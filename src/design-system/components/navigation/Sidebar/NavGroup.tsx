@@ -1,6 +1,5 @@
 import { Box, Typography, Collapse, Popper, Paper } from '@mui/material'
-import { alpha } from '@mui/material/styles'
-import { useTheme } from '@mui/material/styles'
+import { alpha, useTheme } from '@mui/material/styles'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useState, useRef } from 'react'
 import type { ReactNode } from 'react'
@@ -34,17 +33,16 @@ export default function NavGroup({
       <Box>
         {!collapsed && (
           <Typography
-            variant="caption"
             sx={{
               display: 'block',
-              fontSize: tokens.fontSize.xs,
-              fontWeight: 600,
-              letterSpacing: '0.08em',
+              fontSize: '10.5px',
+              fontWeight: 500,
+              letterSpacing: '0.06em',
               textTransform: 'uppercase',
-              color: 'text.secondary',
-              px: '20px',
-              pt: '16px',
-              pb: '4px',
+              color: alpha(theme.palette.text.primary, 0.35),
+              px: '16px',
+              pt: '20px',
+              pb: '2px',
             }}
           >
             {label}
@@ -56,37 +54,37 @@ export default function NavGroup({
     )
   }
 
-  // Collapsible group with icon (sub-category parent)
+  // Collapsible group with icon — collapsed mode: flyout
   if (collapsed) {
-    // In collapsed mode: show parent icon with flyout
     return (
       <Box>
         <Box
           ref={anchorRef}
           onMouseEnter={() => setFlyoutOpen(true)}
           onMouseLeave={() => setFlyoutOpen(false)}
-          sx={{ display: 'flex', justifyContent: 'center', py: 0.25 }}
+          sx={{ display: 'flex', justifyContent: 'center', py: '1px' }}
         >
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 40,
-              height: 40,
+              width: 32,
+              height: 32,
               borderRadius: tokens.borderRadius.md,
               cursor: 'pointer',
               color: 'text.secondary',
-              fontSize: 20,
               mx: '8px',
-              transition: `background-color ${tokens.transition.normal}`,
+              transition: 'background-color 150ms ease',
               '&:hover': {
-                bgcolor: alpha(theme.palette.primary.main, 0.05),
+                bgcolor: alpha(theme.palette.mode === 'light' ? '#000000' : '#ffffff', 0.04),
                 color: 'text.primary',
               },
             }}
           >
-            {icon}
+            <Box sx={{ width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {icon}
+            </Box>
           </Box>
         </Box>
         <Popper
@@ -109,17 +107,16 @@ export default function NavGroup({
             }}
           >
             <Typography
-              variant="caption"
               sx={{
                 display: 'block',
                 px: 2,
                 pt: 0.5,
                 pb: 0.25,
-                fontWeight: 600,
+                fontSize: '10.5px',
+                fontWeight: 500,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: 'text.secondary',
-                fontSize: 11,
+                color: alpha(theme.palette.text.primary, 0.35),
               }}
             >
               {label}
@@ -139,37 +136,54 @@ export default function NavGroup({
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
-          px: '12px',
+          gap: '8px',
+          px: '10px',
           mx: '8px',
-          height: '40px',
+          height: '32px',
           borderRadius: tokens.borderRadius.md,
           cursor: 'pointer',
           color: 'text.secondary',
-          transition: `background-color ${tokens.transition.normal}`,
+          my: '1px',
+          transition: 'background-color 150ms ease',
           '&:hover': {
-            bgcolor: alpha(theme.palette.primary.main, 0.05),
+            bgcolor: alpha(theme.palette.mode === 'light' ? '#000000' : '#ffffff', 0.04),
             color: 'text.primary',
           },
           userSelect: 'none',
         }}
       >
-        <Box sx={{ fontSize: 20, display: 'flex', flexShrink: 0, color: 'inherit' }}>
+        <Box sx={{ width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'inherit' }}>
           {icon}
         </Box>
         <Typography
-          variant="body2"
-          fontWeight={400}
-          color="inherit"
-          sx={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          sx={{
+            fontSize: '13px',
+            fontWeight: 450,
+            lineHeight: 1,
+            flex: 1,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            color: 'inherit',
+          }}
         >
           {label}
         </Typography>
         {badge !== undefined && (
           <Box
             sx={{
-              fontSize: 11, fontWeight: 600, bgcolor: 'primary.main', color: '#fff',
-              borderRadius: '9999px', px: 0.75, py: 0.125, lineHeight: 1.4,
+              minWidth: 16,
+              height: 16,
+              fontSize: '10px',
+              fontWeight: 600,
+              borderRadius: '8px',
+              px: '4px',
+              lineHeight: '16px',
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              color: theme.palette.primary.main,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             {badge}
@@ -177,8 +191,9 @@ export default function NavGroup({
         )}
         <ExpandMoreIcon
           sx={{
-            fontSize: 18,
+            fontSize: 14,
             flexShrink: 0,
+            color: 'inherit',
             transition: `transform ${tokens.transition.normal}`,
             transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
           }}

@@ -5,7 +5,7 @@ import MuiTooltip from '@mui/material/Tooltip'
 import Box from '@mui/material/Box'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
-import type { ElementType, ReactNode } from 'react'
+import type { ElementType, MouseEventHandler, ReactNode } from 'react'
 
 type IconButtonColor = 'primary' | 'secondary' | 'error' | 'success' | 'warning' | 'info' | 'default'
 type IconButtonVariant = 'default' | 'contained' | 'outlined' | 'soft'
@@ -19,7 +19,7 @@ export interface IconButtonProps {
   size?: IconButtonSize
   loading?: boolean
   disabled?: boolean
-  onClick?: () => void
+  onClick?: MouseEventHandler<HTMLElement>
   href?: string
   sx?: SxProps<Theme>
 }

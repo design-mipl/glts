@@ -163,34 +163,38 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
 }
 
 export interface ToastProviderProps {
+  children?: ReactNode
   sx?: SxProps<Theme>
 }
 
-export default function ToastProvider({ sx }: ToastProviderProps) {
+export default function ToastProvider({ children, sx }: ToastProviderProps) {
   const toasts = useToast((state) => state.toasts)
   const dismissToast = useToast((state) => state.dismissToast)
   const visibleToasts = [...toasts].slice(-5).reverse()
 
   return (
-    <Stack
-      spacing={3}
-      sx={[
-        {
-          position: 'fixed',
-          right: tokens.spacing[6],
-          bottom: tokens.spacing[6],
-          zIndex: tokens.zIndex.toast,
-          pointerEvents: 'none',
-          alignItems: 'flex-end',
-        },
-        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
-      ]}
-    >
-      {visibleToasts.map((toast) => (
-        <Box key={toast.id} sx={{ pointerEvents: 'auto' }}>
-          <ToastItem toast={toast} onDismiss={dismissToast} />
-        </Box>
-      ))}
-    </Stack>
+    <>
+      {children}
+      <Stack
+        spacing={3}
+        sx={[
+          {
+            position: 'fixed',
+            right: tokens.spacing[6],
+            bottom: tokens.spacing[6],
+            zIndex: tokens.zIndex.toast,
+            pointerEvents: 'none',
+            alignItems: 'flex-end',
+          },
+          ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+        ]}
+      >
+        {visibleToasts.map((toast) => (
+          <Box key={toast.id} sx={{ pointerEvents: 'auto' }}>
+            <ToastItem toast={toast} onDismiss={dismissToast} />
+          </Box>
+        ))}
+      </Stack>
+    </>
   )
 }

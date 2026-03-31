@@ -1,12 +1,11 @@
-import { Box, Drawer, IconButton, Tooltip } from '@mui/material'
+import { Box, Drawer, IconButton, Tooltip, Typography, Stack } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import { HelpCircle } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { tokens } from '../../../tokens'
 import NavItem from './NavItem'
 import NavGroup from './NavGroup'
-import UserProfile from './UserProfile'
 
 export interface NavConfig {
   type: 'item' | 'group' | 'divider'
@@ -18,31 +17,20 @@ export interface NavConfig {
   roles?: string[]
 }
 
-export interface UserInfo {
-  name: string
-  email: string
-  avatarSrc?: string
-  role?: string
-}
-
 export interface SidebarProps {
   navConfig: NavConfig[]
   collapsed: boolean
   onCollapse: (collapsed: boolean) => void
-  user: UserInfo
   logo?: ReactNode
   logoCollapsed?: ReactNode
   currentPath?: string
-  onSignOut?: () => void
-  onProfileClick?: () => void
-  onSettingsClick?: () => void
   mobileOpen?: boolean
   onMobileClose?: () => void
+  logoMark?: string
+  appName?: string
 }
 
-const SIDEBAR_EXPANDED = 240
-const SIDEBAR_COLLAPSED = 64
-const TOPBAR_HEIGHT = 64
+const TOPBAR_HEIGHT = 52
 
 function renderNavConfig(
   items: NavConfig[],
@@ -67,7 +55,6 @@ function renderNavConfig(
 
     if (item.type === 'group') {
       if (item.icon) {
-        // Collapsible group with icon
         return (
           <NavGroup
             key={i}
@@ -82,7 +69,6 @@ function renderNavConfig(
                   <NavItem
                     key={j}
                     label={child.label ?? ''}
-                    icon={child.icon ?? <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'currentColor' }} />}
                     href={child.href}
                     active={!!child.href && currentPath === child.href}
                     badge={child.badge}
@@ -96,13 +82,8 @@ function renderNavConfig(
           </NavGroup>
         )
       }
-      // Section label group
       return (
-          <NavGroup
-            key={i}
-            label={item.label ?? ''}
-            collapsed={collapsed}
-          >
+        <NavGroup key={i} label={item.label ?? ''} collapsed={collapsed}>
           {item.children?.map((child) => renderNavConfig([child], collapsed, currentPath))}
         </NavGroup>
       )
@@ -113,7 +94,7 @@ function renderNavConfig(
         <NavItem
           key={i}
           label={item.label ?? ''}
-          icon={item.icon ?? <Box />}
+          icon={item.icon}
           href={item.href}
           active={!!item.href && currentPath === item.href}
           badge={item.badge}
@@ -130,21 +111,16 @@ function SidebarContent({
   navConfig,
   collapsed,
   onCollapse,
-  user,
-  logo,
-  logoCollapsed,
   currentPath = '',
-  onSignOut,
-  onProfileClick,
-  onSettingsClick,
-}: Omit<SidebarProps, 'mobileOpen' | 'onMobileClose'>) {
+  logoMark = 'F',
+  appName = 'Foundation',
+}: Pick<SidebarProps, 'navConfig' | 'collapsed' | 'onCollapse' | 'currentPath' | 'logoMark' | 'appName'>) {
   const theme = useTheme()
-  const width = collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED
 
   return (
     <Box
       sx={{
-        width,
+        width: '100%',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -152,48 +128,125 @@ function SidebarContent({
         borderRight: `1px solid ${alpha(theme.palette.mode === 'light' ? '#000000' : '#ffffff', 0.06)}`,
         boxShadow: 'none',
         overflow: 'hidden',
-        transition: `width ${tokens.transition.normal}`,
       }}
     >
-      {/* Logo area */}
-      <Box
-        sx={{
-          height: TOPBAR_HEIGHT,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'space-between',
-          px: collapsed ? 0 : 2,
-          flexShrink: 0,
-          borderBottom: `1px solid ${alpha(theme.palette.mode === 'light' ? '#000000' : '#ffffff', 0.06)}`,
-          overflow: 'hidden',
-        }}
-      >
-        {!collapsed && (
-          <Box sx={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-            {logo}
-          </Box>
-        )}
-        {collapsed && logoCollapsed && (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {logoCollapsed}
-          </Box>
-        )}
-        <Tooltip title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} placement="right">
+      {/* Logo area — 52px to align with topbar */}
+      {!collapsed ? (
+        <Box
+          sx={{
+            height: TOPBAR_HEIGHT,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: '12px',
+            flexShrink: 0,
+            borderBottom: `1px solid ${alpha(theme.palette.mode === 'light' ? '#000000' : '#ffffff', 0.06)}`,
+            overflow: 'hidden',
+            gap: 1.5,
+          }}
+        >
+          <Stack direction="row" alignItems="center" gap={1.5} sx={{ minWidth: 0, flex: 1 }}>
+            {/* Logo mark */}
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: tokens.borderRadius.md,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Typography
+                sx={{
+                  color: '#fff',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                }}
+              >
+                {logoMark}
+              </Typography>
+            </Box>
+
+            {/* App name */}
+            <Typography
+              sx={{
+                fontSize: '14px',
+                fontWeight: 700,
+                color: theme.palette.text.primary,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {appName}
+            </Typography>
+          </Stack>
+
+          {/* Collapse button */}
           <IconButton
+            onClick={() => onCollapse(true)}
             size="small"
-            onClick={() => onCollapse(!collapsed)}
             sx={{
-              flexShrink: 0,
-              color: 'text.secondary',
               width: 28,
               height: 28,
-              '&:hover': { color: 'text.primary' },
+              color: theme.palette.text.disabled,
+              flexShrink: 0,
+              '&:hover': {
+                color: theme.palette.text.secondary,
+                background: alpha(theme.palette.mode === 'light' ? '#000000' : '#ffffff', 0.04),
+              },
             }}
           >
-            {collapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
+            <ChevronLeftIcon sx={{ fontSize: 16 }} />
           </IconButton>
+        </Box>
+      ) : (
+        <Tooltip title="Expand sidebar" placement="right">
+          <Box
+            onClick={() => onCollapse(false)}
+            sx={{
+              height: TOPBAR_HEIGHT,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              borderBottom: `1px solid ${alpha(theme.palette.mode === 'light' ? '#000000' : '#ffffff', 0.06)}`,
+              cursor: 'pointer',
+              transition: 'background-color 150ms ease',
+              '&:hover': {
+                background: alpha(theme.palette.mode === 'light' ? '#000000' : '#ffffff', 0.04),
+              },
+            }}
+          >
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: tokens.borderRadius.md,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography
+                sx={{
+                  color: '#fff',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                }}
+              >
+                {logoMark}
+              </Typography>
+            </Box>
+          </Box>
         </Tooltip>
-      </Box>
+      )}
 
       {/* Nav scroll area */}
       <Box
@@ -201,7 +254,7 @@ function SidebarContent({
           flex: 1,
           overflowY: 'auto',
           overflowX: 'hidden',
-          py: 1,
+          py: '8px',
           '&::-webkit-scrollbar': { width: 4 },
           '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
           '&::-webkit-scrollbar-thumb': {
@@ -219,23 +272,19 @@ function SidebarContent({
         {renderNavConfig(navConfig, collapsed, currentPath)}
       </Box>
 
-      {/* Bottom section */}
-      <Box sx={{ flexShrink: 0 }}>
-        <Box
-          sx={{
-            height: '1px',
-            backgroundColor: alpha(theme.palette.mode === 'light' ? '#000000' : '#ffffff', 0.06),
-          }}
-        />
-        <UserProfile
-          name={user.name}
-          email={user.email}
-          avatarSrc={user.avatarSrc}
-          role={user.role}
+      {/* Bottom — Help & Docs */}
+      <Box
+        sx={{
+          flexShrink: 0,
+          borderTop: `1px solid ${alpha(theme.palette.mode === 'light' ? '#000000' : '#ffffff', 0.06)}`,
+          p: '8px',
+        }}
+      >
+        <NavItem
+          label="Help & Docs"
+          icon={<HelpCircle size={16} strokeWidth={1.75} />}
+          href="/docs"
           collapsed={collapsed}
-          onSignOut={onSignOut}
-          onProfileClick={onProfileClick}
-          onSettingsClick={onSettingsClick}
         />
       </Box>
     </Box>
@@ -245,26 +294,24 @@ function SidebarContent({
 export default function Sidebar({
   mobileOpen = false,
   onMobileClose,
-  ...props
+  collapsed = false,
+  navConfig,
+  onCollapse,
+  currentPath,
+  logoMark = 'F',
+  appName = 'Foundation',
 }: SidebarProps) {
   return (
     <>
-      {/* Desktop permanent sidebar */}
-      <Box
-        component="nav"
-        sx={{
-          display: { xs: 'none', md: 'block' },
-          position: 'fixed',
-          top: TOPBAR_HEIGHT,
-          left: 0,
-          bottom: 0,
-          zIndex: 1000,
-          width: props.collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED,
-          transition: `width ${tokens.transition.normal}`,
-        }}
-      >
-        <SidebarContent {...props} />
-      </Box>
+      {/* Desktop permanent sidebar — managed by AppShell layout */}
+      <SidebarContent
+        navConfig={navConfig}
+        collapsed={collapsed}
+        onCollapse={onCollapse}
+        currentPath={currentPath}
+        logoMark={logoMark}
+        appName={appName}
+      />
 
       {/* Mobile temporary drawer */}
       <Drawer
@@ -276,7 +323,7 @@ export default function Sidebar({
         sx={{
           display: { xs: 'block', md: 'none' },
           '& .MuiDrawer-paper': {
-            width: SIDEBAR_EXPANDED,
+            width: 240,
             top: 0,
             height: '100%',
             border: 'none',
@@ -284,7 +331,14 @@ export default function Sidebar({
           },
         }}
       >
-        <SidebarContent {...props} collapsed={false} />
+        <SidebarContent
+          navConfig={navConfig}
+          collapsed={false}
+          onCollapse={onCollapse}
+          currentPath={currentPath}
+          logoMark={logoMark}
+          appName={appName}
+        />
       </Drawer>
     </>
   )

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import {
   Box, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Checkbox, IconButton, Skeleton,
@@ -344,9 +344,8 @@ export default function DataTable({
               const rowBg = isSelected ? selectedBg : isEven ? evenRowBg : undefined
 
               return (
-                <>
+                <Fragment key={rowId}>
                   <TableRow
-                    key={rowId}
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
                     sx={{
                       bgcolor: rowBg,
@@ -439,7 +438,7 @@ export default function DataTable({
                       {renderExpanded(row)}
                     </ExpandedRow>
                   )}
-                </>
+                </Fragment>
               )
             })}
           </TableBody>

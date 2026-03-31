@@ -26,7 +26,7 @@ export function generateTheme(config: ThemeConfig): Theme {
   const isLight = config.mode === 'light';
 
   const background = {
-    default: isLight ? '#F9F9FB'  : '#0F0F0F',
+    default: isLight ? '#F7F7F8'  : '#0F0F0F',
     paper:   isLight ? '#FFFFFF'  : neutral[900],
   };
 
@@ -167,7 +167,8 @@ export function generateTheme(config: ThemeConfig): Theme {
           root: {
             borderRadius: tokens.borderRadius.lg,
             backgroundImage: 'none',
-            border: `1px solid ${alpha(isLight ? '#000000' : '#ffffff', 0.06)}`,
+            border: `1px solid ${alpha(isLight ? '#000000' : '#ffffff', isLight ? 0.07 : 0.08)}`,
+            boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04)' : 'none',
           },
         },
       },

@@ -1,21 +1,36 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import DashboardIcon from '@mui/icons-material/Dashboard'
-import BarChartIcon from '@mui/icons-material/BarChart'
-import PeopleIcon from '@mui/icons-material/People'
-import FolderIcon from '@mui/icons-material/Folder'
-import SettingsIcon from '@mui/icons-material/Settings'
-import SettingsPanel from './pages/Settings'
-import PreviewPage from './pages/Preview'
-import { AppShell } from './design-system/components/navigation'
-import type { NavConfig } from './design-system/components/navigation'
+import {
+  AppShell,
+  ToastProvider,
+  type NavConfig,
+} from '@/design-system/components'
+import SettingsPanel from '@/pages/Settings'
+import PreviewPage from '@/pages/Preview'
+import {
+  LayoutDashboard,
+  BarChart2,
+  Users,
+  Folder,
+  FileText,
+} from 'lucide-react'
 
 const navConfig: NavConfig[] = [
   {
     type: 'group',
     label: 'Main',
     children: [
-      { type: 'item', label: 'Dashboard', icon: <DashboardIcon sx={{ fontSize: 20 }} />, href: '/' },
-      { type: 'item', label: 'Analytics', icon: <BarChartIcon sx={{ fontSize: 20 }} />, href: '/analytics' },
+      {
+        type: 'item',
+        label: 'Dashboard',
+        icon: <LayoutDashboard size={16} strokeWidth={1.75} />,
+        href: '/',
+      },
+      {
+        type: 'item',
+        label: 'Analytics',
+        icon: <BarChart2 size={16} strokeWidth={1.75} />,
+        href: '/analytics',
+      },
     ],
   },
   {
@@ -25,7 +40,7 @@ const navConfig: NavConfig[] = [
       {
         type: 'group',
         label: 'Users',
-        icon: <PeopleIcon sx={{ fontSize: 20 }} />,
+        icon: <Users size={16} strokeWidth={1.75} />,
         children: [
           { type: 'item', label: 'All Users', href: '/users' },
           { type: 'item', label: 'Roles', href: '/users/roles' },
@@ -35,18 +50,16 @@ const navConfig: NavConfig[] = [
       {
         type: 'item',
         label: 'Records',
-        icon: <FolderIcon sx={{ fontSize: 20 }} />,
+        icon: <Folder size={16} strokeWidth={1.75} />,
         href: '/records',
         badge: 12,
       },
-    ],
-  },
-  { type: 'divider' },
-  {
-    type: 'group',
-    label: 'Settings',
-    children: [
-      { type: 'item', label: 'Settings', icon: <SettingsIcon sx={{ fontSize: 20 }} />, href: '/settings' },
+      {
+        type: 'item',
+        label: 'Reports',
+        icon: <FileText size={16} strokeWidth={1.75} />,
+        href: '/reports',
+      },
     ],
   },
 ]
@@ -60,12 +73,21 @@ const mockUser = {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppShell navConfig={navConfig} user={mockUser}>
-        <Routes>
-          <Route path="/" element={<PreviewPage />} />
-        </Routes>
-      </AppShell>
-      <SettingsPanel />
+      <ToastProvider>
+        <AppShell
+          navConfig={navConfig}
+          user={mockUser}
+          onSignOut={() => console.log('sign out')}
+          onProfileClick={() => console.log('profile')}
+          onSettingsClick={() => console.log('settings')}
+        >
+          <Routes>
+            <Route path="/" element={<PreviewPage />} />
+            <Route path="*" element={<PreviewPage />} />
+          </Routes>
+          <SettingsPanel />
+        </AppShell>
+      </ToastProvider>
     </BrowserRouter>
   )
 }

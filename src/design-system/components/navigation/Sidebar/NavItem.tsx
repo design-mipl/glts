@@ -1,13 +1,12 @@
-import { Box, Typography, Tooltip, Badge } from '@mui/material'
-import { alpha } from '@mui/material/styles'
-import { useTheme } from '@mui/material/styles'
+import { Box, Typography, Tooltip } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { tokens } from '../../../tokens'
 
 export interface NavItemProps {
   label: string
-  icon: ReactNode
+  icon?: ReactNode
   href?: string
   onClick?: () => void
   active?: boolean
@@ -29,72 +28,118 @@ export default function NavItem({
   depth = 0,
 }: NavItemProps) {
   const theme = useTheme()
+  const isSubItem = depth >= 1
 
-  const depthPad = depth === 1 ? 16 : depth === 2 ? 32 : 0
+  const height = isSubItem ? '28px' : '32px'
+  const fontSize = isSubItem ? '12.5px' : '13px'
+  const fontWeight = active ? 600 : isSubItem ? 400 : 450
 
   const rootSx = {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    px: '12px',
+    gap: '8px',
+    px: '10px',
     mx: '8px',
-    height: '40px',
+    height,
     borderRadius: tokens.borderRadius.md,
     cursor: disabled ? 'default' : 'pointer',
     opacity: disabled ? 0.4 : 1,
     textDecoration: 'none',
-    color: active ? 'primary.main' : 'text.secondary',
-    bgcolor: active ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-    transition: `background-color ${tokens.transition.normal}, color ${tokens.transition.normal}`,
-    paddingLeft: `${12 + depthPad}px`,
+    color: active
+      ? theme.palette.primary.main
+      : theme.palette.text.secondary,
+    bgcolor: active ? alpha(theme.palette.primary.main, 0.08) : 'transparent',
+    fontWeight: active ? 600 : (isSubItem ? 400 : 450),
+    transition: 'background-color 150ms ease, color 150ms ease',
+    my: '1px',
     userSelect: 'none' as const,
     '&:hover': disabled ? {} : {
       bgcolor: active
         ? alpha(theme.palette.primary.main, 0.12)
-        : alpha(theme.palette.primary.main, 0.05),
-      color: active ? 'primary.main' : 'text.primary',
+        : alpha(theme.palette.mode === 'light' ? '#000000' : '#ffffff', 0.04),
+      color: active ? theme.palette.primary.main : theme.palette.text.primary,
     },
     width: '100%',
     minWidth: 0,
     boxSizing: 'border-box' as const,
   }
 
-  const iconEl = (
+  // Sub-item dot indicator
+  const dotEl = isSubItem ? (
+    <Box
+      sx={{
+        width: 4,
+        height: 4,
+        borderRadius: '50%',
+        bgcolor: active ? 'primary.main' : 'text.disabled',
+        flexShrink: 0,
+        ml: '8px',
+        mr: '12px',
+      }}
+    />
+  ) : null
+
+  // Icon wrapper (top-level items only)
+  const iconEl = !isSubItem && icon ? (
     <Box
       sx={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 20,
+        width: 16,
+        height: 16,
         flexShrink: 0,
         color: 'inherit',
-        width: 20,
-        height: 20,
-        position: 'relative',
       }}
     >
       {icon}
-      {collapsed && badge !== undefined && (
-        <Badge
-          badgeContent={badge}
-          color="primary"
-          sx={{
-            position: 'absolute',
-            top: -4,
-            right: -6,
-            '& .MuiBadge-badge': { fontSize: 9, height: 14, minWidth: 14, p: '0 3px' },
-          }}
-        />
-      )}
     </Box>
-  )
+  ) : null
+
+  // Badge pill
+  const badgeEl = badge !== undefined && !collapsed ? (
+    <Box
+      sx={{
+        minWidth: 16,
+        height: 16,
+        fontSize: '10px',
+        fontWeight: 600,
+        borderRadius: '8px',
+        px: '4px',
+        lineHeight: '16px',
+        bgcolor: alpha(theme.palette.primary.main, 0.1),
+        color: theme.palette.primary.main,
+        ml: 'auto',
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {badge}
+    </Box>
+  ) : null
+
+  // Collapsed badge dot
+  const collapsedBadgeEl = badge !== undefined && collapsed && !isSubItem ? (
+    <Box
+      sx={{
+        position: 'absolute',
+        top: -2,
+        right: -2,
+        width: 6,
+        height: 6,
+        borderRadius: '50%',
+        bgcolor: 'primary.main',
+      }}
+    />
+  ) : null
 
   const labelEl = (
     <Box
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: 1,
         flex: 1,
         minWidth: 0,
         overflow: 'hidden',
@@ -104,38 +149,78 @@ export default function NavItem({
       }}
     >
       <Typography
-        variant="body2"
-        fontWeight={active ? 600 : 400}
-        color="inherit"
-        sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
+        sx={{
+          fontSize,
+          fontWeight,
+          lineHeight: 1,
+          flex: 1,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          color: 'inherit',
+        }}
       >
         {label}
       </Typography>
-      {!collapsed && badge !== undefined && (
-        <Badge badgeContent={badge} color="primary" sx={{ '& .MuiBadge-badge': { position: 'static', transform: 'none', fontSize: 10, height: 16, minWidth: 16 } }} />
-      )}
+      {badgeEl}
     </Box>
   )
 
   const inner = (
-    <Box sx={rootSx} onClick={disabled ? undefined : onClick} role="button" tabIndex={disabled ? -1 : 0}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!disabled) onClick?.() } }}
+    <Box
+      sx={{ ...rootSx, position: 'relative' }}
+      onClick={disabled ? undefined : onClick}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          if (!disabled) onClick?.()
+        }
+      }}
     >
-      {iconEl}
+      {isSubItem ? dotEl : (
+        <>
+          {iconEl && (
+            <Box sx={{ position: 'relative' }}>
+              {iconEl}
+              {collapsedBadgeEl}
+            </Box>
+          )}
+        </>
+      )}
       {labelEl}
     </Box>
   )
 
   const linked = href && !disabled ? (
-    <Box component={Link} to={href} sx={{ ...rootSx, '&:focus-visible': { outline: `2px solid ${theme.palette.primary.main}`, outlineOffset: -2 } }}
+    <Box
+      component={Link}
+      to={href}
+      sx={{
+        ...rootSx,
+        position: 'relative',
+        '&:focus-visible': {
+          outline: `2px solid ${theme.palette.primary.main}`,
+          outlineOffset: -2,
+        },
+      }}
       tabIndex={0}
     >
-      {iconEl}
+      {isSubItem ? dotEl : (
+        <>
+          {iconEl && (
+            <Box sx={{ position: 'relative' }}>
+              {iconEl}
+              {collapsedBadgeEl}
+            </Box>
+          )}
+        </>
+      )}
       {labelEl}
     </Box>
   ) : inner
 
-  if (collapsed) {
+  if (collapsed && !isSubItem) {
     return (
       <Tooltip title={label} placement="right" arrow>
         <Box sx={{ display: 'block' }}>

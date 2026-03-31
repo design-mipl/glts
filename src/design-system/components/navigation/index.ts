@@ -1,11 +1,12 @@
 export { default as AppShell } from './AppShell'
 export type { AppShellProps } from './AppShell'
 
-export { default as Topbar } from './Topbar'
-export type { TopbarProps, TopbarUser } from './Topbar'
+export { default as Topbar, TOPBAR_HEIGHT } from './Topbar'
+export type { TopbarProps } from './Topbar'
+export type { UserMenuUser } from './Topbar/UserMenu'
 
 export { default as Sidebar } from './Sidebar'
-export type { SidebarProps, NavConfig, UserInfo } from './Sidebar'
+export type { SidebarProps, NavConfig } from './Sidebar'
 
 export { default as Breadcrumb } from './Breadcrumb'
 export type { BreadcrumbProps, BreadcrumbItem } from './Breadcrumb'

@@ -1,29 +1,32 @@
-import { Box, useMediaQuery } from '@mui/material'
+import { Box, useMediaQuery, Drawer as MuiDrawer } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import { alpha } from '@mui/material/styles'
 import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
-import Topbar from '../Topbar'
+import Topbar, { TOPBAR_HEIGHT } from '../Topbar'
 import Sidebar from '../Sidebar'
-import type { NavConfig, UserInfo } from '../Sidebar'
+import type { NavConfig } from '../Sidebar'
+import type { UserMenuUser } from '../Topbar/UserMenu'
 import CommandPalette from '../CommandPalette'
 import type { SearchResults } from '../CommandPalette'
+import { tokens } from '../../../tokens'
 
 const STORAGE_KEY = 'foundation:sidebar-collapsed'
-const TOPBAR_HEIGHT = 64
 const SIDEBAR_EXPANDED = 240
 const SIDEBAR_COLLAPSED = 64
 
 export interface AppShellProps {
   children: ReactNode
   navConfig: NavConfig[]
-  user: UserInfo
+  user: UserMenuUser
   logo?: ReactNode
   logoCollapsed?: ReactNode
   notificationCount?: number
   onNotificationClick?: () => void
   onSignOut?: () => void
   onProfileClick?: () => void
+  onSettingsClick?: () => void
   onSearch?: (query: string) => Promise<SearchResults>
 }
 
@@ -41,33 +44,32 @@ export default function AppShell({
   onNotificationClick,
   onSignOut,
   onProfileClick,
+  onSettingsClick,
   onSearch = defaultSearch,
 }: AppShellProps) {
   const theme = useTheme()
   const location = useLocation()
-  const isLg = useMediaQuery(theme.breakpoints.up('lg'))
+  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'))
 
-  // Initialize collapsed state from localStorage, with breakpoint default
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored !== null) return stored === 'true'
-    // md starts collapsed, lg starts expanded
-    return false // will be corrected after first render
+    return false
   })
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
 
-  // Set initial collapse based on breakpoint only if no localStorage value
+  // Close drawer when resizing to desktop
   useEffect(() => {
-    if (localStorage.getItem(STORAGE_KEY) === null) {
-      setCollapsed(!isLg)
+    if (isDesktop) {
+      setMobileDrawerOpen(false)
     }
-  }, [isLg])
+  }, [isDesktop])
 
-  function handleCollapse(val: boolean) {
-    setCollapsed(val)
-    localStorage.setItem(STORAGE_KEY, String(val))
-  }
+  // Close drawer on route change
+  useEffect(() => {
+    setMobileDrawerOpen(false)
+  }, [location.pathname])
 
   // Cmd+K / Ctrl+K global shortcut
   useEffect(() => {
@@ -81,64 +83,139 @@ export default function AppShell({
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  // Close mobile drawer on route change
-  useEffect(() => {
-    setMobileOpen(false)
-  }, [location.pathname])
+  function handleDesktopCollapse(val: boolean) {
+    setCollapsed(val)
+    localStorage.setItem(STORAGE_KEY, String(val))
+  }
+
+  const sidebarWidth = collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Topbar */}
-      <Topbar
-        onMenuToggle={() => setMobileOpen(o => !o)}
-        sidebarCollapsed={collapsed}
-        user={user}
-        notificationCount={notificationCount}
-        onNotificationClick={onNotificationClick}
-        onSignOut={onSignOut}
-        onProfileClick={onProfileClick}
-        onSearchClick={() => setPaletteOpen(true)}
-      />
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100vh',
+        overflow: 'hidden',
+        backgroundColor: theme.palette.background.default,
+      }}
+    >
+      {/* ── DESKTOP SIDEBAR (lg+) ── */}
+      {isDesktop && (
+        <Box
+          sx={{
+            width: sidebarWidth,
+            flexShrink: 0,
+            height: '100vh',
+            transition: `width ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeInOut}`,
+            zIndex: 1000,
+            overflow: 'hidden',
+          }}
+        >
+          <Sidebar
+            navConfig={navConfig}
+            collapsed={collapsed}
+            onCollapse={handleDesktopCollapse}
+            logo={logo}
+            logoCollapsed={logoCollapsed}
+            currentPath={location.pathname}
+            mobileOpen={false}
+            onMobileClose={() => {}}
+            logoMark="F"
+            appName="Foundation"
+          />
+        </Box>
+      )}
 
-      {/* Sidebar */}
-      <Sidebar
-        navConfig={navConfig}
-        collapsed={collapsed}
-        onCollapse={handleCollapse}
-        user={user}
-        logo={logo}
-        logoCollapsed={logoCollapsed}
-        currentPath={location.pathname}
-        onSignOut={onSignOut}
-        onProfileClick={onProfileClick}
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
-      />
+      {/* ── MOBILE/TABLET DRAWER (below lg) ── */}
+      {!isDesktop && (
+        <MuiDrawer
+          variant="temporary"
+          anchor="left"
+          open={mobileDrawerOpen}
+          onClose={() => setMobileDrawerOpen(false)}
+          ModalProps={{
+            keepMounted: true,
+          }}
+          sx={{
+            '& .MuiDrawer-paper': {
+              width: SIDEBAR_EXPANDED,
+              height: '100vh',
+              border: 'none',
+              boxShadow: tokens.shadow.xl,
+            },
+            '& .MuiBackdrop-root': {
+              backgroundColor: 'rgba(0,0,0,0.3)',
+            },
+          }}
+        >
+          <Sidebar
+            navConfig={navConfig}
+            collapsed={false}
+            onCollapse={() => setMobileDrawerOpen(false)}
+            logo={logo}
+            logoCollapsed={logoCollapsed}
+            currentPath={location.pathname}
+            mobileOpen={mobileDrawerOpen}
+            onMobileClose={() => setMobileDrawerOpen(false)}
+            logoMark="F"
+            appName="Foundation"
+          />
+        </MuiDrawer>
+      )}
 
-      {/* Main content */}
+      {/* ── CONTENT COLUMN ── */}
       <Box
-        component="main"
         sx={{
           flex: 1,
-          marginTop: `${TOPBAR_HEIGHT}px`,
-          marginLeft: {
-            xs: 0,
-            md: collapsed ? `${SIDEBAR_COLLAPSED}px` : `${SIDEBAR_EXPANDED}px`,
-          },
-          transition: `margin-left ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeInOut}`,
-          minHeight: `calc(100vh - ${TOPBAR_HEIGHT}px)`,
-          bgcolor: 'background.default',
-          p: { xs: 2, md: 3 },
-          boxSizing: 'border-box',
-          width: {
-            xs: '100%',
-            md: collapsed
-              ? `calc(100% - ${SIDEBAR_COLLAPSED}px)`
-              : `calc(100% - ${SIDEBAR_EXPANDED}px)`,
-          },
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100vh',
+          overflow: 'hidden',
+          minWidth: 0,
         }}
       >
-        {children}
+        {/* Topbar */}
+        <Box
+          sx={{
+            flexShrink: 0,
+            height: `${TOPBAR_HEIGHT}px`,
+            zIndex: 100,
+            backgroundColor: theme.palette.background.paper,
+            borderBottom: `1px solid ${alpha(
+              theme.palette.mode === 'light' ? '#000000' : '#ffffff',
+              0.06
+            )}`,
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          <Topbar
+            onMenuToggle={() => setMobileDrawerOpen(true)}
+            user={user}
+            notificationCount={notificationCount}
+            onNotificationClick={onNotificationClick}
+            onSignOut={onSignOut}
+            onProfileClick={onProfileClick}
+            onSettingsClick={onSettingsClick}
+            onSearchClick={() => setPaletteOpen(true)}
+            showMenuButton={!isDesktop}
+          />
+        </Box>
+
+        {/* Main Content */}
+        <Box
+          component="main"
+          sx={{
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            p: { xs: 2, md: 3, lg: 4 },
+            backgroundColor: theme.palette.background.default,
+            boxSizing: 'border-box',
+          }}
+        >
+          {children}
+        </Box>
       </Box>
 
       {/* Command Palette */}

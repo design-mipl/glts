@@ -3,7 +3,7 @@ import MuiButton from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
-import type { ElementType, ReactNode } from 'react'
+import type { ElementType, MouseEventHandler, ReactNode } from 'react'
 
 type ButtonColor = 'primary' | 'secondary' | 'error' | 'success' | 'warning' | 'info'
 type ButtonVariant = 'contained' | 'outlined' | 'text' | 'soft'
@@ -20,7 +20,7 @@ export interface ButtonProps {
   fullWidth?: boolean
   startIcon?: ReactNode
   endIcon?: ReactNode
-  onClick?: () => void
+  onClick?: MouseEventHandler<HTMLElement>
   href?: string
   type?: 'button' | 'submit' | 'reset'
   sx?: SxProps<Theme>
