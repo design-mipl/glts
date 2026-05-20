@@ -5,7 +5,7 @@ import {
   type NavConfig,
 } from '@/design-system/UIComponents'
 import SettingsPanel from '@/pages/Settings'
-import PreviewPage from '@/pages/Preview'
+import ComponentLibrary from '@/pages/ComponentLibrary'
 import {
   LayoutDashboard,
   BarChart2,
@@ -82,8 +82,8 @@ export default function App() {
           onSettingsClick={() => console.log('settings')}
         >
           <Routes>
-            <Route path="/" element={<PreviewPage />} />
-            <Route path="*" element={<PreviewPage />} />
+            <Route path="/" element={<ComponentLibrary />} />
+            <Route path="*" element={<ComponentLibrary />} />
           </Routes>
           <SettingsPanel />
         </AppShell>
