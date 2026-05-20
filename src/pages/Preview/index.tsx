@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Box, Stack, Grid, Typography, Divider, Paper, Tooltip, FormControlLabel } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import {
@@ -9,39 +9,108 @@ import {
 import dayjs from 'dayjs'
 
 import PageHeader from '@/components/layout/PageHeader'
+import { useFoundationBreakpointIndex, useFoundationBreakpointKey } from '@/design-system/hooks/useResponsiveValue'
 import { useFoundationTheme } from '@/design-system/ThemeContext'
 import { generateScale, generateNeutralScale, tokens } from '@/design-system/tokens'
 
 // All DS imports from barrel
 import {
-  Button, IconButton, Input, Textarea, Select, MultiSelect, Checkbox,
-  RadioGroup, Toggle, DatePicker, DateRangePicker, FileUpload, Divider as DSDivider,
-} from '@/design-system/components'
-import {
-  FormField, FormSection, FormActions, SearchInput, TagInput, RichTextEditor,
-} from '@/design-system/components'
-import {
-  Badge, Avatar, AvatarGroup, Spinner, Tag, CopyButton, UserCard,
-  NotificationBell, ActivityFeed, TrendIndicator,
-} from '@/design-system/components'
-import {
-  BaseCard, StatCard, MetricCard, ProfileCard, ActionCard, ImageCard, ListCard, SummaryCard,
-} from '@/design-system/components'
-import {
-  LineChart, AreaChart, BarChart, PieChart, DonutChart, SparkLine, ChartCard,
-} from '@/design-system/components'
-import {
-  KPIBlock, ProgressRing, GaugeChart, Heatmap, Timeline, ComparisonBar,
-} from '@/design-system/components'
-import {
-  Alert, ProgressBar, Skeleton, SkeletonCard, SkeletonList, LoadingOverlay,
-  Modal, ConfirmDialog, Drawer, Popover, useToast,
-} from '@/design-system/components'
-import {
-  Tabs, Breadcrumb, Stepper, Menu, BackButton,
-} from '@/design-system/components'
-import type { Column, TableState, BulkAction } from '@/design-system/components'
-import { DataTable } from '@/design-system/components'
+  Alert,
+  AreaChart,
+  Avatar,
+  AvatarGroup,
+  BackButton,
+  Badge,
+  BarChart,
+  BaseCard,
+  Breadcrumb,
+  Button,
+  ChartCard,
+  Checkbox,
+  ComparisonBar,
+  ConfirmDialog,
+  CopyButton,
+  DataTable,
+  DatePicker,
+  DateRangePicker,
+  Divider as DSDivider,
+  DonutChart,
+  Drawer,
+  FileUpload,
+  FormActions,
+  FormField,
+  FormSection,
+  GaugeChart,
+  Heatmap,
+  IconButton,
+  ImageCard,
+  Input,
+  KPIBlock,
+  LineChart,
+  ListCard,
+  LoadingOverlay,
+  Menu,
+  MetricCard,
+  Modal,
+  MultiSelect,
+  NotificationBell,
+  PieChart,
+  Popover,
+  ProfileCard,
+  ProgressBar,
+  ProgressRing,
+  RadioGroup,
+  ResponsiveButton,
+  ResponsiveCard,
+  ResponsiveGrid,
+  ResponsiveInput,
+  ResponsiveListItem,
+  RichTextEditor,
+  SearchInput,
+  Select,
+  Skeleton,
+  SkeletonCard,
+  SkeletonList,
+  SparkLine,
+  Spinner,
+  StatCard,
+  Stepper,
+  SummaryCard,
+  Tabs,
+  Tag,
+  TagInput,
+  Textarea,
+  Timeline,
+  Toggle,
+  UserCard,
+  useToast,
+  ActivityFeed,
+  ActionCard,
+  TrendIndicator,
+} from '@/design-system/UIComponents'
+import type { Column, TableState, BulkAction } from '@/design-system/UIComponents'
+
+function BreakpointDebug() {
+  const tierKey = useFoundationBreakpointKey()
+  const tierIdx = useFoundationBreakpointIndex()
+  const [widthPx, setWidthPx] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth : 0,
+  )
+  useEffect(() => {
+    const onResize = () => setWidthPx(window.innerWidth)
+    onResize()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  return (
+    <Stack direction="row" flexWrap="wrap" gap={2} alignItems="center">
+      <Typography variant="body2" fontWeight={600}>{widthPx}px</Typography>
+      <Typography variant="body2" color="text.secondary">
+        Tier {tierIdx}: {tierKey}
+      </Typography>
+    </Stack>
+  )
+}
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 
@@ -103,11 +172,12 @@ export default function PreviewPage() {
   const [tableState, setTableState] = useState<TableState>({
     page: 0, pageSize: 10, sortKey: null, sortDirection: null,
     filters: [], searchQuery: '', columnSearch: {}, selectedRows: [], expandedRows: [],
+    hiddenColumnKeys: [],
   })
 
   const tableColumns: Column[] = [
     { key: 'name', label: 'Name', sortable: true, searchable: true, width: '20%' },
-    { key: 'email', label: 'Email', sortable: true, searchable: true, width: '25%', hideBelow: 'sm' },
+    { key: 'email', label: 'Email', sortable: true, searchable: true, width: '25%', hideBelow: 'lg' },
     { key: 'role', label: 'Role', sortable: true, filterable: true, width: '15%',
       type: 'select', options: [
         { label: 'Admin', value: 'Admin' },
@@ -124,8 +194,15 @@ export default function PreviewPage() {
         <Badge label={val} color={val === 'Active' ? 'success' : 'neutral'} variant="soft" />
       ),
     },
-    { key: 'department', label: 'Department', sortable: true, width: '15%', hideBelow: 'md' },
-    { key: 'joined', label: 'Joined', sortable: true, width: '10%', hideBelow: 'lg', type: 'date' },
+    {
+      key: 'department',
+      label: 'Department',
+      sortable: true,
+      width: '15%',
+      hideBelow: 'xl',
+      hideOnTablet: true,
+    },
+    { key: 'joined', label: 'Joined', sortable: true, width: '10%', hideBelow: 'desktop', type: 'date' },
   ]
 
   const tableData = Array.from({ length: 20 }, (_, i) => ({
@@ -221,6 +298,34 @@ export default function PreviewPage() {
           </Button>
         }
       />
+
+      <Section title="1b. Responsive system">
+        <Stack spacing={3}>
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Current breakpoint
+            </Typography>
+            <BreakpointDebug />
+          </Paper>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <ResponsiveButton />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <ResponsiveInput />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <ResponsiveCard />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <ResponsiveListItem />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <ResponsiveGrid />
+            </Grid>
+          </Grid>
+        </Stack>
+      </Section>
 
       {/* ── 2. TYPOGRAPHY ── */}
       <Section title="2. Typography">

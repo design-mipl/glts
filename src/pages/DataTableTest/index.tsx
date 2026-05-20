@@ -8,9 +8,9 @@ import EditIcon from '@mui/icons-material/Edit'
 import { alpha } from '@mui/material/styles'
 import {
   DataTable, RowActions, RichTextEditor,
-} from '../../design-system/components'
-import type { Column, TableState, BulkAction, SearchResults } from '../../design-system/components'
-import { GlobalSearchProvider } from '../../design-system/components/data-table/GlobalSearch/provider'
+} from '../../design-system/UIComponents'
+import type { Column, TableState, BulkAction, SearchResults } from '../../design-system/UIComponents'
+import { GlobalSearchProvider } from '../../design-system/UIComponents/DataTable/GlobalSearch/provider'
 import { useTheme } from '@mui/material/styles'
 
 // ── Mock data ──────────────────────────────────────────────────────
@@ -106,6 +106,7 @@ const DEFAULT_STATE: TableState = {
   sortKey: null, sortDirection: null,
   filters: [], searchQuery: '', columnSearch: {},
   selectedRows: [], expandedRows: [],
+  hiddenColumnKeys: [],
 }
 
 // ── Columns ───────────────────────────────────────────────────────
@@ -177,7 +178,7 @@ export default function DataTableTest() {
       type: 'select',
       sortable: true,
       searchable: true,
-      hideBelow: 'md',
+      hideBelow: 'xl',
       options: DEPARTMENTS.map(d => ({ label: d, value: d })),
     },
     {
@@ -188,7 +189,7 @@ export default function DataTableTest() {
       searchable: false,
       editable: true,
       align: 'right',
-      hideBelow: 'lg',
+      hideBelow: 'desktop',
       formatValue: (v) => `$${Number(v).toLocaleString()}`,
     },
     {
@@ -197,12 +198,13 @@ export default function DataTableTest() {
       type: 'date',
       sortable: true,
       searchable: false,
-      hideBelow: 'xl',
+      hideBelow: 'desktopMd',
       formatValue: (v) => new Date(v).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
     },
     {
       key: 'id',
       label: '',
+      hideable: false,
       sortable: false,
       filterable: false,
       searchable: false,

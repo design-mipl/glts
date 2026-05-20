@@ -1,7 +1,7 @@
 import { Box, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 import type { SxProps, Theme } from '@mui/material/styles'
-import { Breadcrumb, Divider } from '@/design-system/components'
+import { Breadcrumb, Divider } from '@/design-system/UIComponents'
 
 export interface PageHeaderProps {
   title: string

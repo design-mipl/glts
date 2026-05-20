@@ -22,7 +22,7 @@ import {
   FileUpload,
   Tooltip,
   Divider as DsDivider,
-} from '../../design-system/components/primitives'
+} from '../../design-system/UIComponents/Primitives'
 
 import {
   Badge,
@@ -34,7 +34,7 @@ import {
   UserCard,
   NotificationBell,
   ActivityFeed,
-} from '../../design-system/components/display'
+} from '../../design-system/UIComponents/Display'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

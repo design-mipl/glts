@@ -3,7 +3,7 @@ import {
   AppShell,
   ToastProvider,
   type NavConfig,
-} from '@/design-system/components'
+} from '@/design-system/UIComponents'
 import SettingsPanel from '@/pages/Settings'
 import PreviewPage from '@/pages/Preview'
 import {

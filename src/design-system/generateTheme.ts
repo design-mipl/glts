@@ -1,118 +1,189 @@
+import chroma from 'chroma-js';
 import { createTheme, alpha, type Theme } from '@mui/material/styles';
-import type { ThemeConfig } from './themeConfig';
-import { generateScale, generateNeutralScale, tokens } from './tokens';
+import {
+  FOUNDATION_BREAKPOINT_VALUES,
+} from './breakpoints';
+import { getNavigationColor, type ThemeConfig } from './themeConfig';
+import {
+  generateScale,
+  generateNeutralScale,
+  tokens,
+} from './tokens';
 
 // ─── Custom breakpoints ───────────────────────────────────────────────────────
 
+interface NavigationSurface {
+  background: string;
+  textPrimary: string;
+  textSecondary: string;
+  textMuted: string;
+  border: string;
+  hover: string;
+  activeBg: string;
+  activeText: string;
+}
+
 declare module '@mui/material/styles' {
-  interface BreakpointOverrides {
-    xs:   true; // 0px     — mobile portrait
-    sm:   true; // 600px   — mobile landscape
-    md:   true; // 900px   — tablet
-    lg:   true; // 1024px  — small laptop
-    xl:   true; // 1280px  — large laptop
-    xxl:  true; // 1440px  — desktop
-    xxxl: true; // 1600px  — wide desktop
-    uhd:  true; // 1920px  — ultra wide
+  interface Theme {
+    foundation: {
+      navigation: NavigationSurface;
+    };
   }
+
+  interface ThemeOptions {
+    foundation?: {
+      navigation?: Partial<NavigationSurface>;
+    };
+  }
+
+  interface BreakpointOverrides {
+    xs: true;
+    sm: true;
+    md: true;
+    lg: true;
+    xl: true;
+    desktop: true;
+    desktopMd: true;
+    desktopLg: true;
+    desktopXl: true;
+    desktopUhd: true;
+  }
+}
+
+
+
+function getContrastText(color: string): string {
+  const lightContrast = chroma.contrast(color, '#FFFFFF');
+  const darkContrast = chroma.contrast(color, '#111827');
+
+  return lightContrast >= darkContrast ? '#FFFFFF' : '#111827';
+}
+
+function createMuiColor(mainColor: string) {
+  const scale = generateScale(mainColor);
+
+  return {
+    light: scale[400],
+    main: scale[500],
+    dark: scale[700],
+    contrastText: getContrastText(scale[500]),
+  };
+}
+
+function createNavigationSurface(background: string, accent: string): NavigationSurface {
+  const textPrimary = getContrastText(background);
+  const prefersLightText = textPrimary === '#FFFFFF';
+  const accentScale = generateScale(accent);
+
+  return {
+    background,
+    textPrimary,
+    textSecondary: alpha(textPrimary, prefersLightText ? 0.78 : 0.72),
+    textMuted: alpha(textPrimary, prefersLightText ? 0.58 : 0.5),
+    border: alpha(textPrimary, prefersLightText ? 0.12 : 0.08),
+    hover: alpha(textPrimary, prefersLightText ? 0.08 : 0.05),
+    activeBg: alpha(accentScale[500], prefersLightText ? 0.22 : 0.14),
+    activeText: prefersLightText ? '#FFFFFF' : accentScale[700],
+  };
 }
 
 // ─── Theme factory ────────────────────────────────────────────────────────────
 
 export function generateTheme(config: ThemeConfig): Theme {
-  const primary = generateScale(config.brandColor);
-  const neutral = generateNeutralScale(config.brandColor);
-
   const isLight = config.mode === 'light';
+  const activePalette = isLight ? config.light : config.dark;
+  const primary = createMuiColor(activePalette.primary);
+  const secondary = createMuiColor(activePalette.secondary);
+  const success = createMuiColor(activePalette.success);
+  const warning = createMuiColor(activePalette.warning);
+  const error = createMuiColor(activePalette.danger);
+  const info = createMuiColor(activePalette.info);
+  const neutral = generateNeutralScale(activePalette.brand);
+  const navigation = createNavigationSurface(
+    getNavigationColor(config.mode, config.navigationColor),
+    activePalette.primary,
+  );
 
   const background = {
-    default: isLight ? '#F7F7F8'  : '#0F0F0F',
-    paper:   isLight ? '#FFFFFF'  : neutral[900],
+    default: isLight ? '#F7F7F8' : '#0F1115',
+    paper: isLight ? '#FFFFFF' : chroma(neutral[900]).brighten(0.2).hex(),
   };
 
   const text = {
-    primary:   isLight ? neutral[900] : neutral[50],
-    secondary: isLight ? neutral[600] : neutral[400],
-    disabled:  isLight ? neutral[400] : neutral[700],
+    primary: activePalette.textPrimary,
+    secondary: activePalette.textSecondary,
+    disabled: isLight ? neutral[400] : neutral[700],
   };
 
-  const divider = isLight ? alpha('#000000', 0.06) : alpha('#ffffff', 0.08);
+  const divider = isLight ? alpha(text.primary, 0.08) : alpha('#ffffff', 0.12);
 
   const fontFamilyString =
     config.fontFamily === 'Helvetica Neue'
       ? 'Helvetica Neue, Helvetica, Arial, system-ui, sans-serif'
       : `'${config.fontFamily}', system-ui, sans-serif`;
 
+  const shadowMicro = tokens.shadow.lg;
+
   return createTheme({
     breakpoints: {
-      values: {
-        xs:   0,
-        sm:   600,
-        md:   900,
-        lg:   1024,
-        xl:   1280,
-        xxl:  1440,
-        xxxl: 1600,
-        uhd:  1920,
-      },
+      values: { ...FOUNDATION_BREAKPOINT_VALUES },
     },
 
     palette: {
       mode: config.mode,
-      primary: {
-        light:       primary[400],
-        main:        primary[500],
-        dark:        primary[700],
-        contrastText: '#FFFFFF',
-      },
-      error:   { main: tokens.color.error[500] },
-      success: { main: tokens.color.success[500] },
-      warning: { main: tokens.color.warning[500] },
-      info:    { main: tokens.color.info[500] },
+      primary,
+      secondary,
+      error,
+      success,
+      warning,
+      info,
       text: {
-        primary:   text.primary,
+        primary: text.primary,
         secondary: text.secondary,
-        disabled:  text.disabled,
+        disabled: text.disabled,
       },
       background,
       divider,
     },
 
+    foundation: {
+      navigation,
+    },
+
     typography: {
       fontFamily: fontFamilyString,
-      fontSize: 14,
+      fontSize: 13,
       fontWeightRegular: tokens.fontWeight.normal,
-      fontWeightMedium:  tokens.fontWeight.medium,
-      fontWeightBold:    tokens.fontWeight.bold,
+      fontWeightMedium: tokens.fontWeight.medium,
+      fontWeightBold: tokens.fontWeight.bold,
       h1: { fontSize: tokens.fontSize['4xl'], fontWeight: 700, lineHeight: 1.25 },
       h2: { fontSize: tokens.fontSize['3xl'], fontWeight: 700, lineHeight: 1.25 },
-      h3: { fontSize: tokens.fontSize['2xl'], fontWeight: 600, lineHeight: 1.3  },
-      h4: { fontSize: tokens.fontSize.xl,     fontWeight: 600, lineHeight: 1.4  },
-      h5: { fontSize: tokens.fontSize.lg,     fontWeight: 600, lineHeight: 1.4  },
-      h6: { fontSize: tokens.fontSize.base,   fontWeight: 600, lineHeight: 1.5  },
-      body1:   { fontSize: tokens.fontSize.base, lineHeight: 1.5 },
-      body2:   { fontSize: tokens.fontSize.sm,   lineHeight: 1.5 },
-      caption: { fontSize: tokens.fontSize.xs,   lineHeight: 1.5 },
+      h3: { fontSize: tokens.fontSize['2xl'], fontWeight: 600, lineHeight: 1.3 },
+      h4: { fontSize: tokens.fontSize.xl, fontWeight: 600, lineHeight: 1.4 },
+      h5: { fontSize: tokens.fontSize.lg, fontWeight: 600, lineHeight: 1.4 },
+      h6: { fontSize: '14px', fontWeight: 600, lineHeight: 1.5 },
+      body1: { fontSize: '13px', lineHeight: 1.5 },
+      body2: { fontSize: '12px', lineHeight: 1.5 },
+      caption: { fontSize: '11px', lineHeight: 1.5 },
       overline: {
-        fontSize:      tokens.fontSize.xs,
-        fontWeight:    600,
+        fontSize: '11px',
+        fontWeight: 600,
         letterSpacing: '0.08em',
         textTransform: 'uppercase',
       },
     },
 
-    shape: { borderRadius: 8 },
+    shape: { borderRadius: 4 },
 
     spacing: 4,
 
-    // MUI requires exactly 25 shadow values (indices 0–24)
     shadows: [
       'none',
+      tokens.shadow.xs,
       tokens.shadow.sm,
       tokens.shadow.md,
       tokens.shadow.lg,
-      tokens.shadow.xl,
-      ...Array(20).fill(tokens.shadow.xl),
+      ...Array(20).fill(shadowMicro),
     ] as any,
 
     components: {
@@ -131,10 +202,25 @@ export function generateTheme(config: ThemeConfig): Theme {
             textTransform: 'none',
             fontWeight: 600,
             borderRadius: tokens.borderRadius.md,
+            fontSize: '12px',
+            padding: '5px 12px',
+            minHeight: 32,
           },
-          sizeSmall:  { fontSize: tokens.fontSize.sm,   padding: '6px 12px'   },
-          sizeMedium: { fontSize: tokens.fontSize.base, padding: '10px 20px'  },
-          sizeLarge:  { fontSize: tokens.fontSize.lg,   padding: '14px 28px'  },
+          sizeSmall: {
+            fontSize: '11px',
+            padding: '4px 8px',
+            minHeight: 28,
+          },
+          sizeMedium: {
+            fontSize: '12px',
+            padding: '5px 12px',
+            minHeight: 32,
+          },
+          sizeLarge: {
+            fontSize: '13px',
+            padding: '7px 14px',
+            minHeight: 36,
+          },
         },
       },
 
@@ -144,6 +230,19 @@ export function generateTheme(config: ThemeConfig): Theme {
           root: {
             '& .MuiOutlinedInput-root': {
               borderRadius: tokens.borderRadius.md,
+              minHeight: '32px !important',
+              height: '32px !important',
+              fontSize: '12px',
+            },
+            '& .MuiInputBase-root': {
+              minHeight: '32px !important',
+              height: '32px !important',
+            },
+            '& .MuiOutlinedInput-input': {
+              paddingTop: '6px',
+              paddingBottom: '6px',
+              fontSize: '12px',
+              height: 'auto',
             },
           },
         },
@@ -155,27 +254,84 @@ export function generateTheme(config: ThemeConfig): Theme {
             borderColor: isLight ? alpha('#000000', 0.18) : alpha('#ffffff', 0.18),
           },
           root: {
+            minHeight: '32px',
+            height: '32px',
+            fontSize: '12px',
             '&:hover:not(.Mui-focused):not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
               borderColor: isLight ? alpha('#000000', 0.32) : alpha('#ffffff', 0.32),
             },
+          },
+          input: {
+            paddingTop: '6px',
+            paddingBottom: '6px',
+            fontSize: '12px',
+            height: 'auto',
           },
         },
       },
 
       MuiCard: {
         styleOverrides: {
-          root: {
+          root: ({ theme }) => ({
             borderRadius: tokens.borderRadius.lg,
             backgroundImage: 'none',
-            border: `1px solid ${alpha(isLight ? '#000000' : '#ffffff', isLight ? 0.07 : 0.08)}`,
-            boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04)' : 'none',
+            border: `1px solid ${alpha(isLight ? '#000000' : '#ffffff', isLight ? 0.07 : 0.1)}`,
+            boxShadow: isLight ? tokens.shadow.sm : 'none',
+            [theme.breakpoints.up('desktop')]: {
+              boxShadow: isLight ? tokens.shadow.xs : 'none',
+            },
+          }),
+        },
+      },
+
+      MuiCardContent: {
+        styleOverrides: {
+          root: {
+            padding: '12px',
+            '&:last-child': { paddingBottom: '12px' },
           },
+        },
+      },
+
+      MuiCheckbox: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            padding: theme.spacing(0.75),
+            [theme.breakpoints.up('desktop')]: {
+              padding: theme.spacing(0.5),
+              transform: 'scale(1)',
+            },
+            transform: 'scale(1.08)',
+          }),
+        },
+      },
+
+      MuiRadio: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            padding: theme.spacing(0.75),
+            [theme.breakpoints.up('desktop')]: {
+              padding: theme.spacing(0.5),
+              transform: 'scale(1)',
+            },
+            transform: 'scale(1.08)',
+          }),
+        },
+      },
+
+      MuiSwitch: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            [theme.breakpoints.down('lg')]: {
+              transform: 'scale(1.06)',
+            },
+          }),
         },
       },
 
       MuiChip: {
         styleOverrides: {
-          root: { borderRadius: tokens.borderRadius.full },
+          root: { borderRadius: tokens.borderRadius.md },
         },
       },
 
@@ -188,7 +344,7 @@ export function generateTheme(config: ThemeConfig): Theme {
       MuiDialog: {
         styleOverrides: {
           paper: {
-            borderRadius: tokens.borderRadius.xl,
+            borderRadius: tokens.borderRadius.lg,
             backgroundImage: 'none',
           },
         },

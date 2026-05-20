@@ -1,36 +1,17 @@
-import { useState, useEffect } from 'react'
-import { Box, Typography, TextField, InputAdornment, Tooltip, Stack } from '@mui/material'
+import { Box, Tooltip, Stack } from '@mui/material'
 import { useFoundationTheme } from '../../../design-system/ThemeContext'
 import { COLOR_PRESETS } from '../../../design-system/themeConfig'
+import ColorPickerField from './ColorPickerField'
 
 export default function ColorPicker() {
   const { config, setBrandColor, muiTheme } = useFoundationTheme()
-  const [hexInput, setHexInput] = useState(config.brandColor)
-
-  // Sync local input when config changes externally (e.g. reset)
-  useEffect(() => {
-    setHexInput(config.brandColor)
-  }, [config.brandColor])
 
   const handlePresetClick = (value: string) => {
     setBrandColor(value)
-    setHexInput(value)
-  }
-
-  const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value
-    setHexInput(val)
-    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-      setBrandColor(val)
-    }
   }
 
   return (
     <Box>
-      <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-        Brand Color
-      </Typography>
-
       <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 2 }}>
         {COLOR_PRESETS.map((preset) => {
           const isSelected =
@@ -58,32 +39,12 @@ export default function ColorPicker() {
         })}
       </Stack>
 
-      <TextField
-        label="Custom color"
-        placeholder="#000000"
-        size="small"
-        fullWidth
-        value={hexInput}
-        onChange={handleHexChange}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <Box
-                  sx={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    bgcolor: config.brandColor,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    flexShrink: 0,
-                  }}
-                />
-              </InputAdornment>
-            ),
-          },
-        }}
+      <ColorPickerField
+        label="Brand Color"
+        value={config.brandColor}
+        onChange={setBrandColor}
+        previewColor={config.brandColor}
+        helpText="Choose the main accent color used across the theme."
       />
     </Box>
   )

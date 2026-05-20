@@ -8,7 +8,7 @@ import {
   TreeMap, 
   ComparisonBar, 
   TrendIndicator 
-} from '../design-system/components/infographics';
+} from '../design-system/UIComponents/Infographics'
 import { 
   Error as ErrorIcon, 
   CheckCircle as CheckCircleIcon,

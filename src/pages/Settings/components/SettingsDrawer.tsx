@@ -5,6 +5,9 @@ import { DEFAULT_THEME_CONFIG } from '../../../design-system/themeConfig'
 import ModeToggle from './ModeToggle'
 import ColorPicker from './ColorPicker'
 import FontSelector from './FontSelector'
+import NavigationColorSection from './NavigationColorSection'
+import AdvancedColorsSection from './AdvancedColorsSection'
+import TemplateSelector from './TemplateSelector'
 
 interface SettingsDrawerProps {
   open: boolean
@@ -22,7 +25,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
       slotProps={{
         paper: {
           sx: {
-            width: { xs: '100vw', md: 320 },
+            width: { xs: '100vw', md: 440 },
             display: 'flex',
             flexDirection: 'column',
           },
@@ -62,7 +65,13 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           <Divider />
           <ColorPicker />
           <Divider />
+          <NavigationColorSection />
+          <Divider />
+          <AdvancedColorsSection />
+          <Divider />
           <FontSelector />
+          <Divider />
+          <TemplateSelector />
         </Stack>
       </Box>
 
