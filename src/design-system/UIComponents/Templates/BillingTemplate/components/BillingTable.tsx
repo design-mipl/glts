@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import { Download, Eye, Pencil, Trash2 } from 'lucide-react'
 import {
@@ -29,6 +29,11 @@ export const BILLING_TABLE_COLUMNS = Object.entries(COLUMN_LABELS).map(([key, la
   label,
   hideable: true,
 }))
+
+const BULK_ACTIONS: BulkAction[] = [
+  { label: 'Export selected', onClick: () => {} },
+  { label: 'Delete selected', onClick: () => {}, variant: 'destructive' },
+]
 
 function getCellDisplayValue(
   invoice: Invoice,
@@ -72,111 +77,113 @@ export default function BillingTable({
   const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null)
   const [activeFilterColumn, setActiveFilterColumn] = useState<string | null>(null)
 
-  const rowActions = (row: Invoice): RowAction[] => [
-    {
-      label: 'View',
-      icon: <Eye size={16} />,
-      onClick: () => onView(row),
-    },
-    {
-      label: 'Edit',
-      icon: <Pencil size={16} />,
-      onClick: () => onEdit(row),
-    },
-    {
-      label: 'Download',
-      icon: <Download size={16} />,
-      onClick: () => onView(row),
-    },
-    {
-      label: 'Delete',
-      icon: <Trash2 size={16} />,
-      variant: 'destructive',
-      divider: true,
-      onClick: () => onDelete?.(row),
-    },
-  ]
+  const getRowActions = useCallback(
+    (row: Invoice): RowAction[] => [
+      {
+        label: 'View',
+        icon: <Eye size={16} />,
+        onClick: () => onView(row),
+      },
+      {
+        label: 'Edit',
+        icon: <Pencil size={16} />,
+        onClick: () => onEdit(row),
+      },
+      {
+        label: 'Download',
+        icon: <Download size={16} />,
+        onClick: () => onView(row),
+      },
+      {
+        label: 'Delete',
+        icon: <Trash2 size={16} />,
+        variant: 'destructive',
+        divider: true,
+        onClick: () => onDelete?.(row),
+      },
+    ],
+    [onView, onEdit, onDelete],
+  )
 
-  const columns: Column<Invoice>[] = [
-    {
-      key: 'invoiceNo',
-      label: 'Invoice no.',
-      sortable: true,
-      searchable: false,
-      width: 140,
-      render: (value: string, row: Invoice) => (
-        <Typography
-          component="span"
-          variant="body2"
-          sx={{
-            color: 'primary.main',
-            fontWeight: 500,
-            cursor: 'pointer',
-            '&:hover': { textDecoration: 'underline' },
-          }}
-          onClick={(e) => {
-            e.stopPropagation()
-            onView(row)
-          }}
-        >
-          {value}
-        </Typography>
-      ),
-    },
-    { key: 'client', label: 'Client', sortable: true, searchable: false, width: 160 },
-    { key: 'project', label: 'Project', sortable: true, searchable: false, width: 160 },
-    { key: 'invoiceDate', label: 'Invoice date', sortable: true, searchable: false, width: 110 },
-    { key: 'dueDate', label: 'Due date', sortable: true, searchable: false, width: 110 },
-    {
-      key: 'amount',
-      label: 'Amount',
-      sortable: true,
-      align: 'right',
-      searchable: false,
-      width: 110,
-      render: (value: number) => formatAmount(value),
-    },
-    {
-      key: 'tds',
-      label: 'TDS',
-      sortable: true,
-      align: 'right',
-      searchable: false,
-      width: 90,
-      render: (value: number) => formatAmount(value),
-    },
-    {
-      key: 'netReceivable',
-      label: 'Net receivable',
-      sortable: true,
-      align: 'right',
-      searchable: false,
-      width: 120,
-      render: (value: number) => formatAmount(value),
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      searchable: false,
-      width: 120,
-      render: (value: InvoiceStatus) => (
-        <Tag label={value} variant={INVOICE_STATUS_VARIANT[value]} />
-      ),
-    },
-    {
-      key: 'actions',
-      label: '',
-      width: 48,
-      hideable: false,
-      sortable: false,
-      render: (_: unknown, row: Invoice) => <RowActions actions={rowActions(row)} row={row} />,
-    },
-  ]
-
-  const bulkActions: BulkAction[] = [
-    { label: 'Export selected', onClick: () => {} },
-    { label: 'Delete selected', onClick: () => {}, variant: 'destructive' },
-  ]
+  const columns = useMemo((): Column<Invoice>[] => {
+    return [
+      {
+        key: 'invoiceNo',
+        label: 'Invoice no.',
+        sortable: true,
+        searchable: false,
+        width: 140,
+        render: (value: string, row: Invoice) => (
+          <Typography
+            component="span"
+            variant="body2"
+            sx={{
+              color: 'primary.main',
+              fontWeight: 500,
+              cursor: 'pointer',
+              '&:hover': { textDecoration: 'underline' },
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
+              onView(row)
+            }}
+          >
+            {value}
+          </Typography>
+        ),
+      },
+      { key: 'client', label: 'Client', sortable: true, searchable: false, width: 160 },
+      { key: 'project', label: 'Project', sortable: true, searchable: false, width: 160 },
+      { key: 'invoiceDate', label: 'Invoice date', sortable: true, searchable: false, width: 110 },
+      { key: 'dueDate', label: 'Due date', sortable: true, searchable: false, width: 110 },
+      {
+        key: 'amount',
+        label: 'Amount',
+        sortable: true,
+        align: 'right',
+        searchable: false,
+        width: 110,
+        render: (value: number) => formatAmount(value),
+      },
+      {
+        key: 'tds',
+        label: 'TDS',
+        sortable: true,
+        align: 'right',
+        searchable: false,
+        width: 90,
+        render: (value: number) => formatAmount(value),
+      },
+      {
+        key: 'netReceivable',
+        label: 'Net receivable',
+        sortable: true,
+        align: 'right',
+        searchable: false,
+        width: 120,
+        render: (value: number) => formatAmount(value),
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        searchable: false,
+        width: 120,
+        render: (value: InvoiceStatus) => (
+          <Tag label={value} variant={INVOICE_STATUS_VARIANT[value]} />
+        ),
+      },
+      {
+        key: 'actions',
+        label: '',
+        width: 48,
+        hideable: false,
+        sortable: false,
+        render: (_: unknown, row: Invoice) => (
+          <RowActions actions={getRowActions(row)} row={row} />
+        ),
+      },
+    ]
+  }, [formatAmount, onView, getRowActions])
 
   const uniqueValues = useMemo(() => {
     if (!activeFilterColumn) return []
@@ -211,7 +218,7 @@ export default function BillingTable({
         onStateChange={onStateChange}
         onRowClick={onView}
         loading={loading}
-        bulkActions={bulkActions}
+        bulkActions={BULK_ACTIONS}
         showColumnPicker={false}
         hideToolbar
         hidePagination

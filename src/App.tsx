@@ -1,23 +1,30 @@
+import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import {
   AppShell,
   ToastProvider,
   type NavConfig,
 } from '@/design-system/UIComponents'
-import SettingsPanel from '@/pages/Settings'
-import ComponentLibrary from '@/pages/ComponentLibrary'
+import RouteFallback from '@/components/RouteFallback'
 import BillingsLayout from '@/pages/Billings'
-import ListingPage from '@/pages/Billings/components/ListingPage'
-import DetailPage from '@/pages/Billings/components/DetailPage'
-import FormPage from '@/pages/Billings/components/FormPage'
-import StepperFormPage from '@/pages/Billings/components/StepperFormPage'
-import PaymentsPage from '@/pages/Billings/components/PaymentsPage'
 import {
   LayoutDashboard,
   BarChart2,
   Folder,
   FileText,
 } from 'lucide-react'
+
+const ComponentLibrary = lazy(() => import('@/pages/ComponentLibrary'))
+const SettingsPanel = lazy(() => import('@/pages/Settings'))
+const ListingPage = lazy(() => import('@/pages/Billings/components/ListingPage'))
+const DetailPage = lazy(() => import('@/pages/Billings/components/DetailPage'))
+const FormPage = lazy(() => import('@/pages/Billings/components/FormPage'))
+const StepperFormPage = lazy(() => import('@/pages/Billings/components/StepperFormPage'))
+const PaymentsPage = lazy(() => import('@/pages/Billings/components/PaymentsPage'))
+
+function LazyPage({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<RouteFallback />}>{children}</Suspense>
+}
 
 const navConfig: NavConfig[] = [
   {
@@ -87,18 +94,76 @@ export default function App() {
           onSettingsClick={() => console.log('settings')}
         >
           <Routes>
-            <Route path="/" element={<ComponentLibrary />} />
+            <Route
+              path="/"
+              element={
+                <LazyPage>
+                  <ComponentLibrary />
+                </LazyPage>
+              }
+            />
             <Route path="/billings" element={<BillingsLayout />}>
-              <Route index element={<ListingPage />} />
-              <Route path="payments" element={<PaymentsPage />} />
-              <Route path="create" element={<FormPage />} />
-              <Route path="stepper" element={<StepperFormPage />} />
-              <Route path=":id/edit" element={<FormPage />} />
-              <Route path=":id" element={<DetailPage />} />
+              <Route
+                index
+                element={
+                  <LazyPage>
+                    <ListingPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path="payments"
+                element={
+                  <LazyPage>
+                    <PaymentsPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path="create"
+                element={
+                  <LazyPage>
+                    <FormPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path="stepper"
+                element={
+                  <LazyPage>
+                    <StepperFormPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path=":id/edit"
+                element={
+                  <LazyPage>
+                    <FormPage />
+                  </LazyPage>
+                }
+              />
+              <Route
+                path=":id"
+                element={
+                  <LazyPage>
+                    <DetailPage />
+                  </LazyPage>
+                }
+              />
             </Route>
-            <Route path="*" element={<ComponentLibrary />} />
+            <Route
+              path="*"
+              element={
+                <LazyPage>
+                  <ComponentLibrary />
+                </LazyPage>
+              }
+            />
           </Routes>
-          <SettingsPanel />
+          <Suspense fallback={null}>
+            <SettingsPanel />
+          </Suspense>
         </AppShell>
       </ToastProvider>
     </BrowserRouter>

@@ -36,23 +36,23 @@ export default function SearchInput({
 }: SearchInputProps) {
   const [internalValue, setInternalValue] = useState(value ?? '')
   const timeoutRef = useRef<number | null>(null)
+  const onChangeRef = useRef(onChange)
+
+  useEffect(() => {
+    onChangeRef.current = onChange
+  }, [onChange])
 
   useEffect(() => {
     setInternalValue(value ?? '')
   }, [value])
 
   useEffect(() => {
-    if (!onChange) {
-      return undefined
-    }
-
-    if (debounce <= 0) {
-      onChange(internalValue)
+    if (!onChange || debounce <= 0) {
       return undefined
     }
 
     timeoutRef.current = window.setTimeout(() => {
-      onChange(internalValue)
+      onChangeRef.current?.(internalValue)
     }, debounce)
 
     return () => {
@@ -60,14 +60,21 @@ export default function SearchInput({
         window.clearTimeout(timeoutRef.current)
       }
     }
-  }, [debounce, internalValue, onChange])
+  }, [debounce, internalValue])
+
+  const emitChange = (nextValue: string) => {
+    setInternalValue(nextValue)
+    if (debounce <= 0) {
+      onChange?.(nextValue)
+    }
+  }
 
   const inputHeight = size === 'sm' ? 36 : 44
 
   return (
     <TextField
       value={internalValue}
-      onChange={(event) => setInternalValue(event.target.value)}
+      onChange={(event) => emitChange(event.target.value)}
       onKeyDown={(event) => {
         if (event.key === 'Enter') {
           onSearch?.(internalValue)
@@ -92,11 +99,8 @@ export default function SearchInput({
                   size="small"
                   aria-label="Clear search"
                   onClick={() => {
-                    setInternalValue('')
+                    emitChange('')
                     onClear?.()
-                    if (debounce <= 0) {
-                      onChange?.('')
-                    }
                   }}
                 >
                   <X size={16} />

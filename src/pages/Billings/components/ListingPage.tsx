@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Box, Typography, Card } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
@@ -108,17 +108,48 @@ export default function ListingPage() {
     return filteredInvoices.slice(start, start + tableState.pageSize)
   }, [filteredInvoices, tableState.page, tableState.pageSize])
 
-  const handleView = (invoice: Invoice) => {
-    navigate(`/billings/${invoice.id}`)
-  }
+  const handleView = useCallback(
+    (invoice: Invoice) => {
+      navigate(`/billings/${invoice.id}`)
+    },
+    [navigate],
+  )
 
-  const handleExport = () => {
+  const handleEdit = useCallback(
+    (invoice: Invoice) => {
+      navigate(`/billings/${invoice.id}/edit`)
+    },
+    [navigate],
+  )
+
+  const handleDelete = useCallback(() => {
+    showToast({
+      title: 'Deleted',
+      description: 'Invoice removed from list (demo).',
+      variant: 'info',
+    })
+  }, [showToast])
+
+  const handleExport = useCallback(() => {
     showToast({
       title: 'Export started',
       description: 'Your invoice export will download shortly.',
       variant: 'success',
     })
-  }
+  }, [showToast])
+
+  const handleSearch = useCallback((q: string) => {
+    setTableState((s) => ({ ...s, searchQuery: q, page: 0 }))
+  }, [])
+
+  const handleStatusTabChange = useCallback((tab: string) => {
+    setStatusTab(tab)
+    setTableState((s) => ({ ...s, page: 0 }))
+  }, [])
+
+  const handleHiddenColumnsChange = useCallback((keys: string[]) => {
+    setTableState((s) => ({ ...s, hiddenColumnKeys: keys }))
+  }, [])
 
   return (
     <Box>
@@ -170,10 +201,7 @@ export default function ListingPage() {
         >
           <BillingStatusTabs
             value={statusTab}
-            onChange={(tab) => {
-              setStatusTab(tab)
-              setTableState((s) => ({ ...s, page: 0 }))
-            }}
+            onChange={handleStatusTabChange}
             embedded
           />
         </Box>
@@ -187,15 +215,13 @@ export default function ListingPage() {
         >
           <BillingToolbar
             searchValue={tableState.searchQuery}
-            onSearch={(q) => setTableState((s) => ({ ...s, searchQuery: q, page: 0 }))}
+            onSearch={handleSearch}
             onExport={handleExport}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
             columns={BILLING_TABLE_COLUMNS}
             hiddenColumnKeys={tableState.hiddenColumnKeys}
-            onHiddenColumnKeysChange={(keys) =>
-              setTableState((s) => ({ ...s, hiddenColumnKeys: keys }))
-            }
+            onHiddenColumnKeysChange={handleHiddenColumnsChange}
           />
         </Box>
 
@@ -208,14 +234,8 @@ export default function ListingPage() {
               onStateChange={setTableState}
               formatAmount={formatINR}
               onView={handleView}
-              onEdit={(inv) => navigate(`/billings/${inv.id}/edit`)}
-              onDelete={() =>
-                showToast({
-                  title: 'Deleted',
-                  description: 'Invoice removed from list (demo).',
-                  variant: 'info',
-                })
-              }
+              onEdit={handleEdit}
+              onDelete={handleDelete}
               columnFilters={columnFilters}
               onColumnFiltersChange={setColumnFilters}
             />

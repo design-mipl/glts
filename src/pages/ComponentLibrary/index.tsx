@@ -1,39 +1,61 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Box, Typography, Tab, Tabs as MuiTabs } from '@mui/material'
-import {
-  PrimitivesShowcase,
-  DisplayShowcase,
-  CardsShowcase,
-  ChartsShowcase,
-  DataTableShowcase,
-  FeedbackShowcase,
-  FormsShowcase,
-  InfographicsShowcase,
-  NavigationShowcase,
-  ResponsiveShowcase,
-  ColorTokensShowcase,
-} from './components'
+import RouteFallback from '@/components/RouteFallback'
 
-const tabs = [
-  { label: 'Primitives',   component: <PrimitivesShowcase /> },
-  { label: 'Display',      component: <DisplayShowcase /> },
-  { label: 'Cards',        component: <CardsShowcase /> },
-  { label: 'Charts',       component: <ChartsShowcase /> },
-  { label: 'DataTable',    component: <DataTableShowcase /> },
-  { label: 'Feedback',     component: <FeedbackShowcase /> },
-  { label: 'Forms',        component: <FormsShowcase /> },
-  { label: 'Infographics', component: <InfographicsShowcase /> },
-  { label: 'Navigation',   component: <NavigationShowcase /> },
-  { label: 'Responsive',   component: <ResponsiveShowcase /> },
-  { label: 'Colors',       component: <ColorTokensShowcase /> },
-]
+const LazyPrimitives = lazy(() =>
+  import('./components/PrimitivesShowcase').then((m) => ({ default: m.PrimitivesShowcase })),
+)
+const LazyDisplay = lazy(() =>
+  import('./components/DisplayShowcase').then((m) => ({ default: m.DisplayShowcase })),
+)
+const LazyCards = lazy(() =>
+  import('./components/CardsShowcase').then((m) => ({ default: m.CardsShowcase })),
+)
+const LazyCharts = lazy(() =>
+  import('./components/ChartsShowcase').then((m) => ({ default: m.ChartsShowcase })),
+)
+const LazyDataTable = lazy(() =>
+  import('./components/DataTableShowcase').then((m) => ({ default: m.DataTableShowcase })),
+)
+const LazyFeedback = lazy(() =>
+  import('./components/FeedbackShowcase').then((m) => ({ default: m.FeedbackShowcase })),
+)
+const LazyForms = lazy(() =>
+  import('./components/FormsShowcase').then((m) => ({ default: m.FormsShowcase })),
+)
+const LazyInfographics = lazy(() =>
+  import('./components/InfographicsShowcase').then((m) => ({ default: m.InfographicsShowcase })),
+)
+const LazyNavigation = lazy(() =>
+  import('./components/NavigationShowcase').then((m) => ({ default: m.NavigationShowcase })),
+)
+const LazyResponsive = lazy(() =>
+  import('./components/ResponsiveShowcase').then((m) => ({ default: m.ResponsiveShowcase })),
+)
+const LazyColors = lazy(() =>
+  import('./components/ColorTokensShowcase').then((m) => ({ default: m.ColorTokensShowcase })),
+)
+
+const tabPanels = [
+  { label: 'Primitives', Component: LazyPrimitives },
+  { label: 'Display', Component: LazyDisplay },
+  { label: 'Cards', Component: LazyCards },
+  { label: 'Charts', Component: LazyCharts },
+  { label: 'DataTable', Component: LazyDataTable },
+  { label: 'Feedback', Component: LazyFeedback },
+  { label: 'Forms', Component: LazyForms },
+  { label: 'Infographics', Component: LazyInfographics },
+  { label: 'Navigation', Component: LazyNavigation },
+  { label: 'Responsive', Component: LazyResponsive },
+  { label: 'Colors', Component: LazyColors },
+] as const
 
 export default function ComponentLibrary() {
   const [activeTab, setActiveTab] = useState(0)
+  const { Component } = tabPanels[activeTab]
 
   return (
     <Box>
-      {/* Page header */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h1">Component Library</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -41,7 +63,6 @@ export default function ComponentLibrary() {
         </Typography>
       </Box>
 
-      {/* Sticky tab bar */}
       <Box
         sx={{
           position: 'sticky',
@@ -60,14 +81,19 @@ export default function ComponentLibrary() {
           scrollButtons="auto"
           sx={{ minHeight: 44 }}
         >
-          {tabs.map((tab, i) => (
-            <Tab key={i} label={tab.label} sx={{ minHeight: 44, py: 0, fontSize: 13, fontWeight: 500 }} />
+          {tabPanels.map((tab) => (
+            <Tab
+              key={tab.label}
+              label={tab.label}
+              sx={{ minHeight: 44, py: 0, fontSize: 13, fontWeight: 500 }}
+            />
           ))}
         </MuiTabs>
       </Box>
 
-      {/* Active showcase */}
-      {tabs[activeTab].component}
+      <Suspense fallback={<RouteFallback label="Loading showcase…" />}>
+        <Component />
+      </Suspense>
     </Box>
   )
 }
