@@ -1,8 +1,8 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Box } from '@mui/material'
-import { DataTable } from '@/design-system/components'
-import type { Column, TableState } from '@/design-system/components'
-import { Tag } from '@/design-system/components'
+import { DataTable } from '@/design-system/UIComponents'
+import type { Column, TableState } from '@/design-system/UIComponents'
+import { Tag } from '@/design-system/UIComponents'
 
 interface Row {
   id: string
@@ -44,6 +44,7 @@ const columns: Column<Row>[] = [
 ]
 
 const initialState: TableState = {
+  hiddenColumnKeys: [],
   page: 0,
   pageSize: 5,
   sortKey: null,
@@ -79,3 +80,4 @@ export function DataTableShowcase() {
     </Box>
   )
 }
+

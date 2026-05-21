@@ -1,5 +1,5 @@
 import { Box, Drawer, Typography, IconButton, Divider, Button, Stack } from '@mui/material'
-import CloseIcon from '@mui/icons-material/Close'
+import { X } from 'lucide-react'
 import { useFoundationTheme } from '../../../design-system/ThemeContext'
 import { DEFAULT_THEME_CONFIG } from '../../../design-system/themeConfig'
 import ModeToggle from './ModeToggle'
@@ -52,7 +52,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           </Typography>
         </Box>
         <IconButton onClick={onClose} size="small" sx={{ mt: 0.5 }}>
-          <CloseIcon fontSize="small" />
+          <X size={18} />
         </IconButton>
       </Box>
 

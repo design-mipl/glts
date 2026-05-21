@@ -1,5 +1,5 @@
 import { Box, Typography, Button, IconButton, Tooltip, useMediaQuery, useTheme } from '@mui/material'
-import CloseIcon from '@mui/icons-material/Close'
+import { X } from 'lucide-react'
 import type { BulkAction } from '../types'
 
 export interface BulkActionsProps {
@@ -57,7 +57,7 @@ export default function BulkActions({ selectedRows, actions, onAction, onDeselec
       </Box>
       <Tooltip title="Deselect all">
         <IconButton size="small" onClick={onDeselectAll} sx={{ color: 'primary.contrastText' }}>
-          <CloseIcon fontSize="small" />
+          <X size={16} />
         </IconButton>
       </Tooltip>
     </Box>

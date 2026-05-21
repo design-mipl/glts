@@ -1,7 +1,7 @@
 import MuiIconButton from '@mui/material/IconButton'
 import MuiBadge from '@mui/material/Badge'
 import { keyframes } from '@mui/system'
-import NotificationsIcon from '@mui/icons-material/Notifications'
+import { Bell } from 'lucide-react'
 import type { SxProps, Theme } from '@mui/material/styles'
 
 export interface NotificationBellProps {
@@ -45,7 +45,7 @@ export default function NotificationBell({
             : undefined
         }
       >
-        <NotificationsIcon />
+        <Bell size={20} strokeWidth={1.75} />
       </MuiBadge>
     </MuiIconButton>
   )

@@ -1,15 +1,14 @@
 import { Box, Typography, Stack } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import LightModeIcon from '@mui/icons-material/LightMode'
-import DarkModeIcon from '@mui/icons-material/DarkMode'
+import { Sun, Moon } from 'lucide-react'
 import { useFoundationTheme } from '../../../design-system/ThemeContext'
 
 export default function ModeToggle() {
   const { isDark, setMode } = useFoundationTheme()
 
   const options = [
-    { value: 'light' as const, label: 'Light', Icon: LightModeIcon, active: !isDark },
-    { value: 'dark'  as const, label: 'Dark',  Icon: DarkModeIcon,  active:  isDark },
+    { value: 'light' as const, label: 'Light', Icon: Sun,  active: !isDark },
+    { value: 'dark'  as const, label: 'Dark',  Icon: Moon, active:  isDark },
   ]
 
   return (
@@ -42,7 +41,7 @@ export default function ModeToggle() {
               '&:hover': { borderColor: 'primary.main' },
             }}
           >
-            <Icon sx={{ color: active ? 'primary.main' : 'text.secondary', fontSize: 22 }} />
+            <Icon size={22} style={{ color: 'inherit' }} />
             <Typography
               variant="body2"
               fontWeight={600}

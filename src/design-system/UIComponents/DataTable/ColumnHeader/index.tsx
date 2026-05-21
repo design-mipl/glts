@@ -1,10 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { Box, Typography, IconButton, InputBase, Tooltip, Badge } from '@mui/material'
-import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
-import FilterListIcon from '@mui/icons-material/FilterList'
-import ClearIcon from '@mui/icons-material/Clear'
+import { ArrowUpDown, ArrowUp, ArrowDown, Filter, X } from 'lucide-react'
+import { BORDER_RADIUS, BORDER_WIDTH } from '../../../tokens'
 import type { Column, SortDirection } from '../types'
 
 export interface ColumnHeaderProps {
@@ -45,10 +42,10 @@ export default function ColumnHeader({
   }
 
   const SortIcon = isSorted && sortDirection === 'asc'
-    ? ArrowUpwardIcon
+    ? ArrowUp
     : isSorted && sortDirection === 'desc'
-      ? ArrowDownwardIcon
-      : UnfoldMoreIcon
+      ? ArrowDown
+      : ArrowUpDown
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: column.minWidth }}>
@@ -73,13 +70,13 @@ export default function ColumnHeader({
                 '&:hover': { color: 'text.secondary' },
               }}
             >
-              <SortIcon sx={{ fontSize: 16 }} />
+              <SortIcon size={16} />
             </IconButton>
           </Tooltip>
         )}
         {column.filterable !== false && filterCount > 0 && (
           <Badge badgeContent={filterCount} color="primary" sx={{ '& .MuiBadge-badge': { fontSize: 10, minWidth: 16, height: 16 } }}>
-            <FilterListIcon sx={{ fontSize: 14, color: 'primary.main' }} />
+            <Filter size={14} style={{ color: 'inherit' }} />
           </Badge>
         )}
       </Box>
@@ -91,11 +88,12 @@ export default function ColumnHeader({
             display: 'flex',
             alignItems: 'center',
             height: 28,
-            border: '1px solid',
+            border: `${BORDER_WIDTH.thin} solid`,
             borderColor: 'divider',
-            borderRadius: 0.75,
+            borderRadius: BORDER_RADIUS.md,
             px: 0.75,
             bgcolor: 'background.paper',
+            transition: 'all 0.2s ease',
             '&:focus-within': { borderColor: 'primary.main' },
           }}
         >
@@ -108,7 +106,7 @@ export default function ColumnHeader({
           />
           {localSearch && (
             <IconButton size="small" sx={{ p: 0, ml: 0.25 }} onClick={() => handleSearchChange('')}>
-              <ClearIcon sx={{ fontSize: 13 }} />
+              <X size={13} />
             </IconButton>
           )}
         </Box>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Divider } from '@mui/material'
-import MoreVertIcon from '@mui/icons-material/MoreVert'
+import { MoreVertical } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 export interface RowAction {
@@ -32,7 +32,7 @@ export default function RowActions({ actions, row, iconButton = true }: RowActio
   return (
     <>
       <IconButton size="small" onClick={handleOpen} sx={{ color: 'text.secondary' }}>
-        <MoreVertIcon fontSize="small" />
+        <MoreVertical size={16} />
       </IconButton>
       <Menu
         anchorEl={anchor}

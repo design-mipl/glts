@@ -1,6 +1,5 @@
 import { Box, Typography, Grid, Divider, Skeleton } from '@mui/material'
-import TrendingUpIcon from '@mui/icons-material/TrendingUp'
-import TrendingDownIcon from '@mui/icons-material/TrendingDown'
+import { TrendingUp, TrendingDown } from 'lucide-react'
 import type { SxProps } from '@mui/material'
 import type { ReactNode } from 'react'
 import BaseCard from '../BaseCard'
@@ -27,7 +26,7 @@ function MetricCell({ metric }: { metric: MetricItem }) {
   const isPositive = (metric.delta ?? 0) > 0
   const isNegative = (metric.delta ?? 0) < 0
   const deltaColor = isPositive ? 'success.main' : isNegative ? 'error.main' : 'text.secondary'
-  const DeltaIcon = isPositive ? TrendingUpIcon : TrendingDownIcon
+  const DeltaIcon = isPositive ? TrendingUp : TrendingDown
 
   return (
     <Box>
@@ -48,7 +47,7 @@ function MetricCell({ metric }: { metric: MetricItem }) {
       {metric.delta !== undefined && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mt: 0.25 }}>
           {metric.delta !== 0 && (
-            <DeltaIcon sx={{ fontSize: 13, color: deltaColor }} />
+            <DeltaIcon size={13} />
           )}
           <Typography variant="caption" fontWeight={600} color={deltaColor}>
             {metric.delta > 0 ? '+' : ''}{metric.delta.toFixed(1)}%

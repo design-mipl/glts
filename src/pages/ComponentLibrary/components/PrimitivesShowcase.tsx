@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Box, Typography, Stack, Grid } from '@mui/material'
 import {
   Button, IconButton, Input, Textarea, Select, MultiSelect,
@@ -32,7 +32,7 @@ export function PrimitivesShowcase() {
       <Grid container spacing={4}>
         {/* Button */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Button</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Button</Typography>
           <Stack direction="row" gap={1.5} flexWrap="wrap" alignItems="center">
             <Button variant="contained">Primary</Button>
             <Button variant="outlined">Secondary</Button>
@@ -50,7 +50,7 @@ export function PrimitivesShowcase() {
 
         {/* IconButton */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>IconButton</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>IconButton</Typography>
           <Stack direction="row" gap={1.5} flexWrap="wrap" alignItems="center">
             <IconButton icon={<Search size={16} />} />
             <IconButton icon={<Edit size={16} />} variant="outlined" />
@@ -64,7 +64,7 @@ export function PrimitivesShowcase() {
 
         {/* Input & Textarea */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Input</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Input</Typography>
           <Stack gap={2}>
             <Input label="Text Input" placeholder="Enter text..." />
             <Input label="With helper" helperText="This is a hint" placeholder="Hint below" />
@@ -74,7 +74,7 @@ export function PrimitivesShowcase() {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Textarea</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Textarea</Typography>
           <Stack gap={2}>
             <Textarea label="Description" placeholder="Enter description..." rows={3} />
             <Textarea label="Disabled" disabled placeholder="Not editable" rows={3} />
@@ -85,7 +85,7 @@ export function PrimitivesShowcase() {
 
         {/* Select & MultiSelect */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Select</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Select</Typography>
           <Stack gap={2}>
             <Select label="Single Select" options={selectOptions} value={selectVal} onChange={setSelectVal} placeholder="Choose one..." />
             <Select label="Disabled" options={selectOptions} value="" onChange={() => {}} disabled />
@@ -93,7 +93,7 @@ export function PrimitivesShowcase() {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>MultiSelect</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>MultiSelect</Typography>
           <MultiSelect label="Multi Select" options={selectOptions} value={multiVal} onChange={setMultiVal} placeholder="Choose multiple..." />
         </Grid>
 
@@ -101,7 +101,7 @@ export function PrimitivesShowcase() {
 
         {/* Checkbox, RadioGroup, Toggle */}
         <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Checkbox</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Checkbox</Typography>
           <Stack gap={1}>
             <Checkbox label="Unchecked" checked={false} onChange={() => {}} />
             <Checkbox label="Checked" checked={checked} onChange={setChecked} />
@@ -110,12 +110,12 @@ export function PrimitivesShowcase() {
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>RadioGroup</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>RadioGroup</Typography>
           <RadioGroup options={radioOptions} value={radio} onChange={setRadio} />
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Toggle</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Toggle</Typography>
           <Stack gap={2}>
             <Toggle label="Off state" checked={false} onChange={() => {}} />
             <Toggle label="On state" checked={toggled} onChange={setToggled} />
@@ -127,12 +127,12 @@ export function PrimitivesShowcase() {
 
         {/* DatePicker & DateRangePicker */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>DatePicker</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>DatePicker</Typography>
           <DatePicker label="Pick a date" value={date} onChange={setDate} />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>DateRangePicker</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>DateRangePicker</Typography>
           <DateRangePicker label="Date range" value={[null, null]} onChange={() => {}} />
         </Grid>
 
@@ -140,12 +140,12 @@ export function PrimitivesShowcase() {
 
         {/* FileUpload & Tooltip */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>FileUpload</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>FileUpload</Typography>
           <FileUpload onUpload={() => {}} />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Tooltip</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Tooltip</Typography>
           <Stack direction="row" gap={2}>
             <Tooltip content="Top tooltip" placement="top">
               <Button variant="outlined" size="sm">Top</Button>
@@ -163,7 +163,7 @@ export function PrimitivesShowcase() {
 
         {/* Divider */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Divider</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Divider</Typography>
           <Stack gap={2}>
             <Divider />
             <Divider label="With Label" />
@@ -174,3 +174,4 @@ export function PrimitivesShowcase() {
     </Box>
   )
 }
+

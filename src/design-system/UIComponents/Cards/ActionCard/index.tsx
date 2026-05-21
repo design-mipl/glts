@@ -1,7 +1,7 @@
 import { Box, Typography, Skeleton, Chip } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import { ChevronRight } from 'lucide-react'
 import type { SxProps } from '@mui/material'
 import type { ReactNode } from 'react'
 import BaseCard from '../BaseCard'
@@ -106,7 +106,7 @@ export default function ActionCard({
 
         {/* Arrow indicator */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
-          <ChevronRightIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+          <ChevronRight size={20} style={{ opacity: 0.5 }} />
         </Box>
       </Box>
     </BaseCard>

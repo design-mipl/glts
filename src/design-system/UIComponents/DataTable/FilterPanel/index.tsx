@@ -3,9 +3,7 @@ import {
   TextField, Drawer, FormControl,
   useTheme, useMediaQuery, Popover,
 } from '@mui/material'
-import CloseIcon from '@mui/icons-material/Close'
-import AddIcon from '@mui/icons-material/Add'
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import { X, Plus, Trash2 } from 'lucide-react'
 import type { Column, FilterRule, FilterOperator, ColumnType } from '../types'
 
 export interface FilterPanelProps {
@@ -108,7 +106,7 @@ function PanelContent({ columns, filters, onFiltersChange, onClose }: Omit<Filte
         {filters.length > 0 && (
           <Button size="small" onClick={() => onFiltersChange([])} sx={{ mr: 1 }}>Clear all</Button>
         )}
-        <IconButton size="small" onClick={onClose}><CloseIcon fontSize="small" /></IconButton>
+        <IconButton size="small" onClick={onClose}><X size={16} /></IconButton>
       </Box>
 
       {/* Rules */}
@@ -140,7 +138,7 @@ function PanelContent({ columns, filters, onFiltersChange, onClose }: Omit<Filte
                   </Select>
                 </FormControl>
                 <IconButton size="small" onClick={() => removeRule(rule.id)} sx={{ mt: 0.25 }}>
-                  <DeleteOutlineIcon fontSize="small" />
+                  <Trash2 size={16} />
                 </IconButton>
               </Box>
               {/* Operator selector */}
@@ -159,7 +157,7 @@ function PanelContent({ columns, filters, onFiltersChange, onClose }: Omit<Filte
             </Box>
           )
         })}
-        <Button startIcon={<AddIcon />} onClick={addRule} size="small" variant="outlined" sx={{ alignSelf: 'flex-start' }}>
+        <Button startIcon={<Plus size={16} />} onClick={addRule} size="small" variant="outlined" sx={{ alignSelf: 'flex-start' }}>
           Add filter
         </Button>
       </Box>

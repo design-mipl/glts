@@ -1,9 +1,9 @@
 import { Box, Typography, Collapse, Popper, Paper } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import { ChevronDown } from 'lucide-react'
 import { useState, useRef } from 'react'
 import type { ReactNode } from 'react'
-import { tokens } from '../../../tokens'
+import { tokens, BORDER_RADIUS } from '../../../tokens'
 
 export interface NavGroupProps {
   label: string
@@ -72,11 +72,11 @@ export default function NavGroup({
               justifyContent: 'center',
               width: 32,
               height: 32,
-              borderRadius: tokens.borderRadius.md,
+              borderRadius: BORDER_RADIUS.sm,
               cursor: 'pointer',
               color: navigation.textSecondary,
               mx: '8px',
-              transition: 'background-color 150ms ease',
+              transition: 'all 0.2s ease',
               '&:hover': {
                 bgcolor: navigation.hover,
                 color: navigation.textPrimary,
@@ -102,7 +102,7 @@ export default function NavGroup({
               ml: 1,
               py: 0.5,
               minWidth: 180,
-              borderRadius: tokens.borderRadius.md,
+              borderRadius: BORDER_RADIUS.sm,
               border: '1px solid',
               borderColor: navigation.border,
               bgcolor: navigation.background,
@@ -143,11 +143,11 @@ export default function NavGroup({
           px: '10px',
           mx: '8px',
           height: '32px',
-          borderRadius: tokens.borderRadius.md,
+          borderRadius: BORDER_RADIUS.sm,
           cursor: 'pointer',
           color: navigation.textSecondary,
           my: '1px',
-          transition: 'background-color 150ms ease',
+          transition: 'all 0.2s ease',
           '&:hover': {
             bgcolor: navigation.hover,
             color: navigation.textPrimary,
@@ -192,15 +192,17 @@ export default function NavGroup({
             {badge}
           </Box>
         )}
-        <ExpandMoreIcon
+        <Box
           sx={{
-            fontSize: 14,
+            display: 'flex',
             flexShrink: 0,
             color: 'inherit',
             transition: `transform ${tokens.transition.normal}`,
             transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
           }}
-        />
+        >
+          <ChevronDown size={14} />
+        </Box>
       </Box>
       <Collapse in={expanded} timeout={200}>
         {children}

@@ -5,16 +5,12 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
-import WarningAmberIcon from '@mui/icons-material/WarningAmber'
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
-import CloseIcon from '@mui/icons-material/Close'
+import { CheckCircle, AlertCircle, AlertTriangle, Info, X } from 'lucide-react'
 import { keyframes } from '@mui/material/styles'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
-import { tokens } from '../../../tokens'
+import { tokens, BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '../../../tokens'
 import { useToast } from './useToast'
 import type { Toast, ToastVariant } from './useToast'
 
@@ -53,19 +49,19 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
     const meta: Record<ToastVariant, { borderColor: string; icon?: ReactNode }> = {
       success: {
         borderColor: theme.palette.success.main,
-        icon: <CheckCircleOutlineIcon sx={{ color: 'success.main' }} />,
+        icon: <CheckCircle size={20} color={theme.palette.success.main} />,
       },
       error: {
         borderColor: theme.palette.error.main,
-        icon: <ErrorOutlineIcon sx={{ color: 'error.main' }} />,
+        icon: <AlertCircle size={20} color={theme.palette.error.main} />,
       },
       warning: {
         borderColor: theme.palette.warning.main,
-        icon: <WarningAmberIcon sx={{ color: 'warning.main' }} />,
+        icon: <AlertTriangle size={20} color={theme.palette.warning.main} />,
       },
       info: {
         borderColor: theme.palette.info.main,
-        icon: <InfoOutlinedIcon sx={{ color: 'info.main' }} />,
+        icon: <Info size={20} color={theme.palette.info.main} />,
       },
       default: {
         borderColor: theme.palette.divider,
@@ -101,12 +97,12 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
       sx={{
         minWidth: 300,
         maxWidth: 420,
-        borderRadius: tokens.borderRadius.lg,
-        boxShadow: tokens.shadow.lg,
+        borderRadius: BORDER_RADIUS.md,
+        boxShadow: SHADOWS.lg,
         borderLeft: `4px solid ${variantMeta.borderColor}`,
-        borderTop: `1px solid ${theme.palette.divider}`,
-        borderRight: `1px solid ${theme.palette.divider}`,
-        borderBottom: `1px solid ${theme.palette.divider}`,
+        borderTop: `${BORDER_WIDTH.thin} solid ${theme.palette.divider}`,
+        borderRight: `${BORDER_WIDTH.thin} solid ${theme.palette.divider}`,
+        borderBottom: `${BORDER_WIDTH.thin} solid ${theme.palette.divider}`,
         backgroundColor: alpha(theme.palette.background.paper, 0.96),
         overflow: 'hidden',
         animation: `${isExiting ? fadeOut : slideIn} ${tokens.transition.normal} forwards`,
@@ -155,7 +151,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
           ) : null}
         </Box>
         <IconButton aria-label="Dismiss toast" size="small" onClick={() => setIsExiting(true)}>
-          <CloseIcon fontSize="small" />
+          <X size={16} />
         </IconButton>
       </Box>
     </Paper>

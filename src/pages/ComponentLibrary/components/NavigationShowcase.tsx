@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Box, Typography, Stack, Grid } from '@mui/material'
 import {
   Breadcrumb, Tabs, Menu, Stepper, BackButton,
@@ -46,7 +46,7 @@ export function NavigationShowcase() {
       <Grid container spacing={4}>
         {/* Breadcrumb */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Breadcrumb</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Breadcrumb</Typography>
           <Stack gap={2}>
             <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Dashboard' }]} />
             <Breadcrumb items={breadcrumbItems} />
@@ -57,7 +57,7 @@ export function NavigationShowcase() {
 
         {/* Tabs */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Tabs</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Tabs</Typography>
           <Tabs
             items={tabItems}
             value={activeTab}
@@ -74,7 +74,7 @@ export function NavigationShowcase() {
 
         {/* Stepper */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Stepper</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Stepper</Typography>
           <Stepper steps={stepperSteps} activeStep={activeStep} />
           <Stack direction="row" gap={1.5} sx={{ mt: 2 }}>
             <Button variant="outlined" size="sm" disabled={activeStep === 0} onClick={() => setActiveStep(s => s - 1)}>
@@ -90,12 +90,12 @@ export function NavigationShowcase() {
 
         {/* BackButton & Menu */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>BackButton</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>BackButton</Typography>
           <BackButton label="Back to Users" onClick={() => {}} />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Menu</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Menu</Typography>
           <Menu
             trigger={<Button variant="outlined" size="sm">Open Menu</Button>}
             items={menuItems}
@@ -106,9 +106,9 @@ export function NavigationShowcase() {
 
         {/* CommandPalette */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>CommandPalette</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>CommandPalette</Typography>
           <Button variant="outlined" size="sm" onClick={() => setCommandOpen(true)}>
-            Open Command Palette (⌘K)
+            Open Command Palette (âŒ˜K)
           </Button>
           <CommandPalette
             open={commandOpen}
@@ -141,3 +141,4 @@ export function NavigationShowcase() {
     </Box>
   )
 }
+

@@ -1,6 +1,5 @@
 import { Box, Toolbar, IconButton, Badge, Divider } from '@mui/material'
-import MenuIcon from '@mui/icons-material/Menu'
-import { Bell, Search } from 'lucide-react'
+import { Menu, Bell, Search } from 'lucide-react'
 import { alpha, useTheme } from '@mui/material/styles'
 import UserMenu from './UserMenu'
 import type { UserMenuUser } from './UserMenu'
@@ -58,7 +57,7 @@ export default function Topbar({
             flexShrink: 0,
           }}
         >
-          <MenuIcon sx={{ fontSize: 20 }} />
+          <Menu size={20} />
         </IconButton>
       )}
 

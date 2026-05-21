@@ -1,7 +1,5 @@
 import { Box, Typography, Button } from '@mui/material'
-import InboxIcon from '@mui/icons-material/Inbox'
-import SearchOffIcon from '@mui/icons-material/SearchOff'
-import LockIcon from '@mui/icons-material/Lock'
+import { Inbox, SearchX, Lock } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 export interface EmptyStateProps {
@@ -16,17 +14,17 @@ const DEFAULTS = {
   'no-data': {
     title: 'No data yet',
     description: 'Add your first record to get started',
-    Icon: InboxIcon,
+    Icon: Inbox,
   },
   'no-results': {
     title: 'No results found',
     description: 'Try adjusting your search or filters',
-    Icon: SearchOffIcon,
+    Icon: SearchX,
   },
   'no-access': {
     title: 'Access restricted',
     description: "You don't have permission to view this",
-    Icon: LockIcon,
+    Icon: Lock,
   },
 }
 
@@ -53,7 +51,7 @@ export default function EmptyState({
       }}
     >
       <Box sx={{ color: 'text.disabled', mb: 1 }}>
-        {icon ?? <Icon sx={{ fontSize: 48 }} />}
+        {icon ?? <Icon size={48} />}
       </Box>
       <Typography variant="subtitle1" fontWeight={600} color="text.primary" textAlign="center">
         {title ?? def.title}

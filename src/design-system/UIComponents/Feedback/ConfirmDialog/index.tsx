@@ -2,8 +2,7 @@ import { useState } from 'react'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
-import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import { HelpCircle, AlertTriangle } from 'lucide-react'
 import { alpha } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
@@ -61,9 +60,9 @@ export default function ConfirmDialog({
         }}
       >
         {variant === 'destructive' ? (
-          <WarningAmberIcon sx={{ color: 'error.main' }} />
+          <AlertTriangle size={24} style={{ color: 'inherit' }} />
         ) : (
-          <HelpOutlineIcon sx={{ color: 'primary.main' }} />
+          <HelpCircle size={24} style={{ color: 'inherit' }} />
         )}
       </Box>
     )

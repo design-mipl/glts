@@ -5,8 +5,8 @@ import {
   Card, CardContent, Typography, useTheme, useMediaQuery, Divider,
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import { ChevronDown, ChevronUp } from 'lucide-react'
+import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '../../../tokens'
 import type { FoundationBreakpointKey } from '../../../breakpoints'
 import type { Column, TableState, BulkAction } from '../types'
 import ColumnHeader from '../ColumnHeader'
@@ -52,7 +52,7 @@ function SkeletonRows({ count, cols }: { count: number; cols: number }) {
       {[...Array(count)].map((_, i) => (
         <TableRow key={i}>
           {[...Array(cols)].map((__, j) => (
-            <TableCell key={j} sx={{ py: { xs: 1.5, md: 1.5, lg: 1.25, xl: 1.25, desktop: 1 }, px: { xs: 1.5, md: 1.5, lg: 1.25, xl: 1.25, desktop: 1 } }}>
+            <TableCell key={j} sx={{ py: '12px', px: '12px' }}>
               <Skeleton variant="text" width="80%" height={20} />
             </TableCell>
           ))}
@@ -107,14 +107,14 @@ export default function DataTable({
 
   // Theme colors
   const headerBg = isDark
-    ? alpha(theme.palette.common.white, 0.03)
-    : alpha(theme.palette.text.primary, 0.02)
+    ? alpha(theme.palette.common.white, 0.04)
+    : '#F9FAFB'
   const evenRowBg = isDark
     ? alpha(theme.palette.common.white, 0.02)
     : alpha(theme.palette.primary.main, 0.02)
   const hoverBg = isDark
     ? alpha(theme.palette.common.white, 0.04)
-    : alpha(theme.palette.primary.main, 0.04)
+    : alpha(theme.palette.primary.main, 0.03)
   const selectedBg = alpha(theme.palette.primary.main, 0.08)
 
   const totalCols = visibleTableColumns.length
@@ -296,9 +296,10 @@ export default function DataTable({
           maxHeight: height !== 'auto' ? height : undefined,
           overflowX: 'auto',
           mt: 1,
-          border: '1px solid',
+          border: `${BORDER_WIDTH.thin} solid`,
           borderColor: 'divider',
-          borderRadius: 1,
+          borderRadius: BORDER_RADIUS.lg,
+          boxShadow: SHADOWS.sm,
         }}
       >
         <Table stickyHeader={stickyHeader} size="small">
@@ -334,8 +335,8 @@ export default function DataTable({
                     boxShadow: col.sticky ? '4px 0 4px -2px rgba(0,0,0,0.08)' : undefined,
                     display: getHideDisplay(col.hideBelow),
                     verticalAlign: 'top',
-                    py: { xs: 1.5, md: 1.5, lg: 1.25, xl: 1.25, desktop: 1 },
-                    px: { xs: 1.5, md: 1.5, lg: 1.25, xl: 1.25, desktop: 1 },
+                    py: '12px',
+                    px: '12px',
                   }}
                 >
                   <ColumnHeader
@@ -407,8 +408,8 @@ export default function DataTable({
                         <TableCell
                           key={col.key}
                           sx={{
-                            py: { xs: 1.5, md: 1.5, lg: 1.25, xl: 1.25, desktop: 1 },
-                            px: { xs: 1.5, md: 1.5, lg: 1.25, xl: 1.25, desktop: 1 },
+                            py: '12px',
+                            px: '12px',
                             fontSize: 'inherit',
                             lineHeight: '20px',
                             borderBottom: '1px solid',
@@ -460,7 +461,7 @@ export default function DataTable({
                         onClick={(e) => e.stopPropagation()}
                       >
                         <IconButton size="small" onClick={() => handleToggleExpand(rowId)}>
-                          {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </IconButton>
                       </TableCell>
                     )}

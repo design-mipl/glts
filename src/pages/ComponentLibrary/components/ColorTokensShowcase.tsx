@@ -1,4 +1,4 @@
-import { Box, Typography, Grid, Stack } from '@mui/material'
+﻿import { Box, Typography, Grid, Stack } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { tokens } from '@/design-system/tokens'
 import { useFoundationTheme } from '@/design-system/ThemeContext'
@@ -51,7 +51,7 @@ export function ColorTokensShowcase() {
       <Grid container spacing={4}>
         {/* Color presets */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Brand Color Presets</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Brand Color Presets</Typography>
           <Stack direction="row" gap={1.5} flexWrap="wrap" alignItems="center">
             {presets.map(p => (
               <Box
@@ -83,7 +83,7 @@ export function ColorTokensShowcase() {
 
         {/* Color scales */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Color Scales</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Color Scales</Typography>
           <Stack gap={1.5}>
             {colorScales.map(({ name, scale }) => (
               <Box key={name}>
@@ -104,7 +104,7 @@ export function ColorTokensShowcase() {
 
         {/* Spacing scale */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Spacing Scale (tokens.spacing)</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Spacing Scale (tokens.spacing)</Typography>
           <Stack direction="row" gap={1.5} flexWrap="wrap" alignItems="flex-end">
             {spacingEntries.map(([key, val]) => (
               <Box key={key} sx={{ textAlign: 'center' }}>
@@ -124,7 +124,7 @@ export function ColorTokensShowcase() {
 
         {/* Border radius */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Border Radius</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Border Radius</Typography>
           <Stack direction="row" gap={2} flexWrap="wrap" alignItems="center">
             {radiusEntries.map(([key, val]) => (
               <Box key={key} sx={{ textAlign: 'center' }}>
@@ -139,7 +139,7 @@ export function ColorTokensShowcase() {
 
         {/* Shadows */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Shadows</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Shadows</Typography>
           <Stack gap={2}>
             {shadowEntries.map(([key, val]) => (
               <Box
@@ -164,7 +164,7 @@ export function ColorTokensShowcase() {
 
         {/* Typography */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Font Size Scale</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Font Size Scale</Typography>
           <Stack gap={1}>
             {fontSizeEntries.map(([key, val]) => (
               <Box key={key} sx={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
@@ -182,3 +182,4 @@ export function ColorTokensShowcase() {
     </Box>
   )
 }
+

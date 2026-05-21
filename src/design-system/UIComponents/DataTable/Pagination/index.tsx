@@ -2,8 +2,7 @@ import {
   Box, Typography, IconButton, Select, MenuItem,
   Button, useTheme, useMediaQuery,
 } from '@mui/material'
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft'
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export interface PaginationProps {
   page: number
@@ -75,14 +74,14 @@ export default function Pagination({
             disabled={page === 0 || loading}
             onClick={() => onPage(page - 1)}
           >
-            <KeyboardArrowLeftIcon />
+            <ChevronLeft size={20} />
           </IconButton>
           <IconButton
             size="small"
             disabled={page >= totalPages - 1 || loading}
             onClick={() => onPage(page + 1)}
           >
-            <KeyboardArrowRightIcon />
+            <ChevronRight size={20} />
           </IconButton>
         </Box>
       ) : (
@@ -113,7 +112,7 @@ export default function Pagination({
               disabled={page === 0 || loading}
               onClick={() => onPage(page - 1)}
             >
-              <KeyboardArrowLeftIcon />
+              <ChevronLeft size={20} />
             </IconButton>
             {pageNumbers.map((p, i) =>
               p === '...' ? (
@@ -145,7 +144,7 @@ export default function Pagination({
               disabled={page >= totalPages - 1 || loading}
               onClick={() => onPage(page + 1)}
             >
-              <KeyboardArrowRightIcon />
+              <ChevronRight size={20} />
             </IconButton>
           </Box>
         </>

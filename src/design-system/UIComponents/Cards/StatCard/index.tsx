@@ -1,9 +1,7 @@
 import { Box, Typography, Skeleton } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
-import TrendingUpIcon from '@mui/icons-material/TrendingUp'
-import TrendingDownIcon from '@mui/icons-material/TrendingDown'
-import RemoveIcon from '@mui/icons-material/Remove'
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import type { SxProps } from '@mui/material'
 import type { ReactNode } from 'react'
 import BaseCard from '../BaseCard'
@@ -28,13 +26,13 @@ function DeltaBadge({ delta, deltaLabel }: { delta: number; deltaLabel?: string 
   const isPositive = delta > 0
   const isNegative = delta < 0
   const color = isPositive ? 'success.main' : isNegative ? 'error.main' : 'text.secondary'
-  const Icon = isPositive ? TrendingUpIcon : isNegative ? TrendingDownIcon : RemoveIcon
+  const Icon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus
   const formatted = isPositive ? `+${delta.toFixed(1)}%` : isNegative ? `${delta.toFixed(1)}%` : '0%'
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, color }}>
-        <Icon sx={{ fontSize: 16 }} />
+        <Icon size={16} />
         <Typography variant="caption" fontWeight={600} color={color}>
           {formatted}
         </Typography>

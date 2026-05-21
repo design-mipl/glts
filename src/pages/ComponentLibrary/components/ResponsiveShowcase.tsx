@@ -1,4 +1,4 @@
-import { Box, Typography, Grid, Stack } from '@mui/material'
+﻿import { Box, Typography, Grid, Stack } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useMediaQuery } from '@mui/material'
 import { tokens } from '@/design-system/tokens'
@@ -11,7 +11,7 @@ const breakpoints = [
   { name: 'md', width: '900px', description: 'Tablet' },
   { name: 'lg', width: '1024px', description: 'Desktop (sidebar shows)' },
   { name: 'xl', width: '1280px', description: 'Wide desktop' },
-  { name: 'xxl', width: '1440px', description: 'Large desktop' },
+  { name: 'xl', width: '1440px', description: 'Large desktop' },
   { name: 'xxxl', width: '1600px', description: 'Extra large' },
   { name: 'uhd', width: '1920px', description: '4K / UHD' },
 ]
@@ -22,8 +22,8 @@ export function ResponsiveShowcase() {
   const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md'))
   const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg'))
   const isLg = useMediaQuery(theme.breakpoints.between('lg', 'xl'))
-  const isXl = useMediaQuery(theme.breakpoints.between('xl', 'xxl'))
-  const isXxl = useMediaQuery(theme.breakpoints.up('xxl'))
+  const isXl = useMediaQuery(theme.breakpoints.between('xl', 'xl'))
+  const isXxl = useMediaQuery(theme.breakpoints.up('xl'))
 
   const currentBp = isXxl ? 'xxl+' : isXl ? 'xl' : isLg ? 'lg' : isMd ? 'md' : isSm ? 'sm' : isXs ? 'xs' : '?'
 
@@ -32,7 +32,7 @@ export function ResponsiveShowcase() {
       <Grid container spacing={4}>
         {/* Current breakpoint indicator */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Current Breakpoint</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Current Breakpoint</Typography>
           <Box
             sx={{
               p: 3,
@@ -57,10 +57,10 @@ export function ResponsiveShowcase() {
 
         {/* Breakpoint table */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Breakpoint Reference</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Breakpoint Reference</Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {breakpoints.map((bp) => {
-              const active = currentBp === bp.name || (currentBp === 'xxl+' && (bp.name === 'xxl' || bp.name === 'xxxl' || bp.name === 'uhd'))
+              const active = currentBp === bp.name || (currentBp === 'xxl+' && (bp.name === 'xl' || bp.name === 'xxxl' || bp.name === 'uhd'))
               return (
                 <Box
                   key={bp.name}
@@ -82,7 +82,7 @@ export function ResponsiveShowcase() {
                     {bp.name}
                   </Typography>
                   <Typography variant="body2" sx={{ width: 80, color: 'text.secondary', fontFamily: 'monospace' }}>
-                    ≥ {bp.width}
+                    â‰¥ {bp.width}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {bp.description}
@@ -102,7 +102,7 @@ export function ResponsiveShowcase() {
 
         {/* Responsive grid */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Responsive Grid (xs:12 → sm:6 → lg:3)</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Responsive Grid (xs:12 â†’ sm:6 â†’ lg:3)</Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <StatCard label="Users" value="12,480" icon={<Users size={20} />} delta={12} deltaLabel="vs last month" />
@@ -123,7 +123,7 @@ export function ResponsiveShowcase() {
 
         {/* sx responsive example */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>sx Responsive Props</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>sx Responsive Props</Typography>
           <Box
             sx={{
               p: { xs: 2, md: 4, lg: 6 },
@@ -133,8 +133,8 @@ export function ResponsiveShowcase() {
             }}
           >
             <Typography variant="body2">
-              This box has responsive padding (<code>xs:2 → md:4 → lg:6</code>)
-              and text alignment (<code>xs:center → md:left</code>).
+              This box has responsive padding (<code>xs:2 â†’ md:4 â†’ lg:6</code>)
+              and text alignment (<code>xs:center â†’ md:left</code>).
               Resize the window to see changes.
             </Typography>
           </Box>
@@ -144,7 +144,7 @@ export function ResponsiveShowcase() {
 
         {/* Conditional rendering */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Conditional Visibility (sx display)</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Conditional Visibility (sx display)</Typography>
           <Stack direction="row" gap={2} flexWrap="wrap">
             <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
               <Button variant="contained" size="sm">Mobile only</Button>
@@ -164,3 +164,4 @@ export function ResponsiveShowcase() {
     </Box>
   )
 }
+

@@ -1,4 +1,4 @@
-import { Box, Typography, Grid } from '@mui/material'
+﻿import { Box, Typography, Grid } from '@mui/material'
 import {
   BaseCard, StatCard, MetricCard, ActionCard,
   ListCard, ProfileCard, ImageCard, SummaryCard,
@@ -12,7 +12,7 @@ export function CardsShowcase() {
       <Grid container spacing={3}>
         {/* BaseCard */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>BaseCard</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>BaseCard</Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <BaseCard>
@@ -21,7 +21,7 @@ export function CardsShowcase() {
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <BaseCard hoverable>
-                <Typography variant="body2">Hoverable — try hovering over this card.</Typography>
+                <Typography variant="body2">Hoverable â€” try hovering over this card.</Typography>
               </BaseCard>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -34,7 +34,7 @@ export function CardsShowcase() {
 
         {/* StatCard */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>StatCard</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>StatCard</Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <StatCard label="Total Users" value="12,480" icon={<Users size={20} />} delta={12.4} deltaLabel="vs last month" />
@@ -53,7 +53,7 @@ export function CardsShowcase() {
 
         {/* MetricCard */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>MetricCard</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>MetricCard</Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <MetricCard
@@ -87,7 +87,7 @@ export function CardsShowcase() {
 
         {/* ActionCard */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>ActionCard</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>ActionCard</Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <ActionCard
@@ -119,7 +119,7 @@ export function CardsShowcase() {
 
         {/* ProfileCard */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>ProfileCard</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>ProfileCard</Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <ProfileCard
@@ -143,7 +143,7 @@ export function CardsShowcase() {
 
         {/* ImageCard */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>ImageCard</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>ImageCard</Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <ImageCard
@@ -174,7 +174,7 @@ export function CardsShowcase() {
 
         {/* ListCard & SummaryCard */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>ListCard</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>ListCard</Typography>
           <ListCard
             title="Recent Activity"
             items={[
@@ -187,7 +187,7 @@ export function CardsShowcase() {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>SummaryCard</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>SummaryCard</Typography>
           <SummaryCard
             title="Account Summary"
             fields={[
@@ -203,3 +203,4 @@ export function CardsShowcase() {
     </Box>
   )
 }
+

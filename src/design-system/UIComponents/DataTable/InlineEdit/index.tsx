@@ -3,8 +3,7 @@ import {
   Box, TextField, Select, MenuItem, Switch,
   IconButton, FormControl,
 } from '@mui/material'
-import CheckIcon from '@mui/icons-material/Check'
-import CloseIcon from '@mui/icons-material/Close'
+import { Check, X } from 'lucide-react'
 import type { Column } from '../types'
 
 export interface InlineEditProps {
@@ -38,8 +37,8 @@ export default function InlineEdit({ value, column, onSave, onCancel }: InlineEd
     return (
       <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
         {column.renderEdit(draft, {} as any, setDraft)}
-        <IconButton size="small" onClick={() => onSave(draft)}><CheckIcon fontSize="small" /></IconButton>
-        <IconButton size="small" onClick={onCancel}><CloseIcon fontSize="small" /></IconButton>
+        <IconButton size="small" onClick={() => onSave(draft)}><Check size={16} /></IconButton>
+        <IconButton size="small" onClick={onCancel}><X size={16} /></IconButton>
       </Box>
     )
   }
@@ -55,8 +54,8 @@ export default function InlineEdit({ value, column, onSave, onCancel }: InlineEd
           onChange={(e) => setDraft(e.target.checked)}
           onKeyDown={handleKeyDown}
         />
-        <IconButton size="small" onClick={() => onSave(draft)}><CheckIcon fontSize="small" /></IconButton>
-        <IconButton size="small" onClick={onCancel}><CloseIcon fontSize="small" /></IconButton>
+        <IconButton size="small" onClick={() => onSave(draft)}><Check size={16} /></IconButton>
+        <IconButton size="small" onClick={onCancel}><X size={16} /></IconButton>
       </Box>
     )
   }
@@ -78,8 +77,8 @@ export default function InlineEdit({ value, column, onSave, onCancel }: InlineEd
             ))}
           </Select>
         </FormControl>
-        <IconButton size="small" onClick={() => onSave(draft)}><CheckIcon fontSize="small" /></IconButton>
-        <IconButton size="small" onClick={onCancel}><CloseIcon fontSize="small" /></IconButton>
+        <IconButton size="small" onClick={() => onSave(draft)}><Check size={16} /></IconButton>
+        <IconButton size="small" onClick={onCancel}><X size={16} /></IconButton>
       </Box>
     )
   }
@@ -100,10 +99,10 @@ export default function InlineEdit({ value, column, onSave, onCancel }: InlineEd
         slotProps={{ htmlInput: { style: { fontSize: 14 } } }}
       />
       <IconButton size="small" onMouseDown={(e) => { e.preventDefault(); onSave(draft) }}>
-        <CheckIcon fontSize="small" />
+        <Check size={16} />
       </IconButton>
       <IconButton size="small" onMouseDown={(e) => { e.preventDefault(); onCancel() }}>
-        <CloseIcon fontSize="small" />
+        <X size={16} />
       </IconButton>
     </Box>
   )

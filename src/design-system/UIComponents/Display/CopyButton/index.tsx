@@ -2,8 +2,7 @@ import { useState } from 'react'
 import MuiIconButton from '@mui/material/IconButton'
 import Button from '@mui/material/Button'
 import MuiTooltip from '@mui/material/Tooltip'
-import ContentCopyIcon from '@mui/icons-material/ContentCopy'
-import CheckIcon from '@mui/icons-material/Check'
+import { Copy, Check } from 'lucide-react'
 import type { SxProps, Theme } from '@mui/material/styles'
 
 export interface CopyButtonProps {
@@ -36,7 +35,7 @@ export default function CopyButton({
     })
   }
 
-  const icon = copied ? <CheckIcon sx={{ fontSize: iconSize, color: 'success.main' }} /> : <ContentCopyIcon sx={{ fontSize: iconSize }} />
+  const icon = copied ? <Check size={iconSize} style={{ color: 'var(--mui-palette-success-main)' }} /> : <Copy size={iconSize} />
 
   if (iconOnly) {
     return (

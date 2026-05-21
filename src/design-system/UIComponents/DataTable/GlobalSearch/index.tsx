@@ -4,12 +4,7 @@ import {
   List, ListItemButton, ListItemIcon, ListItemText,
   Skeleton, Divider, IconButton, Chip,
 } from '@mui/material'
-import SearchIcon from '@mui/icons-material/Search'
-import ClearIcon from '@mui/icons-material/Clear'
-import ArticleIcon from '@mui/icons-material/Article'
-import TableRowsIcon from '@mui/icons-material/TableRows'
-import PersonIcon from '@mui/icons-material/Person'
-import HistoryIcon from '@mui/icons-material/History'
+import { Search, X, FileText, Table, User, Clock } from 'lucide-react'
 import type { SearchResult, SearchResults } from '../types'
 
 export interface GlobalSearchProps {
@@ -35,9 +30,9 @@ function removeRecent(q: string) {
 }
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-  page: <ArticleIcon fontSize="small" />,
-  record: <TableRowsIcon fontSize="small" />,
-  user: <PersonIcon fontSize="small" />,
+  page: <FileText size={16} />,
+  record: <Table size={16} />,
+  user: <User size={16} />,
 }
 
 const EMPTY_RESULTS: SearchResults = { pages: [], records: [], users: [] }
@@ -178,7 +173,7 @@ export default function GlobalSearch({ open, onClose, onSearch }: GlobalSearchPr
           borderColor: 'divider',
         }}
       >
-        <SearchIcon sx={{ color: 'text.secondary', fontSize: 22 }} />
+        <Search size={22} style={{ opacity: 0.5, flexShrink: 0 }} />
         <InputBase
           inputRef={inputRef}
           value={query}
@@ -190,7 +185,7 @@ export default function GlobalSearch({ open, onClose, onSearch }: GlobalSearchPr
         />
         {query && (
           <IconButton size="small" onClick={() => { setQuery(''); setResults(EMPTY_RESULTS) }}>
-            <ClearIcon fontSize="small" />
+            <X size={16} />
           </IconButton>
         )}
         <Chip label="Esc" size="small" onClick={onClose} sx={{ fontSize: 11, height: 20, cursor: 'pointer' }} />
@@ -243,7 +238,7 @@ export default function GlobalSearch({ open, onClose, onSearch }: GlobalSearchPr
                   sx={{ py: 0.75, px: 2 }}
                 >
                   <ListItemIcon sx={{ minWidth: 36, color: 'text.secondary' }}>
-                    <HistoryIcon fontSize="small" />
+                    <Clock size={16} />
                   </ListItemIcon>
                   <ListItemText primary={r} slotProps={{ primary: { variant: 'body2' } }} />
                   <IconButton
@@ -251,7 +246,7 @@ export default function GlobalSearch({ open, onClose, onSearch }: GlobalSearchPr
                     onClick={(e) => { e.stopPropagation(); removeRecent(r); setRecent(getRecent()) }}
                     sx={{ ml: 1 }}
                   >
-                    <ClearIcon sx={{ fontSize: 14 }} />
+                    <X size={14} />
                   </IconButton>
                 </ListItemButton>
               ))}

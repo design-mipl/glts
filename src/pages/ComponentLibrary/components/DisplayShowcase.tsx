@@ -1,4 +1,4 @@
-import { Box, Typography, Stack, Grid } from '@mui/material'
+﻿import { Box, Typography, Stack, Grid } from '@mui/material'
 import {
   Avatar, AvatarGroup, Badge, Tag, Spinner,
   CopyButton, NotificationBell, UserCard, ActivityFeed, Divider,
@@ -16,7 +16,7 @@ export function DisplayShowcase() {
       <Grid container spacing={4}>
         {/* Avatar */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Avatar</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Avatar</Typography>
           <Stack direction="row" gap={2} alignItems="center" flexWrap="wrap">
             <Avatar size="xs" name="Alice Chen" />
             <Avatar size="sm" name="Bob Smith" />
@@ -33,7 +33,7 @@ export function DisplayShowcase() {
 
         {/* AvatarGroup */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>AvatarGroup</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>AvatarGroup</Typography>
           <Stack gap={2}>
             <AvatarGroup
               users={[
@@ -58,7 +58,7 @@ export function DisplayShowcase() {
 
         {/* Badge (standalone label badge) */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Badge</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Badge</Typography>
           <Stack direction="row" gap={2} flexWrap="wrap" alignItems="center">
             <Badge label="Default" />
             <Badge label="Primary" color="primary" />
@@ -77,7 +77,7 @@ export function DisplayShowcase() {
 
         {/* Tag */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Tag</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Tag</Typography>
           <Stack direction="row" gap={1.5} flexWrap="wrap">
             <Tag label="Default" />
             <Tag label="Primary" color="primary" />
@@ -93,7 +93,7 @@ export function DisplayShowcase() {
 
         {/* Spinner */}
         <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Spinner</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Spinner</Typography>
           <Stack direction="row" gap={3} alignItems="center">
             <Spinner size="sm" />
             <Spinner size="md" />
@@ -103,7 +103,7 @@ export function DisplayShowcase() {
 
         {/* CopyButton */}
         <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>CopyButton</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>CopyButton</Typography>
           <Stack direction="row" gap={2} alignItems="center">
             <CopyButton value="Text to copy" />
             <CopyButton value="Another value" label="Copy ID" />
@@ -112,7 +112,7 @@ export function DisplayShowcase() {
 
         {/* NotificationBell */}
         <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>NotificationBell</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>NotificationBell</Typography>
           <Stack direction="row" gap={2} alignItems="center">
             <NotificationBell count={0} onClick={() => {}} />
             <NotificationBell count={3} onClick={() => {}} />
@@ -124,7 +124,7 @@ export function DisplayShowcase() {
 
         {/* UserCard */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>UserCard</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>UserCard</Typography>
           <Stack gap={2}>
             <UserCard name="Sarah Johnson" role="Admin" email="sarah@example.com" />
             <UserCard name="Mike Davis" role="Editor" email="mike@example.com" avatarSrc="https://i.pravatar.cc/150?img=5" />
@@ -133,10 +133,11 @@ export function DisplayShowcase() {
 
         {/* ActivityFeed */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>ActivityFeed</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>ActivityFeed</Typography>
           <ActivityFeed items={activities} />
         </Grid>
       </Grid>
     </Box>
   )
 }
+

@@ -71,9 +71,9 @@ export default function DateRangePicker({
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ display: { xs: 'none', sm: 'block' }, flexShrink: 0 }}
+          sx={{ display: { xs: 'none', sm: 'block' }, flexShrink: 0, fontSize: '12px', userSelect: 'none' }}
         >
-          →
+          –
         </Typography>
         <DatePicker
           label={endLabel}

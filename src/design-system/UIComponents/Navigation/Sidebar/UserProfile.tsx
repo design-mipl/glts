@@ -2,10 +2,7 @@ import {
   Box, Avatar, Typography, IconButton, Menu, MenuItem,
   ListItemIcon, Divider, Tooltip,
 } from '@mui/material'
-import MoreVertIcon from '@mui/icons-material/MoreVert'
-import PersonIcon from '@mui/icons-material/Person'
-import SettingsIcon from '@mui/icons-material/Settings'
-import LogoutIcon from '@mui/icons-material/Logout'
+import { MoreVertical, User, Settings, LogOut } from 'lucide-react'
 import { useState } from 'react'
 
 export interface UserProfileProps {
@@ -91,7 +88,7 @@ export default function UserProfile({
         onClick={e => setAnchorEl(e.currentTarget)}
         sx={{ flexShrink: 0, p: 0.5 }}
       >
-        <MoreVertIcon sx={{ fontSize: 18 }} />
+        <MoreVertical size={18} />
       </IconButton>
       <UserMenu
         anchorEl={anchorEl}
@@ -127,16 +124,16 @@ function UserMenu({
       slotProps={{ paper: { sx: { minWidth: 160, mb: 0.5 } } }}
     >
       <MenuItem onClick={() => { onClose(); onProfileClick?.() }} sx={{ py: 0.75 }}>
-        <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
+        <ListItemIcon><User size={16} /></ListItemIcon>
         <Typography variant="body2">View Profile</Typography>
       </MenuItem>
       <MenuItem onClick={() => { onClose(); onSettingsClick?.() }} sx={{ py: 0.75 }}>
-        <ListItemIcon><SettingsIcon fontSize="small" /></ListItemIcon>
+        <ListItemIcon><Settings size={16} /></ListItemIcon>
         <Typography variant="body2">Settings</Typography>
       </MenuItem>
       <Divider />
       <MenuItem onClick={() => { onClose(); onSignOut?.() }} sx={{ py: 0.75 }}>
-        <ListItemIcon><LogoutIcon fontSize="small" color="error" /></ListItemIcon>
+        <ListItemIcon sx={{ color: 'error.main' }}><LogOut size={16} /></ListItemIcon>
         <Typography variant="body2" color="error.main">Sign Out</Typography>
       </MenuItem>
     </Menu>

@@ -4,11 +4,8 @@ import {
   Tooltip, Fade, Button, useTheme, useMediaQuery,
   Popover, FormGroup, FormControlLabel, Checkbox, Divider,
 } from '@mui/material'
-import SearchIcon from '@mui/icons-material/Search'
-import FilterListIcon from '@mui/icons-material/FilterList'
-import ViewColumnIcon from '@mui/icons-material/ViewColumn'
-import ClearIcon from '@mui/icons-material/Clear'
-import CloseIcon from '@mui/icons-material/Close'
+import { Search, Filter, Columns, X } from 'lucide-react'
+import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '../../../tokens'
 import type { Column, FilterRule, BulkAction } from '../types'
 import FilterPanel from '../FilterPanel'
 import FilterChip from '../FilterChip'
@@ -111,15 +108,16 @@ export default function TableToolbar({
                 flex: 1,
                 maxWidth: { xs: '100%', md: 360 },
                 height: 36,
-                border: '1px solid',
+                border: `${BORDER_WIDTH.thin} solid`,
                 borderColor: 'divider',
-                borderRadius: 1,
+                borderRadius: BORDER_RADIUS.md,
                 px: 1.25,
                 bgcolor: 'background.paper',
-                '&:focus-within': { borderColor: 'primary.main' },
+                transition: 'all 0.2s ease',
+                '&:focus-within': { borderColor: 'primary.main', boxShadow: SHADOWS.xs },
               }}
             >
-              <SearchIcon sx={{ fontSize: 18, color: 'text.disabled', mr: 0.75 }} />
+              <Search size={18} style={{ opacity: 0.4, marginRight: 6, flexShrink: 0 }} />
               <InputBase
                 value={searchValue}
                 onChange={(e) => onSearch(e.target.value)}
@@ -128,7 +126,7 @@ export default function TableToolbar({
               />
               {searchValue && (
                 <IconButton size="small" sx={{ p: 0.25 }} onClick={() => onSearch('')}>
-                  <ClearIcon sx={{ fontSize: 15 }} />
+                  <X size={15} />
                 </IconButton>
               )}
             </Box>
@@ -142,7 +140,7 @@ export default function TableToolbar({
                 sx={{ color: activeFilters > 0 ? 'primary.main' : 'text.secondary' }}
               >
                 <Badge badgeContent={activeFilters || undefined} color="primary">
-                  <FilterListIcon />
+                  <Filter size={18} />
                 </Badge>
               </IconButton>
             </Tooltip>
@@ -158,7 +156,7 @@ export default function TableToolbar({
                         hiddenColumnKeys.length > 0 ? 'primary.main' : 'text.secondary',
                     }}
                   >
-                    <ViewColumnIcon />
+                    <Columns size={18} />
                   </IconButton>
                 </Tooltip>
                 <Popover
@@ -232,7 +230,7 @@ export default function TableToolbar({
           ))}
           <Button
             size="small"
-            startIcon={<CloseIcon sx={{ fontSize: 14 }} />}
+            startIcon={<X size={14} />}
             onClick={() => onFiltersChange([])}
             sx={{ fontSize: 12, py: 0.25 }}
           >

@@ -2,7 +2,7 @@ import {
   Box, Typography, List, ListItem, ListItemAvatar, ListItemText,
   Avatar, Chip, Button, Divider, Skeleton,
 } from '@mui/material'
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import { ChevronRight } from 'lucide-react'
 import type { SxProps } from '@mui/material'
 import type { ReactNode } from 'react'
 import BaseCard from '../BaseCard'
@@ -173,7 +173,7 @@ export default function ListCard({
           <Box sx={{ p: 1.5, textAlign: 'center' }}>
             <Button
               size="small"
-              endIcon={<ChevronRightIcon />}
+              endIcon={<ChevronRight size={16} />}
               onClick={onShowMore}
               sx={{ fontSize: 13 }}
             >

@@ -1,7 +1,6 @@
 import { Box, Drawer, IconButton, Tooltip, Typography, Stack } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
-import { HelpCircle } from 'lucide-react'
+import { HelpCircle, ChevronLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { tokens } from '../../../tokens'
 import NavItem from './NavItem'
@@ -202,7 +201,7 @@ function SidebarContent({
               },
             }}
           >
-            <ChevronLeftIcon sx={{ fontSize: 16 }} />
+            <ChevronLeft size={16} />
           </IconButton>
         </Box>
       ) : (

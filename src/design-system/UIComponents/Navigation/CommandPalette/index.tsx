@@ -3,12 +3,11 @@ import {
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
-import SearchIcon from '@mui/icons-material/Search'
-import AccessTimeIcon from '@mui/icons-material/AccessTime'
+import { Search, Clock } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import { tokens } from '../../../tokens'
+import { tokens, BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '../../../tokens'
 
 export interface SearchResult {
   id: string
@@ -73,7 +72,7 @@ function ResultItem({
         px: 2,
         py: 0,
         height: 48,
-        borderRadius: tokens.borderRadius.md,
+        borderRadius: BORDER_RADIUS.sm,
         mx: 1,
         cursor: 'pointer',
         bgcolor: highlighted ? alpha(theme.palette.primary.main, 0.08) : 'transparent',
@@ -202,7 +201,10 @@ export default function CommandPalette({ open, onClose, onSearch }: CommandPalet
       slotProps={{
         paper: {
           sx: {
-            borderRadius: tokens.borderRadius.xl,
+            borderRadius: BORDER_RADIUS.lg,
+            boxShadow: SHADOWS.lg,
+            border: `${BORDER_WIDTH.thin} solid`,
+            borderColor: 'divider',
             overflow: 'hidden',
             p: 0,
             m: { xs: 1, sm: 2 },
@@ -215,7 +217,7 @@ export default function CommandPalette({ open, onClose, onSearch }: CommandPalet
     >
       {/* Search input */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, height: 56 }}>
-        <SearchIcon sx={{ fontSize: 22, color: 'text.secondary', flexShrink: 0 }} />
+        <Search size={22} style={{ flexShrink: 0, opacity: 0.5 }} />
         <InputBase
           inputRef={inputRef}
           value={query}
@@ -274,7 +276,7 @@ export default function CommandPalette({ open, onClose, onSearch }: CommandPalet
             {recent.map((item, i) => (
               <ResultItem
                 key={item.id}
-                item={{ ...item, icon: item.icon ?? <AccessTimeIcon sx={{ fontSize: 20 }} /> }}
+                item={{ ...item, icon: item.icon ?? <Clock size={20} style={{ opacity: 0.5 }} /> }}
                 highlighted={highlighted === i}
                 onSelect={handleSelect}
               />

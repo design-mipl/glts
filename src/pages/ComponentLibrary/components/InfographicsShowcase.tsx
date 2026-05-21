@@ -1,4 +1,4 @@
-import { Box, Typography, Grid } from '@mui/material'
+﻿import { Box, Typography, Grid } from '@mui/material'
 import {
   KPIBlock, ProgressRing, Heatmap, Timeline,
   GaugeChart, TreeMap, ComparisonBar, TrendIndicator, Divider,
@@ -37,7 +37,7 @@ export function InfographicsShowcase() {
       <Grid container spacing={4}>
         {/* KPIBlock */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>KPIBlock</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>KPIBlock</Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <KPIBlock label="Total Users" value="12,480" delta={12.4} deltaLabel="vs last month" />
@@ -58,7 +58,7 @@ export function InfographicsShowcase() {
 
         {/* ProgressRing & GaugeChart */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>ProgressRing</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>ProgressRing</Typography>
           <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
             <ProgressRing value={72} label="Storage" size={100} showValue />
             <ProgressRing value={45} label="CPU" size={100} showValue />
@@ -67,7 +67,7 @@ export function InfographicsShowcase() {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>GaugeChart</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>GaugeChart</Typography>
           <GaugeChart value={68} min={0} max={100} label="Performance Score" size={180} />
         </Grid>
 
@@ -75,7 +75,7 @@ export function InfographicsShowcase() {
 
         {/* TrendIndicator */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>TrendIndicator</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>TrendIndicator</Typography>
           <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'center' }}>
             <TrendIndicator value={12.4} />
             <TrendIndicator value={-3.2} />
@@ -89,7 +89,7 @@ export function InfographicsShowcase() {
 
         {/* ComparisonBar */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>ComparisonBar</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>ComparisonBar</Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <ComparisonBar leftLabel="This Year" rightLabel="Last Year" leftValue={420} rightValue={380} showLabels showValues />
             <ComparisonBar leftLabel="Mobile" rightLabel="Desktop" leftValue={65} rightValue={35} showLabels showPercentages />
@@ -98,7 +98,7 @@ export function InfographicsShowcase() {
 
         {/* TreeMap */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>TreeMap</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>TreeMap</Typography>
           <TreeMap data={treeMapData} height={200} />
         </Grid>
 
@@ -106,16 +106,17 @@ export function InfographicsShowcase() {
 
         {/* Timeline */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Timeline</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Timeline</Typography>
           <Timeline items={timelineItems} />
         </Grid>
 
         {/* Heatmap */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Heatmap</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Heatmap</Typography>
           <Heatmap data={heatmapData} showMonthLabels showDayLabels />
         </Grid>
       </Grid>
     </Box>
   )
 }
+

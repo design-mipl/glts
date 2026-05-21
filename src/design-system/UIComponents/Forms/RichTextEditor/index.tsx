@@ -6,18 +6,8 @@ import {
   Box, IconButton, Tooltip, Divider, Typography, useTheme,
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import FormatBoldIcon from '@mui/icons-material/FormatBold'
-import FormatItalicIcon from '@mui/icons-material/FormatItalic'
-import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined'
-import StrikethroughSIcon from '@mui/icons-material/StrikethroughS'
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted'
-import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered'
-import FormatQuoteIcon from '@mui/icons-material/FormatQuote'
-import CodeIcon from '@mui/icons-material/Code'
-import LinkIcon from '@mui/icons-material/Link'
-import UndoIcon from '@mui/icons-material/Undo'
-import RedoIcon from '@mui/icons-material/Redo'
-import { tokens } from '../../../tokens'
+import { Bold, Italic, Underline, Strikethrough, List, ListOrdered, Quote, Code, Link, Undo, Redo } from 'lucide-react'
+import { tokens, BORDER_RADIUS, BORDER_WIDTH } from '../../../tokens'
 
 export type ToolbarItem =
   | 'bold' | 'italic' | 'underline' | 'strike'
@@ -138,25 +128,25 @@ export default function RichTextEditor({
     const map: Record<Exclude<ToolbarItem, 'divider'>, { title: string; icon: React.ReactNode; active: boolean; action: () => void }> = {
       bold: {
         title: 'Bold (⌘B)',
-        icon: <FormatBoldIcon fontSize="small" />,
+        icon: <Bold size={16} />,
         active: editor.isActive('bold'),
         action: () => editor.chain().focus().toggleBold().run(),
       },
       italic: {
         title: 'Italic (⌘I)',
-        icon: <FormatItalicIcon fontSize="small" />,
+        icon: <Italic size={16} />,
         active: editor.isActive('italic'),
         action: () => editor.chain().focus().toggleItalic().run(),
       },
       underline: {
         title: 'Underline (⌘U)',
-        icon: <FormatUnderlinedIcon fontSize="small" />,
+        icon: <Underline size={16} />,
         active: editor.isActive('underline'),
         action: () => editor.chain().focus().toggleUnderline().run(),
       },
       strike: {
         title: 'Strikethrough',
-        icon: <StrikethroughSIcon fontSize="small" />,
+        icon: <Strikethrough size={16} />,
         active: editor.isActive('strike'),
         action: () => editor.chain().focus().toggleStrike().run(),
       },
@@ -180,31 +170,31 @@ export default function RichTextEditor({
       },
       bulletList: {
         title: 'Bullet list',
-        icon: <FormatListBulletedIcon fontSize="small" />,
+        icon: <List size={16} />,
         active: editor.isActive('bulletList'),
         action: () => editor.chain().focus().toggleBulletList().run(),
       },
       orderedList: {
         title: 'Ordered list',
-        icon: <FormatListNumberedIcon fontSize="small" />,
+        icon: <ListOrdered size={16} />,
         active: editor.isActive('orderedList'),
         action: () => editor.chain().focus().toggleOrderedList().run(),
       },
       blockquote: {
         title: 'Blockquote',
-        icon: <FormatQuoteIcon fontSize="small" />,
+        icon: <Quote size={16} />,
         active: editor.isActive('blockquote'),
         action: () => editor.chain().focus().toggleBlockquote().run(),
       },
       codeBlock: {
         title: 'Code block',
-        icon: <CodeIcon fontSize="small" />,
+        icon: <Code size={16} />,
         active: editor.isActive('codeBlock'),
         action: () => editor.chain().focus().toggleCodeBlock().run(),
       },
       link: {
         title: 'Link',
-        icon: <LinkIcon fontSize="small" />,
+        icon: <Link size={16} />,
         active: editor.isActive('link'),
         action: () => {
           const prev = editor.getAttributes('link').href as string ?? ''
@@ -216,13 +206,13 @@ export default function RichTextEditor({
       },
       undo: {
         title: 'Undo (⌘Z)',
-        icon: <UndoIcon fontSize="small" />,
+        icon: <Undo size={16} />,
         active: false,
         action: () => editor.chain().focus().undo().run(),
       },
       redo: {
         title: 'Redo (⌘⇧Z)',
-        icon: <RedoIcon fontSize="small" />,
+        icon: <Redo size={16} />,
         active: false,
         action: () => editor.chain().focus().redo().run(),
       },
@@ -253,14 +243,17 @@ export default function RichTextEditor({
       )}
       <Box
         sx={{
-          border: '1px solid',
+          border: `${BORDER_WIDTH.thin} solid`,
           borderColor,
-          borderRadius: tokens.borderRadius.md,
+          borderRadius: BORDER_RADIUS.md,
           overflow: 'hidden',
           opacity: disabled ? 0.6 : 1,
+          transition: 'all 0.2s ease',
           '&:focus-within': {
             borderColor: error ? 'error.main' : 'primary.main',
-            borderWidth: 2,
+            boxShadow: error
+              ? `0 0 0 2px ${alpha(theme.palette.error.main, 0.1)}`
+              : `0 0 0 2px ${alpha(theme.palette.primary.main, 0.1)}`,
           },
         }}
       >

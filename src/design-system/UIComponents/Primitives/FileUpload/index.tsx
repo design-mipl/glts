@@ -2,11 +2,10 @@ import { useState, useRef, useCallback } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
+import MuiButton from '@mui/material/Button'
 import FormHelperText from '@mui/material/FormHelperText'
 import { useTheme, alpha } from '@mui/material/styles'
-import CloudUploadIcon from '@mui/icons-material/CloudUpload'
-import CloseIcon from '@mui/icons-material/Close'
-import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'
+import { Upload, X, FileText } from 'lucide-react'
 import type { SxProps, Theme } from '@mui/material/styles'
 
 export interface FileUploadProps {
@@ -130,7 +129,6 @@ export default function FileUpload({
         </Typography>
       )}
       <Box
-        onClick={handleClick}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -140,15 +138,25 @@ export default function FileUpload({
             ? 'error.main'
             : dragOver
               ? 'primary.main'
-              : 'divider',
+              : theme.palette.divider,
           borderRadius: '8px',
-          p: 3,
+          py: 6,
+          px: 3,
           textAlign: 'center',
           cursor: disabled ? 'not-allowed' : 'pointer',
-          transition: 'border-color 150ms, background-color 150ms',
-          bgcolor: dragOver ? alpha(theme.palette.primary.main, 0.05) : 'transparent',
+          transition: 'all 0.2s ease',
+          bgcolor: dragOver
+            ? alpha(theme.palette.primary.main, 0.04)
+            : theme.palette.mode === 'dark'
+              ? alpha(theme.palette.common.white, 0.02)
+              : '#F9FAFB',
           opacity: disabled ? 0.5 : 1,
+          '&:hover': disabled ? {} : {
+            borderColor: 'primary.main',
+            bgcolor: alpha(theme.palette.primary.main, 0.03),
+          },
         }}
+        onClick={handleClick}
       >
         <input
           ref={inputRef}
@@ -158,15 +166,48 @@ export default function FileUpload({
           onChange={handleInputChange}
           style={{ display: 'none' }}
         />
-        <CloudUploadIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-        <Typography variant="body2" color="text.secondary">
-          Drag & drop or click to browse
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: '12px',
+              bgcolor: alpha(theme.palette.primary.main, 0.08),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Upload size={22} color={theme.palette.primary.main} />
+          </Box>
+        </Box>
+        <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+          Choose a file or drag & drop it here
         </Typography>
-        {accept && (
-          <Typography variant="caption" color="text.disabled">
-            {accept}
-          </Typography>
-        )}
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+          {accept
+            ? accept.replace(/,/g, ', ')
+            : 'All file types supported'}{maxSize ? ` — up to ${formatBytes(maxSize)}` : ''}
+        </Typography>
+        <MuiButton
+          variant="outlined"
+          size="small"
+          onClick={(e) => { e.stopPropagation(); handleClick() }}
+          disabled={disabled}
+          sx={{
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 500,
+            textTransform: 'none',
+            px: 2,
+            py: 0.75,
+            borderColor: 'divider',
+            color: 'text.primary',
+            '&:hover': { borderColor: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.04) },
+          }}
+        >
+          Browse Files
+        </MuiButton>
       </Box>
 
       {helperText && (
@@ -199,7 +240,7 @@ export default function FileUpload({
                   sx={{ width: 32, height: 32, objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }}
                 />
               ) : (
-                <InsertDriveFileIcon sx={{ fontSize: 24, color: 'text.disabled', flexShrink: 0 }} />
+                <FileText size={24} style={{ opacity: 0.4, flexShrink: 0 }} />
               )}
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography variant="caption" noWrap display="block">
@@ -210,7 +251,7 @@ export default function FileUpload({
                 </Typography>
               </Box>
               <IconButton size="small" onClick={() => handleRemove(file.name)}>
-                <CloseIcon sx={{ fontSize: 16 }} />
+                <X size={16} />
               </IconButton>
             </Box>
           ))}

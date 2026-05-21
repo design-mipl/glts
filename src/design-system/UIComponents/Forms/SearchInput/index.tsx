@@ -3,8 +3,7 @@ import TextField from '@mui/material/TextField'
 import InputAdornment from '@mui/material/InputAdornment'
 import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
-import SearchIcon from '@mui/icons-material/Search'
-import CloseIcon from '@mui/icons-material/Close'
+import { Search, X } from 'lucide-react'
 import type { SxProps, Theme } from '@mui/material/styles'
 import { tokens } from '../../../tokens'
 
@@ -82,7 +81,7 @@ export default function SearchInput({
         input: {
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon color="action" fontSize="small" />
+              <Search size={16} style={{ opacity: 0.5 }} />
             </InputAdornment>
           ),
           endAdornment: (
@@ -100,7 +99,7 @@ export default function SearchInput({
                     }
                   }}
                 >
-                  <CloseIcon fontSize="small" />
+                  <X size={16} />
                 </IconButton>
               ) : null}
             </InputAdornment>

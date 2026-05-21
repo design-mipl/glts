@@ -4,12 +4,12 @@ import DialogContent from '@mui/material/DialogContent'
 import IconButton from '@mui/material/IconButton'
 import Slide from '@mui/material/Slide'
 import Typography from '@mui/material/Typography'
-import CloseIcon from '@mui/icons-material/Close'
+import { X } from 'lucide-react'
 import { useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
-import { tokens } from '../../../tokens'
+import { tokens, BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '../../../tokens'
 import LoadingOverlay from '../LoadingOverlay'
 
 type ModalSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'fullscreen'
@@ -87,12 +87,14 @@ export default function Modal({
               height: isFullscreen ? '100vh' : 'min(100vh - 64px, 90vh)',
               maxHeight: isFullscreen ? '100vh' : '90vh',
               m: isFullscreen ? 0 : tokens.spacing[4],
-              borderRadius: isFullscreen ? 0 : tokens.borderRadius.xl,
+              borderRadius: isFullscreen ? 0 : BORDER_RADIUS.lg,
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
               backgroundImage: 'none',
-              boxShadow: isFullscreen ? 'none' : tokens.shadow.xl,
+              boxShadow: isFullscreen ? 'none' : SHADOWS.lg,
+              border: isFullscreen ? 'none' : `${BORDER_WIDTH.thin} solid`,
+              borderColor: isFullscreen ? 'transparent' : 'divider',
             },
             ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
           ],
@@ -130,7 +132,7 @@ export default function Modal({
           </Box>
           {!hideCloseButton ? (
             <IconButton aria-label="Close modal" onClick={onClose}>
-              <CloseIcon />
+              <X size={20} />
             </IconButton>
           ) : null}
         </Box>

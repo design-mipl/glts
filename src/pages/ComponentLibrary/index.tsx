@@ -35,7 +35,7 @@ export default function ComponentLibrary() {
     <Box>
       {/* Page header */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" fontWeight={700}>Component Library</Typography>
+        <Typography variant="h1">Component Library</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           Complete design system showcase — all custom components
         </Typography>

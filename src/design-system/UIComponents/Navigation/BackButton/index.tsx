@@ -1,5 +1,5 @@
 import { Button } from '@mui/material'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { SxProps } from '@mui/material'
 
@@ -26,7 +26,7 @@ export default function BackButton({ label = 'Back', onClick, href, sx }: BackBu
   return (
     <Button
       size="small"
-      startIcon={<ArrowBackIcon fontSize="small" />}
+      startIcon={<ArrowLeft size={16} />}
       onClick={handleClick}
       sx={{
         color: 'text.secondary',

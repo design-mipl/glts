@@ -1,6 +1,6 @@
 import { Breadcrumbs, Typography, Link, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import NavigateNextIcon from '@mui/icons-material/NavigateNext'
+import { ChevronRight } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
 import type { SxProps } from '@mui/material'
 
@@ -23,7 +23,7 @@ export default function Breadcrumb({ items, separator, maxItems, sx }: Breadcrum
 
   return (
     <Breadcrumbs
-      separator={separator ?? <NavigateNextIcon sx={{ fontSize: 16, color: 'text.disabled' }} />}
+      separator={separator ?? <ChevronRight size={16} style={{ color: 'inherit', opacity: 0.4 }} />}
       maxItems={effectiveMax}
       sx={{ ...sx as object }}
     >

@@ -1,12 +1,12 @@
 import MuiAlert from '@mui/material/Alert'
 import AlertTitle from '@mui/material/AlertTitle'
 import IconButton from '@mui/material/IconButton'
-import CloseIcon from '@mui/icons-material/Close'
+import { X } from 'lucide-react'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { AlertColor } from '@mui/material/Alert'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
-import { tokens } from '../../../tokens'
+import { tokens, BORDER_RADIUS, BORDER_WIDTH } from '../../../tokens'
 
 type AlertVariant = 'filled' | 'outlined' | 'soft'
 
@@ -45,7 +45,7 @@ export default function Alert({
       action={
         dismissible ? (
           <IconButton color="inherit" size="small" onClick={onDismiss} aria-label="Dismiss alert">
-            <CloseIcon fontSize="small" />
+            <X size={16} />
           </IconButton>
         ) : (
           action
@@ -53,7 +53,9 @@ export default function Alert({
       }
       sx={[
         {
-          borderRadius: tokens.borderRadius.lg,
+          borderRadius: BORDER_RADIUS.md,
+          border: `${BORDER_WIDTH.thin} solid`,
+          padding: '12px 16px',
           alignItems: title ? 'flex-start' : 'center',
           ...(isSoft
             ? {

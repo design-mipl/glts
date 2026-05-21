@@ -3,7 +3,9 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
+import { useTheme, alpha } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
+import { Calendar } from 'lucide-react'
 
 export interface DatePickerProps {
   label?: string
@@ -40,7 +42,8 @@ export default function DatePicker({
   disableFuture = false,
   sx,
 }: DatePickerProps) {
-  const inputHeight = size === 'sm' ? '36px' : '42px'
+  const theme = useTheme()
+  const inputHeight = size === 'sm' ? '34px' : '40px'
   const dayjsValue = value ? dayjs(value) : null
   const dayjsMin = minDate ? dayjs(minDate) : undefined
   const dayjsMax = maxDate ? dayjs(maxDate) : undefined
@@ -48,6 +51,42 @@ export default function DatePicker({
   const handleChange = (newVal: Dayjs | null) => {
     onChange?.(newVal ? newVal.toDate() : null)
   }
+
+  const sharedInputSx: SxProps<Theme> = [
+    {
+      '& .MuiInputBase-root': {
+        height: inputHeight,
+        fontSize: '13px',
+        borderRadius: '6px',
+        backgroundColor: theme.palette.background.paper,
+        transition: 'box-shadow 0.2s ease',
+      },
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: theme.palette.divider,
+        borderWidth: '1px',
+      },
+      '& .MuiInputBase-root:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
+        borderColor: theme.palette.text.secondary,
+      },
+      '& .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: theme.palette.primary.main,
+        borderWidth: '1.5px',
+      },
+      '& .MuiInputBase-root.Mui-focused': {
+        boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
+      },
+      '& .MuiInputBase-root.Mui-error .MuiOutlinedInput-notchedOutline': {
+        borderColor: theme.palette.error.main,
+        borderWidth: '1.5px',
+      },
+      '& .MuiFormHelperText-root': {
+        fontSize: '11px',
+        mt: '4px',
+        mx: 0,
+      },
+    },
+    ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+  ]
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -61,6 +100,7 @@ export default function DatePicker({
         disablePast={disablePast}
         disableFuture={disableFuture}
         format={format}
+        slots={{ openPickerIcon: () => <Calendar size={16} /> }}
         slotProps={{
           textField: {
             error,
@@ -68,10 +108,34 @@ export default function DatePicker({
             required,
             size: 'small',
             fullWidth,
-            sx: [
-              { '& .MuiInputBase-root': { height: inputHeight } },
-              ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
-            ],
+            sx: sharedInputSx,
+          },
+          openPickerButton: {
+            size: 'small',
+            sx: { color: 'text.secondary' },
+          },
+          desktopPaper: {
+            sx: {
+              mt: 0.5,
+              borderRadius: '8px',
+              border: '1px solid',
+              borderColor: 'divider',
+              boxShadow: theme.shadows[4],
+              '& .MuiPickersDay-root': {
+                borderRadius: '6px',
+                fontSize: '13px',
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                },
+                '&.Mui-selected': {
+                  backgroundColor: theme.palette.primary.main,
+                  '&:hover': { backgroundColor: theme.palette.primary.dark },
+                },
+                '&.MuiPickersDay-today:not(.Mui-selected)': {
+                  borderColor: theme.palette.primary.main,
+                },
+              },
+            },
           },
         }}
       />

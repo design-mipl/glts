@@ -3,7 +3,7 @@ import Box from '@mui/material/Box'
 import Collapse from '@mui/material/Collapse'
 import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import { ChevronDown } from 'lucide-react'
 import Typography from '@mui/material/Typography'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
@@ -72,7 +72,7 @@ export default function FormSection({
                   transition: tokens.transition.normal,
                 }}
               >
-                <KeyboardArrowDownIcon />
+                <ChevronDown size={20} />
               </IconButton>
             ) : null}
           </Box>

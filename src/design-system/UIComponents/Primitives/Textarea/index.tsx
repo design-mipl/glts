@@ -1,6 +1,7 @@
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
+import { useTheme, alpha } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 
 export interface TextareaProps {
@@ -40,6 +41,7 @@ export default function Textarea({
   fullWidth = false,
   sx,
 }: TextareaProps) {
+  const theme = useTheme()
   const charCount = value?.length ?? 0
   const hasError = error || (showCount && maxLength ? charCount > maxLength : false)
 
@@ -68,15 +70,67 @@ export default function Textarea({
       fullWidth={fullWidth}
       multiline
       rows={autoResize ? undefined : (rows ?? undefined)}
-      minRows={autoResize ? minRows : undefined}
+      minRows={autoResize ? minRows : (rows ?? minRows)}
       maxRows={autoResize ? maxRows : undefined}
       variant="outlined"
       slotProps={{
         input: {
           inputProps: { maxLength },
         },
+        formHelperText: { sx: { mx: 0, mt: '4px', fontSize: '11px' } },
       }}
-      sx={sx}
+      sx={[
+        {
+          '& .MuiOutlinedInput-root': {
+            fontSize: '13px',
+            lineHeight: 1.6,
+            borderRadius: '6px',
+            backgroundColor: disabled
+              ? theme.palette.action.disabledBackground
+              : theme.palette.background.paper,
+            transition: 'box-shadow 0.2s ease',
+            minHeight: '120px',
+            alignItems: 'flex-start',
+          },
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.divider,
+            borderWidth: '1px',
+          },
+          '& .MuiOutlinedInput-root:hover:not(.Mui-disabled):not(.Mui-focused) .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.text.secondary,
+          },
+          '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.main,
+            borderWidth: '1.5px',
+          },
+          '& .MuiOutlinedInput-root.Mui-focused': {
+            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
+          },
+          '& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.error.main,
+            borderWidth: '1.5px',
+          },
+          '& .MuiOutlinedInput-root.Mui-error.Mui-focused': {
+            boxShadow: `0 0 0 3px ${alpha(theme.palette.error.main, 0.12)}`,
+          },
+          '& .MuiInputBase-inputMultiline': {
+            fontSize: '13px',
+            lineHeight: 1.6,
+            fontFamily: 'inherit',
+            resize: 'vertical',
+            '&::placeholder': {
+              color: theme.palette.text.disabled,
+              opacity: 1,
+            },
+          },
+          '& .MuiFormHelperText-root': {
+            fontSize: '11px',
+            mx: 0,
+            mt: '4px',
+          },
+        },
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
     />
   )
 }

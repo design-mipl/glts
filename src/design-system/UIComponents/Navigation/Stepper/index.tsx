@@ -3,8 +3,7 @@ import {
   StepConnector, Typography, Box, useMediaQuery,
 } from '@mui/material'
 import { useTheme, styled } from '@mui/material/styles'
-import CheckIcon from '@mui/icons-material/Check'
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
+import { Check, AlertCircle } from 'lucide-react'
 import type { SxProps } from '@mui/material'
 
 export interface StepItem {
@@ -64,7 +63,7 @@ function StepIcon({ active, completed, error, index, variant }: {
         width: 28, height: 28, borderRadius: '50%',
         bgcolor: 'error.main', display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <ErrorOutlineIcon sx={{ fontSize: 16, color: '#fff' }} />
+        <AlertCircle size={16} color="#fff" />
       </Box>
     )
   }
@@ -75,7 +74,7 @@ function StepIcon({ active, completed, error, index, variant }: {
         width: 28, height: 28, borderRadius: '50%',
         bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <CheckIcon sx={{ fontSize: 16, color: '#fff' }} />
+        <Check size={16} color="#fff" />
       </Box>
     )
   }

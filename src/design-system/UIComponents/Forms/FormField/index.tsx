@@ -3,6 +3,7 @@ import Typography from '@mui/material/Typography'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 import { tokens } from '../../../tokens'
+import { AlertCircle } from 'lucide-react'
 
 export interface FormFieldProps {
   label?: string
@@ -31,7 +32,7 @@ export default function FormField({
         {
           display: 'flex',
           flexDirection: 'column',
-          gap: { xs: 4, lg: 3.5, desktop: 3 },
+          gap: 0.75,
         },
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}
@@ -46,22 +47,29 @@ export default function FormField({
           }}
         >
           {label ? (
-            <Typography
-              component="label"
-              htmlFor={labelFor}
-              variant="body2"
-              fontWeight={tokens.fontWeight.medium}
-            >
-              {label}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography
+                component="label"
+                htmlFor={labelFor}
+                sx={{
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: 'text.primary',
+                  lineHeight: 1.4,
+                  cursor: labelFor ? 'pointer' : 'default',
+                }}
+              >
+                {label}
+              </Typography>
               {required ? (
-                <Box component="span" sx={{ color: 'error.main', ml: tokens.spacing[1] }}>
+                <Box component="span" sx={{ color: 'error.main', fontSize: '13px', lineHeight: 1 }}>
                   *
                 </Box>
               ) : null}
-            </Typography>
+            </Box>
           ) : <Box />}
           {hint ? (
-            <Typography variant="caption" color="text.secondary" textAlign="right">
+            <Typography variant="caption" color="text.secondary" textAlign="right" sx={{ fontSize: '11px' }}>
               {hint}
             </Typography>
           ) : null}
@@ -69,9 +77,15 @@ export default function FormField({
       ) : null}
       {children}
       {helperText ? (
-        <Typography variant="caption" color={error ? 'error.main' : 'text.secondary'}>
-          {helperText}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: '2px' }}>
+          {error && <AlertCircle size={12} color="var(--mui-palette-error-main, #d32f2f)" style={{ flexShrink: 0 }} />}
+          <Typography
+            variant="caption"
+            sx={{ fontSize: '11px', color: error ? 'error.main' : 'text.secondary', lineHeight: 1.4 }}
+          >
+            {helperText}
+          </Typography>
+        </Box>
       ) : null}
     </Box>
   )

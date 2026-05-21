@@ -2,11 +2,8 @@ import type { FC } from 'react';
 import type { SxProps, Theme } from '@mui/material';
 import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { 
-  TrendingUp as TrendingUpIcon, 
-  TrendingDown as TrendingDownIcon, 
-  TrendingFlat as TrendingFlatIcon 
-} from '@mui/icons-material';
+import { BORDER_RADIUS } from '../../../tokens';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface TrendIndicatorProps {
   value: number;
@@ -49,14 +46,11 @@ const TrendIndicator: FC<TrendIndicatorProps> = ({
 
   const getIcon = () => {
     if (!showIcon) return null;
-    const iconStyles = {
-      fontSize: size === 'sm' ? 14 : size === 'md' ? 16 : 18,
-      mr: 0.5,
-    };
+    const iconSize = size === 'sm' ? 14 : size === 'md' ? 16 : 18;
 
-    if (isPositive) return <TrendingUpIcon sx={iconStyles} />;
-    if (isNegative) return <TrendingDownIcon sx={iconStyles} />;
-    return <TrendingFlatIcon sx={iconStyles} />;
+    if (isPositive) return <TrendingUp size={iconSize} style={{ marginRight: 4 }} />;
+    if (isNegative) return <TrendingDown size={iconSize} style={{ marginRight: 4 }} />;
+    return <Minus size={iconSize} style={{ marginRight: 4 }} />;
   };
 
   const fontSize = size === 'sm' ? '11px' : size === 'md' ? '12px' : '14px';
@@ -67,7 +61,7 @@ const TrendIndicator: FC<TrendIndicatorProps> = ({
         display: 'inline-flex',
         alignItems: 'center',
         padding: showBackground ? '2px 8px' : 0,
-        borderRadius: '12px',
+        borderRadius: showBackground ? BORDER_RADIUS.xs : 0,
         backgroundColor: showBackground ? `${color}1A` : 'transparent',
         color,
         ...sx,

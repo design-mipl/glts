@@ -2,7 +2,7 @@ import Box from '@mui/material/Box'
 import MuiDrawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import CloseIcon from '@mui/icons-material/Close'
+import { X } from 'lucide-react'
 import { useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import type { DrawerProps as MuiDrawerProps } from '@mui/material/Drawer'
@@ -94,7 +94,7 @@ export default function Drawer({
           </Box>
           {!hideCloseButton ? (
             <IconButton aria-label="Close drawer" onClick={onClose}>
-              <CloseIcon />
+              <X size={20} />
             </IconButton>
           ) : null}
         </Box>

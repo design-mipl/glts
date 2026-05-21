@@ -3,7 +3,7 @@ import { alpha } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
 import type { SxProps } from '@mui/material'
 import type { ReactNode } from 'react'
-import { tokens } from '../../../tokens'
+import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '../../../tokens'
 
 export interface BaseCardProps {
   children: ReactNode
@@ -35,20 +35,21 @@ export default function BaseCard({
       elevation={elevation}
       onClick={onClick}
       sx={{
-        borderRadius: tokens.borderRadius.lg,
-        boxShadow: tokens.shadow.md,
-        border: selected ? '2px solid' : '1px solid',
-        borderColor: selected ? 'primary.main' : alpha(theme.palette.mode === 'light' ? '#000000' : '#ffffff', 0.06),
+        borderRadius: BORDER_RADIUS.lg,
+        boxShadow: SHADOWS.sm,
+        border: selected ? BORDER_WIDTH.medium + ' solid' : BORDER_WIDTH.thin + ' solid',
+        borderColor: selected ? 'primary.main' : 'divider',
         bgcolor: selected ? alpha(theme.palette.primary.main, 0.04) : 'background.paper',
         backgroundImage: 'none',
-        transition: `box-shadow ${tokens.transition.normal}, transform ${tokens.transition.normal}`,
+        transition: 'all 0.2s ease',
         cursor: onClick || selectable ? 'pointer' : 'default',
         overflow: 'hidden',
         width: '100%',
         ...(isInteractive && {
           '&:hover': {
-            boxShadow: tokens.shadow.lg,
+            boxShadow: SHADOWS.md,
             transform: 'translateY(-2px)',
+            borderColor: alpha(theme.palette.primary.main, 0.3),
             ...(!selected && selectable && {
               borderColor: 'primary.light',
             }),

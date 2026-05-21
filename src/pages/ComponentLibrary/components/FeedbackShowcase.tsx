@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Box, Typography, Stack, Grid } from '@mui/material'
 import {
   Alert, Modal, Drawer, ConfirmDialog, LoadingOverlay,
@@ -23,7 +23,7 @@ export function FeedbackShowcase() {
       <Grid container spacing={4}>
         {/* Alert */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Alert</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Alert</Typography>
           <Stack gap={1.5}>
             <Alert severity="info" title="Information">This is an informational message.</Alert>
             <Alert severity="success" title="Success">Your changes have been saved successfully.</Alert>
@@ -36,7 +36,7 @@ export function FeedbackShowcase() {
 
         {/* Toast */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Toast</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Toast</Typography>
           <Stack direction="row" gap={1.5} flexWrap="wrap">
             <Button variant="contained" size="sm" onClick={() => showToast({ title: 'Changes saved!', variant: 'success' })}>
               Success Toast
@@ -57,7 +57,7 @@ export function FeedbackShowcase() {
 
         {/* Modal, Drawer, ConfirmDialog */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Modal / Drawer / ConfirmDialog</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Modal / Drawer / ConfirmDialog</Typography>
           <Stack direction="row" gap={1.5} flexWrap="wrap">
             <Button variant="contained" size="sm" onClick={() => setModalOpen(true)}>Open Modal</Button>
             <Button variant="outlined" size="sm" onClick={() => setDrawerOpen(true)}>Open Drawer</Button>
@@ -67,7 +67,7 @@ export function FeedbackShowcase() {
 
           <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Modal Dialog">
             <Typography variant="body2">
-              This is the modal body. You can put any content here — forms, details, confirmations.
+              This is the modal body. You can put any content here â€” forms, details, confirmations.
             </Typography>
             <Stack direction="row" gap={1} sx={{ mt: 3 }} justifyContent="flex-end">
               <Button variant="outlined" size="sm" onClick={() => setModalOpen(false)}>Cancel</Button>
@@ -94,7 +94,7 @@ export function FeedbackShowcase() {
 
         {/* LoadingOverlay wraps content */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>LoadingOverlay</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>LoadingOverlay</Typography>
           <LoadingOverlay loading={isLoading} label="Processing...">
             <Box sx={{ p: 3, bgcolor: 'action.hover', borderRadius: 1 }}>
               <Typography variant="body2">Content wrapped by LoadingOverlay. Click "Loading Overlay" above to see it.</Typography>
@@ -106,7 +106,7 @@ export function FeedbackShowcase() {
 
         {/* ProgressBar */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>ProgressBar</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>ProgressBar</Typography>
           <Stack gap={2}>
             <ProgressBar value={30} label="Storage" showValue />
             <ProgressBar value={65} color="success" label="Completion" showValue />
@@ -117,7 +117,7 @@ export function FeedbackShowcase() {
 
         {/* Popover */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Popover</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Popover</Typography>
           <Stack direction="row" gap={2}>
             <Popover
               trigger={<Button variant="outlined" size="sm">Click Popover</Button>}
@@ -132,7 +132,7 @@ export function FeedbackShowcase() {
 
         {/* Skeleton */}
         <Grid size={12}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>Skeleton</Typography>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>Skeleton</Typography>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 4 }}>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>SkeletonCard</Typography>
@@ -152,3 +152,4 @@ export function FeedbackShowcase() {
     </Box>
   )
 }
+
