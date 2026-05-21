@@ -31,6 +31,31 @@ export interface SidebarProps {
 
 const TOPBAR_HEIGHT = 52
 
+const BILLINGS_STATIC_PATHS = ['/billings/create', '/billings/stepper', '/billings/payments']
+
+export function isNavActive(href: string | undefined, currentPath: string): boolean {
+  if (!href) return false
+  if (currentPath === href) return true
+
+  if (href === '/billings') {
+    if (currentPath === '/billings') return true
+    if (BILLINGS_STATIC_PATHS.some((p) => currentPath === p || currentPath.startsWith(`${p}/`))) {
+      return false
+    }
+    if (/^\/billings\/[^/]+$/.test(currentPath)) return true
+    if (/^\/billings\/[^/]+\/edit$/.test(currentPath)) return true
+  }
+
+  return false
+}
+
+function isGroupChildActive(children: NavConfig[] | undefined, currentPath: string): boolean {
+  if (!children) return false
+  return children.some(
+    (child) => child.type === 'item' && isNavActive(child.href, currentPath),
+  )
+}
+
 function renderNavConfig(
   items: NavConfig[],
   collapsed: boolean,
@@ -53,6 +78,7 @@ function renderNavConfig(
 
     if (item.type === 'group') {
       if (item.icon) {
+        const groupActive = isGroupChildActive(item.children, currentPath)
         return (
           <NavGroup
             key={i}
@@ -60,6 +86,8 @@ function renderNavConfig(
             icon={item.icon}
             collapsed={collapsed}
             badge={typeof item.badge === 'number' ? item.badge : undefined}
+            defaultExpanded={groupActive}
+            active={groupActive}
           >
             {item.children?.map((child, j) => {
               if (child.type === 'item') {
@@ -68,7 +96,7 @@ function renderNavConfig(
                     key={j}
                     label={child.label ?? ''}
                     href={child.href}
-                    active={!!child.href && currentPath === child.href}
+                    active={isNavActive(child.href, currentPath)}
                     badge={child.badge}
                     depth={collapsed ? 0 : 1}
                     collapsed={collapsed}
@@ -94,7 +122,7 @@ function renderNavConfig(
           label={item.label ?? ''}
           icon={item.icon}
           href={item.href}
-          active={!!item.href && currentPath === item.href}
+          active={isNavActive(item.href, currentPath)}
           badge={item.badge}
           collapsed={collapsed}
         />

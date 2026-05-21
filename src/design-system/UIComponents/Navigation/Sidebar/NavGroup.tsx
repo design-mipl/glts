@@ -1,7 +1,7 @@
 import { Box, Typography, Collapse, Popper, Paper } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { ChevronDown } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { tokens, BORDER_RADIUS } from '../../../tokens'
 
@@ -12,6 +12,7 @@ export interface NavGroupProps {
   defaultExpanded?: boolean
   collapsed?: boolean
   badge?: number
+  active?: boolean
 }
 
 export default function NavGroup({
@@ -21,11 +22,16 @@ export default function NavGroup({
   defaultExpanded = true,
   collapsed = false,
   badge,
+  active = false,
 }: NavGroupProps) {
   const theme = useTheme()
   const navigation = theme.foundation.navigation
   const [expanded, setExpanded] = useState(defaultExpanded)
   const [flyoutOpen, setFlyoutOpen] = useState(false)
+
+  useEffect(() => {
+    if (defaultExpanded) setExpanded(true)
+  }, [defaultExpanded])
   const anchorRef = useRef<HTMLDivElement>(null)
 
   // Section label group (no icon) — just a label + children
@@ -145,11 +151,12 @@ export default function NavGroup({
           height: '32px',
           borderRadius: BORDER_RADIUS.sm,
           cursor: 'pointer',
-          color: navigation.textSecondary,
+          color: active ? navigation.activeText : navigation.textSecondary,
+          bgcolor: active ? navigation.activeBg : 'transparent',
           my: '1px',
           transition: 'all 0.2s ease',
           '&:hover': {
-            bgcolor: navigation.hover,
+            bgcolor: active ? navigation.activeBg : navigation.hover,
             color: navigation.textPrimary,
           },
           userSelect: 'none',
@@ -161,7 +168,7 @@ export default function NavGroup({
         <Typography
           sx={{
             fontSize: '13px',
-            fontWeight: 450,
+            fontWeight: active ? 600 : 450,
             lineHeight: 1,
             flex: 1,
             whiteSpace: 'nowrap',

@@ -39,6 +39,16 @@ export interface DataTableProps {
   actions?: React.ReactNode
   /** When false, toolbar column picker is hidden. Default: show when at least two hideable columns exist. */
   showColumnPicker?: boolean
+  /** Hide toolbar (use external toolbar in parent card). */
+  hideToolbar?: boolean
+  /** Hide built-in pagination (parent renders pagination). */
+  hidePagination?: boolean
+  /** Flat table inside parent card — no outer border/shadow on table container. */
+  embedded?: boolean
+  /** Show per-column search inputs in headers. Default true. */
+  showColumnSearch?: boolean
+  /** Excel-style column filter popup trigger per header. */
+  onColumnFilterClick?: (event: React.MouseEvent<HTMLElement>, columnKey: string) => void
 }
 
 function getHideDisplay(hideBelow?: FoundationBreakpointKey) {
@@ -80,6 +90,11 @@ export default function DataTable({
   title,
   actions,
   showColumnPicker,
+  hideToolbar = false,
+  hidePagination = false,
+  embedded = false,
+  showColumnSearch = true,
+  onColumnFilterClick,
 }: DataTableProps) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
@@ -270,39 +285,63 @@ export default function DataTable({
   )
 
   // ── Desktop table view ─────────────────────────────────────────────
+  const compactCellSx = embedded
+    ? { py: '8px', px: '8px', fontSize: '13px' }
+    : { py: '12px', px: '12px' }
+  const compactHeaderCellSx = embedded
+    ? { py: '8px', px: '8px', verticalAlign: 'middle' as const }
+    : { py: '12px', px: '12px', verticalAlign: 'top' as const }
+
   const tableView = (
     <Box>
-      <TableToolbar
-        title={title}
-        searchValue={state.searchQuery}
-        onSearch={handleGlobalSearch}
-        filters={state.filters}
-        onFiltersChange={(filters) => onStateChange({ ...state, filters, page: 0 })}
-        columns={columns}
-        selectedCount={state.selectedRows.length}
-        selectedRows={selectedData}
-        bulkActions={bulkActions}
-        onBulkAction={(action, rows) => action.onClick(rows)}
-        onDeselectAll={() => onStateChange({ ...state, selectedRows: [] })}
-        actions={actions}
-        showColumnPicker={effectiveShowColumnPicker}
-        hiddenColumnKeys={state.hiddenColumnKeys}
-        onHiddenColumnKeysChange={(keys) =>
-          onStateChange({ ...state, hiddenColumnKeys: keys })}
-      />
+      {!hideToolbar && (
+        <TableToolbar
+          title={title}
+          searchValue={state.searchQuery}
+          onSearch={handleGlobalSearch}
+          filters={state.filters}
+          onFiltersChange={(filters) => onStateChange({ ...state, filters, page: 0 })}
+          columns={columns}
+          selectedCount={state.selectedRows.length}
+          selectedRows={selectedData}
+          bulkActions={bulkActions}
+          onBulkAction={(action, rows) => action.onClick(rows)}
+          onDeselectAll={() => onStateChange({ ...state, selectedRows: [] })}
+          actions={actions}
+          showColumnPicker={effectiveShowColumnPicker}
+          hiddenColumnKeys={state.hiddenColumnKeys}
+          onHiddenColumnKeysChange={(keys) =>
+            onStateChange({ ...state, hiddenColumnKeys: keys })}
+        />
+      )}
 
       <TableContainer
         sx={{
           maxHeight: height !== 'auto' ? height : undefined,
           overflowX: 'auto',
-          mt: 1,
-          border: `${BORDER_WIDTH.thin} solid`,
-          borderColor: 'divider',
-          borderRadius: BORDER_RADIUS.lg,
-          boxShadow: SHADOWS.sm,
+          mt: embedded ? 0 : 1,
+          border: embedded ? 'none' : `${BORDER_WIDTH.thin} solid`,
+          borderColor: embedded ? undefined : 'divider',
+          borderRadius: embedded ? 0 : BORDER_RADIUS.lg,
+          boxShadow: embedded ? 'none' : SHADOWS.sm,
         }}
       >
-        <Table stickyHeader={stickyHeader} size="small">
+        <Table
+          stickyHeader={stickyHeader}
+          size="small"
+          sx={
+            embedded
+              ? {
+                  '& th': {
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    bgcolor: headerBg,
+                  },
+                  '& td': { fontSize: '13px' },
+                }
+              : undefined
+          }
+        >
           {/* Header */}
           <TableHead>
             <TableRow>
@@ -334,9 +373,7 @@ export default function DataTable({
                     minWidth: col.minWidth,
                     boxShadow: col.sticky ? '4px 0 4px -2px rgba(0,0,0,0.08)' : undefined,
                     display: getHideDisplay(col.hideBelow),
-                    verticalAlign: 'top',
-                    py: '12px',
-                    px: '12px',
+                    ...compactHeaderCellSx,
                   }}
                 >
                   <ColumnHeader
@@ -347,6 +384,12 @@ export default function DataTable({
                     searchValue={state.columnSearch[col.key] ?? ''}
                     onSearch={handleColumnSearch}
                     filterCount={state.filters.filter(f => f.columnKey === col.key).length}
+                    showColumnSearch={showColumnSearch}
+                    onFilterClick={
+                      onColumnFilterClick && col.key !== 'actions'
+                        ? (e) => onColumnFilterClick(e, col.key)
+                        : undefined
+                    }
                   />
                 </TableCell>
               ))}
@@ -408,8 +451,7 @@ export default function DataTable({
                         <TableCell
                           key={col.key}
                           sx={{
-                            py: '12px',
-                            px: '12px',
+                            ...compactCellSx,
                             fontSize: 'inherit',
                             lineHeight: '20px',
                             borderBottom: '1px solid',
@@ -480,15 +522,16 @@ export default function DataTable({
         </Table>
       </TableContainer>
 
-      {/* Pagination */}
-      <Pagination
-        page={state.page}
-        pageSize={state.pageSize}
-        total={totalRows}
-        onPage={(p) => onStateChange({ ...state, page: p })}
-        onPageSize={(s) => onStateChange({ ...state, pageSize: s, page: 0 })}
-        loading={loading}
-      />
+      {!hidePagination && (
+        <Pagination
+          page={state.page}
+          pageSize={state.pageSize}
+          total={totalRows}
+          onPage={(p) => onStateChange({ ...state, page: p })}
+          onPageSize={(s) => onStateChange({ ...state, pageSize: s, page: 0 })}
+          loading={loading}
+        />
+      )}
     </Box>
   )
 

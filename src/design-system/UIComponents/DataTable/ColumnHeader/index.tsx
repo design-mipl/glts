@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
+import type { MouseEvent } from 'react'
 import { Box, Typography, IconButton, InputBase, Tooltip, Badge } from '@mui/material'
 import { ArrowUpDown, ArrowUp, ArrowDown, Filter, X } from 'lucide-react'
 import { BORDER_RADIUS, BORDER_WIDTH } from '../../../tokens'
@@ -12,6 +13,8 @@ export interface ColumnHeaderProps {
   searchValue: string
   onSearch: (key: string, value: string) => void
   filterCount: number
+  showColumnSearch?: boolean
+  onFilterClick?: (event: MouseEvent<HTMLElement>) => void
 }
 
 export default function ColumnHeader({
@@ -22,6 +25,8 @@ export default function ColumnHeader({
   searchValue,
   onSearch,
   filterCount,
+  showColumnSearch = true,
+  onFilterClick,
 }: ColumnHeaderProps) {
   const [localSearch, setLocalSearch] = useState(searchValue)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -74,7 +79,25 @@ export default function ColumnHeader({
             </IconButton>
           </Tooltip>
         )}
-        {column.filterable !== false && filterCount > 0 && (
+        {onFilterClick && (
+          <Tooltip title="Filter column">
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation()
+                onFilterClick(e)
+              }}
+              sx={{
+                p: 0.25,
+                color: filterCount > 0 ? 'primary.main' : 'text.disabled',
+                '&:hover': { color: 'text.secondary' },
+              }}
+            >
+              <Filter size={14} />
+            </IconButton>
+          </Tooltip>
+        )}
+        {!onFilterClick && column.filterable !== false && filterCount > 0 && (
           <Badge badgeContent={filterCount} color="primary" sx={{ '& .MuiBadge-badge': { fontSize: 10, minWidth: 16, height: 16 } }}>
             <Filter size={14} style={{ color: 'inherit' }} />
           </Badge>
@@ -82,7 +105,7 @@ export default function ColumnHeader({
       </Box>
 
       {/* Column search */}
-      {column.searchable !== false && (
+      {showColumnSearch && column.searchable !== false && (
         <Box
           sx={{
             display: 'flex',

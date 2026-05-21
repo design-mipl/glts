@@ -1,16 +1,16 @@
 import Box from '@mui/material/Box'
+import FormHelperText from '@mui/material/FormHelperText'
 import Typography from '@mui/material/Typography'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
-import { tokens } from '../../../tokens'
-import { AlertCircle } from 'lucide-react'
 
 export interface FormFieldProps {
   label?: string
   required?: boolean
+  optional?: boolean
+  hint?: string
   error?: boolean
   helperText?: string
-  hint?: string
   children: ReactNode
   labelFor?: string
   sx?: SxProps<Theme>
@@ -19,9 +19,10 @@ export interface FormFieldProps {
 export default function FormField({
   label,
   required = false,
+  optional = false,
+  hint,
   error = false,
   helperText,
-  hint,
   children,
   labelFor,
   sx,
@@ -29,11 +30,7 @@ export default function FormField({
   return (
     <Box
       sx={[
-        {
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 0.75,
-        },
+        { display: 'flex', flexDirection: 'column' },
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}
     >
@@ -41,9 +38,10 @@ export default function FormField({
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'baseline',
+            alignItems: 'center',
             justifyContent: 'space-between',
-            gap: tokens.spacing[3],
+            gap: 0.5,
+            mb: 0.75,
           }}
         >
           {label ? (
@@ -52,7 +50,7 @@ export default function FormField({
                 component="label"
                 htmlFor={labelFor}
                 sx={{
-                  fontSize: '13px',
+                  fontSize: 14,
                   fontWeight: 600,
                   color: 'text.primary',
                   lineHeight: 1.4,
@@ -62,14 +60,21 @@ export default function FormField({
                 {label}
               </Typography>
               {required ? (
-                <Box component="span" sx={{ color: 'error.main', fontSize: '13px', lineHeight: 1 }}>
+                <Typography component="span" sx={{ color: 'error.main', fontSize: 14, lineHeight: 1 }}>
                   *
-                </Box>
+                </Typography>
+              ) : null}
+              {optional && !required ? (
+                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+                  optional
+                </Typography>
               ) : null}
             </Box>
-          ) : <Box />}
+          ) : (
+            <Box />
+          )}
           {hint ? (
-            <Typography variant="caption" color="text.secondary" textAlign="right" sx={{ fontSize: '11px' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
               {hint}
             </Typography>
           ) : null}
@@ -77,15 +82,9 @@ export default function FormField({
       ) : null}
       {children}
       {helperText ? (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: '2px' }}>
-          {error && <AlertCircle size={12} color="var(--mui-palette-error-main, #d32f2f)" style={{ flexShrink: 0 }} />}
-          <Typography
-            variant="caption"
-            sx={{ fontSize: '11px', color: error ? 'error.main' : 'text.secondary', lineHeight: 1.4 }}
-          >
-            {helperText}
-          </Typography>
-        </Box>
+        <FormHelperText error={error} sx={{ mt: 0.5, mx: 0 }}>
+          {helperText}
+        </FormHelperText>
       ) : null}
     </Box>
   )

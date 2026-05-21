@@ -6,10 +6,15 @@ import {
 } from '@/design-system/UIComponents'
 import SettingsPanel from '@/pages/Settings'
 import ComponentLibrary from '@/pages/ComponentLibrary'
+import BillingsLayout from '@/pages/Billings'
+import ListingPage from '@/pages/Billings/components/ListingPage'
+import DetailPage from '@/pages/Billings/components/DetailPage'
+import FormPage from '@/pages/Billings/components/FormPage'
+import StepperFormPage from '@/pages/Billings/components/StepperFormPage'
+import PaymentsPage from '@/pages/Billings/components/PaymentsPage'
 import {
   LayoutDashboard,
   BarChart2,
-  Users,
   Folder,
   FileText,
 } from 'lucide-react'
@@ -39,12 +44,13 @@ const navConfig: NavConfig[] = [
     children: [
       {
         type: 'group',
-        label: 'Users',
-        icon: <Users size={16} strokeWidth={1.75} />,
+        label: 'Billings',
+        icon: <FileText size={16} strokeWidth={1.75} />,
         children: [
-          { type: 'item', label: 'All Users', href: '/users' },
-          { type: 'item', label: 'Roles', href: '/users/roles' },
-          { type: 'item', label: 'Permissions', href: '/users/permissions' },
+          { type: 'item', label: 'All Invoices', href: '/billings' },
+          { type: 'item', label: 'Create Invoice', href: '/billings/create' },
+          { type: 'item', label: 'Stepper Demo', href: '/billings/stepper' },
+          { type: 'item', label: 'Payments', href: '/billings/payments' },
         ],
       },
       {
@@ -52,7 +58,6 @@ const navConfig: NavConfig[] = [
         label: 'Records',
         icon: <Folder size={16} strokeWidth={1.75} />,
         href: '/records',
-        badge: 12,
       },
       {
         type: 'item',
@@ -83,6 +88,14 @@ export default function App() {
         >
           <Routes>
             <Route path="/" element={<ComponentLibrary />} />
+            <Route path="/billings" element={<BillingsLayout />}>
+              <Route index element={<ListingPage />} />
+              <Route path="payments" element={<PaymentsPage />} />
+              <Route path="create" element={<FormPage />} />
+              <Route path="stepper" element={<StepperFormPage />} />
+              <Route path=":id/edit" element={<FormPage />} />
+              <Route path=":id" element={<DetailPage />} />
+            </Route>
             <Route path="*" element={<ComponentLibrary />} />
           </Routes>
           <SettingsPanel />

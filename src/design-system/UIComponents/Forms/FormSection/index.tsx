@@ -24,8 +24,8 @@ export default function FormSection({
   title,
   description,
   children,
-  columns = 1,
-  divider = true,
+  columns = 2,
+  divider = false,
   collapsible = false,
   defaultCollapsed = false,
   sx,
@@ -38,15 +38,13 @@ export default function FormSection({
         {
           display: 'flex',
           flexDirection: 'column',
-          gap: tokens.spacing[4],
+          mb: 4,
         },
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}
     >
-      {divider ? <Divider /> : null}
-
       {(title || description) ? (
-        <Box>
+        <Box sx={{ mb: 2 }}>
           <Box
             sx={{
               display: 'flex',
@@ -56,7 +54,21 @@ export default function FormSection({
             }}
           >
             <Box>
-              {title ? <Typography variant="h6">{title}</Typography> : null}
+              {title ? (
+                <Typography
+                  variant="overline"
+                  sx={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'text.secondary',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {title}
+                </Typography>
+              ) : null}
               {description ? (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: tokens.spacing[1] }}>
                   {description}
@@ -85,14 +97,16 @@ export default function FormSection({
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              md: `repeat(${columns}, minmax(0, 1fr))`,
+              md: columns === 1 ? '1fr' : `repeat(${columns}, minmax(0, 1fr))`,
             },
-            gap: tokens.spacing[4],
+            gap: 3,
           }}
         >
           {children}
         </Box>
       </Collapse>
+
+      {divider ? <Divider sx={{ mt: 4 }} /> : null}
     </Box>
   )
 }
