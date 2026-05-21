@@ -22,6 +22,8 @@ export interface AppShellProps {
   user: UserMenuUser
   logo?: ReactNode
   logoCollapsed?: ReactNode
+  appName?: string
+  logoMark?: string
   notificationCount?: number
   onNotificationClick?: () => void
   onSignOut?: () => void
@@ -40,6 +42,8 @@ export default function AppShell({
   user,
   logo,
   logoCollapsed,
+  appName = 'Foundation',
+  logoMark = 'F',
   notificationCount,
   onNotificationClick,
   onSignOut,
@@ -120,8 +124,8 @@ export default function AppShell({
             currentPath={location.pathname}
             mobileOpen={false}
             onMobileClose={() => {}}
-            logoMark="F"
-            appName="Foundation"
+            logoMark={logoMark}
+            appName={appName}
           />
         </Box>
       )}
@@ -167,8 +171,8 @@ export default function AppShell({
             currentPath={location.pathname}
             mobileOpen={mobileDrawerOpen}
             onMobileClose={() => setMobileDrawerOpen(false)}
-            logoMark="F"
-            appName="Foundation"
+            logoMark={logoMark}
+            appName={appName}
           />
         </MuiDrawer>
       )}

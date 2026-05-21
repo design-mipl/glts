@@ -3,7 +3,7 @@ import chroma from 'chroma-js';
 // ─── Brand color ─────────────────────────────────────────────────────────────
 // This is the ONLY value that changes when rebranding.
 // Every color in the system derives from here.
-export const BRAND_COLOR = '#6366F1';
+export const BRAND_COLOR = '#76C76B';
 
 // ─── Color scale generation ───────────────────────────────────────────────────
 type ColorScale = {

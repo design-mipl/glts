@@ -133,16 +133,62 @@ function renderNavConfig(
   })
 }
 
+function DefaultLogoMark({
+  logoMark,
+}: {
+  logoMark: string
+}) {
+  const theme = useTheme()
+  return (
+    <Box
+      sx={{
+        width: 28,
+        height: 28,
+        borderRadius: tokens.borderRadius.md,
+        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      <Typography
+        sx={{
+          color: '#fff',
+          fontSize: '12px',
+          fontWeight: 700,
+          lineHeight: 1,
+        }}
+      >
+        {logoMark}
+      </Typography>
+    </Box>
+  )
+}
+
 function SidebarContent({
   navConfig,
   collapsed,
   onCollapse,
   currentPath = '',
+  logo,
+  logoCollapsed,
   logoMark = 'F',
   appName = 'Foundation',
-}: Pick<SidebarProps, 'navConfig' | 'collapsed' | 'onCollapse' | 'currentPath' | 'logoMark' | 'appName'>) {
+}: Pick<
+  SidebarProps,
+  | 'navConfig'
+  | 'collapsed'
+  | 'onCollapse'
+  | 'currentPath'
+  | 'logo'
+  | 'logoCollapsed'
+  | 'logoMark'
+  | 'appName'
+>) {
   const theme = useTheme()
   const navigation = theme.foundation.navigation
+  const collapsedBrand = logoCollapsed ?? logo
 
   return (
     <Box
@@ -174,44 +220,21 @@ function SidebarContent({
           }}
         >
           <Stack direction="row" alignItems="center" gap={1.5} sx={{ minWidth: 0, flex: 1 }}>
-            {/* Logo mark */}
-            <Box
-              sx={{
-                width: 28,
-                height: 28,
-                borderRadius: tokens.borderRadius.md,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
+            {logo ?? <DefaultLogoMark logoMark={logoMark} />}
+            {!logo && appName ? (
               <Typography
                 sx={{
-                  color: '#fff',
-                  fontSize: '12px',
+                  fontSize: '14px',
                   fontWeight: 700,
-                  lineHeight: 1,
+                  color: navigation.textPrimary,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               >
-                {logoMark}
+                {appName}
               </Typography>
-            </Box>
-
-            {/* App name */}
-            <Typography
-              sx={{
-                fontSize: '14px',
-                fontWeight: 700,
-                color: navigation.textPrimary,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {appName}
-            </Typography>
+            ) : null}
           </Stack>
 
           {/* Collapse button */}
@@ -250,28 +273,7 @@ function SidebarContent({
               },
             }}
           >
-            <Box
-              sx={{
-                width: 28,
-                height: 28,
-                borderRadius: tokens.borderRadius.md,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Typography
-                sx={{
-                  color: '#fff',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  lineHeight: 1,
-                }}
-              >
-                {logoMark}
-              </Typography>
-            </Box>
+            {collapsedBrand ?? <DefaultLogoMark logoMark={logoMark} />}
           </Box>
         </Tooltip>
       )}
@@ -324,6 +326,8 @@ export default function Sidebar({
   navConfig,
   onCollapse,
   currentPath,
+  logo,
+  logoCollapsed,
   logoMark = 'F',
   appName = 'Foundation',
 }: SidebarProps) {
@@ -335,6 +339,8 @@ export default function Sidebar({
         collapsed={collapsed}
         onCollapse={onCollapse}
         currentPath={currentPath}
+        logo={logo}
+        logoCollapsed={logoCollapsed}
         logoMark={logoMark}
         appName={appName}
       />
@@ -363,6 +369,8 @@ export default function Sidebar({
           collapsed={false}
           onCollapse={onCollapse}
           currentPath={currentPath}
+          logo={logo}
+          logoCollapsed={logoCollapsed}
           logoMark={logoMark}
           appName={appName}
         />
