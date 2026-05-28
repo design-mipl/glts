@@ -1,12 +1,12 @@
 import { Box, Typography, Button, Card } from '@mui/material'
 import { Construction, ArrowRight } from 'lucide-react'
 import {
-  publicColors,
   publicFonts,
   publicLayout,
   publicShadows,
   publicTypography,
-  primaryButtonSx,
+  usePublicBrandColors,
+  getPrimaryButtonSx,
 } from '../theme/publicBrand'
 
 interface ComingSoonPageProps {
@@ -20,6 +20,7 @@ export function ComingSoonPage({
   description = 'This page is under development. Check back soon!',
   returnLink = { text: 'Back to Home', href: '/' },
 }: ComingSoonPageProps) {
+  const colors = usePublicBrandColors()
   return (
     <Box
       sx={{
@@ -30,7 +31,7 @@ export function ComingSoonPage({
         minHeight: '60vh',
         py: publicLayout.sectionMajor,
         px: 3,
-        bgcolor: publicColors.surface,
+        bgcolor: colors.surface,
         fontFamily: publicFonts.body,
       }}
     >
@@ -41,7 +42,7 @@ export function ComingSoonPage({
           width: '100%',
           textAlign: 'center',
           borderRadius: publicLayout.cardRadius,
-          border: `1px solid ${publicColors.border}`,
+          border: `1px solid ${colors.border}`,
           boxShadow: publicShadows.card,
         }}
       >
@@ -50,7 +51,7 @@ export function ComingSoonPage({
             width: 72,
             height: 72,
             borderRadius: '18px',
-            bgcolor: publicColors.greenMuted,
+            bgcolor: colors.greenMuted,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -58,14 +59,14 @@ export function ComingSoonPage({
             mb: 4,
           }}
         >
-          <Construction size={36} color={publicColors.greenBright} />
+          <Construction size={36} color={colors.greenBright} />
         </Box>
         <Typography
           sx={{
             fontFamily: publicFonts.heading,
             fontWeight: 800,
             fontSize: publicTypography.h2,
-            color: publicColors.navy,
+            color: colors.navy,
             mb: 2,
           }}
         >
@@ -73,7 +74,7 @@ export function ComingSoonPage({
         </Typography>
         <Typography
           sx={{
-            color: publicColors.textSecondary,
+            color: colors.textSecondary,
             fontSize: publicTypography.bodyLg,
             lineHeight: 1.75,
             mb: 4,
@@ -85,7 +86,7 @@ export function ComingSoonPage({
           variant="contained"
           href={returnLink.href}
           endIcon={<ArrowRight size={18} />}
-          sx={{ ...primaryButtonSx, px: 4, py: 1.5 }}
+          sx={{ ...getPrimaryButtonSx(colors), px: 4, py: 1.5 }}
         >
           {returnLink.text}
         </Button>

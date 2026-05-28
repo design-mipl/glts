@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
+import LinkExtension from '@tiptap/extension-link'
+import UnderlineExtension from '@tiptap/extension-underline'
 import {
   Box, IconButton, Tooltip, Divider, Typography, useTheme,
 } from '@mui/material'
@@ -98,6 +100,11 @@ export default function RichTextEditor({
   const editor = useEditor({
     extensions: [
       StarterKit,
+      UnderlineExtension,
+      LinkExtension.configure({
+        openOnClick: false,
+        autolink: true,
+      }),
       Placeholder.configure({ placeholder }),
     ],
     content: value,

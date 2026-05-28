@@ -10,6 +10,11 @@ import type { SxProps, Theme } from '@mui/material/styles'
 
 export interface FileUploadProps {
   label?: string
+  /** Main line inside the drop zone (default: generic file picker copy). */
+  dropzoneTitle?: string
+  /** Secondary line inside the drop zone; falls back to accept/maxSize when omitted. */
+  dropzoneCaption?: string
+  browseLabel?: string
   accept?: string
   multiple?: boolean
   maxSize?: number
@@ -29,8 +34,33 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+function getFileSignature(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`
+}
+
+function fileMatchesAccept(file: File, accept: string): boolean {
+  const allowed = accept.split(',').map(token => token.trim()).filter(Boolean)
+  return allowed.some(token => {
+    if (token.startsWith('.')) {
+      return file.name.toLowerCase().endsWith(token.toLowerCase())
+    }
+    if (token.endsWith('/*')) {
+      const prefix = token.slice(0, -1)
+      if (file.type && file.type.startsWith(prefix)) return true
+      if (prefix === 'image/') {
+        return /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif|tiff?)$/i.test(file.name)
+      }
+      return false
+    }
+    return file.type === token
+  })
+}
+
 export default function FileUpload({
   label,
+  dropzoneTitle = 'Choose a file or drag & drop it here',
+  dropzoneCaption,
+  browseLabel = 'Browse Files',
   accept,
   multiple = false,
   maxSize,
@@ -45,13 +75,24 @@ export default function FileUpload({
 }: FileUploadProps) {
   const theme = useTheme()
   const inputRef = useRef<HTMLInputElement>(null)
+  const filesRef = useRef<File[]>([])
   const [dragOver, setDragOver] = useState(false)
   const [files, setFiles] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({})
 
+  const commitFiles = useCallback(
+    (next: File[]) => {
+      filesRef.current = next
+      setFiles(next)
+      onUpload(next)
+    },
+    [onUpload],
+  )
+
   const processFiles = useCallback(
     (incoming: File[]) => {
-      if (maxFiles && files.length + incoming.length > maxFiles) {
+      const currentFiles = filesRef.current
+      if (maxFiles && currentFiles.length + incoming.length > maxFiles) {
         onError?.(`Maximum ${maxFiles} files allowed`)
         return
       }
@@ -62,13 +103,7 @@ export default function FileUpload({
           continue
         }
         if (accept) {
-          const allowed = accept.split(',').map((a) => a.trim())
-          const ok = allowed.some((a) => {
-            if (a.startsWith('.')) return file.name.endsWith(a)
-            if (a.endsWith('/*')) return file.type.startsWith(a.slice(0, -2))
-            return file.type === a
-          })
-          if (!ok) {
+          if (!fileMatchesAccept(file, accept)) {
             onError?.(`${file.name} is not an allowed file type`)
             continue
           }
@@ -81,12 +116,21 @@ export default function FileUpload({
         }
       }
       if (valid.length) {
-        const next = multiple ? [...files, ...valid] : valid
-        setFiles(next)
-        onUpload(next)
+        const currentKeys = new Set(currentFiles.map(getFileSignature))
+        const uniqueIncoming = valid.filter(file => !currentKeys.has(getFileSignature(file)))
+        const next = multiple
+          ? uniqueIncoming.length > 0
+            ? [...currentFiles, ...uniqueIncoming]
+            : currentFiles
+          : valid
+        if (next.length === currentFiles.length && multiple) {
+          onError?.('This file is already in the upload list')
+          return
+        }
+        commitFiles(next)
       }
     },
-    [files, maxFiles, maxSize, accept, multiple, preview, onUpload, onError],
+    [maxFiles, maxSize, accept, multiple, preview, commitFiles, onError],
   )
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -107,15 +151,15 @@ export default function FileUpload({
     if (e.target.files) processFiles(Array.from(e.target.files))
     e.target.value = ''
   }
-  const handleRemove = (name: string) => {
-    const next = files.filter((f) => f.name !== name)
-    setFiles(next)
-    onUpload(next)
-    if (previewUrls[name]) {
-      URL.revokeObjectURL(previewUrls[name])
-      setPreviewUrls((prev) => {
+  const handleRemove = (signature: string) => {
+    const removed = filesRef.current.find(file => getFileSignature(file) === signature)
+    const next = filesRef.current.filter(file => getFileSignature(file) !== signature)
+    commitFiles(next)
+    if (removed && previewUrls[removed.name]) {
+      URL.revokeObjectURL(previewUrls[removed.name])
+      setPreviewUrls(prev => {
         const copy = { ...prev }
-        delete copy[name]
+        delete copy[removed.name]
         return copy
       })
     }
@@ -182,12 +226,11 @@ export default function FileUpload({
           </Box>
         </Box>
         <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
-          Choose a file or drag & drop it here
+          {dropzoneTitle}
         </Typography>
         <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
-          {accept
-            ? accept.replace(/,/g, ', ')
-            : 'All file types supported'}{maxSize ? ` — up to ${formatBytes(maxSize)}` : ''}
+          {dropzoneCaption ??
+            `${accept ? accept.replace(/,/g, ', ') : 'All file types supported'}${maxSize ? ` — up to ${formatBytes(maxSize)}` : ''}`}
         </Typography>
         <MuiButton
           variant="outlined"
@@ -206,7 +249,7 @@ export default function FileUpload({
             '&:hover': { borderColor: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.04) },
           }}
         >
-          Browse Files
+          {browseLabel}
         </MuiButton>
       </Box>
 
@@ -220,7 +263,7 @@ export default function FileUpload({
         <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           {files.map((file) => (
             <Box
-              key={file.name}
+              key={getFileSignature(file)}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -250,7 +293,7 @@ export default function FileUpload({
                   {formatBytes(file.size)}
                 </Typography>
               </Box>
-              <IconButton size="small" onClick={() => handleRemove(file.name)}>
+              <IconButton size="small" onClick={() => handleRemove(getFileSignature(file))}>
                 <X size={16} />
               </IconButton>
             </Box>

@@ -1,0 +1,218 @@
+import { useState } from 'react'
+import { Box, Typography, Chip } from '@mui/material'
+import { BaseCard } from '@/design-system/UIComponents'
+import type { Country } from '@/shared/types/visa'
+import { getCountryHeroImageUrl } from '@/shared/services/visaService'
+import { formatEtaShort, isFastVisa } from '@/shared/utils/countryDisplay'
+import { publicFonts, usePublicBrandColors } from '../theme/publicSiteTokens'
+
+interface DestinationListingCardProps {
+  country: Country
+  href?: string
+}
+
+export function DestinationListingCard({ country, href }: DestinationListingCardProps) {
+  const colors = usePublicBrandColors()
+  const [imgError, setImgError] = useState(false)
+  const link = href ?? `/countries/${country.id}`
+  const eta = formatEtaShort(country.processingTime)
+  const fast = isFastVisa(country)
+
+  return (
+    <Box
+      component="a"
+      href={link}
+      sx={{
+        display: 'block',
+        textDecoration: 'none',
+        color: 'inherit',
+        height: '100%',
+      }}
+    >
+      <BaseCard
+        hoverable
+        sx={{
+          p: 1.5,
+          height: '100%',
+          borderRadius: '16px',
+          border: `1px solid ${colors.border}`,
+          boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)',
+          bgcolor: colors.white,
+          transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s',
+          '&:hover': {
+            borderColor: colors.greenBright,
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.1)',
+          },
+        }}
+      >
+        {/* Photo header — no overlay */}
+        <Box
+          sx={{
+            position: 'relative',
+            height: 112,
+            borderRadius: '12px',
+            overflow: 'hidden',
+            mb: 1.5,
+            bgcolor: colors.surfaceAlt,
+          }}
+        >
+          {imgError ? (
+            <Box
+              sx={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: `linear-gradient(145deg, ${colors.navyLight} 0%, ${colors.navy} 100%)`,
+              }}
+            >
+              <Typography sx={{ fontSize: '48px', lineHeight: 1 }}>{country.flags}</Typography>
+            </Box>
+          ) : (
+            <Box
+              component="img"
+              src={getCountryHeroImageUrl(country)}
+              alt={country.name}
+              loading="lazy"
+              onError={() => setImgError(true)}
+              sx={{
+                display: 'block',
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
+            />
+          )}
+
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 8,
+              left: 8,
+              width: 28,
+              height: 28,
+              borderRadius: '50%',
+              bgcolor: colors.white,
+              border: `1px solid ${colors.border}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+            }}
+          >
+            {country.flags}
+          </Box>
+
+          {fast && (
+            <Chip
+              label="Fast"
+              size="small"
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                height: 22,
+                fontSize: '11px',
+                fontWeight: 700,
+                bgcolor: colors.white,
+                color: colors.greenDark,
+                border: `1px solid ${colors.border}`,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                '& .MuiChip-label': { px: 1 },
+              }}
+            />
+          )}
+        </Box>
+
+        {/* Title row */}
+        <Box sx={{ mb: 0.25, px: 0.25 }}>
+          <Typography
+            sx={{
+              fontFamily: publicFonts.heading,
+              fontSize: '17px',
+              fontWeight: 800,
+              color: colors.navy,
+              lineHeight: 1.2,
+            }}
+          >
+            {country.name}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '12px',
+              color: colors.textSecondary,
+              lineHeight: 1.35,
+              mt: 0.25,
+            }}
+          >
+            {country.cities}
+          </Typography>
+        </Box>
+
+        {/* Dotted divider + metrics */}
+        <Box
+          sx={{
+            mt: 1.25,
+            pt: 1.25,
+            borderTop: `1px dashed ${colors.border}`,
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 1,
+            px: 0.25,
+          }}
+        >
+          <Box>
+            <Typography
+              sx={{
+                fontSize: '10px',
+                fontWeight: 700,
+                color: colors.textMuted,
+                letterSpacing: '0.06em',
+                mb: 0.25,
+              }}
+            >
+              ETA
+            </Typography>
+            <Typography sx={{ fontSize: '15px', fontWeight: 800, color: colors.navy }}>
+              {eta}
+            </Typography>
+          </Box>
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography
+              sx={{
+                fontSize: '10px',
+                fontWeight: 700,
+                color: colors.textMuted,
+                letterSpacing: '0.06em',
+                mb: 0.25,
+              }}
+            >
+              FROM
+            </Typography>
+            <Typography sx={{ fontSize: '15px', fontWeight: 800, color: colors.navy }}>
+              ₹{country.price.toLocaleString('en-IN')}
+            </Typography>
+          </Box>
+        </Box>
+
+        {country.trending && (
+          <Chip
+            label={`Trending +${country.trendingPercent}%`}
+            size="small"
+            sx={{
+              mt: 1.25,
+              height: 22,
+              fontSize: '10px',
+              fontWeight: 700,
+              bgcolor: '#FEF3C7',
+              color: '#92400E',
+              '& .MuiChip-label': { px: 1 },
+            }}
+          />
+        )}
+      </BaseCard>
+    </Box>
+  )
+}

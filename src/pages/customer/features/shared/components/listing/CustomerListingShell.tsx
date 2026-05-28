@@ -1,0 +1,111 @@
+import { Box, Typography, Card } from '@mui/material'
+import type { ReactNode } from 'react'
+import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '@/design-system/tokens'
+import { Tabs } from '@/design-system/UIComponents'
+import { CustomerListingKpis, type CustomerKpiItem } from './CustomerListingKpis'
+
+export interface CustomerListingTab {
+  value: string
+  label: string
+  badge?: number | string
+}
+
+interface CustomerListingShellProps {
+  title?: string
+  headerActions?: ReactNode
+  /** Sticky page header (title + actions) rendered above KPIs; takes precedence over title/headerActions props */
+  stickyPageHeader?: ReactNode
+  kpis?: CustomerKpiItem[]
+  tabs?: CustomerListingTab[]
+  tabValue?: string
+  onTabChange?: (value: string) => void
+  toolbar: ReactNode
+  table: ReactNode
+  pagination: ReactNode
+}
+
+export function CustomerListingShell({
+  title,
+  headerActions,
+  stickyPageHeader,
+  kpis,
+  tabs,
+  tabValue,
+  onTabChange,
+  toolbar,
+  table,
+  pagination,
+}: CustomerListingShellProps) {
+  return (
+    <Box>
+      {stickyPageHeader ?? (
+        (title || headerActions) && (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              gap: 2,
+              mb: 2,
+            }}
+          >
+            {title && (
+              <Box>
+                <Typography variant="h1" sx={{ fontSize: { xs: '22px', md: '26px' }, fontWeight: 700 }}>
+                  {title}
+                </Typography>
+              </Box>
+            )}
+            {headerActions && (
+              <Box sx={{ display: 'flex', gap: 1, flexShrink: 0, flexWrap: 'wrap' }}>{headerActions}</Box>
+            )}
+          </Box>
+        )
+      )}
+
+      {kpis && kpis.length > 0 && <CustomerListingKpis items={kpis} />}
+
+      <Card
+        elevation={0}
+        sx={{
+          border: `${BORDER_WIDTH.thin} solid`,
+          borderColor: 'divider',
+          borderRadius: BORDER_RADIUS.lg,
+          boxShadow: SHADOWS.sm,
+          overflow: 'hidden',
+          bgcolor: 'background.paper',
+        }}
+      >
+        {tabs && tabs.length > 0 && tabValue != null && onTabChange && (
+          <Box sx={{ borderBottom: `${BORDER_WIDTH.thin} solid`, borderColor: 'divider' }}>
+            <Tabs
+              value={tabValue}
+              onChange={onTabChange}
+              variant="underline"
+              items={tabs.map(t => ({
+                value: t.value,
+                label: t.label,
+                badge: t.badge,
+              }))}
+              sx={{ mb: 0, px: 2, minHeight: 44 }}
+            />
+          </Box>
+        )}
+
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: `${BORDER_WIDTH.thin} solid`,
+            borderColor: 'divider',
+          }}
+        >
+          {toolbar}
+        </Box>
+
+        {table}
+        {pagination}
+      </Card>
+    </Box>
+  )
+}

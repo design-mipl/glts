@@ -11,6 +11,7 @@ import type { SxProps, Theme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 import { tokens, BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '../../../tokens'
 import LoadingOverlay from '../LoadingOverlay'
+import { overlayHeaderSubtitleSx, overlayHeaderTitleSx } from '../overlayHeaderTypography'
 
 type ModalSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'fullscreen'
 
@@ -84,8 +85,10 @@ export default function Modal({
             {
               width: isFullscreen ? '100vw' : dialogWidth,
               maxWidth: isFullscreen ? '100vw' : 'calc(100vw - 64px)',
-              height: isFullscreen ? '100vh' : 'min(100vh - 64px, 90vh)',
-              maxHeight: isFullscreen ? '100vh' : '90vh',
+              // Let content decide modal height; cap it at viewport-safe maximum.
+              height: isFullscreen ? '100vh' : 'auto',
+              minHeight: isFullscreen ? '100vh' : 'auto',
+              maxHeight: isFullscreen ? '100vh' : 'min(100vh - 64px, 90vh)',
               m: isFullscreen ? 0 : tokens.spacing[4],
               borderRadius: isFullscreen ? 0 : BORDER_RADIUS.lg,
               display: 'flex',
@@ -114,7 +117,7 @@ export default function Modal({
             zIndex: tokens.zIndex.raised,
             display: 'flex',
             gap: tokens.spacing[3],
-            alignItems: 'flex-start',
+            alignItems: subtitle ? 'flex-start' : 'center',
             justifyContent: 'space-between',
             px: tokens.spacing[3],
             py: tokens.spacing[2],
@@ -123,9 +126,13 @@ export default function Modal({
           }}
         >
           <Box sx={{ minWidth: 0, pr: tokens.spacing[2] }}>
-            {title ? <Typography variant="h6">{title}</Typography> : null}
+            {title ? (
+              <Typography component="h2" sx={overlayHeaderTitleSx}>
+                {title}
+              </Typography>
+            ) : null}
             {subtitle ? (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: tokens.spacing[1] }}>
+              <Typography sx={{ ...overlayHeaderSubtitleSx, mt: tokens.spacing[1] }}>
                 {subtitle}
               </Typography>
             ) : null}

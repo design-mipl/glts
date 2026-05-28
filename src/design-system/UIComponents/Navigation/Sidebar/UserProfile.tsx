@@ -2,7 +2,7 @@ import {
   Box, Avatar, Typography, IconButton, Menu, MenuItem,
   ListItemIcon, Divider, Tooltip,
 } from '@mui/material'
-import { MoreVertical, User, Settings, LogOut } from 'lucide-react'
+import { MoreVertical, User, LogOut } from 'lucide-react'
 import { useState } from 'react'
 
 export interface UserProfileProps {
@@ -13,7 +13,6 @@ export interface UserProfileProps {
   collapsed?: boolean
   onProfileClick?: () => void
   onSignOut?: () => void
-  onSettingsClick?: () => void
 }
 
 export default function UserProfile({
@@ -24,7 +23,6 @@ export default function UserProfile({
   collapsed = false,
   onProfileClick,
   onSignOut,
-  onSettingsClick,
 }: UserProfileProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
@@ -55,7 +53,6 @@ export default function UserProfile({
           anchorEl={anchorEl}
           onClose={() => setAnchorEl(null)}
           onProfileClick={onProfileClick}
-          onSettingsClick={onSettingsClick}
           onSignOut={onSignOut}
         />
       </Box>
@@ -94,7 +91,6 @@ export default function UserProfile({
         anchorEl={anchorEl}
         onClose={() => setAnchorEl(null)}
         onProfileClick={onProfileClick}
-        onSettingsClick={onSettingsClick}
         onSignOut={onSignOut}
       />
     </Box>
@@ -105,13 +101,11 @@ function UserMenu({
   anchorEl,
   onClose,
   onProfileClick,
-  onSettingsClick,
   onSignOut,
 }: {
   anchorEl: HTMLElement | null
   onClose: () => void
   onProfileClick?: () => void
-  onSettingsClick?: () => void
   onSignOut?: () => void
 }) {
   return (
@@ -126,10 +120,6 @@ function UserMenu({
       <MenuItem onClick={() => { onClose(); onProfileClick?.() }} sx={{ py: 0.75 }}>
         <ListItemIcon><User size={16} /></ListItemIcon>
         <Typography variant="body2">View Profile</Typography>
-      </MenuItem>
-      <MenuItem onClick={() => { onClose(); onSettingsClick?.() }} sx={{ py: 0.75 }}>
-        <ListItemIcon><Settings size={16} /></ListItemIcon>
-        <Typography variant="body2">Settings</Typography>
       </MenuItem>
       <Divider />
       <MenuItem onClick={() => { onClose(); onSignOut?.() }} sx={{ py: 0.75 }}>

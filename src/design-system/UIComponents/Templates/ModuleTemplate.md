@@ -1,51 +1,69 @@
 # Module Template — Foundation
 
-This document explains how to build new modules in Foundation using the **Billings** template as reference.
+This document explains how to build new modules using the standardized product template recipes.
+
+For implementation rules, see [root CLAUDE.md](../../../../CLAUDE.md).
 
 ## Module structure
 
 Every module should have:
 
-1. **Listing page** — DataTable (or grid), filters, search, pagination, bulk actions
-2. **Form pages** — Create/edit via Modal, Drawer, full-page, or Stepper
-3. **Detail page** — Read-only two-column layout with actions
-4. **Navigation** — Sidebar entry with collapsible sub-items
+1. **Listing page** — sticky header, KPIs, tabs (when needed), toolbar (search/export/columns/grid/more), advanced filters, tab-specific columns/empty states, table/grid, pagination, toasts, row actions.
+2. **Form pages** — create/edit via modal, drawer, full-page, or stepper surface.
+3. **Detail page** — summary header, status, primary actions, sections, and optional activity.
+4. **Navigation** — page-surface-owned route entry with predictable active state.
+5. **Optional dashboard or queue page** — when the module owns summary or operational work.
 
-## Billings reference layout
+## Live template showcase (source of truth)
 
-```
-src/
-├── design-system/UIComponents/Templates/BillingTemplate/
-│   ├── types.ts
-│   ├── index.ts
-│   └── components/          ← copy-paste presentational building blocks
-├── pages/Billings/
-│   ├── index.tsx            ← <Outlet /> layout
-│   ├── hooks/useBillingData.ts
-│   └── components/
-│       ├── ListingPage.tsx
-│       ├── DetailPage.tsx
-│       ├── FormPage.tsx
-│       ├── StepperFormPage.tsx
-│       └── PaymentsPage.tsx
-└── App.tsx                  ← navConfig + routes
-```
+All module recipes are implemented as **live demos** under Admin → Tools → Template showcase:
+
+- Hub: `/admin/tools/templates`
+- Registry: `src/pages/admin/_tools/TemplateShowcase/config/templateRegistry.ts`
+
+When adding or removing a recipe, update `templateRegistry.ts` first, then align this doc and `CLAUDE.md`.
+
+## Reference-only usage policy
+
+- Template showcase pages and this template document are reference-only.
+- Build and ship module behavior from the actual owning module path (for example, `src/pages/admin/...` or `src/pages/customer/...`), not from template internals.
+- Do not deep-import template internals into production modules.
+- If a reusable pattern is required or changed:
+  1. Update the actual implementation module first.
+  2. Mirror the same pattern in the template reference flow.
+  3. Update this document and any related docs.
+- If something is one-off and module-specific, keep it in the actual module only.
+
+## Reference layers
+
+- The legacy `BillingTemplate` scaffold and `src/pages/Billings/` demo were removed during cleanup.
+- `src/pages/customer/features/shared/components/listing/` is the preferred current listing pattern.
+- `src/pages/customer/features/shared/hooks/useCustomerListing.ts` is the preferred current listing state pattern.
+- `src/pages/admin/components/AdminListingShell.tsx` is the preferred admin listing shell reference.
+
+Do not deep-import template internals from production pages. Promote reusable UI into `src/design-system/UIComponents/` before product code depends on it.
 
 ## Creating a new module
 
-### 1. Copy the template folder
+### 1. Choose ownership
 
-Duplicate `BillingTemplate` → `YourModuleTemplate`, rename components (`BillingTable` → `YourModuleTable`, etc.).
+Place the module under the owning page surface, such as `src/pages/customer` or `src/pages/admin`. Internal operations workflows belong under `src/pages/admin/operations`. Put cross-surface contracts and services under `src/shared/`.
 
-### 2. Define types
+### 2. Choose page recipes
 
-Add entity interfaces in `types.ts` (entity, line items, form data, filters).
+Use the canonical recipes from `CLAUDE.md` and the live template showcase:
 
-### 3. Add mock data hook
+- Listing modules.
+- Detail modules.
+- Dashboard modules.
+- CRUD form surfaces.
+- Queue management modules.
 
-Create `pages/YourModule/hooks/useYourModuleData.ts` with mock rows, KPIs, and helpers (`formatINR`, `getById`, `filterByStatus`, `search`).
+### 3. Define types and services
 
-### 4. Wire pages
+Keep temporary page-surface-only mock data near the feature. Move durable contracts and service shapes to `src/shared/` when they are used across surfaces.
+
+### 4. Compose pages
 
 | Route | Page |
 |-------|------|
@@ -55,11 +73,11 @@ Create `pages/YourModule/hooks/useYourModuleData.ts` with mock rows, KPIs, and h
 | `/your-module/:id` | Detail |
 | `/your-module/:id/edit` | Full-page edit |
 
-Register static routes **before** `:id` in `App.tsx`.
+Register static routes before `:id` inside the owning page-surface app.
 
 ### 5. Update navigation
 
-Use existing `NavConfig` shape — collapsible group with `children`:
+Use the existing `NavConfig` shape with page-surface-owned routes:
 
 ```tsx
 {
@@ -77,50 +95,53 @@ Do not use count badges on nav items for production modules.
 
 ### 6. Sidebar active state
 
-`isNavActive()` in `Sidebar/index.tsx` supports prefix matching for `/billings`. Extend the helper if your module needs the same “list + detail” highlighting.
+Do not add module-specific hardcoded paths to shared navigation. If nested route matching is needed, add or reuse generic route metadata in a later navigation refactor.
 
 ## Design system usage
 
-- Import UI from `@/design-system/components` (never raw MUI inputs/buttons in pages).
+- Import UI from `@/design-system/UIComponents` (never raw MUI inputs/buttons in pages).
 - Layout: `Box`, `Grid`, `Typography`, `useMediaQuery` from MUI only.
 - Icons: `lucide-react` at 16px, `strokeWidth={1.75}`.
 - Colors/spacing: `tokens` and theme palette — no hardcoded hex or px.
 - Types: `import type` for type-only imports.
 
-## Component mapping
+## Standard component mapping
 
-| Billings | Your module |
-|----------|-------------|
-| `BillingKPICards` | `YourModuleKPICards` |
-| `BillingStatusTabs` | `YourModuleStatusTabs` |
-| `BillingTable` | `YourModuleTable` (wraps `DataTable`) |
-| `BillingGridView` | `YourModuleGridView` |
-| `BillingFilters` | `YourModuleFilters` |
-| `BillingModal` / `BillingDrawer` | Popup / drawer forms |
-| `BillingFormSections` | Shared form fields |
-| `BillingDetailSections` | Read-only detail layout |
+| Need | Start from |
+|------|------------|
+| Listing shell | `CustomerListingShell` / `AdminListingShell` reference |
+| Listing state | `useCustomerListing` reference |
+| Table | `DataTable`, `ColumnFilter`, `RowActions`, `Pagination` |
+| Toolbar | `CustomerListingToolbar` reference |
+| Detail layout | `DetailSection`, `DetailField`, `SummaryField` pattern |
+| Form fields | `FormSection`, `FormField`, primitives |
+| Form surface | Modal, Drawer, full-page form card, or Stepper |
+| Dashboard | `StatCard`, `MetricCard`, `ListCard`, `ActionCard`, chart cards |
+| Queue | Listing shell plus SLA, priority, assignment, status, and next-action slots |
 
 ## Example: Customers module
 
-1. Rename Billing → Customer in types and components.
-2. Replace invoice fields with customer fields.
-3. Add `Customers` group to `navConfig`.
-4. Add routes under `/customers`.
+1. Place the feature under the owning page surface.
+2. Define customer contracts and service/mock data.
+3. Compose the listing with the standard listing shell, toolbar, table/grid, and pagination.
+4. Compose create/edit using form surfaces and `FormSection` / `FormField`.
+5. Compose detail using neutral detail sections and fields.
+6. Add page-surface routes and navigation.
 
 ## Checklist before client demo
 
 - [ ] `npm run build` passes
-- [ ] Listing: KPI, tabs, search, filters, table/grid toggle, pagination
-- [ ] Modal + drawer forms from listing
-- [ ] Full-page + stepper forms via nav sub-items
-- [ ] Detail page with edit modal and delete confirm
-- [ ] Nav: no badges, sub-items expand, correct active state
+- [ ] Listing: header, KPI if useful, tabs if useful, toolbar, filters, table/grid, pagination
+- [ ] Modal, drawer, full-page, or stepper form chosen by workflow complexity
+- [ ] Detail page with status, actions, sections, and activity/audit when relevant
+- [ ] Nav: no badges, correct page-surface ownership, correct active state
 - [ ] Responsive at 320px, 1024px, 1920px
 - [ ] Dark mode via Settings
 
 ## Tips
 
-1. Keep template components presentational (props in, callbacks out).
-2. Put routing and toast logic in `pages/`, not in template components.
-3. Reuse `DataTable` instead of building tables from scratch.
-4. Use one `TableState` for table and grid views when sharing pagination.
+1. Keep reusable components presentational: props in, callbacks out.
+2. Put routing, toast, permissions, and workflow logic in page-surface pages or hooks.
+3. Reuse `DataTable`, `ColumnFilter`, `Pagination`, and `RowActions`.
+4. Use one table/listing state contract when table and grid share pagination.
+5. Start from the customer listing/admin shell references; do not recreate the removed billing scaffold.

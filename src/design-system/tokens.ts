@@ -1,9 +1,9 @@
 import chroma from 'chroma-js';
+import { publicLightColors } from '@/shared/theme/publicBrand';
 
 // ─── Brand color ─────────────────────────────────────────────────────────────
-// This is the ONLY value that changes when rebranding.
-// Every color in the system derives from here.
-export const BRAND_COLOR = '#76C76B';
+// Locked to publicBrand; use publicBrand.ts as the source of truth for product UI.
+export const BRAND_COLOR = publicLightColors.greenBright;
 
 // ─── Color scale generation ───────────────────────────────────────────────────
 type ColorScale = {
@@ -51,7 +51,7 @@ export function generateNeutralScale(baseColor: string): ColorScale {
 const primaryScale  = generateScale(BRAND_COLOR);
 const neutralScale  = generateNeutralScale(BRAND_COLOR);
 const errorScale    = generateScale('#EF4444');
-const successScale  = generateScale('#10B981');
+const successScale  = generateScale(BRAND_COLOR);
 const warningScale  = generateScale('#F59E0B');
 const infoScale     = generateScale('#3B82F6');
 
@@ -116,8 +116,8 @@ export const RESPONSIVE_BUTTON_PADDING = {
   ],
 } as const
 
-/** Outlined input min-heights in px */
-export const RESPONSIVE_INPUT_HEIGHT = [32, 32, 32, 32, 32, 32, 32, 32, 32, 32] as const
+/** Outlined input min-heights in px (matches FORM_CONTROL.heightMd) */
+export const RESPONSIVE_INPUT_HEIGHT = [40, 40, 40, 40, 40, 40, 40, 40, 40, 40] as const
 
 /** Card inner padding in px */
 export const RESPONSIVE_CARD_PADDING = [12, 12, 12, 10, 8, 8, 8, 8, 8, 8] as const

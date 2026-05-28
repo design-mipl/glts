@@ -35,6 +35,7 @@ export default function Tabs({
 }: TabsProps) {
   const theme = useTheme()
   const tabHeight = size === 'sm' ? 36 : 44
+  const tabAccent = theme.palette.secondary.main
 
   const tabLabel = (item: TabItem) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
@@ -93,7 +94,7 @@ export default function Tabs({
                 color: 'text.secondary',
                 transition: 'all 200ms ease',
                 '&.Mui-selected': {
-                  color: 'primary.main',
+                  color: tabAccent,
                   fontWeight: 600,
                   bgcolor: 'background.paper',
                   boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
@@ -148,10 +149,10 @@ export default function Tabs({
                 borderColor: 'divider',
                 '&:last-child': { borderRight: 'none' },
                 '&.Mui-selected': {
-                  color: 'text.primary',
+                  color: tabAccent,
                   fontWeight: 600,
                   bgcolor: 'background.paper',
-                  boxShadow: 'inset 0 -2px 0 0 ' + theme.palette.primary.main,
+                  boxShadow: `inset 0 -2px 0 0 ${tabAccent}`,
                 },
               }}
             />
@@ -168,6 +169,7 @@ export default function Tabs({
       onChange={(_, v) => onChange(v)}
       variant={scrollable ? 'scrollable' : fullWidth ? 'fullWidth' : 'standard'}
       scrollButtons="auto"
+      TabIndicatorProps={{ style: { backgroundColor: tabAccent } }}
       sx={{
         minHeight: tabHeight,
         borderBottom: '1px solid',
@@ -190,7 +192,7 @@ export default function Tabs({
             px: 2,
             color: 'text.secondary',
             '&.Mui-selected': {
-              color: 'primary.main',
+              color: tabAccent,
               fontWeight: 600,
             },
           }}

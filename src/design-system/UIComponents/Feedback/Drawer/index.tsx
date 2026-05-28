@@ -9,6 +9,7 @@ import type { DrawerProps as MuiDrawerProps } from '@mui/material/Drawer'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 import { tokens } from '../../../tokens'
+import { overlayHeaderSubtitleSx, overlayHeaderTitleSx } from '../overlayHeaderTypography'
 
 export interface DrawerProps {
   open: boolean
@@ -76,7 +77,7 @@ export default function Drawer({
           sx={{
             display: 'flex',
             gap: tokens.spacing[3],
-            alignItems: 'flex-start',
+            alignItems: subtitle ? 'flex-start' : 'center',
             justifyContent: 'space-between',
             px: tokens.spacing[3],
             py: tokens.spacing[2],
@@ -85,9 +86,13 @@ export default function Drawer({
           }}
         >
           <Box sx={{ minWidth: 0, pr: tokens.spacing[2] }}>
-            {title ? <Typography variant="h6">{title}</Typography> : null}
+            {title ? (
+              <Typography component="h2" sx={overlayHeaderTitleSx}>
+                {title}
+              </Typography>
+            ) : null}
             {subtitle ? (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: tokens.spacing[1] }}>
+              <Typography sx={{ ...overlayHeaderSubtitleSx, mt: tokens.spacing[1] }}>
                 {subtitle}
               </Typography>
             ) : null}

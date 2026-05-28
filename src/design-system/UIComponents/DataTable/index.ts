@@ -7,6 +7,9 @@ export type { TableToolbarProps } from './TableToolbar'
 export { default as ColumnHeader } from './ColumnHeader'
 export type { ColumnHeaderProps } from './ColumnHeader'
 
+export { default as ColumnFilter } from './ColumnFilter'
+export type { ColumnFilterProps } from './ColumnFilter'
+
 export { default as FilterPanel } from './FilterPanel'
 export type { FilterPanelProps } from './FilterPanel'
 

@@ -1,0 +1,6 @@
+export { CustomerDetailWorkspace } from './CustomerDetailWorkspace'
+export type { CustomerDetailTab, CustomerDetailWorkspaceProps } from './CustomerDetailWorkspace'
+export { CustomerDetailHeader } from './CustomerDetailHeader'
+export type { CustomerDetailHeaderProps } from './CustomerDetailHeader'
+export { CustomerDetailSection } from './CustomerDetailSection'
+export type { CustomerDetailSectionProps } from './CustomerDetailSection'

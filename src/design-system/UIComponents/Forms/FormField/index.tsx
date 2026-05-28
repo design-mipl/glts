@@ -50,7 +50,7 @@ export default function FormField({
                 component="label"
                 htmlFor={labelFor}
                 sx={{
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: 600,
                   color: 'text.primary',
                   lineHeight: 1.4,
@@ -60,7 +60,7 @@ export default function FormField({
                 {label}
               </Typography>
               {required ? (
-                <Typography component="span" sx={{ color: 'error.main', fontSize: 14, lineHeight: 1 }}>
+                <Typography component="span" sx={{ color: 'error.main', fontSize: 13, lineHeight: 1 }}>
                   *
                 </Typography>
               ) : null}
@@ -74,7 +74,7 @@ export default function FormField({
             <Box />
           )}
           {hint ? (
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, fontWeight: 400 }}>
               {hint}
             </Typography>
           ) : null}
@@ -82,7 +82,7 @@ export default function FormField({
       ) : null}
       {children}
       {helperText ? (
-        <FormHelperText error={error} sx={{ mt: 0.5, mx: 0 }}>
+        <FormHelperText error={error} sx={{ mt: 0.5, mx: 0, fontSize: 12 }}>
           {helperText}
         </FormHelperText>
       ) : null}

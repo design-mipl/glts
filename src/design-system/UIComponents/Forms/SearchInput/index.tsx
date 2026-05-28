@@ -5,7 +5,8 @@ import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
 import { Search, X } from 'lucide-react'
 import type { SxProps, Theme } from '@mui/material/styles'
-import { tokens } from '../../../tokens'
+import { formControlHeight, outlinedFieldSx } from '../../../formControl'
+import { useTheme } from '@mui/material/styles'
 
 export interface SearchInputProps {
   value?: string
@@ -34,6 +35,7 @@ export default function SearchInput({
   autoFocus = false,
   sx,
 }: SearchInputProps) {
+  const theme = useTheme()
   const [internalValue, setInternalValue] = useState(value ?? '')
   const timeoutRef = useRef<number | null>(null)
   const onChangeRef = useRef(onChange)
@@ -69,7 +71,7 @@ export default function SearchInput({
     }
   }
 
-  const inputHeight = size === 'sm' ? 36 : 44
+  const inputHeight = formControlHeight(size)
 
   return (
     <TextField
@@ -110,16 +112,7 @@ export default function SearchInput({
           ),
         },
       }}
-      sx={[
-        {
-          '& .MuiOutlinedInput-root': {
-            height: inputHeight,
-            borderRadius: tokens.borderRadius.full,
-            pl: tokens.spacing[1],
-          },
-        },
-        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
-      ]}
+      sx={[outlinedFieldSx(theme, inputHeight), ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
     />
   )
 }

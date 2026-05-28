@@ -25,9 +25,6 @@ export default defineConfig({
           if (id.includes('@mui/x-date-pickers') || id.includes('@mui/x-')) {
             return 'mui-x'
           }
-          if (id.includes('@mui/icons-material')) {
-            return 'mui-icons'
-          }
           if (id.includes('@mui') || id.includes('@emotion')) {
             return 'mui'
           }

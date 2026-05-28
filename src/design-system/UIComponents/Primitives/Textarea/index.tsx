@@ -3,6 +3,7 @@ import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import { useTheme, alpha } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
+import { FORM_CONTROL } from '../../../formControl'
 
 export interface TextareaProps {
   label?: string
@@ -77,14 +78,14 @@ export default function Textarea({
         input: {
           inputProps: { maxLength },
         },
-        formHelperText: { sx: { mx: 0, mt: '4px', fontSize: '11px' } },
+        formHelperText: { sx: { mx: 0, mt: '4px', fontSize: FORM_CONTROL.helperFontSize } },
       }}
       sx={[
         {
           '& .MuiOutlinedInput-root': {
             fontSize: '13px',
             lineHeight: 1.6,
-            borderRadius: '6px',
+            borderRadius: FORM_CONTROL.borderRadius,
             backgroundColor: disabled
               ? theme.palette.action.disabledBackground
               : theme.palette.background.paper,
@@ -124,7 +125,7 @@ export default function Textarea({
             },
           },
           '& .MuiFormHelperText-root': {
-            fontSize: '11px',
+            fontSize: FORM_CONTROL.helperFontSize,
             mx: 0,
             mt: '4px',
           },

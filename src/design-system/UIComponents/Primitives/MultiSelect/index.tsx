@@ -2,7 +2,9 @@ import Autocomplete from '@mui/material/Autocomplete'
 import TextField from '@mui/material/TextField'
 import Checkbox from '@mui/material/Checkbox'
 import Chip from '@mui/material/Chip'
+import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
+import { formControlHeight, outlinedFieldSx } from '../../../formControl'
 
 interface MultiSelectOption {
   label: string
@@ -44,8 +46,9 @@ export default function MultiSelect({
   searchable = false,
   sx,
 }: MultiSelectProps) {
+  const theme = useTheme()
   const allOpts = [SELECT_ALL, ...options]
-  const inputHeight = size === 'sm' ? '36px' : '42px'
+  const inputHeight = formControlHeight(size)
 
   const selectedOpts = options.filter((o) => value.includes(o.value))
   const isAllSelected = selectedOpts.length === options.length
@@ -116,7 +119,7 @@ export default function MultiSelect({
             ...params.inputProps,
             readOnly: !searchable,
           }}
-          sx={{ '& .MuiInputBase-root': { minHeight: inputHeight } }}
+          sx={[outlinedFieldSx(theme, inputHeight), { '& .MuiInputBase-root': { minHeight: inputHeight, height: 'auto' } }]}
         />
       )}
     />

@@ -1,3 +1,5 @@
+export type VisaCategory = 'e-Visa' | 'Sticker' | 'Visa on arrival' | 'No Visa Required'
+
 export interface Country {
   id: string
   name: string
@@ -10,6 +12,15 @@ export interface Country {
   flags: string
   trending: boolean
   trendingPercent: number
+  /** Atlys-style card metadata */
+  visaCategory: VisaCategory
+  validity: string
+  documentsNeeded: string[]
+  /** Unsplash slug, e.g. photo-1512453979798-5ea266f8880c */
+  heroPhotoId: string
+  fastMinutes?: number
+  /** e.g. "Dubai · Abu Dhabi" */
+  cities: string
 }
 
 export interface VisaType {

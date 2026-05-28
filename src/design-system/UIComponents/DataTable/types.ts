@@ -25,7 +25,10 @@ export type Column<T = any> = {
   filterable?: boolean
   searchable?: boolean
   editable?: boolean
+  /** Pin column to the left edge while scrolling horizontally. */
   sticky?: boolean
+  /** Pin column to the right edge while scrolling horizontally. Defaults to true when `key === 'actions'`. */
+  stickyEnd?: boolean
   /** Column hidden until this min-width tier; `undefined` = always visible in table. */
   hideBelow?: FoundationBreakpointKey
   /** When true, column is omitted from the table between 600px and 1023px (tablet); still respects `hideBelow`. */

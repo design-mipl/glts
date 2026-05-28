@@ -6,6 +6,7 @@ import type { Dayjs } from 'dayjs'
 import { useTheme, alpha } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 import { Calendar } from 'lucide-react'
+import { formControlHeight, outlinedFieldSx } from '../../../formControl'
 
 export interface DatePickerProps {
   label?: string
@@ -43,7 +44,7 @@ export default function DatePicker({
   sx,
 }: DatePickerProps) {
   const theme = useTheme()
-  const inputHeight = size === 'sm' ? '34px' : '40px'
+  const inputHeight = formControlHeight(size)
   const dayjsValue = value ? dayjs(value) : null
   const dayjsMin = minDate ? dayjs(minDate) : undefined
   const dayjsMax = maxDate ? dayjs(maxDate) : undefined
@@ -53,38 +54,7 @@ export default function DatePicker({
   }
 
   const sharedInputSx: SxProps<Theme> = [
-    {
-      '& .MuiInputBase-root': {
-        height: inputHeight,
-        fontSize: '13px',
-        borderRadius: '6px',
-        backgroundColor: theme.palette.background.paper,
-        transition: 'box-shadow 0.2s ease',
-      },
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.divider,
-        borderWidth: '1px',
-      },
-      '& .MuiInputBase-root:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.text.secondary,
-      },
-      '& .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.primary.main,
-        borderWidth: '1.5px',
-      },
-      '& .MuiInputBase-root.Mui-focused': {
-        boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
-      },
-      '& .MuiInputBase-root.Mui-error .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.error.main,
-        borderWidth: '1.5px',
-      },
-      '& .MuiFormHelperText-root': {
-        fontSize: '11px',
-        mt: '4px',
-        mx: 0,
-      },
-    },
+    outlinedFieldSx(theme, inputHeight),
     ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
   ]
 

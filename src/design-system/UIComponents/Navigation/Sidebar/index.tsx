@@ -5,6 +5,8 @@ import type { ReactNode } from 'react'
 import { tokens } from '../../../tokens'
 import NavItem from './NavItem'
 import NavGroup from './NavGroup'
+import UserProfile from './UserProfile'
+import type { UserProfileProps } from './UserProfile'
 
 export interface NavConfig {
   type: 'item' | 'group' | 'divider'
@@ -27,24 +29,16 @@ export interface SidebarProps {
   onMobileClose?: () => void
   logoMark?: string
   appName?: string
+  footerUser?: Pick<UserProfileProps, 'name' | 'email' | 'role' | 'avatarSrc'>
+  onSignOut?: () => void
+  onProfileClick?: () => void
 }
 
 const TOPBAR_HEIGHT = 52
 
-const BILLINGS_STATIC_PATHS = ['/billings/create', '/billings/stepper', '/billings/payments']
-
 export function isNavActive(href: string | undefined, currentPath: string): boolean {
   if (!href) return false
   if (currentPath === href) return true
-
-  if (href === '/billings') {
-    if (currentPath === '/billings') return true
-    if (BILLINGS_STATIC_PATHS.some((p) => currentPath === p || currentPath.startsWith(`${p}/`))) {
-      return false
-    }
-    if (/^\/billings\/[^/]+$/.test(currentPath)) return true
-    if (/^\/billings\/[^/]+\/edit$/.test(currentPath)) return true
-  }
 
   return false
 }
@@ -175,6 +169,9 @@ function SidebarContent({
   logoCollapsed,
   logoMark = 'F',
   appName = 'Foundation',
+  footerUser,
+  onSignOut,
+  onProfileClick,
 }: Pick<
   SidebarProps,
   | 'navConfig'
@@ -185,6 +182,9 @@ function SidebarContent({
   | 'logoCollapsed'
   | 'logoMark'
   | 'appName'
+  | 'footerUser'
+  | 'onSignOut'
+  | 'onProfileClick'
 >) {
   const theme = useTheme()
   const navigation = theme.foundation.navigation
@@ -300,20 +300,27 @@ function SidebarContent({
         {renderNavConfig(navConfig, collapsed, currentPath)}
       </Box>
 
-      {/* Bottom — Help & Docs */}
-      <Box
-        sx={{
-          flexShrink: 0,
-          borderTop: `1px solid ${navigation.border}`,
-          p: '8px',
-        }}
-      >
-        <NavItem
-          label="Help & Docs"
-          icon={<HelpCircle size={16} strokeWidth={1.75} />}
-          href="/docs"
-          collapsed={collapsed}
-        />
+      {/* Bottom — user profile + Help & Docs */}
+      <Box sx={{ flexShrink: 0, borderTop: `1px solid ${navigation.border}` }}>
+        {footerUser && (
+          <UserProfile
+            name={footerUser.name}
+            email={footerUser.email}
+            role={footerUser.role}
+            avatarSrc={footerUser.avatarSrc}
+            collapsed={collapsed}
+            onSignOut={onSignOut}
+            onProfileClick={onProfileClick}
+          />
+        )}
+        <Box sx={{ p: '8px' }}>
+          <NavItem
+            label="Help & Docs"
+            icon={<HelpCircle size={16} strokeWidth={1.75} />}
+            href="/docs"
+            collapsed={collapsed}
+          />
+        </Box>
       </Box>
     </Box>
   )
@@ -330,6 +337,9 @@ export default function Sidebar({
   logoCollapsed,
   logoMark = 'F',
   appName = 'Foundation',
+  footerUser,
+  onSignOut,
+  onProfileClick,
 }: SidebarProps) {
   return (
     <>
@@ -343,6 +353,9 @@ export default function Sidebar({
         logoCollapsed={logoCollapsed}
         logoMark={logoMark}
         appName={appName}
+        footerUser={footerUser}
+        onSignOut={onSignOut}
+        onProfileClick={onProfileClick}
       />
 
       {/* Mobile temporary drawer */}
@@ -373,6 +386,9 @@ export default function Sidebar({
           logoCollapsed={logoCollapsed}
           logoMark={logoMark}
           appName={appName}
+          footerUser={footerUser}
+          onSignOut={onSignOut}
+          onProfileClick={onProfileClick}
         />
       </Drawer>
     </>

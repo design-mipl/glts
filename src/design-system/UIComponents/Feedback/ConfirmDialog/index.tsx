@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
 import { tokens } from '../../../tokens'
 import { Button } from '../../Primitives'
 import Modal from '../Modal'
+import { overlayHeaderTitleSx } from '../overlayHeaderTypography'
 
 export interface ConfirmDialogProps {
   open: boolean
@@ -124,9 +125,11 @@ export default function ConfirmDialog({
         }}
       >
         {resolvedIcon}
-        <Typography variant="h6">{title}</Typography>
+        <Typography component="h2" sx={overlayHeaderTitleSx}>
+          {title}
+        </Typography>
         {description ? (
-          <Typography variant="body2" color="text.secondary">
+          <Typography sx={{ fontSize: '13px', fontWeight: 400, lineHeight: 1.5, color: 'text.secondary' }}>
             {description}
           </Typography>
         ) : null}

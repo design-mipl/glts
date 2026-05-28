@@ -1,5 +1,31 @@
-/** Brand tokens for public site + product portals (logo-aligned navy + green) */
-export const publicColors = {
+import { useTheme } from '@mui/material/styles'
+import type { SxProps, Theme } from '@mui/material/styles'
+
+export type PublicBrandMode = 'light' | 'dark'
+
+export interface PublicBrandColors {
+  navy: string
+  navyMid: string
+  navyLight: string
+  green: string
+  greenBright: string
+  greenDark: string
+  greenMuted: string
+  white: string
+  surface: string
+  surfaceAlt: string
+  border: string
+  borderSoft: string
+  text: string
+  textSecondary: string
+  textMuted: string
+  heroGradient: string
+  /** Label on saturated filled buttons (primary, success, info, etc.) — always light. */
+  onBrandFilled: string
+}
+
+/** Brand tokens for public site + product portals (logo-aligned navy + green). */
+export const publicLightColors: PublicBrandColors = {
   navy: '#001F3F',
   navyMid: '#0A2540',
   navyLight: '#123B5C',
@@ -16,7 +42,37 @@ export const publicColors = {
   textSecondary: '#64748B',
   textMuted: '#94A3B8',
   heroGradient: 'linear-gradient(165deg, #001F3F 0%, #0A2540 45%, #0d3d4a 100%)',
+  onBrandFilled: '#FFFFFF',
 } as const
+
+export const publicDarkColors: PublicBrandColors = {
+  navy: '#E5F4FF',
+  navyMid: '#C7E1F4',
+  navyLight: '#94A3B8',
+  green: '#76C76B',
+  greenBright: '#34D399',
+  greenDark: '#A7F3D0',
+  greenMuted: 'rgba(52, 211, 153, 0.14)',
+  white: '#111827',
+  surface: '#0F172A',
+  surfaceAlt: '#1E293B',
+  border: '#334155',
+  borderSoft: 'rgba(51, 65, 85, 0.8)',
+  text: '#F8FAFC',
+  textSecondary: '#CBD5E1',
+  textMuted: '#94A3B8',
+  heroGradient: 'linear-gradient(165deg, #020617 0%, #0F172A 50%, #064E3B 100%)',
+  onBrandFilled: '#FFFFFF',
+} as const
+
+export function getPublicBrandColors(mode: PublicBrandMode): PublicBrandColors {
+  return mode === 'dark' ? publicDarkColors : publicLightColors
+}
+
+export function usePublicBrandColors(): PublicBrandColors {
+  const theme = useTheme()
+  return getPublicBrandColors(theme.palette.mode)
+}
 
 export const publicFonts = {
   heading: '"Plus Jakarta Sans", system-ui, sans-serif',
@@ -50,13 +106,47 @@ export const publicTypography = {
   overline: '12px',
 } as const
 
-/** Shared primary CTA button styles */
-export const primaryButtonSx = {
-  backgroundColor: publicColors.greenBright,
-  fontWeight: 700,
-  textTransform: 'none' as const,
-  borderRadius: '12px',
-  fontSize: '16px',
-  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
-  '&:hover': { backgroundColor: publicColors.greenDark },
+/** Product / portal button radius — matches design-system `BUTTON.borderRadius` (10px). */
+export const PRODUCT_BUTTON_BORDER_RADIUS = '10px'
+
+/** Outlined secondary actions in wizards, drawers, and forms. */
+export function getOutlinedButtonSx(): SxProps<Theme> {
+  return {
+    textTransform: 'none',
+    fontSize: '13px',
+    fontWeight: 600,
+    borderRadius: PRODUCT_BUTTON_BORDER_RADIUS,
+  }
+}
+
+/** Merge product button tokens for MUI `sx` prop (avoids spread type errors). */
+export function mergeButtonSx(...parts: SxProps<Theme>[]): SxProps<Theme> {
+  return parts as SxProps<Theme>
+}
+
+/** Shared primary CTA button styles for the active brand mode. */
+export function getPrimaryButtonSx(colors: PublicBrandColors): SxProps<Theme> {
+  return {
+    backgroundColor: colors.greenBright,
+    fontWeight: 600,
+    textTransform: 'none',
+    borderRadius: PRODUCT_BUTTON_BORDER_RADIUS,
+    fontSize: '13px',
+    boxShadow: `0 4px 14px ${colors.greenBright}4D`,
+    color: colors.onBrandFilled,
+    '&:hover': {
+      backgroundColor: colors.greenDark,
+      color: colors.onBrandFilled,
+    },
+  }
+}
+
+/** Marketing / hero CTAs — larger type, same corner radius as product buttons. */
+export function getMarketingPrimaryButtonSx(colors: PublicBrandColors): SxProps<Theme> {
+  return {
+    ...getPrimaryButtonSx(colors),
+    fontSize: '16px',
+    fontWeight: 700,
+    padding: '10px 20px',
+  }
 }

@@ -28,8 +28,11 @@ export interface AppShellProps {
   onNotificationClick?: () => void
   onSignOut?: () => void
   onProfileClick?: () => void
-  onSettingsClick?: () => void
   onSearch?: (query: string) => Promise<SearchResults>
+  /** Renders sidebar UserProfile footer with the same user + menu callbacks */
+  showSidebarUserProfile?: boolean
+  /** Hides name/email text from topbar user menu (avatar/menu remains). */
+  hideTopbarUserDetails?: boolean
 }
 
 function defaultSearch(): Promise<SearchResults> {
@@ -48,8 +51,9 @@ export default function AppShell({
   onNotificationClick,
   onSignOut,
   onProfileClick,
-  onSettingsClick,
   onSearch = defaultSearch,
+  showSidebarUserProfile = false,
+  hideTopbarUserDetails = false,
 }: AppShellProps) {
   const theme = useTheme()
   const location = useLocation()
@@ -126,6 +130,9 @@ export default function AppShell({
             onMobileClose={() => {}}
             logoMark={logoMark}
             appName={appName}
+            footerUser={showSidebarUserProfile ? user : undefined}
+            onSignOut={onSignOut}
+            onProfileClick={onProfileClick}
           />
         </Box>
       )}
@@ -173,6 +180,9 @@ export default function AppShell({
             onMobileClose={() => setMobileDrawerOpen(false)}
             logoMark={logoMark}
             appName={appName}
+            footerUser={showSidebarUserProfile ? user : undefined}
+            onSignOut={onSignOut}
+            onProfileClick={onProfileClick}
           />
         </MuiDrawer>
       )}
@@ -210,9 +220,9 @@ export default function AppShell({
             onNotificationClick={onNotificationClick}
             onSignOut={onSignOut}
             onProfileClick={onProfileClick}
-            onSettingsClick={onSettingsClick}
             onSearchClick={() => setPaletteOpen(true)}
             showMenuButton={!isDesktop}
+            showUserDetails={!hideTopbarUserDetails}
           />
         </Box>
 

@@ -56,6 +56,18 @@ function getHideDisplay(hideBelow?: FoundationBreakpointKey) {
   return { xs: 'none', [hideBelow]: 'table-cell' }
 }
 
+const EXPAND_COLUMN_WIDTH = 48
+
+function isStickyEndColumn(col: Column) {
+  if (col.stickyEnd === false) return false
+  if (col.stickyEnd === true || col.key === 'actions') return true
+  return false
+}
+
+function isStickyStartColumn(col: Column) {
+  return col.sticky === true && !isStickyEndColumn(col)
+}
+
 function SkeletonRows({ count, cols }: { count: number; cols: number }) {
   return (
     <>
@@ -137,6 +149,7 @@ export default function DataTable({
     + (renderExpanded ? 1 : 0)
 
   const totalRows = total ?? data.length
+  const stickyEndRight = renderExpanded ? EXPAND_COLUMN_WIDTH : 0
 
   // State handlers
   const handleSort = (key: string) => {
@@ -272,15 +285,19 @@ export default function DataTable({
           )
         })}
       </Box>
-      <Divider sx={{ mt: 2 }} />
-      <Pagination
-        page={state.page}
-        pageSize={state.pageSize}
-        total={totalRows}
-        onPage={(p) => onStateChange({ ...state, page: p })}
-        onPageSize={(s) => onStateChange({ ...state, pageSize: s, page: 0 })}
-        loading={loading}
-      />
+      {!hidePagination && (
+        <>
+          <Divider sx={{ mt: 2 }} />
+          <Pagination
+            page={state.page}
+            pageSize={state.pageSize}
+            total={totalRows}
+            onPage={(p) => onStateChange({ ...state, page: p })}
+            onPageSize={(s) => onStateChange({ ...state, pageSize: s, page: 0 })}
+            loading={loading}
+          />
+        </>
+      )}
     </Box>
   )
 
@@ -358,20 +375,28 @@ export default function DataTable({
                   />
                 </TableCell>
               )}
-              {visibleTableColumns.map((col) => (
+              {visibleTableColumns.map((col) => {
+                const stickyEnd = isStickyEndColumn(col)
+                const stickyStart = isStickyStartColumn(col)
+                return (
                 <TableCell
                   key={col.key}
                   sx={{
                     bgcolor: headerBg,
-                    position: col.sticky ? 'sticky' : stickyHeader ? 'sticky' : undefined,
-                    left: col.sticky ? 0 : undefined,
+                    position: stickyEnd || stickyStart || stickyHeader ? 'sticky' : undefined,
+                    left: stickyStart ? 0 : undefined,
+                    right: stickyEnd ? stickyEndRight : undefined,
                     top: stickyHeader ? 0 : undefined,
-                    zIndex: col.sticky ? 4 : 3,
+                    zIndex: stickyEnd ? 5 : stickyStart ? 4 : 3,
                     borderBottom: '2px solid',
                     borderColor: 'divider',
                     width: col.width,
                     minWidth: col.minWidth,
-                    boxShadow: col.sticky ? '4px 0 4px -2px rgba(0,0,0,0.08)' : undefined,
+                    boxShadow: stickyEnd
+                      ? '-4px 0 4px -2px rgba(0,0,0,0.08)'
+                      : stickyStart
+                        ? '4px 0 4px -2px rgba(0,0,0,0.08)'
+                        : undefined,
                     display: getHideDisplay(col.hideBelow),
                     ...compactHeaderCellSx,
                   }}
@@ -392,7 +417,7 @@ export default function DataTable({
                     }
                   />
                 </TableCell>
-              ))}
+              )})}
               {renderExpanded && (
                 <TableCell sx={{ bgcolor: headerBg, position: 'sticky', top: 0, zIndex: 3, width: 48, borderBottom: '2px solid', borderColor: 'divider' }} />
               )}
@@ -446,6 +471,13 @@ export default function DataTable({
                     {visibleTableColumns.map((col) => {
                       const cellValue = row[col.key]
                       const isEditing = editingCell?.rowId === rowId && editingCell?.columnKey === col.key
+                      const stickyEnd = isStickyEndColumn(col)
+                      const stickyStart = isStickyStartColumn(col)
+                      const stickyCellBg = isSelected
+                        ? selectedBg
+                        : isEven
+                          ? evenRowBg
+                          : theme.palette.background.paper
 
                       return (
                         <TableCell
@@ -456,19 +488,24 @@ export default function DataTable({
                             lineHeight: '20px',
                             borderBottom: '1px solid',
                             borderColor: 'divider',
-                            position: col.sticky ? 'sticky' : undefined,
-                            left: col.sticky ? 0 : undefined,
-                            zIndex: col.sticky ? 1 : undefined,
-                            bgcolor: col.sticky
-                              ? (isSelected ? selectedBg : isEven ? evenRowBg : theme.palette.background.paper)
-                              : undefined,
-                            boxShadow: col.sticky ? '4px 0 4px -2px rgba(0,0,0,0.08)' : undefined,
+                            width: col.width,
+                            minWidth: col.minWidth,
+                            position: stickyEnd || stickyStart ? 'sticky' : undefined,
+                            left: stickyStart ? 0 : undefined,
+                            right: stickyEnd ? stickyEndRight : undefined,
+                            zIndex: stickyEnd || stickyStart ? 1 : undefined,
+                            bgcolor: stickyEnd || stickyStart ? stickyCellBg : undefined,
+                            boxShadow: stickyEnd
+                              ? '-4px 0 4px -2px rgba(0,0,0,0.08)'
+                              : stickyStart
+                                ? '4px 0 4px -2px rgba(0,0,0,0.08)'
+                                : undefined,
                             display: getHideDisplay(col.hideBelow),
                             textAlign: col.align,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            maxWidth: col.width ? undefined : 240,
+                            maxWidth: col.width ?? 240,
                             cursor: col.editable ? 'text' : undefined,
                           }}
                           onClick={col.editable ? (e) => { e.stopPropagation(); setEditingCell({ rowId, columnKey: col.key }) } : undefined}

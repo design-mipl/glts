@@ -15,6 +15,7 @@ import { useTheme, alpha } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { SelectChangeEvent } from '@mui/material/Select'
 import type { ReactNode } from 'react'
+import { FORM_CONTROL, formControlHeight, outlinedFieldSx } from '../../../formControl'
 
 interface SelectOption {
   label: string
@@ -60,7 +61,7 @@ export default function Select({
 }: SelectProps) {
   const theme = useTheme()
   const labelId = label ? `select-label-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined
-  const inputHeight = size === 'sm' ? '34px' : '40px'
+  const inputHeight = formControlHeight(size)
   const [open, setOpen] = useState(false)
 
   const handleChange = (e: SelectChangeEvent<string | number>) => {
@@ -81,38 +82,7 @@ export default function Select({
       required={required}
       fullWidth={fullWidth}
       size="small"
-      sx={[
-        {
-          '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.palette.divider,
-            borderWidth: '1px',
-          },
-          '& .MuiInputBase-root:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.palette.text.secondary,
-          },
-          '& .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.palette.primary.main,
-            borderWidth: '1.5px',
-          },
-          '& .MuiInputBase-root.Mui-focused': {
-            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
-            borderRadius: '6px',
-          },
-          '& .MuiInputBase-root.Mui-error .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.palette.error.main,
-            borderWidth: '1.5px',
-          },
-          '& .MuiSelect-select': {
-            fontSize: '13px',
-          },
-          '& .MuiFormHelperText-root': {
-            fontSize: '11px',
-            mt: '4px',
-            mx: 0,
-          },
-        },
-        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
-      ]}
+      sx={[outlinedFieldSx(theme, inputHeight), ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
     >
       {label && <InputLabel id={labelId}>{label}</InputLabel>}
       <MuiSelect
@@ -139,8 +109,8 @@ export default function Select({
         }
         sx={{
           height: inputHeight,
-          borderRadius: '6px',
-          fontSize: '13px',
+          borderRadius: FORM_CONTROL.borderRadius,
+          fontSize: FORM_CONTROL.fontSize,
           backgroundColor: theme.palette.background.paper,
           transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
         }}
@@ -204,7 +174,9 @@ export default function Select({
           </MenuItem>
         ))}
       </MuiSelect>
-      {helperText && <FormHelperText sx={{ fontSize: '11px', mx: 0, mt: '4px' }}>{helperText}</FormHelperText>}
+      {helperText && (
+        <FormHelperText sx={{ fontSize: FORM_CONTROL.helperFontSize, mx: 0, mt: '4px' }}>{helperText}</FormHelperText>
+      )}
     </FormControl>
   )
 }

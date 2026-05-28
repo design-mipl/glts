@@ -13,9 +13,9 @@ export interface TopbarProps {
   onNotificationClick?: () => void
   onSignOut?: () => void
   onProfileClick?: () => void
-  onSettingsClick?: () => void
   onSearchClick?: () => void
   showMenuButton?: boolean
+  showUserDetails?: boolean
 }
 
 export default function Topbar({
@@ -25,9 +25,9 @@ export default function Topbar({
   onNotificationClick,
   onSignOut,
   onProfileClick,
-  onSettingsClick,
   onSearchClick,
   showMenuButton = false,
+  showUserDetails = true,
 }: TopbarProps) {
   const theme = useTheme()
   const isLight = theme.palette.mode === 'light'
@@ -174,7 +174,7 @@ export default function Topbar({
           user={user}
           onSignOut={onSignOut}
           onProfileClick={onProfileClick}
-          onSettingsClick={onSettingsClick}
+          showDetails={showUserDetails}
         />
       </Box>
     </Toolbar>

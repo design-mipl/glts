@@ -2,7 +2,7 @@ import {
   Box, Menu, MenuItem, ListItemIcon, Divider, Typography, Avatar, Stack,
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { User, Settings, LogOut, Sun, Moon } from 'lucide-react'
+import { User, LogOut, Sun, Moon } from 'lucide-react'
 import { useState } from 'react'
 import { tokens } from '../../../tokens'
 import { useFoundationTheme } from '../../../ThemeContext'
@@ -19,14 +19,14 @@ export interface UserMenuProps {
   user: UserMenuUser
   onSignOut?: () => void
   onProfileClick?: () => void
-  onSettingsClick?: () => void
+  showDetails?: boolean
 }
 
 export default function UserMenu({
   user,
   onSignOut,
   onProfileClick,
-  onSettingsClick,
+  showDetails = true,
 }: UserMenuProps) {
   const theme = useTheme()
   const { isDark, setMode } = useFoundationTheme()
@@ -64,16 +64,18 @@ export default function UserMenu({
         >
           {initials}
         </Avatar>
-        <Box sx={{ display: { xs: 'none', lg: 'block' }, minWidth: 0 }}>
-          <Typography sx={{ fontSize: '12px', fontWeight: 600, lineHeight: 1.2, color: 'text.primary' }} noWrap>
-            {user.name}
-          </Typography>
-          {user.role && (
-            <Typography sx={{ fontSize: '11px', lineHeight: 1.2, color: 'text.secondary' }} noWrap>
-              {user.role}
+        {showDetails ? (
+          <Box sx={{ display: { xs: 'none', lg: 'block' }, minWidth: 0 }}>
+            <Typography sx={{ fontSize: '12px', fontWeight: 600, lineHeight: 1.2, color: 'text.primary' }} noWrap>
+              {user.name}
             </Typography>
-          )}
-        </Box>
+            {user.role && (
+              <Typography sx={{ fontSize: '11px', lineHeight: 1.2, color: 'text.secondary' }} noWrap>
+                {user.role}
+              </Typography>
+            )}
+          </Box>
+        ) : null}
       </Stack>
 
       {/* Dropdown */}
@@ -95,25 +97,29 @@ export default function UserMenu({
           },
         }}
       >
-        {/* Header */}
-        <Box sx={{ px: 2, pt: '12px', pb: '8px' }}>
-          <Stack direction="row" alignItems="center" gap={1.5}>
-            <Avatar
-              src={user.avatarSrc}
-              sx={{ width: 36, height: 36, fontSize: '13px', fontWeight: 600, bgcolor: theme.palette.primary.main }}
-            >
-              {initials}
-            </Avatar>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="body2" fontWeight={600} noWrap>{user.name}</Typography>
-              <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
-                {user.email}
-              </Typography>
+        {showDetails ? (
+          <>
+            {/* Header */}
+            <Box sx={{ px: 2, pt: '12px', pb: '8px' }}>
+              <Stack direction="row" alignItems="center" gap={1.5}>
+                <Avatar
+                  src={user.avatarSrc}
+                  sx={{ width: 36, height: 36, fontSize: '13px', fontWeight: 600, bgcolor: theme.palette.primary.main }}
+                >
+                  {initials}
+                </Avatar>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="body2" fontWeight={600} noWrap>{user.name}</Typography>
+                  <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+                    {user.email}
+                  </Typography>
+                </Box>
+              </Stack>
             </Box>
-          </Stack>
-        </Box>
 
-        <Divider />
+            <Divider />
+          </>
+        ) : null}
 
         <MenuItem
           onClick={() => { setAnchor(null); onProfileClick?.() }}
@@ -124,18 +130,6 @@ export default function UserMenu({
           </ListItemIcon>
           <Typography variant="body2">Profile</Typography>
         </MenuItem>
-
-        <MenuItem
-          onClick={() => { setAnchor(null); onSettingsClick?.() }}
-          sx={{ py: '8px', gap: 1.5 }}
-        >
-          <ListItemIcon sx={{ minWidth: 'unset' }}>
-            <Settings size={16} strokeWidth={1.75} />
-          </ListItemIcon>
-          <Typography variant="body2">Settings</Typography>
-        </MenuItem>
-
-        <Divider />
 
         {/* Theme toggle row */}
         <Box sx={{ px: '8px', py: '4px' }}>
