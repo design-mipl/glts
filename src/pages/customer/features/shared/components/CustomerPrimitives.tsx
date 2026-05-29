@@ -266,7 +266,7 @@ export interface CustomerChecklistItem {
   id: string
   label: string
   required?: boolean
-  status: 'uploaded' | 'missing' | 'invalid' | 'pending'
+  status: 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified'
 }
 
 export function CustomerDocumentChecklist({
@@ -298,7 +298,7 @@ export function CustomerDocumentChecklist({
               {item.required && <Typography component="span" sx={{ ml: 0.5, color: colors.textMuted, fontSize: 11 }}>*</Typography>}
             </Typography>
             {showUploadAction && onReuploadItem ? (
-              <Button size="sm" variant="outlined" onClick={() => onReuploadItem(item)}>
+              <Button variant="outlined" onClick={() => onReuploadItem(item)}>
                 Upload document
               </Button>
             ) : null}
@@ -331,7 +331,7 @@ export function CustomerEmptyState({
       <Typography sx={{ fontSize: 16, fontWeight: 800, color: colors.navy }}>{title}</Typography>
       {description && <Typography sx={{ fontSize: 13, color: colors.textMuted, maxWidth: 420 }}>{description}</Typography>}
       {actionLabel && onAction && (
-        <Button size="sm" variant="contained" onClick={onAction} sx={{ mt: 1 }}>
+        <Button variant="contained" onClick={onAction} sx={{ mt: 1 }}>
           {actionLabel}
         </Button>
       )}

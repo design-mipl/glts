@@ -13,7 +13,14 @@ import {
   generateScale,
   tokens,
 } from './tokens';
-import { BUTTON, FORM_CONTROL } from './formControl';
+import {
+  BUTTON,
+  buttonPaddingCss,
+  FORM_CONTROL,
+  formControlBorderDefault,
+  formControlBorderHover,
+  formControlFieldBackground,
+} from './formControl';
 
 interface NavigationSurface {
   background: string;
@@ -50,6 +57,18 @@ declare module '@mui/material/styles' {
     desktopLg: true;
     desktopXl: true;
     desktopUhd: true;
+  }
+
+  interface Components {
+    MuiPickersOutlinedInput?: {
+      styleOverrides?: {
+        root?: object | ((props: { theme: Theme }) => object);
+        notchedOutline?: object | ((props: { theme: Theme }) => object);
+      };
+    };
+    MuiPickersTextField?: {
+      defaultProps?: { variant?: 'outlined' | 'filled' | 'standard' };
+    };
   }
 }
 
@@ -221,30 +240,31 @@ export function generateTheme(mode: ThemeMode): Theme {
       },
 
       MuiButton: {
-        defaultProps: { disableElevation: true },
+        defaultProps: { disableElevation: true, size: 'medium' },
         styleOverrides: {
           root: {
             textTransform: 'none',
             fontWeight: BUTTON.fontWeight,
             borderRadius: BUTTON.borderRadius,
             fontSize: BUTTON.fontSize,
-            padding: '7px 16px',
-            minHeight: BUTTON.minHeightSm,
+            lineHeight: 1.25,
+            padding: buttonPaddingCss('md'),
+            minHeight: BUTTON.minHeightMd,
           },
           sizeSmall: {
-            fontSize: '11px',
-            padding: '4px 8px',
-            minHeight: 28,
+            fontSize: '12px',
+            padding: buttonPaddingCss('sm'),
+            minHeight: BUTTON.minHeightSm,
           },
           sizeMedium: {
-            fontSize: '12px',
-            padding: '5px 12px',
-            minHeight: 32,
+            fontSize: BUTTON.fontSize,
+            padding: buttonPaddingCss('md'),
+            minHeight: BUTTON.minHeightMd,
           },
           sizeLarge: {
             fontSize: BUTTON.fontSize,
-            padding: '8px 20px',
-            minHeight: BUTTON.minHeightMd,
+            padding: buttonPaddingCss('lg'),
+            minHeight: '40px',
             borderRadius: BUTTON.borderRadius,
           },
           containedPrimary: filledButtonLabelSx,
@@ -285,13 +305,13 @@ export function generateTheme(mode: ThemeMode): Theme {
           root: {
             '& .MuiOutlinedInput-root': {
               borderRadius: FORM_CONTROL.borderRadius,
-              minHeight: `${FORM_CONTROL.heightMd} !important`,
-              height: `${FORM_CONTROL.heightMd} !important`,
-              fontSize: FORM_CONTROL.fontSize,
-            },
-            '& .MuiOutlinedInput-root.MuiInputBase-sizeSmall': {
               minHeight: `${FORM_CONTROL.heightSm} !important`,
               height: `${FORM_CONTROL.heightSm} !important`,
+              fontSize: FORM_CONTROL.fontSize,
+            },
+            '& .MuiOutlinedInput-root:not(.MuiInputBase-sizeSmall)': {
+              minHeight: `${FORM_CONTROL.heightMd} !important`,
+              height: `${FORM_CONTROL.heightMd} !important`,
             },
             '& .MuiOutlinedInput-input': {
               padding: `0 ${FORM_CONTROL.paddingX}`,
@@ -302,28 +322,74 @@ export function generateTheme(mode: ThemeMode): Theme {
         },
       },
 
-      MuiOutlinedInput: {
+      MuiPickersOutlinedInput: {
         styleOverrides: {
-          notchedOutline: {
-            borderColor: alpha(brand.text, 0.18),
-          },
-          root: {
-            minHeight: FORM_CONTROL.heightMd,
-            height: FORM_CONTROL.heightMd,
+          notchedOutline: ({ theme }) => ({
+            borderColor: formControlBorderDefault(theme),
+            borderWidth: FORM_CONTROL.borderWidth,
+            borderRadius: FORM_CONTROL.borderRadius,
+          }),
+          root: ({ theme }: { theme: Theme }) => ({
+            minHeight: FORM_CONTROL.heightSm,
+            height: FORM_CONTROL.heightSm,
             fontSize: FORM_CONTROL.fontSize,
             borderRadius: FORM_CONTROL.borderRadius,
-            '&.MuiInputBase-sizeSmall': {
-              minHeight: FORM_CONTROL.heightSm,
-              height: FORM_CONTROL.heightSm,
+            backgroundColor: formControlFieldBackground(theme),
+            '&:hover:not(.Mui-focused):not(.Mui-disabled) .MuiPickersOutlinedInput-notchedOutline': {
+              borderColor: formControlBorderHover(theme),
+            },
+            '&.Mui-focused .MuiPickersOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.primary.main,
+              borderWidth: FORM_CONTROL.borderWidth,
+            },
+            '&.Mui-error .MuiPickersOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.error.main,
+              borderWidth: FORM_CONTROL.borderWidth,
+            },
+          }),
+        },
+      },
+
+      MuiPickersTextField: {
+        defaultProps: { variant: 'outlined' },
+      },
+
+      MuiOutlinedInput: {
+        styleOverrides: {
+          notchedOutline: ({ theme }: { theme: Theme }) => ({
+            borderColor: formControlBorderDefault(theme),
+            borderWidth: FORM_CONTROL.borderWidth,
+            borderRadius: FORM_CONTROL.borderRadius,
+          }),
+          root: ({ theme }: { theme: Theme }) => ({
+            minHeight: FORM_CONTROL.heightSm,
+            height: FORM_CONTROL.heightSm,
+            fontSize: FORM_CONTROL.fontSize,
+            borderRadius: FORM_CONTROL.borderRadius,
+            backgroundColor: formControlFieldBackground(theme),
+            '&:not(.MuiInputBase-sizeSmall)': {
+              minHeight: FORM_CONTROL.heightMd,
+              height: FORM_CONTROL.heightMd,
             },
             '&:hover:not(.Mui-focused):not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
-              borderColor: alpha(brand.text, 0.32),
+              borderColor: formControlBorderHover(theme),
             },
-          },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.primary.main,
+              borderWidth: FORM_CONTROL.borderWidth,
+            },
+            '&.Mui-error .MuiOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.error.main,
+              borderWidth: FORM_CONTROL.borderWidth,
+            },
+          }),
           input: {
             padding: `0 ${FORM_CONTROL.paddingX}`,
             fontSize: FORM_CONTROL.fontSize,
             height: 'auto',
+            '&::placeholder': {
+              opacity: 1,
+            },
           },
         },
       },

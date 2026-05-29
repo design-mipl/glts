@@ -125,7 +125,7 @@ export function RequirementPreviewCarousel({ cards }: RequirementPreviewCarousel
                   )}
                 </Box>
                 {doc.hasSample && (
-                  <Button size="small" startIcon={<Eye size={14} />} sx={{ textTransform: 'none', fontSize: 12 }}>
+                  <Button startIcon={<Eye size={14} />} sx={{ textTransform: 'none' }}>
                     Sample
                   </Button>
                 )}

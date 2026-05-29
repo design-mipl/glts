@@ -6,6 +6,12 @@ import { FileUpload } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { UploadQueueTable } from '../../../components/UploadQueueTable'
 import { ApplicantDocumentDrawer } from '../../../components/ApplicantDocumentDrawer'
+import {
+  emptyApplicantAdditionalDetails,
+  resolveApplicantAdditionalDetails,
+} from '../../../config/applicantAdditionalDetailsConfig'
+import { emptyApplicantBasicDetails } from '../../../config/applicantBasicDetailsConfig'
+import { ensureRowBasicDetails } from '../../../utils/applicantBasicDetailsUtils'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
 import type { UploadQueueRow } from '../../../data/applicationFlowData'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
@@ -72,11 +78,13 @@ function buildResolvedExtractedFields(applicantName: string, passportNo: string,
 
 function applicantPatchFromRow(row: UploadQueueRow): Partial<ApplicationFlowState> {
   const normalize = (value: string) => (value === '—' ? '' : value)
+  const basic = row.basicDetails
   return {
     applicantName: normalize(row.travelerName),
     passportNumber: normalize(row.passportNo),
     nationality: normalize(row.nationality),
     passportExpiry: normalize(row.expiry),
+    dateOfBirth: basic?.dateOfBirth?.trim() ?? '',
     passportUploaded: true,
   }
 }
@@ -167,9 +175,14 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
     [onUpdate],
   )
 
+  const ensureRowAdditionalDetails = useCallback((row: UploadQueueRow): UploadQueueRow => {
+    if (row.additionalDetails) return row
+    return { ...row, additionalDetails: emptyApplicantAdditionalDetails() }
+  }, [])
+
   const withChecklist = useCallback(
     (row: UploadQueueRow, fallbackIndex: number): UploadQueueRow => {
-      if (!canBuildChecklist) return row
+      if (!canBuildChecklist) return ensureRowAdditionalDetails(row)
       const passportFields =
         row.fields && row.fields.length > 0
           ? row.fields
@@ -187,9 +200,17 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
             )
           : createApplicantDocuments(state.countryId, state.visaOfferingId, passportFields, fallbackIndex - 1)
       const { documentsComplete, documentsTotal } = countDocumentProgress(documents)
-      return { ...row, fields: passportFields, documents, documentsComplete, documentsTotal }
+      const additionalDetails = resolveApplicantAdditionalDetails(row.additionalDetails)
+      return ensureRowBasicDetails({
+        ...row,
+        fields: passportFields,
+        documents,
+        documentsComplete,
+        documentsTotal,
+        additionalDetails,
+      })
     },
-    [canBuildChecklist, state.countryId, state.visaOfferingId],
+    [canBuildChecklist, ensureRowAdditionalDetails, state.countryId, state.visaOfferingId],
   )
 
   useEffect(() => {
@@ -280,6 +301,8 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
           documents: [],
           documentsComplete: 0,
           documentsTotal: 0,
+          additionalDetails: emptyApplicantAdditionalDetails(),
+          basicDetails: emptyApplicantBasicDetails(),
         }
         return withChecklist(toResolvedIdentity(baseRow, index + 1), index + 1)
       })
@@ -583,6 +606,7 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         row={drawerRow}
         onClose={() => setDrawerRowId(null)}
         onUpdateRow={handleRowUpdate}
+        globalDocumentUploads={globalUploadFiles}
       />
     </Box>
   )

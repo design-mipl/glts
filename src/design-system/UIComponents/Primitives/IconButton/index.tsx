@@ -6,6 +6,7 @@ import Box from '@mui/material/Box'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { ElementType, MouseEventHandler, ReactNode } from 'react'
+import { BUTTON } from '../../../formControl'
 
 type IconButtonColor = 'primary' | 'secondary' | 'error' | 'success' | 'warning' | 'info' | 'default'
 type IconButtonVariant = 'default' | 'contained' | 'outlined' | 'soft'
@@ -55,12 +56,31 @@ export default function IconButton({
 
   const variantSx =
     variant === 'contained' && pal
-      ? { bgcolor: pal.main, color: pal.contrastText, '&:hover': { bgcolor: pal.dark } }
+      ? {
+          bgcolor: pal.main,
+          color: pal.contrastText,
+          '&:hover': { bgcolor: pal.dark, boxShadow: `0 2px 6px ${alpha(pal.main, 0.3)}` },
+        }
       : variant === 'outlined' && pal
-        ? { border: '1px solid', borderColor: pal.main, color: pal.main }
+        ? {
+            border: '1px solid',
+            borderColor: alpha(pal.main, 0.4),
+            color: pal.main,
+            '&:hover': { bgcolor: alpha(pal.main, 0.06), borderColor: pal.main },
+          }
         : variant === 'soft' && pal
-          ? { bgcolor: alpha(pal.main, 0.1), color: pal.main, '&:hover': { bgcolor: alpha(pal.main, 0.18) } }
-          : {}
+          ? {
+              bgcolor: alpha(pal.main, 0.1),
+              color: pal.main,
+              '&:hover': { bgcolor: alpha(pal.main, 0.16) },
+            }
+          : {
+              color: theme.palette.text.secondary,
+              '&:hover': {
+                bgcolor: alpha(theme.palette.text.primary, 0.06),
+                color: theme.palette.text.primary,
+              },
+            }
 
   const linkProps = href ? ({ component: Link as ElementType, to: href } as object) : {}
 
@@ -70,7 +90,12 @@ export default function IconButton({
       onClick={onClick}
       {...linkProps}
       sx={[
-        { width: dim, height: dim, borderRadius: '8px' },
+        {
+          width: dim,
+          height: dim,
+          borderRadius: BUTTON.borderRadius,
+          transition: 'background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease',
+        },
         variantSx,
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}

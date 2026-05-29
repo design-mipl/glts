@@ -151,7 +151,7 @@ export function CardsShowcase() {
                 title="Mountain Retreat"
                 description="A peaceful escape in the mountains."
                 actions={
-                  <Button variant="outlined" size="sm" startIcon={<Eye size={14} />}>View</Button>
+                  <Button variant="outlined" startIcon={<Eye size={14} />}>View</Button>
                 }
               />
             </Grid>
@@ -163,8 +163,8 @@ export function CardsShowcase() {
                 badges={[{ label: 'Featured', color: '#6366F1' }]}
                 actions={
                   <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button variant="outlined" size="sm" startIcon={<Edit size={14} />}>Edit</Button>
-                    <Button variant="text" size="sm" color="error" startIcon={<Trash2 size={14} />}>Delete</Button>
+                    <Button variant="outlined" startIcon={<Edit size={14} />}>Edit</Button>
+                    <Button variant="text" color="error" startIcon={<Trash2 size={14} />}>Delete</Button>
                   </Box>
                 }
               />

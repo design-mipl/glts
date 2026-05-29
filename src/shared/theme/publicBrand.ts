@@ -1,5 +1,6 @@
 import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
+import { buttonPaddingCss } from '@/design-system/formControl'
 
 export type PublicBrandMode = 'light' | 'dark'
 
@@ -147,6 +148,6 @@ export function getMarketingPrimaryButtonSx(colors: PublicBrandColors): SxProps<
     ...getPrimaryButtonSx(colors),
     fontSize: '16px',
     fontWeight: 700,
-    padding: '10px 20px',
+    padding: buttonPaddingCss('lg'),
   }
 }

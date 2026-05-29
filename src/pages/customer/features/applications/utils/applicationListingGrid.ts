@@ -1,6 +1,7 @@
 import type { CustomerListingGridItem } from '@/pages/customer/features/shared/components/listing/CustomerListingGrid'
 import type { BulkBatchRow, SingleApplicationRow } from '../data/applicationFlowData'
 import { getApplicationOperationalTone, getApplicationTypeLabel } from '../components/listing/applicationStatus'
+import { resolveApplicationCreatorLabel } from './applicationCreatorUtils'
 import type { ApplicationListingRow } from '../types/applicationListing.types'
 import { isBulkRow } from '../types/applicationListing.types'
 
@@ -27,7 +28,7 @@ function mapSingleRowToGridItem(row: SingleApplicationRow): CustomerListingGridI
     id: row.id,
     title: row.applicantName,
     subtitle: `${typeLabel} · ${row.id}`,
-    meta: `${row.countryFlag ?? ''} ${row.country} · ${row.visaType} · 1 traveler`,
+    meta: `${row.countryFlag ?? ''} ${row.country} · ${row.visaType} · Created by ${resolveApplicationCreatorLabel(row.createdByEmail)}`,
     status: row.operationalStatus,
     statusColor: toneToGridColor(tone),
   }
@@ -40,7 +41,7 @@ function mapBulkRowToGridItem(row: BulkBatchRow): CustomerListingGridItem {
     id: row.id,
     title: row.companyName,
     subtitle: `${typeLabel} · ${row.id}`,
-    meta: `${row.countryFlag ?? ''} ${row.country} · ${row.totalApplicants} travelers · ${row.verifiedApplicants} verified`,
+    meta: `${row.countryFlag ?? ''} ${row.country} · ${row.totalApplicants} travelers · Created by ${resolveApplicationCreatorLabel(row.createdByEmail)}`,
     status: row.operationalStatus,
     statusColor: toneToGridColor(tone),
   }

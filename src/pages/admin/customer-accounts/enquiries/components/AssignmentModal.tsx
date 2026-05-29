@@ -37,22 +37,34 @@ export function AssignmentModal({ open, value, onClose, onChange, onSubmit }: As
     >
       <Stack spacing={2}>
         <FormField label="Assigned Team">
-          <Input value={value.assignedTeam} onChange={(next) => patch({ assignedTeam: next })} fullWidth />
+          <Input value={value.assignedTeam} onChange={(next) => patch({ assignedTeam: next })} placeholder="e.g. Marine Ops, Corporate Ops" fullWidth />
         </FormField>
         <FormField label="Assigned User">
-          <Input value={value.assignedUser} onChange={(next) => patch({ assignedUser: next })} fullWidth />
+          <Input value={value.assignedUser} onChange={(next) => patch({ assignedUser: next })} placeholder="Enter assignee name" fullWidth />
         </FormField>
         <FormField label="Branch">
-          <Input value={value.branch} onChange={(next) => patch({ branch: next })} fullWidth />
+          <Input value={value.branch} onChange={(next) => patch({ branch: next })} placeholder="e.g. Mumbai, Dubai" fullWidth />
         </FormField>
         <FormField label="Priority">
-          <Select value={value.priority} onChange={(next) => patch({ priority: String(next) })} options={enquiryPriorityOptions.slice(1)} fullWidth />
+          <Select
+            value={value.priority}
+            onChange={(next) => patch({ priority: String(next) })}
+            options={enquiryPriorityOptions.slice(1)}
+            placeholder="Select priority"
+            fullWidth
+          />
         </FormField>
         <FormField label="SLA Target">
-          <Input type="date" value={value.slaTarget} onChange={(next) => patch({ slaTarget: next })} fullWidth />
+          <Input type="date" value={value.slaTarget} onChange={(next) => patch({ slaTarget: next })} placeholder="Select SLA target date" fullWidth />
         </FormField>
         <FormField label="Assignment Notes">
-          <Textarea value={value.assignmentNotes} onChange={(next) => patch({ assignmentNotes: next })} minRows={3} fullWidth />
+          <Textarea
+            value={value.assignmentNotes}
+            onChange={(next) => patch({ assignmentNotes: next })}
+            placeholder="Add context for this assignment"
+            minRows={3}
+            fullWidth
+          />
         </FormField>
       </Stack>
     </Modal>

@@ -53,7 +53,7 @@ export default function Select({
   helperText,
   disabled = false,
   required = false,
-  size = 'md',
+  size = 'sm',
   fullWidth = false,
   clearable = false,
   loading = false,
@@ -74,6 +74,22 @@ export default function Select({
   }
 
   const showClear = clearable && value !== undefined && value !== ''
+  const isEmpty = value === undefined || value === ''
+
+  const renderValue = (selected: string | number) => {
+    if (selected === '' || selected === undefined) {
+      if (placeholder) {
+        return (
+          <Box component="span" sx={{ color: 'text.disabled', fontSize: FORM_CONTROL.fontSize }}>
+            {placeholder}
+          </Box>
+        )
+      }
+      return ''
+    }
+    const opt = options.find((o) => o.value === selected)
+    return opt?.label ?? String(selected)
+  }
 
   return (
     <FormControl
@@ -93,7 +109,8 @@ export default function Select({
         open={open}
         onOpen={() => setOpen(true)}
         onClose={() => setOpen(false)}
-        displayEmpty={!!placeholder}
+        displayEmpty={!!placeholder || isEmpty}
+        renderValue={renderValue}
         endAdornment={
           loading ? (
             <InputAdornment position="end" sx={{ mr: 2 }}>
@@ -107,13 +124,6 @@ export default function Select({
             </InputAdornment>
           ) : undefined
         }
-        sx={{
-          height: inputHeight,
-          borderRadius: FORM_CONTROL.borderRadius,
-          fontSize: FORM_CONTROL.fontSize,
-          backgroundColor: theme.palette.background.paper,
-          transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-        }}
         MenuProps={{
           PaperProps: {
             sx: {
@@ -143,11 +153,6 @@ export default function Select({
           },
         }}
       >
-        {placeholder && (
-          <MenuItem value="" disabled>
-            <Box component="span" sx={{ color: 'text.disabled', fontSize: '13px' }}>{placeholder}</Box>
-          </MenuItem>
-        )}
         {options.map((opt) => (
           <MenuItem key={opt.value} value={opt.value} disabled={opt.disabled}>
             {opt.avatar && (

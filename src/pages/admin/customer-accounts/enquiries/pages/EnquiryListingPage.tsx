@@ -10,7 +10,6 @@ import {
   useToast,
 } from '@/design-system/UIComponents'
 import {
-  AdminListingAdvancedFilters,
   AdminListingGrid,
   AdminListingStickyHeader,
   AdminListingTable,
@@ -18,19 +17,22 @@ import {
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { enquiryService } from '@/shared/services/enquiryService'
-import type { EnquiryRecord } from '@/shared/types/enquiry'
+import type { EnquiryRecord, EnquiryStatus } from '@/shared/types/enquiry'
+import { AddFollowupModal, type FollowupModalValue } from '../components/AddFollowupModal'
 import { AssignmentModal, type AssignmentModalValue } from '../components/AssignmentModal'
 import { EnquiryKpiRow } from '../components/EnquiryKpiRow'
 import { StatusUpdateModal } from '../components/StatusUpdateModal'
 import { buildEnquiryColumns } from '../components/EnquiryTableColumns'
-import { enquiryStatusLabel } from '../config/enquiryStatusConfig'
+import { getEnquiryActor } from '../utils/enquiryActor'
 import {
-  applyEnquiryAdvancedFilters,
-  EMPTY_ENQUIRY_LISTING_FILTERS,
+  downloadEnquiryCsv,
+  filterEnquiryRowsByTab,
   getEnquiryCellValue,
-  getEnquiryFilterOptions,
+  getEnquiryEmptyState,
+  mapEnquiryRowsToGridItems,
   matchesEnquirySearch,
-} from '../hooks/useEnquiryListingState'
+  type EnquiryListingTab,
+} from '../utils/enquiryListingUtils'
 
 const initialAssignment: AssignmentModalValue = {
   assignedTeam: '',
@@ -41,10 +43,15 @@ const initialAssignment: AssignmentModalValue = {
   assignmentNotes: '',
 }
 
-function getGridStatusColor(status: EnquiryRecord['status']): 'success' | 'warning' | 'info' {
-  if (status === 'converted') return 'success'
-  if (status === 'on_hold') return 'warning'
-  return 'info'
+const initialFollowup: FollowupModalValue = {
+  followupType: 'call',
+  followupDate: '',
+  followupTime: '10:00',
+  discussionSummary: '',
+  nextAction: '',
+  assignedUser: '',
+  reminderRequired: true,
+  followupStatus: 'scheduled',
 }
 
 export function EnquiryListingPage() {
@@ -53,15 +60,18 @@ export function EnquiryListingPage() {
   const navigate = useNavigate()
   const [rows, setRows] = useState<EnquiryRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<EnquiryListingTab>('all')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
-  const [advancedFilters, setAdvancedFilters] = useState(EMPTY_ENQUIRY_LISTING_FILTERS)
 
   const [statusModalOpen, setStatusModalOpen] = useState(false)
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false)
+  const [followupModalOpen, setFollowupModalOpen] = useState(false)
   const [activeEnquiryId, setActiveEnquiryId] = useState<string>()
+  const [activeEnquiryStatus, setActiveEnquiryStatus] = useState<EnquiryStatus>('new')
   const [statusValue, setStatusValue] = useState('under_discussion')
   const [statusReason, setStatusReason] = useState('')
   const [assignmentValue, setAssignmentValue] = useState<AssignmentModalValue>(initialAssignment)
+  const [followupValue, setFollowupValue] = useState<FollowupModalValue>(initialFollowup)
 
   const loadRows = async () => {
     setLoading(true)
@@ -76,6 +86,7 @@ export function EnquiryListingPage() {
 
   const openStatus = (record: EnquiryRecord) => {
     setActiveEnquiryId(record.id)
+    setActiveEnquiryStatus(record.status)
     setStatusValue(record.status)
     setStatusReason('')
     setStatusModalOpen(true)
@@ -94,50 +105,87 @@ export function EnquiryListingPage() {
     setAssignmentModalOpen(true)
   }
 
-  const columns = useMemo(() => buildEnquiryColumns({
-    onOpenDetail: (row) => navigate(`/admin/customer-accounts/enquiries/${row.id}`),
-    onOpenAssignment: openAssignment,
-    onOpenStatus: openStatus,
-  }), [navigate])
+  const openFollowup = (record: EnquiryRecord) => {
+    setActiveEnquiryId(record.id)
+    setFollowupValue({
+      ...initialFollowup,
+      assignedUser: record.assignment.assignedUser ?? '',
+    })
+    setFollowupModalOpen(true)
+  }
 
-  const advancedFilteredRows = useMemo(
-    () => applyEnquiryAdvancedFilters(rows, advancedFilters),
-    [rows, advancedFilters],
+  const columns = useMemo(
+    () =>
+      buildEnquiryColumns({
+        onOpenDetail: (row) => navigate(`/admin/customer-accounts/enquiries/${row.id}`),
+        onOpenEdit: (row) => navigate(`/admin/customer-accounts/enquiries/${row.id}/edit`),
+        onOpenAssignment: openAssignment,
+        onOpenStatus: openStatus,
+        onOpenFollowup: openFollowup,
+      }),
+    [navigate],
+  )
+
+  const tabFilteredRows = useMemo(
+    () => filterEnquiryRowsByTab(rows, activeTab),
+    [rows, activeTab],
   )
 
   const listing = useCustomerListing({
-    rows: advancedFilteredRows,
+    rows: tabFilteredRows,
     getCellValue: getEnquiryCellValue,
     searchMatch: matchesEnquirySearch,
     initialPageSize: 10,
   })
-
-  const filterOptions = useMemo(() => getEnquiryFilterOptions(rows), [rows])
 
   const toolbarColumns = useMemo(
     () => columns.filter((col) => col.key !== 'actions').map((col) => ({ key: col.key, label: col.label })),
     [columns],
   )
 
-  const hasActiveFilters = Boolean(advancedFilters.country || advancedFilters.status || advancedFilters.priority)
+  const handleCreate = useCallback(() => {
+    navigate('/admin/customer-accounts/enquiries/new')
+  }, [navigate])
+
+  const emptyState = useMemo(
+    () => getEnquiryEmptyState(activeTab, handleCreate),
+    [activeTab, handleCreate],
+  )
+
+  const allowedStatuses = useMemo(
+    () => enquiryService.getAllowedStatusTransitions(activeEnquiryStatus),
+    [activeEnquiryStatus],
+  )
 
   const bulkActions: BulkAction[] = [
     {
       label: 'Bulk Status Update',
       onClick: (selected) => {
-        if (selected.length > 0) {
-          const first = selected[0] as EnquiryRecord
-          openStatus(first)
+        if (selected.length === 0) return
+        if (selected.length > 1) {
+          showToast({
+            title: 'Select one enquiry',
+            description: 'Select one enquiry at a time for status updates.',
+            variant: 'info',
+          })
+          return
         }
+        openStatus(selected[0] as EnquiryRecord)
       },
     },
     {
       label: 'Bulk Assignment',
       onClick: (selected) => {
-        if (selected.length > 0) {
-          const first = selected[0] as EnquiryRecord
-          openAssignment(first)
+        if (selected.length === 0) return
+        if (selected.length > 1) {
+          showToast({
+            title: 'Select one enquiry',
+            description: 'Select one enquiry at a time for assignment updates.',
+            variant: 'info',
+          })
+          return
         }
+        openAssignment(selected[0] as EnquiryRecord)
       },
     },
   ]
@@ -148,31 +196,29 @@ export function EnquiryListingPage() {
   }, [showToast])
 
   const handleExport = useCallback(() => {
+    downloadEnquiryCsv(listing.filterSourceRows)
     showToast({
       title: 'Export started',
       description: 'Your enquiry export will download shortly.',
       variant: 'success',
     })
-  }, [showToast])
+  }, [listing.filterSourceRows, showToast])
 
   const handleClearFilters = useCallback(() => {
-    setAdvancedFilters(EMPTY_ENQUIRY_LISTING_FILTERS)
     listing.handleSearch('')
     listing.setColumnFilters({})
   }, [listing])
 
-  const gridItems = useMemo(
-    () =>
-      listing.paginatedRows.map((row) => ({
-        id: row.id,
-        title: row.customer.companyOrCustomerName,
-        subtitle: `${row.id} • ${row.customer.contactPersonName}`,
-        meta: `${row.visaRequirement.countries.join(', ')} • ${row.visaRequirement.visaType}`,
-        status: enquiryStatusLabel[row.status],
-        statusColor: getGridStatusColor(row.status),
-      })),
-    [listing.paginatedRows],
+  const handleTabChange = useCallback(
+    (tab: EnquiryListingTab) => {
+      setActiveTab(tab)
+      setViewMode('table')
+      listing.setTableState((state) => ({ ...state, page: 0 }))
+    },
+    [listing],
   )
+
+  const gridItems = useMemo(() => mapEnquiryRowsToGridItems(listing.paginatedRows), [listing.paginatedRows])
 
   const footerBg =
     theme.palette.mode === 'dark'
@@ -188,44 +234,39 @@ export function EnquiryListingPage() {
             description="Capture, qualify, assign, and progress customer enquiries toward quotation."
             actions={
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                <Button label="Create Enquiry" startIcon={<Plus size={14} />} onClick={() => navigate('/admin/customer-accounts/enquiries/new')} />
+                <Button label="Create Enquiry" startIcon={<Plus size={14} />} onClick={handleCreate} />
               </Stack>
             }
           />
         }
         kpis={<EnquiryKpiRow enquiries={rows} />}
+        tabs={[
+          { value: 'all', label: 'All enquiries' },
+          { value: 'new', label: 'New' },
+          { value: 'active', label: 'Active' },
+          { value: 'converted', label: 'Converted' },
+          { value: 'closed', label: 'Closed' },
+        ]}
+        tabValue={activeTab}
+        onTabChange={(value) => handleTabChange(value as EnquiryListingTab)}
         toolbar={
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <AdminListingToolbar
-              searchValue={listing.tableState.searchQuery}
-              onSearch={listing.handleSearch}
-              searchPlaceholder="Search by enquiry ID, company, contact, country, or assignee…"
-              onExport={handleExport}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              columns={toolbarColumns}
-              hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
-              onHiddenColumnKeysChange={(keys) =>
-                listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
-              }
-              moreMenuItems={[
-                { label: 'Refresh list', onClick: () => void handleRefresh() },
-                { label: 'Clear all filters', onClick: handleClearFilters },
-              ]}
-            />
-            <AdminListingAdvancedFilters
-              filters={advancedFilters}
-              onFiltersChange={(next) => {
-                setAdvancedFilters(next)
-                listing.setTableState((state) => ({ ...state, page: 0 }))
-              }}
-              onClearFilters={handleClearFilters}
-              countries={filterOptions.countries}
-              statuses={filterOptions.statuses}
-              priorities={filterOptions.priorities}
-              hasActiveFilters={hasActiveFilters}
-            />
-          </Box>
+          <AdminListingToolbar
+            searchValue={listing.tableState.searchQuery}
+            onSearch={listing.handleSearch}
+            searchPlaceholder="Search by enquiry ID, company, contact, country, or assignee…"
+            onExport={handleExport}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            columns={toolbarColumns}
+            hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
+            onHiddenColumnKeysChange={(keys) =>
+              listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
+            }
+            moreMenuItems={[
+              { label: 'Refresh list', onClick: () => void handleRefresh() },
+              { label: 'Clear all filters', onClick: handleClearFilters },
+            ]}
+          />
         }
         listingContent={
           viewMode === 'table' ? (
@@ -243,12 +284,9 @@ export function EnquiryListingPage() {
               loading={loading}
               bulkActions={bulkActions}
               stickyHeader
-              emptyTitle="No enquiries available"
-              emptyDescription="Create a new enquiry to begin tracking onboarding requirements."
-              emptyAction={{
-                label: 'Create enquiry',
-                onClick: () => navigate('/admin/customer-accounts/enquiries/new'),
-              }}
+              emptyTitle={emptyState.emptyTitle}
+              emptyDescription={emptyState.emptyDescription}
+              emptyAction={emptyState.emptyAction}
             />
           ) : (
             <AdminListingGrid
@@ -274,13 +312,29 @@ export function EnquiryListingPage() {
         open={statusModalOpen}
         value={statusValue}
         reason={statusReason}
+        allowedStatuses={allowedStatuses}
         onClose={() => setStatusModalOpen(false)}
         onStatusChange={setStatusValue}
         onReasonChange={setStatusReason}
         onSubmit={async () => {
           if (!activeEnquiryId) return
-          await enquiryService.updateStatus(activeEnquiryId, statusValue as EnquiryRecord['status'], 'Admin User', statusReason)
+          const actor = getEnquiryActor()
+          const result = await enquiryService.updateStatus(
+            activeEnquiryId,
+            statusValue as EnquiryStatus,
+            actor,
+            statusReason,
+          )
+          if (!result.ok) {
+            showToast({
+              title: 'Status update failed',
+              description: 'message' in result ? result.message : 'Invalid status transition',
+              variant: 'error',
+            })
+            return
+          }
           setStatusModalOpen(false)
+          showToast({ title: 'Status updated', variant: 'success' })
           await loadRows()
         }}
       />
@@ -302,9 +356,34 @@ export function EnquiryListingPage() {
               slaTarget: assignmentValue.slaTarget,
               assignmentNotes: assignmentValue.assignmentNotes,
             },
-            'Admin User',
+            getEnquiryActor(),
           )
           setAssignmentModalOpen(false)
+          showToast({ title: 'Assignment updated', variant: 'success' })
+          await loadRows()
+        }}
+      />
+
+      <AddFollowupModal
+        open={followupModalOpen}
+        value={followupValue}
+        onClose={() => setFollowupModalOpen(false)}
+        onChange={setFollowupValue}
+        onSubmit={async () => {
+          if (!activeEnquiryId) return
+          await enquiryService.addFollowup(
+            activeEnquiryId,
+            {
+              ...followupValue,
+              followupType: followupValue.followupType as 'call',
+              followupStatus: followupValue.followupStatus as 'scheduled',
+              createdBy: getEnquiryActor(),
+            },
+            getEnquiryActor(),
+          )
+          setFollowupModalOpen(false)
+          setFollowupValue(initialFollowup)
+          showToast({ title: 'Follow-up scheduled', variant: 'success' })
           await loadRows()
         }}
       />

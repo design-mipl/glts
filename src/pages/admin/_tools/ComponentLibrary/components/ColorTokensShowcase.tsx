@@ -55,7 +55,7 @@ export function ColorTokensShowcase() {
         <Grid size={12}>
           <Typography variant="h3" sx={{ mb: 1.5 }}>Locked GLTS brand (publicBrand)</Typography>
           <Stack direction="row" gap={1.5} flexWrap="wrap" alignItems="center" sx={{ mb: 2 }}>
-            <Button variant="outlined" size="sm" onClick={toggleMode}>
+            <Button variant="outlined" onClick={toggleMode}>
               {isDark ? 'Light mode' : 'Dark mode'}
             </Button>
             <Typography variant="body2" color="text.secondary">

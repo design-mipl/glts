@@ -80,12 +80,12 @@ export function DisplayShowcase() {
           <Typography variant="h3" sx={{ mb: 1.5 }}>Tag</Typography>
           <Stack direction="row" gap={1.5} flexWrap="wrap">
             <Tag label="Default" />
-            <Tag label="Primary" color="primary" />
-            <Tag label="Success" color="success" />
-            <Tag label="Warning" color="warning" />
-            <Tag label="Error" color="error" />
-            <Tag label="Info" color="info" />
-            <Tag label="Removable" color="primary" onDelete={() => {}} />
+            <Tag label="Success" variant="success" />
+            <Tag label="Warning" variant="warning" />
+            <Tag label="Error" variant="error" />
+            <Tag label="Info" variant="info" />
+            <Tag label="Neutral" variant="neutral" />
+            <Tag label="Removable" variant="info" onDelete={() => {}} />
           </Stack>
         </Grid>
 

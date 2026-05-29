@@ -43,7 +43,7 @@ export default function Input({
   disabled = false,
   required = false,
   readonly = false,
-  size = 'md',
+  size = 'sm',
   type = 'text',
   startAdornment,
   endAdornment,
@@ -73,6 +73,7 @@ export default function Input({
   return (
     <TextField
       label={label}
+      hiddenLabel={!label}
       placeholder={placeholder}
       value={value}
       defaultValue={defaultValue}

@@ -1,5 +1,5 @@
-import { Box, Button } from '@mui/material'
-import { Select } from '@/design-system/UIComponents'
+import { Box } from '@mui/material'
+import { Button, Select } from '@/design-system/UIComponents'
 
 export interface AdminListingFilterState {
   country: string
@@ -48,35 +48,36 @@ export function AdminListingAdvancedFilters({
         }}
       >
         <Select
-          label="Country"
           value={filters.country}
           onChange={(value) => patch({ country: String(value) })}
-          options={[{ value: '', label: 'All countries' }, ...countries.map((c) => ({ value: c, label: c }))]}
+          options={countries.map((c) => ({ value: c, label: c }))}
+          placeholder="All countries"
           size="sm"
           clearable
+          fullWidth
         />
         <Select
-          label="Status"
           value={filters.status}
           onChange={(value) => patch({ status: String(value) })}
-          options={[{ value: '', label: 'All statuses' }, ...statuses.map((s) => ({ value: s, label: s }))]}
+          options={statuses.map((s) => ({ value: s, label: s }))}
+          placeholder="All statuses"
           size="sm"
           clearable
+          fullWidth
         />
         <Select
-          label="Priority"
           value={filters.priority}
           onChange={(value) => patch({ priority: String(value) })}
-          options={[{ value: '', label: 'All priorities' }, ...priorities.map((p) => ({ value: p, label: p }))]}
+          options={priorities.map((p) => ({ value: p, label: p }))}
+          placeholder="All priorities"
           size="sm"
           clearable
+          fullWidth
         />
       </Box>
       {hasActiveFilters && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button size="small" variant="text" onClick={onClearFilters} sx={{ fontWeight: 600 }}>
-            Clear filters
-          </Button>
+          <Button label="Clear filters" variant="text" size="sm" onClick={onClearFilters} />
         </Box>
       )}
     </Box>

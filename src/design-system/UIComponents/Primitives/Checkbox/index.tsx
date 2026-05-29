@@ -2,7 +2,9 @@ import MuiCheckbox from '@mui/material/Checkbox'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import FormHelperText from '@mui/material/FormHelperText'
 import Box from '@mui/material/Box'
+import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
+import { controlLabelSx, FORM_CONTROL } from '../../../formControl'
 
 type CheckboxColor = 'primary' | 'secondary' | 'error' | 'success'
 type LabelPlacement = 'end' | 'start' | 'top' | 'bottom'
@@ -38,6 +40,8 @@ export default function Checkbox({
   labelPlacement = 'end',
   sx,
 }: CheckboxProps) {
+  const theme = useTheme()
+
   const checkbox = (
     <MuiCheckbox
       checked={checked}
@@ -47,7 +51,13 @@ export default function Checkbox({
       disabled={disabled}
       color={error ? 'error' : color}
       size={muiSize[size]}
-      sx={size === 'lg' ? { '& svg': { fontSize: 28 } } : undefined}
+      sx={[
+        size === 'lg' ? { '& svg': { fontSize: 26 } } : { '& svg': { fontSize: 20 } },
+        {
+          borderRadius: '6px',
+          transition: 'background-color 0.15s ease',
+        },
+      ]}
     />
   )
 
@@ -58,7 +68,14 @@ export default function Checkbox({
           control={checkbox}
           label={label}
           labelPlacement={labelPlacement}
-          sx={{ '& .MuiFormControlLabel-label': error ? { color: 'error.main' } : {} }}
+          sx={[
+            controlLabelSx(theme),
+            {
+              '& .MuiFormControlLabel-label': error
+                ? { color: 'error.main', fontSize: FORM_CONTROL.fontSize }
+                : {},
+            },
+          ]}
         />
       ) : (
         checkbox

@@ -2,9 +2,17 @@ export type PortalKind = 'business' | 'operations'
 
 export type CustomerType = 'marine' | 'corporate' | 'b2b_agent'
 
-export type PortalUserRole = 'corporate_admin' | 'booker'
+export type CustomerPortalRole = 'super_admin' | 'admin' | 'booker'
+
+/** @deprecated Use CustomerPortalRole */
+export type PortalUserRole = CustomerPortalRole
 
 const SESSION_KEY = 'glts:auth'
+
+const ADMIN_DEMO_EMAILS = new Set([
+  'sneha.patel@glts.com',
+  'arun.krishnan@glts.com',
+])
 
 export interface AuthSession {
   portal: PortalKind
@@ -12,19 +20,28 @@ export interface AuthSession {
   customerType?: CustomerType
   companyName?: string
   contactName?: string
-  userRole?: PortalUserRole
+  userRole?: CustomerPortalRole
 }
 
-/** Prototype: corporate admin vs booker from email pattern */
-export function inferUserRole(email: string): PortalUserRole {
+function migrateLegacyRole(role: string | undefined): CustomerPortalRole | undefined {
+  if (!role) return undefined
+  if (role === 'corporate_admin') return 'super_admin'
+  if (role === 'super_admin' || role === 'admin' || role === 'booker') return role
+  return undefined
+}
+
+/** Prototype: infer customer portal role from email pattern */
+export function inferUserRole(email: string): CustomerPortalRole {
   const e = email.toLowerCase()
   if (
     e.startsWith('admin@') ||
     e.startsWith('owner@') ||
-    e.includes('.admin@') ||
     e.includes('corporate.admin')
   ) {
-    return 'corporate_admin'
+    return 'super_admin'
+  }
+  if (ADMIN_DEMO_EMAILS.has(e) || e.includes('.portaladmin@')) {
+    return 'admin'
   }
   return 'booker'
 }
@@ -61,9 +78,16 @@ export function loadSession(): AuthSession | null {
   try {
     const raw = localStorage.getItem(SESSION_KEY)
     if (!raw) return null
-    const session = JSON.parse(raw) as AuthSession
+    const session = JSON.parse(raw) as AuthSession & { userRole?: string }
+    let changed = false
+
+    const migratedRole = migrateLegacyRole(session.userRole)
+    if (migratedRole && migratedRole !== session.userRole) {
+      session.userRole = migratedRole
+      changed = true
+    }
+
     if (session.portal === 'business') {
-      let changed = false
       if (session.companyName?.toLowerCase() === 'interics') {
         session.companyName = BUSINESS_WORKSPACE_ID
         changed = true
@@ -72,8 +96,9 @@ export function loadSession(): AuthSession | null {
         session.email = session.email.replace(/@interics\./i, '@glts.')
         changed = true
       }
-      if (changed) saveSession(session)
     }
+
+    if (changed) saveSession(session)
     return session
   } catch {
     return null

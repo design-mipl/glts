@@ -2,7 +2,9 @@ import MuiSwitch from '@mui/material/Switch'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
+import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
+import { controlLabelSx, FORM_CONTROL } from '../../../formControl'
 
 type ToggleColor = 'primary' | 'secondary' | 'success'
 type ToggleSize = 'sm' | 'md' | 'lg'
@@ -34,6 +36,7 @@ export default function Toggle({
   labelPlacement = 'end',
   sx,
 }: ToggleProps) {
+  const theme = useTheme()
   const scale = switchScale[size]
 
   const switchEl = (
@@ -43,15 +46,29 @@ export default function Toggle({
       onChange={onChange ? (e) => onChange(e.target.checked) : undefined}
       disabled={disabled}
       color={color}
-      sx={scale !== 1 ? { transform: `scale(${scale})` } : undefined}
+      sx={{
+        ...(scale !== 1 ? { transform: `scale(${scale})` } : {}),
+        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+          opacity: 1,
+        },
+      }}
     />
   )
 
   const labelContent = (label || description) ? (
     <Box>
-      {label && <Typography variant="body2">{label}</Typography>}
+      {label && (
+        <Typography sx={{ fontSize: FORM_CONTROL.fontSize, fontWeight: 500, lineHeight: 1.45 }}>
+          {label}
+        </Typography>
+      )}
       {description && (
-        <Typography variant="caption" color="text.secondary" display="block">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          sx={{ fontSize: FORM_CONTROL.helperFontSize, mt: 0.25, lineHeight: 1.4 }}
+        >
           {description}
         </Typography>
       )}
@@ -65,7 +82,7 @@ export default function Toggle({
         label={labelContent}
         labelPlacement={labelPlacement}
         disabled={disabled}
-        sx={sx}
+        sx={[controlLabelSx(theme), ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
       />
     )
   }

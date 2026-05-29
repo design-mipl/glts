@@ -60,7 +60,7 @@ export default function EmptyState({
         {description ?? def.description}
       </Typography>
       {action && (
-        <Button variant="contained" size="small" sx={{ mt: 1 }} onClick={action.onClick}>
+        <Button variant="contained" sx={{ mt: 1 }} onClick={action.onClick}>
           {action.label}
         </Button>
       )}

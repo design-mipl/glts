@@ -39,10 +39,13 @@ export interface EnquiryCustomerInfo {
   companyAddress?: string
 }
 
+export type EnquiryProcessingType = 'standard' | 'express' | 'urgent'
+
 export interface EnquiryVisaRequirement {
   countries: string[]
   visaType: string
   purposeOfVisit: string
+  processingType?: EnquiryProcessingType | string
   numberOfApplicants: number
   marineRequirement: boolean
   tentativeTravelDate?: string

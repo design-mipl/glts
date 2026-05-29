@@ -1,6 +1,33 @@
-import { lazy, Suspense, useState } from 'react'
-import { Box, Typography, Tab, Tabs as MuiTabs } from '@mui/material'
+import { Component, lazy, Suspense, useState, type ReactNode } from 'react'
+import { Box, Typography, Tab, Tabs as MuiTabs, Alert } from '@mui/material'
 import RouteFallback from '@/components/RouteFallback'
+
+class ShowcaseErrorBoundary extends Component<
+  { children: ReactNode; tabLabel: string },
+  { error: Error | null }
+> {
+  state = { error: null as Error | null }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error }
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <Alert severity="error" sx={{ borderRadius: 2 }}>
+          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
+            {this.props.tabLabel} failed to render
+          </Typography>
+          <Typography variant="body2" component="pre" sx={{ m: 0, whiteSpace: 'pre-wrap', fontSize: 12 }}>
+            {this.state.error.message}
+          </Typography>
+        </Alert>
+      )
+    }
+    return this.props.children
+  }
+}
 
 const LazyPrimitives = lazy(() =>
   import('./components/PrimitivesShowcase').then((m) => ({ default: m.PrimitivesShowcase })),
@@ -52,7 +79,7 @@ const tabPanels = [
 
 export default function ComponentLibrary() {
   const [activeTab, setActiveTab] = useState(0)
-  const { Component } = tabPanels[activeTab]
+  const { Component: ActiveShowcase, label: activeLabel } = tabPanels[activeTab]
 
   return (
     <Box>
@@ -92,7 +119,9 @@ export default function ComponentLibrary() {
       </Box>
 
       <Suspense fallback={<RouteFallback label="Loading showcase…" />}>
-        <Component />
+        <ShowcaseErrorBoundary key={activeLabel} tabLabel={activeLabel}>
+          <ActiveShowcase />
+        </ShowcaseErrorBoundary>
       </Suspense>
     </Box>
   )

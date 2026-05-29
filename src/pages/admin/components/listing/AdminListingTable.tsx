@@ -21,6 +21,10 @@ export interface AdminListingTableProps<T extends object> {
   emptyDescription?: string
   emptyAction?: { label: string; onClick: () => void }
   stickyHeader?: boolean
+  /** When false, column header sort controls are hidden. Default true. */
+  enableColumnSort?: boolean
+  /** When false, column header filter controls are hidden. Default true. */
+  enableColumnFilters?: boolean
 }
 
 export function AdminListingTable<T extends object>({
@@ -40,6 +44,8 @@ export function AdminListingTable<T extends object>({
   emptyDescription = 'Try adjusting your search or filters.',
   emptyAction,
   stickyHeader = false,
+  enableColumnSort = true,
+  enableColumnFilters = true,
 }: AdminListingTableProps<T>) {
   const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null)
   const [activeFilterColumn, setActiveFilterColumn] = useState<string | null>(null)
@@ -65,6 +71,7 @@ export function AdminListingTable<T extends object>({
     <Box sx={{ overflowX: 'auto' }}>
       <DataTable
         columns={columns}
+        enableColumnSort={enableColumnSort}
         data={data}
         rowKey={rowKey as string}
         state={state}
@@ -77,10 +84,14 @@ export function AdminListingTable<T extends object>({
         embedded
         stickyHeader={stickyHeader}
         showColumnSearch={false}
-        onColumnFilterClick={(event, columnKey) => {
-          setFilterAnchor(event.currentTarget)
-          setActiveFilterColumn(columnKey)
-        }}
+        onColumnFilterClick={
+          enableColumnFilters
+            ? (event, columnKey) => {
+                setFilterAnchor(event.currentTarget)
+                setActiveFilterColumn(columnKey)
+              }
+            : undefined
+        }
         emptyState={{
           title: emptyTitle,
           description: emptyDescription,

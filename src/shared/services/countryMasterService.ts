@@ -22,7 +22,7 @@ export function listCountryMasters(options: ListCountryMastersOptions = {}): Cou
   const { activeOnly = true, accountMappedOnly = false, query } = options
   let rows = getMockCountryMasters()
 
-  if (activeOnly) rows = rows.filter(c => c.status === 'active')
+  if (activeOnly) rows = rows.filter((c) => c.status === 'active')
   if (accountMappedOnly) {
     const allowed = new Set<string>(ACCOUNT_MAPPED_COUNTRY_IDS)
     rows = rows.filter(c => allowed.has(c.id))

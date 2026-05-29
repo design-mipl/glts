@@ -37,10 +37,9 @@ export function ApplicationListingHeader() {
       </Box>
       <Button
         variant="contained"
-        size="sm"
         startIcon={<Plus size={16} />}
         onClick={() => navigateToCreateApplication(navigate, base)}
-        sx={{ ...getPrimaryButtonSx(colors), fontSize: '13px', py: 0.75, flexShrink: 0 }}
+        sx={{ ...getPrimaryButtonSx(colors), flexShrink: 0 }}
       >
         Create application
       </Button>

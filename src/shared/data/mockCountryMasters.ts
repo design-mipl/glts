@@ -1,21 +1,26 @@
 import { getAllCountries } from '@/shared/services/visaService'
+import {
+  defaultRulesForSegment,
+  syncVisaOfferingsFromSegments,
+} from '@/shared/data/countryMasterDefaults'
 import type {
-  CountryDocumentMapping,
+  CountryDocumentChecklistItem,
   CountryMaster,
-  CountryVisaOffering,
-  RequirementPreviewCard,
+  CountrySegmentConfig,
+  CountryVisaType,
 } from '@/shared/types/countryMaster'
 
 /** B2B customer account ↔ country mapping (admin-configured; mock). */
 export const ACCOUNT_MAPPED_COUNTRY_IDS = ['13', '15'] as const
 
-const stdDocs: CountryDocumentMapping[] = [
+const stdChecklist: CountryDocumentChecklistItem[] = [
   {
     documentId: 'passport',
     name: 'Passport',
     mandatory: true,
+    ocrEnabled: true,
+    sortOrder: 0,
     hasSample: true,
-    ocrSupported: true,
     description: 'Primary identity document used for OCR and visa filing.',
     formatNotes: 'Color scan, all corners visible, PDF/JPG/PNG.',
     remarks: 'Bio page must be clear and glare-free.',
@@ -24,6 +29,8 @@ const stdDocs: CountryDocumentMapping[] = [
     documentId: 'photo',
     name: 'Applicant Photo',
     mandatory: true,
+    ocrEnabled: false,
+    sortOrder: 1,
     description: 'Recent passport-size photograph as per embassy requirements.',
     formatNotes: 'White background, 35x45mm equivalent.',
   },
@@ -31,203 +38,237 @@ const stdDocs: CountryDocumentMapping[] = [
     documentId: 'bank',
     name: 'Bank Statement',
     mandatory: true,
+    ocrEnabled: false,
+    sortOrder: 2,
+    validationRule: 'Last 3 months, stamped by bank',
     description: 'Financial proof as per embassy checklist.',
-    formatNotes: 'Last 3 months, stamped by bank.',
   },
 ]
 
-const crewDocs: CountryDocumentMapping[] = [
-  ...stdDocs.filter(d => d.documentId !== 'bank'),
+const crewChecklist: CountryDocumentChecklistItem[] = [
+  ...stdChecklist.filter((d) => d.documentId !== 'bank'),
   {
     documentId: 'cdc',
     name: 'CDC',
     mandatory: true,
+    ocrEnabled: true,
+    sortOrder: 2,
     hasSample: true,
-    ocrSupported: true,
     description: 'Continuous discharge certificate for marine workflows.',
-    formatNotes: 'Upload front and back pages in one PDF.',
   },
   {
     documentId: 'vessel-letter',
     name: 'Vessel Joining Letter',
     mandatory: true,
+    ocrEnabled: false,
+    sortOrder: 3,
     description: 'Joining confirmation issued by shipping company.',
-    formatNotes: 'Company letterhead with sign and stamp.',
   },
 ]
 
-function offering(
-  partial: Omit<CountryVisaOffering, 'active' | 'documentMappings' | 'workflowProfile'> & {
-    workflowProfile?: CountryVisaOffering['workflowProfile']
-    documentMappings?: CountryDocumentMapping[]
-    requirementPreviewCards?: RequirementPreviewCard[]
+function visaType(
+  partial: Omit<CountryVisaType, 'checklist' | 'status' | 'prioritySupport'> & {
+    checklist?: CountryDocumentChecklistItem[]
+    status?: CountryVisaType['status']
+    prioritySupport?: boolean
   },
-): CountryVisaOffering {
-  const isCrew = partial.workflowProfile === 'crew' || partial.purposeId === 'crew_joining'
+): CountryVisaType {
   return {
-    active: true,
-    workflowProfile: partial.workflowProfile ?? (isCrew ? 'crew' : 'standard'),
-    documentMappings: partial.documentMappings ?? (isCrew ? crewDocs : stdDocs),
+    prioritySupport: false,
+    status: 'active',
+    checklist: partial.checklist ?? stdChecklist,
     ...partial,
   }
 }
 
-const OFFERINGS_BY_COUNTRY: Record<string, CountryVisaOffering[]> = {
+function segment(
+  partial: Omit<CountrySegmentConfig, 'processingRules'> & {
+    processingRules?: CountrySegmentConfig['processingRules']
+  },
+): CountrySegmentConfig {
+  return {
+    processingRules: partial.processingRules ?? defaultRulesForSegment(partial.segment),
+    ...partial,
+  }
+}
+
+const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
   '1': [
-    offering({
-      id: 'schengen-tourist',
-      visaTypeId: 'tourist',
-      visaTypeLabel: 'Tourist Visa',
-      purposeId: 'tourism',
-      purposeLabel: 'Tourism',
-      processingTimeline: '12–18 business days',
-      entryType: 'Multiple entry · 90 days',
-      requirementSummary: 'Passport, photos, itinerary, insurance',
+    segment({
+      segment: 'retail',
+      enabled: true,
+      visaTypes: [
+        visaType({
+          id: 'schengen-tourist',
+          name: 'Tourist Visa',
+          visaCategory: 'Tourism',
+          processingTime: '12–18 business days',
+          entryType: 'Multiple entry · 90 days',
+          validity: '90 days',
+          stayDuration: '90 days per entry',
+          purposeId: 'tourism',
+          purposeLabel: 'Tourism',
+        }),
+        visaType({
+          id: 'schengen-business',
+          name: 'Business Visa',
+          visaCategory: 'Business',
+          processingTime: '10–15 business days',
+          entryType: 'Single / multiple entry',
+          validity: '90 days',
+          stayDuration: 'As per invitation',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Business meeting',
+        }),
+      ],
     }),
-    offering({
-      id: 'schengen-business',
-      visaTypeId: 'business',
-      visaTypeLabel: 'Business Visa',
-      purposeId: 'business_meeting',
-      purposeLabel: 'Business meeting',
-      processingTimeline: '10–15 business days',
-      entryType: 'Single / multiple entry',
-      requirementSummary: 'Invitation, company letter, passport',
+    segment({
+      segment: 'marine',
+      enabled: true,
+      visaTypes: [
+        visaType({
+          id: 'schengen-crew',
+          name: 'Marine Crew Visa',
+          visaCategory: 'Crew',
+          processingTime: '8–12 business days',
+          entryType: 'Crew manifest · Type C',
+          validity: '90 days',
+          stayDuration: 'Crew rotation',
+          checklist: crewChecklist,
+          purposeId: 'crew_joining',
+          purposeLabel: 'Crew joining',
+        }),
+      ],
     }),
-    offering({
-      id: 'schengen-crew',
-      visaTypeId: 'crew',
-      visaTypeLabel: 'Marine Crew Visa',
-      purposeId: 'crew_joining',
-      purposeLabel: 'Crew joining',
-      processingTimeline: '8–12 business days',
-      entryType: 'Crew manifest · Type C',
-      requirementSummary: 'CDC, vessel letter, crew documents',
-      workflowProfile: 'crew',
-    }),
-  ],
-  '2': [
-    offering({
-      id: 'japan-tourist',
-      visaTypeId: 'tourist',
-      visaTypeLabel: 'Tourist Visa',
-      purposeId: 'tourism',
-      purposeLabel: 'Tourism',
-      processingTimeline: '5–7 business days',
-      entryType: 'Single entry · 90 days',
-      requirementSummary: 'Passport, photo, itinerary',
-    }),
-    offering({
-      id: 'japan-business',
-      visaTypeId: 'business',
-      visaTypeLabel: 'Business Visa',
-      purposeId: 'conference',
-      purposeLabel: 'Conference',
-      processingTimeline: '7–10 business days',
-      entryType: 'Single entry',
-      requirementSummary: 'Invitation, schedule, passport',
-    }),
-  ],
-  '3': [
-    offering({
-      id: 'uae-tourist',
-      visaTypeId: 'tourist',
-      visaTypeLabel: 'Tourist e-Visa',
-      purposeId: 'tourism',
-      purposeLabel: 'Tourism',
-      processingTimeline: '2–3 business days',
-      entryType: '30-day stay',
-      requirementSummary: 'Passport scan, photo',
-    }),
-    offering({
-      id: 'uae-business',
-      visaTypeId: 'business',
-      visaTypeLabel: 'Business e-Visa',
-      purposeId: 'business_meeting',
-      purposeLabel: 'Business meeting',
-      processingTimeline: '3–5 business days',
-      entryType: '30 / 60 day options',
-      requirementSummary: 'Passport, sponsor documents',
-    }),
-  ],
-  '4': [
-    offering({
-      id: 'uk-visitor',
-      visaTypeId: 'tourist',
-      visaTypeLabel: 'Visitor Visa',
-      purposeId: 'tourism',
-      purposeLabel: 'Tourism',
-      processingTimeline: '15–20 business days',
-      entryType: 'Standard visitor',
-      requirementSummary: 'Passport, financials, itinerary',
-    }),
-    offering({
-      id: 'uk-business',
-      visaTypeId: 'business',
-      visaTypeLabel: 'Business Visitor',
-      purposeId: 'business_meeting',
-      purposeLabel: 'Business meeting',
-      processingTimeline: '12–18 business days',
-      entryType: 'Short-term work allowed',
-      requirementSummary: 'Invitation, employment proof',
-    }),
+    segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
   ],
   '13': [
-    offering({
-      id: 'cn-crew',
-      visaTypeId: 'crew',
-      visaTypeLabel: 'Crew / Marine (C)',
-      purposeId: 'crew_joining',
-      purposeLabel: 'Crew joining',
-      processingTimeline: '10–14 business days',
-      entryType: 'Crew visa',
-      requirementSummary: 'CDC, vessel docs, passport',
-      workflowProfile: 'crew',
+    segment({
+      segment: 'retail',
+      enabled: true,
+      visaTypes: [
+        visaType({
+          id: 'cn-tourist',
+          name: 'Tourist Visa',
+          visaCategory: 'Tourism',
+          processingTime: '8–12 business days',
+          entryType: 'Single entry',
+          validity: '30 days',
+          stayDuration: '30 days',
+          purposeId: 'tourism',
+          purposeLabel: 'Tourism',
+        }),
+        visaType({
+          id: 'cn-business-retail',
+          name: 'Business Visa',
+          visaCategory: 'Business',
+          processingTime: '10–14 business days',
+          entryType: 'Single / multiple',
+          validity: '90 days',
+          stayDuration: 'As per invitation',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Business meeting',
+        }),
+      ],
     }),
-    offering({
-      id: 'cn-transit',
-      visaTypeId: 'transit',
-      visaTypeLabel: 'Transit Visa',
-      purposeId: 'transit',
-      purposeLabel: 'Transit connection',
-      processingTimeline: '5–8 business days',
-      entryType: 'Under 72h connection',
-      requirementSummary: 'Onward ticket, passport',
+    segment({
+      segment: 'corporate',
+      enabled: true,
+      visaTypes: [
+        visaType({
+          id: 'cn-business-corp',
+          name: 'Business Visa',
+          visaCategory: 'Business',
+          processingTime: '10–14 business days',
+          entryType: 'Multiple entry',
+          validity: '1 year',
+          stayDuration: '90 days per visit',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Corporate travel',
+        }),
+        visaType({
+          id: 'cn-work',
+          name: 'Work Visa',
+          visaCategory: 'Work',
+          processingTime: '15–20 business days',
+          entryType: 'Long stay',
+          validity: '1 year',
+          stayDuration: 'Employment contract',
+          purposeId: 'employment',
+          purposeLabel: 'Employment',
+        }),
+      ],
+    }),
+    segment({
+      segment: 'marine',
+      enabled: true,
+      visaTypes: [
+        visaType({
+          id: 'cn-m-type',
+          name: 'M Type Visa',
+          visaCategory: 'Crew',
+          processingTime: '10–14 business days',
+          entryType: 'Crew visa',
+          validity: '90 days',
+          stayDuration: 'Crew rotation',
+          checklist: crewChecklist,
+          purposeId: 'crew_joining',
+          purposeLabel: 'Crew joining',
+        }),
+        visaType({
+          id: 'cn-g-type',
+          name: 'G Type Visa',
+          visaCategory: 'Transit crew',
+          processingTime: '5–8 business days',
+          entryType: 'Transit',
+          validity: '72 hours',
+          stayDuration: 'Transit connection',
+          checklist: crewChecklist,
+          purposeId: 'transit',
+          purposeLabel: 'Transit',
+        }),
+      ],
     }),
   ],
 }
 
-const DEFAULT_OFFERINGS: CountryVisaOffering[] = [
-  offering({
-    id: 'default-tourist',
-    visaTypeId: 'tourist',
-    visaTypeLabel: 'Tourist Visa',
-    purposeId: 'tourism',
-    purposeLabel: 'Tourism',
-    processingTimeline: '7–14 business days',
-    entryType: 'Single entry',
-    requirementSummary: 'Passport, photo, travel proof',
+const DEFAULT_SEGMENTS: CountrySegmentConfig[] = [
+  segment({
+    segment: 'retail',
+    enabled: true,
+    visaTypes: [
+      visaType({
+        id: 'default-tourist',
+        name: 'Tourist Visa',
+        visaCategory: 'Tourism',
+        processingTime: '7–14 business days',
+        entryType: 'Single entry',
+        validity: '30 days',
+        stayDuration: '30 days',
+        purposeId: 'tourism',
+        purposeLabel: 'Tourism',
+      }),
+    ],
   }),
-  offering({
-    id: 'default-business',
-    visaTypeId: 'business',
-    visaTypeLabel: 'Business Visa',
-    purposeId: 'business_meeting',
-    purposeLabel: 'Business meeting',
-    processingTimeline: '10–15 business days',
-    entryType: 'Single / multiple',
-    requirementSummary: 'Passport, invitation letter',
-  }),
+  segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
+  segment({ segment: 'marine', enabled: false, visaTypes: [] }),
 ]
 
-function buildMasters(): CountryMaster[] {
-  return getAllCountries().map(c => ({
+function buildMasterFromCountry(c: ReturnType<typeof getAllCountries>[0]): CountryMaster {
+  const segments = SEGMENTS_BY_COUNTRY[c.id] ?? DEFAULT_SEGMENTS
+  const now = new Date().toISOString()
+  const visaOfferings = syncVisaOfferingsFromSegments(segments)
+
+  return {
     id: c.id,
     code: c.code,
     name: c.name,
     flag: c.flags,
     region: c.region,
-    status: 'active' as const,
+    status: 'active',
+    processingType: c.id === '3' ? 'e_visa' : c.id === '13' ? 'embassy' : 'vfs',
+    embassyNotes: c.id === '13' ? 'China consulate — confirm LOI validity before upload.' : undefined,
+    internalNotes: '',
     cities: c.cities,
     heroPhotoId: c.heroPhotoId,
     processingTime: c.processingTime,
@@ -238,8 +279,24 @@ function buildMasters(): CountryMaster[] {
     visaCategory: c.visaCategory,
     validity: c.validity,
     fastMinutes: c.fastMinutes,
-    visaOfferings: OFFERINGS_BY_COUNTRY[c.id] ?? DEFAULT_OFFERINGS,
-  }))
+    segments,
+    visaOfferings,
+    createdAt: now,
+    updatedAt: now,
+    activities: [
+      {
+        id: `act-${c.id}-seed`,
+        timestamp: now,
+        actor: 'System',
+        action: 'Country configuration initialized',
+        detail: 'Seeded from visa service catalog',
+      },
+    ],
+  }
+}
+
+function buildMasters(): CountryMaster[] {
+  return getAllCountries().map(buildMasterFromCountry)
 }
 
 let cache: CountryMaster[] | null = null
@@ -251,4 +308,8 @@ export function getMockCountryMasters(): CountryMaster[] {
 
 export function resetMockCountryMastersCache(): void {
   cache = null
+}
+
+export function setMockCountryMastersStore(rows: CountryMaster[]): void {
+  cache = rows
 }

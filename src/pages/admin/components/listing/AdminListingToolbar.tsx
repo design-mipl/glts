@@ -83,7 +83,7 @@ export function AdminListingToolbar({
             variant="outlined"
             color="secondary"
             size="sm"
-            startIcon={<Download size={16} strokeWidth={1.75} />}
+            startIcon={<Download size={14} strokeWidth={1.75} />}
             onClick={onExport}
           >
             <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
@@ -142,7 +142,7 @@ export function AdminListingToolbar({
               {hiddenColumnKeys.length > 0 && (
                 <>
                   <Divider sx={{ my: 1 }} />
-                  <Button size="sm" fullWidth onClick={() => onHiddenColumnKeysChange?.([])}>
+                  <Button fullWidth onClick={() => onHiddenColumnKeysChange?.([])}>
                     Reset columns
                   </Button>
                 </>

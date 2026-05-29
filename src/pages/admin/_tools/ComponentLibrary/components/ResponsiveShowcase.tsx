@@ -147,16 +147,16 @@ export function ResponsiveShowcase() {
           <Typography variant="h3" sx={{ mb: 1.5 }}>Conditional Visibility (sx display)</Typography>
           <Stack direction="row" gap={2} flexWrap="wrap">
             <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-              <Button variant="contained" size="sm">Mobile only</Button>
+              <Button variant="contained">Mobile only</Button>
             </Box>
             <Box sx={{ display: { xs: 'none', md: 'flex', lg: 'none' } }}>
-              <Button variant="outlined" size="sm">Tablet only</Button>
+              <Button variant="outlined">Tablet only</Button>
             </Box>
             <Box sx={{ display: { xs: 'none', lg: 'flex' } }}>
-              <Button variant="text" size="sm">Desktop only</Button>
+              <Button variant="text">Desktop only</Button>
             </Box>
             <Box sx={{ display: 'flex' }}>
-              <Button variant="outlined" size="sm">Always visible</Button>
+              <Button variant="outlined">Always visible</Button>
             </Box>
           </Stack>
         </Grid>

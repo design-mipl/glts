@@ -9,6 +9,7 @@ import { SUBMITTED_OPERATIONAL_STATUSES } from '../types/applicationListing.type
 import type { ApplicationListingRow } from '../types/applicationListing.types'
 import { isBulkRow } from '../types/applicationListing.types'
 import { getApplicationTypeLabel } from '../components/listing/applicationStatus'
+import { resolveApplicationCreatorLabel, getApplicationCreatorOptions } from './applicationCreatorUtils'
 
 export function getAllListingRows(singles: SingleApplicationRow[], bulks: BulkBatchRow[]): ApplicationListingRow[] {
   return [...singles, ...bulks]
@@ -55,7 +56,9 @@ export function matchesListingSearch(row: ApplicationListingRow, query: string):
       row.companyName.toLowerCase().includes(s) ||
       row.country.toLowerCase().includes(s) ||
       row.visaType.toLowerCase().includes(s) ||
-      row.status.toLowerCase().includes(s)
+      row.status.toLowerCase().includes(s) ||
+      row.createdByEmail.toLowerCase().includes(s) ||
+      resolveApplicationCreatorLabel(row.createdByEmail).toLowerCase().includes(s)
     )
   }
   return (
@@ -64,7 +67,9 @@ export function matchesListingSearch(row: ApplicationListingRow, query: string):
     (row.companyName?.toLowerCase().includes(s) ?? false) ||
     row.country.toLowerCase().includes(s) ||
     row.visaType.toLowerCase().includes(s) ||
-    row.status.toLowerCase().includes(s)
+    row.status.toLowerCase().includes(s) ||
+    row.createdByEmail.toLowerCase().includes(s) ||
+    resolveApplicationCreatorLabel(row.createdByEmail).toLowerCase().includes(s)
   )
 }
 
@@ -78,6 +83,7 @@ export function applyAdvancedFilters(
     if (filters.status && row.operationalStatus !== filters.status) return false
     if (filters.processingStage && row.processingStage !== filters.processingStage) return false
     if (filters.applicationType && row.recordType !== filters.applicationType) return false
+    if (filters.createdBy && row.createdByEmail.toLowerCase() !== filters.createdBy.toLowerCase()) return false
     return true
   })
 }
@@ -87,6 +93,8 @@ export function getListingCellValue(row: ApplicationListingRow, key: string): st
   if (key === 'operationalStatus') return row.operationalStatus
   if (key === 'recordType' || key === 'applicationType') return getApplicationTypeLabel(row.recordType)
   if (key === 'processingStage') return row.processingStage
+  if (key === 'createdBy') return resolveApplicationCreatorLabel(row.createdByEmail)
+  if (key === 'createdByEmail') return row.createdByEmail
   if (key === 'travelerCount') {
     return isBulkRow(row) ? String(row.totalApplicants) : '1'
   }
@@ -132,6 +140,7 @@ export function getFilterOptions(singles: SingleApplicationRow[], bulks: BulkBat
   const visaTypes = [...new Set(all.map(r => r.visaType))].sort()
   const statuses = [...new Set(all.map(r => r.operationalStatus))].sort() as ApplicationOperationalStatus[]
   const stages = [...new Set(all.map(r => r.processingStage))].sort()
-  return { countries, visaTypes, statuses, stages }
+  const createdByOptions = getApplicationCreatorOptions(all.map(r => r.createdByEmail))
+  return { countries, visaTypes, statuses, stages, createdByOptions }
 }
 

@@ -104,7 +104,7 @@ function PanelContent({ columns, filters, onFiltersChange, onClose }: Omit<Filte
       <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
         <Typography variant="subtitle1" fontWeight={600} sx={{ flex: 1 }}>Filters</Typography>
         {filters.length > 0 && (
-          <Button size="small" onClick={() => onFiltersChange([])} sx={{ mr: 1 }}>Clear all</Button>
+          <Button onClick={() => onFiltersChange([])} sx={{ mr: 1 }}>Clear all</Button>
         )}
         <IconButton size="small" onClick={onClose}><X size={16} /></IconButton>
       </Box>
@@ -157,7 +157,7 @@ function PanelContent({ columns, filters, onFiltersChange, onClose }: Omit<Filte
             </Box>
           )
         })}
-        <Button startIcon={<Plus size={16} />} onClick={addRule} size="small" variant="outlined" sx={{ alignSelf: 'flex-start' }}>
+        <Button startIcon={<Plus size={16} />} onClick={addRule} variant="outlined" sx={{ alignSelf: 'flex-start' }}>
           Add filter
         </Button>
       </Box>

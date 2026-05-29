@@ -14,6 +14,10 @@ import {
   getApplicationTypeLabel,
   getApplicationTypeTone,
 } from './applicationStatus'
+import {
+  resolveApplicationCreatorLabel,
+  resolveApplicationCreatorRoleLabel,
+} from '../../utils/applicationCreatorUtils'
 
 type ToastFn = (toast: Omit<Toast, 'id'>) => void
 
@@ -48,6 +52,7 @@ export interface ApplicationListingColumnsParams {
   base: string
   navigate: NavigateFunction
   showToast: ToastFn
+  showCreatedBy?: boolean
 }
 
 export function buildSingleApplicationColumns({
@@ -125,8 +130,9 @@ export function buildUnifiedApplicationColumns({
   base,
   navigate,
   showToast,
+  showCreatedBy = true,
 }: ApplicationListingColumnsParams): Column<SingleApplicationRow | BulkBatchRow>[] {
-  return [
+  const columns: Column<SingleApplicationRow | BulkBatchRow>[] = [
     {
       key: 'id',
       label: 'GLTS reference',
@@ -186,6 +192,29 @@ export function buildUnifiedApplicationColumns({
     },
     { key: 'visaType', label: 'Visa type', sortable: false, filterable: true, width: 130 },
     { key: 'travelDate', label: 'Travel date', sortable: true, filterable: true, width: 110 },
+  ]
+
+  if (showCreatedBy) {
+    columns.push({
+      key: 'createdBy',
+      label: 'Created by',
+      sortable: true,
+      filterable: true,
+      width: 150,
+      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+        <Box>
+          <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+            {resolveApplicationCreatorLabel(row.createdByEmail)}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+            {resolveApplicationCreatorRoleLabel(row.createdByRole)}
+          </Typography>
+        </Box>
+      ),
+    })
+  }
+
+  columns.push(
     {
       key: 'operationalStatus',
       label: 'Status',
@@ -224,7 +253,9 @@ export function buildUnifiedApplicationColumns({
         />
       ),
     },
-  ]
+  )
+
+  return columns
 }
 
 /** @deprecated Use buildUnifiedApplicationColumns */

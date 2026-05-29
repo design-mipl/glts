@@ -30,7 +30,7 @@ export default function SearchInput({
   loading = false,
   onClear,
   debounce = 0,
-  size = 'md',
+  size = 'sm',
   fullWidth = false,
   autoFocus = false,
   sx,

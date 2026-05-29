@@ -3,11 +3,36 @@ import { ComingSoonPage } from '@/shared/components/ComingSoonPage'
 import { PermissionGuard } from '../components/PermissionGuard'
 import {
   CreateEnquiryPage,
+  EditEnquiryPage,
   EnquiryDetailPage,
   EnquiryListingPage,
 } from '../customer-accounts/enquiries'
+import {
+  AgreementDetailPage,
+  AgreementListingPage,
+  CreateAgreementPage,
+  EditAgreementPage,
+} from '../customer-accounts/agreements'
+import {
+  CorporateAccountDetailPage,
+  CorporateAccountListingPage,
+  CreateCorporateAccountPage,
+  EditCorporateAccountPage,
+} from '../customer-accounts/corporate-accounts'
+import {
+  CountryDetailPage,
+  CountryListingPage,
+  CreateCountryPage,
+  EditCountryPage,
+} from '../masters/country'
+import {
+  DocumentDetailPage,
+  DocumentListingPage,
+  EditDocumentPage,
+} from '../masters/documents'
 import { InternalDashboard } from '../operations/pages/InternalDashboard'
 import { AdminProfilePage } from '../profile/AdminProfilePage'
+import { MarineApplicationListingPage, MarineVerifyDocumentsPage, MarineViewFormPage } from '../application-management/marine'
 import ComponentLibrary from '../_tools/ComponentLibrary'
 import TemplateShowcaseRoutes from '../_tools/TemplateShowcase'
 
@@ -38,20 +63,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     kind: 'coming-soon',
   },
   {
-    path: 'customer-accounts/agreements',
-    title: 'Agreements & contracts',
-    description: 'This module is under development.',
-    eyebrow: 'Customer & accounts',
-    kind: 'coming-soon',
-  },
-  {
-    path: 'customer-accounts/corporate-accounts',
-    title: 'Corporate accounts',
-    description: 'This module is under development.',
-    eyebrow: 'Customer & accounts',
-    kind: 'coming-soon',
-  },
-  {
     path: 'customer-accounts/corporate-admins',
     title: 'Corporate admins',
     description: 'This module is under development.',
@@ -69,13 +80,6 @@ const adminRoutes: AdminRouteDefinition[] = [
   {
     path: 'application-management/corporate',
     title: 'Corporate application management',
-    description: 'This module is under development.',
-    eyebrow: 'Application management',
-    kind: 'coming-soon',
-  },
-  {
-    path: 'application-management/marine',
-    title: 'Marine application management',
     description: 'This module is under development.',
     eyebrow: 'Application management',
     kind: 'coming-soon',
@@ -155,22 +159,8 @@ const adminRoutes: AdminRouteDefinition[] = [
   },
 
   {
-    path: 'masters/country',
-    title: 'Country master',
-    description: 'This module is under development.',
-    eyebrow: 'Masters',
-    kind: 'coming-soon',
-  },
-  {
     path: 'masters/visa-type',
     title: 'Visa type master',
-    description: 'This module is under development.',
-    eyebrow: 'Masters',
-    kind: 'coming-soon',
-  },
-  {
-    path: 'masters/documents',
-    title: 'Document master',
     description: 'This module is under development.',
     eyebrow: 'Masters',
     kind: 'coming-soon',
@@ -297,10 +287,166 @@ export function AdminRoutes() {
         }
       />
       <Route
+        path="customer-accounts/enquiries/:enquiryId/edit"
+        element={
+          <PermissionGuard>
+            <EditEnquiryPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
         path="customer-accounts/enquiries/:enquiryId"
         element={
           <PermissionGuard>
             <EnquiryDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/agreements"
+        element={
+          <PermissionGuard>
+            <AgreementListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/agreements/new"
+        element={
+          <PermissionGuard>
+            <CreateAgreementPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/agreements/:agreementId/edit"
+        element={
+          <PermissionGuard>
+            <EditAgreementPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/agreements/:agreementId"
+        element={
+          <PermissionGuard>
+            <AgreementDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/corporate-accounts"
+        element={
+          <PermissionGuard>
+            <CorporateAccountListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/corporate-accounts/new"
+        element={
+          <PermissionGuard>
+            <CreateCorporateAccountPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/corporate-accounts/:accountId/edit"
+        element={
+          <PermissionGuard>
+            <EditCorporateAccountPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/corporate-accounts/:accountId"
+        element={
+          <PermissionGuard>
+            <CorporateAccountDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/country"
+        element={
+          <PermissionGuard>
+            <CountryListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/country/new"
+        element={
+          <PermissionGuard>
+            <CreateCountryPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/country/:countryId/edit"
+        element={
+          <PermissionGuard>
+            <EditCountryPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/country/:countryId"
+        element={
+          <PermissionGuard>
+            <CountryDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/documents"
+        element={
+          <PermissionGuard>
+            <DocumentListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/documents/new"
+        element={<Navigate to="/admin/masters/documents" replace />}
+      />
+      <Route
+        path="masters/documents/:documentId/edit"
+        element={
+          <PermissionGuard>
+            <EditDocumentPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/documents/:documentId"
+        element={
+          <PermissionGuard>
+            <DocumentDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/marine"
+        element={
+          <PermissionGuard>
+            <MarineApplicationListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/marine/:applicationId/view-form"
+        element={
+          <PermissionGuard>
+            <MarineViewFormPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/marine/:applicationId"
+        element={
+          <PermissionGuard>
+            <MarineVerifyDocumentsPage />
           </PermissionGuard>
         }
       />

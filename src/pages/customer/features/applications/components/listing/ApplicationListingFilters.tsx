@@ -10,8 +10,12 @@ interface ApplicationListingFiltersProps {
   onClearFilters: () => void
   countries: string[]
   visaTypes: string[]
+  createdByOptions: { value: string; label: string }[]
+  showCreatedByFilter?: boolean
   hasActiveFilters: boolean
 }
+
+const PROCESSING_STAGES = PROCESSING_STAGE_OPTIONS.filter(opt => opt.value !== '')
 
 export function ApplicationListingFilters({
   filters,
@@ -19,6 +23,8 @@ export function ApplicationListingFilters({
   onClearFilters,
   countries,
   visaTypes,
+  createdByOptions,
+  showCreatedByFilter = true,
   hasActiveFilters,
 }: ApplicationListingFiltersProps) {
   const patch = (partial: Partial<ApplicationListingFilterState>) => onFiltersChange({ ...filters, ...partial })
@@ -32,62 +38,73 @@ export function ApplicationListingFilters({
             xs: '1fr',
             sm: 'repeat(2, 1fr)',
             md: 'repeat(3, 1fr)',
-            lg: 'repeat(5, 1fr)',
           },
           gap: 1.5,
         }}
       >
         <Select
-          label="Application type"
           value={filters.applicationType}
           onChange={v => patch({ applicationType: String(v) as ApplicationRecordType | '' })}
           options={[
-            { value: '', label: 'All types' },
             { value: 'single', label: 'Single' },
             { value: 'bulk', label: 'Bulk' },
           ]}
+          placeholder="All types"
           size="sm"
           clearable
+          fullWidth
         />
         <Select
-          label="Country"
           value={filters.country}
           onChange={v => patch({ country: String(v) })}
-          options={[{ value: '', label: 'All countries' }, ...countries.map(c => ({ value: c, label: c }))]}
+          options={countries.map(c => ({ value: c, label: c }))}
+          placeholder="All countries"
           size="sm"
           clearable
+          fullWidth
         />
         <Select
-          label="Visa type"
           value={filters.visaType}
           onChange={v => patch({ visaType: String(v) })}
-          options={[{ value: '', label: 'All visa types' }, ...visaTypes.map(v => ({ value: v, label: v }))]}
+          options={visaTypes.map(v => ({ value: v, label: v }))}
+          placeholder="All visa types"
           size="sm"
           clearable
+          fullWidth
         />
         <Select
-          label="Status"
           value={filters.status}
           onChange={v => patch({ status: String(v) })}
-          options={[
-            { value: '', label: 'All statuses' },
-            ...APPLICATION_OPERATIONAL_STATUSES.map(s => ({ value: s, label: s })),
-          ]}
+          options={APPLICATION_OPERATIONAL_STATUSES.map(s => ({ value: s, label: s }))}
+          placeholder="All statuses"
           size="sm"
           clearable
+          fullWidth
         />
         <Select
-          label="Processing stage"
           value={filters.processingStage}
           onChange={v => patch({ processingStage: String(v) })}
-          options={PROCESSING_STAGE_OPTIONS}
+          options={PROCESSING_STAGES}
+          placeholder="All stages"
           size="sm"
           clearable
+          fullWidth
         />
+        {showCreatedByFilter && (
+          <Select
+            value={filters.createdBy}
+            onChange={v => patch({ createdBy: String(v) })}
+            options={createdByOptions}
+            placeholder="All creators"
+            size="sm"
+            clearable
+            fullWidth
+          />
+        )}
       </Box>
       {hasActiveFilters && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button size="small" variant="text" onClick={onClearFilters} sx={{ fontSize: 13, fontWeight: 600 }}>
+          <Button variant="text" onClick={onClearFilters} sx={{ fontSize: 13, fontWeight: 600 }}>
             Clear filters
           </Button>
         </Box>

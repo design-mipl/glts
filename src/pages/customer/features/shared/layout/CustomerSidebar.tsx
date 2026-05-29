@@ -1,40 +1,43 @@
-import { Box, Typography, List, ListItemButton, Drawer, Divider, IconButton, useTheme } from '@mui/material'
+import { useEffect, useState } from 'react'
+import { Box, Typography, List, ListItemButton, Drawer, Divider, IconButton, Collapse, useTheme } from '@mui/material'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   FileText,
-  MapPin,
   Bell,
   LifeBuoy,
   Users,
   Building2,
-  Ship,
+  Database,
   LogOut,
   ChevronLeft,
+  ChevronDown,
+  UserCog,
 } from 'lucide-react'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { clearSession, loadSession } from '@/shared/auth/session'
-import { getBusinessDashboardVariant } from '@/shared/auth/dashboardConfig'
+import { clearSession } from '@/shared/auth/session'
 import { useCustomerPortalBase } from '../hooks/useCustomerPortalBase'
 
 export const CUSTOMER_SIDEBAR_WIDTH = 240
 const TOPBAR_HEIGHT = 56
 
-const coreNavItems = [
-  { path: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: 'profile', label: 'Profile & account', icon: Building2 },
-  { path: 'applications', label: 'Application management', icon: FileText },
-  { path: 'tracking', label: 'Tracking', icon: MapPin },
-]
+type NavIcon = typeof LayoutDashboard
 
-const adminNavItem = { path: 'bookers', label: 'Booker management', icon: Users }
+interface NavItem {
+  path: string
+  label: string
+  icon: NavIcon
+}
 
-const footerNavItems = [
+const footerNavItems: NavItem[] = [
   { path: 'notifications', label: 'Notifications', icon: Bell },
   { path: 'support', label: 'Support', icon: LifeBuoy },
 ]
 
-const marineNavItem = { path: 'marine/crew', label: 'Crew upload', icon: Ship }
+const mastersSubItems: NavItem[] = [
+  { path: 'masters/entities', label: 'Entity master', icon: Building2 },
+  { path: 'masters/vessels', label: 'Vessel master', icon: Database },
+]
 
 interface CustomerSidebarProps {
   mobile?: boolean
@@ -46,10 +49,12 @@ function SidebarNav({
   basePath,
   items,
   onNavigate,
+  indent = false,
 }: {
   basePath: string
-  items: Array<{ path: string; label: string; icon: typeof LayoutDashboard }>
+  items: NavItem[]
   onNavigate?: () => void
+  indent?: boolean
 }) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -72,6 +77,7 @@ function SidebarNav({
               borderRadius: '8px',
               py: 1,
               px: 1.5,
+              pl: indent ? 3 : 1.5,
               mb: 0.25,
               bgcolor: active ? colors.greenBright : 'transparent',
               color: active ? colors.white : colors.textSecondary,
@@ -82,12 +88,12 @@ function SidebarNav({
               },
             }}
           >
-            <Icon size={18} color={active ? colors.white : colors.textSecondary} strokeWidth={1.75} />
+            <Icon size={indent ? 16 : 18} color={active ? colors.white : colors.textSecondary} strokeWidth={1.75} />
             <Typography
               sx={{
                 ml: 1.5,
                 flex: 1,
-                fontSize: '13px',
+                fontSize: indent ? '12px' : '13px',
                 fontWeight: active ? 600 : 500,
                 color: 'inherit',
               }}
@@ -101,6 +107,135 @@ function SidebarNav({
   )
 }
 
+function UserManagementNavGroup({
+  basePath,
+  onNavigate,
+  expanded,
+  onToggle,
+  showAdminManagement,
+}: {
+  basePath: string
+  onNavigate?: () => void
+  expanded: boolean
+  onToggle: () => void
+  showAdminManagement: boolean
+}) {
+  const location = useLocation()
+  const colors = usePublicBrandColors()
+  const isUserMgmtActive = location.pathname.includes(`${basePath}/users/`)
+
+  const userMgmtSubItems: NavItem[] = [
+    ...(showAdminManagement ? [{ path: 'users/admins', label: 'Admin management', icon: UserCog }] : []),
+    { path: 'users/bookers', label: 'Booker management', icon: Users },
+  ]
+
+  return (
+    <Box sx={{ px: 1, mb: 0.25 }}>
+      <ListItemButton
+        onClick={onToggle}
+        sx={{
+          width: '100%',
+          borderRadius: '8px',
+          py: 1,
+          px: 1.5,
+          bgcolor: isUserMgmtActive ? colors.greenBright : 'transparent',
+          color: isUserMgmtActive ? colors.white : colors.textSecondary,
+          transition: 'background-color 150ms ease, color 150ms ease',
+          '&:hover': {
+            bgcolor: isUserMgmtActive ? colors.greenBright : colors.greenMuted,
+            color: isUserMgmtActive ? colors.white : colors.navy,
+          },
+        }}
+      >
+        <UserCog size={18} color={isUserMgmtActive ? colors.white : colors.textSecondary} strokeWidth={1.75} />
+        <Typography
+          sx={{
+            ml: 1.5,
+            flex: 1,
+            fontSize: '13px',
+            fontWeight: isUserMgmtActive ? 600 : 500,
+            color: 'inherit',
+          }}
+        >
+          User management
+        </Typography>
+        <ChevronDown
+          size={14}
+          color={isUserMgmtActive ? colors.white : colors.textSecondary}
+          style={{
+            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 150ms ease',
+          }}
+        />
+      </ListItemButton>
+      <Collapse in={expanded}>
+        <SidebarNav basePath={basePath} items={userMgmtSubItems} onNavigate={onNavigate} indent />
+      </Collapse>
+    </Box>
+  )
+}
+
+function MastersNavGroup({
+  basePath,
+  onNavigate,
+  expanded,
+  onToggle,
+}: {
+  basePath: string
+  onNavigate?: () => void
+  expanded: boolean
+  onToggle: () => void
+}) {
+  const location = useLocation()
+  const colors = usePublicBrandColors()
+  const isMastersActive = location.pathname.includes(`${basePath}/masters/`)
+
+  return (
+    <Box sx={{ px: 1, mb: 0.25 }}>
+      <ListItemButton
+        onClick={onToggle}
+        sx={{
+          width: '100%',
+          borderRadius: '8px',
+          py: 1,
+          px: 1.5,
+          bgcolor: isMastersActive ? colors.greenBright : 'transparent',
+          color: isMastersActive ? colors.white : colors.textSecondary,
+          transition: 'background-color 150ms ease, color 150ms ease',
+          '&:hover': {
+            bgcolor: isMastersActive ? colors.greenBright : colors.greenMuted,
+            color: isMastersActive ? colors.white : colors.navy,
+          },
+        }}
+      >
+        <Database size={18} color={isMastersActive ? colors.white : colors.textSecondary} strokeWidth={1.75} />
+        <Typography
+          sx={{
+            ml: 1.5,
+            flex: 1,
+            fontSize: '13px',
+            fontWeight: isMastersActive ? 600 : 500,
+            color: 'inherit',
+          }}
+        >
+          Masters
+        </Typography>
+        <ChevronDown
+          size={14}
+          color={isMastersActive ? colors.white : colors.textSecondary}
+          style={{
+            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 150ms ease',
+          }}
+        />
+      </ListItemButton>
+      <Collapse in={expanded}>
+        <SidebarNav basePath={basePath} items={mastersSubItems} onNavigate={onNavigate} indent />
+      </Collapse>
+    </Box>
+  )
+}
+
 function SidebarPanel({
   onNavigate,
   onClose,
@@ -111,16 +246,35 @@ function SidebarPanel({
   fullWidth?: boolean
 }) {
   const navigate = useNavigate()
-  const { base, isBusiness, isAdmin } = useCustomerPortalBase()
-  const session = loadSession()
+  const location = useLocation()
+  const { base, isBusiness, canAccessUserManagement, canAccessAdminManagement, canAccessMasters } =
+    useCustomerPortalBase()
   const colors = usePublicBrandColors()
-  const showMarine = isBusiness && getBusinessDashboardVariant(session?.customerType).showMarineNav
+  const showBusinessNav = isBusiness
 
-  const navItems = [
-    ...coreNavItems.slice(0, 3),
-    ...(showMarine ? [marineNavItem] : []),
-    ...coreNavItems.slice(3),
-    ...(isAdmin && isBusiness ? [adminNavItem] : []),
+  const [userMgmtExpanded, setUserMgmtExpanded] = useState(() =>
+    location.pathname.includes(`${base}/users/`),
+  )
+  const [mastersExpanded, setMastersExpanded] = useState(() =>
+    location.pathname.includes(`${base}/masters/`),
+  )
+
+  useEffect(() => {
+    if (location.pathname.includes(`${base}/users/`)) {
+      setUserMgmtExpanded(true)
+    }
+  }, [location.pathname, base])
+
+  useEffect(() => {
+    if (location.pathname.includes(`${base}/masters/`)) {
+      setMastersExpanded(true)
+    }
+  }, [location.pathname, base])
+
+  const primaryNavItems: NavItem[] = [
+    { path: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: 'profile', label: 'Profile details', icon: Building2 },
+    { path: 'applications', label: 'Application management', icon: FileText },
   ]
 
   const handleLogout = () => {
@@ -155,12 +309,7 @@ function SidebarPanel({
       >
         <Box component="img" src="/greenlight_logo.jpg" alt="Greenlight Travel Solutions" sx={{ height: 28, maxWidth: 160 }} />
         {onClose && (
-          <IconButton
-            size="small"
-            onClick={onClose}
-            aria-label="Close navigation"
-            sx={{ color: colors.textSecondary }}
-          >
+          <IconButton size="small" onClick={onClose} aria-label="Close navigation" sx={{ color: colors.textSecondary }}>
             <ChevronLeft size={18} />
           </IconButton>
         )}
@@ -180,7 +329,24 @@ function SidebarPanel({
           },
         }}
       >
-        <SidebarNav basePath={base} items={navItems} onNavigate={onNavigate} />
+        <SidebarNav basePath={base} items={primaryNavItems} onNavigate={onNavigate} />
+        {showBusinessNav && canAccessUserManagement && (
+          <UserManagementNavGroup
+            basePath={base}
+            onNavigate={onNavigate}
+            expanded={userMgmtExpanded}
+            onToggle={() => setUserMgmtExpanded(e => !e)}
+            showAdminManagement={canAccessAdminManagement}
+          />
+        )}
+        {showBusinessNav && canAccessMasters && (
+          <MastersNavGroup
+            basePath={base}
+            onNavigate={onNavigate}
+            expanded={mastersExpanded}
+            onToggle={() => setMastersExpanded(e => !e)}
+          />
+        )}
       </Box>
 
       <Box sx={{ width: '100%', flexShrink: 0, borderTop: `1px solid ${colors.border}`, py: 0.5 }}>

@@ -38,16 +38,16 @@ export function FeedbackShowcase() {
         <Grid size={12}>
           <Typography variant="h3" sx={{ mb: 1.5 }}>Toast</Typography>
           <Stack direction="row" gap={1.5} flexWrap="wrap">
-            <Button variant="contained" size="sm" onClick={() => showToast({ title: 'Changes saved!', variant: 'success' })}>
+            <Button variant="contained" onClick={() => showToast({ title: 'Changes saved!', variant: 'success' })}>
               Success Toast
             </Button>
-            <Button variant="outlined" size="sm" onClick={() => showToast({ title: 'Something went wrong.', variant: 'error' })}>
+            <Button variant="outlined" onClick={() => showToast({ title: 'Something went wrong.', variant: 'error' })}>
               Error Toast
             </Button>
-            <Button variant="text" size="sm" onClick={() => showToast({ title: 'Check your input.', variant: 'warning' })}>
+            <Button variant="text" onClick={() => showToast({ title: 'Check your input.', variant: 'warning' })}>
               Warning Toast
             </Button>
-            <Button variant="text" size="sm" onClick={() => showToast({ title: 'Update available.', variant: 'info' })}>
+            <Button variant="text" onClick={() => showToast({ title: 'Update available.', variant: 'info' })}>
               Info Toast
             </Button>
           </Stack>
@@ -59,10 +59,10 @@ export function FeedbackShowcase() {
         <Grid size={12}>
           <Typography variant="h3" sx={{ mb: 1.5 }}>Modal / Drawer / ConfirmDialog</Typography>
           <Stack direction="row" gap={1.5} flexWrap="wrap">
-            <Button variant="contained" size="sm" onClick={() => setModalOpen(true)}>Open Modal</Button>
-            <Button variant="outlined" size="sm" onClick={() => setDrawerOpen(true)}>Open Drawer</Button>
-            <Button variant="text" size="sm" onClick={() => setConfirmOpen(true)}>Confirm Dialog</Button>
-            <Button variant="text" size="sm" onClick={triggerLoading}>Loading Overlay (2s)</Button>
+            <Button variant="contained" onClick={() => setModalOpen(true)}>Open Modal</Button>
+            <Button variant="outlined" onClick={() => setDrawerOpen(true)}>Open Drawer</Button>
+            <Button variant="text" onClick={() => setConfirmOpen(true)}>Confirm Dialog</Button>
+            <Button variant="text" onClick={triggerLoading}>Loading Overlay (2s)</Button>
           </Stack>
 
           <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Modal Dialog">
@@ -70,8 +70,8 @@ export function FeedbackShowcase() {
               This is the modal body. You can put any content here â€” forms, details, confirmations.
             </Typography>
             <Stack direction="row" gap={1} sx={{ mt: 3 }} justifyContent="flex-end">
-              <Button variant="outlined" size="sm" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button variant="contained" size="sm" onClick={() => setModalOpen(false)}>Confirm</Button>
+              <Button variant="outlined" onClick={() => setModalOpen(false)}>Cancel</Button>
+              <Button variant="contained" onClick={() => setModalOpen(false)}>Confirm</Button>
             </Stack>
           </Modal>
 
@@ -120,7 +120,7 @@ export function FeedbackShowcase() {
           <Typography variant="h3" sx={{ mb: 1.5 }}>Popover</Typography>
           <Stack direction="row" gap={2}>
             <Popover
-              trigger={<Button variant="outlined" size="sm">Click Popover</Button>}
+              trigger={<Button variant="outlined">Click Popover</Button>}
               title="Popover title"
             >
               <Typography variant="body2" color="text.secondary">Content appears here.</Typography>

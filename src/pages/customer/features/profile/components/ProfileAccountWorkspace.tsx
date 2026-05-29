@@ -45,7 +45,7 @@ export function ProfileAccountWorkspace() {
   const colors = usePublicBrandColors()
   const { showToast } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { base, companyName } = useCustomerPortalBase()
+  const { companyName } = useCustomerPortalBase()
   const { workspace, updatePersonalAccount, setSessions } = useProfileAccount()
   const [personalEditToken, setPersonalEditToken] = useState(0)
 
@@ -125,10 +125,6 @@ export function ProfileAccountWorkspace() {
 
   return (
     <CustomerDetailWorkspace
-      breadcrumbs={[
-        { label: 'Dashboard', href: `${base}/dashboard` },
-        { label: 'Profile & account' },
-      ]}
       header={{
         title: overview.companyName || companyName,
         subtitle: `${company.operational.gltsTeam} · Onboarded ${overview.onboardingDate}`,

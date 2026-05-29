@@ -14,6 +14,7 @@ export interface ColumnHeaderProps {
   onSearch: (key: string, value: string) => void
   filterCount: number
   showColumnSearch?: boolean
+  enableColumnSort?: boolean
   onFilterClick?: (event: MouseEvent<HTMLElement>) => void
 }
 
@@ -26,12 +27,13 @@ export default function ColumnHeader({
   onSearch,
   filterCount,
   showColumnSearch = true,
+  enableColumnSort = true,
   onFilterClick,
 }: ColumnHeaderProps) {
   const [localSearch, setLocalSearch] = useState(searchValue)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isSorted = sortKey === column.key
-  const sortable = column.sortable !== false
+  const sortable = enableColumnSort && column.sortable !== false
 
   // Sync external value changes (e.g. clear all)
   useEffect(() => {
@@ -51,6 +53,23 @@ export default function ColumnHeader({
     : isSorted && sortDirection === 'desc'
       ? ArrowDown
       : ArrowUpDown
+
+  const isActionColumn = column.key === 'actions'
+
+  if (isActionColumn) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography
+          variant="body2"
+          fontWeight={600}
+          color="text.secondary"
+          sx={{ fontSize: 13, userSelect: 'none', textAlign: 'center' }}
+        >
+          {column.label || 'Actions'}
+        </Typography>
+      </Box>
+    )
+  }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: column.minWidth }}>

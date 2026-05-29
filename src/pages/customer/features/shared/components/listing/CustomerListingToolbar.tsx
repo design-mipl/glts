@@ -82,7 +82,6 @@ export function CustomerListingToolbar({
           <Button
             variant="outlined"
             color="secondary"
-            size="sm"
             startIcon={<Download size={16} strokeWidth={1.75} />}
             onClick={onExport}
           >
@@ -142,7 +141,7 @@ export function CustomerListingToolbar({
               {hiddenColumnKeys.length > 0 && (
                 <>
                   <Divider sx={{ my: 1 }} />
-                  <Button size="sm" fullWidth onClick={() => onHiddenColumnKeysChange?.([])}>
+                  <Button fullWidth onClick={() => onHiddenColumnKeysChange?.([])}>
                     Reset columns
                   </Button>
                 </>

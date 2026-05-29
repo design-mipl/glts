@@ -1,5 +1,5 @@
 import type { SxProps, Theme } from '@mui/material/styles'
-import { BUTTON } from '../../formControl'
+import { BUTTON, buttonPaddingCss } from '../../formControl'
 
 /**
  * Modal / drawer / confirm panel titles.
@@ -26,4 +26,5 @@ export const overlayFooterButtonSx: SxProps<Theme> = {
   fontWeight: BUTTON.fontWeight,
   borderRadius: BUTTON.borderRadius,
   minHeight: BUTTON.minHeightMd,
+  padding: buttonPaddingCss('md'),
 }

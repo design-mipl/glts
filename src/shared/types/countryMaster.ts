@@ -1,9 +1,23 @@
 /** Admin Country master — aggregate root for portal visa & document configuration. */
 
-export type CountryMasterStatus = 'active' | 'inactive'
+export type CountryMasterStatus = 'active' | 'inactive' | 'draft'
+
+export type BusinessSegment = 'retail' | 'corporate' | 'marine'
+
+export type ProcessingType =
+  | 'embassy'
+  | 'e_visa'
+  | 'vfs'
+  | 'agent_submission'
+  | 'hybrid'
+
+export type VisaTypeStatus = 'active' | 'inactive'
+
+export type WorkflowProfile = 'standard' | 'crew'
 
 export type RequirementPreviewVariant = 'crew' | 'shipping' | 'embassy' | 'glts'
 
+/** Legacy document mapping shape — used by customer portal workspace. */
 export interface CountryDocumentMapping {
   documentId: string
   name: string
@@ -13,6 +27,91 @@ export interface CountryDocumentMapping {
   ocrSupported?: boolean
   description?: string
   formatNotes?: string
+}
+
+export interface CountryDocumentChecklistItem {
+  documentId: string
+  name: string
+  mandatory: boolean
+  ocrEnabled: boolean
+  validationRule?: string
+  remarks?: string
+  sortOrder: number
+  hasSample?: boolean
+  description?: string
+  formatNotes?: string
+}
+
+export interface CountryProcessingRules {
+  submissionMode: 'embassy_direct' | 'vfs' | 'e_visa_portal' | 'agent_channel'
+  normalProcessingDays: string
+  expressProcessingDays?: string
+  expressFeeNotes?: string
+  appointmentProvider?: string
+  appointmentRequired: boolean
+  appointmentLeadTimeDays?: number
+  fundsHandlingMode: 'customer_pays' | 'glts_float' | 'embassy_direct'
+  fundsNotes?: string
+  ocrPolicyEnabled: boolean
+  workflowProfile: WorkflowProfile
+  slaTargetDays?: number
+  escalationThresholdDays?: number
+  biometricRequired: boolean
+  interviewRequired: boolean
+  physicalPassportRequired: boolean
+  eVisaPortalUrl?: string
+  agentChannelNotes?: string
+}
+
+export interface CountryVisaType {
+  id: string
+  name: string
+  visaCategory: string
+  processingTime: string
+  entryType: string
+  validity: string
+  stayDuration: string
+  prioritySupport: boolean
+  status: VisaTypeStatus
+  checklist: CountryDocumentChecklistItem[]
+  processingRulesOverride?: Partial<CountryProcessingRules>
+  /** Legacy sync fields */
+  purposeId?: string
+  purposeLabel?: string
+  requirementSummary?: string
+}
+
+export interface CountrySegmentConfig {
+  segment: BusinessSegment
+  enabled: boolean
+  visaTypes: CountryVisaType[]
+  processingRules: CountryProcessingRules
+}
+
+export interface CountryActivityEntry {
+  id: string
+  timestamp: string
+  actor: string
+  action: string
+  detail?: string
+  segment?: BusinessSegment
+}
+
+/** Flat offering — synthesized for customer portal backward compatibility. */
+export interface CountryVisaOffering {
+  id: string
+  visaTypeId: string
+  visaTypeLabel: string
+  purposeId: string
+  purposeLabel: string
+  processingTimeline: string
+  entryType: string
+  requirementSummary: string
+  active: boolean
+  workflowProfile: WorkflowProfile
+  documentMappings: CountryDocumentMapping[]
+  requirementPreviewCards?: RequirementPreviewCard[]
+  segment?: BusinessSegment
 }
 
 export interface RequirementDocumentRow {
@@ -33,22 +132,6 @@ export interface RequirementPreviewCard {
   variant: RequirementPreviewVariant
 }
 
-export interface CountryVisaOffering {
-  id: string
-  visaTypeId: string
-  visaTypeLabel: string
-  purposeId: string
-  purposeLabel: string
-  processingTimeline: string
-  entryType: string
-  requirementSummary: string
-  active: boolean
-  /** Drives requirement preview & document workspace templates when sections are not overridden. */
-  workflowProfile: 'standard' | 'crew'
-  documentMappings: CountryDocumentMapping[]
-  requirementPreviewCards?: RequirementPreviewCard[]
-}
-
 export interface CountryMaster {
   id: string
   code: string
@@ -56,6 +139,9 @@ export interface CountryMaster {
   flag: string
   region: string
   status: CountryMasterStatus
+  processingType: ProcessingType
+  embassyNotes?: string
+  internalNotes?: string
   cities: string
   heroPhotoId: string
   processingTime: string
@@ -66,7 +152,53 @@ export interface CountryMaster {
   visaCategory: string
   validity: string
   fastMinutes?: number
+  segments: CountrySegmentConfig[]
+  /** Synced flat list for legacy consumers */
   visaOfferings: CountryVisaOffering[]
+  createdAt: string
+  updatedAt: string
+  activities: CountryActivityEntry[]
+}
+
+export interface CountryMasterFormData {
+  code: string
+  name: string
+  flag: string
+  region: string
+  status: CountryMasterStatus
+  processingType: ProcessingType
+  embassyNotes: string
+  internalNotes: string
+  cities: string
+  heroPhotoId: string
+  processingTime: string
+  price: number
+  rating: number
+  trending: boolean
+  trendingPercent: number
+  visaCategory: string
+  validity: string
+  fastMinutes?: number
+  segments: CountrySegmentConfig[]
+}
+
+export interface CountryMasterListFilters {
+  status?: CountryMasterStatus | 'all'
+  segment?: BusinessSegment | 'all'
+  processingType?: ProcessingType | 'all'
+  query?: string
+}
+
+export interface CountryMasterKpiCounts {
+  total: number
+  active: number
+  inactive: number
+  draft: number
+}
+
+export interface CountrySegmentAggregates {
+  visaTypeCount: number
+  checklistCount: number
 }
 
 export type DocumentVerificationStatus =

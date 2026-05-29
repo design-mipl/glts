@@ -14,9 +14,11 @@ export interface BreadcrumbProps {
   separator?: React.ReactNode
   maxItems?: number
   sx?: SxProps
+  /** When false, hides the leading back icon (parent crumb links still work). */
+  showBack?: boolean
 }
 
-export default function Breadcrumb({ items, separator, maxItems, sx }: BreadcrumbProps) {
+export default function Breadcrumb({ items, separator, maxItems, sx, showBack = true }: BreadcrumbProps) {
   const theme = useTheme()
   const navigate = useNavigate()
   const isXs = useMediaQuery(theme.breakpoints.down('lg'))
@@ -33,7 +35,7 @@ export default function Breadcrumb({ items, separator, maxItems, sx }: Breadcrum
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ...sx as object }}>
-      {items.length > 1 ? (
+      {showBack && items.length > 1 ? (
         <IconButton
           size="small"
           aria-label="Go back"

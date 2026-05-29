@@ -11,6 +11,8 @@ export type ApplicationOperationalStatus =
 
 export type ApplicationRecordType = 'single' | 'bulk'
 
+export type ApplicationCustomerSegment = 'marine' | 'corporate' | 'retail'
+
 export type ApplicationListingTab = 'all' | 'draft' | 'submitted'
 
 export type ApplicationTypeFilter = '' | ApplicationRecordType
@@ -23,6 +25,7 @@ export interface ApplicationListingFilterState {
   status: string
   processingStage: string
   applicationType: ApplicationTypeFilter
+  createdBy: string
 }
 
 export const EMPTY_APPLICATION_LISTING_FILTERS: ApplicationListingFilterState = {
@@ -31,6 +34,7 @@ export const EMPTY_APPLICATION_LISTING_FILTERS: ApplicationListingFilterState = 
   status: '',
   processingStage: '',
   applicationType: '',
+  createdBy: '',
 }
 
 /** Post-submit pipeline — excludes Draft and pre-submit Pending Documents. */

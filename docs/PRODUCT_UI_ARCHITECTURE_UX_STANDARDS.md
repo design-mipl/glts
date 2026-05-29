@@ -405,12 +405,15 @@ Admin tables should standardize:
 - Column labels.
 - Sort behavior.
 - Filter behavior.
-- Sticky or visible row actions.
+- Sticky right **Actions** column (`key: 'actions'`, fixed width, header label **Actions**, `RowActions` per row).
+- Cell ellipsis so row data does not overflow into the sticky actions column.
 - Status badge placement.
 - Bulk selection.
 - Pagination.
 - Empty/loading states.
 - Export only when useful and permission-allowed.
+
+Prefer `AdminListingTable` (wraps embedded `DataTable` with column filters) inside `AdminListingShell` rather than standalone `DataTable` with its own toolbar on admin listing pages.
 
 ### Filters and Pagination
 
@@ -772,9 +775,16 @@ Use these recipes before creating new page structures.
 
 For reusable product template contracts, listing acceptance rules, and promotion rules, see [root CLAUDE.md](../CLAUDE.md).
 
-### Listing Page
+For admin module step-by-step implementation (copy-from files, shell components, checklists), see [Admin Module Implementation Guide](./ADMIN_MODULE_IMPLEMENTATION_GUIDE.md).
+
+Template showcase registry (live URLs and component lists): `src/pages/admin/_tools/TemplateShowcase/config/templateRegistry.ts`.
+
+### Listing modules {#listing-modules}
 
 Use for applications, bookers, customers, users, masters, invoices, queues, and documents.
+
+**Live demo:** `/admin/tools/templates/listing`  
+**Reference source:** `src/pages/admin/_tools/TemplateShowcase/pages/ListingTemplatePage.tsx`
 
 Required parts:
 
@@ -805,27 +815,32 @@ Header
 KPI row
 Tabs, if needed
 Toolbar
+Advanced filters
 Table/Grid
 Pagination
 ```
 
 Listing implementation standard:
 
-- Use `src/pages/admin/_tools/TemplateShowcase/pages/ListingTemplatePage.tsx` as the reference source of truth for listing composition order and behavior.
+- Use `ListingTemplatePage.tsx` as the reference source of truth for listing composition order and behavior.
 - Do not use queue-template or customer-listing-template variants as separate scaffolds; compose all listings from the same canonical listing recipe.
-- Compose each listing with the shared listing primitives used by that reference pattern (`AdminListingShell`, `AdminListingStickyHeader`, `AdminListingToolbar`, `AdminListingAdvancedFilters`, `AdminListingTable`, `AdminListingGrid`, and `Pagination`) or approved surface-specific wrappers that preserve the same UX sequence.
-- Use public design-system table primitives: `DataTable`, `ColumnFilter`, `FilterPanel`, `RowActions`, and `Pagination`.
-- Keep module-specific columns, row actions, status tabs, export behavior, route paths, and permissions outside reusable listing components.
-- Treat `BillingTable`, `BillingToolbar`, and `BillingGridView` as legacy scaffold examples until their reusable mechanics are promoted into the public design-system API.
+- Compose each admin listing with: `AdminListingShell`, `AdminListingStickyHeader`, `AdminListingToolbar`, `AdminListingAdvancedFilters`, `AdminListingTable` or `AdminListingGrid`, and `Pagination` — or approved surface-specific wrappers that preserve the same UX sequence.
+- Use design-system table primitives inside `AdminListingTable`: `DataTable`, `ColumnFilter`, `RowActions`, and `Pagination`.
+- **Actions column:** last column, `key: 'actions'`, sticky right, fixed width, header **Actions**, `RowActions` in cells; data columns use ellipsis so content does not overflow into the action column.
+- Keep module-specific columns, row actions, status tabs, export behavior, route paths, and permissions in the feature folder.
+- Component library **DataTable** tab demonstrates the underlying table engine; admin listings should use the admin listing shell stack above.
 
 Listing exception policy:
 
 - One-off listing structures are allowed only with documented module constraints (regulatory/legal behavior, embedded third-party restrictions, or critical performance constraints).
 - The PR must include: why the reference module is insufficient, which reference components are still reused, and screenshots that show intentional differences.
 
-### Detail Page
+### Detail modules {#detail-modules}
 
 Use for application detail, customer detail, account detail, user detail, invoice detail, and case detail.
+
+**Live demo:** `/admin/tools/templates/detail`  
+**Reference source:** `src/pages/admin/_tools/TemplateShowcase/pages/DetailTemplatePage.tsx`
 
 Required parts:
 
@@ -847,13 +862,16 @@ Recommended tabs:
 
 Detail implementation standard:
 
-- Promote neutral detail mechanics only: detail shell, `DetailSection`, `DetailField`, and `SummaryField`.
+- Use `AdminDetailShell` for page frame and breadcrumbs.
+- Promote neutral detail mechanics only: detail shell, read-only field blocks, `BaseCard`, `FormSection`.
 - Keep status semantics, edit behavior, activity source, audit rules, and document data module-owned.
-- Do not promote invoice-specific detail sections, TDS summaries, or mock line items from the removed billing scaffold.
 
-### Dashboard Page
+### Dashboard modules {#dashboard-modules}
 
 Use for portal home screens and operational overview pages.
+
+**Live demo:** `/admin/tools/templates/dashboard`  
+**Reference source:** `src/pages/admin/_tools/TemplateShowcase/pages/DashboardTemplatePage.tsx`
 
 Required parts:
 
@@ -877,12 +895,23 @@ Dashboard rules:
 - Do not duplicate full listings.
 - Keep primary actions visible.
 - Show actionable alerts before passive charts.
-- Prefer reusable cards such as `StatCard`, `MetricCard`, `ListCard`, `ActionCard`, `SummaryCard`, and chart cards over Billing-derived dashboard components.
+- Prefer reusable cards such as `StatCard`, `MetricCard`, `ListCard`, `ActionCard`, `SummaryCard`, and chart cards.
 - Keep dashboard data, greetings, workspace context, and route destinations portal-owned.
 
-### Form Page
+### CRUD modules {#crud-modules}
 
-Use for create/edit workflows.
+Use for create/edit workflows composed from listing, detail, and form surfaces.
+
+**Live demos:**
+
+| Form type | URL | Reference source |
+|-----------|-----|------------------|
+| Modal | `/admin/tools/templates/forms/modal` | `ModalFormTemplatePage.tsx` |
+| Drawer | `/admin/tools/templates/forms/drawer` | `DrawerFormTemplatePage.tsx` |
+| Full page | `/admin/tools/templates/forms/page` | `FullPageFormTemplatePage.tsx` |
+| Stepper | `/admin/tools/templates/forms/stepper` | `StepperFormTemplatePage.tsx` |
+
+**Forms patterns guide (component library):** `AdminFormPatternsGuide.tsx` in the Forms tab.
 
 Required parts:
 
@@ -897,18 +926,44 @@ Modal vs drawer vs full-page:
 
 | Form type | Use when |
 |-----------|----------|
-| Modal | Short focused task, usually 1 to 6 fields. Use content-driven height with viewport-capped max-height; avoid fixed heights. |
+| Modal | Short focused task, usually 2 to 8 fields. Use content-driven height with viewport-capped max-height; avoid fixed heights. |
 | Drawer | Side edit or secondary workflow, usually 4 to 12 fields |
 | Full page | Complex form, multi-step flow, review step, or high-impact change |
+| Stepper | Staged workflow with review step |
+
+Admin form shells and layout tokens:
+
+| Pattern | Shell | Tokens |
+|---------|-------|--------|
+| Full page | `AdminFullPageFormShell`, `AdminFullPageFormFooter` | `adminFullPageFormLayout.ts` |
+| Modal | DS `Modal`, `FormSection`, `FormField` | `adminOverlayFormLayout.ts` |
+| Drawer | `AdminDrawerFormShell`, `AdminOverlayFormSection` | `adminOverlayFormLayout.ts` |
+| Stepper | `AdminStepperFormShell`, DS `Stepper` | `adminOverlayFormLayout.ts` |
+
+Form field spec (all surfaces): `src/design-system/formControl.ts` — default `size="sm"`, 34px height, 10px radius, 13px label.
 
 Sticky actions:
 
 - Use sticky footer for long forms.
 - Keep destructive actions separated from save actions.
 - Confirm high-impact changes.
-- Treat CRUD as a recipe composed from listing, detail, and form surfaces rather than as one monolithic CRUD component.
-- Use modal, drawer, full-page, or stepper surfaces based on workflow complexity.
 - Keep fields, validation, save/draft semantics, and mutations module-owned.
+
+### Listing Page (legacy heading — see Listing modules above)
+
+The canonical admin listing recipe is documented under [Listing modules](#listing-modules). Customer portal listings may use `PortalListingShell` and related wrappers while preserving the same UX sequence where applicable.
+
+### Detail Page (legacy heading — see Detail modules above)
+
+See [Detail modules](#detail-modules).
+
+### Dashboard Page (legacy heading — see Dashboard modules above)
+
+See [Dashboard modules](#dashboard-modules).
+
+### Form Page (legacy heading — see CRUD modules above)
+
+See [CRUD modules](#crud-modules).
 
 ### Queue Page
 

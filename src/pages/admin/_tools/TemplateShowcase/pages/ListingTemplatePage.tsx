@@ -124,8 +124,6 @@ export function ListingTemplatePage() {
         stickyPageHeader={
           <AdminListingStickyHeader
             title="Listing module"
-            titleVariant="h3"
-            titleSx={{ fontSize: '16px' }}
             actions={
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                 <Button label="New record" startIcon={<Plus size={14} />} />

@@ -6,10 +6,11 @@ import type { Dayjs } from 'dayjs'
 import { useTheme, alpha } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 import { Calendar } from 'lucide-react'
-import { formControlHeight, outlinedFieldSx } from '../../../formControl'
+import { FORM_CONTROL, formControlHeight, pickersOutlinedFieldSx } from '../../../formControl'
 
 export interface DatePickerProps {
   label?: string
+  placeholder?: string
   value?: Date | null
   onChange?: (date: Date | null) => void
   minDate?: Date
@@ -28,6 +29,7 @@ export interface DatePickerProps {
 
 export default function DatePicker({
   label,
+  placeholder,
   value,
   onChange,
   minDate,
@@ -36,7 +38,7 @@ export default function DatePicker({
   error = false,
   helperText,
   required = false,
-  size = 'md',
+  size = 'sm',
   fullWidth = false,
   format = 'DD/MM/YYYY',
   disablePast = false,
@@ -54,7 +56,15 @@ export default function DatePicker({
   }
 
   const sharedInputSx: SxProps<Theme> = [
-    outlinedFieldSx(theme, inputHeight),
+    pickersOutlinedFieldSx(theme, inputHeight),
+    {
+      '& .MuiPickersInputBase-sectionContainer': {
+        fontSize: FORM_CONTROL.fontSize,
+      },
+      '& .MuiInputAdornment-root': {
+        marginRight: '4px',
+      },
+    },
     ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
   ]
 
@@ -78,11 +88,17 @@ export default function DatePicker({
             required,
             size: 'small',
             fullWidth,
+            variant: 'outlined',
+            hiddenLabel: !label,
+            placeholder: placeholder ?? (label ? undefined : format),
             sx: sharedInputSx,
+            slotProps: {
+              formHelperText: { sx: { mx: 0, mt: '4px', fontSize: FORM_CONTROL.helperFontSize } },
+            },
           },
           openPickerButton: {
             size: 'small',
-            sx: { color: 'text.secondary' },
+            sx: { color: 'text.secondary', mr: 0.5 },
           },
           desktopPaper: {
             sx: {

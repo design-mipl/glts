@@ -51,7 +51,7 @@ export function ProfileChipPanel({ countries, visaTypes }: ProfileChipPanelProps
             ))}
           </Stack>
           {items.length > COLLAPSED_LIMIT && (
-            <Button size="small" onClick={onToggle} sx={{ mt: 1, textTransform: 'none', fontWeight: 700 }}>
+            <Button onClick={onToggle} sx={{ mt: 1, textTransform: 'none', fontWeight: 700 }}>
               {expanded ? 'Show less' : `Show all (${items.length})`}
             </Button>
           )}

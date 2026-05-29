@@ -77,10 +77,10 @@ export function NavigationShowcase() {
           <Typography variant="h3" sx={{ mb: 1.5 }}>Stepper</Typography>
           <Stepper steps={stepperSteps} activeStep={activeStep} />
           <Stack direction="row" gap={1.5} sx={{ mt: 2 }}>
-            <Button variant="outlined" size="sm" disabled={activeStep === 0} onClick={() => setActiveStep(s => s - 1)}>
+            <Button variant="outlined" disabled={activeStep === 0} onClick={() => setActiveStep(s => s - 1)}>
               Back
             </Button>
-            <Button variant="contained" size="sm" disabled={activeStep === stepperSteps.length - 1} onClick={() => setActiveStep(s => s + 1)}>
+            <Button variant="contained" disabled={activeStep === stepperSteps.length - 1} onClick={() => setActiveStep(s => s + 1)}>
               Next
             </Button>
           </Stack>
@@ -97,7 +97,7 @@ export function NavigationShowcase() {
         <Grid size={{ xs: 12, md: 6 }}>
           <Typography variant="h3" sx={{ mb: 1.5 }}>Menu</Typography>
           <Menu
-            trigger={<Button variant="outlined" size="sm">Open Menu</Button>}
+            trigger={<Button variant="outlined">Open Menu</Button>}
             items={menuItems}
           />
         </Grid>
@@ -107,7 +107,7 @@ export function NavigationShowcase() {
         {/* CommandPalette */}
         <Grid size={12}>
           <Typography variant="h3" sx={{ mb: 1.5 }}>CommandPalette</Typography>
-          <Button variant="outlined" size="sm" onClick={() => setCommandOpen(true)}>
+          <Button variant="outlined" onClick={() => setCommandOpen(true)}>
             Open Command Palette (âŒ˜K)
           </Button>
           <CommandPalette

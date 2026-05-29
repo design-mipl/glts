@@ -10,6 +10,7 @@ import DatePicker from '@/design-system/UIComponents/Primitives/DatePicker'
 import DateRangePicker from '@/design-system/UIComponents/Primitives/DateRangePicker'
 import type { TagVariant } from '@/design-system/UIComponents/Display/Tag'
 import { Users, Briefcase, Globe, Lock } from 'lucide-react'
+import { AdminFormPatternsGuide } from './AdminFormPatternsGuide'
 
 function SectionHeader({ title, description }: { title: string; description?: string }) {
   return (
@@ -55,7 +56,19 @@ export function FormsShowcase() {
 
   return (
     <Box>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 720, fontSize: '13px' }}>
+        Admin form patterns: <strong>full-page</strong>, <strong>modal</strong>, <strong>drawer</strong>, and{' '}
+        <strong>stepper</strong> shells — each with defined layout, section colors, and footers. All use{' '}
+        <strong>FormField</strong> + inputs (default <code>size="sm"</code>).
+      </Typography>
       <Grid container spacing={5}>
+
+        {/* ── Form patterns (full-page, modal, drawer, stepper) ── */}
+        <Grid size={12}>
+          <AdminFormPatternsGuide />
+        </Grid>
+
+        <Grid size={12}><Divider /></Grid>
 
         {/* ── Input ── */}
         <Grid size={12}>
@@ -94,8 +107,8 @@ export function FormsShowcase() {
               </FormField>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <FormField label="Small size">
-                <Input placeholder="Compact input..." size="sm" fullWidth />
+              <FormField label="Default (sm)">
+                <Input placeholder="Default density..." fullWidth />
               </FormField>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 6 }}>
@@ -254,9 +267,9 @@ export function FormsShowcase() {
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <FormField label="Date picker">
                 <DatePicker
-                  label="Select date"
                   value={date}
                   onChange={setDate}
+                  placeholder="DD/MM/YYYY"
                   fullWidth
                 />
               </FormField>
@@ -264,10 +277,10 @@ export function FormsShowcase() {
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <FormField label="Error state" error helperText="Please select a valid date">
                 <DatePicker
-                  label="Select date"
                   value={null}
                   onChange={() => {}}
                   error
+                  placeholder="DD/MM/YYYY"
                   fullWidth
                 />
               </FormField>
@@ -275,7 +288,6 @@ export function FormsShowcase() {
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <FormField label="Disabled">
                 <DatePicker
-                  label="Select date"
                   value={new Date()}
                   onChange={() => {}}
                   disabled
@@ -284,10 +296,11 @@ export function FormsShowcase() {
               </FormField>
             </Grid>
             <Grid size={12}>
-              <FormField label="Date range picker">
+              <FormField label="Date range" helperText="Start and end dates for the reporting period">
                 <DateRangePicker
                   value={dateRange}
                   onChange={setDateRange}
+                  fullWidth
                 />
               </FormField>
             </Grid>
@@ -326,21 +339,25 @@ export function FormsShowcase() {
           <SectionHeader title="TagInput" description="Add tags by typing and pressing Enter or comma." />
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TagInput
-                label="Tags"
-                value={tags}
-                onChange={setTags}
-                placeholder="Type and press Enter..."
-              />
+              <FormField label="Tags">
+                <TagInput
+                  value={tags}
+                  onChange={setTags}
+                  placeholder="Type and press Enter..."
+                  fullWidth
+                />
+              </FormField>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TagInput
-                label="Max 3 tags"
-                value={['design', 'ui']}
-                onChange={() => {}}
-                placeholder="Max 3 tags..."
-                maxTags={3}
-              />
+              <FormField label="Max 3 tags">
+                <TagInput
+                  value={['design', 'ui']}
+                  onChange={() => {}}
+                  placeholder="Max 3 tags..."
+                  maxTags={3}
+                  fullWidth
+                />
+              </FormField>
             </Grid>
           </Grid>
         </Grid>
@@ -436,16 +453,24 @@ export function FormsShowcase() {
           <FormSection title="Personal Information" description="Basic profile details used across your account">
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6 }}>
-                <Input label="First Name" placeholder="John" fullWidth />
+                <FormField label="First Name" required>
+                  <Input placeholder="John" fullWidth />
+                </FormField>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <Input label="Last Name" placeholder="Doe" fullWidth />
+                <FormField label="Last Name" required>
+                  <Input placeholder="Doe" fullWidth />
+                </FormField>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <Input label="Email" placeholder="john@example.com" type="email" fullWidth />
+                <FormField label="Email" required>
+                  <Input placeholder="john@example.com" type="email" fullWidth />
+                </FormField>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <Input label="Phone" placeholder="+1 (555) 000-0000" type="tel" fullWidth />
+                <FormField label="Phone" optional>
+                  <Input placeholder="+1 (555) 000-0000" type="tel" fullWidth />
+                </FormField>
               </Grid>
             </Grid>
           </FormSection>

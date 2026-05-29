@@ -673,13 +673,17 @@ Use chart components for analytics surfaces, admin dashboards, operations dashbo
 
 ### Data Table
 
-Use these for list-heavy admin, operations, and customer workflows. Prefer the higher-level customer portal listing components when inside `CustomerPortal`.
+Use these for list-heavy admin, operations, and customer workflows. Prefer the higher-level customer portal listing components when inside `CustomerPortal`. For **admin listings**, prefer `AdminListingTable` inside `AdminListingShell` (see [Admin Module Implementation Guide](./ADMIN_MODULE_IMPLEMENTATION_GUIDE.md)).
 
 | Component | Use it for | Typical GLTS usage |
 |-----------|------------|--------------------|
-| `DataTable` | Main table engine | Applications, bookers, users, customers, documents |
-| `TableToolbar` | Search/actions above a table | Generic non-portal table pages |
-| `ColumnHeader` | Custom sortable/filterable headers | Advanced table customization |
+| `DataTable` | Main table engine | Core table; admin listings via `AdminListingTable` wrapper |
+| `AdminListingTable` | Admin listing embedded table | Column filters, sticky header, no duplicate toolbar |
+| `AdminListingShell` | Admin listing page frame | Header, KPIs, tabs, toolbar slot, table/grid, footer |
+| `AdminListingToolbar` | Listing search/actions row | Export, view toggle, column picker, more menu |
+| `AdminListingAdvancedFilters` | Module filter row | Country, status, priority selects |
+| `TableToolbar` | Search/actions above a standalone table | Non-listing-shell table pages |
+| `ColumnHeader` | Sortable/filterable headers | Actions column shows **Actions** label when `key === 'actions'` |
 | `FilterPanel` | Multi-filter form/panel | Status, country, visa type, assigned user filters |
 | `FilterChip` | Active filter display | Applied filters summary |
 | `Pagination` | Page controls | Lists with server/client pagination |
@@ -690,6 +694,8 @@ Use these for list-heavy admin, operations, and customer workflows. Prefer the h
 | `ExpandedRow` | Detail content under a row | Inline application summary |
 | `GlobalSearch` | App-wide search | Search applications, travelers, countries |
 | `GlobalSearchProvider`, `useGlobalSearch` | Global search state | Shell-level search experiences |
+
+**Actions column convention:** last column, `key: 'actions'`, `hideable: false`, width 56–60px, sticky right, `sortable/filterable/searchable: false`, `RowActions` in `render`.
 
 ### Feedback
 
@@ -720,6 +726,32 @@ Use these for consistent forms and form sections. Some current portal forms stil
 | `RichTextEditor` | Rich text input | Email templates, internal notes, support articles |
 | `SearchInput` | Search-specific input | Listing toolbar search |
 | `TagInput` | Enter multiple tokens | Tags, aliases, allowed domains |
+
+**Form/button tokens:** `src/design-system/formControl.ts` exports `FORM_CONTROL` and `BUTTON` — keep in sync with root `CLAUDE.md`. Component library **Forms** tab includes `AdminFormPatternsGuide` for modal, drawer, full-page, and stepper shells.
+
+### Admin module shells
+
+Admin-specific composition lives in `src/pages/admin/components/`. These are not design-system exports — import from `@/pages/admin/components/...` when building admin modules.
+
+| Component | Use it for |
+|-----------|------------|
+| `AdminListingShell` | Listing page frame (header, KPIs, tabs, toolbar, content, footer) |
+| `AdminListingStickyHeader` | Sticky listing title + primary CTA |
+| `AdminListingToolbar` | Search, export, table/grid toggle, column picker |
+| `AdminListingAdvancedFilters` | Module-specific filter row |
+| `AdminListingTable` | Embedded `DataTable` + column filters |
+| `AdminListingGrid` | Card grid listing mode |
+| `AdminDetailShell` | Detail page frame + breadcrumbs |
+| `AdminFullPageFormShell` | Full-page create/edit with section cards |
+| `AdminFullPageFormFooter` | Sticky save/cancel footer |
+| `AdminDrawerFormShell` | Drawer create/edit |
+| `AdminStepperFormShell` | Multi-step form with review |
+| `AdminOverlayFormSection` | Primary/secondary section cards in drawer/stepper |
+| `AdminPageHeader` | Generic admin page header |
+
+Layout token files: `adminFullPageFormLayout.ts`, `adminOverlayFormLayout.ts`.
+
+**Implementation guide:** [Admin Module Implementation Guide](./ADMIN_MODULE_IMPLEMENTATION_GUIDE.md) — recipes mapped to `/admin/tools/templates` and `/admin/tools/component-library`.
 
 ### Navigation
 
@@ -1214,9 +1246,9 @@ Use this table when starting a new page:
 | Booker management | `PortalListingShell`, `BookerFormDrawer`, `UserCard`, `Avatar`, `Tag`, `ConfirmDialog` |
 | Marine crew upload | `FileUpload`, `UploadQueueTable`, `DataTable`, `Alert`, `ProgressBar` |
 | Operations dashboard | `StatCard`, `MetricCard`, `DataTable`, `FilterPanel`, `RowActions`, `ChartCard` |
-| Admin list page | `AppShell`, `DataTable`, `TableToolbar`, `FilterPanel`, `RowActions`, `BulkActions` |
-| Admin edit form | `Drawer` or `Modal`, `FormSection`, `FormField`, `FormActions`, `ConfirmDialog` |
-| Product template standards | [root CLAUDE.md](../CLAUDE.md) |
+| Admin list page | `AdminListingShell`, `AdminListingTable`, `AdminListingToolbar`, `RowActions`, `Pagination` — see [Admin Module Implementation Guide](./ADMIN_MODULE_IMPLEMENTATION_GUIDE.md) |
+| Admin edit form | `AdminDrawerFormShell` or `Modal`, `AdminFullPageFormShell`, `FormSection`, `FormField`, `ConfirmDialog` |
+| Product template standards | [root CLAUDE.md](../CLAUDE.md), [Admin Module Implementation Guide](./ADMIN_MODULE_IMPLEMENTATION_GUIDE.md) |
 | Empty/loading/error states | `EmptyState`, `SkeletonTable`, `SkeletonCard`, `Alert`, `LoadingOverlay` |
 | Small status labels | `Badge`, `Tag`, `Chip` from MUI only when the design-system component does not fit |
 | Global notification | `useToast`, with `ToastProvider` already mounted in `App.tsx` |
@@ -1226,6 +1258,14 @@ Use this table when starting a new page:
 ## 17. Templates and Legacy Demo Layer
 
 The current repository includes two non-product layers that should not be confused with real GLTS portal ownership.
+
+**Primary admin module cookbook:** [Admin Module Implementation Guide](./ADMIN_MODULE_IMPLEMENTATION_GUIDE.md)
+
+**Live demos:**
+
+- Component library — `/admin/tools/component-library`
+- Template showcase — `/admin/tools/templates`
+- Registry — `src/pages/admin/_tools/TemplateShowcase/config/templateRegistry.ts`
 
 ### `src/design-system/UIComponents/Templates/`
 

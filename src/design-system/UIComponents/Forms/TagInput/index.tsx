@@ -1,10 +1,15 @@
 import { useMemo, useState } from 'react'
 import Autocomplete from '@mui/material/Autocomplete'
+import Chip from '@mui/material/Chip'
 import TextField from '@mui/material/TextField'
+import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
-import type { MouseEvent } from 'react'
-import { tokens } from '../../../tokens'
-import { Tag } from '../../Display'
+import {
+  FORM_CONTROL,
+  autocompleteOutlinedFieldSx,
+  autocompleteSlotProps,
+  formControlHeight,
+} from '../../../formControl'
 
 export interface TagInputProps {
   label?: string
@@ -17,6 +22,8 @@ export interface TagInputProps {
   error?: boolean
   helperText?: string
   disabled?: boolean
+  size?: 'sm' | 'md'
+  fullWidth?: boolean
   sx?: SxProps<Theme>
 }
 
@@ -35,8 +42,13 @@ export default function TagInput({
   error = false,
   helperText,
   disabled = false,
+  size = 'sm',
+  fullWidth = false,
   sx,
 }: TagInputProps) {
+  const theme = useTheme()
+  const inputHeight = formControlHeight(size)
+  const fieldSx = autocompleteOutlinedFieldSx(theme, inputHeight)
   const [inputValue, setInputValue] = useState('')
 
   const normalizedSuggestions = useMemo(
@@ -58,25 +70,35 @@ export default function TagInput({
       multiple
       freeSolo
       disabled={disabled}
+      fullWidth={fullWidth}
       options={normalizedSuggestions}
       value={value}
       inputValue={inputValue}
       onInputChange={(_, nextValue) => setInputValue(nextValue)}
       onChange={(_, nextValue) => commitTags(nextValue)}
       filterSelectedOptions={!allowDuplicates}
+      slotProps={autocompleteSlotProps(theme)}
+      sx={[
+        fieldSx,
+        {
+          minWidth: fullWidth ? undefined : 200,
+          width: fullWidth ? '100%' : undefined,
+          '& .MuiOutlinedInput-root.MuiAutocomplete-inputRoot': {
+            minHeight: inputHeight,
+          },
+        },
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
       renderTags={(tagValue, getTagProps) =>
         tagValue.map((option, index) => {
-          const tagProps = getTagProps({ index })
+          const { key, ...chipProps } = getTagProps({ index })
           return (
-            <Tag
-              key={tagProps.key}
+            <Chip
+              key={key}
+              {...chipProps}
               label={option}
-              onDelete={
-                tagProps.onDelete
-                  ? () => tagProps.onDelete?.({} as MouseEvent<HTMLButtonElement>)
-                  : undefined
-              }
-              sx={{ m: tokens.spacing[1] }}
+              size="small"
+              sx={{ height: 22, '& .MuiChip-label': { py: 0 } }}
             />
           )
         })
@@ -85,9 +107,16 @@ export default function TagInput({
         <TextField
           {...params}
           label={label}
+          hiddenLabel={!label}
+          size="small"
+          variant="outlined"
+          fullWidth={fullWidth}
           placeholder={maxTags && value.length >= maxTags ? '' : placeholder}
           error={error}
           helperText={helperText}
+          slotProps={{
+            formHelperText: { sx: { mx: 0, mt: '4px', fontSize: FORM_CONTROL.helperFontSize } },
+          }}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ',') {
               event.preventDefault()
@@ -108,16 +137,6 @@ export default function TagInput({
           }}
         />
       )}
-      sx={[
-        {
-          '& .MuiOutlinedInput-root': {
-            alignItems: 'center',
-            gap: tokens.spacing[1],
-            py: tokens.spacing[1],
-          },
-        },
-        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
-      ]}
     />
   )
 }

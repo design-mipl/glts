@@ -1,6 +1,10 @@
 import { Grid, Stack, Typography } from '@mui/material'
-import { BaseCard } from '@/design-system/UIComponents'
+import { BaseCard, Button } from '@/design-system/UIComponents'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
+import {
+  formatEnquiryInquirySource,
+  formatEnquiryProcessingType,
+} from '../../config/enquiryFormConfig'
 
 function Field({ label, value }: { label: string; value?: string | number | boolean }) {
   return (
@@ -8,36 +12,127 @@ function Field({ label, value }: { label: string; value?: string | number | bool
       <Typography variant="caption" color="text.secondary">
         {label}
       </Typography>
-      <Typography variant="body2">{String(value ?? '--')}</Typography>
+      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+        {String(value ?? '--')}
+      </Typography>
     </Stack>
   )
 }
 
-export function OverviewTab({ enquiry }: { enquiry: EnquiryRecord }) {
+interface OverviewTabProps {
+  enquiry: EnquiryRecord
+  onUploadAttachment?: () => void
+}
+
+export function OverviewTab({ enquiry, onUploadAttachment }: OverviewTabProps) {
+  const notes =
+    enquiry.notes.initialDiscussionNotes ||
+    [enquiry.notes.customerExpectations, enquiry.notes.specialInstructions].filter(Boolean).join('\n\n') ||
+    undefined
+
   return (
     <Stack spacing={2}>
       <BaseCard sx={{ p: 2 }}>
         <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
-          Customer Information
+          Customer &amp; Enquiry Information
         </Typography>
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 6 }}><Field label="Company / Customer" value={enquiry.customer.companyOrCustomerName} /></Grid>
-          <Grid size={{ xs: 12, md: 6 }}><Field label="Customer Type" value={enquiry.customer.customerType} /></Grid>
-          <Grid size={{ xs: 12, md: 6 }}><Field label="Contact Person" value={enquiry.customer.contactPersonName} /></Grid>
-          <Grid size={{ xs: 12, md: 6 }}><Field label="Contact Number" value={enquiry.customer.contactNumber} /></Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Field label="Company / Customer Name" value={enquiry.customer.companyOrCustomerName} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Field label="Customer Type" value={enquiry.customer.customerType} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Field label="Contact Person" value={enquiry.customer.contactPersonName} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Field label="Contact" value={enquiry.customer.contactNumber} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Field label="Email" value={enquiry.customer.emailAddress} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Field label="Company Address" value={enquiry.customer.companyAddress} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Field
+              label="Inquiry Source"
+              value={formatEnquiryInquirySource(enquiry.salesDetails.inquirySource)}
+            />
+          </Grid>
         </Grid>
       </BaseCard>
 
       <BaseCard sx={{ p: 2 }}>
         <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
-          Requirement Summary
+          Visa Requirement Details
         </Typography>
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 6 }}><Field label="Countries" value={enquiry.visaRequirement.countries.join(', ')} /></Grid>
-          <Grid size={{ xs: 12, md: 6 }}><Field label="Visa Type" value={enquiry.visaRequirement.visaType} /></Grid>
-          <Grid size={{ xs: 12, md: 6 }}><Field label="No. of Applicants" value={enquiry.visaRequirement.numberOfApplicants} /></Grid>
-          <Grid size={{ xs: 12, md: 6 }}><Field label="Marine Requirement" value={enquiry.visaRequirement.marineRequirement ? 'Yes' : 'No'} /></Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Field label="Country Requirement" value={enquiry.visaRequirement.countries.join(', ')} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Field label="Visa Type" value={enquiry.visaRequirement.visaType} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Field label="Purpose of Visit" value={enquiry.visaRequirement.purposeOfVisit} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Field
+              label="Processing Type"
+              value={formatEnquiryProcessingType(enquiry.visaRequirement.processingType)}
+            />
+          </Grid>
         </Grid>
+      </BaseCard>
+
+      <BaseCard sx={{ p: 2 }}>
+        <Stack spacing={2}>
+          <Typography variant="subtitle2">Additional Information</Typography>
+          <Field label="Notes / Internal Remarks" value={notes} />
+
+          <Stack spacing={1}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="subtitle2">Attachments</Typography>
+              {onUploadAttachment ? (
+                <Button label="Upload attachment" size="sm" variant="outlined" onClick={onUploadAttachment} />
+              ) : null}
+            </Stack>
+            {enquiry.attachments.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                No attachments uploaded yet.
+              </Typography>
+            ) : (
+              enquiry.attachments.map((item) => (
+                <Stack
+                  key={item.id}
+                  direction={{ xs: 'column', sm: 'row' }}
+                  justifyContent="space-between"
+                  alignItems={{ xs: 'flex-start', sm: 'center' }}
+                  spacing={1}
+                  sx={{
+                    py: 1,
+                    borderTop: 1,
+                    borderColor: 'divider',
+                    '&:first-of-type': { borderTop: 0, pt: 0 },
+                  }}
+                >
+                  <Stack spacing={0.25}>
+                    <Typography variant="body2" fontWeight={600}>
+                      {item.fileName}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Version {item.version} · {item.fileType.toUpperCase()} · {item.fileSizeKb} KB ·{' '}
+                      {new Date(item.uploadedAt).toLocaleDateString()}
+                    </Typography>
+                  </Stack>
+                  <Button label="Download" size="sm" variant="outlined" />
+                </Stack>
+              ))
+            )}
+          </Stack>
+        </Stack>
       </BaseCard>
     </Stack>
   )

@@ -4,6 +4,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { ElementType, MouseEventHandler, ReactNode } from 'react'
+import { BUTTON, buttonPaddingCss } from '../../../formControl'
 
 type ButtonColor = 'primary' | 'secondary' | 'error' | 'success' | 'warning' | 'info'
 type ButtonVariant = 'contained' | 'outlined' | 'text' | 'soft'
@@ -26,10 +27,80 @@ export interface ButtonProps {
   sx?: SxProps<Theme>
 }
 
-const sizeDensity: Record<ButtonSize, SxProps<Theme>> = {
-  sm: { minHeight: { xs: 9, desktop: 7.5 } },
-  md: { minHeight: { xs: 10, desktop: 8 } },
-  lg: { minHeight: { xs: 11, desktop: 9 } },
+const sizeStyles: Record<ButtonSize, SxProps<Theme>> = {
+  sm: {
+    minHeight: BUTTON.minHeightSm,
+    fontSize: '12px',
+    padding: buttonPaddingCss('sm'),
+    gap: 0.75,
+  },
+  md: {
+    minHeight: BUTTON.minHeightMd,
+    fontSize: BUTTON.fontSize,
+    padding: buttonPaddingCss('md'),
+    gap: 1,
+  },
+  lg: {
+    minHeight: '40px',
+    fontSize: BUTTON.fontSize,
+    padding: buttonPaddingCss('lg'),
+    gap: 1,
+  },
+}
+
+function getVariantSx(
+  variant: ButtonVariant,
+  color: ButtonColor,
+  theme: Theme,
+): SxProps<Theme> {
+  const paletteMap = {
+    primary: theme.palette.primary,
+    secondary: theme.palette.secondary,
+    error: theme.palette.error,
+    success: theme.palette.success,
+    warning: theme.palette.warning,
+    info: theme.palette.info,
+  }
+  const pal = paletteMap[color]
+
+  if (variant === 'soft') {
+    return {
+      backgroundColor: alpha(pal.main, 0.1),
+      color: pal.main,
+      '&:hover:not(:disabled)': {
+        backgroundColor: alpha(pal.main, 0.16),
+      },
+    }
+  }
+
+  if (variant === 'outlined') {
+    return {
+      borderWidth: '1px',
+      ...(color === 'secondary'
+        ? {}
+        : {
+            borderColor: theme.palette.divider,
+            '&:hover:not(:disabled)': {
+              borderColor: theme.palette.primary.main,
+              backgroundColor: alpha(theme.palette.primary.main, 0.04),
+            },
+          }),
+    }
+  }
+
+  if (variant === 'text') {
+    return {
+      '&:hover:not(:disabled)': {
+        backgroundColor: alpha(theme.palette.text.primary, 0.06),
+      },
+    }
+  }
+
+  return {
+    '&:hover:not(:disabled)': {
+      boxShadow: `0 2px 8px ${alpha(pal.main, 0.28)}`,
+    },
+  }
 }
 
 export default function Button({
@@ -51,28 +122,7 @@ export default function Button({
   const theme = useTheme()
   const isSoft = variant === 'soft'
   const muiVariant = isSoft ? 'text' : (variant as 'contained' | 'outlined' | 'text')
-
-  const paletteMap = {
-    primary: theme.palette.primary,
-    secondary: theme.palette.secondary,
-    error: theme.palette.error,
-    success: theme.palette.success,
-    warning: theme.palette.warning,
-    info: theme.palette.info,
-  }
-  const palColor = paletteMap[color]
-
-  const softSx = isSoft
-    ? {
-        backgroundColor: alpha(palColor.main, 0.1),
-        color: palColor.main,
-        '&:hover': { backgroundColor: alpha(palColor.main, 0.18) },
-      }
-    : {}
-
   const muiSize = size === 'sm' ? 'small' : size === 'lg' ? 'large' : 'medium'
-
-  const sizeSx = sizeDensity[size]
   const linkProps = href ? ({ component: Link as ElementType, to: href } as object) : {}
 
   return (
@@ -84,10 +134,31 @@ export default function Button({
       fullWidth={fullWidth}
       onClick={onClick}
       type={type}
-      startIcon={loading ? <CircularProgress size={16} color="inherit" /> : startIcon}
+      disableElevation
+      startIcon={loading ? <CircularProgress size={14} color="inherit" /> : startIcon}
       endIcon={endIcon}
       {...linkProps}
-      sx={[sizeSx, softSx, ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
+      sx={[
+        {
+          borderRadius: BUTTON.borderRadius,
+          fontWeight: BUTTON.fontWeight,
+          textTransform: 'none',
+          lineHeight: 1.25,
+          boxShadow: 'none',
+          transition:
+            'background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease',
+          '&:focus-visible': {
+            outline: `2px solid ${alpha(theme.palette.primary.main, 0.45)}`,
+            outlineOffset: 2,
+          },
+          '& .MuiButton-startIcon, & .MuiButton-endIcon': {
+            margin: 0,
+          },
+        },
+        sizeStyles[size],
+        getVariantSx(variant, color, theme),
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
     >
       {label ?? children}
     </MuiButton>

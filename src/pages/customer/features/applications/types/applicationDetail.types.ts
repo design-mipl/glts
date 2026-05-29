@@ -31,6 +31,18 @@ export interface FlowDraftLikeState {
   visaTypeLabel: string
   purposeLabel: string
   travelDate: string
+  entityId?: string
+  entityName?: string
+  contactPerson?: string
+  location?: string
+  vesselId?: string
+  vesselName?: string
+  imoNumber?: string
+  vesselType?: string
+  flagCountry?: string
+  portOfRegistry?: string
+  referencePo?: string
+  billingAddress?: string
   globalDocumentUploads: Record<string, { fileName: string; uploadedAt: string }>
   uploadQueueRows: UploadQueueRow[]
 }

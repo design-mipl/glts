@@ -1,6 +1,8 @@
 /**
  * Single source of truth for module template recipes shown in Admin → Tools → Template showcase.
- * Update this file when adding, renaming, or removing a template recipe; keep docs in sync.
+ * Update this file when adding, renaming, or removing a template recipe.
+ * Keep in sync with docs/ADMIN_MODULE_IMPLEMENTATION_GUIDE.md and docAnchor sections in
+ * docs/PRODUCT_UI_ARCHITECTURE_UX_STANDARDS.md.
  */
 
 export type TemplateRecipeCategory = 'listing' | 'detail' | 'dashboard' | 'form'
@@ -68,7 +70,15 @@ export const TEMPLATE_RECIPES: TemplateRecipeDefinition[] = [
     description: 'Short create/edit surface (2–8 fields) using Modal + FormSection.',
     category: 'form',
     path: `${BASE}/forms/modal`,
-    components: ['Modal', 'FormSection', 'FormField', 'Button'],
+    components: [
+      'Modal',
+      'FormSection',
+      'FormField',
+      'Input',
+      'Select',
+      'AdminFullPageFormFooter',
+      'Button',
+    ],
     docAnchor: 'crud-modules',
   },
   {
@@ -77,7 +87,16 @@ export const TEMPLATE_RECIPES: TemplateRecipeDefinition[] = [
     description: 'Side edit workflow using Drawer + grouped fields.',
     category: 'form',
     path: `${BASE}/forms/drawer`,
-    components: ['Drawer', 'FormSection', 'FormField', 'Button'],
+    components: [
+      'Drawer',
+      'AdminOverlayFormSection',
+      'FormField',
+      'Input',
+      'Select',
+      'Textarea',
+      'AdminFullPageFormFooter',
+      'Button',
+    ],
     docAnchor: 'crud-modules',
   },
   {
@@ -86,7 +105,17 @@ export const TEMPLATE_RECIPES: TemplateRecipeDefinition[] = [
     description: 'Complex create/edit with sections, validation display, and sticky footer actions.',
     category: 'form',
     path: `${BASE}/forms/page`,
-    components: ['AdminPageHeader', 'BaseCard', 'FormSection', 'FormField', 'Button'],
+    components: [
+      'AdminFullPageFormShell',
+      'AdminFullPageFormFooter',
+      'FormField',
+      'Input',
+      'Select',
+      'Textarea',
+      'Breadcrumb',
+      'BaseCard',
+      'Button',
+    ],
     docAnchor: 'crud-modules',
   },
   {
@@ -95,7 +124,16 @@ export const TEMPLATE_RECIPES: TemplateRecipeDefinition[] = [
     description: 'Multi-step workflow with Stepper, step panels, and review.',
     category: 'form',
     path: `${BASE}/forms/stepper`,
-    components: ['Stepper', 'FormSection', 'FormField', 'Button', 'BaseCard'],
+    components: [
+      'Stepper',
+      'BaseCard',
+      'AdminOverlayFormSection',
+      'FormField',
+      'Input',
+      'Select',
+      'Textarea',
+      'Button',
+    ],
     docAnchor: 'crud-modules',
   },
 ]

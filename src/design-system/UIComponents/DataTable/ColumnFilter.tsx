@@ -127,10 +127,10 @@ export default function ColumnFilter({
 
         <Divider sx={{ mb: 1.5 }} />
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="text" color="secondary" size="sm" fullWidth onClick={handleClear}>
+          <Button variant="text" color="secondary" fullWidth onClick={handleClear}>
             Clear
           </Button>
-          <Button variant="contained" color="primary" size="sm" fullWidth onClick={handleApply}>
+          <Button variant="contained" color="primary" fullWidth onClick={handleApply}>
             Apply
           </Button>
         </Box>

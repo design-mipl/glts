@@ -89,12 +89,11 @@ export function PersonalProfileTab({
           ]}
         />
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 2 }}>
-          <Button variant="outlined" size="sm" onClick={() => setPasswordOpen(true)}>
+          <Button variant="outlined" onClick={() => setPasswordOpen(true)}>
             Change password
           </Button>
           <Button
             variant="outlined"
-            size="sm"
             color="secondary"
             disabled={sessions.filter(s => !s.isCurrent).length === 0}
             onClick={() => setLogoutOthersOpen(true)}

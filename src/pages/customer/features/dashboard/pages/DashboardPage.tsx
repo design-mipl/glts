@@ -91,7 +91,7 @@ export function DashboardPage() {
               subtitle="Most recent visa work across single and bulk requests"
               icon={FileText}
               action={
-                <Button size="sm" variant="text" endIcon={<ArrowRight size={14} />} onClick={() => navigate(`${base}/applications`)}>
+                <Button variant="text" endIcon={<ArrowRight size={14} />} onClick={() => navigate(`${base}/applications`)}>
                   View all
                 </Button>
               }
@@ -114,7 +114,7 @@ export function DashboardPage() {
                       action={
                         <Stack direction="row" spacing={1} alignItems="center">
                           <CustomerStatusChip label={app.statusLabel} tone={getCustomerStatusTone(app.statusLabel)} />
-                          <Button size="sm" variant="outlined" onClick={() => navigate(`${base}/applications/${app.id}`)}>
+                          <Button variant="outlined" onClick={() => navigate(`${base}/applications/${app.id}`)}>
                             Track
                           </Button>
                         </Stack>
@@ -168,7 +168,6 @@ export function DashboardPage() {
                     description={action.description}
                     action={
                       <Button
-                        size="sm"
                         variant={action.urgent ? 'contained' : 'outlined'}
                         onClick={() =>
                           action.applicationId
@@ -208,7 +207,7 @@ export function DashboardPage() {
             <CustomerCard
               title="Notifications"
               icon={Bell}
-              action={<Button size="sm" variant="text" onClick={() => navigate(`${base}/notifications`)}>View all</Button>}
+              action={<Button variant="text" onClick={() => navigate(`${base}/notifications`)}>View all</Button>}
             >
               <Stack spacing={1.25}>
                 {dashboard.notifications.map(n => (

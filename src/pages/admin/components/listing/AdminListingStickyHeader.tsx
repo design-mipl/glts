@@ -1,10 +1,18 @@
 import { Box } from '@mui/material'
 import type { ReactNode } from 'react'
+import {
+  ADMIN_RECORD_PAGE_TITLE_SX,
+  ADMIN_RECORD_PAGE_TITLE_VARIANT,
+} from '../adminRecordPageTitle'
 import { AdminPageHeader, type AdminPageHeaderProps } from '../AdminPageHeader'
 
 type AdminListingStickyHeaderProps = AdminPageHeaderProps
 
-export function AdminListingStickyHeader(props: AdminListingStickyHeaderProps) {
+export function AdminListingStickyHeader({
+  titleVariant = ADMIN_RECORD_PAGE_TITLE_VARIANT,
+  titleSx,
+  ...props
+}: AdminListingStickyHeaderProps) {
   return (
     <Box
       sx={{
@@ -16,7 +24,11 @@ export function AdminListingStickyHeader(props: AdminListingStickyHeaderProps) {
         mb: 0,
       }}
     >
-      <AdminPageHeader {...props} />
+      <AdminPageHeader
+        titleVariant={titleVariant}
+        titleSx={{ ...ADMIN_RECORD_PAGE_TITLE_SX, ...titleSx }}
+        {...props}
+      />
     </Box>
   )
 }

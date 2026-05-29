@@ -42,7 +42,7 @@ export function TrackingPage() {
         <Grid size={{ xs: 12, lg: 7 }}>
           <CustomerCard title="Application lookup" subtitle="Use the GLTS application reference" icon={Search}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ mb: 2 }}>
-              <Input value={query} onChange={setQuery} fullWidth size="md" placeholder="GLTS-APP-2026-847" />
+              <Input value={query} onChange={setQuery} fullWidth placeholder="GLTS-APP-2026-847" />
               <Button variant="contained" startIcon={<Search size={16} />} onClick={() => setQuery(query.trim())}>
                 Track
               </Button>

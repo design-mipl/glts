@@ -1,14 +1,12 @@
 import { Box, Stack, Typography, IconButton } from '@mui/material'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useMemo } from 'react'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 
-const BAR_HEIGHT = 5
-const SEGMENT_GAP = 7
+const BAR_HEIGHT = 3
+const SEGMENT_GAP = 4
 
 export interface FlowStep {
   id: string
-  /** Display name in `01 · NAME` (uppercased automatically) */
   label: string
 }
 
@@ -22,10 +20,13 @@ interface ApplicationFlowStepperProps {
   disableNext?: boolean
 }
 
-function formatStepCaption(index: number, label: string): string {
-  const num = String(index + 1).padStart(2, '0')
-  return `${num} · ${label.toUpperCase()}`
-}
+const arrowButtonSx = (colors: ReturnType<typeof usePublicBrandColors>) => ({
+  flexShrink: 0,
+  p: 0.25,
+  color: colors.textMuted,
+  '&:hover': { bgcolor: 'transparent', color: colors.navy },
+  '&.Mui-disabled': { color: colors.textMuted, opacity: 0.35 },
+})
 
 export function ApplicationFlowStepper({
   steps,
@@ -37,64 +38,31 @@ export function ApplicationFlowStepper({
   disableNext = false,
 }: ApplicationFlowStepperProps) {
   const colors = usePublicBrandColors()
-  const stepperColors = useMemo(
-    () => ({
-      barActive: colors.greenBright,
-      barInactive: colors.surfaceAlt,
-      labelCompleted: colors.greenDark,
-      labelActive: colors.navy,
-      labelInactive: colors.textMuted,
-    }),
-    [colors],
-  )
-
-  const arrowButtonSx = {
-    flexShrink: 0,
-    p: 0.5,
-    mt: '-12px',
-    color: colors.textSecondary,
-    '&:hover': { bgcolor: 'transparent', color: colors.navy },
-    '&.Mui-disabled': { color: colors.textMuted, opacity: 0.45 },
-  }
+  const current = steps[activeIndex]
+  const showNav = Boolean(onPrevious || onNext)
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        py: { xs: 1.75, md: 2.25 },
-      }}
-    >
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
-        {onPrevious && (
-          <IconButton
-            size="small"
-            onClick={onPrevious}
-            disabled={disablePrevious}
-            aria-label="Previous step"
-            sx={arrowButtonSx}
-          >
-            <ChevronLeft size={22} />
-          </IconButton>
-        )}
-        <Stack direction="row" spacing={`${SEGMENT_GAP}px`} sx={{ flex: 1, minWidth: 0 }}>
+    <Box sx={{ width: '100%', py: { xs: 1, md: 1.25 } }}>
+      <Stack
+        direction="row"
+        spacing={`${SEGMENT_GAP}px`}
+        sx={{ width: '100%' }}
+        role="progressbar"
+        aria-valuenow={activeIndex + 1}
+        aria-valuemin={1}
+        aria-valuemax={steps.length}
+        aria-label={`Step ${activeIndex + 1} of ${steps.length}: ${current?.label ?? ''}`}
+      >
         {steps.map((step, i) => {
-          const completed = i < activeIndex
-          const active = i === activeIndex
+          const filled = i <= activeIndex
           const clickable = Boolean(onStepClick && i <= activeIndex)
-          const barFilled = completed || active
-
-          const labelColor = active
-            ? stepperColors.labelActive
-            : completed
-              ? stepperColors.labelCompleted
-              : stepperColors.labelInactive
 
           return (
             <Box
               key={step.id}
               role={clickable ? 'button' : undefined}
               tabIndex={clickable ? 0 : undefined}
-              aria-current={active ? 'step' : undefined}
+              aria-current={i === activeIndex ? 'step' : undefined}
               aria-label={step.label}
               onClick={clickable ? () => onStepClick?.(i) : undefined}
               onKeyDown={
@@ -110,48 +78,71 @@ export function ApplicationFlowStepper({
               sx={{
                 flex: 1,
                 minWidth: 0,
+                height: BAR_HEIGHT,
+                borderRadius: 999,
+                bgcolor: filled ? colors.navy : colors.surfaceAlt,
                 cursor: clickable ? 'pointer' : 'default',
+                transition: 'background-color 180ms ease',
               }}
-            >
-              <Box
-                sx={{
-                  width: '100%',
-                  height: BAR_HEIGHT,
-                  borderRadius: '2px',
-                  bgcolor: barFilled ? stepperColors.barActive : stepperColors.barInactive,
-                  transition: 'background-color 220ms ease',
-                }}
-              />
-              <Typography
-                noWrap
-                sx={{
-                  mt: 0.75,
-                  fontSize: { xs: '8px', sm: '9px', md: '10px' },
-                  fontWeight: active ? 700 : completed ? 600 : 500,
-                  letterSpacing: '0.04em',
-                  color: labelColor,
-                  textAlign: 'center',
-                  lineHeight: 1.2,
-                  transition: 'color 220ms ease',
-                }}
-              >
-                {formatStepCaption(i, step.label)}
-              </Typography>
-            </Box>
+            />
           )
         })}
-        </Stack>
-        {onNext && (
+      </Stack>
+
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent={showNav ? 'space-between' : 'center'}
+        sx={{ mt: 1, minHeight: 24 }}
+      >
+        {onPrevious ? (
+          <IconButton
+            size="small"
+            onClick={onPrevious}
+            disabled={disablePrevious}
+            aria-label="Previous step"
+            sx={arrowButtonSx(colors)}
+          >
+            <ChevronLeft size={18} />
+          </IconButton>
+        ) : showNav ? (
+          <Box sx={{ width: 28 }} />
+        ) : null}
+
+        <Typography
+          noWrap
+          sx={{
+            flex: showNav ? 1 : undefined,
+            textAlign: 'center',
+            fontSize: 13,
+            fontWeight: 500,
+            color: colors.textSecondary,
+            lineHeight: 1.3,
+            px: showNav ? 1 : 0,
+          }}
+        >
+          <Box component="span" sx={{ color: colors.navy, fontWeight: 600 }}>
+            {current?.label}
+          </Box>
+          <Box component="span" sx={{ color: colors.textMuted, mx: 0.75 }}>
+            ·
+          </Box>
+          {activeIndex + 1} of {steps.length}
+        </Typography>
+
+        {onNext ? (
           <IconButton
             size="small"
             onClick={onNext}
             disabled={disableNext}
             aria-label="Next step"
-            sx={arrowButtonSx}
+            sx={arrowButtonSx(colors)}
           >
-            <ChevronRight size={22} />
+            <ChevronRight size={18} />
           </IconButton>
-        )}
+        ) : showNav ? (
+          <Box sx={{ width: 28 }} />
+        ) : null}
       </Stack>
     </Box>
   )

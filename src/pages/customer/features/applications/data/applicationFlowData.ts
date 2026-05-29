@@ -1,4 +1,11 @@
-import type { ApplicationOperationalStatus, ApplicationRecordType } from '../types/applicationListing.types'
+import type {
+  ApplicationCustomerSegment,
+  ApplicationOperationalStatus,
+  ApplicationRecordType,
+} from '../types/applicationListing.types'
+import type { ApplicantAdditionalDetails } from '../config/applicantAdditionalDetailsConfig'
+import type { ApplicantBasicDetails } from '../config/applicantBasicDetailsConfig'
+import type { CustomerPortalRole } from '@/shared/auth/session'
 import { statusToneFromOperational } from '../components/listing/applicationStatus'
 import { GLTS_APPLICATION_IDS } from '../../../data/portalIds'
 
@@ -28,6 +35,9 @@ export interface SingleApplicationRow {
   /** Display label — mirrors operationalStatus */
   status: string
   statusTone: 'review' | 'pending' | 'approved' | 'draft' | 'processing'
+  createdByEmail: string
+  createdByRole: CustomerPortalRole
+  customerSegment: ApplicationCustomerSegment
 }
 
 export interface BulkBatchRow {
@@ -50,6 +60,9 @@ export interface BulkBatchRow {
   operationalStatus: ApplicationOperationalStatus
   status: string
   statusTone: 'review' | 'pending' | 'approved' | 'processing' | 'draft'
+  createdByEmail: string
+  createdByRole: CustomerPortalRole
+  customerSegment: ApplicationCustomerSegment
 }
 
 export interface ExtractedField {
@@ -59,7 +72,7 @@ export interface ExtractedField {
   confidence: number
 }
 
-export type ApplicantDocumentStatus = 'missing' | 'uploaded' | 'verified' | 'needs_review'
+export type ApplicantDocumentStatus = 'missing' | 'uploaded' | 'verified' | 'needs_review' | 'rejected'
 
 export interface ApplicantDocumentItem {
   documentId: string
@@ -93,6 +106,10 @@ export interface UploadQueueRow {
   documents: ApplicantDocumentItem[]
   documentsComplete: number
   documentsTotal: number
+  /** Per-traveler supplemental fields on the Documents step. */
+  additionalDetails?: ApplicantAdditionalDetails
+  /** Per-traveler identity and add-on flags in the applicant drawer. */
+  basicDetails?: ApplicantBasicDetails
 }
 
 export interface ChecklistItem {
@@ -153,6 +170,9 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     lastUpdated: '2026-02-18',
     processingStage: 'Embassy processing',
     operationalStatus: 'Under Review',
+    createdByEmail: 'priya@glts.com',
+    createdByRole: 'booker',
+    customerSegment: 'marine',
   }),
   singleRow({
     id: GLTS_APPLICATION_IDS.japan,
@@ -167,6 +187,9 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     lastUpdated: '2026-02-17',
     processingStage: 'Document verification',
     operationalStatus: 'Correction Required',
+    createdByEmail: 'james@glts.com',
+    createdByRole: 'booker',
+    customerSegment: 'retail',
   }),
   singleRow({
     id: GLTS_APPLICATION_IDS.uae,
@@ -181,6 +204,9 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     lastUpdated: '2026-02-12',
     processingStage: 'Closed',
     operationalStatus: 'Completed',
+    createdByEmail: 'james@glts.com',
+    createdByRole: 'booker',
+    customerSegment: 'retail',
   }),
   singleRow({
     id: 'GLTS-APP-2026-820',
@@ -195,6 +221,9 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     lastUpdated: '2026-02-20',
     processingStage: 'Intake',
     operationalStatus: 'Draft',
+    createdByEmail: 'sneha.patel@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'retail',
   }),
   singleRow({
     id: 'GLTS-APP-2026-815',
@@ -210,6 +239,9 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     lastUpdated: '2026-02-19',
     processingStage: 'Intake',
     operationalStatus: 'Draft',
+    createdByEmail: 'admin@glts.com',
+    createdByRole: 'super_admin',
+    customerSegment: 'corporate',
   }),
   singleRow({
     id: 'GLTS-APP-2026-802',
@@ -224,6 +256,9 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     lastUpdated: '2026-02-16',
     processingStage: 'Document verification',
     operationalStatus: 'Pending Documents',
+    createdByEmail: 'arun.krishnan@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'corporate',
   }),
   singleRow({
     id: 'GLTS-APP-2026-790',
@@ -238,6 +273,9 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     lastUpdated: '2026-02-15',
     processingStage: 'Embassy submission',
     operationalStatus: 'Submitted',
+    createdByEmail: 'priya@glts.com',
+    createdByRole: 'booker',
+    customerSegment: 'marine',
   }),
   singleRow({
     id: 'GLTS-APP-2026-778',
@@ -252,6 +290,9 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     lastUpdated: '2026-02-10',
     processingStage: 'Passport dispatch',
     operationalStatus: 'Passport Ready',
+    createdByEmail: 'admin@glts.com',
+    createdByRole: 'super_admin',
+    customerSegment: 'retail',
   }),
   singleRow({
     id: 'GLTS-APP-2026-765',
@@ -266,6 +307,9 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     lastUpdated: '2026-02-14',
     processingStage: 'Document verification',
     operationalStatus: 'Verification Pending',
+    createdByEmail: 'sneha.patel@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'retail',
   }),
   singleRow({
     id: 'GLTS-APP-2026-751',
@@ -280,6 +324,9 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     lastUpdated: '2026-01-22',
     processingStage: 'Closed',
     operationalStatus: 'Rejected',
+    createdByEmail: 'james@glts.com',
+    createdByRole: 'booker',
+    customerSegment: 'retail',
   }),
 ]
 
@@ -301,6 +348,9 @@ export const mockBulkBatches: BulkBatchRow[] = [
     lastUpdated: '2026-02-18',
     processingStage: 'Embassy processing',
     operationalStatus: 'Under Review',
+    createdByEmail: 'admin@glts.com',
+    createdByRole: 'super_admin',
+    customerSegment: 'marine',
   }),
   bulkRow({
     id: GLTS_BATCH_IDS.japanGroup,
@@ -319,6 +369,9 @@ export const mockBulkBatches: BulkBatchRow[] = [
     lastUpdated: '2026-02-17',
     processingStage: 'Embassy submission',
     operationalStatus: 'Submitted',
+    createdByEmail: 'james@glts.com',
+    createdByRole: 'booker',
+    customerSegment: 'retail',
   }),
   bulkRow({
     id: 'GLTS-BAT-2026-035',
@@ -337,6 +390,9 @@ export const mockBulkBatches: BulkBatchRow[] = [
     lastUpdated: '2026-02-12',
     processingStage: 'Passport dispatch',
     operationalStatus: 'Passport Ready',
+    createdByEmail: 'sneha.patel@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'corporate',
   }),
   bulkRow({
     id: 'GLTS-BAT-2026-032',
@@ -355,6 +411,9 @@ export const mockBulkBatches: BulkBatchRow[] = [
     lastUpdated: '2026-02-18',
     processingStage: 'Intake',
     operationalStatus: 'Draft',
+    createdByEmail: 'priya@glts.com',
+    createdByRole: 'booker',
+    customerSegment: 'retail',
   }),
   bulkRow({
     id: 'GLTS-BAT-2026-029',
@@ -373,6 +432,9 @@ export const mockBulkBatches: BulkBatchRow[] = [
     lastUpdated: '2026-02-16',
     processingStage: 'Document verification',
     operationalStatus: 'Correction Required',
+    createdByEmail: 'arun.krishnan@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'marine',
   }),
   bulkRow({
     id: 'GLTS-BAT-2026-025',
@@ -391,6 +453,9 @@ export const mockBulkBatches: BulkBatchRow[] = [
     lastUpdated: '2026-02-05',
     processingStage: 'Closed',
     operationalStatus: 'Completed',
+    createdByEmail: 'admin@glts.com',
+    createdByRole: 'super_admin',
+    customerSegment: 'corporate',
   }),
 ]
 
@@ -505,9 +570,9 @@ export const mockUploadQueue: UploadQueueRow[] = rawMockUploadQueue.map(row => (
 }))
 
 export const defaultChecklist = (country: string): ChecklistItem[] => [
-  { id: 'passport', label: 'Passport bio page', required: true, status: 'uploaded' },
-  { id: 'photo', label: 'Passport photo', required: true, status: 'uploaded' },
-  { id: 'bank', label: 'Bank statements (3 months)', required: true, status: 'missing' },
+  { id: 'passport', label: 'Passport', required: true, status: 'uploaded' },
+  { id: 'photo', label: 'Applicant Photo', required: true, status: 'uploaded' },
+  { id: 'bank', label: 'Bank Statement', required: true, status: 'missing' },
   { id: 'insurance', label: 'Travel insurance', required: true, status: 'pending' },
   { id: 'itinerary', label: `Itinerary · ${country}`, required: false, status: 'missing' },
 ]
@@ -516,6 +581,211 @@ export const singleExtractedFields: ExtractedField[] = hiroshiFields.map(f => ({
   ...f,
   value: f.key === 'surname' ? 'SHARMA' : f.key === 'given' ? 'PRIYA' : f.value,
 }))
+
+function passportFieldsForApplicant(
+  surname: string,
+  given: string,
+  docNo: string,
+  dob: string,
+  expiry: string,
+  nationality: string,
+  pob: string,
+  sex: 'M' | 'F' = 'M',
+): ExtractedField[] {
+  return [
+    { key: 'surname', label: 'Surname', value: surname, confidence: 99 },
+    { key: 'given', label: 'Given names', value: given, confidence: 99 },
+    { key: 'sex', label: 'Sex', value: sex, confidence: 100 },
+    { key: 'docNo', label: 'Document no.', value: docNo, confidence: 97 },
+    { key: 'issueDate', label: 'Date of issue', value: '16 Aug 2022', confidence: 95 },
+    { key: 'dob', label: 'Date of birth', value: dob, confidence: 96 },
+    { key: 'expiry', label: 'Date of expiry', value: expiry, confidence: 98 },
+    { key: 'pob', label: 'Place of birth', value: pob, confidence: 91 },
+    { key: 'issuer', label: 'Issuing state', value: nationality, confidence: 100 },
+    { key: 'mrz', label: 'Machine-readable line', value: 'Valid', confidence: 100 },
+  ]
+}
+
+export interface SingleApplicationFlowExtras {
+  entityName: string
+  location: string
+  billingAddress: string
+  vesselName: string
+  imoNumber: string
+  joiningPort: string
+}
+
+export interface SingleApplicationDemoSeed {
+  expiry: string
+  nationality: string
+  fields: ExtractedField[]
+  mrzLine?: string
+  basicDetails: ApplicantBasicDetails
+  additionalDetails: ApplicantAdditionalDetails
+  flowExtras: SingleApplicationFlowExtras
+}
+
+const priyaSharmaSeed: SingleApplicationDemoSeed = {
+  expiry: '15 Aug 2032',
+  nationality: 'IND',
+  mrzLine: 'P<IND SHARMA<<PRIYA<<<<<<<<<<<<<<<<<<<<<<',
+  fields: passportFieldsForApplicant(
+    'SHARMA',
+    'PRIYA',
+    'Z1234567',
+    '22 Jul 1990',
+    '15 Aug 2032',
+    'IND',
+    'MUMBAI',
+    'F',
+  ),
+  basicDetails: {
+    crewId: 'GLTS-APL-847-001',
+    applicantName: 'Priya Sharma',
+    passportNumber: 'Z1234567',
+    nationality: 'IND',
+    dateOfBirth: '22 Jul 1990',
+    cdcNumber: 'IN-CDC-884921',
+    requestDummyTicket: true,
+    requestInsurance: true,
+  },
+  additionalDetails: {
+    paxContactNo: '+91 98765 43210',
+    paxEmailId: 'priya.sharma@oceanicmarine.com',
+    fatherName: 'Rajesh Sharma',
+    fatherDob: '1958-04-12',
+    fatherOccupation: 'Retired',
+    fatherNationality: 'IND',
+    motherName: 'Sunita Sharma',
+    motherDob: '1962-09-03',
+    motherOccupation: 'Homemaker',
+    motherNationality: 'IND',
+    spouseName: '',
+    spouseDob: '',
+    spousePlaceOfBirth: '',
+    spouseOccupation: '',
+    spouseNationality: '',
+    childName: '',
+    childDob: '',
+    childPlaceOfBirth: '',
+    lastContractSignDate: '2025-11-15',
+    employmentOccupation: 'Third Officer',
+    educationInstituteName: 'Tolani Maritime Institute',
+    previousChinaVisaDetails: '',
+    previousChinaVisaCategory: '',
+    previousChinaVisaPlaceIssued: '',
+    previousChinaVisaIssueDate: '',
+    previousChinaVisaNo: '',
+    validVisaInPassport: 'None',
+    last12MonthsVisitedCountry: 'Singapore, UAE',
+  },
+  flowExtras: {
+    entityName: 'Oceanic Marine Ltd',
+    location: 'Mumbai Operations',
+    billingAddress: '14 Harbour Road, Ballard Estate, Mumbai 400001, India',
+    vesselName: 'MV Oceanic Star',
+    imoNumber: '9434567',
+    joiningPort: 'Rotterdam',
+  },
+}
+
+const oliverGrantSeed: SingleApplicationDemoSeed = {
+  expiry: '03 Jan 2030',
+  nationality: 'GBR',
+  mrzLine: 'P<GBR GRANT<<OLIVER<<<<<<<<<<<<<<<<<<<<<<',
+  fields: passportFieldsForApplicant(
+    'GRANT',
+    'OLIVER',
+    'XK9283746',
+    '14 Mar 1988',
+    '03 Jan 2030',
+    'GBR',
+    'SOUTHAMPTON',
+    'M',
+  ),
+  basicDetails: {
+    crewId: 'GLTS-APL-790-001',
+    applicantName: 'Oliver Grant',
+    passportNumber: 'XK9283746',
+    nationality: 'GBR',
+    dateOfBirth: '14 Mar 1988',
+    cdcNumber: 'GB-CDC-772104',
+    requestDummyTicket: false,
+    requestInsurance: true,
+  },
+  additionalDetails: {
+    paxContactNo: '+44 7700 900482',
+    paxEmailId: 'oliver.grant@seafarer-solutions.com',
+    fatherName: 'Michael Grant',
+    fatherDob: '1955-01-20',
+    fatherOccupation: 'Engineer',
+    fatherNationality: 'GBR',
+    motherName: 'Helen Grant',
+    motherDob: '1957-06-08',
+    motherOccupation: 'Nurse',
+    motherNationality: 'GBR',
+    spouseName: 'Emma Grant',
+    spouseDob: '1990-11-02',
+    spousePlaceOfBirth: 'London',
+    spouseOccupation: 'Teacher',
+    spouseNationality: 'GBR',
+    childName: 'Lucas Grant',
+    childDob: '2018-07-19',
+    childPlaceOfBirth: 'Southampton',
+    lastContractSignDate: '2026-01-08',
+    employmentOccupation: 'Chief Engineer',
+    educationInstituteName: 'Southampton Solent University',
+    previousChinaVisaDetails: '',
+    previousChinaVisaCategory: '',
+    previousChinaVisaPlaceIssued: '',
+    previousChinaVisaIssueDate: '',
+    previousChinaVisaNo: '',
+    validVisaInPassport: 'Schengen C · valid until Sep 2026',
+    last12MonthsVisitedCountry: 'Japan, South Korea',
+  },
+  flowExtras: {
+    entityName: 'Seafarer Solutions',
+    location: 'Southampton Crewing Office',
+    billingAddress: 'Unit 4, Ocean Gate, Southampton SO14 3TL, United Kingdom',
+    vesselName: 'MV Pacific Horizon',
+    imoNumber: '9318765',
+    joiningPort: 'Yokohama',
+  },
+}
+
+/** Rich demo applicant data for single-application admin/customer flows (View Form, verify, etc.). */
+export const SINGLE_APPLICATION_DEMO_SEEDS: Record<string, SingleApplicationDemoSeed> = {
+  [GLTS_APPLICATION_IDS.schengen]: priyaSharmaSeed,
+  'GLTS-APP-2026-790': oliverGrantSeed,
+}
+
+export function getSingleApplicationDemoSeed(applicationId: string): SingleApplicationDemoSeed | undefined {
+  return SINGLE_APPLICATION_DEMO_SEEDS[applicationId]
+}
+
+export function getSingleApplicationFlowExtras(applicationId: string): SingleApplicationFlowExtras | undefined {
+  return SINGLE_APPLICATION_DEMO_SEEDS[applicationId]?.flowExtras
+}
+
+export function applySingleApplicationDemoSeed(
+  row: SingleApplicationRow,
+  queueRow: UploadQueueRow,
+): UploadQueueRow {
+  const seed = getSingleApplicationDemoSeed(row.id)
+  if (!seed) return queueRow
+
+  return {
+    ...queueRow,
+    travelerName: seed.basicDetails.applicantName,
+    passportNo: seed.basicDetails.passportNumber,
+    expiry: seed.expiry,
+    nationality: seed.nationality,
+    fields: seed.fields,
+    mrzLine: seed.mrzLine,
+    basicDetails: seed.basicDetails,
+    additionalDetails: seed.additionalDetails,
+  }
+}
 
 export const VISA_TYPE_OPTIONS = [
   { id: 'tourist', label: 'Tourist', sub: 'Leisure travel' },

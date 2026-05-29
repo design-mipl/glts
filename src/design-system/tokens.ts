@@ -76,14 +76,14 @@ export const RESPONSIVE_FONT_SIZE = {
   xl: [15, 15, 15, 15, 14, 13, 13, 13, 13, 12],
 } as const
 
-/** [vertical px, horizontal px] per tier for button padding */
+/** [vertical px, horizontal px] per tier — horizontal must be 2 × vertical */
 export const RESPONSIVE_BUTTON_PADDING = {
   small: [
     [4, 8],
     [4, 8],
     [4, 8],
-    [6, 10],
-    [6, 10],
+    [4, 8],
+    [4, 8],
     [4, 8],
     [4, 8],
     [4, 8],
@@ -94,8 +94,8 @@ export const RESPONSIVE_BUTTON_PADDING = {
     [6, 12],
     [6, 12],
     [6, 12],
-    [8, 12],
-    [8, 12],
+    [8, 16],
+    [8, 16],
     [6, 12],
     [6, 12],
     [6, 12],
@@ -103,16 +103,16 @@ export const RESPONSIVE_BUTTON_PADDING = {
     [6, 12],
   ],
   large: [
-    [8, 14],
-    [8, 14],
-    [8, 14],
-    [8, 14],
-    [8, 14],
-    [8, 14],
-    [8, 14],
-    [8, 14],
-    [8, 14],
-    [8, 14],
+    [8, 16],
+    [8, 16],
+    [8, 16],
+    [10, 20],
+    [10, 20],
+    [8, 16],
+    [8, 16],
+    [8, 16],
+    [8, 16],
+    [8, 16],
   ],
 } as const
 

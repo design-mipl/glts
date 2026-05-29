@@ -10,13 +10,16 @@ Use these as extended references when needed:
 
 1. `docs/DEVELOPER_ONBOARDING.md` — architecture, routing, folders, ownership, and current status.
 2. `docs/PRODUCT_UI_ARCHITECTURE_UX_STANDARDS.md` — surface-specific UX direction and deeper implementation context.
+3. `docs/ADMIN_MODULE_IMPLEMENTATION_GUIDE.md` — admin module recipes (listing, detail, dashboard, forms) with copy-from files and checklists.
 
 Live implementation references:
 
+- Component library: `/admin/tools/component-library`
 - Template showcase hub: `/admin/tools/templates`
 - Listing reference: `/admin/tools/templates/listing`
 - Listing source module: `src/pages/admin/_tools/TemplateShowcase/pages/ListingTemplatePage.tsx`
 - Template registry: `src/pages/admin/_tools/TemplateShowcase/config/templateRegistry.ts`
+- Form/button tokens: `src/design-system/formControl.ts`
 
 ## Architecture
 
@@ -72,7 +75,7 @@ GLTS Admin Portal is a strict enterprise application:
 
 Use one field spec everywhere to avoid style drift:
 
-- Field height: `40px` (`md`), `34px` (`sm`)
+- Field height: `34px` (`sm`, **default**), `40px` (`md` — opt-in only)
 - Border radius: `10px`
 - Field font: `13px`
 - Label: `13px`, `fontWeight: 600`, `text.primary`
@@ -80,10 +83,28 @@ Use one field spec everywhere to avoid style drift:
 
 Implementation rules:
 
-- Default to DS primitives: `FormField` + `Input`/`Select`/`Textarea` from `@/design-system/UIComponents`.
+- Default to DS primitives: `FormField` + `Input`/`Select`/`Textarea` from `@/design-system/UIComponents`. Form controls default to `size="sm"`; pass `size="md"` only when a taller field is explicitly required.
+- **Admin form patterns** (component library **Forms** tab + `src/pages/admin/components/`):
+  - **Full-page:** `AdminFullPageFormShell` + `AdminFullPageFormFooter` — primary/secondary section cards (`adminFullPageFormLayout.ts`).
+  - **Modal (2–8 fields):** `Modal` + `FormSection` (1 col) + `FormField` — no section cards inside dialog (`adminOverlayFormLayout.ts`).
+  - **Drawer (4–12 fields):** `Drawer` + stacked `AdminOverlayFormSection` (primary then secondary) + same footer tokens.
+  - **Stepper:** `BaseCard` + DS `Stepper` + `AdminOverlayFormSection` per step + neutral review panel.
+  - Live templates: `/admin/tools/templates/forms/page`, `/modal`, `/drawer`, `/stepper`.
 - Raw MUI `TextField` is allowed only when inheriting theme defaults from `generateTheme.ts`.
 - Do not set per-page field `sx` for `fontSize`, `borderRadius`, border color, or focus ring unless explicitly approved.
 - Listing filters must use the same field spec (typically `size="sm"`).
+
+### Button dimensions (all surfaces)
+
+- Button height: `36px` (`md`, **default**), `32px` (`sm` — compact/toolbar only), `40px` (`lg` — hero/marketing CTAs)
+- Border radius: `10px` (matches form fields)
+- Button font: `13px` (`md`/`lg`), `12px` (`sm`)
+
+Implementation rules:
+
+- Default to DS `Button` / `IconButton` without a `size` prop (both default to `md`).
+- Pass `size="sm"` only for intentionally compact affordances (e.g. component-library size demos, dense table chrome).
+- Raw MUI `Button` inherits `size="medium"` from `generateTheme.ts`; avoid `size="small"` in product UI.
 
 ### Listing acceptance checklist
 
@@ -100,6 +121,14 @@ Before marking a listing module complete, verify:
 - Pagination footer
 - Toast feedback on export/refresh
 - Row actions and row click to detail (admin modules)
+- Actions column: `key: 'actions'`, sticky right, fixed width, header label **Actions**, `RowActions` per row; other columns must ellipsis and not bleed into actions column
+
+### DataTable action column
+
+- Define actions column last with `key: 'actions'`, `label: ''`, `hideable: false`, `width: 56–60`, `sortable/filterable/searchable: false`.
+- `DataTable` pins `key === 'actions'` to the sticky right edge with opaque row background.
+- Header shows **Actions** text (via `ColumnHeader`); row cells use `RowActions` (⋮ menu).
+- Prefer `AdminListingTable` in admin listings — embeds `DataTable` with column filters and listing-appropriate chrome.
 
 ### Listing reference standard
 

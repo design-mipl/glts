@@ -60,7 +60,7 @@ export default function Tag({
           height,
           fontSize,
           fontWeight: 500,
-          borderRadius: BORDER_RADIUS.xs,
+          borderRadius: BORDER_RADIUS.md,
           border: `${BORDER_WIDTH.thin} solid`,
           borderColor: isCustom
             ? `${chroma(resolvedColor).alpha(0.3).css()}`

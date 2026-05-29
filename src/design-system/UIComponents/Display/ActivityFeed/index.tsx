@@ -156,7 +156,7 @@ export default function ActivityFeed({
 
       {showLoadMore && onLoadMore && (
         <Box sx={{ textAlign: 'center', mt: 1 }}>
-          <Button variant="text" size="small" onClick={onLoadMore}>
+          <Button variant="text" onClick={onLoadMore}>
             Load more
           </Button>
         </Box>

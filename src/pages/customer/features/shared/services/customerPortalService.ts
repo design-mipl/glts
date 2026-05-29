@@ -2,6 +2,7 @@ import { mockApplications, timelineStages, type CustomerApplication } from '../.
 import { dashboardKpis, mockNotifications, pendingActions } from '../../dashboard/data/dashboardData'
 import { mockApplicants, mockCorrections, mockDocuments, mockGlobalDocumentUploads } from '../../applications/data/applicationDetailData'
 import {
+  applySingleApplicationDemoSeed,
   defaultChecklist,
   GLTS_BATCH_IDS,
   mockBulkBatches,
@@ -15,7 +16,18 @@ import {
 import { normalizeApplicationId } from '../../../data/portalIds'
 import type { ApplicationStatus } from '@/shared/types/application'
 import { computeListingKpis } from '../../applications/utils/applicationListingUtils'
-import { BOOKER_PERMISSION_LABELS, mockBookers, type BookerRecord } from '../../bookers/data/bookerData'
+import {
+  canViewApplication,
+  filterApplicationsBySession,
+  getSessionCreatorMeta,
+} from '../../applications/utils/applicationAccessUtils'
+import { mergeVerificationIntoDetail } from '@/shared/services/applicationVerificationService'
+import { bookerManagementService } from '@/shared/services/bookerManagementService'
+import { entityMasterService } from '@/shared/services/entityMasterService'
+import { vesselMasterService } from '@/shared/services/vesselMasterService'
+import type { BookerUser } from '@/shared/types/bookerUser'
+import type { EntityMaster } from '@/shared/types/entityMaster'
+import type { VesselMaster } from '@/shared/types/vesselMaster'
 import { mockBillingAgreementData } from '../../profile/data/billingAgreement.mock'
 import { mockCompanyProfileData } from '../../profile/data/companyProfile.mock'
 import {
@@ -24,10 +36,18 @@ import {
 } from '../../profile/data/personalAccount.mock'
 import { mockVisaRules } from '../../profile/data/profileData'
 import { loadSession } from '@/shared/auth/session'
+import type { CustomerType } from '@/shared/auth/session'
+import type { ApplicationCustomerSegment } from '../../applications/types/applicationListing.types'
 import type { ApplicationDetailViewModel, FlowDraftLikeState } from '../../applications/types/applicationDetail.types'
 
 const CUSTOMER_DRAFTS_STORAGE_KEY = 'glts:customer-application-drafts'
 const APPLICATION_FLOW_STORAGE_KEY = 'glts:application-flow'
+
+function mapSessionToApplicationSegment(customerType?: CustomerType): ApplicationCustomerSegment {
+  if (customerType === 'marine') return 'marine'
+  if (customerType === 'corporate' || customerType === 'b2b_agent') return 'corporate'
+  return 'retail'
+}
 
 interface SaveDraftPayload {
   applicationId: string
@@ -40,47 +60,81 @@ interface SaveDraftPayload {
 
 export const customerPortalService = {
   getDashboard() {
+    const session = loadSession()
+    const visibleIds = new Set(
+      filterApplicationsBySession([...mockSingleApplications, ...mockBulkBatches], session).map(r => r.id),
+    )
     return {
       kpis: dashboardKpis,
       pendingActions,
       notifications: mockNotifications,
-      applications: mockApplications,
+      applications: mockApplications.filter(app => visibleIds.has(app.id)),
     }
   },
 
   getApplications(): CustomerApplication[] {
-    return mockApplications
+    const session = loadSession()
+    const visibleIds = new Set(
+      filterApplicationsBySession([...mockSingleApplications, ...mockBulkBatches], session).map(r => r.id),
+    )
+    return mockApplications.filter(app => visibleIds.has(app.id))
   },
 
   getSingleApplications(): SingleApplicationRow[] {
-    return [...getSavedDraftRows(), ...mockSingleApplications]
+    const session = loadSession()
+    return filterApplicationsBySession([...getSavedDraftRows(), ...mockSingleApplications], session)
   },
 
   getBulkBatches(): BulkBatchRow[] {
-    return mockBulkBatches
+    const session = loadSession()
+    return filterApplicationsBySession(mockBulkBatches, session)
   },
 
   getApplicationListingRows() {
-    return { singles: this.getSingleApplications(), bulks: mockBulkBatches }
+    return { singles: this.getSingleApplications(), bulks: this.getBulkBatches() }
   },
 
   getApplicationListingKpis() {
-    const metrics = computeListingKpis(this.getSingleApplications(), mockBulkBatches)
+    const metrics = computeListingKpis(this.getSingleApplications(), this.getBulkBatches())
     return metrics
   },
 
   getApplicationDetail(applicationId?: string): ApplicationDetailViewModel {
     const resolvedId = normalizeApplicationId(applicationId) ?? applicationId
+    const session = loadSession()
     const flowState = getSavedFlowState()
     const single = resolvedId ? this.getSingleApplications().find(row => row.id === resolvedId) : undefined
     const bulk = resolvedId ? this.getBulkBatches().find(row => row.id === resolvedId) : undefined
 
     if (single) {
-      return buildSingleDetail(single, resolvedId, flowState)
+      const detail = buildSingleDetail(single, resolvedId, flowState)
+      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId) : detail
     }
 
     if (bulk) {
-      return buildBulkDetail(bulk, resolvedId, flowState)
+      const detail = buildBulkDetail(bulk, resolvedId, flowState)
+      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId) : detail
+    }
+
+    const allSingles = [...getSavedDraftRows(), ...mockSingleApplications]
+    const allBulks = mockBulkBatches
+    const restrictedSingle = resolvedId ? allSingles.find(row => row.id === resolvedId) : undefined
+    const restrictedBulk = resolvedId ? allBulks.find(row => row.id === resolvedId) : undefined
+    const restricted = restrictedSingle ?? restrictedBulk
+    if (restricted && !canViewApplication(restricted, session)) {
+      return {
+        resolvedId,
+        application: null,
+        isBulkBatch: false,
+        operationalStatus: undefined,
+        uploadQueueRows: [],
+        documents: [],
+        globalDocumentUploads: {},
+        corrections: [],
+        timeline: timelineStages,
+        selectedQueueHintId: null,
+        source: 'missing',
+      }
     }
 
     const application = resolvedId ? mockApplications.find(app => app.id === resolvedId) ?? null : null
@@ -123,14 +177,38 @@ export const customerPortalService = {
     }
   },
 
-  getBookers(): BookerRecord[] {
-    return mockBookers
+  getBookers(): BookerUser[] {
+    return bookerManagementService.listForSession()
   },
 
   getBookerDetail(bookerId?: string) {
-    const booker = mockBookers.find(row => row.id === bookerId) ?? null
-    const assignedApps = mockApplications.slice(0, booker ? Math.min(booker.apps, mockApplications.length) : 0)
-    return { booker, assignedApps, permissionLabels: BOOKER_PERMISSION_LABELS }
+    const booker = bookerId ? bookerManagementService.getById(bookerId) ?? null : null
+    const session = loadSession()
+    const assignedApps = booker
+      ? filterApplicationsBySession(mockSingleApplications, session).slice(
+          0,
+          Math.min(booker.applicationCount, mockApplications.length),
+        )
+      : []
+    return { booker, assignedApps }
+  },
+
+  getEntities(): EntityMaster[] {
+    return entityMasterService.list()
+  },
+
+  getEntityDetail(entityId?: string) {
+    const entity = entityId ? entityMasterService.getById(entityId) ?? null : null
+    return { entity }
+  },
+
+  getVessels(): VesselMaster[] {
+    return vesselMasterService.list()
+  },
+
+  getVesselDetail(vesselId?: string) {
+    const vessel = vesselId ? vesselMasterService.getById(vesselId) ?? null : null
+    return { vessel }
   },
 
   getAccountWorkspace() {
@@ -199,6 +277,8 @@ export const customerPortalService = {
     const primary = readyRows[0]
     const fallbackName = readyRows.length > 1 ? `${readyRows.length} travelers` : 'Applicant pending'
 
+    const session = loadSession()
+    const creator = getSessionCreatorMeta(session)
     const draftRow: SingleApplicationRow = {
       id: payload.applicationId,
       recordType: 'single',
@@ -217,6 +297,9 @@ export const customerPortalService = {
       operationalStatus: 'Draft',
       status: 'Draft',
       statusTone: 'draft',
+      createdByEmail: creator.createdByEmail,
+      createdByRole: creator.createdByRole,
+      customerSegment: mapSessionToApplicationSegment(session?.customerType),
     }
 
     const existing = getSavedDraftRows().filter(row => row.id !== draftRow.id)
@@ -270,7 +353,16 @@ function buildSingleDetail(
     eta: row.operationalStatus === 'Completed' ? 'Completed' : row.submissionDate || 'Awaiting review',
   }
   const draftRows = pickFlowRows(flowState, row.id)
-  const uploadQueueRows = draftRows.length > 0 ? draftRows : [singleRowToUploadQueue(row)]
+  const uploadQueueRows =
+    draftRows.length > 0
+      ? draftRows.map((queueRow, index) =>
+          applySingleApplicationDemoSeed(row, {
+            ...queueRow,
+            gltsApplicationId: row.id,
+            sequenceNo: queueRow.sequenceNo ?? index + 1,
+          }),
+        )
+      : [singleRowToUploadQueue(row)]
   return {
     resolvedId,
     application,
@@ -315,7 +407,7 @@ function singleRowToUploadQueue(row: SingleApplicationRow): UploadQueueRow {
   const documents = checklistToApplicantDocuments(defaultChecklist(row.country))
   const documentsComplete = documents.filter(doc => doc.status === 'verified' || doc.status === 'uploaded').length
   const documentsTotal = documents.length
-  return {
+  const base: UploadQueueRow = {
     id: `${row.id}-q1`,
     fileName: `${row.id}.pdf`,
     gltsApplicationId: row.id,
@@ -337,6 +429,7 @@ function singleRowToUploadQueue(row: SingleApplicationRow): UploadQueueRow {
     documentsComplete,
     documentsTotal,
   }
+  return applySingleApplicationDemoSeed(row, base)
 }
 
 function bulkRowToUploadQueue(row: BulkBatchRow): UploadQueueRow[] {
@@ -435,7 +528,7 @@ function toDocumentRows(documents: ApplicantDocumentItem[]) {
     tone:
       doc.status === 'verified' || doc.status === 'uploaded'
         ? ('success' as const)
-        : doc.status === 'needs_review'
+        : doc.status === 'needs_review' || doc.status === 'rejected'
           ? ('warning' as const)
           : ('neutral' as const),
   }))

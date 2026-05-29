@@ -4,7 +4,12 @@ import Checkbox from '@mui/material/Checkbox'
 import Chip from '@mui/material/Chip'
 import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
-import { formControlHeight, outlinedFieldSx } from '../../../formControl'
+import {
+  FORM_CONTROL,
+  autocompleteOutlinedFieldSx,
+  autocompleteSlotProps,
+  formControlHeight,
+} from '../../../formControl'
 
 interface MultiSelectOption {
   label: string
@@ -39,7 +44,7 @@ export default function MultiSelect({
   error = false,
   helperText,
   disabled = false,
-  size = 'md',
+  size = 'sm',
   fullWidth = false,
   maxDisplay,
   clearable = false,
@@ -62,6 +67,8 @@ export default function MultiSelect({
     }
   }
 
+  const fieldSx = autocompleteOutlinedFieldSx(theme, inputHeight)
+
   return (
     <Autocomplete
       multiple
@@ -71,10 +78,15 @@ export default function MultiSelect({
       onChange={handleChange}
       disabled={disabled}
       disableClearable={!clearable}
+      fullWidth={fullWidth}
       getOptionLabel={(opt) => opt.label}
       isOptionEqualToValue={(opt, val) => opt.value === val.value}
       filterOptions={searchable ? undefined : (opts) => opts}
-      sx={[{ minWidth: 200, ...(fullWidth ? {} : {}) }, ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
+      slotProps={autocompleteSlotProps(theme)}
+      sx={[
+        { minWidth: fullWidth ? undefined : 200, width: fullWidth ? '100%' : undefined },
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
       renderOption={(props, option, { selected }) => {
         const { key, ...rest } = props as { key: string } & React.HTMLAttributes<HTMLLIElement>
         const isSelectAll = option.value === SELECT_ALL.value
@@ -111,15 +123,21 @@ export default function MultiSelect({
         <TextField
           {...params}
           label={label}
+          hiddenLabel={!label}
           placeholder={selectedOpts.length === 0 ? placeholder : undefined}
           error={error}
           helperText={helperText}
           size="small"
+          fullWidth={fullWidth}
+          variant="outlined"
+          slotProps={{
+            formHelperText: { sx: { mx: 0, mt: '4px', fontSize: FORM_CONTROL.helperFontSize } },
+          }}
           inputProps={{
             ...params.inputProps,
             readOnly: !searchable,
           }}
-          sx={[outlinedFieldSx(theme, inputHeight), { '& .MuiInputBase-root': { minHeight: inputHeight, height: 'auto' } }]}
+          sx={fieldSx}
         />
       )}
     />

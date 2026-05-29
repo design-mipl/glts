@@ -3,6 +3,10 @@ import type { ReactNode } from 'react'
 import { BaseCard, DataTable, Tabs } from '@/design-system/UIComponents'
 import type { DataTableProps, TabItem } from '@/design-system/UIComponents'
 import type { BreadcrumbItem } from '@/design-system/UIComponents'
+import {
+  ADMIN_RECORD_PAGE_TITLE_SX,
+  ADMIN_RECORD_PAGE_TITLE_VARIANT,
+} from './adminRecordPageTitle'
 import { AdminPageHeader } from './AdminPageHeader'
 
 export interface AdminListingTab {
@@ -63,6 +67,8 @@ export function AdminListingShell({
       {showDefaultHeader && title ? (
         <AdminPageHeader
           title={title}
+          titleVariant={ADMIN_RECORD_PAGE_TITLE_VARIANT}
+          titleSx={ADMIN_RECORD_PAGE_TITLE_SX}
           description={description}
           eyebrow={eyebrow}
           breadcrumbs={breadcrumbs}

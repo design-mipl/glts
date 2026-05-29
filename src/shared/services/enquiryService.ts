@@ -24,7 +24,7 @@ function daysFromToday(days: number) {
   return value.toISOString()
 }
 
-const statusFlow: Record<EnquiryStatus, EnquiryStatus[]> = {
+export const enquiryStatusFlow: Record<EnquiryStatus, EnquiryStatus[]> = {
   new: ['under_discussion', 'on_hold', 'rejected'],
   under_discussion: ['requirement_gathering', 'pending_customer_response', 'on_hold'],
   requirement_gathering: ['internal_review', 'pending_customer_response', 'on_hold'],
@@ -73,6 +73,7 @@ let enquiryStore: EnquiryRecord[] = [
       countries: ['Singapore', 'UAE'],
       visaType: 'Crew Movement Visa',
       purposeOfVisit: 'Crew joining and vessel handover',
+      processingType: 'urgent',
       numberOfApplicants: 24,
       marineRequirement: true,
       tentativeTravelDate: daysFromToday(9),
@@ -130,6 +131,325 @@ let enquiryStore: EnquiryRecord[] = [
     },
     lastActivity: daysFromToday(-1),
     nextFollowupDate: daysFromToday(1),
+  },
+  {
+    id: 'ENQ-24002',
+    enquiryDate: daysFromToday(-1),
+    createdBy: 'Arjun Patel',
+    status: 'new',
+    customer: {
+      companyOrCustomerName: 'Sunrise Retail Pvt Ltd',
+      customerType: 'retail',
+      contactPersonName: 'Meera Shah',
+      contactNumber: '+91 9876501234',
+      emailAddress: 'meera@sunriseretail.com',
+      companyAddress: 'Ahmedabad, Gujarat',
+    },
+    visaRequirement: {
+      countries: ['UK'],
+      visaType: 'Tourist Visa',
+      purposeOfVisit: 'Family visit',
+      processingType: 'standard',
+      numberOfApplicants: 2,
+      marineRequirement: false,
+      tentativeTravelDate: daysFromToday(30),
+      expectedProcessingTimeline: '3 weeks',
+      urgencyLevel: 'medium',
+    },
+    operationalRequirements: {
+      bulkUploadRequired: false,
+      documentPickupRequired: false,
+      groundOperationsRequired: false,
+      biometricsAssistanceRequired: true,
+      courierSupportRequired: false,
+      dedicatedSpocRequired: false,
+    },
+    salesDetails: {
+      inquirySource: 'website',
+      assignedSalesPerson: 'Ravi Kumar',
+      branch: 'Ahmedabad',
+      priorityLevel: 'medium',
+    },
+    notes: { initialDiscussionNotes: 'First-time retail customer.' },
+    attachments: [],
+    followups: [],
+    activities: [makeActivity('created', 'Enquiry created', 'Submitted via website form', 'Arjun Patel')],
+    assignment: { priority: 'medium', ownershipHistory: [] },
+    lastActivity: daysFromToday(-1),
+  },
+  {
+    id: 'ENQ-24003',
+    enquiryDate: daysFromToday(-12),
+    createdBy: 'Pooja Sharma',
+    status: 'internal_review',
+    customer: {
+      companyOrCustomerName: 'Global Tech Corp',
+      customerType: 'corporate',
+      contactPersonName: 'Lisa Chen',
+      contactNumber: '+65 61234567',
+      emailAddress: 'lisa.chen@globaltech.com',
+      companyWebsite: 'https://globaltech.example',
+    },
+    visaRequirement: {
+      countries: ['USA', 'UK'],
+      visaType: 'Business Visa',
+      purposeOfVisit: 'Conference and client meetings',
+      processingType: 'express',
+      numberOfApplicants: 8,
+      marineRequirement: false,
+      urgencyLevel: 'high',
+      expectedProcessingTimeline: '2 weeks',
+    },
+    operationalRequirements: {
+      bulkUploadRequired: true,
+      documentPickupRequired: false,
+      groundOperationsRequired: false,
+      biometricsAssistanceRequired: true,
+      courierSupportRequired: true,
+      dedicatedSpocRequired: true,
+    },
+    salesDetails: {
+      inquirySource: 'existing_customer',
+      assignedSalesPerson: 'Pooja Sharma',
+      assignedOperationsTeam: 'Corporate Ops',
+      branch: 'Singapore',
+      priorityLevel: 'high',
+    },
+    notes: {
+      initialDiscussionNotes: 'Annual corporate visa batch.',
+      internalNotes: 'Ready for quotation once docs verified.',
+    },
+    attachments: [],
+    followups: [
+      {
+        id: id('fup'),
+        followupType: 'meeting',
+        followupDate: daysFromToday(-3),
+        followupTime: '14:00',
+        discussionSummary: 'Document checklist reviewed',
+        nextAction: 'Submit to internal review',
+        assignedUser: 'Pooja Sharma',
+        reminderRequired: false,
+        followupStatus: 'completed',
+        createdAt: daysFromToday(-4),
+        createdBy: 'Pooja Sharma',
+      },
+    ],
+    activities: [
+      makeActivity('created', 'Enquiry created', 'Corporate renewal enquiry', 'Pooja Sharma'),
+      makeActivity('followup_completed', 'Follow-up completed', 'Document checklist reviewed', 'Pooja Sharma'),
+    ],
+    assignment: {
+      assignedTeam: 'Corporate Ops',
+      assignedUser: 'Pooja Sharma',
+      branch: 'Singapore',
+      priority: 'high',
+      ownershipHistory: [],
+    },
+    lastActivity: daysFromToday(-2),
+    nextFollowupDate: daysFromToday(5),
+  },
+  {
+    id: 'ENQ-24004',
+    enquiryDate: daysFromToday(-20),
+    createdBy: 'Karan S',
+    status: 'converted',
+    customer: {
+      companyOrCustomerName: 'Harbor Shipping Co',
+      customerType: 'marine',
+      contactPersonName: 'James Wright',
+      contactNumber: '+44 7700900123',
+      emailAddress: 'j.wright@harborshipping.com',
+    },
+    visaRequirement: {
+      countries: ['UAE'],
+      visaType: 'Crew Transit Visa',
+      purposeOfVisit: 'Crew change',
+      processingType: 'urgent',
+      numberOfApplicants: 12,
+      marineRequirement: true,
+      urgencyLevel: 'critical',
+      expectedProcessingTimeline: '5 business days',
+    },
+    operationalRequirements: {
+      bulkUploadRequired: true,
+      documentPickupRequired: true,
+      groundOperationsRequired: true,
+      biometricsAssistanceRequired: false,
+      courierSupportRequired: true,
+      dedicatedSpocRequired: true,
+    },
+    salesDetails: {
+      inquirySource: 'referral',
+      assignedSalesPerson: 'Karan S',
+      assignedOperationsTeam: 'Marine Ops',
+      branch: 'Dubai',
+      priorityLevel: 'critical',
+    },
+    notes: {},
+    attachments: [],
+    followups: [],
+    activities: [
+      makeActivity('created', 'Enquiry created', 'Marine crew batch', 'Karan S'),
+      makeActivity('converted_to_quotation', 'Converted to quotation', 'Quotation QT-24004 generated', 'Karan S'),
+    ],
+    assignment: {
+      assignedTeam: 'Marine Ops',
+      assignedUser: 'Karan S',
+      branch: 'Dubai',
+      priority: 'critical',
+      ownershipHistory: [],
+    },
+    lastActivity: daysFromToday(-8),
+  },
+  {
+    id: 'ENQ-24005',
+    enquiryDate: daysFromToday(-15),
+    createdBy: 'Neha Arora',
+    status: 'closed',
+    customer: {
+      companyOrCustomerName: 'Quick Travel Agency',
+      customerType: 'retail',
+      contactPersonName: 'Anita Desai',
+      contactNumber: '+91 9123456780',
+      emailAddress: 'anita@quicktravel.in',
+    },
+    visaRequirement: {
+      countries: ['Singapore'],
+      visaType: 'Tourist Visa',
+      purposeOfVisit: 'Holiday',
+      processingType: 'standard',
+      numberOfApplicants: 4,
+      marineRequirement: false,
+      urgencyLevel: 'low',
+      expectedProcessingTimeline: '4 weeks',
+    },
+    operationalRequirements: {
+      bulkUploadRequired: false,
+      documentPickupRequired: false,
+      groundOperationsRequired: false,
+      biometricsAssistanceRequired: false,
+      courierSupportRequired: false,
+      dedicatedSpocRequired: false,
+    },
+    salesDetails: {
+      inquirySource: 'call',
+      priorityLevel: 'low',
+    },
+    notes: { internalNotes: 'Customer chose competitor.' },
+    attachments: [],
+    followups: [],
+    activities: [
+      makeActivity('created', 'Enquiry created', 'Inbound call enquiry', 'Neha Arora'),
+      makeActivity('status_updated', 'Status updated', 'Status changed to closed: Customer withdrew', 'Neha Arora'),
+    ],
+    assignment: { priority: 'low', ownershipHistory: [] },
+    lastActivity: daysFromToday(-10),
+  },
+  {
+    id: 'ENQ-24006',
+    enquiryDate: daysFromToday(-7),
+    createdBy: 'Ravi Kumar',
+    status: 'rejected',
+    customer: {
+      companyOrCustomerName: 'Unknown Applicant',
+      customerType: 'retail',
+      contactPersonName: 'Test User',
+      contactNumber: '+91 9000000000',
+      emailAddress: 'test@example.com',
+    },
+    visaRequirement: {
+      countries: ['USA'],
+      visaType: 'Student Visa',
+      purposeOfVisit: 'Study',
+      processingType: 'standard',
+      numberOfApplicants: 1,
+      marineRequirement: false,
+      urgencyLevel: 'medium',
+    },
+    operationalRequirements: {
+      bulkUploadRequired: false,
+      documentPickupRequired: false,
+      groundOperationsRequired: false,
+      biometricsAssistanceRequired: false,
+      courierSupportRequired: false,
+      dedicatedSpocRequired: false,
+    },
+    salesDetails: { inquirySource: 'email', priorityLevel: 'medium' },
+    notes: {},
+    attachments: [],
+    followups: [],
+    activities: [
+      makeActivity('created', 'Enquiry created', 'Incomplete documentation', 'Ravi Kumar'),
+      makeActivity('status_updated', 'Status updated', 'Status changed to rejected: Incomplete docs', 'Ravi Kumar'),
+    ],
+    assignment: { priority: 'medium', ownershipHistory: [] },
+    lastActivity: daysFromToday(-6),
+  },
+  {
+    id: 'ENQ-24007',
+    enquiryDate: daysFromToday(-3),
+    createdBy: 'Pooja Sharma',
+    status: 'quotation_in_progress',
+    customer: {
+      companyOrCustomerName: 'Nordic Foods AB',
+      customerType: 'corporate',
+      contactPersonName: 'Erik Lindstrom',
+      contactNumber: '+46 701234567',
+      emailAddress: 'erik@nordicfoods.se',
+    },
+    visaRequirement: {
+      countries: ['UAE', 'Singapore'],
+      visaType: 'Business Visa',
+      purposeOfVisit: 'Trade fair',
+      processingType: 'express',
+      numberOfApplicants: 5,
+      marineRequirement: false,
+      urgencyLevel: 'high',
+      expectedProcessingTimeline: '10 days',
+    },
+    operationalRequirements: {
+      bulkUploadRequired: false,
+      documentPickupRequired: false,
+      groundOperationsRequired: false,
+      biometricsAssistanceRequired: true,
+      courierSupportRequired: true,
+      dedicatedSpocRequired: false,
+    },
+    salesDetails: {
+      inquirySource: 'sales_team',
+      assignedSalesPerson: 'Pooja Sharma',
+      assignedOperationsTeam: 'Corporate Ops',
+      branch: 'Stockholm',
+      priorityLevel: 'high',
+    },
+    notes: { initialDiscussionNotes: 'Trade fair deadline end of month.' },
+    attachments: [],
+    followups: [
+      {
+        id: id('fup'),
+        followupType: 'email',
+        followupDate: daysFromToday(2),
+        followupTime: '09:00',
+        discussionSummary: 'Send quotation draft',
+        nextAction: 'Finalize pricing',
+        assignedUser: 'Pooja Sharma',
+        reminderRequired: true,
+        followupStatus: 'scheduled',
+        createdAt: daysFromToday(-2),
+        createdBy: 'Pooja Sharma',
+      },
+    ],
+    activities: [makeActivity('created', 'Enquiry created', 'Sales team referral', 'Pooja Sharma')],
+    assignment: {
+      assignedTeam: 'Corporate Ops',
+      assignedUser: 'Pooja Sharma',
+      branch: 'Stockholm',
+      priority: 'high',
+      ownershipHistory: [],
+    },
+    lastActivity: daysFromToday(-1),
+    nextFollowupDate: daysFromToday(2),
   },
 ]
 
@@ -189,19 +509,32 @@ export const enquiryService = {
     return Promise.resolve(record)
   },
 
-  update(enquiryId: string, patch: Partial<EnquiryFormData>) {
+  update(enquiryId: string, patch: Partial<EnquiryFormData>, actor = 'System User') {
     const target = enquiryStore.find((item) => item.id === enquiryId)
     if (!target) return Promise.resolve(undefined)
-    Object.assign(target, patch)
+    if (patch.customer) target.customer = { ...target.customer, ...patch.customer }
+    if (patch.visaRequirement) target.visaRequirement = { ...target.visaRequirement, ...patch.visaRequirement }
+    if (patch.operationalRequirements) {
+      target.operationalRequirements = { ...target.operationalRequirements, ...patch.operationalRequirements }
+    }
+    if (patch.salesDetails) target.salesDetails = { ...target.salesDetails, ...patch.salesDetails }
+    if (patch.notes) target.notes = { ...target.notes, ...patch.notes }
+    if (patch.attachments) target.attachments = patch.attachments
+    if (patch.followups) target.followups = patch.followups
     target.lastActivity = nowIso()
-    target.activities.unshift(makeActivity('note_added', 'Enquiry updated', 'Core enquiry fields were updated', 'System User'))
+    target.activities.unshift(makeActivity('note_added', 'Enquiry updated', 'Core enquiry fields were updated', actor))
     return Promise.resolve(target)
+  },
+
+  getAllowedStatusTransitions(current: EnquiryStatus): EnquiryStatus[] {
+    const allowed = enquiryStatusFlow[current] ?? []
+    return Array.from(new Set([current, ...allowed]))
   },
 
   updateStatus(enquiryId: string, nextStatus: EnquiryStatus, actor: string, reason?: string) {
     const target = enquiryStore.find((item) => item.id === enquiryId)
     if (!target) return Promise.resolve({ ok: false, message: 'Enquiry not found' })
-    if (!statusFlow[target.status].includes(nextStatus) && target.status !== nextStatus) {
+    if (!enquiryStatusFlow[target.status].includes(nextStatus) && target.status !== nextStatus) {
       return Promise.resolve({ ok: false, message: 'Invalid status transition' })
     }
     const previousStatus = target.status
@@ -342,7 +675,7 @@ export const enquiryService = {
   },
 
   getStatusOptions() {
-    return Promise.resolve(Object.keys(statusFlow) as EnquiryStatus[])
+    return Promise.resolve(Object.keys(enquiryStatusFlow) as EnquiryStatus[])
   },
 
   getPriorityOptions(): Promise<EnquiryPriority[]> {

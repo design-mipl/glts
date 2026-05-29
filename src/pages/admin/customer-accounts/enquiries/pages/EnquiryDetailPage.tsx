@@ -1,27 +1,22 @@
 import { useMemo, useState } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, CircularProgress } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button, Tabs, Badge, BaseCard, useToast } from '@/design-system/UIComponents'
-import { AdminPageHeader } from '@/pages/admin/components/AdminPageHeader'
+import { Tabs, BaseCard, EmptyState, useToast } from '@/design-system/UIComponents'
+import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { enquiryService } from '@/shared/services/enquiryService'
-import {
-  enquiryPriorityColor,
-  enquiryPriorityLabel,
-  enquiryStatusColor,
-  enquiryStatusLabel,
-} from '../config/enquiryStatusConfig'
+import type { EnquiryStatus } from '@/shared/types/enquiry'
 import { AddFollowupModal, type FollowupModalValue } from '../components/AddFollowupModal'
 import { AssignmentModal, type AssignmentModalValue } from '../components/AssignmentModal'
 import { ConvertToQuotationDialog } from '../components/ConvertToQuotationDialog'
-import { EnquiryQuickActions } from '../components/EnquiryQuickActions'
+import { EnquiryDetailSummary } from '../components/EnquiryDetailSummary'
 import { StatusUpdateModal } from '../components/StatusUpdateModal'
 import { ActivityTimelineTab } from '../components/detail/ActivityTimelineTab'
 import { AssignmentOwnershipTab } from '../components/detail/AssignmentOwnershipTab'
-import { AttachmentsTab } from '../components/detail/AttachmentsTab'
 import { FollowupsTab } from '../components/detail/FollowupsTab'
 import { InternalNotesTab } from '../components/detail/InternalNotesTab'
 import { OverviewTab } from '../components/detail/OverviewTab'
 import { useEnquiryDetailState } from '../hooks/useEnquiryDetailState'
+import { getEnquiryActor } from '../utils/enquiryActor'
 
 const initialAssignment: AssignmentModalValue = {
   assignedTeam: '',
@@ -66,50 +61,52 @@ export function EnquiryDetailPage() {
     () => [
       { label: 'Overview', value: 'overview' },
       { label: 'Follow-ups', value: 'followups', badge: enquiry?.followups.length ?? 0 },
-      { label: 'Activity Timeline', value: 'activity', badge: enquiry?.activities.length ?? 0 },
-      { label: 'Attachments', value: 'attachments', badge: enquiry?.attachments.length ?? 0 },
-      { label: 'Internal Notes', value: 'notes' },
-      { label: 'Assignment & Ownership', value: 'assignment' },
+      { label: 'Activity', value: 'activity', badge: enquiry?.activities.length ?? 0 },
+      { label: 'Team notes', value: 'notes' },
+      { label: 'Assignment', value: 'assignment' },
     ],
     [enquiry],
   )
 
+  const allowedStatuses = useMemo(
+    () => (enquiry ? enquiryService.getAllowedStatusTransitions(enquiry.status) : []),
+    [enquiry],
+  )
+
   if (loading) {
-    return <Typography variant="body2">Loading enquiry workspace...</Typography>
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 240 }}>
+        <CircularProgress size={32} />
+      </Box>
+    )
   }
 
   if (!enquiry) {
-    return <Typography variant="body2">Enquiry not found.</Typography>
+    return (
+      <EmptyState
+        variant="no-data"
+        title="Enquiry not found"
+        description="This enquiry may have been removed or the link is incorrect."
+        action={{
+          label: 'Back to enquiries',
+          onClick: () => navigate('/admin/customer-accounts/enquiries'),
+        }}
+      />
+    )
   }
 
   return (
-    <Stack spacing={2}>
-      <AdminPageHeader
-        title={enquiry.customer.companyOrCustomerName}
-        description={`${enquiry.id} · Assigned Team: ${enquiry.assignment.assignedTeam ?? '--'} · Assigned User: ${enquiry.assignment.assignedUser ?? '--'}`}
+    <>
+      <AdminDetailShell
         breadcrumbs={[
           { label: 'Customer & Accounts', href: '/admin/customer-accounts/enquiries' },
           { label: 'Enquiry Management', href: '/admin/customer-accounts/enquiries' },
           { label: enquiry.id },
         ]}
-        actions={<Button label="Back to listing" variant="outlined" onClick={() => navigate('/admin/customer-accounts/enquiries')} />}
-      />
-
-      <BaseCard sx={{ p: 2 }}>
-        <Stack spacing={1.5}>
-          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1.5}>
-            <Stack spacing={0.5}>
-              <Typography variant="body2" color="text.secondary">
-                Next Follow-up: {enquiry.nextFollowupDate ? new Date(enquiry.nextFollowupDate).toLocaleDateString() : '--'}
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Badge label={enquiryStatusLabel[enquiry.status]} color={enquiryStatusColor[enquiry.status]} />
-              <Badge label={enquiryPriorityLabel[enquiry.salesDetails.priorityLevel]} color={enquiryPriorityColor[enquiry.salesDetails.priorityLevel]} />
-            </Stack>
-          </Stack>
-          <EnquiryQuickActions
-            onEdit={() => navigate(`/admin/customer-accounts/enquiries/new`)}
+        summary={
+          <EnquiryDetailSummary
+            enquiry={enquiry}
+            onEdit={() => navigate(`/admin/customer-accounts/enquiries/${enquiry.id}/edit`)}
             onAssign={() => {
               setAssignmentValue({
                 assignedTeam: enquiry.assignment.assignedTeam ?? '',
@@ -134,65 +131,93 @@ export function EnquiryDetailPage() {
             }}
             onNotes={() => setActiveTab('notes')}
           />
-        </Stack>
-      </BaseCard>
-
-      <BaseCard sx={{ p: 0, overflow: 'hidden' }}>
-        <Tabs items={tabs} value={activeTab} onChange={setActiveTab} />
-        <Box sx={{ p: 2 }}>
-          {activeTab === 'overview' ? <OverviewTab enquiry={enquiry} /> : null}
-          {activeTab === 'followups' ? (
-            <FollowupsTab
-              enquiry={enquiry}
-              onAdd={() => setFollowupModalOpen(true)}
-              onMarkComplete={async (followupId) => {
-                await enquiryService.completeFollowup(enquiry.id, followupId, 'Admin User')
-                await reload()
-              }}
-            />
-          ) : null}
-          {activeTab === 'activity' ? <ActivityTimelineTab enquiry={enquiry} /> : null}
-          {activeTab === 'attachments' ? (
-            <AttachmentsTab
-              enquiry={enquiry}
-              onUpload={async () => {
-                await enquiryService.uploadAttachment(enquiry.id, `requirements-${Date.now()}.pdf`, 'Admin User')
-                await reload()
-              }}
-            />
-          ) : null}
-          {activeTab === 'notes' ? (
-            <InternalNotesTab
-              value={internalNotes || enquiry.notes.internalNotes || ''}
-              onChange={setInternalNotes}
-              onSave={async () => {
-                await enquiryService.addNote(enquiry.id, internalNotes, 'Admin User')
-                setInternalNotes('')
-                await reload()
-              }}
-            />
-          ) : null}
-          {activeTab === 'assignment' ? (
-            <AssignmentOwnershipTab
-              enquiry={enquiry}
-              onEdit={() => {
-                setAssignmentModalOpen(true)
-              }}
-            />
-          ) : null}
-        </Box>
-      </BaseCard>
+        }
+      >
+        <BaseCard sx={{ p: 0, overflow: 'hidden' }}>
+          <Tabs items={tabs} value={activeTab} onChange={setActiveTab} variant="underline" size="sm" />
+          <Box sx={{ p: 2 }}>
+            {activeTab === 'overview' ? (
+              <OverviewTab
+                enquiry={enquiry}
+                onUploadAttachment={async () => {
+                  await enquiryService.uploadAttachment(
+                    enquiry.id,
+                    `requirements-${Date.now()}.pdf`,
+                    getEnquiryActor(),
+                  )
+                  showToast({ title: 'Attachment uploaded', variant: 'success' })
+                  await reload()
+                }}
+              />
+            ) : null}
+            {activeTab === 'followups' ? (
+              <FollowupsTab
+                enquiry={enquiry}
+                onAdd={() => setFollowupModalOpen(true)}
+                onMarkComplete={async (followupId) => {
+                  await enquiryService.completeFollowup(enquiry.id, followupId, getEnquiryActor())
+                  await reload()
+                }}
+              />
+            ) : null}
+            {activeTab === 'activity' ? <ActivityTimelineTab enquiry={enquiry} /> : null}
+            {activeTab === 'notes' ? (
+              <InternalNotesTab
+                value={internalNotes || enquiry.notes.internalNotes || ''}
+                onChange={setInternalNotes}
+                onSave={async () => {
+                  await enquiryService.addNote(enquiry.id, internalNotes, getEnquiryActor())
+                  setInternalNotes('')
+                  showToast({ title: 'Note saved', variant: 'success' })
+                  await reload()
+                }}
+              />
+            ) : null}
+            {activeTab === 'assignment' ? (
+              <AssignmentOwnershipTab
+                enquiry={enquiry}
+                onEdit={() => {
+                  setAssignmentValue({
+                    assignedTeam: enquiry.assignment.assignedTeam ?? '',
+                    assignedUser: enquiry.assignment.assignedUser ?? '',
+                    branch: enquiry.assignment.branch ?? '',
+                    priority: enquiry.assignment.priority,
+                    slaTarget: enquiry.assignment.slaTarget?.slice(0, 10) ?? '',
+                    assignmentNotes: enquiry.assignment.assignmentNotes ?? '',
+                  })
+                  setAssignmentModalOpen(true)
+                }}
+              />
+            ) : null}
+          </Box>
+        </BaseCard>
+      </AdminDetailShell>
 
       <StatusUpdateModal
         open={statusModalOpen}
         value={statusValue}
         reason={statusReason}
+        allowedStatuses={allowedStatuses}
         onClose={() => setStatusModalOpen(false)}
         onStatusChange={setStatusValue}
         onReasonChange={setStatusReason}
         onSubmit={async () => {
-          await enquiryService.updateStatus(enquiry.id, statusValue as typeof enquiry.status, 'Admin User', statusReason)
+          const result = await enquiryService.updateStatus(
+            enquiry.id,
+            statusValue as EnquiryStatus,
+            getEnquiryActor(),
+            statusReason,
+          )
+          if (!result.ok) {
+            showToast({
+              title: 'Status update failed',
+              description: 'message' in result ? result.message : 'Invalid status transition',
+              variant: 'error',
+            })
+            return
+          }
           setStatusModalOpen(false)
+          showToast({ title: 'Status updated', variant: 'success' })
           await reload()
         }}
       />
@@ -213,9 +238,10 @@ export function EnquiryDetailPage() {
               slaTarget: assignmentValue.slaTarget,
               assignmentNotes: assignmentValue.assignmentNotes,
             },
-            'Admin User',
+            getEnquiryActor(),
           )
           setAssignmentModalOpen(false)
+          showToast({ title: 'Assignment updated', variant: 'success' })
           await reload()
         }}
       />
@@ -232,12 +258,13 @@ export function EnquiryDetailPage() {
               ...followupValue,
               followupType: followupValue.followupType as 'call',
               followupStatus: followupValue.followupStatus as 'scheduled',
-              createdBy: 'Admin User',
+              createdBy: getEnquiryActor(),
             },
-            'Admin User',
+            getEnquiryActor(),
           )
           setFollowupModalOpen(false)
           setFollowupValue(initialFollowup)
+          showToast({ title: 'Follow-up scheduled', variant: 'success' })
           await reload()
         }}
       />
@@ -247,16 +274,17 @@ export function EnquiryDetailPage() {
         issues={conversionIssues}
         onClose={() => setConvertModalOpen(false)}
         onConfirm={async () => {
-          const result = await enquiryService.convertToQuotation(enquiry.id, 'Admin User')
+          const result = await enquiryService.convertToQuotation(enquiry.id, getEnquiryActor())
           if (result.ok) {
             showToast({ title: `Quotation ${result.quotationId} generated`, variant: 'success' })
             setConvertModalOpen(false)
             await reload()
+            navigate('/admin/customer-accounts/quotations')
             return
           }
           setConversionIssues(result.validation?.issues ?? ['Unable to convert enquiry'])
         }}
       />
-    </Stack>
+    </>
   )
 }

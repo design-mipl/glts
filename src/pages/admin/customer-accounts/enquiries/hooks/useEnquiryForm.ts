@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { EnquiryFormData } from '@/shared/types/enquiry'
 
-const INITIAL_FORM: EnquiryFormData = {
+export const INITIAL_ENQUIRY_FORM: EnquiryFormData = {
   customer: {
     companyOrCustomerName: '',
     customerType: 'retail',
@@ -16,6 +16,7 @@ const INITIAL_FORM: EnquiryFormData = {
     countries: [],
     visaType: '',
     purposeOfVisit: '',
+    processingType: '',
     numberOfApplicants: 1,
     marineRequirement: false,
     tentativeTravelDate: '',
@@ -48,8 +49,8 @@ const INITIAL_FORM: EnquiryFormData = {
   assignment: {},
 }
 
-export function useEnquiryForm() {
-  const [formData, setFormData] = useState<EnquiryFormData>(INITIAL_FORM)
+export function useEnquiryForm(initialData?: EnquiryFormData) {
+  const [formData, setFormData] = useState<EnquiryFormData>(initialData ?? INITIAL_ENQUIRY_FORM)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const setFieldError = (key: string, message?: string) => {
@@ -71,12 +72,13 @@ export function useEnquiryForm() {
     if (!formData.customer.emailAddress.trim()) next.emailAddress = 'Email is required'
     if (!formData.visaRequirement.countries.length) next.countries = 'At least one country is required'
     if (!formData.visaRequirement.visaType.trim()) next.visaType = 'Visa type is required'
+    if (!formData.salesDetails.inquirySource) next.inquirySource = 'Inquiry source is required'
     setErrors(next)
     return Object.keys(next).length === 0
   }
 
   const reset = () => {
-    setFormData(INITIAL_FORM)
+    setFormData(initialData ?? INITIAL_ENQUIRY_FORM)
     setErrors({})
   }
 

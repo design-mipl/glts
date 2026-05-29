@@ -8,16 +8,18 @@ export function deriveApplicationSubmitKind(rows: UploadQueueRow[]): Application
 
 export function checklistItemsFromRowDocuments(
   documents: UploadQueueRow['documents'],
-): Array<{ id: string; label: string; required: boolean; status: 'uploaded' | 'missing' | 'invalid' | 'pending' }> {
+): Array<{ id: string; label: string; required: boolean; status: 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified' }> {
   return documents.map(doc => ({
     id: doc.documentId,
     label: doc.name,
     required: doc.required,
     status:
-      doc.status === 'verified' || doc.status === 'uploaded'
-        ? 'uploaded'
-        : doc.status === 'needs_review'
-          ? 'invalid'
-          : 'missing',
+      doc.status === 'verified'
+        ? 'verified'
+        : doc.status === 'uploaded'
+          ? 'uploaded'
+          : doc.status === 'rejected' || doc.status === 'needs_review'
+            ? 'invalid'
+            : 'missing',
   }))
 }

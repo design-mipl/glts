@@ -22,6 +22,8 @@ export interface DrawerProps {
   width?: number | string
   hideCloseButton?: boolean
   disableBackdropClick?: boolean
+  /** `default` = grey form canvas (section cards read like full-page form); `paper` = flat white body */
+  bodyVariant?: 'default' | 'paper'
   sx?: SxProps<Theme>
 }
 
@@ -36,6 +38,7 @@ export default function Drawer({
   width = 400,
   hideCloseButton = false,
   disableBackdropClick = false,
+  bodyVariant = 'paper',
   sx,
 }: DrawerProps) {
   const theme = useTheme()
@@ -111,6 +114,7 @@ export default function Drawer({
           overflowY: 'auto',
           px: tokens.spacing[3],
           py: tokens.spacing[3],
+          bgcolor: bodyVariant === 'default' ? 'background.default' : 'background.paper',
         }}
       >
         {children}

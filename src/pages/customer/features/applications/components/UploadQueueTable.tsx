@@ -120,11 +120,11 @@ export function UploadQueueTable({
         </Stack>
         {!readOnly && !selectionMode && (
           <Stack direction="row" spacing={1}>
-            <Button size="small" startIcon={<Download size={14} />} sx={{ textTransform: 'none', fontSize: '12px' }}>
+            <Button startIcon={<Download size={14} />} sx={{ textTransform: 'none' }}>
               Export CSV
             </Button>
             {!singleListing && (
-              <Button size="small" startIcon={<Pause size={14} />} variant="outlined" sx={{ textTransform: 'none', fontSize: '12px' }}>
+              <Button startIcon={<Pause size={14} />} variant="outlined" sx={{ textTransform: 'none' }}>
                 Pause
               </Button>
             )}

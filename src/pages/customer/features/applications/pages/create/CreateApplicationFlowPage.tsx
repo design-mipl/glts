@@ -177,15 +177,11 @@ export function CreateApplicationFlowPage() {
 
         <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 1.5 }}>
           <Breadcrumb
-
+            showBack={false}
             items={[
-
               { label: 'Application Management', href: `${base}/applications` },
-
               { label: 'Application creation' },
-
             ]}
-
           />
 
         </Stack>

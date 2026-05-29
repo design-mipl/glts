@@ -2,7 +2,7 @@
 import { Box } from '@mui/material'
 import { DataTable } from '@/design-system/UIComponents'
 import type { Column, TableState } from '@/design-system/UIComponents'
-import { Tag } from '@/design-system/UIComponents'
+import { Badge } from '@/design-system/UIComponents'
 
 interface Row {
   id: string
@@ -38,7 +38,7 @@ const columns: Column<Row>[] = [
     key: 'status',
     label: 'Status',
     width: 120,
-    render: (value: string) => <Tag label={value} color={statusColor[value]} />,
+    render: (value: string) => <Badge label={value} color={statusColor[value]} />,
   },
   { key: 'joined', label: 'Joined', sortable: true, width: 130 },
 ]

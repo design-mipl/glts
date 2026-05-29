@@ -4,7 +4,7 @@ import {
   TableHead, TableRow, Checkbox, IconButton, Skeleton,
   Card, CardContent, Typography, useTheme, useMediaQuery, Divider,
 } from '@mui/material'
-import { alpha } from '@mui/material/styles'
+import { alpha, type Theme } from '@mui/material/styles'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '../../../tokens'
 import type { FoundationBreakpointKey } from '../../../breakpoints'
@@ -49,6 +49,8 @@ export interface DataTableProps {
   showColumnSearch?: boolean
   /** Excel-style column filter popup trigger per header. */
   onColumnFilterClick?: (event: React.MouseEvent<HTMLElement>, columnKey: string) => void
+  /** When false, column header sort controls are hidden. Default true. */
+  enableColumnSort?: boolean
 }
 
 function getHideDisplay(hideBelow?: FoundationBreakpointKey) {
@@ -57,6 +59,7 @@ function getHideDisplay(hideBelow?: FoundationBreakpointKey) {
 }
 
 const EXPAND_COLUMN_WIDTH = 48
+const ACTION_COLUMN_WIDTH = 60
 
 function isStickyEndColumn(col: Column) {
   if (col.stickyEnd === false) return false
@@ -66,6 +69,31 @@ function isStickyEndColumn(col: Column) {
 
 function isStickyStartColumn(col: Column) {
   return col.sticky === true && !isStickyEndColumn(col)
+}
+
+/** Sticky cells need opaque backgrounds so scrolling content does not bleed through. */
+function getStickyCellBg(
+  isSelected: boolean,
+  isEven: boolean,
+  theme: Theme,
+  isDark: boolean,
+) {
+  if (isSelected) {
+    return isDark
+      ? alpha(theme.palette.primary.main, 0.16)
+      : alpha(theme.palette.primary.main, 0.1)
+  }
+  if (isEven) {
+    return isDark ? '#1A1D21' : '#F9FAFB'
+  }
+  return theme.palette.background.paper
+}
+
+function getStickyEdgeShadow(side: 'start' | 'end', isDark: boolean) {
+  const shadowColor = isDark ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.08)'
+  return side === 'end'
+    ? `-4px 0 4px -2px ${shadowColor}`
+    : `4px 0 4px -2px ${shadowColor}`
 }
 
 function SkeletonRows({ count, cols }: { count: number; cols: number }) {
@@ -107,6 +135,7 @@ export default function DataTable({
   embedded = false,
   showColumnSearch = true,
   onColumnFilterClick,
+  enableColumnSort = true,
 }: DataTableProps) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
@@ -378,6 +407,7 @@ export default function DataTable({
               {visibleTableColumns.map((col) => {
                 const stickyEnd = isStickyEndColumn(col)
                 const stickyStart = isStickyStartColumn(col)
+                const actionWidth = stickyEnd ? (col.width ?? ACTION_COLUMN_WIDTH) : undefined
                 return (
                 <TableCell
                   key={col.key}
@@ -390,14 +420,16 @@ export default function DataTable({
                     zIndex: stickyEnd ? 5 : stickyStart ? 4 : 3,
                     borderBottom: '2px solid',
                     borderColor: 'divider',
-                    width: col.width,
-                    minWidth: col.minWidth,
+                    width: actionWidth ?? col.width,
+                    minWidth: stickyEnd ? actionWidth : col.minWidth,
+                    maxWidth: stickyEnd ? actionWidth : undefined,
                     boxShadow: stickyEnd
-                      ? '-4px 0 4px -2px rgba(0,0,0,0.08)'
+                      ? getStickyEdgeShadow('end', isDark)
                       : stickyStart
-                        ? '4px 0 4px -2px rgba(0,0,0,0.08)'
+                        ? getStickyEdgeShadow('start', isDark)
                         : undefined,
                     display: getHideDisplay(col.hideBelow),
+                    overflow: stickyEnd ? 'visible' : 'hidden',
                     ...compactHeaderCellSx,
                   }}
                 >
@@ -410,6 +442,7 @@ export default function DataTable({
                     onSearch={handleColumnSearch}
                     filterCount={state.filters.filter(f => f.columnKey === col.key).length}
                     showColumnSearch={showColumnSearch}
+                    enableColumnSort={enableColumnSort}
                     onFilterClick={
                       onColumnFilterClick && col.key !== 'actions'
                         ? (e) => onColumnFilterClick(e, col.key)
@@ -419,7 +452,21 @@ export default function DataTable({
                 </TableCell>
               )})}
               {renderExpanded && (
-                <TableCell sx={{ bgcolor: headerBg, position: 'sticky', top: 0, zIndex: 3, width: 48, borderBottom: '2px solid', borderColor: 'divider' }} />
+                <TableCell
+                  sx={{
+                    bgcolor: headerBg,
+                    position: 'sticky',
+                    top: 0,
+                    right: 0,
+                    zIndex: 5,
+                    width: EXPAND_COLUMN_WIDTH,
+                    minWidth: EXPAND_COLUMN_WIDTH,
+                    maxWidth: EXPAND_COLUMN_WIDTH,
+                    boxShadow: getStickyEdgeShadow('end', isDark),
+                    borderBottom: '2px solid',
+                    borderColor: 'divider',
+                  }}
+                />
               )}
             </TableRow>
           </TableHead>
@@ -473,11 +520,24 @@ export default function DataTable({
                       const isEditing = editingCell?.rowId === rowId && editingCell?.columnKey === col.key
                       const stickyEnd = isStickyEndColumn(col)
                       const stickyStart = isStickyStartColumn(col)
-                      const stickyCellBg = isSelected
-                        ? selectedBg
-                        : isEven
-                          ? evenRowBg
-                          : theme.palette.background.paper
+                      const stickyCellBg = getStickyCellBg(isSelected, isEven, theme, isDark)
+                      const actionWidth = stickyEnd ? (col.width ?? ACTION_COLUMN_WIDTH) : undefined
+
+                      const cellContent = isEditing ? (
+                        <InlineEdit
+                          value={cellValue}
+                          column={col}
+                          onSave={(val) => {
+                            onCellEdit?.(rowId, col.key, val)
+                            setEditingCell(null)
+                          }}
+                          onCancel={() => setEditingCell(null)}
+                        />
+                      ) : col.render
+                        ? col.render(cellValue, row)
+                        : col.formatValue
+                          ? col.formatValue(cellValue)
+                          : (cellValue == null ? '' : String(cellValue))
 
                       return (
                         <TableCell
@@ -488,43 +548,46 @@ export default function DataTable({
                             lineHeight: '20px',
                             borderBottom: '1px solid',
                             borderColor: 'divider',
-                            width: col.width,
-                            minWidth: col.minWidth,
+                            width: actionWidth ?? col.width,
+                            minWidth: stickyEnd ? actionWidth : col.minWidth,
+                            maxWidth: stickyEnd ? actionWidth : (col.width ?? col.minWidth ?? 240),
                             position: stickyEnd || stickyStart ? 'sticky' : undefined,
                             left: stickyStart ? 0 : undefined,
                             right: stickyEnd ? stickyEndRight : undefined,
-                            zIndex: stickyEnd || stickyStart ? 1 : undefined,
+                            zIndex: stickyEnd ? 3 : stickyStart ? 2 : undefined,
                             bgcolor: stickyEnd || stickyStart ? stickyCellBg : undefined,
                             boxShadow: stickyEnd
-                              ? '-4px 0 4px -2px rgba(0,0,0,0.08)'
+                              ? getStickyEdgeShadow('end', isDark)
                               : stickyStart
-                                ? '4px 0 4px -2px rgba(0,0,0,0.08)'
+                                ? getStickyEdgeShadow('start', isDark)
                                 : undefined,
                             display: getHideDisplay(col.hideBelow),
                             textAlign: col.align,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            maxWidth: col.width ?? 240,
+                            whiteSpace: stickyEnd ? 'nowrap' : 'nowrap',
+                            overflow: stickyEnd ? 'visible' : 'hidden',
+                            textOverflow: stickyEnd ? undefined : 'ellipsis',
                             cursor: col.editable ? 'text' : undefined,
+                            isolation: stickyEnd || stickyStart ? 'isolate' : undefined,
                           }}
                           onClick={col.editable ? (e) => { e.stopPropagation(); setEditingCell({ rowId, columnKey: col.key }) } : undefined}
                         >
-                          {isEditing ? (
-                            <InlineEdit
-                              value={cellValue}
-                              column={col}
-                              onSave={(val) => {
-                                onCellEdit?.(rowId, col.key, val)
-                                setEditingCell(null)
+                          {stickyEnd ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                              {cellContent}
+                            </Box>
+                          ) : (
+                            <Box
+                              sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                minWidth: 0,
+                                maxWidth: '100%',
                               }}
-                              onCancel={() => setEditingCell(null)}
-                            />
-                          ) : col.render
-                            ? col.render(cellValue, row)
-                            : col.formatValue
-                              ? col.formatValue(cellValue)
-                              : (cellValue == null ? '' : String(cellValue))}
+                            >
+                              {cellContent}
+                            </Box>
+                          )}
                         </TableCell>
                       )
                     })}
@@ -533,7 +596,16 @@ export default function DataTable({
                     {renderExpanded && (
                       <TableCell
                         sx={{
-                          py: 0.5, px: 1,
+                          py: 0.5,
+                          px: 1,
+                          width: EXPAND_COLUMN_WIDTH,
+                          minWidth: EXPAND_COLUMN_WIDTH,
+                          maxWidth: EXPAND_COLUMN_WIDTH,
+                          position: 'sticky',
+                          right: 0,
+                          zIndex: 3,
+                          bgcolor: getStickyCellBg(isSelected, isEven, theme, isDark),
+                          boxShadow: getStickyEdgeShadow('end', isDark),
                           borderBottom: '1px solid',
                           borderColor: 'divider',
                         }}

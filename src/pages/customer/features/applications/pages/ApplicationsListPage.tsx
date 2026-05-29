@@ -51,7 +51,8 @@ function getEmptyState(
 
 export function ApplicationsListPage() {
   const navigate = useNavigate()
-  const { base } = useCustomerPortalBase()
+  const { base, isSuperAdmin, isAdmin } = useCustomerPortalBase()
+  const showCreatedBy = isSuperAdmin || isAdmin
   const { showToast } = useToast()
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
 
@@ -61,8 +62,8 @@ export function ApplicationsListPage() {
   const { listing, activeTab, setActiveTab } = workspace
 
   const columnParams = useMemo(
-    () => ({ base, navigate, showToast }),
-    [base, navigate, showToast],
+    () => ({ base, navigate, showToast, showCreatedBy }),
+    [base, navigate, showToast, showCreatedBy],
   )
 
   const columns = useMemo(
@@ -127,7 +128,7 @@ export function ApplicationsListPage() {
           <CustomerListingToolbar
             searchValue={listing.tableState.searchQuery}
             onSearch={listing.handleSearch}
-            searchPlaceholder="Search by GLTS reference, applicant, passport, company, or type…"
+            searchPlaceholder="Search by GLTS reference, applicant, passport, admin name, booker name, or visa type…"
             onExport={handleExport}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
@@ -148,6 +149,8 @@ export function ApplicationsListPage() {
             onClearFilters={handleClearFilters}
             countries={workspace.filterOptions.countries}
             visaTypes={workspace.filterOptions.visaTypes}
+            createdByOptions={workspace.filterOptions.createdByOptions}
+            showCreatedByFilter={showCreatedBy}
             hasActiveFilters={workspace.hasActiveFilters}
           />
         </Box>

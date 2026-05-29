@@ -20,6 +20,7 @@ export interface ApplicationFlowState {
   purpose: string
   purposeLabel: string
   travelDate: string
+  referencePo: string
   billingAddress: string
   expectedReturnDate: string
   processingType: 'normal' | 'express'
@@ -31,6 +32,15 @@ export interface ApplicationFlowState {
   vesselName: string
   rank: string
   joiningPort: string
+  entityId: string
+  entityName: string
+  contactPerson: string
+  location: string
+  vesselId: string
+  imoNumber: string
+  vesselType: string
+  flagCountry: string
+  portOfRegistry: string
   applicantName: string
   passportNumber: string
   nationality: string
@@ -56,6 +66,7 @@ const defaultState: ApplicationFlowState = {
   purpose: '',
   purposeLabel: '',
   travelDate: '',
+  referencePo: '',
   billingAddress: '',
   expectedReturnDate: '',
   processingType: 'normal',
@@ -67,6 +78,15 @@ const defaultState: ApplicationFlowState = {
   vesselName: '',
   rank: '',
   joiningPort: '',
+  entityId: '',
+  entityName: '',
+  contactPerson: '',
+  location: '',
+  vesselId: '',
+  imoNumber: '',
+  vesselType: '',
+  flagCountry: '',
+  portOfRegistry: '',
   applicantName: '',
   passportNumber: '',
   nationality: '',
@@ -124,11 +144,6 @@ export function useApplicationFlowState(options?: { startFresh?: boolean }) {
     }
     return loadStored()
   })
-
-  const persist = useCallback((next: ApplicationFlowState) => {
-    setState(next)
-    sessionStorage.setItem(APPLICATION_FLOW_STORAGE_KEY, JSON.stringify(next))
-  }, [])
 
   const reset = useCallback(() => {
     setState(defaultState)

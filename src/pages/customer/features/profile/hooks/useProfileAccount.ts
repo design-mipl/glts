@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { loadSession } from '@/shared/auth/session'
+import { canAccessMasters } from '@/shared/auth/customerRoleAccess'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import type { AccountWorkspace, PersonalAccount, UserSession } from '../types/accountWorkspace'
 
@@ -10,7 +11,7 @@ export function useProfileAccount() {
   const [error] = useState<string | null>(null)
 
   const session = loadSession()
-  const isAdmin = session?.userRole === 'corporate_admin'
+  const canManageMasters = canAccessMasters(session?.userRole)
 
   const updatePersonalAccount = useCallback((patch: Partial<PersonalAccount>) => {
     setWorkspace(prev => ({
@@ -33,7 +34,8 @@ export function useProfileAccount() {
     workspace,
     isLoading,
     error,
-    isAdmin,
+    canManageMasters,
+    userRole: session?.userRole,
     updatePersonalAccount,
     setSessions,
   }

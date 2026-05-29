@@ -12,6 +12,7 @@ export interface CustomerListingTab {
 
 interface CustomerListingShellProps {
   title?: string
+  subtitle?: string
   headerActions?: ReactNode
   /** Sticky page header (title + actions) rendered above KPIs; takes precedence over title/headerActions props */
   stickyPageHeader?: ReactNode
@@ -20,12 +21,14 @@ interface CustomerListingShellProps {
   tabValue?: string
   onTabChange?: (value: string) => void
   toolbar: ReactNode
+  advancedFilters?: ReactNode
   table: ReactNode
   pagination: ReactNode
 }
 
 export function CustomerListingShell({
   title,
+  subtitle,
   headerActions,
   stickyPageHeader,
   kpis,
@@ -33,6 +36,7 @@ export function CustomerListingShell({
   tabValue,
   onTabChange,
   toolbar,
+  advancedFilters,
   table,
   pagination,
 }: CustomerListingShellProps) {
@@ -55,6 +59,9 @@ export function CustomerListingShell({
                 <Typography variant="h1" sx={{ fontSize: { xs: '22px', md: '26px' }, fontWeight: 700 }}>
                   {title}
                 </Typography>
+                {subtitle && (
+                  <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>{subtitle}</Typography>
+                )}
               </Box>
             )}
             {headerActions && (
@@ -102,6 +109,20 @@ export function CustomerListingShell({
         >
           {toolbar}
         </Box>
+
+        {advancedFilters && (
+          <Box
+            sx={{
+              px: 2,
+              py: 1.5,
+              borderBottom: `${BORDER_WIDTH.thin} solid`,
+              borderColor: 'divider',
+              bgcolor: 'action.hover',
+            }}
+          >
+            {advancedFilters}
+          </Box>
+        )}
 
         {table}
         {pagination}

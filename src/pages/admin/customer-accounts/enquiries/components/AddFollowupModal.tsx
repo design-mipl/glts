@@ -48,23 +48,36 @@ export function AddFollowupModal({ open, value, onClose, onChange, onSubmit }: A
               { label: 'WhatsApp', value: 'whatsapp' },
               { label: 'Internal', value: 'internal' },
             ]}
+            placeholder="Select follow-up type"
             fullWidth
           />
         </FormField>
         <FormField label="Follow-up Date">
-          <Input type="date" value={value.followupDate} onChange={(next) => patch({ followupDate: next })} fullWidth />
+          <Input type="date" value={value.followupDate} onChange={(next) => patch({ followupDate: next })} placeholder="Select date" fullWidth />
         </FormField>
         <FormField label="Follow-up Time">
-          <Input type="time" value={value.followupTime} onChange={(next) => patch({ followupTime: next })} fullWidth />
+          <Input type="time" value={value.followupTime} onChange={(next) => patch({ followupTime: next })} placeholder="Select time" fullWidth />
         </FormField>
         <FormField label="Discussion Summary">
-          <Textarea value={value.discussionSummary} onChange={(next) => patch({ discussionSummary: next })} minRows={3} fullWidth />
+          <Textarea
+            value={value.discussionSummary}
+            onChange={(next) => patch({ discussionSummary: next })}
+            placeholder="Summarize what was discussed"
+            minRows={3}
+            fullWidth
+          />
         </FormField>
         <FormField label="Next Action">
-          <Textarea value={value.nextAction} onChange={(next) => patch({ nextAction: next })} minRows={2} fullWidth />
+          <Textarea
+            value={value.nextAction}
+            onChange={(next) => patch({ nextAction: next })}
+            placeholder="Describe the next step"
+            minRows={2}
+            fullWidth
+          />
         </FormField>
         <FormField label="Assigned User">
-          <Input value={value.assignedUser} onChange={(next) => patch({ assignedUser: next })} fullWidth />
+          <Input value={value.assignedUser} onChange={(next) => patch({ assignedUser: next })} placeholder="Who owns this follow-up" fullWidth />
         </FormField>
         <FormField label="Reminder Required">
           <Toggle checked={value.reminderRequired} onChange={(next) => patch({ reminderRequired: next })} />
@@ -79,6 +92,7 @@ export function AddFollowupModal({ open, value, onClose, onChange, onSubmit }: A
               { label: 'Missed', value: 'missed' },
               { label: 'Rescheduled', value: 'rescheduled' },
             ]}
+            placeholder="Select follow-up status"
             fullWidth
           />
         </FormField>

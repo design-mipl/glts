@@ -36,7 +36,7 @@ export function BillingAgreementTab({ data, onDownloadAgreement }: BillingAgreem
       <CustomerDetailSection
         title="Agreement summary"
         action={
-          <Button variant="outlined" size="sm" startIcon={<Download size={16} />} onClick={handleDownload}>
+          <Button variant="outlined" startIcon={<Download size={16} />} onClick={handleDownload}>
             Download PDF
           </Button>
         }
