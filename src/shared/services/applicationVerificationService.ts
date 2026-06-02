@@ -23,6 +23,7 @@ export interface VerificationDocumentOverride {
   travelerRowId?: string
   documentId: string
   status: ApplicantDocumentStatus
+  comment?: string
   updatedAt: string
 }
 
@@ -123,19 +124,59 @@ export function mergeVerificationIntoDetail(
     record.operationalStatus ??
     deriveOperationalStatusFromRows(uploadQueueRows, detail.operationalStatus)
 
+  const commentCorrections = record.documentOverrides
+    .filter(
+      override =>
+        override.status === 'rejected' || override.status === 'needs_review',
+    )
+    .map((override, index) => {
+      if (override.scope === 'traveler') {
+        const row = uploadQueueRows.find(r => r.id === override.travelerRowId)
+        const document = row?.documents.find(doc => doc.documentId === override.documentId)
+        return {
+          id: `ovr-${override.scope}-${override.travelerRowId ?? 'none'}-${override.documentId}-${index}`,
+          field: row ? `${document?.name ?? override.documentId} · ${row.travelerName}` : (document?.name ?? override.documentId),
+          reason:
+            override.comment?.trim() ||
+            (override.status === 'rejected'
+              ? 'Document rejected by GLTS team'
+              : 'Re-upload requested'),
+          status: 'Open',
+        }
+      }
+      const globalDoc = REQUIRED_GLOBAL_CHECKLIST_DOCUMENTS.find(
+        doc => doc.documentId === override.documentId,
+      )
+      return {
+        id: `ovr-global-${override.documentId}-${index}`,
+        field: globalDoc ? `${globalDoc.name} · Global` : `${override.documentId} · Global`,
+        reason:
+          override.comment?.trim() ||
+          (override.status === 'rejected'
+            ? 'Document rejected by GLTS team'
+            : 'Re-upload requested'),
+        status: 'Open',
+      }
+    })
+
   const corrections =
-    operationalStatus === 'Correction Required'
-      ? uploadQueueRows.flatMap(row =>
-          row.documents
-            .filter(d => d.status === 'rejected' || d.status === 'needs_review')
-            .map((d, index) => ({
-              id: `${row.id}-${d.documentId}-${index}`,
-              field: d.name,
-              reason: d.status === 'rejected' ? 'Document rejected by GLTS team' : 'Re-upload requested',
-              status: 'Open',
-            })),
-        )
-      : detail.corrections
+    commentCorrections.length > 0
+      ? commentCorrections
+      : operationalStatus === 'Correction Required'
+        ? uploadQueueRows.flatMap(row =>
+            row.documents
+              .filter(d => d.status === 'rejected' || d.status === 'needs_review')
+              .map((d, index) => ({
+                id: `${row.id}-${d.documentId}-${index}`,
+                field: `${d.name} · ${row.travelerName}`,
+                reason:
+                  d.status === 'rejected'
+                    ? 'Document rejected by GLTS team'
+                    : 'Re-upload requested',
+                status: 'Open',
+              })),
+          )
+        : detail.corrections
 
   return {
     ...detail,
@@ -159,12 +200,16 @@ export const applicationVerificationService = {
     if (!listingRow || !isCustomerSubmitted(listingRow)) {
       return { ok: false as const, listingRow: undefined, detail: undefined }
     }
-    const detail = customerPortalService.getApplicationDetail(applicationId)
+    const detail = customerPortalService.getApplicationDetail(applicationId, {
+      ignoreAccessControl: true,
+    })
     return { ok: true as const, listingRow, detail }
   },
 
   getMergedDetail(applicationId: string): ApplicationDetailViewModel {
-    return customerPortalService.getApplicationDetail(applicationId)
+    return customerPortalService.getApplicationDetail(applicationId, {
+      ignoreAccessControl: true,
+    })
   },
 
   updateTravelerDocumentStatus(
@@ -172,6 +217,7 @@ export const applicationVerificationService = {
     travelerRowId: string,
     documentId: string,
     status: ApplicantDocumentStatus,
+    comment?: string,
   ) {
     const record = getRecord(applicationId)
     const without = record.documentOverrides.filter(
@@ -191,6 +237,7 @@ export const applicationVerificationService = {
           travelerRowId,
           documentId,
           status,
+          comment: comment?.trim() ? comment.trim() : undefined,
           updatedAt: new Date().toISOString(),
         },
       ],
@@ -203,6 +250,7 @@ export const applicationVerificationService = {
     applicationId: string,
     documentId: string,
     status: ApplicantDocumentStatus,
+    comment?: string,
   ) {
     const record = getRecord(applicationId)
     const without = record.documentOverrides.filter(
@@ -216,6 +264,7 @@ export const applicationVerificationService = {
           scope: 'global',
           documentId,
           status,
+          comment: comment?.trim() ? comment.trim() : undefined,
           updatedAt: new Date().toISOString(),
         },
       ],

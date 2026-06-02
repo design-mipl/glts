@@ -12,6 +12,16 @@ export const invoiceTypeLabel: Record<InvoiceType, string> = {
   credit_note: 'Credit note',
 }
 
+export const invoiceTypeColor: Record<InvoiceType, BadgeColor> = {
+  single_application: 'info',
+  batch: 'warning',
+  cumulative: 'success',
+  service_wise: 'neutral',
+  additional_expense: 'error',
+  final_settlement: 'primary',
+  credit_note: 'secondary',
+}
+
 export const invoiceStatusLabel: Record<InvoiceStatus, string> = {
   draft: 'Draft',
   generated: 'Generated',

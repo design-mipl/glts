@@ -79,8 +79,8 @@ interface VerifyDocumentChecklistSectionProps {
   documents: ApplicantDocumentItem[]
   onPreview: (documentId: string) => void
   onVerify: (documentId: string) => void
-  onReject: (documentId: string) => void
-  onRequestReupload: (documentId: string) => void
+  onReject: (document: ApplicantDocumentItem) => void
+  onRequestReupload: (document: ApplicantDocumentItem) => void
 }
 
 export function VerifyDocumentChecklistSection({
@@ -102,8 +102,8 @@ export function VerifyDocumentChecklistSection({
           document={doc}
           onPreview={() => onPreview(doc.documentId)}
           onVerify={() => onVerify(doc.documentId)}
-          onReject={() => onReject(doc.documentId)}
-          onRequestReupload={() => onRequestReupload(doc.documentId)}
+          onReject={() => onReject(doc)}
+          onRequestReupload={() => onRequestReupload(doc)}
         />
       ))}
     </Stack>
@@ -114,8 +114,8 @@ interface VerifyGlobalDocumentChecklistProps {
   documents: ApplicantDocumentItem[]
   onPreview: (documentId: string) => void
   onVerify: (documentId: string) => void
-  onReject: (documentId: string) => void
-  onRequestReupload: (documentId: string) => void
+  onReject: (document: ApplicantDocumentItem) => void
+  onRequestReupload: (document: ApplicantDocumentItem) => void
 }
 
 export function VerifyGlobalDocumentChecklist({

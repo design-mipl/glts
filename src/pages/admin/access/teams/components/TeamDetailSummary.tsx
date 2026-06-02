@@ -72,35 +72,28 @@ export function TeamDetailSummary({ team, onEdit, onToggleStatus }: TeamDetailSu
 
 export function TeamInformationSection({ team }: { team: TeamMaster }) {
   return (
-    <BaseCard>
-      <Box sx={{ p: 2.5 }}>
-        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-          Team information
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <ReadOnlyField label="Team name" value={team.name} />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <ReadOnlyField label="Status" value={masterStatusLabel[team.status]} />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <ReadOnlyField label="Description" value={team.description || '—'} />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <ReadOnlyField
-              label="Created by"
-              value={`${team.createdBy} · ${formatMasterDate(team.createdAt)}`}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <ReadOnlyField
-              label="Updated by"
-              value={`${team.updatedBy} · ${formatMasterDate(team.updatedAt)}`}
-            />
-          </Grid>
-        </Grid>
-      </Box>
-    </BaseCard>
+    <Grid container spacing={2}>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <ReadOnlyField label="Team name" value={team.name} />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <ReadOnlyField label="Status" value={masterStatusLabel[team.status]} />
+      </Grid>
+      <Grid size={{ xs: 12 }}>
+        <ReadOnlyField label="Description" value={team.description || '—'} />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <ReadOnlyField
+          label="Created by"
+          value={`${team.createdBy} · ${formatMasterDate(team.createdAt)}`}
+        />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <ReadOnlyField
+          label="Updated by"
+          value={`${team.updatedBy} · ${formatMasterDate(team.updatedAt)}`}
+        />
+      </Grid>
+    </Grid>
   )
 }

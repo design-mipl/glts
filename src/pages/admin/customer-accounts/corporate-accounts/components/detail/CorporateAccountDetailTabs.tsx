@@ -1,11 +1,17 @@
 import { Grid, Stack, Typography } from '@mui/material'
-import { Button } from '@/design-system/UIComponents'
+import { Badge, Button } from '@/design-system/UIComponents'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import { corporateAccountService } from '@/shared/services/corporateAccountService'
 import { entityMasterService } from '@/shared/services/entityMasterService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
 import type { CorporateAccount } from '@/shared/types/corporateAccount'
-import { billingTypeLabel, onboardingDocumentStatusLabel, workflowTypeLabel } from '../../../agreements/config/agreementStatusConfig'
+import {
+  billingTypeColor,
+  billingTypeLabel,
+  onboardingDocumentStatusLabel,
+  workflowTypeColor,
+  workflowTypeLabel,
+} from '../../../agreements/config/agreementStatusConfig'
 
 export function OverviewTab({ account }: { account: CorporateAccount }) {
   const counts = corporateAccountService.getCounts(account)
@@ -91,7 +97,10 @@ export function BillingTab({ account }: { account: CorporateAccount }) {
   if (!agreement) return <Typography variant="body2" color="text.secondary">Agreement not found.</Typography>
   return (
     <Stack spacing={2}>
-      <Typography variant="body2">{workflowTypeLabel[agreement.workflowType]} · {billingTypeLabel[agreement.billingType]}</Typography>
+      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+        <Badge label={workflowTypeLabel[agreement.workflowType]} color={workflowTypeColor[agreement.workflowType]} size="sm" />
+        <Badge label={billingTypeLabel[agreement.billingType]} color={billingTypeColor[agreement.billingType]} size="sm" />
+      </Stack>
       {agreement.pricingMatrix.map((row) => (
         <Typography key={row.id} variant="body2" color="text.secondary">{row.country} · {row.visaType} · ₹{row.serviceFee.toLocaleString('en-IN')}</Typography>
       ))}

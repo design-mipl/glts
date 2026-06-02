@@ -92,18 +92,22 @@ export function InvoiceDetailPage() {
         }
       >
         <BaseCard sx={{ p: 0 }}>
-          <Tabs
-            items={[
-              { label: 'Overview', value: 'overview' },
-              { label: 'Line items', value: 'line_items' },
-              { label: 'Tax breakdown', value: 'tax' },
-              { label: 'Attachments', value: 'attachments' },
-              { label: 'Payment history', value: 'payments' },
-              { label: 'Activity logs', value: 'activity' },
-            ]}
-            value={activeTab}
-            onChange={setActiveTab}
-          />
+          <Box sx={{ px: 2.5, pt: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs
+              items={[
+                { label: 'Overview', value: 'overview' },
+                { label: 'Line items', value: 'line_items' },
+                { label: 'Tax breakdown', value: 'tax' },
+                { label: 'Attachments', value: 'attachments' },
+                { label: 'Payment history', value: 'payments' },
+                { label: 'Activity logs', value: 'activity' },
+              ]}
+              value={activeTab}
+              onChange={setActiveTab}
+              variant="underline"
+              size="sm"
+            />
+          </Box>
           <Box sx={{ p: 2.5 }}>
             <InvoiceDetailTabContent invoice={invoice} activeTab={activeTab} />
           </Box>

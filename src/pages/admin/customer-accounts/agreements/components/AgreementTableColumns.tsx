@@ -6,7 +6,9 @@ import { deriveAdvanceRuleSummary } from '@/shared/utils/commercialAgreementVali
 import {
   agreementStatusColor,
   agreementStatusLabel,
+  billingTypeColor,
   billingTypeLabel,
+  workflowTypeColor,
   workflowTypeLabel,
 } from '../config/agreementStatusConfig'
 
@@ -31,14 +33,16 @@ export function buildAgreementColumns({
       label: 'Billing Type',
       filterable: true,
       minWidth: 110,
-      render: (_, row) => billingTypeLabel[row.billingType],
+      render: (_, row) => <Badge label={billingTypeLabel[row.billingType]} color={billingTypeColor[row.billingType]} size="sm" />,
     },
     {
       key: 'workflowType',
       label: 'Workflow Type',
       filterable: true,
       minWidth: 120,
-      render: (_, row) => workflowTypeLabel[row.workflowType],
+      render: (_, row) => (
+        <Badge label={workflowTypeLabel[row.workflowType]} color={workflowTypeColor[row.workflowType]} size="sm" />
+      ),
     },
     {
       key: 'totalEntities',

@@ -105,27 +105,33 @@ export function AgreementDetailPage() {
           />
         }
       >
-        <Tabs
-          items={[
-            { label: 'Overview', value: 'overview' },
-            { label: 'Entities', value: 'entities', badge: agreement.entities.length || undefined },
-            { label: 'Pricing Matrix', value: 'pricing', badge: agreement.pricingMatrix.length || undefined },
-            { label: 'Billing Configuration', value: 'billing' },
-            { label: 'Tax Configuration', value: 'tax' },
-            { label: 'Documents', value: 'documents', badge: agreement.documents.length },
-            { label: 'Activity Logs', value: 'activity', badge: agreement.activities.length || undefined },
-          ]}
-          value={activeTab}
-          onChange={setActiveTab}
-        />
-        <BaseCard sx={{ mt: 2, p: 2 }}>
-          {activeTab === 'overview' ? <OverviewTab agreement={agreement} /> : null}
-          {activeTab === 'entities' ? <EntitiesTab agreement={agreement} /> : null}
-          {activeTab === 'pricing' ? <PricingMatrixTab agreement={agreement} /> : null}
-          {activeTab === 'billing' ? <BillingConfigurationTab agreement={agreement} /> : null}
-          {activeTab === 'tax' ? <TaxConfigurationTab agreement={agreement} /> : null}
-          {activeTab === 'documents' ? <DocumentsTab agreement={agreement} /> : null}
-          {activeTab === 'activity' ? <ActivityTab agreement={agreement} /> : null}
+        <BaseCard>
+          <Box sx={{ px: 2.5, pt: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs
+              items={[
+                { label: 'Overview', value: 'overview' },
+                { label: 'Entities', value: 'entities', badge: agreement.entities.length || undefined },
+                { label: 'Pricing Matrix', value: 'pricing', badge: agreement.pricingMatrix.length || undefined },
+                { label: 'Billing Configuration', value: 'billing' },
+                { label: 'Tax Configuration', value: 'tax' },
+                { label: 'Documents', value: 'documents', badge: agreement.documents.length },
+                { label: 'Activity Logs', value: 'activity', badge: agreement.activities.length || undefined },
+              ]}
+              value={activeTab}
+              onChange={setActiveTab}
+              variant="underline"
+              size="sm"
+            />
+          </Box>
+          <Box sx={{ p: 2.5 }}>
+            {activeTab === 'overview' ? <OverviewTab agreement={agreement} /> : null}
+            {activeTab === 'entities' ? <EntitiesTab agreement={agreement} /> : null}
+            {activeTab === 'pricing' ? <PricingMatrixTab agreement={agreement} /> : null}
+            {activeTab === 'billing' ? <BillingConfigurationTab agreement={agreement} /> : null}
+            {activeTab === 'tax' ? <TaxConfigurationTab agreement={agreement} /> : null}
+            {activeTab === 'documents' ? <DocumentsTab agreement={agreement} /> : null}
+            {activeTab === 'activity' ? <ActivityTab agreement={agreement} /> : null}
+          </Box>
         </BaseCard>
       </AdminDetailShell>
 

@@ -31,12 +31,31 @@ export const agreementTypeLabel: Record<AgreementType, string> = {
   non_agreemented: 'Non-agreemented',
 }
 
+export const agreementTypeColor: Record<
+  AgreementType,
+  'neutral' | 'info' | 'warning' | 'success' | 'error'
+> = {
+  agreemented: 'success',
+  non_agreemented: 'warning',
+}
+
 export const workflowTypeLabel: Record<AgreementWorkflowType, string> = {
   marine: 'Marine',
   corporate: 'Corporate',
   b2b_agent: 'B2B Agent',
   mixed: 'Mixed',
   retail: 'Retail',
+}
+
+export const workflowTypeColor: Record<
+  AgreementWorkflowType,
+  'neutral' | 'info' | 'warning' | 'success' | 'error'
+> = {
+  marine: 'info',
+  corporate: 'success',
+  b2b_agent: 'warning',
+  mixed: 'neutral',
+  retail: 'error',
 }
 
 /** B2B-only workflow options for agreement UI */
@@ -51,6 +70,15 @@ export const billingTypeLabel: Record<AgreementBillingType, string> = {
   credit: 'Credit',
   advance: 'Advance',
   mixed: 'Mixed',
+}
+
+export const billingTypeColor: Record<
+  AgreementBillingType,
+  'neutral' | 'info' | 'warning' | 'success' | 'error'
+> = {
+  credit: 'info',
+  advance: 'success',
+  mixed: 'warning',
 }
 
 export const onboardingDocumentStatusLabel = {

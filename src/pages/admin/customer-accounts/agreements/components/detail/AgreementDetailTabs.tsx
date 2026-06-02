@@ -1,11 +1,14 @@
 import { Stack, Typography } from '@mui/material'
 import { Grid } from '@mui/material'
+import { Badge } from '@/design-system/UIComponents'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import { deriveAdvanceRuleSummary } from '@/shared/utils/commercialAgreementValidation'
 import {
+  billingTypeColor,
   billingTypeLabel,
   customerSourceModeLabel,
+  workflowTypeColor,
   workflowTypeLabel,
 } from '../../config/agreementStatusConfig'
 import { getSelectedFinanceContactPersons } from '@/shared/utils/agreementFinanceContacts'
@@ -44,13 +47,13 @@ export function OverviewTab({ agreement }: TabProps) {
           <Typography variant="caption" color="text.secondary">
             Workflow
           </Typography>
-          <Typography variant="body2">{workflowTypeLabel[agreement.workflowType]}</Typography>
+          <Badge label={workflowTypeLabel[agreement.workflowType]} color={workflowTypeColor[agreement.workflowType]} size="sm" />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <Typography variant="caption" color="text.secondary">
             Billing
           </Typography>
-          <Typography variant="body2">{billingTypeLabel[agreement.billingType]}</Typography>
+          <Badge label={billingTypeLabel[agreement.billingType]} color={billingTypeColor[agreement.billingType]} size="sm" />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <Typography variant="caption" color="text.secondary">

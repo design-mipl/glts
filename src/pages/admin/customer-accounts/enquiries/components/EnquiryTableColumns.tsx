@@ -3,7 +3,11 @@ import { CalendarClock, Eye, PencilLine, RefreshCcw, UserCog } from 'lucide-reac
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
-import { formatEnquiryInquirySource } from '../config/enquiryFormConfig'
+import {
+  enquiryCustomerTypeColor,
+  enquiryInquirySourceColor,
+  formatEnquiryInquirySource,
+} from '../config/enquiryFormConfig'
 import { formatEnquiryContactSecondary } from '../utils/enquiryListingUtils'
 import {
   enquiryStatusColor,
@@ -40,7 +44,9 @@ export function buildEnquiryColumns({
       label: 'Customer Type',
       filterable: true,
       minWidth: 120,
-      render: (_, row) => row.customer.customerType,
+      render: (_, row) => (
+        <Badge label={row.customer.customerType} color={enquiryCustomerTypeColor[row.customer.customerType]} size="sm" />
+      ),
     },
     {
       key: 'contactPerson',
@@ -63,7 +69,13 @@ export function buildEnquiryColumns({
       label: 'Inquiry Source',
       filterable: true,
       minWidth: 140,
-      render: (_, row) => formatEnquiryInquirySource(row.salesDetails.inquirySource),
+      render: (_, row) => (
+        <Badge
+          label={formatEnquiryInquirySource(row.salesDetails.inquirySource)}
+          color={enquiryInquirySourceColor[row.salesDetails.inquirySource]}
+          size="sm"
+        />
+      ),
     },
     {
       key: 'countryRequirement',

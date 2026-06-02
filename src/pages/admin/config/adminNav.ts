@@ -6,7 +6,6 @@ import {
   HandCoins,
   Headphones,
   LayoutDashboard,
-  NotebookText,
   Shield,
   SlidersHorizontal,
   Wrench,
@@ -21,6 +20,9 @@ export const adminNav: NavConfig[] = [
     label: 'Dashboard',
     href: '/admin',
     icon: createElement(LayoutDashboard, iconProps),
+  },
+  {
+    type: 'divider',
   },
   {
     type: 'group',
@@ -76,6 +78,18 @@ export const adminNav: NavConfig[] = [
     ],
   },
   {
+    type: 'divider',
+  },
+  {
+    type: 'group',
+    label: 'User management',
+    icon: createElement(Shield, iconProps),
+    children: [
+      { type: 'item', label: 'Team', href: '/admin/access/teams' },
+      { type: 'item', label: 'User & permission', href: '/admin/access/users' },
+    ],
+  },
+  {
     type: 'group',
     label: 'Masters',
     icon: createElement(SlidersHorizontal, iconProps),
@@ -91,26 +105,11 @@ export const adminNav: NavConfig[] = [
   },
   {
     type: 'group',
-    label: 'User management',
-    icon: createElement(Shield, iconProps),
-    children: [
-      { type: 'item', label: 'Team', href: '/admin/access/teams' },
-      { type: 'item', label: 'User & permission', href: '/admin/access/users' },
-    ],
-  },
-  {
-    type: 'group',
     label: 'Tools',
     icon: createElement(Wrench, iconProps),
     children: [
       { type: 'item', label: 'Component library', href: '/admin/tools/component-library' },
       { type: 'item', label: 'Template showcase', href: '/admin/tools/templates' },
     ],
-  },
-  {
-    type: 'item',
-    label: 'Operations dashboard',
-    href: '/admin/operations',
-    icon: createElement(NotebookText, iconProps),
   },
 ]

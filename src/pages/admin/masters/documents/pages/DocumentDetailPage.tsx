@@ -123,24 +123,37 @@ export function DocumentDetailPage() {
           />
         }
       >
-        <BaseCard sx={{ p: 2.5 }}>
-          <Stack spacing={2}>
-            <Typography variant="h6" fontWeight={600}>
-              Overview
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <ReadOnlyField label="Document type" value={document.documentType} />
+        <Stack spacing={2}>
+          <BaseCard sx={{ p: 2.5 }}>
+            <Stack spacing={2}>
+              <Typography variant="overline" color="text.secondary">
+                Overview
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <ReadOnlyField label="Document type" value={document.documentType} />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <ReadOnlyField label="Status" value={documentStatusLabel[document.status]} />
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <ReadOnlyField label="Description" value={document.description} />
+                </Grid>
               </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <ReadOnlyField label="Status" value={documentStatusLabel[document.status]} />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <ReadOnlyField label="Description" value={document.description} />
-              </Grid>
-            </Grid>
-          </Stack>
-        </BaseCard>
+            </Stack>
+          </BaseCard>
+          <BaseCard sx={{ p: 2.5 }}>
+            <Stack spacing={1}>
+              <Typography variant="overline" color="text.secondary">
+                Activity
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Created on {new Date(document.createdAt).toLocaleDateString()}. Last updated on{' '}
+                {new Date(document.updatedAt).toLocaleDateString()}.
+              </Typography>
+            </Stack>
+          </BaseCard>
+        </Stack>
       </AdminDetailShell>
 
       <ConfirmDialog

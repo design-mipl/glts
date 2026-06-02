@@ -60,6 +60,10 @@ interface SaveDraftPayload {
   rows: UploadQueueRow[]
 }
 
+interface GetApplicationDetailOptions {
+  ignoreAccessControl?: boolean
+}
+
 export const customerPortalService = {
   getDashboard() {
     const session = loadSession()
@@ -105,12 +109,18 @@ export const customerPortalService = {
     return invoiceService.listCustomerVisibleInvoices()
   },
 
-  getApplicationDetail(applicationId?: string): ApplicationDetailViewModel {
+  getApplicationDetail(
+    applicationId?: string,
+    options?: GetApplicationDetailOptions,
+  ): ApplicationDetailViewModel {
+    const ignoreAccessControl = options?.ignoreAccessControl === true
     const resolvedId = normalizeApplicationId(applicationId) ?? applicationId
     const session = loadSession()
     const flowState = getSavedFlowState()
-    const single = resolvedId ? this.getSingleApplications().find(row => row.id === resolvedId) : undefined
-    const bulk = resolvedId ? this.getBulkBatches().find(row => row.id === resolvedId) : undefined
+    const visibleSingles = this.getSingleApplications()
+    const visibleBulks = this.getBulkBatches()
+    const single = resolvedId ? visibleSingles.find(row => row.id === resolvedId) : undefined
+    const bulk = resolvedId ? visibleBulks.find(row => row.id === resolvedId) : undefined
 
     if (single) {
       const detail = buildSingleDetail(single, resolvedId, flowState)
@@ -127,6 +137,13 @@ export const customerPortalService = {
     const restrictedSingle = resolvedId ? allSingles.find(row => row.id === resolvedId) : undefined
     const restrictedBulk = resolvedId ? allBulks.find(row => row.id === resolvedId) : undefined
     const restricted = restrictedSingle ?? restrictedBulk
+    if (restricted && ignoreAccessControl) {
+      const detail = restricted.recordType === 'bulk'
+        ? buildBulkDetail(restricted as BulkBatchRow, resolvedId, flowState)
+        : buildSingleDetail(restricted as SingleApplicationRow, resolvedId, flowState)
+      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId) : detail
+    }
+
     if (restricted && !canViewApplication(restricted, session)) {
       return {
         resolvedId,

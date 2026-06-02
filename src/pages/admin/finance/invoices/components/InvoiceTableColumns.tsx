@@ -6,6 +6,7 @@ import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
   invoiceStatusBadgeColor,
   invoiceStatusLabel,
+  invoiceTypeColor,
   invoiceTypeLabel,
   paymentStatusBadgeColor,
   paymentStatusLabel,
@@ -35,7 +36,7 @@ export function buildInvoiceColumns({
       label: 'Invoice Type',
       filterable: true,
       minWidth: 140,
-      render: (_, row) => invoiceTypeLabel[row.invoiceType],
+      render: (_, row) => <Badge label={invoiceTypeLabel[row.invoiceType]} color={invoiceTypeColor[row.invoiceType]} size="sm" />,
     },
     { key: 'companyName', label: 'Company Name', sortable: true, searchable: true, minWidth: 180 },
     { key: 'billingEntity', label: 'Billing Entity', sortable: true, searchable: true, minWidth: 180 },

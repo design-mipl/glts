@@ -3,6 +3,7 @@ import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import { corporateAccountService } from '@/shared/services/corporateAccountService'
 import type { CorporateAccount } from '@/shared/types/corporateAccount'
+import { workflowTypeColor, workflowTypeLabel } from '../../agreements/config/agreementStatusConfig'
 import { corporatePortalStatusColor, corporatePortalStatusLabel } from '../config/corporateAccountStatusConfig'
 
 interface ColumnHandlers {
@@ -18,10 +19,21 @@ export function buildCorporateAccountColumns({
   onActivate,
   onDeactivate,
 }: ColumnHandlers): Column<CorporateAccount>[] {
+  const getWorkflowBadge = (workflowType: string) => {
+    const workflowKey = workflowType as keyof typeof workflowTypeLabel
+    return <Badge label={workflowTypeLabel[workflowKey]} color={workflowTypeColor[workflowKey]} size="sm" />
+  }
+
   return [
     { key: 'companyId', label: 'Company ID', sortable: true, searchable: true, hideable: false, minWidth: 110 },
     { key: 'companyName', label: 'Company Name', sortable: true, searchable: true, minWidth: 200 },
-    { key: 'workflowType', label: 'Workflow Type', filterable: true, minWidth: 120 },
+    {
+      key: 'workflowType',
+      label: 'Workflow Type',
+      filterable: true,
+      minWidth: 120,
+      render: (_, row) => getWorkflowBadge(row.workflowType),
+    },
     { key: 'superAdmin', label: 'Super Admin', minWidth: 150, searchable: true },
     { key: 'totalAdmins', label: 'Total Admins', sortable: true, minWidth: 100, align: 'center' },
     { key: 'totalEntities', label: 'Total Entities', sortable: true, minWidth: 110, align: 'center' },

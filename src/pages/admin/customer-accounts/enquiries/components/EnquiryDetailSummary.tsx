@@ -2,6 +2,9 @@ import { Grid, Stack, Typography } from '@mui/material'
 import { BaseCard, Badge } from '@/design-system/UIComponents'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
 import {
+  enquiryCustomerTypeColor,
+  enquiryInquirySourceColor,
+  enquiryProcessingTypeColor,
   formatEnquiryInquirySource,
   formatEnquiryProcessingType,
 } from '../config/enquiryFormConfig'
@@ -40,6 +43,11 @@ export function EnquiryDetailSummary({
   onConvert,
   onNotes,
 }: EnquiryDetailSummaryProps) {
+  const processingTypeValue = enquiry.visaRequirement.processingType
+  const processingTypeKey =
+    processingTypeValue && processingTypeValue in enquiryProcessingTypeColor
+      ? (processingTypeValue as keyof typeof enquiryProcessingTypeColor)
+      : undefined
   const enquiryDate = enquiry.enquiryDate
     ? new Date(enquiry.enquiryDate).toLocaleDateString()
     : '--'
@@ -70,6 +78,21 @@ export function EnquiryDetailSummary({
               {formatEnquiryInquirySource(enquiry.salesDetails.inquirySource)}
               {visaSummary ? ` · ${visaSummary}` : ''}
             </Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Badge label={enquiry.customer.customerType} color={enquiryCustomerTypeColor[enquiry.customer.customerType]} size="sm" />
+              <Badge
+                label={formatEnquiryInquirySource(enquiry.salesDetails.inquirySource)}
+                color={enquiryInquirySourceColor[enquiry.salesDetails.inquirySource]}
+                size="sm"
+              />
+              {processingTypeKey ? (
+                <Badge
+                  label={formatEnquiryProcessingType(processingTypeKey)}
+                  color={enquiryProcessingTypeColor[processingTypeKey]}
+                  size="sm"
+                />
+              ) : null}
+            </Stack>
           </Stack>
           <Badge
             label={enquiryStatusLabel[enquiry.status]}

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Box, Stack } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ConfirmDialog, EmptyState, useToast } from '@/design-system/UIComponents'
+import { BaseCard, ConfirmDialog, EmptyState, useToast } from '@/design-system/UIComponents'
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { teamService } from '@/shared/services/teamService'
 import {
@@ -70,10 +70,34 @@ export function TeamDetailPage() {
         }
       >
         <Stack spacing={2}>
-          <TeamInformationSection team={currentTeam} />
-          <Box sx={{ bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: 2, p: 2.5 }}>
-            <TeamMembersTable teamId={currentTeam.id} />
-          </Box>
+          <BaseCard sx={{ p: 2.5 }}>
+            <Stack spacing={2}>
+              <Typography variant="overline" color="text.secondary">
+                Team overview
+              </Typography>
+              <TeamInformationSection team={currentTeam} />
+            </Stack>
+          </BaseCard>
+          <BaseCard sx={{ p: 2.5 }}>
+            <Stack spacing={2}>
+              <Typography variant="overline" color="text.secondary">
+                Members
+              </Typography>
+              <Box>
+                <TeamMembersTable teamId={currentTeam.id} />
+              </Box>
+            </Stack>
+          </BaseCard>
+          <BaseCard sx={{ p: 2.5 }}>
+            <Stack spacing={1}>
+              <Typography variant="overline" color="text.secondary">
+                Activity
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Last updated by {currentTeam.updatedBy}. Changes are tracked in team membership and status history.
+              </Typography>
+            </Stack>
+          </BaseCard>
         </Stack>
       </AdminDetailShell>
 

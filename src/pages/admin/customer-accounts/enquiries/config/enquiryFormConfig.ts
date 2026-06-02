@@ -1,4 +1,6 @@
-import type { EnquiryProcessingType, EnquirySource } from '@/shared/types/enquiry'
+import type { EnquiryCustomerType, EnquiryProcessingType, EnquirySource } from '@/shared/types/enquiry'
+
+type BadgeColor = 'neutral' | 'info' | 'warning' | 'success' | 'error'
 
 export const enquiryProcessingTypeLabel: Record<EnquiryProcessingType, string> = {
   standard: 'Standard',
@@ -44,3 +46,24 @@ export const enquiryCustomerTypeOptions = [
   { label: 'Corporate', value: 'corporate' },
   { label: 'Marine', value: 'marine' },
 ]
+
+export const enquiryCustomerTypeColor: Record<EnquiryCustomerType, BadgeColor> = {
+  retail: 'info',
+  corporate: 'success',
+  marine: 'warning',
+}
+
+export const enquiryInquirySourceColor: Record<EnquirySource, BadgeColor> = {
+  website: 'info',
+  referral: 'warning',
+  existing_customer: 'success',
+  email: 'neutral',
+  call: 'neutral',
+  sales_team: 'error',
+}
+
+export const enquiryProcessingTypeColor: Record<EnquiryProcessingType, BadgeColor> = {
+  standard: 'neutral',
+  express: 'info',
+  urgent: 'error',
+}

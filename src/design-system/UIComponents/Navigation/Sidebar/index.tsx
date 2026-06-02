@@ -83,7 +83,7 @@ function renderNavConfig(
             height: '1px',
             mx: 2,
             my: 1,
-            backgroundColor: (t) => t.foundation.navigation.border,
+            backgroundColor: (t) => alpha(t.foundation.navigation.border, 0.5),
           }}
         />
       )

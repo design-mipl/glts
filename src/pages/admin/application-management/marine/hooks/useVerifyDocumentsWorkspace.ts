@@ -108,7 +108,7 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
   )
 
   const updateTravelerDoc = useCallback(
-    (documentId: string, status: ApplicantDocumentStatus) => {
+    (documentId: string, status: ApplicantDocumentStatus, comment?: string) => {
       if (!applicationId || !selectedRow) return
       setWorkspace(
         applicationVerificationService.updateTravelerDocumentStatus(
@@ -116,6 +116,7 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
           selectedRow.id,
           documentId,
           status,
+          comment,
         ),
       )
     },
@@ -123,10 +124,15 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
   )
 
   const updateGlobalDoc = useCallback(
-    (documentId: string, status: ApplicantDocumentStatus) => {
+    (documentId: string, status: ApplicantDocumentStatus, comment?: string) => {
       if (!applicationId) return
       setWorkspace(
-        applicationVerificationService.updateGlobalDocumentStatus(applicationId, documentId, status),
+        applicationVerificationService.updateGlobalDocumentStatus(
+          applicationId,
+          documentId,
+          status,
+          comment,
+        ),
       )
     },
     [applicationId],

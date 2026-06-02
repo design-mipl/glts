@@ -1,7 +1,16 @@
+import { useMemo, useState } from 'react'
 import { Box, CircularProgress, Stack } from '@mui/material'
 import { FileText } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button, EmptyState, useToast } from '@/design-system/UIComponents'
+import {
+  Button,
+  EmptyState,
+  FormField,
+  Modal,
+  Textarea,
+  useToast,
+} from '@/design-system/UIComponents'
+import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
 import { AdminRecordPageChrome } from '@/pages/admin/components/AdminRecordPageChrome'
 import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { useVerifyDocumentsWorkspace } from '../hooks/useVerifyDocumentsWorkspace'
@@ -18,6 +27,13 @@ export function MarineVerifyDocumentsPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
   const navigate = useNavigate()
   const { showToast } = useToast()
+  const [reviewDialog, setReviewDialog] = useState<{
+    scope: 'traveler' | 'global'
+    documentId: string
+    documentName: string
+    status: Extract<ApplicantDocumentStatus, 'rejected' | 'needs_review'>
+  } | null>(null)
+  const [reviewComment, setReviewComment] = useState('')
 
   const workspace = useVerifyDocumentsWorkspace(applicationId)
   const {
@@ -93,6 +109,48 @@ export function MarineVerifyDocumentsPage() {
     navigate(listingPath)
   }
 
+  const isReviewCommentValid = reviewComment.trim().length > 0
+  const reviewActionLabel = reviewDialog?.status === 'rejected' ? 'Reject' : 'Request re-upload'
+  const reviewDialogTitle = useMemo(() => {
+    if (!reviewDialog) return ''
+    return `${reviewActionLabel} document`
+  }, [reviewActionLabel, reviewDialog])
+
+  const openReviewDialog = (
+    scope: 'traveler' | 'global',
+    document: ApplicantDocumentItem,
+    status: Extract<ApplicantDocumentStatus, 'rejected' | 'needs_review'>,
+  ) => {
+    setReviewDialog({
+      scope,
+      documentId: document.documentId,
+      documentName: document.name,
+      status,
+    })
+    setReviewComment('')
+  }
+
+  const closeReviewDialog = () => {
+    setReviewDialog(null)
+    setReviewComment('')
+  }
+
+  const submitReviewAction = () => {
+    if (!reviewDialog || !isReviewCommentValid) return
+    const comment = reviewComment.trim()
+    if (reviewDialog.scope === 'traveler') {
+      updateTravelerDoc(reviewDialog.documentId, reviewDialog.status, comment)
+    } else {
+      updateGlobalDoc(reviewDialog.documentId, reviewDialog.status, comment)
+    }
+    showToast({
+      title: `${reviewActionLabel} saved`,
+      description: `Comment added for ${reviewDialog.documentName}.`,
+      variant: 'success',
+    })
+    closeReviewDialog()
+  }
+
   return (
     <AdminRecordPageChrome
       breadcrumbs={[
@@ -127,8 +185,8 @@ export function MarineVerifyDocumentsPage() {
               documents={selectedRow.documents}
               onPreview={documentId => handlePreview(documentId, 'traveler')}
               onVerify={documentId => updateTravelerDoc(documentId, 'verified')}
-              onReject={documentId => updateTravelerDoc(documentId, 'rejected')}
-              onRequestReupload={documentId => updateTravelerDoc(documentId, 'needs_review')}
+              onReject={document => openReviewDialog('traveler', document, 'rejected')}
+              onRequestReupload={document => openReviewDialog('traveler', document, 'needs_review')}
             />
           </>
         ) : null}
@@ -137,8 +195,8 @@ export function MarineVerifyDocumentsPage() {
           documents={globalDocuments}
           onPreview={documentId => handlePreview(documentId, 'global')}
           onVerify={documentId => updateGlobalDoc(documentId, 'verified')}
-          onReject={documentId => updateGlobalDoc(documentId, 'rejected')}
-          onRequestReupload={documentId => updateGlobalDoc(documentId, 'needs_review')}
+          onReject={document => openReviewDialog('global', document, 'rejected')}
+          onRequestReupload={document => openReviewDialog('global', document, 'needs_review')}
         />
 
         <AdminFullPageFormFooter
@@ -159,6 +217,37 @@ export function MarineVerifyDocumentsPage() {
           }
         />
       </Stack>
+
+      <Modal
+        open={Boolean(reviewDialog)}
+        onClose={closeReviewDialog}
+        title={reviewDialogTitle}
+        subtitle={
+          reviewDialog
+            ? `${reviewDialog.documentName} · ${reviewDialog.scope === 'traveler' ? 'Traveler document' : 'Global document'}`
+            : undefined
+        }
+        footer={
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Button label="Cancel" variant="outlined" onClick={closeReviewDialog} />
+            <Button label={reviewActionLabel} color="error" onClick={submitReviewAction} disabled={!isReviewCommentValid} />
+          </Stack>
+        }
+      >
+        <FormField
+          label="Comment"
+          required
+          helperText="Comment is required and will be visible in the customer portal."
+        >
+          <Textarea
+            value={reviewComment}
+            onChange={setReviewComment}
+            placeholder="Add clear instruction for the customer"
+            minRows={4}
+            fullWidth
+          />
+        </FormField>
+      </Modal>
     </AdminRecordPageChrome>
   )
 }
