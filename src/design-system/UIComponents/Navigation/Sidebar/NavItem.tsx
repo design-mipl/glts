@@ -66,18 +66,20 @@ export default function NavItem({
     opacity: disabled ? 0.4 : 1,
     textDecoration: 'none',
     color: active
-      ? navigation.activeText
+      ? (isSubItem ? theme.palette.primary.main : navigation.activeText)
       : navigation.textSecondary,
-    bgcolor: active ? navigation.activeBg : 'transparent',
+    bgcolor: active ? (isSubItem ? navigation.hover : navigation.activeBg) : 'transparent',
     fontWeight: active ? 600 : (isSubItem ? 400 : 450),
     transition: 'background-color 150ms ease, color 150ms ease',
     my: '1px',
     userSelect: 'none' as const,
     '&:hover': disabled ? {} : {
       bgcolor: active
-        ? navigation.activeBg
+        ? (isSubItem ? navigation.hover : navigation.activeBg)
         : navigation.hover,
-      color: active ? navigation.activeText : navigation.textPrimary,
+      color: active
+        ? (isSubItem ? theme.palette.primary.main : navigation.activeText)
+        : navigation.textPrimary,
     },
     ...(!isSubItem && { width: '100%' }),
     minWidth: 0,
@@ -104,7 +106,9 @@ export default function NavItem({
           width: active ? 6 : 4,
           height: active ? 6 : 4,
           borderRadius: '50%',
-          bgcolor: active ? navigation.activeText : navigation.textMuted,
+          bgcolor: active
+            ? (isSubItem ? theme.palette.primary.main : navigation.activeText)
+            : navigation.textMuted,
         }}
       />
     </Box>

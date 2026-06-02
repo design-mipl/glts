@@ -13,19 +13,14 @@ import { Button, ConfirmDialog, Pagination, useToast } from '@/design-system/UIC
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
-import { AgreementAdvancedFilters } from '../components/AgreementAdvancedFilters'
 import { AgreementKpiRow } from '../components/AgreementKpiRow'
 import { buildAgreementColumns } from '../components/AgreementTableColumns'
 import {
   downloadAgreementCsv,
   getAgreementCellValue,
   getAgreementEmptyState,
-  hasActiveAgreementFilters,
-  INITIAL_AGREEMENT_ADVANCED_FILTERS,
   mapAgreementRowsToGridItems,
-  matchesAgreementAdvancedFilters,
   matchesAgreementSearch,
-  type AgreementAdvancedFilterState,
 } from '../utils/agreementListingUtils'
 
 export function AgreementListingPage() {
@@ -37,10 +32,6 @@ export function AgreementListingPage() {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [rejectTarget, setRejectTarget] = useState<CommercialAgreement>()
   const [rejectOpen, setRejectOpen] = useState(false)
-  const [advancedFilters, setAdvancedFilters] = useState<AgreementAdvancedFilterState>(
-    INITIAL_AGREEMENT_ADVANCED_FILTERS,
-  )
-
   const loadRows = useCallback(async () => {
     setLoading(true)
     setRows(commercialAgreementService.list())
@@ -51,13 +42,8 @@ export function AgreementListingPage() {
     void loadRows()
   }, [loadRows])
 
-  const filteredRows = useMemo(
-    () => rows.filter((row) => matchesAgreementAdvancedFilters(row, advancedFilters)),
-    [rows, advancedFilters],
-  )
-
   const listing = useCustomerListing({
-    rows: filteredRows,
+    rows,
     getCellValue: getAgreementCellValue,
     searchMatch: matchesAgreementSearch,
     initialPageSize: 10,
@@ -93,11 +79,6 @@ export function AgreementListingPage() {
   const handleCreate = useCallback(() => {
     navigate('/admin/customer-accounts/agreements/new')
   }, [navigate])
-
-  const handleClearFilters = useCallback(() => {
-    setAdvancedFilters(INITIAL_AGREEMENT_ADVANCED_FILTERS)
-    listing.setTableState((state) => ({ ...state, page: 0 }))
-  }, [listing])
 
   const emptyState = useMemo(() => {
     const base = getAgreementEmptyState(Boolean(listing.tableState.searchQuery))
@@ -161,17 +142,6 @@ export function AgreementListingPage() {
         }
         listingContent={
           <>
-            <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-              <AgreementAdvancedFilters
-                filters={advancedFilters}
-                onFiltersChange={(next) => {
-                  setAdvancedFilters(next)
-                  listing.setTableState((state) => ({ ...state, page: 0 }))
-                }}
-                onClearFilters={handleClearFilters}
-                hasActiveFilters={hasActiveAgreementFilters(advancedFilters)}
-              />
-            </Box>
             {viewMode === 'table' ? (
               <AdminListingTable
                 columns={columns}
