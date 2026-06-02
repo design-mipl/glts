@@ -11,7 +11,9 @@ export const FORM_CONTROL = {
   helperFontSize: '12px',
   borderRadius: '10px',
   paddingX: '12px',
+  paddingY: '8px',
   borderWidth: '1px',
+  textareaLineHeight: 1.6,
 } as const
 
 /** Text-button padding: horizontal = 2 × vertical (not used for IconButton). */
@@ -105,6 +107,43 @@ export function autocompleteSlotProps(theme: Theme) {
     },
     listbox: {
       sx: { maxHeight: 280, py: 0.5 },
+    },
+  }
+}
+
+/** Select dropdown — portaled above listing cards and scroll regions */
+export function selectMenuSlotProps(theme: Theme) {
+  return {
+    disableScrollLock: true,
+    slotProps: {
+      paper: {
+        sx: {
+          mt: 0.5,
+          borderRadius: FORM_CONTROL.borderRadius,
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: theme.shadows[4],
+          zIndex: theme.zIndex.modal,
+          '& .MuiMenuItem-root': {
+            fontSize: FORM_CONTROL.fontSize,
+            py: 1,
+            px: 1.5,
+            borderRadius: '4px',
+            mx: 0.5,
+            minHeight: 36,
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.06),
+            },
+            '&.Mui-selected': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              fontWeight: 500,
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.14),
+              },
+            },
+          },
+        },
+      },
     },
   }
 }
@@ -272,6 +311,87 @@ export function outlinedFieldSx(theme: Theme, height: string) {
         color: theme.palette.text.disabled,
         opacity: 1,
       },
+    },
+    '& .MuiFormHelperText-root': {
+      fontSize: FORM_CONTROL.helperFontSize,
+      mt: '4px',
+      mx: 0,
+    },
+  }
+}
+
+/** Theme-level multiline exemptions — keep in sync with textareaOutlinedFieldSx */
+export const multilineOutlinedInputThemeOverrides = {
+  '& .MuiOutlinedInput-root.MuiInputBase-multiline': {
+    minHeight: 'unset !important',
+    height: 'auto !important',
+    alignItems: 'flex-start',
+  },
+  '& .MuiOutlinedInput-inputMultiline': {
+    padding: `${FORM_CONTROL.paddingY} ${FORM_CONTROL.paddingX}`,
+    fontSize: FORM_CONTROL.fontSize,
+    lineHeight: FORM_CONTROL.textareaLineHeight,
+  },
+} as const
+
+export const multilineOutlinedInputRootOverrides = {
+  '&.MuiInputBase-multiline': {
+    minHeight: 'unset !important',
+    height: 'auto !important',
+    alignItems: 'flex-start',
+  },
+} as const
+
+/** Outlined multiline field — DS Textarea wrapper (no fixed 34px height) */
+export function textareaOutlinedFieldSx(theme: Theme) {
+  const borderDefault = formControlBorderDefault(theme)
+  const borderHover = formControlBorderHover(theme)
+
+  return {
+    ...multilineOutlinedInputThemeOverrides,
+    '& .MuiInputLabel-root': {
+      fontSize: FORM_CONTROL.labelFontSize,
+      fontWeight: FORM_CONTROL.labelFontWeight,
+      color: theme.palette.text.primary,
+      '&.Mui-focused': {
+        color: theme.palette.primary.main,
+      },
+    },
+    '& .MuiOutlinedInput-root, & .MuiInputBase-root': {
+      height: 'auto',
+      minHeight: 'unset',
+      fontSize: FORM_CONTROL.fontSize,
+      borderRadius: FORM_CONTROL.borderRadius,
+      backgroundColor: formControlFieldBackground(theme),
+      transition: 'border-color 0.2s ease, background-color 0.2s ease',
+      alignItems: 'flex-start',
+    },
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: borderDefault,
+      borderWidth: FORM_CONTROL.borderWidth,
+      borderRadius: FORM_CONTROL.borderRadius,
+    },
+    '& .MuiOutlinedInput-root:hover:not(.Mui-disabled):not(.Mui-focused) .MuiOutlinedInput-notchedOutline, & .MuiInputBase-root:hover:not(.Mui-disabled):not(.Mui-focused) .MuiOutlinedInput-notchedOutline':
+      {
+        borderColor: borderHover,
+      },
+    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline, & .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline':
+      {
+        borderColor: theme.palette.primary.main,
+        borderWidth: FORM_CONTROL.borderWidth,
+      },
+    '& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline, & .MuiInputBase-root.Mui-error .MuiOutlinedInput-notchedOutline':
+      {
+        borderColor: theme.palette.error.main,
+        borderWidth: FORM_CONTROL.borderWidth,
+      },
+    '& .MuiInputBase-inputMultiline': {
+      lineHeight: FORM_CONTROL.textareaLineHeight,
+      fontFamily: 'inherit',
+      resize: 'vertical',
+    },
+    '& .MuiOutlinedInput-root.Mui-disabled': {
+      backgroundColor: theme.palette.action.disabledBackground,
     },
     '& .MuiFormHelperText-root': {
       fontSize: FORM_CONTROL.helperFontSize,

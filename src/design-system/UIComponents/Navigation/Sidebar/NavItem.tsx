@@ -2,7 +2,16 @@ import { Box, Typography, Tooltip } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import { tokens } from '../../../tokens'
+import { BORDER_RADIUS, tokens } from '../../../tokens'
+
+/** Matches NavGroup expanded header columns (icon · label · chevron) */
+const NAV_ICON_COLUMN_PX = 16
+const NAV_CHEVRON_COLUMN_PX = 14
+const NAV_ITEM_GAP_PX = 8
+const NAV_ITEM_MX_PX = 8
+const NAV_ITEM_PX_PX = 10
+/** Extra inset so sub-items read as children of the expanded group row */
+export const NAV_SUB_ITEM_INDENT_PX = 10
 
 export interface NavItemProps {
   label: string
@@ -36,13 +45,23 @@ export default function NavItem({
   const fontWeight = active ? 600 : isSubItem ? 400 : 450
 
   const rootSx = {
-    display: 'flex',
+    display: isSubItem ? 'grid' : 'flex',
+    gridTemplateColumns: isSubItem
+      ? `${NAV_ICON_COLUMN_PX}px minmax(0, 1fr) ${NAV_CHEVRON_COLUMN_PX}px`
+      : undefined,
+    columnGap: isSubItem ? `${NAV_ITEM_GAP_PX}px` : undefined,
     alignItems: 'center',
-    gap: '8px',
-    px: '10px',
-    mx: '8px',
+    gap: isSubItem ? undefined : `${NAV_ITEM_GAP_PX}px`,
+    px: `${NAV_ITEM_PX_PX}px`,
+    ...(!isSubItem && { mx: `${NAV_ITEM_MX_PX}px` }),
     height,
-    borderRadius: tokens.borderRadius.md,
+    borderRadius: isSubItem ? BORDER_RADIUS.sm : tokens.borderRadius.md,
+    ...(isSubItem && {
+      ml: `${NAV_ITEM_MX_PX + NAV_SUB_ITEM_INDENT_PX}px`,
+      mr: `${NAV_ITEM_MX_PX}px`,
+      width: `calc(100% - ${NAV_ITEM_MX_PX * 2 + NAV_SUB_ITEM_INDENT_PX}px)`,
+      maxWidth: `calc(100% - ${NAV_ITEM_MX_PX * 2 + NAV_SUB_ITEM_INDENT_PX}px)`,
+    }),
     cursor: disabled ? 'default' : 'pointer',
     opacity: disabled ? 0.4 : 1,
     textDecoration: 'none',
@@ -60,24 +79,35 @@ export default function NavItem({
         : navigation.hover,
       color: active ? navigation.activeText : navigation.textPrimary,
     },
-    width: '100%',
+    ...(!isSubItem && { width: '100%' }),
     minWidth: 0,
     boxSizing: 'border-box' as const,
   }
 
-  // Sub-item dot indicator
+  /** Reserves the same trailing space as NavGroup chevron + gap */
+  const chevronSpacerEl = isSubItem ? <Box aria-hidden sx={{ width: NAV_CHEVRON_COLUMN_PX, flexShrink: 0 }} /> : null
+
+  // Sub-item dot — centered in the same 16px column as the parent group icon
   const dotEl = isSubItem ? (
     <Box
       sx={{
-        width: 4,
-        height: 4,
-        borderRadius: '50%',
-        bgcolor: active ? navigation.activeText : navigation.textMuted,
+        width: NAV_ICON_COLUMN_PX,
+        height: NAV_ICON_COLUMN_PX,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         flexShrink: 0,
-        ml: '8px',
-        mr: '12px',
       }}
-    />
+    >
+      <Box
+        sx={{
+          width: active ? 6 : 4,
+          height: active ? 6 : 4,
+          borderRadius: '50%',
+          bgcolor: active ? navigation.activeText : navigation.textMuted,
+        }}
+      />
+    </Box>
   ) : null
 
   // Icon wrapper (top-level items only)
@@ -190,6 +220,7 @@ export default function NavItem({
         </>
       )}
       {labelEl}
+      {chevronSpacerEl}
     </Box>
   )
 
@@ -218,6 +249,7 @@ export default function NavItem({
         </>
       )}
       {labelEl}
+      {chevronSpacerEl}
     </Box>
   ) : inner
 

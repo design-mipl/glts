@@ -1,6 +1,7 @@
 import { Box, Typography, Grid, Chip, Button, Breadcrumbs, Link, Card } from '@mui/material'
 import { useParams } from 'react-router-dom'
 import { useState } from 'react'
+import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
 import { getCountryById, getCountryHeroImageUrl } from '@/shared/services/visaService'
 import { PricingCard } from './components/PricingCard'
 import { TabsNavigation } from './components/TabsNavigation'
@@ -8,7 +9,7 @@ import { RequirementsSection } from './components/RequirementsSection'
 import { OftenAppliedWithSection } from './components/OftenAppliedWithSection'
 import { ComingSoonPage } from '@/shared/components/ComingSoonPage'
 import { PublicContainer } from '../../components/PublicContainer'
-import { publicLayout, usePublicBrandColors, getMarketingPrimaryButtonSx } from '@/shared/theme/publicBrand'
+import { publicLayout, publicFonts, usePublicBrandColors, getMarketingPrimaryButtonSx } from '@/shared/theme/publicBrand'
 import { ChevronRight, Clock, MapPin } from 'lucide-react'
 
 const timelineSteps = [
@@ -35,13 +36,13 @@ export function CountryDetailPage() {
       <Box sx={{ backgroundColor: colors.surface, borderBottom: `1px solid ${colors.border}`, py: 2 }}>
         <PublicContainer>
           <Breadcrumbs separator={<ChevronRight size={12} color="#9CA3AF" />}>
-            <Link href="/" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: '#10B981' } }}>
+            <Link href="/" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: colors.greenBright } }}>
               Home
             </Link>
-            <Link href="/countries" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: '#10B981' } }}>
+            <Link href="/countries" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: colors.greenBright } }}>
               Destinations
             </Link>
-            <Link href="/countries" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: '#10B981' } }}>
+            <Link href="/countries" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: colors.greenBright } }}>
               Europe
             </Link>
             <Typography sx={{ fontSize: '13px', color: '#001F3F', fontWeight: 600 }}>
@@ -71,7 +72,7 @@ export function CountryDetailPage() {
               background: `linear-gradient(145deg, ${colors.navyLight} 0%, ${colors.navy} 100%)`,
             }}
           >
-            <Typography sx={{ fontSize: { xs: 96, md: 120 }, lineHeight: 1 }}>{country.flags}</Typography>
+            <CountryFlagVisual flag={country.flags} size={96} />
           </Box>
         ) : (
           <Box
@@ -123,7 +124,7 @@ export function CountryDetailPage() {
                     fontSize: { xs: '28px', md: '40px' },
                     lineHeight: 1.15,
                     mb: 0.5,
-                    fontFamily: '"DM Serif Display", Georgia, serif',
+                    fontFamily: publicFonts.heading,
                   }}
                 >
                   {country.name} Visa for Indians
@@ -160,7 +161,7 @@ export function CountryDetailPage() {
                       width: 28,
                       height: 28,
                       borderRadius: '50%',
-                      backgroundColor: '#10B981',
+                      backgroundColor: colors.greenBright,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -308,8 +309,8 @@ export function CountryDetailPage() {
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Clock size={13} color="#10B981" />
-                  <Typography sx={{ fontSize: '13px', color: '#10B981', fontWeight: 600 }}>
+                  <Clock size={13} color={colors.greenBright} />
+                  <Typography sx={{ fontSize: '13px', color: colors.greenBright, fontWeight: 600 }}>
                     Next slot · Mar 14 · 3 slots left
                   </Typography>
                 </Box>

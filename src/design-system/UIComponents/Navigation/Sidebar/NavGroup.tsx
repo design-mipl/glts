@@ -212,7 +212,7 @@ export default function NavGroup({
         </Box>
       </Box>
       <Collapse in={expanded} timeout={200}>
-        {children}
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>{children}</Box>
       </Collapse>
     </Box>
   )

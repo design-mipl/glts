@@ -1,206 +1,282 @@
-import {
-  Box,
-  IconButton,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material'
+import { useMemo, useState } from 'react'
+import { Box, IconButton, Stack, Typography } from '@mui/material'
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react'
-import { FormField, Input, Select, Toggle } from '@/design-system/UIComponents'
+import { Link as RouterLink } from 'react-router-dom'
+import { FormField, Select, Textarea, Toggle } from '@/design-system/UIComponents'
 import { documentMasterService } from '@/shared/services/documentMasterService'
-import type { CountryDocumentChecklistItem, CountryVisaType } from '@/shared/types/countryMaster'
+import type {
+  BusinessSegment,
+  CountryDocumentChecklistItem,
+  CountryMasterFormData,
+  CountryVisaType,
+} from '@/shared/types/countryMaster'
+import { SEGMENT_LABELS } from '../config/countrySegmentConfig'
+import {
+  checklistItemFromDocumentMaster,
+  mergeVisaTypeChecklistRows,
+  resolveChecklistItemDescription,
+  resolveDocumentMasterDescription,
+  resolveDocumentMasterLabel,
+  type CountryDocumentChecklistRow,
+  type CountryDocumentChecklistScope,
+} from '../utils/countryChecklistUtils'
 
-interface CountryChecklistTableProps {
+const ROW_GRID = 'minmax(0, 1fr) 72px 80px 88px'
+
+interface CountryVisaTypeDocumentTableProps {
   visaType: CountryVisaType
-  onChange: (next: CountryVisaType) => void
+  commonDocuments: CountryDocumentChecklistItem[]
+  onCommonDocumentsChange: (documents: CountryDocumentChecklistItem[]) => void
+  onVisaTypeChange: (next: CountryVisaType) => void
 }
 
-function newChecklistItem(documentId: string, name: string, sortOrder: number): CountryDocumentChecklistItem {
-  return {
-    documentId,
-    name,
-    mandatory: false,
-    ocrEnabled: false,
-    sortOrder,
-    validationRule: '',
-    remarks: '',
+function reindex(items: CountryDocumentChecklistItem[]): CountryDocumentChecklistItem[] {
+  return items.map((item, index) => ({ ...item, sortOrder: index }))
+}
+
+export function CountryVisaTypeDocumentTable({
+  visaType,
+  commonDocuments,
+  onCommonDocumentsChange,
+  onVisaTypeChange,
+}: CountryVisaTypeDocumentTableProps) {
+  const [pickerKey, setPickerKey] = useState(0)
+  const activeDocuments = documentMasterService
+    .list({ status: 'active' })
+    .sort((a, b) => a.documentType.localeCompare(b.documentType))
+
+  const rows = mergeVisaTypeChecklistRows(commonDocuments, visaType.applicationDocuments)
+  const mappedIds = useMemo(() => new Set(rows.map((r) => r.documentId)), [rows])
+
+  const documentOptions = useMemo(
+    () =>
+      activeDocuments.map((doc) => ({
+        value: doc.id,
+        label: doc.documentType,
+        description: doc.description,
+        disabled: mappedIds.has(doc.id),
+      })),
+    [activeDocuments, mappedIds],
+  )
+  const hasAddableDocument = documentOptions.some((opt) => !opt.disabled)
+
+  const updateScopeList = (
+    scope: CountryDocumentChecklistScope,
+    updater: (items: CountryDocumentChecklistItem[]) => CountryDocumentChecklistItem[],
+  ) => {
+    if (scope === 'common') {
+      onCommonDocumentsChange(updater(commonDocuments))
+      return
+    }
+    onVisaTypeChange({ ...visaType, applicationDocuments: updater(visaType.applicationDocuments) })
   }
-}
 
-export function CountryChecklistTable({ visaType, onChange }: CountryChecklistTableProps) {
-  const documents = documentMasterService.list({ status: 'active' })
-  const sorted = [...visaType.checklist].sort((a, b) => a.sortOrder - b.sortOrder)
+  const patchRow = (documentId: string, scope: CountryDocumentChecklistScope, patch: Partial<CountryDocumentChecklistItem>) => {
+    updateScopeList(scope, (items) =>
+      items.map((item) => (item.documentId === documentId ? { ...item, ...patch } : item)),
+    )
+  }
 
-  const updateChecklist = (checklist: CountryDocumentChecklistItem[]) => {
-    onChange({ ...visaType, checklist })
+  const removeRow = (documentId: string, scope: CountryDocumentChecklistScope) => {
+    updateScopeList(scope, (items) => items.filter((item) => item.documentId !== documentId))
+  }
+
+  const setRowScope = (documentId: string, fromScope: CountryDocumentChecklistScope, toScope: CountryDocumentChecklistScope) => {
+    if (fromScope === toScope) return
+    const source = fromScope === 'common' ? commonDocuments : visaType.applicationDocuments
+    const item = source.find((entry) => entry.documentId === documentId)
+    if (!item) return
+
+    if (fromScope === 'common') {
+      onCommonDocumentsChange(reindex(commonDocuments.filter((entry) => entry.documentId !== documentId)))
+      onVisaTypeChange({
+        ...visaType,
+        applicationDocuments: reindex([...visaType.applicationDocuments, item]),
+      })
+      return
+    }
+
+    onVisaTypeChange({
+      ...visaType,
+      applicationDocuments: reindex(
+        visaType.applicationDocuments.filter((entry) => entry.documentId !== documentId),
+      ),
+    })
+    onCommonDocumentsChange(reindex([...commonDocuments, item]))
   }
 
   const addDocument = (documentId: string) => {
-    const doc = documents.find((d) => d.id === documentId)
-    if (!doc) return
-    if (visaType.checklist.some((c) => c.documentId === documentId)) return
-    updateChecklist([
-      ...visaType.checklist,
-      newChecklistItem(doc.id, doc.documentType, visaType.checklist.length),
-    ])
+    if (mappedIds.has(documentId)) return
+    onVisaTypeChange({
+      ...visaType,
+      applicationDocuments: reindex([
+        ...visaType.applicationDocuments,
+        checklistItemFromDocumentMaster(documentId, visaType.applicationDocuments.length),
+      ]),
+    })
+    setPickerKey((k) => k + 1)
   }
 
-  const moveItem = (index: number, direction: -1 | 1) => {
-    const next = [...sorted]
+  const moveRow = (row: CountryDocumentChecklistRow, direction: -1 | 1) => {
+    const list = row.scope === 'common' ? [...commonDocuments] : [...visaType.applicationDocuments]
+    const sorted = [...list].sort((a, b) => a.sortOrder - b.sortOrder)
+    const index = sorted.findIndex((item) => item.documentId === row.documentId)
     const target = index + direction
-    if (target < 0 || target >= next.length) return
+    if (index < 0 || target < 0 || target >= sorted.length) return
+    const next = [...sorted]
     const temp = next[index]
     next[index] = next[target]
     next[target] = temp
-    updateChecklist(next.map((item, i) => ({ ...item, sortOrder: i })))
+    updateScopeList(row.scope, () => reindex(next))
   }
 
   return (
-    <Box>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mb: 2 }} alignItems="flex-end">
-        <FormField label="Add from Document Master" sx={{ flex: 1, minWidth: 200 }}>
-          <Select
-            value=""
-            placeholder="Select document…"
-            onChange={(value) => {
-              if (value) addDocument(String(value))
-            }}
-            options={[
-              ...documents
-                .filter((d) => !visaType.checklist.some((c) => c.documentId === d.id))
-                .map((d) => ({ value: d.id, label: d.documentType })),
-            ]}
-          />
-        </FormField>
-      </Stack>
+    <Stack spacing={1.5} sx={{ width: '100%' }}>
+      <FormField
+        label="Add from Document Master"
+        sx={{ width: '100%' }}
+        helperText={
+          activeDocuments.length === 0
+            ? 'No active documents in Document Master. Add documents there first.'
+            : !hasAddableDocument
+              ? 'All active documents are already mapped for this visa type.'
+              : 'Use Common for segment-wide documents; otherwise they apply to this visa type only.'
+        }
+      >
+        <Select
+          key={pickerKey}
+          value=""
+          placeholder="Select document…"
+          fullWidth
+          disabled={activeDocuments.length === 0 || !hasAddableDocument}
+          onChange={(value) => {
+            if (value) addDocument(String(value))
+          }}
+          options={documentOptions}
+        />
+      </FormField>
+      {activeDocuments.length === 0 ? (
+        <Typography variant="caption" color="text.secondary">
+          <RouterLink to="/admin/masters/documents">Open Document Master</RouterLink>
+        </Typography>
+      ) : null}
 
-      {sorted.length === 0 ? (
+      {rows.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           No documents mapped yet.
         </Typography>
       ) : (
-        <Box sx={{ overflowX: 'auto' }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Document</TableCell>
-                <TableCell width={90}>Mandatory</TableCell>
-                <TableCell width={70}>OCR</TableCell>
-                <TableCell>Validation rule</TableCell>
-                <TableCell>Remarks</TableCell>
-                <TableCell width={100} align="right">
-                  Order
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {sorted.map((item, index) => (
-                <TableRow key={item.documentId}>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600}>
-                      {item.name}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
+        <Box sx={{ width: '100%' }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: ROW_GRID,
+              gap: 1,
+              alignItems: 'center',
+              width: '100%',
+              py: 0.75,
+              px: 1,
+              mb: 0.5,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography variant="caption" fontWeight={600} color="text.secondary">
+              Document
+            </Typography>
+            <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textAlign: 'center' }}>
+              Common
+            </Typography>
+            <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textAlign: 'center' }}>
+              Mandatory
+            </Typography>
+            <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ textAlign: 'right' }}>
+              Actions
+            </Typography>
+          </Box>
+          {rows.map((row) => {
+            const scopeRows = rows.filter((r) => r.scope === row.scope)
+            const scopeIndex = scopeRows.findIndex((r) => r.documentId === row.documentId)
+            const masterHint = resolveDocumentMasterDescription(row.documentId)
+            const displayDescription = row.description?.trim()
+              ? row.description
+              : resolveChecklistItemDescription(row)
+
+            return (
+              <Box
+                key={`${row.scope}-${row.documentId}`}
+                sx={{ width: '100%', borderBottom: 1, borderColor: 'divider', py: 1.5 }}
+              >
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: ROW_GRID,
+                    gap: 1,
+                    alignItems: 'center',
+                    width: '100%',
+                    mb: 1,
+                  }}
+                >
+                  <Typography variant="body2" fontWeight={600}>
+                    {resolveDocumentMasterLabel(row.documentId)}
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <Toggle
-                      checked={item.mandatory}
+                      size="sm"
+                      checked={row.scope === 'common'}
                       onChange={(checked) =>
-                        updateChecklist(
-                          visaType.checklist.map((c) =>
-                            c.documentId === item.documentId ? { ...c, mandatory: checked } : c,
-                          ),
-                        )
+                        setRowScope(row.documentId, row.scope, checked ? 'common' : 'application')
                       }
                       label=""
                     />
-                  </TableCell>
-                  <TableCell>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <Toggle
-                      checked={item.ocrEnabled}
-                      onChange={(checked) =>
-                        updateChecklist(
-                          visaType.checklist.map((c) =>
-                            c.documentId === item.documentId ? { ...c, ocrEnabled: checked } : c,
-                          ),
-                        )
-                      }
+                      size="sm"
+                      checked={row.mandatory}
+                      onChange={(checked) => patchRow(row.documentId, row.scope, { mandatory: checked })}
                       label=""
                     />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={item.validationRule ?? ''}
-                      onChange={(value) =>
-                        updateChecklist(
-                          visaType.checklist.map((c) =>
-                            c.documentId === item.documentId
-                              ? { ...c, validationRule: value }
-                              : c,
-                          ),
-                        )
-                      }
-                      placeholder="e.g. Min 6 months validity"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={item.remarks ?? ''}
-                      onChange={(value) =>
-                        updateChecklist(
-                          visaType.checklist.map((c) =>
-                            c.documentId === item.documentId
-                              ? { ...c, remarks: value }
-                              : c,
-                          ),
-                        )
-                      }
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" justifyContent="flex-end">
-                      <IconButton
-                        size="small"
-                        disabled={index === 0}
-                        onClick={() => moveItem(index, -1)}
-                      >
-                        <ArrowUp size={14} />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        disabled={index === sorted.length - 1}
-                        onClick={() => moveItem(index, 1)}
-                      >
-                        <ArrowDown size={14} />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() =>
-                          updateChecklist(
-                            visaType.checklist.filter((c) => c.documentId !== item.documentId),
-                          )
-                        }
-                      >
-                        <Trash2 size={14} />
-                      </IconButton>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </Box>
+                  <Stack direction="row" justifyContent="flex-end" spacing={0.25}>
+                    <IconButton size="small" disabled={scopeIndex === 0} onClick={() => moveRow(row, -1)}>
+                      <ArrowUp size={14} />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      disabled={scopeIndex === scopeRows.length - 1}
+                      onClick={() => moveRow(row, 1)}
+                    >
+                      <ArrowDown size={14} />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => removeRow(row.documentId, row.scope)} color="error">
+                      <Trash2 size={14} />
+                    </IconButton>
+                  </Stack>
+                </Box>
+                <FormField label="Description" sx={{ width: '100%' }}>
+                  <Textarea
+                    value={displayDescription}
+                    onChange={(value) => patchRow(row.documentId, row.scope, { description: value })}
+                    placeholder={masterHint ?? 'Instructions for applicants'}
+                    autoResize
+                    minRows={2}
+                    maxRows={6}
+                    fullWidth
+                  />
+                </FormField>
+              </Box>
+            )
+          })}
         </Box>
       )}
-    </Box>
+    </Stack>
   )
 }
 
 interface CountryFormChecklistStepProps {
-  data: import('@/shared/types/countryMaster').CountryMasterFormData
-  onChange: (next: import('@/shared/types/countryMaster').CountryMasterFormData) => void
+  data: CountryMasterFormData
+  onChange: (next: CountryMasterFormData) => void
 }
 
 export function CountryFormChecklistStep({ data, onChange }: CountryFormChecklistStepProps) {
@@ -214,33 +290,56 @@ export function CountryFormChecklistStep({ data, onChange }: CountryFormChecklis
     )
   }
 
+  const updateSegmentCommon = (
+    segment: BusinessSegment,
+    commonDocuments: CountryDocumentChecklistItem[],
+  ) => {
+    onChange({
+      ...data,
+      segments: data.segments.map((s) =>
+        s.segment === segment ? { ...s, commonDocuments } : s,
+      ),
+    })
+  }
+
   return (
-    <Stack spacing={3}>
-      {enabledSegments.map((seg) =>
-        seg.visaTypes.map((vt) => (
-          <Box key={`${seg.segment}-${vt.id}`} sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
-              {vt.name || 'Unnamed visa type'} · {seg.segment}
-            </Typography>
-            <CountryChecklistTable
-              visaType={vt}
-              onChange={(next) => {
-                onChange({
-                  ...data,
-                  segments: data.segments.map((s) =>
-                    s.segment === seg.segment
-                      ? {
-                          ...s,
-                          visaTypes: s.visaTypes.map((v) => (v.id === vt.id ? next : v)),
-                        }
-                      : s,
-                  ),
-                })
-              }}
-            />
-          </Box>
-        )),
-      )}
+    <Stack spacing={3} sx={{ width: '100%' }}>
+      {enabledSegments.map((seg) => (
+        <Stack key={seg.segment} spacing={2} sx={{ width: '100%' }}>
+          <Typography variant="subtitle2" fontWeight={700}>
+            {SEGMENT_LABELS[seg.segment]}
+          </Typography>
+          <Stack spacing={2.5} sx={{ width: '100%' }}>
+            {seg.visaTypes.map((vt) => (
+              <Stack key={vt.id} spacing={1} sx={{ width: '100%' }}>
+                <Typography variant="body2" fontWeight={600}>
+                  {vt.name || 'Unnamed visa type'}
+                </Typography>
+                <CountryVisaTypeDocumentTable
+                  visaType={vt}
+                  commonDocuments={seg.commonDocuments}
+                  onCommonDocumentsChange={(commonDocuments) =>
+                    updateSegmentCommon(seg.segment, commonDocuments)
+                  }
+                  onVisaTypeChange={(next) => {
+                    onChange({
+                      ...data,
+                      segments: data.segments.map((s) =>
+                        s.segment === seg.segment
+                          ? {
+                              ...s,
+                              visaTypes: s.visaTypes.map((v) => (v.id === vt.id ? next : v)),
+                            }
+                          : s,
+                      ),
+                    })
+                  }}
+                />
+              </Stack>
+            ))}
+          </Stack>
+        </Stack>
+      ))}
     </Stack>
   )
 }

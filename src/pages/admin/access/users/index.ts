@@ -1,0 +1,5 @@
+export { UserListingPage } from './pages/UserListingPage'
+export { UserDetailPage } from './pages/UserDetailPage'
+export { CreateUserPage } from './pages/CreateUserPage'
+export { EditUserPage } from './pages/EditUserPage'
+export { UserPermissionConfigurationPage } from './pages/UserPermissionConfigurationPage'

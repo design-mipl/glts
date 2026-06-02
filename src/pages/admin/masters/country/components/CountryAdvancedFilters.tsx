@@ -1,10 +1,7 @@
 import { Stack } from '@mui/material'
 import { Select } from '@/design-system/UIComponents'
 import type { CountryMasterListFilters } from '@/shared/types/countryMaster'
-import {
-  COUNTRY_STATUS_OPTIONS,
-  PROCESSING_TYPE_OPTIONS,
-} from '../config/countryProcessingConfig'
+import { PROCESSING_TYPE_OPTIONS } from '../config/countryProcessingConfig'
 import { COUNTRY_LISTING_TABS } from '../config/countrySegmentConfig'
 
 export interface CountryAdvancedFiltersProps {
@@ -21,19 +18,6 @@ export function CountryAdvancedFilters({
 }: CountryAdvancedFiltersProps) {
   return (
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} useFlexGap flexWrap="wrap">
-      <Select
-        label="Status"
-        value={filters.status ?? 'all'}
-        onChange={(value) =>
-          onChange({
-            ...filters,
-            status: value as CountryMasterListFilters['status'],
-          })
-        }
-        options={[{ value: 'all', label: 'All statuses' }, ...COUNTRY_STATUS_OPTIONS]}
-        size="sm"
-        sx={{ minWidth: 160 }}
-      />
       <Select
         label="Processing type"
         value={filters.processingType ?? 'all'}

@@ -1,55 +1,173 @@
-import { useCallback, useState } from 'react'
-import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
+import { useCallback, useMemo, useState } from 'react'
+import type { AgreementEntity, CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
+import type { AgreementSectionId } from '@/shared/utils/commercialAgreementValidation'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
-import { companyMasterService } from '@/shared/services/companyMasterService'
-import { createEmptyAgreementFormData } from '@/shared/utils/commercialAgreementValidation'
+import {
+  createEmptyAgreementFormData,
+  validateAgreementForm,
+  validateAgreementSection,
+} from '@/shared/utils/commercialAgreementValidation'
+
+function generateEntityId() {
+  return `agr-ent-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+}
 
 export function useAgreementForm(initial?: CommercialAgreementFormData) {
-  const [formData, setFormData] = useState<CommercialAgreementFormData>(
+  const [formData, setFormDataState] = useState<CommercialAgreementFormData>(
     initial ?? createEmptyAgreementFormData(),
   )
   const [dirty, setDirty] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [touchedSections, setTouchedSections] = useState<Partial<Record<AgreementSectionId, boolean>>>({})
 
-  const setFormDataTracked = useCallback((next: CommercialAgreementFormData | ((prev: CommercialAgreementFormData) => CommercialAgreementFormData)) => {
-    setFormData(next)
-    setDirty(true)
-  }, [])
+  const setFormData = useCallback(
+    (next: CommercialAgreementFormData | ((prev: CommercialAgreementFormData) => CommercialAgreementFormData)) => {
+      setFormDataState(next)
+      setDirty(true)
+    },
+    [],
+  )
+
+  const isValid = useMemo(() => Object.keys(errors).length === 0, [errors])
 
   const loadFromAgreement = useCallback((agreementId: string) => {
     const agreement = commercialAgreementService.getById(agreementId)
     if (agreement) {
-      setFormData(commercialAgreementService.agreementToFormData(agreement))
+      setFormDataState(commercialAgreementService.agreementToFormData(agreement))
       setDirty(false)
+      setErrors({})
+      setTouchedSections({})
     }
   }, [])
 
-  const hydrateCompanyFromSelection = useCallback((companyId: string) => {
-    const company = companyMasterService.getById(companyId)
-    if (!company) return
-    setFormDataTracked((prev) => ({
-      ...prev,
-      existingCompanyId: companyId,
-      company: {
-        companyName: company.companyName,
-        companyType: company.companyType,
-        industryType: company.industryType,
-        contactPersonName: company.contactPersonName,
-        contactNumber: company.contactNumber,
-        emailAddress: company.emailAddress,
-        companyAddress: company.companyAddress,
-        billingEntityName: company.billingEntityName,
-        billingAddress: company.billingAddress,
-        gstNumber: company.gstNumber,
-        panNumber: company.panNumber,
-      },
-    }))
-  }, [setFormDataTracked])
+  const touchSection = useCallback((sectionId: AgreementSectionId) => {
+    setTouchedSections((prev) => ({ ...prev, [sectionId]: true }))
+    const sectionErrors = validateAgreementSection(sectionId, formData)
+    setErrors((prev) => {
+      const next = { ...prev }
+      Object.keys(next).forEach((key) => {
+        if (key in sectionErrors || sectionId === 'companyInfo' || sectionId === 'customerSource') {
+          delete next[key]
+        }
+      })
+      return { ...next, ...sectionErrors }
+    })
+  }, [formData])
+
+  const validate = useCallback(() => {
+    const nextErrors = validateAgreementForm(formData)
+    setErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }, [formData])
+
+  const validateSection = useCallback(
+    (sectionId: AgreementSectionId) => {
+      const sectionErrors = validateAgreementSection(sectionId, formData)
+      setErrors((prev) => ({ ...prev, ...sectionErrors }))
+      return Object.keys(sectionErrors).length === 0
+    },
+    [formData],
+  )
+
+  const clearFieldError = useCallback((field: string) => {
+    setErrors((prev) => {
+      if (!prev[field]) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+  }, [])
+
+  const hydrateFromQuotation = useCallback(
+    (quotationId: string) => {
+      const patch = commercialAgreementService.hydrateFromQuotation(quotationId)
+      if (!patch) return
+      setFormData((prev) => ({
+        ...prev,
+        ...patch,
+        customerSourceMode: 'quotation',
+        referenceQuotationId: quotationId,
+      }))
+    },
+    [setFormData],
+  )
+
+  const hydrateFromExistingCustomer = useCallback(
+    (companyId: string) => {
+      const patch = commercialAgreementService.hydrateFromExistingCustomer(companyId)
+      if (!patch) return
+      setFormData((prev) => ({
+        ...prev,
+        ...patch,
+        customerSourceMode: 'existing',
+        existingCompanyId: companyId,
+      }))
+    },
+    [setFormData],
+  )
+
+  const addEntity = useCallback(
+    (entity?: Partial<AgreementEntity>) => {
+      const newEntity: AgreementEntity = {
+        id: generateEntityId(),
+        entityName: entity?.entityName ?? '',
+        billingAddress: entity?.billingAddress ?? '',
+        gstNumber: entity?.gstNumber ?? '',
+        contactPerson: entity?.contactPerson ?? '',
+        email: entity?.email ?? '',
+        phone: entity?.phone ?? '',
+        status: entity?.status ?? 'active',
+      }
+      setFormData((prev) => ({ ...prev, entities: [...prev.entities, newEntity] }))
+      return newEntity.id
+    },
+    [setFormData],
+  )
+
+  const updateEntity = useCallback(
+    (entityId: string, patch: Partial<AgreementEntity>) => {
+      setFormData((prev) => ({
+        ...prev,
+        entities: prev.entities.map((e) => (e.id === entityId ? { ...e, ...patch } : e)),
+      }))
+    },
+    [setFormData],
+  )
+
+  const removeEntity = useCallback(
+    (entityId: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        entities: prev.entities.filter((e) => e.id !== entityId),
+      }))
+    },
+    [setFormData],
+  )
+
+  const sectionComplete = useCallback(
+    (sectionId: AgreementSectionId) => {
+      return Object.keys(validateAgreementSection(sectionId, formData)).length === 0
+    },
+    [formData],
+  )
 
   return {
     formData,
-    setFormData: setFormDataTracked,
+    setFormData,
     dirty,
+    errors,
+    touchedSections,
+    isValid,
     loadFromAgreement,
-    hydrateCompanyFromSelection,
+    touchSection,
+    validate,
+    validateSection,
+    clearFieldError,
+    hydrateFromQuotation,
+    hydrateFromExistingCustomer,
+    addEntity,
+    updateEntity,
+    removeEntity,
+    sectionComplete,
   }
 }

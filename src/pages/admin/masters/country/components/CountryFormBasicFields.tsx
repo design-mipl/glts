@@ -2,14 +2,15 @@ import { FormField, Input, Select, Textarea, Toggle } from '@/design-system/UICo
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import type { CountryMasterFormData } from '@/shared/types/countryMaster'
 import {
-  COUNTRY_STATUS_OPTIONS,
   PROCESSING_TYPE_OPTIONS,
   VISA_CATEGORY_OPTIONS,
 } from '../config/countryProcessingConfig'
+import { CountryFormImageField } from './CountryFormImageField'
 
 interface CountryFormBasicFieldsProps {
   data: CountryMasterFormData
   onChange: (next: CountryMasterFormData) => void
+  /** Primary = country identity; portal = website/customer card presentation */
   variant?: 'primary' | 'portal'
 }
 
@@ -23,14 +24,16 @@ export function CountryFormBasicFields({
   if (variant === 'portal') {
     return (
       <>
-        <FormField label="Hero photo ID">
-          <Input
+        <AdminFullPageFormFieldSpan>
+          <CountryFormImageField
+            label="Hero photo"
             value={data.heroPhotoId}
             onChange={(value) => patch({ heroPhotoId: value })}
-            placeholder="e.g. china-hero"
-            fullWidth
+            helperText="Cover image for website and customer portal destination cards"
+            dropzoneTitle="Upload hero photo for destination cards"
+            dropzoneCaption="PNG, JPG, WebP, or SVG — up to 2 MB"
           />
-        </FormField>
+        </AdminFullPageFormFieldSpan>
         <FormField label="Cities">
           <Input
             value={data.cities}
@@ -43,6 +46,7 @@ export function CountryFormBasicFields({
           <Input
             value={data.processingTime}
             onChange={(value) => patch({ processingTime: value })}
+            placeholder="e.g. 5–7 business days"
             fullWidth
           />
         </FormField>
@@ -51,6 +55,7 @@ export function CountryFormBasicFields({
             type="number"
             value={String(data.price)}
             onChange={(value) => patch({ price: Number(value) || 0 })}
+            placeholder="0"
             fullWidth
           />
         </FormField>
@@ -59,21 +64,28 @@ export function CountryFormBasicFields({
             type="number"
             value={String(data.rating)}
             onChange={(value) => patch({ rating: Number(value) || 0 })}
+            placeholder="0"
             fullWidth
           />
         </FormField>
         <FormField label="Validity label">
-          <Input value={data.validity} onChange={(value) => patch({ validity: value })} fullWidth />
+          <Input
+            value={data.validity}
+            onChange={(value) => patch({ validity: value })}
+            placeholder="e.g. 90 days"
+            fullWidth
+          />
         </FormField>
         <FormField label="Visa category">
           <Select
             value={data.visaCategory}
             onChange={(value) => patch({ visaCategory: String(value) })}
+            placeholder="Select category"
             options={VISA_CATEGORY_OPTIONS.map((v) => ({ value: v, label: v }))}
             fullWidth
           />
         </FormField>
-        <FormField label="Fast minutes (optional)">
+        <FormField label="Fast minutes" optional>
           <Input
             type="number"
             value={data.fastMinutes != null ? String(data.fastMinutes) : ''}
@@ -82,6 +94,7 @@ export function CountryFormBasicFields({
                 fastMinutes: value ? Number(value) : undefined,
               })
             }
+            placeholder="Optional"
             fullWidth
           />
         </FormField>
@@ -97,6 +110,7 @@ export function CountryFormBasicFields({
             type="number"
             value={String(data.trendingPercent)}
             onChange={(value) => patch({ trendingPercent: Number(value) || 0 })}
+            placeholder="0"
             fullWidth
           />
         </FormField>
@@ -106,7 +120,7 @@ export function CountryFormBasicFields({
 
   return (
     <>
-      <FormField label="Country name">
+      <FormField label="Country name" required>
         <Input
           value={data.name}
           onChange={(value) => patch({ name: value })}
@@ -114,7 +128,7 @@ export function CountryFormBasicFields({
           fullWidth
         />
       </FormField>
-      <FormField label="Country code">
+      <FormField label="Country code" required>
         <Input
           value={data.code}
           onChange={(value) => patch({ code: value.toUpperCase() })}
@@ -122,14 +136,16 @@ export function CountryFormBasicFields({
           fullWidth
         />
       </FormField>
-      <FormField label="Country flag" helperText="Emoji or image URL">
-        <Input
+      <AdminFullPageFormFieldSpan>
+        <CountryFormImageField
+          label="Country flag"
           value={data.flag}
           onChange={(value) => patch({ flag: value })}
-          placeholder="🇨🇳"
-          fullWidth
+          helperText="Flag image for listings and destination cards"
+          dropzoneTitle="Upload flag image"
+          dropzoneCaption="PNG, JPG, WebP, or SVG — up to 2 MB"
         />
-      </FormField>
+      </AdminFullPageFormFieldSpan>
       <FormField label="Region">
         <Input
           value={data.region}
@@ -144,35 +160,28 @@ export function CountryFormBasicFields({
           onChange={(value) =>
             patch({ processingType: value as CountryMasterFormData['processingType'] })
           }
+          placeholder="Select processing type"
           options={PROCESSING_TYPE_OPTIONS}
           fullWidth
         />
       </FormField>
-      <FormField label="Status">
-        <Select
-          value={data.status}
-          onChange={(value) =>
-            patch({ status: value as CountryMasterFormData['status'] })
-          }
-          options={COUNTRY_STATUS_OPTIONS}
-          fullWidth
-        />
-      </FormField>
       <AdminFullPageFormFieldSpan>
-        <FormField label="Embassy / consulate notes">
+        <FormField label="Embassy / consulate notes" optional>
           <Textarea
             value={data.embassyNotes}
             onChange={(value) => patch({ embassyNotes: value })}
+            placeholder="Embassy-specific requirements or submission notes"
             minRows={3}
             fullWidth
           />
         </FormField>
       </AdminFullPageFormFieldSpan>
       <AdminFullPageFormFieldSpan>
-        <FormField label="Internal operational notes">
+        <FormField label="Internal operational notes" optional>
           <Textarea
             value={data.internalNotes}
             onChange={(value) => patch({ internalNotes: value })}
+            placeholder="Internal-only guidance for operations teams"
             minRows={3}
             fullWidth
           />

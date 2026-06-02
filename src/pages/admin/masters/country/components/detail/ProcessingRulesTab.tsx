@@ -21,12 +21,14 @@ const SUBMISSION_LABELS: Record<CountryProcessingRules['submissionMode'], string
   vfs: 'VFS',
   e_visa_portal: 'E-visa portal',
   agent_channel: 'Agent channel',
+  agent_submission: 'Agent submission',
 }
 
 const FUNDS_LABELS: Record<CountryProcessingRules['fundsHandlingMode'], string> = {
   customer_pays: 'Customer pays',
   glts_float: 'GLTS float account',
   embassy_direct: 'Embassy direct',
+  agent_float: 'Agent float account',
 }
 
 function RulesGrid({ rules }: { rules: CountryProcessingRules }) {

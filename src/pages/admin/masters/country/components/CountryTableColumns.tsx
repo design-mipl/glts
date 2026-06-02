@@ -17,6 +17,7 @@ import {
 } from '../config/countryProcessingConfig'
 import { SEGMENT_LABELS } from '../config/countrySegmentConfig'
 import { formatCountryDate } from '../utils/countryListingUtils'
+import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
 
 interface ColumnHandlers {
   listingSegment?: BusinessSegment
@@ -45,11 +46,7 @@ export function buildCountryColumns({
       sortable: false,
       searchable: false,
       hideable: false,
-      render: (_, row) => (
-        <span style={{ fontSize: 22, lineHeight: 1 }} aria-hidden>
-          {row.flag || '🏳️'}
-        </span>
-      ),
+      render: (_, row) => <CountryFlagVisual flag={row.flag} size={22} />,
     },
     {
       key: 'name',

@@ -4,6 +4,7 @@ import {
 } from '@/shared/data/mockCommercialAgreements'
 import { companyMasterService } from '@/shared/services/companyMasterService'
 import { getMockCorporateAccounts } from '@/shared/data/mockCorporateAccounts'
+import { quotationReferenceService } from '@/shared/services/quotationReferenceService'
 import type {
   AgreementActivity,
   CommercialAgreement,
@@ -13,8 +14,12 @@ import type {
 import {
   buildDefaultAgreementDocuments,
   createEmptyAgreementFormData,
+  normalizeLegacyAgreement,
   validateForApproval,
 } from '@/shared/utils/commercialAgreementValidation'
+import {
+  syncFinanceContactsFromSources,
+} from '@/shared/utils/agreementFinanceContacts'
 
 const ADMIN_ACTOR = 'Admin User'
 
@@ -23,7 +28,7 @@ function nowIso() {
 }
 
 function getStore(): CommercialAgreement[] {
-  return getMockCommercialAgreements()
+  return getMockCommercialAgreements().map(normalizeLegacyAgreement)
 }
 
 function persist(rows: CommercialAgreement[]) {
@@ -59,9 +64,16 @@ function makeActivity(action: string, detail: string): AgreementActivity {
 }
 
 function resolveCompany(data: CommercialAgreementFormData): { companyId: string; companyName: string } {
-  if (data.companyMode === 'existing' && data.existingCompanyId) {
+  if (data.customerSourceMode === 'existing' && data.existingCompanyId) {
     const company = companyMasterService.getById(data.existingCompanyId)
     if (company) return { companyId: company.id, companyName: company.companyName }
+  }
+  if (data.customerSourceMode === 'quotation' && data.referenceQuotationId) {
+    const quotation = quotationReferenceService.getById(data.referenceQuotationId)
+    if (quotation?.companyId) {
+      const company = companyMasterService.getById(quotation.companyId)
+      if (company) return { companyId: company.id, companyName: company.companyName }
+    }
   }
   const created = companyMasterService.create(data.company)
   return { companyId: created.id, companyName: created.companyName }
@@ -72,26 +84,63 @@ function formToAgreement(
   companyId: string,
   companyName: string,
 ): Omit<CommercialAgreement, 'id' | 'agreementId' | 'createdAt' | 'updatedAt' | 'activities'> {
+  const synced = syncFinanceContactsFromSources(data)
   return {
     companyId,
     companyName,
-    agreementType: data.agreementType,
-    workflowType: data.workflowType,
-    billingType: data.billingType,
+    customerSourceMode: synced.customerSourceMode,
+    referenceQuotationId: synced.referenceQuotationId || undefined,
+    parentCompanyId: synced.parentCompanyId || undefined,
+    agreementType: synced.agreementType,
+    workflowType: synced.workflowType,
+    billingType: synced.billingType,
     status: 'draft',
-    startDate: data.startDate,
-    endDate: data.endDate,
-    pricingMatrix: data.pricingMatrix,
-    miscellaneousCosts: data.miscellaneousCosts,
-    billingConfig: data.billingConfig,
-    financeContacts: data.financeContacts,
-    documents: data.documents,
+    startDate: synced.startDate,
+    endDate: synced.endDate,
+    entities: synced.entities,
+    pricingMatrix: synced.pricingMatrix,
+    miscellaneousCosts: synced.miscellaneousCosts,
+    billingConfig: synced.billingConfig,
+    financeContacts: synced.financeContacts,
+    financeContactPersons: synced.financeContactPersons,
+    selectedFinanceContactIds: synced.selectedFinanceContactIds,
+    documents: synced.documents,
   }
+}
+
+function matchesExtendedSearch(record: CommercialAgreement, q: string): boolean {
+  const company = companyMasterService.getById(record.companyId)
+  const gstMatch = company?.gstNumber.toLowerCase().includes(q)
+  const contactMatch = company?.contactPersonName.toLowerCase().includes(q)
+  const entityMatch = record.entities.some(
+    (e) =>
+      e.entityName.toLowerCase().includes(q) ||
+      e.contactPerson.toLowerCase().includes(q) ||
+      e.gstNumber.toLowerCase().includes(q),
+  )
+  return (
+    record.agreementId.toLowerCase().includes(q) ||
+    record.companyName.toLowerCase().includes(q) ||
+    record.id.toLowerCase().includes(q) ||
+    Boolean(gstMatch) ||
+    Boolean(contactMatch) ||
+    entityMatch
+  )
 }
 
 export const commercialAgreementService = {
   list(filters: CommercialAgreementListFilters = {}): CommercialAgreement[] {
-    const { status = 'all', agreementType = 'all', workflowType = 'all', billingType = 'all', companyId, query } = filters
+    const {
+      status = 'all',
+      agreementType = 'all',
+      workflowType = 'all',
+      billingType = 'all',
+      companyId,
+      entityName,
+      dateFrom,
+      dateTo,
+      query,
+    } = filters
     const q = normalizeQuery(query)
     let rows = [...getStore()]
 
@@ -101,27 +150,40 @@ export const commercialAgreementService = {
     if (billingType !== 'all') rows = rows.filter((r) => r.billingType === billingType)
     if (companyId) rows = rows.filter((r) => r.companyId === companyId)
 
-    if (q) {
-      rows = rows.filter(
-        (r) =>
-          r.agreementId.toLowerCase().includes(q) ||
-          r.companyName.toLowerCase().includes(q) ||
-          r.id.toLowerCase().includes(q),
+    if (entityName) {
+      const entityQ = entityName.trim().toLowerCase()
+      rows = rows.filter((r) =>
+        r.entities.some((e) => e.entityName.toLowerCase().includes(entityQ)),
       )
+    }
+
+    if (dateFrom) {
+      rows = rows.filter((r) => r.updatedAt.slice(0, 10) >= dateFrom)
+    }
+    if (dateTo) {
+      rows = rows.filter((r) => r.updatedAt.slice(0, 10) <= dateTo)
+    }
+
+    if (q) {
+      rows = rows.filter((r) => matchesExtendedSearch(r, q))
     }
 
     return rows.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   },
 
   getById(id: string): CommercialAgreement | undefined {
-    return getStore().find((r) => r.id === id)
+    const record = getStore().find((r) => r.id === id)
+    return record ? normalizeLegacyAgreement(record) : undefined
   },
 
   agreementToFormData(agreement: CommercialAgreement): CommercialAgreementFormData {
-    const company = companyMasterService.getById(agreement.companyId)
-    return {
-      companyMode: 'existing',
-      existingCompanyId: agreement.companyId,
+    const normalized = normalizeLegacyAgreement(agreement)
+    const company = companyMasterService.getById(normalized.companyId)
+    const base: CommercialAgreementFormData = {
+      customerSourceMode: normalized.customerSourceMode,
+      referenceQuotationId: normalized.referenceQuotationId ?? '',
+      existingCompanyId: normalized.companyId,
+      parentCompanyId: normalized.parentCompanyId ?? '',
       company: company
         ? {
             companyName: company.companyName,
@@ -137,16 +199,60 @@ export const commercialAgreementService = {
             panNumber: company.panNumber,
           }
         : createEmptyAgreementFormData().company,
-      agreementType: agreement.agreementType,
-      workflowType: agreement.workflowType,
-      billingType: agreement.billingType,
-      startDate: agreement.startDate,
-      endDate: agreement.endDate,
-      pricingMatrix: [...agreement.pricingMatrix],
-      miscellaneousCosts: [...agreement.miscellaneousCosts],
-      billingConfig: { ...agreement.billingConfig },
-      financeContacts: { ...agreement.financeContacts },
-      documents: [...agreement.documents],
+      agreementType: normalized.agreementType,
+      workflowType: normalized.workflowType,
+      billingType: normalized.billingType,
+      startDate: normalized.startDate,
+      endDate: normalized.endDate,
+      entities: [...normalized.entities],
+      pricingMatrix: [...normalized.pricingMatrix],
+      miscellaneousCosts: [...normalized.miscellaneousCosts],
+      billingConfig: { ...normalized.billingConfig },
+      financeContacts: { ...normalized.financeContacts },
+      financeContactPersons: normalized.financeContactPersons
+        ? [...normalized.financeContactPersons]
+        : [],
+      selectedFinanceContactIds: normalized.selectedFinanceContactIds
+        ? [...normalized.selectedFinanceContactIds]
+        : [],
+      documents: [...normalized.documents],
+    }
+    return syncFinanceContactsFromSources(base)
+  },
+
+  hydrateFromQuotation(quotationId: string): Partial<CommercialAgreementFormData> | undefined {
+    const quotation = quotationReferenceService.getById(quotationId)
+    if (!quotation) return undefined
+    return {
+      customerSourceMode: 'quotation',
+      referenceQuotationId: quotationId,
+      existingCompanyId: quotation.companyId ?? '',
+      company: { ...quotation.company },
+      workflowType: quotation.workflowType,
+      billingType: quotation.billingType,
+      pricingMatrix: quotation.pricingMatrix.map((row) => ({ ...row, id: `pr-${Date.now()}-${Math.random()}` })),
+    }
+  },
+
+  hydrateFromExistingCustomer(companyId: string): Partial<CommercialAgreementFormData> | undefined {
+    const company = companyMasterService.getById(companyId)
+    if (!company) return undefined
+    return {
+      customerSourceMode: 'existing',
+      existingCompanyId: companyId,
+      company: {
+        companyName: company.companyName,
+        companyType: company.companyType,
+        industryType: company.industryType,
+        contactPersonName: company.contactPersonName,
+        contactNumber: company.contactNumber,
+        emailAddress: company.emailAddress,
+        companyAddress: company.companyAddress,
+        billingEntityName: company.billingEntityName,
+        billingAddress: company.billingAddress,
+        gstNumber: company.gstNumber,
+        panNumber: company.panNumber,
+      },
     }
   },
 
@@ -159,8 +265,12 @@ export const commercialAgreementService = {
       if (idx >= 0) {
         const existing = store[idx]
         const { companyId, companyName } =
-          data.companyMode === 'existing' && data.existingCompanyId
-            ? { companyId: data.existingCompanyId, companyName: companyMasterService.getById(data.existingCompanyId)?.companyName ?? existing.companyName }
+          data.customerSourceMode === 'existing' && data.existingCompanyId
+            ? {
+                companyId: data.existingCompanyId,
+                companyName:
+                  companyMasterService.getById(data.existingCompanyId)?.companyName ?? existing.companyName,
+              }
             : resolveCompany(data)
         const updated: CommercialAgreement = {
           ...existing,
@@ -210,7 +320,7 @@ export const commercialAgreementService = {
   approve(id: string): { ok: true; record: CommercialAgreement } | { ok: false; issues: string[] } {
     const record = this.getById(id)
     if (!record) return { ok: false, issues: ['Agreement not found'] }
-    const validation = validateForApproval(record)
+    const validation = validateForApproval(record, (r) => this.agreementToFormData(r))
     if (!validation.ok) return { ok: false, issues: validation.issues }
 
     const store = getStore()
@@ -268,7 +378,10 @@ export const commercialAgreementService = {
     return updated
   },
 
-  syncDocumentsForAgreementType(data: CommercialAgreementFormData, agreementType: CommercialAgreementFormData['agreementType']): CommercialAgreementFormData {
+  syncDocumentsForAgreementType(
+    data: CommercialAgreementFormData,
+    agreementType: CommercialAgreementFormData['agreementType'],
+  ): CommercialAgreementFormData {
     const existing = data.documents
     const defaults = buildDefaultAgreementDocuments(agreementType)
     const merged = defaults.map((d) => {

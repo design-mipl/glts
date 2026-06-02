@@ -58,7 +58,8 @@ export function VisaTypesTab({ country, segment }: VisaTypesTabProps) {
                 {vt.name}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {vt.visaCategory} · {vt.processingTime} · {vt.entryType}
+                {vt.visaCategory}
+                {vt.purposeLabel ? ` · ${vt.purposeLabel}` : ''} · {vt.processingTime} · {vt.entryType}
               </Typography>
               <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
                 Validity: {vt.validity} · Stay: {vt.stayDuration}
@@ -73,7 +74,8 @@ export function VisaTypesTab({ country, segment }: VisaTypesTabProps) {
             </Stack>
           </Stack>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            {vt.checklist.length} document(s) in checklist
+            {(segConfig.commonDocuments?.length ?? 0) + (vt.applicationDocuments?.length ?? 0)}{' '}
+            document(s) mapped (common + application-level)
           </Typography>
         </Box>
       ))}

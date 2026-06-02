@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { Box, Collapse, Grid, IconButton, Stack, Typography } from '@mui/material'
 import { ChevronDown, Copy, Trash2 } from 'lucide-react'
-import {
-  Button,
-  FormField,
-  Input,
-  Select,
-  Toggle,
-} from '@/design-system/UIComponents'
+import { Button, FormField, Input, Select } from '@/design-system/UIComponents'
 import type { CountryVisaType, VisaTypeStatus } from '@/shared/types/countryMaster'
 import { VISA_CATEGORY_OPTIONS } from '../config/countryProcessingConfig'
+
+function purposeIdFromLabel(label: string): string | undefined {
+  const slug = label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+  return slug ? slug.slice(0, 32) : undefined
+}
 import { SEGMENT_LABELS } from '../config/countrySegmentConfig'
 import type { BusinessSegment } from '@/shared/types/countryMaster'
 
@@ -63,7 +66,9 @@ export function CountryVisaTypeAccordion({
               {visaType.name || 'New visa type'}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {SEGMENT_LABELS[segment]} · {visaType.processingTime || 'Processing time TBD'}
+              {SEGMENT_LABELS[segment]}
+              {visaType.purposeLabel ? ` · ${visaType.purposeLabel}` : ''}
+              {visaType.processingTime ? ` · ${visaType.processingTime}` : ' · Processing time TBD'}
             </Typography>
           </Box>
         </Stack>
@@ -90,6 +95,20 @@ export function CountryVisaTypeAccordion({
                   value={visaType.visaCategory}
                   onChange={(value) => patch({ visaCategory: String(value) })}
                   options={VISA_CATEGORY_OPTIONS.map((v) => ({ value: v, label: v }))}
+                />
+              </FormField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FormField label="Purpose of visit">
+                <Input
+                  value={visaType.purposeLabel ?? ''}
+                  onChange={(value) =>
+                    patch({
+                      purposeLabel: value,
+                      purposeId: purposeIdFromLabel(value),
+                    })
+                  }
+                  placeholder="e.g. Conference, family visit, crew change"
                 />
               </FormField>
             </Grid>
@@ -128,15 +147,6 @@ export function CountryVisaTypeAccordion({
                     { value: 'active', label: 'Active' },
                     { value: 'inactive', label: 'Inactive' },
                   ]}
-                />
-              </FormField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormField label="Priority support">
-                <Toggle
-                  checked={visaType.prioritySupport}
-                  onChange={(checked) => patch({ prioritySupport: checked })}
-                  label={visaType.prioritySupport ? 'Enabled' : 'Disabled'}
                 />
               </FormField>
             </Grid>
@@ -184,7 +194,7 @@ export function CountryFormVisaTypesStep({ data, onChange }: CountryVisaTypesSte
       stayDuration: '',
       prioritySupport: false,
       status: 'active',
-      checklist: [],
+      applicationDocuments: [],
     }
     updateSegmentVisaTypes(segment, [...seg.visaTypes, next])
   }
@@ -241,7 +251,7 @@ export function CountryFormVisaTypesStep({ data, onChange }: CountryVisaTypesSte
                       ...vt,
                       id: newVisaTypeId(),
                       name: `${vt.name} (copy)`,
-                      checklist: structuredClone(vt.checklist),
+                      applicationDocuments: structuredClone(vt.applicationDocuments),
                     }
                     updateSegmentVisaTypes(seg.segment, [...seg.visaTypes, copy])
                   }}

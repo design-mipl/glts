@@ -23,7 +23,7 @@ export function FAQSection() {
             variant="text"
             href="/track"
             endIcon={<ArrowRight size={15} />}
-            sx={{ color: '#10B981', fontWeight: 600, fontSize: '13px', textTransform: 'none', p: 0 }}
+            sx={{ color: colors.greenBright, fontWeight: 600, fontSize: '13px', textTransform: 'none', p: 0 }}
           >
             Visit Help Center
           </Button>

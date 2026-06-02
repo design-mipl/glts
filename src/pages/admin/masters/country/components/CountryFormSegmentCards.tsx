@@ -1,5 +1,5 @@
 import { Box, Stack, Typography } from '@mui/material'
-import { Building2, Ship, Users } from 'lucide-react'
+import { Building2, Handshake, Ship, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { BaseCard, Toggle } from '@/design-system/UIComponents'
 import type { BusinessSegment, CountryMasterFormData } from '@/shared/types/countryMaster'
@@ -9,6 +9,7 @@ const SEGMENT_ICONS: Record<BusinessSegment, LucideIcon> = {
   retail: Users,
   corporate: Building2,
   marine: Ship,
+  b2bAgents: Handshake,
 }
 
 interface CountryFormSegmentCardsProps {

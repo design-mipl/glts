@@ -1,6 +1,7 @@
-import { Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { Download, Eye, RotateCcw, Upload } from 'lucide-react'
-import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
+import { Badge, Button } from '@/design-system/UIComponents'
 import type { AgreementOnboardingDocument } from '@/shared/types/commercialAgreement'
 import {
   onboardingDocumentStatusColor,
@@ -22,13 +23,23 @@ export function AgreementOnboardingDocumentCard({
   onReplace,
   onDownload,
 }: AgreementOnboardingDocumentCardProps) {
+  const theme = useTheme()
   const uploaded = document.status === 'uploaded' || document.status === 'verified'
 
   return (
-    <BaseCard sx={{ p: 2 }}>
+    <Box
+      sx={{
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 2,
+        bgcolor: theme.palette.background.paper,
+        p: 2,
+        height: '100%',
+      }}
+    >
       <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1} sx={{ mb: 1.5 }}>
-        <Stack spacing={0.5}>
-          <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
+        <Stack spacing={0.5} sx={{ minWidth: 0 }}>
+          <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
             {document.name}
             {document.required ? (
               <Typography component="span" color="error.main" sx={{ ml: 0.25 }}>
@@ -37,7 +48,7 @@ export function AgreementOnboardingDocumentCard({
             ) : null}
           </Typography>
           {document.fileName ? (
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" noWrap>
               {document.fileName}
             </Typography>
           ) : null}
@@ -45,6 +56,11 @@ export function AgreementOnboardingDocumentCard({
             label={onboardingDocumentStatusLabel[document.status]}
             color={onboardingDocumentStatusColor[document.status]}
             size="sm"
+            sx={{
+              height: 18,
+              minHeight: 18,
+              '& .MuiChip-label': { px: '6px', fontSize: '10px' },
+            }}
           />
         </Stack>
       </Stack>
@@ -59,6 +75,6 @@ export function AgreementOnboardingDocumentCard({
         <Button label="Preview" variant="outlined" size="sm" startIcon={<Eye size={14} />} onClick={onPreview} disabled={!uploaded} />
         <Button label="Download" variant="outlined" size="sm" startIcon={<Download size={14} />} onClick={onDownload} disabled={!uploaded} />
       </Stack>
-    </BaseCard>
+    </Box>
   )
 }

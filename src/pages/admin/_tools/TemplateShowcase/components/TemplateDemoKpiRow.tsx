@@ -2,6 +2,7 @@ import { Grid, Stack, Typography } from '@mui/material'
 import type { LucideIcon } from 'lucide-react'
 import { AlertTriangle, CheckCircle2, ListChecks, UserX } from 'lucide-react'
 import { BaseCard } from '@/design-system/UIComponents'
+import { publicLightColors } from '@/shared/theme/publicBrand'
 import type { TemplateDemoRecord } from '../config/demoEntity'
 
 interface TemplateDemoKpiRowProps {
@@ -65,7 +66,7 @@ export function TemplateDemoKpiRow({ rows }: TemplateDemoKpiRowProps) {
         <SimpleKpiCard label="Total records" value={total} icon={ListChecks} iconColor="#2563eb" />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <SimpleKpiCard label="Active" value={active} icon={CheckCircle2} iconColor="#059669" />
+        <SimpleKpiCard label="Active" value={active} icon={CheckCircle2} iconColor={publicLightColors.greenDark} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <SimpleKpiCard label="SLA at risk" value={atRisk} icon={AlertTriangle} iconColor="#d97706" />

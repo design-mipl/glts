@@ -1,11 +1,15 @@
 import type { Country, VisaCategory } from '../types/visa'
+import { isImageSource } from '../utils/imageSource'
 
 /** Destination cover photos (Unsplash). IDs verified — many legacy slugs now 404. */
 const IMG = (photoId: string, width = 640) =>
   `https://images.unsplash.com/${photoId}?auto=format&fit=crop&w=${width}&h=${Math.round(width * 0.7)}&q=80`
 
 export function getCountryHeroImageUrl(country: Country, width = 640): string {
-  return IMG(country.heroPhotoId, width)
+  const id = country.heroPhotoId?.trim() ?? ''
+  if (!id) return ''
+  if (isImageSource(id)) return id
+  return IMG(id, width)
 }
 
 function country(

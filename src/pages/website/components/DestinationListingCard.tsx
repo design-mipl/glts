@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Box, Typography, Chip } from '@mui/material'
 import { BaseCard } from '@/design-system/UIComponents'
 import type { Country } from '@/shared/types/visa'
+import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
 import { getCountryHeroImageUrl } from '@/shared/services/visaService'
 import { formatEtaShort, isFastVisa } from '@/shared/utils/countryDisplay'
 import { publicFonts, usePublicBrandColors } from '../theme/publicSiteTokens'
@@ -67,7 +68,7 @@ export function DestinationListingCard({ country, href }: DestinationListingCard
                 background: `linear-gradient(145deg, ${colors.navyLight} 0%, ${colors.navy} 100%)`,
               }}
             >
-              <Typography sx={{ fontSize: '48px', lineHeight: 1 }}>{country.flags}</Typography>
+              <CountryFlagVisual flag={country.flags} size={48} />
             </Box>
           ) : (
             <Box
@@ -102,7 +103,7 @@ export function DestinationListingCard({ country, href }: DestinationListingCard
               boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
             }}
           >
-            {country.flags}
+            <CountryFlagVisual flag={country.flags} size={14} />
           </Box>
 
           {fast && (

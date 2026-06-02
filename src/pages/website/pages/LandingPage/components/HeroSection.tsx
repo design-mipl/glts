@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { PublicContainer } from '../../../components/PublicContainer'
-import { publicFonts, publicShadows, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { publicFonts, publicShadows, usePublicBrandColors, brandPrimaryGreenRgb } from '@/shared/theme/publicBrand'
 import { getAllCountries } from '@/shared/services/visaService'
 
 const tryLinks = [
@@ -127,7 +127,7 @@ export function HeroSection() {
           width: 140,
           height: 90,
           borderRadius: '20px',
-          bgcolor: 'rgba(16, 185, 129, 0.06)',
+          bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.06)`,
           transform: 'rotate(-6deg)',
           pointerEvents: 'none',
         }}

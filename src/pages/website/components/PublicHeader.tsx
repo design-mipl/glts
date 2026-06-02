@@ -291,11 +291,11 @@ export function PublicHeader() {
                 py: { xs: 0.85, md: 1 },
                 borderRadius: '12px',
                 textTransform: 'none',
-                boxShadow: '0 2px 10px rgba(16, 185, 129, 0.35)',
+                boxShadow: `0 2px 10px rgba(115, 192, 100, 0.35)`,
                 whiteSpace: 'nowrap',
                 '&:hover': {
                   background: `linear-gradient(135deg, ${colors.greenBright} 0%, ${colors.greenDark} 100%)`,
-                  boxShadow: '0 4px 16px rgba(16, 185, 129, 0.4)',
+                  boxShadow: `0 4px 16px rgba(115, 192, 100, 0.4)`,
                 },
               }}
             >

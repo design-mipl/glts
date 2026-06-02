@@ -69,7 +69,7 @@ export function AgreementKpiRow({ agreements }: AgreementKpiRowProps) {
         <KpiCard label="Draft" value={draft} icon={FileText} iconColor={theme.palette.text.secondary} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <KpiCard label="Submitted" value={submitted} icon={Send} iconColor={theme.palette.info.main} />
+        <KpiCard label="Pending approval" value={submitted} icon={Send} iconColor={theme.palette.info.main} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <KpiCard label="Approved" value={approved} icon={CheckCircle2} iconColor={theme.palette.success.main} />

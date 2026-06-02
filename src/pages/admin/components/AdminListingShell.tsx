@@ -105,7 +105,18 @@ export function AdminListingShell({
           )}
 
           {footer ? (
-            <Box sx={{ px: 2, py: 1.5, borderTop: 1, borderColor: 'divider' }}>{footer}</Box>
+            <Box
+              sx={{
+                px: 2,
+                py: 1.5,
+                borderTop: 1,
+                borderColor: 'divider',
+                overflow: 'visible',
+                position: 'relative',
+              }}
+            >
+              {footer}
+            </Box>
           ) : null}
         </BaseCard>
       </Stack>

@@ -56,12 +56,15 @@ export function AdminOverlayFormSection({
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns:
-            columns === 1
-              ? '1fr'
-              : columns === 3
-                ? 'repeat(3, minmax(0, 1fr))'
-                : 'repeat(2, minmax(0, 1fr))',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm:
+              columns === 1
+                ? '1fr'
+                : columns === 3
+                  ? 'repeat(3, minmax(0, 1fr))'
+                  : 'repeat(2, minmax(0, 1fr))',
+          },
           gap: ADMIN_FULL_PAGE_FORM_LAYOUT.fieldGridGap,
         }}
       >

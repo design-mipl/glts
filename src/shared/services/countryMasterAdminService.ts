@@ -108,9 +108,10 @@ export const countryMasterAdminService = {
     let visaTypeCount = 0
     let checklistCount = 0
     for (const cfg of configs) {
+      checklistCount += cfg.commonDocuments?.length ?? 0
       visaTypeCount += cfg.visaTypes.length
       for (const vt of cfg.visaTypes) {
-        checklistCount += vt.checklist.length
+        checklistCount += vt.applicationDocuments?.length ?? 0
       }
     }
     return { visaTypeCount, checklistCount }

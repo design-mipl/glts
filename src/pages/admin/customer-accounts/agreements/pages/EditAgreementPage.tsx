@@ -1,11 +1,11 @@
 import { useParams } from 'react-router-dom'
-import { AgreementFormStepperPage } from './AgreementFormStepperPage'
+import { AgreementWorkspacePage } from './AgreementWorkspacePage'
 
 export function EditAgreementPage() {
   const { agreementId } = useParams<{ agreementId: string }>()
 
   return (
-    <AgreementFormStepperPage
+    <AgreementWorkspacePage
       mode="edit"
       agreementId={agreementId}
       breadcrumbs={[

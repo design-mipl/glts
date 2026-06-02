@@ -1,6 +1,8 @@
 import { getAllCountries } from '@/shared/services/visaService'
 import {
   defaultRulesForSegment,
+  ensureAllSegments,
+  normalizeCountrySegments,
   syncVisaOfferingsFromSegments,
 } from '@/shared/data/countryMasterDefaults'
 import type {
@@ -13,62 +15,23 @@ import type {
 /** B2B customer account ↔ country mapping (admin-configured; mock). */
 export const ACCOUNT_MAPPED_COUNTRY_IDS = ['13', '15'] as const
 
-const stdChecklist: CountryDocumentChecklistItem[] = [
-  {
-    documentId: 'passport',
-    name: 'Passport',
-    mandatory: true,
-    ocrEnabled: true,
-    sortOrder: 0,
-    hasSample: true,
-    description: 'Primary identity document used for OCR and visa filing.',
-    formatNotes: 'Color scan, all corners visible, PDF/JPG/PNG.',
-    remarks: 'Bio page must be clear and glare-free.',
-  },
-  {
-    documentId: 'photo',
-    name: 'Applicant Photo',
-    mandatory: true,
-    ocrEnabled: false,
-    sortOrder: 1,
-    description: 'Recent passport-size photograph as per embassy requirements.',
-    formatNotes: 'White background, 35x45mm equivalent.',
-  },
-  {
-    documentId: 'bank',
-    name: 'Bank Statement',
-    mandatory: true,
-    ocrEnabled: false,
-    sortOrder: 2,
-    validationRule: 'Last 3 months, stamped by bank',
-    description: 'Financial proof as per embassy checklist.',
-  },
+const stdCommonDocuments: CountryDocumentChecklistItem[] = [
+  { documentId: 'passport', mandatory: true, sortOrder: 0 },
+  { documentId: 'photo', mandatory: true, sortOrder: 1 },
 ]
 
-const crewChecklist: CountryDocumentChecklistItem[] = [
-  ...stdChecklist.filter((d) => d.documentId !== 'bank'),
-  {
-    documentId: 'cdc',
-    name: 'CDC',
-    mandatory: true,
-    ocrEnabled: true,
-    sortOrder: 2,
-    hasSample: true,
-    description: 'Continuous discharge certificate for marine workflows.',
-  },
-  {
-    documentId: 'vessel-letter',
-    name: 'Vessel Joining Letter',
-    mandatory: true,
-    ocrEnabled: false,
-    sortOrder: 3,
-    description: 'Joining confirmation issued by shipping company.',
-  },
+const stdApplicationDocuments: CountryDocumentChecklistItem[] = [
+  { documentId: 'bank', mandatory: true, sortOrder: 0 },
+]
+
+const crewApplicationDocuments: CountryDocumentChecklistItem[] = [
+  { documentId: 'cdc', mandatory: true, sortOrder: 0 },
+  { documentId: 'vessel-letter', mandatory: true, sortOrder: 1 },
 ]
 
 function visaType(
-  partial: Omit<CountryVisaType, 'checklist' | 'status' | 'prioritySupport'> & {
-    checklist?: CountryDocumentChecklistItem[]
+  partial: Omit<CountryVisaType, 'applicationDocuments' | 'status' | 'prioritySupport'> & {
+    applicationDocuments?: CountryDocumentChecklistItem[]
     status?: CountryVisaType['status']
     prioritySupport?: boolean
   },
@@ -76,18 +39,20 @@ function visaType(
   return {
     prioritySupport: false,
     status: 'active',
-    checklist: partial.checklist ?? stdChecklist,
+    applicationDocuments: partial.applicationDocuments ?? stdApplicationDocuments,
     ...partial,
   }
 }
 
 function segment(
-  partial: Omit<CountrySegmentConfig, 'processingRules'> & {
+  partial: Omit<CountrySegmentConfig, 'processingRules' | 'commonDocuments'> & {
     processingRules?: CountrySegmentConfig['processingRules']
+    commonDocuments?: CountryDocumentChecklistItem[]
   },
 ): CountrySegmentConfig {
   return {
     processingRules: partial.processingRules ?? defaultRulesForSegment(partial.segment),
+    commonDocuments: partial.commonDocuments ?? stdCommonDocuments,
     ...partial,
   }
 }
@@ -134,13 +99,14 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           entryType: 'Crew manifest · Type C',
           validity: '90 days',
           stayDuration: 'Crew rotation',
-          checklist: crewChecklist,
+          applicationDocuments: crewApplicationDocuments,
           purposeId: 'crew_joining',
           purposeLabel: 'Crew joining',
         }),
       ],
     }),
     segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
+    segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
   ],
   '13': [
     segment({
@@ -211,7 +177,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           entryType: 'Crew visa',
           validity: '90 days',
           stayDuration: 'Crew rotation',
-          checklist: crewChecklist,
+          applicationDocuments: crewApplicationDocuments,
           purposeId: 'crew_joining',
           purposeLabel: 'Crew joining',
         }),
@@ -223,9 +189,37 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           entryType: 'Transit',
           validity: '72 hours',
           stayDuration: 'Transit connection',
-          checklist: crewChecklist,
+          applicationDocuments: crewApplicationDocuments,
           purposeId: 'transit',
           purposeLabel: 'Transit',
+        }),
+      ],
+    }),
+    segment({
+      segment: 'b2bAgents',
+      enabled: true,
+      visaTypes: [
+        visaType({
+          id: 'cn-agent-tourist',
+          name: 'Agent Tourist Visa',
+          visaCategory: 'Tourism',
+          processingTime: '8–12 business days',
+          entryType: 'Single entry',
+          validity: '30 days',
+          stayDuration: '30 days',
+          purposeId: 'tourism',
+          purposeLabel: 'Agent retail filing',
+        }),
+        visaType({
+          id: 'cn-agent-business',
+          name: 'Agent Business Visa',
+          visaCategory: 'Business',
+          processingTime: '10–14 business days',
+          entryType: 'Single / multiple',
+          validity: '90 days',
+          stayDuration: 'As per invitation',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Agent corporate filing',
         }),
       ],
     }),
@@ -252,10 +246,13 @@ const DEFAULT_SEGMENTS: CountrySegmentConfig[] = [
   }),
   segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
   segment({ segment: 'marine', enabled: false, visaTypes: [] }),
+  segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
 ]
 
 function buildMasterFromCountry(c: ReturnType<typeof getAllCountries>[0]): CountryMaster {
-  const segments = SEGMENTS_BY_COUNTRY[c.id] ?? DEFAULT_SEGMENTS
+  const segments = ensureAllSegments(
+    normalizeCountrySegments(SEGMENTS_BY_COUNTRY[c.id] ?? DEFAULT_SEGMENTS),
+  )
   const now = new Date().toISOString()
   const visaOfferings = syncVisaOfferingsFromSegments(segments)
 

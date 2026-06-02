@@ -2,10 +2,10 @@ import { Eye, PencilLine, ShieldCheck, XCircle } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
+import { deriveAdvanceRuleSummary } from '@/shared/utils/commercialAgreementValidation'
 import {
   agreementStatusColor,
   agreementStatusLabel,
-  agreementTypeLabel,
   billingTypeLabel,
   workflowTypeLabel,
 } from '../config/agreementStatusConfig'
@@ -27,11 +27,11 @@ export function buildAgreementColumns({
     { key: 'agreementId', label: 'Agreement ID', sortable: true, searchable: true, hideable: false, minWidth: 130 },
     { key: 'companyName', label: 'Company Name', sortable: true, searchable: true, minWidth: 200 },
     {
-      key: 'agreementType',
-      label: 'Agreement Type',
+      key: 'billingType',
+      label: 'Billing Type',
       filterable: true,
-      minWidth: 140,
-      render: (_, row) => agreementTypeLabel[row.agreementType],
+      minWidth: 110,
+      render: (_, row) => billingTypeLabel[row.billingType],
     },
     {
       key: 'workflowType',
@@ -41,14 +41,28 @@ export function buildAgreementColumns({
       render: (_, row) => workflowTypeLabel[row.workflowType],
     },
     {
-      key: 'billingType',
-      label: 'Billing Type',
-      filterable: true,
+      key: 'totalEntities',
+      label: 'Total Entities',
+      sortable: true,
       minWidth: 110,
-      render: (_, row) => billingTypeLabel[row.billingType],
+      render: (_, row) => row.entities.length,
     },
-    { key: 'startDate', label: 'Start Date', sortable: true, minWidth: 110 },
-    { key: 'endDate', label: 'End Date', sortable: true, minWidth: 110 },
+    {
+      key: 'creditLimit',
+      label: 'Credit Limit',
+      sortable: true,
+      minWidth: 120,
+      render: (_, row) =>
+        row.billingConfig.creditLimit
+          ? `₹${row.billingConfig.creditLimit.toLocaleString('en-IN')}`
+          : '—',
+    },
+    {
+      key: 'advanceRule',
+      label: 'Advance Rule',
+      minWidth: 130,
+      render: (_, row) => deriveAdvanceRuleSummary(row.billingType, row.billingConfig),
+    },
     {
       key: 'status',
       label: 'Status',

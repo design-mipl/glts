@@ -7,7 +7,8 @@ import {
   publicFonts,
   usePublicBrandColors,
   getMarketingPrimaryButtonSx,
-} from '../../../theme/publicSiteTokens'
+  brandPrimaryGreenRgb,
+} from '@/shared/theme/publicBrand'
 
 export function PortalCards() {
   const colors = usePublicBrandColors()
@@ -22,16 +23,16 @@ export function PortalCards() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 1,
-                  backgroundColor: 'rgba(16,185,129,0.15)',
-                  border: '1px solid rgba(16,185,129,0.3)',
+                  backgroundColor: `rgba(${brandPrimaryGreenRgb}, 0.15)`,
+                  border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.3)`,
                   borderRadius: '6px',
                   px: 1.5,
                   py: 0.5,
                   mb: 2.5,
                 }}
               >
-                <Anchor size={13} color="#10B981" />
-                <Typography sx={{ color: '#10B981', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                <Anchor size={13} color={colors.greenBright} />
+                <Typography sx={{ color: colors.greenBright, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
                   MARINE CREW
                 </Typography>
               </Box>
@@ -81,7 +82,7 @@ export function PortalCards() {
                         p: 4,
                       }}
                     >
-                      <Typography sx={{ color: '#10B981', fontWeight: 800, fontSize: '28px', lineHeight: 1.1, mb: 0.5 }}>
+                      <Typography sx={{ color: colors.greenBright, fontWeight: 800, fontSize: '28px', lineHeight: 1.1, mb: 0.5 }}>
                         {value}
                       </Typography>
                       <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '12px' }}>
@@ -175,7 +176,7 @@ export function PortalCards() {
                 ].map(item => (
                   <Box key={item} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                     <Box sx={{ width: 16, height: 16, borderRadius: '50%', backgroundColor: '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, mt: 0.15 }}>
-                      <Typography sx={{ color: '#10B981', fontSize: '9px', fontWeight: 800 }}>✓</Typography>
+                      <Typography sx={{ color: colors.greenBright, fontSize: '9px', fontWeight: 800 }}>✓</Typography>
                     </Box>
                     <Typography sx={{ fontSize: '14px', color: '#374151' }}>{item}</Typography>
                   </Box>

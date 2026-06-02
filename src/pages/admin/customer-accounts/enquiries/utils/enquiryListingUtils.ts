@@ -1,4 +1,4 @@
-import type { EnquiryRecord, EnquiryStatus } from '@/shared/types/enquiry'
+import type { EnquiryCustomerInfo, EnquiryRecord, EnquiryStatus } from '@/shared/types/enquiry'
 import {
   formatEnquiryInquirySource,
   formatEnquiryProcessingType,
@@ -114,16 +114,22 @@ export function hasActiveEnquiryFilters(filters: EnquiryListingFilterState): boo
   return Object.values(filters).some((value) => Boolean(value))
 }
 
+/** Phone and email line for stacked contact column and grid subtitle */
+export function formatEnquiryContactSecondary(
+  customer: Pick<EnquiryCustomerInfo, 'contactNumber' | 'emailAddress'>,
+): string {
+  const phone = customer.contactNumber?.trim() ?? ''
+  const email = customer.emailAddress?.trim() ?? ''
+  if (phone && email) return `${phone} · ${email}`
+  return phone || email
+}
+
 export function getEnquiryCellValue(record: EnquiryRecord, key: string): string {
   switch (key) {
     case 'companyOrCustomerName':
       return record.customer.companyOrCustomerName
     case 'contactPerson':
       return record.customer.contactPersonName
-    case 'contactNumber':
-      return record.customer.contactNumber
-    case 'emailAddress':
-      return record.customer.emailAddress
     case 'customerType':
       return record.customer.customerType
     case 'inquirySource':
@@ -202,7 +208,7 @@ export function mapEnquiryRowsToGridItems(rows: EnquiryRecord[]) {
   return rows.map((row) => ({
     id: row.id,
     title: row.customer.companyOrCustomerName,
-    subtitle: `${row.customer.contactPersonName} • ${row.customer.contactNumber}`,
+    subtitle: `${row.customer.contactPersonName} • ${formatEnquiryContactSecondary(row.customer)}`,
     meta: `${row.visaRequirement.countries.join(', ')} • ${row.visaRequirement.visaType}`,
     status: enquiryStatusLabel[row.status],
     statusColor: getGridStatusColor(row.status),

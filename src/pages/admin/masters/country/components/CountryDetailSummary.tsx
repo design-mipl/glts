@@ -11,6 +11,7 @@ import {
 } from '../config/countryProcessingConfig'
 import { SEGMENT_LABELS } from '../config/countrySegmentConfig'
 import { formatCountryDate } from '../utils/countryListingUtils'
+import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
 
 interface CountryDetailSummaryProps {
   country: CountryMaster
@@ -34,7 +35,7 @@ export function CountryDetailSummary({
         <Stack spacing={2}>
           <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2}>
             <Stack direction="row" spacing={1.5} alignItems="flex-start">
-              <Typography sx={{ fontSize: 40, lineHeight: 1 }}>{country.flag}</Typography>
+              <CountryFlagVisual flag={country.flag} size={40} />
               <Box>
                 <Typography variant="h5" fontWeight={700}>
                   {country.name}

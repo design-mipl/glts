@@ -13,6 +13,8 @@ export interface AdminStepperFormStep {
   label: string
   description?: string
   sections?: AdminFullPageFormSection[]
+  /** Step content without an extra section card wrapper. */
+  children?: ReactNode
   review?: ReactNode
 }
 
@@ -62,8 +64,10 @@ export function AdminStepperFormShell({
 
   const stepBody = current.review ? (
     current.review
+  ) : current.children != null ? (
+    <Box sx={{ width: '100%' }}>{current.children}</Box>
   ) : current.sections ? (
-    <AdminFormSectionsLayout sections={current.sections} variant="page" />
+    <AdminFormSectionsLayout sections={current.sections} variant="stack" />
   ) : null
 
   return (

@@ -444,7 +444,7 @@ export default function DataTable({
                     showColumnSearch={showColumnSearch}
                     enableColumnSort={enableColumnSort}
                     onFilterClick={
-                      onColumnFilterClick && col.key !== 'actions'
+                      onColumnFilterClick && col.filterable !== false && col.key !== 'actions'
                         ? (e) => onColumnFilterClick(e, col.key)
                         : undefined
                     }

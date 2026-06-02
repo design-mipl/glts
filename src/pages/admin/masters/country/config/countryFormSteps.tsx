@@ -20,6 +20,8 @@ export function buildCountryFormSteps(
         {
           id: 'primary',
           title: 'Country details',
+          description: 'Core identity and processing classification for this country.',
+          span: 2,
           columns: ADMIN_STEPPER_FORM_LAYOUT.primarySectionColumns,
           children: <CountryFormBasicFields data={formData} onChange={onChange} />,
         },
@@ -28,7 +30,8 @@ export function buildCountryFormSteps(
           title: 'Portal presentation',
           description: 'Controls public website and customer portal destination cards.',
           importance: 'secondary',
-          columns: ADMIN_STEPPER_FORM_LAYOUT.secondarySectionColumns,
+          span: 2,
+          columns: ADMIN_STEPPER_FORM_LAYOUT.primarySectionColumns,
           children: (
             <CountryFormBasicFields data={formData} onChange={onChange} variant="portal" />
           ),
@@ -38,7 +41,7 @@ export function buildCountryFormSteps(
     {
       id: 'segments',
       label: 'Business segments',
-      description: 'Retail, Corporate, Marine',
+      description: 'Retail, Corporate, Marine, B2B Agents',
       sections: [
         {
           id: 'segments-primary',
@@ -68,12 +71,13 @@ export function buildCountryFormSteps(
     {
       id: 'checklist',
       label: 'Document checklist',
-      description: 'Map documents per visa type',
+      description: 'Common and application-level documents',
       sections: [
         {
           id: 'checklist-primary',
-          title: 'Document checklist mapping',
-          description: 'Select documents from Document Master and set mandatory, OCR, and validation rules.',
+          title: 'Document checklist',
+          description:
+            'Add documents from Document Master. Use Common for segment-wide requirements; edit descriptions per country.',
           span: 2,
           columns: 1,
           children: <CountryFormChecklistStep data={formData} onChange={onChange} />,

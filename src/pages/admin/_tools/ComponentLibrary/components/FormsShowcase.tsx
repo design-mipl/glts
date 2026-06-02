@@ -132,7 +132,7 @@ export function FormsShowcase() {
         <Grid size={12}>
           <SectionHeader
             title="Textarea"
-            description="Multi-line text input. Min height 120px, vertically resizable."
+            description="Multi-line input. Auto-grows with content (minRows/maxRows) unless a fixed rows count is set."
           />
           <StateGrid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -143,6 +143,11 @@ export function FormsShowcase() {
             <Grid size={{ xs: 12, md: 6 }}>
               <FormField label="Error state" error helperText="Description cannot be empty">
                 <Textarea placeholder="Enter description..." error fullWidth />
+              </FormField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FormField label="Auto-grow (2–6 rows)" hint="Default behavior">
+                <Textarea placeholder="Paste long text to see height grow…" minRows={2} maxRows={6} fullWidth />
               </FormField>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>

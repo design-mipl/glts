@@ -1,8 +1,10 @@
 import { Box, IconButton, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { Button, Checkbox, FormField, Input, Modal, Select } from '@/design-system/UIComponents'
+import { Button, Checkbox, FormField, FormSection, Input, Modal, Select } from '@/design-system/UIComponents'
+import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import type { AgreementMiscCostRow, CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
+import { agreementEmbeddedTableHeadCellSx, agreementEmbeddedTableSx } from './agreementFormLayout'
 
 interface AgreementMiscCostsTableProps {
   data: CommercialAgreementFormData
@@ -41,55 +43,59 @@ export function AgreementMiscCostsTable({ data, onChange }: AgreementMiscCostsTa
   }
 
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Typography variant="body2" fontWeight={600}>
-          Miscellaneous services
-        </Typography>
+    <Box sx={{ gridColumn: '1 / -1', width: '100%' }}>
+      <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1.5 }}>
         <Button label="Add service" size="sm" startIcon={<Plus size={14} />} onClick={() => setEditRow(newRow())} />
       </Stack>
 
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>Service name</TableCell>
-            <TableCell>Pricing type</TableCell>
-            <TableCell>Amount</TableCell>
-            <TableCell>GST</TableCell>
-            <TableCell>Remarks</TableCell>
-            <TableCell align="right">Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.miscellaneousCosts.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6}>
-                <Typography variant="body2" color="text.secondary">
-                  No miscellaneous costs added.
-                </Typography>
-              </TableCell>
-            </TableRow>
-          ) : (
-            data.miscellaneousCosts.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.serviceName}</TableCell>
-                <TableCell>{row.pricingType}</TableCell>
-                <TableCell>₹{row.amount.toLocaleString('en-IN')}</TableCell>
-                <TableCell>{row.gstApplicable ? 'Yes' : 'No'}</TableCell>
-                <TableCell>{row.remarks || '—'}</TableCell>
-                <TableCell align="right">
-                  <IconButton size="small" onClick={() => setEditRow({ ...row })}>
-                    <Pencil size={14} />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => updateCosts(data.miscellaneousCosts.filter((r) => r.id !== row.id))}>
-                    <Trash2 size={14} />
-                  </IconButton>
+      <Box sx={agreementEmbeddedTableSx}>
+        {data.miscellaneousCosts.length === 0 ? (
+          <Box sx={{ py: 3, px: 2, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: 13 }}>
+              No miscellaneous costs added. Optional add-on charges can be configured here.
+            </Typography>
+            <Button label="Add service" size="sm" startIcon={<Plus size={14} />} onClick={() => setEditRow(newRow())} />
+          </Box>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={agreementEmbeddedTableHeadCellSx}>Service name</TableCell>
+                <TableCell sx={agreementEmbeddedTableHeadCellSx}>Pricing type</TableCell>
+                <TableCell sx={agreementEmbeddedTableHeadCellSx}>Amount</TableCell>
+                <TableCell sx={agreementEmbeddedTableHeadCellSx}>GST</TableCell>
+                <TableCell sx={agreementEmbeddedTableHeadCellSx}>Remarks</TableCell>
+                <TableCell align="right" sx={agreementEmbeddedTableHeadCellSx}>
+                  Actions
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            </TableHead>
+            <TableBody>
+              {data.miscellaneousCosts.map((row) => (
+                <TableRow key={row.id} hover>
+                  <TableCell sx={{ fontSize: 13 }}>{row.serviceName}</TableCell>
+                  <TableCell sx={{ fontSize: 13 }}>{row.pricingType}</TableCell>
+                  <TableCell sx={{ fontSize: 13 }}>₹{row.amount.toLocaleString('en-IN')}</TableCell>
+                  <TableCell sx={{ fontSize: 13 }}>{row.gstApplicable ? 'Yes' : 'No'}</TableCell>
+                  <TableCell sx={{ fontSize: 13 }}>{row.remarks || '—'}</TableCell>
+                  <TableCell align="right">
+                    <IconButton size="small" aria-label="Edit service" onClick={() => setEditRow({ ...row })}>
+                      <Pencil size={14} />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      aria-label="Remove service"
+                      onClick={() => updateCosts(data.miscellaneousCosts.filter((r) => r.id !== row.id))}
+                    >
+                      <Trash2 size={14} />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Box>
 
       <Modal
         open={Boolean(editRow)}
@@ -97,14 +103,14 @@ export function AgreementMiscCostsTable({ data, onChange }: AgreementMiscCostsTa
         title="Miscellaneous service"
         footer={
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button label="Cancel" variant="outlined" onClick={() => setEditRow(null)} />
+            <Button label="Cancel" variant="outlined" color="secondary" onClick={() => setEditRow(null)} />
             <Button label="Save" onClick={saveEdit} />
           </Stack>
         }
       >
         {editRow ? (
-          <Stack spacing={2}>
-            <FormField label="Service name">
+          <FormSection columns={2}>
+            <FormField label="Service preset">
               <Select
                 value={editRow.serviceName}
                 onChange={(v) => setEditRow({ ...editRow, serviceName: String(v) })}
@@ -145,10 +151,12 @@ export function AgreementMiscCostsTable({ data, onChange }: AgreementMiscCostsTa
               checked={editRow.gstApplicable}
               onChange={(checked) => setEditRow({ ...editRow, gstApplicable: checked })}
             />
-            <FormField label="Remarks">
-              <Input value={editRow.remarks} onChange={(v) => setEditRow({ ...editRow, remarks: v })} fullWidth />
-            </FormField>
-          </Stack>
+            <AdminFullPageFormFieldSpan>
+              <FormField label="Remarks" optional>
+                <Input value={editRow.remarks} onChange={(v) => setEditRow({ ...editRow, remarks: v })} fullWidth />
+              </FormField>
+            </AdminFullPageFormFieldSpan>
+          </FormSection>
         ) : null}
       </Modal>
     </Box>

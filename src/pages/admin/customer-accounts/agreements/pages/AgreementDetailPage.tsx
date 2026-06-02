@@ -6,7 +6,15 @@ import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { AgreementDetailSummary } from '../components/AgreementDetailSummary'
-import { ActivityTab, DocumentsTab, OverviewTab } from '../components/detail/AgreementDetailTabs'
+import {
+  ActivityTab,
+  BillingConfigurationTab,
+  DocumentsTab,
+  EntitiesTab,
+  OverviewTab,
+  PricingMatrixTab,
+  TaxConfigurationTab,
+} from '../components/detail/AgreementDetailTabs'
 
 export function AgreementDetailPage() {
   const { agreementId } = useParams<{ agreementId: string }>()
@@ -100,14 +108,22 @@ export function AgreementDetailPage() {
         <Tabs
           items={[
             { label: 'Overview', value: 'overview' },
+            { label: 'Entities', value: 'entities', badge: agreement.entities.length || undefined },
+            { label: 'Pricing Matrix', value: 'pricing', badge: agreement.pricingMatrix.length || undefined },
+            { label: 'Billing Configuration', value: 'billing' },
+            { label: 'Tax Configuration', value: 'tax' },
             { label: 'Documents', value: 'documents', badge: agreement.documents.length },
-            { label: 'Activity', value: 'activity', badge: agreement.activities.length },
+            { label: 'Activity Logs', value: 'activity', badge: agreement.activities.length || undefined },
           ]}
           value={activeTab}
           onChange={setActiveTab}
         />
         <BaseCard sx={{ mt: 2, p: 2 }}>
           {activeTab === 'overview' ? <OverviewTab agreement={agreement} /> : null}
+          {activeTab === 'entities' ? <EntitiesTab agreement={agreement} /> : null}
+          {activeTab === 'pricing' ? <PricingMatrixTab agreement={agreement} /> : null}
+          {activeTab === 'billing' ? <BillingConfigurationTab agreement={agreement} /> : null}
+          {activeTab === 'tax' ? <TaxConfigurationTab agreement={agreement} /> : null}
           {activeTab === 'documents' ? <DocumentsTab agreement={agreement} /> : null}
           {activeTab === 'activity' ? <ActivityTab agreement={agreement} /> : null}
         </BaseCard>

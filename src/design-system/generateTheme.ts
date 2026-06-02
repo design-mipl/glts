@@ -20,6 +20,8 @@ import {
   formControlBorderDefault,
   formControlBorderHover,
   formControlFieldBackground,
+  multilineOutlinedInputRootOverrides,
+  multilineOutlinedInputThemeOverrides,
 } from './formControl';
 
 interface NavigationSurface {
@@ -313,6 +315,7 @@ export function generateTheme(mode: ThemeMode): Theme {
               minHeight: `${FORM_CONTROL.heightMd} !important`,
               height: `${FORM_CONTROL.heightMd} !important`,
             },
+            ...multilineOutlinedInputThemeOverrides,
             '& .MuiOutlinedInput-input': {
               padding: `0 ${FORM_CONTROL.paddingX}`,
               fontSize: FORM_CONTROL.fontSize,
@@ -371,6 +374,7 @@ export function generateTheme(mode: ThemeMode): Theme {
               minHeight: FORM_CONTROL.heightMd,
               height: FORM_CONTROL.heightMd,
             },
+            ...multilineOutlinedInputRootOverrides,
             '&:hover:not(.Mui-focused):not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
               borderColor: formControlBorderHover(theme),
             },
@@ -389,6 +393,10 @@ export function generateTheme(mode: ThemeMode): Theme {
             height: 'auto',
             '&::placeholder': {
               opacity: 1,
+            },
+            '&.MuiInputBase-inputMultiline': {
+              padding: `${FORM_CONTROL.paddingY} ${FORM_CONTROL.paddingX}`,
+              lineHeight: FORM_CONTROL.textareaLineHeight,
             },
           },
         },

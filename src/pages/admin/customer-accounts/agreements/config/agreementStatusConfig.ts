@@ -1,11 +1,17 @@
-import type { AgreementStatus, AgreementType, AgreementBillingType, AgreementWorkflowType } from '@/shared/types/commercialAgreement'
+import type {
+  AgreementBillingType,
+  AgreementStatus,
+  AgreementType,
+  AgreementWorkflowType,
+} from '@/shared/types/commercialAgreement'
 
 export const agreementStatusLabel: Record<AgreementStatus, string> = {
   draft: 'Draft',
-  submitted: 'Submitted',
+  submitted: 'Pending Approval',
   approved: 'Approved',
   rejected: 'Rejected',
   expired: 'Expired',
+  inactive: 'Inactive',
 }
 
 export const agreementStatusColor: Record<
@@ -17,6 +23,7 @@ export const agreementStatusColor: Record<
   approved: 'success',
   rejected: 'error',
   expired: 'warning',
+  inactive: 'neutral',
 }
 
 export const agreementTypeLabel: Record<AgreementType, string> = {
@@ -27,9 +34,18 @@ export const agreementTypeLabel: Record<AgreementType, string> = {
 export const workflowTypeLabel: Record<AgreementWorkflowType, string> = {
   marine: 'Marine',
   corporate: 'Corporate',
-  retail: 'Retail',
+  b2b_agent: 'B2B Agent',
   mixed: 'Mixed',
+  retail: 'Retail',
 }
+
+/** B2B-only workflow options for agreement UI */
+export const AGREEMENT_WORKFLOW_OPTIONS: { value: AgreementWorkflowType; label: string }[] = [
+  { value: 'marine', label: 'Marine' },
+  { value: 'corporate', label: 'Corporate' },
+  { value: 'b2b_agent', label: 'B2B Agent' },
+  { value: 'mixed', label: 'Mixed' },
+]
 
 export const billingTypeLabel: Record<AgreementBillingType, string> = {
   credit: 'Credit',
@@ -53,3 +69,21 @@ export const onboardingDocumentStatusColor: Record<
   verified: 'success',
   rejected: 'error',
 }
+
+export const advanceTypeLabel = {
+  full: 'Full Advance',
+  percentage: 'Percentage Advance',
+  fixed: 'Fixed Advance',
+} as const
+
+export const processingBlockRuleLabel = {
+  before_submission: 'Block Before Submission',
+  before_appointment: 'Block Before Appointment',
+  before_processing: 'Block Before Processing',
+} as const
+
+export const customerSourceModeLabel = {
+  quotation: 'Reference Quotation',
+  existing: 'Existing Customer',
+  new: 'New Customer',
+} as const

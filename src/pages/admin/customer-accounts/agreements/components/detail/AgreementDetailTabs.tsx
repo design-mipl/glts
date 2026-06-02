@@ -1,13 +1,28 @@
-import { Grid, Stack, Typography } from '@mui/material'
-import { Badge } from '@/design-system/UIComponents'
+import { Stack, Typography } from '@mui/material'
+import { Grid } from '@mui/material'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
-import { billingTypeLabel, onboardingDocumentStatusLabel, workflowTypeLabel } from '../../config/agreementStatusConfig'
+import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
+import { deriveAdvanceRuleSummary } from '@/shared/utils/commercialAgreementValidation'
+import {
+  billingTypeLabel,
+  customerSourceModeLabel,
+  workflowTypeLabel,
+} from '../../config/agreementStatusConfig'
+import { getSelectedFinanceContactPersons } from '@/shared/utils/agreementFinanceContacts'
+import { AgreementBillingConfigSection } from '../workspace/AgreementBillingConfigSection'
+import { AgreementOnboardingDocumentsSection } from '../workspace/AgreementOnboardingDocumentsSection'
+import { AgreementEntitiesTable } from '../workspace/AgreementEntitiesTable'
+import { AgreementPricingMatrixTable } from '../workspace/AgreementPricingMatrixTable'
+import { AgreementTaxConfigSection } from '../workspace/AgreementTaxConfigSection'
 
-interface OverviewTabProps {
+interface TabProps {
   agreement: CommercialAgreement
 }
 
-export function OverviewTab({ agreement }: OverviewTabProps) {
+export function OverviewTab({ agreement }: TabProps) {
+  const financeContacts = getSelectedFinanceContactPersons(
+    commercialAgreementService.agreementToFormData(agreement),
+  )
   return (
     <Stack spacing={3}>
       <Grid container spacing={2}>
@@ -18,6 +33,12 @@ export function OverviewTab({ agreement }: OverviewTabProps) {
           <Typography variant="body2" fontWeight={600}>
             {agreement.companyName}
           </Typography>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Typography variant="caption" color="text.secondary">
+            Customer source
+          </Typography>
+          <Typography variant="body2">{customerSourceModeLabel[agreement.customerSourceMode]}</Typography>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <Typography variant="caption" color="text.secondary">
@@ -33,68 +54,83 @@ export function OverviewTab({ agreement }: OverviewTabProps) {
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <Typography variant="caption" color="text.secondary">
-            Period
+            Entities
           </Typography>
-          <Typography variant="body2">
-            {agreement.startDate || '—'} → {agreement.endDate || '—'}
-          </Typography>
+          <Typography variant="body2">{agreement.entities.length}</Typography>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <Typography variant="caption" color="text.secondary">
             Credit limit
           </Typography>
-          <Typography variant="body2">₹{agreement.billingConfig.creditLimit.toLocaleString('en-IN')}</Typography>
+          <Typography variant="body2">
+            {agreement.billingConfig.creditLimit
+              ? `₹${agreement.billingConfig.creditLimit.toLocaleString('en-IN')}`
+              : '—'}
+          </Typography>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <Typography variant="caption" color="text.secondary">
-            Accounts SPOC
+            Advance rule
           </Typography>
-          <Typography variant="body2">{agreement.financeContacts.accountsSpocName || '—'}</Typography>
+          <Typography variant="body2">
+            {deriveAdvanceRuleSummary(agreement.billingType, agreement.billingConfig)}
+          </Typography>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Typography variant="caption" color="text.secondary">
+            Finance contacts
+          </Typography>
+          <Typography variant="body2">{financeContacts.length}</Typography>
         </Grid>
       </Grid>
-
-      <Stack spacing={1}>
-        <Typography variant="body2" fontWeight={600}>
-          Pricing matrix
-        </Typography>
-        {agreement.pricingMatrix.map((row) => (
-          <Typography key={row.id} variant="body2" color="text.secondary">
-            {row.country} · {row.visaType} · ₹{row.serviceFee.toLocaleString('en-IN')}
-          </Typography>
-        ))}
-      </Stack>
-
-      <Stack spacing={1}>
-        <Typography variant="body2" fontWeight={600}>
-          Miscellaneous costs
-        </Typography>
-        {agreement.miscellaneousCosts.map((row) => (
-          <Typography key={row.id} variant="body2" color="text.secondary">
-            {row.serviceName} · ₹{row.amount.toLocaleString('en-IN')}
-          </Typography>
-        ))}
-      </Stack>
     </Stack>
   )
 }
 
-export function DocumentsTab({ agreement }: OverviewTabProps) {
+export function EntitiesTab({ agreement }: TabProps) {
+  const formData = commercialAgreementService.agreementToFormData(agreement)
   return (
-    <Stack spacing={1.5}>
-      {agreement.documents.map((doc) => (
-        <Stack key={doc.documentKey} direction="row" spacing={1} alignItems="center">
-          <Badge label={onboardingDocumentStatusLabel[doc.status]} size="sm" />
-          <Typography variant="body2" fontWeight={doc.required ? 600 : 400}>
-            {doc.name}
-            {doc.fileName ? ` · ${doc.fileName}` : ''}
-          </Typography>
-        </Stack>
-      ))}
-    </Stack>
+    <AgreementEntitiesTable
+      data={formData}
+      errors={{}}
+      onChange={() => {}}
+      onAddEntity={() => ''}
+      onUpdateEntity={() => {}}
+      onRemoveEntity={() => {}}
+      readOnly
+    />
   )
 }
 
-export function ActivityTab({ agreement }: OverviewTabProps) {
+export function PricingMatrixTab({ agreement }: TabProps) {
+  const formData = commercialAgreementService.agreementToFormData(agreement)
+  return <AgreementPricingMatrixTable data={formData} errors={{}} onChange={() => {}} readOnly />
+}
+
+export function BillingConfigurationTab({ agreement }: TabProps) {
+  const formData = commercialAgreementService.agreementToFormData(agreement)
+  return <AgreementBillingConfigSection data={formData} errors={{}} onChange={() => {}} readOnly />
+}
+
+export function TaxConfigurationTab({ agreement }: TabProps) {
+  const formData = commercialAgreementService.agreementToFormData(agreement)
+  return <AgreementTaxConfigSection data={formData} errors={{}} onChange={() => {}} readOnly />
+}
+
+export function DocumentsTab({ agreement }: TabProps) {
+  const formData = commercialAgreementService.agreementToFormData(agreement)
+  return (
+    <AgreementOnboardingDocumentsSection
+      data={formData}
+      errors={{}}
+      onChange={() => {}}
+      onClearError={() => {}}
+      readOnly
+    />
+  )
+}
+
+export function ActivityTab({ agreement }: TabProps) {
   return (
     <Stack spacing={1.5}>
       {agreement.activities.length === 0 ? (

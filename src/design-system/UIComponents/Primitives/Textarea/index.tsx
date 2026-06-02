@@ -3,7 +3,7 @@ import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
-import { FORM_CONTROL, outlinedFieldSx } from '../../../formControl'
+import { FORM_CONTROL, textareaOutlinedFieldSx } from '../../../formControl'
 
 export interface TextareaProps {
   label?: string
@@ -17,6 +17,7 @@ export interface TextareaProps {
   rows?: number
   maxRows?: number
   minRows?: number
+  /** Grow with content between minRows and maxRows (default when `rows` is not set). */
   autoResize?: boolean
   maxLength?: number
   showCount?: boolean
@@ -36,7 +37,7 @@ export default function Textarea({
   rows,
   maxRows,
   minRows = 3,
-  autoResize = false,
+  autoResize = true,
   maxLength,
   showCount = false,
   fullWidth = false,
@@ -45,6 +46,10 @@ export default function Textarea({
   const theme = useTheme()
   const charCount = value?.length ?? 0
   const hasError = error || (showCount && maxLength ? charCount > maxLength : false)
+
+  /** Explicit `rows` = fixed height; otherwise auto-size (default). */
+  const isFixedHeight = rows != null
+  const useAutoSize = !isFixedHeight && autoResize
 
   const helperContent =
     showCount && maxLength ? (
@@ -71,9 +76,9 @@ export default function Textarea({
       required={required}
       fullWidth={fullWidth}
       multiline
-      rows={autoResize ? undefined : (rows ?? undefined)}
-      minRows={autoResize ? minRows : (rows ?? minRows)}
-      maxRows={autoResize ? maxRows : undefined}
+      rows={isFixedHeight ? rows : undefined}
+      minRows={useAutoSize ? minRows : undefined}
+      maxRows={useAutoSize ? maxRows : undefined}
       variant="outlined"
       size="small"
       slotProps={{
@@ -83,22 +88,7 @@ export default function Textarea({
         formHelperText: { sx: { mx: 0, mt: '4px', fontSize: FORM_CONTROL.helperFontSize } },
       }}
       sx={[
-        outlinedFieldSx(theme, 'auto'),
-        {
-          '& .MuiOutlinedInput-root, & .MuiInputBase-root': {
-            height: 'auto',
-            minHeight: '120px',
-            alignItems: 'flex-start',
-          },
-          '& .MuiInputBase-inputMultiline': {
-            lineHeight: 1.6,
-            fontFamily: 'inherit',
-            resize: 'vertical',
-          },
-          '& .MuiOutlinedInput-root.Mui-disabled': {
-            backgroundColor: theme.palette.action.disabledBackground,
-          },
-        },
+        textareaOutlinedFieldSx(theme),
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}
     />

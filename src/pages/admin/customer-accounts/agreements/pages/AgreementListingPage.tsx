@@ -13,14 +13,19 @@ import { Button, ConfirmDialog, Pagination, useToast } from '@/design-system/UIC
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
+import { AgreementAdvancedFilters } from '../components/AgreementAdvancedFilters'
 import { AgreementKpiRow } from '../components/AgreementKpiRow'
 import { buildAgreementColumns } from '../components/AgreementTableColumns'
 import {
   downloadAgreementCsv,
   getAgreementCellValue,
   getAgreementEmptyState,
+  hasActiveAgreementFilters,
+  INITIAL_AGREEMENT_ADVANCED_FILTERS,
   mapAgreementRowsToGridItems,
+  matchesAgreementAdvancedFilters,
   matchesAgreementSearch,
+  type AgreementAdvancedFilterState,
 } from '../utils/agreementListingUtils'
 
 export function AgreementListingPage() {
@@ -32,6 +37,9 @@ export function AgreementListingPage() {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [rejectTarget, setRejectTarget] = useState<CommercialAgreement>()
   const [rejectOpen, setRejectOpen] = useState(false)
+  const [advancedFilters, setAdvancedFilters] = useState<AgreementAdvancedFilterState>(
+    INITIAL_AGREEMENT_ADVANCED_FILTERS,
+  )
 
   const loadRows = useCallback(async () => {
     setLoading(true)
@@ -43,8 +51,13 @@ export function AgreementListingPage() {
     void loadRows()
   }, [loadRows])
 
+  const filteredRows = useMemo(
+    () => rows.filter((row) => matchesAgreementAdvancedFilters(row, advancedFilters)),
+    [rows, advancedFilters],
+  )
+
   const listing = useCustomerListing({
-    rows,
+    rows: filteredRows,
     getCellValue: getAgreementCellValue,
     searchMatch: matchesAgreementSearch,
     initialPageSize: 10,
@@ -81,6 +94,11 @@ export function AgreementListingPage() {
     navigate('/admin/customer-accounts/agreements/new')
   }, [navigate])
 
+  const handleClearFilters = useCallback(() => {
+    setAdvancedFilters(INITIAL_AGREEMENT_ADVANCED_FILTERS)
+    listing.setTableState((state) => ({ ...state, page: 0 }))
+  }, [listing])
+
   const emptyState = useMemo(() => {
     const base = getAgreementEmptyState(Boolean(listing.tableState.searchQuery))
     return {
@@ -111,7 +129,7 @@ export function AgreementListingPage() {
         stickyPageHeader={
           <AdminListingStickyHeader
             title="Agreements & contracts"
-            description="Corporate onboarding and commercial agreement management"
+            description="Corporate onboarding, finance configuration and commercial agreement management"
             actions={<Button label="Create agreement" startIcon={<Plus size={14} />} onClick={handleCreate} />}
           />
         }
@@ -119,8 +137,11 @@ export function AgreementListingPage() {
         toolbar={
           <AdminListingToolbar
             searchValue={listing.tableState.searchQuery}
-            onSearch={listing.handleSearch}
-            searchPlaceholder="Search by agreement ID, company, or workflow…"
+            onSearch={(value) => {
+              listing.handleSearch(value)
+              listing.setTableState((state) => ({ ...state, page: 0 }))
+            }}
+            searchPlaceholder="Search by agreement ID, company, GST, entity, or contact person…"
             onExport={() => {
               downloadAgreementCsv(listing.filterSourceRows)
               showToast({ title: 'Export started', variant: 'success' })
@@ -139,27 +160,43 @@ export function AgreementListingPage() {
           />
         }
         listingContent={
-          viewMode === 'table' ? (
-            <AdminListingTable
-              columns={columns}
-              data={listing.paginatedRows}
-              filterSourceData={listing.filterSourceRows}
-              rowKey="id"
-              state={listing.tableState}
-              onStateChange={listing.setTableState}
-              columnFilters={listing.columnFilters}
-              onColumnFiltersChange={listing.setColumnFilters}
-              getCellValue={getAgreementCellValue}
-              onRowClick={(row) => navigate(`/admin/customer-accounts/agreements/${row.id}`)}
-              loading={loading}
-              stickyHeader
-              emptyTitle={emptyState.emptyTitle}
-              emptyDescription={emptyState.emptyDescription}
-              emptyAction={emptyState.emptyAction}
-            />
-          ) : (
-            <AdminListingGrid items={gridItems} onItemClick={(id) => navigate(`/admin/customer-accounts/agreements/${id}`)} />
-          )
+          <>
+            <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+              <AgreementAdvancedFilters
+                filters={advancedFilters}
+                onFiltersChange={(next) => {
+                  setAdvancedFilters(next)
+                  listing.setTableState((state) => ({ ...state, page: 0 }))
+                }}
+                onClearFilters={handleClearFilters}
+                hasActiveFilters={hasActiveAgreementFilters(advancedFilters)}
+              />
+            </Box>
+            {viewMode === 'table' ? (
+              <AdminListingTable
+                columns={columns}
+                data={listing.paginatedRows}
+                filterSourceData={listing.filterSourceRows}
+                rowKey="id"
+                state={listing.tableState}
+                onStateChange={listing.setTableState}
+                columnFilters={listing.columnFilters}
+                onColumnFiltersChange={listing.setColumnFilters}
+                getCellValue={getAgreementCellValue}
+                onRowClick={(row) => navigate(`/admin/customer-accounts/agreements/${row.id}`)}
+                loading={loading}
+                stickyHeader
+                emptyTitle={emptyState.emptyTitle}
+                emptyDescription={emptyState.emptyDescription}
+                emptyAction={emptyState.emptyAction}
+              />
+            ) : (
+              <AdminListingGrid
+                items={gridItems}
+                onItemClick={(id) => navigate(`/admin/customer-accounts/agreements/${id}`)}
+              />
+            )}
+          </>
         }
         footer={
           <Box sx={{ bgcolor: footerBg }}>

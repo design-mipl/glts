@@ -22,6 +22,7 @@ import {
   getSessionCreatorMeta,
 } from '../../applications/utils/applicationAccessUtils'
 import { mergeVerificationIntoDetail } from '@/shared/services/applicationVerificationService'
+import { invoiceService } from '@/shared/services/invoiceService'
 import { bookerManagementService } from '@/shared/services/bookerManagementService'
 import { entityMasterService } from '@/shared/services/entityMasterService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
@@ -45,7 +46,8 @@ const APPLICATION_FLOW_STORAGE_KEY = 'glts:application-flow'
 
 function mapSessionToApplicationSegment(customerType?: CustomerType): ApplicationCustomerSegment {
   if (customerType === 'marine') return 'marine'
-  if (customerType === 'corporate' || customerType === 'b2b_agent') return 'corporate'
+  if (customerType === 'b2b_agent') return 'b2bAgents'
+  if (customerType === 'corporate') return 'corporate'
   return 'retail'
 }
 
@@ -97,6 +99,10 @@ export const customerPortalService = {
   getApplicationListingKpis() {
     const metrics = computeListingKpis(this.getSingleApplications(), this.getBulkBatches())
     return metrics
+  },
+
+  listCustomerInvoices() {
+    return invoiceService.listCustomerVisibleInvoices()
   },
 
   getApplicationDetail(applicationId?: string): ApplicationDetailViewModel {

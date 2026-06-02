@@ -8,6 +8,7 @@ export const APPLICATION_OPERATIONAL_STATUSES: ApplicationOperationalStatus[] = 
   'Verification Pending',
   'Correction Required',
   'Submitted',
+  'Appointment Booked',
   'Passport Ready',
   'Completed',
   'Rejected',
@@ -18,6 +19,7 @@ export const PROCESSING_STAGE_OPTIONS = [
   { value: 'Intake', label: 'Intake' },
   { value: 'Document verification', label: 'Document verification' },
   { value: 'Embassy submission', label: 'Embassy submission' },
+  { value: 'Appointment Booked', label: 'Appointment Booked' },
   { value: 'Embassy processing', label: 'Embassy processing' },
   { value: 'Passport dispatch', label: 'Passport dispatch' },
   { value: 'Closed', label: 'Closed' },
@@ -38,6 +40,7 @@ export function getApplicationOperationalTone(status: ApplicationOperationalStat
     case 'Under Review':
     case 'Verification Pending':
     case 'Submitted':
+    case 'Appointment Booked':
       return 'info'
     default:
       return 'neutral'
@@ -58,6 +61,6 @@ export function statusToneFromOperational(
   if (status === 'Draft') return 'draft'
   if (status === 'Completed' || status === 'Passport Ready') return 'approved'
   if (status === 'Pending Documents' || status === 'Correction Required') return 'pending'
-  if (status === 'Under Review' || status === 'Verification Pending' || status === 'Submitted') return 'review'
+  if (status === 'Under Review' || status === 'Verification Pending' || status === 'Submitted' || status === 'Appointment Booked') return 'review'
   return 'processing'
 }

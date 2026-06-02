@@ -1,6 +1,5 @@
-import { Stack } from '@mui/material'
-import { Checkbox, DatePicker, FormField, Input, Select, Toggle } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
+import { Checkbox, DatePicker, FormField, Input, Select, Toggle } from '@/design-system/UIComponents'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
 
@@ -26,13 +25,16 @@ export function AgreementBillingConfigFields({
   if (variant === 'creditTax') {
     return (
       <>
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ gridColumn: '1 / -1' }}>
-          <Toggle
-            checked={data.billingConfig.creditBillingEnabled}
-            onChange={(checked) => updateBilling({ creditBillingEnabled: checked })}
-          />
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Credit billing enabled</span>
-        </Stack>
+        <AdminFullPageFormFieldSpan>
+          <FormField label="Credit billing">
+            <Toggle
+              checked={data.billingConfig.creditBillingEnabled}
+              onChange={(checked) => updateBilling({ creditBillingEnabled: checked })}
+              label="Credit billing enabled"
+              size="sm"
+            />
+          </FormField>
+        </AdminFullPageFormFieldSpan>
         <FormField label="Billing cycle">
           <Select
             value={data.billingConfig.billingCycle}

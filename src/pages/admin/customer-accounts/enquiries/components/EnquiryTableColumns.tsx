@@ -1,8 +1,10 @@
+import { Box, Typography } from '@mui/material'
 import { CalendarClock, Eye, PencilLine, RefreshCcw, UserCog } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
 import { formatEnquiryInquirySource } from '../config/enquiryFormConfig'
+import { formatEnquiryContactSecondary } from '../utils/enquiryListingUtils'
 import {
   enquiryStatusColor,
   enquiryStatusLabel,
@@ -42,23 +44,19 @@ export function buildEnquiryColumns({
     },
     {
       key: 'contactPerson',
-      label: 'Contact Person',
-      minWidth: 160,
+      label: 'Contact person',
+      minWidth: 200,
       searchable: true,
-      render: (_, row) => row.customer.contactPersonName,
-    },
-    {
-      key: 'contactNumber',
-      label: 'Contact',
-      minWidth: 140,
-      render: (_, row) => row.customer.contactNumber,
-    },
-    {
-      key: 'emailAddress',
-      label: 'Email',
-      minWidth: 180,
-      searchable: true,
-      render: (_, row) => row.customer.emailAddress,
+      render: (_, row) => (
+        <Box>
+          <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+            {row.customer.contactPersonName}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+            {formatEnquiryContactSecondary(row.customer)}
+          </Typography>
+        </Box>
+      ),
     },
     {
       key: 'inquirySource',

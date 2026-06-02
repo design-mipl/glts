@@ -25,7 +25,7 @@ export function CustomerCountryCard({ country, selected, onSelect }: CustomerCou
         overflow: 'hidden',
         border: `2px solid ${selected ? colors.greenBright : colors.border}`,
         bgcolor: selected ? colors.greenMuted : '#fff',
-        boxShadow: selected ? '0 0 0 1px rgba(16,185,129,0.2)' : '0 1px 3px rgba(15,23,42,0.06)',
+        boxShadow: selected ? '0 0 0 1px rgba(115, 192, 100, 0.2)' : '0 1px 3px rgba(15,23,42,0.06)',
         transition: 'border-color 0.2s, box-shadow 0.2s',
         '&:hover': { borderColor: colors.greenBright },
       }}

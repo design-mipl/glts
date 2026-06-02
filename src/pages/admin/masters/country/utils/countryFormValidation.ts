@@ -1,5 +1,5 @@
 import type { CountryMasterFormData } from '@/shared/types/countryMaster'
-import { ALL_SEGMENTS, emptySegment } from '@/shared/data/countryMasterDefaults'
+import { ALL_SEGMENTS, emptySegment, ensureAllSegments, normalizeCountrySegments } from '@/shared/data/countryMasterDefaults'
 
 export interface CountryFormValidationResult {
   valid: boolean
@@ -77,6 +77,6 @@ export function countryMasterToFormData(
     visaCategory: master.visaCategory,
     validity: master.validity,
     fastMinutes: master.fastMinutes,
-    segments: structuredClone(master.segments),
+    segments: ensureAllSegments(normalizeCountrySegments(structuredClone(master.segments))),
   }
 }

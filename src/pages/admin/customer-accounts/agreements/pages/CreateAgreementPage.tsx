@@ -1,8 +1,8 @@
-import { AgreementFormStepperPage } from './AgreementFormStepperPage'
+import { AgreementWorkspacePage } from './AgreementWorkspacePage'
 
 export function CreateAgreementPage() {
   return (
-    <AgreementFormStepperPage
+    <AgreementWorkspacePage
       mode="create"
       breadcrumbs={[
         { label: 'Customer & accounts', href: '/admin/customer-accounts/agreements' },

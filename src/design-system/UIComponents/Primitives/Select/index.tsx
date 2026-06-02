@@ -11,11 +11,11 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { X } from 'lucide-react'
-import { useTheme, alpha } from '@mui/material/styles'
+import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { SelectChangeEvent } from '@mui/material/Select'
 import type { ReactNode } from 'react'
-import { FORM_CONTROL, formControlHeight, outlinedFieldSx } from '../../../formControl'
+import { FORM_CONTROL, formControlHeight, outlinedFieldSx, selectMenuSlotProps } from '../../../formControl'
 
 interface SelectOption {
   label: string
@@ -124,34 +124,7 @@ export default function Select({
             </InputAdornment>
           ) : undefined
         }
-        MenuProps={{
-          PaperProps: {
-            sx: {
-              mt: 0.5,
-              borderRadius: '8px',
-              border: '1px solid',
-              borderColor: 'divider',
-              boxShadow: theme.shadows[4],
-              '& .MuiMenuItem-root': {
-                fontSize: '13px',
-                py: 1,
-                px: 1.5,
-                borderRadius: '4px',
-                mx: 0.5,
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.06),
-                },
-                '&.Mui-selected': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  fontWeight: 500,
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.14),
-                  },
-                },
-              },
-            },
-          },
-        }}
+        MenuProps={selectMenuSlotProps(theme)}
       >
         {options.map((opt) => (
           <MenuItem key={opt.value} value={opt.value} disabled={opt.disabled}>

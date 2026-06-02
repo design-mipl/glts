@@ -10,7 +10,7 @@ export type CustomerTone = 'success' | 'warning' | 'info' | 'critical' | 'neutra
 
 function getToneStyles(colors: PublicBrandColors): Record<CustomerTone, { bg: string; text: string; border: string }> {
   return {
-  success: { bg: 'rgba(16, 185, 129, 0.12)', text: colors.greenDark, border: 'rgba(16, 185, 129, 0.24)' },
+  success: { bg: colors.greenMuted, text: colors.greenDark, border: 'rgba(115, 192, 100, 0.24)' },
   warning: { bg: 'rgba(245, 158, 11, 0.14)', text: '#B45309', border: 'rgba(245, 158, 11, 0.26)' },
   info: { bg: 'rgba(59, 130, 246, 0.12)', text: '#2563EB', border: 'rgba(59, 130, 246, 0.24)' },
   critical: { bg: 'rgba(239, 68, 68, 0.12)', text: '#DC2626', border: 'rgba(239, 68, 68, 0.24)' },

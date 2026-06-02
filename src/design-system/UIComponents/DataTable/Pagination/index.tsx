@@ -1,8 +1,6 @@
-import {
-  Box, Typography, IconButton, Select, MenuItem,
-  Button, useTheme, useMediaQuery,
-} from '@mui/material'
+import { Box, Typography, IconButton, Button, useTheme, useMediaQuery } from '@mui/material'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import Select from '../../Primitives/Select'
 
 export interface PaginationProps {
   page: number
@@ -28,6 +26,12 @@ function buildPageNumbers(page: number, totalPages: number): (number | '...')[] 
   return pages
 }
 
+const PAGE_SIZE_SELECT_SX = {
+  minWidth: 80,
+  width: 80,
+  flexShrink: 0,
+} as const
+
 export default function Pagination({
   page,
   pageSize,
@@ -38,117 +42,119 @@ export default function Pagination({
   loading = false,
 }: PaginationProps) {
   const theme = useTheme()
-  const isCompact = useMediaQuery(theme.breakpoints.down('xl'))
+  const isCompact = useMediaQuery(theme.breakpoints.down('lg'))
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const from = total === 0 ? 0 : page * pageSize + 1
   const to = Math.min((page + 1) * pageSize, total)
   const pageNumbers = buildPageNumbers(page + 1, totalPages)
 
+  const pageSizeSelect = (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+        Rows per page:
+      </Typography>
+      <Select
+        value={pageSize}
+        onChange={(value) => {
+          onPageSize(Number(value))
+          onPage(0)
+        }}
+        options={pageSizeOptions.map((s) => ({ label: String(s), value: s }))}
+        size="sm"
+        disabled={loading}
+        sx={PAGE_SIZE_SELECT_SX}
+      />
+    </Box>
+  )
+
+  const pageControls = (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0 }}>
+      <IconButton
+        size="small"
+        disabled={page === 0 || loading}
+        onClick={() => onPage(page - 1)}
+        aria-label="Previous page"
+      >
+        <ChevronLeft size={20} />
+      </IconButton>
+      {isCompact ? (
+        <Typography variant="body2" color="text.secondary" sx={{ px: 0.5, minWidth: 48, textAlign: 'center' }}>
+          {page + 1} / {totalPages}
+        </Typography>
+      ) : (
+        pageNumbers.map((p, i) =>
+          p === '...' ? (
+            <Typography key={`ellipsis-${i}`} variant="body2" color="text.secondary" sx={{ px: 0.5 }}>
+              …
+            </Typography>
+          ) : (
+            <Button
+              key={p}
+              size="small"
+              variant={p === page + 1 ? 'contained' : 'text'}
+              disabled={loading}
+              onClick={() => onPage((p as number) - 1)}
+              sx={{
+                minWidth: 32,
+                px: 0.5,
+                py: 0.25,
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: p === page + 1 ? undefined : 'text.secondary',
+              }}
+            >
+              {p}
+            </Button>
+          ),
+        )
+      )}
+      <IconButton
+        size="small"
+        disabled={page >= totalPages - 1 || loading}
+        onClick={() => onPage(page + 1)}
+        aria-label="Next page"
+      >
+        <ChevronRight size={20} />
+      </IconButton>
+    </Box>
+  )
+
   return (
     <Box
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: { xs: 1, md: 2 },
+        gap: { xs: 1.5, md: 2 },
         px: 2,
         py: 1.5,
         flexWrap: 'wrap',
+        rowGap: 1.5,
       }}
     >
-      {/* Showing info */}
-      <Typography variant="body2" color="text.secondary" sx={{ flex: { xs: 1, md: 'none' } }}>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' }, minWidth: 0 }}
+      >
         {total === 0 ? 'No results' : `Showing ${from}–${to} of ${total}`}
       </Typography>
 
-      <Box sx={{ flex: 1 }} />
-
-      {/* Compact: prev/next only */}
-      {isCompact ? (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Typography variant="body2" color="text.secondary">
-            {page + 1} / {totalPages}
-          </Typography>
-          <IconButton
-            size="small"
-            disabled={page === 0 || loading}
-            onClick={() => onPage(page - 1)}
-          >
-            <ChevronLeft size={20} />
-          </IconButton>
-          <IconButton
-            size="small"
-            disabled={page >= totalPages - 1 || loading}
-            onClick={() => onPage(page + 1)}
-          >
-            <ChevronRight size={20} />
-          </IconButton>
-        </Box>
-      ) : (
-        <>
-          {/* Rows per page */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-              Rows per page:
-            </Typography>
-            <Select
-              value={pageSize}
-              onChange={(e) => { onPageSize(Number(e.target.value)); onPage(0) }}
-              size="small"
-              variant="outlined"
-              disabled={loading}
-              sx={{ fontSize: 13, '& .MuiSelect-select': { py: 0.5, pr: 3 } }}
-            >
-              {pageSizeOptions.map((s) => (
-                <MenuItem key={s} value={s}>{s}</MenuItem>
-              ))}
-            </Select>
-          </Box>
-
-          {/* Page numbers */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
-            <IconButton
-              size="small"
-              disabled={page === 0 || loading}
-              onClick={() => onPage(page - 1)}
-            >
-              <ChevronLeft size={20} />
-            </IconButton>
-            {pageNumbers.map((p, i) =>
-              p === '...' ? (
-                <Typography key={`ellipsis-${i}`} variant="body2" color="text.secondary" sx={{ px: 0.5 }}>
-                  …
-                </Typography>
-              ) : (
-                <Button
-                  key={p}
-                  size="small"
-                  variant={p === page + 1 ? 'contained' : 'text'}
-                  disabled={loading}
-                  onClick={() => onPage((p as number) - 1)}
-                  sx={{
-                    minWidth: 32,
-                    px: 0.5,
-                    py: 0.25,
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    color: p === page + 1 ? undefined : 'text.secondary',
-                  }}
-                >
-                  {p}
-                </Button>
-              )
-            )}
-            <IconButton
-              size="small"
-              disabled={page >= totalPages - 1 || loading}
-              onClick={() => onPage(page + 1)}
-            >
-              <ChevronRight size={20} />
-            </IconButton>
-          </Box>
-        </>
-      )}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: { xs: 1.5, md: 2 },
+          flexShrink: 0,
+          flexWrap: 'wrap',
+          ml: { xs: 0, sm: 'auto' },
+          width: { xs: '100%', sm: 'auto' },
+          justifyContent: { xs: 'flex-end', sm: 'flex-end' },
+        }}
+      >
+        {pageSizeSelect}
+        {pageControls}
+      </Box>
     </Box>
   )
 }

@@ -2,7 +2,7 @@
 
 export type CountryMasterStatus = 'active' | 'inactive' | 'draft'
 
-export type BusinessSegment = 'retail' | 'corporate' | 'marine'
+export type BusinessSegment = 'retail' | 'corporate' | 'marine' | 'b2bAgents'
 
 export type ProcessingType =
   | 'embassy'
@@ -29,28 +29,24 @@ export interface CountryDocumentMapping {
   formatNotes?: string
 }
 
+/** Reference to Document Master — name from master; description may be overridden per country. */
 export interface CountryDocumentChecklistItem {
   documentId: string
-  name: string
   mandatory: boolean
-  ocrEnabled: boolean
-  validationRule?: string
-  remarks?: string
   sortOrder: number
-  hasSample?: boolean
+  /** Country-specific description; falls back to Document Master when empty. */
   description?: string
-  formatNotes?: string
 }
 
 export interface CountryProcessingRules {
-  submissionMode: 'embassy_direct' | 'vfs' | 'e_visa_portal' | 'agent_channel'
+  submissionMode: 'embassy_direct' | 'vfs' | 'e_visa_portal' | 'agent_channel' | 'agent_submission'
   normalProcessingDays: string
   expressProcessingDays?: string
   expressFeeNotes?: string
   appointmentProvider?: string
   appointmentRequired: boolean
   appointmentLeadTimeDays?: number
-  fundsHandlingMode: 'customer_pays' | 'glts_float' | 'embassy_direct'
+  fundsHandlingMode: 'customer_pays' | 'glts_float' | 'embassy_direct' | 'agent_float'
   fundsNotes?: string
   ocrPolicyEnabled: boolean
   workflowProfile: WorkflowProfile
@@ -73,7 +69,8 @@ export interface CountryVisaType {
   stayDuration: string
   prioritySupport: boolean
   status: VisaTypeStatus
-  checklist: CountryDocumentChecklistItem[]
+  /** Visa-type / application-specific documents (in addition to segment common documents). */
+  applicationDocuments: CountryDocumentChecklistItem[]
   processingRulesOverride?: Partial<CountryProcessingRules>
   /** Legacy sync fields */
   purposeId?: string
@@ -84,6 +81,8 @@ export interface CountryVisaType {
 export interface CountrySegmentConfig {
   segment: BusinessSegment
   enabled: boolean
+  /** Shared across all visa types in this segment (e.g. passport, photo). */
+  commonDocuments: CountryDocumentChecklistItem[]
   visaTypes: CountryVisaType[]
   processingRules: CountryProcessingRules
 }

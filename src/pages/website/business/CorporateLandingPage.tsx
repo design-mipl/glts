@@ -7,6 +7,7 @@ import {
   publicShadows,
   usePublicBrandColors,
   getMarketingPrimaryButtonSx,
+  brandPrimaryGreenRgb,
 } from '@/shared/theme/publicBrand'
 import {
   Building2,
@@ -80,7 +81,7 @@ export function CorporateLandingPage() {
           sx={{
             position: 'absolute',
             inset: 0,
-            backgroundImage: 'radial-gradient(circle at 80% 30%, rgba(16,185,129,0.1) 0%, transparent 55%)',
+            backgroundImage: `radial-gradient(circle at 80% 30%, rgba(${brandPrimaryGreenRgb}, 0.1) 0%, transparent 55%)`,
             pointerEvents: 'none',
           }}
         />
@@ -92,16 +93,16 @@ export function CorporateLandingPage() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 1,
-                  backgroundColor: 'rgba(16,185,129,0.15)',
-                  border: '1px solid rgba(16,185,129,0.3)',
+                  backgroundColor: `rgba(${brandPrimaryGreenRgb}, 0.15)`,
+                  border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.3)`,
                   borderRadius: '6px',
                   px: 1.5,
                   py: 0.5,
                   mb: 3,
                 }}
               >
-                <Building2 size={12} color="#10B981" />
-                <Typography sx={{ color: '#10B981', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                <Building2 size={12} color={colors.greenBright} />
+                <Typography sx={{ color: colors.greenBright, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
                   GREENLIGHT FOR TEAMS
                 </Typography>
               </Box>
@@ -119,7 +120,7 @@ export function CorporateLandingPage() {
                 }}
               >
                 Visa operations,
-                <Box component="span" sx={{ color: '#10B981', display: 'block' }}>
+                <Box component="span" sx={{ color: colors.greenBright, display: 'block' }}>
                   finally orchestrated.
                 </Box>
               </Typography>
@@ -349,7 +350,7 @@ export function CorporateLandingPage() {
                       >
                         {i + 1}
                       </Box>
-                      <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#10B981', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      <Typography sx={{ fontSize: '11px', fontWeight: 700, color: colors.greenBright, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         {day}
                       </Typography>
                     </Box>
@@ -367,7 +368,7 @@ export function CorporateLandingPage() {
         <PublicContainer>
           <Grid container spacing={5} alignItems="center">
             <Grid size={{ xs: 12, md: 7 }}>
-              <Typography sx={{ color: '#10B981', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', mb: 1.5 }}>
+              <Typography sx={{ color: colors.greenBright, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', mb: 1.5 }}>
                 MARINE MODULE
               </Typography>
               <Typography variant="h3" sx={{ color: '#fff', fontWeight: 800, fontSize: { xs: '26px', md: '34px' }, mb: 2 }}>
@@ -403,7 +404,7 @@ export function CorporateLandingPage() {
                 ].map(({ value, label }) => (
                   <Grid size={{ xs: 6 }} key={label}>
                     <Box sx={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', p: 2.5 }}>
-                      <Typography sx={{ color: '#10B981', fontWeight: 800, fontSize: '26px', mb: 0.5 }}>{value}</Typography>
+                      <Typography sx={{ color: colors.greenBright, fontWeight: 800, fontSize: '26px', mb: 0.5 }}>{value}</Typography>
                       <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>{label}</Typography>
                     </Box>
                   </Grid>

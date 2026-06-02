@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { ComingSoonPage } from '@/shared/components/ComingSoonPage'
+import { AdminModulePlaceholder } from '../components/AdminModulePlaceholder'
 import { PermissionGuard } from '../components/PermissionGuard'
 import {
   CreateEnquiryPage,
@@ -30,9 +30,28 @@ import {
   DocumentListingPage,
   EditDocumentPage,
 } from '../masters/documents'
+import { SacCodeListingPage } from '../masters/sac-codes'
+import { ServiceListingPage } from '../masters/services'
+import { TaxConfigurationPage } from '../masters/tax'
 import { InternalDashboard } from '../operations/pages/InternalDashboard'
 import { AdminProfilePage } from '../profile/AdminProfilePage'
-import { MarineApplicationListingPage, MarineVerifyDocumentsPage, MarineViewFormPage } from '../application-management/marine'
+import {
+  MarineApplicationListingPage, MarineVerifyDocumentsPage, MarineViewFormPage,
+} from '../application-management/marine'
+import {
+  BillingReportsPage,
+  GenerateInvoiceWorkspacePage,
+  InvoiceDetailPage,
+  InvoiceListingPage,
+} from '../finance/invoices'
+import { TeamDetailPage, TeamListingPage } from '../access/teams'
+import {
+  CreateUserPage,
+  EditUserPage,
+  UserDetailPage,
+  UserListingPage,
+  UserPermissionConfigurationPage,
+} from '../access/users'
 import ComponentLibrary from '../_tools/ComponentLibrary'
 import TemplateShowcaseRoutes from '../_tools/TemplateShowcase'
 
@@ -122,13 +141,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     kind: 'coming-soon',
   },
   {
-    path: 'finance/invoices',
-    title: 'Billing & invoice management',
-    description: 'This module is under development.',
-    eyebrow: 'Finance, billing & collections',
-    kind: 'coming-soon',
-  },
-  {
     path: 'finance/payments',
     title: 'Payment & collections',
     description: 'This module is under development.',
@@ -170,42 +182,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     title: 'Rate master',
     description: 'This module is under development.',
     eyebrow: 'Masters',
-    kind: 'coming-soon',
-  },
-  {
-    path: 'masters/sac-codes',
-    title: 'SAC code master',
-    description: 'This module is under development.',
-    eyebrow: 'Masters',
-    kind: 'coming-soon',
-  },
-  {
-    path: 'masters/tax',
-    title: 'GST and TDS master',
-    description: 'This module is under development.',
-    eyebrow: 'Masters',
-    kind: 'coming-soon',
-  },
-  {
-    path: 'masters/services',
-    title: 'Service master',
-    description: 'This module is under development.',
-    eyebrow: 'Masters',
-    kind: 'coming-soon',
-  },
-
-  {
-    path: 'access/users',
-    title: 'User management',
-    description: 'This module is under development.',
-    eyebrow: 'User & role management',
-    kind: 'coming-soon',
-  },
-  {
-    path: 'access/roles',
-    title: 'Roles and permission',
-    description: 'This module is under development.',
-    eyebrow: 'User & role management',
     kind: 'coming-soon',
   },
   {
@@ -258,10 +234,12 @@ function AdminFoundationPage({ route }: { route: AdminRouteDefinition }) {
 
   return (
     <PermissionGuard>
-      <ComingSoonPage
+      <AdminModulePlaceholder
+        eyebrow={route.eyebrow}
         title={route.title}
         description={route.description}
-        returnLink={{ text: 'Back to Admin dashboard', href: '/admin' }}
+        returnHref="/admin"
+        returnLabel="Back to Admin dashboard"
       />
     </PermissionGuard>
   )
@@ -427,6 +405,30 @@ export function AdminRoutes() {
         }
       />
       <Route
+        path="masters/tax"
+        element={
+          <PermissionGuard>
+            <TaxConfigurationPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/sac-codes"
+        element={
+          <PermissionGuard>
+            <SacCodeListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/services"
+        element={
+          <PermissionGuard>
+            <ServiceListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
         path="application-management/marine"
         element={
           <PermissionGuard>
@@ -450,6 +452,103 @@ export function AdminRoutes() {
           </PermissionGuard>
         }
       />
+      <Route
+        path="finance/invoices"
+        element={
+          <PermissionGuard>
+            <InvoiceListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="finance/invoices/reports"
+        element={
+          <PermissionGuard>
+            <BillingReportsPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="finance/invoices/generate"
+        element={
+          <PermissionGuard>
+            <GenerateInvoiceWorkspacePage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="finance/invoices/:invoiceId/credit-note"
+        element={
+          <PermissionGuard>
+            <GenerateInvoiceWorkspacePage creditNoteMode />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="finance/invoices/:invoiceId"
+        element={
+          <PermissionGuard>
+            <InvoiceDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="access/teams"
+        element={
+          <PermissionGuard>
+            <TeamListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="access/teams/:teamId"
+        element={
+          <PermissionGuard>
+            <TeamDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="access/users"
+        element={
+          <PermissionGuard>
+            <UserListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="access/users/new"
+        element={
+          <PermissionGuard>
+            <CreateUserPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="access/users/:userId/edit"
+        element={
+          <PermissionGuard>
+            <EditUserPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="access/users/:userId/permissions"
+        element={
+          <PermissionGuard>
+            <UserPermissionConfigurationPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="access/users/:userId"
+        element={
+          <PermissionGuard>
+            <UserDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route path="access/roles" element={<Navigate to="/admin/access/users" replace />} />
       <Route
         path="tools/templates/*"
         element={

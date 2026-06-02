@@ -107,11 +107,13 @@ export const documentMasterService = {
     const countries = getMockCountryMasters()
     let count = 0
     for (const country of countries) {
-      const inUse = country.segments.some((seg) =>
-        seg.visaTypes.some((vt) =>
-          vt.checklist.some((doc) => doc.documentId === id),
-        ),
-      )
+      const inUse = country.segments.some((seg) => {
+        const inCommon = (seg.commonDocuments ?? []).some((doc) => doc.documentId === id)
+        const inApplication = seg.visaTypes.some((vt) =>
+          (vt.applicationDocuments ?? []).some((doc) => doc.documentId === id),
+        )
+        return inCommon || inApplication
+      })
       if (inUse) count += 1
     }
     return count

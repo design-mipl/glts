@@ -4,6 +4,9 @@ import { buttonPaddingCss } from '@/design-system/formControl'
 
 export type PublicBrandMode = 'light' | 'dark'
 
+/** RGB components for primary brand green (`#73C064`) — use in `rgba(${brandPrimaryGreenRgb}, α)`. */
+export const brandPrimaryGreenRgb = '115, 192, 100' as const
+
 export interface PublicBrandColors {
   navy: string
   navyMid: string
@@ -30,10 +33,10 @@ export const publicLightColors: PublicBrandColors = {
   navy: '#001F3F',
   navyMid: '#0A2540',
   navyLight: '#123B5C',
-  green: '#76C76B',
-  greenBright: '#10B981',
-  greenDark: '#059669',
-  greenMuted: 'rgba(118, 199, 107, 0.12)',
+  green: '#73C064',
+  greenBright: '#73C064',
+  greenDark: '#5A9A4E',
+  greenMuted: 'rgba(115, 192, 100, 0.12)',
   white: '#FFFFFF',
   surface: '#F8FAFC',
   surfaceAlt: '#F1F5F9',
@@ -50,10 +53,10 @@ export const publicDarkColors: PublicBrandColors = {
   navy: '#E5F4FF',
   navyMid: '#C7E1F4',
   navyLight: '#94A3B8',
-  green: '#76C76B',
-  greenBright: '#34D399',
-  greenDark: '#A7F3D0',
-  greenMuted: 'rgba(52, 211, 153, 0.14)',
+  green: '#73C064',
+  greenBright: '#8FD67F',
+  greenDark: '#5A9A4E',
+  greenMuted: 'rgba(115, 192, 100, 0.14)',
   white: '#111827',
   surface: '#0F172A',
   surfaceAlt: '#1E293B',
@@ -76,8 +79,8 @@ export function usePublicBrandColors(): PublicBrandColors {
 }
 
 export const publicFonts = {
-  heading: '"Plus Jakarta Sans", system-ui, sans-serif',
-  body: '"Inter", system-ui, sans-serif',
+  heading: '"Roboto", system-ui, sans-serif',
+  body: '"Roboto", system-ui, sans-serif',
 } as const
 
 export const publicLayout = {

@@ -5,13 +5,14 @@ export type ApplicationOperationalStatus =
   | 'Verification Pending'
   | 'Correction Required'
   | 'Submitted'
+  | 'Appointment Booked'
   | 'Passport Ready'
   | 'Completed'
   | 'Rejected'
 
 export type ApplicationRecordType = 'single' | 'bulk'
 
-export type ApplicationCustomerSegment = 'marine' | 'corporate' | 'retail'
+export type ApplicationCustomerSegment = 'marine' | 'corporate' | 'retail' | 'b2bAgents'
 
 export type ApplicationListingTab = 'all' | 'draft' | 'submitted'
 
@@ -43,6 +44,7 @@ export const SUBMITTED_OPERATIONAL_STATUSES: ApplicationOperationalStatus[] = [
   'Under Review',
   'Verification Pending',
   'Correction Required',
+  'Appointment Booked',
   'Passport Ready',
   'Completed',
   'Rejected',

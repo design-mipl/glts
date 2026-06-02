@@ -1,0 +1,64 @@
+import { Stack, Typography } from '@mui/material'
+import { useNavigate } from 'react-router-dom'
+import { Badge, Button } from '@/design-system/UIComponents'
+import { validateForApproval } from '@/shared/utils/commercialAgreementValidation'
+import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
+import { AgreementReviewPanel } from '../AgreementReviewPanel'
+
+interface AgreementApprovalSectionProps {
+  data: CommercialAgreementFormData
+  agreementRecordId?: string
+  status?: string
+  onSubmit?: () => void
+  onApprove?: () => void
+  onReject?: () => void
+}
+
+export function AgreementApprovalSection({
+  data,
+  agreementRecordId,
+  status = 'draft',
+  onSubmit,
+  onApprove,
+  onReject,
+}: AgreementApprovalSectionProps) {
+  const navigate = useNavigate()
+  const validation = validateForApproval(data)
+
+  return (
+    <Stack spacing={2}>
+      <AgreementReviewPanel data={data} />
+
+      <Stack spacing={1}>
+        <Typography variant="body2" fontWeight={600}>
+          Validation checklist
+        </Typography>
+        {validation.ok ? (
+          <Badge label="All required fields and documents are complete" color="success" size="sm" />
+        ) : (
+          validation.issues.map((issue) => <Badge key={issue} label={issue} color="warning" size="sm" />)
+        )}
+      </Stack>
+
+      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+        {status === 'draft' && onSubmit ? (
+          <Button label="Submit agreement" onClick={onSubmit} disabled={!validation.ok} />
+        ) : null}
+        {status === 'submitted' && onApprove ? (
+          <Button label="Approve agreement" onClick={onApprove} disabled={!validation.ok} />
+        ) : null}
+        {status === 'submitted' && onReject ? (
+          <Button label="Reject agreement" variant="outlined" color="secondary" onClick={onReject} />
+        ) : null}
+        {status === 'approved' && agreementRecordId ? (
+          <Button
+            label="Proceed to corporate accounts"
+            onClick={() =>
+              navigate(`/admin/customer-accounts/corporate-accounts/new?agreementId=${agreementRecordId}`)
+            }
+          />
+        ) : null}
+      </Stack>
+    </Stack>
+  )
+}

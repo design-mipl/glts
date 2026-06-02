@@ -1,10 +1,18 @@
 export type AgreementType = 'agreemented' | 'non_agreemented'
 
-export type AgreementWorkflowType = 'marine' | 'corporate' | 'retail' | 'mixed'
+export type AgreementWorkflowType = 'marine' | 'corporate' | 'b2b_agent' | 'mixed' | 'retail'
 
 export type AgreementBillingType = 'credit' | 'advance' | 'mixed'
 
-export type AgreementStatus = 'draft' | 'submitted' | 'approved' | 'rejected' | 'expired'
+export type AgreementStatus = 'draft' | 'submitted' | 'approved' | 'rejected' | 'expired' | 'inactive'
+
+export type CustomerSourceMode = 'quotation' | 'existing' | 'new'
+
+export type AgreementEntityStatus = 'active' | 'inactive'
+
+export type AdvanceType = 'full' | 'percentage' | 'fixed'
+
+export type ProcessingBlockRule = 'before_submission' | 'before_appointment' | 'before_processing'
 
 export type OnboardingDocumentStatus = 'pending' | 'uploaded' | 'verified' | 'rejected'
 
@@ -16,11 +24,25 @@ export interface AgreementActivity {
   detail: string
 }
 
+export interface AgreementEntity {
+  id: string
+  entityName: string
+  billingAddress: string
+  gstNumber: string
+  contactPerson: string
+  email: string
+  phone: string
+  status: AgreementEntityStatus
+}
+
 export interface AgreementPricingRow {
   id: string
   country: string
+  countryId?: string
   visaType: string
   workflowType: string
+  servicePresetId: string
+  servicePresetName: string
   serviceFee: number
   gstApplicable: boolean
   remarks: string
@@ -35,11 +57,23 @@ export interface AgreementMiscCostRow {
   remarks: string
 }
 
+export interface AgreementServiceWiseBillingRule {
+  servicePresetId: string
+  servicePresetName: string
+  billingRule: 'advance' | 'credit'
+}
+
 export interface AgreementBillingConfig {
   creditBillingEnabled: boolean
   billingCycle: 'monthly' | 'quarterly' | 'custom'
   creditPeriodDays: number
   creditLimit: number
+  gracePeriodDays: number
+  advanceType: AdvanceType
+  advancePercentage: number
+  fixedAdvanceAmount: number
+  processingBlockRule: ProcessingBlockRule
+  serviceWiseBillingRules: AgreementServiceWiseBillingRule[]
   gstApplicable: boolean
   gstPercentage: number
   tdsApplicable: boolean
@@ -52,6 +86,18 @@ export interface AgreementFinanceContacts {
   accountsContactNumber: string
   invoiceSubmissionEmail: string
   paymentFollowUpContact: string
+}
+
+export type AgreementFinanceContactSource = 'company' | 'parent_company' | 'entity'
+
+export interface AgreementFinanceContactPerson {
+  id: string
+  sourceType: AgreementFinanceContactSource
+  sourceId?: string
+  sourceLabel: string
+  contactPerson: string
+  email: string
+  phone: string
 }
 
 export interface AgreementOnboardingDocument {
@@ -68,16 +114,22 @@ export interface CommercialAgreement {
   agreementId: string
   companyId: string
   companyName: string
+  customerSourceMode: CustomerSourceMode
+  referenceQuotationId?: string
+  parentCompanyId?: string
   agreementType: AgreementType
   workflowType: AgreementWorkflowType
   billingType: AgreementBillingType
   status: AgreementStatus
   startDate: string
   endDate: string
+  entities: AgreementEntity[]
   pricingMatrix: AgreementPricingRow[]
   miscellaneousCosts: AgreementMiscCostRow[]
   billingConfig: AgreementBillingConfig
   financeContacts: AgreementFinanceContacts
+  financeContactPersons?: AgreementFinanceContactPerson[]
+  selectedFinanceContactIds?: string[]
   documents: AgreementOnboardingDocument[]
   createdAt: string
   updatedAt: string
@@ -89,18 +141,23 @@ export interface CommercialAgreement {
 }
 
 export interface CommercialAgreementFormData {
-  companyMode: 'existing' | 'new'
+  customerSourceMode: CustomerSourceMode
+  referenceQuotationId: string
   existingCompanyId: string
+  parentCompanyId: string
   company: import('./companyMaster').CompanyMasterFormData
   agreementType: AgreementType
   workflowType: AgreementWorkflowType
   billingType: AgreementBillingType
   startDate: string
   endDate: string
+  entities: AgreementEntity[]
   pricingMatrix: AgreementPricingRow[]
   miscellaneousCosts: AgreementMiscCostRow[]
   billingConfig: AgreementBillingConfig
   financeContacts: AgreementFinanceContacts
+  financeContactPersons: AgreementFinanceContactPerson[]
+  selectedFinanceContactIds: string[]
   documents: AgreementOnboardingDocument[]
 }
 
@@ -110,6 +167,9 @@ export interface CommercialAgreementListFilters {
   workflowType?: AgreementWorkflowType | 'all'
   billingType?: AgreementBillingType | 'all'
   companyId?: string
+  entityName?: string
+  dateFrom?: string
+  dateTo?: string
   query?: string
 }
 
@@ -117,3 +177,6 @@ export interface AgreementApprovalValidation {
   ok: boolean
   issues: string[]
 }
+
+/** @deprecated Use customerSourceMode === 'existing' */
+export type LegacyCompanyMode = 'existing' | 'new'

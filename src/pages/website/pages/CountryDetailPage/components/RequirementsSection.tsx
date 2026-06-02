@@ -77,12 +77,12 @@ const iconConfig: Record<
   ReqType,
   { Icon: React.ElementType; bg: string; color: string }
 > = {
-  document: { Icon: FileText, bg: 'rgba(16, 185, 129, 0.1)', color: publicLightColors.greenBright },
+  document: { Icon: FileText, bg: publicLightColors.greenMuted, color: publicLightColors.greenBright },
   photo: { Icon: Camera, bg: 'rgba(99, 102, 241, 0.1)', color: '#6366F1' },
   financial: { Icon: CreditCard, bg: 'rgba(245, 158, 11, 0.12)', color: '#D97706' },
   insurance: { Icon: Shield, bg: 'rgba(14, 165, 233, 0.1)', color: '#0EA5E9' },
   travel: { Icon: Plane, bg: 'rgba(236, 72, 153, 0.1)', color: '#EC4899' },
-  accommodation: { Icon: Building2, bg: 'rgba(118, 199, 107, 0.15)', color: publicLightColors.greenDark },
+  accommodation: { Icon: Building2, bg: 'rgba(115, 192, 100, 0.15)', color: publicLightColors.greenDark },
 }
 
 interface RequirementsSectionProps {
@@ -151,7 +151,7 @@ function RequirementRow({ req }: { req: RequirementItem }) {
                 fontWeight: 700,
                 bgcolor: colors.greenMuted,
                 color: colors.greenDark,
-                border: `1px solid rgba(16, 185, 129, 0.25)`,
+                border: `1px solid rgba(115, 192, 100, 0.25)`,
                 '& .MuiChip-icon': { color: colors.greenBright, ml: 0.5 },
                 '& .MuiChip-label': { px: 1 },
               }}

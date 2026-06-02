@@ -36,11 +36,30 @@ export interface SidebarProps {
 
 const TOPBAR_HEIGHT = 52
 
+/** Strip trailing slash so `/admin/` and `/admin` compare consistently. */
+function normalizeNavPath(path: string): string {
+  if (path.length > 1 && path.endsWith('/')) {
+    return path.slice(0, -1)
+  }
+  return path
+}
+
+/**
+ * Whether a nav href matches the current route.
+ * Section links (e.g. agreements listing) stay active on create/edit/detail child paths.
+ * `/admin` dashboard href is exact-only so it does not highlight on every admin URL.
+ */
 export function isNavActive(href: string | undefined, currentPath: string): boolean {
   if (!href) return false
-  if (currentPath === href) return true
 
-  return false
+  const hrefNorm = normalizeNavPath(href)
+  const pathNorm = normalizeNavPath(currentPath)
+
+  if (pathNorm === hrefNorm) return true
+
+  if (hrefNorm === '/admin') return false
+
+  return pathNorm.startsWith(`${hrefNorm}/`)
 }
 
 function isGroupChildActive(children: NavConfig[] | undefined, currentPath: string): boolean {
