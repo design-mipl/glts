@@ -39,7 +39,7 @@ jobs:
             --exclude='.git' \
             --exclude='node_modules' \
             --exclude='.env' \
-            ./ /var/www/bisc.metaphi.in/
+            ./ /var/www/glts/
 
       - name: Install dependencies
         working-directory: /var/www/glts
