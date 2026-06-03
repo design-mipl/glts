@@ -13,7 +13,6 @@ import { Button, ConfirmDialog, Pagination, useToast } from '@/design-system/UIC
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { invoiceService } from '@/shared/services/invoiceService'
 import type { Invoice } from '@/shared/types/invoice'
-import { InvoiceAdvancedFilters } from '../components/InvoiceAdvancedFilters'
 import { InvoiceKpiRow } from '../components/InvoiceKpiRow'
 import { buildInvoiceColumns } from '../components/InvoiceTableColumns'
 import {
@@ -23,15 +22,11 @@ import {
   type InvoiceListingTab,
 } from '../config/invoiceListingTabs'
 import {
-  applyInvoiceAdvancedFilters,
   downloadInvoiceCsv,
-  EMPTY_INVOICE_ADVANCED_FILTERS,
   getInvoiceCellValue,
   getInvoiceEmptyState,
-  getInvoiceFilterOptions,
   mapInvoiceRowsToGridItems,
   matchesInvoiceSearch,
-  type InvoiceAdvancedFilterState,
 } from '../utils/invoiceListingUtils'
 import type { ShareInvoiceModalValue } from '../components/workspace/ShareInvoiceModal'
 import { ShareInvoiceModal } from '../components/workspace/ShareInvoiceModal'
@@ -46,9 +41,6 @@ export function InvoiceListingPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<InvoiceListingTab>('all')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
-  const [advancedFilters, setAdvancedFilters] = useState<InvoiceAdvancedFilterState>(
-    EMPTY_INVOICE_ADVANCED_FILTERS,
-  )
   const [shareTarget, setShareTarget] = useState<Invoice>()
   const [shareOpen, setShareOpen] = useState(false)
   const [shareValue, setShareValue] = useState<ShareInvoiceModalValue>({
@@ -73,20 +65,15 @@ export function InvoiceListingPage() {
   }, [loadRows])
 
   const tabFilteredRows = useMemo(() => filterInvoicesByTab(rows, activeTab), [rows, activeTab])
-  const advancedFilteredRows = useMemo(
-    () => applyInvoiceAdvancedFilters(tabFilteredRows, advancedFilters),
-    [tabFilteredRows, advancedFilters],
-  )
 
   const listing = useCustomerListing({
-    rows: advancedFilteredRows,
+    rows: tabFilteredRows,
     getCellValue: getInvoiceCellValue,
     searchMatch: matchesInvoiceSearch,
     initialPageSize: 10,
   })
 
   const tabCounts = useMemo(() => getInvoiceTabCounts(rows), [rows])
-  const filterOptions = useMemo(() => getInvoiceFilterOptions(rows), [rows])
 
   const columns = useMemo(
     () =>
@@ -153,7 +140,6 @@ export function InvoiceListingPage() {
   const handleClearFilters = useCallback(() => {
     listing.handleSearch('')
     listing.setColumnFilters({})
-    setAdvancedFilters(EMPTY_INVOICE_ADVANCED_FILTERS)
   }, [listing])
 
   const handleShareConfirm = () => {
@@ -204,41 +190,27 @@ export function InvoiceListingPage() {
         tabValue={activeTab}
         onTabChange={value => handleTabChange(value as InvoiceListingTab)}
         toolbar={
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <AdminListingToolbar
-              searchValue={listing.tableState.searchQuery}
-              onSearch={listing.handleSearch}
-              searchPlaceholder="Search invoice ID, GLTS ref, batch, company, billing entity, vessel, PO ref…"
-              onExport={() => {
-                downloadInvoiceCsv(listing.filterSourceRows)
-                showToast({ title: 'Export started', variant: 'success' })
-              }}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              columns={toolbarColumns}
-              hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
-              onHiddenColumnKeysChange={keys =>
-                listing.setTableState(state => ({ ...state, hiddenColumnKeys: keys }))
-              }
-              moreMenuItems={[
-                { label: 'Billing reports', onClick: () => navigate(`${LISTING_PATH}/reports`) },
-                { label: 'Refresh list', onClick: loadRows },
-                { label: 'Clear all filters', onClick: handleClearFilters },
-              ]}
-            />
-            <InvoiceAdvancedFilters
-              filters={advancedFilters}
-              onChange={next => {
-                setAdvancedFilters(next)
-                listing.setTableState(state => ({ ...state, page: 0 }))
-              }}
-              companyOptions={filterOptions.companies}
-              billingEntityOptions={filterOptions.billingEntities}
-              vesselOptions={filterOptions.vessels}
-              countryOptions={filterOptions.countries}
-              visaTypeOptions={filterOptions.visaTypes}
-            />
-          </Box>
+          <AdminListingToolbar
+            searchValue={listing.tableState.searchQuery}
+            onSearch={listing.handleSearch}
+            searchPlaceholder="Search invoice ID, GLTS ref, batch, company, billing entity, vessel, PO ref…"
+            onExport={() => {
+              downloadInvoiceCsv(listing.filterSourceRows)
+              showToast({ title: 'Export started', variant: 'success' })
+            }}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            columns={toolbarColumns}
+            hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
+            onHiddenColumnKeysChange={keys =>
+              listing.setTableState(state => ({ ...state, hiddenColumnKeys: keys }))
+            }
+            moreMenuItems={[
+              { label: 'Billing reports', onClick: () => navigate(`${LISTING_PATH}/reports`) },
+              { label: 'Refresh list', onClick: loadRows },
+              { label: 'Clear all filters', onClick: handleClearFilters },
+            ]}
+          />
         }
         listingContent={
           viewMode === 'table' ? (
