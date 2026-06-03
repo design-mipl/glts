@@ -8,7 +8,7 @@ import {
   LayoutDashboard,
   Shield,
   SlidersHorizontal,
-  // Wrench,
+  Wrench,
 } from 'lucide-react'
 import type { NavConfig } from '@/design-system/UIComponents'
 
@@ -103,14 +103,13 @@ export const adminNav: NavConfig[] = [
       { type: 'item', label: 'GST & TDS Master', href: '/admin/masters/tax' },
     ],
   },
-  // Tools — re-enable when internal scaffolds are needed again
-  // {
-  //   type: 'group',
-  //   label: 'Tools',
-  //   icon: createElement(Wrench, iconProps),
-  //   children: [
-  //     { type: 'item', label: 'Component library', href: '/admin/tools/component-library' },
-  //     { type: 'item', label: 'Template showcase', href: '/admin/tools/templates' },
-  //   ],
-  // },
+  {
+    type: 'group',
+    label: 'Tools',
+    icon: createElement(Wrench, iconProps),
+    children: [
+      { type: 'item', label: 'Component library', href: '/admin/tools/component-library' },
+      { type: 'item', label: 'Template showcase', href: '/admin/tools/templates' },
+    ],
+  },
 ]
