@@ -5,6 +5,9 @@ import { resolve } from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    allowedHosts: ['glts.dev.metaphi.in'],
+  },
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
