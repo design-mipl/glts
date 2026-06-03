@@ -15,8 +15,7 @@ import {
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { sacCodeMasterService } from '@/shared/services/sacCodeMasterService'
-import type { SacCodeMaster, SacCodeMasterListFilters } from '@/shared/types/sacCodeMaster'
-import { SacCodeAdvancedFilters } from '../components/SacCodeAdvancedFilters'
+import type { SacCodeMaster } from '@/shared/types/sacCodeMaster'
 import { SacCodeFormDrawer } from '../components/SacCodeFormDrawer'
 import { buildSacCodeColumns } from '../components/SacCodeTableColumns'
 import {
@@ -26,14 +25,11 @@ import {
   matchesSacCodeSearch,
 } from '../utils/sacCodeListingUtils'
 
-const EMPTY_FILTERS: SacCodeMasterListFilters = { status: 'all', category: 'all' }
-
 export function SacCodeListingPage() {
   const theme = useTheme()
   const { showToast } = useToast()
   const [rows, setRows] = useState<SacCodeMaster[]>([])
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState<SacCodeMasterListFilters>(EMPTY_FILTERS)
   const [formOpen, setFormOpen] = useState(false)
   const [editRecord, setEditRecord] = useState<SacCodeMaster | null>(null)
   const [statusOpen, setStatusOpen] = useState(false)
@@ -42,9 +38,9 @@ export function SacCodeListingPage() {
 
   const loadRows = useCallback(() => {
     setLoading(true)
-    setRows(sacCodeMasterService.list(filters))
+    setRows(sacCodeMasterService.list())
     setLoading(false)
-  }, [filters])
+  }, [])
 
   useEffect(() => {
     loadRows()
@@ -99,7 +95,6 @@ export function SacCodeListingPage() {
   }, [loadRows, showToast])
 
   const handleClearFilters = useCallback(() => {
-    setFilters(EMPTY_FILTERS)
     listing.handleSearch('')
     listing.setColumnFilters({})
   }, [listing])
@@ -124,9 +119,7 @@ export function SacCodeListingPage() {
       ? alpha(theme.palette.common.white, 0.04)
       : alpha(theme.palette.common.black, 0.02)
 
-  const hasActiveFilters =
-    (filters.category && filters.category !== 'all') ||
-    Boolean(listing.tableState.searchQuery)
+  const hasActiveFilters = Boolean(listing.tableState.searchQuery)
 
   return (
     <>
@@ -141,26 +134,23 @@ export function SacCodeListingPage() {
           />
         }
         toolbar={
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <AdminListingToolbar
-              searchValue={listing.tableState.searchQuery}
-              onSearch={listing.handleSearch}
-              searchPlaceholder="Search SAC code, title, or category…"
-              onExport={handleExport}
-              columns={toolbarColumns}
-              hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
-              onHiddenColumnKeysChange={(keys) =>
-                listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
-              }
-              moreMenuItems={[
-                { label: 'Refresh list', onClick: handleRefresh },
-                ...(hasActiveFilters
-                  ? [{ label: 'Clear all filters', onClick: handleClearFilters }]
-                  : []),
-              ]}
-            />
-            <SacCodeAdvancedFilters filters={filters} onChange={setFilters} />
-          </Box>
+          <AdminListingToolbar
+            searchValue={listing.tableState.searchQuery}
+            onSearch={listing.handleSearch}
+            searchPlaceholder="Search SAC code, title, or category…"
+            onExport={handleExport}
+            columns={toolbarColumns}
+            hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
+            onHiddenColumnKeysChange={(keys) =>
+              listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
+            }
+            moreMenuItems={[
+              { label: 'Refresh list', onClick: handleRefresh },
+              ...(hasActiveFilters
+                ? [{ label: 'Clear all filters', onClick: handleClearFilters }]
+                : []),
+            ]}
+          />
         }
         listingContent={
           <AdminListingTable

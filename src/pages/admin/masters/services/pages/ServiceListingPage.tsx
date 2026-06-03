@@ -15,9 +15,7 @@ import {
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { serviceMasterService } from '@/shared/services/serviceMasterService'
-import type { ServiceMaster, ServiceMasterListFilters } from '@/shared/types/serviceMaster'
-import { ServiceAdvancedFilters } from '../components/ServiceAdvancedFilters'
-import { ServiceFormDrawer } from '../components/ServiceFormDrawer'
+import type { ServiceMaster } from '@/shared/types/serviceMaster'
 import { buildServiceColumns } from '../components/ServiceTableColumns'
 import {
   downloadServiceCsv,
@@ -26,18 +24,11 @@ import {
   matchesServiceSearch,
 } from '../utils/serviceListingUtils'
 
-const EMPTY_FILTERS: ServiceMasterListFilters = {
-  status: 'all',
-  category: 'all',
-  currency: 'all',
-}
-
 export function ServiceListingPage() {
   const theme = useTheme()
   const { showToast } = useToast()
   const [rows, setRows] = useState<ServiceMaster[]>([])
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState<ServiceMasterListFilters>(EMPTY_FILTERS)
   const [formOpen, setFormOpen] = useState(false)
   const [editRecord, setEditRecord] = useState<ServiceMaster | null>(null)
   const [statusOpen, setStatusOpen] = useState(false)
@@ -46,9 +37,9 @@ export function ServiceListingPage() {
 
   const loadRows = useCallback(() => {
     setLoading(true)
-    setRows(serviceMasterService.list(filters))
+    setRows(serviceMasterService.list())
     setLoading(false)
-  }, [filters])
+  }, [])
 
   useEffect(() => {
     loadRows()
@@ -103,7 +94,6 @@ export function ServiceListingPage() {
   }, [loadRows, showToast])
 
   const handleClearFilters = useCallback(() => {
-    setFilters(EMPTY_FILTERS)
     listing.handleSearch('')
     listing.setColumnFilters({})
   }, [listing])
@@ -128,10 +118,7 @@ export function ServiceListingPage() {
       ? alpha(theme.palette.common.white, 0.04)
       : alpha(theme.palette.common.black, 0.02)
 
-  const hasActiveFilters =
-    (filters.category && filters.category !== 'all') ||
-    (filters.currency && filters.currency !== 'all') ||
-    Boolean(listing.tableState.searchQuery)
+  const hasActiveFilters = Boolean(listing.tableState.searchQuery)
 
   return (
     <>
@@ -146,26 +133,23 @@ export function ServiceListingPage() {
           />
         }
         toolbar={
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <AdminListingToolbar
-              searchValue={listing.tableState.searchQuery}
-              onSearch={listing.handleSearch}
-              searchPlaceholder="Search service code, name, category…"
-              onExport={handleExport}
-              columns={toolbarColumns}
-              hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
-              onHiddenColumnKeysChange={(keys) =>
-                listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
-              }
-              moreMenuItems={[
-                { label: 'Refresh list', onClick: handleRefresh },
-                ...(hasActiveFilters
-                  ? [{ label: 'Clear all filters', onClick: handleClearFilters }]
-                  : []),
-              ]}
-            />
-            <ServiceAdvancedFilters filters={filters} onChange={setFilters} />
-          </Box>
+          <AdminListingToolbar
+            searchValue={listing.tableState.searchQuery}
+            onSearch={listing.handleSearch}
+            searchPlaceholder="Search service code, name, category…"
+            onExport={handleExport}
+            columns={toolbarColumns}
+            hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
+            onHiddenColumnKeysChange={(keys) =>
+              listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
+            }
+            moreMenuItems={[
+              { label: 'Refresh list', onClick: handleRefresh },
+              ...(hasActiveFilters
+                ? [{ label: 'Clear all filters', onClick: handleClearFilters }]
+                : []),
+            ]}
+          />
         }
         listingContent={
           <AdminListingTable
