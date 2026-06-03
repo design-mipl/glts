@@ -267,6 +267,7 @@ export interface CustomerChecklistItem {
   label: string
   required?: boolean
   status: 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified'
+  reviewComment?: string
 }
 
 export function CustomerDocumentChecklist({
@@ -287,21 +288,43 @@ export function CustomerDocumentChecklist({
           const isInvalid = item.status === 'invalid'
           const isMissing = item.status === 'missing'
           const showUploadAction = isInvalid || isMissing
+          const showComment = Boolean(item.reviewComment?.trim()) && (isInvalid || isMissing)
           return (
-            <Stack key={item.id} direction="row" alignItems="center" spacing={1}>
-            <CustomerStatusChip
-              label={item.status === 'invalid' ? 'marked invalid' : item.status.replace('_', ' ')}
-              tone={isInvalid ? 'critical' : getCustomerStatusTone(item.status)}
-            />
-            <Typography sx={{ flex: 1, fontSize: 13, fontWeight: item.required ? 700 : 500, color: colors.navy }}>
-              {item.label}
-              {item.required && <Typography component="span" sx={{ ml: 0.5, color: colors.textMuted, fontSize: 11 }}>*</Typography>}
-            </Typography>
-            {showUploadAction && onReuploadItem ? (
-              <Button variant="outlined" onClick={() => onReuploadItem(item)}>
-                Upload document
-              </Button>
-            ) : null}
+            <Stack key={item.id} spacing={0.5}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <CustomerStatusChip
+                  label={item.status === 'invalid' ? 'marked invalid' : item.status.replace('_', ' ')}
+                  tone={isInvalid ? 'critical' : getCustomerStatusTone(item.status)}
+                />
+                <Typography sx={{ flex: 1, fontSize: 13, fontWeight: item.required ? 700 : 500, color: colors.navy }}>
+                  {item.label}
+                  {item.required && <Typography component="span" sx={{ ml: 0.5, color: colors.textMuted, fontSize: 11 }}>*</Typography>}
+                </Typography>
+                {showUploadAction && onReuploadItem ? (
+                  <Button variant="outlined" onClick={() => onReuploadItem(item)}>
+                    Upload document
+                  </Button>
+                ) : null}
+              </Stack>
+              {showComment ? (
+                <Box
+                  sx={{
+                    ml: 0.5,
+                    px: 1.25,
+                    py: 0.75,
+                    borderRadius: '8px',
+                    bgcolor: colors.surfaceAlt,
+                    border: `1px solid ${colors.border}`,
+                  }}
+                >
+                  <Typography sx={{ fontSize: 12, color: colors.textSecondary, lineHeight: 1.5 }}>
+                    <Typography component="span" sx={{ fontWeight: 700, fontSize: 12, color: colors.navy }}>
+                      GLTS note:{' '}
+                    </Typography>
+                    {item.reviewComment}
+                  </Typography>
+                </Box>
+              ) : null}
             </Stack>
           )
         })}

@@ -73,7 +73,7 @@ export function UserPermissionAccordion({
             </Stack>
 
             <Collapse in={expanded}>
-              <Box sx={{ px: 2, py: 2 }}>
+              <Box sx={{ px: { xs: 1.5, sm: 2 }, py: 2 }}>
                 <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 1 }}>
                   Module level
                 </Typography>

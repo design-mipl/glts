@@ -1,17 +1,13 @@
 import { Stack } from '@mui/material'
-import { BaseCard, Checkbox, FormField, Input, Select } from '@/design-system/UIComponents'
-import type { BillingMode, InvoiceType } from '@/shared/types/invoice'
-import {
-  getApplicationOptions,
-  getBatchOptions,
-  getCompanyOptions,
-  getVesselOptions,
-  SERVICE_TYPE_OPTIONS,
-} from '@/shared/utils/invoiceBillingEngine'
+import { BaseCard, FormField, Select } from '@/design-system/UIComponents'
+import type { ApplicationSelectionMode, BillingMode, InvoiceType } from '@/shared/types/invoice'
 import { billingModeLabel, INVOICE_TYPE_OPTIONS } from '../../config/invoiceStatusConfig'
+import { BillableApplicationsTable } from './BillableApplicationsTable'
+import { CompanyWiseBillingFields } from './CompanyWiseBillingFields'
 
 interface InvoiceBillingSelectionPanelProps {
   billingMode: BillingMode
+  applicationSelectionMode: ApplicationSelectionMode
   invoiceType: InvoiceType
   companyId: string
   billingEntity: string
@@ -19,21 +15,31 @@ interface InvoiceBillingSelectionPanelProps {
   vesselId: string
   applicationIds: string[]
   batchIds: string[]
-  serviceTypes: string[]
-  billableOnly: boolean
+  billingPeriodFrom: string
+  billingPeriodTo: string
+  poReference: string
   onBillingModeChange: (mode: BillingMode) => void
+  onApplicationSelectionModeChange: (mode: ApplicationSelectionMode) => void
   onInvoiceTypeChange: (type: InvoiceType) => void
   onCompanyChange: (companyId: string, companyName: string, billingEntity: string) => void
   onBillingEntityOverrideChange: (value: string) => void
   onVesselChange: (vesselId: string, vesselName: string) => void
   onApplicationIdsChange: (ids: string[]) => void
   onBatchIdsChange: (ids: string[]) => void
-  onServiceTypesChange: (types: string[]) => void
-  onBillableOnlyChange: (value: boolean) => void
+  onBillingPeriodFromChange: (value: string) => void
+  onBillingPeriodToChange: (value: string) => void
+  onPoReferenceChange: (value: string) => void
 }
+
+const APPLICATION_SELECTION_OPTIONS = [
+  { value: 'single', label: 'Single application' },
+  { value: 'batch', label: 'Batch application' },
+  { value: 'multiple', label: 'Multiple applications' },
+]
 
 export function InvoiceBillingSelectionPanel({
   billingMode,
+  applicationSelectionMode,
   invoiceType,
   companyId,
   billingEntity,
@@ -41,22 +47,32 @@ export function InvoiceBillingSelectionPanel({
   vesselId,
   applicationIds,
   batchIds,
-  serviceTypes,
-  billableOnly,
+  billingPeriodFrom,
+  billingPeriodTo,
+  poReference,
   onBillingModeChange,
+  onApplicationSelectionModeChange,
   onInvoiceTypeChange,
   onCompanyChange,
   onBillingEntityOverrideChange,
   onVesselChange,
   onApplicationIdsChange,
   onBatchIdsChange,
-  onServiceTypesChange,
-  onBillableOnlyChange,
+  onBillingPeriodFromChange,
+  onBillingPeriodToChange,
+  onPoReferenceChange,
 }: InvoiceBillingSelectionPanelProps) {
-  const companyOptions = getCompanyOptions()
-  const vesselOptions = getVesselOptions()
-  const appOptions = getApplicationOptions(billableOnly)
-  const batchOptions = getBatchOptions(billableOnly)
+  const handleTableSelection = (appIds: string[], batchRowIds: string[]) => {
+    onApplicationIdsChange(appIds)
+    onBatchIdsChange(batchRowIds)
+    if (batchRowIds.length === 1 && appIds.length === 0) {
+      onApplicationSelectionModeChange('batch')
+    } else if (appIds.length === 1 && batchRowIds.length === 0) {
+      onApplicationSelectionModeChange('single')
+    } else if (appIds.length > 1 || batchRowIds.length > 1 || (appIds.length > 0 && batchRowIds.length > 0)) {
+      onApplicationSelectionModeChange('multiple')
+    }
+  }
 
   return (
     <BaseCard sx={{ p: 2 }}>
@@ -73,97 +89,50 @@ export function InvoiceBillingSelectionPanel({
             fullWidth
           />
         </FormField>
-        <FormField label="Company">
-          <Select
-            value={companyId}
-            onChange={v => {
-              const opt = companyOptions.find(c => c.value === v)
-              if (opt) onCompanyChange(opt.value, opt.label, opt.billingEntity)
-            }}
-            options={companyOptions.map(c => ({ value: c.value, label: c.label }))}
-            placeholder="Select company"
-            size="sm"
-            clearable
-            fullWidth
-          />
-        </FormField>
-        <FormField label="Billing entity">
-          <Input value={billingEntityOverride || billingEntity} onChange={onBillingEntityOverrideChange} size="sm" fullWidth />
-        </FormField>
-        <FormField label="Vessel">
-          <Select
-            value={vesselId}
-            onChange={v => {
-              const opt = vesselOptions.find(o => o.value === v)
-              if (opt) onVesselChange(opt.value, opt.label)
-            }}
-            options={vesselOptions}
-            placeholder="Select vessel"
-            size="sm"
-            clearable
-            fullWidth
-          />
-        </FormField>
         <FormField label="Invoice type">
           <Select
             value={invoiceType}
             onChange={v => onInvoiceTypeChange(v as InvoiceType)}
-            options={INVOICE_TYPE_OPTIONS.filter(o => o.value !== 'credit_note')}
+            options={INVOICE_TYPE_OPTIONS}
+            placeholder="Select invoice type"
             size="sm"
             fullWidth
           />
         </FormField>
-        <Checkbox checked={billableOnly} onChange={onBillableOnlyChange} label="Billable applications only (Appointment Booked)" />
-        {(billingMode === 'single' || billingMode === 'cumulative' || billingMode === 'service_wise') && (
-          <FormField label="Applications">
-            <Select
-              value={applicationIds[0] ?? ''}
-              onChange={v => {
-                const id = String(v)
-                if (billingMode === 'cumulative') {
-                  onApplicationIdsChange(applicationIds.includes(id) ? applicationIds.filter(x => x !== id) : [...applicationIds, id])
-                } else {
-                  onApplicationIdsChange(id ? [id] : [])
-                }
-              }}
-              options={appOptions}
-              placeholder="Select application"
-              size="sm"
-              clearable
-              fullWidth
+
+        {billingMode === 'application_wise' ? (
+          <>
+            <FormField label="Application selection">
+              <Select
+                value={applicationSelectionMode}
+                onChange={v => onApplicationSelectionModeChange(v as ApplicationSelectionMode)}
+                options={APPLICATION_SELECTION_OPTIONS}
+                size="sm"
+                fullWidth
+              />
+            </FormField>
+            <BillableApplicationsTable
+              selectedIds={applicationIds}
+              selectedBatchIds={batchIds}
+              onSelectionChange={handleTableSelection}
             />
-          </FormField>
-        )}
-        {billingMode === 'cumulative' && applicationIds.length > 0 ? (
-          <FormField label="Selected applications">
-            <Input value={applicationIds.join(', ')} onChange={() => {}} size="sm" fullWidth disabled />
-          </FormField>
-        ) : null}
-        {(billingMode === 'batch' || billingMode === 'cumulative') && (
-          <FormField label="Batch">
-            <Select
-              value={batchIds[0] ?? ''}
-              onChange={v => onBatchIdsChange(v ? [String(v)] : [])}
-              options={batchOptions}
-              placeholder="Select batch"
-              size="sm"
-              clearable
-              fullWidth
-            />
-          </FormField>
-        )}
-        {(billingMode === 'service_wise' || invoiceType === 'additional_expense') && (
-          <FormField label="Service types">
-            <Select
-              value={serviceTypes[0] ?? ''}
-              onChange={v => onServiceTypesChange(v ? [String(v)] : [])}
-              options={SERVICE_TYPE_OPTIONS.map(s => ({ value: s, label: s }))}
-              placeholder="Select service"
-              size="sm"
-              clearable
-              fullWidth
-            />
-          </FormField>
+          </>
+        ) : (
+          <CompanyWiseBillingFields
+            companyId={companyId}
+            billingEntity={billingEntity}
+            billingEntityOverride={billingEntityOverride}
+            vesselId={vesselId}
+            billingPeriodFrom={billingPeriodFrom}
+            billingPeriodTo={billingPeriodTo}
+            poReference={poReference}
+            onCompanyChange={onCompanyChange}
+            onBillingEntityOverrideChange={onBillingEntityOverrideChange}
+            onVesselChange={onVesselChange}
+            onBillingPeriodFromChange={onBillingPeriodFromChange}
+            onBillingPeriodToChange={onBillingPeriodToChange}
+            onPoReferenceChange={onPoReferenceChange}
+          />
         )}
       </Stack>
     </BaseCard>

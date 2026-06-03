@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Box, Stack, alpha, useTheme } from '@mui/material'
-import { Layers, Plus, Receipt } from 'lucide-react'
+import { Box, alpha, useTheme } from '@mui/material'
+import { Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
@@ -46,7 +46,9 @@ export function InvoiceListingPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<InvoiceListingTab>('all')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
-  const [advancedFilters, setAdvancedFilters] = useState<InvoiceAdvancedFilterState>(EMPTY_INVOICE_ADVANCED_FILTERS)
+  const [advancedFilters, setAdvancedFilters] = useState<InvoiceAdvancedFilterState>(
+    EMPTY_INVOICE_ADVANCED_FILTERS,
+  )
   const [shareTarget, setShareTarget] = useState<Invoice>()
   const [shareOpen, setShareOpen] = useState(false)
   const [shareValue, setShareValue] = useState<ShareInvoiceModalValue>({
@@ -57,6 +59,8 @@ export function InvoiceListingPage() {
   })
   const [cancelTarget, setCancelTarget] = useState<Invoice>()
   const [cancelOpen, setCancelOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Invoice>()
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const loadRows = useCallback(() => {
     setLoading(true)
@@ -81,10 +85,8 @@ export function InvoiceListingPage() {
     initialPageSize: 10,
   })
 
-  const filterOptions = useMemo(() => getInvoiceFilterOptions(rows), [rows])
   const tabCounts = useMemo(() => getInvoiceTabCounts(rows), [rows])
-
-  const hasActiveFilters = Object.values(advancedFilters).some(Boolean)
+  const filterOptions = useMemo(() => getInvoiceFilterOptions(rows), [rows])
 
   const columns = useMemo(
     () =>
@@ -108,6 +110,10 @@ export function InvoiceListingPage() {
         onCancel: row => {
           setCancelTarget(row)
           setCancelOpen(true)
+        },
+        onDeleteDraft: row => {
+          setDeleteTarget(row)
+          setDeleteOpen(true)
         },
       }),
     [navigate, showToast],
@@ -145,9 +151,9 @@ export function InvoiceListingPage() {
   )
 
   const handleClearFilters = useCallback(() => {
-    setAdvancedFilters(EMPTY_INVOICE_ADVANCED_FILTERS)
     listing.handleSearch('')
     listing.setColumnFilters({})
+    setAdvancedFilters(EMPTY_INVOICE_ADVANCED_FILTERS)
   }, [listing])
 
   const handleShareConfirm = () => {
@@ -168,29 +174,24 @@ export function InvoiceListingPage() {
     loadRows()
   }
 
+  const handleDeleteConfirm = () => {
+    if (!deleteTarget) return
+    invoiceService.deleteDraft(deleteTarget.id)
+    showToast({ title: 'Draft deleted', variant: 'info' })
+    setDeleteOpen(false)
+    setDeleteTarget(undefined)
+    loadRows()
+  }
+
   return (
     <>
       <AdminListingShell
         stickyPageHeader={
           <AdminListingStickyHeader
             title="Billing & invoice management"
-            description="Operational billing, invoice generation and customer finance tracking"
+            description="Operational invoice generation and finance tracking"
             actions={
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                <Button
-                  label="Batch billing"
-                  variant="outlined"
-                  startIcon={<Layers size={14} />}
-                  onClick={() => navigate(`${LISTING_PATH}/generate?mode=batch`)}
-                />
-                <Button
-                  label="Additional charges"
-                  variant="outlined"
-                  startIcon={<Receipt size={14} />}
-                  onClick={() => navigate(`${LISTING_PATH}/generate?type=additional_expense`)}
-                />
-                <Button label="Generate invoice" startIcon={<Plus size={14} />} onClick={handleGenerate} />
-              </Stack>
+              <Button label="Generate invoice" startIcon={<Plus size={14} />} onClick={handleGenerate} />
             }
           />
         }
@@ -207,7 +208,7 @@ export function InvoiceListingPage() {
             <AdminListingToolbar
               searchValue={listing.tableState.searchQuery}
               onSearch={listing.handleSearch}
-              searchPlaceholder="Search invoice ID, GLTS ref, batch, company, billing entity, vessel…"
+              searchPlaceholder="Search invoice ID, GLTS ref, batch, company, billing entity, vessel, PO ref…"
               onExport={() => {
                 downloadInvoiceCsv(listing.filterSourceRows)
                 showToast({ title: 'Export started', variant: 'success' })
@@ -220,24 +221,22 @@ export function InvoiceListingPage() {
                 listing.setTableState(state => ({ ...state, hiddenColumnKeys: keys }))
               }
               moreMenuItems={[
-                { label: 'Download report', onClick: () => navigate(`${LISTING_PATH}/reports`) },
+                { label: 'Billing reports', onClick: () => navigate(`${LISTING_PATH}/reports`) },
                 { label: 'Refresh list', onClick: loadRows },
                 { label: 'Clear all filters', onClick: handleClearFilters },
               ]}
             />
             <InvoiceAdvancedFilters
               filters={advancedFilters}
-              onFiltersChange={next => {
+              onChange={next => {
                 setAdvancedFilters(next)
                 listing.setTableState(state => ({ ...state, page: 0 }))
               }}
-              onClearFilters={handleClearFilters}
-              companies={filterOptions.companies}
-              billingEntities={filterOptions.billingEntities}
-              vessels={filterOptions.vessels}
-              countries={filterOptions.countries}
-              visaTypes={filterOptions.visaTypes}
-              hasActiveFilters={hasActiveFilters}
+              companyOptions={filterOptions.companies}
+              billingEntityOptions={filterOptions.billingEntities}
+              vesselOptions={filterOptions.vessels}
+              countryOptions={filterOptions.countries}
+              visaTypeOptions={filterOptions.visaTypes}
             />
           </Box>
         }
@@ -294,6 +293,16 @@ export function InvoiceListingPage() {
         confirmLabel="Cancel invoice"
         variant="destructive"
         onConfirm={handleCancelConfirm}
+      />
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        title="Delete draft"
+        description={`Delete draft ${deleteTarget?.invoiceId}? This cannot be undone.`}
+        confirmLabel="Delete draft"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
       />
     </>
   )

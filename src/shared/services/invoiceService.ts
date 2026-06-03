@@ -10,13 +10,26 @@ import type {
   InvoiceWorkspaceState,
   ShareInvoicePayload,
 } from '@/shared/types/invoice'
+import { findAgreementForCompany, buildLineItems } from '@/shared/utils/invoiceBillingEngine'
+import {
+  computeInvoiceBillingAdjustment,
+  mergeTotalsWithAdjustment,
+} from '@/shared/utils/invoiceBillingAdjustment'
+import { getBilledItemsRegistry } from '@/shared/utils/invoiceBilledItemsRegistry'
 import {
   computeInvoiceTotals,
   recalculateLineItems,
 } from '@/shared/utils/invoiceCalculations'
-import { buildLineItems } from '@/shared/utils/invoiceBillingEngine'
 
 const ADMIN_ACTOR = 'Finance Admin'
+
+const CUSTOMER_VISIBLE_STATUSES: InvoiceStatus[] = [
+  'submitted',
+  'shared',
+  'partially_paid',
+  'paid',
+  'overdue',
+]
 
 function nowIso() {
   return new Date().toISOString()
@@ -63,13 +76,40 @@ function makeActivity(action: string, detail: string): InvoiceActivity {
   }
 }
 
+function lockLineItems(workspace: InvoiceWorkspaceState, lock: boolean) {
+  return workspace.lineItems.map(li => ({
+    ...li,
+    billingStatus: lock && li.included !== false ? ('billed' as const) : li.billingStatus,
+  }))
+}
+
+function buildTotalsWithAdjustment(workspace: InvoiceWorkspaceState, agreementId?: string) {
+  const lineItems = recalculateLineItems(workspace.lineItems, workspace.taxConfig)
+  const baseTotals = computeInvoiceTotals(lineItems, workspace.taxConfig, workspace.additionalCharges)
+  const agreement =
+    findAgreementForCompany(workspace.selection.companyName) ??
+    (agreementId ? undefined : undefined)
+  const adjustment = computeInvoiceBillingAdjustment(agreement, baseTotals.finalAmount)
+  return {
+    lineItems,
+    totals: mergeTotalsWithAdjustment(baseTotals, adjustment),
+    billingAdjustment: adjustment.snapshot,
+    agreementId: agreement?.id ?? agreementId,
+  }
+}
+
 function workspaceToInvoice(
   workspace: InvoiceWorkspaceState,
   status: InvoiceStatus,
   existing?: Invoice,
+  lockItems = false,
 ): Invoice {
-  const lineItems = recalculateLineItems(workspace.lineItems, workspace.taxConfig)
-  const totals = computeInvoiceTotals(lineItems, workspace.taxConfig, workspace.additionalCharges)
+  const processedLineItems = lockItems ? lockLineItems(workspace, true) : workspace.lineItems
+  const processedWorkspace = { ...workspace, lineItems: processedLineItems }
+  const { lineItems, totals, billingAdjustment, agreementId } = buildTotalsWithAdjustment(
+    { ...processedWorkspace, lineItems: recalculateLineItems(processedLineItems, workspace.taxConfig) },
+    existing?.agreementId ?? workspace.agreementId,
+  )
   const billingEntity = workspace.selection.billingEntityOverride || workspace.selection.billingEntity
   const gltsRefs = [
     ...new Set(lineItems.map(li => li.applicationId).filter(Boolean) as string[]),
@@ -91,13 +131,19 @@ function workspaceToInvoice(
     billingEntity,
     vesselId: workspace.selection.vesselId,
     vesselName: workspace.selection.vesselName,
-    agreementId: existing?.agreementId,
+    agreementId: agreementId ?? existing?.agreementId,
+    poReference: workspace.selection.poReference ?? existing?.poReference,
     gltsReferences: gltsRefs.length ? gltsRefs : workspace.selection.applicationIds,
     batchIds,
-    totalApplications: Math.max(gltsRefs.length, workspace.selection.applicationIds.length, batchIds.length ? 1 : 0),
+    totalApplications: Math.max(
+      gltsRefs.length,
+      workspace.selection.applicationIds.length,
+      batchIds.length ? 1 : 0,
+    ),
     lineItems,
     taxConfig: workspace.taxConfig,
     totals,
+    billingAdjustment,
     invoiceStatus: status,
     paymentStatus: existing?.paymentStatus ?? 'pending',
     invoiceDate: existing?.invoiceDate ?? todayDate(),
@@ -125,6 +171,7 @@ function matchesFilters(invoice: Invoice, filters?: InvoiceListFilters): boolean
       invoice.companyName,
       invoice.billingEntity,
       invoice.vesselName ?? '',
+      invoice.poReference ?? '',
       ...invoice.gltsReferences,
       ...invoice.batchIds,
     ]
@@ -133,18 +180,33 @@ function matchesFilters(invoice: Invoice, filters?: InvoiceListFilters): boolean
     if (!haystack.includes(q)) return false
   }
   if (filters.company && !invoice.companyName.toLowerCase().includes(filters.company.toLowerCase())) return false
-  if (filters.billingEntity && !invoice.billingEntity.toLowerCase().includes(filters.billingEntity.toLowerCase())) return false
+  if (filters.billingEntity && !invoice.billingEntity.toLowerCase().includes(filters.billingEntity.toLowerCase()))
+    return false
   if (filters.vessel && !(invoice.vesselName ?? '').toLowerCase().includes(filters.vessel.toLowerCase())) return false
+  if (filters.billingMode && filters.billingMode !== 'all' && invoice.billingMode !== filters.billingMode)
+    return false
   if (filters.applicationId && !invoice.gltsReferences.some(r => r.includes(filters.applicationId!))) return false
   if (filters.batchId && !invoice.batchIds.some(b => b.includes(filters.batchId!))) return false
   if (filters.invoiceType && filters.invoiceType !== 'all' && invoice.invoiceType !== filters.invoiceType) return false
-  if (filters.invoiceStatus && filters.invoiceStatus !== 'all' && invoice.invoiceStatus !== filters.invoiceStatus) return false
-  if (filters.paymentStatus && filters.paymentStatus !== 'all' && invoice.paymentStatus !== filters.paymentStatus) return false
+  if (filters.invoiceStatus && filters.invoiceStatus !== 'all' && invoice.invoiceStatus !== filters.invoiceStatus)
+    return false
+  if (filters.paymentStatus && filters.paymentStatus !== 'all' && invoice.paymentStatus !== filters.paymentStatus)
+    return false
   if (filters.country && !(invoice.country ?? '').toLowerCase().includes(filters.country.toLowerCase())) return false
   if (filters.visaType && !(invoice.visaType ?? '').toLowerCase().includes(filters.visaType.toLowerCase())) return false
   if (filters.dateFrom && invoice.invoiceDate < filters.dateFrom) return false
   if (filters.dateTo && invoice.invoiceDate > filters.dateTo) return false
   return true
+}
+
+function mergeWorkspace(workspace: InvoiceWorkspaceState) {
+  const built = buildLineItems(workspace.selection)
+  return {
+    ...workspace,
+    lineItems: workspace.lineItems.length ? workspace.lineItems : built.lineItems,
+    taxConfig: workspace.taxConfig.gstPercentage ? workspace.taxConfig : built.taxConfig,
+    agreementId: built.agreementId ?? workspace.agreementId,
+  }
 }
 
 export const invoiceService = {
@@ -156,13 +218,15 @@ export const invoiceService = {
     return getStore().find(inv => inv.id === id || inv.invoiceId === id)
   },
 
+  getBilledItemsRegistry(): Set<string> {
+    return getBilledItemsRegistry()
+  },
+
   getExistingChargesForApplication(applicationId: string): string[] {
     const services: string[] = []
-    for (const inv of getStore()) {
-      if (inv.invoiceStatus === 'cancelled') continue
-      for (const li of inv.lineItems) {
-        if (li.applicationId === applicationId) services.push(li.serviceType)
-      }
+    for (const key of getBilledItemsRegistry()) {
+      const [appId, , serviceType] = key.split('::')
+      if (appId === applicationId && serviceType) services.push(serviceType)
     }
     return [...new Set(services)]
   },
@@ -170,71 +234,77 @@ export const invoiceService = {
   saveDraft(workspace: InvoiceWorkspaceState): Invoice {
     const store = getStore()
     const existing = workspace.draftInvoiceId ? store.find(i => i.id === workspace.draftInvoiceId) : undefined
-    const built = buildLineItems(workspace.selection)
-    const merged: InvoiceWorkspaceState = {
-      ...workspace,
-      lineItems: workspace.lineItems.length ? workspace.lineItems : built.lineItems,
-      taxConfig: workspace.taxConfig.gstPercentage ? workspace.taxConfig : built.taxConfig,
-    }
+    const merged = mergeWorkspace(workspace)
     const invoice = workspaceToInvoice(merged, 'draft', existing)
-    invoice.agreementId = built.agreementId ?? invoice.agreementId
     if (!existing) {
       invoice.activities = [makeActivity('Draft saved', `Draft invoice ${invoice.invoiceId} saved`)]
     } else {
       invoice.activities = [...existing.activities, makeActivity('Draft updated', 'Workspace changes saved')]
     }
-    const next = existing
-      ? store.map(i => (i.id === existing.id ? invoice : i))
-      : [...store, invoice]
+    const next = existing ? store.map(i => (i.id === existing.id ? invoice : i)) : [...store, invoice]
     persist(next)
     return invoice
   },
 
-  generate(workspace: InvoiceWorkspaceState): Invoice {
+  submit(workspace: InvoiceWorkspaceState): Invoice {
     const store = getStore()
     const existing = workspace.draftInvoiceId ? store.find(i => i.id === workspace.draftInvoiceId) : undefined
-    const built = buildLineItems(workspace.selection)
-    const merged: InvoiceWorkspaceState = {
-      ...workspace,
-      lineItems: workspace.lineItems.length ? workspace.lineItems : built.lineItems,
-      taxConfig: workspace.taxConfig,
-    }
-    const invoice = workspaceToInvoice(merged, 'generated', existing)
-    invoice.agreementId = built.agreementId ?? invoice.agreementId
+    const merged = mergeWorkspace(workspace)
+    const invoice = workspaceToInvoice(merged, 'submitted', existing, true)
     invoice.activities = [
       ...(existing?.activities ?? []),
-      makeActivity('Invoice generated', `Invoice ${invoice.invoiceId} generated`),
+      makeActivity('Invoice submitted', `Invoice ${invoice.invoiceId} submitted to customer portal`),
     ]
-    const next = existing
-      ? store.map(i => (i.id === existing.id ? invoice : i))
-      : [...store, invoice]
+    invoice.attachments = [
+      ...invoice.attachments,
+      {
+        id: `att-${Date.now()}`,
+        name: `${invoice.invoiceId}.pdf`,
+        type: 'invoice_pdf' as const,
+        uploadedAt: nowIso(),
+      },
+    ]
+    const next = existing ? store.map(i => (i.id === existing.id ? invoice : i)) : [...store, invoice]
     persist(next)
     return invoice
+  },
+
+  /** @deprecated Use submit() */
+  generate(workspace: InvoiceWorkspaceState): Invoice {
+    return this.submit(workspace)
+  },
+
+  deleteDraft(id: string): boolean {
+    const store = getStore()
+    const target = store.find(i => i.id === id || i.invoiceId === id)
+    if (!target || target.invoiceStatus !== 'draft') return false
+    persist(store.filter(i => i.id !== target.id))
+    return true
   },
 
   share(id: string, payload: ShareInvoicePayload): Invoice | undefined {
     const store = getStore()
     const idx = store.findIndex(i => i.id === id || i.invoiceId === id)
     if (idx < 0) return undefined
+    const current = store[idx]
+    if (current.invoiceStatus === 'draft' || current.invoiceStatus === 'cancelled') return undefined
+
     const updated: Invoice = {
-      ...store[idx],
+      ...current,
       invoiceStatus: 'shared',
       paymentTerms: payload.paymentTerms,
       dueDate: payload.dueDate,
       sharedAt: nowIso(),
       sharedToEmail: payload.email,
       lastUpdated: nowIso(),
-      activities: [
-        ...store[idx].activities,
-        makeActivity('Invoice shared', `Sent to ${payload.email}`),
-      ],
-      attachments: store[idx].attachments.some(a => a.type === 'invoice_pdf')
-        ? store[idx].attachments
+      activities: [...current.activities, makeActivity('Invoice shared', `Sent to ${payload.email}`)],
+      attachments: current.attachments.some(a => a.type === 'invoice_pdf')
+        ? current.attachments
         : [
-            ...store[idx].attachments,
+            ...current.attachments,
             {
               id: `att-${Date.now()}`,
-              name: `${store[idx].invoiceId}.pdf`,
+              name: `${current.invoiceId}.pdf`,
               type: 'invoice_pdf' as const,
               uploadedAt: nowIso(),
             },
@@ -275,6 +345,7 @@ export const invoiceService = {
             gstAmount: -Math.abs(li.gstAmount),
             amount: -Math.abs(li.amount),
             description: `Credit: ${li.description}`,
+            billingStatus: 'unbilled' as const,
           }))
         : source.lineItems
             .filter(li => adjustment.lineItemIds?.includes(li.id))
@@ -285,11 +356,13 @@ export const invoiceService = {
               gstAmount: -Math.abs(li.gstAmount),
               amount: -Math.abs(li.amount),
               description: `Credit: ${li.description}`,
+              billingStatus: 'unbilled' as const,
             }))
 
     const workspace: InvoiceWorkspaceState = {
       selection: {
-        billingMode: 'single',
+        billingMode: 'application_wise',
+        applicationSelectionMode: 'single',
         invoiceType: 'credit_note',
         companyId: source.companyId,
         companyName: source.companyName,
@@ -298,8 +371,7 @@ export const invoiceService = {
         vesselName: source.vesselName,
         applicationIds: source.gltsReferences,
         batchIds: source.batchIds,
-        serviceTypes: [],
-        billableOnly: false,
+        servicePresetIds: [],
       },
       lineItems,
       taxConfig: source.taxConfig,
@@ -307,9 +379,10 @@ export const invoiceService = {
       paymentTerms: source.paymentTerms ?? 'Net 30',
       dueDate: dueDateFromTerms(30),
       sourceInvoiceId: source.id,
+      agreementId: source.agreementId,
     }
 
-    const invoice = workspaceToInvoice(workspace, 'generated')
+    const invoice = workspaceToInvoice(workspace, 'submitted')
     invoice.invoiceType = 'credit_note'
     invoice.activities = [
       makeActivity('Credit note created', `${adjustment.mode} adjustment — ${adjustment.reason}`),
@@ -322,14 +395,12 @@ export const invoiceService = {
     return getStore().filter(i => i.invoiceType === 'credit_note')
   },
 
-  listSharedInvoices(): Invoice[] {
-    return getStore().filter(i => i.invoiceStatus === 'shared')
+  listSubmittedInvoices(): Invoice[] {
+    return getStore().filter(i => i.invoiceStatus === 'submitted' || i.invoiceStatus === 'shared')
   },
 
   listCustomerVisibleInvoices(): Invoice[] {
-    return getStore().filter(
-      i => i.invoiceStatus === 'shared' || i.invoiceStatus === 'partially_paid' || i.invoiceStatus === 'paid' || i.invoiceStatus === 'overdue',
-    )
+    return getStore().filter(i => CUSTOMER_VISIBLE_STATUSES.includes(i.invoiceStatus))
   },
 
   getBillingReport(filters?: BillingReportFilters): BillingReportData {
@@ -351,7 +422,10 @@ export const invoiceService = {
     const outstanding = totalBilled - totalCollected
     const overdueCount = rows.filter(r => r.invoiceStatus === 'overdue').length
 
-    const byKey = new Map<string, { companyName: string; billingEntity: string; invoiceCount: number; totalBilled: number; totalCollected: number }>()
+    const byKey = new Map<
+      string,
+      { companyName: string; billingEntity: string; invoiceCount: number; totalBilled: number; totalCollected: number }
+    >()
     for (const inv of rows) {
       const key = `${inv.companyName}::${inv.billingEntity}`
       const cur = byKey.get(key) ?? {
@@ -389,6 +463,7 @@ export const invoiceService = {
       ...workspace,
       lineItems,
       taxConfig: workspace.taxConfig.gstPercentage ? workspace.taxConfig : built.taxConfig,
+      agreementId: built.agreementId,
     }
   },
 }

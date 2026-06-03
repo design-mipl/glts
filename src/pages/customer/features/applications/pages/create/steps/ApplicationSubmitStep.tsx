@@ -72,6 +72,7 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
 
       <ApplicationReviewPanels
         rows={rows}
+        applicationId={state.gltsApplicationId || state.gltsBatchId || undefined}
         overview={{
           countryName: state.countryName,
           countryFlag: state.countryFlag,
@@ -82,7 +83,6 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
           gltsBatchId: state.gltsBatchId || undefined,
         }}
         globalDocumentUploads={state.globalDocumentUploads}
-        helperText="Select a traveler from the listing to review their summary and document checklist before submission."
         onReuploadDocument={handleReuploadDocument}
       />
 

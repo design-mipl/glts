@@ -63,6 +63,7 @@ export const AGREEMENT_WORKFLOW_OPTIONS: { value: AgreementWorkflowType; label: 
   { value: 'marine', label: 'Marine' },
   { value: 'corporate', label: 'Corporate' },
   { value: 'b2b_agent', label: 'B2B Agent' },
+  { value: 'retail', label: 'Retail' },
   { value: 'mixed', label: 'Mixed' },
 ]
 

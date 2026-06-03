@@ -16,18 +16,19 @@ export function TaxAdvancedFilters({ activeTab, filters, onChange }: TaxAdvanced
   return (
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} useFlexGap flexWrap="wrap">
       <Select
-        label="Applicable on"
-        placeholder="Select applicability"
-        value={filters.applicableOn ?? 'all'}
+        placeholder="All applicability"
+        value={filters.applicableOn === 'all' ? '' : (filters.applicableOn ?? '')}
         onChange={(value) =>
-          onChange({ ...filters, applicableOn: value as TaxMasterListFilters['applicableOn'] })
+          onChange({
+            ...filters,
+            applicableOn: (value ? value : 'all') as TaxMasterListFilters['applicableOn'],
+          })
         }
-        options={[
-          { value: 'all', label: 'All applicability' },
-          ...TDS_APPLICABLE_ON_OPTIONS,
-        ]}
+        options={TDS_APPLICABLE_ON_OPTIONS}
         size="sm"
-        sx={{ minWidth: 180 }}
+        clearable
+        fullWidth
+        sx={{ minWidth: { xs: '100%', sm: 220 } }}
       />
     </Stack>
   )

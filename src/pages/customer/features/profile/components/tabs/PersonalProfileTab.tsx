@@ -1,8 +1,7 @@
-import { Avatar, Stack } from '@mui/material'
+import { Stack } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { Button, ConfirmDialog, useToast } from '@/design-system/UIComponents'
 import { CustomerInfoGrid } from '@/pages/customer/features/shared/components/CustomerPrimitives'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { CustomerDetailSection } from '@/pages/customer/features/shared/components/detail'
 import { PersonalInfoDrawer } from '../PersonalInfoDrawer'
 import { ChangePasswordModal } from '../ChangePasswordModal'
@@ -22,7 +21,6 @@ export function PersonalProfileTab({
   onSetSessions,
   openEditRequestId = 0,
 }: PersonalProfileTabProps) {
-  const colors = usePublicBrandColors()
   const { showToast } = useToast()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [passwordOpen, setPasswordOpen] = useState(false)
@@ -32,13 +30,6 @@ export function PersonalProfileTab({
   useEffect(() => {
     if (openEditRequestId > 0) setDrawerOpen(true)
   }, [openEditRequestId])
-
-  const initials = account.name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
 
   const handleSavePersonal = (patch: Partial<PersonalAccount>) => {
     onUpdateAccount(patch)
@@ -54,29 +45,14 @@ export function PersonalProfileTab({
   return (
     <>
       <CustomerDetailSection title="Personal information">
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5} alignItems={{ xs: 'center', sm: 'flex-start' }}>
-          <Avatar
-            src={account.profilePhotoUrl}
-            sx={{
-              width: 56,
-              height: 56,
-              bgcolor: colors.greenMuted,
-              color: colors.greenDark,
-              fontWeight: 800,
-              fontSize: 20,
-            }}
-          >
-            {initials}
-          </Avatar>
-          <CustomerInfoGrid
-            items={[
-              { label: 'Name', value: account.name },
-              { label: 'Designation', value: account.designation },
-              { label: 'Email', value: account.email },
-              { label: 'Contact number', value: account.phone },
-            ]}
-          />
-        </Stack>
+        <CustomerInfoGrid
+          items={[
+            { label: 'Name', value: account.name },
+            { label: 'Designation', value: account.designation },
+            { label: 'Email', value: account.email },
+            { label: 'Contact number', value: account.phone },
+          ]}
+        />
       </CustomerDetailSection>
 
       <CustomerDetailSection title="Login & password" divider={false}>

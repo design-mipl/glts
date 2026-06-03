@@ -1,8 +1,7 @@
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Stack } from '@mui/material'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, MapPin, PlayCircle, Upload } from 'lucide-react'
 import { Button } from '@/design-system/UIComponents'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
 import { navigateToResumeApplication } from '../utils/createApplicationNavigation'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
@@ -18,7 +17,6 @@ function mapStatusToTimelineStatus(status: 'done' | 'completed' | 'in_progress' 
 }
 
 export function ApplicationDetailPage() {
-  const colors = usePublicBrandColors()
   const { applicationId } = useParams()
   const navigate = useNavigate()
   const { base } = useCustomerPortalBase()
@@ -55,6 +53,8 @@ export function ApplicationDetailPage() {
 
       <ApplicationReviewPanels
         rows={detail.uploadQueueRows}
+        applicationId={detail.resolvedId ?? app.id}
+        corrections={detail.corrections}
         overview={{
           countryName: app.country,
           countryFlag: app.countryFlag ?? '',
@@ -67,19 +67,6 @@ export function ApplicationDetailPage() {
         timelineSteps={timelineSteps}
         onReuploadDocument={handleReuploadDocument}
       />
-
-      {detail.corrections.length > 0 && showContinue ? (
-        <Box sx={{ mb: 2, p: 2, borderRadius: '12px', border: `1px solid ${colors.border}`, bgcolor: colors.surfaceAlt }}>
-          <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 1 }}>Corrections requested</Typography>
-          <Stack spacing={0.75}>
-            {detail.corrections.map(correction => (
-              <Typography key={correction.id} sx={{ fontSize: 12.5, color: colors.textSecondary }}>
-                {correction.field}: {correction.reason}
-              </Typography>
-            ))}
-          </Stack>
-        </Box>
-      ) : null}
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 1 }}>
         {showContinue ? (

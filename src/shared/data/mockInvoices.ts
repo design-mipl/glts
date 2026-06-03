@@ -1,5 +1,13 @@
 import { GLTS_INVOICE_ID } from '@/pages/customer/data/portalIds'
-import type { Invoice } from '@/shared/types/invoice'
+import type {
+  BillingMode,
+  Invoice,
+  InvoiceLineItem,
+  InvoiceStatus,
+  InvoiceType,
+} from '@/shared/types/invoice'
+import { computeInvoiceBillingAdjustment, mergeTotalsWithAdjustment } from '@/shared/utils/invoiceBillingAdjustment'
+import { computeInvoiceTotals } from '@/shared/utils/invoiceCalculations'
 
 function daysAgo(days: number) {
   const d = new Date()
@@ -17,38 +25,66 @@ function daysFromNowDate(days: number) {
   return d.toISOString().slice(0, 10)
 }
 
+function lineItem(partial: Omit<InvoiceLineItem, 'included' | 'billingStatus' | 'isAdditionalExpense'> & {
+  included?: boolean
+  billingStatus?: InvoiceLineItem['billingStatus']
+  isAdditionalExpense?: boolean
+}): InvoiceLineItem {
+  return {
+    included: partial.included ?? true,
+    billingStatus: partial.billingStatus ?? 'unbilled',
+    isAdditionalExpense: partial.isAdditionalExpense ?? false,
+    remarks: partial.remarks ?? '',
+    ...partial,
+  }
+}
+
+function withAdjustment(invoice: Omit<Invoice, 'totals' | 'billingAdjustment'> & { totals: Invoice['totals'] }): Invoice {
+  const base = computeInvoiceTotals(invoice.lineItems, invoice.taxConfig, invoice.totals.additionalCharges)
+  const adjustment = computeInvoiceBillingAdjustment(undefined, base.finalAmount)
+  return {
+    ...invoice,
+    totals: mergeTotalsWithAdjustment(base, adjustment),
+    billingAdjustment: adjustment.snapshot,
+  }
+}
+
 export const SEED_INVOICES: Invoice[] = [
-  {
+  withAdjustment({
     id: 'INV-001',
     invoiceId: GLTS_INVOICE_ID,
-    invoiceType: 'single_application',
-    billingMode: 'single',
+    invoiceType: 'single_invoice',
+    billingMode: 'application_wise',
     companyId: 'CMP-1001',
     companyName: 'Apex Marine Logistics',
     billingEntity: 'Apex Marine Logistics Pvt Ltd',
     vesselId: 'GLTS-VSL-001',
     vesselName: 'MV Ocean Star',
     agreementId: 'AGR-001',
+    poReference: 'PO-AMX-2026-014',
     gltsReferences: ['GLTS-APP-2026-790'],
     batchIds: [],
     totalApplications: 1,
     country: 'Japan',
     visaType: 'eVisa · Tourist',
     lineItems: [
-      {
+      lineItem({
         id: 'li-seed-1',
         applicationId: 'GLTS-APP-2026-790',
-        serviceType: 'Visa Fees',
+        applicantName: 'Rajesh Kumar',
+        serviceType: 'Visa Fee',
         description: 'Japan · eVisa · Tourist service fee',
         quantity: 1,
         unitPrice: 1500,
         gstApplicable: true,
         gstAmount: 270,
         amount: 1770,
-      },
-      {
+        billingStatus: 'billed',
+      }),
+      lineItem({
         id: 'li-seed-2',
         applicationId: 'GLTS-APP-2026-790',
+        applicantName: 'Rajesh Kumar',
         serviceType: 'Courier Charges',
         description: 'Courier Charges',
         quantity: 1,
@@ -56,10 +92,11 @@ export const SEED_INVOICES: Invoice[] = [
         gstApplicable: true,
         gstAmount: 90,
         amount: 590,
-      },
+        billingStatus: 'billed',
+      }),
     ],
     taxConfig: { gstApplicable: true, gstPercentage: 18, tdsApplicable: false, tdsPercentage: 0 },
-    totals: { subtotal: 2000, gstTotal: 360, tdsAmount: 0, additionalCharges: 0, finalAmount: 2360 },
+    totals: { subtotal: 2000, gstTotal: 360, tdsAmount: 0, additionalCharges: 0, finalAmount: 2360, advanceAvailable: 0, advanceAdjusted: 0, creditApplied: 0, balancePayable: 0 },
     invoiceStatus: 'shared',
     paymentStatus: 'pending',
     invoiceDate: daysAgoDate(5),
@@ -70,29 +107,17 @@ export const SEED_INVOICES: Invoice[] = [
     sharedAt: daysAgo(3),
     sharedToEmail: 'invoices@apexmarine.com',
     activities: [
-      {
-        id: 'act-1',
-        timestamp: daysAgo(5),
-        actor: 'Finance Admin',
-        action: 'Invoice generated',
-        detail: 'Invoice created from application GLTS-APP-2026-790',
-      },
-      {
-        id: 'act-2',
-        timestamp: daysAgo(3),
-        actor: 'Finance Admin',
-        action: 'Invoice shared',
-        detail: 'Sent to invoices@apexmarine.com',
-      },
+      { id: 'act-1', timestamp: daysAgo(5), actor: 'Finance Admin', action: 'Invoice submitted', detail: 'Invoice created from application GLTS-APP-2026-790' },
+      { id: 'act-2', timestamp: daysAgo(3), actor: 'Finance Admin', action: 'Invoice shared', detail: 'Sent to invoices@apexmarine.com' },
     ],
     attachments: [{ id: 'att-1', name: 'GLTS-INV-8821.pdf', type: 'invoice_pdf', uploadedAt: daysAgo(5) }],
     payments: [],
-  },
-  {
+  }),
+  withAdjustment({
     id: 'INV-002',
     invoiceId: 'GLTS-INV-8822',
-    invoiceType: 'batch',
-    billingMode: 'batch',
+    invoiceType: 'cumulative',
+    billingMode: 'application_wise',
     companyId: 'CMP-1001',
     companyName: 'Apex Marine Logistics',
     billingEntity: 'Apex Marine Logistics Pvt Ltd',
@@ -105,44 +130,37 @@ export const SEED_INVOICES: Invoice[] = [
     country: 'Schengen',
     visaType: 'Crew · Type C',
     lineItems: [
-      {
+      lineItem({
         id: 'li-seed-3',
         batchId: 'GLTS-BAT-2026-041',
-        serviceType: 'Visa Fees',
+        serviceType: 'Visa Fee',
         description: 'Schengen · Crew · Type C service fee',
         quantity: 24,
         unitPrice: 1500,
         gstApplicable: true,
         gstAmount: 6480,
         amount: 42480,
-      },
+        billingStatus: 'billed',
+      }),
     ],
     taxConfig: { gstApplicable: true, gstPercentage: 18, tdsApplicable: false, tdsPercentage: 0 },
-    totals: { subtotal: 36000, gstTotal: 6480, tdsAmount: 0, additionalCharges: 0, finalAmount: 42480 },
-    invoiceStatus: 'generated',
+    totals: { subtotal: 36000, gstTotal: 6480, tdsAmount: 0, additionalCharges: 0, finalAmount: 42480, advanceAvailable: 0, advanceAdjusted: 0, creditApplied: 0, balancePayable: 0 },
+    invoiceStatus: 'submitted',
     paymentStatus: 'pending',
     invoiceDate: daysAgoDate(3),
     dueDate: daysFromNowDate(27),
     paymentTerms: 'Net 30',
     lastUpdated: daysAgo(1),
     createdAt: daysAgo(3),
-    activities: [
-      {
-        id: 'act-3',
-        timestamp: daysAgo(3),
-        actor: 'Finance Admin',
-        action: 'Invoice generated',
-        detail: 'Batch invoice for GLTS-BAT-2026-041',
-      },
-    ],
+    activities: [{ id: 'act-3', timestamp: daysAgo(3), actor: 'Finance Admin', action: 'Invoice submitted', detail: 'Batch invoice for GLTS-BAT-2026-041' }],
     attachments: [],
     payments: [],
-  },
-  {
+  }),
+  withAdjustment({
     id: 'INV-003',
     invoiceId: 'GLTS-INV-8823',
     invoiceType: 'cumulative',
-    billingMode: 'cumulative',
+    billingMode: 'application_wise',
     companyId: 'CMP-1001',
     companyName: 'Apex Marine Logistics',
     billingEntity: 'Apex Marine Logistics Pvt Ltd',
@@ -154,31 +172,11 @@ export const SEED_INVOICES: Invoice[] = [
     country: 'Mixed',
     visaType: 'Mixed',
     lineItems: [
-      {
-        id: 'li-seed-4',
-        applicationId: 'GLTS-APP-2026-790',
-        serviceType: 'Visa Fees',
-        description: 'Japan visa service',
-        quantity: 1,
-        unitPrice: 1500,
-        gstApplicable: true,
-        gstAmount: 270,
-        amount: 1770,
-      },
-      {
-        id: 'li-seed-5',
-        applicationId: 'GLTS-APP-2026-778',
-        serviceType: 'Courier Charges',
-        description: 'Courier for UAE application',
-        quantity: 1,
-        unitPrice: 500,
-        gstApplicable: true,
-        gstAmount: 90,
-        amount: 590,
-      },
+      lineItem({ id: 'li-seed-4', applicationId: 'GLTS-APP-2026-790', serviceType: 'Visa Fee', description: 'Japan visa service', quantity: 1, unitPrice: 1500, gstApplicable: true, gstAmount: 270, amount: 1770, billingStatus: 'billed' }),
+      lineItem({ id: 'li-seed-5', applicationId: 'GLTS-APP-2026-778', serviceType: 'Courier Charges', description: 'Courier for UAE application', quantity: 1, unitPrice: 500, gstApplicable: true, gstAmount: 90, amount: 590, billingStatus: 'billed' }),
     ],
     taxConfig: { gstApplicable: true, gstPercentage: 18, tdsApplicable: true, tdsPercentage: 2 },
-    totals: { subtotal: 2000, gstTotal: 360, tdsAmount: 47.2, additionalCharges: 0, finalAmount: 2312.8 },
+    totals: { subtotal: 2000, gstTotal: 360, tdsAmount: 47.2, additionalCharges: 0, finalAmount: 2312.8, advanceAvailable: 0, advanceAdjusted: 0, creditApplied: 0, balancePayable: 0 },
     invoiceStatus: 'partially_paid',
     paymentStatus: 'partial',
     invoiceDate: daysAgoDate(15),
@@ -186,32 +184,15 @@ export const SEED_INVOICES: Invoice[] = [
     paymentTerms: 'Net 30',
     lastUpdated: daysAgo(4),
     createdAt: daysAgo(15),
-    activities: [
-      {
-        id: 'act-4',
-        timestamp: daysAgo(15),
-        actor: 'Finance Admin',
-        action: 'Invoice generated',
-        detail: 'Cumulative invoice for 2 applications',
-      },
-    ],
+    activities: [{ id: 'act-4', timestamp: daysAgo(15), actor: 'Finance Admin', action: 'Invoice submitted', detail: 'Cumulative invoice for 2 applications' }],
     attachments: [],
-    payments: [
-      {
-        id: 'pay-1',
-        date: daysAgoDate(7),
-        amount: 1000,
-        method: 'NEFT',
-        reference: 'UTR8829100',
-        status: 'partial',
-      },
-    ],
-  },
-  {
+    payments: [{ id: 'pay-1', date: daysAgoDate(7), amount: 1000, method: 'NEFT', reference: 'UTR8829100', status: 'partial' }],
+  }),
+  withAdjustment({
     id: 'INV-004',
     invoiceId: 'GLTS-INV-8824',
     invoiceType: 'additional_expense',
-    billingMode: 'single',
+    billingMode: 'application_wise',
     companyId: 'CMP-1001',
     companyName: 'Apex Marine Logistics',
     billingEntity: 'Apex Marine Logistics Pvt Ltd',
@@ -219,20 +200,10 @@ export const SEED_INVOICES: Invoice[] = [
     batchIds: [],
     totalApplications: 1,
     lineItems: [
-      {
-        id: 'li-seed-6',
-        applicationId: 'GLTS-APP-2026-790',
-        serviceType: 'Airport Assistance',
-        description: 'Urgent airport assistance',
-        quantity: 1,
-        unitPrice: 1200,
-        gstApplicable: true,
-        gstAmount: 216,
-        amount: 1416,
-      },
+      lineItem({ id: 'li-seed-6', applicationId: 'GLTS-APP-2026-790', serviceType: 'Airport Assistance', description: 'Urgent airport assistance', quantity: 1, unitPrice: 1200, gstApplicable: true, gstAmount: 216, amount: 1416, isAdditionalExpense: true, billingStatus: 'billed' }),
     ],
     taxConfig: { gstApplicable: true, gstPercentage: 18, tdsApplicable: false, tdsPercentage: 0 },
-    totals: { subtotal: 1200, gstTotal: 216, tdsAmount: 0, additionalCharges: 0, finalAmount: 1416 },
+    totals: { subtotal: 1200, gstTotal: 216, tdsAmount: 0, additionalCharges: 0, finalAmount: 1416, advanceAvailable: 0, advanceAdjusted: 0, creditApplied: 0, balancePayable: 0 },
     invoiceStatus: 'paid',
     paymentStatus: 'paid',
     invoiceDate: daysAgoDate(20),
@@ -241,22 +212,13 @@ export const SEED_INVOICES: Invoice[] = [
     createdAt: daysAgo(20),
     activities: [],
     attachments: [],
-    payments: [
-      {
-        id: 'pay-2',
-        date: daysAgoDate(6),
-        amount: 1416,
-        method: 'RTGS',
-        reference: 'UTR9910200',
-        status: 'paid',
-      },
-    ],
-  },
-  {
+    payments: [{ id: 'pay-2', date: daysAgoDate(6), amount: 1416, method: 'RTGS', reference: 'UTR9910200', status: 'paid' }],
+  }),
+  withAdjustment({
     id: 'INV-005',
     invoiceId: 'GLTS-INV-8825',
-    invoiceType: 'single_application',
-    billingMode: 'single',
+    invoiceType: 'single_invoice',
+    billingMode: 'application_wise',
     companyId: 'CMP-1002',
     companyName: 'Oceanic Crew Services',
     billingEntity: 'Oceanic Crew Services Pvt Ltd',
@@ -265,7 +227,7 @@ export const SEED_INVOICES: Invoice[] = [
     totalApplications: 0,
     lineItems: [],
     taxConfig: { gstApplicable: true, gstPercentage: 18, tdsApplicable: false, tdsPercentage: 0 },
-    totals: { subtotal: 0, gstTotal: 0, tdsAmount: 0, additionalCharges: 0, finalAmount: 0 },
+    totals: { subtotal: 0, gstTotal: 0, tdsAmount: 0, additionalCharges: 0, finalAmount: 0, advanceAvailable: 0, advanceAdjusted: 0, creditApplied: 0, balancePayable: 0 },
     invoiceStatus: 'draft',
     paymentStatus: 'pending',
     invoiceDate: daysAgoDate(1),
@@ -275,12 +237,12 @@ export const SEED_INVOICES: Invoice[] = [
     activities: [],
     attachments: [],
     payments: [],
-  },
-  {
+  }),
+  withAdjustment({
     id: 'INV-006',
     invoiceId: 'GLTS-INV-8826',
-    invoiceType: 'single_application',
-    billingMode: 'single',
+    invoiceType: 'single_invoice',
+    billingMode: 'application_wise',
     companyId: 'CMP-1001',
     companyName: 'Apex Marine Logistics',
     billingEntity: 'Apex Marine Logistics Pvt Ltd',
@@ -288,20 +250,10 @@ export const SEED_INVOICES: Invoice[] = [
     batchIds: [],
     totalApplications: 1,
     lineItems: [
-      {
-        id: 'li-seed-7',
-        applicationId: 'GLTS-APP-2026-751',
-        serviceType: 'Visa Fees',
-        description: 'Japan visa fee',
-        quantity: 1,
-        unitPrice: 1500,
-        gstApplicable: true,
-        gstAmount: 270,
-        amount: 1770,
-      },
+      lineItem({ id: 'li-seed-7', applicationId: 'GLTS-APP-2026-751', serviceType: 'Visa Fee', description: 'Japan visa fee', quantity: 1, unitPrice: 1500, gstApplicable: true, gstAmount: 270, amount: 1770, billingStatus: 'billed' }),
     ],
     taxConfig: { gstApplicable: true, gstPercentage: 18, tdsApplicable: false, tdsPercentage: 0 },
-    totals: { subtotal: 1500, gstTotal: 270, tdsAmount: 0, additionalCharges: 0, finalAmount: 1770 },
+    totals: { subtotal: 1500, gstTotal: 270, tdsAmount: 0, additionalCharges: 0, finalAmount: 1770, advanceAvailable: 0, advanceAdjusted: 0, creditApplied: 0, balancePayable: 0 },
     invoiceStatus: 'overdue',
     paymentStatus: 'pending',
     invoiceDate: daysAgoDate(45),
@@ -311,12 +263,12 @@ export const SEED_INVOICES: Invoice[] = [
     activities: [],
     attachments: [],
     payments: [],
-  },
-  {
+  }),
+  withAdjustment({
     id: 'INV-007',
     invoiceId: 'GLTS-INV-8827',
     invoiceType: 'credit_note',
-    billingMode: 'single',
+    billingMode: 'application_wise',
     companyId: 'CMP-1001',
     companyName: 'Apex Marine Logistics',
     billingEntity: 'Apex Marine Logistics Pvt Ltd',
@@ -325,50 +277,86 @@ export const SEED_INVOICES: Invoice[] = [
     totalApplications: 1,
     sourceInvoiceId: 'INV-001',
     lineItems: [
-      {
-        id: 'li-seed-8',
-        applicationId: 'GLTS-APP-2026-790',
-        serviceType: 'Courier Charges',
-        description: 'Credit adjustment — duplicate courier charge',
-        quantity: 1,
-        unitPrice: -500,
-        gstApplicable: true,
-        gstAmount: -90,
-        amount: -590,
-      },
+      lineItem({ id: 'li-seed-8', applicationId: 'GLTS-APP-2026-790', serviceType: 'Courier Charges', description: 'Credit adjustment — duplicate courier charge', quantity: 1, unitPrice: -500, gstApplicable: true, gstAmount: -90, amount: -590 }),
     ],
     taxConfig: { gstApplicable: true, gstPercentage: 18, tdsApplicable: false, tdsPercentage: 0 },
-    totals: { subtotal: -500, gstTotal: -90, tdsAmount: 0, additionalCharges: 0, finalAmount: -590 },
-    invoiceStatus: 'generated',
-    paymentStatus: 'pending',
+    totals: { subtotal: -500, gstTotal: -90, tdsAmount: 0, additionalCharges: 0, finalAmount: -590, advanceAvailable: 0, advanceAdjusted: 0, creditApplied: 0, balancePayable: 0 },
+    invoiceStatus: 'submitted',
+    paymentStatus: 'adjusted',
     invoiceDate: daysAgoDate(2),
     dueDate: daysFromNowDate(28),
     lastUpdated: daysAgo(2),
     createdAt: daysAgo(2),
-    activities: [
-      {
-        id: 'act-5',
-        timestamp: daysAgo(2),
-        actor: 'Finance Admin',
-        action: 'Credit note created',
-        detail: 'Partial adjustment against GLTS-INV-8821',
-      },
-    ],
+    activities: [{ id: 'act-5', timestamp: daysAgo(2), actor: 'Finance Admin', action: 'Credit note created', detail: 'Partial adjustment against GLTS-INV-8821' }],
     attachments: [],
     payments: [],
-  },
+  }),
 ]
 
 const STORAGE_KEY = 'glts:invoices'
 
 let memoryStore: Invoice[] | null = null
 
+function mapLegacyBillingMode(value: string): BillingMode {
+  if (value === 'company_wise' || value === 'application_wise') return value
+  return 'application_wise'
+}
+
+function mapLegacyInvoiceType(value: string): InvoiceType {
+  const map: Record<string, InvoiceType> = {
+    single_application: 'single_invoice',
+    batch: 'cumulative',
+    service_wise: 'single_invoice',
+    single_invoice: 'single_invoice',
+    cumulative: 'cumulative',
+    additional_expense: 'additional_expense',
+    final_settlement: 'final_settlement',
+    credit_note: 'credit_note',
+  }
+  return map[value] ?? 'single_invoice'
+}
+
+function mapLegacyStatus(value: string): InvoiceStatus {
+  if (value === 'generated') return 'submitted'
+  return value as InvoiceStatus
+}
+
+function normalizeInvoice(raw: Invoice): Invoice {
+  const lineItems = (raw.lineItems ?? []).map(li =>
+    lineItem({
+      ...li,
+      included: li.included ?? true,
+      billingStatus: li.billingStatus ?? 'unbilled',
+      isAdditionalExpense: li.isAdditionalExpense ?? false,
+    }),
+  )
+  const taxConfig = raw.taxConfig ?? { gstApplicable: true, gstPercentage: 18, tdsApplicable: false, tdsPercentage: 0 }
+  const baseTotals = computeInvoiceTotals(lineItems, taxConfig, raw.totals?.additionalCharges ?? 0)
+  const adjustment = computeInvoiceBillingAdjustment(undefined, baseTotals.finalAmount)
+
+  return {
+    ...raw,
+    billingMode: mapLegacyBillingMode(String(raw.billingMode)),
+    invoiceType: mapLegacyInvoiceType(String(raw.invoiceType)),
+    invoiceStatus: mapLegacyStatus(String(raw.invoiceStatus)),
+    lineItems,
+    taxConfig,
+    totals: raw.totals?.balancePayable != null ? raw.totals : mergeTotalsWithAdjustment(baseTotals, adjustment),
+    billingAdjustment: raw.billingAdjustment ?? adjustment.snapshot,
+    activities: raw.activities ?? [],
+    attachments: raw.attachments ?? [],
+    payments: raw.payments ?? [],
+    gltsReferences: raw.gltsReferences ?? [],
+    batchIds: raw.batchIds ?? [],
+  }
+}
+
 function loadStore(): Invoice[] {
   if (memoryStore) return memoryStore
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
-      memoryStore = JSON.parse(raw) as Invoice[]
+      memoryStore = (JSON.parse(raw) as Invoice[]).map(normalizeInvoice)
       return memoryStore
     }
   } catch {
@@ -383,9 +371,9 @@ export function getMockInvoices(): Invoice[] {
 }
 
 export function setMockInvoicesStore(rows: Invoice[]) {
-  memoryStore = rows
+  memoryStore = rows.map(normalizeInvoice)
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(rows))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(memoryStore))
   } catch {
     /* ignore */
   }

@@ -1,14 +1,109 @@
 import type { ApplicationSubmitKind, UploadQueueRow } from '../data/applicationFlowData'
 
+export interface ChecklistCorrectionRef {
+  field: string
+  reason: string
+}
+
 /** One processed listing → single application; more than one → bulk batch. */
 export function deriveApplicationSubmitKind(rows: UploadQueueRow[]): ApplicationSubmitKind {
   const ready = rows.filter(r => r.status !== 'processing')
   return ready.length <= 1 ? 'single' : 'bulk'
 }
 
+function findCorrectionForChecklistItem(
+  item: { label: string },
+  corrections: ChecklistCorrectionRef[],
+  travelerName?: string,
+  scope: 'traveler' | 'global' = 'traveler',
+): ChecklistCorrectionRef | undefined {
+  const labelKey = item.label.toLowerCase()
+
+  return corrections.find(correction => {
+    const field = correction.field.toLowerCase()
+    const isGlobal = field.includes('global')
+    if (scope === 'global' && !isGlobal) return false
+    if (scope === 'traveler' && isGlobal) return false
+
+    const documentLabel = field.split(' · ')[0]?.trim() ?? field
+    const labelMatch =
+      field.includes(labelKey) ||
+      labelKey.includes(documentLabel) ||
+      documentLabel.includes(labelKey.split('(')[0].trim())
+
+    if (!labelMatch) return false
+    if (!travelerName || scope === 'global') return true
+    return field.includes(travelerName.toLowerCase())
+  })
+}
+
+export function enrichChecklistWithCorrections<
+  T extends {
+    id: string
+    label: string
+    required: boolean
+    status: 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified'
+    reviewComment?: string
+  },
+>(items: T[], corrections: ChecklistCorrectionRef[], travelerName?: string): T[] {
+  return items.map(item => {
+    if (item.reviewComment?.trim()) return item
+    if (item.status !== 'invalid' && item.status !== 'missing') return item
+
+    const match = findCorrectionForChecklistItem(item, corrections, travelerName, 'traveler')
+    if (match?.reason?.trim()) {
+      return { ...item, reviewComment: match.reason.trim() }
+    }
+
+    if (item.status === 'invalid') {
+      return {
+        ...item,
+        reviewComment: 'Please re-upload this document per GLTS team instructions.',
+      }
+    }
+
+    return item
+  })
+}
+
+export function enrichGlobalChecklistWithCorrections<
+  T extends {
+    id: string
+    label: string
+    required?: boolean
+    status: 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified'
+    reviewComment?: string
+  },
+>(items: T[], corrections: ChecklistCorrectionRef[]): T[] {
+  return items.map(item => {
+    if (item.reviewComment?.trim()) return item
+    if (item.status !== 'invalid' && item.status !== 'missing') return item
+
+    const match = findCorrectionForChecklistItem(item, corrections, undefined, 'global')
+    if (match?.reason?.trim()) {
+      return { ...item, reviewComment: match.reason.trim() }
+    }
+
+    if (item.status === 'invalid') {
+      return {
+        ...item,
+        reviewComment: 'Please re-upload this document per GLTS team instructions.',
+      }
+    }
+
+    return item
+  })
+}
+
 export function checklistItemsFromRowDocuments(
   documents: UploadQueueRow['documents'],
-): Array<{ id: string; label: string; required: boolean; status: 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified' }> {
+): Array<{
+  id: string
+  label: string
+  required: boolean
+  status: 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified'
+  reviewComment?: string
+}> {
   return documents.map(doc => ({
     id: doc.documentId,
     label: doc.name,
@@ -21,5 +116,6 @@ export function checklistItemsFromRowDocuments(
           : doc.status === 'rejected' || doc.status === 'needs_review'
             ? 'invalid'
             : 'missing',
+    reviewComment: doc.reviewComment,
   }))
 }

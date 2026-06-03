@@ -1,29 +1,33 @@
-export type BillingMode = 'single' | 'batch' | 'cumulative' | 'service_wise'
+export type BillingMode = 'application_wise' | 'company_wise'
+
+export type ApplicationSelectionMode = 'single' | 'batch' | 'multiple'
 
 export type InvoiceType =
-  | 'single_application'
-  | 'batch'
+  | 'single_invoice'
   | 'cumulative'
-  | 'service_wise'
   | 'additional_expense'
   | 'final_settlement'
   | 'credit_note'
 
 export type InvoiceStatus =
   | 'draft'
-  | 'generated'
+  | 'submitted'
   | 'shared'
   | 'partially_paid'
   | 'paid'
   | 'overdue'
   | 'cancelled'
 
-export type PaymentStatus = 'pending' | 'partial' | 'paid' | 'failed'
+export type PaymentStatus = 'pending' | 'partial' | 'paid' | 'failed' | 'adjusted'
+
+export type LineItemBillingStatus = 'unbilled' | 'billed' | 'partial'
 
 export interface InvoiceLineItem {
   id: string
   applicationId?: string
   batchId?: string
+  applicantName?: string
+  servicePresetId?: string
   serviceType: string
   description: string
   quantity: number
@@ -31,6 +35,10 @@ export interface InvoiceLineItem {
   gstApplicable: boolean
   gstAmount: number
   amount: number
+  included: boolean
+  billingStatus: LineItemBillingStatus
+  remarks?: string
+  isAdditionalExpense: boolean
 }
 
 export interface InvoiceTaxConfig {
@@ -46,6 +54,22 @@ export interface InvoiceTotals {
   tdsAmount: number
   additionalCharges: number
   finalAmount: number
+  advanceAvailable: number
+  advanceAdjusted: number
+  creditApplied: number
+  balancePayable: number
+}
+
+export interface InvoiceBillingAdjustmentSnapshot {
+  billingType: 'credit' | 'advance' | 'mixed'
+  creditLimit?: number
+  creditUsed?: number
+  creditAvailable?: number
+  creditPeriodDays?: number
+  advanceBalance?: number
+  advanceUtilized?: number
+  remainingAdvance?: number
+  outstandingAmount?: number
 }
 
 export interface InvoiceActivity {
@@ -83,6 +107,7 @@ export interface Invoice {
   vesselId?: string
   vesselName?: string
   agreementId?: string
+  poReference?: string
   gltsReferences: string[]
   batchIds: string[]
   totalApplications: number
@@ -91,6 +116,7 @@ export interface Invoice {
   lineItems: InvoiceLineItem[]
   taxConfig: InvoiceTaxConfig
   totals: InvoiceTotals
+  billingAdjustment?: InvoiceBillingAdjustmentSnapshot
   invoiceStatus: InvoiceStatus
   paymentStatus: PaymentStatus
   invoiceDate: string
@@ -108,6 +134,7 @@ export interface Invoice {
 
 export interface InvoiceBillingSelection {
   billingMode: BillingMode
+  applicationSelectionMode: ApplicationSelectionMode
   invoiceType: InvoiceType
   companyId: string
   companyName: string
@@ -117,8 +144,10 @@ export interface InvoiceBillingSelection {
   vesselName?: string
   applicationIds: string[]
   batchIds: string[]
-  serviceTypes: string[]
-  billableOnly: boolean
+  servicePresetIds: string[]
+  billingPeriodFrom?: string
+  billingPeriodTo?: string
+  poReference?: string
 }
 
 export interface InvoiceWorkspaceState {
@@ -130,12 +159,14 @@ export interface InvoiceWorkspaceState {
   dueDate: string
   sourceInvoiceId?: string
   draftInvoiceId?: string
+  agreementId?: string
 }
 
 export interface InvoiceListFilters {
   company?: string
   billingEntity?: string
   vessel?: string
+  billingMode?: BillingMode | 'all'
   applicationId?: string
   batchId?: string
   invoiceType?: InvoiceType | 'all'
@@ -186,13 +217,13 @@ export interface BillingReportData {
 }
 
 export const EMPTY_INVOICE_BILLING_SELECTION: InvoiceBillingSelection = {
-  billingMode: 'single',
-  invoiceType: 'single_application',
+  billingMode: 'application_wise',
+  applicationSelectionMode: 'single',
+  invoiceType: 'single_invoice',
   companyId: '',
   companyName: '',
   billingEntity: '',
   applicationIds: [],
   batchIds: [],
-  serviceTypes: [],
-  billableOnly: true,
+  servicePresetIds: [],
 }

@@ -3,17 +3,10 @@ import { FileText, FileCheck, AlertTriangle, Clock, CheckCircle2 } from 'lucide-
 import type { CustomerKpiItem } from '@/pages/customer/features/shared/components/listing/CustomerListingKpis'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import type { BulkBatchRow, SingleApplicationRow } from '../data/applicationFlowData'
-import type {
-  ApplicationListingFilterState,
-  ApplicationListingTab,
-  ApplicationSortPreset,
-} from '../types/applicationListing.types'
-import { EMPTY_APPLICATION_LISTING_FILTERS } from '../types/applicationListing.types'
+import type { ApplicationListingTab, ApplicationSortPreset } from '../types/applicationListing.types'
 import {
-  applyAdvancedFilters,
   computeListingKpis,
   filterByTab,
-  getFilterOptions,
   getListingCellValue,
   matchesListingSearch,
   sortPresetToTableState,
@@ -26,20 +19,12 @@ export interface UseApplicationListingWorkspaceOptions {
 
 export function useApplicationListingWorkspace({ singles, bulks }: UseApplicationListingWorkspaceOptions) {
   const [activeTab, setActiveTab] = useState<ApplicationListingTab>('all')
-  const [advancedFilters, setAdvancedFilters] = useState<ApplicationListingFilterState>(
-    EMPTY_APPLICATION_LISTING_FILTERS,
-  )
   const [sortPreset, setSortPreset] = useState<ApplicationSortPreset>('latest_created')
 
   const tabFilteredRows = useMemo(() => filterByTab([...singles, ...bulks], activeTab), [singles, bulks, activeTab])
 
-  const advancedFilteredSource = useMemo(
-    () => applyAdvancedFilters(tabFilteredRows, advancedFilters),
-    [tabFilteredRows, advancedFilters],
-  )
-
   const listing = useCustomerListing({
-    rows: advancedFilteredSource,
+    rows: tabFilteredRows,
     getCellValue: getListingCellValue,
     searchMatch: matchesListingSearch,
     initialPageSize: 10,
@@ -72,19 +57,6 @@ export function useApplicationListingWorkspace({ singles, bulks }: UseApplicatio
     [listing],
   )
 
-  const handleAdvancedFiltersChange = useCallback(
-    (next: ApplicationListingFilterState) => {
-      setAdvancedFilters(next)
-      listing.setTableState(s => ({ ...s, page: 0 }))
-    },
-    [listing],
-  )
-
-  const clearAdvancedFilters = useCallback(() => {
-    setAdvancedFilters(EMPTY_APPLICATION_LISTING_FILTERS)
-    listing.setTableState(s => ({ ...s, page: 0 }))
-  }, [listing])
-
   const kpiMetrics = useMemo(() => computeListingKpis(singles, bulks), [singles, bulks])
 
   const kpis: CustomerKpiItem[] = useMemo(
@@ -110,27 +82,12 @@ export function useApplicationListingWorkspace({ singles, bulks }: UseApplicatio
     [kpiMetrics],
   )
 
-  const filterOptions = useMemo(() => getFilterOptions(singles, bulks), [singles, bulks])
-
-  const hasActiveFilters = useMemo(
-    () =>
-      Object.values(advancedFilters).some(v => v !== '') ||
-      Boolean(listing.tableState.searchQuery.trim()) ||
-      Object.values(listing.columnFilters).some(v => v.length > 0),
-    [advancedFilters, listing.tableState.searchQuery, listing.columnFilters],
-  )
-
   return {
     activeTab,
     setActiveTab: handleTabChange,
-    advancedFilters,
-    setAdvancedFilters: handleAdvancedFiltersChange,
-    clearAdvancedFilters,
     sortPreset,
     setSortPreset: handleSortPresetChange,
     kpis,
-    filterOptions,
     listing,
-    hasActiveFilters,
   }
 }

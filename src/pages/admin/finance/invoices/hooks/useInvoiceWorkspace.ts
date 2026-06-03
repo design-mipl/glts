@@ -6,7 +6,12 @@ import { EMPTY_INVOICE_BILLING_SELECTION } from '@/shared/types/invoice'
 import {
   buildLineItems,
   enrichSelectionFromApplication,
+  findAgreementForCompany,
 } from '@/shared/utils/invoiceBillingEngine'
+import {
+  computeInvoiceBillingAdjustment,
+  mergeTotalsWithAdjustment,
+} from '@/shared/utils/invoiceBillingAdjustment'
 import {
   computeInvoiceTotals,
   recalculateLineItems,
@@ -22,6 +27,12 @@ function workspaceFromInvoice(invoice: Invoice): InvoiceWorkspaceState {
   return {
     selection: {
       billingMode: invoice.billingMode,
+      applicationSelectionMode:
+        invoice.batchIds.length === 1 && invoice.gltsReferences.length <= 1
+          ? 'batch'
+          : invoice.gltsReferences.length > 1
+            ? 'multiple'
+            : 'single',
       invoiceType: invoice.invoiceType === 'credit_note' ? 'credit_note' : invoice.invoiceType,
       companyId: invoice.companyId,
       companyName: invoice.companyName,
@@ -30,8 +41,8 @@ function workspaceFromInvoice(invoice: Invoice): InvoiceWorkspaceState {
       vesselName: invoice.vesselName,
       applicationIds: invoice.gltsReferences,
       batchIds: invoice.batchIds,
-      serviceTypes: [],
-      billableOnly: false,
+      servicePresetIds: [],
+      poReference: invoice.poReference,
     },
     lineItems: invoice.lineItems,
     taxConfig: invoice.taxConfig,
@@ -40,6 +51,7 @@ function workspaceFromInvoice(invoice: Invoice): InvoiceWorkspaceState {
     dueDate: invoice.dueDate,
     sourceInvoiceId: invoice.sourceInvoiceId,
     draftInvoiceId: invoice.id,
+    agreementId: invoice.agreementId,
   }
 }
 
@@ -51,13 +63,15 @@ export function useInvoiceWorkspace(invoiceId?: string, creditNoteSourceId?: str
 
   const [workspace, setWorkspace] = useState<InvoiceWorkspaceState>(() => {
     const selection = { ...EMPTY_INVOICE_BILLING_SELECTION }
-    if (mode === 'batch') selection.billingMode = 'batch'
-    if (mode === 'cumulative') selection.billingMode = 'cumulative'
-    if (type === 'additional_expense') selection.invoiceType = 'additional_expense'
-    if (type === 'service_wise') {
-      selection.billingMode = 'service_wise'
-      selection.invoiceType = 'service_wise'
+    if (mode === 'batch') {
+      selection.applicationSelectionMode = 'batch'
     }
+    if (mode === 'cumulative') {
+      selection.invoiceType = 'cumulative'
+      selection.applicationSelectionMode = 'multiple'
+    }
+    if (type === 'additional_expense') selection.invoiceType = 'additional_expense'
+    if (type === 'final_settlement') selection.invoiceType = 'final_settlement'
     return {
       selection,
       lineItems: [],
@@ -84,13 +98,13 @@ export function useInvoiceWorkspace(invoiceId?: string, creditNoteSourceId?: str
           gstAmount: -Math.abs(li.gstAmount),
           amount: -Math.abs(li.amount),
           description: `Credit: ${li.description}`,
+          billingStatus: 'unbilled' as const,
         }))
         setWorkspace({
           ...workspaceFromInvoice(source),
           selection: {
             ...workspaceFromInvoice(source).selection,
             invoiceType: 'credit_note',
-            billableOnly: false,
           },
           lineItems: negatedItems,
           sourceInvoiceId: source.id,
@@ -110,19 +124,11 @@ export function useInvoiceWorkspace(invoiceId?: string, creditNoteSourceId?: str
           selection: enriched,
           lineItems: recalculateLineItems(built.lineItems, built.taxConfig),
           taxConfig: built.taxConfig,
+          agreementId: built.agreementId,
         }
       })
     }
   }, [applicationId])
-
-  const refreshLineItems = useCallback((selection = workspace.selection) => {
-    const built = buildLineItems(selection)
-    setWorkspace(prev => ({
-      ...prev,
-      lineItems: recalculateLineItems(built.lineItems, prev.taxConfig.gstPercentage ? prev.taxConfig : built.taxConfig),
-      taxConfig: prev.taxConfig.gstPercentage ? prev.taxConfig : built.taxConfig,
-    }))
-  }, [workspace.selection])
 
   const updateSelection = useCallback((patch: Partial<InvoiceWorkspaceState['selection']>) => {
     setWorkspace(prev => {
@@ -133,6 +139,7 @@ export function useInvoiceWorkspace(invoiceId?: string, creditNoteSourceId?: str
         selection,
         lineItems: recalculateLineItems(built.lineItems, built.taxConfig),
         taxConfig: built.taxConfig,
+        agreementId: built.agreementId,
       }
     })
   }, [])
@@ -144,17 +151,33 @@ export function useInvoiceWorkspace(invoiceId?: string, creditNoteSourceId?: str
     }))
   }, [])
 
-  const totals = useMemo(
+  const baseTotals = useMemo(
     () => computeInvoiceTotals(workspace.lineItems, workspace.taxConfig, workspace.additionalCharges),
     [workspace.lineItems, workspace.taxConfig, workspace.additionalCharges],
+  )
+
+  const agreement = useMemo(
+    () => findAgreementForCompany(workspace.selection.companyName),
+    [workspace.selection.companyName],
+  )
+
+  const adjustment = useMemo(
+    () => computeInvoiceBillingAdjustment(agreement, baseTotals.finalAmount),
+    [agreement, baseTotals.finalAmount],
+  )
+
+  const totals = useMemo(
+    () => mergeTotalsWithAdjustment(baseTotals, adjustment),
+    [baseTotals, adjustment],
   )
 
   return {
     workspace,
     totals,
+    billingAdjustment: adjustment.snapshot,
+    agreement,
     setWorkspace,
     updateSelection,
     updateLineItems,
-    refreshLineItems,
   }
 }

@@ -13,7 +13,6 @@ import { CustomerListingToolbar } from '@/pages/customer/features/shared/compone
 import { CustomerListingTable } from '@/pages/customer/features/shared/components/listing/CustomerListingTable'
 import { CustomerListingPagination } from '@/pages/customer/features/shared/components/listing/CustomerListingPagination'
 import { CustomerListingGrid } from '@/pages/customer/features/shared/components/listing/CustomerListingGrid'
-import { VesselAdvancedFilters } from '../components/VesselAdvancedFilters'
 import { VesselFormDrawer } from '../components/VesselFormDrawer'
 import { buildVesselColumns } from '../components/VesselTableColumns'
 import {
@@ -31,9 +30,6 @@ export function VesselListingPage() {
 
   const [rows, setRows] = useState<VesselMaster[]>([])
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
-  const [typeFilter, setTypeFilter] = useState('all')
-  const [flagFilter, setFlagFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('all')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editVessel, setEditVessel] = useState<VesselMaster | undefined>()
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -49,17 +45,8 @@ export function VesselListingPage() {
     loadRows()
   }, [loadRows])
 
-  const filteredByAdvanced = useMemo(() => {
-    return rows.filter(row => {
-      if (typeFilter !== 'all' && row.vesselType !== typeFilter) return false
-      if (flagFilter !== 'all' && row.flagCountry !== flagFilter) return false
-      if (statusFilter !== 'all' && row.status !== statusFilter) return false
-      return true
-    })
-  }, [rows, typeFilter, flagFilter, statusFilter])
-
   const listing = useCustomerListing({
-    rows: filteredByAdvanced,
+    rows,
     getCellValue: getVesselCellValue,
     searchMatch: matchesVesselSearch,
     initialPageSize: 10,
@@ -69,8 +56,6 @@ export function VesselListingPage() {
     const start = listing.tableState.page * listing.tableState.pageSize
     return listing.filteredRows.slice(start, start + listing.tableState.pageSize)
   }, [listing.filteredRows, listing.tableState.page, listing.tableState.pageSize])
-
-  const flagOptions = useMemo(() => vesselMasterService.getFlagCountryOptions(), [rows])
 
   const openEdit = (record: VesselMaster) => {
     setEditVessel(record)
@@ -137,26 +122,6 @@ export function VesselListingPage() {
             columns={columns.filter(c => c.key !== 'actions').map(c => ({ key: c.key, label: c.label }))}
             hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
             onHiddenColumnKeysChange={keys => listing.setTableState(s => ({ ...s, hiddenColumnKeys: keys }))}
-          />
-        }
-        advancedFilters={
-          <VesselAdvancedFilters
-            vesselType={typeFilter}
-            flagCountry={flagFilter}
-            status={statusFilter}
-            flagOptions={flagOptions}
-            onVesselTypeChange={v => {
-              setTypeFilter(v)
-              listing.setTableState(s => ({ ...s, page: 0 }))
-            }}
-            onFlagCountryChange={v => {
-              setFlagFilter(v)
-              listing.setTableState(s => ({ ...s, page: 0 }))
-            }}
-            onStatusChange={v => {
-              setStatusFilter(v)
-              listing.setTableState(s => ({ ...s, page: 0 }))
-            }}
           />
         }
         table={

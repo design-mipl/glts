@@ -1,5 +1,4 @@
 import { useMemo, useCallback, useState } from 'react'
-import { Box } from '@mui/material'
 import { useNavigate, type NavigateFunction } from 'react-router-dom'
 import { useToast } from '@/design-system/UIComponents'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
@@ -14,7 +13,6 @@ import { getListingCellValue } from '../utils/applicationListingUtils'
 import { mapApplicationRowsToGridItems } from '../utils/applicationListingGrid'
 import { useApplicationListingWorkspace } from '../hooks/useApplicationListingWorkspace'
 import { ApplicationListingHeader } from '../components/listing/ApplicationListingHeader'
-import { ApplicationListingFilters } from '../components/listing/ApplicationListingFilters'
 import { buildUnifiedApplicationColumns } from '../components/listing/applicationListingColumns'
 import type { ApplicationListingTab } from '../types/applicationListing.types'
 import type { ApplicationListingRow } from '../types/applicationListing.types'
@@ -99,12 +97,6 @@ export function ApplicationsListPage() {
     })
   }, [showToast])
 
-  const handleClearFilters = useCallback(() => {
-    workspace.clearAdvancedFilters()
-    listing.handleSearch('')
-    listing.setColumnFilters({})
-  }, [workspace, listing])
-
   const handleTabChange = useCallback(
     (tab: ApplicationListingTab) => {
       setActiveTab(tab)
@@ -124,36 +116,24 @@ export function ApplicationsListPage() {
       tabValue={activeTab}
       onTabChange={v => handleTabChange(v as ApplicationListingTab)}
       toolbar={
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          <CustomerListingToolbar
-            searchValue={listing.tableState.searchQuery}
-            onSearch={listing.handleSearch}
-            searchPlaceholder="Search by GLTS reference, applicant, passport, admin name, booker name, or visa type…"
-            onExport={handleExport}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            columns={toolbarColumns}
-            hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
-            onHiddenColumnKeysChange={keys => listing.setTableState(s => ({ ...s, hiddenColumnKeys: keys }))}
-            moreMenuItems={[
-              { label: 'Refresh list', onClick: () => showToast({ title: 'Refreshed', variant: 'info' }) },
-              {
-                label: 'Download bulk template',
-                onClick: () => navigate(`${base}/applications/new`),
-              },
-            ]}
-          />
-          <ApplicationListingFilters
-            filters={workspace.advancedFilters}
-            onFiltersChange={workspace.setAdvancedFilters}
-            onClearFilters={handleClearFilters}
-            countries={workspace.filterOptions.countries}
-            visaTypes={workspace.filterOptions.visaTypes}
-            createdByOptions={workspace.filterOptions.createdByOptions}
-            showCreatedByFilter={showCreatedBy}
-            hasActiveFilters={workspace.hasActiveFilters}
-          />
-        </Box>
+        <CustomerListingToolbar
+          searchValue={listing.tableState.searchQuery}
+          onSearch={listing.handleSearch}
+          searchPlaceholder="Search by GLTS reference, applicant, passport, admin name, booker name, or visa type…"
+          onExport={handleExport}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          columns={toolbarColumns}
+          hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
+          onHiddenColumnKeysChange={keys => listing.setTableState(s => ({ ...s, hiddenColumnKeys: keys }))}
+          moreMenuItems={[
+            { label: 'Refresh list', onClick: () => showToast({ title: 'Refreshed', variant: 'info' }) },
+            {
+              label: 'Download bulk template',
+              onClick: () => navigate(`${base}/applications/new`),
+            },
+          ]}
+        />
       }
       table={
         viewMode === 'table' ? (

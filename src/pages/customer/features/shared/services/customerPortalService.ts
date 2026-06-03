@@ -30,6 +30,7 @@ import type { BookerUser } from '@/shared/types/bookerUser'
 import type { EntityMaster } from '@/shared/types/entityMaster'
 import type { VesselMaster } from '@/shared/types/vesselMaster'
 import { mockBillingAgreementData } from '../../profile/data/billingAgreement.mock'
+import { enrichBillingAgreementFromCommercialAgreement } from '../../profile/utils/resolveFinanceContactPersons'
 import { mockCompanyProfileData } from '../../profile/data/companyProfile.mock'
 import {
   mockBookerPersonalAccountData,
@@ -38,6 +39,9 @@ import {
 import { mockVisaRules } from '../../profile/data/profileData'
 import { loadSession } from '@/shared/auth/session'
 import type { CustomerType } from '@/shared/auth/session'
+import { mapApplicationBillingTermsSummary } from '@/shared/utils/mapApplicationBillingTermsSummary'
+import type { ApplicationBillingTermsViewModel } from '@/shared/utils/mapApplicationBillingTermsSummary'
+import { resolveCustomerPortalAgreement } from '@/shared/utils/resolveCustomerPortalAgreement'
 import type { ApplicationCustomerSegment } from '../../applications/types/applicationListing.types'
 import type { ApplicationDetailViewModel, FlowDraftLikeState } from '../../applications/types/applicationDetail.types'
 
@@ -234,13 +238,24 @@ export const customerPortalService = {
     return { vessel }
   },
 
+  getApplicationBillingTermsSummary(): ApplicationBillingTermsViewModel | null {
+    const session = loadSession()
+    const agreement = resolveCustomerPortalAgreement(session)
+    if (!agreement) return null
+    return mapApplicationBillingTermsSummary(agreement)
+  },
+
   getAccountWorkspace() {
     const session = loadSession()
     const personal =
       session?.userRole === 'booker' ? mockBookerPersonalAccountData : mockPersonalAccountData
+    const billing = enrichBillingAgreementFromCommercialAgreement(mockBillingAgreementData)
     return {
-      company: mockCompanyProfileData,
-      billing: mockBillingAgreementData,
+      company: {
+        ...mockCompanyProfileData,
+        operations: billing.supportedOperations,
+      },
+      billing,
       personal,
     }
   },
@@ -265,9 +280,14 @@ export const customerPortalService = {
         operationalSpoc: `${company.operational.escalationContact.name} · ${company.operational.escalationContact.email}`,
       },
       agreement: {
-        creditTerms: billing.agreement.creditTerms,
-        sla: billing.agreement.slaSummary,
-        invoiceRules: billing.invoiceRules,
+        creditTerms:
+          billing.billingConfig.billingType === 'credit'
+            ? billing.billingConfig.credit.creditPeriod
+            : billing.billingConfig.billingType === 'mixed'
+              ? billing.billingConfig.mixed.creditLimit
+              : billing.billingConfig.advance.advanceRule,
+        sla: `${billing.agreement.workflowType} workflow`,
+        invoiceRules: billing.financeContacts.invoiceSubmissionEmail,
       },
       visaRules: mockVisaRules,
     }

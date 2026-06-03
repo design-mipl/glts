@@ -1,6 +1,7 @@
 import type { Invoice, InvoiceListFilters } from '@/shared/types/invoice'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
+  billingModeLabel,
   invoiceStatusLabel,
   invoiceTypeLabel,
   paymentStatusLabel,
@@ -11,6 +12,7 @@ export interface InvoiceAdvancedFilterState {
   company: string
   billingEntity: string
   vessel: string
+  billingMode: string
   applicationId: string
   batchId: string
   invoiceType: string
@@ -26,6 +28,7 @@ export const EMPTY_INVOICE_ADVANCED_FILTERS: InvoiceAdvancedFilterState = {
   company: '',
   billingEntity: '',
   vessel: '',
+  billingMode: '',
   applicationId: '',
   batchId: '',
   invoiceType: '',
@@ -45,6 +48,7 @@ export function matchesInvoiceSearch(record: Invoice, query: string): boolean {
     record.companyName.toLowerCase().includes(q) ||
     record.billingEntity.toLowerCase().includes(q) ||
     (record.vesselName ?? '').toLowerCase().includes(q) ||
+    (record.poReference ?? '').toLowerCase().includes(q) ||
     record.gltsReferences.some(r => r.toLowerCase().includes(q)) ||
     record.batchIds.some(b => b.toLowerCase().includes(q))
   )
@@ -56,9 +60,12 @@ export function applyInvoiceAdvancedFilters(
 ): Invoice[] {
   return rows.filter(row => {
     if (filters.company && !row.companyName.toLowerCase().includes(filters.company.toLowerCase())) return false
-    if (filters.billingEntity && !row.billingEntity.toLowerCase().includes(filters.billingEntity.toLowerCase())) return false
+    if (filters.billingEntity && !row.billingEntity.toLowerCase().includes(filters.billingEntity.toLowerCase()))
+      return false
     if (filters.vessel && !(row.vesselName ?? '').toLowerCase().includes(filters.vessel.toLowerCase())) return false
-    if (filters.applicationId && !row.gltsReferences.some(r => r.toLowerCase().includes(filters.applicationId.toLowerCase()))) return false
+    if (filters.billingMode && row.billingMode !== filters.billingMode) return false
+    if (filters.applicationId && !row.gltsReferences.some(r => r.toLowerCase().includes(filters.applicationId.toLowerCase())))
+      return false
     if (filters.batchId && !row.batchIds.some(b => b.toLowerCase().includes(filters.batchId.toLowerCase()))) return false
     if (filters.invoiceType && row.invoiceType !== filters.invoiceType) return false
     if (filters.invoiceStatus && row.invoiceStatus !== filters.invoiceStatus) return false
@@ -78,6 +85,7 @@ export function advancedFiltersToServiceFilters(
     company: filters.company || undefined,
     billingEntity: filters.billingEntity || undefined,
     vessel: filters.vessel || undefined,
+    billingMode: (filters.billingMode || 'all') as InvoiceListFilters['billingMode'],
     applicationId: filters.applicationId || undefined,
     batchId: filters.batchId || undefined,
     invoiceType: (filters.invoiceType || 'all') as InvoiceListFilters['invoiceType'],
@@ -94,6 +102,8 @@ export function getInvoiceCellValue(record: Invoice, columnKey: string): string 
   switch (columnKey) {
     case 'invoiceId':
       return record.invoiceId
+    case 'billingMode':
+      return billingModeLabel[record.billingMode]
     case 'invoiceType':
       return invoiceTypeLabel[record.invoiceType]
     case 'companyName':
@@ -108,12 +118,12 @@ export function getInvoiceCellValue(record: Invoice, columnKey: string): string 
       return record.batchIds.join(', ') || '—'
     case 'totalApplications':
       return String(record.totalApplications)
-    case 'baseAmount':
-      return formatInr(record.totals.subtotal)
-    case 'gst':
-      return formatInr(record.totals.gstTotal)
-    case 'totalAmount':
+    case 'invoiceAmount':
       return formatInr(record.totals.finalAmount)
+    case 'advanceAdjusted':
+      return formatInr(record.totals.advanceAdjusted)
+    case 'balancePayable':
+      return formatInr(record.totals.balancePayable)
     case 'invoiceStatus':
       return invoiceStatusLabel[record.invoiceStatus]
     case 'paymentStatus':
@@ -132,6 +142,7 @@ export function getInvoiceCellValue(record: Invoice, columnKey: string): string 
 export function downloadInvoiceCsv(records: Invoice[]) {
   const headers = [
     'Invoice ID',
+    'Billing Mode',
     'Invoice Type',
     'Company',
     'Billing Entity',
@@ -139,9 +150,9 @@ export function downloadInvoiceCsv(records: Invoice[]) {
     'GLTS Reference',
     'Batch ID',
     'Total Applications',
-    'Base Amount',
-    'GST',
-    'Total Amount',
+    'Invoice Amount',
+    'Advance Adjusted',
+    'Balance Payable',
     'Invoice Status',
     'Payment Status',
     'Invoice Date',
@@ -151,6 +162,7 @@ export function downloadInvoiceCsv(records: Invoice[]) {
   const rows = records.map(r =>
     [
       r.invoiceId,
+      billingModeLabel[r.billingMode],
       invoiceTypeLabel[r.invoiceType],
       r.companyName,
       r.billingEntity,
@@ -158,9 +170,9 @@ export function downloadInvoiceCsv(records: Invoice[]) {
       r.gltsReferences.join(';'),
       r.batchIds.join(';'),
       r.totalApplications,
-      r.totals.subtotal,
-      r.totals.gstTotal,
       r.totals.finalAmount,
+      r.totals.advanceAdjusted,
+      r.totals.balancePayable,
       invoiceStatusLabel[r.invoiceStatus],
       paymentStatusLabel[r.paymentStatus],
       r.invoiceDate,
@@ -191,8 +203,8 @@ export function getInvoiceEmptyState(tab: InvoiceListingTab, hasSearch: boolean)
   const tabLabel =
     tab === 'draft'
       ? 'draft invoices'
-      : tab === 'shared'
-        ? 'shared invoices'
+      : tab === 'submitted'
+        ? 'submitted invoices'
         : tab === 'overdue'
           ? 'overdue invoices'
           : tab === 'credit_notes'

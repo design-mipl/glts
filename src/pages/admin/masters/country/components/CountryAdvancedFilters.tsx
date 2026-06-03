@@ -19,37 +19,38 @@ export function CountryAdvancedFilters({
   return (
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} useFlexGap flexWrap="wrap">
       <Select
-        label="Processing type"
-        value={filters.processingType ?? 'all'}
+        placeholder="All types"
+        value={filters.processingType === 'all' ? '' : (filters.processingType ?? '')}
         onChange={(value) =>
           onChange({
             ...filters,
-            processingType: value as CountryMasterListFilters['processingType'],
+            processingType: (value ? value : 'all') as CountryMasterListFilters['processingType'],
           })
         }
-        options={[{ value: 'all', label: 'All types' }, ...PROCESSING_TYPE_OPTIONS]}
+        options={PROCESSING_TYPE_OPTIONS}
         size="sm"
-        sx={{ minWidth: 160 }}
+        clearable
+        fullWidth
+        sx={{ minWidth: { xs: '100%', sm: 180 } }}
       />
       {showSegmentFilter ? (
         <Select
-          label="Segment"
-          value={filters.segment ?? 'all'}
+          placeholder="All segments"
+          value={filters.segment === 'all' ? '' : (filters.segment ?? '')}
           onChange={(value) =>
             onChange({
               ...filters,
-              segment: value as CountryMasterListFilters['segment'],
+              segment: (value ? value : 'all') as CountryMasterListFilters['segment'],
             })
           }
-          options={[
-            { value: 'all', label: 'All segments' },
-            ...COUNTRY_LISTING_TABS.filter((t) => t.value !== 'all').map((t) => ({
-              value: t.value,
-              label: t.label,
-            })),
-          ]}
+          options={COUNTRY_LISTING_TABS.filter((t) => t.value !== 'all').map((t) => ({
+            value: t.value,
+            label: t.label,
+          }))}
           size="sm"
-          sx={{ minWidth: 180 }}
+          clearable
+          fullWidth
+          sx={{ minWidth: { xs: '100%', sm: 200 } }}
         />
       ) : null}
     </Stack>

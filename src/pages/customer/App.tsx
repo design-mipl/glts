@@ -18,6 +18,9 @@ import { EntityListingPage } from './features/masters/entities/pages/EntityListi
 import { EntityDetailPage } from './features/masters/entities/pages/EntityDetailPage'
 import { VesselListingPage } from './features/masters/vessels/pages/VesselListingPage'
 import { VesselDetailPage } from './features/masters/vessels/pages/VesselDetailPage'
+import { FinanceComingSoonPage } from './features/finance/pages/FinanceComingSoonPage'
+import { CustomerInvoicesListPage } from './features/finance/pages/CustomerInvoicesListPage'
+import { FINANCE_NAV_ITEMS } from './features/finance/config/financeNav'
 
 export function CustomerPortalApp() {
   return (
@@ -29,6 +32,14 @@ export function CustomerPortalApp() {
         <Route path="applications" element={<ApplicationsListPage />} />
         <Route path="applications/new" element={<CreateApplicationFlowPage />} />
         <Route path="applications/:applicationId" element={<ApplicationDetailPage />} />
+        <Route path="finance" element={<Navigate to="finance/overview" replace />} />
+        {FINANCE_NAV_ITEMS.map(item =>
+          item.path === 'finance/invoices' ? (
+            <Route key={item.path} path={item.path} element={<CustomerInvoicesListPage />} />
+          ) : (
+            <Route key={item.path} path={item.path} element={<FinanceComingSoonPage />} />
+          ),
+        )}
         <Route path="applications/new/single" element={<Navigate to="../new" replace />} />
         <Route path="applications/new/bulk" element={<Navigate to="../new" replace />} />
         <Route path="documents" element={<PlaceholderPage title="Documents vault" />} />

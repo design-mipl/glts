@@ -2,11 +2,13 @@ import { Box, CircularProgress, Stack, Typography } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Badge, Button, EmptyState, Select, useToast } from '@/design-system/UIComponents'
 import { AdminStepperFormShell } from '@/pages/admin/components/AdminStepperFormShell'
+import { AdminRecordPageChrome } from '@/pages/admin/components/AdminRecordPageChrome'
 import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { useViewFormWorkspace } from '../hooks/useViewFormWorkspace'
 import { CopyAssistFieldList } from '../components/view-form/CopyAssistField'
 import { StepConfirmModal } from '../components/view-form/StepConfirmModal'
 import { ViewFormSubmissionSection } from '../components/view-form/ViewFormSubmissionSection'
+import { ViewFormDocumentVault } from '../components/view-form/ViewFormDocumentVault'
 import { VerifyDocumentsTimeline } from '../components/verify/VerifyDocumentsTimeline'
 import { buildFormAssistFieldsForStep } from '../utils/formAssistFieldBuilder'
 
@@ -177,52 +179,63 @@ export function MarineViewFormPage() {
 
   return (
     <>
-      <Stack spacing={2} sx={{ mb: 2 }}>
-        {isBulk && rows.length > 1 ? (
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
-            <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13, minWidth: 80 }}>
-              Traveler
-            </Typography>
-            <Select
-              value={selectedTravelerId ?? ''}
-              onChange={v => setSelectedTravelerId(String(v))}
-              options={rows.map(r => ({
-                value: r.id,
-                label: `${r.travelerName} · ${r.passportNo}`,
-              }))}
-              size="sm"
-              sx={{ minWidth: 280 }}
-            />
-          </Stack>
-        ) : null}
-
-        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-            {selectedRow.travelerName} · {selectedRow.passportNo}
-          </Typography>
-          {externallySubmitted ? (
-            <Badge label="Externally submitted" color="success" size="sm" />
-          ) : (
-            <Badge label={currentStep?.label ?? 'In progress'} color="info" size="sm" />
-          )}
-        </Stack>
-
-        <VerifyDocumentsTimeline steps={timelineSteps} multiTraveler={rows.length > 1} />
-      </Stack>
-
-      <AdminStepperFormShell
+      <AdminRecordPageChrome
         breadcrumbs={[
           { label: 'Application Management', href: listingPath },
           { label: 'View Form' },
         ]}
-        steps={stepperSteps}
-        activeStep={activeStepIndex}
-        onActiveStepChange={setActiveStep}
-        onStepClick={index => {
-          if (index <= activeStepIndex) setActiveStep(index)
-        }}
-        footer={footer}
-      />
+      >
+        <Stack spacing={2}>
+          {isBulk && rows.length > 1 ? (
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
+              <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13, minWidth: 80 }}>
+                Traveler
+              </Typography>
+              <Select
+                value={selectedTravelerId ?? ''}
+                onChange={v => setSelectedTravelerId(String(v))}
+                options={rows.map(r => ({
+                  value: r.id,
+                  label: `${r.travelerName} · ${r.passportNo}`,
+                }))}
+                size="sm"
+                sx={{ minWidth: 280 }}
+              />
+            </Stack>
+          ) : null}
+
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+              {selectedRow.travelerName} · {selectedRow.passportNo}
+            </Typography>
+            {externallySubmitted ? (
+              <Badge label="Externally submitted" color="success" size="sm" />
+            ) : (
+              <Badge label={currentStep?.label ?? 'In progress'} color="info" size="sm" />
+            )}
+          </Stack>
+
+          <VerifyDocumentsTimeline steps={timelineSteps} multiTraveler={rows.length > 1} />
+
+          <ViewFormDocumentVault
+            applicationId={applicationId}
+            selectedRow={selectedRow}
+            detail={detail}
+            submission={submission}
+          />
+        </Stack>
+
+        <AdminStepperFormShell
+          hidePageChrome
+          steps={stepperSteps}
+          activeStep={activeStepIndex}
+          onActiveStepChange={setActiveStep}
+          onStepClick={index => {
+            if (index <= activeStepIndex) setActiveStep(index)
+          }}
+          footer={footer}
+        />
+      </AdminRecordPageChrome>
 
       <StepConfirmModal
         open={confirmModalOpen}

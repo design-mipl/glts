@@ -10,7 +10,7 @@ import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/us
 
 import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
 
-import { useApplicationFlowState } from '../../hooks/useApplicationFlowState'
+import { useApplicationFlowState, type ApplicationFlowState } from '../../hooks/useApplicationFlowState'
 import type { CreateApplicationLocationState } from '../../utils/createApplicationNavigation'
 
 import { ApplicationFlowStepper } from '../../components/ApplicationFlowStepper'
@@ -49,6 +49,25 @@ const stepLabels: Record<FlowStep, string> = {
 
   submit: 'Submit',
 
+}
+
+function canAdvanceFromStep(step: FlowStep, state: ApplicationFlowState): boolean {
+  switch (step) {
+    case 'country':
+      return Boolean(state.countryId)
+    case 'visa':
+      return Boolean(state.visaOfferingId)
+    case 'requirements':
+      return Boolean(state.visaOfferingId && state.travelDate)
+    case 'upload':
+      return state.uploadQueueRows.length > 0
+    case 'details':
+      return true
+    case 'submit':
+      return false
+    default:
+      return false
+  }
 }
 
 
@@ -129,9 +148,11 @@ export function CreateApplicationFlowPage() {
 
     const i = stepIndex
 
-    if (i < FLOW_STEPS.length - 1) setStep(FLOW_STEPS[i + 1])
+    if (i < FLOW_STEPS.length - 1 && canAdvanceFromStep(step, state)) setStep(FLOW_STEPS[i + 1])
 
   }
+
+  const canAdvance = canAdvanceFromStep(step, state)
 
 
 
@@ -177,7 +198,6 @@ export function CreateApplicationFlowPage() {
 
         <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 1.5 }}>
           <Breadcrumb
-            showBack={false}
             items={[
               { label: 'Application Management', href: `${base}/applications` },
               { label: 'Application creation' },
@@ -245,7 +265,7 @@ export function CreateApplicationFlowPage() {
               onNext={goNext}
 
               disablePrevious={stepIndex <= 0}
-              disableNext={stepIndex >= FLOW_STEPS.length - 1}
+              disableNext={stepIndex >= FLOW_STEPS.length - 1 || !canAdvance}
             />
 
           </Box>

@@ -69,7 +69,7 @@ function isGroupChildActive(children: NavConfig[] | undefined, currentPath: stri
   )
 }
 
-function renderNavConfig(
+export function renderNavConfig(
   items: NavConfig[],
   collapsed: boolean,
   currentPath: string,

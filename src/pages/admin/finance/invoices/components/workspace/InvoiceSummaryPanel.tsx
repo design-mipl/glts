@@ -1,6 +1,8 @@
-import { Divider, Stack, Typography } from '@mui/material'
+import { Collapse, Divider, Stack, Typography } from '@mui/material'
+import { useState } from 'react'
 import { BaseCard, FormField, Input, Toggle } from '@/design-system/UIComponents'
-import type { InvoiceTaxConfig } from '@/shared/types/invoice'
+import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
+import type { InvoiceBillingAdjustmentSnapshot, InvoiceTaxConfig } from '@/shared/types/invoice'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 
 interface InvoiceTaxConfigFieldsProps {
@@ -50,6 +52,12 @@ interface InvoiceSummaryPanelProps {
   tdsAmount: number
   additionalCharges: number
   finalAmount: number
+  advanceAvailable: number
+  advanceAdjusted: number
+  creditApplied: number
+  balancePayable: number
+  billingAdjustment?: InvoiceBillingAdjustmentSnapshot
+  agreement?: CommercialAgreement
   taxConfig: InvoiceTaxConfig
   onTaxConfigChange: (config: InvoiceTaxConfig) => void
   onAdditionalChargesChange: (value: number) => void
@@ -72,12 +80,60 @@ function SummaryRow({ label, value, bold }: { label: string; value: string; bold
   )
 }
 
+function BillingTypeBlock({ snapshot }: { snapshot?: InvoiceBillingAdjustmentSnapshot }) {
+  if (!snapshot) return null
+
+  if (snapshot.billingType === 'credit') {
+    return (
+      <Stack spacing={0.75}>
+        <Typography variant="caption" color="text.secondary" fontWeight={600}>
+          Credit billing
+        </Typography>
+        <SummaryRow label="Credit limit" value={formatInr(snapshot.creditLimit ?? 0)} />
+        <SummaryRow label="Credit used" value={formatInr(snapshot.creditUsed ?? 0)} />
+        <SummaryRow label="Available credit" value={formatInr(snapshot.creditAvailable ?? 0)} />
+        <SummaryRow label="Credit period" value={`${snapshot.creditPeriodDays ?? 30} days`} />
+      </Stack>
+    )
+  }
+
+  if (snapshot.billingType === 'advance') {
+    return (
+      <Stack spacing={0.75}>
+        <Typography variant="caption" color="text.secondary" fontWeight={600}>
+          Advance billing
+        </Typography>
+        <SummaryRow label="Advance balance" value={formatInr(snapshot.advanceBalance ?? 0)} />
+        <SummaryRow label="Advance utilized" value={formatInr(snapshot.advanceUtilized ?? 0)} />
+        <SummaryRow label="Remaining advance" value={formatInr(snapshot.remainingAdvance ?? 0)} />
+      </Stack>
+    )
+  }
+
+  return (
+    <Stack spacing={0.75}>
+      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+        Mixed billing
+      </Typography>
+      <SummaryRow label="Advance balance" value={formatInr(snapshot.advanceBalance ?? 0)} />
+      <SummaryRow label="Advance adjusted" value={formatInr(snapshot.advanceUtilized ?? 0)} />
+      <SummaryRow label="Outstanding (credit)" value={formatInr(snapshot.outstandingAmount ?? 0)} />
+      <SummaryRow label="Credit period remaining" value={`${snapshot.creditPeriodDays ?? 30} days`} />
+    </Stack>
+  )
+}
+
 export function InvoiceSummaryPanel({
   subtotal,
   gstTotal,
   tdsAmount,
   additionalCharges,
   finalAmount,
+  advanceAvailable,
+  advanceAdjusted,
+  creditApplied,
+  balancePayable,
+  billingAdjustment,
   taxConfig,
   onTaxConfigChange,
   onAdditionalChargesChange,
@@ -86,6 +142,8 @@ export function InvoiceSummaryPanel({
   onPaymentTermsChange,
   onDueDateChange,
 }: InvoiceSummaryPanelProps) {
+  const [showTaxConfig, setShowTaxConfig] = useState(false)
+
   return (
     <BaseCard sx={{ p: 2 }}>
       <Stack spacing={2}>
@@ -105,16 +163,31 @@ export function InvoiceSummaryPanel({
             />
           </FormField>
           <Divider />
-          <SummaryRow label="Final amount" value={formatInr(finalAmount)} bold />
+          <SummaryRow label="Invoice total" value={formatInr(finalAmount)} bold />
+          <SummaryRow label="Advance available" value={formatInr(advanceAvailable)} />
+          <SummaryRow label="Advance adjusted" value={formatInr(advanceAdjusted)} />
+          <SummaryRow label="Credit applied" value={formatInr(creditApplied)} />
+          <SummaryRow label="Balance payable" value={formatInr(balancePayable)} bold />
         </Stack>
         <Divider />
-        <InvoiceTaxConfigFields taxConfig={taxConfig} onChange={onTaxConfigChange} />
-        <FormField label="Payment terms">
-          <Input value={paymentTerms} onChange={onPaymentTermsChange} size="sm" fullWidth />
-        </FormField>
+        <BillingTypeBlock snapshot={billingAdjustment} />
         <FormField label="Due date">
           <Input value={dueDate} onChange={onDueDateChange} size="sm" fullWidth placeholder="YYYY-MM-DD" />
         </FormField>
+        <FormField label="Payment terms">
+          <Input value={paymentTerms} onChange={onPaymentTermsChange} size="sm" fullWidth />
+        </FormField>
+        <Typography
+          variant="caption"
+          color="primary"
+          sx={{ cursor: 'pointer', fontWeight: 600 }}
+          onClick={() => setShowTaxConfig(v => !v)}
+        >
+          {showTaxConfig ? 'Hide tax configuration' : 'Show tax configuration'}
+        </Typography>
+        <Collapse in={showTaxConfig}>
+          <InvoiceTaxConfigFields taxConfig={taxConfig} onChange={onTaxConfigChange} />
+        </Collapse>
       </Stack>
     </BaseCard>
   )

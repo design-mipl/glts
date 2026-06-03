@@ -26,7 +26,7 @@ export const AGREEMENT_FIELD_MESSAGES = {
   pricingRequired: 'Add at least one pricing row',
   pricingCountry: 'Country is required',
   pricingVisaType: 'Visa type is required',
-  pricingServicePreset: 'Service preset is required',
+  pricingServicePreset: 'Service is required',
   billingType: 'Billing type is required',
   advanceType: 'Advance type is required',
   creditPeriod: 'Credit period is required',

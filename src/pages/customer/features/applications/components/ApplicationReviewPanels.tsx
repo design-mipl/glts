@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Box, Card, Grid, Stack, Typography } from '@mui/material'
 import { CustomerDocumentChecklist, type CustomerChecklistItem } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 import { UploadQueueTable } from './UploadQueueTable'
-import { checklistItemsFromRowDocuments } from '../utils/applicationSubmitKind'
+import { checklistItemsFromRowDocuments, enrichChecklistWithCorrections, enrichGlobalChecklistWithCorrections, type ChecklistCorrectionRef } from '../utils/applicationSubmitKind'
 import { buildGlobalChecklistItems } from '../utils/globalDocumentChecklist'
+import { buildGlobalDocumentsForVerification } from '@/shared/services/applicationVerificationService'
 import { ApplicationProcessingTimeline, type ApplicationProcessingTimelineStep } from './ApplicationProcessingTimeline'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 import type { SubmitTimelineStatus } from '../types/applicationDetail.types'
@@ -22,6 +23,8 @@ export interface ApplicationReviewOverview {
 interface ApplicationReviewPanelsProps {
   rows: UploadQueueRow[]
   overview: ApplicationReviewOverview
+  applicationId?: string
+  corrections?: ChecklistCorrectionRef[]
   globalDocumentUploads: Record<string, { fileName: string; uploadedAt: string }>
   timelineSteps?: Array<{ id: string; label: string; status: SubmitTimelineStatus }>
   helperText?: string
@@ -75,6 +78,8 @@ export function buildSubmitTimeline(row: UploadQueueRow | null): ApplicationProc
 export function ApplicationReviewPanels({
   rows,
   overview,
+  applicationId,
+  corrections = [],
   globalDocumentUploads,
   timelineSteps,
   helperText,
@@ -98,14 +103,18 @@ export function ApplicationReviewPanels({
     () => readyRows.find(r => r.id === selectedRowId) ?? null,
     [readyRows, selectedRowId],
   )
-  const checklist = useMemo(
-    () => (selectedRow ? checklistItemsFromRowDocuments(selectedRow.documents) : []),
-    [selectedRow],
-  )
-  const globalChecklist = useMemo(
-    () => buildGlobalChecklistItems(globalDocumentUploads),
-    [globalDocumentUploads],
-  )
+  const checklist = useMemo(() => {
+    if (!selectedRow) return []
+    const base = checklistItemsFromRowDocuments(selectedRow.documents)
+    return enrichChecklistWithCorrections(base, corrections, selectedRow.travelerName)
+  }, [selectedRow, corrections])
+  const globalChecklist = useMemo(() => {
+    const globalDocs = applicationId
+      ? buildGlobalDocumentsForVerification(applicationId, globalDocumentUploads)
+      : undefined
+    const base = buildGlobalChecklistItems(globalDocumentUploads, globalDocs)
+    return enrichGlobalChecklistWithCorrections(base, corrections)
+  }, [applicationId, globalDocumentUploads, corrections])
   const globalUploadEntries = Object.entries(globalDocumentUploads)
   const resolvedTimeline = useMemo(
     () => timelineSteps ?? buildSubmitTimeline(selectedRow),

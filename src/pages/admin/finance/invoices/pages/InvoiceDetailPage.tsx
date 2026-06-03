@@ -98,6 +98,7 @@ export function InvoiceDetailPage() {
                 { label: 'Overview', value: 'overview' },
                 { label: 'Line items', value: 'line_items' },
                 { label: 'Tax breakdown', value: 'tax' },
+                { label: 'Advance / credit', value: 'adjustment' },
                 { label: 'Attachments', value: 'attachments' },
                 { label: 'Payment history', value: 'payments' },
                 { label: 'Activity logs', value: 'activity' },

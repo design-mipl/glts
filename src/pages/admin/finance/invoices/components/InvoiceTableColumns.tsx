@@ -1,9 +1,10 @@
-import { Download, Eye, FileMinus2, PencilLine, Send, XCircle } from 'lucide-react'
+import { Download, Eye, FileMinus2, PencilLine, Send, Trash2, XCircle } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import type { Invoice } from '@/shared/types/invoice'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
+  billingModeLabel,
   invoiceStatusBadgeColor,
   invoiceStatusLabel,
   invoiceTypeColor,
@@ -19,6 +20,7 @@ interface ColumnHandlers {
   onDownload: (row: Invoice) => void
   onCreditNote: (row: Invoice) => void
   onCancel: (row: Invoice) => void
+  onDeleteDraft: (row: Invoice) => void
 }
 
 export function buildInvoiceColumns({
@@ -28,44 +30,53 @@ export function buildInvoiceColumns({
   onDownload,
   onCreditNote,
   onCancel,
+  onDeleteDraft,
 }: ColumnHandlers): Column<Invoice>[] {
   return [
     { key: 'invoiceId', label: 'Invoice ID', sortable: true, searchable: true, hideable: false, minWidth: 130 },
+    {
+      key: 'billingMode',
+      label: 'Billing Mode',
+      filterable: true,
+      minWidth: 140,
+      render: (_, row) => billingModeLabel[row.billingMode],
+    },
     {
       key: 'invoiceType',
       label: 'Invoice Type',
       filterable: true,
       minWidth: 140,
-      render: (_, row) => <Badge label={invoiceTypeLabel[row.invoiceType]} color={invoiceTypeColor[row.invoiceType]} size="sm" />,
+      render: (_, row) => (
+        <Badge label={invoiceTypeLabel[row.invoiceType]} color={invoiceTypeColor[row.invoiceType]} size="sm" />
+      ),
     },
     { key: 'companyName', label: 'Company Name', sortable: true, searchable: true, minWidth: 180 },
     { key: 'billingEntity', label: 'Billing Entity', sortable: true, searchable: true, minWidth: 180 },
     { key: 'vessel', label: 'Vessel', sortable: true, searchable: true, minWidth: 140 },
-    { key: 'gltsReference', label: 'GLTS Reference', searchable: true, minWidth: 160 },
-    { key: 'batchId', label: 'Batch ID', searchable: true, minWidth: 150 },
     { key: 'totalApplications', label: 'Total Applications', sortable: true, align: 'right', width: 120 },
     {
-      key: 'baseAmount',
-      label: 'Base Amount',
-      sortable: true,
-      align: 'right',
-      minWidth: 110,
-      render: (_, row) => formatInr(row.totals.subtotal),
-    },
-    {
-      key: 'gst',
-      label: 'GST',
-      align: 'right',
-      minWidth: 90,
-      render: (_, row) => formatInr(row.totals.gstTotal),
-    },
-    {
-      key: 'totalAmount',
-      label: 'Total Amount',
+      key: 'invoiceAmount',
+      label: 'Invoice Amount',
       sortable: true,
       align: 'right',
       minWidth: 120,
       render: (_, row) => formatInr(row.totals.finalAmount),
+    },
+    {
+      key: 'advanceAdjusted',
+      label: 'Advance Adjusted',
+      sortable: true,
+      align: 'right',
+      minWidth: 120,
+      render: (_, row) => formatInr(row.totals.advanceAdjusted),
+    },
+    {
+      key: 'balancePayable',
+      label: 'Balance Payable',
+      sortable: true,
+      align: 'right',
+      minWidth: 120,
+      render: (_, row) => formatInr(row.totals.balancePayable),
     },
     {
       key: 'invoiceStatus',
@@ -73,7 +84,11 @@ export function buildInvoiceColumns({
       filterable: true,
       minWidth: 130,
       render: (_, row) => (
-        <Badge label={invoiceStatusLabel[row.invoiceStatus]} color={invoiceStatusBadgeColor(row.invoiceStatus)} size="sm" />
+        <Badge
+          label={invoiceStatusLabel[row.invoiceStatus]}
+          color={invoiceStatusBadgeColor(row.invoiceStatus)}
+          size="sm"
+        />
       ),
     },
     {
@@ -82,18 +97,15 @@ export function buildInvoiceColumns({
       filterable: true,
       minWidth: 120,
       render: (_, row) => (
-        <Badge label={paymentStatusLabel[row.paymentStatus]} color={paymentStatusBadgeColor(row.paymentStatus)} size="sm" />
+        <Badge
+          label={paymentStatusLabel[row.paymentStatus]}
+          color={paymentStatusBadgeColor(row.paymentStatus)}
+          size="sm"
+        />
       ),
     },
     { key: 'invoiceDate', label: 'Invoice Date', sortable: true, minWidth: 110 },
     { key: 'dueDate', label: 'Due Date', sortable: true, minWidth: 110 },
-    {
-      key: 'lastUpdated',
-      label: 'Last Updated',
-      sortable: true,
-      minWidth: 120,
-      render: (_, row) => new Date(row.lastUpdated).toLocaleDateString(),
-    },
     {
       key: 'actions',
       label: '',
@@ -109,6 +121,7 @@ export function buildInvoiceColumns({
         ]
         if (row.invoiceStatus === 'draft') {
           actions.push({ label: 'Edit draft', icon: <PencilLine size={14} />, onClick: () => onEditDraft(row) })
+          actions.push({ label: 'Delete draft', icon: <Trash2 size={14} />, onClick: () => onDeleteDraft(row) })
         }
         if (row.invoiceStatus !== 'cancelled' && row.invoiceStatus !== 'draft') {
           actions.push({ label: 'Share', icon: <Send size={14} />, onClick: () => onShare(row) })

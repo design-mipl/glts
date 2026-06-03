@@ -5,7 +5,7 @@ import { Button, Checkbox, FormField, FormSection, Input, Modal, Select } from '
 import type { AgreementPricingRow, CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
 import {
   getCountrySelectOptions,
-  getServicePresetOptions,
+  getServiceOptions,
   getVisaTypeOptions,
   resolveServiceFee,
   workflowTypeDisplayLabel,
@@ -42,7 +42,7 @@ export function AgreementPricingMatrixTable({
 }: AgreementPricingMatrixTableProps) {
   const [editRow, setEditRow] = useState<AgreementPricingRow | null>(null)
   const countryOptions = useMemo(() => getCountrySelectOptions(), [])
-  const serviceOptions = useMemo(() => getServicePresetOptions(data.workflowType), [data.workflowType])
+  const serviceOptions = useMemo(() => getServiceOptions(data.workflowType), [data.workflowType])
 
   const visaOptions = useMemo(() => {
     if (!editRow?.countryId) return []
@@ -82,7 +82,7 @@ export function AgreementPricingMatrixTable({
         {data.pricingMatrix.length === 0 ? (
           <Box sx={{ py: 3, px: 2, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: 13 }}>
-              No pricing rows yet. Add at least one country, visa type, and service preset.
+              No pricing rows yet. Add at least one country, visa type, and service from Service Master.
             </Typography>
             {!readOnly ? (
               <Button label="Add pricing" size="sm" startIcon={<Plus size={14} />} onClick={() => setEditRow(newRow(data.workflowType))} />
@@ -95,7 +95,7 @@ export function AgreementPricingMatrixTable({
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>Country</TableCell>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>Visa type</TableCell>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>Workflow</TableCell>
-                <TableCell sx={agreementEmbeddedTableHeadCellSx}>Service preset</TableCell>
+                <TableCell sx={agreementEmbeddedTableHeadCellSx}>Service</TableCell>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>Service fee</TableCell>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>GST</TableCell>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>Remarks</TableCell>
@@ -188,22 +188,23 @@ export function AgreementPricingMatrixTable({
             <FormField label="Workflow type">
               <Input value={editRow.workflowType} onChange={(v) => setEditRow({ ...editRow, workflowType: v })} fullWidth />
             </FormField>
-            <FormField label="Service preset" required>
+            <FormField label="Service" required>
               <Select
                 value={editRow.servicePresetId}
                 onChange={(v) => {
-                  const servicePresetId = String(v)
-                  const service = serviceOptions.find((s) => s.value === servicePresetId)
+                  const serviceId = String(v)
+                  const service = serviceOptions.find((s) => s.value === serviceId)
                   setEditRow({
                     ...editRow,
-                    servicePresetId,
+                    servicePresetId: serviceId,
                     servicePresetName: service?.label ?? '',
-                    serviceFee: resolveServiceFee(servicePresetId),
+                    serviceFee: resolveServiceFee(serviceId),
                   })
                 }}
-                options={[{ value: '', label: 'Select service preset' }, ...serviceOptions.map((s) => ({ value: s.value, label: s.label }))]}
-                placeholder="Select service preset"
+                options={serviceOptions.map((s) => ({ value: s.value, label: s.label }))}
+                placeholder={serviceOptions.length === 0 ? 'No services for this workflow' : 'Select service'}
                 fullWidth
+                clearable
               />
             </FormField>
             <FormField label="Service fee (₹)">

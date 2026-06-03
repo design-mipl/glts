@@ -94,7 +94,7 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
       <FlowStepActions
         onContinue={onContinue}
         continueLabel="Continue to documents"
-        continueDisabled={!state.travelDate}
+        continueDisabled={!state.visaOfferingId || cards.length === 0 || !state.travelDate}
       />
     </Box>
   )

@@ -38,7 +38,6 @@ export const mockCompanyProfileData: CompanyProfileData = {
     panVerified: true,
   },
   operations: {
-    countries: ['Kenya', 'UAE', 'Schengen', 'Japan', 'Singapore', 'UK', 'Thailand', 'Australia'],
-    visaTypes: ['Tourist', 'Business', 'Crew / Marine', 'Transit', 'Work'],
+    countryCoverage: [],
   },
 }

@@ -110,11 +110,13 @@ export function AgreementMiscCostsTable({ data, onChange }: AgreementMiscCostsTa
       >
         {editRow ? (
           <FormSection columns={2}>
-            <FormField label="Service preset">
+            <FormField label="Service name">
               <Select
                 value={editRow.serviceName}
                 onChange={(v) => setEditRow({ ...editRow, serviceName: String(v) })}
-                options={[{ value: '', label: 'Select preset' }, ...PRESETS.map((p) => ({ value: p, label: p }))]}
+                options={PRESETS.map((p) => ({ value: p, label: p }))}
+                placeholder="Select or enter service name below"
+                clearable
                 fullWidth
               />
             </FormField>

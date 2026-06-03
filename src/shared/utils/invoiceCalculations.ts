@@ -31,13 +31,18 @@ export function recalculateLineItems(
   return items.map(item => recalculateLineItem(item, taxConfig.gstPercentage))
 }
 
+export function includedLineItems(items: InvoiceLineItem[]): InvoiceLineItem[] {
+  return items.filter(item => item.included !== false)
+}
+
 export function computeInvoiceTotals(
   lineItems: InvoiceLineItem[],
   taxConfig: InvoiceTaxConfig,
   additionalCharges = 0,
-): InvoiceTotals {
-  const subtotal = roundMoney(lineItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0))
-  const gstTotal = roundMoney(lineItems.reduce((sum, item) => sum + item.gstAmount, 0))
+): Omit<InvoiceTotals, 'advanceAvailable' | 'advanceAdjusted' | 'creditApplied' | 'balancePayable'> {
+  const active = includedLineItems(lineItems)
+  const subtotal = roundMoney(active.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0))
+  const gstTotal = roundMoney(active.reduce((sum, item) => sum + item.gstAmount, 0))
   const beforeTds = subtotal + gstTotal + additionalCharges
   const tdsAmount = taxConfig.tdsApplicable
     ? roundMoney((beforeTds * taxConfig.tdsPercentage) / 100)
@@ -52,4 +57,16 @@ export function roundMoney(value: number): number {
 
 export function formatInr(amount: number): string {
   return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+}
+
+export function defaultLineItemFields(): Pick<
+  InvoiceLineItem,
+  'included' | 'billingStatus' | 'isAdditionalExpense' | 'remarks'
+> {
+  return {
+    included: true,
+    billingStatus: 'unbilled',
+    isAdditionalExpense: false,
+    remarks: '',
+  }
 }

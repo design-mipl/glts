@@ -2,6 +2,7 @@ import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPa
 import { Checkbox, DatePicker, FormField, Input, Select, Toggle } from '@/design-system/UIComponents'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
+import { AGREEMENT_WORKFLOW_OPTIONS } from '../config/agreementStatusConfig'
 
 interface AgreementBillingConfigFieldsProps {
   data: CommercialAgreementFormData
@@ -110,12 +111,7 @@ export function AgreementBillingConfigFields({
         <Select
           value={data.workflowType}
           onChange={(v) => onChange({ ...data, workflowType: v as CommercialAgreementFormData['workflowType'] })}
-          options={[
-            { value: 'marine', label: 'Marine' },
-            { value: 'corporate', label: 'Corporate' },
-            { value: 'retail', label: 'Retail' },
-            { value: 'mixed', label: 'Mixed' },
-          ]}
+          options={AGREEMENT_WORKFLOW_OPTIONS}
           fullWidth
         />
       </FormField>

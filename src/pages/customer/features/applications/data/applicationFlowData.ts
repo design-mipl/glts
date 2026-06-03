@@ -38,6 +38,8 @@ export interface SingleApplicationRow {
   createdByEmail: string
   createdByRole: CustomerPortalRole
   customerSegment: ApplicationCustomerSegment
+  appointmentDate?: string
+  poReference?: string
 }
 
 export interface BulkBatchRow {
@@ -63,6 +65,8 @@ export interface BulkBatchRow {
   createdByEmail: string
   createdByRole: CustomerPortalRole
   customerSegment: ApplicationCustomerSegment
+  appointmentDate?: string
+  poReference?: string
 }
 
 export interface ExtractedField {
@@ -79,6 +83,8 @@ export interface ApplicantDocumentItem {
   name: string
   required: boolean
   status: ApplicantDocumentStatus
+  /** Admin review note shown to the customer when a document is rejected or needs re-upload. */
+  reviewComment?: string
   fields?: ExtractedField[]
 }
 
@@ -274,6 +280,8 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     lastUpdated: '2026-02-15',
     processingStage: 'Appointment Booked',
     operationalStatus: 'Appointment Booked',
+    appointmentDate: '2026-03-12',
+    poReference: 'PO-AMX-2026-014',
     createdByEmail: 'priya@glts.com',
     createdByRole: 'booker',
     customerSegment: 'marine',
@@ -292,6 +300,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     lastUpdated: '2026-02-10',
     processingStage: 'Appointment Booked',
     operationalStatus: 'Appointment Booked',
+    appointmentDate: '2026-03-08',
     createdByEmail: 'admin@glts.com',
     createdByRole: 'super_admin',
     customerSegment: 'marine',
@@ -422,6 +431,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     lastUpdated: '2026-02-18',
     processingStage: 'Appointment Booked',
     operationalStatus: 'Appointment Booked',
+    appointmentDate: '2026-03-15',
     createdByEmail: 'admin@glts.com',
     createdByRole: 'super_admin',
     customerSegment: 'marine',
@@ -506,6 +516,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     lastUpdated: '2026-02-16',
     processingStage: 'Appointment Booked',
     operationalStatus: 'Appointment Booked',
+    appointmentDate: '2026-03-20',
     createdByEmail: 'arun.krishnan@glts.com',
     createdByRole: 'admin',
     customerSegment: 'marine',

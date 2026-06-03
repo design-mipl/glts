@@ -1,11 +1,16 @@
 import { useMemo } from 'react'
 import { Box, Card, Chip, Grid, Stack, Typography } from '@mui/material'
 import { FormField, Input, Select } from '@/design-system/UIComponents'
+import { loadSession } from '@/shared/auth/session'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { getVisaOfferingById } from '@/shared/services/countryMasterService'
 import { entityMasterService } from '@/shared/services/entityMasterService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
 import { vesselTypeLabel } from '@/pages/customer/features/masters/vessels/config/vesselTypeConfig'
+import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
+import { CustomerCard } from '@/pages/customer/features/shared/components/CustomerPrimitives'
+import { CustomerDetailSection } from '@/pages/customer/features/shared/components/detail'
+import { ApplicationBillingTermsSummaryCard } from '../../../components/ApplicationBillingTermsSummaryCard'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
 import { FlowStepActions } from '../../../components/create/FlowStepActions'
 
@@ -25,6 +30,28 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
 
   const isMarine = offering?.segment === 'marine' || offering?.workflowProfile === 'crew'
   const isCorporate = offering?.segment === 'corporate'
+
+  const session = useMemo(() => loadSession(), [])
+  const offeringSegment = offering?.segment
+  const isRetailOffering = offeringSegment === 'retail'
+  const isB2bOffering =
+    offeringSegment === 'marine' ||
+    offeringSegment === 'corporate' ||
+    offeringSegment === 'b2bAgents'
+  const isB2bSession =
+    session?.portal === 'business' &&
+    (session.customerType === 'marine' ||
+      session.customerType === 'corporate' ||
+      session.customerType === 'b2b_agent')
+  const showBillingTerms =
+    session?.portal === 'business' &&
+    !isRetailOffering &&
+    (isB2bOffering || isB2bSession)
+
+  const billingTermsSummary = useMemo(
+    () => (showBillingTerms ? customerPortalService.getApplicationBillingTermsSummary() : null),
+    [showBillingTerms],
+  )
 
   const activeEntities = useMemo(
     () => entityMasterService.list({ status: 'active' }),
@@ -94,7 +121,7 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
           ? 'Select a vessel from your master list to auto-fill marine application details.'
           : isCorporate
             ? 'Select an entity from your master list to auto-fill corporate billing details.'
-            : 'Add billing and vessel details before final submission.'}
+            : 'Select billing entity and vessel from your master lists, or leave optional fields blank.'}
       </Typography>
 
       <Card
@@ -111,6 +138,8 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
               <Grid size={{ xs: 12 }}>
                 <FormField label="Entity">
                   <Select
+                    fullWidth
+                    placeholder="Select entity from master"
                     value={state.entityId}
                     onChange={v => handleEntitySelect(String(v))}
                     options={[
@@ -137,6 +166,8 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
               <Grid size={{ xs: 12 }}>
                 <FormField label="Vessel">
                   <Select
+                    fullWidth
+                    placeholder="Select vessel from master"
                     value={state.vesselId}
                     onChange={v => handleVesselSelect(String(v))}
                     options={[
@@ -178,38 +209,79 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
                   <Input
                     fullWidth
                     size="sm"
-                    placeholder="Enter reference PO number"
+                    placeholder="e.g. PO-2026-0142"
                     value={state.referencePo}
                     onChange={value => onUpdate({ referencePo: value })}
                   />
                 </FormField>
               </Grid>
-              <Grid size={{ xs: 12 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <FormField label="Billing address" optional>
-                  <Input
+                  <Select
                     fullWidth
-                    size="sm"
-                    placeholder="Enter billing address"
-                    value={state.billingAddress}
-                    onChange={value => onUpdate({ billingAddress: value })}
+                    placeholder="Select billing entity from master"
+                    value={state.entityId}
+                    onChange={v => handleEntitySelect(String(v))}
+                    options={[
+                      { value: '', label: 'Select billing entity' },
+                      ...activeEntities.map(e => ({ value: e.id, label: e.entityName })),
+                    ]}
                   />
                 </FormField>
               </Grid>
+              {state.entityId && (
+                <Grid size={{ xs: 12 }}>
+                  <Stack direction="row" flexWrap="wrap" gap={0.75}>
+                    <Chip label={state.billingAddress} size="small" />
+                    <Chip label={state.contactPerson} size="small" variant="outlined" />
+                  </Stack>
+                </Grid>
+              )}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormField label="Vessel name" optional>
-                  <Input
+                  <Select
                     fullWidth
-                    size="sm"
-                    placeholder="Enter vessel name"
-                    value={state.vesselName}
-                    onChange={value => onUpdate({ vesselName: value })}
+                    placeholder="Select vessel from master"
+                    value={state.vesselId}
+                    onChange={v => handleVesselSelect(String(v))}
+                    options={[
+                      { value: '', label: 'Select vessel' },
+                      ...activeVessels.map(v => ({
+                        value: v.id,
+                        label: `${v.vesselName} (IMO ${v.imoNumber})`,
+                      })),
+                    ]}
                   />
                 </FormField>
               </Grid>
+              {state.vesselId && (
+                <Grid size={{ xs: 12 }}>
+                  <Stack direction="row" flexWrap="wrap" gap={0.75}>
+                    <Chip label={state.vesselName} size="small" />
+                    <Chip label={`IMO ${state.imoNumber}`} size="small" variant="outlined" />
+                  </Stack>
+                </Grid>
+              )}
             </>
           )}
         </Grid>
       </Card>
+
+      {showBillingTerms && (
+        <Box sx={{ mt: 2 }}>
+          <CustomerDetailSection title="Billing terms summary" divider={false}>
+            {billingTermsSummary ? (
+              <ApplicationBillingTermsSummaryCard model={billingTermsSummary} />
+            ) : (
+              <CustomerCard tone="neutral">
+                <Typography sx={{ fontSize: 13, color: colors.textSecondary, lineHeight: 1.5 }}>
+                  Billing terms will appear once your agreement is approved.
+                </Typography>
+              </CustomerCard>
+            )}
+          </CustomerDetailSection>
+        </Box>
+      )}
 
       <FlowStepActions onContinue={onContinue} continueLabel="Continue to submit" />
     </Box>

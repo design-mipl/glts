@@ -5,8 +5,10 @@ export { default as Topbar, TOPBAR_HEIGHT } from './Topbar'
 export type { TopbarProps } from './Topbar'
 export type { UserMenuUser } from './Topbar/UserMenu'
 
-export { default as Sidebar } from './Sidebar'
+export { default as Sidebar, isNavActive, renderNavConfig } from './Sidebar'
 export type { SidebarProps, NavConfig } from './Sidebar'
+export { default as NavItem } from './Sidebar/NavItem'
+export type { NavItemProps } from './Sidebar/NavItem'
 
 export { default as Breadcrumb } from './Breadcrumb'
 export type { BreadcrumbProps, BreadcrumbItem } from './Breadcrumb'

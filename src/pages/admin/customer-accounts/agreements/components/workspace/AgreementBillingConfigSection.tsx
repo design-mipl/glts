@@ -2,7 +2,7 @@ import { Box, IconButton, Stack, Table, TableBody, TableCell, TableHead, TableRo
 import { Plus, Trash2 } from 'lucide-react'
 import { Button, FormField, Input, Select } from '@/design-system/UIComponents'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
-import { getServicePresetOptions } from '../../utils/agreementMasterOptions'
+import { getServiceOptions } from '../../utils/agreementMasterOptions'
 import { advanceTypeLabel, processingBlockRuleLabel } from '../../config/agreementStatusConfig'
 import { agreementEmbeddedTableHeadCellSx, agreementEmbeddedTableSx, agreementFieldError } from '../agreementFormLayout'
 
@@ -23,7 +23,7 @@ export function AgreementBillingConfigSection({
     onChange({ ...data, billingConfig: { ...data.billingConfig, ...patch } })
   }
 
-  const serviceOptions = getServicePresetOptions(data.workflowType)
+  const serviceOptions = getServiceOptions(data.workflowType)
 
   const addServiceRule = () => {
     const first = serviceOptions[0]
@@ -193,7 +193,7 @@ export function AgreementBillingConfigSection({
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={agreementEmbeddedTableHeadCellSx}>Service preset</TableCell>
+                    <TableCell sx={agreementEmbeddedTableHeadCellSx}>Service</TableCell>
                     <TableCell sx={agreementEmbeddedTableHeadCellSx}>Billing rule</TableCell>
                     <TableCell align="right" sx={agreementEmbeddedTableHeadCellSx}>
                       Actions
@@ -218,6 +218,8 @@ export function AgreementBillingConfigSection({
                             updateBilling({ serviceWiseBillingRules: next })
                           }}
                           options={serviceOptions.map((s) => ({ value: s.value, label: s.label }))}
+                          placeholder={serviceOptions.length === 0 ? 'No services for this workflow' : 'Select service'}
+                          clearable
                           fullWidth
                           size="sm"
                         />

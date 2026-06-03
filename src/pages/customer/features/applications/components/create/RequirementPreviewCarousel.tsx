@@ -11,7 +11,26 @@ interface RequirementPreviewCarouselProps {
 export function RequirementPreviewCarousel({ cards }: RequirementPreviewCarouselProps) {
   const colors = usePublicBrandColors()
   const [index, setIndex] = useState(0)
-  const card = cards[index]
+
+  if (cards.length === 0) {
+    return (
+      <Card
+        sx={{
+          p: 2.5,
+          borderRadius: '14px',
+          border: `1px solid ${colors.border}`,
+          bgcolor: colors.surface,
+        }}
+      >
+        <Typography sx={{ fontSize: 13, color: colors.textSecondary, textAlign: 'center', lineHeight: 1.5 }}>
+          Requirement preview is unavailable until a visa type and purpose are selected on the previous step.
+        </Typography>
+      </Card>
+    )
+  }
+
+  const safeIndex = Math.min(index, cards.length - 1)
+  const card = cards[safeIndex]
 
   const go = (delta: number) => {
     setIndex(i => Math.max(0, Math.min(cards.length - 1, i + delta)))
@@ -20,7 +39,7 @@ export function RequirementPreviewCarousel({ cards }: RequirementPreviewCarousel
   return (
     <Box>
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
-        <IconButton size="small" onClick={() => go(-1)} disabled={index === 0} aria-label="Previous requirement card">
+        <IconButton size="small" onClick={() => go(-1)} disabled={safeIndex === 0} aria-label="Previous requirement card">
           <ChevronLeft size={20} />
         </IconButton>
         <Stack direction="row" spacing={0.75}>
@@ -28,10 +47,10 @@ export function RequirementPreviewCarousel({ cards }: RequirementPreviewCarousel
             <Box
               key={c.id}
               sx={{
-                width: i === index ? 24 : 8,
+                width: i === safeIndex ? 24 : 8,
                 height: 8,
                 borderRadius: '4px',
-                bgcolor: i === index ? colors.greenBright : colors.surfaceAlt,
+                bgcolor: i === safeIndex ? colors.greenBright : colors.surfaceAlt,
                 transition: 'width 200ms ease',
               }}
             />
@@ -40,7 +59,7 @@ export function RequirementPreviewCarousel({ cards }: RequirementPreviewCarousel
         <IconButton
           size="small"
           onClick={() => go(1)}
-          disabled={index === cards.length - 1}
+          disabled={safeIndex === cards.length - 1}
           aria-label="Next requirement card"
         >
           <ChevronRight size={20} />
@@ -68,7 +87,7 @@ export function RequirementPreviewCarousel({ cards }: RequirementPreviewCarousel
             )}
           </Box>
           <Typography sx={{ fontSize: 12, color: colors.textMuted, fontWeight: 600 }}>
-            {index + 1} / {cards.length}
+            {safeIndex + 1} / {cards.length}
           </Typography>
         </Stack>
 

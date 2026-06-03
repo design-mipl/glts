@@ -100,6 +100,68 @@ function LineItemsTab({ invoice }: { invoice: Invoice }) {
   )
 }
 
+function AdvanceCreditTab({ invoice }: { invoice: Invoice }) {
+  const { totals, billingAdjustment } = invoice
+  if (!billingAdjustment) {
+    return (
+      <Typography variant="body2" color="text.secondary">
+        No advance or credit adjustment snapshot recorded for this invoice.
+      </Typography>
+    )
+  }
+
+  return (
+    <Stack spacing={1.5}>
+      <Stack direction="row" justifyContent="space-between">
+        <Typography variant="body2">Billing type</Typography>
+        <Typography variant="body2" fontWeight={600} sx={{ textTransform: 'capitalize' }}>
+          {billingAdjustment.billingType}
+        </Typography>
+      </Stack>
+      <Stack direction="row" justifyContent="space-between">
+        <Typography variant="body2">Invoice total</Typography>
+        <Typography variant="body2">{formatInr(totals.finalAmount)}</Typography>
+      </Stack>
+      <Stack direction="row" justifyContent="space-between">
+        <Typography variant="body2">Advance available</Typography>
+        <Typography variant="body2">{formatInr(totals.advanceAvailable)}</Typography>
+      </Stack>
+      <Stack direction="row" justifyContent="space-between">
+        <Typography variant="body2">Advance adjusted</Typography>
+        <Typography variant="body2">{formatInr(totals.advanceAdjusted)}</Typography>
+      </Stack>
+      <Stack direction="row" justifyContent="space-between">
+        <Typography variant="body2">Credit applied</Typography>
+        <Typography variant="body2">{formatInr(totals.creditApplied)}</Typography>
+      </Stack>
+      <Stack direction="row" justifyContent="space-between">
+        <Typography variant="body2" fontWeight={700}>
+          Balance payable
+        </Typography>
+        <Typography variant="body2" fontWeight={700}>
+          {formatInr(totals.balancePayable)}
+        </Typography>
+      </Stack>
+      {billingAdjustment.billingType === 'credit' || billingAdjustment.billingType === 'mixed' ? (
+        <>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography variant="body2">Credit limit</Typography>
+            <Typography variant="body2">{formatInr(billingAdjustment.creditLimit ?? 0)}</Typography>
+          </Stack>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography variant="body2">Credit used</Typography>
+            <Typography variant="body2">{formatInr(billingAdjustment.creditUsed ?? 0)}</Typography>
+          </Stack>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography variant="body2">Available credit</Typography>
+            <Typography variant="body2">{formatInr(billingAdjustment.creditAvailable ?? 0)}</Typography>
+          </Stack>
+        </>
+      ) : null}
+    </Stack>
+  )
+}
+
 function TaxBreakdownTab({ invoice }: { invoice: Invoice }) {
   const { totals, taxConfig } = invoice
   return (
@@ -207,6 +269,8 @@ export function InvoiceDetailTabContent({ invoice, activeTab }: InvoiceDetailTab
       return <LineItemsTab invoice={invoice} />
     case 'tax':
       return <TaxBreakdownTab invoice={invoice} />
+    case 'adjustment':
+      return <AdvanceCreditTab invoice={invoice} />
     case 'attachments':
       return <AttachmentsTab invoice={invoice} />
     case 'payments':

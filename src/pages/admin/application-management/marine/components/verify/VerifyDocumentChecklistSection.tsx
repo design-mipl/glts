@@ -1,4 +1,4 @@
-import { Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import { Eye, RotateCcw, ShieldCheck, XCircle } from 'lucide-react'
 import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
@@ -43,6 +43,26 @@ export function VerifyDocumentCard({
               size="sm"
             />
           </Stack>
+          {document.reviewComment?.trim() ? (
+            <Box
+              sx={{
+                mt: 0.5,
+                px: 1.25,
+                py: 0.75,
+                borderRadius: 1,
+                bgcolor: 'action.hover',
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.5, display: 'block' }}>
+                <Typography component="span" fontWeight={700} sx={{ fontSize: 12, color: 'text.primary' }}>
+                  GLTS note:{' '}
+                </Typography>
+                {document.reviewComment.trim()}
+              </Typography>
+            </Box>
+          ) : null}
         </Stack>
       </Stack>
       <Stack direction="row" flexWrap="wrap" gap={1}>

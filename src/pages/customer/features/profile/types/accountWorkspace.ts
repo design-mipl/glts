@@ -1,6 +1,7 @@
 export type DocumentStatus = 'verified' | 'pending' | 'expired' | 'missing'
 export type AgreementStatus = 'active' | 'expiring' | 'expired' | 'pending'
 export type PricingModel = 'credit' | 'advance' | 'mixed'
+export type BillingType = 'credit' | 'advance' | 'mixed'
 
 export interface CompanyOverview {
   companyName: string
@@ -37,9 +38,13 @@ export interface BillingIdentity {
   panVerified?: boolean
 }
 
-export interface SupportedOperations {
-  countries: string[]
+export interface CountryVisaCoverage {
+  country: string
   visaTypes: string[]
+}
+
+export interface SupportedOperations {
+  countryCoverage: CountryVisaCoverage[]
 }
 
 export interface CompanyProfileData {
@@ -52,10 +57,69 @@ export interface CompanyProfileData {
 export interface AgreementSummary {
   status: AgreementStatus
   agreementType: string
+  billingType: BillingType
+  workflowType: string
   startDate: string
   endDate: string
-  creditTerms: string
-  slaSummary: string
+}
+
+export interface CreditBillingConfig {
+  creditLimit: string
+  creditUsed: string
+  availableCredit: string
+  creditPeriod: string
+  gracePeriod: string
+}
+
+export interface AdvanceBillingConfig {
+  advanceBalance: string
+  advanceUtilized: string
+  advanceRemaining: string
+  advanceRule: string
+}
+
+export interface MixedBillingConfig {
+  advanceBalance: string
+  creditLimit: string
+  outstanding: string
+  remainingCredit: string
+}
+
+export interface AgreementDocument {
+  id: string
+  label: string
+  fileName?: string
+  status: 'available' | 'pending'
+}
+
+export interface FinanceContactsSummary {
+  accountsSpocName: string
+  invoiceSubmissionEmail: string
+  paymentFollowUpContact: string
+  accountsContactNumber?: string
+}
+
+export interface FinanceContactPerson {
+  id: string
+  sourceType: 'company' | 'parent_company' | 'entity'
+  sourceId?: string
+  sourceLabel: string
+  contactPerson: string
+  email: string
+  phone: string
+}
+
+export interface BillingSummary {
+  creditPeriodDays: string
+  creditLimit: string
+  gracePeriodDays: string
+  advancePercentage?: string
+}
+
+export interface AdvanceAdjustmentPreview {
+  invoiceTotal: string
+  advanceUsed: string
+  remainingPayable: string
 }
 
 export interface PricingRow {
@@ -74,15 +138,6 @@ export interface PricingGroup {
   rows: PricingRow[]
 }
 
-export interface FinanceSnapshot {
-  billingCycle: string
-  creditLimit: string
-  outstandingAmount: string
-  outstandingAlert?: boolean
-  invoiceSummary: string
-  paymentSummary: string
-}
-
 export interface TaxSummary {
   gstApplicable: boolean
   tdsApplicable: boolean
@@ -92,10 +147,19 @@ export interface TaxSummary {
 
 export interface BillingAgreementData {
   agreement: AgreementSummary
+  billingEntity: BillingIdentity
+  billingSummary: BillingSummary
+  billingConfig:
+    | { billingType: 'credit'; credit: CreditBillingConfig }
+    | { billingType: 'advance'; advance: AdvanceBillingConfig }
+    | { billingType: 'mixed'; mixed: MixedBillingConfig }
   pricingGroups: PricingGroup[]
-  finance: FinanceSnapshot
+  supportedOperations: SupportedOperations
+  documents: AgreementDocument[]
+  financeContacts: FinanceContactsSummary
+  financeContactPersons: FinanceContactPerson[]
+  advanceAdjustmentPreview: AdvanceAdjustmentPreview
   tax: TaxSummary
-  invoiceRules: string
 }
 
 export interface PersonalAccount {

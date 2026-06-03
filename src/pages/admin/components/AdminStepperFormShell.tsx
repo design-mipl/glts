@@ -19,11 +19,13 @@ export interface AdminStepperFormStep {
 }
 
 export interface AdminStepperFormShellProps {
-  breadcrumbs: BreadcrumbItem[]
+  breadcrumbs?: BreadcrumbItem[]
   steps: AdminStepperFormStep[]
   activeStep: number
   onActiveStepChange: (step: number) => void
   onStepClick?: (index: number) => void
+  /** When true, omits breadcrumb chrome (use when parent already renders AdminRecordPageChrome). */
+  hidePageChrome?: boolean
   /** Replaces default Back / Next / Submit footer when provided */
   footer?: ReactNode
   onNext?: () => void
@@ -34,11 +36,12 @@ export interface AdminStepperFormShellProps {
  * Breadcrumb + back · stepper · divider · section cards · divider · step footer.
  */
 export function AdminStepperFormShell({
-  breadcrumbs,
+  breadcrumbs = [],
   steps,
   activeStep,
   onActiveStepChange,
   onStepClick,
+  hidePageChrome = false,
   footer,
   onNext,
   onSubmit,
@@ -70,59 +73,63 @@ export function AdminStepperFormShell({
     <AdminFormSectionsLayout sections={current.sections} variant="stack" />
   ) : null
 
-  return (
-    <AdminRecordPageChrome breadcrumbs={breadcrumbs}>
-      <BaseCard sx={{ overflow: 'hidden' }}>
-        <Box sx={{ px: shellPaddingX, pt: shellPaddingX, pb: 2 }}>
-          <Stepper steps={stepperSteps} activeStep={activeStep} onStepClick={handleStepClick} />
-        </Box>
+  const stepperCard = (
+    <BaseCard sx={{ overflow: 'hidden' }}>
+      <Box sx={{ px: shellPaddingX, pt: shellPaddingX, pb: 2 }}>
+        <Stepper steps={stepperSteps} activeStep={activeStep} onStepClick={handleStepClick} />
+      </Box>
 
-        <Divider />
+      <Divider />
 
-        <Box sx={{ px: shellPaddingX, py: ADMIN_STEPPER_FORM_LAYOUT.contentPaddingY }}>
-          {stepBody}
-        </Box>
+      <Box sx={{ px: shellPaddingX, py: ADMIN_STEPPER_FORM_LAYOUT.contentPaddingY }}>
+        {stepBody}
+      </Box>
 
-        <Divider />
+      <Divider />
 
-        <Box sx={{ px: shellPaddingX, py: 2 }}>
-          {footer ?? (
-            <Stack
-              direction="row"
-              spacing={1}
-              justifyContent="flex-end"
-              sx={{ flexWrap: 'wrap', gap: 1 }}
-            >
+      <Box sx={{ px: shellPaddingX, py: 2 }}>
+        {footer ?? (
+          <Stack
+            direction="row"
+            spacing={1}
+            justifyContent="flex-end"
+            sx={{ flexWrap: 'wrap', gap: 1 }}
+          >
+            <Button
+              label="Back"
+              variant="outlined"
+              color="secondary"
+              disabled={activeStep === 0}
+              onClick={() => onActiveStepChange(Math.max(0, activeStep - 1))}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            />
+            {!isLast ? (
               <Button
-                label="Back"
-                variant="outlined"
-                color="secondary"
-                disabled={activeStep === 0}
-                onClick={() => onActiveStepChange(Math.max(0, activeStep - 1))}
+                label="Next"
+                variant="contained"
+                onClick={() => {
+                  onNext?.()
+                  onActiveStepChange(Math.min(steps.length - 1, activeStep + 1))
+                }}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
               />
-              {!isLast ? (
-                <Button
-                  label="Next"
-                  variant="contained"
-                  onClick={() => {
-                    onNext?.()
-                    onActiveStepChange(Math.min(steps.length - 1, activeStep + 1))
-                  }}
-                  sx={{ width: { xs: '100%', sm: 'auto' } }}
-                />
-              ) : (
-                <Button
-                  label="Submit"
-                  variant="contained"
-                  onClick={onSubmit}
-                  sx={{ width: { xs: '100%', sm: 'auto' } }}
-                />
-              )}
-            </Stack>
-          )}
-        </Box>
-      </BaseCard>
-    </AdminRecordPageChrome>
+            ) : (
+              <Button
+                label="Submit"
+                variant="contained"
+                onClick={onSubmit}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              />
+            )}
+          </Stack>
+        )}
+      </Box>
+    </BaseCard>
   )
+
+  if (hidePageChrome) {
+    return stepperCard
+  }
+
+  return <AdminRecordPageChrome breadcrumbs={breadcrumbs}>{stepperCard}</AdminRecordPageChrome>
 }

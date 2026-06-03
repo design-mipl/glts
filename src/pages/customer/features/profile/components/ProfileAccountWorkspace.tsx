@@ -1,9 +1,9 @@
 import { Box, Stack, Typography } from '@mui/material'
-import { Building2, Download, MapPin } from 'lucide-react'
+import { Building2, MapPin } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Button, useToast } from '@/design-system/UIComponents'
+import { Button } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
 import { CustomerDetailWorkspace } from '@/pages/customer/features/shared/components/detail'
@@ -43,7 +43,6 @@ function MetaItem({ icon, label }: { icon: ReactNode; label: string }) {
 
 export function ProfileAccountWorkspace() {
   const colors = usePublicBrandColors()
-  const { showToast } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
   const { companyName } = useCustomerPortalBase()
   const { workspace, updatePersonalAccount, setSessions } = useProfileAccount()
@@ -62,10 +61,6 @@ export function ProfileAccountWorkspace() {
   const { company, billing, personal } = workspace
   const overview = company.overview
   const { billing: billingIdentity } = company
-
-  const handleDownloadAgreement = useCallback(() => {
-    showToast({ title: 'Agreement download queued', variant: 'info' })
-  }, [showToast])
 
   const headerMeta = useMemo(
     () => (
@@ -92,6 +87,13 @@ export function ProfileAccountWorkspace() {
     ],
   )
 
+  const billingTypeLabel =
+    billing.agreement.billingType === 'credit'
+      ? 'Credit'
+      : billing.agreement.billingType === 'advance'
+        ? 'Advance'
+        : 'Mixed'
+
   const headerStatus = useMemo(
     () => (
       <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
@@ -100,19 +102,13 @@ export function ProfileAccountWorkspace() {
           label={billing.agreement.status === 'active' ? 'Agreement active' : billing.agreement.status}
           tone={getCustomerStatusTone(billing.agreement.status)}
         />
+        <CustomerStatusChip label={`${billingTypeLabel} billing`} tone="info" />
       </Stack>
     ),
-    [overview.companyStatus, billing.agreement.status],
+    [overview.companyStatus, billing.agreement.status, billingTypeLabel],
   )
 
   const headerActions = useMemo(() => {
-    if (tab === 'billing') {
-      return (
-        <Button variant="outlined" startIcon={<Download size={16} />} onClick={handleDownloadAgreement}>
-          Download agreement PDF
-        </Button>
-      )
-    }
     if (tab === 'personal') {
       return (
         <Button variant="outlined" onClick={() => setPersonalEditToken(t => t + 1)}>
@@ -121,7 +117,7 @@ export function ProfileAccountWorkspace() {
       )
     }
     return undefined
-  }, [tab, handleDownloadAgreement])
+  }, [tab])
 
   return (
     <CustomerDetailWorkspace
@@ -137,7 +133,7 @@ export function ProfileAccountWorkspace() {
       onTabChange={setTab}
     >
       {tab === 'company' && <CompanyProfileTab data={company} />}
-      {tab === 'billing' && <BillingAgreementTab data={billing} onDownloadAgreement={handleDownloadAgreement} />}
+      {tab === 'billing' && <BillingAgreementTab data={billing} />}
       {tab === 'personal' && (
         <PersonalProfileTab
           data={personal}

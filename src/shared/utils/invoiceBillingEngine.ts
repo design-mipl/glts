@@ -7,14 +7,21 @@ import {
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import { companyMasterService } from '@/shared/services/companyMasterService'
+import { serviceMasterService } from '@/shared/services/serviceMasterService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
+import type { MasterApplicability } from '@/shared/types/masterCommon'
 import type {
   InvoiceBillingSelection,
   InvoiceLineItem,
   InvoiceTaxConfig,
+  LineItemBillingStatus,
 } from '@/shared/types/invoice'
-import { calculateLineItemAmount } from '@/shared/utils/invoiceCalculations'
+import {
+  getBilledItemsRegistry,
+  isServiceAlreadyBilled,
+} from '@/shared/utils/invoiceBilledItemsRegistry'
+import { calculateLineItemAmount, defaultLineItemFields } from '@/shared/utils/invoiceCalculations'
 
 const COMPANY_VESSEL_MAP: Record<string, { vesselId: string; vesselName: string }> = {
   'Apex Marine Logistics': { vesselId: 'GLTS-VSL-001', vesselName: 'MV Ocean Star' },
@@ -23,19 +30,26 @@ const COMPANY_VESSEL_MAP: Record<string, { vesselId: string; vesselName: string 
   'Seafarer Solutions': { vesselId: 'GLTS-VSL-004', vesselName: 'MV Offshore Explorer' },
 }
 
+const SEGMENT_TO_APPLICABILITY: Record<string, MasterApplicability> = {
+  marine: 'marine',
+  corporate: 'corporate',
+  b2bAgents: 'b2b',
+  b2b: 'b2b',
+}
+
 export function isInvoiceTriggerReady(row: ApplicationListingRow): boolean {
+  if (row.customerSegment === 'retail') return false
   if (row.operationalStatus === 'Appointment Booked') return true
   return row.processingStage === 'Appointment Booked'
 }
 
-export function listBillableApplications(billableOnly = true): ApplicationListingRow[] {
+export function listBillableApplications(): ApplicationListingRow[] {
   const singles = mockSingleApplications.filter(r => r.submissionDate?.trim())
   const bulks = mockBulkBatches.filter(r => r.submissionDate?.trim())
-  const all: ApplicationListingRow[] = [...singles, ...bulks]
-  return billableOnly ? all.filter(isInvoiceTriggerReady) : all
+  return [...singles, ...bulks].filter(isInvoiceTriggerReady)
 }
 
-function findAgreementForCompany(companyName: string): CommercialAgreement | undefined {
+export function findAgreementForCompany(companyName: string): CommercialAgreement | undefined {
   const normalized = companyName.trim().toLowerCase()
   return commercialAgreementService
     .list()
@@ -54,13 +68,13 @@ function resolveCompanyFromApplication(row: ApplicationListingRow): {
 } {
   const companyName =
     ('companyName' in row && row.companyName) ||
-    row.customerSegment === 'marine'
-      ? 'Apex Marine Logistics'
-      : 'Global Corporate Travel Ltd'
+    (row.customerSegment === 'marine' ? 'Apex Marine Logistics' : 'Global Corporate Travel Ltd')
 
   const company =
     companyMasterService.list().find(c => c.companyName.toLowerCase() === companyName.toLowerCase()) ??
-    companyMasterService.list().find(c => companyName.toLowerCase().includes(c.companyName.toLowerCase().split(' ')[0] ?? ''))
+    companyMasterService
+      .list()
+      .find(c => companyName.toLowerCase().includes(c.companyName.toLowerCase().split(' ')[0] ?? ''))
 
   if (company) {
     return {
@@ -70,11 +84,7 @@ function resolveCompanyFromApplication(row: ApplicationListingRow): {
     }
   }
 
-  return {
-    companyId: '',
-    companyName,
-    billingEntity: companyName,
-  }
+  return { companyId: '', companyName, billingEntity: companyName }
 }
 
 function resolveVessel(companyName: string): { vesselId?: string; vesselName?: string } {
@@ -84,16 +94,18 @@ function resolveVessel(companyName: string): { vesselId?: string; vesselName?: s
   return vessels[0] ? { vesselId: vessels[0].id, vesselName: vessels[0].vesselName } : {}
 }
 
-function normalizeCountry(country: string): string {
-  return country.trim()
+function getApplicantName(row: SingleApplicationRow | BulkBatchRow): string {
+  if ('applicantName' in row) return row.applicantName
+  return `${row.companyName} (${row.totalApplicants} crew)`
 }
 
-function matchPricingRow(
-  agreement: CommercialAgreement,
-  country: string,
-  visaType: string,
-) {
-  const c = normalizeCountry(country).toLowerCase()
+function getAppointmentDate(row: SingleApplicationRow | BulkBatchRow): string {
+  if (row.appointmentDate) return row.appointmentDate
+  return row.submissionDate ?? '—'
+}
+
+function matchPricingRow(agreement: CommercialAgreement, country: string, visaType: string) {
+  const c = country.trim().toLowerCase()
   return (
     agreement.pricingMatrix.find(
       p =>
@@ -101,7 +113,9 @@ function matchPricingRow(
         c.includes(p.country.toLowerCase()) ||
         p.country.toLowerCase().includes(c),
     ) ??
-    agreement.pricingMatrix.find(p => p.visaType.toLowerCase().includes(visaType.toLowerCase().split(' ')[0] ?? '')) ??
+    agreement.pricingMatrix.find(p =>
+      p.visaType.toLowerCase().includes(visaType.toLowerCase().split(' ')[0] ?? ''),
+    ) ??
     agreement.pricingMatrix[0]
   )
 }
@@ -110,10 +124,41 @@ function newLineItemId(): string {
   return `li-${Date.now()}-${Math.floor(Math.random() * 1000)}`
 }
 
+function resolveBillingStatus(
+  registry: Set<string>,
+  applicationId?: string,
+  batchId?: string,
+  serviceType?: string,
+): LineItemBillingStatus {
+  return isServiceAlreadyBilled(registry, applicationId, batchId, serviceType) ? 'billed' : 'unbilled'
+}
+
+function buildLineItemBase(
+  row: SingleApplicationRow | BulkBatchRow,
+  batchId: string | undefined,
+  registry: Set<string>,
+  fields: Omit<InvoiceLineItem, 'id'>,
+): InvoiceLineItem {
+  const applicationId = 'applicantName' in row ? row.id : undefined
+  const resolvedBatchId = batchId ?? ('totalApplicants' in row ? row.id : undefined)
+  const billingStatus = resolveBillingStatus(registry, applicationId, resolvedBatchId, fields.serviceType)
+  return {
+    id: newLineItemId(),
+    applicationId,
+    batchId: resolvedBatchId,
+    applicantName: getApplicantName(row),
+    ...defaultLineItemFields(),
+    ...fields,
+    billingStatus,
+    included: billingStatus !== 'billed',
+  }
+}
+
 function buildVisaFeeLine(
   row: SingleApplicationRow | BulkBatchRow,
   agreement: CommercialAgreement,
   gstPercentage: number,
+  registry: Set<string>,
   batchId?: string,
 ): InvoiceLineItem {
   const pricing = matchPricingRow(agreement, row.country, row.visaType)
@@ -122,42 +167,52 @@ function buildVisaFeeLine(
   const qty = 'totalApplicants' in row ? row.totalApplicants : 1
   const { gstAmount, amount } = calculateLineItemAmount(qty, unitPrice, gstApplicable, gstPercentage)
 
-  return {
-    id: newLineItemId(),
-    applicationId: 'applicantName' in row ? row.id : undefined,
-    batchId: batchId ?? ('totalApplicants' in row ? row.id : undefined),
-    serviceType: 'Visa Fees',
+  return buildLineItemBase(row, batchId, registry, {
+    servicePresetId: pricing?.servicePresetId,
+    serviceType: pricing?.servicePresetName ?? 'Visa Fee',
     description: `${row.country} · ${row.visaType} service fee`,
     quantity: qty,
     unitPrice,
     gstApplicable,
     gstAmount,
     amount,
-  }
+    included: true,
+    billingStatus: 'unbilled',
+    isAdditionalExpense: false,
+    remarks: '',
+  })
 }
 
 function buildMiscLines(
   row: SingleApplicationRow | BulkBatchRow,
   agreement: CommercialAgreement,
   gstPercentage: number,
-  serviceTypes: string[],
+  registry: Set<string>,
+  servicePresetIds: string[],
   batchId?: string,
+  additionalOnly = false,
 ): InvoiceLineItem[] {
-  const filterServices = serviceTypes.length > 0
+  const services = serviceMasterService.list()
+  const filterByPreset = servicePresetIds.length > 0
+
   return agreement.miscellaneousCosts
-    .filter(mc => !filterServices || serviceTypes.some(st => mc.serviceName.toLowerCase().includes(st.toLowerCase())))
+    .filter(mc => {
+      if (additionalOnly && !mc.serviceName.toLowerCase().includes('additional')) return false
+      if (!filterByPreset) return true
+      const match = services.find(
+        s =>
+          servicePresetIds.includes(s.id) &&
+          (s.serviceName.toLowerCase().includes(mc.serviceName.toLowerCase()) ||
+            mc.serviceName.toLowerCase().includes(s.serviceName.toLowerCase())),
+      )
+      return Boolean(match) || servicePresetIds.some(id => mc.serviceName.includes(id))
+    })
     .map(mc => {
       const qty = 'totalApplicants' in row ? row.totalApplicants : 1
-      const { gstAmount, amount } = calculateLineItemAmount(
-        qty,
-        mc.amount,
-        mc.gstApplicable,
-        gstPercentage,
-      )
-      return {
-        id: newLineItemId(),
-        applicationId: 'applicantName' in row ? row.id : undefined,
-        batchId: batchId ?? ('totalApplicants' in row ? row.id : undefined),
+      const master = services.find(s => mc.serviceName.toLowerCase().includes(s.serviceName.toLowerCase()))
+      const { gstAmount, amount } = calculateLineItemAmount(qty, mc.amount, mc.gstApplicable, gstPercentage)
+      return buildLineItemBase(row, batchId, registry, {
+        servicePresetId: master?.id,
         serviceType: mc.serviceName,
         description: mc.remarks || mc.serviceName,
         quantity: qty,
@@ -165,7 +220,11 @@ function buildMiscLines(
         gstApplicable: mc.gstApplicable,
         gstAmount,
         amount,
-      }
+        included: true,
+        billingStatus: 'unbilled',
+        isAdditionalExpense: additionalOnly,
+        remarks: mc.remarks ?? '',
+      })
     })
 }
 
@@ -175,29 +234,28 @@ function expandApplications(selection: InvoiceBillingSelection): Array<{
 }> {
   const result: Array<{ row: SingleApplicationRow | BulkBatchRow; batchId?: string }> = []
 
-  if (selection.billingMode === 'batch' || selection.batchIds.length > 0) {
+  if (
+    selection.applicationSelectionMode === 'batch' ||
+    (selection.batchIds.length > 0 && selection.applicationSelectionMode !== 'multiple')
+  ) {
     for (const batchId of selection.batchIds) {
       const batch = mockBulkBatches.find(b => b.id === batchId)
-      if (batch) result.push({ row: batch, batchId: batch.id })
+      if (batch && isInvoiceTriggerReady(batch)) result.push({ row: batch, batchId: batch.id })
     }
-    if (selection.billingMode === 'batch' && selection.batchIds.length === 0) return result
+    if (selection.applicationSelectionMode === 'batch') return result
   }
 
   for (const appId of selection.applicationIds) {
     const single = mockSingleApplications.find(a => a.id === appId)
-    if (single) {
+    if (single && isInvoiceTriggerReady(single)) {
       result.push({ row: single })
       continue
     }
     const batch = mockBulkBatches.find(b => b.id === appId)
-    if (batch) result.push({ row: batch, batchId: batch.id })
+    if (batch && isInvoiceTriggerReady(batch)) result.push({ row: batch, batchId: batch.id })
   }
 
-  if (selection.billingMode === 'cumulative') {
-    return result
-  }
-
-  if (selection.billingMode === 'single' && selection.applicationIds.length === 1) {
+  if (selection.applicationSelectionMode === 'single' && result.length > 1) {
     return result.slice(0, 1)
   }
 
@@ -216,22 +274,66 @@ export function resolveTaxConfigFromAgreement(agreement?: CommercialAgreement): 
   }
 }
 
+export function fetchCompanyWiseBillables(selection: InvoiceBillingSelection): InvoiceBillingSelection {
+  if (!selection.companyId && !selection.companyName) return selection
+
+  const company = companyMasterService.list().find(c => c.id === selection.companyId)
+  const companyName = company?.companyName ?? selection.companyName
+  const from = selection.billingPeriodFrom
+  const to = selection.billingPeriodTo
+
+  const matchesCompany = (row: ApplicationListingRow) => {
+    const rowCompany =
+      'companyName' in row && row.companyName ? row.companyName : resolveCompanyFromApplication(row).companyName
+    return rowCompany.toLowerCase().includes(companyName.toLowerCase())
+  }
+
+  const inPeriod = (row: ApplicationListingRow) => {
+    if (!from && !to) return true
+    const date = getAppointmentDate(row as SingleApplicationRow | BulkBatchRow)
+    if (date === '—') return true
+    if (from && date < from) return false
+    if (to && date > to) return false
+    return true
+  }
+
+  const eligible = listBillableApplications().filter(r => matchesCompany(r) && inPeriod(r))
+
+  const applicationIds = eligible
+    .filter(r => r.recordType === 'single')
+    .map(r => r.id)
+  const batchIds = eligible.filter(r => r.recordType === 'bulk').map(r => r.id)
+
+  return {
+    ...selection,
+    companyName,
+    companyId: company?.id ?? selection.companyId,
+    billingEntity: selection.billingEntityOverride || company?.billingEntityName || selection.billingEntity,
+    applicationIds,
+    batchIds,
+    applicationSelectionMode: batchIds.length === 1 && applicationIds.length === 0 ? 'batch' : 'multiple',
+  }
+}
+
 export function buildLineItems(selection: InvoiceBillingSelection): {
   lineItems: InvoiceLineItem[]
   taxConfig: InvoiceTaxConfig
   agreementId?: string
 } {
-  const apps = expandApplications(selection)
+  const effectiveSelection =
+    selection.billingMode === 'company_wise' ? fetchCompanyWiseBillables(selection) : selection
+
+  const apps = expandApplications(effectiveSelection)
   if (apps.length === 0) {
     return { lineItems: [], taxConfig: resolveTaxConfigFromAgreement() }
   }
 
   const firstRow = apps[0].row
   const companyInfo =
-    selection.companyId && selection.companyName
+    effectiveSelection.companyId && effectiveSelection.companyName
       ? {
-          companyName: selection.companyName,
-          agreement: findAgreementForCompany(selection.companyName),
+          companyName: effectiveSelection.companyName,
+          agreement: findAgreementForCompany(effectiveSelection.companyName),
         }
       : (() => {
           const resolved = resolveCompanyFromApplication(firstRow)
@@ -244,37 +346,43 @@ export function buildLineItems(selection: InvoiceBillingSelection): {
   const agreement = companyInfo.agreement
   const taxConfig = resolveTaxConfigFromAgreement(agreement)
   const gstPercentage = taxConfig.gstPercentage
+  const registry = getBilledItemsRegistry()
   const lineItems: InvoiceLineItem[] = []
-  const includeVisa = selection.serviceTypes.length === 0 || selection.serviceTypes.includes('Visa Fees')
-  const isServiceWise = selection.billingMode === 'service_wise' || selection.invoiceType === 'service_wise'
-  const isAdditional = selection.invoiceType === 'additional_expense'
+  const isAdditional = effectiveSelection.invoiceType === 'additional_expense'
+  const isSingleService =
+    effectiveSelection.invoiceType === 'single_invoice' && effectiveSelection.servicePresetIds.length > 0
 
   for (const { row, batchId } of apps) {
-    if (selection.billableOnly && !isInvoiceTriggerReady(row)) continue
+    if (!isInvoiceTriggerReady(row)) continue
 
-    if (!isAdditional && includeVisa && (!isServiceWise || selection.serviceTypes.includes('Visa Fees'))) {
-      if (agreement) {
-        lineItems.push(buildVisaFeeLine(row, agreement, gstPercentage, batchId))
-      }
+    const includeVisa =
+      !isAdditional &&
+      (!isSingleService ||
+        effectiveSelection.servicePresetIds.some(id => {
+          const svc = serviceMasterService.getById(id)
+          return svc?.serviceName.toLowerCase().includes('visa')
+        }))
+
+    if (includeVisa && agreement) {
+      lineItems.push(buildVisaFeeLine(row, agreement, gstPercentage, registry, batchId))
     }
 
     if (agreement) {
-      const miscTypes = isServiceWise ? selection.serviceTypes : isAdditional ? selection.serviceTypes : []
       const miscLines = buildMiscLines(
         row,
         agreement,
         gstPercentage,
-        miscTypes,
+        registry,
+        effectiveSelection.servicePresetIds,
         batchId,
+        isAdditional,
       )
-      if (isAdditional || isServiceWise || miscTypes.length === 0) {
-        if (isAdditional) {
-          lineItems.push(...miscLines.filter(l => l.serviceType !== 'Visa Fees'))
-        } else if (!isServiceWise) {
-          lineItems.push(...miscLines)
-        } else {
-          lineItems.push(...miscLines)
-        }
+      if (isAdditional) {
+        lineItems.push(...miscLines)
+      } else if (isSingleService) {
+        lineItems.push(...miscLines)
+      } else if (effectiveSelection.invoiceType !== 'single_invoice') {
+        lineItems.push(...miscLines)
       }
     }
   }
@@ -296,6 +404,8 @@ export function enrichSelectionFromApplication(
 
   return {
     ...selection,
+    billingMode: 'application_wise',
+    applicationSelectionMode: batch ? 'batch' : 'single',
     companyId: company.companyId || selection.companyId,
     companyName: company.companyName,
     billingEntity: selection.billingEntityOverride || company.billingEntity,
@@ -303,28 +413,12 @@ export function enrichSelectionFromApplication(
     vesselName: vessel.vesselName,
     applicationIds: single ? [single.id] : selection.applicationIds,
     batchIds: batch ? [batch.id] : selection.batchIds,
+    invoiceType: selection.invoiceType === 'credit_note' ? 'credit_note' : 'single_invoice',
   }
 }
 
-export function getApplicationOptions(billableOnly: boolean) {
-  return listBillableApplications(billableOnly).map(row => ({
-    value: row.id,
-    label:
-      'applicantName' in row
-        ? `${row.id} · ${row.applicantName}`
-        : `${row.id} · ${row.companyName} (${row.totalApplicants} applicants)`,
-    recordType: row.recordType,
-  }))
-}
-
-export function getBatchOptions(billableOnly: boolean) {
-  return mockBulkBatches
-    .filter(b => b.submissionDate?.trim())
-    .filter(b => !billableOnly || isInvoiceTriggerReady(b))
-    .map(b => ({
-      value: b.id,
-      label: `${b.id} · ${b.companyName}`,
-    }))
+export function getBillableApplicationRows(): ApplicationListingRow[] {
+  return listBillableApplications()
 }
 
 export function getCompanyOptions() {
@@ -342,14 +436,36 @@ export function getVesselOptions() {
   }))
 }
 
-export const SERVICE_TYPE_OPTIONS = [
-  'Visa Fees',
-  'VFS Fees',
-  'Courier Charges',
-  'E-Ticket Charges',
-  'Airport Assistance',
-  'Travel Insurance',
-  'Operational Charges',
-  'Additional Expenses',
-  'Miscellaneous Services',
-]
+export function getBillableServiceOptions(segment?: string) {
+  const applicability = segment ? SEGMENT_TO_APPLICABILITY[segment] : undefined
+  const services = serviceMasterService.list().filter(s => s.status === 'active')
+  const filtered = applicability
+    ? services.filter(s => s.applicableFor.includes(applicability))
+    : services.filter(s => !s.applicableFor.includes('retail'))
+  return filtered.map(s => ({
+    value: s.id,
+    label: s.serviceName,
+    defaultPrice: s.defaultPrice,
+  }))
+}
+
+export function resolveApplicationBillingEntity(row: ApplicationListingRow): string {
+  return resolveCompanyFromApplication(row).billingEntity
+}
+
+export function resolveApplicationVessel(row: ApplicationListingRow): string {
+  const companyName =
+    'companyName' in row && row.companyName
+      ? row.companyName
+      : resolveCompanyFromApplication(row).companyName
+  return resolveVessel(companyName).vesselName ?? '—'
+}
+
+export function getApplicationBillingStatusLabel(row: ApplicationListingRow): string {
+  const registry = getBilledItemsRegistry()
+  const appId = row.id
+  const hasBilled = [...registry].some(key => key.startsWith(`${appId}::`))
+  return hasBilled ? 'Partially billed' : 'Unbilled'
+}
+
+export { getApplicantName, getAppointmentDate }
