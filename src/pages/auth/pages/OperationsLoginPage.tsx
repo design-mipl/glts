@@ -1,10 +1,10 @@
-import { useNavigate } from 'react-router-dom'
 import { SplitAuthLayout } from '../components/SplitAuthLayout'
 import { LoginFormPanel } from '../components/LoginFormPanel'
 import { saveSession } from '@/shared/auth/session'
+import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 
 export function OperationsLoginPage() {
-  const navigate = useNavigate()
+  const navigate = useAppNavigate()
 
   const handleLogin = (email: string) => {
     saveSession({

@@ -33,7 +33,7 @@ import {
 import { SacCodeListingPage } from '../masters/sac-codes'
 import { ServiceListingPage } from '../masters/services'
 import { TaxConfigurationPage } from '../masters/tax'
-import { InternalDashboard } from '../operations/pages/InternalDashboard'
+import { OperationsDashboardPage } from '../operations/dashboard/pages/OperationsDashboardPage'
 import { AdminProfilePage } from '../profile/AdminProfilePage'
 import {
   MarineApplicationListingPage,
@@ -61,7 +61,7 @@ import {
 import ComponentLibrary from '../_tools/ComponentLibrary'
 import TemplateShowcaseRoutes from '../_tools/TemplateShowcase'
 
-type AdminRouteKind = 'coming-soon' | 'operations' | 'profile' | 'tools'
+type AdminRouteKind = 'coming-soon' | 'dashboard' | 'operations' | 'profile' | 'tools'
 
 interface AdminRouteDefinition {
   path?: string
@@ -76,9 +76,9 @@ const adminRoutes: AdminRouteDefinition[] = [
   {
     index: true,
     title: 'Dashboard',
-    description: 'This module is under development.',
+    description: 'Real-time overview of applications, operations, and finance.',
     eyebrow: 'Admin',
-    kind: 'coming-soon',
+    kind: 'dashboard',
   },
   {
     path: 'customer-accounts/quotations',
@@ -222,10 +222,10 @@ function AdminFoundationPage({ route }: { route: AdminRouteDefinition }) {
     )
   }
 
-  if (route.kind === 'operations') {
+  if (route.kind === 'dashboard' || route.kind === 'operations') {
     return (
       <PermissionGuard>
-        <InternalDashboard />
+        <OperationsDashboardPage />
       </PermissionGuard>
     )
   }
