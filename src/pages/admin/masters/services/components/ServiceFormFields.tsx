@@ -8,7 +8,6 @@ import { masterStatusLabel } from '../../config/masterStatusConfig'
 import {
   getServiceSubcategoryOptions,
   SERVICE_CATEGORY_OPTIONS,
-  SERVICE_CURRENCY_OPTIONS,
 } from '../config/serviceClassificationConfig'
 
 type ServiceFormSection =
@@ -137,21 +136,6 @@ export function ServiceFormFields({ formData, onChange, errors, section }: Servi
             value={formData.defaultPrice}
             onChange={(value) => patch({ defaultPrice: value })}
             placeholder="Enter default service price"
-            size="sm"
-            fullWidth
-          />
-        </FormField>
-        <FormField
-          label="Currency"
-          required
-          error={Boolean(errors.currency)}
-          helperText={errors.currency}
-        >
-          <Select
-            value={formData.currency}
-            onChange={(value) => patch({ currency: value as ServiceMasterFormData['currency'] })}
-            placeholder="Select currency"
-            options={[...SERVICE_CURRENCY_OPTIONS]}
             size="sm"
             fullWidth
           />

@@ -171,8 +171,10 @@ export function AdminFullPageFormShell({
             position: 'sticky',
             bottom: 0,
             zIndex: stickyFooterZIndex,
+            flexShrink: 0,
             px: shellPaddingX,
             py: 2,
+            bgcolor: 'background.paper',
             borderTop: 1,
             borderColor: 'divider',
           }}

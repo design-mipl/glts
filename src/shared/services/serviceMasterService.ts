@@ -27,16 +27,13 @@ let serviceStore: ServiceMaster[] = [...SEED_SERVICE_MASTERS]
 
 export const serviceMasterService = {
   list(filters: ServiceMasterListFilters = {}): ServiceMaster[] {
-    const { status = 'all', category = 'all', currency = 'all' } = filters
+    const { status = 'all', category = 'all' } = filters
     let rows = [...serviceStore]
     if (status !== 'all') {
       rows = rows.filter((row) => row.status === status)
     }
     if (category !== 'all') {
       rows = rows.filter((row) => row.category === category)
-    }
-    if (currency !== 'all') {
-      rows = rows.filter((row) => row.currency === currency)
     }
     return rows.sort(
       (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
@@ -70,7 +67,6 @@ export const serviceMasterService = {
       category: data.category as ServiceMaster['category'],
       subcategory: data.subcategory.trim(),
       defaultPrice: parsePrice(data.defaultPrice),
-      currency: data.currency as ServiceMaster['currency'],
       mappedSacCodeId: data.mappedSacCodeId.trim() || null,
       gstRateId: data.gstRateId.trim() || null,
       tdsSectionId: data.tdsSectionId.trim() || null,
@@ -102,7 +98,6 @@ export const serviceMasterService = {
       category: data.category as ServiceMaster['category'],
       subcategory: data.subcategory.trim(),
       defaultPrice: parsePrice(data.defaultPrice),
-      currency: data.currency as ServiceMaster['currency'],
       mappedSacCodeId: data.mappedSacCodeId.trim() || null,
       gstRateId: data.gstRateId.trim() || null,
       tdsSectionId: data.tdsSectionId.trim() || null,
@@ -125,7 +120,6 @@ export const serviceMasterService = {
       category: existing.category,
       subcategory: existing.subcategory,
       defaultPrice: existing.defaultPrice != null ? String(existing.defaultPrice) : '',
-      currency: existing.currency,
       mappedSacCodeId: existing.mappedSacCodeId ?? '',
       gstRateId: existing.gstRateId ?? '',
       tdsSectionId: existing.tdsSectionId ?? '',

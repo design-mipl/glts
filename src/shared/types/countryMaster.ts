@@ -131,6 +131,14 @@ export interface RequirementPreviewCard {
   variant: RequirementPreviewVariant
 }
 
+/** Passport issuing city/office mapped to consulate/VFS jurisdiction for customer applications. */
+export interface PassportIssueLocation {
+  id: string
+  label: string
+  jurisdiction: string
+  active?: boolean
+}
+
 export interface CountryMaster {
   id: string
   code: string
@@ -151,6 +159,7 @@ export interface CountryMaster {
   visaCategory: string
   validity: string
   fastMinutes?: number
+  passportIssueLocations: PassportIssueLocation[]
   segments: CountrySegmentConfig[]
   /** Synced flat list for legacy consumers */
   visaOfferings: CountryVisaOffering[]
@@ -178,6 +187,7 @@ export interface CountryMasterFormData {
   visaCategory: string
   validity: string
   fastMinutes?: number
+  passportIssueLocations: PassportIssueLocation[]
   segments: CountrySegmentConfig[]
 }
 

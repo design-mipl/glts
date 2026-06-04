@@ -48,6 +48,18 @@ export function OverviewTab({ country, segment }: OverviewTabProps) {
         <ReadOnlyField label="Internal operational notes" value={country.internalNotes ?? ''} />
       </Grid>
       <Grid size={{ xs: 12 }}>
+        <ReadOnlyField
+          label="Passport issue locations"
+          value={
+            country.passportIssueLocations?.length
+              ? country.passportIssueLocations
+                  .map((loc) => `${loc.label} → ${loc.jurisdiction}`)
+                  .join('\n')
+              : ''
+          }
+        />
+      </Grid>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="overline" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
           {SEGMENT_LABELS[segment]} segment
         </Typography>

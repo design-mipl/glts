@@ -22,6 +22,13 @@ import {
   getSessionCreatorMeta,
 } from '../../applications/utils/applicationAccessUtils'
 import { mergeVerificationIntoDetail } from '@/shared/services/applicationVerificationService'
+import { isApplicantDocumentSatisfied } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import { readApplicationFlowDraftFromSession } from '../../applications/utils/applicationFlowDraftStorage'
+import {
+  checklistToApplicantDocuments,
+  normalizeUploadQueueRows,
+  type ApplicantDocumentChecklistContext,
+} from '../../applications/utils/uploadQueueDocuments'
 import { invoiceService } from '@/shared/services/invoiceService'
 import { bookerManagementService } from '@/shared/services/bookerManagementService'
 import { entityMasterService } from '@/shared/services/entityMasterService'
@@ -46,7 +53,6 @@ import type { ApplicationCustomerSegment } from '../../applications/types/applic
 import type { ApplicationDetailViewModel, FlowDraftLikeState } from '../../applications/types/applicationDetail.types'
 
 const CUSTOMER_DRAFTS_STORAGE_KEY = 'glts:customer-application-drafts'
-const APPLICATION_FLOW_STORAGE_KEY = 'glts:application-flow'
 
 function mapSessionToApplicationSegment(customerType?: CustomerType): ApplicationCustomerSegment {
   if (customerType === 'marine') return 'marine'
@@ -377,6 +383,17 @@ function bulkBatchToCustomerApplication(bulk: BulkBatchRow): CustomerApplication
   }
 }
 
+function documentChecklistContext(
+  countryLabel: string,
+  flowState: FlowDraftLikeState | null,
+): Omit<ApplicantDocumentChecklistContext, 'seedIndex' | 'passportFields'> {
+  return {
+    countryLabel: flowState?.countryName?.trim() || countryLabel,
+    countryId: flowState?.countryId,
+    visaOfferingId: flowState?.visaOfferingId,
+  }
+}
+
 function buildSingleDetail(
   row: SingleApplicationRow,
   resolvedId: string | undefined,
@@ -396,7 +413,8 @@ function buildSingleDetail(
     eta: row.operationalStatus === 'Completed' ? 'Completed' : row.submissionDate || 'Awaiting review',
   }
   const draftRows = pickFlowRows(flowState, row.id)
-  const uploadQueueRows =
+  const checklistCtx = documentChecklistContext(row.country, flowState)
+  const uploadQueueRows = normalizeUploadQueueRows(
     draftRows.length > 0
       ? draftRows.map((queueRow, index) =>
           applySingleApplicationDemoSeed(row, {
@@ -405,7 +423,9 @@ function buildSingleDetail(
             sequenceNo: queueRow.sequenceNo ?? index + 1,
           }),
         )
-      : [singleRowToUploadQueue(row)]
+      : [singleRowToUploadQueue(row)],
+    checklistCtx,
+  )
   return {
     resolvedId,
     application,
@@ -429,7 +449,11 @@ function buildBulkDetail(
 ): ApplicationDetailViewModel {
   const application = bulkBatchToCustomerApplication(row)
   const draftRows = pickFlowRows(flowState, row.id)
-  const uploadQueueRows = draftRows.length > 0 ? draftRows : bulkRowToUploadQueue(row)
+  const checklistCtx = documentChecklistContext(row.country, flowState)
+  const uploadQueueRows = normalizeUploadQueueRows(
+    draftRows.length > 0 ? draftRows : bulkRowToUploadQueue(row),
+    checklistCtx,
+  )
   return {
     resolvedId,
     application,
@@ -448,7 +472,7 @@ function buildBulkDetail(
 
 function singleRowToUploadQueue(row: SingleApplicationRow): UploadQueueRow {
   const documents = checklistToApplicantDocuments(defaultChecklist(row.country))
-  const documentsComplete = documents.filter(doc => doc.status === 'verified' || doc.status === 'uploaded').length
+  const documentsComplete = documents.filter(doc => isApplicantDocumentSatisfied(doc)).length
   const documentsTotal = documents.length
   const base: UploadQueueRow = {
     id: `${row.id}-q1`,
@@ -484,7 +508,7 @@ function bulkRowToUploadQueue(row: BulkBatchRow): UploadQueueRow[] {
         gltsApplicationId: row.id,
         sequenceNo: index + 1,
         documents,
-        documentsComplete: documents.filter(doc => doc.status === 'verified' || doc.status === 'uploaded').length,
+        documentsComplete: documents.filter(doc => isApplicantDocumentSatisfied(doc)).length,
         documentsTotal: documents.length,
       }
     })
@@ -516,11 +540,12 @@ function bulkRowToUploadQueue(row: BulkBatchRow): UploadQueueRow[] {
 }
 
 function buildLegacyRows(application: CustomerApplication, flowState: FlowDraftLikeState | null): UploadQueueRow[] {
+  const checklistCtx = documentChecklistContext(application.country, flowState)
   const draftRows = pickFlowRows(flowState, application.id)
   if (draftRows.length > 0) {
-    return draftRows
+    return normalizeUploadQueueRows(draftRows, checklistCtx)
   }
-  return mockApplicants.map((applicant, index) => ({
+  const legacyRows = mockApplicants.map((applicant, index) => ({
     id: `${application.id}-legacy-${index + 1}`,
     fileName: `${applicant.id}.pdf`,
     gltsApplicationId: application.id,
@@ -531,49 +556,25 @@ function buildLegacyRows(application: CustomerApplication, flowState: FlowDraftL
     expiry: index % 2 === 0 ? '17 Nov 2031' : '08 Jun 2032',
     nationality: application.country.slice(0, 3).toUpperCase(),
     confidence: 95,
-    status: applicant.status.toLowerCase().includes('pending') ? 'needs_review' : 'verified',
+    status: (applicant.status.toLowerCase().includes('pending')
+      ? 'needs_review'
+      : 'verified') as UploadQueueRow['status'],
     fields: [],
-    documents: checklistToApplicantDocuments(defaultChecklist(application.country), index),
-    documentsComplete: 3,
-    documentsTotal: 5,
+    documents: [] as ApplicantDocumentItem[],
+    documentsComplete: 0,
+    documentsTotal: 0,
   }))
-}
-
-function checklistToApplicantDocuments(
-  checklist: ReturnType<typeof defaultChecklist>,
-  offset = 0,
-): ApplicantDocumentItem[] {
-  return checklist.map((item, index) => {
-    const rotated = (index + offset) % 3
-    const status =
-      item.status === 'uploaded'
-        ? 'verified'
-        : item.status === 'pending'
-          ? 'needs_review'
-          : rotated === 0
-            ? 'missing'
-            : rotated === 1
-              ? 'uploaded'
-              : 'needs_review'
-    return {
-      documentId: item.id,
-      name: item.label,
-      required: item.required,
-      status,
-      fields: [],
-    }
-  })
+  return normalizeUploadQueueRows(legacyRows, checklistCtx)
 }
 
 function toDocumentRows(documents: ApplicantDocumentItem[]) {
   return documents.map(doc => ({
     name: doc.name,
-    tone:
-      doc.status === 'verified' || doc.status === 'uploaded'
-        ? ('success' as const)
-        : doc.status === 'needs_review' || doc.status === 'rejected'
-          ? ('warning' as const)
-          : ('neutral' as const),
+    tone: isApplicantDocumentSatisfied(doc)
+      ? ('success' as const)
+      : doc.status === 'needs_review' || doc.status === 'rejected'
+        ? ('warning' as const)
+        : ('neutral' as const),
   }))
 }
 
@@ -584,28 +585,7 @@ function pickFlowRows(flowState: FlowDraftLikeState | null, id: string): UploadQ
 }
 
 function getSavedFlowState(): FlowDraftLikeState | null {
-  try {
-    const raw = sessionStorage.getItem(APPLICATION_FLOW_STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as Partial<FlowDraftLikeState>
-    if (!parsed || typeof parsed !== 'object') return null
-    return {
-      gltsApplicationId: typeof parsed.gltsApplicationId === 'string' ? parsed.gltsApplicationId : '',
-      gltsBatchId: typeof parsed.gltsBatchId === 'string' ? parsed.gltsBatchId : '',
-      countryName: typeof parsed.countryName === 'string' ? parsed.countryName : '',
-      countryFlag: typeof parsed.countryFlag === 'string' ? parsed.countryFlag : '',
-      visaTypeLabel: typeof parsed.visaTypeLabel === 'string' ? parsed.visaTypeLabel : '',
-      purposeLabel: typeof parsed.purposeLabel === 'string' ? parsed.purposeLabel : '',
-      travelDate: typeof parsed.travelDate === 'string' ? parsed.travelDate : '',
-      globalDocumentUploads:
-        parsed.globalDocumentUploads && typeof parsed.globalDocumentUploads === 'object'
-          ? parsed.globalDocumentUploads
-          : {},
-      uploadQueueRows: Array.isArray(parsed.uploadQueueRows) ? parsed.uploadQueueRows : [],
-    }
-  } catch {
-    return null
-  }
+  return readApplicationFlowDraftFromSession()
 }
 
 function getSavedDraftRows(): SingleApplicationRow[] {

@@ -44,9 +44,74 @@ export function isInvoiceTriggerReady(row: ApplicationListingRow): boolean {
 }
 
 export function listBillableApplications(): ApplicationListingRow[] {
-  const singles = mockSingleApplications.filter(r => r.submissionDate?.trim())
-  const bulks = mockBulkBatches.filter(r => r.submissionDate?.trim())
-  return [...singles, ...bulks].filter(isInvoiceTriggerReady)
+  return [...mockSingleApplications, ...mockBulkBatches].filter(isInvoiceTriggerReady)
+}
+
+function applicationMatchesCompany(row: ApplicationListingRow, companyName: string): boolean {
+  const rowCompany =
+    'companyName' in row && row.companyName
+      ? row.companyName
+      : resolveCompanyFromApplication(row).companyName
+  const normalized = companyName.trim().toLowerCase()
+  return (
+    rowCompany.toLowerCase() === normalized ||
+    rowCompany.toLowerCase().includes(normalized) ||
+    normalized.includes(rowCompany.toLowerCase().split(' ')[0] ?? '')
+  )
+}
+
+export function filterBillableApplicationsByCompany(
+  rows: ApplicationListingRow[],
+  companyId?: string,
+): ApplicationListingRow[] {
+  if (!companyId) return rows
+  const company = companyMasterService.list().find(c => c.id === companyId)
+  if (!company) return rows
+  return rows.filter(row => applicationMatchesCompany(row, company.companyName))
+}
+
+function parseAppointmentDate(row: ApplicationListingRow): string | undefined {
+  if ('appointmentDate' in row && row.appointmentDate) return row.appointmentDate
+  if ('submissionDate' in row && row.submissionDate) return row.submissionDate
+  return undefined
+}
+
+export function filterBillableApplicationsByAppointmentDate(
+  rows: ApplicationListingRow[],
+  dateFrom?: string,
+  dateTo?: string,
+): ApplicationListingRow[] {
+  if (!dateFrom && !dateTo) return rows
+  return rows.filter(row => {
+    const date = parseAppointmentDate(row)
+    if (!date || date === '—') return false
+    if (dateFrom && date < dateFrom) return false
+    if (dateTo && date > dateTo) return false
+    return true
+  })
+}
+
+export function getApplicationTypeLabel(row: ApplicationListingRow): 'Single' | 'Bulk' {
+  return row.recordType === 'bulk' ? 'Bulk' : 'Single'
+}
+
+export function getOperationalStatusLabel(_row: ApplicationListingRow): string {
+  return 'Appointment Booked'
+}
+
+export function getBillableCompanyFilterOptions(): Array<{ value: string; label: string }> {
+  const rows = listBillableApplications()
+  const companyIds = new Set<string>()
+  for (const row of rows) {
+    const { companyId } = resolveCompanyFromApplication(row)
+    if (companyId) companyIds.add(companyId)
+  }
+  const options = companyMasterService
+    .list()
+    .filter(c => companyIds.has(c.id))
+    .map(c => ({ value: c.id, label: c.companyName }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+  return [{ value: '', label: 'All companies' }, ...options]
 }
 
 export function findAgreementForCompany(companyName: string): CommercialAgreement | undefined {
@@ -97,6 +162,12 @@ function resolveVessel(companyName: string): { vesselId?: string; vesselName?: s
 function getApplicantName(row: SingleApplicationRow | BulkBatchRow): string {
   if ('applicantName' in row) return row.applicantName
   return `${row.companyName} (${row.totalApplicants} crew)`
+}
+
+/** Human-readable application label for billing UI (distinct from GLTS reference id). */
+export function resolveApplicationDisplayName(row: SingleApplicationRow | BulkBatchRow): string {
+  if ('applicantName' in row) return row.applicantName
+  return `${row.companyName} · ${row.country}`
 }
 
 function getAppointmentDate(row: SingleApplicationRow | BulkBatchRow): string {
@@ -282,11 +353,7 @@ export function fetchCompanyWiseBillables(selection: InvoiceBillingSelection): I
   const from = selection.billingPeriodFrom
   const to = selection.billingPeriodTo
 
-  const matchesCompany = (row: ApplicationListingRow) => {
-    const rowCompany =
-      'companyName' in row && row.companyName ? row.companyName : resolveCompanyFromApplication(row).companyName
-    return rowCompany.toLowerCase().includes(companyName.toLowerCase())
-  }
+  const matchesCompany = (row: ApplicationListingRow) => applicationMatchesCompany(row, companyName)
 
   const inPeriod = (row: ApplicationListingRow) => {
     if (!from && !to) return true
@@ -417,8 +484,13 @@ export function enrichSelectionFromApplication(
   }
 }
 
-export function getBillableApplicationRows(): ApplicationListingRow[] {
-  return listBillableApplications()
+export function getBillableApplicationRows(
+  companyId?: string,
+  dateFrom?: string,
+  dateTo?: string,
+): ApplicationListingRow[] {
+  const byCompany = filterBillableApplicationsByCompany(listBillableApplications(), companyId)
+  return filterBillableApplicationsByAppointmentDate(byCompany, dateFrom, dateTo)
 }
 
 export function getCompanyOptions() {

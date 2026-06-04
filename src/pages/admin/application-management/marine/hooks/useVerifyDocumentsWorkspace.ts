@@ -6,6 +6,11 @@ import {
   applicationVerificationService,
   buildGlobalDocumentsForVerification,
 } from '@/shared/services/applicationVerificationService'
+import type {
+  DocumentHandlingMode,
+  InsuranceWorkflow,
+  TravelTicketWorkflow,
+} from '@/shared/utils/applicantDocumentWorkflowUtils'
 import {
   buildOverviewFromDetail,
   buildVerifyTimeline,
@@ -138,6 +143,29 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
     [applicationId],
   )
 
+  const updateTravelerDocumentWorkflow = useCallback(
+    (
+      documentId: string,
+      patch: {
+        handlingMode?: DocumentHandlingMode
+        travelTicket?: Partial<TravelTicketWorkflow>
+        insurance?: Partial<InsuranceWorkflow>
+        status?: ApplicantDocumentStatus
+      },
+    ) => {
+      if (!applicationId || !selectedRow) return
+      setWorkspace(
+        applicationVerificationService.updateTravelerDocumentWorkflow(
+          applicationId,
+          selectedRow.id,
+          documentId,
+          patch,
+        ),
+      )
+    },
+    [applicationId, selectedRow],
+  )
+
   const saveDraft = useCallback(() => {
     if (!applicationId) return
     setWorkspace(applicationVerificationService.saveDraft(applicationId))
@@ -163,6 +191,7 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
     timelineSteps,
     globalDocuments,
     updateTravelerDoc,
+    updateTravelerDocumentWorkflow,
     updateGlobalDoc,
     saveDraft,
     submitVerification,

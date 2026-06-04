@@ -1,8 +1,16 @@
-import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
+import type {
+  ApplicantDocumentItem,
+  ApplicantDocumentStatus,
+  UploadQueueRow,
+} from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationProcessingTimelineStep } from '@/pages/customer/features/applications/components/ApplicationProcessingTimeline'
 import type { SubmitTimelineStatus } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import { adminDocumentBadgeStatus } from '@/shared/services/applicationVerificationService'
-import type { ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
+import {
+  documentStatusLabel,
+  isApplicantDocumentSatisfied,
+  isSimpleDocumentRequirement,
+} from '@/shared/utils/applicantDocumentWorkflowUtils'
 import type { BadgeProps } from '@/design-system/UIComponents/Display/Badge'
 
 export function buildVerifyTimeline(
@@ -12,8 +20,7 @@ export function buildVerifyTimeline(
 ): ApplicationProcessingTimelineStep[] {
   const required = row?.documents.filter(d => d.required) ?? []
   const docsDone =
-    required.length === 0 ||
-    required.every(d => d.status === 'verified' || d.status === 'uploaded')
+    required.length === 0 || required.every(d => isApplicantDocumentSatisfied(d))
   const allVerified = required.length > 0 && required.every(d => d.status === 'verified')
   const hasRejection = required.some(d => d.status === 'rejected' || d.status === 'needs_review')
 
@@ -66,7 +73,15 @@ export function buildVerifyTimeline(
 
 export function documentBadgeColor(
   status: ApplicantDocumentStatus,
+  doc?: ApplicantDocumentItem,
 ): BadgeProps['color'] {
+  if (doc && isSimpleDocumentRequirement(doc.documentId)) {
+    const label = documentStatusLabel(doc)
+    if (label === 'Verified' || label === 'Arranged by GLTS') return 'success'
+    if (label === 'Rejected' || label === 'Re-upload Requested') return 'error'
+    if (label.includes('Uploaded') || label === 'Under Verification') return 'info'
+    return 'warning'
+  }
   const badge = adminDocumentBadgeStatus(status)
   switch (badge) {
     case 'verified':
@@ -86,6 +101,13 @@ export function documentBadgeLabel(status: ApplicantDocumentStatus): string {
   if (badge === 'rejected') return 'rejected'
   if (status === 'needs_review') return 'uploaded'
   return badge
+}
+
+export function verifyDocumentBadgeLabel(doc: ApplicantDocumentItem): string {
+  if (isSimpleDocumentRequirement(doc.documentId)) {
+    return documentStatusLabel(doc)
+  }
+  return documentBadgeLabel(doc.status)
 }
 
 export interface VerifyOverviewData {

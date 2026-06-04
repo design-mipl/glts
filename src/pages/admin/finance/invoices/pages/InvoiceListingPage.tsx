@@ -28,10 +28,18 @@ import {
   mapInvoiceRowsToGridItems,
   matchesInvoiceSearch,
 } from '../utils/invoiceListingUtils'
+import type { RecordPaymentModalValue } from '../components/workspace/RecordPaymentModal'
+import { RecordPaymentModal } from '../components/workspace/RecordPaymentModal'
 import type { ShareInvoiceModalValue } from '../components/workspace/ShareInvoiceModal'
 import { ShareInvoiceModal } from '../components/workspace/ShareInvoiceModal'
 
 const LISTING_PATH = '/admin/finance/invoices'
+const GENERATE_DRAFT_PATH = `${LISTING_PATH}/generate`
+
+function parsePaymentField(raw: string): number {
+  const n = Number.parseFloat(raw.replace(/,/g, ''))
+  return Number.isFinite(n) ? n : 0
+}
 
 export function InvoiceListingPage() {
   const theme = useTheme()
@@ -49,10 +57,22 @@ export function InvoiceListingPage() {
     dueDate: '',
     message: '',
   })
-  const [cancelTarget, setCancelTarget] = useState<Invoice>()
-  const [cancelOpen, setCancelOpen] = useState(false)
+  const [submitTarget, setSubmitTarget] = useState<Invoice>()
+  const [submitOpen, setSubmitOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Invoice>()
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [reminderTarget, setReminderTarget] = useState<Invoice>()
+  const [reminderOpen, setReminderOpen] = useState(false)
+  const [paymentTarget, setPaymentTarget] = useState<Invoice>()
+  const [paymentOpen, setPaymentOpen] = useState(false)
+  const [paymentValue, setPaymentValue] = useState<RecordPaymentModalValue>({
+    amount: '',
+    date: new Date().toISOString().slice(0, 10),
+    method: 'NEFT',
+    reference: '',
+    tdsPercentage: '',
+    tdsAmount: '',
+  })
 
   const loadRows = useCallback(() => {
     setLoading(true)
@@ -79,7 +99,16 @@ export function InvoiceListingPage() {
     () =>
       buildInvoiceColumns({
         onOpenDetail: row => navigate(`${LISTING_PATH}/${row.id}`),
-        onEditDraft: row => navigate(`${LISTING_PATH}/generate?draftId=${row.id}`),
+        onEditDraft: row =>
+          navigate(`${GENERATE_DRAFT_PATH}?draftId=${row.id}&step=1`),
+        onSubmitDraft: row => {
+          setSubmitTarget(row)
+          setSubmitOpen(true)
+        },
+        onDeleteDraft: row => {
+          setDeleteTarget(row)
+          setDeleteOpen(true)
+        },
         onShare: row => {
           setShareTarget(row)
           setShareValue({
@@ -93,17 +122,61 @@ export function InvoiceListingPage() {
         onDownload: row => {
           showToast({ title: 'Download started', description: `${row.invoiceId}.pdf`, variant: 'success' })
         },
-        onCreditNote: row => navigate(`${LISTING_PATH}/${row.id}/credit-note`),
-        onCancel: row => {
-          setCancelTarget(row)
-          setCancelOpen(true)
+        onDownloadReceipt: row => {
+          showToast({ title: 'Receipt download started', description: row.invoiceId, variant: 'success' })
         },
-        onDeleteDraft: row => {
-          setDeleteTarget(row)
-          setDeleteOpen(true)
+        onRecordPayment: row => {
+          const collected = row.payments.reduce((sum, p) => sum + p.amount, 0)
+          const balance = Math.max(0, row.totals.finalAmount - collected)
+          const tdsPct =
+            row.taxConfig.tdsApplicable && row.taxConfig.tdsPercentage > 0
+              ? row.taxConfig.tdsPercentage
+              : 0
+          const gross = balance > 0 ? balance : 0
+          const tdsAmount =
+            tdsPct > 0 && gross > 0 ? Math.round(((gross * tdsPct) / 100) * 100) / 100 : 0
+          setPaymentTarget(row)
+          setPaymentValue({
+            amount: gross > 0 ? String(gross) : '',
+            date: new Date().toISOString().slice(0, 10),
+            method: 'NEFT',
+            reference: '',
+            tdsPercentage: tdsPct > 0 ? String(tdsPct) : '',
+            tdsAmount: tdsAmount > 0 ? String(tdsAmount) : '',
+          })
+          setPaymentOpen(true)
+        },
+        onSecondaryInvoice: row => {
+          const secondary = invoiceService.createSecondaryInvoice(row.id)
+          if (!secondary) {
+            showToast({ title: 'Unable to create secondary invoice', variant: 'error' })
+            return
+          }
+          showToast({
+            title: 'Secondary invoice created',
+            description: `${secondary.invoiceId} linked to ${row.invoiceId}`,
+            variant: 'success',
+          })
+          loadRows()
+          navigate(`${GENERATE_DRAFT_PATH}?draftId=${secondary.id}&step=1`)
+        },
+        onCreditNote: row => navigate(`${LISTING_PATH}/${row.id}/credit-note`),
+        onDebitNote: row => {
+          const debit = invoiceService.createDebitNote(row.id)
+          if (!debit) {
+            showToast({ title: 'Unable to create debit note', variant: 'error' })
+            return
+          }
+          showToast({ title: 'Debit note created', description: debit.invoiceId, variant: 'success' })
+          loadRows()
+          navigate(`${LISTING_PATH}/${debit.id}`)
+        },
+        onSendReminder: row => {
+          setReminderTarget(row)
+          setReminderOpen(true)
         },
       }),
-    [navigate, showToast],
+    [navigate, showToast, loadRows],
   )
 
   const toolbarColumns = useMemo(
@@ -151,12 +224,16 @@ export function InvoiceListingPage() {
     loadRows()
   }
 
-  const handleCancelConfirm = () => {
-    if (!cancelTarget) return
-    invoiceService.cancel(cancelTarget.id)
-    showToast({ title: 'Invoice cancelled', variant: 'info' })
-    setCancelOpen(false)
-    setCancelTarget(undefined)
+  const handleSubmitConfirm = () => {
+    if (!submitTarget) return
+    const updated = invoiceService.submitDraft(submitTarget.id)
+    if (!updated) {
+      showToast({ title: 'Unable to submit invoice', variant: 'error' })
+      return
+    }
+    showToast({ title: 'Invoice submitted', description: updated.invoiceId, variant: 'success' })
+    setSubmitOpen(false)
+    setSubmitTarget(undefined)
     loadRows()
   }
 
@@ -169,15 +246,68 @@ export function InvoiceListingPage() {
     loadRows()
   }
 
+  const handleReminderConfirm = () => {
+    if (!reminderTarget) return
+    const updated = invoiceService.sendReminder(reminderTarget.id)
+    if (!updated) {
+      showToast({ title: 'Unable to send reminder', variant: 'error' })
+      return
+    }
+    showToast({ title: 'Reminder sent', description: reminderTarget.invoiceId, variant: 'success' })
+    setReminderOpen(false)
+    setReminderTarget(undefined)
+    loadRows()
+  }
+
+  const handleRecordPaymentConfirm = () => {
+    if (!paymentTarget) return
+    const amount = Number.parseFloat(paymentValue.amount.replace(/,/g, ''))
+    if (!Number.isFinite(amount) || amount <= 0) {
+      showToast({ title: 'Enter a valid payment amount', variant: 'error' })
+      return
+    }
+    if (!paymentValue.reference.trim()) {
+      showToast({ title: 'Payment reference is required', variant: 'error' })
+      return
+    }
+    const tdsPercentage = parsePaymentField(paymentValue.tdsPercentage)
+    const tdsAmount = parsePaymentField(paymentValue.tdsAmount)
+
+    const updated = invoiceService.recordPayment(paymentTarget.id, {
+      amount,
+      date: paymentValue.date,
+      method: paymentValue.method,
+      reference: paymentValue.reference.trim(),
+      tdsPercentage: tdsPercentage > 0 ? tdsPercentage : undefined,
+      tdsAmount: tdsAmount > 0 ? tdsAmount : undefined,
+    })
+    if (!updated) {
+      showToast({ title: 'Unable to record payment', variant: 'error' })
+      return
+    }
+    showToast({
+      title: 'Payment recorded',
+      description: updated.invoiceId,
+      variant: 'success',
+    })
+    setPaymentOpen(false)
+    setPaymentTarget(undefined)
+    loadRows()
+  }
+
   return (
     <>
       <AdminListingShell
         stickyPageHeader={
           <AdminListingStickyHeader
             title="Billing & invoice management"
-            description="Operational invoice generation and finance tracking"
+            description="Operational invoice generation and finance tracking."
             actions={
-              <Button label="Generate invoice" startIcon={<Plus size={14} />} onClick={handleGenerate} />
+              <Button
+                label="Generate Invoice"
+                startIcon={<Plus size={14} />}
+                href={`${LISTING_PATH}/generate`}
+              />
             }
           />
         }
@@ -258,13 +388,12 @@ export function InvoiceListingPage() {
       />
 
       <ConfirmDialog
-        open={cancelOpen}
-        onClose={() => setCancelOpen(false)}
-        title="Cancel invoice"
-        description={`Cancel invoice ${cancelTarget?.invoiceId}? This cannot be undone.`}
-        confirmLabel="Cancel invoice"
-        variant="destructive"
-        onConfirm={handleCancelConfirm}
+        open={submitOpen}
+        onClose={() => setSubmitOpen(false)}
+        title="Submit invoice"
+        description={`Submit invoice ${submitTarget?.invoiceId}? This will lock billing items and make the invoice visible to the customer.`}
+        confirmLabel="Submit invoice"
+        onConfirm={handleSubmitConfirm}
       />
 
       <ConfirmDialog
@@ -275,6 +404,35 @@ export function InvoiceListingPage() {
         confirmLabel="Delete draft"
         variant="destructive"
         onConfirm={handleDeleteConfirm}
+      />
+
+      <ConfirmDialog
+        open={reminderOpen}
+        onClose={() => setReminderOpen(false)}
+        title="Send payment reminder"
+        description={`Send a payment reminder for overdue invoice ${reminderTarget?.invoiceId}?`}
+        confirmLabel="Send reminder"
+        onConfirm={handleReminderConfirm}
+      />
+
+      <RecordPaymentModal
+        open={paymentOpen}
+        onClose={() => setPaymentOpen(false)}
+        value={paymentValue}
+        onChange={setPaymentValue}
+        onSubmit={handleRecordPaymentConfirm}
+        invoiceId={paymentTarget?.invoiceId}
+        balancePayable={
+          paymentTarget
+            ? Math.max(
+                0,
+                paymentTarget.totals.finalAmount -
+                  paymentTarget.payments.reduce((sum, p) => sum + p.amount, 0),
+              )
+            : 0
+        }
+        tdsApplicable={paymentTarget?.taxConfig.tdsApplicable}
+        defaultTdsPercentage={paymentTarget?.taxConfig.tdsPercentage ?? 0}
       />
     </>
   )

@@ -40,7 +40,6 @@ export function buildServiceColumns({
       width: 120,
       render: (_, row) => formatServicePrice(row),
     },
-    { key: 'currency', label: 'Currency', width: 80 },
     {
       key: 'mappedSacCode',
       label: 'Mapped SAC Code',

@@ -40,10 +40,14 @@ export function EditEnquiryPage() {
     })
   }, [enquiryId, setFormData])
 
+  const enquiryDetailHref = enquiryId
+    ? `/admin/customer-accounts/enquiries/${enquiryId}`
+    : '/admin/customer-accounts/enquiries'
+
   const breadcrumbs = [
     { label: 'Customer & Accounts', href: '/admin/customer-accounts/enquiries' },
     { label: 'Enquiry Management', href: '/admin/customer-accounts/enquiries' },
-    { label: enquiryId ?? 'Edit', href: enquiryId ? `/admin/customer-accounts/enquiries/${enquiryId}` : undefined },
+    { label: enquiryId ?? 'Edit', href: enquiryDetailHref },
     { label: 'Edit' },
   ]
 

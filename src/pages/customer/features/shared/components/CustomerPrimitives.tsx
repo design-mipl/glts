@@ -267,6 +267,8 @@ export interface CustomerChecklistItem {
   label: string
   required?: boolean
   status: 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified'
+  /** Overrides chip text when set (e.g. workflow-specific travel ticket / insurance status). */
+  statusLabel?: string
   reviewComment?: string
 }
 
@@ -293,7 +295,10 @@ export function CustomerDocumentChecklist({
             <Stack key={item.id} spacing={0.5}>
               <Stack direction="row" alignItems="center" spacing={1}>
                 <CustomerStatusChip
-                  label={item.status === 'invalid' ? 'marked invalid' : item.status.replace('_', ' ')}
+                  label={
+                    item.statusLabel ??
+                    (item.status === 'invalid' ? 'marked invalid' : item.status.replace('_', ' '))
+                  }
                   tone={isInvalid ? 'critical' : getCustomerStatusTone(item.status)}
                 />
                 <Typography sx={{ flex: 1, fontSize: 13, fontWeight: item.required ? 700 : 500, color: colors.navy }}>

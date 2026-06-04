@@ -70,7 +70,7 @@ export function AdminStepperFormShell({
   ) : current.children != null ? (
     <Box sx={{ width: '100%' }}>{current.children}</Box>
   ) : current.sections ? (
-    <AdminFormSectionsLayout sections={current.sections} variant="stack" />
+    <AdminFormSectionsLayout sections={current.sections} variant="page" />
   ) : null
 
   const stepperCard = (

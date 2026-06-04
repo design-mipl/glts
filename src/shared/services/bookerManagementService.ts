@@ -1,7 +1,7 @@
 import { SEED_BOOKER_USERS } from '@/shared/data/mockBookerUsers'
 import { GLTS_BOOKER_IDS } from '@/pages/customer/data/portalIds'
 import { getCustomerActor } from '@/pages/customer/features/shared/utils/customerActor'
-import { loadSession } from '@/shared/auth/session'
+import { BUSINESS_WORKSPACE_ID, loadSession } from '@/shared/auth/session'
 import { adminManagementService } from '@/shared/services/adminManagementService'
 import type {
   BookerUser,
@@ -53,10 +53,18 @@ function normalizeQuery(query?: string) {
   return query?.trim().toLowerCase() ?? ''
 }
 
-function formToBooker(data: BookerUserFormData) {
+function resolveBookerCompanyName(): string {
+  const session = loadSession()
+  const fromSession = session?.companyName?.trim()
+  if (fromSession && fromSession !== BUSINESS_WORKSPACE_ID) return fromSession
+  return 'Apex Marine Logistics'
+}
+
+function formToBooker(data: BookerUserFormData, companyName: string) {
   return {
     fullName: data.fullName.trim(),
     email: data.email.trim().toLowerCase(),
+    companyName: companyName.trim() || resolveBookerCompanyName(),
     mobile: data.mobile.trim(),
     location: data.location.trim(),
     designation: data.designation.trim(),
@@ -118,7 +126,7 @@ export const bookerManagementService = {
       : `${data.fullName.trim()} added without invite email.`
     const record: BookerUser = {
       id: generateBookerId(),
-      ...formToBooker(data),
+      ...formToBooker(data, resolveBookerCompanyName()),
       ...creator,
       lastLogin: undefined,
       applicationCount: 0,
@@ -138,7 +146,7 @@ export const bookerManagementService = {
 
     const updated: BookerUser = {
       ...bookerStore[index],
-      ...formToBooker(data),
+      ...formToBooker(data, bookerStore[index].companyName),
       updatedAt: nowIso(),
       activities: [
         makeActivity('Booker updated', `${data.fullName.trim()} details were updated.`),

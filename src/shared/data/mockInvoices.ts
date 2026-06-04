@@ -7,7 +7,7 @@ import type {
   InvoiceType,
 } from '@/shared/types/invoice'
 import { computeInvoiceBillingAdjustment, mergeTotalsWithAdjustment } from '@/shared/utils/invoiceBillingAdjustment'
-import { computeInvoiceTotals } from '@/shared/utils/invoiceCalculations'
+import { computeInvoiceTotals, getInvoiceApplicationCount } from '@/shared/utils/invoiceCalculations'
 
 function daysAgo(days: number) {
   const d = new Date()
@@ -126,7 +126,7 @@ export const SEED_INVOICES: Invoice[] = [
     agreementId: 'AGR-001',
     gltsReferences: ['GLTS-BAT-2026-041'],
     batchIds: ['GLTS-BAT-2026-041'],
-    totalApplications: 24,
+    totalApplications: 1,
     country: 'Schengen',
     visaType: 'Crew · Type C',
     lineItems: [
@@ -291,6 +291,124 @@ export const SEED_INVOICES: Invoice[] = [
     attachments: [],
     payments: [],
   }),
+  withAdjustment({
+    id: 'INV-008',
+    invoiceId: 'GLTS-INV-8828',
+    invoiceType: 'bulk_invoice',
+    billingMode: 'application_wise',
+    companyId: 'CMP-1001',
+    companyName: 'Apex Marine Logistics',
+    billingEntity: 'Apex Marine Logistics Pvt Ltd',
+    vesselId: 'GLTS-VSL-001',
+    vesselName: 'MV Ocean Star',
+    gltsReferences: [],
+    batchIds: ['GLTS-BAT-2026-055'],
+    totalApplications: 1,
+    country: 'UAE',
+    visaType: 'Crew · Transit',
+    lineItems: [
+      lineItem({
+        id: 'li-seed-9',
+        batchId: 'GLTS-BAT-2026-055',
+        serviceType: 'Visa Fee',
+        description: 'UAE bulk crew visa fees',
+        quantity: 12,
+        unitPrice: 1200,
+        gstApplicable: true,
+        gstAmount: 2592,
+        amount: 16992,
+        billingStatus: 'billed',
+      }),
+    ],
+    taxConfig: { gstApplicable: true, gstPercentage: 18, tdsApplicable: false, tdsPercentage: 0 },
+    totals: { subtotal: 14400, gstTotal: 2592, tdsAmount: 0, additionalCharges: 0, finalAmount: 16992, advanceAvailable: 5000, advanceAdjusted: 2000, creditApplied: 0, balancePayable: 14992 },
+    invoiceStatus: 'submitted',
+    paymentStatus: 'pending',
+    invoiceDate: daysAgoDate(7),
+    dueDate: daysFromNowDate(23),
+    paymentTerms: 'Net 30',
+    lastUpdated: daysAgo(2),
+    createdAt: daysAgo(7),
+    activities: [{ id: 'act-6', timestamp: daysAgo(7), actor: 'Finance Admin', action: 'Invoice submitted', detail: 'Bulk invoice GLTS-BAT-2026-055' }],
+    attachments: [{ id: 'att-2', name: 'GLTS-INV-8828.pdf', type: 'invoice_pdf', uploadedAt: daysAgo(7) }],
+    payments: [],
+  }),
+  withAdjustment({
+    id: 'INV-009',
+    invoiceId: 'GLTS-INV-8829',
+    invoiceType: 'debit_note',
+    billingMode: 'application_wise',
+    companyId: 'CMP-1001',
+    companyName: 'Apex Marine Logistics',
+    billingEntity: 'Apex Marine Logistics Pvt Ltd',
+    gltsReferences: ['GLTS-APP-2026-790'],
+    batchIds: [],
+    totalApplications: 1,
+    sourceInvoiceId: 'INV-001',
+    lineItems: [
+      lineItem({
+        id: 'li-seed-10',
+        applicationId: 'GLTS-APP-2026-790',
+        serviceType: 'Additional Service',
+        description: 'Debit — missed airport assistance charge',
+        quantity: 1,
+        unitPrice: 800,
+        gstApplicable: true,
+        gstAmount: 144,
+        amount: 944,
+      }),
+    ],
+    taxConfig: { gstApplicable: true, gstPercentage: 18, tdsApplicable: false, tdsPercentage: 0 },
+    totals: { subtotal: 800, gstTotal: 144, tdsAmount: 0, additionalCharges: 0, finalAmount: 944, advanceAvailable: 0, advanceAdjusted: 0, creditApplied: 0, balancePayable: 944 },
+    invoiceStatus: 'submitted',
+    paymentStatus: 'pending',
+    invoiceDate: daysAgoDate(4),
+    dueDate: daysFromNowDate(26),
+    lastUpdated: daysAgo(4),
+    createdAt: daysAgo(4),
+    activities: [{ id: 'act-7', timestamp: daysAgo(4), actor: 'Finance Admin', action: 'Debit note created', detail: 'Additional charge against GLTS-INV-8821' }],
+    attachments: [],
+    payments: [],
+  }),
+  withAdjustment({
+    id: 'INV-010',
+    invoiceId: 'GLTS-INV-8830',
+    invoiceType: 'final_settlement',
+    billingMode: 'company_wise',
+    companyId: 'CMP-1003',
+    companyName: 'Global Corporate Travel Ltd',
+    billingEntity: 'Global Corporate Travel Ltd',
+    gltsReferences: ['GLTS-APP-2026-801'],
+    batchIds: [],
+    totalApplications: 1,
+    country: 'UK',
+    visaType: 'Business',
+    lineItems: [
+      lineItem({
+        id: 'li-seed-11',
+        applicationId: 'GLTS-APP-2026-801',
+        serviceType: 'Visa Fee',
+        description: 'Final settlement — UK business visa',
+        quantity: 1,
+        unitPrice: 2200,
+        gstApplicable: true,
+        gstAmount: 396,
+        amount: 2596,
+        billingStatus: 'billed',
+      }),
+    ],
+    taxConfig: { gstApplicable: true, gstPercentage: 18, tdsApplicable: false, tdsPercentage: 0 },
+    totals: { subtotal: 2200, gstTotal: 396, tdsAmount: 0, additionalCharges: 0, finalAmount: 2596, advanceAvailable: 0, advanceAdjusted: 500, creditApplied: 0, balancePayable: 2096 },
+    invoiceStatus: 'draft',
+    paymentStatus: 'pending',
+    invoiceDate: daysAgoDate(0),
+    dueDate: daysFromNowDate(30),
+    lastUpdated: daysAgo(0),
+    createdAt: daysAgo(0),
+    activities: [],
+    attachments: [],
+    payments: [],
+  }),
 ]
 
 const STORAGE_KEY = 'glts:invoices'
@@ -312,6 +430,9 @@ function mapLegacyInvoiceType(value: string): InvoiceType {
     additional_expense: 'additional_expense',
     final_settlement: 'final_settlement',
     credit_note: 'credit_note',
+    debit_note: 'debit_note',
+    bulk_invoice: 'bulk_invoice',
+    bulk: 'bulk_invoice',
   }
   return map[value] ?? 'single_invoice'
 }
@@ -334,6 +455,9 @@ function normalizeInvoice(raw: Invoice): Invoice {
   const baseTotals = computeInvoiceTotals(lineItems, taxConfig, raw.totals?.additionalCharges ?? 0)
   const adjustment = computeInvoiceBillingAdjustment(undefined, baseTotals.finalAmount)
 
+  const gltsReferences = raw.gltsReferences ?? []
+  const batchIds = raw.batchIds ?? []
+
   return {
     ...raw,
     billingMode: mapLegacyBillingMode(String(raw.billingMode)),
@@ -346,8 +470,9 @@ function normalizeInvoice(raw: Invoice): Invoice {
     activities: raw.activities ?? [],
     attachments: raw.attachments ?? [],
     payments: raw.payments ?? [],
-    gltsReferences: raw.gltsReferences ?? [],
-    batchIds: raw.batchIds ?? [],
+    gltsReferences,
+    batchIds,
+    totalApplications: getInvoiceApplicationCount({ gltsReferences, batchIds }),
   }
 }
 

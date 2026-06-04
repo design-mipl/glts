@@ -4,6 +4,7 @@ import type {
   CountryMaster,
   CountryVisaOffering,
   DocumentWorkspaceItem,
+  PassportIssueLocation,
   PortalChecklistItem,
   RequirementDocumentRow,
   RequirementPreviewCard,
@@ -44,6 +45,26 @@ export function listCountryMasters(options: ListCountryMastersOptions = {}): Cou
 
 export function getCountryMasterById(countryId: string): CountryMaster | undefined {
   return getMockCountryMasters().find(c => c.id === countryId)
+}
+
+export function getPassportIssueLocations(countryId: string): PassportIssueLocation[] {
+  const master = getCountryMasterById(countryId)
+  if (!master?.passportIssueLocations?.length) return []
+  return master.passportIssueLocations.filter((loc) => loc.active !== false)
+}
+
+export function resolvePassportJurisdiction(
+  countryId: string,
+  locationId: string,
+): string | undefined {
+  return getPassportIssueLocations(countryId).find((loc) => loc.id === locationId)?.jurisdiction
+}
+
+export function getPassportIssueLocationLabel(
+  countryId: string,
+  locationId: string,
+): string | undefined {
+  return getPassportIssueLocations(countryId).find((loc) => loc.id === locationId)?.label
 }
 
 export function getVisaOfferings(countryId: string, activeOnly = true): CountryVisaOffering[] {

@@ -26,8 +26,8 @@ export interface DateRangePickerProps {
 
 export default function DateRangePicker({
   label,
-  startLabel = 'Start date',
-  endLabel = 'End date',
+  startLabel,
+  endLabel,
   startPlaceholder = 'DD/MM/YYYY',
   endPlaceholder = 'DD/MM/YYYY',
   value,
@@ -65,9 +65,11 @@ export default function DateRangePicker({
         alignItems={{ sm: 'flex-start' }}
       >
         <Box sx={{ flex: 1, minWidth: 0, width: fullWidth ? '100%' : undefined }}>
-          <Typography component="label" sx={formFieldLabelSx()}>
-            {startLabel}
-          </Typography>
+          {startLabel ? (
+            <Typography component="label" sx={formFieldLabelSx()}>
+              {startLabel}
+            </Typography>
+          ) : null}
           <DatePicker
             value={startVal}
             onChange={handleStartChange}
@@ -89,15 +91,17 @@ export default function DateRangePicker({
             flexShrink: 0,
             fontSize: '12px',
             userSelect: 'none',
-            pt: { sm: 3.25 },
+            pt: startLabel || endLabel ? { sm: 3.25 } : { sm: 0.75 },
           }}
         >
           –
         </Typography>
         <Box sx={{ flex: 1, minWidth: 0, width: fullWidth ? '100%' : undefined }}>
-          <Typography component="label" sx={formFieldLabelSx()}>
-            {endLabel}
-          </Typography>
+          {endLabel ? (
+            <Typography component="label" sx={formFieldLabelSx()}>
+              {endLabel}
+            </Typography>
+          ) : null}
           <DatePicker
             value={endVal}
             onChange={handleEndChange}

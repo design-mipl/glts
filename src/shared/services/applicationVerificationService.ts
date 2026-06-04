@@ -15,6 +15,15 @@ import { REQUIRED_GLOBAL_CHECKLIST_DOCUMENTS } from '@/pages/customer/features/a
 import { withDocumentProgress } from '@/pages/customer/features/applications/utils/uploadQueueDocuments'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import { isCustomerSubmitted, marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
+import {
+  emptyInsuranceWorkflow,
+  emptyTravelTicketWorkflow,
+  isSimpleDocumentRequirement,
+  seedSimpleDocumentWorkflowFields,
+  type DocumentHandlingMode,
+  type InsuranceWorkflow,
+  type TravelTicketWorkflow,
+} from '@/shared/utils/applicantDocumentWorkflowUtils'
 
 const VERIFICATION_STORAGE_KEY = 'glts:application-verification'
 
@@ -29,12 +38,24 @@ export interface VerificationDocumentOverride {
   updatedAt: string
 }
 
+export interface VerificationDocumentWorkflowPatch {
+  scope: VerificationDocumentScope
+  travelerRowId?: string
+  documentId: string
+  handlingMode?: DocumentHandlingMode
+  travelTicket?: Partial<TravelTicketWorkflow>
+  insurance?: Partial<InsuranceWorkflow>
+  status?: ApplicantDocumentStatus
+  updatedAt: string
+}
+
 export interface ApplicationVerificationRecord {
   applicationId: string
   operationalStatus?: ApplicationOperationalStatus
   draftSavedAt?: string
   submittedAt?: string
   documentOverrides: VerificationDocumentOverride[]
+  documentWorkflowPatches?: VerificationDocumentWorkflowPatch[]
 }
 
 type VerificationStore = Record<string, ApplicationVerificationRecord>
@@ -79,6 +100,22 @@ function getDemoVerificationSeeds(applicationId: string): VerificationDocumentOv
         comment: 'Bank statement must show transactions for the last 90 days with a visible bank stamp.',
         updatedAt,
       },
+      {
+        scope: 'traveler',
+        travelerRowId: `${applicationId}-q1`,
+        documentId: 'travel-ticket',
+        status: 'missing',
+        comment: 'Upload confirmed flight itinerary with applicant name matching the passport.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId: `${applicationId}-q1`,
+        documentId: 'insurance',
+        status: 'needs_review',
+        comment: 'Insurance must cover the full stay period and Schengen minimum coverage.',
+        updatedAt,
+      },
     ]
   }
 
@@ -98,6 +135,22 @@ function getDemoVerificationSeeds(applicationId: string): VerificationDocumentOv
         documentId: 'bank',
         status: 'needs_review',
         comment: 'Statement period does not cover the full travel dates. Upload updated statements.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId: 'q1',
+        documentId: 'travel-ticket',
+        status: 'missing',
+        comment: 'Upload crew travel ticket or confirmed booking for the joining port.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId: 'q1',
+        documentId: 'insurance',
+        status: 'needs_review',
+        comment: 'Marine travel insurance must list vessel name and policy dates covering the contract.',
         updatedAt,
       },
       {
@@ -128,15 +181,61 @@ function getDemoVerificationSeeds(applicationId: string): VerificationDocumentOv
         comment: 'Upload the last 3 months of bank statements with account holder name matching the passport.',
         updatedAt,
       },
+      {
+        scope: 'traveler',
+        travelerRowId: `${applicationId}-q1`,
+        documentId: 'travel-ticket',
+        status: 'needs_review',
+        comment: 'Flight reservation must show entry and exit dates aligned with the visa application.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId: `${applicationId}-q1`,
+        documentId: 'insurance',
+        status: 'missing',
+        comment: 'Upload travel medical insurance meeting Schengen coverage requirements.',
+        updatedAt,
+      },
     ]
   }
 
   return undefined
 }
 
-function overrideMatchesRow(row: UploadQueueRow, override: VerificationDocumentOverride): boolean {
-  if (override.scope !== 'traveler') return false
-  const travelerKey = override.travelerRowId
+function getDemoWorkflowPatches(applicationId: string): VerificationDocumentWorkflowPatch[] | undefined {
+  const updatedAt = new Date().toISOString()
+
+  if (applicationId === GLTS_BATCH_IDS.schengenCrew) {
+    return [
+      {
+        scope: 'traveler',
+        travelerRowId: 'q1',
+        documentId: 'travel-ticket',
+        handlingMode: 'arrange_by_glts',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId: 'q1',
+        documentId: 'insurance',
+        handlingMode: 'upload_by_applicant',
+        insurance: { fileName: 'marine_insurance_policy.pdf' },
+        status: 'uploaded',
+        updatedAt,
+      },
+    ]
+  }
+
+  return undefined
+}
+
+function travelerPatchMatchesRow(
+  row: UploadQueueRow,
+  patch: { scope: VerificationDocumentScope; travelerRowId?: string },
+): boolean {
+  if (patch.scope !== 'traveler') return false
+  const travelerKey = patch.travelerRowId
   if (!travelerKey) return false
   return (
     travelerKey === row.id ||
@@ -144,6 +243,10 @@ function overrideMatchesRow(row: UploadQueueRow, override: VerificationDocumentO
     (Boolean(row.gltsApplicationId) &&
       travelerKey === `${row.gltsApplicationId}-q${row.sequenceNo}`)
   )
+}
+
+function overrideMatchesRow(row: UploadQueueRow, override: VerificationDocumentOverride): boolean {
+  return travelerPatchMatchesRow(row, override)
 }
 
 function findDemoOverride(
@@ -219,12 +322,14 @@ function getRecord(applicationId: string): ApplicationVerificationRecord {
       return {
         applicationId,
         documentOverrides: demoSeeds,
+        documentWorkflowPatches: getDemoWorkflowPatches(applicationId) ?? [],
         operationalStatus: 'Correction Required',
       }
     }
     return {
       applicationId,
       documentOverrides: [],
+      documentWorkflowPatches: [],
     }
   }
 
@@ -234,14 +339,54 @@ function getRecord(applicationId: string): ApplicationVerificationRecord {
     return {
       ...persisted,
       documentOverrides: demoSeeds,
+      documentWorkflowPatches:
+        persisted.documentWorkflowPatches?.length
+          ? persisted.documentWorkflowPatches
+          : (getDemoWorkflowPatches(applicationId) ?? []),
       operationalStatus: persisted.operationalStatus ?? 'Correction Required',
     }
   }
 
+  const workflowPatches =
+    persisted.documentWorkflowPatches?.length
+      ? persisted.documentWorkflowPatches
+      : (getDemoWorkflowPatches(applicationId) ?? [])
+
   return {
     ...persisted,
     documentOverrides,
+    documentWorkflowPatches: workflowPatches,
   }
+}
+
+function applyWorkflowPatchToDocument(
+  doc: ApplicantDocumentItem,
+  patch: VerificationDocumentWorkflowPatch,
+): ApplicantDocumentItem {
+  if (!isSimpleDocumentRequirement(doc.documentId) || doc.documentId !== patch.documentId) {
+    return doc
+  }
+
+  let next: ApplicantDocumentItem = { ...doc }
+  if (patch.handlingMode) {
+    next.handlingMode = patch.handlingMode
+  }
+  if (patch.travelTicket && doc.documentId === 'travel-ticket') {
+    next.travelTicket = {
+      ...(doc.travelTicket ?? emptyTravelTicketWorkflow()),
+      ...patch.travelTicket,
+    }
+  }
+  if (patch.insurance && doc.documentId === 'insurance') {
+    next.insurance = {
+      ...(doc.insurance ?? emptyInsuranceWorkflow()),
+      ...patch.insurance,
+    }
+  }
+  if (patch.status) {
+    next.status = patch.status
+  }
+  return seedSimpleDocumentWorkflowFields(next)
 }
 
 function saveRecord(record: ApplicationVerificationRecord) {
@@ -253,40 +398,49 @@ function saveRecord(record: ApplicationVerificationRecord) {
 function applyOverridesToRow(
   row: UploadQueueRow,
   overrides: VerificationDocumentOverride[],
+  workflowPatches: VerificationDocumentWorkflowPatch[],
   applicationId: string,
 ): UploadQueueRow {
   const rowOverrides = overrides.filter(
     o => o.scope === 'traveler' && overrideMatchesRow(row, o),
   )
+  const rowWorkflowPatches = workflowPatches.filter(p => travelerPatchMatchesRow(row, p))
 
   const documents = row.documents.map(doc => {
+    let next = doc
     const override = rowOverrides.find(o => o.documentId === doc.documentId)
-    if (!override) {
-      if (doc.status !== 'rejected' && doc.status !== 'needs_review') return doc
-      if (doc.reviewComment?.trim()) return doc
-      return {
-        ...doc,
-        reviewComment:
-          doc.status === 'rejected'
-            ? 'Document rejected by GLTS team. Please re-upload a corrected document.'
-            : 'Re-upload requested by GLTS team. Please upload an updated document.',
+    if (override) {
+      next = {
+        ...next,
+        status: override.status,
+        reviewComment: resolveOverrideComment(applicationId, override),
+      }
+    } else if (next.status === 'rejected' || next.status === 'needs_review') {
+      if (!next.reviewComment?.trim()) {
+        next = {
+          ...next,
+          reviewComment:
+            next.status === 'rejected'
+              ? 'Document rejected by GLTS team. Please re-upload a corrected document.'
+              : 'Re-upload requested by GLTS team. Please upload an updated document.',
+        }
       }
     }
-    return {
-      ...doc,
-      status: override.status,
-      reviewComment: resolveOverrideComment(applicationId, override),
+
+    const workflowPatch = rowWorkflowPatches.find(p => p.documentId === doc.documentId)
+    if (workflowPatch) {
+      next = applyWorkflowPatchToDocument(next, workflowPatch)
     }
+
+    return next
   })
 
-  if (rowOverrides.length === 0) {
-    const hasCommentUpdates = documents.some(
-      (doc, index) => doc.reviewComment !== row.documents[index]?.reviewComment,
-    )
-    return hasCommentUpdates ? withDocumentProgress({ ...row, documents }) : row
-  }
+  const hasChanges =
+    rowOverrides.length > 0 ||
+    rowWorkflowPatches.length > 0 ||
+    documents.some((doc, index) => doc !== row.documents[index])
 
-  return withDocumentProgress({ ...row, documents })
+  return hasChanges ? withDocumentProgress({ ...row, documents }) : row
 }
 
 function allRequiredVerified(rows: UploadQueueRow[]): boolean {
@@ -319,7 +473,12 @@ export function mergeVerificationIntoDetail(
 ): ApplicationDetailViewModel {
   const record = getRecord(applicationId)
   const uploadQueueRows = detail.uploadQueueRows.map(row =>
-    applyOverridesToRow(row, record.documentOverrides, applicationId),
+    applyOverridesToRow(
+      row,
+      record.documentOverrides,
+      record.documentWorkflowPatches ?? [],
+      applicationId,
+    ),
   )
   const operationalStatus =
     record.operationalStatus ??
@@ -435,6 +594,64 @@ export const applicationVerificationService = {
           updatedAt: new Date().toISOString(),
         },
       ],
+    }
+    saveRecord(next)
+    return this.getWorkspace(applicationId)
+  },
+
+  updateTravelerDocumentWorkflow(
+    applicationId: string,
+    travelerRowId: string,
+    documentId: string,
+    patch: {
+      handlingMode?: DocumentHandlingMode
+      travelTicket?: Partial<TravelTicketWorkflow>
+      insurance?: Partial<InsuranceWorkflow>
+      status?: ApplicantDocumentStatus
+    },
+  ) {
+    const record = getRecord(applicationId)
+    const without = (record.documentWorkflowPatches ?? []).filter(
+      p =>
+        !(
+          p.scope === 'traveler' &&
+          p.travelerRowId === travelerRowId &&
+          p.documentId === documentId
+        ),
+    )
+    const workflowPatch: VerificationDocumentWorkflowPatch = {
+      scope: 'traveler',
+      travelerRowId,
+      documentId,
+      handlingMode: patch.handlingMode,
+      travelTicket: patch.travelTicket,
+      insurance: patch.insurance,
+      status: patch.status,
+      updatedAt: new Date().toISOString(),
+    }
+    const next: ApplicationVerificationRecord = {
+      ...record,
+      documentWorkflowPatches: [...without, workflowPatch],
+    }
+    if (patch.status) {
+      const statusWithout = record.documentOverrides.filter(
+        o =>
+          !(
+            o.scope === 'traveler' &&
+            o.travelerRowId === travelerRowId &&
+            o.documentId === documentId
+          ),
+      )
+      next.documentOverrides = [
+        ...statusWithout,
+        {
+          scope: 'traveler',
+          travelerRowId,
+          documentId,
+          status: patch.status,
+          updatedAt: workflowPatch.updatedAt,
+        },
+      ]
     }
     saveRecord(next)
     return this.getWorkspace(applicationId)

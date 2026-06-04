@@ -8,6 +8,7 @@ import type {
   InvoiceListFilters,
   InvoiceStatus,
   InvoiceWorkspaceState,
+  RecordPaymentPayload,
   ShareInvoicePayload,
 } from '@/shared/types/invoice'
 import { findAgreementForCompany, buildLineItems } from '@/shared/utils/invoiceBillingEngine'
@@ -18,6 +19,8 @@ import {
 import { getBilledItemsRegistry } from '@/shared/utils/invoiceBilledItemsRegistry'
 import {
   computeInvoiceTotals,
+  formatInr,
+  getInvoiceApplicationCount,
   recalculateLineItems,
 } from '@/shared/utils/invoiceCalculations'
 
@@ -135,11 +138,10 @@ function workspaceToInvoice(
     poReference: workspace.selection.poReference ?? existing?.poReference,
     gltsReferences: gltsRefs.length ? gltsRefs : workspace.selection.applicationIds,
     batchIds,
-    totalApplications: Math.max(
-      gltsRefs.length,
-      workspace.selection.applicationIds.length,
-      batchIds.length ? 1 : 0,
-    ),
+    totalApplications: getInvoiceApplicationCount({
+      gltsReferences: gltsRefs.length ? gltsRefs : workspace.selection.applicationIds,
+      batchIds,
+    }),
     lineItems,
     taxConfig: workspace.taxConfig,
     totals,
@@ -282,6 +284,117 @@ export const invoiceService = {
     return true
   },
 
+  submitDraft(id: string): Invoice | undefined {
+    const store = getStore()
+    const idx = store.findIndex(i => i.id === id || i.invoiceId === id)
+    if (idx < 0) return undefined
+    const current = store[idx]
+    if (current.invoiceStatus !== 'draft') return undefined
+
+    const lockedLineItems = current.lineItems.map(li => ({
+      ...li,
+      billingStatus: li.included !== false ? ('billed' as const) : li.billingStatus,
+    }))
+    const updated: Invoice = {
+      ...current,
+      lineItems: lockedLineItems,
+      invoiceStatus: 'submitted',
+      lastUpdated: nowIso(),
+      activities: [
+        ...current.activities,
+        makeActivity('Invoice submitted', `Invoice ${current.invoiceId} submitted to customer portal`),
+      ],
+      attachments: current.attachments.some(a => a.type === 'invoice_pdf')
+        ? current.attachments
+        : [
+            ...current.attachments,
+            {
+              id: `att-${Date.now()}`,
+              name: `${current.invoiceId}.pdf`,
+              type: 'invoice_pdf' as const,
+              uploadedAt: nowIso(),
+            },
+          ],
+    }
+    const next = [...store]
+    next[idx] = updated
+    persist(next)
+    return updated
+  },
+
+  sendReminder(id: string): Invoice | undefined {
+    const store = getStore()
+    const idx = store.findIndex(i => i.id === id || i.invoiceId === id)
+    if (idx < 0) return undefined
+    const current = store[idx]
+    if (current.invoiceStatus !== 'overdue') return undefined
+
+    const updated: Invoice = {
+      ...current,
+      lastUpdated: nowIso(),
+      activities: [
+        ...current.activities,
+        makeActivity('Payment reminder sent', `Reminder sent for overdue invoice ${current.invoiceId}`),
+      ],
+    }
+    const next = [...store]
+    next[idx] = updated
+    persist(next)
+    return updated
+  },
+
+  createDebitNote(sourceInvoiceId: string, reason = 'Debit note adjustment'): Invoice | undefined {
+    const source = this.getById(sourceInvoiceId)
+    if (!source || source.invoiceType === 'credit_note' || source.invoiceType === 'debit_note') return undefined
+
+    const lineItems = [
+      {
+        id: `dn-${Date.now()}`,
+        applicationId: source.gltsReferences[0],
+        batchId: source.batchIds[0],
+        serviceType: 'Additional Charge',
+        description: `Debit: ${reason}`,
+        quantity: 1,
+        unitPrice: 500,
+        gstApplicable: true,
+        gstAmount: 90,
+        amount: 590,
+        included: true,
+        billingStatus: 'unbilled' as const,
+        isAdditionalExpense: true,
+      },
+    ]
+
+    const workspace: InvoiceWorkspaceState = {
+      selection: {
+        billingMode: 'application_wise',
+        applicationSelectionMode: 'single',
+        invoiceType: 'debit_note',
+        companyId: source.companyId,
+        companyName: source.companyName,
+        billingEntity: source.billingEntity,
+        vesselId: source.vesselId,
+        vesselName: source.vesselName,
+        applicationIds: source.gltsReferences,
+        batchIds: source.batchIds,
+        servicePresetIds: [],
+      },
+      lineItems,
+      taxConfig: source.taxConfig,
+      additionalCharges: 0,
+      paymentTerms: source.paymentTerms ?? 'Net 30',
+      dueDate: dueDateFromTerms(30),
+      sourceInvoiceId: source.id,
+      agreementId: source.agreementId,
+    }
+
+    const invoice = workspaceToInvoice(workspace, 'submitted')
+    invoice.invoiceType = 'debit_note'
+    invoice.activities = [makeActivity('Debit note created', reason)]
+    persist([...getStore(), invoice])
+    return invoice
+  },
+
   share(id: string, payload: ShareInvoicePayload): Invoice | undefined {
     const store = getStore()
     const idx = store.findIndex(i => i.id === id || i.invoiceId === id)
@@ -330,6 +443,131 @@ export const invoiceService = {
     next[idx] = updated
     persist(next)
     return updated
+  },
+
+  recordPayment(id: string, payload: RecordPaymentPayload): Invoice | undefined {
+    const store = getStore()
+    const idx = store.findIndex(i => i.id === id || i.invoiceId === id)
+    if (idx < 0) return undefined
+    const current = store[idx]
+    if (
+      current.invoiceStatus === 'draft' ||
+      current.invoiceStatus === 'cancelled' ||
+      current.invoiceType === 'credit_note' ||
+      current.invoiceType === 'debit_note'
+    ) {
+      return undefined
+    }
+
+    const amount = Math.max(0, payload.amount)
+    if (amount <= 0) return undefined
+
+    const collectedBefore = current.payments.reduce((sum, p) => sum + p.amount, 0)
+    const outstanding = Math.max(0, current.totals.finalAmount - collectedBefore)
+    const appliedAmount = Math.min(amount, outstanding)
+    if (appliedAmount <= 0) return undefined
+
+    const tdsPercentage = Math.max(0, payload.tdsPercentage ?? 0)
+    const tdsAmount = Math.max(0, payload.tdsAmount ?? 0)
+
+    const payment = {
+      id: `pay-${Date.now()}`,
+      date: payload.date || todayDate(),
+      amount: appliedAmount,
+      method: payload.method.trim() || 'Bank transfer',
+      reference: payload.reference.trim(),
+      status: 'partial' as const,
+      ...(tdsPercentage > 0 || tdsAmount > 0 ? { tdsPercentage, tdsAmount } : {}),
+    }
+
+    const payments = [...current.payments, payment]
+    const collected = payments.reduce((sum, p) => sum + p.amount, 0)
+    const balancePayable = Math.max(0, current.totals.finalAmount - collected)
+    const fullyPaid = balancePayable <= 0
+
+    const paymentStatus = fullyPaid ? ('paid' as const) : ('partial' as const)
+    const invoiceStatus = fullyPaid
+      ? ('paid' as const)
+      : collected > 0
+        ? ('partially_paid' as const)
+        : current.invoiceStatus
+
+    const updated: Invoice = {
+      ...current,
+      invoiceStatus,
+      paymentStatus,
+      totals: { ...current.totals, balancePayable },
+      payments: payments.map(p => ({
+        ...p,
+        status: fullyPaid ? ('paid' as const) : ('partial' as const),
+      })),
+      lastUpdated: nowIso(),
+      activities: [
+        ...current.activities,
+        makeActivity(
+          'Payment recorded',
+          [
+            `${formatInr(appliedAmount)} via ${payment.method}`,
+            payment.reference ? `Ref: ${payment.reference}` : '',
+            tdsAmount > 0
+              ? `TDS ${tdsPercentage > 0 ? `${tdsPercentage}% · ` : ''}${formatInr(tdsAmount)}`
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        ),
+      ],
+    }
+
+    const next = [...store]
+    next[idx] = updated
+    persist(next)
+    return updated
+  },
+
+  createSecondaryInvoice(sourceInvoiceId: string): Invoice | undefined {
+    const source = this.getById(sourceInvoiceId)
+    if (!source) return undefined
+    if (
+      source.invoiceStatus === 'draft' ||
+      source.invoiceStatus === 'cancelled' ||
+      source.invoiceType === 'credit_note' ||
+      source.invoiceType === 'debit_note'
+    ) {
+      return undefined
+    }
+
+    const workspace: InvoiceWorkspaceState = {
+      selection: {
+        billingMode: source.billingMode,
+        applicationSelectionMode: 'single',
+        invoiceType: 'additional_expense',
+        companyId: source.companyId,
+        companyName: source.companyName,
+        billingEntity: source.billingEntity,
+        vesselId: source.vesselId,
+        vesselName: source.vesselName,
+        applicationIds: [...source.gltsReferences],
+        batchIds: [...source.batchIds],
+        servicePresetIds: [],
+        poReference: source.poReference,
+      },
+      lineItems: [],
+      taxConfig: { ...source.taxConfig },
+      additionalCharges: 0,
+      paymentTerms: source.paymentTerms ?? 'Net 30',
+      dueDate: dueDateFromTerms(30),
+      sourceInvoiceId: source.id,
+      agreementId: source.agreementId,
+    }
+
+    const invoice = workspaceToInvoice(workspace, 'draft')
+    invoice.invoiceType = 'additional_expense'
+    invoice.activities = [
+      makeActivity('Secondary invoice created', `Linked to primary invoice ${source.invoiceId}`),
+    ]
+    persist([...getStore(), invoice])
+    return invoice
   },
 
   createCreditNote(sourceInvoiceId: string, adjustment: CreditNoteAdjustment): Invoice | undefined {

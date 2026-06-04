@@ -1,4 +1,7 @@
 export { InvoiceListingPage } from './pages/InvoiceListingPage'
+export { GenerateInvoiceStepperPage } from './pages/GenerateInvoiceStepperPage'
+export { GenerateInvoiceApplicationSelectionPage } from './pages/GenerateInvoiceApplicationSelectionPage'
+export { GenerateInvoiceCompositionPage } from './pages/GenerateInvoiceCompositionPage'
 export { GenerateInvoiceWorkspacePage } from './pages/GenerateInvoiceWorkspacePage'
 export { InvoiceDetailPage } from './pages/InvoiceDetailPage'
 export { BillingReportsPage } from './pages/BillingReportsPage'

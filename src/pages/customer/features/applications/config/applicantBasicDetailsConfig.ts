@@ -5,8 +5,6 @@ export interface ApplicantBasicDetails {
   nationality: string
   dateOfBirth: string
   cdcNumber: string
-  requestDummyTicket: boolean
-  requestInsurance: boolean
 }
 
 export const BASIC_DETAIL_REQUIRED_KEYS = [
@@ -24,7 +22,5 @@ export function emptyApplicantBasicDetails(): ApplicantBasicDetails {
     nationality: '',
     dateOfBirth: '',
     cdcNumber: '',
-    requestDummyTicket: false,
-    requestInsurance: false,
   }
 }

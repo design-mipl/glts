@@ -7,8 +7,10 @@ export const mockApplicants = [
 
 export const mockDocuments = [
   { name: 'Passport · Priya', status: 'Valid', tone: 'success' as const },
-  { name: 'Bank statements', status: 'Missing', tone: 'warning' as const },
-  { name: 'Travel insurance', status: 'Uploaded', tone: 'neutral' as const },
+  { name: 'Applicant Photo', status: 'Uploaded', tone: 'success' as const },
+  { name: 'Bank Statement', status: 'Missing', tone: 'warning' as const },
+  { name: 'Travel Ticket', status: 'Missing', tone: 'warning' as const },
+  { name: 'Insurance', status: 'Uploaded', tone: 'neutral' as const },
 ]
 
 export const mockGlobalDocumentUploads = {

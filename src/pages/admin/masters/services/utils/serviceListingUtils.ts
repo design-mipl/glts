@@ -4,7 +4,7 @@ import type { ServiceMaster } from '@/shared/types/serviceMaster'
 import { masterStatusLabel } from '../../config/masterStatusConfig'
 export function formatServicePrice(row: ServiceMaster): string {
   if (row.defaultPrice == null) return '—'
-  return `${row.currency} ${row.defaultPrice.toLocaleString()}`
+  return row.defaultPrice.toLocaleString()
 }
 
 export function getServiceSacLabel(row: ServiceMaster): string {
@@ -31,7 +31,6 @@ export function matchesServiceSearch(row: ServiceMaster, query: string): boolean
     row.description,
     row.category,
     row.subcategory,
-    row.currency,
     getServiceSacLabel(row),
     row.status,
   ].some((part) => part.toLowerCase().includes(normalized))
@@ -52,7 +51,6 @@ export function downloadServiceCsv(rows: ServiceMaster[]) {
     'Category',
     'Subcategory',
     'Price',
-    'Currency',
     'SAC',
     'Status',
   ]
@@ -63,7 +61,6 @@ export function downloadServiceCsv(rows: ServiceMaster[]) {
       row.category,
       row.subcategory,
       row.defaultPrice ?? '',
-      row.currency,
       getServiceSacLabel(row),
       masterStatusLabel[row.status],
     ]

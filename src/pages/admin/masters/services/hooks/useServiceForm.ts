@@ -8,7 +8,6 @@ export const INITIAL_SERVICE_FORM: ServiceMasterFormData = {
   category: '',
   subcategory: '',
   defaultPrice: '',
-  currency: '',
   mappedSacCodeId: '',
   gstRateId: '',
   tdsSectionId: '',
@@ -24,7 +23,6 @@ export function serviceToFormData(row: ServiceMaster): ServiceMasterFormData {
     category: row.category,
     subcategory: row.subcategory,
     defaultPrice: row.defaultPrice != null ? String(row.defaultPrice) : '',
-    currency: row.currency,
     mappedSacCodeId: row.mappedSacCodeId ?? '',
     gstRateId: row.gstRateId ?? '',
     tdsSectionId: row.tdsSectionId ?? '',
@@ -47,7 +45,6 @@ export function useServiceForm(initialData?: ServiceMasterFormData) {
     if (!formData.serviceName.trim()) next.serviceName = 'Service name is required'
     if (!formData.category) next.category = 'Category is required'
     if (!formData.subcategory) next.subcategory = 'Subcategory is required'
-    if (!formData.currency) next.currency = 'Currency is required'
     if (formData.applicableFor.length === 0) {
       next.applicableFor = 'Select at least one applicability'
     }

@@ -1,8 +1,10 @@
-import { Breadcrumbs, Typography, Link, useMediaQuery, Box, IconButton } from '@mui/material'
+import { Breadcrumbs, Typography, useMediaQuery, Box, IconButton } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { ChevronRight, ArrowLeft } from 'lucide-react'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import type { SxProps } from '@mui/material'
+import type { MouseEvent } from 'react'
+import { getPreviousCrumbHref, navigateToAppPath } from '@/shared/utils/routerNavigationUtils'
 
 export interface BreadcrumbItem {
   label: string
@@ -18,25 +20,50 @@ export interface BreadcrumbProps {
   showBack?: boolean
 }
 
+const crumbLinkSx = {
+  textDecoration: 'none',
+  color: 'text.secondary',
+  cursor: 'pointer',
+  '&:hover': {
+    color: 'text.primary',
+    textDecoration: 'underline',
+  },
+} as const
+
 export default function Breadcrumb({ items, separator, maxItems, sx, showBack = true }: BreadcrumbProps) {
   const theme = useTheme()
   const navigate = useNavigate()
-  const isXs = useMediaQuery(theme.breakpoints.down('lg'))
-  const effectiveMax = maxItems ?? (isXs ? 2 : undefined)
-  const previousCrumbHref = items.length > 1 ? items[items.length - 2]?.href : undefined
+  const isCompact = useMediaQuery(theme.breakpoints.down('lg'))
+  const effectiveMax = maxItems ?? (isCompact ? 2 : undefined)
+  const previousCrumbHref = getPreviousCrumbHref(items)
+
+  const goToHref = (href: string) => (event: MouseEvent<HTMLElement>) => {
+    event.preventDefault()
+    navigateToAppPath(navigate, href)
+  }
 
   const handleBack = () => {
     if (previousCrumbHref) {
-      navigate(previousCrumbHref)
+      navigateToAppPath(navigate, previousCrumbHref)
       return
     }
     navigate(-1)
   }
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ...sx as object }}>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 0.5,
+        position: 'relative',
+        zIndex: 11,
+        ...(sx as object),
+      }}
+    >
       {showBack && items.length > 1 ? (
         <IconButton
+          type="button"
           size="small"
           aria-label="Go back"
           onClick={handleBack}
@@ -54,10 +81,12 @@ export default function Breadcrumb({ items, separator, maxItems, sx, showBack = 
       >
         {items.map((item, i) => {
           const isLast = i === items.length - 1
+          const href = item.href?.trim()
+
           if (isLast) {
             return (
               <Typography
-                key={i}
+                key={`${item.label}-${i}`}
                 variant="body2"
                 fontWeight={600}
                 color="text.primary"
@@ -66,22 +95,24 @@ export default function Breadcrumb({ items, separator, maxItems, sx, showBack = 
               </Typography>
             )
           }
-          if (item.href) {
+
+          if (href) {
             return (
-              <Link
-                key={i}
-                component={RouterLink}
-                to={item.href}
+              <Typography
+                key={`${item.label}-${i}`}
+                component="a"
+                href={href}
                 variant="body2"
-                color="text.secondary"
-                underline="hover"
+                onClick={goToHref(href)}
+                sx={crumbLinkSx}
               >
                 {item.label}
-              </Link>
+              </Typography>
             )
           }
+
           return (
-            <Typography key={i} variant="body2" color="text.secondary">
+            <Typography key={`${item.label}-${i}`} variant="body2" color="text.secondary">
               {item.label}
             </Typography>
           )

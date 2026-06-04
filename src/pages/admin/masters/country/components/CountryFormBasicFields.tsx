@@ -6,6 +6,7 @@ import {
   VISA_CATEGORY_OPTIONS,
 } from '../config/countryProcessingConfig'
 import { CountryFormImageField } from './CountryFormImageField'
+import { CountryPassportIssueLocationsEditor } from './CountryPassportIssueLocationsEditor'
 
 interface CountryFormBasicFieldsProps {
   data: CountryMasterFormData
@@ -176,6 +177,10 @@ export function CountryFormBasicFields({
           />
         </FormField>
       </AdminFullPageFormFieldSpan>
+      <CountryPassportIssueLocationsEditor
+        locations={data.passportIssueLocations}
+        onChange={(passportIssueLocations) => patch({ passportIssueLocations })}
+      />
       <AdminFullPageFormFieldSpan>
         <FormField label="Internal operational notes" optional>
           <Textarea

@@ -1,3 +1,7 @@
+import {
+  documentStatusLabel,
+  isSimpleDocumentRequirement,
+} from '@/shared/utils/applicantDocumentWorkflowUtils'
 import type { ApplicationSubmitKind, UploadQueueRow } from '../data/applicationFlowData'
 
 export interface ChecklistCorrectionRef {
@@ -95,6 +99,29 @@ export function enrichGlobalChecklistWithCorrections<
   })
 }
 
+function mapDocToChecklistStatus(
+  doc: UploadQueueRow['documents'][number],
+): 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified' {
+  if (doc.status === 'verified') return 'verified'
+  if (doc.status === 'rejected' || doc.status === 'needs_review') return 'invalid'
+  if (isSimpleDocumentRequirement(doc.documentId)) {
+    const label = documentStatusLabel(doc)
+    if (
+      label === 'Uploaded by Customer' ||
+      label === 'Arranged by GLTS' ||
+      label.includes('Uploaded by GLTS')
+    ) {
+      return 'uploaded'
+    }
+    if (label.includes('Pending GLTS') || label === 'Customer Will Upload') {
+      return 'pending'
+    }
+    if (label === 'Not Selected') return 'missing'
+  }
+  if (doc.status === 'uploaded') return 'uploaded'
+  return 'missing'
+}
+
 export function checklistItemsFromRowDocuments(
   documents: UploadQueueRow['documents'],
 ): Array<{
@@ -102,20 +129,15 @@ export function checklistItemsFromRowDocuments(
   label: string
   required: boolean
   status: 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified'
+  statusLabel?: string
   reviewComment?: string
 }> {
   return documents.map(doc => ({
     id: doc.documentId,
     label: doc.name,
     required: doc.required,
-    status:
-      doc.status === 'verified'
-        ? 'verified'
-        : doc.status === 'uploaded'
-          ? 'uploaded'
-          : doc.status === 'rejected' || doc.status === 'needs_review'
-            ? 'invalid'
-            : 'missing',
+    status: mapDocToChecklistStatus(doc),
+    statusLabel: isSimpleDocumentRequirement(doc.documentId) ? documentStatusLabel(doc) : undefined,
     reviewComment: doc.reviewComment,
   }))
 }

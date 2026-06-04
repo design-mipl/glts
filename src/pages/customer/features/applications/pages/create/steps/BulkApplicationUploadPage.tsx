@@ -17,9 +17,18 @@ import type { UploadQueueRow } from '../../../data/applicationFlowData'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import { useToast } from '@/design-system/UIComponents'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
-import { countDocumentProgress, createApplicantDocuments } from '../../../utils/uploadQueueDocuments'
+import {
+  countDocumentProgress,
+  mergeApplicantDocumentsWithChecklist,
+} from '../../../utils/uploadQueueDocuments'
+import {
+  requiresFieldValidation,
+  useApplicationFlowPolicy,
+} from '../../../context/ApplicationFlowPolicyContext'
+import { FlowStepActions } from '../../../components/create/FlowStepActions'
 import {
   assignApplicantReferences,
+  createEmptyUploadQueueRow,
   ensureFlowGltsApplicationId,
   resolveFlowBatchId,
 } from '../../../utils/gltsReferenceIds'
@@ -127,6 +136,8 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { base } = useCustomerPortalBase()
+  const { policy } = useApplicationFlowPolicy()
+  const strict = requiresFieldValidation(policy)
   const [drawerRowId, setDrawerRowId] = useState<string | null>(null)
   const [pendingGlobalDocId, setPendingGlobalDocId] = useState<string | null>(null)
   const globalUploadInputRef = useRef<HTMLInputElement>(null)
@@ -187,18 +198,21 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         row.fields && row.fields.length > 0
           ? row.fields
           : buildPendingExtractedFields()
-      const documents =
-        row.documents && row.documents.length > 0
-          ? row.documents.map(doc =>
-              doc.documentId === 'passport'
-                ? {
-                    ...doc,
-                    fields: passportFields,
-                    status: doc.status === 'missing' ? 'needs_review' : doc.status,
-                  }
-                : doc,
-            )
-          : createApplicantDocuments(state.countryId, state.visaOfferingId, passportFields, fallbackIndex - 1)
+      const documents = mergeApplicantDocumentsWithChecklist(
+        (row.documents ?? []).map(doc =>
+          doc.documentId === 'passport'
+            ? {
+                ...doc,
+                fields: passportFields,
+                status: doc.status === 'missing' ? 'needs_review' : doc.status,
+              }
+            : doc,
+        ),
+        state.countryId,
+        state.visaOfferingId,
+        passportFields,
+        fallbackIndex - 1,
+      )
       const { documentsComplete, documentsTotal } = countDocumentProgress(documents)
       const additionalDetails = resolveApplicantAdditionalDetails(row.additionalDetails)
       return ensureRowBasicDetails({
@@ -398,6 +412,21 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
 
   const isSingleListing = rows.length === 1
 
+  const handleAddEmptyApplicant = useCallback(() => {
+    const gltsApplicationId = ensureFlowGltsApplicationId(state)
+    const nextSequence = rows.length + 1
+    const emptyRow = createEmptyUploadQueueRow(gltsApplicationId, nextSequence)
+    const withRefs = assignApplicantReferences(
+      [...rows, withChecklist(emptyRow, nextSequence)],
+      gltsApplicationId,
+    )
+    const batchId = resolveFlowBatchId(state, withRefs.length)
+    persistRows(withRefs, {
+      gltsApplicationId,
+      gltsBatchId: batchId ?? '',
+    })
+  }, [persistRows, rows, state, withChecklist])
+
   return (
     <Box sx={{ width: '100%', maxWidth: '100%' }}>
       <Typography sx={{ fontWeight: 800, fontSize: '20px', color: colors.navy, mb: 0.5 }}>
@@ -573,6 +602,18 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         onChange={handleGlobalFileChange}
       />
 
+      {!strict && rows.length === 0 && (
+        <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={handleAddEmptyApplicant}
+            sx={{ textTransform: 'none', fontSize: 13 }}
+          >
+            Add empty applicant
+          </Button>
+        </Stack>
+      )}
+
       {uploaded && rows.length > 0 && (
         <UploadQueueTable
           rows={rows}
@@ -590,11 +631,18 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         />
       )}
 
+      {!strict && !uploaded && (
+        <FlowStepActions
+          onContinue={onContinue}
+          continueLabel="Continue to details →"
+        />
+      )}
+
       <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1.5 }}>
         <Button
           variant="outlined"
           onClick={handleSaveDraft}
-          disabled={!state.countryId || !state.visaOfferingId}
+          disabled={strict && (!state.countryId || !state.visaOfferingId)}
           sx={{ textTransform: 'none', fontSize: 13 }}
         >
           Save draft
@@ -606,7 +654,6 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         row={drawerRow}
         onClose={() => setDrawerRowId(null)}
         onUpdateRow={handleRowUpdate}
-        globalDocumentUploads={globalUploadFiles}
       />
     </Box>
   )

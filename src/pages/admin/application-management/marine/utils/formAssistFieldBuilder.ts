@@ -1,4 +1,4 @@
-import { APPLICATION_FLOW_STORAGE_KEY } from '@/pages/customer/features/applications/hooks/useApplicationFlowState'
+import { readApplicationFlowDraftFromSession } from '@/pages/customer/features/applications/utils/applicationFlowDraftStorage'
 import type { FlowDraftLikeState } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
 import { getSingleApplicationFlowExtras } from '@/pages/customer/features/applications/data/applicationFlowData'
@@ -122,15 +122,7 @@ export function collectAllFormAssistFields(ctx: FormAssistContext): FormAssistFi
 }
 
 function readSavedFlowState(): FlowDraftLikeState | null {
-  try {
-    const raw = sessionStorage.getItem(APPLICATION_FLOW_STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as Partial<FlowDraftLikeState>
-    if (!parsed || typeof parsed !== 'object') return null
-    return parsed as FlowDraftLikeState
-  } catch {
-    return null
-  }
+  return readApplicationFlowDraftFromSession()
 }
 
 export function resolveFormAssistFlowExtras(applicationId: string): SingleApplicationFlowExtras {

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import {
   Box,
   Checkbox as MuiCheckbox,
@@ -8,20 +9,23 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
-import { Badge } from '@/design-system/UIComponents'
+import { Badge, FormField, Select } from '@/design-system/UIComponents'
 import type { BulkBatchRow, SingleApplicationRow } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import {
   getApplicantName,
   getAppointmentDate,
-  getBillableApplicationRows,
   getApplicationBillingStatusLabel,
+  getBillableApplicationRows,
+  getBillableCompanyFilterOptions,
   resolveApplicationBillingEntity,
   resolveApplicationVessel,
 } from '@/shared/utils/invoiceBillingEngine'
 import { agreementEmbeddedTableHeadCellSx, agreementEmbeddedTableSx } from '@/pages/admin/customer-accounts/agreements/components/agreementFormLayout'
 
 interface BillableApplicationsTableProps {
+  companyFilterId: string
+  onCompanyFilterChange: (companyId: string) => void
   selectedIds: string[]
   selectedBatchIds: string[]
   onSelectionChange: (applicationIds: string[], batchIds: string[]) => void
@@ -35,12 +39,34 @@ function isBatchRow(row: ApplicationListingRow): boolean {
   return row.recordType === 'bulk'
 }
 
+function pruneSelection(
+  rows: ApplicationListingRow[],
+  selectedIds: string[],
+  selectedBatchIds: string[],
+): { applicationIds: string[]; batchIds: string[] } {
+  const visibleIds = new Set(rows.filter(r => !isBatchRow(r)).map(r => r.id))
+  const visibleBatchIds = new Set(rows.filter(isBatchRow).map(r => r.id))
+  return {
+    applicationIds: selectedIds.filter(id => visibleIds.has(id)),
+    batchIds: selectedBatchIds.filter(id => visibleBatchIds.has(id)),
+  }
+}
+
 export function BillableApplicationsTable({
+  companyFilterId,
+  onCompanyFilterChange,
   selectedIds,
   selectedBatchIds,
   onSelectionChange,
 }: BillableApplicationsTableProps) {
-  const rows = getBillableApplicationRows()
+  const companyOptions = useMemo(() => getBillableCompanyFilterOptions(), [])
+  const rows = useMemo(() => getBillableApplicationRows(companyFilterId || undefined), [companyFilterId])
+
+  const handleCompanyFilterChange = (value: string) => {
+    onCompanyFilterChange(value)
+    const next = pruneSelection(getBillableApplicationRows(value || undefined), selectedIds, selectedBatchIds)
+    onSelectionChange(next.applicationIds, next.batchIds)
+  }
 
   const toggleRow = (row: ApplicationListingRow) => {
     const id = rowId(row)
@@ -60,14 +86,26 @@ export function BillableApplicationsTable({
 
   return (
     <Box>
-      <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+      <FormField label="Company">
+        <Select
+          value={companyFilterId}
+          onChange={v => handleCompanyFilterChange(String(v))}
+          options={companyOptions}
+          placeholder="All companies"
+          size="sm"
+          fullWidth
+        />
+      </FormField>
+      <Typography variant="body2" fontWeight={600} sx={{ mb: 1, mt: 1.5 }}>
         Billable applications (Appointment Booked)
       </Typography>
       <Box sx={agreementEmbeddedTableSx}>
         {rows.length === 0 ? (
           <Box sx={{ py: 2, px: 2 }}>
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-              No applications with Appointment Booked status are available for billing.
+              {companyFilterId
+                ? 'No Appointment Booked applications for this company.'
+                : 'No applications with Appointment Booked status are available for billing.'}
             </Typography>
           </Box>
         ) : (
@@ -95,13 +133,15 @@ export function BillableApplicationsTable({
                   const billingStatus = getApplicationBillingStatusLabel(row)
                   const appRow = row as SingleApplicationRow | BulkBatchRow
                   return (
-                    <TableRow key={row.id} hover selected={isSelected(row)} onClick={() => toggleRow(row)} sx={{ cursor: 'pointer' }}>
+                    <TableRow
+                      key={row.id}
+                      hover
+                      selected={isSelected(row)}
+                      onClick={() => toggleRow(row)}
+                      sx={{ cursor: 'pointer' }}
+                    >
                       <TableCell padding="checkbox" onClick={e => e.stopPropagation()}>
-                        <MuiCheckbox
-                          size="small"
-                          checked={isSelected(row)}
-                          onChange={() => toggleRow(row)}
-                        />
+                        <MuiCheckbox size="small" checked={isSelected(row)} onChange={() => toggleRow(row)} />
                       </TableCell>
                       <TableCell sx={{ fontSize: 13 }}>{isBatchRow(row) ? '—' : row.id}</TableCell>
                       <TableCell sx={{ fontSize: 13 }}>{batchId}</TableCell>

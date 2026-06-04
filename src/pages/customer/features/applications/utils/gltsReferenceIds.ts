@@ -1,3 +1,4 @@
+import { emptyApplicantBasicDetails } from '../config/applicantBasicDetailsConfig'
 import type { ApplicationFlowState } from '../hooks/useApplicationFlowState'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 
@@ -54,6 +55,31 @@ export function assignApplicantReferences(
       gltsApplicantId: row.gltsApplicantId || createGltsApplicantId(sequenceNo),
     }
   })
+}
+
+/** Minimal queue row for admin create when no passport upload was provided. */
+export function createEmptyUploadQueueRow(
+  gltsApplicationId: string,
+  sequenceNo = 1,
+): UploadQueueRow {
+  return {
+    id: `empty-${gltsApplicationId}-${sequenceNo}-${Date.now()}`,
+    fileName: '',
+    gltsApplicationId,
+    gltsApplicantId: createGltsApplicantId(sequenceNo),
+    sequenceNo,
+    travelerName: '—',
+    passportNo: '—',
+    expiry: '—',
+    nationality: '—',
+    confidence: 0,
+    status: 'verified',
+    fields: [],
+    documents: [],
+    documentsComplete: 0,
+    documentsTotal: 0,
+    basicDetails: emptyApplicantBasicDetails(),
+  }
 }
 
 export function formatQueueRowGltsLabel(

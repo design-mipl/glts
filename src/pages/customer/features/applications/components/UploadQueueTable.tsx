@@ -13,6 +13,10 @@ import {
 } from '@mui/material'
 import { ChevronRight, Download, Pause } from 'lucide-react'
 import { usePublicBrandColors, getPrimaryButtonSx } from '@/shared/theme/publicBrand'
+import {
+  requiresFieldValidation,
+  useApplicationFlowPolicy,
+} from '../context/ApplicationFlowPolicyContext'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 import { formatQueueRowGltsLabel } from '../utils/gltsReferenceIds'
 
@@ -72,6 +76,8 @@ export function UploadQueueTable({
   continueLabel,
 }: UploadQueueTableProps) {
   const colors = usePublicBrandColors()
+  const { policy } = useApplicationFlowPolicy()
+  const strict = requiresFieldValidation(policy)
   const verified = rows.filter(r => r.status === 'verified').length
   const needsReview = rows.filter(r => r.status === 'needs_review').length
   const processing = rows.filter(r => r.status === 'processing').length
@@ -221,7 +227,7 @@ export function UploadQueueTable({
             <Button
               variant="contained"
               onClick={onContinue}
-              disabled={processed === 0 || !allDocsReady}
+              disabled={strict && (processed === 0 || !allDocsReady)}
               sx={{ ...getPrimaryButtonSx(colors), fontSize: '13px', py: 1, px: 2.5 }}
             >
               {continueLabel ||

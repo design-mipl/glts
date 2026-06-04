@@ -13,6 +13,7 @@ import {
   getDocumentWorkspaceItems,
   getRequirementPreviewCards,
 } from '../../../../data/singleApplicationFlowData'
+import { getPassportIssueLocationLabel } from '@/shared/services/countryMasterService'
 import { useState } from 'react'
 
 interface SingleApplicationReviewStepProps {
@@ -76,7 +77,11 @@ export function SingleApplicationReviewStep({ state, onBack, onSubmitted }: Sing
             ['Visa', `${state.visaTypeLabel} · ${state.purposeLabel}`],
             ['Travel', state.travelDate || '—'],
             ['Return (optional)', state.expectedReturnDate || '—'],
-            ['Processing', state.processingType === 'express' ? 'Express' : 'Normal'],
+            [
+              'Passport location',
+              getPassportIssueLocationLabel(state.countryId, state.issuedPassportLocationId) || '—',
+            ],
+            ['Jurisdiction', state.jurisdiction || '—'],
             ['Entry', state.entryType || '—'],
           ].map(([k, v]) => (
             <Grid size={{ xs: 6 }} key={k}>

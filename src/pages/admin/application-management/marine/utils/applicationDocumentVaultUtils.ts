@@ -1,8 +1,13 @@
 import type { ApplicantDocumentItem, UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
+import {
+  documentStatusLabel,
+  formatWorkflowSummary,
+  isSimpleDocumentRequirement,
+  resolveHandlingMode,
+} from '@/shared/utils/applicantDocumentWorkflowUtils'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import type { FormAssistSubmissionDraft } from '@/shared/services/applicationFormAssistService'
 import { REQUIRED_GLOBAL_CHECKLIST_DOCUMENTS } from '@/pages/customer/features/applications/utils/globalDocumentChecklist'
-import { documentBadgeLabel } from './verifyDocumentsUtils'
 
 export type DocumentVaultCategory =
   | 'traveler'
@@ -36,8 +41,17 @@ function slugify(value: string): string {
     .replace(/^_|_$/g, '')
 }
 
-function isDocumentAvailable(status: ApplicantDocumentItem['status']): boolean {
-  return status !== 'missing'
+function simpleDocHasFile(doc: ApplicantDocumentItem): boolean {
+  if (doc.documentId === 'travel-ticket') return Boolean(doc.travelTicket?.fileName?.trim())
+  if (doc.documentId === 'insurance') return Boolean(doc.insurance?.fileName?.trim())
+  return false
+}
+
+function isDocumentAvailable(doc: ApplicantDocumentItem): boolean {
+  if (isSimpleDocumentRequirement(doc.documentId)) {
+    return simpleDocHasFile(doc)
+  }
+  return doc.status !== 'missing'
 }
 
 function vaultFileNameForDocument(doc: ApplicantDocumentItem, row: UploadQueueRow): string {
@@ -45,16 +59,27 @@ function vaultFileNameForDocument(doc: ApplicantDocumentItem, row: UploadQueueRo
     return row.fileName.trim()
   }
 
+  if (isSimpleDocumentRequirement(doc.documentId)) {
+    const uploadedName =
+      doc.documentId === 'travel-ticket'
+        ? doc.travelTicket?.fileName
+        : doc.insurance?.fileName
+    if (uploadedName?.trim()) return uploadedName.trim()
+    if (resolveHandlingMode(doc) === 'arrange_by_glts') {
+      return 'Pending GLTS upload'
+    }
+  }
+
   const passport = slugify(row.passportNo || 'traveler')
   const docSlug = slugify(doc.name)
   const ext =
     doc.documentId === 'photo'
       ? 'jpg'
-      : doc.documentId === 'bank'
+      : doc.documentId === 'bank' ||
+          doc.documentId === 'insurance' ||
+          doc.documentId === 'travel-ticket'
         ? 'pdf'
-        : doc.documentId === 'insurance'
-          ? 'pdf'
-          : 'pdf'
+        : 'pdf'
 
   return `${passport}_${docSlug}.${ext}`
 }
@@ -113,15 +138,18 @@ export function buildApplicationDocumentVaultItems(input: {
     const id = `traveler-${selectedRow.id}-${doc.documentId}`
     if (seen.has(id)) continue
     seen.add(id)
+    const summary = formatWorkflowSummary(doc)
     items.push({
       id,
       label: doc.name,
       fileName: vaultFileNameForDocument(doc, selectedRow),
       category: 'traveler',
       categoryLabel: CATEGORY_LABELS.traveler,
-      statusLabel: documentBadgeLabel(doc.status),
+      statusLabel: summary
+        ? `${documentStatusLabel(doc)} · ${summary}`
+        : documentStatusLabel(doc),
       travelerName: selectedRow.travelerName,
-      available: isDocumentAvailable(doc.status),
+      available: isDocumentAvailable(doc),
     })
   }
 

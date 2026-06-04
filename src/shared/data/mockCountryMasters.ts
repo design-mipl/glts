@@ -1,3 +1,4 @@
+import { buildDefaultPassportIssueLocations } from '@/shared/data/passportIssueLocationDefaults'
 import { getAllCountries } from '@/shared/services/visaService'
 import {
   defaultRulesForSegment,
@@ -22,11 +23,15 @@ const stdCommonDocuments: CountryDocumentChecklistItem[] = [
 
 const stdApplicationDocuments: CountryDocumentChecklistItem[] = [
   { documentId: 'bank', mandatory: true, sortOrder: 0 },
+  { documentId: 'travel-ticket', mandatory: true, sortOrder: 1 },
+  { documentId: 'insurance', mandatory: true, sortOrder: 2 },
 ]
 
 const crewApplicationDocuments: CountryDocumentChecklistItem[] = [
   { documentId: 'cdc', mandatory: true, sortOrder: 0 },
   { documentId: 'vessel-letter', mandatory: true, sortOrder: 1 },
+  { documentId: 'travel-ticket', mandatory: true, sortOrder: 2 },
+  { documentId: 'insurance', mandatory: true, sortOrder: 3 },
 ]
 
 function visaType(
@@ -276,6 +281,7 @@ function buildMasterFromCountry(c: ReturnType<typeof getAllCountries>[0]): Count
     visaCategory: c.visaCategory,
     validity: c.validity,
     fastMinutes: c.fastMinutes,
+    passportIssueLocations: buildDefaultPassportIssueLocations(c.name),
     segments,
     visaOfferings,
     createdAt: now,

@@ -11,6 +11,11 @@ export { default as NavItem } from './Sidebar/NavItem'
 export type { NavItemProps } from './Sidebar/NavItem'
 
 export { default as Breadcrumb } from './Breadcrumb'
+export {
+  getPreviousCrumbHref,
+  navigateToAppPath,
+  resolveNavigationTo,
+} from '@/shared/utils/routerNavigationUtils'
 export type { BreadcrumbProps, BreadcrumbItem } from './Breadcrumb'
 
 export { default as Tabs } from './Tabs'

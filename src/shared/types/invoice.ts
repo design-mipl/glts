@@ -4,10 +4,12 @@ export type ApplicationSelectionMode = 'single' | 'batch' | 'multiple'
 
 export type InvoiceType =
   | 'single_invoice'
+  | 'bulk_invoice'
   | 'cumulative'
   | 'additional_expense'
   | 'final_settlement'
   | 'credit_note'
+  | 'debit_note'
 
 export type InvoiceStatus =
   | 'draft'
@@ -94,6 +96,8 @@ export interface InvoicePaymentRecord {
   method: string
   reference: string
   status: PaymentStatus
+  tdsPercentage?: number
+  tdsAmount?: number
 }
 
 export interface Invoice {
@@ -184,6 +188,15 @@ export interface ShareInvoicePayload {
   paymentTerms: string
   dueDate: string
   message?: string
+}
+
+export interface RecordPaymentPayload {
+  amount: number
+  date: string
+  method: string
+  reference: string
+  tdsPercentage?: number
+  tdsAmount?: number
 }
 
 export interface CreditNoteAdjustment {

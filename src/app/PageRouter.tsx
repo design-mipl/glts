@@ -14,14 +14,18 @@ export function PageRouter() {
       {/* Legacy operations entry now belongs inside the admin portal. */}
       <Route path="/operations/*" element={<Navigate to="/admin/operations" replace />} />
 
-      {/* Retail Portal — /retail/* */}
-      <Route path="/retail/*" element={<RetailPortalApp />} />
+      {/* Retail Portal — /retail/* (nested splat for React Router 7 path resolution) */}
+      <Route path="/retail">
+        <Route path="*" element={<RetailPortalApp />} />
+      </Route>
 
       {/* B2B Portal — /business/* */}
       <Route path="/business/*" element={<B2BCustomerApp />} />
 
       {/* Admin Portal — /admin/* */}
-      <Route path="/admin/*" element={<AdminPortalApp />} />
+      <Route path="/admin">
+        <Route path="*" element={<AdminPortalApp />} />
+      </Route>
 
       {/* Public Website — everything else */}
       <Route path="/*" element={<PublicWebsiteApp />} />

@@ -78,6 +78,14 @@ export interface ExtractedField {
 
 export type ApplicantDocumentStatus = 'missing' | 'uploaded' | 'verified' | 'needs_review' | 'rejected'
 
+import type {
+  DocumentHandlingMode,
+  InsuranceWorkflow,
+  TravelTicketWorkflow,
+} from '@/shared/utils/applicantDocumentWorkflowUtils'
+
+export type { DocumentHandlingMode, TravelTicketWorkflow, InsuranceWorkflow }
+
 export interface ApplicantDocumentItem {
   documentId: string
   name: string
@@ -86,6 +94,10 @@ export interface ApplicantDocumentItem {
   /** Admin review note shown to the customer when a document is rejected or needs re-upload. */
   reviewComment?: string
   fields?: ExtractedField[]
+  /** Simple requirement workflow — Travel Ticket / Insurance. */
+  handlingMode?: DocumentHandlingMode
+  travelTicket?: TravelTicketWorkflow
+  insurance?: InsuranceWorkflow
 }
 
 export interface UploadQueueRow {
@@ -114,7 +126,7 @@ export interface UploadQueueRow {
   documentsTotal: number
   /** Per-traveler supplemental fields on the Documents step. */
   additionalDetails?: ApplicantAdditionalDetails
-  /** Per-traveler identity and add-on flags in the applicant drawer. */
+  /** Per-traveler identity fields in the applicant drawer. */
   basicDetails?: ApplicantBasicDetails
 }
 
@@ -420,10 +432,10 @@ export const mockBulkBatches: BulkBatchRow[] = [
     country: 'Schengen',
     countryFlag: '🇫🇷',
     visaType: 'Crew · Type C',
-    totalApplicants: 24,
-    verifiedApplicants: 24,
+    totalApplicants: 6,
+    verifiedApplicants: 5,
     pendingCorrections: 0,
-    processed: 24,
+    processed: 5,
     errors: 0,
     travelDate: '2026-05-01',
     submissionDate: '2026-02-08',
@@ -700,7 +712,8 @@ export const defaultChecklist = (country: string): ChecklistItem[] => [
   { id: 'passport', label: 'Passport', required: true, status: 'uploaded' },
   { id: 'photo', label: 'Applicant Photo', required: true, status: 'uploaded' },
   { id: 'bank', label: 'Bank Statement', required: true, status: 'missing' },
-  { id: 'insurance', label: 'Travel insurance', required: true, status: 'pending' },
+  { id: 'travel-ticket', label: 'Travel Ticket', required: true, status: 'missing' },
+  { id: 'insurance', label: 'Insurance', required: true, status: 'pending' },
   { id: 'itinerary', label: `Itinerary · ${country}`, required: false, status: 'missing' },
 ]
 
@@ -773,8 +786,6 @@ const priyaSharmaSeed: SingleApplicationDemoSeed = {
     nationality: 'IND',
     dateOfBirth: '22 Jul 1990',
     cdcNumber: 'IN-CDC-884921',
-    requestDummyTicket: true,
-    requestInsurance: true,
   },
   additionalDetails: {
     paxContactNo: '+91 98765 43210',
@@ -837,8 +848,6 @@ const oliverGrantSeed: SingleApplicationDemoSeed = {
     nationality: 'GBR',
     dateOfBirth: '14 Mar 1988',
     cdcNumber: 'GB-CDC-772104',
-    requestDummyTicket: false,
-    requestInsurance: true,
   },
   additionalDetails: {
     paxContactNo: '+44 7700 900482',
@@ -901,8 +910,6 @@ const mateoAlvarezSeed: SingleApplicationDemoSeed = {
     nationality: 'ESP',
     dateOfBirth: '19 Feb 1992',
     cdcNumber: 'ES-CDC-440912',
-    requestDummyTicket: true,
-    requestInsurance: false,
   },
   additionalDetails: {
     paxContactNo: '+34 61234 9988',
@@ -965,8 +972,6 @@ const ashaNairSeed: SingleApplicationDemoSeed = {
     nationality: 'IND',
     dateOfBirth: '08 Dec 1994',
     cdcNumber: 'IN-CDC-992107',
-    requestDummyTicket: false,
-    requestInsurance: true,
   },
   additionalDetails: {
     paxContactNo: '+91 99887 65432',

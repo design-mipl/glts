@@ -63,7 +63,7 @@ export const adminNav: NavConfig[] = [
     icon: createElement(HandCoins, iconProps),
     children: [
       { type: 'item', label: 'Expense management', href: '/admin/finance/expenses' },
-      { type: 'item', label: 'Billing & invoices', href: '/admin/finance/invoices' },
+      { type: 'item', label: 'Billing & invoice management', href: '/admin/finance/invoices' },
       { type: 'item', label: 'Payments & collections', href: '/admin/finance/payments' },
       { type: 'item', label: 'Reconciliation', href: '/admin/finance/reconciliation' },
     ],

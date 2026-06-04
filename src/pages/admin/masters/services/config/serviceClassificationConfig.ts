@@ -1,13 +1,6 @@
 import type { MasterCategory } from '@/shared/types/masterCommon'
 import { MASTER_CATEGORY_OPTIONS } from '@/shared/types/masterCommon'
 
-export const SERVICE_CURRENCY_OPTIONS = [
-  { value: 'INR', label: 'INR' },
-  { value: 'USD', label: 'USD' },
-  { value: 'EUR', label: 'EUR' },
-  { value: 'GBP', label: 'GBP' },
-] as const
-
 export const SERVICE_SUBCATEGORIES_BY_CATEGORY: Record<MasterCategory, { value: string; label: string }[]> = {
   'Visa Services': [
     { value: 'Marine Visa', label: 'Marine Visa' },

@@ -16,7 +16,7 @@ export interface AdminFinanceWorkspaceShellProps {
   headerActions?: ReactNode
   leftPanel: ReactNode
   centerPanel: ReactNode
-  rightPanel: ReactNode
+  rightPanel?: ReactNode
   footer: ReactNode
 }
 
@@ -73,7 +73,9 @@ export function AdminFinanceWorkspaceShell({
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              lg: '280px minmax(0, 1fr) 320px',
+              lg: rightPanel
+                ? 'minmax(0, 1fr) minmax(0, 1fr) 320px'
+                : 'minmax(0, 1fr) minmax(0, 1fr)',
             },
             gap: 2,
             alignItems: 'start',
@@ -81,15 +83,17 @@ export function AdminFinanceWorkspaceShell({
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>{leftPanel}</Box>
           <Box sx={{ minWidth: 0 }}>{centerPanel}</Box>
-          <Box
-            sx={{
-              position: { lg: 'sticky' },
-              top: { lg: 72 },
-              alignSelf: 'start',
-            }}
-          >
-            {rightPanel}
-          </Box>
+          {rightPanel ? (
+            <Box
+              sx={{
+                position: { lg: 'sticky' },
+                top: { lg: 72 },
+                alignSelf: 'start',
+              }}
+            >
+              {rightPanel}
+            </Box>
+          ) : null}
         </Box>
 
         <Box

@@ -36,10 +36,16 @@ import { TaxConfigurationPage } from '../masters/tax'
 import { InternalDashboard } from '../operations/pages/InternalDashboard'
 import { AdminProfilePage } from '../profile/AdminProfilePage'
 import {
-  MarineApplicationListingPage, MarineVerifyDocumentsPage, MarineViewFormPage,
+  MarineApplicationListingPage,
+  MarineCreateApplicationPage,
+  MarineVerifyDocumentsPage,
+  MarineViewFormPage,
 } from '../application-management/marine'
+import { InvoiceFinanceRoutes } from '../finance/invoices/InvoiceFinanceRoutes'
 import {
   BillingReportsPage,
+  GenerateInvoiceCompositionPage,
+  GenerateInvoiceStepperPage,
   GenerateInvoiceWorkspacePage,
   InvoiceDetailPage,
   InvoiceListingPage,
@@ -437,6 +443,14 @@ export function AdminRoutes() {
         }
       />
       <Route
+        path="application-management/marine/new"
+        element={
+          <PermissionGuard>
+            <MarineCreateApplicationPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
         path="application-management/marine/:applicationId/view-form"
         element={
           <PermissionGuard>
@@ -452,46 +466,17 @@ export function AdminRoutes() {
           </PermissionGuard>
         }
       />
-      <Route
-        path="finance/invoices"
-        element={
-          <PermissionGuard>
-            <InvoiceListingPage />
-          </PermissionGuard>
-        }
-      />
-      <Route
-        path="finance/invoices/reports"
-        element={
-          <PermissionGuard>
-            <BillingReportsPage />
-          </PermissionGuard>
-        }
-      />
-      <Route
-        path="finance/invoices/generate"
-        element={
-          <PermissionGuard>
-            <GenerateInvoiceWorkspacePage />
-          </PermissionGuard>
-        }
-      />
-      <Route
-        path="finance/invoices/:invoiceId/credit-note"
-        element={
-          <PermissionGuard>
-            <GenerateInvoiceWorkspacePage creditNoteMode />
-          </PermissionGuard>
-        }
-      />
-      <Route
-        path="finance/invoices/:invoiceId"
-        element={
-          <PermissionGuard>
-            <InvoiceDetailPage />
-          </PermissionGuard>
-        }
-      />
+      <Route path="finance/invoices" element={<InvoiceFinanceRoutes />}>
+        <Route index element={<InvoiceListingPage />} />
+        <Route path="reports" element={<BillingReportsPage />} />
+        <Route path="generate" element={<GenerateInvoiceStepperPage />} />
+        <Route path="generate/composition" element={<GenerateInvoiceCompositionPage />} />
+        <Route
+          path=":invoiceId/credit-note"
+          element={<GenerateInvoiceWorkspacePage creditNoteMode />}
+        />
+        <Route path=":invoiceId" element={<InvoiceDetailPage />} />
+      </Route>
       <Route
         path="access/teams"
         element={

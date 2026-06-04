@@ -51,6 +51,7 @@ export function createEmptyCountryFormData(): CountryMasterFormData {
     visaCategory: 'Tourist',
     validity: '',
     fastMinutes: undefined,
+    passportIssueLocations: [],
     segments: ALL_SEGMENTS.map((segment) => emptySegment(segment, segment === 'retail')),
   }
 }
@@ -77,6 +78,7 @@ export function countryMasterToFormData(
     visaCategory: master.visaCategory,
     validity: master.validity,
     fastMinutes: master.fastMinutes,
+    passportIssueLocations: master.passportIssueLocations ?? [],
     segments: ensureAllSegments(normalizeCountrySegments(structuredClone(master.segments))),
   }
 }

@@ -1,6 +1,10 @@
 import { Box, Typography, Grid, Card, Stack, Chip } from '@mui/material'
 import { Clock, Plane } from 'lucide-react'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import {
+  requiresFieldValidation,
+  useApplicationFlowPolicy,
+} from '../../../../context/ApplicationFlowPolicyContext'
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import { FlowStepActions } from '../../../../components/create/FlowStepActions'
 import {
@@ -22,6 +26,8 @@ export function SingleVisaPurposeStep({
   continueLabel = 'Continue',
 }: SingleVisaPurposeStepProps) {
   const colors = usePublicBrandColors()
+  const { policy } = useApplicationFlowPolicy()
+  const strict = requiresFieldValidation(policy)
   const options = getVisaOfferings(state.countryId)
 
   return (
@@ -81,7 +87,7 @@ export function SingleVisaPurposeStep({
       <FlowStepActions
         onContinue={onContinue}
         continueLabel={continueLabel}
-        continueDisabled={!state.visaOfferingId}
+        continueDisabled={strict && !state.visaOfferingId}
       />
     </Box>
   )

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Box, CircularProgress, Stack } from '@mui/material'
 import { FileText } from 'lucide-react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import {
   Button,
   EmptyState,
@@ -22,10 +23,15 @@ import {
   VerifyDocumentChecklistSection,
   VerifyGlobalDocumentChecklist,
 } from '../components/verify/VerifyDocumentChecklistSection'
+import {
+  GltsDocumentUploadDrawer,
+  type GltsDocumentUploadPayload,
+} from '../components/verify/GltsDocumentUploadDrawer'
+import { resolveHandlingMode } from '@/shared/utils/applicantDocumentWorkflowUtils'
 
 export function MarineVerifyDocumentsPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
-  const navigate = useNavigate()
+  const navigate = useAppNavigate()
   const { showToast } = useToast()
   const [reviewDialog, setReviewDialog] = useState<{
     scope: 'traveler' | 'global'
@@ -34,6 +40,7 @@ export function MarineVerifyDocumentsPage() {
     status: Extract<ApplicantDocumentStatus, 'rejected' | 'needs_review'>
   } | null>(null)
   const [reviewComment, setReviewComment] = useState('')
+  const [gltsUploadDocument, setGltsUploadDocument] = useState<ApplicantDocumentItem | null>(null)
 
   const workspace = useVerifyDocumentsWorkspace(applicationId)
   const {
@@ -48,6 +55,7 @@ export function MarineVerifyDocumentsPage() {
     timelineSteps,
     globalDocuments,
     updateTravelerDoc,
+    updateTravelerDocumentWorkflow,
     updateGlobalDoc,
     saveDraft,
     submitVerification,
@@ -187,6 +195,7 @@ export function MarineVerifyDocumentsPage() {
               onVerify={documentId => updateTravelerDoc(documentId, 'verified')}
               onReject={document => openReviewDialog('traveler', document, 'rejected')}
               onRequestReupload={document => openReviewDialog('traveler', document, 'needs_review')}
+              onGltsUpload={document => setGltsUploadDocument(document)}
             />
           </>
         ) : null}
@@ -217,6 +226,29 @@ export function MarineVerifyDocumentsPage() {
           }
         />
       </Stack>
+
+      <GltsDocumentUploadDrawer
+        open={Boolean(gltsUploadDocument)}
+        document={gltsUploadDocument}
+        onClose={() => setGltsUploadDocument(null)}
+        onSave={(payload: GltsDocumentUploadPayload) => {
+          if (!gltsUploadDocument) return
+          const mode = resolveHandlingMode(gltsUploadDocument) ?? 'arrange_by_glts'
+          updateTravelerDocumentWorkflow(gltsUploadDocument.documentId, {
+            handlingMode: mode,
+            status: 'uploaded',
+            ...(gltsUploadDocument.documentId === 'travel-ticket'
+              ? { travelTicket: payload.travelTicket }
+              : { insurance: payload.insurance }),
+          })
+          showToast({
+            title: 'Document saved',
+            description: `${gltsUploadDocument.name} uploaded by GLTS.`,
+            variant: 'success',
+          })
+          setGltsUploadDocument(null)
+        }}
+      />
 
       <Modal
         open={Boolean(reviewDialog)}

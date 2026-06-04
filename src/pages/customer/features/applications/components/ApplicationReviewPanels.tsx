@@ -5,6 +5,8 @@ import { UploadQueueTable } from './UploadQueueTable'
 import { checklistItemsFromRowDocuments, enrichChecklistWithCorrections, enrichGlobalChecklistWithCorrections, type ChecklistCorrectionRef } from '../utils/applicationSubmitKind'
 import { buildGlobalChecklistItems } from '../utils/globalDocumentChecklist'
 import { buildGlobalDocumentsForVerification } from '@/shared/services/applicationVerificationService'
+import { isSimpleDocumentRequirement } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import { SimpleDocumentRequirementPanel } from './documentWorkflow'
 import { ApplicationProcessingTimeline, type ApplicationProcessingTimelineStep } from './ApplicationProcessingTimeline'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 import type { SubmitTimelineStatus } from '../types/applicationDetail.types'
@@ -16,6 +18,8 @@ export interface ApplicationReviewOverview {
   visaTypeLabel: string
   purposeLabel?: string
   travelDate: string
+  issuedPassportLocationLabel?: string
+  jurisdiction?: string
   gltsApplicationId?: string
   gltsBatchId?: string
 }
@@ -149,6 +153,8 @@ export function ApplicationReviewPanels({
               ['Country', `${overview.countryFlag} ${overview.countryName}`],
               ['Visa', overview.purposeLabel ? `${overview.visaTypeLabel} · ${overview.purposeLabel}` : overview.visaTypeLabel],
               ['Travel', overview.travelDate || '—'],
+              ['Passport location', overview.issuedPassportLocationLabel || '—'],
+              ['Jurisdiction', overview.jurisdiction || '—'],
               ['Travelers', String(readyRows.length)],
             ].map(([k, v]) => (
               <Grid size={{ xs: 6, sm: 3 }} key={k}>
@@ -196,6 +202,8 @@ export function ApplicationReviewPanels({
                 ['Country', `${overview.countryFlag} ${overview.countryName}`],
                 ['Visa', overview.purposeLabel ? `${overview.visaTypeLabel} · ${overview.purposeLabel}` : overview.visaTypeLabel],
                 ['Travel', overview.travelDate || '—'],
+                ['Passport location', overview.issuedPassportLocationLabel || '—'],
+                ['Jurisdiction', overview.jurisdiction || '—'],
                 ['Nationality', selectedRow.nationality],
                 ['Passport expiry', selectedRow.expiry],
                 [
@@ -220,6 +228,22 @@ export function ApplicationReviewPanels({
               onReuploadItem={onReuploadDocument}
             />
           </Box>
+
+          {selectedRow.documents.filter(d => isSimpleDocumentRequirement(d.documentId)).length > 0 ? (
+            <Stack spacing={1.5} sx={{ mb: 2 }}>
+              {selectedRow.documents
+                .filter(d => isSimpleDocumentRequirement(d.documentId))
+                .map(doc => (
+                  <SimpleDocumentRequirementPanel
+                    key={doc.documentId}
+                    document={doc}
+                    onChange={() => {}}
+                    readOnly
+                    travelerName={selectedRow.travelerName}
+                  />
+                ))}
+            </Stack>
+          ) : null}
         </>
       ) : null}
 

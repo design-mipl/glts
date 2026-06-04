@@ -11,6 +11,8 @@ export interface BookerUser {
   id: string
   fullName: string
   email: string
+  /** Parent company this booker submits applications under */
+  companyName: string
   mobile: string
   location: string
   designation: string

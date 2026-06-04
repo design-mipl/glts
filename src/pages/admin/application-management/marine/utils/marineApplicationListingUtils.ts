@@ -1,6 +1,8 @@
 import type { BulkBatchRow, SingleApplicationRow } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { isBulkRow } from '@/pages/customer/features/applications/types/applicationListing.types'
+import { resolveApplicationCompanyName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { resolveApplicationCreatorLabel } from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
 import { getListingCellValue } from '@/pages/customer/features/applications/utils/applicationListingUtils'
 import { mapApplicationRowsToGridItems } from '@/pages/customer/features/applications/utils/applicationListingGrid'
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
@@ -54,13 +56,16 @@ export function matchesMarineApplicationSearch(row: MarineApplicationRow, query:
   const s = query.trim().toLowerCase()
   if (!s) return true
   if (row.id.toLowerCase().includes(s)) return true
+  if (resolveApplicationCompanyName(row).toLowerCase().includes(s)) return true
+  if (resolveApplicationCreatorLabel(row.createdByEmail).toLowerCase().includes(s)) return true
   if (isBulkRow(row)) {
-    return row.companyName.toLowerCase().includes(s)
+    return row.country.toLowerCase().includes(s) || row.visaType.toLowerCase().includes(s)
   }
   return (
     row.applicantName.toLowerCase().includes(s) ||
     row.passportNumber.toLowerCase().includes(s) ||
-    (row.companyName?.toLowerCase().includes(s) ?? false)
+    row.country.toLowerCase().includes(s) ||
+    row.visaType.toLowerCase().includes(s)
   )
 }
 
@@ -145,7 +150,8 @@ export function exportMarineApplicationsToCsv(rows: MarineApplicationRow[]): str
   const headers = [
     'GLTS reference',
     'Type',
-    'Applicant / company',
+    'Applicant',
+    'Company name',
     'Country',
     'Visa type',
     'Travel date',
@@ -157,12 +163,14 @@ export function exportMarineApplicationsToCsv(rows: MarineApplicationRow[]): str
 
   const lines = rows.map(row => {
     const type = isBulkRow(row) ? 'Bulk' : 'Single'
-    const applicant = isBulkRow(row) ? row.companyName : row.applicantName
+    const applicant = isBulkRow(row) ? `${row.totalApplicants} travelers` : row.applicantName
+    const companyName = resolveApplicationCompanyName(row)
     const createdBy = getMarineApplicationCellValue(row, 'createdBy')
     return [
       row.id,
       type,
       applicant,
+      companyName,
       row.country,
       row.visaType,
       row.travelDate,

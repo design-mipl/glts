@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Box } from '@mui/material'
 import { ColumnFilter, DataTable } from '@/design-system/UIComponents'
 import type { Column, TableState } from '@/design-system/UIComponents'
@@ -25,6 +26,8 @@ export interface AdminListingTableProps<T extends object> {
   enableColumnSort?: boolean
   /** When false, column header filter controls are hidden. Default true. */
   enableColumnFilters?: boolean
+  /** Renders expandable row panel; adds accordion chevron column. */
+  renderExpanded?: (row: T) => ReactNode
 }
 
 export function AdminListingTable<T extends object>({
@@ -46,6 +49,7 @@ export function AdminListingTable<T extends object>({
   stickyHeader = false,
   enableColumnSort = true,
   enableColumnFilters = true,
+  renderExpanded,
 }: AdminListingTableProps<T>) {
   const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null)
   const [activeFilterColumn, setActiveFilterColumn] = useState<string | null>(null)
@@ -92,6 +96,7 @@ export function AdminListingTable<T extends object>({
               }
             : undefined
         }
+        renderExpanded={renderExpanded}
         emptyState={{
           title: emptyTitle,
           description: emptyDescription,

@@ -229,6 +229,7 @@ export const countryMasterAdminService = {
       visaCategory: existing.visaCategory,
       validity: existing.validity,
       fastMinutes: existing.fastMinutes,
+      passportIssueLocations: existing.passportIssueLocations ?? [],
       segments: existing.segments,
     })
   },

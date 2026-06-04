@@ -1,4 +1,4 @@
-import type { InvoiceLineItem, InvoiceTaxConfig, InvoiceTotals } from '@/shared/types/invoice'
+import type { Invoice, InvoiceLineItem, InvoiceTaxConfig, InvoiceTotals } from '@/shared/types/invoice'
 
 export function calculateLineItemAmount(
   quantity: number,
@@ -57,6 +57,16 @@ export function roundMoney(value: number): number {
 
 export function formatInr(amount: number): string {
   return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+}
+
+/** Count of billed application records (single refs + bulk batches), not applicant/crew headcount. */
+export function getInvoiceApplicationCount(
+  invoice: Pick<Invoice, 'gltsReferences' | 'batchIds'>,
+): number {
+  const batchIds = new Set(invoice.batchIds ?? [])
+  const singleRefs = (invoice.gltsReferences ?? []).filter(ref => !batchIds.has(ref))
+  const count = batchIds.size + singleRefs.length
+  return count > 0 ? count : 0
 }
 
 export function defaultLineItemFields(): Pick<

@@ -5,6 +5,7 @@ import { listPortalCountries } from '@/shared/services/countryMasterService'
 import { usePublicBrandColors, getPrimaryButtonSx } from '@/shared/theme/publicBrand'
 import { CustomerCountryCard } from '../../../components/CustomerCountryCard'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
+import { useApplicationFlowPolicy, requiresFieldValidation } from '../../../context/ApplicationFlowPolicyContext'
 import { ensureFlowGltsApplicationId } from '../../../utils/gltsReferenceIds'
 
 interface CountrySelectionStepProps {
@@ -15,6 +16,8 @@ interface CountrySelectionStepProps {
 
 export function CountrySelectionStep({ state, onUpdate, onContinue }: CountrySelectionStepProps) {
   const colors = usePublicBrandColors()
+  const { policy } = useApplicationFlowPolicy()
+  const strict = requiresFieldValidation(policy)
   const [query, setQuery] = useState('')
   const countries = useMemo(() => {
     const all = listPortalCountries()
@@ -93,7 +96,7 @@ export function CountrySelectionStep({ state, onUpdate, onContinue }: CountrySel
           variant="contained"
           endIcon={<ArrowRight size={16} />}
           onClick={handleContinue}
-          disabled={!state.countryId}
+          disabled={strict && !state.countryId}
           sx={{ ...getPrimaryButtonSx(colors), fontSize: '13px' }}
         >
           Continue to visa type

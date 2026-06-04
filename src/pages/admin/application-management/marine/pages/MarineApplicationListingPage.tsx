@@ -67,12 +67,8 @@ export function MarineApplicationListingPage() {
   )
 
   const handleCreate = useCallback(() => {
-    showToast({
-      title: 'Create application',
-      description: 'Admin-side application creation will be available in a future release.',
-      variant: 'info',
-    })
-  }, [showToast])
+    navigate('/admin/application-management/marine/new', { state: { freshStart: true } })
+  }, [navigate])
 
   const emptyState = useMemo(
     () => getMarineApplicationEmptyState(activeTab, handleCreate),

@@ -26,6 +26,8 @@ export interface ApplicationDetailViewModel {
 export interface FlowDraftLikeState {
   gltsApplicationId: string
   gltsBatchId: string
+  countryId?: string
+  visaOfferingId?: string
   countryName: string
   countryFlag: string
   visaTypeLabel: string

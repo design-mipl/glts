@@ -4,12 +4,19 @@ import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/design-system/UIComponents'
 import { usePublicBrandColors, getPrimaryButtonSx, getOutlinedButtonSx, mergeButtonSx } from '@/shared/theme/publicBrand'
 import { overlayFooterButtonSx } from '@/design-system/UIComponents/Feedback/overlayHeaderTypography'
+import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
+import {
+  isAdminFlowPolicy,
+  requiresFieldValidation,
+  useApplicationFlowPolicy,
+} from '../../../context/ApplicationFlowPolicyContext'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import { deriveApplicationSubmitKind } from '../../../utils/applicationSubmitKind'
 import { ApplicationReviewPanels } from '../../../components/ApplicationReviewPanels'
 import type { CustomerChecklistItem } from '@/pages/customer/features/shared/components/CustomerPrimitives'
+import { getPassportIssueLocationLabel } from '@/shared/services/countryMasterService'
 
 interface ApplicationSubmitStepProps {
   state: ApplicationFlowState
@@ -21,13 +28,33 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
   const navigate = useNavigate()
   const { base } = useCustomerPortalBase()
   const { showToast } = useToast()
+  const { policy, listingPath } = useApplicationFlowPolicy()
+  const strict = requiresFieldValidation(policy)
+  const isAdmin = isAdminFlowPolicy(policy)
   const [declared, setDeclared] = useState(false)
 
   const rows = state.uploadQueueRows
   const readyRows = useMemo(() => rows.filter(r => r.status !== 'processing'), [rows])
   const submitKind = useMemo(() => deriveApplicationSubmitKind(rows), [rows])
 
+  const cancelListingPath = listingPath || `${base}/applications`
+
   const handleSubmit = () => {
+    if (isAdmin) {
+      const { id, kind } = marineApplicationAdminService.createAndSubmitFromFlow(state)
+      onSubmitted()
+      showToast({
+        title: 'Application created',
+        description:
+          kind === 'single'
+            ? `${id} is now in the marine applications listing.`
+            : `${id} batch is now in the marine applications listing.`,
+        variant: 'success',
+      })
+      navigate(cancelListingPath)
+      return
+    }
+
     const refId = customerPortalService.submitApplication(submitKind, {
       applicationId: state.gltsApplicationId,
       batchId: state.gltsBatchId,
@@ -47,10 +74,12 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
   const handleDraft = () => {
     showToast({
       title: 'Draft saved',
-      description: 'Resume from Application Management → Draft applications.',
+      description: isAdmin
+        ? 'Resume from Marine applications when draft persistence is enabled.'
+        : 'Resume from Application Management → Draft applications.',
       variant: 'info',
     })
-    navigate(`${base}/applications`)
+    navigate(cancelListingPath)
   }
 
   const handleReuploadDocument = (_item: CustomerChecklistItem) => {
@@ -61,13 +90,17 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
     })
   }
 
+  const submitDisabled = strict && (!declared || readyRows.length === 0)
+
   return (
     <Box sx={{ width: '100%', maxWidth: '100%' }}>
       <Typography sx={{ fontWeight: 800, fontSize: { xs: 20, md: 22 }, color: colors.navy, mb: 0.5 }}>
         Review & submit
       </Typography>
       <Typography sx={{ fontSize: 13, color: colors.textSecondary, mb: 2.5 }}>
-        Select a traveler from the listing to review their summary and document checklist before submission.
+        {isAdmin
+          ? 'Review the application summary. Fields may be incomplete; submit when ready to add the record to marine operations.'
+          : 'Select a traveler from the listing to review their summary and document checklist before submission.'}
       </Typography>
 
       <ApplicationReviewPanels
@@ -79,6 +112,11 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
           visaTypeLabel: state.visaTypeLabel,
           purposeLabel: state.purposeLabel,
           travelDate: state.travelDate,
+          issuedPassportLocationLabel: getPassportIssueLocationLabel(
+            state.countryId,
+            state.issuedPassportLocationId,
+          ),
+          jurisdiction: state.jurisdiction,
           gltsApplicationId: state.gltsApplicationId || undefined,
           gltsBatchId: state.gltsBatchId || undefined,
         }}
@@ -86,28 +124,36 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
         onReuploadDocument={handleReuploadDocument}
       />
 
-      <FormControlLabel
-        control={<Checkbox checked={declared} onChange={e => setDeclared(e.target.checked)} size="small" />}
-        label={
-          <Typography sx={{ fontSize: 13 }}>
-            I confirm the information is accurate and understand GLTS will process this application per the agreed
-            scope.
-          </Typography>
-        }
-        sx={{ mb: 2, alignItems: 'flex-start' }}
-      />
+      {strict ? (
+        <FormControlLabel
+          control={<Checkbox checked={declared} onChange={e => setDeclared(e.target.checked)} size="small" />}
+          label={
+            <Typography sx={{ fontSize: 13 }}>
+              I confirm the information is accurate and understand GLTS will process this application per the agreed
+              scope.
+            </Typography>
+          }
+          sx={{ mb: 2, alignItems: 'flex-start' }}
+        />
+      ) : null}
 
       <Stack direction="row" spacing={1.5} flexWrap="wrap">
-        <Button variant="outlined" onClick={handleDraft} sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx)}>
-          Save draft
-        </Button>
+        {!isAdmin ? (
+          <Button
+            variant="outlined"
+            onClick={handleDraft}
+            sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx)}
+          >
+            Save draft
+          </Button>
+        ) : null}
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={!declared || readyRows.length === 0}
+          disabled={submitDisabled}
           sx={mergeButtonSx(getPrimaryButtonSx(colors), overlayFooterButtonSx, { ml: 'auto' })}
         >
-          Submit application
+          {isAdmin ? 'Create application' : 'Submit application'}
         </Button>
       </Stack>
     </Box>

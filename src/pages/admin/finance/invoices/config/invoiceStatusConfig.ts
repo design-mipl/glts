@@ -3,19 +3,23 @@ import type { InvoiceStatus, InvoiceType, PaymentStatus } from '@/shared/types/i
 export type BadgeColor = 'primary' | 'secondary' | 'error' | 'success' | 'warning' | 'info' | 'neutral'
 
 export const invoiceTypeLabel: Record<InvoiceType, string> = {
-  single_invoice: 'Single invoice',
-  cumulative: 'Cumulative invoice',
-  additional_expense: 'Additional expense',
-  final_settlement: 'Final settlement',
-  credit_note: 'Credit note',
+  single_invoice: 'Single Application Invoice',
+  bulk_invoice: 'Bulk Invoice',
+  cumulative: 'Cumulative Invoice',
+  additional_expense: 'Additional Expense Invoice',
+  final_settlement: 'Final Settlement Invoice',
+  credit_note: 'Credit Note',
+  debit_note: 'Debit Note',
 }
 
 export const invoiceTypeColor: Record<InvoiceType, BadgeColor> = {
   single_invoice: 'info',
+  bulk_invoice: 'info',
   cumulative: 'success',
   additional_expense: 'error',
   final_settlement: 'primary',
   credit_note: 'secondary',
+  debit_note: 'warning',
 }
 
 export const invoiceStatusLabel: Record<InvoiceStatus, string> = {
@@ -73,7 +77,7 @@ export function paymentStatusBadgeColor(status: PaymentStatus): BadgeColor {
 }
 
 export const INVOICE_TYPE_OPTIONS = Object.entries(invoiceTypeLabel)
-  .filter(([value]) => value !== 'credit_note')
+  .filter(([value]) => value !== 'credit_note' && value !== 'debit_note')
   .map(([value, label]) => ({ value, label }))
 
 export const INVOICE_STATUS_OPTIONS = Object.entries(invoiceStatusLabel).map(([value, label]) => ({

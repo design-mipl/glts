@@ -55,7 +55,16 @@ export function DrawerSidebarSection({
           gap: 1,
         }}
       >
-        <Typography sx={{ fontSize: 12, fontWeight: 800, color: colors.navy }}>{title}</Typography>
+        <Typography
+          sx={{
+            fontSize: 12,
+            fontWeight: 800,
+            color: colors.navy,
+            letterSpacing: '0.02em',
+          }}
+        >
+          {title}
+        </Typography>
         {summary}
       </Box>
       {children}

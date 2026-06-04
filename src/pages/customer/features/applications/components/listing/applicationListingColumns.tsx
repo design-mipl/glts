@@ -14,6 +14,7 @@ import {
   getApplicationTypeLabel,
   getApplicationTypeTone,
 } from './applicationStatus'
+import { resolveApplicationCompanyName } from '../../utils/applicationCompanyUtils'
 import {
   resolveApplicationCreatorLabel,
   resolveApplicationCreatorRoleLabel,
@@ -170,12 +171,24 @@ export function buildUnifiedApplicationColumns({
     },
     {
       key: 'applicantName',
-      label: 'Applicant / company',
+      label: 'Applicant',
       sortable: false,
       filterable: false,
       render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
         <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-          {row.recordType === 'bulk' ? row.companyName : row.applicantName}
+          {row.recordType === 'bulk' ? `${row.totalApplicants} travelers` : row.applicantName}
+        </Typography>
+      ),
+    },
+    {
+      key: 'companyName',
+      label: 'Company name',
+      sortable: true,
+      filterable: true,
+      width: 180,
+      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+        <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+          {resolveApplicationCompanyName(row)}
         </Typography>
       ),
     },

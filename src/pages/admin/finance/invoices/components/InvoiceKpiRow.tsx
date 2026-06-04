@@ -1,6 +1,14 @@
 import { Grid, Stack, Typography, useTheme } from '@mui/material'
 import type { LucideIcon } from 'lucide-react'
-import { AlertCircle, FileText, IndianRupee, Receipt } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  FileText,
+  IndianRupee,
+  Receipt,
+  Send,
+} from 'lucide-react'
 import { BaseCard } from '@/design-system/UIComponents'
 import type { Invoice } from '@/shared/types/invoice'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
@@ -54,29 +62,69 @@ function KpiCard({
   )
 }
 
+function computeOutstanding(invoices: Invoice[]): number {
+  return invoices
+    .filter(i => i.invoiceStatus !== 'cancelled' && i.invoiceStatus !== 'paid' && i.invoiceType !== 'credit_note')
+    .reduce((sum, i) => {
+      const collected = i.payments.reduce((ps, p) => ps + p.amount, 0)
+      return sum + Math.max(0, i.totals.balancePayable || i.totals.finalAmount - collected)
+    }, 0)
+}
+
+function computeTotalBilled(invoices: Invoice[]): number {
+  return invoices
+    .filter(i => i.invoiceStatus !== 'draft' && i.invoiceStatus !== 'cancelled')
+    .reduce((sum, i) => sum + i.totals.finalAmount, 0)
+}
+
 export function InvoiceKpiRow({ invoices }: InvoiceKpiRowProps) {
   const theme = useTheme()
   const total = invoices.length
   const draft = invoices.filter(i => i.invoiceStatus === 'draft').length
+  const submitted = invoices.filter(
+    i =>
+      i.invoiceStatus === 'submitted' &&
+      i.invoiceType !== 'credit_note' &&
+      i.invoiceType !== 'debit_note',
+  ).length
   const overdue = invoices.filter(i => i.invoiceStatus === 'overdue').length
-  const outstanding = invoices
-    .filter(i => i.invoiceStatus !== 'cancelled' && i.invoiceStatus !== 'paid')
-    .reduce((sum, i) => sum + i.totals.finalAmount - i.payments.reduce((ps, p) => ps + p.amount, 0), 0)
+  const outstanding = computeOutstanding(invoices)
+  const totalBilled = computeTotalBilled(invoices)
+  const advanceAdjusted = invoices.reduce((s, i) => s + i.totals.advanceAdjusted, 0)
+  const creditNotes = invoices.filter(i => i.invoiceType === 'credit_note').length
+  const debitNotes = invoices.filter(i => i.invoiceType === 'debit_note').length
+
+  const primary = [
+    { label: 'Total Invoices', value: total, icon: FileText, color: theme.palette.primary.main },
+    { label: 'Draft Invoices', value: draft, icon: Receipt, color: theme.palette.info.main },
+    { label: 'Submitted Invoices', value: submitted, icon: Send, color: theme.palette.success.main },
+    { label: 'Overdue Invoices', value: overdue, icon: AlertCircle, color: theme.palette.error.main },
+    { label: 'Outstanding Amount', value: formatInr(outstanding), icon: IndianRupee, color: theme.palette.warning.main },
+    { label: 'Total Billed Amount', value: formatInr(totalBilled), icon: IndianRupee, color: theme.palette.primary.dark },
+  ]
+
+  const optional = [
+    { label: 'Advance Adjusted', value: formatInr(advanceAdjusted), icon: ArrowDownCircle, color: theme.palette.info.dark },
+    { label: 'Credit Notes', value: creditNotes, icon: ArrowDownCircle, color: theme.palette.secondary.main },
+    { label: 'Debit Notes', value: debitNotes, icon: ArrowUpCircle, color: theme.palette.warning.dark },
+  ]
 
   return (
-    <Grid container spacing={1.5}>
-      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <KpiCard label="Total invoices" value={total} icon={FileText} iconColor={theme.palette.primary.main} />
+    <Stack spacing={1.5}>
+      <Grid container spacing={1.5}>
+        {primary.map(kpi => (
+          <Grid key={kpi.label} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+            <KpiCard label={kpi.label} value={kpi.value} icon={kpi.icon} iconColor={kpi.color} />
+          </Grid>
+        ))}
       </Grid>
-      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <KpiCard label="Draft" value={draft} icon={Receipt} iconColor={theme.palette.info.main} />
+      <Grid container spacing={1.5}>
+        {optional.map(kpi => (
+          <Grid key={kpi.label} size={{ xs: 12, sm: 4 }}>
+            <KpiCard label={kpi.label} value={kpi.value} icon={kpi.icon} iconColor={kpi.color} />
+          </Grid>
+        ))}
       </Grid>
-      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <KpiCard label="Overdue" value={overdue} icon={AlertCircle} iconColor={theme.palette.error.main} />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <KpiCard label="Outstanding" value={formatInr(outstanding)} icon={IndianRupee} iconColor={theme.palette.warning.main} />
-      </Grid>
-    </Grid>
+    </Stack>
   )
 }

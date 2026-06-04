@@ -4,8 +4,6 @@ import {
   emptyApplicantBasicDetails,
   type ApplicantBasicDetails,
 } from '../config/applicantBasicDetailsConfig'
-import { isDocumentComplete } from './uploadQueueDocuments'
-
 const PLACEHOLDER = '—'
 
 function isEmptyValue(value: string): boolean {
@@ -99,24 +97,6 @@ export function basicDetailsCompletion(details: ApplicantBasicDetails): {
   const total = BASIC_DETAIL_REQUIRED_KEYS.length
   const complete = BASIC_DETAIL_REQUIRED_KEYS.filter(key => !isEmptyValue(details[key])).length
   return { complete, total }
-}
-
-export function hasDummyTicketProvided(
-  row: UploadQueueRow,
-  globalUploads?: Record<string, { fileName: string }>,
-): boolean {
-  if (globalUploads?.['dummy-ticket']) return true
-  const doc = row.documents?.find(d => d.documentId === 'dummy-ticket' || d.documentId === 'dummy_ticket')
-  return doc ? isDocumentComplete(doc.status) : false
-}
-
-export function hasInsuranceProvided(
-  row: UploadQueueRow,
-  globalUploads?: Record<string, { fileName: string }>,
-): boolean {
-  if (globalUploads?.insurance) return true
-  const doc = row.documents?.find(d => d.documentId === 'insurance')
-  return doc ? isDocumentComplete(doc.status) : false
 }
 
 export function ensureRowBasicDetails(row: UploadQueueRow): UploadQueueRow {

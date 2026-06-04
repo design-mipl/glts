@@ -34,6 +34,22 @@ export const SEED_DOCUMENT_MASTERS: DocumentMaster[] = [
     updatedAt: daysAgo(7),
   },
   {
+    id: 'travel-ticket',
+    documentType: 'Travel Ticket',
+    description: 'Confirmed flight or travel booking showing itinerary and traveler name.',
+    status: 'active',
+    createdAt: daysAgo(75),
+    updatedAt: daysAgo(6),
+  },
+  {
+    id: 'insurance',
+    documentType: 'Insurance',
+    description: 'Travel medical insurance covering the visa stay period as per embassy requirements.',
+    status: 'active',
+    createdAt: daysAgo(75),
+    updatedAt: daysAgo(6),
+  },
+  {
     id: 'cdc',
     documentType: 'CDC',
     description: 'Continuous discharge certificate for marine workflows.',

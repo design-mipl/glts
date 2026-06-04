@@ -1,5 +1,6 @@
 import { Box, CircularProgress, Stack, Typography } from '@mui/material'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import { Badge, Button, EmptyState, Select, useToast } from '@/design-system/UIComponents'
 import { AdminStepperFormShell } from '@/pages/admin/components/AdminStepperFormShell'
 import { AdminRecordPageChrome } from '@/pages/admin/components/AdminRecordPageChrome'
@@ -14,7 +15,7 @@ import { buildFormAssistFieldsForStep } from '../utils/formAssistFieldBuilder'
 
 export function MarineViewFormPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
-  const navigate = useNavigate()
+  const navigate = useAppNavigate()
   const { showToast } = useToast()
 
   const workspace = useViewFormWorkspace(applicationId)

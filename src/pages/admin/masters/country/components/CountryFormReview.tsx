@@ -3,6 +3,7 @@ import { alpha, useTheme } from '@mui/material/styles'
 import type { CountryMasterFormData } from '@/shared/types/countryMaster'
 import { PROCESSING_TYPE_LABELS } from '../config/countryProcessingConfig'
 import { SEGMENT_LABELS } from '../config/countrySegmentConfig'
+import { formatPassportIssueLocationsSummary } from './CountryPassportIssueLocationsEditor'
 
 interface CountryFormReviewProps {
   data: CountryMasterFormData
@@ -51,6 +52,10 @@ export function CountryFormReview({ data }: CountryFormReviewProps) {
         <ReviewRow label="Country" value={`${data.name} (${data.code})`} />
         <ReviewRow label="Region" value={data.region} />
         <ReviewRow label="Processing" value={PROCESSING_TYPE_LABELS[data.processingType]} />
+        <ReviewRow
+          label="Passport locations"
+          value={formatPassportIssueLocationsSummary(data.passportIssueLocations)}
+        />
         <ReviewRow label="Portal cities" value={data.cities} />
         <ReviewRow
           label="Segments"

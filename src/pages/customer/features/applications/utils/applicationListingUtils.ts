@@ -9,6 +9,7 @@ import { SUBMITTED_OPERATIONAL_STATUSES } from '../types/applicationListing.type
 import type { ApplicationListingRow } from '../types/applicationListing.types'
 import { isBulkRow } from '../types/applicationListing.types'
 import { getApplicationTypeLabel } from '../components/listing/applicationStatus'
+import { resolveApplicationCompanyName } from './applicationCompanyUtils'
 import { resolveApplicationCreatorLabel, getApplicationCreatorOptions } from './applicationCreatorUtils'
 
 export function getAllListingRows(singles: SingleApplicationRow[], bulks: BulkBatchRow[]): ApplicationListingRow[] {
@@ -51,9 +52,11 @@ export function matchesListingSearch(row: ApplicationListingRow, query: string):
   if (!s) return true
   if (row.id.toLowerCase().includes(s)) return true
   if (getApplicationTypeLabel(row.recordType).toLowerCase().includes(s)) return true
+  const company = resolveApplicationCompanyName(row).toLowerCase()
+  if (company.includes(s)) return true
+
   if (isBulkRow(row)) {
     return (
-      row.companyName.toLowerCase().includes(s) ||
       row.country.toLowerCase().includes(s) ||
       row.visaType.toLowerCase().includes(s) ||
       row.status.toLowerCase().includes(s) ||
@@ -64,7 +67,6 @@ export function matchesListingSearch(row: ApplicationListingRow, query: string):
   return (
     row.applicantName.toLowerCase().includes(s) ||
     row.passportNumber.toLowerCase().includes(s) ||
-    (row.companyName?.toLowerCase().includes(s) ?? false) ||
     row.country.toLowerCase().includes(s) ||
     row.visaType.toLowerCase().includes(s) ||
     row.status.toLowerCase().includes(s) ||
@@ -99,10 +101,10 @@ export function getListingCellValue(row: ApplicationListingRow, key: string): st
     return isBulkRow(row) ? String(row.totalApplicants) : '1'
   }
   if (key === 'applicantName') {
-    return isBulkRow(row) ? row.companyName : row.applicantName
+    return isBulkRow(row) ? `${row.totalApplicants} travelers` : row.applicantName
   }
+  if (key === 'companyName') return resolveApplicationCompanyName(row)
   if (isBulkRow(row)) {
-    if (key === 'companyName') return row.companyName
     if (key === 'totalApplicants') return String(row.totalApplicants)
     if (key === 'verifiedApplicants') return String(row.verifiedApplicants)
     if (key === 'pendingCorrections') return String(row.pendingCorrections)
@@ -113,7 +115,6 @@ export function getListingCellValue(row: ApplicationListingRow, key: string): st
   }
   if (key === 'applicantName') return row.applicantName
   if (key === 'passportNumber') return row.passportNumber
-  if (key === 'companyName') return row.companyName ?? '—'
   if (key === 'country') return row.country
   if (key === 'submissionDate') return row.submissionDate || '—'
   if (key === 'lastUpdated') return row.lastUpdated

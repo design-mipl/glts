@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Box,
   Typography,
@@ -16,10 +16,21 @@ import {
 import { Upload, Eye, FileText, ChevronDown } from 'lucide-react'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { CustomerStatusChip, getCustomerStatusTone } from '@/pages/customer/features/shared/components/CustomerPrimitives'
-import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import {
-  getDocumentWorkspaceItems,
-} from '../../../../data/singleApplicationFlowData'
+  documentStatusLabel,
+  isApplicantDocumentSatisfied,
+  isSimpleDocumentRequirement,
+  applyWorkflowPatch,
+} from '@/shared/utils/applicantDocumentWorkflowUtils'
+import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
+import { getDocumentWorkspaceItems } from '../../../../data/singleApplicationFlowData'
+import { singleExtractedFields } from '../../../../data/applicationFlowData'
+import type { ApplicantDocumentItem, UploadQueueRow } from '../../../../data/applicationFlowData'
+import { SimpleDocumentRequirementPanel } from '../../../../components/documentWorkflow'
+import {
+  normalizeUploadQueueRow,
+  withDocumentProgress,
+} from '../../../../utils/uploadQueueDocuments'
 import { FlowStepActions } from '../../../../components/create/FlowStepActions'
 
 interface DocumentUploadWorkspaceStepProps {
@@ -83,6 +94,29 @@ function getDocumentFieldDefs(docId: string): DocumentFieldDef[] {
   ]
 }
 
+function buildSingleQueueRow(state: ApplicationFlowState): UploadQueueRow {
+  const existing = state.uploadQueueRows[0]
+  if (existing) return existing
+
+  return {
+    id: `${state.gltsApplicationId || 'single'}-q1`,
+    fileName: 'passport.pdf',
+    gltsApplicationId: state.gltsApplicationId,
+    gltsApplicantId: `${state.gltsApplicationId || 'single'}-APL-001`,
+    sequenceNo: 1,
+    travelerName: state.applicantName || '—',
+    passportNo: state.passportNumber || '—',
+    expiry: state.passportExpiry || '—',
+    nationality: state.nationality || '—',
+    confidence: 0,
+    status: 'processing',
+    fields: singleExtractedFields,
+    documents: [],
+    documentsComplete: 0,
+    documentsTotal: 0,
+  }
+}
+
 export function DocumentUploadWorkspaceStep({
   state,
   onUpdate,
@@ -90,14 +124,61 @@ export function DocumentUploadWorkspaceStep({
   onSaveDraft,
 }: DocumentUploadWorkspaceStepProps) {
   const colors = usePublicBrandColors()
-  const docs = useMemo(
+  const workspaceDocs = useMemo(
     () => getDocumentWorkspaceItems(state.countryId, state.visaOfferingId, state.processingType),
     [state.countryId, state.visaOfferingId, state.processingType],
   )
-  const [expanded, setExpanded] = useState<string>(docs[0]?.id ?? 'passport')
+
+  const queueRow = useMemo(() => buildSingleQueueRow(state), [state])
+
+  const applicantDocuments = useMemo(() => {
+    if (!state.countryId || !state.visaOfferingId) return queueRow.documents ?? []
+    const normalized = normalizeUploadQueueRow(queueRow, {
+      countryId: state.countryId,
+      visaOfferingId: state.visaOfferingId,
+      countryLabel: state.countryName,
+      passportFields: queueRow.fields?.length ? queueRow.fields : singleExtractedFields,
+    })
+    return normalized.documents
+  }, [queueRow, state.countryId, state.visaOfferingId, state.countryName])
+
+  useEffect(() => {
+    if (!state.countryId || !state.visaOfferingId) return
+    const base = buildSingleQueueRow(state)
+    const normalized = normalizeUploadQueueRow(base, {
+      countryId: state.countryId,
+      visaOfferingId: state.visaOfferingId,
+      countryLabel: state.countryName,
+      passportFields: base.fields?.length ? base.fields : singleExtractedFields,
+    })
+    const current = state.uploadQueueRows[0]
+    const idsMatch =
+      current &&
+      current.documents.length === normalized.documents.length &&
+      normalized.documents.every((d, i) => d.documentId === current.documents[i]?.documentId)
+    if (idsMatch) return
+    onUpdate({ uploadQueueRows: [normalized] })
+  }, [
+    state.countryId,
+    state.visaOfferingId,
+    state.countryName,
+    state.gltsApplicationId,
+    state.uploadQueueRows.length,
+  ])
+
+  const documentsById = useMemo(
+    () => new Map(applicantDocuments.map(d => [d.documentId, d])),
+    [applicantDocuments],
+  )
+
+  const [expanded, setExpanded] = useState<string>(workspaceDocs[0]?.id ?? 'passport')
   const [draftFields, setDraftFields] = useState<Record<string, string>>({})
-  const mandatoryMissing = docs.filter(d => d.required && !d.status).length
-  const clarificationOpen = docs.filter(d => d.status === 'Needs Clarification').length
+
+  const mandatoryDocs = applicantDocuments.filter(d => d.required)
+  const mandatoryMissing = mandatoryDocs.filter(d => !isApplicantDocumentSatisfied(d)).length
+  const clarificationOpen = applicantDocuments.filter(
+    d => d.status === 'needs_review' || d.status === 'rejected',
+  ).length
   const canProceed = mandatoryMissing === 0 && clarificationOpen === 0
 
   const fieldKey = (docId: string, label: string) => `${docId}:${label}`
@@ -126,6 +207,18 @@ export function DocumentUploadWorkspaceStep({
       if (key === 'gender') return onUpdate({ gender: value })
     }
     setDraftFields(prev => ({ ...prev, [fieldKey(docId, key)]: value }))
+  }
+
+  const updateApplicantDocument = (documentId: string, patch: Partial<ApplicantDocumentItem>) => {
+    const row = buildSingleQueueRow(state)
+    const nextDocuments = (row.documents.length ? row.documents : applicantDocuments).map(d => {
+      if (d.documentId !== documentId) return d
+      return isSimpleDocumentRequirement(d.documentId)
+        ? applyWorkflowPatch(d, patch)
+        : { ...d, ...patch }
+    })
+    const nextRow = withDocumentProgress({ ...row, documents: nextDocuments })
+    onUpdate({ uploadQueueRows: [nextRow] })
   }
 
   return (
@@ -164,8 +257,12 @@ export function DocumentUploadWorkspaceStep({
           </Stack>
 
           <Stack spacing={1.5}>
-            {docs.map(doc => {
-              const fieldDefs = getDocumentFieldDefs(doc.id)
+            {workspaceDocs.map(doc => {
+              const applicantDoc = documentsById.get(doc.id)
+              const isSimple = isSimpleDocumentRequirement(doc.id)
+              const fieldDefs = isSimple ? [] : getDocumentFieldDefs(doc.id)
+              const statusLabel = applicantDoc ? documentStatusLabel(applicantDoc) : doc.status ?? 'Not uploaded'
+
               return (
                 <Accordion
                   key={doc.id}
@@ -201,99 +298,117 @@ export function DocumentUploadWorkspaceStep({
                         <Typography sx={{ fontSize: 11, color: colors.textSecondary, fontWeight: 700 }}>
                           {doc.required ? 'Mandatory' : 'Optional'}
                         </Typography>
-                        {doc.status && (
+                        {applicantDoc ? (
+                          <CustomerStatusChip
+                            label={statusLabel}
+                            tone={
+                              isApplicantDocumentSatisfied(applicantDoc)
+                                ? 'success'
+                                : applicantDoc.status === 'needs_review' || applicantDoc.status === 'rejected'
+                                  ? 'warning'
+                                  : 'neutral'
+                            }
+                          />
+                        ) : doc.status ? (
                           <CustomerStatusChip label={`Status: ${doc.status}`} tone={getCustomerStatusTone(doc.status)} />
-                        )}
+                        ) : null}
                       </Stack>
                     </Stack>
                   </AccordionSummary>
                   <AccordionDetails sx={{ px: 1.5, pt: 1.25, pb: 1.5 }}>
-                    <Stack spacing={1}>
-                      <Typography sx={{ fontSize: 11.5, color: colors.textMuted }}>
-                        {doc.description || 'Upload document as per checklist. Minimum file size should be above 40KB.'}
-                      </Typography>
-                      <Typography sx={{ fontSize: 11.5, color: colors.textSecondary }}>
-                        File guidance: upload clear files above 40KB.
-                      </Typography>
+                    {isSimple && applicantDoc ? (
+                      <SimpleDocumentRequirementPanel
+                        document={applicantDoc}
+                        onChange={patch => updateApplicantDocument(doc.id, patch)}
+                      />
+                    ) : (
+                      <Stack spacing={1}>
+                        <Typography sx={{ fontSize: 11.5, color: colors.textMuted }}>
+                          {doc.description || 'Upload document as per checklist. Minimum file size should be above 40KB.'}
+                        </Typography>
+                        <Typography sx={{ fontSize: 11.5, color: colors.textSecondary }}>
+                          File guidance: upload clear files above 40KB.
+                        </Typography>
 
-                      <Grid container spacing={1}>
-                        <Grid size={{ xs: 12, md: 8 }}>
-                          <Grid container spacing={1}>
-                            {fieldDefs.map(field => (
-                              <Grid key={`${doc.id}-${field.key}`} size={{ xs: 12, sm: 6, lg: 4 }}>
-                                <TextField
-                                  fullWidth
+                        <Grid container spacing={1}>
+                          <Grid size={{ xs: 12, md: 8 }}>
+                            <Grid container spacing={1}>
+                              {fieldDefs.map(field => (
+                                <Grid key={`${doc.id}-${field.key}`} size={{ xs: 12, sm: 6, lg: 4 }}>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    label={field.label}
+                                    type={field.type === 'date' ? 'date' : 'text'}
+                                    select={field.type === 'select'}
+                                    value={schemaFieldValue(doc.id, field.key)}
+                                    onChange={e => onSchemaFieldChange(doc.id, field.key, e.target.value)}
+                                    slotProps={field.type === 'date' ? { inputLabel: { shrink: true } } : undefined}
+                                    sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
+                                  >
+                                    {field.type === 'select' &&
+                                      field.options?.map(option => (
+                                        <MenuItem key={option.value} value={option.value}>
+                                          {option.label}
+                                        </MenuItem>
+                                      ))}
+                                  </TextField>
+                                </Grid>
+                              ))}
+                            </Grid>
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            {doc.id === 'passport' ? (
+                              <Stack spacing={1} sx={{ p: 1.1, border: `1px solid ${colors.border}`, borderRadius: '10px', bgcolor: colors.surfaceAlt }}>
+                                <Button
                                   size="small"
-                                  label={field.label}
-                                  type={field.type === 'date' ? 'date' : 'text'}
-                                  select={field.type === 'select'}
-                                  value={schemaFieldValue(doc.id, field.key)}
-                                  onChange={e => onSchemaFieldChange(doc.id, field.key, e.target.value)}
-                                  slotProps={field.type === 'date' ? { inputLabel: { shrink: true } } : undefined}
-                                  sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
+                                  variant="outlined"
+                                  startIcon={<Upload size={14} />}
+                                  sx={{ textTransform: 'none', justifyContent: 'flex-start', borderRadius: '9px', borderColor: colors.border }}
                                 >
-                                  {field.type === 'select' &&
-                                    field.options?.map(option => (
-                                      <MenuItem key={option.value} value={option.value}>
-                                        {option.label}
-                                      </MenuItem>
-                                    ))}
-                                </TextField>
-                              </Grid>
-                            ))}
+                                  Upload front photo
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<Upload size={14} />}
+                                  sx={{ textTransform: 'none', justifyContent: 'flex-start', borderRadius: '9px', borderColor: colors.border }}
+                                >
+                                  Upload complete passport PDF
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="text"
+                                  startIcon={<Eye size={14} />}
+                                  sx={{ textTransform: 'none', justifyContent: 'flex-start', borderRadius: '9px' }}
+                                >
+                                  Preview
+                                </Button>
+                              </Stack>
+                            ) : (
+                              <Stack spacing={1} sx={{ p: 1.1, border: `1px solid ${colors.border}`, borderRadius: '10px', bgcolor: colors.surfaceAlt }}>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<Upload size={14} />}
+                                  sx={{ textTransform: 'none', justifyContent: 'flex-start', borderRadius: '9px', borderColor: colors.border }}
+                                >
+                                  {doc.status ? 'Re-upload document' : 'Upload document'}
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="text"
+                                  startIcon={<Eye size={14} />}
+                                  sx={{ textTransform: 'none', justifyContent: 'flex-start', borderRadius: '9px' }}
+                                >
+                                  Preview
+                                </Button>
+                              </Stack>
+                            )}
                           </Grid>
                         </Grid>
-                        <Grid size={{ xs: 12, md: 4 }}>
-                          {doc.id === 'passport' ? (
-                            <Stack spacing={1} sx={{ p: 1.1, border: `1px solid ${colors.border}`, borderRadius: '10px', bgcolor: colors.surfaceAlt }}>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                startIcon={<Upload size={14} />}
-                                sx={{ textTransform: 'none', justifyContent: 'flex-start', borderRadius: '9px', borderColor: colors.border }}
-                              >
-                                Upload front photo
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                startIcon={<Upload size={14} />}
-                                sx={{ textTransform: 'none', justifyContent: 'flex-start', borderRadius: '9px', borderColor: colors.border }}
-                              >
-                                Upload complete passport PDF
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="text"
-                                startIcon={<Eye size={14} />}
-                                sx={{ textTransform: 'none', justifyContent: 'flex-start', borderRadius: '9px' }}
-                              >
-                                Preview
-                              </Button>
-                            </Stack>
-                          ) : (
-                            <Stack spacing={1} sx={{ p: 1.1, border: `1px solid ${colors.border}`, borderRadius: '10px', bgcolor: colors.surfaceAlt }}>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                startIcon={<Upload size={14} />}
-                                sx={{ textTransform: 'none', justifyContent: 'flex-start', borderRadius: '9px', borderColor: colors.border }}
-                              >
-                                {doc.status ? 'Re-upload document' : 'Upload document'}
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="text"
-                                startIcon={<Eye size={14} />}
-                                sx={{ textTransform: 'none', justifyContent: 'flex-start', borderRadius: '9px' }}
-                              >
-                                Preview
-                              </Button>
-                            </Stack>
-                          )}
-                        </Grid>
-                      </Grid>
-                    </Stack>
+                      </Stack>
+                    )}
                   </AccordionDetails>
                 </Accordion>
               )

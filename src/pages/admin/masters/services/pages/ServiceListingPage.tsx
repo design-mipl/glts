@@ -17,6 +17,7 @@ import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCu
 import { serviceMasterService } from '@/shared/services/serviceMasterService'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
 import { buildServiceColumns } from '../components/ServiceTableColumns'
+import { ServiceFormDrawer } from '../components/ServiceFormDrawer'
 import {
   downloadServiceCsv,
   getServiceCellValue,

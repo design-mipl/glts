@@ -14,6 +14,7 @@ import {
   getApplicationOperationalTone,
   getApplicationTypeLabel,
 } from '@/pages/customer/features/applications/components/listing/applicationStatus'
+import { resolveApplicationCompanyName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
 import {
   resolveApplicationCreatorLabel,
   resolveApplicationCreatorRoleLabel,
@@ -138,14 +139,26 @@ export function buildMarineApplicationColumns({
     },
     {
       key: 'applicantName',
-      label: 'Applicant / company',
+      label: 'Applicant',
       sortable: false,
       filterable: false,
       render: (_: unknown, row: MarineApplicationRow) => (
         <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
           {row.recordType === 'bulk'
-            ? (row as BulkBatchRow).companyName
+            ? `${(row as BulkBatchRow).totalApplicants} travelers`
             : (row as SingleApplicationRow).applicantName}
+        </Typography>
+      ),
+    },
+    {
+      key: 'companyName',
+      label: 'Company name',
+      sortable: true,
+      filterable: true,
+      width: 180,
+      render: (_: unknown, row: MarineApplicationRow) => (
+        <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+          {resolveApplicationCompanyName(row)}
         </Typography>
       ),
     },

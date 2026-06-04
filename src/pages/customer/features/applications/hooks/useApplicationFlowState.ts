@@ -23,6 +23,10 @@ export interface ApplicationFlowState {
   referencePo: string
   billingAddress: string
   expectedReturnDate: string
+  /** Selected passport issuing location from country master. */
+  issuedPassportLocationId: string
+  /** Auto-filled from issued passport location jurisdiction mapping. */
+  jurisdiction: string
   processingType: 'normal' | 'express'
   uploadSource: 'folder' | 'zip'
   passportUploaded: boolean
@@ -69,6 +73,8 @@ const defaultState: ApplicationFlowState = {
   referencePo: '',
   billingAddress: '',
   expectedReturnDate: '',
+  issuedPassportLocationId: '',
+  jurisdiction: '',
   processingType: 'normal',
   uploadSource: 'folder',
   passportUploaded: false,
@@ -114,9 +120,9 @@ function seedApplicantFromExtracted(): Partial<ApplicationFlowState> {
   }
 }
 
-function loadStored(): ApplicationFlowState {
+function loadStored(storageKey: string): ApplicationFlowState {
   try {
-    const raw = sessionStorage.getItem(APPLICATION_FLOW_STORAGE_KEY)
+    const raw = sessionStorage.getItem(storageKey)
     if (!raw) return defaultState
     const parsed = JSON.parse(raw) as Partial<ApplicationFlowState> & { mode?: string }
     const { mode: _removed, ...rest } = parsed
@@ -136,35 +142,43 @@ function loadStored(): ApplicationFlowState {
   }
 }
 
-export function useApplicationFlowState(options?: { startFresh?: boolean }) {
+export function useApplicationFlowState(options?: {
+  startFresh?: boolean
+  storageKey?: string
+}) {
+  const storageKey = options?.storageKey ?? APPLICATION_FLOW_STORAGE_KEY
+
   const [state, setState] = useState<ApplicationFlowState>(() => {
     if (options?.startFresh) {
-      sessionStorage.removeItem(APPLICATION_FLOW_STORAGE_KEY)
+      sessionStorage.removeItem(storageKey)
       return defaultState
     }
-    return loadStored()
+    return loadStored(storageKey)
   })
 
   const reset = useCallback(() => {
     setState(defaultState)
-    sessionStorage.removeItem(APPLICATION_FLOW_STORAGE_KEY)
-  }, [])
+    sessionStorage.removeItem(storageKey)
+  }, [storageKey])
 
-  const update = useCallback((patch: Partial<ApplicationFlowState>) => {
-    setState(prev => {
-      const next = { ...prev, ...patch }
-      sessionStorage.setItem(APPLICATION_FLOW_STORAGE_KEY, JSON.stringify(next))
-      return next
-    })
-  }, [])
+  const update = useCallback(
+    (patch: Partial<ApplicationFlowState>) => {
+      setState(prev => {
+        const next = { ...prev, ...patch }
+        sessionStorage.setItem(storageKey, JSON.stringify(next))
+        return next
+      })
+    },
+    [storageKey],
+  )
 
   const applyOcrDefaults = useCallback(() => {
     setState(prev => {
       const next = { ...prev, ...seedApplicantFromExtracted(), ocrConfirmed: true }
-      sessionStorage.setItem(APPLICATION_FLOW_STORAGE_KEY, JSON.stringify(next))
+      sessionStorage.setItem(storageKey, JSON.stringify(next))
       return next
     })
-  }, [])
+  }, [storageKey])
 
   return { state, update, reset, applyOcrDefaults }
 }

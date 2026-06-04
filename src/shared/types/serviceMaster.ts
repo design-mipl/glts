@@ -1,7 +1,5 @@
 import type { MasterApplicability, MasterAuditFields, MasterCategory, MasterRecordStatus } from './masterCommon'
 
-export type ServiceCurrency = 'INR' | 'USD' | 'EUR' | 'GBP'
-
 export interface ServiceMaster extends MasterAuditFields {
   id: string
   serviceCode: string
@@ -10,7 +8,6 @@ export interface ServiceMaster extends MasterAuditFields {
   category: MasterCategory
   subcategory: string
   defaultPrice: number | null
-  currency: ServiceCurrency
   mappedSacCodeId: string | null
   gstRateId: string | null
   tdsSectionId: string | null
@@ -25,7 +22,6 @@ export interface ServiceMasterFormData {
   category: MasterCategory | ''
   subcategory: string
   defaultPrice: string
-  currency: ServiceCurrency | ''
   mappedSacCodeId: string
   gstRateId: string
   tdsSectionId: string
@@ -36,5 +32,4 @@ export interface ServiceMasterFormData {
 export interface ServiceMasterListFilters {
   status?: MasterRecordStatus | 'all'
   category?: MasterCategory | 'all'
-  currency?: ServiceCurrency | 'all'
 }

@@ -1,26 +1,24 @@
-import { Box, Grid, Stack, Typography } from '@mui/material'
-import { FormField, Input, Toggle } from '@/design-system/UIComponents'
+import { Box, Grid, Typography } from '@mui/material'
+import { FormField, Input } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { requiresFieldValidation, useApplicationFlowPolicy } from '../context/ApplicationFlowPolicyContext'
 import type { ApplicantBasicDetails } from '../config/applicantBasicDetailsConfig'
 import type { UploadQueueRow } from '../data/applicationFlowData'
-import { hasDummyTicketProvided, hasInsuranceProvided } from '../utils/applicantBasicDetailsUtils'
 
 interface ApplicantBasicDetailsFormProps {
   details: ApplicantBasicDetails
   row: UploadQueueRow
   onChange: (patch: Partial<ApplicantBasicDetails>) => void
-  globalDocumentUploads?: Record<string, { fileName: string }>
 }
 
 export function ApplicantBasicDetailsForm({
   details,
   row,
   onChange,
-  globalDocumentUploads,
 }: ApplicantBasicDetailsFormProps) {
   const colors = usePublicBrandColors()
-  const dummyProvided = hasDummyTicketProvided(row, globalDocumentUploads)
-  const insuranceProvided = hasInsuranceProvided(row, globalDocumentUploads)
+  const { policy } = useApplicationFlowPolicy()
+  const strict = requiresFieldValidation(policy)
   const crewFromReference = Boolean(row.gltsApplicantId?.trim())
 
   return (
@@ -44,7 +42,7 @@ export function ApplicantBasicDetailsForm({
           </FormField>
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <FormField label="Applicant name" required>
+          <FormField label="Applicant name" required={strict}>
             <Input
               fullWidth
               size="sm"
@@ -54,7 +52,7 @@ export function ApplicantBasicDetailsForm({
           </FormField>
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <FormField label="Passport number" required>
+          <FormField label="Passport number" required={strict}>
             <Input
               fullWidth
               size="sm"
@@ -64,7 +62,7 @@ export function ApplicantBasicDetailsForm({
           </FormField>
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <FormField label="Nationality" required>
+          <FormField label="Nationality" required={strict}>
             <Input
               fullWidth
               size="sm"
@@ -74,7 +72,7 @@ export function ApplicantBasicDetailsForm({
           </FormField>
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <FormField label="Date of birth" required>
+          <FormField label="Date of birth" required={strict}>
             <Input
               fullWidth
               size="sm"
@@ -95,44 +93,6 @@ export function ApplicantBasicDetailsForm({
           </FormField>
         </Grid>
       </Grid>
-
-      <Typography
-        sx={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: colors.navy,
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
-          mt: 2.5,
-          mb: 1,
-        }}
-      >
-        Add-ons
-      </Typography>
-      <Stack spacing={1.25}>
-        <Toggle
-          checked={details.requestDummyTicket}
-          onChange={value => onChange({ requestDummyTicket: value })}
-          label="Dummy ticket"
-          description={
-            dummyProvided
-              ? 'Already provided — no dummy ticket needed'
-              : 'Request a dummy ticket for this applicant'
-          }
-          disabled={dummyProvided}
-        />
-        <Toggle
-          checked={details.requestInsurance}
-          onChange={value => onChange({ requestInsurance: value })}
-          label="Travel insurance"
-          description={
-            insuranceProvided
-              ? 'Already provided — insurance on file'
-              : 'Request travel insurance for this applicant'
-          }
-          disabled={insuranceProvided}
-        />
-      </Stack>
     </Box>
   )
 }

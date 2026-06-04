@@ -22,6 +22,7 @@ import { defaultChecklist } from '../../../data/applicationFlowData'
 import {
   getRequirementPreviewCards,
 } from '../../../data/singleApplicationFlowData'
+import { getPassportIssueLocationLabel } from '@/shared/services/countryMasterService'
 import { UploadQueueTable } from '../../../components/UploadQueueTable'
 
 interface BulkApplicationReviewStepProps {
@@ -86,6 +87,8 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
 
   const applicantName = singleRow?.travelerName || state.applicantName
   const passportNumber = singleRow?.passportNo || state.passportNumber
+  const passportLocationLabel =
+    getPassportIssueLocationLabel(state.countryId, state.issuedPassportLocationId) || '—'
 
   return (
     <Box sx={{ width: '100%', maxWidth: '100%' }}>
@@ -112,6 +115,8 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
               ['Country', `${state.countryFlag} ${state.countryName}`],
               ['Visa', `${state.visaTypeLabel} · ${state.purposeLabel}`],
               ['Travel', state.travelDate || '—'],
+              ['Passport location', passportLocationLabel],
+              ['Jurisdiction', state.jurisdiction || '—'],
               ['Nationality', singleRow?.nationality || state.nationality || '—'],
               ['Passport expiry', singleRow?.expiry || state.passportExpiry || '—'],
               [
@@ -137,9 +142,10 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
                 ['Country', `${state.countryFlag} ${state.countryName}`],
                 ['Visa', `${state.visaTypeLabel} · ${state.purposeLabel}`],
                 ['Travel', state.travelDate || '—'],
+                ['Passport location', passportLocationLabel],
+                ['Jurisdiction', state.jurisdiction || '—'],
                 ['Applicants', String(readyRows.length)],
                 ['Documents progress', docsTotal > 0 ? `${docsComplete}/${docsTotal} across travelers` : '—'],
-                ['Processing', state.processingType === 'express' ? 'Express' : 'Normal'],
               ].map(([k, v]) => (
                 <Grid size={{ xs: 6, md: 4 }} key={k}>
                   <Typography sx={{ fontSize: 11, color: colors.textMuted }}>{k}</Typography>

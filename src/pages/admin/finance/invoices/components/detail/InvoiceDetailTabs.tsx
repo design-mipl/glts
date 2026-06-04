@@ -228,6 +228,8 @@ function PaymentHistoryTab({ invoice }: { invoice: Invoice }) {
           <TableRow>
             <TableCell sx={agreementEmbeddedTableHeadCellSx}>Date</TableCell>
             <TableCell sx={agreementEmbeddedTableHeadCellSx}>Amount</TableCell>
+            <TableCell sx={agreementEmbeddedTableHeadCellSx}>TDS %</TableCell>
+            <TableCell sx={agreementEmbeddedTableHeadCellSx}>TDS value</TableCell>
             <TableCell sx={agreementEmbeddedTableHeadCellSx}>Method</TableCell>
             <TableCell sx={agreementEmbeddedTableHeadCellSx}>Reference</TableCell>
             <TableCell sx={agreementEmbeddedTableHeadCellSx}>Status</TableCell>
@@ -238,6 +240,12 @@ function PaymentHistoryTab({ invoice }: { invoice: Invoice }) {
             <TableRow key={p.id}>
               <TableCell sx={{ fontSize: 13 }}>{p.date}</TableCell>
               <TableCell sx={{ fontSize: 13 }}>{formatInr(p.amount)}</TableCell>
+              <TableCell sx={{ fontSize: 13 }}>
+                {p.tdsPercentage != null && p.tdsPercentage > 0 ? `${p.tdsPercentage}%` : '—'}
+              </TableCell>
+              <TableCell sx={{ fontSize: 13 }}>
+                {p.tdsAmount != null && p.tdsAmount > 0 ? formatInr(p.tdsAmount) : '—'}
+              </TableCell>
               <TableCell sx={{ fontSize: 13 }}>{p.method}</TableCell>
               <TableCell sx={{ fontSize: 13 }}>{p.reference}</TableCell>
               <TableCell sx={{ fontSize: 13 }}>{paymentStatusLabel[p.status]}</TableCell>

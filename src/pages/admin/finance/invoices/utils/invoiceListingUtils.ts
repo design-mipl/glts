@@ -1,5 +1,5 @@
 import type { Invoice, InvoiceListFilters } from '@/shared/types/invoice'
-import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatInr, getInvoiceApplicationCount } from '@/shared/utils/invoiceCalculations'
 import {
   billingModeLabel,
   invoiceStatusLabel,
@@ -117,7 +117,7 @@ export function getInvoiceCellValue(record: Invoice, columnKey: string): string 
     case 'batchId':
       return record.batchIds.join(', ') || '—'
     case 'totalApplications':
-      return String(record.totalApplications)
+      return String(getInvoiceApplicationCount(record))
     case 'invoiceAmount':
       return formatInr(record.totals.finalAmount)
     case 'advanceAdjusted':
@@ -169,7 +169,7 @@ export function downloadInvoiceCsv(records: Invoice[]) {
       r.vesselName ?? '',
       r.gltsReferences.join(';'),
       r.batchIds.join(';'),
-      r.totalApplications,
+      getInvoiceApplicationCount(r),
       r.totals.finalAmount,
       r.totals.advanceAdjusted,
       r.totals.balancePayable,
@@ -200,23 +200,24 @@ export function mapInvoiceRowsToGridItems(records: Invoice[]) {
 }
 
 export function getInvoiceEmptyState(tab: InvoiceListingTab, hasSearch: boolean) {
-  const tabLabel =
-    tab === 'draft'
-      ? 'draft invoices'
-      : tab === 'submitted'
-        ? 'submitted invoices'
-        : tab === 'overdue'
-          ? 'overdue invoices'
-          : tab === 'credit_notes'
-            ? 'credit notes'
-            : 'invoices'
+  const tabLabels: Record<InvoiceListingTab, string> = {
+    all: 'invoices',
+    draft: 'draft invoices',
+    submitted: 'submitted invoices',
+    shared: 'shared invoices',
+    paid: 'paid invoices',
+    overdue: 'overdue invoices',
+    credit_notes: 'credit notes',
+    debit_notes: 'debit notes',
+  }
+  const tabLabel = tabLabels[tab]
 
   return {
     emptyTitle: hasSearch ? 'No invoices match your search' : `No ${tabLabel} yet`,
     emptyDescription: hasSearch
       ? 'Try adjusting search or filters.'
       : 'Generate an invoice from billable applications to get started.',
-    emptyAction: hasSearch ? undefined : { label: 'Generate invoice', onClick: () => {} },
+    emptyAction: hasSearch ? undefined : { label: 'Generate invoice' },
   }
 }
 
