@@ -92,13 +92,17 @@ export default function Input({
       slotProps={{
         input: {
           readOnly: readonly,
-          inputProps: { maxLength, 'aria-label': label },
           startAdornment: startAdornment ? (
             <InputAdornment position="start">{startAdornment}</InputAdornment>
           ) : undefined,
           endAdornment: endAdornment ? (
             <InputAdornment position="end">{endAdornment}</InputAdornment>
           ) : undefined,
+        },
+        htmlInput: {
+          readOnly: readonly,
+          maxLength,
+          'aria-label': label,
         },
         formHelperText: { sx: { mx: 0, mt: '4px', fontSize: FORM_CONTROL.helperFontSize } },
       }}

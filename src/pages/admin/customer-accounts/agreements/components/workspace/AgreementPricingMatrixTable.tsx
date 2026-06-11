@@ -185,9 +185,6 @@ export function AgreementPricingMatrixTable({
                 disabled={!editRow.countryId}
               />
             </FormField>
-            <FormField label="Workflow type">
-              <Input value={editRow.workflowType} onChange={(v) => setEditRow({ ...editRow, workflowType: v })} fullWidth />
-            </FormField>
             <FormField label="Service" required>
               <Select
                 value={editRow.servicePresetId}
@@ -216,11 +213,13 @@ export function AgreementPricingMatrixTable({
                 fullWidth
               />
             </FormField>
-            <Checkbox
-              label="GST applicable"
-              checked={editRow.gstApplicable}
-              onChange={(checked) => setEditRow({ ...editRow, gstApplicable: checked })}
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+              <Checkbox
+                label="GST applicable"
+                checked={editRow.gstApplicable}
+                onChange={(checked) => setEditRow({ ...editRow, gstApplicable: checked })}
+              />
+            </Box>
             <FormField label="Remarks">
               <Input
                 value={editRow.remarks}

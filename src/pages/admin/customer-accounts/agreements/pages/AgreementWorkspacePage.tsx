@@ -21,7 +21,7 @@ import { agreementStatusLabel } from '../config/agreementStatusConfig'
 
 const WORKSPACE_SECTIONS: { id: AgreementSectionId; navId: string; label: string; description: string }[] = [
   { id: 'customerSource', navId: 'section-customer-source', label: 'Customer source', description: 'Quotation, existing customer, or new customer' },
-  { id: 'companyInfo', navId: 'section-company-info', label: 'Company information', description: 'Company profile and parent company' },
+  { id: 'companyInfo', navId: 'section-company-info', label: 'Company information', description: 'Company profile' },
   { id: 'entities', navId: 'section-entities', label: 'Entities', description: 'Operational billing entities' },
   { id: 'pricing', navId: 'section-pricing', label: 'Pricing matrix', description: 'Country, visa, and service pricing' },
   { id: 'billing', navId: 'section-billing', label: 'Billing configuration', description: 'Advance, credit, or mixed billing rules' },

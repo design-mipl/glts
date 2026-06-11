@@ -71,6 +71,7 @@ export function InvoiceListingPage() {
     method: 'NEFT',
     reference: '',
     tdsAmount: '',
+    netAmount: '',
   })
 
   const loadRows = useCallback(() => {
@@ -136,6 +137,7 @@ export function InvoiceListingPage() {
             tdsPct > 0 && invoiceAmount > 0
               ? Math.round(((invoiceAmount * tdsPct) / 100) * 100) / 100
               : 0
+          const netAmount = Math.max(0, Math.round((invoiceAmount - tdsAmount) * 100) / 100)
           setPaymentTarget(row)
           setPaymentValue({
             amount: invoiceAmount > 0 ? String(invoiceAmount) : '',
@@ -143,6 +145,7 @@ export function InvoiceListingPage() {
             method: 'NEFT',
             reference: '',
             tdsAmount: tdsAmount > 0 ? String(tdsAmount) : '',
+            netAmount: netAmount > 0 ? String(netAmount) : '',
           })
           setPaymentOpen(true)
         },
@@ -263,7 +266,7 @@ export function InvoiceListingPage() {
     if (!paymentTarget) return
     const invoiceAmount = Number.parseFloat(paymentValue.amount.replace(/,/g, ''))
     const tdsAmount = parsePaymentField(paymentValue.tdsAmount)
-    const netAmount = Math.max(0, Math.round((invoiceAmount - tdsAmount) * 100) / 100)
+    const netAmount = parsePaymentField(paymentValue.netAmount)
 
     if (!Number.isFinite(invoiceAmount) || invoiceAmount <= 0) {
       showToast({ title: 'Enter a valid invoice amount', variant: 'error' })

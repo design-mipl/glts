@@ -86,7 +86,10 @@ export default function Textarea({
       slotProps={{
         input: {
           readOnly: readonly,
-          inputProps: { maxLength },
+        },
+        htmlInput: {
+          readOnly: readonly,
+          maxLength,
         },
         formHelperText: { sx: { mx: 0, mt: '4px', fontSize: FORM_CONTROL.helperFontSize } },
       }}

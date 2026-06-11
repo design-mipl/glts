@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import { Grid, Stack } from '@mui/material'
 import { Button, FormField, Input, Modal } from '@/design-system/UIComponents'
 
@@ -8,6 +8,7 @@ export interface RecordPaymentModalValue {
   method: string
   reference: string
   tdsAmount: string
+  netAmount: string
 }
 
 interface RecordPaymentModalProps {
@@ -31,6 +32,12 @@ function formatAmountField(amount: number): string {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2)
 }
 
+function deriveNetAmount(amount: string, tdsAmount: string): string {
+  const invoiceAmount = parseAmount(amount)
+  const tdsDeduction = parseAmount(tdsAmount)
+  return formatAmountField(Math.max(0, Math.round((invoiceAmount - tdsDeduction) * 100) / 100))
+}
+
 export function RecordPaymentModal({
   open,
   onClose,
@@ -46,13 +53,7 @@ export function RecordPaymentModal({
   )
 
   const invoiceAmount = parseAmount(value.amount)
-  const tdsDeduction = parseAmount(value.tdsAmount)
-  const netAmountReceived = Math.max(0, Math.round((invoiceAmount - tdsDeduction) * 100) / 100)
-
-  const netAmountDisplay = useMemo(
-    () => (invoiceAmount > 0 || tdsDeduction > 0 ? formatAmountField(netAmountReceived) : ''),
-    [invoiceAmount, tdsDeduction, netAmountReceived],
-  )
+  const netAmountReceived = parseAmount(value.netAmount)
 
   const validInvoiceAmount = invoiceAmount > 0
   const validNetAmount = netAmountReceived > 0
@@ -77,7 +78,7 @@ export function RecordPaymentModal({
             <FormField label="Actual Balance Amount" required>
               <Input
                 value={value.amount}
-                onChange={amount => patch({ amount })}
+                onChange={amount => patch({ amount, netAmount: deriveNetAmount(amount, value.tdsAmount) })}
                 size="sm"
                 fullWidth
                 placeholder="0.00"
@@ -88,7 +89,7 @@ export function RecordPaymentModal({
             <FormField label="TDS Deduction Amount" optional>
               <Input
                 value={value.tdsAmount}
-                onChange={tdsAmount => patch({ tdsAmount })}
+                onChange={tdsAmount => patch({ tdsAmount, netAmount: deriveNetAmount(value.amount, tdsAmount) })}
                 size="sm"
                 fullWidth
                 placeholder="0.00"
@@ -96,8 +97,14 @@ export function RecordPaymentModal({
             </FormField>
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <FormField label="Net Amount Received">
-              <Input value={netAmountDisplay} onChange={() => {}} size="sm" fullWidth readonly />
+            <FormField label="Net Amount Received" required>
+              <Input
+                value={value.netAmount}
+                onChange={netAmount => patch({ netAmount })}
+                size="sm"
+                fullWidth
+                placeholder="0.00"
+              />
             </FormField>
           </Grid>
         </Grid>

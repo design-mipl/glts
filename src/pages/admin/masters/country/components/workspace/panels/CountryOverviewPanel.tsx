@@ -107,7 +107,7 @@ export function CountryOverviewPanel({
             </FormField>
           </AdminFullPageFormFieldSpan>
           <FormField label="Country Code">
-            <Input value={formData.code} onChange={(v) => patch({ code: v })} size="sm" readonly={readOnly} />
+            <Input value={formData.code} size="sm" readonly />
           </FormField>
           <FormField label="Region">
             <Input value={formData.region} onChange={(v) => patch({ region: v })} size="sm" readonly={readOnly} />

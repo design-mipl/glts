@@ -1,6 +1,5 @@
 import { FormField, Input, Select, Textarea } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
-import { companyMasterService } from '@/shared/services/companyMasterService'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
 import { AGREEMENT_WORKFLOW_OPTIONS } from '../../config/agreementStatusConfig'
 import { agreementFieldError } from '../agreementFormLayout'
@@ -26,8 +25,6 @@ export function AgreementCompanyInformationSection({
   onChange,
   onClearError,
 }: AgreementCompanyInformationSectionProps) {
-  const parentCompanyOptions = companyMasterService.getSelectOptions()
-
   const updateCompany = (patch: Partial<CommercialAgreementFormData['company']>) => {
     onChange({ ...data, company: { ...data.company, ...patch } })
   }
@@ -45,22 +42,6 @@ export function AgreementCompanyInformationSection({
         gap: 16,
       }}
     >
-      <AdminFullPageFormFieldSpan>
-        <FormField label="Parent company">
-          <Select
-            value={data.parentCompanyId}
-            onChange={(v) => onChange({ ...data, parentCompanyId: String(v) })}
-            options={[
-              { value: '', label: 'No parent company' },
-              ...parentCompanyOptions.map((c) => ({ value: c.value, label: c.label })),
-            ]}
-            placeholder="Select parent company (optional)"
-            fullWidth
-            clearable
-          />
-        </FormField>
-      </AdminFullPageFormFieldSpan>
-
       <FormField label="Workflow type" required>
         <Select
           value={data.workflowType}
