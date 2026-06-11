@@ -1,7 +1,7 @@
 import { Box, Card, Chip, LinearProgress, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { AlertCircle, CheckCircle2, Circle, Clock, FileText } from 'lucide-react'
+import { AlertCircle, AlertTriangle, CheckCircle2, Circle, Clock, FileText } from 'lucide-react'
 import { Button, Tabs } from '@/design-system/UIComponents'
 import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '@/design-system/tokens'
 import { publicShadows, usePublicBrandColors, type PublicBrandColors } from '@/shared/theme/publicBrand'
@@ -272,69 +272,170 @@ export interface CustomerChecklistItem {
   reviewComment?: string
 }
 
+const CUSTOMER_DOCUMENT_CHECKLIST_GRID_SX = {
+  display: 'grid',
+  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+  gap: 1.5,
+} as const
+
+function CustomerDocumentChecklistItemCard({
+  item,
+  onReuploadItem,
+}: {
+  item: CustomerChecklistItem
+  onReuploadItem?: (item: CustomerChecklistItem) => void
+}) {
+  const colors = usePublicBrandColors()
+  const isInvalid = item.status === 'invalid'
+  const isMissing = item.status === 'missing'
+  const showUploadAction = isInvalid || isMissing
+  const showComment = Boolean(item.reviewComment?.trim()) && (isInvalid || isMissing)
+  const statusLabel =
+    item.statusLabel ??
+    (item.status === 'invalid' ? 'marked invalid' : item.status.replace('_', ' '))
+
+  return (
+    <Card
+      elevation={0}
+      sx={{
+        p: 2,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        border: `${BORDER_WIDTH.thin} solid ${colors.border}`,
+        borderRadius: BORDER_RADIUS.lg,
+        boxShadow: SHADOWS.sm,
+        bgcolor: colors.white,
+      }}
+    >
+      <Stack spacing={1.5} sx={{ flex: 1 }}>
+        <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1}>
+          <Typography sx={{ minWidth: 0, flex: 1, fontSize: 13, fontWeight: item.required ? 700 : 600, color: colors.navy }}>
+            {item.label}
+            {item.required ? (
+              <Typography component="span" sx={{ ml: 0.25, color: colors.textMuted, fontSize: 11 }}>
+                *
+              </Typography>
+            ) : null}
+          </Typography>
+          <CustomerStatusChip
+            label={statusLabel}
+            tone={isInvalid ? 'critical' : getCustomerStatusTone(item.status)}
+          />
+        </Stack>
+
+        {showComment ? (
+          <Box
+            sx={{
+              px: 1.25,
+              py: 0.75,
+              borderRadius: BORDER_RADIUS.md,
+              bgcolor: colors.surfaceAlt,
+              border: `1px solid ${colors.border}`,
+            }}
+          >
+            <Typography sx={{ fontSize: 12, color: colors.textSecondary, lineHeight: 1.5 }}>
+              <Typography component="span" sx={{ fontWeight: 700, fontSize: 12, color: colors.navy }}>
+                GLTS note:{' '}
+              </Typography>
+              {item.reviewComment}
+            </Typography>
+          </Box>
+        ) : null}
+
+        {showUploadAction && onReuploadItem ? (
+          <Box sx={{ mt: 'auto', pt: showComment ? 0 : 0.5 }}>
+            <Button variant="outlined" size="sm" onClick={() => onReuploadItem(item)}>
+              Upload document
+            </Button>
+          </Box>
+        ) : null}
+      </Stack>
+    </Card>
+  )
+}
+
+function isRejectedCustomerChecklistItem(item: CustomerChecklistItem): boolean {
+  return item.status === 'invalid'
+}
+
 export function CustomerDocumentChecklist({
   country,
+  title,
   items,
   onReuploadItem,
 }: {
   country?: string
+  title?: string
   items: CustomerChecklistItem[]
   onReuploadItem?: (item: CustomerChecklistItem) => void
 }) {
   const colors = usePublicBrandColors()
+  const cardTitle = title ?? (country ? `Checklist · ${country}` : 'Document checklist')
+  const rejectedItems = items.filter(isRejectedCustomerChecklistItem)
+  const remainingItems = items.filter(item => !isRejectedCustomerChecklistItem(item))
 
   return (
-    <CustomerCard title={country ? `Checklist · ${country}` : 'Document checklist'} subtitle="Required documents for this visa type" icon={FileText} tone="info">
-      <Stack spacing={1}>
-        {items.map(item => {
-          const isInvalid = item.status === 'invalid'
-          const isMissing = item.status === 'missing'
-          const showUploadAction = isInvalid || isMissing
-          const showComment = Boolean(item.reviewComment?.trim()) && (isInvalid || isMissing)
-          return (
-            <Stack key={item.id} spacing={0.5}>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <CustomerStatusChip
-                  label={
-                    item.statusLabel ??
-                    (item.status === 'invalid' ? 'marked invalid' : item.status.replace('_', ' '))
-                  }
-                  tone={isInvalid ? 'critical' : getCustomerStatusTone(item.status)}
-                />
-                <Typography sx={{ flex: 1, fontSize: 13, fontWeight: item.required ? 700 : 500, color: colors.navy }}>
-                  {item.label}
-                  {item.required && <Typography component="span" sx={{ ml: 0.5, color: colors.textMuted, fontSize: 11 }}>*</Typography>}
-                </Typography>
-                {showUploadAction && onReuploadItem ? (
-                  <Button variant="outlined" onClick={() => onReuploadItem(item)}>
-                    Upload document
-                  </Button>
-                ) : null}
-              </Stack>
-              {showComment ? (
-                <Box
-                  sx={{
-                    ml: 0.5,
-                    px: 1.25,
-                    py: 0.75,
-                    borderRadius: '8px',
-                    bgcolor: colors.surfaceAlt,
-                    border: `1px solid ${colors.border}`,
-                  }}
-                >
-                  <Typography sx={{ fontSize: 12, color: colors.textSecondary, lineHeight: 1.5 }}>
-                    <Typography component="span" sx={{ fontWeight: 700, fontSize: 12, color: colors.navy }}>
-                      GLTS note:{' '}
-                    </Typography>
-                    {item.reviewComment}
-                  </Typography>
-                </Box>
-              ) : null}
-            </Stack>
-          )
-        })}
-      </Stack>
-    </CustomerCard>
+    <Stack spacing={2}>
+      {rejectedItems.length > 0 ? (
+        <Box
+          sx={{
+            p: 1.5,
+            borderRadius: BORDER_RADIUS.lg,
+            border: `1px solid rgba(239, 68, 68, 0.35)`,
+            bgcolor: 'rgba(239, 68, 68, 0.06)',
+          }}
+        >
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: BORDER_RADIUS.md,
+                display: 'grid',
+                placeItems: 'center',
+                bgcolor: 'rgba(239, 68, 68, 0.12)',
+                color: '#DC2626',
+                flexShrink: 0,
+              }}
+            >
+              <AlertTriangle size={16} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#DC2626' }}>
+                Rejected documents
+              </Typography>
+              <Typography sx={{ fontSize: 12, color: colors.textSecondary }}>
+                {rejectedItems.length} document{rejectedItems.length === 1 ? '' : 's'} need your attention.
+              </Typography>
+            </Box>
+          </Stack>
+          <Box sx={CUSTOMER_DOCUMENT_CHECKLIST_GRID_SX}>
+            {rejectedItems.map(item => (
+              <CustomerDocumentChecklistItemCard
+                key={item.id}
+                item={item}
+                onReuploadItem={onReuploadItem}
+              />
+            ))}
+          </Box>
+        </Box>
+      ) : null}
+
+      {remainingItems.length > 0 ? (
+        <CustomerCard title={cardTitle} subtitle="Required documents for this visa type" icon={FileText} tone="info">
+          <Box sx={CUSTOMER_DOCUMENT_CHECKLIST_GRID_SX}>
+            {remainingItems.map(item => (
+              <CustomerDocumentChecklistItemCard
+                key={item.id}
+                item={item}
+                onReuploadItem={onReuploadItem}
+              />
+            ))}
+          </Box>
+        </CustomerCard>
+      ) : null}
+    </Stack>
   )
 }
 

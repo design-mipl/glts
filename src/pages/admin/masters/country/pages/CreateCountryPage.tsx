@@ -5,7 +5,6 @@ export function CreateCountryPage() {
     <CountryFormStepperPage
       mode="create"
       breadcrumbs={[
-        { label: 'Masters', href: '/admin/masters/country' },
         { label: 'Country Master', href: '/admin/masters/country' },
         { label: 'Add country' },
       ]}

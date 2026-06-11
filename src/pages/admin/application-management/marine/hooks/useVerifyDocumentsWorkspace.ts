@@ -128,6 +128,22 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
     [applicationId, selectedRow],
   )
 
+  const updateTravelerDocForRow = useCallback(
+    (rowId: string, documentId: string, status: ApplicantDocumentStatus, comment?: string) => {
+      if (!applicationId) return
+      setWorkspace(
+        applicationVerificationService.updateTravelerDocumentStatus(
+          applicationId,
+          rowId,
+          documentId,
+          status,
+          comment,
+        ),
+      )
+    },
+    [applicationId],
+  )
+
   const updateGlobalDoc = useCallback(
     (documentId: string, status: ApplicantDocumentStatus, comment?: string) => {
       if (!applicationId) return
@@ -191,6 +207,7 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
     timelineSteps,
     globalDocuments,
     updateTravelerDoc,
+    updateTravelerDocForRow,
     updateTravelerDocumentWorkflow,
     updateGlobalDoc,
     saveDraft,

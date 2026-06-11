@@ -37,6 +37,7 @@ export function VerifyDocumentsOverview({ overview }: VerifyDocumentsOverviewPro
         {[
           ['Country', `${overview.countryFlag} ${overview.countryName}`],
           ['Visa', visaLabel],
+          ['Jurisdiction', overview.jurisdiction || '—'],
           ['Travel', overview.travelDate || '—'],
           ['Travelers', String(overview.travelerCount)],
         ].map(([label, value]) => (

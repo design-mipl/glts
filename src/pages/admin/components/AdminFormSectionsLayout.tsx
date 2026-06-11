@@ -10,10 +10,14 @@ export type AdminFormSectionsLayoutVariant = 'page' | 'stack'
 export interface AdminFormSectionsLayoutProps {
   sections: AdminFullPageFormSection[]
   /**
-   * `page` — side-by-side section cards on md+ (full-page form grid).
+   * `page` — side-by-side section cards from `sectionColumnsFrom` breakpoint upward.
    * `stack` — vertical stack (drawer).
    */
   variant?: AdminFormSectionsLayoutVariant
+  /** Breakpoint where paired section cards begin (default `md` for full-page forms). */
+  sectionColumnsFrom?: 'sm' | 'md'
+  /** Breakpoint where multi-column field grids begin inside each section (`xs` = always). */
+  fieldColumnsFrom?: 'xs' | 'sm' | 'md'
 }
 
 function defaultColumnsForImportance(
@@ -27,8 +31,14 @@ function defaultColumnsForImportance(
 /**
  * Renders primary/secondary section cards with the same grid as AdminFullPageFormShell.
  */
-export function AdminFormSectionsLayout({ sections, variant = 'page' }: AdminFormSectionsLayoutProps) {
+export function AdminFormSectionsLayout({
+  sections,
+  variant = 'page',
+  sectionColumnsFrom = 'md',
+  fieldColumnsFrom = 'sm',
+}: AdminFormSectionsLayoutProps) {
   const { sectionGridGap } = ADMIN_FULL_PAGE_FORM_LAYOUT
+  const pairedColumns = sections.length > 1 ? '1fr 1fr' : '1fr'
 
   return (
     <Box
@@ -39,7 +49,7 @@ export function AdminFormSectionsLayout({ sections, variant = 'page' }: AdminFor
             ? '1fr'
             : {
                 xs: '1fr',
-                md: sections.length > 1 ? '1fr 1fr' : '1fr',
+                [sectionColumnsFrom]: pairedColumns,
               },
         gap: sectionGridGap,
       }}
@@ -53,7 +63,7 @@ export function AdminFormSectionsLayout({ sections, variant = 'page' }: AdminFor
             sx={{
               gridColumn: {
                 xs: '1 / -1',
-                md: section.span === 2 ? '1 / -1' : 'auto',
+                [sectionColumnsFrom]: section.span === 2 ? '1 / -1' : 'auto',
               },
             }}
           >
@@ -62,6 +72,7 @@ export function AdminFormSectionsLayout({ sections, variant = 'page' }: AdminFor
               description={section.description}
               importance={importance}
               columns={section.columns ?? defaultColumnsForImportance(section.importance)}
+              fieldColumnsFrom={fieldColumnsFrom}
               headerAction={section.headerAction}
             >
               {section.children}

@@ -1,7 +1,8 @@
 import { Stack, Typography } from '@mui/material'
 import { Copy } from 'lucide-react'
 import { IconButton, useToast } from '@/design-system/UIComponents'
-import type { FormAssistField } from '../../utils/formAssistFieldBuilder'
+import { AdminOverlayFormSection } from '@/pages/admin/components/AdminOverlayFormSection'
+import type { FormAssistField, FormAssistFieldSection } from '../../utils/formAssistFieldBuilder'
 
 interface CopyAssistFieldProps {
   field: FormAssistField
@@ -61,6 +62,29 @@ export function CopyAssistFieldList({ fields }: CopyAssistFieldListProps) {
     <Stack spacing={1.25}>
       {fields.map(f => (
         <CopyAssistField key={f.id} field={f} />
+      ))}
+    </Stack>
+  )
+}
+
+interface CopyAssistFieldSectionsProps {
+  sections: FormAssistFieldSection[]
+}
+
+export function CopyAssistFieldSections({ sections }: CopyAssistFieldSectionsProps) {
+  return (
+    <Stack spacing={2}>
+      {sections.map((section, index) => (
+        <AdminOverlayFormSection
+          key={section.id}
+          title={section.title}
+          columns={2}
+          importance={index === 0 ? 'primary' : 'secondary'}
+        >
+          {section.fields.map(field => (
+            <CopyAssistField key={`${section.id}-${field.id}`} field={field} />
+          ))}
+        </AdminOverlayFormSection>
       ))}
     </Stack>
   )

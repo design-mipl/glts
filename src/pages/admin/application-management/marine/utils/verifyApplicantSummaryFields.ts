@@ -56,6 +56,7 @@ export function buildVerifyApplicantSummaryFields(
       'travel',
       'visa',
       'country',
+      'jurisdiction',
     ],
   )
 

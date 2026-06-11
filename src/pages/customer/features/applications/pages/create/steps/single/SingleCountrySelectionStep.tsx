@@ -1,13 +1,25 @@
 import { useMemo, useState } from 'react'
-import { Box, Typography, Grid, Stack, TextField, InputAdornment } from '@mui/material'
+import {
+  Box,
+  Typography,
+  Grid,
+  Stack,
+  TextField,
+  InputAdornment,
+} from '@mui/material'
 import { Search } from 'lucide-react'
+import { Select } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { CustomerCountryCard } from '../../../../components/CustomerCountryCard'
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import { FlowStepActions } from '../../../../components/create/FlowStepActions'
+import { getAccountMappedCountries } from '../../../../data/singleApplicationFlowData'
+import { useFavoriteCountries } from '../../../../hooks/useFavoriteCountries'
 import {
-  getAccountMappedCountries,
-} from '../../../../data/singleApplicationFlowData'
+  orderCountriesForDisplay,
+  type CountrySortMode,
+} from '../../../../utils/orderCountriesForDisplay'
+import type { Country } from '@/shared/types/visa'
 
 interface SingleCountrySelectionStepProps {
   state: ApplicationFlowState
@@ -15,9 +27,59 @@ interface SingleCountrySelectionStepProps {
   onContinue: () => void
 }
 
+function SectionLabel({ children }: { children: string }) {
+  const colors = usePublicBrandColors()
+  return (
+    <Typography
+      sx={{
+        fontSize: 12,
+        fontWeight: 700,
+        color: colors.textSecondary,
+        mb: 1,
+        textTransform: 'uppercase',
+        letterSpacing: '0.06em',
+      }}
+    >
+      {children}
+    </Typography>
+  )
+}
+
+function CountryGrid({
+  countries,
+  state,
+  onSelect,
+  isFavorite,
+  onToggleFavorite,
+}: {
+  countries: Country[]
+  state: ApplicationFlowState
+  onSelect: (c: Country) => void
+  isFavorite: (id: string) => boolean
+  onToggleFavorite: (id: string) => void
+}) {
+  return (
+    <Grid container spacing={1.5} sx={{ mb: 1 }}>
+      {countries.map(c => (
+        <Grid size={{ xs: 6, sm: 4, md: 3 }} key={c.id}>
+          <CustomerCountryCard
+            country={c}
+            selected={state.countryId === c.id}
+            onSelect={() => onSelect(c)}
+            isFavorite={isFavorite(c.id)}
+            onToggleFavorite={onToggleFavorite}
+          />
+        </Grid>
+      ))}
+    </Grid>
+  )
+}
+
 export function SingleCountrySelectionStep({ state, onUpdate, onContinue }: SingleCountrySelectionStepProps) {
   const colors = usePublicBrandColors()
   const [query, setQuery] = useState('')
+  const [sortMode, setSortMode] = useState<CountrySortMode>('default')
+  const { favoriteIds, isFavorite, toggleFavorite } = useFavoriteCountries()
 
   const accountCountries = useMemo(() => getAccountMappedCountries(), [])
 
@@ -32,6 +94,14 @@ export function SingleCountrySelectionStep({ state, onUpdate, onContinue }: Sing
       )
     })
   }, [accountCountries, query])
+
+  const { favorites, others } = useMemo(
+    () => orderCountriesForDisplay(filtered, favoriteIds, sortMode),
+    [filtered, favoriteIds, sortMode],
+  )
+
+  const hasFavorites = favorites.length > 0
+  const totalCount = favorites.length + others.length
 
   const handleSelect = (c: (typeof accountCountries)[0]) => {
     onUpdate({
@@ -56,7 +126,12 @@ export function SingleCountrySelectionStep({ state, onUpdate, onContinue }: Sing
         Only countries mapped to your account are shown. Choose where this visa application will be filed.
       </Typography>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2 }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1.5}
+        sx={{ mb: 2 }}
+        alignItems={{ xs: 'stretch', sm: 'flex-start' }}
+      >
         <TextField
           size="small"
           fullWidth
@@ -72,42 +147,58 @@ export function SingleCountrySelectionStep({ state, onUpdate, onContinue }: Sing
           }}
           sx={{ maxWidth: { sm: 360 } }}
         />
+        <Select
+          label="Sort"
+          value={sortMode}
+          onChange={v => setSortMode(v as CountrySortMode)}
+          options={[
+            { value: 'default', label: 'Recommended' },
+            { value: 'alphabetical', label: 'A–Z' },
+          ]}
+          sx={{ minWidth: { sm: 160 } }}
+        />
       </Stack>
 
-      <Typography sx={{ fontSize: 12, fontWeight: 700, color: colors.textSecondary, mb: 1, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-        All destinations
-      </Typography>
-      <Grid container spacing={1.5} sx={{ mb: 1 }}>
-        {filtered.map(c => (
-          <Grid size={{ xs: 6, sm: 4, md: 3 }} key={c.id}>
-            <CountryCardWithMeta country={c} selected={state.countryId === c.id} onSelect={() => handleSelect(c)} />
-          </Grid>
-        ))}
-      </Grid>
+      {hasFavorites ? (
+        <Box sx={{ mb: 1 }}>
+          <SectionLabel>Favourites</SectionLabel>
+          <CountryGrid
+            countries={favorites}
+            state={state}
+            onSelect={handleSelect}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
+          />
+          {others.length > 0 ? (
+            <>
+              <SectionLabel>All destinations</SectionLabel>
+              <CountryGrid
+                countries={others}
+                state={state}
+                onSelect={handleSelect}
+                isFavorite={isFavorite}
+                onToggleFavorite={toggleFavorite}
+              />
+            </>
+          ) : null}
+        </Box>
+      ) : (
+        <CountryGrid
+          countries={others}
+          state={state}
+          onSelect={handleSelect}
+          isFavorite={isFavorite}
+          onToggleFavorite={toggleFavorite}
+        />
+      )}
 
-      {filtered.length === 0 && (
+      {totalCount === 0 && (
         <Typography sx={{ fontSize: 13, color: colors.textMuted, py: 4, textAlign: 'center' }}>
           No countries match your search. Try another region or keyword.
         </Typography>
       )}
 
       <FlowStepActions onContinue={onContinue} continueLabel="Continue" continueDisabled={!state.countryId} />
-    </Box>
-  )
-}
-
-function CountryCardWithMeta({
-  country,
-  selected,
-  onSelect,
-}: {
-  country: ReturnType<typeof getAccountMappedCountries>[0]
-  selected: boolean
-  onSelect: () => void
-}) {
-  return (
-    <Box>
-      <CustomerCountryCard country={country} selected={selected} onSelect={onSelect} />
     </Box>
   )
 }

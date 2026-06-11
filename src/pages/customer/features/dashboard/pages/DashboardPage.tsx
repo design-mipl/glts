@@ -1,11 +1,14 @@
 import { Box, Grid, Stack, Typography, Avatar, LinearProgress } from '@mui/material'
-import { FileText, Upload, CheckCircle2, ArrowRight, Plus, Bell, Plane, AlertTriangle } from 'lucide-react'
+import { FileText, Upload, CheckCircle2, ArrowRight, Plus, Bell, Plane, AlertTriangle, Ship } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { getBusinessDashboardVariant } from '@/shared/auth/dashboardConfig'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
 import { navigateToCreateApplication } from '@/pages/customer/features/applications/utils/createApplicationNavigation'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
+import { formatMarineDashboardDescription } from '../utils/marineDashboardUtils'
+import type { CustomerApplication } from '../../../data/mockData'
 import {
   CustomerActionPanel,
   CustomerCard,
@@ -22,18 +25,38 @@ function greeting(): string {
   return 'Good evening'
 }
 
+function applicationPanelTitle(app: CustomerApplication, isMarinePortal: boolean): string {
+  if (isMarinePortal) {
+    return app.passengerName ?? (app.applicantCount > 1 ? `${app.applicantCount} crew members` : 'Applicant')
+  }
+  return `${app.countryFlag ?? ''} ${app.country} · ${app.visaType}`
+}
+
+function applicationPanelDescription(app: CustomerApplication, isMarinePortal: boolean): string {
+  if (isMarinePortal) {
+    return formatMarineDashboardDescription(app)
+  }
+  return `${app.id} · ${app.applicantCount} applicant${app.applicantCount === 1 ? '' : 's'} · Travel ${app.travelDate}`
+}
+
 export function DashboardPage() {
   const navigate = useNavigate()
   const { base, session, contactName } = useCustomerPortalBase()
   const dashboard = customerPortalService.getDashboard()
   const applications = dashboard.applications
+  const isMarinePortal = dashboard.isMarinePortal
+  const marineVariant = isMarinePortal ? getBusinessDashboardVariant(session?.customerType) : null
   const colors = usePublicBrandColors()
 
   return (
     <Box>
       <CustomerPageHeader
         title={`${greeting()}, ${contactName.split(' ')[0]}.`}
-        subtitle="Track active visa work, complete pending actions, and start new applications from one place."
+        subtitle={
+          isMarinePortal
+            ? marineVariant?.subtitle ?? 'Track crew visas, vessel assignments, and pending corrections from one place.'
+            : 'Track active visa work, complete pending actions, and start new applications from one place.'
+        }
         action={
           <Button
             variant="contained"
@@ -87,9 +110,13 @@ export function DashboardPage() {
         <Grid size={{ xs: 12, lg: 8 }}>
           <Stack spacing={2}>
             <CustomerCard
-              title="Recent applications"
-              subtitle="Most recent visa work across single and bulk requests"
-              icon={FileText}
+              title={isMarinePortal ? 'Recent crew applications' : 'Recent applications'}
+              subtitle={
+                isMarinePortal
+                  ? 'Passenger, vessel, rank, and travel date for your latest crew work'
+                  : 'Most recent visa work across single and bulk requests'
+              }
+              icon={isMarinePortal ? Ship : FileText}
               action={
                 <Button variant="text" endIcon={<ArrowRight size={14} />} onClick={() => navigate(`${base}/applications`)}>
                   View all
@@ -108,8 +135,8 @@ export function DashboardPage() {
                   {applications.map(app => (
                     <CustomerActionPanel
                       key={app.id}
-                      title={`${app.countryFlag ?? ''} ${app.country} � ${app.visaType}`}
-                      description={`${app.id} � ${app.applicantCount} applicant${app.applicantCount === 1 ? '' : 's'} � Travel ${app.travelDate}`}
+                      title={applicationPanelTitle(app, isMarinePortal)}
+                      description={applicationPanelDescription(app, isMarinePortal)}
                       progress={app.progress}
                       action={
                         <Stack direction="row" spacing={1} alignItems="center">
@@ -125,7 +152,15 @@ export function DashboardPage() {
               )}
             </CustomerCard>
 
-            <CustomerCard title="Active journeys" subtitle="A card-led view for quick B2B follow-up" icon={Plane}>
+            <CustomerCard
+              title={isMarinePortal ? 'Active crew' : 'Active journeys'}
+              subtitle={
+                isMarinePortal
+                  ? 'Quick follow-up by passenger, vessel, and travel date'
+                  : 'A card-led view for quick B2B follow-up'
+              }
+              icon={isMarinePortal ? Ship : Plane}
+            >
               <Grid container spacing={1.5}>
                 {applications.map(app => (
                   <Grid size={{ xs: 12, md: 4 }} key={app.id}>
@@ -141,9 +176,26 @@ export function DashboardPage() {
                         '&:hover': { borderColor: colors.greenBright },
                       }}
                     >
-                      <Typography sx={{ fontSize: 28, lineHeight: 1 }}>{app.countryFlag}</Typography>
-                      <Typography sx={{ mt: 1, fontSize: 14, fontWeight: 800, color: colors.navy }}>{app.country}</Typography>
-                      <Typography sx={{ fontSize: 12, color: colors.textMuted }}>{app.id}</Typography>
+                      {isMarinePortal ? (
+                        <>
+                          <Ship size={22} color={colors.greenDark} />
+                          <Typography sx={{ mt: 1, fontSize: 14, fontWeight: 800, color: colors.navy }}>
+                            {app.passengerName ?? 'Applicant'}
+                          </Typography>
+                          <Typography sx={{ fontSize: 12, color: colors.textSecondary, fontWeight: 600 }}>
+                            {app.vesselName ?? '—'}
+                          </Typography>
+                          <Typography sx={{ fontSize: 12, color: colors.textMuted }}>
+                            {app.rank ?? '—'} · Travel {app.travelDate}
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <Typography sx={{ fontSize: 28, lineHeight: 1 }}>{app.countryFlag}</Typography>
+                          <Typography sx={{ mt: 1, fontSize: 14, fontWeight: 800, color: colors.navy }}>{app.country}</Typography>
+                          <Typography sx={{ fontSize: 12, color: colors.textMuted }}>{app.id}</Typography>
+                        </>
+                      )}
                       <LinearProgress variant="determinate" value={app.progress ?? 0} sx={{ mt: 1.5, height: 6, borderRadius: 99 }} />
                       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1.25 }}>
                         <CustomerStatusChip label={app.statusLabel} tone={getCustomerStatusTone(app.statusLabel)} />

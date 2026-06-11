@@ -62,6 +62,17 @@ export function formControlFieldBackground(theme: Theme): string {
     : alpha(theme.palette.background.paper, 0.6)
 }
 
+/** Muted surface for read-only / view-only fields — distinct from editable but not heavy gray */
+export function formControlInactiveSurface(theme: Theme) {
+  return {
+    background:
+      theme.palette.mode === 'light'
+        ? alpha(theme.palette.text.primary, 0.04)
+        : alpha(theme.palette.common.white, 0.05),
+    border: alpha(theme.palette.text.primary, 0.1),
+  }
+}
+
 /** Label typography matching FormField — use above controls when label is external */
 export function formFieldLabelSx() {
   return {
@@ -156,11 +167,11 @@ export function autocompleteOutlinedFieldSx(theme: Theme, height: string) {
       minHeight: height,
       height: 'auto',
       boxSizing: 'border-box',
-      py: 0,
+      py: '5px',
       pl: '6px',
       pr: '32px',
-      alignItems: 'center',
-      alignContent: 'center',
+      alignItems: 'flex-start',
+      alignContent: 'flex-start',
       flexWrap: 'wrap',
       gap: '6px',
       fontSize: FORM_CONTROL.fontSize,
@@ -184,8 +195,8 @@ export function autocompleteOutlinedFieldSx(theme: Theme, height: string) {
     '& .MuiAutocomplete-endAdornment': {
       position: 'absolute',
       right: 9,
-      top: '50%',
-      transform: 'translateY(-50%)',
+      top: 7,
+      transform: 'none',
       '& .MuiButtonBase-root': {
         padding: '2px',
       },
@@ -200,6 +211,7 @@ export function autocompleteOutlinedFieldSx(theme: Theme, height: string) {
         lineHeight: 1.2,
       },
     },
+    ...subtleDisabledOutlinedFieldSx(theme),
   }
 }
 
@@ -213,9 +225,82 @@ export function controlLabelSx(theme: Theme) {
       lineHeight: 1.45,
     },
     '& .MuiFormControlLabel-label.Mui-disabled': {
-      color: theme.palette.text.disabled,
+      color: theme.palette.text.secondary,
     },
   }
+}
+
+/** Subtle disabled field chrome — muted surface, no heavy gray fill */
+export function subtleDisabledOutlinedFieldSx(theme: Theme) {
+  const { background, border } = formControlInactiveSurface(theme)
+
+  return {
+    '& .MuiInputBase-root.Mui-disabled, & .MuiPickersOutlinedInput-root.Mui-disabled': {
+      backgroundColor: background,
+      cursor: 'default',
+      opacity: 1,
+      pointerEvents: 'none',
+    },
+    '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline, & .MuiInputBase-root.Mui-disabled .MuiOutlinedInput-notchedOutline':
+      {
+        borderColor: border,
+      },
+    '& .MuiInputBase-input.Mui-disabled, & .MuiSelect-select.Mui-disabled': {
+      WebkitTextFillColor: theme.palette.text.secondary,
+      color: theme.palette.text.secondary,
+      cursor: 'default',
+      opacity: 1,
+    },
+    '& .MuiInputLabel-root.Mui-disabled': {
+      color: theme.palette.text.secondary,
+    },
+    '&.Mui-disabled .MuiOutlinedInput-notchedOutline': {
+      borderColor: border,
+    },
+    '&.Mui-disabled .MuiInputBase-root': {
+      backgroundColor: background,
+      cursor: 'default',
+      opacity: 1,
+      pointerEvents: 'none',
+    },
+    '&.Mui-disabled .MuiSelect-select': {
+      WebkitTextFillColor: theme.palette.text.secondary,
+      color: theme.palette.text.secondary,
+      cursor: 'default',
+      opacity: 1,
+    },
+    '&.Mui-disabled .MuiSelect-icon': {
+      color: alpha(theme.palette.text.primary, 0.28),
+    },
+    '& .MuiAutocomplete-endAdornment .Mui-disabled': {
+      opacity: 0.35,
+    },
+  } as const
+}
+
+/** Read-only Input/Textarea wrapper — blocks hover/focus affordances */
+export function readOnlyFieldWrapperSx(theme: Theme) {
+  const { background, border } = formControlInactiveSurface(theme)
+
+  return {
+    '& .MuiOutlinedInput-root': {
+      cursor: 'default',
+      pointerEvents: 'none',
+      backgroundColor: background,
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: border,
+      },
+      '&:hover .MuiOutlinedInput-notchedOutline, &.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: border,
+        borderWidth: FORM_CONTROL.borderWidth,
+      },
+    },
+    '& .MuiInputBase-input, & .MuiInputBase-inputMultiline': {
+      color: theme.palette.text.secondary,
+      WebkitTextFillColor: theme.palette.text.secondary,
+      cursor: 'default',
+    },
+  } as const
 }
 
 /** MUI X DatePicker / DateRangePicker — v8 uses PickersOutlinedInput, not OutlinedInput */
@@ -317,6 +402,7 @@ export function outlinedFieldSx(theme: Theme, height: string) {
       mt: '4px',
       mx: 0,
     },
+    ...subtleDisabledOutlinedFieldSx(theme),
   }
 }
 
@@ -390,13 +476,11 @@ export function textareaOutlinedFieldSx(theme: Theme) {
       fontFamily: 'inherit',
       resize: 'vertical',
     },
-    '& .MuiOutlinedInput-root.Mui-disabled': {
-      backgroundColor: theme.palette.action.disabledBackground,
-    },
     '& .MuiFormHelperText-root': {
       fontSize: FORM_CONTROL.helperFontSize,
       mt: '4px',
       mx: 0,
     },
+    ...subtleDisabledOutlinedFieldSx(theme),
   }
 }

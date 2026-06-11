@@ -26,7 +26,13 @@ export function TrackingPage() {
   const tracking = customerPortalService.getTracking(query)
   const app = tracking.application
   const timeline = useMemo<CustomerTimelineItem[]>(
-    () => tracking.timeline.map(stage => ({ id: stage.id, title: stage.title, status: stage.status })),
+    () =>
+      tracking.timeline.map((stage) => ({
+        id: stage.id,
+        title: stage.title,
+        status: stage.status,
+        timestamp: stage.date,
+      })),
     [tracking.timeline],
   )
 

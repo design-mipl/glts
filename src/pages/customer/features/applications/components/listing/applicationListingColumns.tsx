@@ -8,7 +8,11 @@ import type { NavigateFunction } from 'react-router-dom'
 import { RowActions, type Column } from '@/design-system/UIComponents'
 import type { Toast } from '@/design-system/UIComponents'
 import { CustomerStatusChip } from '@/pages/customer/features/shared/components/CustomerPrimitives'
-import type { BulkBatchRow, SingleApplicationRow } from '../../data/applicationFlowData'
+import {
+  formatBulkApplicantListingLabel,
+  type BulkBatchRow,
+  type SingleApplicationRow,
+} from '../../data/applicationFlowData'
 import {
   getApplicationOperationalTone,
   getApplicationTypeLabel,
@@ -176,7 +180,7 @@ export function buildUnifiedApplicationColumns({
       filterable: false,
       render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
         <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-          {row.recordType === 'bulk' ? `${row.totalApplicants} travelers` : row.applicantName}
+          {row.recordType === 'bulk' ? formatBulkApplicantListingLabel(row) : row.applicantName}
         </Typography>
       ),
     },

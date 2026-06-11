@@ -106,7 +106,7 @@ export function buildMarineApplicationColumns({
       label: 'GLTS reference',
       sortable: true,
       filterable: false,
-      width: 160,
+      width: 170,
       render: (value: string, row: MarineApplicationRow) => (
         <Box>
           <Typography
@@ -117,24 +117,14 @@ export function buildMarineApplicationColumns({
           >
             {value}
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
-            {row.recordType === 'bulk' ? 'Batch' : 'Application'}
-          </Typography>
+          <Box sx={{ mt: 0.35 }}>
+            <Badge
+              label={getApplicationTypeLabel(row.recordType)}
+              color={row.recordType === 'bulk' ? 'info' : 'neutral'}
+              size="sm"
+            />
+          </Box>
         </Box>
-      ),
-    },
-    {
-      key: 'applicationType',
-      label: 'Type',
-      sortable: false,
-      filterable: true,
-      width: 100,
-      render: (_: unknown, row: MarineApplicationRow) => (
-        <Badge
-          label={getApplicationTypeLabel(row.recordType)}
-          color={row.recordType === 'bulk' ? 'info' : 'neutral'}
-          size="sm"
-        />
       ),
     },
     {
@@ -163,17 +153,34 @@ export function buildMarineApplicationColumns({
       ),
     },
     {
-      key: 'country',
-      label: 'Country',
+      key: 'countryVisa',
+      label: 'Country / Visa',
       sortable: true,
       filterable: true,
+      width: 180,
       render: (_: unknown, row: MarineApplicationRow) => (
+        <Box>
+          <Typography variant="body2" sx={{ fontSize: 13 }}>
+            {row.countryFlag} {row.country}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11, display: 'block' }}>
+            {row.visaType}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      key: 'jurisdiction',
+      label: 'Jurisdiction',
+      sortable: true,
+      filterable: true,
+      width: 120,
+      render: (value: string) => (
         <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {row.countryFlag} {row.country}
+          {value?.trim() ? value : '—'}
         </Typography>
       ),
     },
-    { key: 'visaType', label: 'Visa type', sortable: false, filterable: true, width: 130 },
     { key: 'travelDate', label: 'Travel date', sortable: true, filterable: true, width: 110 },
     {
       key: 'createdBy',

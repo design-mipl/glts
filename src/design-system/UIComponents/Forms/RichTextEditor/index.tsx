@@ -9,7 +9,8 @@ import {
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { Bold, Italic, Underline, Strikethrough, List, ListOrdered, Quote, Code, Link, Undo, Redo } from 'lucide-react'
-import { tokens, BORDER_RADIUS, BORDER_WIDTH } from '../../../tokens'
+import { BORDER_RADIUS, BORDER_WIDTH } from '../../../tokens'
+import { getRichTextProseSx } from './richTextProseStyles'
 
 export type ToolbarItem =
   | 'bold' | 'italic' | 'underline' | 'strike'
@@ -283,16 +284,13 @@ export default function RichTextEditor({
         {/* Editor content */}
         <Box
           sx={{
+            ...getRichTextProseSx(theme, { minHeight }),
             minHeight,
             maxHeight,
             overflowY: maxHeight ? 'auto' : undefined,
             px: 1.75,
             py: 1.5,
-            fontSize: tokens.fontSize.base,
-            fontFamily: theme.typography.fontFamily,
-            color: 'text.primary',
             bgcolor: 'transparent',
-            // TipTap editor styles
             '& .ProseMirror': {
               outline: 'none',
               minHeight,
@@ -303,31 +301,6 @@ export default function RichTextEditor({
                 float: 'left',
                 height: 0,
               },
-              '& h1': { fontSize: '1.5em', fontWeight: 700, mt: 1, mb: 0.5 },
-              '& h2': { fontSize: '1.25em', fontWeight: 700, mt: 1, mb: 0.5 },
-              '& h3': { fontSize: '1.1em', fontWeight: 700, mt: 1, mb: 0.5 },
-              '& ul, & ol': { pl: 3 },
-              '& blockquote': {
-                borderLeft: `3px solid ${theme.palette.divider}`,
-                pl: 2,
-                color: theme.palette.text.secondary,
-                my: 1,
-              },
-              '& code': {
-                fontFamily: 'monospace',
-                fontSize: '0.875em',
-                bgcolor: alpha(theme.palette.text.primary, 0.06),
-                px: 0.5,
-                borderRadius: 0.5,
-              },
-              '& pre': {
-                bgcolor: isDark ? alpha(theme.palette.common.white, 0.05) : alpha(theme.palette.text.primary, 0.04),
-                borderRadius: 1,
-                p: 1.5,
-                overflow: 'auto',
-                '& code': { bgcolor: 'transparent', p: 0 },
-              },
-              '& a': { color: theme.palette.primary.main, cursor: 'pointer' },
             },
           }}
         >

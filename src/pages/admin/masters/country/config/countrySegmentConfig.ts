@@ -1,4 +1,4 @@
-import { ALL_SEGMENTS } from '@/shared/data/countryMasterDefaults'
+import { ALL_SEGMENTS, SEGMENT_LABELS as SHARED_SEGMENT_LABELS } from '@/shared/data/countryMasterDefaults'
 import type { BusinessSegment } from '@/shared/types/countryMaster'
 
 export type CountryListingTab = 'all' | BusinessSegment
@@ -11,12 +11,7 @@ export const COUNTRY_LISTING_TABS: { value: CountryListingTab; label: string }[]
   { value: 'b2bAgents', label: 'B2B Agents' },
 ]
 
-export const SEGMENT_LABELS: Record<BusinessSegment, string> = {
-  retail: 'Retail',
-  corporate: 'Corporate',
-  marine: 'Marine',
-  b2bAgents: 'B2B Agents',
-}
+export const SEGMENT_LABELS = SHARED_SEGMENT_LABELS
 
 export const SEGMENT_DESCRIPTIONS: Record<BusinessSegment, string> = {
   retail: 'Individual travelers and retail visa processing',

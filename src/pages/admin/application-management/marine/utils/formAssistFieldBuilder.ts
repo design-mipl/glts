@@ -16,10 +16,84 @@ export interface FormAssistField {
   value: string
 }
 
+export interface FormAssistFieldSection {
+  id: string
+  title: string
+  fields: FormAssistField[]
+}
+
+interface FormAssistFieldSectionDefinition {
+  id: string
+  title: string
+  fieldIds: string[]
+}
+
+const FORM_ASSIST_STEP_SECTIONS: Record<string, FormAssistFieldSectionDefinition[]> = {
+  personal: [
+    {
+      id: 'identity',
+      title: 'Applicant identity',
+      fieldIds: ['traveler', 'nationality', 'dateOfBirth'],
+    },
+    {
+      id: 'contact',
+      title: 'Contact details',
+      fieldIds: ['paxContactNo', 'paxEmailId'],
+    },
+  ],
+  passport: [
+    {
+      id: 'passport-identification',
+      title: 'Passport identification',
+      fieldIds: ['passportNo', 'nationality'],
+    },
+    {
+      id: 'passport-validity',
+      title: 'Passport validity',
+      fieldIds: ['passportExpiry'],
+    },
+  ],
+  travel: [
+    {
+      id: 'travel-itinerary',
+      title: 'Travel itinerary',
+      fieldIds: ['travel', 'country'],
+    },
+    {
+      id: 'visa-information',
+      title: 'Visa information',
+      fieldIds: ['visa', 'jurisdiction'],
+    },
+  ],
+  employment: [
+    {
+      id: 'employment-record',
+      title: 'Employment record',
+      fieldIds: ['crewId', 'cdcNumber', 'employmentOccupation', 'lastContractSignDate'],
+    },
+    {
+      id: 'vessel-assignment',
+      title: 'Vessel & port',
+      fieldIds: ['vesselName', 'imoNumber', 'joiningPort'],
+    },
+  ],
+  address: [
+    {
+      id: 'organization',
+      title: 'Organization',
+      fieldIds: ['entityName', 'location'],
+    },
+    {
+      id: 'billing',
+      title: 'Billing address',
+      fieldIds: ['billingAddress'],
+    },
+  ],
+}
+
 export interface FormAssistStepDefinition {
   id: string
   label: string
-  description?: string
 }
 
 export const GENERIC_FORM_ASSIST_STEPS: FormAssistStepDefinition[] = [
@@ -28,8 +102,17 @@ export const GENERIC_FORM_ASSIST_STEPS: FormAssistStepDefinition[] = [
   { id: 'travel', label: 'Travel details' },
   { id: 'employment', label: 'Employment / Marine details' },
   { id: 'address', label: 'Address details' },
-  { id: 'review', label: 'Review & submission' },
+  { id: 'review', label: 'Review' },
+  { id: 'submission', label: 'Submission & Payment' },
 ]
+
+const FORM_ASSIST_COPY_STEP_IDS = new Set([
+  'personal',
+  'passport',
+  'travel',
+  'employment',
+  'address',
+])
 
 const PLACEHOLDER = '—'
 
@@ -52,7 +135,49 @@ export interface FormAssistContext {
     vesselName?: string
     imoNumber?: string
     joiningPort?: string
+    jurisdiction?: string
   }
+}
+
+function resolveFormAssistFieldSections(
+  stepId: string,
+  fields: FormAssistField[],
+  titlePrefix?: string,
+): FormAssistFieldSection[] {
+  const definitions = FORM_ASSIST_STEP_SECTIONS[stepId]
+  if (!definitions) {
+    return fields.length > 0
+      ? [{ id: stepId, title: titlePrefix ?? 'Details', fields }]
+      : []
+  }
+
+  const fieldById = new Map(fields.map(field => [field.id, field]))
+
+  return definitions
+    .map(definition => ({
+      id: titlePrefix ? `${stepId}-${definition.id}` : definition.id,
+      title: titlePrefix ? `${titlePrefix} · ${definition.title}` : definition.title,
+      fields: definition.fieldIds
+        .map(fieldId => fieldById.get(fieldId))
+        .filter((field): field is FormAssistField => Boolean(field)),
+    }))
+    .filter(section => section.fields.length > 0)
+}
+
+export function buildFormAssistFieldSectionsForStep(
+  stepId: string,
+  ctx: FormAssistContext,
+): FormAssistFieldSection[] {
+  if (stepId === 'review') {
+    return [...FORM_ASSIST_COPY_STEP_IDS].flatMap(copyStepId => {
+      const step = GENERIC_FORM_ASSIST_STEPS.find(item => item.id === copyStepId)
+      const fields = buildFormAssistFieldsForStep(copyStepId, ctx)
+      return resolveFormAssistFieldSections(copyStepId, fields, step?.label)
+    })
+  }
+
+  const fields = buildFormAssistFieldsForStep(stepId, ctx)
+  return resolveFormAssistFieldSections(stepId, fields)
 }
 
 export function buildFormAssistFieldsForStep(
@@ -85,6 +210,11 @@ export function buildFormAssistFieldsForStep(
         field('travel', 'Travel', app?.travelDate ?? ''),
         field('visa', 'Visa', app?.visaType ?? ''),
         field('country', 'Country', app?.country ?? ''),
+        field(
+          'jurisdiction',
+          'Jurisdiction',
+          app?.jurisdiction ?? extras.jurisdiction ?? '',
+        ),
       ]
     case 'employment':
       return [
@@ -103,21 +233,19 @@ export function buildFormAssistFieldsForStep(
         field('billingAddress', 'Billing address', extras.billingAddress ?? ''),
       ]
     case 'review':
-      return [
-        ...buildFormAssistFieldsForStep('personal', ctx),
-        ...buildFormAssistFieldsForStep('passport', ctx),
-        ...buildFormAssistFieldsForStep('travel', ctx),
-        ...buildFormAssistFieldsForStep('employment', ctx),
-        ...buildFormAssistFieldsForStep('address', ctx),
-      ]
+      return [...FORM_ASSIST_COPY_STEP_IDS].flatMap(stepId =>
+        buildFormAssistFieldsForStep(stepId, ctx),
+      )
+    case 'submission':
+      return []
     default:
       return []
   }
 }
 
 export function collectAllFormAssistFields(ctx: FormAssistContext): FormAssistField[] {
-  return GENERIC_FORM_ASSIST_STEPS.filter(s => s.id !== 'review').flatMap(step =>
-    buildFormAssistFieldsForStep(step.id, ctx),
+  return GENERIC_FORM_ASSIST_STEPS.filter(step => FORM_ASSIST_COPY_STEP_IDS.has(step.id)).flatMap(
+    step => buildFormAssistFieldsForStep(step.id, ctx),
   )
 }
 
@@ -133,6 +261,7 @@ export function resolveFormAssistFlowExtras(applicationId: string): SingleApplic
     vesselName: '',
     imoNumber: '',
     joiningPort: '',
+    jurisdiction: '',
   }
   const flowState = readSavedFlowState()
   if (!flowState) return fromSeed
@@ -146,5 +275,6 @@ export function resolveFormAssistFlowExtras(applicationId: string): SingleApplic
     vesselName: flowState.vesselName || fromSeed.vesselName,
     imoNumber: flowState.imoNumber || fromSeed.imoNumber,
     joiningPort: flowState.portOfRegistry || fromSeed.joiningPort,
+    jurisdiction: flowState.jurisdiction || fromSeed.jurisdiction,
   }
 }

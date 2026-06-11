@@ -11,6 +11,7 @@ interface CountryFormImageFieldProps {
   helperText?: string
   dropzoneTitle?: string
   dropzoneCaption?: string
+  disabled?: boolean
 }
 
 export function CountryFormImageField({
@@ -20,6 +21,7 @@ export function CountryFormImageField({
   helperText,
   dropzoneTitle = 'Upload an image or drag & drop here',
   dropzoneCaption = 'PNG, JPG, WebP, or SVG — up to 2 MB',
+  disabled = false,
 }: CountryFormImageFieldProps) {
   const [uploadError, setUploadError] = useState<string | undefined>()
 
@@ -57,6 +59,7 @@ export function CountryFormImageField({
         browseLabel="Browse image"
         onUpload={(files) => void handleUpload(files)}
         onError={setUploadError}
+        disabled={disabled}
       />
     </FormField>
   )

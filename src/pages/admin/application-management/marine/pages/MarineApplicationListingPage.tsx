@@ -131,11 +131,11 @@ export function MarineApplicationListingPage() {
       kpis={<MarineApplicationKpiRow rows={allRows} />}
       tabs={[
         { value: 'all', label: 'All applications' },
-        { value: 'submitted', label: 'Submitted' },
+        { value: 'new_applications', label: 'New applications' },
         { value: 'under_verification', label: 'Under verification' },
         { value: 'ready_for_submission', label: 'Ready for submission' },
         { value: 'embassy_processing', label: 'Embassy processing' },
-        { value: 'passport_dispatch', label: 'Passport dispatch' },
+        { value: 'visa_approved', label: 'Visa approved' },
         { value: 'completed', label: 'Completed' },
       ]}
       tabValue={activeTab}
@@ -144,7 +144,7 @@ export function MarineApplicationListingPage() {
         <AdminListingToolbar
           searchValue={listing.tableState.searchQuery}
           onSearch={listing.handleSearch}
-          searchPlaceholder="Search by GLTS reference, applicant, company, passport no."
+          searchPlaceholder="Search by GLTS reference, applicant, company, jurisdiction, passport no."
           onExport={handleExport}
           viewMode={viewMode}
           onViewModeChange={setViewMode}

@@ -14,7 +14,6 @@ export function EditCountryPage() {
       countryId={countryId}
       initialStep={initialStep}
       breadcrumbs={[
-        { label: 'Masters', href: '/admin/masters/country' },
         { label: 'Country Master', href: '/admin/masters/country' },
         { label: country?.name ?? 'Edit country' },
       ]}

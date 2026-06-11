@@ -16,8 +16,7 @@ import {
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
-import type { AdminPortalUser, AdminPortalUserListFilters } from '@/shared/types/adminPortalUser'
-import { UserAdvancedFilters } from '../components/UserAdvancedFilters'
+import type { AdminPortalUser } from '@/shared/types/adminPortalUser'
 import { buildUserColumns } from '../components/UserTableColumns'
 import {
   downloadUserCsv,
@@ -26,19 +25,12 @@ import {
   matchesUserSearch,
 } from '../utils/userListingUtils'
 
-const EMPTY_FILTERS: AdminPortalUserListFilters = {
-  status: 'all',
-  teamId: 'all',
-  designation: 'all',
-}
-
 export function UserListingPage() {
   const theme = useTheme()
   const navigate = useNavigate()
   const { showToast } = useToast()
   const [rows, setRows] = useState<AdminPortalUser[]>([])
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState<AdminPortalUserListFilters>(EMPTY_FILTERS)
   const [statusOpen, setStatusOpen] = useState(false)
   const [statusTarget, setStatusTarget] = useState<AdminPortalUser | null>(null)
   const [superAdminConfirm, setSuperAdminConfirm] = useState(false)
@@ -46,9 +38,9 @@ export function UserListingPage() {
 
   const loadRows = useCallback(() => {
     setLoading(true)
-    setRows(adminPortalUserService.list(filters))
+    setRows(adminPortalUserService.list())
     setLoading(false)
-  }, [filters])
+  }, [])
 
   useEffect(() => {
     loadRows()
@@ -108,7 +100,6 @@ export function UserListingPage() {
   }, [loadRows, showToast])
 
   const handleClearFilters = useCallback(() => {
-    setFilters(EMPTY_FILTERS)
     listing.handleSearch('')
     listing.setColumnFilters({})
   }, [listing])
@@ -149,10 +140,7 @@ export function UserListingPage() {
       ? alpha(theme.palette.common.white, 0.04)
       : alpha(theme.palette.common.black, 0.02)
 
-  const hasActiveFilters =
-    (filters.teamId && filters.teamId !== 'all') ||
-    (filters.designation && filters.designation !== 'all') ||
-    Boolean(listing.tableState.searchQuery)
+  const hasActiveFilters = Boolean(listing.tableState.searchQuery)
 
   const statusDialogDescription = statusTarget
     ? statusTarget.isSuperAdmin &&
@@ -177,26 +165,23 @@ export function UserListingPage() {
           />
         }
         toolbar={
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <AdminListingToolbar
-              searchValue={listing.tableState.searchQuery}
-              onSearch={listing.handleSearch}
-              searchPlaceholder="Search user name, email, or team…"
-              onExport={handleExport}
-              columns={toolbarColumns}
-              hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
-              onHiddenColumnKeysChange={(keys) =>
-                listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
-              }
-              moreMenuItems={[
-                { label: 'Refresh list', onClick: handleRefresh },
-                ...(hasActiveFilters
-                  ? [{ label: 'Clear all filters', onClick: handleClearFilters }]
-                  : []),
-              ]}
-            />
-            <UserAdvancedFilters filters={filters} onChange={setFilters} />
-          </Box>
+          <AdminListingToolbar
+            searchValue={listing.tableState.searchQuery}
+            onSearch={listing.handleSearch}
+            searchPlaceholder="Search user name, email, or team…"
+            onExport={handleExport}
+            columns={toolbarColumns}
+            hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
+            onHiddenColumnKeysChange={(keys) =>
+              listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
+            }
+            moreMenuItems={[
+              { label: 'Refresh list', onClick: handleRefresh },
+              ...(hasActiveFilters
+                ? [{ label: 'Clear all filters', onClick: handleClearFilters }]
+                : []),
+            ]}
+          />
         }
         listingContent={
           <AdminListingTable

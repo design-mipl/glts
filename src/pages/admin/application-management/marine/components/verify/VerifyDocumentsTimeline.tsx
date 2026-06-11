@@ -1,7 +1,7 @@
 import { Stack, Typography } from '@mui/material'
 import { BaseCard } from '@/design-system/UIComponents'
 import { ApplicationProcessingTimeline } from '@/pages/customer/features/applications/components/ApplicationProcessingTimeline'
-import type { ApplicationProcessingTimelineStep } from '@/pages/customer/features/applications/components/ApplicationProcessingTimeline'
+import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
 
 interface VerifyDocumentsTimelineProps {
   steps: ApplicationProcessingTimelineStep[]

@@ -20,7 +20,17 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
       { id: 'retail_applications', label: 'Retail applications' },
       { id: 'corporate_applications', label: 'Corporate applications' },
       { id: 'marine_applications', label: 'Marine applications' },
-      { id: 'assignments', label: 'Assignment management' },
+      { id: 'b2b_agents_applications', label: 'B2B agents applications' },
+    ],
+  },
+  {
+    id: 'assignment_priority',
+    label: 'Assignment & Priority Management',
+    submodules: [
+      { id: 'marine_assignment_queue', label: 'Marine assignment queue' },
+      { id: 'b2b_assignment_queue', label: 'B2B assignment queue' },
+      { id: 'corporate_assignment_queue', label: 'Corporate assignment queue' },
+      { id: 'retail_assignment_queue', label: 'Retail assignment queue' },
     ],
   },
   {
@@ -55,7 +65,7 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
     label: 'Masters',
     submodules: [
       { id: 'country', label: 'Country' },
-      { id: 'visa_type', label: 'Visa type' },
+      { id: 'jurisdiction', label: 'Jurisdiction Master' },
       { id: 'documents', label: 'Document master' },
       { id: 'rates', label: 'Rate master' },
       { id: 'services', label: 'Service Master' },

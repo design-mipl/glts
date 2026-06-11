@@ -70,7 +70,6 @@ export function InvoiceListingPage() {
     date: new Date().toISOString().slice(0, 10),
     method: 'NEFT',
     reference: '',
-    tdsPercentage: '',
     tdsAmount: '',
   })
 
@@ -128,20 +127,21 @@ export function InvoiceListingPage() {
         onRecordPayment: row => {
           const collected = row.payments.reduce((sum, p) => sum + p.amount, 0)
           const balance = Math.max(0, row.totals.finalAmount - collected)
+          const invoiceAmount = balance > 0 ? balance : 0
           const tdsPct =
             row.taxConfig.tdsApplicable && row.taxConfig.tdsPercentage > 0
               ? row.taxConfig.tdsPercentage
               : 0
-          const gross = balance > 0 ? balance : 0
           const tdsAmount =
-            tdsPct > 0 && gross > 0 ? Math.round(((gross * tdsPct) / 100) * 100) / 100 : 0
+            tdsPct > 0 && invoiceAmount > 0
+              ? Math.round(((invoiceAmount * tdsPct) / 100) * 100) / 100
+              : 0
           setPaymentTarget(row)
           setPaymentValue({
-            amount: gross > 0 ? String(gross) : '',
+            amount: invoiceAmount > 0 ? String(invoiceAmount) : '',
             date: new Date().toISOString().slice(0, 10),
             method: 'NEFT',
             reference: '',
-            tdsPercentage: tdsPct > 0 ? String(tdsPct) : '',
             tdsAmount: tdsAmount > 0 ? String(tdsAmount) : '',
           })
           setPaymentOpen(true)
@@ -261,24 +261,33 @@ export function InvoiceListingPage() {
 
   const handleRecordPaymentConfirm = () => {
     if (!paymentTarget) return
-    const amount = Number.parseFloat(paymentValue.amount.replace(/,/g, ''))
-    if (!Number.isFinite(amount) || amount <= 0) {
-      showToast({ title: 'Enter a valid payment amount', variant: 'error' })
+    const invoiceAmount = Number.parseFloat(paymentValue.amount.replace(/,/g, ''))
+    const tdsAmount = parsePaymentField(paymentValue.tdsAmount)
+    const netAmount = Math.max(0, Math.round((invoiceAmount - tdsAmount) * 100) / 100)
+
+    if (!Number.isFinite(invoiceAmount) || invoiceAmount <= 0) {
+      showToast({ title: 'Enter a valid invoice amount', variant: 'error' })
+      return
+    }
+    if (netAmount <= 0) {
+      showToast({ title: 'Net amount received must be greater than zero', variant: 'error' })
       return
     }
     if (!paymentValue.reference.trim()) {
       showToast({ title: 'Payment reference is required', variant: 'error' })
       return
     }
-    const tdsPercentage = parsePaymentField(paymentValue.tdsPercentage)
-    const tdsAmount = parsePaymentField(paymentValue.tdsAmount)
+    const tdsPercentage =
+      invoiceAmount > 0 && tdsAmount > 0
+        ? Math.round((tdsAmount / invoiceAmount) * 10000) / 100
+        : undefined
 
     const updated = invoiceService.recordPayment(paymentTarget.id, {
-      amount,
+      amount: invoiceAmount,
       date: paymentValue.date,
       method: paymentValue.method,
       reference: paymentValue.reference.trim(),
-      tdsPercentage: tdsPercentage > 0 ? tdsPercentage : undefined,
+      tdsPercentage,
       tdsAmount: tdsAmount > 0 ? tdsAmount : undefined,
     })
     if (!updated) {
@@ -422,17 +431,6 @@ export function InvoiceListingPage() {
         onChange={setPaymentValue}
         onSubmit={handleRecordPaymentConfirm}
         invoiceId={paymentTarget?.invoiceId}
-        balancePayable={
-          paymentTarget
-            ? Math.max(
-                0,
-                paymentTarget.totals.finalAmount -
-                  paymentTarget.payments.reduce((sum, p) => sum + p.amount, 0),
-              )
-            : 0
-        }
-        tdsApplicable={paymentTarget?.taxConfig.tdsApplicable}
-        defaultTdsPercentage={paymentTarget?.taxConfig.tdsPercentage ?? 0}
       />
     </>
   )

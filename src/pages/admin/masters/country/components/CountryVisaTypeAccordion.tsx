@@ -194,6 +194,7 @@ export function CountryFormVisaTypesStep({ data, onChange }: CountryVisaTypesSte
       stayDuration: '',
       prioritySupport: false,
       status: 'active',
+      jurisdictions: [],
       applicationDocuments: [],
     }
     updateSegmentVisaTypes(segment, [...seg.visaTypes, next])

@@ -9,11 +9,11 @@ import type { MarineApplicationRow } from '@/shared/services/marineApplicationAd
 
 export type MarineApplicationListingTab =
   | 'all'
-  | 'submitted'
+  | 'new_applications'
   | 'under_verification'
   | 'ready_for_submission'
   | 'embassy_processing'
-  | 'passport_dispatch'
+  | 'visa_approved'
   | 'completed'
 
 const UNDER_VERIFICATION_STATUSES = new Set([
@@ -28,7 +28,7 @@ export function filterMarineRowsByTab(
   tab: MarineApplicationListingTab,
 ): MarineApplicationRow[] {
   switch (tab) {
-    case 'submitted':
+    case 'new_applications':
       return rows.filter(row => row.operationalStatus === 'Submitted')
     case 'under_verification':
       return rows.filter(
@@ -40,7 +40,7 @@ export function filterMarineRowsByTab(
       return rows.filter(row => row.processingStage === 'Embassy submission')
     case 'embassy_processing':
       return rows.filter(row => row.processingStage === 'Embassy processing')
-    case 'passport_dispatch':
+    case 'visa_approved':
       return rows.filter(
         row =>
           row.processingStage === 'Passport dispatch' || row.operationalStatus === 'Passport Ready',
@@ -58,6 +58,7 @@ export function matchesMarineApplicationSearch(row: MarineApplicationRow, query:
   if (row.id.toLowerCase().includes(s)) return true
   if (resolveApplicationCompanyName(row).toLowerCase().includes(s)) return true
   if (resolveApplicationCreatorLabel(row.createdByEmail).toLowerCase().includes(s)) return true
+  if (row.jurisdiction?.toLowerCase().includes(s)) return true
   if (isBulkRow(row)) {
     return row.country.toLowerCase().includes(s) || row.visaType.toLowerCase().includes(s)
   }
@@ -70,6 +71,12 @@ export function matchesMarineApplicationSearch(row: MarineApplicationRow, query:
 }
 
 export function getMarineApplicationCellValue(row: MarineApplicationRow, key: string): string {
+  if (key === 'countryVisa') {
+    return `${row.country} · ${row.visaType}`
+  }
+  if (key === 'applicationType') {
+    return getListingCellValue(row as ApplicationListingRow, 'applicationType')
+  }
   return getListingCellValue(row as ApplicationListingRow, key)
 }
 
@@ -103,9 +110,9 @@ export function getMarineApplicationEmptyState(
   onCreate?: () => void,
 ): MarineApplicationEmptyState {
   switch (tab) {
-    case 'submitted':
+    case 'new_applications':
       return {
-        emptyTitle: 'No submitted applications',
+        emptyTitle: 'No new applications',
         emptyDescription: 'Applications appear here once customers submit from the portal.',
       }
     case 'under_verification':
@@ -123,10 +130,10 @@ export function getMarineApplicationEmptyState(
         emptyTitle: 'No applications in embassy processing',
         emptyDescription: 'Applications at the embassy processing stage appear here.',
       }
-    case 'passport_dispatch':
+    case 'visa_approved':
       return {
-        emptyTitle: 'No applications in passport dispatch',
-        emptyDescription: 'Passport dispatch and passport-ready applications appear here.',
+        emptyTitle: 'No visa approved applications',
+        emptyDescription: 'Visa approved and passport-ready applications appear here.',
       }
     case 'completed':
       return {
@@ -154,6 +161,7 @@ export function exportMarineApplicationsToCsv(rows: MarineApplicationRow[]): str
     'Company name',
     'Country',
     'Visa type',
+    'Jurisdiction',
     'Travel date',
     'Created by',
     'Status',
@@ -173,6 +181,7 @@ export function exportMarineApplicationsToCsv(rows: MarineApplicationRow[]): str
       companyName,
       row.country,
       row.visaType,
+      row.jurisdiction ?? '—',
       row.travelDate,
       createdBy,
       row.operationalStatus,

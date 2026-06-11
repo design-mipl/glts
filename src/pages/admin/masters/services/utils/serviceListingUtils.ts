@@ -1,10 +1,13 @@
 import { sacCodeMasterService } from '@/shared/services/sacCodeMasterService'
 import { taxMasterService } from '@/shared/services/taxMasterService'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
+import { MASTER_APPLICABILITY_OPTIONS } from '@/shared/types/masterCommon'
 import { masterStatusLabel } from '../../config/masterStatusConfig'
+import { serviceTypeLabel } from '../config/serviceTypeConfig'
+
 export function formatServicePrice(row: ServiceMaster): string {
   if (row.defaultPrice == null) return '—'
-  return row.defaultPrice.toLocaleString()
+  return `₹${row.defaultPrice.toLocaleString('en-IN')}`
 }
 
 export function getServiceSacLabel(row: ServiceMaster): string {
@@ -15,10 +18,19 @@ export function getServiceSacLabel(row: ServiceMaster): string {
 
 export function getServiceCellValue(row: ServiceMaster, key: string): string {
   if (key === 'status') return masterStatusLabel[row.status]
+  if (key === 'serviceType') return serviceTypeLabel[row.serviceType]
   if (key === 'defaultPrice') return formatServicePrice(row)
   if (key === 'mappedSacCode') return getServiceSacLabel(row)
   if (key === 'gstRate') return taxMasterService.getGstLabel(row.gstRateId)
   if (key === 'tdsSection') return taxMasterService.getTdsLabel(row.tdsSectionId)
+  if (key === 'applicableFor') {
+    return row.applicableFor
+      .map(
+        (value) =>
+          MASTER_APPLICABILITY_OPTIONS.find((option) => option.value === value)?.label ?? value,
+      )
+      .join(', ')
+  }
   return String((row as unknown as Record<string, unknown>)[key] ?? '')
 }
 
@@ -26,13 +38,16 @@ export function matchesServiceSearch(row: ServiceMaster, query: string): boolean
   const normalized = query.trim().toLowerCase()
   if (!normalized) return true
   return [
-    row.serviceCode,
     row.serviceName,
     row.description,
-    row.category,
-    row.subcategory,
+    serviceTypeLabel[row.serviceType],
     getServiceSacLabel(row),
+    taxMasterService.getGstLabel(row.gstRateId),
     row.status,
+    ...row.applicableFor.map(
+      (value) =>
+        MASTER_APPLICABILITY_OPTIONS.find((option) => option.value === value)?.label ?? value,
+    ),
   ].some((part) => part.toLowerCase().includes(normalized))
 }
 
@@ -46,22 +61,20 @@ export function getServiceEmptyState(onCreate: () => void) {
 
 export function downloadServiceCsv(rows: ServiceMaster[]) {
   const headers = [
-    'Service Code',
     'Service Name',
-    'Category',
-    'Subcategory',
+    'Service Type',
     'Price',
     'SAC',
+    'GST',
     'Status',
   ]
   const lines = rows.map((row) =>
     [
-      row.serviceCode,
       row.serviceName,
-      row.category,
-      row.subcategory,
+      serviceTypeLabel[row.serviceType],
       row.defaultPrice ?? '',
       getServiceSacLabel(row),
+      taxMasterService.getGstLabel(row.gstRateId),
       masterStatusLabel[row.status],
     ]
       .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)

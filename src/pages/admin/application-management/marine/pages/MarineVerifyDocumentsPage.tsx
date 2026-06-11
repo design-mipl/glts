@@ -23,11 +23,17 @@ import {
   VerifyDocumentChecklistSection,
   VerifyGlobalDocumentChecklist,
 } from '../components/verify/VerifyDocumentChecklistSection'
+import { VerifyRejectedDocumentsSection } from '../components/verify/VerifyRejectedDocumentsSection'
 import {
   GltsDocumentUploadDrawer,
   type GltsDocumentUploadPayload,
 } from '../components/verify/GltsDocumentUploadDrawer'
 import { resolveHandlingMode } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import {
+  collectRejectedVerifyDocuments,
+  isRejectedVerifyDocument,
+  type VerifyRejectedDocumentEntry,
+} from '../utils/verifyDocumentsUtils'
 
 export function MarineVerifyDocumentsPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
@@ -35,6 +41,7 @@ export function MarineVerifyDocumentsPage() {
   const { showToast } = useToast()
   const [reviewDialog, setReviewDialog] = useState<{
     scope: 'traveler' | 'global'
+    travelerId?: string
     documentId: string
     documentName: string
     status: Extract<ApplicantDocumentStatus, 'rejected' | 'needs_review'>
@@ -55,6 +62,7 @@ export function MarineVerifyDocumentsPage() {
     timelineSteps,
     globalDocuments,
     updateTravelerDoc,
+    updateTravelerDocForRow,
     updateTravelerDocumentWorkflow,
     updateGlobalDoc,
     saveDraft,
@@ -62,6 +70,27 @@ export function MarineVerifyDocumentsPage() {
   } = workspace
 
   const listingPath = '/admin/application-management/marine'
+
+  const reviewActionLabel = reviewDialog?.status === 'rejected' ? 'Reject' : 'Request re-upload'
+  const reviewDialogTitle = useMemo(() => {
+    if (!reviewDialog) return ''
+    return `${reviewActionLabel} document`
+  }, [reviewActionLabel, reviewDialog])
+
+  const rejectedDocuments = useMemo(
+    () => collectRejectedVerifyDocuments(rows, globalDocuments),
+    [rows, globalDocuments],
+  )
+
+  const travelerChecklistDocuments = useMemo(
+    () => selectedRow?.documents.filter(doc => !isRejectedVerifyDocument(doc)) ?? [],
+    [selectedRow],
+  )
+
+  const globalChecklistDocuments = useMemo(
+    () => globalDocuments.filter(doc => !isRejectedVerifyDocument(doc)),
+    [globalDocuments],
+  )
 
   if (!applicationId) {
     return (
@@ -118,24 +147,51 @@ export function MarineVerifyDocumentsPage() {
   }
 
   const isReviewCommentValid = reviewComment.trim().length > 0
-  const reviewActionLabel = reviewDialog?.status === 'rejected' ? 'Reject' : 'Request re-upload'
-  const reviewDialogTitle = useMemo(() => {
-    if (!reviewDialog) return ''
-    return `${reviewActionLabel} document`
-  }, [reviewActionLabel, reviewDialog])
 
   const openReviewDialog = (
     scope: 'traveler' | 'global',
     document: ApplicantDocumentItem,
     status: Extract<ApplicantDocumentStatus, 'rejected' | 'needs_review'>,
+    travelerId?: string,
   ) => {
     setReviewDialog({
       scope,
+      travelerId,
       documentId: document.documentId,
       documentName: document.name,
       status,
     })
     setReviewComment('')
+  }
+
+  const handleRejectedPreview = (entry: VerifyRejectedDocumentEntry) => {
+    handlePreview(entry.document.documentId, entry.scope)
+  }
+
+  const handleRejectedVerify = (entry: VerifyRejectedDocumentEntry) => {
+    if (entry.scope === 'global') {
+      updateGlobalDoc(entry.document.documentId, 'verified')
+      return
+    }
+    if (entry.travelerId) {
+      updateTravelerDocForRow(entry.travelerId, entry.document.documentId, 'verified')
+    }
+  }
+
+  const handleRejectedReject = (entry: VerifyRejectedDocumentEntry) => {
+    openReviewDialog(entry.scope, entry.document, 'rejected', entry.travelerId)
+  }
+
+  const handleRejectedReupload = (entry: VerifyRejectedDocumentEntry) => {
+    openReviewDialog(entry.scope, entry.document, 'needs_review', entry.travelerId)
+  }
+
+  const handleRejectedGltsUpload = (entry: VerifyRejectedDocumentEntry) => {
+    if (entry.scope !== 'traveler') return
+    setGltsUploadDocument(entry.document)
+    if (entry.travelerId) {
+      setSelectedTravelerId(entry.travelerId)
+    }
   }
 
   const closeReviewDialog = () => {
@@ -147,7 +203,9 @@ export function MarineVerifyDocumentsPage() {
     if (!reviewDialog || !isReviewCommentValid) return
     const comment = reviewComment.trim()
     if (reviewDialog.scope === 'traveler') {
-      updateTravelerDoc(reviewDialog.documentId, reviewDialog.status, comment)
+      const rowId = reviewDialog.travelerId ?? selectedRow?.id
+      if (!rowId) return
+      updateTravelerDocForRow(rowId, reviewDialog.documentId, reviewDialog.status, comment)
     } else {
       updateGlobalDoc(reviewDialog.documentId, reviewDialog.status, comment)
     }
@@ -188,20 +246,44 @@ export function MarineVerifyDocumentsPage() {
               applicationId={applicationId}
             />
 
-            <VerifyDocumentChecklistSection
-              countryTitle={overview.countryName}
-              documents={selectedRow.documents}
-              onPreview={documentId => handlePreview(documentId, 'traveler')}
-              onVerify={documentId => updateTravelerDoc(documentId, 'verified')}
-              onReject={document => openReviewDialog('traveler', document, 'rejected')}
-              onRequestReupload={document => openReviewDialog('traveler', document, 'needs_review')}
-              onGltsUpload={document => setGltsUploadDocument(document)}
-            />
+            {rejectedDocuments.length > 0 ? (
+              <VerifyRejectedDocumentsSection
+                entries={rejectedDocuments}
+                onPreview={handleRejectedPreview}
+                onVerify={handleRejectedVerify}
+                onReject={handleRejectedReject}
+                onRequestReupload={handleRejectedReupload}
+                onGltsUpload={handleRejectedGltsUpload}
+              />
+            ) : null}
+
+            {travelerChecklistDocuments.length > 0 ? (
+              <VerifyDocumentChecklistSection
+                countryTitle={overview.countryName}
+                documents={travelerChecklistDocuments}
+                onPreview={documentId => handlePreview(documentId, 'traveler')}
+                onVerify={documentId => updateTravelerDoc(documentId, 'verified')}
+                onReject={document => openReviewDialog('traveler', document, 'rejected', selectedRow.id)}
+                onRequestReupload={document => openReviewDialog('traveler', document, 'needs_review', selectedRow.id)}
+                onGltsUpload={document => setGltsUploadDocument(document)}
+              />
+            ) : null}
           </>
         ) : null}
 
+        {rejectedDocuments.length > 0 && !selectedRow ? (
+          <VerifyRejectedDocumentsSection
+            entries={rejectedDocuments}
+            onPreview={handleRejectedPreview}
+            onVerify={handleRejectedVerify}
+            onReject={handleRejectedReject}
+            onRequestReupload={handleRejectedReupload}
+            onGltsUpload={handleRejectedGltsUpload}
+          />
+        ) : null}
+
         <VerifyGlobalDocumentChecklist
-          documents={globalDocuments}
+          documents={globalChecklistDocuments}
           onPreview={documentId => handlePreview(documentId, 'global')}
           onVerify={documentId => updateGlobalDoc(documentId, 'verified')}
           onReject={document => openReviewDialog('global', document, 'rejected')}

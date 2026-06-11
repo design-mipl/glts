@@ -20,16 +20,16 @@ import {
   EditCorporateAccountPage,
 } from '../customer-accounts/corporate-accounts'
 import {
-  CountryDetailPage,
+  CountryConfigWorkspacePage,
   CountryListingPage,
-  CreateCountryPage,
-  EditCountryPage,
+  EditCountryConfigWorkspacePage,
 } from '../masters/country'
 import {
   DocumentDetailPage,
   DocumentListingPage,
   EditDocumentPage,
 } from '../masters/documents'
+import { JurisdictionListingPage } from '../masters/jurisdiction'
 import { SacCodeListingPage } from '../masters/sac-codes'
 import { ServiceListingPage } from '../masters/services'
 import { TaxConfigurationPage } from '../masters/tax'
@@ -60,6 +60,13 @@ import {
 } from '../access/users'
 import ComponentLibrary from '../_tools/ComponentLibrary'
 import TemplateShowcaseRoutes from '../_tools/TemplateShowcase'
+import { OperationalCaseHandlingPage } from '../ground-operations/case-handling'
+import {
+  B2bAssignmentQueuePage,
+  CorporateAssignmentQueuePage,
+  MarineAssignmentQueuePage,
+  RetailAssignmentQueuePage,
+} from '../assignment-priority'
 
 type AdminRouteKind = 'coming-soon' | 'dashboard' | 'operations' | 'profile' | 'tools'
 
@@ -110,18 +117,10 @@ const adminRoutes: AdminRouteDefinition[] = [
     kind: 'coming-soon',
   },
   {
-    path: 'application-management/assignments',
-    title: 'Application assignment management',
+    path: 'application-management/b2b-agents',
+    title: 'B2B agents application management',
     description: 'This module is under development.',
     eyebrow: 'Application management',
-    kind: 'coming-soon',
-  },
-
-  {
-    path: 'ground-operations/case-handling',
-    title: 'Operational case handling',
-    description: 'This module is under development.',
-    eyebrow: 'Ground operations',
     kind: 'coming-soon',
   },
   {
@@ -176,13 +175,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     kind: 'coming-soon',
   },
 
-  {
-    path: 'masters/visa-type',
-    title: 'Visa type master',
-    description: 'This module is under development.',
-    eyebrow: 'Masters',
-    kind: 'coming-soon',
-  },
   {
     path: 'masters/rates',
     title: 'Rate master',
@@ -360,17 +352,13 @@ export function AdminRoutes() {
       />
       <Route
         path="masters/country/new"
-        element={
-          <PermissionGuard>
-            <CreateCountryPage />
-          </PermissionGuard>
-        }
+        element={<Navigate to="/admin/masters/country" replace />}
       />
       <Route
         path="masters/country/:countryId/edit"
         element={
           <PermissionGuard>
-            <EditCountryPage />
+            <EditCountryConfigWorkspacePage />
           </PermissionGuard>
         }
       />
@@ -378,7 +366,7 @@ export function AdminRoutes() {
         path="masters/country/:countryId"
         element={
           <PermissionGuard>
-            <CountryDetailPage />
+            <CountryConfigWorkspacePage />
           </PermissionGuard>
         }
       />
@@ -415,6 +403,14 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <TaxConfigurationPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/jurisdiction"
+        element={
+          <PermissionGuard>
+            <JurisdictionListingPage />
           </PermissionGuard>
         }
       />
@@ -463,6 +459,46 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <MarineVerifyDocumentsPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="ground-operations/case-handling"
+        element={
+          <PermissionGuard>
+            <OperationalCaseHandlingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="assignment-priority/marine"
+        element={
+          <PermissionGuard>
+            <MarineAssignmentQueuePage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="assignment-priority/b2b"
+        element={
+          <PermissionGuard>
+            <B2bAssignmentQueuePage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="assignment-priority/corporate"
+        element={
+          <PermissionGuard>
+            <CorporateAssignmentQueuePage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="assignment-priority/retail"
+        element={
+          <PermissionGuard>
+            <RetailAssignmentQueuePage />
           </PermissionGuard>
         }
       />

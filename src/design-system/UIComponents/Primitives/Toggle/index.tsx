@@ -51,6 +51,18 @@ export default function Toggle({
         '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
           opacity: 1,
         },
+        '&.Mui-disabled': {
+          opacity: 0.72,
+        },
+        '&.Mui-disabled .MuiSwitch-track': {
+          opacity: 0.28,
+        },
+        '&.Mui-disabled .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+          opacity: 0.42,
+        },
+        '&.Mui-disabled .MuiSwitch-thumb': {
+          color: theme.palette.action.disabled,
+        },
       }}
     />
   )

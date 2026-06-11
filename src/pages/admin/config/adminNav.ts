@@ -2,6 +2,7 @@ import { createElement } from 'react'
 import {
   Activity,
   Building2,
+  ClipboardList,
   FileText,
   HandCoins,
   Headphones,
@@ -33,7 +34,6 @@ export const adminNav: NavConfig[] = [
       { type: 'item', label: 'Quotation management', href: '/admin/customer-accounts/quotations' },
       { type: 'item', label: 'Agreements & contracts', href: '/admin/customer-accounts/agreements' },
       { type: 'item', label: 'Corporate accounts', href: '/admin/customer-accounts/corporate-accounts' },
-      { type: 'item', label: 'Corporate admins', href: '/admin/customer-accounts/corporate-admins' },
     ],
   },
   {
@@ -44,8 +44,22 @@ export const adminNav: NavConfig[] = [
       { type: 'item', label: 'Retail applications', href: '/admin/application-management/retail' },
       { type: 'item', label: 'Corporate applications', href: '/admin/application-management/corporate' },
       { type: 'item', label: 'Marine applications', href: '/admin/application-management/marine' },
-      { type: 'item', label: 'Assignment management', href: '/admin/application-management/assignments' },
+      { type: 'item', label: 'B2B agents applications', href: '/admin/application-management/b2b-agents' },
     ],
+  },
+  {
+    type: 'group',
+    label: 'Assignment & Priority Management',
+    icon: createElement(ClipboardList, iconProps),
+    children: [
+      { type: 'item', label: 'Marine assignment queue', href: '/admin/assignment-priority/marine' },
+      { type: 'item', label: 'B2B assignment queue', href: '/admin/assignment-priority/b2b' },
+      { type: 'item', label: 'Corporate assignment queue', href: '/admin/assignment-priority/corporate' },
+      { type: 'item', label: 'Retail assignment queue', href: '/admin/assignment-priority/retail' },
+    ],
+  },
+  {
+    type: 'divider',
   },
   {
     type: 'group',
@@ -95,7 +109,7 @@ export const adminNav: NavConfig[] = [
     icon: createElement(SlidersHorizontal, iconProps),
     children: [
       { type: 'item', label: 'Country', href: '/admin/masters/country' },
-      { type: 'item', label: 'Visa type', href: '/admin/masters/visa-type' },
+      { type: 'item', label: 'Jurisdiction Master', href: '/admin/masters/jurisdiction' },
       { type: 'item', label: 'Document master', href: '/admin/masters/documents' },
       { type: 'item', label: 'Rate master', href: '/admin/masters/rates' },
       { type: 'item', label: 'Service Master', href: '/admin/masters/services' },

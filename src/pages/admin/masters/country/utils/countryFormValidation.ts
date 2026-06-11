@@ -1,5 +1,6 @@
 import type { CountryMasterFormData } from '@/shared/types/countryMaster'
 import { ALL_SEGMENTS, emptySegment, ensureAllSegments, normalizeCountrySegments } from '@/shared/data/countryMasterDefaults'
+import { DEFAULT_VISA_APPLICATION_WINDOW } from '../config/countryProcessingConfig'
 
 export interface CountryFormValidationResult {
   valid: boolean
@@ -51,6 +52,7 @@ export function createEmptyCountryFormData(): CountryMasterFormData {
     visaCategory: 'Tourist',
     validity: '',
     fastMinutes: undefined,
+    visaApplicationWindow: { ...DEFAULT_VISA_APPLICATION_WINDOW },
     passportIssueLocations: [],
     segments: ALL_SEGMENTS.map((segment) => emptySegment(segment, segment === 'retail')),
   }
@@ -78,6 +80,7 @@ export function countryMasterToFormData(
     visaCategory: master.visaCategory,
     validity: master.validity,
     fastMinutes: master.fastMinutes,
+    visaApplicationWindow: master.visaApplicationWindow ?? { ...DEFAULT_VISA_APPLICATION_WINDOW },
     passportIssueLocations: master.passportIssueLocations ?? [],
     segments: ensureAllSegments(normalizeCountrySegments(structuredClone(master.segments))),
   }

@@ -1,12 +1,9 @@
-import { useCallback, useState } from 'react'
 import { Grid } from '@mui/material'
 import { FormField, Input, Select } from '@/design-system/UIComponents'
-import { FileUpload } from '@/design-system/UIComponents'
 import { MASTER_STATUS_FILTER_OPTIONS } from '@/pages/admin/masters/config/masterStatusConfig'
 import { ADMIN_ROLE_TEMPLATES } from '@/shared/config/adminRoleTemplates'
 import { teamService } from '@/shared/services/teamService'
 import type { AdminPortalUserBasicFormData } from '@/shared/types/adminPortalUser'
-import { readFileAsDataUrl } from '@/shared/utils/imageSource'
 
 interface UserFormFieldsProps {
   formData: AdminPortalUserBasicFormData
@@ -19,7 +16,6 @@ export function UserFormFields({
   onChange,
   errors,
 }: UserFormFieldsProps) {
-  const [uploadError, setUploadError] = useState<string | undefined>()
   const update = (patch: Partial<AdminPortalUserBasicFormData>) => onChange({ ...formData, ...patch })
 
   const statusOptions = MASTER_STATUS_FILTER_OPTIONS.filter((o) => o.value !== 'all').map(
@@ -31,21 +27,6 @@ export function UserFormFields({
     { value: '', label: 'No template' },
     ...ADMIN_ROLE_TEMPLATES.map((t) => ({ value: t.id, label: t.label })),
   ]
-
-  const handlePhotoUpload = useCallback(
-    async (files: File[]) => {
-      const file = files[0]
-      if (!file) return
-      setUploadError(undefined)
-      try {
-        const dataUrl = await readFileAsDataUrl(file)
-        onChange({ ...formData, profilePhotoUrl: dataUrl })
-      } catch {
-        setUploadError('Could not read the selected file.')
-      }
-    },
-    [formData, onChange],
-  )
 
   return (
     <Grid container spacing={2}>
@@ -129,26 +110,6 @@ export function UserFormFields({
             options={statusOptions}
             placeholder="Select status"
             fullWidth
-          />
-        </FormField>
-      </Grid>
-      <Grid size={{ xs: 12 }}>
-        <FormField
-          label="Profile photo"
-          optional
-          helperText={uploadError ?? (formData.profilePhotoUrl ? 'Photo attached (mock storage).' : undefined)}
-          error={Boolean(uploadError)}
-        >
-          <FileUpload
-            accept="image/*"
-            preview
-            maxSize={2 * 1024 * 1024}
-            maxFiles={1}
-            dropzoneTitle="Upload profile photo or drag & drop"
-            dropzoneCaption="PNG, JPG, WebP — up to 2 MB"
-            browseLabel="Browse image"
-            onUpload={(files) => void handlePhotoUpload(files)}
-            onError={setUploadError}
           />
         </FormField>
       </Grid>

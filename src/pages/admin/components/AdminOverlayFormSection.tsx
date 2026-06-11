@@ -13,6 +13,8 @@ export interface AdminOverlayFormSectionProps {
   description?: string
   importance?: AdminFullPageFormSectionImportance
   columns?: 1 | 2 | 3
+  /** Breakpoint where multi-column field grids begin; `xs` = always (default `sm`). */
+  fieldColumnsFrom?: 'xs' | 'sm' | 'md'
   headerAction?: ReactNode
   children: ReactNode
 }
@@ -26,10 +28,17 @@ export function AdminOverlayFormSection({
   description,
   importance = 'primary',
   columns = 1,
+  fieldColumnsFrom = 'sm',
   headerAction,
   children,
 }: AdminOverlayFormSectionProps) {
   const theme = useTheme()
+  const fieldColumns =
+    columns === 1
+      ? '1fr'
+      : columns === 3
+        ? 'repeat(3, minmax(0, 1fr))'
+        : 'repeat(2, minmax(0, 1fr))'
 
   return (
     <Box sx={getAdminOverlayFormSectionSx(importance, theme)}>
@@ -56,15 +65,13 @@ export function AdminOverlayFormSection({
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm:
-              columns === 1
-                ? '1fr'
-                : columns === 3
-                  ? 'repeat(3, minmax(0, 1fr))'
-                  : 'repeat(2, minmax(0, 1fr))',
-          },
+          gridTemplateColumns:
+            fieldColumnsFrom === 'xs'
+              ? fieldColumns
+              : {
+                  xs: '1fr',
+                  [fieldColumnsFrom]: fieldColumns,
+                },
           gap: ADMIN_FULL_PAGE_FORM_LAYOUT.fieldGridGap,
         }}
       >

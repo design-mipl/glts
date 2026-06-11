@@ -18,7 +18,12 @@ export interface ApplicationDetailViewModel {
   documents: ApplicationDetailDocumentRow[]
   globalDocumentUploads: Record<string, { fileName: string; uploadedAt: string }>
   corrections: Array<{ id: string; field: string; reason: string; status: string }>
-  timeline: Array<{ id: string; title: string; status: 'completed' | 'in_progress' | 'pending' }>
+  timeline: Array<{
+    id: string
+    title: string
+    status: 'completed' | 'in_progress' | 'pending'
+    date?: string
+  }>
   selectedQueueHintId: string | null
   source: 'single' | 'bulk' | 'legacy' | 'missing'
 }
@@ -33,6 +38,7 @@ export interface FlowDraftLikeState {
   visaTypeLabel: string
   purposeLabel: string
   travelDate: string
+  jurisdiction?: string
   entityId?: string
   entityName?: string
   contactPerson?: string

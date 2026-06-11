@@ -1,7 +1,7 @@
 import { Stack } from '@mui/material'
 import { Select } from '@/design-system/UIComponents'
 import type { ServiceMasterListFilters } from '@/shared/types/serviceMaster'
-import { SERVICE_CATEGORY_OPTIONS } from '../config/serviceClassificationConfig'
+import { SERVICE_TYPE_OPTIONS } from '../config/serviceTypeConfig'
 
 export interface ServiceAdvancedFiltersProps {
   filters: ServiceMasterListFilters
@@ -12,13 +12,13 @@ export function ServiceAdvancedFilters({ filters, onChange }: ServiceAdvancedFil
   return (
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} useFlexGap flexWrap="wrap">
       <Select
-        label="Category"
-        placeholder="Select category"
-        value={filters.category ?? 'all'}
+        label="Service type"
+        placeholder="Select service type"
+        value={filters.serviceType ?? 'all'}
         onChange={(value) =>
-          onChange({ ...filters, category: value as ServiceMasterListFilters['category'] })
+          onChange({ ...filters, serviceType: value as ServiceMasterListFilters['serviceType'] })
         }
-        options={[{ value: 'all', label: 'All categories' }, ...SERVICE_CATEGORY_OPTIONS]}
+        options={[{ value: 'all', label: 'All types' }, ...SERVICE_TYPE_OPTIONS]}
         size="sm"
         sx={{ minWidth: 180 }}
       />

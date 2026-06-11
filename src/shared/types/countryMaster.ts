@@ -13,6 +13,19 @@ export type ProcessingType =
 
 export type VisaTypeStatus = 'active' | 'inactive'
 
+export type VisaApplicationWindowUnit = 'days' | 'weeks' | 'months'
+
+export interface VisaApplicationWindow {
+  unit: VisaApplicationWindowUnit
+  value: number
+}
+
+export type ConfigNodeStatus = 'enabled' | 'disabled' | 'draft' | 'warning'
+
+export type JurisdictionPriorityLevel = 'standard' | 'express' | 'urgent'
+
+export type JurisdictionDocumentGroup = 'common' | 'jurisdiction' | 'optional'
+
 export type WorkflowProfile = 'standard' | 'crew'
 
 export type RequirementPreviewVariant = 'crew' | 'shipping' | 'embassy' | 'glts'
@@ -59,6 +72,40 @@ export interface CountryProcessingRules {
   agentChannelNotes?: string
 }
 
+export interface CountryJurisdictionDocumentRule {
+  id: string
+  documentId: string
+  group: JurisdictionDocumentGroup
+  mandatory: boolean
+  ocrEnabled: boolean
+  multipleUpload: boolean
+  commonDocument: boolean
+  description?: string
+  acceptedFormats?: string[]
+  validationRules?: string
+  sortOrder: number
+}
+
+export interface CountryJurisdictionProcessingRules {
+  biometricsRequired: boolean
+  interviewRequired: boolean
+  originalDocumentsRequired: boolean
+  appointmentMandatory: boolean
+}
+
+export interface CountryVisaJurisdiction {
+  id: string
+  name: string
+  embassyOrVfs: string
+  submissionCenter: string
+  processingTime: string
+  priorityLevel: JurisdictionPriorityLevel
+  status: VisaTypeStatus
+  applicableStates: string[]
+  processingRules: CountryJurisdictionProcessingRules
+  documents: CountryJurisdictionDocumentRule[]
+}
+
 export interface CountryVisaType {
   id: string
   name: string
@@ -69,6 +116,8 @@ export interface CountryVisaType {
   stayDuration: string
   prioritySupport: boolean
   status: VisaTypeStatus
+  pricing?: number
+  jurisdictions: CountryVisaJurisdiction[]
   /** Visa-type / application-specific documents (in addition to segment common documents). */
   applicationDocuments: CountryDocumentChecklistItem[]
   processingRulesOverride?: Partial<CountryProcessingRules>
@@ -76,6 +125,21 @@ export interface CountryVisaType {
   purposeId?: string
   purposeLabel?: string
   requirementSummary?: string
+}
+
+export interface CountryConfigValidationWarning {
+  id: string
+  message: string
+  nodePath: string
+  severity: 'warning' | 'error'
+}
+
+export interface CountryConfigSummary {
+  totalSegments: number
+  totalVisaTypes: number
+  totalJurisdictions: number
+  totalDocuments: number
+  warnings: CountryConfigValidationWarning[]
 }
 
 export interface CountrySegmentConfig {
@@ -105,6 +169,8 @@ export interface CountryVisaOffering {
   purposeLabel: string
   processingTimeline: string
   entryType: string
+  /** Visa-type pricing when set; otherwise falls back to country starting price. */
+  approxCost?: number
   requirementSummary: string
   active: boolean
   workflowProfile: WorkflowProfile
@@ -159,6 +225,7 @@ export interface CountryMaster {
   visaCategory: string
   validity: string
   fastMinutes?: number
+  visaApplicationWindow?: VisaApplicationWindow
   passportIssueLocations: PassportIssueLocation[]
   segments: CountrySegmentConfig[]
   /** Synced flat list for legacy consumers */
@@ -187,6 +254,7 @@ export interface CountryMasterFormData {
   visaCategory: string
   validity: string
   fastMinutes?: number
+  visaApplicationWindow: VisaApplicationWindow
   passportIssueLocations: PassportIssueLocation[]
   segments: CountrySegmentConfig[]
 }
@@ -195,6 +263,7 @@ export interface CountryMasterListFilters {
   status?: CountryMasterStatus | 'all'
   segment?: BusinessSegment | 'all'
   processingType?: ProcessingType | 'all'
+  region?: string | 'all'
   query?: string
 }
 

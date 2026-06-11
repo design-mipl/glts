@@ -1,5 +1,6 @@
 import { Box, Typography, Grid, Card, Stack, Chip } from '@mui/material'
-import { Clock, Plane } from 'lucide-react'
+import { Clock, IndianRupee, Plane } from 'lucide-react'
+import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import {
   requiresFieldValidation,
@@ -74,6 +75,14 @@ export function SingleVisaPurposeStep({
                     <Plane size={14} color={colors.textMuted} />
                     <Typography sx={{ fontSize: 12, color: colors.textSecondary }}>{opt.entryType}</Typography>
                   </Stack>
+                  {opt.approxCost != null && opt.approxCost > 0 ? (
+                    <Stack direction="row" spacing={0.75} alignItems="center">
+                      <IndianRupee size={14} color={colors.textMuted} />
+                      <Typography sx={{ fontSize: 12, color: colors.textSecondary }}>
+                        Approx. {formatInr(opt.approxCost)}
+                      </Typography>
+                    </Stack>
+                  ) : null}
                 </Stack>
                 <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 1.25, lineHeight: 1.4 }}>
                   {opt.requirementSummary}

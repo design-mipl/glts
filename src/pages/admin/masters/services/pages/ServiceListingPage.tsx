@@ -16,8 +16,10 @@ import {
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { serviceMasterService } from '@/shared/services/serviceMasterService'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
+import { ServiceAdvancedFilters } from '../components/ServiceAdvancedFilters'
 import { buildServiceColumns } from '../components/ServiceTableColumns'
 import { ServiceFormDrawer } from '../components/ServiceFormDrawer'
+import type { ServiceMasterListFilters } from '@/shared/types/serviceMaster'
 import {
   downloadServiceCsv,
   getServiceCellValue,
@@ -35,12 +37,13 @@ export function ServiceListingPage() {
   const [statusOpen, setStatusOpen] = useState(false)
   const [statusTarget, setStatusTarget] = useState<ServiceMaster | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [filters, setFilters] = useState<ServiceMasterListFilters>({ serviceType: 'all' })
 
   const loadRows = useCallback(() => {
     setLoading(true)
-    setRows(serviceMasterService.list())
+    setRows(serviceMasterService.list(filters))
     setLoading(false)
-  }, [])
+  }, [filters])
 
   useEffect(() => {
     loadRows()
@@ -97,6 +100,7 @@ export function ServiceListingPage() {
   const handleClearFilters = useCallback(() => {
     listing.handleSearch('')
     listing.setColumnFilters({})
+    setFilters({ serviceType: 'all' })
   }, [listing])
 
   const handleConfirmStatus = () => {
@@ -119,7 +123,8 @@ export function ServiceListingPage() {
       ? alpha(theme.palette.common.white, 0.04)
       : alpha(theme.palette.common.black, 0.02)
 
-  const hasActiveFilters = Boolean(listing.tableState.searchQuery)
+  const hasActiveFilters =
+    Boolean(listing.tableState.searchQuery) || (filters.serviceType ?? 'all') !== 'all'
 
   return (
     <>
@@ -137,7 +142,7 @@ export function ServiceListingPage() {
           <AdminListingToolbar
             searchValue={listing.tableState.searchQuery}
             onSearch={listing.handleSearch}
-            searchPlaceholder="Search service code, name, category…"
+            searchPlaceholder="Search service name, type, or SAC…"
             onExport={handleExport}
             columns={toolbarColumns}
             hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
@@ -153,7 +158,11 @@ export function ServiceListingPage() {
           />
         }
         listingContent={
-          <AdminListingTable
+          <>
+            <Box sx={{ px: 2, pt: 0, pb: 1.5 }}>
+              <ServiceAdvancedFilters filters={filters} onChange={setFilters} />
+            </Box>
+            <AdminListingTable
             columns={columns}
             data={listing.paginatedRows}
             filterSourceData={listing.filterSourceRows}
@@ -171,6 +180,7 @@ export function ServiceListingPage() {
             emptyDescription={emptyState.emptyDescription}
             emptyAction={emptyState.emptyAction}
           />
+          </>
         }
         footer={
           <Box sx={{ bgcolor: footerBg }}>

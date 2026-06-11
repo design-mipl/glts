@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { Box, Typography, Chip, Stack, Card, Grid, TextField, MenuItem } from '@mui/material'
+import { Box, Typography, Chip, Stack, Card, Grid, TextField, MenuItem, Divider } from '@mui/material'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import {
   getPassportIssueLocations,
@@ -74,7 +74,6 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
 
       <Card
         sx={{
-          mb: 2,
           p: { xs: 1.5, md: 2 },
           borderRadius: '12px',
           border: `1px solid ${colors.border}`,
@@ -144,6 +143,8 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
           </Grid>
         </Grid>
       </Card>
+
+      <Divider sx={{ my: 2, borderColor: colors.border }} />
 
       <RequirementPreviewCarousel cards={cards} />
 

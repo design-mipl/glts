@@ -1,0 +1,116 @@
+import type { ClientDocumentMaster } from '@/shared/types/clientDocumentMaster'
+
+const AUDIT = {
+  createdBy: 'Rajan Mehta',
+  updatedBy: 'Rajan Mehta',
+}
+
+function daysAgo(days: number) {
+  const d = new Date()
+  d.setDate(d.getDate() - days)
+  return d.toISOString()
+}
+
+/** Initial seed — client-side documents for corporate, marine, and B2B onboarding. */
+export const SEED_CLIENT_DOCUMENT_MASTERS: ClientDocumentMaster[] = [
+  {
+    id: 'billing-entity',
+    documentType: 'Billing Entity Details',
+    description: 'Legal billing entity name, address, and tax identifiers for invoicing.',
+    applicableFor: ['corporate', 'b2b'],
+    status: 'active',
+    ...AUDIT,
+    createdAt: daysAgo(90),
+    updatedAt: daysAgo(12),
+  },
+  {
+    id: 'company-registration',
+    documentType: 'Company Registration Certificate',
+    description: 'Certificate of incorporation or business registration for account onboarding.',
+    applicableFor: ['corporate', 'b2b', 'marine'],
+    status: 'active',
+    ...AUDIT,
+    createdAt: daysAgo(90),
+    updatedAt: daysAgo(10),
+  },
+  {
+    id: 'gst-certificate',
+    documentType: 'GST Certificate',
+    description: 'GST registration certificate where applicable for Indian billing entities.',
+    applicableFor: ['corporate', 'b2b'],
+    status: 'active',
+    ...AUDIT,
+    createdAt: daysAgo(85),
+    updatedAt: daysAgo(8),
+  },
+  {
+    id: 'finance-contact',
+    documentType: 'Accounts / Finance Team Contact Details',
+    description: 'Primary finance SPOC contact for invoices, statements, and payment follow-up.',
+    applicableFor: ['corporate', 'b2b', 'marine'],
+    status: 'active',
+    ...AUDIT,
+    createdAt: daysAgo(80),
+    updatedAt: daysAgo(6),
+  },
+  {
+    id: 'invoice-submission',
+    documentType: 'Additional Documents for Invoice Submission',
+    description: 'Supporting documents required when submitting invoices or statements.',
+    applicableFor: ['corporate', 'b2b'],
+    status: 'active',
+    ...AUDIT,
+    createdAt: daysAgo(75),
+    updatedAt: daysAgo(5),
+  },
+  {
+    id: 'agreement-document',
+    documentType: 'Agreement Document',
+    description: 'Signed commercial agreement for agreemented corporate accounts.',
+    applicableFor: ['corporate', 'b2b'],
+    status: 'active',
+    ...AUDIT,
+    createdAt: daysAgo(70),
+    updatedAt: daysAgo(4),
+  },
+  {
+    id: 'covering-letter',
+    documentType: 'Covering Letter',
+    description: 'Covering letter on company letterhead arranged by the shipping company.',
+    applicableFor: ['marine'],
+    status: 'active',
+    ...AUDIT,
+    createdAt: daysAgo(65),
+    updatedAt: daysAgo(3),
+  },
+  {
+    id: 'employee-details',
+    documentType: 'Employee Details',
+    description: 'Crew or employee roster details submitted by the client for visa filing.',
+    applicableFor: ['marine', 'corporate'],
+    status: 'active',
+    ...AUDIT,
+    createdAt: daysAgo(60),
+    updatedAt: daysAgo(2),
+  },
+  {
+    id: 'company-declaration',
+    documentType: 'Company Declaration',
+    description: 'Signed declaration from the client company confirming application details.',
+    applicableFor: ['marine', 'b2b'],
+    status: 'active',
+    ...AUDIT,
+    createdAt: daysAgo(55),
+    updatedAt: daysAgo(1),
+  },
+  {
+    id: 'expense-clause',
+    documentType: 'Expense Clause',
+    description: 'Clause confirming who bears visa and travel expenses for crew applications.',
+    applicableFor: ['marine'],
+    status: 'inactive',
+    ...AUDIT,
+    createdAt: daysAgo(50),
+    updatedAt: daysAgo(50),
+  },
+]

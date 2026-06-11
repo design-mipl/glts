@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Box, Typography, Card, Chip } from '@mui/material'
+import { Box, Typography, Card, Chip, IconButton } from '@mui/material'
+import { Star } from 'lucide-react'
 import type { Country } from '@/shared/types/visa'
 import { getCountryHeroImageUrl } from '@/shared/services/visaService'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
@@ -9,9 +10,17 @@ interface CustomerCountryCardProps {
   country: Country
   selected: boolean
   onSelect: () => void
+  isFavorite?: boolean
+  onToggleFavorite?: (countryId: string) => void
 }
 
-export function CustomerCountryCard({ country, selected, onSelect }: CustomerCountryCardProps) {
+export function CustomerCountryCard({
+  country,
+  selected,
+  onSelect,
+  isFavorite = false,
+  onToggleFavorite,
+}: CustomerCountryCardProps) {
   const colors = usePublicBrandColors()
   const [imgError, setImgError] = useState(false)
   const fast = isFastVisa(country)
@@ -72,22 +81,54 @@ export function CustomerCountryCard({ country, selected, onSelect }: CustomerCou
         >
           {country.flags}
         </Box>
-        {fast && (
-          <Chip
-            label="Fast"
-            size="small"
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              height: 20,
-              fontSize: '10px',
-              fontWeight: 700,
-              bgcolor: '#fff',
-              color: colors.greenDark,
-            }}
-          />
-        )}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 6,
+            right: 6,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+          }}
+        >
+          {fast && (
+            <Chip
+              label="Fast"
+              size="small"
+              sx={{
+                height: 20,
+                fontSize: '10px',
+                fontWeight: 700,
+                bgcolor: '#fff',
+                color: colors.greenDark,
+              }}
+            />
+          )}
+          {onToggleFavorite ? (
+            <IconButton
+              size="small"
+              aria-label={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
+              onClick={e => {
+                e.stopPropagation()
+                onToggleFavorite(country.id)
+              }}
+              sx={{
+                width: 28,
+                height: 28,
+                bgcolor: '#fff',
+                border: `1px solid ${colors.border}`,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+                '&:hover': { bgcolor: '#fff' },
+              }}
+            >
+              <Star
+                size={14}
+                fill={isFavorite ? colors.greenBright : 'transparent'}
+                color={isFavorite ? colors.greenBright : colors.textMuted}
+              />
+            </IconButton>
+          ) : null}
+        </Box>
       </Box>
       <Box sx={{ p: 1.25 }}>
         <Typography sx={{ fontWeight: 700, fontSize: '13px', color: colors.navy }}>{country.name}</Typography>

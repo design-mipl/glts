@@ -7,14 +7,7 @@ import { navigateToResumeApplication } from '../utils/createApplicationNavigatio
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import { CustomerEmptyState } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 import { ApplicationReviewPanels } from '../components/ApplicationReviewPanels'
-import type { SubmitTimelineStatus } from '../types/applicationDetail.types'
 import type { CustomerChecklistItem } from '@/pages/customer/features/shared/components/CustomerPrimitives'
-
-function mapStatusToTimelineStatus(status: 'done' | 'completed' | 'in_progress' | 'pending'): SubmitTimelineStatus {
-  if (status === 'done' || status === 'completed') return 'completed'
-  if (status === 'in_progress') return 'active'
-  return 'pending'
-}
 
 export function ApplicationDetailPage() {
   const { applicationId } = useParams()
@@ -36,11 +29,6 @@ export function ApplicationDetailPage() {
   }
 
   const showContinue = app.statusLabel === 'Draft' || app.statusLabel === 'Correction Required'
-  const timelineSteps = detail.timeline.map(stage => ({
-    id: stage.id,
-    label: stage.title,
-    status: mapStatusToTimelineStatus(stage.status),
-  }))
   const handleReuploadDocument = (_item: CustomerChecklistItem) => {
     navigateToResumeApplication(navigate, base)
   }
@@ -64,7 +52,6 @@ export function ApplicationDetailPage() {
           gltsBatchId: isBulk ? (detail.resolvedId ?? app.id) : undefined,
         }}
         globalDocumentUploads={detail.globalDocumentUploads}
-        timelineSteps={timelineSteps}
         onReuploadDocument={handleReuploadDocument}
       />
 

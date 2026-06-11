@@ -1,8 +1,14 @@
-import { Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import { Upload } from 'lucide-react'
 import { useRef } from 'react'
-import { BaseCard, Button, FormField, Input, Textarea } from '@/design-system/UIComponents'
+import { Button, FormField, Input, Select, Textarea } from '@/design-system/UIComponents'
+import { AdminOverlayFormSection } from '@/pages/admin/components/AdminOverlayFormSection'
 import type { FormAssistSubmissionDraft } from '@/shared/services/applicationFormAssistService'
+import {
+  CARD_NAME_OPTIONS,
+  PAYMENT_MODE_OPTIONS,
+  RECEIPT_STATUS_OPTIONS,
+} from '../../config/submissionPaymentConfig'
 
 interface ViewFormSubmissionSectionProps {
   submission: FormAssistSubmissionDraft
@@ -10,19 +16,15 @@ interface ViewFormSubmissionSectionProps {
   onPickFile: (field: keyof FormAssistSubmissionDraft, file: File) => void
 }
 
-const FILE_FIELDS: Array<{ key: keyof FormAssistSubmissionDraft; label: string }> = [
-  { key: 'appointmentPdfFileName', label: 'Appointment PDF' },
-  { key: 'submissionConfirmationPdfFileName', label: 'Submission confirmation PDF' },
-  { key: 'confirmationEmailFileName', label: 'Confirmation email PDF/screenshot' },
-]
-
 function FileUploadRow({
   label,
   fileName,
+  required = false,
   onPick,
 }: {
   label: string
   fileName: string
+  required?: boolean
   onPick: (file: File) => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -37,7 +39,12 @@ function FileUploadRow({
     >
       <Stack spacing={0.25}>
         <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-          {label} *
+          {label}
+          {required ? (
+            <Typography component="span" color="error.main" sx={{ ml: 0.25 }}>
+              *
+            </Typography>
+          ) : null}
         </Typography>
         <Typography variant="caption" color="text.secondary">
           {fileName || 'No file selected'}
@@ -70,65 +77,152 @@ export function ViewFormSubmissionSection({
   onChange,
   onPickFile,
 }: ViewFormSubmissionSectionProps) {
+  const showCardName = submission.paymentMode === 'card'
+
   return (
-    <BaseCard sx={{ p: 2 }}>
-      <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
-        Submission confirmation
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13, mb: 2 }}>
-        Record external portal appointment and upload confirmation artifacts. GLTS does not submit forms
-        automatically.
-      </Typography>
-      <Stack spacing={2}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-          <FormField label="Appointment date" required sx={{ flex: 1 }}>
-            <Input
-              type="date"
-              value={submission.appointmentDate}
-              onChange={v => onChange({ appointmentDate: String(v) })}
-              size="sm"
-              fullWidth
-            />
-          </FormField>
-          <FormField label="Appointment reference" required sx={{ flex: 1 }}>
-            <Input
-              value={submission.appointmentReference}
-              onChange={v => onChange({ appointmentReference: String(v) })}
-              size="sm"
-              fullWidth
-            />
-          </FormField>
-        </Stack>
-        <FormField label="External portal reference no." required>
+    <Stack spacing={2}>
+      <AdminOverlayFormSection
+        title="Submission details"
+        columns={2}
+      >
+        <FormField label="Submission date" required>
           <Input
-            value={submission.externalPortalReference}
-            onChange={v => onChange({ externalPortalReference: String(v) })}
+            type="date"
+            value={submission.submissionDate}
+            onChange={v => onChange({ submissionDate: String(v) })}
             size="sm"
             fullWidth
           />
         </FormField>
-        <FormField label="Remarks">
-          <Textarea
-            value={submission.remarks}
-            onChange={v => onChange({ remarks: String(v) })}
-            rows={3}
+        <FormField label="Submission reference number" required>
+          <Input
+            value={submission.submissionReferenceNumber}
+            onChange={v => onChange({ submissionReferenceNumber: String(v) })}
+            size="sm"
             fullWidth
           />
         </FormField>
-        <Stack spacing={1.25}>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-            Mandatory uploads
-          </Typography>
-          {FILE_FIELDS.map(({ key, label }) => (
-            <FileUploadRow
-              key={key}
-              label={label}
-              fileName={submission[key]}
-              onPick={file => onPickFile(key, file)}
+        <FormField label="Submitted by" required>
+          <Input
+            value={submission.submittedBy}
+            onChange={v => onChange({ submittedBy: String(v) })}
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        <FormField label="Tentative collection date" required>
+          <Input
+            type="date"
+            value={submission.tentativeCollectionDate}
+            onChange={v => onChange({ tentativeCollectionDate: String(v) })}
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+      </AdminOverlayFormSection>
+
+      <AdminOverlayFormSection
+        title="Payment details"
+        columns={2}
+        importance="secondary"
+      >
+        <FormField label="Payment date" required>
+          <Input
+            type="date"
+            value={submission.paymentDate}
+            onChange={v => onChange({ paymentDate: String(v) })}
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        <FormField label="Payment mode" required>
+          <Select
+            value={submission.paymentMode}
+            onChange={v => {
+              const paymentMode = String(v) as FormAssistSubmissionDraft['paymentMode']
+              onChange({
+                paymentMode,
+                ...(paymentMode !== 'card' ? { cardName: '' } : {}),
+              })
+            }}
+            options={PAYMENT_MODE_OPTIONS}
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        {showCardName ? (
+          <FormField label="Card name" required>
+            <Select
+              value={submission.cardName}
+              onChange={v => onChange({ cardName: String(v) })}
+              options={CARD_NAME_OPTIONS}
+              placeholder="Select card"
+              size="sm"
+              fullWidth
+              clearable
             />
-          ))}
-        </Stack>
-      </Stack>
-    </BaseCard>
+          </FormField>
+        ) : null}
+        <FormField label="Payment reference number" required>
+          <Input
+            value={submission.paymentReferenceNumber}
+            onChange={v => onChange({ paymentReferenceNumber: String(v) })}
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        <FormField label="Amount paid" required>
+          <Input
+            type="number"
+            value={submission.amountPaid}
+            onChange={v => onChange({ amountPaid: String(v) })}
+            size="sm"
+            fullWidth
+            placeholder="0.00"
+          />
+        </FormField>
+        <FormField label="Receipt status" required>
+          <Select
+            value={submission.receiptStatus}
+            onChange={v =>
+              onChange({ receiptStatus: String(v) as FormAssistSubmissionDraft['receiptStatus'] })
+            }
+            options={RECEIPT_STATUS_OPTIONS}
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
+          <FormField label="Payment remarks">
+            <Textarea
+              value={submission.paymentRemarks}
+              onChange={v => onChange({ paymentRemarks: String(v) })}
+              rows={3}
+              fullWidth
+              placeholder="Optional notes about payment or receipt"
+            />
+          </FormField>
+        </Box>
+      </AdminOverlayFormSection>
+
+      <AdminOverlayFormSection
+        title="Document uploads"
+        columns={2}
+        importance="secondary"
+      >
+        <FileUploadRow
+          label="Confirmation PDF"
+          fileName={submission.confirmationPdfFileName}
+          required
+          onPick={file => onPickFile('confirmationPdfFileName', file)}
+        />
+        <FileUploadRow
+          label="Invoice PDF"
+          fileName={submission.invoicePdfFileName}
+          required
+          onPick={file => onPickFile('invoicePdfFileName', file)}
+        />
+      </AdminOverlayFormSection>
+    </Stack>
   )
 }

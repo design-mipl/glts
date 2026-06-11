@@ -4,6 +4,8 @@ import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import { taxMasterService } from '@/shared/services/taxMasterService'
 import type { SacCodeMaster } from '@/shared/types/sacCodeMaster'
+import { MasterAudienceTags } from '../../components/MasterAudienceTags'
+import { toApplicabilityTagItems } from '../../config/masterAudienceTagConfig'
 import { masterStatusColor, masterStatusLabel } from '../../config/masterStatusConfig'
 import { formatMasterDate } from '../../utils/masterListingUtils'
 
@@ -50,6 +52,14 @@ export function buildSacCodeColumns({
         const pct = taxMasterService.getTdsPercent(row.defaultTdsSectionId)
         return pct != null ? `${pct}%` : '—'
       },
+    },
+    {
+      key: 'applicableFor',
+      label: 'Applicable For',
+      minWidth: 200,
+      render: (_, row) => (
+        <MasterAudienceTags items={toApplicabilityTagItems(row.applicableFor)} />
+      ),
     },
     {
       key: 'status',

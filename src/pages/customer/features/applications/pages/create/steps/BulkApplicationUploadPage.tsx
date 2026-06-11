@@ -482,7 +482,7 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         <Grid size={{ xs: 12, md: 5 }}>
           <Card sx={{ p: 2, borderRadius: '12px', border: `1px solid ${colors.border}`, height: '100%' }}>
             <Typography sx={{ fontWeight: 800, fontSize: 14, color: colors.navy, mb: 1 }}>
-              Global document checklist
+              Common Document Checklist
             </Typography>
 
             <Box sx={{ mb: 1.5 }}>

@@ -23,17 +23,40 @@ function parsePrice(value: string): number | null {
   return num
 }
 
+function deriveServiceCode(name: string): string {
+  const slug = name
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 32)
+  return slug ? `SVC-${slug}` : `SVC-${Date.now()}`
+}
+
+function uniqueServiceCode(name: string, excludeId?: string): string {
+  let code = deriveServiceCode(name)
+  let suffix = 1
+  while (serviceMasterService.getByServiceCode(code, excludeId)) {
+    code = `${deriveServiceCode(name)}-${suffix}`
+    suffix += 1
+  }
+  return code
+}
+
 let serviceStore: ServiceMaster[] = [...SEED_SERVICE_MASTERS]
 
 export const serviceMasterService = {
   list(filters: ServiceMasterListFilters = {}): ServiceMaster[] {
-    const { status = 'all', category = 'all' } = filters
+    const { status = 'all', category = 'all', serviceType = 'all' } = filters
     let rows = [...serviceStore]
     if (status !== 'all') {
       rows = rows.filter((row) => row.status === status)
     }
     if (category !== 'all') {
       rows = rows.filter((row) => row.category === category)
+    }
+    if (serviceType !== 'all') {
+      rows = rows.filter((row) => row.serviceType === serviceType)
     }
     return rows.sort(
       (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
@@ -53,19 +76,17 @@ export const serviceMasterService = {
     )
   },
 
-  create(data: ServiceMasterFormData): ServiceMaster | { error: 'duplicate_code' } {
-    if (this.getByServiceCode(data.serviceCode)) {
-      return { error: 'duplicate_code' }
-    }
+  create(data: ServiceMasterFormData): ServiceMaster {
     const actor = getMasterActor()
     const timestamp = nowIso()
     const record: ServiceMaster = {
       id: generateServiceId(),
-      serviceCode: data.serviceCode.trim(),
+      serviceCode: uniqueServiceCode(data.serviceName),
       serviceName: data.serviceName.trim(),
       description: data.description.trim(),
-      category: data.category as ServiceMaster['category'],
-      subcategory: data.subcategory.trim(),
+      serviceType: data.serviceType as ServiceMaster['serviceType'],
+      category: 'Visa Services',
+      subcategory: 'General',
       defaultPrice: parsePrice(data.defaultPrice),
       mappedSacCodeId: data.mappedSacCodeId.trim() || null,
       gstRateId: data.gstRateId.trim() || null,
@@ -84,19 +105,15 @@ export const serviceMasterService = {
   update(
     id: string,
     data: ServiceMasterFormData,
-  ): ServiceMaster | { error: 'duplicate_code' } | undefined {
+  ): ServiceMaster | undefined {
     const index = serviceStore.findIndex((row) => row.id === id)
     if (index < 0) return undefined
-    if (this.getByServiceCode(data.serviceCode, id)) {
-      return { error: 'duplicate_code' }
-    }
+    const existing = serviceStore[index]
     const updated: ServiceMaster = {
-      ...serviceStore[index],
-      serviceCode: data.serviceCode.trim(),
+      ...existing,
       serviceName: data.serviceName.trim(),
       description: data.description.trim(),
-      category: data.category as ServiceMaster['category'],
-      subcategory: data.subcategory.trim(),
+      serviceType: data.serviceType as ServiceMaster['serviceType'],
       defaultPrice: parsePrice(data.defaultPrice),
       mappedSacCodeId: data.mappedSacCodeId.trim() || null,
       gstRateId: data.gstRateId.trim() || null,
@@ -113,18 +130,20 @@ export const serviceMasterService = {
   setStatus(id: string, status: MasterRecordStatus): ServiceMaster | undefined {
     const existing = serviceStore.find((row) => row.id === id)
     if (!existing) return undefined
-    return this.update(id, {
-      serviceCode: existing.serviceCode,
-      serviceName: existing.serviceName,
-      description: existing.description,
-      category: existing.category,
-      subcategory: existing.subcategory,
-      defaultPrice: existing.defaultPrice != null ? String(existing.defaultPrice) : '',
-      mappedSacCodeId: existing.mappedSacCodeId ?? '',
-      gstRateId: existing.gstRateId ?? '',
-      tdsSectionId: existing.tdsSectionId ?? '',
-      applicableFor: existing.applicableFor,
-      status,
-    }) as ServiceMaster | undefined
+    return this.update(id, { ...serviceToFormData(existing), status })
   },
+}
+
+function serviceToFormData(row: ServiceMaster): ServiceMasterFormData {
+  return {
+    serviceName: row.serviceName,
+    description: row.description,
+    serviceType: row.serviceType,
+    defaultPrice: row.defaultPrice != null ? String(row.defaultPrice) : '',
+    mappedSacCodeId: row.mappedSacCodeId ?? '',
+    gstRateId: row.gstRateId ?? '',
+    tdsSectionId: row.tdsSectionId ?? '',
+    applicableFor: [...row.applicableFor],
+    status: row.status,
+  }
 }

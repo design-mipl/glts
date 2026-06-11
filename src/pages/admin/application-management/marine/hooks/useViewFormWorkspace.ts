@@ -24,9 +24,6 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
   )
   const [selectedTravelerId, setSelectedTravelerId] = useState<string | null>(null)
   const [assistRecord, setAssistRecord] = useState<FormAssistRecord | null>(null)
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false)
-  const [pendingStepId, setPendingStepId] = useState<string | null>(null)
-
   const reload = useCallback(() => {
     if (!applicationId) return
     setWorkspace(applicationVerificationService.getWorkspace(applicationId))
@@ -50,8 +47,6 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
 
   useEffect(() => {
     setSelectedTravelerId(null)
-    setConfirmModalOpen(false)
-    setPendingStepId(null)
     if (!applicationId) {
       setWorkspace({ ok: false as const })
       return
@@ -142,28 +137,15 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
   )
 
   const requestStepContinue = useCallback(() => {
-    if (!currentStep || isLastStep) return
-    setPendingStepId(currentStep.id)
-    setConfirmModalOpen(true)
-  }, [currentStep, isLastStep])
-
-  const confirmStepContinue = useCallback(() => {
-    if (!applicationId || !selectedRow || !pendingStepId) return
+    if (!applicationId || !selectedRow || !currentStep || isLastStep) return
     applicationFormAssistService.completeStep(
       applicationId,
       selectedRow.id,
-      pendingStepId,
+      currentStep.id,
       Math.min(activeStepIndex + 1, GENERIC_FORM_ASSIST_STEPS.length - 1),
     )
-    setConfirmModalOpen(false)
-    setPendingStepId(null)
     refreshAssistRecord()
-  }, [applicationId, selectedRow, pendingStepId, activeStepIndex, refreshAssistRecord])
-
-  const cancelStepConfirm = useCallback(() => {
-    setConfirmModalOpen(false)
-    setPendingStepId(null)
-  }, [])
+  }, [applicationId, selectedRow, currentStep, isLastStep, activeStepIndex, refreshAssistRecord])
 
   const updateSubmission = useCallback(
     (patch: Partial<FormAssistRecord['submission']>) => {
@@ -214,13 +196,11 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
     submission,
     updateSubmission,
     pickSubmissionFile,
-    confirmModalOpen,
     requestStepContinue,
-    confirmStepContinue,
-    cancelStepConfirm,
     saveDraft,
     markAsSubmitted,
     externallySubmitted,
     timelineSteps,
+    completedStepIds: assistRecord?.completedStepIds ?? [],
   }
 }

@@ -11,6 +11,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-marine-visa',
     serviceCode: 'SVC-MV-001',
+    serviceType: 'glts',
     serviceName: 'Marine crew visa processing',
     description: 'End-to-end marine crew visa filing and submission',
     category: 'Visa Services',
@@ -26,6 +27,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-marine-joining',
     serviceCode: 'SVC-MV-002',
+    serviceType: 'glts',
     serviceName: 'Marine joining formalities',
     description: 'Port joining, sign-on documentation, and compliance checks',
     category: 'Visa Services',
@@ -44,6 +46,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-marine-cdc',
     serviceCode: 'SVC-MV-003',
+    serviceType: 'glts',
     serviceName: 'CDC & medical coordination',
     description: 'CDC verification and medical appointment coordination for crew',
     category: 'Documentation',
@@ -62,6 +65,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-corp-visa',
     serviceCode: 'SVC-CV-010',
+    serviceType: 'glts',
     serviceName: 'Corporate business visa',
     description: 'Corporate traveler visa support and embassy liaison',
     category: 'Visa Services',
@@ -80,6 +84,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-corp-mice',
     serviceCode: 'SVC-CV-011',
+    serviceType: 'glts',
     serviceName: 'Corporate MICE visa handling',
     description: 'Group and event visa processing for corporate travel programs',
     category: 'Visa Services',
@@ -98,6 +103,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-b2b-agent',
     serviceCode: 'SVC-B2B-020',
+    serviceType: 'glts',
     serviceName: 'B2B agent visa processing',
     description: 'Agent-channel visa filing with consolidated invoicing',
     category: 'Visa Services',
@@ -116,6 +122,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-retail-tourist',
     serviceCode: 'SVC-RT-030',
+    serviceType: 'glts',
     serviceName: 'Retail tourist visa',
     description: 'Individual tourist visa application support',
     category: 'Visa Services',
@@ -134,6 +141,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-apostille',
     serviceCode: 'SVC-DOC-003',
+    serviceType: 'vendor',
     serviceName: 'Apostille & attestation',
     description: 'Document apostille and embassy attestation',
     category: 'Documentation',
@@ -152,6 +160,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-embassy-submission',
     serviceCode: 'SVC-DOC-004',
+    serviceType: 'vfs',
     serviceName: 'Embassy submission',
     description: 'Physical document submission and collection at embassy',
     category: 'Documentation',
@@ -170,6 +179,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-consultation',
     serviceCode: 'SVC-CON-040',
+    serviceType: 'glts',
     serviceName: 'Visa eligibility consultation',
     description: 'Pre-application eligibility and document checklist review',
     category: 'Consultation',
@@ -188,6 +198,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-mea-attestation',
     serviceCode: 'SVC-ATT-050',
+    serviceType: 'vendor',
     serviceName: 'MEA attestation',
     description: 'Ministry of External Affairs document attestation',
     category: 'Attestation',
@@ -206,6 +217,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-travel-insurance',
     serviceCode: 'SVC-TRV-060',
+    serviceType: 'vendor',
     serviceName: 'Travel insurance facilitation',
     description: 'Travel insurance arrangement for visa applicants',
     category: 'Travel Support',
@@ -224,6 +236,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-courier',
     serviceCode: 'SVC-TRV-061',
+    serviceType: 'vendor',
     serviceName: 'Courier & logistics',
     description: 'Passport and document courier between client and operations',
     category: 'Travel Support',
@@ -242,6 +255,7 @@ export const SEED_SERVICE_MASTERS: ServiceMaster[] = [
   {
     id: 'svc-legacy-visa',
     serviceCode: 'SVC-LEG-099',
+    serviceType: 'glts',
     serviceName: 'Legacy visa support (inactive)',
     description: 'Deprecated service — retained for historical agreements',
     category: 'Visa Services',

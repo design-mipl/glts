@@ -3,8 +3,11 @@ import { PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
+import { MasterAudienceTags } from '../../components/MasterAudienceTags'
+import { toApplicabilityTagItems } from '../../config/masterAudienceTagConfig'
 import { masterStatusColor, masterStatusLabel } from '../../config/masterStatusConfig'
 import { formatMasterDate } from '../../utils/masterListingUtils'
+import { serviceTypeLabel } from '../config/serviceTypeConfig'
 import { formatServicePrice, getServiceSacLabel } from '../utils/serviceListingUtils'
 
 interface ColumnHandlers {
@@ -30,15 +33,28 @@ export function buildServiceColumns({
   onToggleStatus,
 }: ColumnHandlers): Column<ServiceMaster>[] {
   return [
-    { key: 'serviceCode', label: 'Service Code', minWidth: 120, searchable: true },
-    { key: 'serviceName', label: 'Service Name', minWidth: 180, searchable: true },
-    { key: 'category', label: 'Category', minWidth: 120 },
-    { key: 'subcategory', label: 'Subcategory', minWidth: 130 },
+    { key: 'serviceName', label: 'Service Name', minWidth: 200, searchable: true },
+    {
+      key: 'serviceType',
+      label: 'Service Type',
+      width: 110,
+      render: (_, row) => (
+        <Badge label={serviceTypeLabel[row.serviceType]} color="neutral" size="sm" />
+      ),
+    },
     {
       key: 'defaultPrice',
       label: 'Default Price',
       width: 120,
       render: (_, row) => formatServicePrice(row),
+    },
+    {
+      key: 'applicableFor',
+      label: 'Applicable For',
+      minWidth: 200,
+      render: (_, row) => (
+        <MasterAudienceTags items={toApplicabilityTagItems(row.applicableFor)} />
+      ),
     },
     {
       key: 'mappedSacCode',

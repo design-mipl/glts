@@ -61,7 +61,13 @@ export function contactNameFromEmail(email: string): string {
 /** Prototype: infer customer segment from email — no user selection at login */
 export function inferCustomerType(email: string): CustomerType {
   const e = email.toLowerCase()
-  if (e.includes('marine') || e.includes('crew') || e.includes('vessel') || e.includes('ship')) {
+  if (
+    e === 'admin@glts.com' ||
+    e.includes('marine') ||
+    e.includes('crew') ||
+    e.includes('vessel') ||
+    e.includes('ship')
+  ) {
     return 'marine'
   }
   if (e.includes('agent') || e.includes('b2b') || e.includes('traveldesk')) {
@@ -94,6 +100,11 @@ export function loadSession(): AuthSession | null {
       }
       if (session.email?.toLowerCase().includes('@interics.')) {
         session.email = session.email.replace(/@interics\./i, '@glts.')
+        changed = true
+      }
+      const inferredCustomerType = inferCustomerType(session.email)
+      if (session.customerType !== inferredCustomerType) {
+        session.customerType = inferredCustomerType
         changed = true
       }
     }

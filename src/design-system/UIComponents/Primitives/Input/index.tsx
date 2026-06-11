@@ -5,7 +5,7 @@ import Box from '@mui/material/Box'
 import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
-import { FORM_CONTROL, formControlHeight, outlinedFieldSx } from '../../../formControl'
+import { FORM_CONTROL, formControlHeight, outlinedFieldSx, readOnlyFieldWrapperSx } from '../../../formControl'
 
 export interface InputProps {
   label?: string
@@ -104,19 +104,7 @@ export default function Input({
       }}
       sx={[
         outlinedFieldSx(theme, inputHeight),
-        {
-          '& .MuiInputBase-root.Mui-disabled': {
-            backgroundColor: theme.palette.action.disabledBackground,
-            cursor: 'not-allowed',
-          },
-          '& .MuiInputBase-root.Mui-disabled .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.palette.divider,
-          },
-          '& .MuiInputBase-input.Mui-disabled': {
-            WebkitTextFillColor: theme.palette.text.disabled,
-            cursor: 'not-allowed',
-          },
-        },
+        readonly ? readOnlyFieldWrapperSx(theme) : undefined,
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}
     />

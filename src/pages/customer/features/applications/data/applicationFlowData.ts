@@ -1,3 +1,4 @@
+import type { ApplicationProcessingStageDates } from '@/shared/types/applicationProcessingTimeline'
 import type {
   ApplicationCustomerSegment,
   ApplicationOperationalStatus,
@@ -26,6 +27,7 @@ export interface SingleApplicationRow {
   country: string
   countryFlag?: string
   visaType: string
+  jurisdiction?: string
   travelDate: string
   submissionDate: string
   createdAt: string
@@ -40,15 +42,19 @@ export interface SingleApplicationRow {
   customerSegment: ApplicationCustomerSegment
   appointmentDate?: string
   poReference?: string
+  processingStageDates?: ApplicationProcessingStageDates
 }
 
 export interface BulkBatchRow {
   id: string
   recordType: Extract<ApplicationRecordType, 'bulk'>
   companyName: string
+  /** Lead passenger shown in listings as "Name × count". */
+  primaryApplicantName?: string
   country: string
   countryFlag?: string
   visaType: string
+  jurisdiction?: string
   totalApplicants: number
   verifiedApplicants: number
   pendingCorrections: number
@@ -67,6 +73,7 @@ export interface BulkBatchRow {
   customerSegment: ApplicationCustomerSegment
   appointmentDate?: string
   poReference?: string
+  processingStageDates?: ApplicationProcessingStageDates
 }
 
 export interface ExtractedField {
@@ -128,6 +135,8 @@ export interface UploadQueueRow {
   additionalDetails?: ApplicantAdditionalDetails
   /** Per-traveler identity fields in the applicant drawer. */
   basicDetails?: ApplicantBasicDetails
+  /** Milestone timestamps for the horizontal processing timeline. */
+  processingStageDates?: ApplicationProcessingStageDates
 }
 
 export interface ChecklistItem {
@@ -182,6 +191,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     country: 'Schengen',
     countryFlag: '🇫🇷',
     visaType: 'Sticker · Type C',
+    jurisdiction: 'Mumbai',
     travelDate: '2026-05-01',
     submissionDate: '2026-02-10',
     createdAt: '2026-02-01',
@@ -191,6 +201,12 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdByEmail: 'priya@glts.com',
     createdByRole: 'booker',
     customerSegment: 'marine',
+    processingStageDates: {
+      ready: '2026-02-01T09:00:00.000Z',
+      submitted: '2026-02-10T11:30:00.000Z',
+      appointment: '2026-02-14T10:00:00.000Z',
+      embassy: '2026-02-18T08:15:00.000Z',
+    },
   }),
   singleRow({
     id: GLTS_APPLICATION_IDS.japan,
@@ -208,6 +224,10 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdByEmail: 'james@glts.com',
     createdByRole: 'booker',
     customerSegment: 'retail',
+    processingStageDates: {
+      ready: '2026-01-28T09:00:00.000Z',
+      submitted: '2026-02-05T14:00:00.000Z',
+    },
   }),
   singleRow({
     id: GLTS_APPLICATION_IDS.uae,
@@ -225,6 +245,15 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdByEmail: 'james@glts.com',
     createdByRole: 'booker',
     customerSegment: 'retail',
+    processingStageDates: {
+      ready: '2026-01-10T08:00:00.000Z',
+      submitted: '2026-01-15T10:30:00.000Z',
+      appointment: '2026-01-20T09:00:00.000Z',
+      embassy: '2026-02-01T11:00:00.000Z',
+      'passport-ready': '2026-02-08T16:00:00.000Z',
+      dispatch: '2026-02-10T09:30:00.000Z',
+      delivered: '2026-02-12T13:00:00.000Z',
+    },
   }),
   singleRow({
     id: 'GLTS-APP-2026-820',
@@ -276,7 +305,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     operationalStatus: 'Pending Documents',
     createdByEmail: 'arun.krishnan@glts.com',
     createdByRole: 'admin',
-    customerSegment: 'corporate',
+    customerSegment: 'b2bAgents',
   }),
   singleRow({
     id: 'GLTS-APP-2026-790',
@@ -286,6 +315,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     country: 'Japan',
     countryFlag: '🇯🇵',
     visaType: 'eVisa · Tourist',
+    jurisdiction: 'Delhi',
     travelDate: '2026-04-02',
     submissionDate: '2026-02-01',
     createdAt: '2026-01-25',
@@ -306,6 +336,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     country: 'UAE',
     countryFlag: '🇦🇪',
     visaType: 'e-Visa · 14d',
+    jurisdiction: 'Mumbai',
     travelDate: '2026-03-28',
     submissionDate: '2026-01-20',
     createdAt: '2026-01-18',
@@ -325,6 +356,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     country: 'Schengen',
     countryFlag: '🇪🇸',
     visaType: 'Crew · Type C',
+    jurisdiction: 'Mumbai',
     travelDate: '2026-06-08',
     submissionDate: '2026-02-16',
     createdAt: '2026-02-10',
@@ -343,6 +375,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     country: 'Japan',
     countryFlag: '🇯🇵',
     visaType: 'Crew · Transit',
+    jurisdiction: 'Delhi',
     travelDate: '2026-06-20',
     submissionDate: '2026-02-11',
     createdAt: '2026-02-03',
@@ -361,6 +394,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     country: 'Singapore',
     countryFlag: '🇸🇬',
     visaType: 'Crew · Multi-entry',
+    jurisdiction: 'Chennai',
     travelDate: '2026-05-28',
     submissionDate: '2026-02-09',
     createdAt: '2026-01-29',
@@ -379,6 +413,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     country: 'UK',
     countryFlag: '🇬🇧',
     visaType: 'Crew · Standard',
+    jurisdiction: 'Delhi',
     travelDate: '2026-05-12',
     submissionDate: '2026-01-30',
     createdAt: '2026-01-16',
@@ -404,7 +439,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     operationalStatus: 'Verification Pending',
     createdByEmail: 'sneha.patel@glts.com',
     createdByRole: 'admin',
-    customerSegment: 'retail',
+    customerSegment: 'b2bAgents',
   }),
   singleRow({
     id: 'GLTS-APP-2026-751',
@@ -429,9 +464,11 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: GLTS_BATCH_IDS.schengenCrew,
     companyName: 'Oceanic Marine Ltd',
+    primaryApplicantName: 'Brendan Ryan',
     country: 'Schengen',
     countryFlag: '🇫🇷',
     visaType: 'Crew · Type C',
+    jurisdiction: 'Delhi',
     totalApplicants: 6,
     verifiedApplicants: 5,
     pendingCorrections: 0,
@@ -451,6 +488,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: GLTS_BATCH_IDS.japanGroup,
     companyName: 'Pacific Tours Inc',
+    primaryApplicantName: 'Hiroshi Tanaka',
     country: 'Japan',
     countryFlag: '🇯🇵',
     visaType: 'eVisa · Group',
@@ -472,6 +510,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: 'GLTS-BAT-2026-035',
     companyName: 'Global Freight Co',
+    primaryApplicantName: 'Carlos Mendez',
     country: 'UAE',
     countryFlag: '🇦🇪',
     visaType: 'e-Visa · Group',
@@ -488,11 +527,12 @@ export const mockBulkBatches: BulkBatchRow[] = [
     operationalStatus: 'Passport Ready',
     createdByEmail: 'sneha.patel@glts.com',
     createdByRole: 'admin',
-    customerSegment: 'corporate',
+    customerSegment: 'b2bAgents',
   }),
   bulkRow({
     id: 'GLTS-BAT-2026-032',
     companyName: 'Harbor Logistics',
+    primaryApplicantName: 'Anita Desai',
     country: 'UK',
     countryFlag: '🇬🇧',
     visaType: 'Visitor · Group',
@@ -514,9 +554,11 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: 'GLTS-BAT-2026-029',
     companyName: 'Seafarer Solutions',
+    primaryApplicantName: 'Andreas Klein',
     country: 'Schengen',
     countryFlag: '🇩🇪',
     visaType: 'Crew · Type C',
+    jurisdiction: 'Mumbai',
     totalApplicants: 30,
     verifiedApplicants: 30,
     pendingCorrections: 0,
@@ -536,9 +578,11 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: 'GLTS-BAT-2026-021',
     companyName: 'Harborline Crewing Co',
+    primaryApplicantName: 'Luca Bergstrom',
     country: 'Schengen',
     countryFlag: '🇫🇷',
     visaType: 'Crew · Type C',
+    jurisdiction: 'Delhi',
     totalApplicants: 16,
     verifiedApplicants: 15,
     pendingCorrections: 1,
@@ -557,9 +601,11 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: 'GLTS-BAT-2026-018',
     companyName: 'NorthSea Manning',
+    primaryApplicantName: 'Erik Johansson',
     country: 'Japan',
     countryFlag: '🇯🇵',
     visaType: 'Crew · Group',
+    jurisdiction: 'Delhi',
     totalApplicants: 10,
     verifiedApplicants: 10,
     pendingCorrections: 0,
@@ -578,6 +624,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: 'GLTS-BAT-2026-025',
     companyName: 'Asia Connect Ltd',
+    primaryApplicantName: 'Mei Lin',
     country: 'Singapore',
     countryFlag: '🇸🇬',
     visaType: 'Business · Group',
@@ -611,13 +658,11 @@ const hiroshiFields: ExtractedField[] = [
   { key: 'mrz', label: 'Machine-readable line', value: 'Valid', confidence: 100 },
 ]
 
-const MOCK_GLTS_APPLICATION_ID = GLTS_APPLICATION_IDS.schengen
-
 const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete' | 'documentsTotal'>[] = [
   {
     id: 'q1',
     fileName: 'IMG_8821.heic',
-    gltsApplicationId: MOCK_GLTS_APPLICATION_ID,
+    gltsApplicationId: GLTS_BATCH_IDS.schengenCrew,
     gltsApplicantId: 'GLTS-APL-001',
     sequenceNo: 1,
     travelerName: 'BRENDAN RYAN',
@@ -631,7 +676,7 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
   {
     id: 'q2',
     fileName: 'passport_scan.jpg',
-    gltsApplicationId: MOCK_GLTS_APPLICATION_ID,
+    gltsApplicationId: GLTS_BATCH_IDS.schengenCrew,
     gltsApplicantId: 'GLTS-APL-002',
     sequenceNo: 2,
     travelerName: 'SARAH MILES',
@@ -645,7 +690,7 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
   {
     id: 'q3',
     fileName: 'crew_03.pdf',
-    gltsApplicationId: MOCK_GLTS_APPLICATION_ID,
+    gltsApplicationId: GLTS_BATCH_IDS.schengenCrew,
     gltsApplicantId: 'GLTS-APL-003',
     sequenceNo: 3,
     travelerName: 'HIROSHI TANAKA',
@@ -660,7 +705,7 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
   {
     id: 'q4',
     fileName: 'IMG_9012.heic',
-    gltsApplicationId: MOCK_GLTS_APPLICATION_ID,
+    gltsApplicationId: GLTS_BATCH_IDS.schengenCrew,
     gltsApplicantId: 'GLTS-APL-004',
     sequenceNo: 4,
     travelerName: 'PRIYA SHARMA',
@@ -674,7 +719,7 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
   {
     id: 'q5',
     fileName: 'crew_04.pdf',
-    gltsApplicationId: MOCK_GLTS_APPLICATION_ID,
+    gltsApplicationId: GLTS_BATCH_IDS.schengenCrew,
     gltsApplicantId: 'GLTS-APL-005',
     sequenceNo: 5,
     travelerName: 'MIKE CHEN',
@@ -688,7 +733,7 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
   {
     id: 'q6',
     fileName: 'scan_pending.heic',
-    gltsApplicationId: MOCK_GLTS_APPLICATION_ID,
+    gltsApplicationId: GLTS_BATCH_IDS.schengenCrew,
     gltsApplicantId: 'GLTS-APL-006',
     sequenceNo: 6,
     travelerName: '—',
@@ -701,12 +746,48 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
   },
 ]
 
+const MOCK_QUEUE_PROCESSING_STAGE_DATES: ApplicationProcessingStageDates = {
+  ready: '2026-02-01T09:00:00.000Z',
+  submitted: '2026-02-10T11:30:00.000Z',
+  appointment: '2026-02-14T10:00:00.000Z',
+  embassy: '2026-02-18T08:15:00.000Z',
+}
+
 export const mockUploadQueue: UploadQueueRow[] = rawMockUploadQueue.map(row => ({
   ...row,
+  processingStageDates: MOCK_QUEUE_PROCESSING_STAGE_DATES,
   documents: [],
   documentsComplete: 0,
   documentsTotal: 0,
 }))
+
+function toApplicantDisplayName(value: string): string {
+  if (!value || value === '—') return value
+  return value
+    .toLowerCase()
+    .split(' ')
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+/** Lead passenger for a bulk batch — used in listings as "Name × count". */
+export function resolveBulkPrimaryApplicantName(batch: BulkBatchRow): string {
+  if (batch.primaryApplicantName?.trim()) {
+    return batch.primaryApplicantName.trim()
+  }
+  if (batch.id === GLTS_BATCH_IDS.schengenCrew) {
+    const firstTraveler = mockUploadQueue[0]?.travelerName
+    if (firstTraveler && firstTraveler !== '—') {
+      return toApplicantDisplayName(firstTraveler)
+    }
+  }
+  return 'Traveler 1'
+}
+
+export function formatBulkApplicantListingLabel(batch: BulkBatchRow): string {
+  return `${resolveBulkPrimaryApplicantName(batch)} × ${batch.totalApplicants}`
+}
 
 export const defaultChecklist = (country: string): ChecklistItem[] => [
   { id: 'passport', label: 'Passport', required: true, status: 'uploaded' },
@@ -753,6 +834,7 @@ export interface SingleApplicationFlowExtras {
   vesselName: string
   imoNumber: string
   joiningPort: string
+  jurisdiction?: string
 }
 
 export interface SingleApplicationDemoSeed {
@@ -824,6 +906,7 @@ const priyaSharmaSeed: SingleApplicationDemoSeed = {
     vesselName: 'MV Oceanic Star',
     imoNumber: '9434567',
     joiningPort: 'Rotterdam',
+    jurisdiction: 'Mumbai',
   },
 }
 
@@ -886,6 +969,7 @@ const oliverGrantSeed: SingleApplicationDemoSeed = {
     vesselName: 'MV Pacific Horizon',
     imoNumber: '9318765',
     joiningPort: 'Yokohama',
+    jurisdiction: 'Delhi',
   },
 }
 
@@ -948,6 +1032,7 @@ const mateoAlvarezSeed: SingleApplicationDemoSeed = {
     vesselName: 'MV Atlantic Crest',
     imoNumber: '9384112',
     joiningPort: 'Marseille',
+    jurisdiction: 'Mumbai',
   },
 }
 
@@ -1010,6 +1095,7 @@ const ashaNairSeed: SingleApplicationDemoSeed = {
     vesselName: 'MV Eastern Pearl',
     imoNumber: '9457821',
     joiningPort: 'Osaka',
+    jurisdiction: 'Delhi',
   },
 }
 

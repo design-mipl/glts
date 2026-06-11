@@ -164,7 +164,7 @@ function defaultRequirementPreviewCards(isCrew: boolean): RequirementPreviewCard
     },
     {
       id: 'embassy',
-      title: 'Documents required from embassy / agents',
+      title: 'Document requirement from embassy',
       variant: 'embassy',
       alertNote: 'Embassy formatting rules apply. Confirm LOI validity before upload.',
       documents: [

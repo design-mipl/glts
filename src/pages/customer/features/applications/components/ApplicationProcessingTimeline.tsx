@@ -1,13 +1,9 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { Check, Circle, Clock3 } from 'lucide-react'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import type { SubmitTimelineStatus } from '../types/applicationDetail.types'
+import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
 
-export interface ApplicationProcessingTimelineStep {
-  id: string
-  label: string
-  status: SubmitTimelineStatus
-}
+export type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
 
 interface ApplicationProcessingTimelineProps {
   steps: ApplicationProcessingTimelineStep[]
@@ -79,9 +75,21 @@ export function ApplicationProcessingTimeline({ steps }: ApplicationProcessingTi
                     />
                   )}
                 </Stack>
-                <Typography sx={{ fontSize: 11, fontWeight: isCompleted || isActive ? 700 : 600, color: textColor, pr: 0.5 }}>
+                <Typography
+                  sx={{
+                    fontSize: 11,
+                    fontWeight: isCompleted || isActive ? 700 : 600,
+                    color: textColor,
+                    pr: 0.5,
+                  }}
+                >
                   {step.label}
                 </Typography>
+                {step.date ? (
+                  <Typography sx={{ fontSize: 10, color: colors.textMuted, pr: 0.5 }}>
+                    {step.date}
+                  </Typography>
+                ) : null}
               </Stack>
             </Box>
           )

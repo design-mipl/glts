@@ -1,6 +1,6 @@
-import { Box, Stack } from '@mui/material'
 import { FormField, Select, Textarea } from '@/design-system/UIComponents'
 import { Input } from '@/design-system/UIComponents'
+import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import { MASTER_STATUS_FILTER_OPTIONS } from '@/pages/admin/masters/config/masterStatusConfig'
 import type { TeamMasterFormData } from '@/shared/types/teamMaster'
 
@@ -18,25 +18,29 @@ export function TeamFormFields({ formData, onChange, errors }: TeamFormFieldsPro
   )
 
   return (
-    <Stack spacing={2}>
-      <FormField label="Team name" required error={Boolean(errors.name)} helperText={errors.name}>
-        <Input
-          value={formData.name}
-          onChange={(v) => update({ name: v })}
-          placeholder="e.g. Operations, Finance & Billing"
-          fullWidth
-        />
-      </FormField>
-      <FormField label="Description" optional>
-        <Textarea
-          value={formData.description}
-          onChange={(v) => update({ description: v })}
-          placeholder="Brief description of team responsibilities"
-          rows={3}
-          fullWidth
-        />
-      </FormField>
-      <Box sx={{ maxWidth: 240 }}>
+    <>
+      <AdminFullPageFormFieldSpan>
+        <FormField label="Team name" required error={Boolean(errors.name)} helperText={errors.name}>
+          <Input
+            value={formData.name}
+            onChange={(v) => update({ name: v })}
+            placeholder="e.g. Operations, Finance & Billing"
+            fullWidth
+          />
+        </FormField>
+      </AdminFullPageFormFieldSpan>
+      <AdminFullPageFormFieldSpan>
+        <FormField label="Description" optional>
+          <Textarea
+            value={formData.description}
+            onChange={(v) => update({ description: v })}
+            placeholder="Brief description of team responsibilities"
+            rows={3}
+            fullWidth
+          />
+        </FormField>
+      </AdminFullPageFormFieldSpan>
+      <AdminFullPageFormFieldSpan>
         <FormField label="Status" required error={Boolean(errors.status)} helperText={errors.status}>
           <Select
             value={formData.status}
@@ -46,7 +50,7 @@ export function TeamFormFields({ formData, onChange, errors }: TeamFormFieldsPro
             fullWidth
           />
         </FormField>
-      </Box>
-    </Stack>
+      </AdminFullPageFormFieldSpan>
+    </>
   )
 }

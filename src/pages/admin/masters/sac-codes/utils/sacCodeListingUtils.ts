@@ -1,5 +1,6 @@
 import { taxMasterService } from '@/shared/services/taxMasterService'
 import type { SacCodeMaster } from '@/shared/types/sacCodeMaster'
+import { MASTER_APPLICABILITY_OPTIONS } from '@/shared/types/masterCommon'
 import { masterStatusLabel } from '../../config/masterStatusConfig'
 
 export function getSacCodeCellValue(row: SacCodeMaster, key: string): string {
@@ -8,6 +9,14 @@ export function getSacCodeCellValue(row: SacCodeMaster, key: string): string {
   if (key === 'defaultTds') {
     const pct = taxMasterService.getTdsPercent(row.defaultTdsSectionId)
     return pct != null ? `${pct}%` : '—'
+  }
+  if (key === 'applicableFor') {
+    return row.applicableFor
+      .map(
+        (value) =>
+          MASTER_APPLICABILITY_OPTIONS.find((option) => option.value === value)?.label ?? value,
+      )
+      .join(', ')
   }
   return String((row as unknown as Record<string, unknown>)[key] ?? '')
 }
@@ -22,6 +31,10 @@ export function matchesSacCodeSearch(row: SacCodeMaster, query: string): boolean
     row.category,
     row.status,
     taxMasterService.getGstLabel(row.defaultGstRateId),
+    ...row.applicableFor.map(
+      (value) =>
+        MASTER_APPLICABILITY_OPTIONS.find((option) => option.value === value)?.label ?? value,
+    ),
   ].some((part) => part.toLowerCase().includes(normalized))
 }
 

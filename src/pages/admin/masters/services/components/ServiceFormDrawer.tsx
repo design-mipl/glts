@@ -44,14 +44,7 @@ export function ServiceFormDrawer({ open, record, onClose, onSaved }: ServiceFor
         ? serviceMasterService.update(record.id, formData)
         : serviceMasterService.create(formData)
     setLoading(false)
-    if (result && 'error' in result && result.error === 'duplicate_code') {
-      showToast({
-        title: 'Duplicate service code',
-        description: 'A service with this code already exists.',
-        variant: 'error',
-      })
-      return
-    }
+    if (!result) return
     showToast({
       title: isEdit ? 'Service updated' : 'Service added',
       variant: 'success',
@@ -83,22 +76,10 @@ export function ServiceFormDrawer({ open, record, onClose, onSaved }: ServiceFor
           children: <ServiceFormFields {...fieldProps} section="basic" />,
         },
         {
-          id: 'classification',
-          title: 'Classification',
+          id: 'pricingTax',
+          title: 'Pricing & tax mapping',
           columns: ADMIN_DRAWER_FORM_LAYOUT.primarySectionColumns,
-          children: <ServiceFormFields {...fieldProps} section="classification" />,
-        },
-        {
-          id: 'pricing',
-          title: 'Pricing',
-          columns: ADMIN_DRAWER_FORM_LAYOUT.primarySectionColumns,
-          children: <ServiceFormFields {...fieldProps} section="pricing" />,
-        },
-        {
-          id: 'tax',
-          title: 'Tax mapping',
-          columns: ADMIN_DRAWER_FORM_LAYOUT.primarySectionColumns,
-          children: <ServiceFormFields {...fieldProps} section="tax" />,
+          children: <ServiceFormFields {...fieldProps} section="pricingTax" />,
         },
         {
           id: 'applicability',

@@ -1,10 +1,13 @@
 import type { MasterApplicability, MasterAuditFields, MasterCategory, MasterRecordStatus } from './masterCommon'
 
+export type ServiceType = 'glts' | 'vendor' | 'vfs'
+
 export interface ServiceMaster extends MasterAuditFields {
   id: string
   serviceCode: string
   serviceName: string
   description: string
+  serviceType: ServiceType
   category: MasterCategory
   subcategory: string
   defaultPrice: number | null
@@ -16,11 +19,9 @@ export interface ServiceMaster extends MasterAuditFields {
 }
 
 export interface ServiceMasterFormData {
-  serviceCode: string
   serviceName: string
   description: string
-  category: MasterCategory | ''
-  subcategory: string
+  serviceType: ServiceType | ''
   defaultPrice: string
   mappedSacCodeId: string
   gstRateId: string
@@ -32,4 +33,5 @@ export interface ServiceMasterFormData {
 export interface ServiceMasterListFilters {
   status?: MasterRecordStatus | 'all'
   category?: MasterCategory | 'all'
+  serviceType?: ServiceType | 'all'
 }

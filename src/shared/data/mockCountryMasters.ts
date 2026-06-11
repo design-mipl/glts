@@ -1,15 +1,22 @@
 import { buildDefaultPassportIssueLocations } from '@/shared/data/passportIssueLocationDefaults'
+import {
+  defaultJurisdictionsForVisa,
+  singleJurisdictionForVisa,
+} from '@/shared/data/countryJurisdictionDefaults'
 import { getAllCountries } from '@/shared/services/visaService'
 import {
   defaultRulesForSegment,
   ensureAllSegments,
+  emptySegment,
   normalizeCountrySegments,
+  enrichVisaOfferingsApproxCost,
   syncVisaOfferingsFromSegments,
 } from '@/shared/data/countryMasterDefaults'
 import type {
   CountryDocumentChecklistItem,
   CountryMaster,
   CountrySegmentConfig,
+  CountryVisaJurisdiction,
   CountryVisaType,
 } from '@/shared/types/countryMaster'
 
@@ -35,16 +42,19 @@ const crewApplicationDocuments: CountryDocumentChecklistItem[] = [
 ]
 
 function visaType(
-  partial: Omit<CountryVisaType, 'applicationDocuments' | 'status' | 'prioritySupport'> & {
+  partial: Omit<CountryVisaType, 'applicationDocuments' | 'status' | 'prioritySupport' | 'jurisdictions'> & {
     applicationDocuments?: CountryDocumentChecklistItem[]
+    jurisdictions?: CountryVisaJurisdiction[]
     status?: CountryVisaType['status']
     prioritySupport?: boolean
   },
 ): CountryVisaType {
+  const applicationDocuments = partial.applicationDocuments ?? stdApplicationDocuments
   return {
     prioritySupport: false,
     status: 'active',
-    applicationDocuments: partial.applicationDocuments ?? stdApplicationDocuments,
+    jurisdictions: partial.jurisdictions ?? [],
+    applicationDocuments,
     ...partial,
   }
 }
@@ -62,6 +72,8 @@ function segment(
   }
 }
 
+const CHINA_NAME = 'China'
+
 const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
   '1': [
     segment({
@@ -72,23 +84,32 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           id: 'schengen-tourist',
           name: 'Tourist Visa',
           visaCategory: 'Tourism',
+          pricing: 12400,
           processingTime: '12–18 business days',
           entryType: 'Multiple entry · 90 days',
           validity: '90 days',
           stayDuration: '90 days per entry',
           purposeId: 'tourism',
           purposeLabel: 'Tourism',
+          jurisdictions: [
+            singleJurisdictionForVisa('delhi', 'Delhi', 'Schengen', stdApplicationDocuments),
+            singleJurisdictionForVisa('mumbai', 'Mumbai', 'Schengen', stdApplicationDocuments),
+          ],
         }),
         visaType({
           id: 'schengen-business',
           name: 'Business Visa',
           visaCategory: 'Business',
+          pricing: 14200,
           processingTime: '10–15 business days',
           entryType: 'Single / multiple entry',
           validity: '90 days',
           stayDuration: 'As per invitation',
           purposeId: 'business_meeting',
           purposeLabel: 'Business meeting',
+          jurisdictions: [
+            singleJurisdictionForVisa('delhi', 'Delhi', 'Schengen', stdApplicationDocuments),
+          ],
         }),
       ],
     }),
@@ -107,6 +128,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           applicationDocuments: crewApplicationDocuments,
           purposeId: 'crew_joining',
           purposeLabel: 'Crew joining',
+          jurisdictions: [
+            singleJurisdictionForVisa('mumbai', 'Mumbai', 'Schengen', crewApplicationDocuments),
+          ],
         }),
       ],
     }),
@@ -122,23 +146,29 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           id: 'cn-tourist',
           name: 'Tourist Visa',
           visaCategory: 'Tourism',
+          pricing: 5200,
           processingTime: '8–12 business days',
           entryType: 'Single entry',
           validity: '30 days',
           stayDuration: '30 days',
           purposeId: 'tourism',
           purposeLabel: 'Tourism',
+          jurisdictions: defaultJurisdictionsForVisa('Tourist Visa', CHINA_NAME, stdApplicationDocuments),
         }),
         visaType({
           id: 'cn-business-retail',
           name: 'Business Visa',
           visaCategory: 'Business',
+          pricing: 6800,
           processingTime: '10–14 business days',
           entryType: 'Single / multiple',
           validity: '90 days',
           stayDuration: 'As per invitation',
           purposeId: 'business_meeting',
           purposeLabel: 'Business meeting',
+          jurisdictions: [
+            singleJurisdictionForVisa('delhi', 'Delhi', CHINA_NAME, stdApplicationDocuments),
+          ],
         }),
       ],
     }),
@@ -156,6 +186,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           stayDuration: '90 days per visit',
           purposeId: 'business_meeting',
           purposeLabel: 'Corporate travel',
+          jurisdictions: [
+            singleJurisdictionForVisa('delhi', 'Delhi', CHINA_NAME, stdApplicationDocuments),
+          ],
         }),
         visaType({
           id: 'cn-work',
@@ -167,6 +200,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           stayDuration: 'Employment contract',
           purposeId: 'employment',
           purposeLabel: 'Employment',
+          jurisdictions: [
+            singleJurisdictionForVisa('delhi', 'Delhi', CHINA_NAME, stdApplicationDocuments),
+          ],
         }),
       ],
     }),
@@ -185,6 +221,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           applicationDocuments: crewApplicationDocuments,
           purposeId: 'crew_joining',
           purposeLabel: 'Crew joining',
+          jurisdictions: [],
         }),
         visaType({
           id: 'cn-g-type',
@@ -197,6 +234,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           applicationDocuments: crewApplicationDocuments,
           purposeId: 'transit',
           purposeLabel: 'Transit',
+          jurisdictions: [
+            singleJurisdictionForVisa('mumbai', 'Mumbai', CHINA_NAME, crewApplicationDocuments),
+          ],
         }),
       ],
     }),
@@ -214,6 +254,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           stayDuration: '30 days',
           purposeId: 'tourism',
           purposeLabel: 'Agent retail filing',
+          jurisdictions: [
+            singleJurisdictionForVisa('delhi', 'Delhi', CHINA_NAME, stdApplicationDocuments),
+          ],
         }),
         visaType({
           id: 'cn-agent-business',
@@ -225,6 +268,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           stayDuration: 'As per invitation',
           purposeId: 'business_meeting',
           purposeLabel: 'Agent corporate filing',
+          jurisdictions: [
+            singleJurisdictionForVisa('mumbai', 'Mumbai', CHINA_NAME, stdApplicationDocuments),
+          ],
         }),
       ],
     }),
@@ -246,6 +292,9 @@ const DEFAULT_SEGMENTS: CountrySegmentConfig[] = [
         stayDuration: '30 days',
         purposeId: 'tourism',
         purposeLabel: 'Tourism',
+        jurisdictions: [
+          singleJurisdictionForVisa('delhi', 'Delhi', 'Default', stdApplicationDocuments),
+        ],
       }),
     ],
   }),
@@ -254,12 +303,74 @@ const DEFAULT_SEGMENTS: CountrySegmentConfig[] = [
   segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
 ]
 
+function buildDraftCountry(): CountryMaster {
+  const now = new Date().toISOString()
+  const segments = ensureAllSegments([
+    segment({
+      segment: 'retail',
+      enabled: true,
+      visaTypes: [
+        visaType({
+          id: 'draft-tourist',
+          name: 'Tourist Visa',
+          visaCategory: 'Tourism',
+          processingTime: '10–15 business days',
+          entryType: 'Single entry',
+          validity: '30 days',
+          stayDuration: '30 days',
+          purposeId: 'tourism',
+          purposeLabel: 'Tourism',
+          jurisdictions: [],
+        }),
+      ],
+    }),
+    segment({ segment: 'marine', enabled: true, visaTypes: [] }),
+    emptySegment('corporate', false),
+    emptySegment('b2bAgents', false),
+  ])
+
+  return {
+    id: 'CNT-DRAFT',
+    code: 'DRF',
+    name: 'Draft Destination',
+    flag: '🏳️',
+    region: 'Asia',
+    status: 'draft',
+    processingType: 'embassy',
+    embassyNotes: '',
+    internalNotes: 'Incomplete configuration — review before publish.',
+    cities: 'TBD',
+    heroPhotoId: 'default',
+    processingTime: 'TBD',
+    price: 0,
+    rating: 0,
+    trending: false,
+    trendingPercent: 0,
+    visaCategory: 'Tourism',
+    validity: '30 days',
+    passportIssueLocations: buildDefaultPassportIssueLocations('Draft Destination'),
+    segments,
+    visaOfferings: enrichVisaOfferingsApproxCost(syncVisaOfferingsFromSegments(segments), 0),
+    createdAt: now,
+    updatedAt: now,
+    activities: [
+      {
+        id: 'act-draft-seed',
+        timestamp: now,
+        actor: 'Admin User',
+        action: 'Country created',
+        detail: 'Saved as draft',
+      },
+    ],
+  }
+}
+
 function buildMasterFromCountry(c: ReturnType<typeof getAllCountries>[0]): CountryMaster {
   const segments = ensureAllSegments(
     normalizeCountrySegments(SEGMENTS_BY_COUNTRY[c.id] ?? DEFAULT_SEGMENTS),
   )
   const now = new Date().toISOString()
-  const visaOfferings = syncVisaOfferingsFromSegments(segments)
+  const visaOfferings = enrichVisaOfferingsApproxCost(syncVisaOfferingsFromSegments(segments), c.price)
 
   return {
     id: c.id,
@@ -299,7 +410,8 @@ function buildMasterFromCountry(c: ReturnType<typeof getAllCountries>[0]): Count
 }
 
 function buildMasters(): CountryMaster[] {
-  return getAllCountries().map(buildMasterFromCountry)
+  const masters = getAllCountries().map(buildMasterFromCountry)
+  return [buildDraftCountry(), ...masters]
 }
 
 let cache: CountryMaster[] | null = null

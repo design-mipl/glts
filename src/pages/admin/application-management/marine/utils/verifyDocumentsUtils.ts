@@ -3,8 +3,8 @@ import type {
   ApplicantDocumentStatus,
   UploadQueueRow,
 } from '@/pages/customer/features/applications/data/applicationFlowData'
-import type { ApplicationProcessingTimelineStep } from '@/pages/customer/features/applications/components/ApplicationProcessingTimeline'
-import type { SubmitTimelineStatus } from '@/pages/customer/features/applications/types/applicationDetail.types'
+import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
+import { buildProcessingTimelineFromQueueRow } from '@/shared/utils/applicationProcessingTimeline'
 import { adminDocumentBadgeStatus } from '@/shared/services/applicationVerificationService'
 import {
   documentStatusLabel,
@@ -18,57 +18,21 @@ export function buildVerifyTimeline(
   isSubmitted: boolean,
   externalPortalSubmitted = false,
 ): ApplicationProcessingTimelineStep[] {
-  const required = row?.documents.filter(d => d.required) ?? []
+  const required = row?.documents.filter((doc) => doc.required) ?? []
   const docsDone =
-    required.length === 0 || required.every(d => isApplicantDocumentSatisfied(d))
-  const allVerified = required.length > 0 && required.every(d => d.status === 'verified')
-  const hasRejection = required.some(d => d.status === 'rejected' || d.status === 'needs_review')
+    required.length === 0 || required.every((doc) => isApplicantDocumentSatisfied(doc))
+  const allVerified = required.length > 0 && required.every((doc) => doc.status === 'verified')
+  const hasRejection = required.some(
+    (doc) => doc.status === 'rejected' || doc.status === 'needs_review',
+  )
 
-  const submitted: SubmitTimelineStatus =
-    externalPortalSubmitted || isSubmitted ? 'completed' : docsDone ? 'active' : 'pending'
-  const appointmentBooked = externalPortalSubmitted || (allVerified && isSubmitted && !hasRejection)
-  const embassyStageActive = externalPortalSubmitted || appointmentBooked
-  const passportReady = false
-  const dispatch = false
-  const delivered = false
-
-  return [
-    {
-      id: 'ready',
-      label: 'Ready of submission',
-      status: docsDone ? 'completed' : 'active',
-    },
-    {
-      id: 'submitted',
-      label: 'Submitted',
-      status: externalPortalSubmitted || isSubmitted ? 'completed' : docsDone ? 'active' : 'pending',
-    },
-    {
-      id: 'appointment',
-      label: 'Appointment booked',
-      status: appointmentBooked ? 'completed' : submitted === 'completed' ? 'active' : 'pending',
-    },
-    {
-      id: 'embassy',
-      label: 'Embassy processing',
-      status: externalPortalSubmitted || appointmentBooked ? 'active' : 'pending',
-    },
-    {
-      id: 'passport-ready',
-      label: 'Passport ready',
-      status: passportReady ? 'completed' : embassyStageActive ? 'active' : 'pending',
-    },
-    {
-      id: 'dispatch',
-      label: 'Dispatch',
-      status: dispatch ? 'completed' : passportReady ? 'active' : 'pending',
-    },
-    {
-      id: 'delivered',
-      label: 'Delivered',
-      status: delivered ? 'completed' : dispatch ? 'active' : 'pending',
-    },
-  ]
+  return buildProcessingTimelineFromQueueRow(row, {
+    isSubmitted,
+    externalPortalSubmitted,
+    docsDone,
+    allVerified,
+    hasRejection,
+  })
 }
 
 export function documentBadgeColor(
@@ -117,15 +81,62 @@ export interface VerifyOverviewData {
   countryFlag: string
   visaTypeLabel: string
   purposeLabel?: string
+  jurisdiction?: string
   travelDate: string
   travelerCount: number
+}
+
+export interface VerifyRejectedDocumentEntry {
+  document: ApplicantDocumentItem
+  scope: 'traveler' | 'global'
+  travelerId?: string
+  travelerName?: string
+}
+
+export function isRejectedVerifyDocument(doc: ApplicantDocumentItem): boolean {
+  return doc.status === 'rejected'
+}
+
+export function collectRejectedVerifyDocuments(
+  rows: UploadQueueRow[],
+  globalDocuments: ApplicantDocumentItem[],
+): VerifyRejectedDocumentEntry[] {
+  const entries: VerifyRejectedDocumentEntry[] = []
+
+  for (const row of rows.filter(r => r.status !== 'processing')) {
+    for (const document of row.documents) {
+      if (!isRejectedVerifyDocument(document)) continue
+      entries.push({
+        document,
+        scope: 'traveler',
+        travelerId: row.id,
+        travelerName: row.travelerName,
+      })
+    }
+  }
+
+  for (const document of globalDocuments) {
+    if (!isRejectedVerifyDocument(document)) continue
+    entries.push({
+      document,
+      scope: 'global',
+    })
+  }
+
+  return entries
 }
 
 export function buildOverviewFromDetail(
   applicationId: string,
   isBulk: boolean,
   rows: UploadQueueRow[],
-  app?: { country?: string; countryFlag?: string; visaType?: string; travelDate?: string } | null,
+  app?: {
+    country?: string
+    countryFlag?: string
+    visaType?: string
+    travelDate?: string
+    jurisdiction?: string
+  } | null,
 ): VerifyOverviewData {
   const readyRows = rows.filter(r => r.status !== 'processing')
   const firstRow = rows[0]
@@ -135,6 +146,7 @@ export function buildOverviewFromDetail(
     countryName: app?.country ?? '—',
     countryFlag: app?.countryFlag ?? '',
     visaTypeLabel: app?.visaType ?? '—',
+    jurisdiction: app?.jurisdiction?.trim() || undefined,
     travelDate: app?.travelDate ?? '—',
     travelerCount: readyRows.length || rows.length,
   }

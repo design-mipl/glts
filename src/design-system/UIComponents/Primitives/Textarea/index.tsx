@@ -3,7 +3,7 @@ import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
-import { FORM_CONTROL, textareaOutlinedFieldSx } from '../../../formControl'
+import { FORM_CONTROL, readOnlyFieldWrapperSx, textareaOutlinedFieldSx } from '../../../formControl'
 
 export interface TextareaProps {
   label?: string
@@ -13,6 +13,7 @@ export interface TextareaProps {
   error?: boolean
   helperText?: string
   disabled?: boolean
+  readonly?: boolean
   required?: boolean
   rows?: number
   maxRows?: number
@@ -33,6 +34,7 @@ export default function Textarea({
   error = false,
   helperText,
   disabled = false,
+  readonly = false,
   required = false,
   rows,
   maxRows,
@@ -83,12 +85,14 @@ export default function Textarea({
       size="small"
       slotProps={{
         input: {
+          readOnly: readonly,
           inputProps: { maxLength },
         },
         formHelperText: { sx: { mx: 0, mt: '4px', fontSize: FORM_CONTROL.helperFontSize } },
       }}
       sx={[
         textareaOutlinedFieldSx(theme),
+        readonly ? readOnlyFieldWrapperSx(theme) : undefined,
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}
     />

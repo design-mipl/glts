@@ -111,8 +111,8 @@ export function renderNavConfig(
                     href={child.href}
                     active={isNavActive(child.href, currentPath)}
                     badge={child.badge}
-                    depth={collapsed ? 0 : 1}
-                    collapsed={collapsed}
+                    depth={1}
+                    collapsed={false}
                   />
                 )
               }

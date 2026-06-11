@@ -82,7 +82,6 @@ export function CountryDetailPage() {
   return (
     <AdminDetailShell
       breadcrumbs={[
-        { label: 'Masters', href: '/admin/masters/country' },
         { label: 'Country Master', href: '/admin/masters/country' },
         { label: country.name },
       ]}

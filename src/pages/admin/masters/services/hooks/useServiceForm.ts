@@ -2,11 +2,9 @@ import { useMemo, useState } from 'react'
 import type { ServiceMaster, ServiceMasterFormData } from '@/shared/types/serviceMaster'
 
 export const INITIAL_SERVICE_FORM: ServiceMasterFormData = {
-  serviceCode: '',
   serviceName: '',
   description: '',
-  category: '',
-  subcategory: '',
+  serviceType: '',
   defaultPrice: '',
   mappedSacCodeId: '',
   gstRateId: '',
@@ -17,11 +15,9 @@ export const INITIAL_SERVICE_FORM: ServiceMasterFormData = {
 
 export function serviceToFormData(row: ServiceMaster): ServiceMasterFormData {
   return {
-    serviceCode: row.serviceCode,
     serviceName: row.serviceName,
     description: row.description,
-    category: row.category,
-    subcategory: row.subcategory,
+    serviceType: row.serviceType,
     defaultPrice: row.defaultPrice != null ? String(row.defaultPrice) : '',
     mappedSacCodeId: row.mappedSacCodeId ?? '',
     gstRateId: row.gstRateId ?? '',
@@ -41,10 +37,8 @@ export function useServiceForm(initialData?: ServiceMasterFormData) {
 
   const validate = () => {
     const next: Record<string, string> = {}
-    if (!formData.serviceCode.trim()) next.serviceCode = 'Service code is required'
     if (!formData.serviceName.trim()) next.serviceName = 'Service name is required'
-    if (!formData.category) next.category = 'Category is required'
-    if (!formData.subcategory) next.subcategory = 'Subcategory is required'
+    if (!formData.serviceType) next.serviceType = 'Service type is required'
     if (formData.applicableFor.length === 0) {
       next.applicableFor = 'Select at least one applicability'
     }

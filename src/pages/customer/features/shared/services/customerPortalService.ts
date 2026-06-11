@@ -1,5 +1,6 @@
 import { mockApplications, timelineStages, type CustomerApplication } from '../../../data/mockData'
 import { dashboardKpis, mockNotifications, pendingActions } from '../../dashboard/data/dashboardData'
+import { buildMarineDashboardApplications } from '../../dashboard/utils/marineDashboardUtils'
 import { mockApplicants, mockCorrections, mockDocuments, mockGlobalDocumentUploads } from '../../applications/data/applicationDetailData'
 import {
   applySingleApplicationDemoSeed,
@@ -22,6 +23,11 @@ import {
   getSessionCreatorMeta,
 } from '../../applications/utils/applicationAccessUtils'
 import { mergeVerificationIntoDetail } from '@/shared/services/applicationVerificationService'
+import {
+  buildApplicationProcessingTimeline,
+  deriveProcessingStageDates,
+  mapProcessingTimelineToCustomerTracking,
+} from '@/shared/utils/applicationProcessingTimeline'
 import { isApplicantDocumentSatisfied } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import { readApplicationFlowDraftFromSession } from '../../applications/utils/applicationFlowDraftStorage'
 import {
@@ -77,10 +83,23 @@ interface GetApplicationDetailOptions {
 export const customerPortalService = {
   getDashboard() {
     const session = loadSession()
-    const visibleIds = new Set(
-      filterApplicationsBySession([...mockSingleApplications, ...mockBulkBatches], session).map(r => r.id),
-    )
+    const visibleSingles = filterApplicationsBySession([...mockSingleApplications], session)
+    const visibleBulks = filterApplicationsBySession(mockBulkBatches, session)
+    const isMarinePortal = session?.customerType === 'marine'
+
+    if (isMarinePortal) {
+      return {
+        isMarinePortal: true,
+        kpis: dashboardKpis,
+        pendingActions,
+        notifications: mockNotifications,
+        applications: buildMarineDashboardApplications(visibleSingles, visibleBulks),
+      }
+    }
+
+    const visibleIds = new Set([...visibleSingles, ...visibleBulks].map(r => r.id))
     return {
+      isMarinePortal: false,
       kpis: dashboardKpis,
       pendingActions,
       notifications: mockNotifications,
@@ -367,7 +386,10 @@ function mapOperationalToApplicationStatus(label: string): ApplicationStatus {
   return 'in_review'
 }
 
-function bulkBatchToCustomerApplication(bulk: BulkBatchRow): CustomerApplication {
+function bulkBatchToCustomerApplication(
+  bulk: BulkBatchRow,
+  flowState: FlowDraftLikeState | null = null,
+): CustomerApplication {
   return {
     id: bulk.id,
     country: bulk.country,
@@ -380,6 +402,7 @@ function bulkBatchToCustomerApplication(bulk: BulkBatchRow): CustomerApplication
     updatedAt: bulk.lastUpdated,
     progress: Math.round((bulk.verifiedApplicants / Math.max(bulk.totalApplicants, 1)) * 100),
     eta: bulk.pendingCorrections > 0 ? `${bulk.pendingCorrections} corrections` : '—',
+    jurisdiction: bulk.jurisdiction ?? flowState?.jurisdiction,
   }
 }
 
@@ -392,6 +415,51 @@ function documentChecklistContext(
     countryId: flowState?.countryId,
     visaOfferingId: flowState?.visaOfferingId,
   }
+}
+
+function isApplicationSubmitted(row: SingleApplicationRow | BulkBatchRow): boolean {
+  return Boolean(row.submissionDate) && row.operationalStatus !== 'Draft'
+}
+
+function attachQueueProcessingStageDates<T extends UploadQueueRow>(
+  queueRow: T,
+  parent: SingleApplicationRow | BulkBatchRow,
+): T {
+  return {
+    ...queueRow,
+    processingStageDates:
+      queueRow.processingStageDates ??
+      parent.processingStageDates ??
+      deriveProcessingStageDates(parent),
+  }
+}
+
+function buildDetailTimeline(
+  row: SingleApplicationRow | BulkBatchRow,
+  uploadQueueRows: UploadQueueRow[],
+) {
+  const stageDates =
+    uploadQueueRows[0]?.processingStageDates ??
+    row.processingStageDates ??
+    deriveProcessingStageDates(row)
+  const primaryRow = uploadQueueRows[0]
+  const required = primaryRow?.documents.filter((doc) => doc.required) ?? []
+  const docsDone =
+    required.length === 0 || required.every((doc) => isApplicantDocumentSatisfied(doc))
+  const allVerified = required.length > 0 && required.every((doc) => doc.status === 'verified')
+  const hasRejection = required.some(
+    (doc) => doc.status === 'rejected' || doc.status === 'needs_review',
+  )
+
+  const steps = buildApplicationProcessingTimeline({
+    stageDates,
+    docsDone,
+    isSubmitted: isApplicationSubmitted(row),
+    allVerified,
+    hasRejection,
+  })
+
+  return mapProcessingTimelineToCustomerTracking(steps)
 }
 
 function buildSingleDetail(
@@ -411,17 +479,21 @@ function buildSingleDetail(
     updatedAt: row.lastUpdated,
     progress: row.operationalStatus === 'Draft' ? 22 : row.operationalStatus === 'Completed' ? 100 : 64,
     eta: row.operationalStatus === 'Completed' ? 'Completed' : row.submissionDate || 'Awaiting review',
+    jurisdiction: row.jurisdiction ?? flowState?.jurisdiction,
   }
   const draftRows = pickFlowRows(flowState, row.id)
   const checklistCtx = documentChecklistContext(row.country, flowState)
   const uploadQueueRows = normalizeUploadQueueRows(
     draftRows.length > 0
       ? draftRows.map((queueRow, index) =>
-          applySingleApplicationDemoSeed(row, {
-            ...queueRow,
-            gltsApplicationId: row.id,
-            sequenceNo: queueRow.sequenceNo ?? index + 1,
-          }),
+          attachQueueProcessingStageDates(
+            applySingleApplicationDemoSeed(row, {
+              ...queueRow,
+              gltsApplicationId: row.id,
+              sequenceNo: queueRow.sequenceNo ?? index + 1,
+            }),
+            row,
+          ),
         )
       : [singleRowToUploadQueue(row)],
     checklistCtx,
@@ -436,7 +508,7 @@ function buildSingleDetail(
     globalDocumentUploads:
       draftRows.length > 0 && flowState ? flowState.globalDocumentUploads : mockGlobalDocumentUploads,
     corrections: row.operationalStatus === 'Correction Required' ? mockCorrections : [],
-    timeline: timelineStages,
+    timeline: buildDetailTimeline(row, uploadQueueRows),
     selectedQueueHintId: uploadQueueRows[0]?.id ?? null,
     source: 'single',
   }
@@ -447,11 +519,13 @@ function buildBulkDetail(
   resolvedId: string | undefined,
   flowState: FlowDraftLikeState | null,
 ): ApplicationDetailViewModel {
-  const application = bulkBatchToCustomerApplication(row)
+  const application = bulkBatchToCustomerApplication(row, flowState)
   const draftRows = pickFlowRows(flowState, row.id)
   const checklistCtx = documentChecklistContext(row.country, flowState)
   const uploadQueueRows = normalizeUploadQueueRows(
-    draftRows.length > 0 ? draftRows : bulkRowToUploadQueue(row),
+    (draftRows.length > 0 ? draftRows : bulkRowToUploadQueue(row)).map((queueRow) =>
+      attachQueueProcessingStageDates(queueRow, row),
+    ),
     checklistCtx,
   )
   return {
@@ -464,7 +538,7 @@ function buildBulkDetail(
     globalDocumentUploads:
       draftRows.length > 0 && flowState ? flowState.globalDocumentUploads : mockGlobalDocumentUploads,
     corrections: row.pendingCorrections > 0 ? mockCorrections : [],
-    timeline: timelineStages,
+    timeline: buildDetailTimeline(row, uploadQueueRows),
     selectedQueueHintId: uploadQueueRows[0]?.id ?? null,
     source: 'bulk',
   }
@@ -496,7 +570,7 @@ function singleRowToUploadQueue(row: SingleApplicationRow): UploadQueueRow {
     documentsComplete,
     documentsTotal,
   }
-  return applySingleApplicationDemoSeed(row, base)
+  return attachQueueProcessingStageDates(applySingleApplicationDemoSeed(row, base), row)
 }
 
 function bulkRowToUploadQueue(row: BulkBatchRow): UploadQueueRow[] {

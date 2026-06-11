@@ -10,6 +10,9 @@ export type { FormSectionProps } from './FormSection'
 export { default as RichTextEditor } from './RichTextEditor'
 export type { RichTextEditorProps, ToolbarItem } from './RichTextEditor'
 
+export { default as RichTextContent } from './RichTextContent'
+export type { RichTextContentProps } from './RichTextContent'
+
 export { default as SearchInput } from './SearchInput'
 export type { SearchInputProps } from './SearchInput'
 

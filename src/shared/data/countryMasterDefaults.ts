@@ -3,6 +3,7 @@ import type {
   BusinessSegment,
   CountryDocumentChecklistItem,
   CountryDocumentMapping,
+  CountryJurisdictionDocumentRule,
   CountryProcessingRules,
   CountrySegmentConfig,
   CountryVisaOffering,
@@ -66,6 +67,7 @@ export function normalizeCountrySegments(segments: LegacySegment[]): CountrySegm
       )
       return {
         ...vt,
+        jurisdictions: vt.jurisdictions ?? [],
         applicationDocuments: hasExplicitApplication
           ? legacyVt.applicationDocuments!.map((item, i) =>
               slimChecklistItem(item as LegacyChecklistItem, i),
@@ -161,6 +163,29 @@ export function checklistToDocumentMappings(
     })
 }
 
+function jurisdictionRulesToChecklist(
+  rules: CountryJurisdictionDocumentRule[],
+): CountryDocumentChecklistItem[] {
+  return [...rules]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((rule, index) => ({
+      documentId: rule.documentId,
+      mandatory: rule.mandatory,
+      sortOrder: index,
+      description: rule.description,
+    }))
+}
+
+export function resolveVisaApplicationDocuments(visaType: CountryVisaType): CountryDocumentChecklistItem[] {
+  const primaryJurisdiction = visaType.jurisdictions?.[0]
+  if (primaryJurisdiction?.documents?.length) {
+    return jurisdictionRulesToChecklist(
+      primaryJurisdiction.documents.filter((d) => d.group !== 'optional'),
+    )
+  }
+  return visaType.applicationDocuments
+}
+
 export function mergeSegmentChecklist(
   commonDocuments: CountryDocumentChecklistItem[],
   applicationDocuments: CountryDocumentChecklistItem[],
@@ -179,7 +204,10 @@ export function visaTypeToOffering(
   workflowProfile: WorkflowProfile,
   commonDocuments: CountryDocumentChecklistItem[] = [],
 ): CountryVisaOffering {
-  const merged = mergeSegmentChecklist(commonDocuments, visaType.applicationDocuments)
+  const merged = mergeSegmentChecklist(
+    commonDocuments,
+    resolveVisaApplicationDocuments(visaType),
+  )
   const slug = visaType.name.toLowerCase().replace(/\s+/g, '_').slice(0, 32)
   const mappings = checklistToDocumentMappings(merged)
   return {
@@ -190,6 +218,7 @@ export function visaTypeToOffering(
     purposeLabel: visaType.purposeLabel ?? visaType.visaCategory,
     processingTimeline: visaType.processingTime,
     entryType: visaType.entryType,
+    approxCost: visaType.pricing,
     requirementSummary:
       visaType.requirementSummary ??
       mappings
@@ -216,6 +245,21 @@ export function syncVisaOfferingsFromSegments(segments: CountrySegmentConfig[]):
   return offerings
 }
 
+export function enrichVisaOfferingsApproxCost(
+  offerings: CountryVisaOffering[],
+  countryPrice = 0,
+): CountryVisaOffering[] {
+  return offerings.map(offering => ({
+    ...offering,
+    approxCost:
+      offering.approxCost != null && offering.approxCost > 0
+        ? offering.approxCost
+        : countryPrice > 0
+          ? countryPrice
+          : undefined,
+  }))
+}
+
 export function emptySegment(segment: BusinessSegment, enabled = false): CountrySegmentConfig {
   return {
     segment,
@@ -227,3 +271,10 @@ export function emptySegment(segment: BusinessSegment, enabled = false): Country
 }
 
 export const ALL_SEGMENTS: BusinessSegment[] = ['retail', 'corporate', 'marine', 'b2bAgents']
+
+export const SEGMENT_LABELS: Record<BusinessSegment, string> = {
+  retail: 'Retail',
+  corporate: 'Corporate',
+  marine: 'Marine',
+  b2bAgents: 'B2B Agents',
+}

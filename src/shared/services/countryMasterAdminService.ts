@@ -3,9 +3,22 @@ import {
   resetMockCountryMastersCache,
   setMockCountryMastersStore,
 } from '@/shared/data/mockCountryMasters'
-import { syncVisaOfferingsFromSegments } from '@/shared/data/countryMasterDefaults'
+import {
+  DEFAULT_JURISDICTION_PROCESSING_RULES,
+  generateDocumentRuleId,
+  generateJurisdictionId,
+} from '@/shared/data/countryJurisdictionDefaults'
+import {
+  ensureAllSegments,
+  emptySegment,
+  enrichVisaOfferingsApproxCost,
+  syncVisaOfferingsFromSegments,
+} from '@/shared/data/countryMasterDefaults'
+import { getCountryConfigSummary } from '@/shared/utils/countryConfigValidation'
 import type {
   BusinessSegment,
+  CountryConfigSummary,
+  CountryJurisdictionDocumentRule,
   CountryMaster,
   CountryMasterFormData,
   CountryMasterKpiCounts,
@@ -13,6 +26,9 @@ import type {
   CountryMasterStatus,
   CountrySegmentAggregates,
   CountrySegmentConfig,
+  CountryVisaJurisdiction,
+  CountryVisaType,
+  JurisdictionDocumentGroup,
 } from '@/shared/types/countryMaster'
 
 function nowIso() {
@@ -38,7 +54,10 @@ function withSyncedOfferings(
   return {
     ...master,
     updatedAt,
-    visaOfferings: syncVisaOfferingsFromSegments(master.segments),
+    visaOfferings: enrichVisaOfferingsApproxCost(
+      syncVisaOfferingsFromSegments(master.segments),
+      master.price,
+    ),
   }
 }
 
@@ -51,9 +70,74 @@ function generateActivityId(): string {
   return `act-${Date.now()}-${Math.floor(Math.random() * 1000)}`
 }
 
+function generateVisaTypeId(): string {
+  return `vt-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+}
+
+function masterToFormData(master: CountryMaster): CountryMasterFormData {
+  return {
+    code: master.code,
+    name: master.name,
+    flag: master.flag,
+    region: master.region,
+    status: master.status,
+    processingType: master.processingType,
+    embassyNotes: master.embassyNotes ?? '',
+    internalNotes: master.internalNotes ?? '',
+    cities: master.cities,
+    heroPhotoId: master.heroPhotoId,
+    processingTime: master.processingTime,
+    price: master.price,
+    rating: master.rating,
+    trending: master.trending,
+    trendingPercent: master.trendingPercent,
+    visaCategory: master.visaCategory,
+    validity: master.validity,
+    fastMinutes: master.fastMinutes,
+    visaApplicationWindow:
+      master.visaApplicationWindow ?? { unit: 'days' as const, value: 30 },
+    passportIssueLocations: master.passportIssueLocations ?? [],
+    segments: master.segments,
+  }
+}
+
+function updateMaster(
+  id: string,
+  updater: (existing: CountryMaster) => CountryMaster,
+): CountryMaster | undefined {
+  const index = getStore().findIndex((row) => row.id === id)
+  if (index < 0) return undefined
+  const existing = getStore()[index]
+  const timestamp = nowIso()
+  const updated = withSyncedOfferings({
+    ...updater(existing),
+    updatedAt: timestamp,
+    activities: [
+      {
+        id: generateActivityId(),
+        timestamp,
+        actor: 'Admin User',
+        action: 'Configuration updated',
+      },
+      ...existing.activities,
+    ],
+  })
+  const rows = [...getStore()]
+  rows[index] = updated
+  persist(rows)
+  return updated
+}
+
+function mapSegments(
+  country: CountryMaster,
+  mapper: (segments: CountrySegmentConfig[]) => CountrySegmentConfig[],
+): CountryMaster {
+  return { ...country, segments: mapper(country.segments) }
+}
+
 export const countryMasterAdminService = {
   list(filters: CountryMasterListFilters = {}): CountryMaster[] {
-    const { status = 'all', segment = 'all', processingType = 'all', query } = filters
+    const { status = 'all', segment = 'all', processingType = 'all', region = 'all', query } = filters
     const q = normalizeQuery(query)
     let rows = [...getStore()]
 
@@ -63,6 +147,10 @@ export const countryMasterAdminService = {
 
     if (processingType !== 'all') {
       rows = rows.filter((row) => row.processingType === processingType)
+    }
+
+    if (region !== 'all' && region) {
+      rows = rows.filter((row) => row.region === region)
     }
 
     if (segment !== 'all') {
@@ -112,6 +200,9 @@ export const countryMasterAdminService = {
       visaTypeCount += cfg.visaTypes.length
       for (const vt of cfg.visaTypes) {
         checklistCount += vt.applicationDocuments?.length ?? 0
+        for (const jur of vt.jurisdictions ?? []) {
+          checklistCount += jur.documents?.length ?? 0
+        }
       }
     }
     return { visaTypeCount, checklistCount }
@@ -129,6 +220,19 @@ export const countryMasterAdminService = {
     return { total: rows.length, active, inactive, draft }
   },
 
+  getValidationWarnings(countryId: string): CountryConfigSummary {
+    const country = this.getById(countryId)
+    if (!country) {
+      return { totalSegments: 0, totalVisaTypes: 0, totalJurisdictions: 0, totalDocuments: 0, warnings: [] }
+    }
+    return getCountryConfigSummary(country)
+  },
+
+  getDistinctRegions(): string[] {
+    const regions = new Set(getStore().map((r) => r.region).filter(Boolean))
+    return [...regions].sort()
+  },
+
   isCodeTaken(code: string, excludeId?: string): boolean {
     const normalized = code.trim().toUpperCase()
     return getStore().some(
@@ -141,6 +245,7 @@ export const countryMasterAdminService = {
     const record = withSyncedOfferings({
       id: generateCountryId(),
       ...data,
+      segments: ensureAllSegments(data.segments),
       createdAt: timestamp,
       updatedAt: timestamp,
       activities: [
@@ -166,6 +271,7 @@ export const countryMasterAdminService = {
     const updated = withSyncedOfferings({
       ...existing,
       ...data,
+      segments: ensureAllSegments(data.segments),
       id: existing.id,
       createdAt: existing.createdAt,
       activities: [
@@ -207,31 +313,408 @@ export const countryMasterAdminService = {
     return this.create(submitData)
   },
 
+  publish(id: string): CountryMaster | undefined {
+    const existing = this.getById(id)
+    if (!existing) return undefined
+    return this.submit(id, { ...masterToFormData(existing), status: 'active' })
+  },
+
   setStatus(id: string, status: CountryMasterStatus): CountryMaster | undefined {
     const existing = this.getById(id)
     if (!existing) return undefined
-    return this.update(id, {
-      code: existing.code,
-      name: existing.name,
-      flag: existing.flag,
-      region: existing.region,
-      status,
-      processingType: existing.processingType,
-      embassyNotes: existing.embassyNotes ?? '',
-      internalNotes: existing.internalNotes ?? '',
-      cities: existing.cities,
-      heroPhotoId: existing.heroPhotoId,
-      processingTime: existing.processingTime,
-      price: existing.price,
-      rating: existing.rating,
-      trending: existing.trending,
-      trendingPercent: existing.trendingPercent,
-      visaCategory: existing.visaCategory,
-      validity: existing.validity,
-      fastMinutes: existing.fastMinutes,
-      passportIssueLocations: existing.passportIssueLocations ?? [],
-      segments: existing.segments,
+    return this.update(id, { ...masterToFormData(existing), status })
+  },
+
+  duplicate(id: string): CountryMaster | undefined {
+    const existing = this.getById(id)
+    if (!existing) return undefined
+    const timestamp = nowIso()
+    const copy = withSyncedOfferings({
+      ...existing,
+      id: generateCountryId(),
+      code: `${existing.code}-COPY`,
+      name: `${existing.name} (Copy)`,
+      status: 'draft',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      activities: [
+        {
+          id: generateActivityId(),
+          timestamp,
+          actor: 'Admin User',
+          action: 'Country duplicated',
+          detail: `Duplicated from ${existing.name}`,
+        },
+      ],
     })
+    persist([copy, ...getStore()])
+    return copy
+  },
+
+  archive(id: string): CountryMaster | undefined {
+    const existing = this.getById(id)
+    if (!existing) return undefined
+    return updateMaster(id, (master) => ({
+      ...master,
+      status: 'inactive',
+      activities: [
+        {
+          id: generateActivityId(),
+          timestamp: nowIso(),
+          actor: 'Admin User',
+          action: 'Country archived',
+        },
+        ...master.activities,
+      ],
+    }))
+  },
+
+  toggleSegment(countryId: string, segment: BusinessSegment, enabled: boolean): CountryMaster | undefined {
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) => (s.segment === segment ? { ...s, enabled } : s)),
+      ),
+    )
+  },
+
+  addVisaType(
+    countryId: string,
+    segment: BusinessSegment,
+    data: Omit<CountryVisaType, 'id' | 'jurisdictions' | 'applicationDocuments' | 'prioritySupport'> & {
+      applicationDocuments?: CountryVisaType['applicationDocuments']
+    },
+  ): CountryMaster | undefined {
+    const newVisa: CountryVisaType = {
+      id: generateVisaTypeId(),
+      prioritySupport: false,
+      jurisdictions: [],
+      applicationDocuments: data.applicationDocuments ?? [],
+      ...data,
+    }
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment ? { ...s, visaTypes: [...s.visaTypes, newVisa] } : s,
+        ),
+      ),
+    )
+  },
+
+  updateVisaType(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    data: Partial<CountryVisaType>,
+  ): CountryMaster | undefined {
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? {
+                ...s,
+                visaTypes: s.visaTypes.map((vt) =>
+                  vt.id === visaTypeId ? { ...vt, ...data, id: vt.id } : vt,
+                ),
+              }
+            : s,
+        ),
+      ),
+    )
+  },
+
+  removeVisaType(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+  ): CountryMaster | undefined {
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? { ...s, visaTypes: s.visaTypes.filter((vt) => vt.id !== visaTypeId) }
+            : s,
+        ),
+      ),
+    )
+  },
+
+  addJurisdiction(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    data: Omit<CountryVisaJurisdiction, 'id' | 'documents' | 'processingRules'> & {
+      documents?: CountryVisaJurisdiction['documents']
+      processingRules?: CountryVisaJurisdiction['processingRules']
+    },
+  ): CountryMaster | undefined {
+    const newJur: CountryVisaJurisdiction = {
+      id: generateJurisdictionId(),
+      documents: data.documents ?? [],
+      processingRules: data.processingRules ?? { ...DEFAULT_JURISDICTION_PROCESSING_RULES },
+      ...data,
+    }
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? {
+                ...s,
+                visaTypes: s.visaTypes.map((vt) =>
+                  vt.id === visaTypeId
+                    ? { ...vt, jurisdictions: [...(vt.jurisdictions ?? []), newJur] }
+                    : vt,
+                ),
+              }
+            : s,
+        ),
+      ),
+    )
+  },
+
+  updateJurisdiction(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    jurisdictionId: string,
+    data: Partial<CountryVisaJurisdiction>,
+  ): CountryMaster | undefined {
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? {
+                ...s,
+                visaTypes: s.visaTypes.map((vt) =>
+                  vt.id === visaTypeId
+                    ? {
+                        ...vt,
+                        jurisdictions: (vt.jurisdictions ?? []).map((j) =>
+                          j.id === jurisdictionId ? { ...j, ...data, id: j.id } : j,
+                        ),
+                      }
+                    : vt,
+                ),
+              }
+            : s,
+        ),
+      ),
+    )
+  },
+
+  removeJurisdiction(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    jurisdictionId: string,
+  ): CountryMaster | undefined {
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? {
+                ...s,
+                visaTypes: s.visaTypes.map((vt) =>
+                  vt.id === visaTypeId
+                    ? {
+                        ...vt,
+                        jurisdictions: (vt.jurisdictions ?? []).filter((j) => j.id !== jurisdictionId),
+                      }
+                    : vt,
+                ),
+              }
+            : s,
+        ),
+      ),
+    )
+  },
+
+  upsertJurisdictionDocument(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    jurisdictionId: string,
+    rule: CountryJurisdictionDocumentRule,
+  ): CountryMaster | undefined {
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? {
+                ...s,
+                visaTypes: s.visaTypes.map((vt) =>
+                  vt.id === visaTypeId
+                    ? {
+                        ...vt,
+                        jurisdictions: (vt.jurisdictions ?? []).map((j) => {
+                          if (j.id !== jurisdictionId) return j
+                          const exists = j.documents.some((d) => d.id === rule.id)
+                          const documents = exists
+                            ? j.documents.map((d) => (d.id === rule.id ? rule : d))
+                            : [...j.documents, rule]
+                          return { ...j, documents }
+                        }),
+                      }
+                    : vt,
+                ),
+              }
+            : s,
+        ),
+      ),
+    )
+  },
+
+  addJurisdictionDocumentFromMaster(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    jurisdictionId: string,
+    documentId: string,
+    group: JurisdictionDocumentGroup,
+    description?: string,
+  ): CountryMaster | undefined {
+    const rule: CountryJurisdictionDocumentRule = {
+      id: generateDocumentRuleId(),
+      documentId,
+      group,
+      mandatory: group !== 'optional',
+      ocrEnabled: documentId === 'passport',
+      multipleUpload: false,
+      commonDocument: group === 'common',
+      description: description?.trim() || undefined,
+      acceptedFormats: ['PDF', 'JPG', 'PNG'],
+      sortOrder: 0,
+    }
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? {
+                ...s,
+                visaTypes: s.visaTypes.map((vt) =>
+                  vt.id === visaTypeId
+                    ? {
+                        ...vt,
+                        jurisdictions: (vt.jurisdictions ?? []).map((j) => {
+                          if (j.id !== jurisdictionId) return j
+                          return {
+                            ...j,
+                            documents: [
+                              ...j.documents,
+                              { ...rule, sortOrder: j.documents.length },
+                            ],
+                          }
+                        }),
+                      }
+                    : vt,
+                ),
+              }
+            : s,
+        ),
+      ),
+    )
+  },
+
+  reorderJurisdictionDocuments(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    jurisdictionId: string,
+    documentIds: string[],
+  ): CountryMaster | undefined {
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? {
+                ...s,
+                visaTypes: s.visaTypes.map((vt) =>
+                  vt.id === visaTypeId
+                    ? {
+                        ...vt,
+                        jurisdictions: (vt.jurisdictions ?? []).map((j) => {
+                          if (j.id !== jurisdictionId) return j
+                          const byId = new Map(j.documents.map((d) => [d.id, d]))
+                          const reordered = documentIds
+                            .map((id, index) => {
+                              const doc = byId.get(id)
+                              return doc ? { ...doc, sortOrder: index } : null
+                            })
+                            .filter((d): d is CountryJurisdictionDocumentRule => d !== null)
+                          return { ...j, documents: reordered }
+                        }),
+                      }
+                    : vt,
+                ),
+              }
+            : s,
+        ),
+      ),
+    )
+  },
+
+  removeJurisdictionDocument(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    jurisdictionId: string,
+    documentRuleId: string,
+  ): CountryMaster | undefined {
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? {
+                ...s,
+                visaTypes: s.visaTypes.map((vt) =>
+                  vt.id === visaTypeId
+                    ? {
+                        ...vt,
+                        jurisdictions: (vt.jurisdictions ?? []).map((j) =>
+                          j.id === jurisdictionId
+                            ? {
+                                ...j,
+                                documents: j.documents.filter((d) => d.id !== documentRuleId),
+                              }
+                            : j,
+                        ),
+                      }
+                    : vt,
+                ),
+              }
+            : s,
+        ),
+      ),
+    )
+  },
+
+  createEmptyCountryFormData(name: string, code: string, region: string): CountryMasterFormData {
+    return {
+      code,
+      name,
+      flag: '🏳️',
+      region,
+      status: 'draft',
+      processingType: 'embassy',
+      embassyNotes: '',
+      internalNotes: '',
+      cities: '',
+      heroPhotoId: 'default',
+      processingTime: 'TBD',
+      price: 0,
+      rating: 0,
+      trending: false,
+      trendingPercent: 0,
+      visaCategory: 'Tourism',
+      validity: '30 days',
+      visaApplicationWindow: { unit: 'days', value: 30 },
+      passportIssueLocations: [],
+      segments: ensureAllSegments([
+        emptySegment('retail', true),
+        emptySegment('corporate', false),
+        emptySegment('marine', false),
+        emptySegment('b2bAgents', false),
+      ]),
+    }
   },
 
   resetStore(): void {

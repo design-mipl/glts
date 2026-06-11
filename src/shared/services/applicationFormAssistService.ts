@@ -6,14 +6,23 @@ import type { ApplicationOperationalStatus } from '@/pages/customer/features/app
 
 const FORM_ASSIST_STORAGE_KEY = 'glts:application-form-assist'
 
+export type FormAssistPaymentMode = 'card' | 'cash' | 'bank_transfer' | 'upi'
+export type FormAssistReceiptStatus = 'awaited' | 'received' | 'not_applicable'
+
 export interface FormAssistSubmissionDraft {
-  appointmentDate: string
-  appointmentReference: string
-  externalPortalReference: string
-  remarks: string
-  appointmentPdfFileName: string
-  submissionConfirmationPdfFileName: string
-  confirmationEmailFileName: string
+  submissionDate: string
+  submissionReferenceNumber: string
+  submittedBy: string
+  tentativeCollectionDate: string
+  confirmationPdfFileName: string
+  invoicePdfFileName: string
+  paymentDate: string
+  paymentMode: FormAssistPaymentMode
+  cardName: string
+  paymentReferenceNumber: string
+  amountPaid: string
+  receiptStatus: FormAssistReceiptStatus
+  paymentRemarks: string
 }
 
 export interface FormAssistRecord {
@@ -28,13 +37,19 @@ export interface FormAssistRecord {
 }
 
 export const EMPTY_FORM_ASSIST_SUBMISSION: FormAssistSubmissionDraft = {
-  appointmentDate: '',
-  appointmentReference: '',
-  externalPortalReference: '',
-  remarks: '',
-  appointmentPdfFileName: '',
-  submissionConfirmationPdfFileName: '',
-  confirmationEmailFileName: '',
+  submissionDate: '',
+  submissionReferenceNumber: '',
+  submittedBy: '',
+  tentativeCollectionDate: '',
+  confirmationPdfFileName: '',
+  invoicePdfFileName: '',
+  paymentDate: '',
+  paymentMode: 'card',
+  cardName: '',
+  paymentReferenceNumber: '',
+  amountPaid: '',
+  receiptStatus: 'awaited',
+  paymentRemarks: '',
 }
 
 type FormAssistStore = Record<string, FormAssistRecord>
@@ -62,10 +77,43 @@ function writeStore(store: FormAssistStore) {
   }
 }
 
+function isPaymentMode(value: string | undefined): value is FormAssistPaymentMode {
+  return value === 'card' || value === 'cash' || value === 'bank_transfer' || value === 'upi'
+}
+
+function isReceiptStatus(value: string | undefined): value is FormAssistReceiptStatus {
+  return value === 'awaited' || value === 'received' || value === 'not_applicable'
+}
+
+function normalizeSubmission(
+  submission: Partial<FormAssistSubmissionDraft> & Record<string, string | undefined>,
+): FormAssistSubmissionDraft {
+  const legacy = submission as Record<string, string | undefined>
+  return {
+    ...EMPTY_FORM_ASSIST_SUBMISSION,
+    submissionDate: submission.submissionDate ?? legacy.appointmentDate ?? '',
+    submissionReferenceNumber:
+      submission.submissionReferenceNumber ?? legacy.appointmentReference ?? '',
+    submittedBy: submission.submittedBy ?? '',
+    tentativeCollectionDate: submission.tentativeCollectionDate ?? '',
+    confirmationPdfFileName: submission.confirmationPdfFileName ?? legacy.confirmationPdfFileName ?? '',
+    invoicePdfFileName: submission.invoicePdfFileName ?? legacy.invoicePdfFileName ?? '',
+    paymentDate: submission.paymentDate ?? '',
+    paymentMode: isPaymentMode(submission.paymentMode) ? submission.paymentMode : 'card',
+    cardName: submission.cardName ?? '',
+    paymentReferenceNumber:
+      submission.paymentReferenceNumber ?? legacy.externalPortalReference ?? '',
+    amountPaid: submission.amountPaid ?? '',
+    receiptStatus: isReceiptStatus(submission.receiptStatus) ? submission.receiptStatus : 'awaited',
+    paymentRemarks: submission.paymentRemarks ?? legacy.remarks ?? '',
+  }
+}
+
 function getRecord(applicationId: string, travelerRowId: string): FormAssistRecord {
   const store = readStore()
-  return (
-    store[recordKey(applicationId, travelerRowId)] ?? {
+  const stored = store[recordKey(applicationId, travelerRowId)]
+  if (!stored) {
+    return {
       applicationId,
       travelerRowId,
       completedStepIds: [],
@@ -73,7 +121,11 @@ function getRecord(applicationId: string, travelerRowId: string): FormAssistReco
       externalPortalSubmitted: false,
       submission: { ...EMPTY_FORM_ASSIST_SUBMISSION },
     }
-  )
+  }
+  return {
+    ...stored,
+    submission: normalizeSubmission(stored.submission as FormAssistSubmissionDraft & Record<string, string>),
+  }
 }
 
 function saveRecord(record: FormAssistRecord) {
@@ -171,15 +223,23 @@ export const applicationFormAssistService = {
 
   validateSubmission(submission: FormAssistSubmissionDraft): string[] {
     const errors: string[] = []
-    if (!submission.appointmentDate.trim()) errors.push('Appointment date is required')
-    if (!submission.appointmentReference.trim()) errors.push('Appointment reference is required')
-    if (!submission.externalPortalReference.trim()) errors.push('External portal reference no. is required')
-    if (!submission.appointmentPdfFileName.trim()) errors.push('Appointment PDF is required')
-    if (!submission.submissionConfirmationPdfFileName.trim()) {
-      errors.push('Submission confirmation PDF is required')
+    if (!submission.submissionDate.trim()) errors.push('Submission date is required')
+    if (!submission.submissionReferenceNumber.trim()) {
+      errors.push('Submission reference number is required')
     }
-    if (!submission.confirmationEmailFileName.trim()) {
-      errors.push('Confirmation email PDF/screenshot is required')
+    if (!submission.submittedBy.trim()) errors.push('Submitted by is required')
+    if (!submission.tentativeCollectionDate.trim()) {
+      errors.push('Tentative collection date is required')
+    }
+    if (!submission.confirmationPdfFileName.trim()) errors.push('Confirmation PDF is required')
+    if (!submission.invoicePdfFileName.trim()) errors.push('Invoice PDF is required')
+    if (!submission.paymentDate.trim()) errors.push('Payment date is required')
+    if (!submission.paymentReferenceNumber.trim()) {
+      errors.push('Payment reference number is required')
+    }
+    if (!submission.amountPaid.trim()) errors.push('Amount paid is required')
+    if (submission.paymentMode === 'card' && !submission.cardName.trim()) {
+      errors.push('Card name is required for card payments')
     }
     return errors
   },
@@ -194,7 +254,7 @@ export const applicationFormAssistService = {
       ...current,
       externalPortalSubmitted: true,
       submittedAt: new Date().toISOString(),
-      completedStepIds: [...new Set([...current.completedStepIds, 'review'])],
+      completedStepIds: [...new Set([...current.completedStepIds, 'review', 'submission'])],
     }
     saveRecord(next)
     syncListingAfterExternalSubmit(applicationId)

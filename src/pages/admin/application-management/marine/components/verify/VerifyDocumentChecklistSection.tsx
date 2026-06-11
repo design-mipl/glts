@@ -1,4 +1,4 @@
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Divider, Stack, Typography } from '@mui/material'
 import { Eye, RotateCcw, ShieldCheck, Upload, XCircle } from 'lucide-react'
 import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
@@ -12,6 +12,21 @@ import {
   type SimpleDocumentRequirementId,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import { documentBadgeColor, verifyDocumentBadgeLabel } from '../../utils/verifyDocumentsUtils'
+
+const VERIFY_DOCUMENT_CARD_SX = {
+  p: 2,
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  borderWidth: 1,
+  borderColor: 'divider',
+} as const
+
+export const VERIFY_DOCUMENT_GRID_SX = {
+  display: 'grid',
+  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+  gap: 1.5,
+} as const
 
 interface VerifyDocumentCardProps {
   document: ApplicantDocumentItem
@@ -49,10 +64,15 @@ export function VerifyDocumentCard({
   const displayStatus = verifyDocumentBadgeLabel(document)
 
   return (
-    <BaseCard sx={{ p: 2 }}>
-      <Stack spacing={1.5}>
-        <Stack spacing={0.5}>
-          <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
+    <BaseCard sx={VERIFY_DOCUMENT_CARD_SX}>
+      <Stack spacing={1.5} sx={{ flex: 1 }}>
+        <Stack
+          direction="row"
+          alignItems="flex-start"
+          justifyContent="space-between"
+          spacing={1}
+        >
+          <Typography variant="subtitle2" fontWeight={700} sx={{ minWidth: 0, flex: 1, fontSize: 13 }}>
             {document.name}
             {document.required ? (
               <Typography component="span" color="error.main" sx={{ ml: 0.25 }}>
@@ -60,26 +80,24 @@ export function VerifyDocumentCard({
               </Typography>
             ) : null}
           </Typography>
+          <Badge
+            label={displayStatus}
+            color={documentBadgeColor(status, document)}
+            size="sm"
+          />
+        </Stack>
+
+        <Stack spacing={0.75} sx={{ flex: 1 }}>
           {reqType ? (
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Typography variant="caption" color="text.secondary">
+            <Stack direction="row" alignItems="center" spacing={0.75} flexWrap="wrap" useFlexGap>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
                 Requirement type:
               </Typography>
-              <Typography variant="caption" fontWeight={600}>
+              <Typography variant="caption" fontWeight={600} sx={{ fontSize: 12 }}>
                 {reqType}
               </Typography>
             </Stack>
           ) : null}
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Typography variant="caption" color="text.secondary">
-              Current status:
-            </Typography>
-            <Badge
-              label={displayStatus}
-              color={documentBadgeColor(status, document)}
-              size="sm"
-            />
-          </Stack>
           {!isSimple ? (
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
               {documentStatusLabel(document)}
@@ -93,7 +111,6 @@ export function VerifyDocumentCard({
           {document.reviewComment?.trim() ? (
             <Box
               sx={{
-                mt: 0.5,
                 px: 1.25,
                 py: 0.75,
                 borderRadius: 1,
@@ -111,7 +128,10 @@ export function VerifyDocumentCard({
             </Box>
           ) : null}
         </Stack>
-        <Stack direction="row" flexWrap="wrap" gap={1}>
+
+        <Divider />
+
+        <Stack direction="row" flexWrap="wrap" gap={1} useFlexGap>
           {showGltsUpload ? (
             <Button
               label={simpleDocumentUploadActionLabel(document.documentId as SimpleDocumentRequirementId)}
@@ -161,6 +181,8 @@ export function VerifyDocumentCard({
 
 interface VerifyDocumentChecklistSectionProps {
   countryTitle: string
+  /** When set, used as the full section heading instead of `Checklist · {countryTitle}`. */
+  sectionTitle?: string
   documents: ApplicantDocumentItem[]
   onPreview: (documentId: string) => void
   onVerify: (documentId: string) => void
@@ -171,6 +193,7 @@ interface VerifyDocumentChecklistSectionProps {
 
 export function VerifyDocumentChecklistSection({
   countryTitle,
+  sectionTitle,
   documents,
   onPreview,
   onVerify,
@@ -181,19 +204,21 @@ export function VerifyDocumentChecklistSection({
   return (
     <Stack spacing={1.5}>
       <Typography variant="subtitle2" fontWeight={700}>
-        Checklist · {countryTitle}
+        {sectionTitle ?? `Checklist · ${countryTitle}`}
       </Typography>
-      {documents.map(doc => (
-        <VerifyDocumentCard
-          key={doc.documentId}
-          document={doc}
-          onPreview={() => onPreview(doc.documentId)}
-          onVerify={() => onVerify(doc.documentId)}
-          onReject={() => onReject(doc)}
-          onRequestReupload={() => onRequestReupload(doc)}
-          onGltsUpload={onGltsUpload ? () => onGltsUpload(doc) : undefined}
-        />
-      ))}
+      <Box sx={VERIFY_DOCUMENT_GRID_SX}>
+        {documents.map(doc => (
+          <VerifyDocumentCard
+            key={doc.documentId}
+            document={doc}
+            onPreview={() => onPreview(doc.documentId)}
+            onVerify={() => onVerify(doc.documentId)}
+            onReject={() => onReject(doc)}
+            onRequestReupload={() => onRequestReupload(doc)}
+            onGltsUpload={onGltsUpload ? () => onGltsUpload(doc) : undefined}
+          />
+        ))}
+      </Box>
     </Stack>
   )
 }
@@ -217,7 +242,8 @@ export function VerifyGlobalDocumentChecklist({
 
   return (
     <VerifyDocumentChecklistSection
-      countryTitle="Global documents"
+      countryTitle="Common Document Checklist"
+      sectionTitle="Common Document Checklist"
       documents={documents}
       onPreview={onPreview}
       onVerify={onVerify}

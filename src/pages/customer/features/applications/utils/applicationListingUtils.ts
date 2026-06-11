@@ -1,4 +1,8 @@
-import type { BulkBatchRow, SingleApplicationRow } from '../data/applicationFlowData'
+import {
+  formatBulkApplicantListingLabel,
+  type BulkBatchRow,
+  type SingleApplicationRow,
+} from '../data/applicationFlowData'
 import type {
   ApplicationListingFilterState,
   ApplicationListingTab,
@@ -101,9 +105,10 @@ export function getListingCellValue(row: ApplicationListingRow, key: string): st
     return isBulkRow(row) ? String(row.totalApplicants) : '1'
   }
   if (key === 'applicantName') {
-    return isBulkRow(row) ? `${row.totalApplicants} travelers` : row.applicantName
+    return isBulkRow(row) ? formatBulkApplicantListingLabel(row) : row.applicantName
   }
   if (key === 'companyName') return resolveApplicationCompanyName(row)
+  if (key === 'jurisdiction') return row.jurisdiction?.trim() || '—'
   if (isBulkRow(row)) {
     if (key === 'totalApplicants') return String(row.totalApplicants)
     if (key === 'verifiedApplicants') return String(row.verifiedApplicants)

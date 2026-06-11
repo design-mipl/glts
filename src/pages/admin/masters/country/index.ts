@@ -1,4 +1,3 @@
 export { CountryListingPage } from './pages/CountryListingPage'
-export { CountryDetailPage } from './pages/CountryDetailPage'
-export { CreateCountryPage } from './pages/CreateCountryPage'
-export { EditCountryPage } from './pages/EditCountryPage'
+export { CountryConfigWorkspacePage } from './pages/CountryConfigWorkspacePage'
+export { EditCountryConfigWorkspacePage } from './pages/EditCountryConfigWorkspacePage'

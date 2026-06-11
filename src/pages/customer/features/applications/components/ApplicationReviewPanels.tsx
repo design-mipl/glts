@@ -7,9 +7,10 @@ import { buildGlobalChecklistItems } from '../utils/globalDocumentChecklist'
 import { buildGlobalDocumentsForVerification } from '@/shared/services/applicationVerificationService'
 import { isSimpleDocumentRequirement } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import { SimpleDocumentRequirementPanel } from './documentWorkflow'
-import { ApplicationProcessingTimeline, type ApplicationProcessingTimelineStep } from './ApplicationProcessingTimeline'
+import { ApplicationProcessingTimeline } from './ApplicationProcessingTimeline'
 import type { UploadQueueRow } from '../data/applicationFlowData'
-import type { SubmitTimelineStatus } from '../types/applicationDetail.types'
+import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
+import { buildApplicationProcessingTimeline } from '@/shared/utils/applicationProcessingTimeline'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 
 export interface ApplicationReviewOverview {
@@ -30,7 +31,7 @@ interface ApplicationReviewPanelsProps {
   applicationId?: string
   corrections?: ChecklistCorrectionRef[]
   globalDocumentUploads: Record<string, { fileName: string; uploadedAt: string }>
-  timelineSteps?: Array<{ id: string; label: string; status: SubmitTimelineStatus }>
+  timelineSteps?: ApplicationProcessingTimelineStep[]
   helperText?: string
   onReuploadDocument?: (item: CustomerChecklistItem) => void
 }
@@ -41,42 +42,11 @@ function queueReadyRows(rows: UploadQueueRow[]) {
 
 export function buildSubmitTimeline(row: UploadQueueRow | null): ApplicationProcessingTimelineStep[] {
   const docsDone = row ? row.documentsTotal === 0 || row.documentsComplete >= row.documentsTotal : false
-  const submitted = false
-  const appointmentBooked = false
-  const embassyProcessing = false
-  const passportReady = false
-  const dispatch = false
-  const delivered = false
-
-  return [
-    { id: 'ready', label: 'Ready of submission', status: docsDone ? 'completed' : 'active' },
-    { id: 'submitted', label: 'Submitted', status: submitted ? 'completed' : docsDone ? 'active' : 'pending' },
-    {
-      id: 'appointment',
-      label: 'Appointment booked',
-      status: appointmentBooked ? 'completed' : submitted ? 'active' : 'pending',
-    },
-    {
-      id: 'embassy',
-      label: 'Embassy processing',
-      status: embassyProcessing ? 'completed' : appointmentBooked ? 'active' : 'pending',
-    },
-    {
-      id: 'passport-ready',
-      label: 'Passport ready',
-      status: passportReady ? 'completed' : embassyProcessing ? 'active' : 'pending',
-    },
-    {
-      id: 'dispatch',
-      label: 'Dispatch',
-      status: dispatch ? 'completed' : passportReady ? 'active' : 'pending',
-    },
-    {
-      id: 'delivered',
-      label: 'Delivered',
-      status: delivered ? 'completed' : dispatch ? 'active' : 'pending',
-    },
-  ]
+  return buildApplicationProcessingTimeline({
+    stageDates: row?.processingStageDates,
+    docsDone,
+    isSubmitted: false,
+  })
 }
 
 export function ApplicationReviewPanels({
@@ -249,7 +219,7 @@ export function ApplicationReviewPanels({
 
       <Box sx={{ mb: 2 }}>
         <CustomerDocumentChecklist
-          country="Global documents"
+          title="Common Document Checklist"
           items={globalChecklist}
           onReuploadItem={onReuploadDocument}
         />
@@ -257,28 +227,38 @@ export function ApplicationReviewPanels({
 
       {globalUploadEntries.length > 0 ? (
         <Card sx={{ p: 2, borderRadius: '12px', border: `1px solid ${colors.border}`, mb: 2 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 1 }}>Global documents</Typography>
-          <Stack spacing={1}>
+          <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 1.5 }}>Uploaded common documents</Typography>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+              gap: 1.5,
+            }}
+          >
             {globalUploadEntries.map(([docId, meta]) => (
-              <Stack
+              <Card
                 key={docId}
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                sx={{ p: 1, borderRadius: '10px', border: `1px solid ${colors.border}` }}
+                elevation={0}
+                sx={{
+                  p: 1.5,
+                  height: '100%',
+                  borderRadius: '10px',
+                  border: `1px solid ${colors.border}`,
+                  bgcolor: colors.white,
+                }}
               >
-                <Box>
-                  <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: colors.navy }}>
-                    {docId === 'loi' ? 'LOI (Letter of Intent)' : docId.toUpperCase()}
-                  </Typography>
-                  <Typography sx={{ fontSize: 11, color: colors.textSecondary }}>{meta.fileName}</Typography>
-                </Box>
-                <Typography sx={{ fontSize: 11, color: colors.textMuted }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 700, color: colors.navy }}>
+                  {docId === 'loi' ? 'LOI (Letter of Intent)' : docId.toUpperCase()}
+                </Typography>
+                <Typography sx={{ fontSize: 12, color: colors.textSecondary, mt: 0.5 }}>
+                  {meta.fileName}
+                </Typography>
+                <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.75 }}>
                   Uploaded {new Date(meta.uploadedAt).toLocaleDateString()}
                 </Typography>
-              </Stack>
+              </Card>
             ))}
-          </Stack>
+          </Box>
         </Card>
       ) : null}
     </>
