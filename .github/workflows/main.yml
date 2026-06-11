@@ -49,7 +49,7 @@ jobs:
       - name: Stop existing PM2 process
         working-directory: /var/www/glts
         run: |
-          pm2 restart 11
+          pm2 restart glts
           sleep 2
   
       - name: Show PM2 logs
