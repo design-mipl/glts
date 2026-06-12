@@ -50,6 +50,14 @@ export function CountryOverviewPanel({
     })
   }
 
+  const patchTravelDateRiskThresholds = (
+    partial: Partial<CountryMasterFormData['travelDateRiskThresholds']>,
+  ) => {
+    patch({
+      travelDateRiskThresholds: { ...formData.travelDateRiskThresholds, ...partial },
+    })
+  }
+
   const countryNameOptions = useMemo(
     () => buildCountryReferenceSelectOptions({ name: formData.name, code: formData.code }),
     [formData.name, formData.code],
@@ -149,6 +157,26 @@ export function CountryOverviewPanel({
               options={VISA_APPLICATION_WINDOW_VALUE_OPTIONS}
               size="sm"
               disabled={readOnly}
+            />
+          </FormField>
+          <FormField label="Escalation buffer (working days)">
+            <Input
+              type="number"
+              value={String(formData.travelDateRiskThresholds.escalationBufferDays)}
+              onChange={(v) =>
+                patchTravelDateRiskThresholds({ escalationBufferDays: Number(v) || 0 })
+              }
+              size="sm"
+              readonly={readOnly}
+            />
+          </FormField>
+          <FormField label="Safe buffer (working days)">
+            <Input
+              type="number"
+              value={String(formData.travelDateRiskThresholds.safeBufferDays)}
+              onChange={(v) => patchTravelDateRiskThresholds({ safeBufferDays: Number(v) || 0 })}
+              size="sm"
+              readonly={readOnly}
             />
           </FormField>
         </>

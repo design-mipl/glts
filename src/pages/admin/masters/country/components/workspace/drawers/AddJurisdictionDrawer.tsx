@@ -13,7 +13,6 @@ import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageF
 import { ADMIN_MODAL_FORM_LAYOUT } from '@/pages/admin/components/adminOverlayFormLayout'
 import { countryMasterAdminService } from '@/shared/services/countryMasterAdminService'
 import type { BusinessSegment, VisaTypeStatus } from '@/shared/types/countryMaster'
-import { PROCESSING_TIME_SELECT_OPTIONS } from '../../../config/countryProcessingConfig'
 import { INDIAN_STATE_SELECT_OPTIONS } from '../../../config/indianStates'
 
 interface AddJurisdictionDrawerProps {
@@ -37,7 +36,7 @@ export function AddJurisdictionDrawer({
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState('')
   const [embassyOrVfs, setEmbassyOrVfs] = useState('')
-  const [processingTime, setProcessingTime] = useState('10 business days')
+  const [processingTime, setProcessingTime] = useState('10')
   const [status, setStatus] = useState<VisaTypeStatus>('active')
   const [applicableStates, setApplicableStates] = useState<string[]>([])
 
@@ -45,7 +44,7 @@ export function AddJurisdictionDrawer({
     if (open) {
       setName('')
       setEmbassyOrVfs('')
-      setProcessingTime('10 business days')
+      setProcessingTime('10')
       setStatus('active')
       setApplicableStates([])
     }
@@ -105,13 +104,8 @@ export function AddJurisdictionDrawer({
           <FormField label="Embassy / VFS">
             <Input value={embassyOrVfs} onChange={setEmbassyOrVfs} size="sm" />
           </FormField>
-          <FormField label="Processing Time">
-            <Select
-              value={processingTime}
-              onChange={(v) => setProcessingTime(String(v))}
-              options={PROCESSING_TIME_SELECT_OPTIONS}
-              size="sm"
-            />
+          <FormField label="Processing Time (days)">
+            <Input type="number" value={processingTime} onChange={setProcessingTime} size="sm" />
           </FormField>
           <FormField label="Status">
             <Select

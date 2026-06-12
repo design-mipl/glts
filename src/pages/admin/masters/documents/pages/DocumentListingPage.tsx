@@ -25,7 +25,7 @@ import type {
 } from '@/shared/types/documentMaster'
 import { ClientDocumentFormModal } from '../components/ClientDocumentFormModal'
 import { buildClientDocumentColumns } from '../components/ClientDocumentTableColumns'
-import { CreateDocumentModal } from '../components/CreateDocumentModal'
+import { DocumentFormModal } from '../components/DocumentFormModal'
 import { DocumentDeleteDialog } from '../components/DocumentDeleteDialog'
 import { buildDocumentColumns } from '../components/DocumentTableColumns'
 import {
@@ -56,7 +56,8 @@ export function DocumentListingPage() {
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
 
-  const [createOpen, setCreateOpen] = useState(false)
+  const [documentFormOpen, setDocumentFormOpen] = useState(false)
+  const [editDocument, setEditDocument] = useState<DocumentMaster | null>(null)
   const [clientFormOpen, setClientFormOpen] = useState(false)
   const [editClient, setEditClient] = useState<ClientDocumentMaster | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -116,7 +117,10 @@ export function DocumentListingPage() {
     () =>
       buildDocumentColumns({
         onOpenDetail: (row) => navigate(`/admin/masters/documents/${row.id}`),
-        onOpenEdit: (row) => navigate(`/admin/masters/documents/${row.id}/edit`),
+        onOpenEdit: (row) => {
+          setEditDocument(row)
+          setDocumentFormOpen(true)
+        },
         onToggleStatus: openDocumentStatusToggle,
         onDelete: openDelete,
       }),
@@ -139,7 +143,8 @@ export function DocumentListingPage() {
 
   const handleAdd = () => {
     if (activeTab === 'documents') {
-      setCreateOpen(true)
+      setEditDocument(null)
+      setDocumentFormOpen(true)
     } else {
       setEditClient(null)
       setClientFormOpen(true)
@@ -147,7 +152,12 @@ export function DocumentListingPage() {
   }
 
   const emptyState = useMemo(() => {
-    if (activeTab === 'documents') return getDocumentEmptyState(() => setCreateOpen(true))
+    if (activeTab === 'documents') {
+      return getDocumentEmptyState(() => {
+        setEditDocument(null)
+        setDocumentFormOpen(true)
+      })
+    }
     return getClientDocumentEmptyState(handleAdd)
   }, [activeTab])
 
@@ -378,10 +388,14 @@ export function DocumentListingPage() {
         }
       />
 
-      <CreateDocumentModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreated={loadRows}
+      <DocumentFormModal
+        open={documentFormOpen}
+        record={editDocument}
+        onClose={() => {
+          setDocumentFormOpen(false)
+          setEditDocument(null)
+        }}
+        onSaved={loadRows}
       />
 
       <ClientDocumentFormModal

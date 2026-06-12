@@ -1,8 +1,9 @@
 import { Box, Typography } from '@mui/material'
-import type { CountryJurisdictionDocumentRule } from '@/shared/types/countryMaster'
+import type { BusinessSegment, CountryJurisdictionDocumentRule } from '@/shared/types/countryMaster'
 import { DocumentCard } from './DocumentCard'
 
 interface DocumentCardListProps {
+  segment: BusinessSegment
   rules: CountryJurisdictionDocumentRule[]
   onChange: (rule: CountryJurisdictionDocumentRule) => void
   onDuplicate?: (rule: CountryJurisdictionDocumentRule) => void
@@ -12,6 +13,7 @@ interface DocumentCardListProps {
 }
 
 export function DocumentCardList({
+  segment,
   rules,
   onChange,
   onDuplicate,
@@ -38,6 +40,7 @@ export function DocumentCardList({
       {rules.map((rule, index) => (
         <DocumentCard
           key={rule.id}
+          segment={segment}
           rule={rule}
           onChange={onChange}
           onDuplicate={onDuplicate ? () => onDuplicate(rule) : undefined}

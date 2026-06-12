@@ -42,7 +42,7 @@ export const COUNTRY_WORKSPACE_TREE_INDENT = {
 } as const
 
 export const COUNTRY_WORKSPACE_LAYOUT = {
-  treeWidth: 300,
+  treeWidth: 248,
   treeMinHeight: 520,
   /** Main workspace body — tree + detail fill viewport below admin chrome. */
   workspaceBodyMinHeight: { xs: 400, lg: 'calc(100vh - 220px)' },

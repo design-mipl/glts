@@ -20,11 +20,26 @@ export interface VisaApplicationWindow {
   value: number
 }
 
+export interface TravelDateRiskThresholds {
+  /** Red when buffer working days is below this (default 5). */
+  escalationBufferDays: number
+  /** Green when buffer is above this (default 10); amber between escalation and safe. */
+  safeBufferDays: number
+}
+
 export type ConfigNodeStatus = 'enabled' | 'disabled' | 'draft' | 'warning'
 
 export type JurisdictionPriorityLevel = 'standard' | 'express' | 'urgent'
 
 export type JurisdictionDocumentGroup = 'common' | 'jurisdiction' | 'optional'
+
+export type DocumentOwnerType =
+  | 'seafarer'
+  | 'applicant'
+  | 'company'
+  | 'shipping_agent'
+  | 'inviting_company'
+  | 'inviting_family_friend'
 
 export type WorkflowProfile = 'standard' | 'crew'
 
@@ -80,7 +95,11 @@ export interface CountryJurisdictionDocumentRule {
   ocrEnabled: boolean
   multipleUpload: boolean
   commonDocument: boolean
+  ownerType?: DocumentOwnerType
   description?: string
+  hasSample?: boolean
+  sampleDocumentName?: string
+  sampleDocumentUrl?: string
   acceptedFormats?: string[]
   validationRules?: string
   sortOrder: number
@@ -104,6 +123,8 @@ export interface CountryVisaJurisdiction {
   applicableStates: string[]
   processingRules: CountryJurisdictionProcessingRules
   documents: CountryJurisdictionDocumentRule[]
+  /** GLTS service scope and responsibilities for this jurisdiction. */
+  gltsScope?: string
 }
 
 export interface CountryVisaType {
@@ -184,16 +205,21 @@ export interface RequirementDocumentRow {
   name: string
   mandatory: boolean
   remarks?: string
+  description?: string
   hasSample?: boolean
+  sampleDocumentName?: string
+  sampleDocumentUrl?: string
 }
 
 export interface RequirementPreviewCard {
   id: string
   title: string
+  ownerType?: DocumentOwnerType
   arrangedBy?: string
   alertNote?: string
   documents?: RequirementDocumentRow[]
   scopeItems?: string[]
+  gltsScopeHtml?: string
   variant: RequirementPreviewVariant
 }
 
@@ -226,6 +252,7 @@ export interface CountryMaster {
   validity: string
   fastMinutes?: number
   visaApplicationWindow?: VisaApplicationWindow
+  travelDateRiskThresholds?: TravelDateRiskThresholds
   passportIssueLocations: PassportIssueLocation[]
   segments: CountrySegmentConfig[]
   /** Synced flat list for legacy consumers */
@@ -255,6 +282,7 @@ export interface CountryMasterFormData {
   validity: string
   fastMinutes?: number
   visaApplicationWindow: VisaApplicationWindow
+  travelDateRiskThresholds: TravelDateRiskThresholds
   passportIssueLocations: PassportIssueLocation[]
   segments: CountrySegmentConfig[]
 }

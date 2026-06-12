@@ -1,6 +1,12 @@
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { Box, Typography, Card, Grid, TextField } from '@mui/material'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import {
+  getTravelFeasibilityConfig,
+  getVisaApplicationWindow,
+} from '@/shared/services/countryMasterService'
+import { getTravelDateInputBounds } from '@/shared/utils/jurisdictionRequirementPreview'
+import { TravelDateFieldWithFeasibility } from '../../../../components/create/TravelDateFieldWithFeasibility'
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import { FlowStepActions } from '../../../../components/create/FlowStepActions'
 
@@ -31,6 +37,23 @@ export function ApplicantInformationStep({
 }: ApplicantInformationStepProps) {
   const colors = usePublicBrandColors()
   const isMarine = state.visaType === 'crew' || state.purpose === 'crew_joining'
+
+  const travelFeasibilityConfig = useMemo(
+    () =>
+      state.countryId && state.visaOfferingId
+        ? getTravelFeasibilityConfig(
+            state.countryId,
+            state.visaOfferingId,
+            state.jurisdictionId || undefined,
+          )
+        : null,
+    [state.countryId, state.jurisdictionId, state.visaOfferingId],
+  )
+
+  const travelDateBounds = useMemo(
+    () => getTravelDateInputBounds(getVisaApplicationWindow(state.countryId)),
+    [state.countryId],
+  )
 
   const canContinue =
     Boolean(state.applicantName.trim()) &&
@@ -98,16 +121,29 @@ export function ApplicantInformationStep({
 
       <Section title="Travel information">
         <Grid container spacing={1.5}>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <TextField
-              label="Travel date"
-              type="date"
-              size="small"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              value={state.travelDate}
-              onChange={e => onUpdate({ travelDate: e.target.value })}
-            />
+          <Grid size={{ xs: 12 }}>
+            <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.5 }}>
+              Travel date
+            </Typography>
+            {travelFeasibilityConfig ? (
+              <TravelDateFieldWithFeasibility
+                value={state.travelDate}
+                onChange={(iso) => onUpdate({ travelDate: iso })}
+                config={travelFeasibilityConfig}
+                applicationWindowHelper={travelDateBounds.helperText}
+                showCalendar={false}
+              />
+            ) : (
+              <TextField
+                label="Travel date"
+                type="date"
+                size="small"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                value={state.travelDate}
+                onChange={(e) => onUpdate({ travelDate: e.target.value })}
+              />
+            )}
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
             <TextField

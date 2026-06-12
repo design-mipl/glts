@@ -54,11 +54,11 @@ export function getTrendingAccountCountries(): Country[] {
   const allowed = new Set<string>(ACCOUNT_MAPPED_COUNTRY_IDS)
   return listCountryMasters({ accountMappedOnly: true })
     .filter(c => c.trending && allowed.has(c.id))
-    .map(countryMasterToPortalCountry)
+    .map((master) => countryMasterToPortalCountry(master))
 }
 
 export function getVisaPurposeOptions(countryId: string): VisaPurposeOption[] {
-  return getVisaOfferings(countryId).map(o => ({
+  return getVisaOfferings(countryId, true, 'marine').map(o => ({
     id: o.id,
     visaType: o.visaTypeId,
     visaTypeLabel: o.visaTypeLabel,
@@ -77,7 +77,7 @@ export {
 }
 
 export function getPopularVisaTypesForCountry(country: Country): string {
-  return getVisaOfferings(country.id)
+  return getVisaOfferings(country.id, true, 'marine')
     .slice(0, 2)
     .map(o => o.visaTypeLabel)
     .join(' · ')

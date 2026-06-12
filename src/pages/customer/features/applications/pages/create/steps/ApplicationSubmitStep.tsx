@@ -16,7 +16,6 @@ import { customerPortalService } from '@/pages/customer/features/shared/services
 import { deriveApplicationSubmitKind } from '../../../utils/applicationSubmitKind'
 import { ApplicationReviewPanels } from '../../../components/ApplicationReviewPanels'
 import type { CustomerChecklistItem } from '@/pages/customer/features/shared/components/CustomerPrimitives'
-import { getPassportIssueLocationLabel } from '@/shared/services/countryMasterService'
 
 interface ApplicationSubmitStepProps {
   state: ApplicationFlowState
@@ -112,10 +111,8 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
           visaTypeLabel: state.visaTypeLabel,
           purposeLabel: state.purposeLabel,
           travelDate: state.travelDate,
-          issuedPassportLocationLabel: getPassportIssueLocationLabel(
-            state.countryId,
-            state.issuedPassportLocationId,
-          ),
+          issuedPassportLocationLabel:
+            state.issuedPassportState || state.issuedPassportLocationId || undefined,
           jurisdiction: state.jurisdiction,
           gltsApplicationId: state.gltsApplicationId || undefined,
           gltsBatchId: state.gltsBatchId || undefined,

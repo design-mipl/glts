@@ -1,14 +1,41 @@
 import { ACCOUNT_MAPPED_COUNTRY_IDS, getMockCountryMasters } from '@/shared/data/mockCountryMasters'
 import type { Country } from '@/shared/types/visa'
 import type {
+  BusinessSegment,
   CountryMaster,
+  CountryVisaType,
+  CountryVisaJurisdiction,
   CountryVisaOffering,
+  VisaApplicationWindow,
   DocumentWorkspaceItem,
   PassportIssueLocation,
   PortalChecklistItem,
   RequirementDocumentRow,
   RequirementPreviewCard,
 } from '@/shared/types/countryMaster'
+import {
+  countryHasBookableConfiguration,
+  resolvePortalFastMinutes,
+  resolvePortalProcessingLabel,
+  resolvePortalProcessingTime,
+  resolvePortalStartingPrice,
+  resolvePortalValidityLabel,
+  resolvePortalVisaCategory,
+  type PortalCountryDisplayOptions,
+} from '@/shared/utils/portalCountryDisplay'
+import {
+  buildRequirementPreviewCardsFromJurisdiction,
+  enrichRequirementDocumentRow,
+  getApplicableStatesForVisaType,
+  resolveJurisdictionForState,
+} from '@/shared/utils/jurisdictionRequirementPreview'
+import { DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS } from '@/shared/constants/travelDateFeasibility'
+import {
+  evaluateTravelDateFeasibility,
+  parseProcessingWorkingDays,
+  type TravelDateFeasibilityResult,
+  type TravelFeasibilityConfig,
+} from '@/shared/utils/travelDateFeasibility'
 
 export type { CountryMaster, CountryVisaOffering } from '@/shared/types/countryMaster'
 export { ACCOUNT_MAPPED_COUNTRY_IDS } from '@/shared/data/mockCountryMasters'
@@ -16,17 +43,29 @@ export { ACCOUNT_MAPPED_COUNTRY_IDS } from '@/shared/data/mockCountryMasters'
 export interface ListCountryMastersOptions {
   activeOnly?: boolean
   accountMappedOnly?: boolean
+  /** When set, only countries with an enabled segment and active visa types are returned. */
+  segment?: BusinessSegment
+  /**
+   * Card display only — maps country master fields using this segment without filtering the list.
+   * Use on country selection when all destinations are shown but visa types are segment-scoped.
+   */
+  portalDisplaySegment?: BusinessSegment
   query?: string
 }
 
 export function listCountryMasters(options: ListCountryMastersOptions = {}): CountryMaster[] {
-  const { activeOnly = true, accountMappedOnly = false, query } = options
+  const { activeOnly = true, accountMappedOnly = false, segment, query } = options
   let rows = getMockCountryMasters()
 
   if (activeOnly) rows = rows.filter((c) => c.status === 'active')
   if (accountMappedOnly) {
     const allowed = new Set<string>(ACCOUNT_MAPPED_COUNTRY_IDS)
     rows = rows.filter(c => allowed.has(c.id))
+  }
+  if (segment) {
+    rows = rows.filter((country) => countryHasBookableConfiguration(country, segment))
+  } else {
+    rows = rows.filter((country) => countryHasBookableConfiguration(country))
   }
 
   const q = query?.trim().toLowerCase()
@@ -67,11 +106,16 @@ export function getPassportIssueLocationLabel(
   return getPassportIssueLocations(countryId).find((loc) => loc.id === locationId)?.label
 }
 
-export function getVisaOfferings(countryId: string, activeOnly = true): CountryVisaOffering[] {
+export function getVisaOfferings(
+  countryId: string,
+  activeOnly = true,
+  segment?: BusinessSegment,
+): CountryVisaOffering[] {
   const master = getCountryMasterById(countryId)
   if (!master) return []
-  const offerings = master.visaOfferings
-  return activeOnly ? offerings.filter(o => o.active) : offerings
+  let offerings = master.visaOfferings
+  if (segment) offerings = offerings.filter((offering) => offering.segment === segment)
+  return activeOnly ? offerings.filter((offering) => offering.active) : offerings
 }
 
 export function getVisaOfferingById(
@@ -82,30 +126,38 @@ export function getVisaOfferingById(
 }
 
 /** Map country master to legacy `Country` shape for existing portal cards. */
-export function countryMasterToPortalCountry(master: CountryMaster): Country {
+export function countryMasterToPortalCountry(
+  master: CountryMaster,
+  options: PortalCountryDisplayOptions = {},
+): Country {
   return {
     id: master.id,
     name: master.name,
     code: master.code,
     region: master.region,
     visaTypes: [],
-    processingTime: master.processingTime,
-    price: master.price,
+    processingTime: resolvePortalProcessingTime(master, options),
+    price: resolvePortalStartingPrice(master, options),
     rating: master.rating,
     flags: master.flag,
     trending: master.trending,
     trendingPercent: master.trendingPercent,
-    visaCategory: master.visaCategory as Country['visaCategory'],
-    validity: master.validity,
+    visaCategory: resolvePortalVisaCategory(master),
+    validity: resolvePortalValidityLabel(master, options),
     documentsNeeded: [],
     heroPhotoId: master.heroPhotoId,
-    fastMinutes: master.fastMinutes,
+    fastMinutes: resolvePortalFastMinutes(master),
     cities: master.cities,
+    portalProcessingLabel: resolvePortalProcessingLabel(master),
   }
 }
 
 export function listPortalCountries(options: ListCountryMastersOptions = {}): Country[] {
-  return listCountryMasters(options).map(countryMasterToPortalCountry)
+  const { segment, portalDisplaySegment, ...listOptions } = options
+  const displaySegment = portalDisplaySegment ?? segment
+  return listCountryMasters(listOptions).map((master) =>
+    countryMasterToPortalCountry(master, { segment: displaySegment }),
+  )
 }
 
 export function patchStateFromVisaOffering(offering: CountryVisaOffering): {
@@ -126,14 +178,30 @@ export function patchStateFromVisaOffering(offering: CountryVisaOffering): {
   }
 }
 
+function previewDoc(
+  documentId: string,
+  mandatory: boolean,
+  extra?: Partial<RequirementDocumentRow>,
+): RequirementDocumentRow {
+  return enrichRequirementDocumentRow(
+    {
+      id: documentId,
+      name: '',
+      mandatory,
+      ...extra,
+    },
+    documentId,
+  )
+}
+
 function defaultRequirementPreviewCards(isCrew: boolean): RequirementPreviewCard[] {
   const crewDocs: RequirementDocumentRow[] = [
-    { id: 'passport', name: 'Passport', mandatory: true, hasSample: true },
-    { id: 'cdc', name: 'CDC', mandatory: true, hasSample: true },
-    { id: 'photos', name: 'Photos', mandatory: true },
-    { id: 'aadhaar', name: 'Aadhaar', mandatory: false, remarks: 'If applicable' },
-    { id: 'passport-scan', name: 'Passport scans', mandatory: true },
-    { id: 'cdc-copy', name: 'CDC copies', mandatory: true },
+    previewDoc('passport', true, { hasSample: true }),
+    previewDoc('cdc', true, { hasSample: true }),
+    previewDoc('photo', true),
+    previewDoc('aadhaar-card', false, { remarks: 'If applicable' }),
+    previewDoc('passport-scan-copy', true),
+    previewDoc('cdc-scan-copy', true),
   ]
 
   return [
@@ -144,9 +212,9 @@ function defaultRequirementPreviewCards(isCrew: boolean): RequirementPreviewCard
       documents: isCrew
         ? crewDocs
         : [
-            { id: 'passport', name: 'Passport', mandatory: true, hasSample: true },
-            { id: 'photos', name: 'Photos', mandatory: true },
-            { id: 'bank', name: 'Bank statements', mandatory: true, remarks: 'Last 3 months' },
+            previewDoc('passport', true, { hasSample: true }),
+            previewDoc('photo', true),
+            previewDoc('bank', true, { remarks: 'Last 3 months' }),
           ],
     },
     {
@@ -155,11 +223,11 @@ function defaultRequirementPreviewCards(isCrew: boolean): RequirementPreviewCard
       variant: 'shipping',
       arrangedBy: 'Shipping company',
       documents: [
-        { id: 'cover', name: 'Covering letter', mandatory: true, hasSample: true },
-        { id: 'employee', name: 'Employee details', mandatory: true },
-        { id: 'expense', name: 'Expense clause', mandatory: true },
-        { id: 'nature', name: 'Business nature', mandatory: false },
-        { id: 'declaration', name: 'Company declaration', mandatory: true },
+        previewDoc('company-covering-letter', true, { hasSample: true }),
+        previewDoc('employment-certificate', true),
+        previewDoc('company-explanation-letter', true),
+        previewDoc('certificate-of-incorporation', false),
+        previewDoc('company-declaration', true),
       ],
     },
     {
@@ -168,11 +236,11 @@ function defaultRequirementPreviewCards(isCrew: boolean): RequirementPreviewCard
       variant: 'embassy',
       alertNote: 'Embassy formatting rules apply. Confirm LOI validity before upload.',
       documents: [
-        { id: 'invitation', name: 'Invitation letter', mandatory: true, hasSample: true },
-        { id: 'loi', name: 'LOI', mandatory: isCrew },
-        { id: 'license', name: 'Business license', mandatory: false },
-        { id: 'agent', name: 'Agent ID proof', mandatory: false },
-        { id: 'instructions', name: 'Embassy instructions', mandatory: true, remarks: 'Follow embassy PDF' },
+        previewDoc('invitation', true, { hasSample: true }),
+        previewDoc('loi', isCrew),
+        previewDoc('foreign-business-license', false),
+        previewDoc('inviter-id-proof', false),
+        previewDoc('embassy-instructions', true, { remarks: 'Follow embassy PDF' }),
       ],
     },
     {
@@ -191,13 +259,127 @@ function defaultRequirementPreviewCards(isCrew: boolean): RequirementPreviewCard
   ]
 }
 
+export function getVisaTypeForOffering(
+  countryId: string,
+  offeringId: string,
+): CountryVisaType | undefined {
+  const master = getCountryMasterById(countryId)
+  if (!master) return undefined
+  for (const segment of master.segments) {
+    const visaType = segment.visaTypes.find((entry) => entry.id === offeringId)
+    if (visaType) return visaType
+  }
+  return undefined
+}
+
+export function getJurisdictionForOffering(
+  countryId: string,
+  offeringId: string,
+  jurisdictionId: string,
+): CountryVisaJurisdiction | undefined {
+  const visaType = getVisaTypeForOffering(countryId, offeringId)
+  return visaType?.jurisdictions?.find((jurisdiction) => jurisdiction.id === jurisdictionId)
+}
+
+export function getApplicableStatesForOffering(countryId: string, offeringId: string): string[] {
+  return getApplicableStatesForVisaType(getVisaTypeForOffering(countryId, offeringId))
+}
+
+export function resolveJurisdictionForOfferingState(
+  countryId: string,
+  offeringId: string,
+  stateName: string,
+): CountryVisaJurisdiction | undefined {
+  return resolveJurisdictionForState(getVisaTypeForOffering(countryId, offeringId), stateName)
+}
+
+export function getVisaApplicationWindow(countryId: string): VisaApplicationWindow | undefined {
+  return getCountryMasterById(countryId)?.visaApplicationWindow
+}
+
+export function getEmbassyProcessingWorkingDays(
+  countryId: string,
+  offeringId: string,
+  jurisdictionId?: string,
+): number | null {
+  if (jurisdictionId) {
+    const jurisdiction = getJurisdictionForOffering(countryId, offeringId, jurisdictionId)
+    const fromJurisdiction = parseProcessingWorkingDays(jurisdiction?.processingTime ?? '')
+    if (fromJurisdiction != null) return fromJurisdiction
+  }
+
+  const visaType = getVisaTypeForOffering(countryId, offeringId)
+  return parseProcessingWorkingDays(visaType?.processingTime ?? '')
+}
+
+export function getTravelFeasibilityConfig(
+  countryId: string,
+  offeringId: string,
+  jurisdictionId?: string,
+): TravelFeasibilityConfig {
+  const master = getCountryMasterById(countryId)
+  return {
+    requiredWorkingDays: getEmbassyProcessingWorkingDays(countryId, offeringId, jurisdictionId),
+    thresholds: master?.travelDateRiskThresholds ?? DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS,
+    applicationWindow: master?.visaApplicationWindow,
+  }
+}
+
+export function getTravelDateFeasibilityForOffering(
+  countryId: string,
+  offeringId: string,
+  travelDateIso: string,
+  jurisdictionId?: string,
+  applicationDate: Date = new Date(),
+): TravelDateFeasibilityResult {
+  return evaluateTravelDateFeasibility({
+    applicationDate,
+    travelDateIso,
+    config: getTravelFeasibilityConfig(countryId, offeringId, jurisdictionId),
+  })
+}
+
+function visaTypeUsesJurisdictionDocuments(visaType: CountryVisaType | undefined): boolean {
+  return Boolean(
+    visaType?.jurisdictions?.some(
+      (jurisdiction) =>
+        jurisdiction.status === 'active' &&
+        jurisdiction.applicableStates.length > 0 &&
+        jurisdiction.documents.length > 0,
+    ),
+  )
+}
+
+function enrichPreviewCards(cards: RequirementPreviewCard[]): RequirementPreviewCard[] {
+  return cards.map((card) => ({
+    ...card,
+    documents: card.documents?.map((doc) => enrichRequirementDocumentRow(doc)),
+  }))
+}
+
 export function getRequirementPreviewCards(
   countryId: string,
   offeringId: string,
+  jurisdictionId?: string,
 ): RequirementPreviewCard[] {
+  const visaType = getVisaTypeForOffering(countryId, offeringId)
+  const jurisdictionDriven = visaTypeUsesJurisdictionDocuments(visaType)
+
+  if (jurisdictionId) {
+    const jurisdiction = getJurisdictionForOffering(countryId, offeringId, jurisdictionId)
+    if (jurisdiction) {
+      const cards = buildRequirementPreviewCardsFromJurisdiction(jurisdiction)
+      if (cards.length) return cards
+    }
+  }
+
+  if (jurisdictionDriven) return []
+
   const offering = getVisaOfferingById(countryId, offeringId)
   if (!offering) return []
-  if (offering.requirementPreviewCards?.length) return offering.requirementPreviewCards
+  if (offering.requirementPreviewCards?.length) {
+    return enrichPreviewCards(offering.requirementPreviewCards)
+  }
   const isCrew = offering.workflowProfile === 'crew'
   return defaultRequirementPreviewCards(isCrew)
 }

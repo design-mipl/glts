@@ -1,5 +1,6 @@
 import type { CountryMasterFormData } from '@/shared/types/countryMaster'
 import { ALL_SEGMENTS, emptySegment, ensureAllSegments, normalizeCountrySegments } from '@/shared/data/countryMasterDefaults'
+import { DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS } from '@/shared/constants/travelDateFeasibility'
 import { DEFAULT_VISA_APPLICATION_WINDOW } from '../config/countryProcessingConfig'
 
 export interface CountryFormValidationResult {
@@ -53,6 +54,7 @@ export function createEmptyCountryFormData(): CountryMasterFormData {
     validity: '',
     fastMinutes: undefined,
     visaApplicationWindow: { ...DEFAULT_VISA_APPLICATION_WINDOW },
+    travelDateRiskThresholds: { ...DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS },
     passportIssueLocations: [],
     segments: ALL_SEGMENTS.map((segment) => emptySegment(segment, segment === 'retail')),
   }
@@ -81,6 +83,7 @@ export function countryMasterToFormData(
     validity: master.validity,
     fastMinutes: master.fastMinutes,
     visaApplicationWindow: master.visaApplicationWindow ?? { ...DEFAULT_VISA_APPLICATION_WINDOW },
+    travelDateRiskThresholds: master.travelDateRiskThresholds ?? { ...DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS },
     passportIssueLocations: master.passportIssueLocations ?? [],
     segments: ensureAllSegments(normalizeCountrySegments(structuredClone(master.segments))),
   }

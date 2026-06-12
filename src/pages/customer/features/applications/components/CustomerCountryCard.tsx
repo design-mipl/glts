@@ -133,7 +133,7 @@ export function CustomerCountryCard({
       <Box sx={{ p: 1.25 }}>
         <Typography sx={{ fontWeight: 700, fontSize: '13px', color: colors.navy }}>{country.name}</Typography>
         <Typography sx={{ fontSize: '11px', color: colors.textMuted, mt: 0.25 }}>
-          {country.visaCategory} · Valid till {country.validity}
+          {country.portalProcessingLabel ?? country.visaCategory} · Valid till {country.validity}
         </Typography>
       </Box>
     </Card>

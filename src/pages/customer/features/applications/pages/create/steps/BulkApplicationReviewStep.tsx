@@ -19,10 +19,9 @@ import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/us
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import { CustomerDocumentChecklist } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 import { defaultChecklist } from '../../../data/applicationFlowData'
-import {
-  getRequirementPreviewCards,
-} from '../../../data/singleApplicationFlowData'
-import { getPassportIssueLocationLabel } from '@/shared/services/countryMasterService'
+import { getTravelDateFeasibilityForOffering } from '@/shared/services/countryMasterService'
+import { getRequirementPreviewCards } from '../../../data/singleApplicationFlowData'
+import { TravelDateFeasibilityCard } from '../../../components/create/TravelDateFeasibilityCard'
 import { UploadQueueTable } from '../../../components/UploadQueueTable'
 
 interface BulkApplicationReviewStepProps {
@@ -50,10 +49,22 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
   const checklist = defaultChecklist(state.countryName)
   const missingCount = checklist.filter(i => i.status === 'missing').length
   const requirementCards = useMemo(
-    () => getRequirementPreviewCards(state.countryId, state.visaOfferingId),
-    [state.countryId, state.visaOfferingId],
+    () => getRequirementPreviewCards(state.countryId, state.visaOfferingId, state.jurisdictionId),
+    [state.countryId, state.visaOfferingId, state.jurisdictionId],
   )
   const totalDocs = requirementCards.reduce((n, c) => n + (c.documents?.length ?? 0), 0)
+  const travelDateFeasibility = useMemo(
+    () =>
+      state.travelDate && state.countryId && state.visaOfferingId
+        ? getTravelDateFeasibilityForOffering(
+            state.countryId,
+            state.visaOfferingId,
+            state.travelDate,
+            state.jurisdictionId || undefined,
+          )
+        : null,
+    [state.countryId, state.jurisdictionId, state.travelDate, state.visaOfferingId],
+  )
 
   const docsComplete = readyRows.reduce((n, r) => n + r.documentsComplete, 0)
   const docsTotal = readyRows.reduce((n, r) => n + r.documentsTotal, 0)
@@ -87,8 +98,7 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
 
   const applicantName = singleRow?.travelerName || state.applicantName
   const passportNumber = singleRow?.passportNo || state.passportNumber
-  const passportLocationLabel =
-    getPassportIssueLocationLabel(state.countryId, state.issuedPassportLocationId) || '—'
+  const passportStateLabel = state.issuedPassportState || state.issuedPassportLocationId || '—'
 
   return (
     <Box sx={{ width: '100%', maxWidth: '100%' }}>
@@ -115,7 +125,7 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
               ['Country', `${state.countryFlag} ${state.countryName}`],
               ['Visa', `${state.visaTypeLabel} · ${state.purposeLabel}`],
               ['Travel', state.travelDate || '—'],
-              ['Passport location', passportLocationLabel],
+              ['Passport state', passportStateLabel],
               ['Jurisdiction', state.jurisdiction || '—'],
               ['Nationality', singleRow?.nationality || state.nationality || '—'],
               ['Passport expiry', singleRow?.expiry || state.passportExpiry || '—'],
@@ -142,7 +152,7 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
                 ['Country', `${state.countryFlag} ${state.countryName}`],
                 ['Visa', `${state.visaTypeLabel} · ${state.purposeLabel}`],
                 ['Travel', state.travelDate || '—'],
-                ['Passport location', passportLocationLabel],
+                ['Passport state', passportStateLabel],
                 ['Jurisdiction', state.jurisdiction || '—'],
                 ['Applicants', String(readyRows.length)],
                 ['Documents progress', docsTotal > 0 ? `${docsComplete}/${docsTotal} across travelers` : '—'],
@@ -170,6 +180,12 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
           )}
         </>
       )}
+
+      {travelDateFeasibility ? (
+        <Box sx={{ mb: 2 }}>
+          <TravelDateFeasibilityCard result={travelDateFeasibility} />
+        </Box>
+      ) : null}
 
       <Box sx={{ mb: 2 }}>
         <CustomerDocumentChecklist country={state.countryName} items={checklist} />

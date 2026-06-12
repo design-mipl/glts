@@ -11,6 +11,7 @@ import { ArrowRight, Search } from 'lucide-react'
 import { Select } from '@/design-system/UIComponents'
 import { useMemo, useState } from 'react'
 import { listPortalCountries } from '@/shared/services/countryMasterService'
+import { resolveApplicationFlowSegment } from '../../../utils/resolveApplicationFlowSegment'
 import { usePublicBrandColors, getPrimaryButtonSx } from '@/shared/theme/publicBrand'
 import { CustomerCountryCard } from '../../../components/CustomerCountryCard'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
@@ -85,8 +86,10 @@ export function CountrySelectionStep({ state, onUpdate, onContinue }: CountrySel
   const [sortMode, setSortMode] = useState<CountrySortMode>('default')
   const { favoriteIds, isFavorite, toggleFavorite } = useFavoriteCountries()
 
+  const flowSegment = resolveApplicationFlowSegment(policy)
+
   const filtered = useMemo(() => {
-    const all = listPortalCountries()
+    const all = listPortalCountries({ portalDisplaySegment: flowSegment })
     const q = query.trim().toLowerCase()
     if (!q) return all
     return all.filter(
@@ -95,7 +98,7 @@ export function CountrySelectionStep({ state, onUpdate, onContinue }: CountrySel
         c.region.toLowerCase().includes(q) ||
         c.cities.toLowerCase().includes(q),
     )
-  }, [query])
+  }, [query, flowSegment])
 
   const { favorites, others } = useMemo(
     () => orderCountriesForDisplay(filtered, favoriteIds, sortMode),

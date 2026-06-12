@@ -39,7 +39,8 @@ export function canAdvanceFromStep(
       return Boolean(
         state.visaOfferingId &&
           state.travelDate &&
-          state.issuedPassportLocationId &&
+          (state.issuedPassportState || state.issuedPassportLocationId) &&
+          state.jurisdictionId &&
           state.jurisdiction,
       )
     case 'upload':

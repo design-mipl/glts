@@ -8,6 +8,7 @@ import {
   generateDocumentRuleId,
   generateJurisdictionId,
 } from '@/shared/data/countryJurisdictionDefaults'
+import { DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS } from '@/shared/constants/travelDateFeasibility'
 import {
   ensureAllSegments,
   emptySegment,
@@ -96,6 +97,8 @@ function masterToFormData(master: CountryMaster): CountryMasterFormData {
     fastMinutes: master.fastMinutes,
     visaApplicationWindow:
       master.visaApplicationWindow ?? { unit: 'days' as const, value: 30 },
+    travelDateRiskThresholds:
+      master.travelDateRiskThresholds ?? { ...DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS },
     passportIssueLocations: master.passportIssueLocations ?? [],
     segments: master.segments,
   }
@@ -571,6 +574,8 @@ export const countryMasterAdminService = {
     documentId: string,
     group: JurisdictionDocumentGroup,
     description?: string,
+    ownerType?: CountryJurisdictionDocumentRule['ownerType'],
+    sampleDocument?: { fileName: string; url: string },
   ): CountryMaster | undefined {
     const rule: CountryJurisdictionDocumentRule = {
       id: generateDocumentRuleId(),
@@ -580,7 +585,11 @@ export const countryMasterAdminService = {
       ocrEnabled: documentId === 'passport',
       multipleUpload: false,
       commonDocument: group === 'common',
+      ownerType,
       description: description?.trim() || undefined,
+      hasSample: Boolean(sampleDocument?.url),
+      sampleDocumentName: sampleDocument?.fileName,
+      sampleDocumentUrl: sampleDocument?.url,
       acceptedFormats: ['PDF', 'JPG', 'PNG'],
       sortOrder: 0,
     }
@@ -707,6 +716,7 @@ export const countryMasterAdminService = {
       visaCategory: 'Tourism',
       validity: '30 days',
       visaApplicationWindow: { unit: 'days', value: 30 },
+      travelDateRiskThresholds: { ...DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS },
       passportIssueLocations: [],
       segments: ensureAllSegments([
         emptySegment('retail', true),

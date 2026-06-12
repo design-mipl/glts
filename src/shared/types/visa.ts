@@ -21,6 +21,8 @@ export interface Country {
   fastMinutes?: number
   /** e.g. "Dubai · Abu Dhabi" */
   cities: string
+  /** Admin country master processing type label for portal cards (E-Visa, VFS, …). */
+  portalProcessingLabel?: string
 }
 
 export interface VisaType {

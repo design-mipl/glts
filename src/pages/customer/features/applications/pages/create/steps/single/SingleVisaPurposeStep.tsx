@@ -12,6 +12,7 @@ import {
   getVisaOfferings,
   patchStateFromVisaOffering,
 } from '@/shared/services/countryMasterService'
+import { resolveApplicationFlowSegment } from '../../../../utils/resolveApplicationFlowSegment'
 
 interface SingleVisaPurposeStepProps {
   state: ApplicationFlowState
@@ -29,7 +30,8 @@ export function SingleVisaPurposeStep({
   const colors = usePublicBrandColors()
   const { policy } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
-  const options = getVisaOfferings(state.countryId)
+  const flowSegment = resolveApplicationFlowSegment(policy)
+  const options = getVisaOfferings(state.countryId, true, flowSegment)
 
   return (
     <Box sx={{ maxWidth: '100%', mx: 'auto', width: '100%' }}>
@@ -40,8 +42,15 @@ export function SingleVisaPurposeStep({
         <Chip label={`${state.countryFlag} ${state.countryName}`} size="small" sx={{ fontWeight: 600, fontSize: 11 }} />
       </Stack>
       <Typography sx={{ fontSize: 13, color: colors.textSecondary, mb: 2.5 }}>
-        Select the visa category and purpose of visit. Requirements in the next step depend on this selection.
+        Select the marine visa category for this destination. Requirements in the next step depend on this selection.
       </Typography>
+
+      {options.length === 0 ? (
+        <Typography sx={{ fontSize: 13, color: colors.textMuted, mb: 2 }}>
+          No marine visa types are configured for {state.countryName} yet. Choose another destination or contact
+          GLTS operations to enable marine filing for this country.
+        </Typography>
+      ) : null}
 
       <Grid container spacing={1.5}>
         {options.map(opt => {

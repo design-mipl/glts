@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Box, Typography, Card, Stack, Button, Grid, Checkbox, FormControlLabel } from '@mui/material'
 import { ArrowLeft, Download } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -9,13 +9,12 @@ import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/us
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import { CustomerDocumentChecklist } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 import { defaultChecklist } from '../../../../data/applicationFlowData'
+import { getTravelDateFeasibilityForOffering } from '@/shared/services/countryMasterService'
 import {
   getDocumentWorkspaceItems,
   getRequirementPreviewCards,
 } from '../../../../data/singleApplicationFlowData'
-import { getPassportIssueLocationLabel } from '@/shared/services/countryMasterService'
-import { useState } from 'react'
-
+import { TravelDateFeasibilityCard } from '../../../../components/create/TravelDateFeasibilityCard'
 interface SingleApplicationReviewStepProps {
   state: ApplicationFlowState
   onBack: () => void
@@ -32,11 +31,23 @@ export function SingleApplicationReviewStep({ state, onBack, onSubmitted }: Sing
   const checklist = defaultChecklist(state.countryName)
   const missingCount = checklist.filter(i => i.status === 'missing').length
   const requirementCards = useMemo(
-    () => getRequirementPreviewCards(state.countryId, state.visaOfferingId),
-    [state.countryId, state.visaOfferingId],
+    () => getRequirementPreviewCards(state.countryId, state.visaOfferingId, state.jurisdictionId),
+    [state.countryId, state.visaOfferingId, state.jurisdictionId],
   )
   const totalDocs = requirementCards.reduce((n, c) => n + (c.documents?.length ?? 0), 0)
   const uploadedDocs = getDocumentWorkspaceItems(state.countryId, state.visaOfferingId)
+  const travelDateFeasibility = useMemo(
+    () =>
+      state.travelDate && state.countryId && state.visaOfferingId
+        ? getTravelDateFeasibilityForOffering(
+            state.countryId,
+            state.visaOfferingId,
+            state.travelDate,
+            state.jurisdictionId || undefined,
+          )
+        : null,
+    [state.countryId, state.jurisdictionId, state.travelDate, state.visaOfferingId],
+  )
 
   const handleSubmit = () => {
     customerPortalService.submitApplication('single', { applicationId: state.gltsApplicationId })
@@ -77,10 +88,7 @@ export function SingleApplicationReviewStep({ state, onBack, onSubmitted }: Sing
             ['Visa', `${state.visaTypeLabel} · ${state.purposeLabel}`],
             ['Travel', state.travelDate || '—'],
             ['Return (optional)', state.expectedReturnDate || '—'],
-            [
-              'Passport location',
-              getPassportIssueLocationLabel(state.countryId, state.issuedPassportLocationId) || '—',
-            ],
+            ['Passport state', state.issuedPassportState || state.issuedPassportLocationId || '—'],
             ['Jurisdiction', state.jurisdiction || '—'],
             ['Entry', state.entryType || '—'],
           ].map(([k, v]) => (
@@ -90,6 +98,11 @@ export function SingleApplicationReviewStep({ state, onBack, onSubmitted }: Sing
             </Grid>
           ))}
         </Grid>
+        {travelDateFeasibility ? (
+          <Box sx={{ mt: 1.5 }}>
+            <TravelDateFeasibilityCard result={travelDateFeasibility} />
+          </Box>
+        ) : null}
       </Card>
 
       <Box sx={{ mb: 2 }}>

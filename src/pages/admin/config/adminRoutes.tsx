@@ -27,7 +27,6 @@ import {
 import {
   DocumentDetailPage,
   DocumentListingPage,
-  EditDocumentPage,
 } from '../masters/documents'
 import { JurisdictionListingPage } from '../masters/jurisdiction'
 import { SacCodeListingPage } from '../masters/sac-codes'
@@ -384,11 +383,7 @@ export function AdminRoutes() {
       />
       <Route
         path="masters/documents/:documentId/edit"
-        element={
-          <PermissionGuard>
-            <EditDocumentPage />
-          </PermissionGuard>
-        }
+        element={<Navigate to="../?edit=1" replace />}
       />
       <Route
         path="masters/documents/:documentId"

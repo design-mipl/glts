@@ -1,3 +1,4 @@
+import { PROCESSING_TYPE_LABELS } from '@/shared/constants/countryProcessing'
 import type {
   CountryMasterStatus,
   ProcessingType,
@@ -5,21 +6,15 @@ import type {
   VisaApplicationWindowUnit,
 } from '@/shared/types/countryMaster'
 
-export const PROCESSING_TYPE_OPTIONS: { value: ProcessingType; label: string }[] = [
-  { value: 'embassy', label: 'Embassy' },
-  { value: 'e_visa', label: 'E-Visa' },
-  { value: 'vfs', label: 'VFS' },
-  { value: 'agent_submission', label: 'Agent submission' },
-  { value: 'hybrid', label: 'Hybrid' },
-]
+export { PROCESSING_TYPE_LABELS }
 
-export const PROCESSING_TYPE_LABELS: Record<ProcessingType, string> = {
-  embassy: 'Embassy',
-  e_visa: 'E-Visa',
-  vfs: 'VFS',
-  agent_submission: 'Agent submission',
-  hybrid: 'Hybrid',
-}
+export const PROCESSING_TYPE_OPTIONS: { value: ProcessingType; label: string }[] = [
+  { value: 'embassy', label: PROCESSING_TYPE_LABELS.embassy },
+  { value: 'e_visa', label: PROCESSING_TYPE_LABELS.e_visa },
+  { value: 'vfs', label: PROCESSING_TYPE_LABELS.vfs },
+  { value: 'agent_submission', label: PROCESSING_TYPE_LABELS.agent_submission },
+  { value: 'hybrid', label: PROCESSING_TYPE_LABELS.hybrid },
+]
 
 export const COUNTRY_STATUS_OPTIONS: { value: CountryMasterStatus; label: string }[] = [
   { value: 'active', label: 'Active' },

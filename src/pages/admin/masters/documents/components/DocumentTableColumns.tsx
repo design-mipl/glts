@@ -2,6 +2,7 @@ import { Eye, PencilLine, Power, PowerOff, Trash2 } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import type { DocumentMaster } from '@/shared/types/documentMaster'
+import { richTextToPlainText } from '@/shared/utils/richTextUtils'
 import {
   documentStatusColor,
   documentStatusLabel,
@@ -35,20 +36,23 @@ export function buildDocumentColumns({
       label: 'Description',
       sortable: false,
       minWidth: 240,
-      render: (_, row) => (
-        <span
-          style={{
-            display: 'block',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            maxWidth: 320,
-          }}
-          title={row.description}
-        >
-          {row.description || '--'}
-        </span>
-      ),
+      render: (_, row) => {
+        const plainDescription = richTextToPlainText(row.description)
+        return (
+          <span
+            style={{
+              display: 'block',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: 320,
+            }}
+            title={plainDescription}
+          >
+            {plainDescription || '--'}
+          </span>
+        )
+      },
     },
     {
       key: 'status',

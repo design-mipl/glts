@@ -7,6 +7,8 @@ import FormHelperText from '@mui/material/FormHelperText'
 import { useTheme, alpha } from '@mui/material/styles'
 import { Upload, X, FileText } from 'lucide-react'
 import type { SxProps, Theme } from '@mui/material/styles'
+import { FORM_CONTROL, formControlBorderDefault } from '../../../formControl'
+import { tokens } from '../../../tokens'
 
 export interface FileUploadProps {
   label?: string
@@ -25,6 +27,8 @@ export interface FileUploadProps {
   helperText?: string
   error?: boolean
   preview?: boolean
+  /** Dense horizontal dropzone for modals and form rows. */
+  compact?: boolean
   sx?: SxProps<Theme>
 }
 
@@ -71,6 +75,7 @@ export default function FileUpload({
   helperText,
   error = false,
   preview = false,
+  compact = false,
   sx,
 }: FileUploadProps) {
   const theme = useTheme()
@@ -165,6 +170,80 @@ export default function FileUpload({
     }
   }
 
+  const caption =
+    dropzoneCaption ??
+    `${accept ? accept.replace(/,/g, ', ') : 'All file types supported'}${maxSize ? ` — up to ${formatBytes(maxSize)}` : ''}`
+
+  const dropzoneBorderColor = error
+    ? theme.palette.error.main
+    : dragOver
+      ? theme.palette.primary.main
+      : formControlBorderDefault(theme)
+
+  const dropzoneSx = compact
+    ? {
+        border: `${FORM_CONTROL.borderWidth} dashed`,
+        borderColor: dropzoneBorderColor,
+        borderRadius: FORM_CONTROL.borderRadius,
+        minHeight: FORM_CONTROL.heightMd,
+        px: 1.5,
+        py: 1,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.25,
+        textAlign: 'left' as const,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        transition: 'border-color 0.2s ease, background-color 0.2s ease',
+        bgcolor: dragOver
+          ? alpha(theme.palette.primary.main, 0.04)
+          : theme.palette.mode === 'dark'
+            ? alpha(theme.palette.common.white, 0.02)
+            : alpha(theme.palette.text.primary, 0.02),
+        opacity: disabled ? 0.5 : 1,
+        '&:hover': disabled
+          ? {}
+          : {
+              borderColor: 'primary.main',
+              bgcolor: alpha(theme.palette.primary.main, 0.03),
+            },
+      }
+    : {
+        border: '2px dashed',
+        borderColor: dropzoneBorderColor,
+        borderRadius: '8px',
+        py: 6,
+        px: 3,
+        textAlign: 'center' as const,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        transition: 'all 0.2s ease',
+        bgcolor: dragOver
+          ? alpha(theme.palette.primary.main, 0.04)
+          : theme.palette.mode === 'dark'
+            ? alpha(theme.palette.common.white, 0.02)
+            : '#F9FAFB',
+        opacity: disabled ? 0.5 : 1,
+        '&:hover': disabled
+          ? {}
+          : {
+              borderColor: 'primary.main',
+              bgcolor: alpha(theme.palette.primary.main, 0.03),
+            },
+      }
+
+  const browseButtonSx = {
+    borderRadius: FORM_CONTROL.borderRadius,
+    fontSize: FORM_CONTROL.fontSize,
+    fontWeight: 600,
+    textTransform: 'none' as const,
+    px: 1.5,
+    py: compact ? 0.5 : 0.75,
+    minHeight: compact ? 32 : undefined,
+    borderColor: 'divider',
+    color: 'text.primary',
+    flexShrink: 0,
+    '&:hover': { borderColor: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.04) },
+  }
+
   return (
     <Box sx={sx}>
       {label && (
@@ -176,30 +255,7 @@ export default function FileUpload({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        sx={{
-          border: '2px dashed',
-          borderColor: error
-            ? 'error.main'
-            : dragOver
-              ? 'primary.main'
-              : theme.palette.divider,
-          borderRadius: '8px',
-          py: 6,
-          px: 3,
-          textAlign: 'center',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          transition: 'all 0.2s ease',
-          bgcolor: dragOver
-            ? alpha(theme.palette.primary.main, 0.04)
-            : theme.palette.mode === 'dark'
-              ? alpha(theme.palette.common.white, 0.02)
-              : '#F9FAFB',
-          opacity: disabled ? 0.5 : 1,
-          '&:hover': disabled ? {} : {
-            borderColor: 'primary.main',
-            bgcolor: alpha(theme.palette.primary.main, 0.03),
-          },
-        }}
+        sx={dropzoneSx}
         onClick={handleClick}
       >
         <input
@@ -210,47 +266,91 @@ export default function FileUpload({
           onChange={handleInputChange}
           style={{ display: 'none' }}
         />
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '12px',
-              bgcolor: alpha(theme.palette.primary.main, 0.08),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Upload size={22} color={theme.palette.primary.main} />
-          </Box>
-        </Box>
-        <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
-          {dropzoneTitle}
-        </Typography>
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
-          {dropzoneCaption ??
-            `${accept ? accept.replace(/,/g, ', ') : 'All file types supported'}${maxSize ? ` — up to ${formatBytes(maxSize)}` : ''}`}
-        </Typography>
-        <MuiButton
-          variant="outlined"
-          size="small"
-          onClick={(e) => { e.stopPropagation(); handleClick() }}
-          disabled={disabled}
-          sx={{
-            borderRadius: '6px',
-            fontSize: '12px',
-            fontWeight: 500,
-            textTransform: 'none',
-            px: 2,
-            py: 0.75,
-            borderColor: 'divider',
-            color: 'text.primary',
-            '&:hover': { borderColor: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.04) },
-          }}
-        >
-          {browseLabel}
-        </MuiButton>
+        {compact ? (
+          <>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Upload size={16} color={theme.palette.primary.main} />
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                variant="body2"
+                fontWeight={600}
+                sx={{ fontSize: FORM_CONTROL.fontSize, lineHeight: 1.3 }}
+                noWrap
+              >
+                {dropzoneTitle}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                noWrap
+                sx={{ fontSize: tokens.fontSize.xs, lineHeight: 1.25 }}
+              >
+                {caption}
+              </Typography>
+            </Box>
+            <MuiButton
+              variant="outlined"
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleClick()
+              }}
+              disabled={disabled}
+              sx={browseButtonSx}
+            >
+              {browseLabel}
+            </MuiButton>
+          </>
+        ) : (
+          <>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '12px',
+                  bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Upload size={22} color={theme.palette.primary.main} />
+              </Box>
+            </Box>
+            <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+              {dropzoneTitle}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+              {caption}
+            </Typography>
+            <MuiButton
+              variant="outlined"
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleClick()
+              }}
+              disabled={disabled}
+              sx={browseButtonSx}
+            >
+              {browseLabel}
+            </MuiButton>
+          </>
+        )}
       </Box>
 
       {helperText && (

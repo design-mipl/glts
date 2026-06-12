@@ -23,9 +23,13 @@ export interface ApplicationFlowState {
   referencePo: string
   billingAddress: string
   expectedReturnDate: string
-  /** Selected passport issuing location from country master. */
+  /** Selected passport issuing state — maps to visa jurisdiction via applicable states. */
+  issuedPassportState: string
+  /** @deprecated Use issuedPassportState — kept for stored session compatibility. */
   issuedPassportLocationId: string
-  /** Auto-filled from issued passport location jurisdiction mapping. */
+  /** Resolved country master jurisdiction id for document requirements. */
+  jurisdictionId: string
+  /** Jurisdiction display name (e.g. Delhi). */
   jurisdiction: string
   processingType: 'normal' | 'express'
   uploadSource: 'folder' | 'zip'
@@ -73,7 +77,9 @@ const defaultState: ApplicationFlowState = {
   referencePo: '',
   billingAddress: '',
   expectedReturnDate: '',
+  issuedPassportState: '',
   issuedPassportLocationId: '',
+  jurisdictionId: '',
   jurisdiction: '',
   processingType: 'normal',
   uploadSource: 'folder',
@@ -126,9 +132,18 @@ function loadStored(storageKey: string): ApplicationFlowState {
     if (!raw) return defaultState
     const parsed = JSON.parse(raw) as Partial<ApplicationFlowState> & { mode?: string }
     const { mode: _removed, ...rest } = parsed
+    const issuedPassportState =
+      typeof parsed.issuedPassportState === 'string'
+        ? parsed.issuedPassportState
+        : typeof parsed.issuedPassportLocationId === 'string'
+          ? parsed.issuedPassportLocationId
+          : ''
+
     return {
       ...defaultState,
       ...rest,
+      issuedPassportState,
+      jurisdictionId: typeof parsed.jurisdictionId === 'string' ? parsed.jurisdictionId : '',
       gltsApplicationId: typeof parsed.gltsApplicationId === 'string' ? parsed.gltsApplicationId : '',
       gltsBatchId: typeof parsed.gltsBatchId === 'string' ? parsed.gltsBatchId : '',
       globalDocumentUploads:

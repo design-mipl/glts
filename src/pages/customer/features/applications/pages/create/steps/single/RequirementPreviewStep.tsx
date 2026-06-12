@@ -2,9 +2,14 @@ import { useEffect, useMemo } from 'react'
 import { Box, Typography, Chip, Stack, Card, Grid, TextField, MenuItem, Divider } from '@mui/material'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import {
-  getPassportIssueLocations,
-  resolvePassportJurisdiction,
+  getApplicableStatesForOffering,
+  getRequirementPreviewCards,
+  getTravelFeasibilityConfig,
+  getVisaApplicationWindow,
+  resolveJurisdictionForOfferingState,
 } from '@/shared/services/countryMasterService'
+import { DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS } from '@/shared/constants/travelDateFeasibility'
+import { getTravelDateInputBounds } from '@/shared/utils/jurisdictionRequirementPreview'
 import {
   requiresFieldValidation,
   useApplicationFlowPolicy,
@@ -12,7 +17,7 @@ import {
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import { FlowStepActions } from '../../../../components/create/FlowStepActions'
 import { RequirementPreviewCarousel } from '../../../../components/create/RequirementPreviewCarousel'
-import { getRequirementPreviewCards } from '../../../../data/singleApplicationFlowData'
+import { TravelDateFieldWithFeasibility } from '../../../../components/create/TravelDateFieldWithFeasibility'
 
 interface RequirementPreviewStepProps {
   state: ApplicationFlowState
@@ -24,42 +29,110 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
   const colors = usePublicBrandColors()
   const { policy } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
-  const cards = useMemo(
-    () => getRequirementPreviewCards(state.countryId, state.visaOfferingId),
+
+  const applicableStates = useMemo(
+    () => getApplicableStatesForOffering(state.countryId, state.visaOfferingId),
     [state.countryId, state.visaOfferingId],
   )
-  const passportIssueLocations = useMemo(
-    () => getPassportIssueLocations(state.countryId),
+  const hasStateOptions = applicableStates.length > 0
+
+  const resolvedJurisdiction = useMemo(
+    () =>
+      state.issuedPassportState
+        ? resolveJurisdictionForOfferingState(
+            state.countryId,
+            state.visaOfferingId,
+            state.issuedPassportState,
+          )
+        : undefined,
+    [state.countryId, state.visaOfferingId, state.issuedPassportState],
+  )
+
+  const jurisdictionId = resolvedJurisdiction?.id ?? state.jurisdictionId
+
+  const cards = useMemo(() => {
+    if (hasStateOptions && !jurisdictionId) return []
+    return getRequirementPreviewCards(state.countryId, state.visaOfferingId, jurisdictionId || undefined)
+  }, [hasStateOptions, jurisdictionId, state.countryId, state.visaOfferingId])
+
+  const travelDateBounds = useMemo(
+    () => getTravelDateInputBounds(getVisaApplicationWindow(state.countryId)),
     [state.countryId],
   )
-  const hasLocationOptions = passportIssueLocations.length > 0
+
+  const travelFeasibilityConfig = useMemo(
+    () =>
+      state.countryId && state.visaOfferingId
+        ? getTravelFeasibilityConfig(
+            state.countryId,
+            state.visaOfferingId,
+            jurisdictionId || undefined,
+          )
+        : null,
+    [jurisdictionId, state.countryId, state.visaOfferingId],
+  )
 
   useEffect(() => {
-    if (!state.issuedPassportLocationId) return
-    const stillValid = passportIssueLocations.some((loc) => loc.id === state.issuedPassportLocationId)
-    if (!stillValid) {
-      onUpdate({ issuedPassportLocationId: '', jurisdiction: '' })
+    if (!state.issuedPassportState) {
+      if (state.jurisdictionId || state.jurisdiction) {
+        onUpdate({ jurisdictionId: '', jurisdiction: '' })
+      }
       return
     }
-    const resolved = resolvePassportJurisdiction(state.countryId, state.issuedPassportLocationId)
-    if (resolved && resolved !== state.jurisdiction) {
-      onUpdate({ jurisdiction: resolved })
-    }
-  }, [state.countryId, state.issuedPassportLocationId, state.jurisdiction, passportIssueLocations, onUpdate])
 
-  const handleLocationChange = (locationId: string) => {
+    const stillValid = applicableStates.includes(state.issuedPassportState)
+    if (!stillValid) {
+      onUpdate({ issuedPassportState: '', jurisdictionId: '', jurisdiction: '' })
+      return
+    }
+
+    if (!resolvedJurisdiction) {
+      if (state.jurisdictionId || state.jurisdiction) {
+        onUpdate({ jurisdictionId: '', jurisdiction: '' })
+      }
+      return
+    }
+
+    if (
+      resolvedJurisdiction.id !== state.jurisdictionId ||
+      resolvedJurisdiction.name !== state.jurisdiction
+    ) {
+      onUpdate({
+        jurisdictionId: resolvedJurisdiction.id,
+        jurisdiction: resolvedJurisdiction.name,
+      })
+    }
+  }, [
+    applicableStates,
+    onUpdate,
+    resolvedJurisdiction,
+    state.issuedPassportState,
+    state.jurisdiction,
+    state.jurisdictionId,
+  ])
+
+  const handleStateChange = (stateName: string) => {
+    const jurisdiction = resolveJurisdictionForOfferingState(
+      state.countryId,
+      state.visaOfferingId,
+      stateName,
+    )
     onUpdate({
-      issuedPassportLocationId: locationId,
-      jurisdiction: resolvePassportJurisdiction(state.countryId, locationId) ?? '',
+      issuedPassportState: stateName,
+      jurisdictionId: jurisdiction?.id ?? '',
+      jurisdiction: jurisdiction?.name ?? '',
     })
   }
 
   const canContinue = strict
-    ? Boolean(state.visaOfferingId) &&
-      cards.length > 0 &&
-      Boolean(state.travelDate) &&
-      Boolean(state.issuedPassportLocationId) &&
-      Boolean(state.jurisdiction)
+    ? Boolean(
+        state.visaOfferingId &&
+          cards.length > 0 &&
+          state.travelDate &&
+          state.issuedPassportState &&
+          state.jurisdictionId &&
+          state.jurisdiction,
+      )
     : true
 
   return (
@@ -72,81 +145,97 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
         <Chip label={state.purposeLabel} size="small" variant="outlined" />
       </Stack>
 
-      <Card
-        sx={{
-          p: { xs: 1.5, md: 2 },
-          borderRadius: '12px',
-          border: `1px solid ${colors.border}`,
-          bgcolor: colors.surface,
-        }}
-      >
-        <Typography sx={{ fontSize: 12, fontWeight: 700, color: colors.textSecondary, textTransform: 'uppercase', mb: 1 }}>
-          Travel & jurisdiction
-        </Typography>
-        <Grid container spacing={1.25}>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.5 }}>
-              Issued passport location
-            </Typography>
-            <TextField
-              select
-              size="small"
-              fullWidth
-              value={state.issuedPassportLocationId}
-              onChange={(e) => handleLocationChange(e.target.value)}
-              disabled={!hasLocationOptions}
-              inputProps={{ 'aria-label': 'Issued passport location' }}
-              sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
+      <Grid container spacing={2} alignItems="stretch">
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card
+            sx={{
+              p: { xs: 1.25, md: 1.5 },
+              borderRadius: '12px',
+              border: `1px solid ${colors.border}`,
+              bgcolor: colors.surface,
+              height: '100%',
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: colors.textSecondary,
+                textTransform: 'uppercase',
+                mb: 1,
+              }}
             >
-              <MenuItem value="">
-                <em>Select location</em>
-              </MenuItem>
-              {passportIssueLocations.map((loc) => (
-                <MenuItem key={loc.id} value={loc.id}>
-                  {loc.label}
-                </MenuItem>
-              ))}
-            </TextField>
-            {!hasLocationOptions && (
-              <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.5 }}>
-                No passport issue locations configured for this country.
-              </Typography>
-            )}
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.5 }}>
-              Jurisdiction
+              Travel & jurisdiction
             </Typography>
-            <TextField
-              size="small"
-              fullWidth
-              value={state.jurisdiction}
-              disabled
-              placeholder="Auto-filled from location"
-              inputProps={{ 'aria-label': 'Jurisdiction' }}
-              sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.5 }}>
-              Intended travel date
-            </Typography>
-            <TextField
-              type="date"
-              size="small"
-              fullWidth
-              value={state.travelDate}
-              onChange={(e) => onUpdate({ travelDate: e.target.value })}
-              inputProps={{ 'aria-label': 'Intended travel date' }}
-              sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
-            />
-          </Grid>
+            <Divider sx={{ mb: 1.5, borderColor: colors.border }} />
+            <Stack spacing={2}>
+              <Box>
+                <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
+                  Issued passport state
+                </Typography>
+                <TextField
+                  select
+                  size="small"
+                  fullWidth
+                  value={state.issuedPassportState}
+                  onChange={(e) => handleStateChange(e.target.value)}
+                  disabled={!hasStateOptions}
+                  inputProps={{ 'aria-label': 'Issued passport state' }}
+                  sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
+                >
+                  <MenuItem value="">
+                    <em>Select state</em>
+                  </MenuItem>
+                  {applicableStates.map((stateName) => (
+                    <MenuItem key={stateName} value={stateName}>
+                      {stateName}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                {!hasStateOptions && (
+                  <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.5 }}>
+                    No applicable states configured for this visa type.
+                  </Typography>
+                )}
+              </Box>
+              <Box>
+                <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
+                  Jurisdiction
+                </Typography>
+                <TextField
+                  size="small"
+                  fullWidth
+                  value={state.jurisdiction}
+                  disabled
+                  placeholder="Auto-filled from state"
+                  inputProps={{ 'aria-label': 'Jurisdiction' }}
+                  sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
+                />
+              </Box>
+              <Box>
+                <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
+                  Intended travel date
+                </Typography>
+                <TravelDateFieldWithFeasibility
+                  value={state.travelDate}
+                  onChange={(iso) => onUpdate({ travelDate: iso })}
+                  config={
+                    travelFeasibilityConfig ?? {
+                      requiredWorkingDays: null,
+                      thresholds: DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS,
+                    }
+                  }
+                  applicationWindowHelper={travelDateBounds.helperText}
+                />
+              </Box>
+            </Stack>
+          </Card>
         </Grid>
-      </Card>
 
-      <Divider sx={{ my: 2, borderColor: colors.border }} />
-
-      <RequirementPreviewCarousel cards={cards} />
+        <Grid size={{ xs: 12, md: 6 }}>
+          <RequirementPreviewCarousel cards={cards} />
+        </Grid>
+      </Grid>
 
       <FlowStepActions
         onContinue={onContinue}

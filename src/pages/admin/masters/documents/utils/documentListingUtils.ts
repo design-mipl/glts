@@ -1,4 +1,5 @@
 import type { DocumentMaster } from '@/shared/types/documentMaster'
+import { richTextToPlainText } from '@/shared/utils/richTextUtils'
 import { documentStatusLabel } from '../config/documentStatusConfig'
 
 export function getDocumentCellValue(row: DocumentMaster, key: string): string {
@@ -8,13 +9,17 @@ export function getDocumentCellValue(row: DocumentMaster, key: string): string {
   if (key === 'status') {
     return documentStatusLabel[row.status]
   }
+  if (key === 'description') {
+    return richTextToPlainText(row.description)
+  }
   return String((row as unknown as Record<string, unknown>)[key] ?? '')
 }
 
 export function matchesDocumentSearch(row: DocumentMaster, query: string): boolean {
   const normalized = query.trim().toLowerCase()
   if (!normalized) return true
-  return [row.id, row.documentType, row.description, row.status].some((part) =>
+  const plainDescription = richTextToPlainText(row.description)
+  return [row.id, row.documentType, plainDescription, row.status].some((part) =>
     part.toLowerCase().includes(normalized),
   )
 }
@@ -32,7 +37,7 @@ export function mapDocumentRowsToGridItems(rows: DocumentMaster[]) {
   return rows.map((row) => ({
     id: row.id,
     title: row.documentType,
-    subtitle: row.description || documentStatusLabel[row.status],
+    subtitle: richTextToPlainText(row.description) || documentStatusLabel[row.status],
     meta: formatDocumentDate(row.createdAt),
     status: documentStatusLabel[row.status],
     statusColor: row.status === 'active' ? ('success' as const) : ('default' as const),
@@ -59,7 +64,7 @@ export function downloadDocumentCsv(rows: DocumentMaster[]) {
     [
       row.id,
       row.documentType,
-      row.description.replace(/"/g, '""'),
+      richTextToPlainText(row.description).replace(/"/g, '""'),
       documentStatusLabel[row.status],
       formatDocumentDate(row.createdAt),
     ]
