@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { AppShell } from '@/design-system/UIComponents'
 import { GreenlightLogoCollapsed, GreenlightLogoExpanded } from '@/components/brand/GreenlightLogo'
+import { AdminPageCanvasShell } from '../components/AdminPageCanvasShell'
 import { adminNav } from '../config/adminNav'
 import { useAdminSession } from '../hooks/useAdminSession'
 
@@ -23,7 +24,7 @@ export function AdminShell({ children }: AdminShellProps) {
       onProfileClick={goToProfile}
       hideTopbarUserDetails
     >
-      {children}
+      <AdminPageCanvasShell>{children}</AdminPageCanvasShell>
     </AppShell>
   )
 }

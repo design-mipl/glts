@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '@/design-system/tokens'
 import { Tabs } from '@/design-system/UIComponents'
 import { CustomerListingKpis, type CustomerKpiItem } from './CustomerListingKpis'
+import { CustomerListingStickyHeader } from './CustomerListingStickyHeader'
 
 export interface CustomerListingTab {
   value: string
@@ -40,36 +41,38 @@ export function CustomerListingShell({
   table,
   pagination,
 }: CustomerListingShellProps) {
-  return (
-    <Box>
-      {stickyPageHeader ?? (
-        (title || headerActions) && (
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              justifyContent: 'space-between',
-              alignItems: { xs: 'flex-start', sm: 'center' },
-              gap: 2,
-              mb: 2,
-            }}
-          >
-            {title && (
-              <Box>
-                <Typography variant="h1" sx={{ fontSize: { xs: '22px', md: '26px' }, fontWeight: 700 }}>
-                  {title}
-                </Typography>
-                {subtitle && (
-                  <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>{subtitle}</Typography>
-                )}
-              </Box>
-            )}
-            {headerActions && (
-              <Box sx={{ display: 'flex', gap: 1, flexShrink: 0, flexWrap: 'wrap' }}>{headerActions}</Box>
+  const defaultHeader =
+    !stickyPageHeader && (title || headerActions) ? (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2,
+        }}
+      >
+        {title && (
+          <Box>
+            <Typography variant="h1" sx={{ fontSize: { xs: '22px', md: '26px' }, fontWeight: 700 }}>
+              {title}
+            </Typography>
+            {subtitle && (
+              <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>{subtitle}</Typography>
             )}
           </Box>
-        )
-      )}
+        )}
+        {headerActions && (
+          <Box sx={{ display: 'flex', gap: 1, flexShrink: 0, flexWrap: 'wrap' }}>{headerActions}</Box>
+        )}
+      </Box>
+    ) : null
+
+  const headerContent = stickyPageHeader ?? defaultHeader
+
+  return (
+    <Box>
+      {headerContent ? <CustomerListingStickyHeader>{headerContent}</CustomerListingStickyHeader> : null}
 
       {kpis && kpis.length > 0 && <CustomerListingKpis items={kpis} />}
 

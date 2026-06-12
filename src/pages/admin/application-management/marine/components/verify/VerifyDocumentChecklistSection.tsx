@@ -1,9 +1,9 @@
 import { Box, Divider, Stack, Typography } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 import { Eye, RotateCcw, ShieldCheck, Upload, XCircle } from 'lucide-react'
 import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
 import {
-  documentStatusLabel,
   formatWorkflowSummary,
   isSimpleDocumentRequirement,
   requirementTypeLabel,
@@ -12,6 +12,7 @@ import {
   type SimpleDocumentRequirementId,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import { documentBadgeColor, verifyDocumentBadgeLabel } from '../../utils/verifyDocumentsUtils'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 
 const VERIFY_DOCUMENT_CARD_SX = {
   p: 2,
@@ -69,7 +70,7 @@ export function VerifyDocumentCard({
         ? Boolean(document.insurance?.fileName?.trim())
         : true
   const previewDisabled = !hasFile
-  const reuploadDisabled = !customerUpload
+  const showReuploadRequest = customerUpload
   const showGltsUpload =
     arrangeByGlts && !hasFile && onGltsUpload && isSimpleDocumentRequirement(document.documentId)
   const reqType = requirementTypeLabel(document)
@@ -92,11 +93,13 @@ export function VerifyDocumentCard({
               </Typography>
             ) : null}
           </Typography>
-          <Badge
-            label={displayStatus}
-            color={documentBadgeColor(status, document)}
-            size="sm"
-          />
+          {displayStatus !== 'Needs review' ? (
+            <Badge
+              label={displayStatus}
+              color={documentBadgeColor(status, document)}
+              size="sm"
+            />
+          ) : null}
         </Stack>
 
         <Stack spacing={0.75} sx={{ flex: 1 }}>
@@ -109,11 +112,6 @@ export function VerifyDocumentCard({
                 {reqType}
               </Typography>
             </Stack>
-          ) : null}
-          {!isSimple ? (
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-              {documentStatusLabel(document)}
-            </Typography>
           ) : null}
           {workflowSummary ? (
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.45 }}>
@@ -143,16 +141,51 @@ export function VerifyDocumentCard({
 
         <Divider />
 
-        <Stack direction="row" flexWrap="wrap" gap={1} useFlexGap>
-          {showGltsUpload ? (
+        <Stack
+          direction="row"
+          flexWrap="wrap"
+          gap={1}
+          useFlexGap
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ width: '100%' }}
+        >
+          <Stack direction="row" flexWrap="wrap" gap={1} useFlexGap>
+            {showGltsUpload ? (
+              <Button
+                label={simpleDocumentUploadActionLabel(document.documentId as SimpleDocumentRequirementId)}
+                variant="contained"
+                size="sm"
+                startIcon={<Upload size={14} />}
+                onClick={onGltsUpload}
+              />
+            ) : null}
             <Button
-              label={simpleDocumentUploadActionLabel(document.documentId as SimpleDocumentRequirementId)}
-              variant="contained"
+              label="Verify"
+              variant="outlined"
               size="sm"
-              startIcon={<Upload size={14} />}
-              onClick={onGltsUpload}
+              startIcon={<ShieldCheck size={14} />}
+              onClick={onVerify}
+              disabled={!hasFile && arrangeByGlts}
             />
-          ) : null}
+            <Button
+              label="Reject"
+              variant="outlined"
+              color="error"
+              size="sm"
+              startIcon={<XCircle size={14} />}
+              onClick={onReject}
+            />
+            {showReuploadRequest ? (
+              <Button
+                label="Request Re-upload"
+                variant="text"
+                size="sm"
+                startIcon={<RotateCcw size={14} />}
+                onClick={onRequestReupload}
+              />
+            ) : null}
+          </Stack>
           <Button
             label="Preview"
             variant="outlined"
@@ -160,30 +193,6 @@ export function VerifyDocumentCard({
             startIcon={<Eye size={14} />}
             onClick={onPreview}
             disabled={previewDisabled}
-          />
-          <Button
-            label="Verify"
-            variant="outlined"
-            size="sm"
-            startIcon={<ShieldCheck size={14} />}
-            onClick={onVerify}
-            disabled={!hasFile && arrangeByGlts}
-          />
-          <Button
-            label="Reject"
-            variant="outlined"
-            color="error"
-            size="sm"
-            startIcon={<XCircle size={14} />}
-            onClick={onReject}
-          />
-          <Button
-            label="Request Re-upload"
-            variant="text"
-            size="sm"
-            startIcon={<RotateCcw size={14} />}
-            onClick={onRequestReupload}
-            disabled={reuploadDisabled}
           />
         </Stack>
       </Stack>
@@ -237,38 +246,83 @@ export function VerifyDocumentChecklistSection({
   )
 }
 
-interface VerifyGlobalDocumentChecklistProps {
-  documents: ApplicantDocumentItem[]
+interface VerifyDocumentChecklistsPanelProps {
+  countryTitle: string
+  travelerDocuments: ApplicantDocumentItem[]
+  globalDocuments: ApplicantDocumentItem[]
   gridSx?: typeof VERIFY_DOCUMENT_GRID_SX
-  onPreview: (documentId: string) => void
-  onVerify: (documentId: string) => void
-  onReject: (document: ApplicantDocumentItem) => void
-  onRequestReupload: (document: ApplicantDocumentItem) => void
+  onTravelerPreview: (documentId: string) => void
+  onTravelerVerify: (documentId: string) => void
+  onTravelerReject: (document: ApplicantDocumentItem) => void
+  onTravelerRequestReupload: (document: ApplicantDocumentItem) => void
+  onTravelerGltsUpload?: (document: ApplicantDocumentItem) => void
+  onGlobalPreview: (documentId: string) => void
+  onGlobalVerify: (documentId: string) => void
+  onGlobalReject: (document: ApplicantDocumentItem) => void
+  onGlobalRequestReupload: (document: ApplicantDocumentItem) => void
 }
 
-export function VerifyGlobalDocumentChecklist({
-  documents,
+export function VerifyDocumentChecklistsPanel({
+  countryTitle,
+  travelerDocuments,
+  globalDocuments,
   gridSx,
-  onPreview,
-  onVerify,
-  onReject,
-  onRequestReupload,
-}: VerifyGlobalDocumentChecklistProps) {
-  if (documents.length === 0) return null
+  onTravelerPreview,
+  onTravelerVerify,
+  onTravelerReject,
+  onTravelerRequestReupload,
+  onTravelerGltsUpload,
+  onGlobalPreview,
+  onGlobalVerify,
+  onGlobalReject,
+  onGlobalRequestReupload,
+}: VerifyDocumentChecklistsPanelProps) {
+  const theme = useTheme()
+  const colors = usePublicBrandColors()
+  const showTravelerChecklist = travelerDocuments.length > 0
+  const showGlobalChecklist = globalDocuments.length > 0
+
+  if (!showTravelerChecklist && !showGlobalChecklist) return null
+
+  const isLight = theme.palette.mode === 'light'
 
   return (
-    <Stack spacing={2}>
-      <Divider />
-      <VerifyDocumentChecklistSection
-        countryTitle="Common Document Checklist"
-        sectionTitle="Common Document Checklist"
-        documents={documents}
-        gridSx={gridSx}
-        onPreview={onPreview}
-        onVerify={onVerify}
-        onReject={onReject}
-        onRequestReupload={onRequestReupload}
-      />
-    </Stack>
+    <BaseCard
+      sx={{
+        p: 2,
+        borderWidth: 1,
+        borderColor: 'divider',
+        bgcolor: alpha(colors.navy, isLight ? 0.022 : 0.055),
+        backgroundImage: `linear-gradient(160deg, ${alpha(colors.navyMid, isLight ? 0.032 : 0.07)} 0%, transparent 72%)`,
+      }}
+    >
+      <Stack spacing={2}>
+        {showTravelerChecklist ? (
+          <VerifyDocumentChecklistSection
+            countryTitle={countryTitle}
+            documents={travelerDocuments}
+            gridSx={gridSx}
+            onPreview={onTravelerPreview}
+            onVerify={onTravelerVerify}
+            onReject={onTravelerReject}
+            onRequestReupload={onTravelerRequestReupload}
+            onGltsUpload={onTravelerGltsUpload}
+          />
+        ) : null}
+        {showTravelerChecklist && showGlobalChecklist ? <Divider /> : null}
+        {showGlobalChecklist ? (
+          <VerifyDocumentChecklistSection
+            countryTitle="Common Document Checklist"
+            sectionTitle="Common Document Checklist"
+            documents={globalDocuments}
+            gridSx={gridSx}
+            onPreview={onGlobalPreview}
+            onVerify={onGlobalVerify}
+            onReject={onGlobalReject}
+            onRequestReupload={onGlobalRequestReupload}
+          />
+        ) : null}
+      </Stack>
+    </BaseCard>
   )
 }

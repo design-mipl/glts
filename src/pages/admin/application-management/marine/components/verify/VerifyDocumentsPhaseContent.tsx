@@ -11,8 +11,7 @@ import { VerifyDocumentsTravelerSection } from './VerifyDocumentsTravelerSection
 import { VerifyDocumentsTimeline } from './VerifyDocumentsTimeline'
 import {
   VERIFY_DOCUMENT_SPLIT_GRID_SX,
-  VerifyDocumentChecklistSection,
-  VerifyGlobalDocumentChecklist,
+  VerifyDocumentChecklistsPanel,
 } from './VerifyDocumentChecklistSection'
 import { VerifyRejectedDocumentsSection } from './VerifyRejectedDocumentsSection'
 import { VerifyFinalVerificationChecklist } from './VerifyFinalVerificationChecklist'
@@ -104,36 +103,28 @@ export function VerifyDocumentsPhaseContent({
       />
     ) : null
 
-  const travelerDocumentChecklist =
-    selectedRow && detail && travelerChecklistDocuments.length > 0 ? (
-      <VerifyDocumentChecklistSection
-        countryTitle={overview.countryName}
-        documents={travelerChecklistDocuments}
-        gridSx={splitGridSx}
-        onPreview={documentId => onPreview(documentId, 'traveler')}
-        onVerify={onTravelerVerify}
-        onReject={onTravelerReject}
-        onRequestReupload={onTravelerRequestReupload}
-        onGltsUpload={onGltsUpload}
-      />
-    ) : null
-
-  const globalDocumentChecklist = (
-    <VerifyGlobalDocumentChecklist
-      documents={globalChecklistDocuments}
+  const documentChecklistsSection = (
+    <VerifyDocumentChecklistsPanel
+      countryTitle={overview.countryName}
+      travelerDocuments={selectedRow && detail ? travelerChecklistDocuments : []}
+      globalDocuments={globalChecklistDocuments}
       gridSx={splitGridSx}
-      onPreview={documentId => onPreview(documentId, 'global')}
-      onVerify={onGlobalVerify}
-      onReject={onGlobalReject}
-      onRequestReupload={onGlobalRequestReupload}
+      onTravelerPreview={documentId => onPreview(documentId, 'traveler')}
+      onTravelerVerify={onTravelerVerify}
+      onTravelerReject={onTravelerReject}
+      onTravelerRequestReupload={onTravelerRequestReupload}
+      onTravelerGltsUpload={onGltsUpload}
+      onGlobalPreview={documentId => onPreview(documentId, 'global')}
+      onGlobalVerify={onGlobalVerify}
+      onGlobalReject={onGlobalReject}
+      onGlobalRequestReupload={onGlobalRequestReupload}
     />
   )
 
   const documentsPane = (
     <Stack spacing={2}>
       {rejectedDocumentsSection}
-      {travelerDocumentChecklist}
-      {globalDocumentChecklist}
+      {documentChecklistsSection}
     </Stack>
   )
 

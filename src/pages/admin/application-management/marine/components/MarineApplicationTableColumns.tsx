@@ -106,7 +106,6 @@ export function buildMarineApplicationColumns({
       label: 'GLTS reference',
       sortable: true,
       filterable: false,
-      width: 170,
       render: (value: string, row: MarineApplicationRow) => (
         <Box>
           <Typography
@@ -145,7 +144,6 @@ export function buildMarineApplicationColumns({
       label: 'Company name',
       sortable: true,
       filterable: true,
-      width: 180,
       render: (_: unknown, row: MarineApplicationRow) => (
         <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
           {resolveApplicationCompanyName(row)}
@@ -157,7 +155,6 @@ export function buildMarineApplicationColumns({
       label: 'Country / Visa',
       sortable: true,
       filterable: true,
-      width: 180,
       render: (_: unknown, row: MarineApplicationRow) => (
         <Box>
           <Typography variant="body2" sx={{ fontSize: 13 }}>
@@ -174,20 +171,18 @@ export function buildMarineApplicationColumns({
       label: 'Jurisdiction',
       sortable: true,
       filterable: true,
-      width: 120,
       render: (value: string) => (
         <Typography variant="body2" sx={{ fontSize: 13 }}>
           {value?.trim() ? value : '—'}
         </Typography>
       ),
     },
-    { key: 'travelDate', label: 'Travel date', sortable: true, filterable: true, width: 110 },
+    { key: 'travelDate', label: 'Travel date', sortable: true, filterable: true },
     {
       key: 'createdBy',
       label: 'Created by',
       sortable: true,
       filterable: true,
-      width: 150,
       render: (_: unknown, row: MarineApplicationRow) => (
         <Box>
           <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
@@ -204,7 +199,6 @@ export function buildMarineApplicationColumns({
       label: 'Status',
       sortable: true,
       filterable: true,
-      width: 150,
       render: (_: unknown, row: MarineApplicationRow) => (
         <Badge
           label={row.operationalStatus}
@@ -218,14 +212,13 @@ export function buildMarineApplicationColumns({
       label: 'Processing stage',
       sortable: false,
       filterable: true,
-      width: 150,
       render: (value: string) => (
         <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
           {value}
         </Typography>
       ),
     },
-    { key: 'lastUpdated', label: 'Last updated', sortable: true, filterable: false, width: 110 },
+    { key: 'lastUpdated', label: 'Last updated', sortable: true, filterable: false },
     {
       key: 'actions',
       label: '',
@@ -233,7 +226,7 @@ export function buildMarineApplicationColumns({
       filterable: false,
       searchable: false,
       hideable: false,
-      width: 56,
+      width: 60,
       render: (_: unknown, row: MarineApplicationRow) => (
         <RowActions actions={buildRowActions(navigate, showToast, row.id)} row={row} />
       ),

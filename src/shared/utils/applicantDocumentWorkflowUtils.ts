@@ -47,6 +47,7 @@ export type SimpleDocumentWorkflowStatus =
   | 'verified'
   | 'rejected'
   | 'reupload_requested'
+  | 'needs_review'
 
 export function isSimpleDocumentRequirement(documentId: string): documentId is SimpleDocumentRequirementId {
   return SIMPLE_DOCUMENT_REQUIREMENT_IDS.includes(documentId as SimpleDocumentRequirementId)
@@ -83,7 +84,9 @@ export function getSimpleDocumentWorkflowStatus(doc: ApplicantDocumentItem): Sim
 
   if (doc.status === 'verified') return 'verified'
   if (doc.status === 'rejected') return 'rejected'
-  if (doc.status === 'needs_review') return 'reupload_requested'
+  if (doc.status === 'needs_review') {
+    return doc.handlingMode === 'upload_by_applicant' ? 'reupload_requested' : 'needs_review'
+  }
 
   if (!hasHandlingModeChosen(doc)) return 'not_selected'
 
@@ -117,6 +120,7 @@ const WORKFLOW_STATUS_LABELS: Record<SimpleDocumentWorkflowStatus, string> = {
   verified: 'Verified',
   rejected: 'Rejected',
   reupload_requested: 'Re-upload Requested',
+  needs_review: 'Needs review',
 }
 
 export function documentStatusLabel(doc: ApplicantDocumentItem): string {
@@ -127,6 +131,15 @@ export function documentStatusLabel(doc: ApplicantDocumentItem): string {
     if (doc.status === 'uploaded') return 'Uploaded'
     return 'Not uploaded'
   }
+
+  if (doc.status === 'needs_review') {
+    return doc.handlingMode === 'upload_by_applicant'
+      ? WORKFLOW_STATUS_LABELS.reupload_requested
+      : WORKFLOW_STATUS_LABELS.needs_review
+  }
+
+  if (doc.status === 'verified') return 'Verified'
+  if (doc.status === 'rejected') return 'Rejected'
 
   const workflowStatus = getSimpleDocumentWorkflowStatus(doc)
   if (workflowStatus === 'ticket_uploaded_by_glts' || workflowStatus === 'insurance_uploaded_by_glts') {

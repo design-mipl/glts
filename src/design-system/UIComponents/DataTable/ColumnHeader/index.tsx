@@ -4,6 +4,7 @@ import { Box, Typography, IconButton, InputBase, Tooltip, Badge } from '@mui/mat
 import { ArrowUpDown, ArrowUp, ArrowDown, Filter, X } from 'lucide-react'
 import { BORDER_RADIUS, BORDER_WIDTH } from '../../../tokens'
 import type { Column, SortDirection } from '../types'
+import { isActionColumn } from '../columnLayout'
 
 export interface ColumnHeaderProps {
   column: Column
@@ -54,9 +55,7 @@ export default function ColumnHeader({
       ? ArrowDown
       : ArrowUpDown
 
-  const isActionColumn = column.key === 'actions'
-
-  if (isActionColumn) {
+  if (isActionColumn(column)) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Typography
@@ -72,7 +71,7 @@ export default function ColumnHeader({
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: column.minWidth }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, width: '100%', minWidth: 0 }}>
       {/* Label row */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
         <Typography
