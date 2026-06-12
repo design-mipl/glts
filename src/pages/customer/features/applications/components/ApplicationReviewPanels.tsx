@@ -12,18 +12,10 @@ import type { UploadQueueRow } from '../data/applicationFlowData'
 import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
 import { buildApplicationProcessingTimeline } from '@/shared/utils/applicationProcessingTimeline'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
+import { resolveApplicationReferenceDisplay } from '../utils/gltsReferenceIds'
 
-export interface ApplicationReviewOverview {
-  countryName: string
-  countryFlag: string
-  visaTypeLabel: string
-  purposeLabel?: string
-  travelDate: string
-  issuedPassportLocationLabel?: string
-  jurisdiction?: string
-  gltsApplicationId?: string
-  gltsBatchId?: string
-}
+export type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
 
 interface ApplicationReviewPanelsProps {
   rows: UploadQueueRow[]
@@ -94,6 +86,10 @@ export function ApplicationReviewPanels({
     () => timelineSteps ?? buildSubmitTimeline(selectedRow),
     [timelineSteps, selectedRow],
   )
+  const { primaryId, batchId } = resolveApplicationReferenceDisplay(
+    overview.gltsApplicationId,
+    overview.gltsBatchId,
+  )
 
   return (
     <>
@@ -106,14 +102,14 @@ export function ApplicationReviewPanels({
       {readyRows.length > 1 && (
         <Card sx={{ p: 2, borderRadius: '12px', border: `1px solid ${colors.border}`, mb: 2 }}>
           <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 1 }}>Application overview</Typography>
-          {overview.gltsApplicationId ? (
+          {primaryId ? (
             <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 1.5 }}>
               <Typography sx={{ fontSize: 12, fontFamily: 'monospace', fontWeight: 700, color: colors.navy }}>
-                {overview.gltsApplicationId}
+                {primaryId}
               </Typography>
-              {overview.gltsBatchId ? (
+              {batchId ? (
                 <Typography sx={{ fontSize: 12, fontFamily: 'monospace', color: colors.textSecondary }}>
-                  · Batch {overview.gltsBatchId}
+                  · Batch {batchId}
                 </Typography>
               ) : null}
             </Stack>
@@ -146,7 +142,7 @@ export function ApplicationReviewPanels({
             readOnly
             singleListing={readyRows.length <= 1}
             gltsApplicationId={overview.gltsApplicationId}
-            gltsBatchId={overview.gltsBatchId}
+            summaryOverview={overview}
           />
         </Box>
       ) : null}
@@ -163,34 +159,6 @@ export function ApplicationReviewPanels({
 
       {selectedRow ? (
         <>
-          <Card sx={{ p: 2, borderRadius: '12px', border: `1px solid ${colors.border}`, mb: 2 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 1.5 }}>Application summary</Typography>
-            <Grid container spacing={1}>
-              {[
-                ['Name', selectedRow.travelerName],
-                ['Passport', selectedRow.passportNo],
-                ['Country', `${overview.countryFlag} ${overview.countryName}`],
-                ['Visa', overview.purposeLabel ? `${overview.visaTypeLabel} · ${overview.purposeLabel}` : overview.visaTypeLabel],
-                ['Travel', overview.travelDate || '—'],
-                ['Passport location', overview.issuedPassportLocationLabel || '—'],
-                ['Jurisdiction', overview.jurisdiction || '—'],
-                ['Nationality', selectedRow.nationality],
-                ['Passport expiry', selectedRow.expiry],
-                [
-                  'Documents',
-                  selectedRow.documentsTotal > 0
-                    ? `${selectedRow.documentsComplete}/${selectedRow.documentsTotal} complete`
-                    : '—',
-                ],
-              ].map(([k, v]) => (
-                <Grid size={{ xs: 6 }} key={k}>
-                  <Typography sx={{ fontSize: 11, color: colors.textMuted }}>{k}</Typography>
-                  <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{v}</Typography>
-                </Grid>
-              ))}
-            </Grid>
-          </Card>
-
           <Box sx={{ mb: 2 }}>
             <CustomerDocumentChecklist
               country={overview.countryName}

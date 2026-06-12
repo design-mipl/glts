@@ -82,6 +82,18 @@ export function createEmptyUploadQueueRow(
   }
 }
 
+export function resolveApplicationReferenceDisplay(
+  gltsApplicationId?: string,
+  gltsBatchId?: string,
+): { primaryId?: string; batchId?: string } {
+  const appId = gltsApplicationId?.trim() || undefined
+  const batchId = gltsBatchId?.trim() || undefined
+
+  if (!appId && !batchId) return {}
+  if (appId && batchId && appId !== batchId) return { primaryId: appId, batchId }
+  return { primaryId: appId ?? batchId }
+}
+
 export function formatQueueRowGltsLabel(
   row: UploadQueueRow,
   gltsApplicationId: string | undefined,

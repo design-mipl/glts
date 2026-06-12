@@ -1,4 +1,6 @@
 import { bookerManagementService } from '@/shared/services/bookerManagementService'
+import { GLTS_APPLICATION_IDS } from '../../../data/portalIds'
+import { GLTS_BATCH_IDS, getSingleApplicationDemoSeed } from '../data/applicationFlowData'
 import type { ApplicationListingRow } from '../types/applicationListing.types'
 import { isBulkRow } from '../types/applicationListing.types'
 
@@ -26,4 +28,20 @@ export function resolveApplicationCompanyName(row: ApplicationListingRow): strin
 
   const fallback = segmentFallbackCompany(row.customerSegment)
   return fallback === '—' ? '—' : fallback
+}
+
+/** Vessel linked to marine crew applications — explicit on row or from demo seed. */
+export function resolveApplicationVesselName(row: ApplicationListingRow): string {
+  const explicit = row.vesselName?.trim()
+  if (explicit) return explicit
+
+  if (!isBulkRow(row)) {
+    const seedVessel = getSingleApplicationDemoSeed(row.id)?.flowExtras.vesselName?.trim()
+    if (seedVessel) return seedVessel
+  } else if (row.id === GLTS_BATCH_IDS.schengenCrew) {
+    const seedVessel = getSingleApplicationDemoSeed(GLTS_APPLICATION_IDS.schengen)?.flowExtras.vesselName?.trim()
+    if (seedVessel) return seedVessel
+  }
+
+  return '—'
 }

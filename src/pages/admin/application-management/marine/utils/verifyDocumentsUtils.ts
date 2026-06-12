@@ -140,9 +140,15 @@ export function buildOverviewFromDetail(
 ): VerifyOverviewData {
   const readyRows = rows.filter(r => r.status !== 'processing')
   const firstRow = rows[0]
+  const batchId = isBulk ? applicationId : undefined
+  const rowAppId = firstRow?.gltsApplicationId?.trim() || undefined
   return {
-    gltsApplicationId: firstRow?.gltsApplicationId ?? applicationId,
-    gltsBatchId: isBulk ? applicationId : undefined,
+    gltsApplicationId: isBulk
+      ? rowAppId && rowAppId !== batchId
+        ? rowAppId
+        : undefined
+      : rowAppId ?? applicationId,
+    gltsBatchId: batchId,
     countryName: app?.country ?? '—',
     countryFlag: app?.countryFlag ?? '',
     visaTypeLabel: app?.visaType ?? '—',

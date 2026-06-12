@@ -48,8 +48,8 @@ export function ApplicationDetailPage() {
           countryFlag: app.countryFlag ?? '',
           visaTypeLabel: app.visaType,
           travelDate: app.travelDate,
-          gltsApplicationId: detail.resolvedId ?? app.id,
-          gltsBatchId: isBulk ? (detail.resolvedId ?? app.id) : undefined,
+          gltsApplicationId: isBulk ? undefined : detail.resolvedId ?? app.id,
+          gltsBatchId: isBulk ? detail.resolvedId ?? app.id : undefined,
         }}
         globalDocumentUploads={detail.globalDocumentUploads}
         onReuploadDocument={handleReuploadDocument}

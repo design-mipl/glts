@@ -24,6 +24,7 @@ export interface SingleApplicationRow {
   applicantName: string
   passportNumber: string
   companyName?: string
+  vesselName?: string
   country: string
   countryFlag?: string
   visaType: string
@@ -49,6 +50,7 @@ export interface BulkBatchRow {
   id: string
   recordType: Extract<ApplicationRecordType, 'bulk'>
   companyName: string
+  vesselName?: string
   /** Lead passenger shown in listings as "Name × count". */
   primaryApplicantName?: string
   country: string
@@ -188,6 +190,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Priya Sharma',
     passportNumber: 'Z1234567',
     companyName: 'Oceanic Marine Ltd',
+    vesselName: 'MV Oceanic Star',
     country: 'Schengen',
     countryFlag: '🇫🇷',
     visaType: 'Sticker · Type C',
@@ -312,6 +315,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Oliver Grant',
     passportNumber: 'XK9283746',
     companyName: 'Apex Marine Logistics',
+    vesselName: 'MV Pacific Horizon',
     country: 'Japan',
     countryFlag: '🇯🇵',
     visaType: 'eVisa · Tourist',
@@ -333,6 +337,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Sofia Petrov',
     passportNumber: 'TR3528471',
     companyName: 'Apex Marine Logistics',
+    vesselName: 'MV Gulf Runner',
     country: 'UAE',
     countryFlag: '🇦🇪',
     visaType: 'e-Visa · 14d',
@@ -353,6 +358,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Mateo Alvarez',
     passportNumber: 'NQ5528931',
     companyName: 'BlueWave Marine Agency',
+    vesselName: 'MV Atlantic Crest',
     country: 'Schengen',
     countryFlag: '🇪🇸',
     visaType: 'Crew · Type C',
@@ -372,6 +378,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Asha Nair',
     passportNumber: 'IN3387214',
     companyName: 'Neptune Crew Services',
+    vesselName: 'MV Eastern Pearl',
     country: 'Japan',
     countryFlag: '🇯🇵',
     visaType: 'Crew · Transit',
@@ -391,6 +398,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Kenji Sato',
     passportNumber: 'JP7742019',
     companyName: 'Apex Marine Logistics',
+    vesselName: 'MV Lion City',
     country: 'Singapore',
     countryFlag: '🇸🇬',
     visaType: 'Crew · Multi-entry',
@@ -410,6 +418,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Liam O Connor',
     passportNumber: 'IE2298810',
     companyName: 'Oceanic Marine Ltd',
+    vesselName: 'MV Oceanic Star',
     country: 'UK',
     countryFlag: '🇬🇧',
     visaType: 'Crew · Standard',
@@ -464,6 +473,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: GLTS_BATCH_IDS.schengenCrew,
     companyName: 'Oceanic Marine Ltd',
+    vesselName: 'MV Oceanic Star',
     primaryApplicantName: 'Brendan Ryan',
     country: 'Schengen',
     countryFlag: '🇫🇷',
@@ -554,6 +564,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: 'GLTS-BAT-2026-029',
     companyName: 'Seafarer Solutions',
+    vesselName: 'MV Pacific Horizon',
     primaryApplicantName: 'Andreas Klein',
     country: 'Schengen',
     countryFlag: '🇩🇪',
@@ -578,6 +589,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: 'GLTS-BAT-2026-021',
     companyName: 'Harborline Crewing Co',
+    vesselName: 'MV Atlantic Crest',
     primaryApplicantName: 'Luca Bergstrom',
     country: 'Schengen',
     countryFlag: '🇫🇷',
@@ -601,6 +613,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: 'GLTS-BAT-2026-018',
     companyName: 'NorthSea Manning',
+    vesselName: 'MV Eastern Pearl',
     primaryApplicantName: 'Erik Johansson',
     country: 'Japan',
     countryFlag: '🇯🇵',

@@ -24,7 +24,19 @@ const VERIFY_DOCUMENT_CARD_SX = {
 
 export const VERIFY_DOCUMENT_GRID_SX = {
   display: 'grid',
-  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+  gridTemplateColumns: {
+    xs: '1fr',
+    sm: 'repeat(2, minmax(0, 1fr))',
+    md: 'repeat(3, minmax(0, 1fr))',
+    lg: 'repeat(4, minmax(0, 1fr))',
+  },
+  gap: 1.5,
+} as const
+
+/** Single-column grid for the documents pane in a 50/50 final verification layout. */
+export const VERIFY_DOCUMENT_SPLIT_GRID_SX = {
+  display: 'grid',
+  gridTemplateColumns: '1fr',
   gap: 1.5,
 } as const
 
@@ -184,6 +196,7 @@ interface VerifyDocumentChecklistSectionProps {
   /** When set, used as the full section heading instead of `Checklist · {countryTitle}`. */
   sectionTitle?: string
   documents: ApplicantDocumentItem[]
+  gridSx?: typeof VERIFY_DOCUMENT_GRID_SX
   onPreview: (documentId: string) => void
   onVerify: (documentId: string) => void
   onReject: (document: ApplicantDocumentItem) => void
@@ -195,6 +208,7 @@ export function VerifyDocumentChecklistSection({
   countryTitle,
   sectionTitle,
   documents,
+  gridSx = VERIFY_DOCUMENT_GRID_SX,
   onPreview,
   onVerify,
   onReject,
@@ -206,7 +220,7 @@ export function VerifyDocumentChecklistSection({
       <Typography variant="subtitle2" fontWeight={700}>
         {sectionTitle ?? `Checklist · ${countryTitle}`}
       </Typography>
-      <Box sx={VERIFY_DOCUMENT_GRID_SX}>
+      <Box sx={gridSx}>
         {documents.map(doc => (
           <VerifyDocumentCard
             key={doc.documentId}
@@ -225,6 +239,7 @@ export function VerifyDocumentChecklistSection({
 
 interface VerifyGlobalDocumentChecklistProps {
   documents: ApplicantDocumentItem[]
+  gridSx?: typeof VERIFY_DOCUMENT_GRID_SX
   onPreview: (documentId: string) => void
   onVerify: (documentId: string) => void
   onReject: (document: ApplicantDocumentItem) => void
@@ -233,6 +248,7 @@ interface VerifyGlobalDocumentChecklistProps {
 
 export function VerifyGlobalDocumentChecklist({
   documents,
+  gridSx,
   onPreview,
   onVerify,
   onReject,
@@ -241,14 +257,18 @@ export function VerifyGlobalDocumentChecklist({
   if (documents.length === 0) return null
 
   return (
-    <VerifyDocumentChecklistSection
-      countryTitle="Common Document Checklist"
-      sectionTitle="Common Document Checklist"
-      documents={documents}
-      onPreview={onPreview}
-      onVerify={onVerify}
-      onReject={onReject}
-      onRequestReupload={onRequestReupload}
-    />
+    <Stack spacing={2}>
+      <Divider />
+      <VerifyDocumentChecklistSection
+        countryTitle="Common Document Checklist"
+        sectionTitle="Common Document Checklist"
+        documents={documents}
+        gridSx={gridSx}
+        onPreview={onPreview}
+        onVerify={onVerify}
+        onReject={onReject}
+        onRequestReupload={onRequestReupload}
+      />
+    </Stack>
   )
 }

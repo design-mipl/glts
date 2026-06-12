@@ -19,6 +19,9 @@ import {
 } from '../context/ApplicationFlowPolicyContext'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 import { formatQueueRowGltsLabel } from '../utils/gltsReferenceIds'
+import type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
+import type { ApplicationDetailViewModel } from '../types/applicationDetail.types'
+import { ApplicationSummaryPopover } from './ApplicationSummaryPopover'
 
 function documentProgressChip(
   complete: number,
@@ -61,6 +64,11 @@ interface UploadQueueTableProps {
   gltsApplicationId?: string
   gltsBatchId?: string
   continueLabel?: string
+  /** When set, each row shows an info dialog with full application summary */
+  summaryOverview?: ApplicationReviewOverview
+  /** Admin verify — includes employment / marine fields in the summary dialog */
+  summaryDetail?: ApplicationDetailViewModel
+  summaryApplicationId?: string
 }
 
 export function UploadQueueTable({
@@ -74,6 +82,9 @@ export function UploadQueueTable({
   gltsApplicationId,
   gltsBatchId,
   continueLabel,
+  summaryOverview,
+  summaryDetail,
+  summaryApplicationId,
 }: UploadQueueTableProps) {
   const colors = usePublicBrandColors()
   const { policy } = useApplicationFlowPolicy()
@@ -88,6 +99,18 @@ export function UploadQueueTable({
     readyRows.every(r => r.documentsTotal === 0 || r.documentsComplete >= r.documentsTotal)
 
   const idColumnLabel = singleListing ? 'GLTS no.' : 'Applicant no.'
+  const showSummaryColumn = Boolean(summaryOverview)
+  const showNavigateColumn = !readOnly && !selectionMode
+  const tableHeaders = [
+    idColumnLabel,
+    'Traveler',
+    'Passport no.',
+    'Expiry',
+    'Nationality',
+    'Documents',
+    ...(showSummaryColumn ? ['Summary'] : []),
+    ...(showNavigateColumn ? [''] : []),
+  ]
 
   return (
     <Box sx={{ borderRadius: '14px', border: `1px solid ${colors.border}`, overflow: 'hidden', bgcolor: '#fff' }}>
@@ -138,11 +161,23 @@ export function UploadQueueTable({
         )}
       </Stack>
 
-      <Table size="small">
+      <Box sx={{ overflowX: 'auto' }}>
+      <Table size="small" sx={{ minWidth: showSummaryColumn ? 760 : 640 }}>
         <TableHead>
           <TableRow sx={{ bgcolor: colors.surface }}>
-            {[idColumnLabel, 'Traveler', 'Passport no.', 'Expiry', 'Nationality', 'Documents', ''].map(h => (
-              <TableCell key={h || 'act'} sx={{ fontSize: '11px', fontWeight: 700, color: colors.textMuted, py: 1.25 }}>
+            {tableHeaders.map(h => (
+              <TableCell
+                key={h || 'act'}
+                align={h === 'Summary' ? 'center' : 'inherit'}
+                sx={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: colors.textMuted,
+                  py: 1.25,
+                  width: h === 'Summary' ? 72 : undefined,
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {h}
               </TableCell>
             ))}
@@ -198,18 +233,39 @@ export function UploadQueueTable({
                     ? '—'
                     : documentProgressChip(row.documentsComplete, row.documentsTotal, colors)}
                 </TableCell>
-                <TableCell align="right">
-                  {!readOnly && !selectionMode && !isProcessing && (
-                    <IconButton size="small" aria-label="Open applicant documents">
-                      <ChevronRight size={16} />
-                    </IconButton>
-                  )}
-                </TableCell>
+                {showSummaryColumn ? (
+                  <TableCell align="center" sx={{ width: 72 }}>
+                    {summaryOverview && !isProcessing ? (
+                      <ApplicationSummaryPopover
+                        overview={summaryOverview}
+                        row={row}
+                        singleListing={singleListing}
+                        verifyContext={
+                          summaryDetail && summaryApplicationId
+                            ? { detail: summaryDetail, applicationId: summaryApplicationId }
+                            : undefined
+                        }
+                      />
+                    ) : (
+                      '—'
+                    )}
+                  </TableCell>
+                ) : null}
+                {showNavigateColumn ? (
+                  <TableCell align="right" sx={{ width: 48 }}>
+                    {!isProcessing ? (
+                      <IconButton size="small" aria-label="Open applicant documents">
+                        <ChevronRight size={16} />
+                      </IconButton>
+                    ) : null}
+                  </TableCell>
+                ) : null}
               </TableRow>
             )
           })}
         </TableBody>
       </Table>
+      </Box>
 
       {!readOnly && !selectionMode && (
         <Stack

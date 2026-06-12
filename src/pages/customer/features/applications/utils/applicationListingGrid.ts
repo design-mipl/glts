@@ -5,7 +5,7 @@ import {
   type SingleApplicationRow,
 } from '../data/applicationFlowData'
 import { getApplicationOperationalTone, getApplicationTypeLabel } from '../components/listing/applicationStatus'
-import { resolveApplicationCompanyName } from './applicationCompanyUtils'
+import { resolveApplicationCompanyName, resolveApplicationVesselName } from './applicationCompanyUtils'
 import { resolveApplicationCreatorLabel } from './applicationCreatorUtils'
 import type { ApplicationListingRow } from '../types/applicationListing.types'
 import { isBulkRow } from '../types/applicationListing.types'
@@ -33,7 +33,7 @@ function mapSingleRowToGridItem(row: SingleApplicationRow): CustomerListingGridI
     id: row.id,
     title: row.applicantName,
     subtitle: `${typeLabel} · ${row.id}`,
-    meta: `${resolveApplicationCompanyName(row)} · ${row.countryFlag ?? ''} ${row.country} · ${row.visaType}${row.jurisdiction ? ` · ${row.jurisdiction}` : ''} · Created by ${resolveApplicationCreatorLabel(row.createdByEmail)}`,
+    meta: `${resolveApplicationCompanyName(row)} · ${resolveApplicationVesselName(row)} · ${row.countryFlag ?? ''} ${row.country} · ${row.visaType}${row.jurisdiction ? ` · ${row.jurisdiction}` : ''} · Created by ${resolveApplicationCreatorLabel(row.createdByEmail)}`,
     status: row.operationalStatus,
     statusColor: toneToGridColor(tone),
   }
@@ -46,7 +46,7 @@ function mapBulkRowToGridItem(row: BulkBatchRow): CustomerListingGridItem {
     id: row.id,
     title: row.companyName,
     subtitle: `${typeLabel} · ${row.id}`,
-    meta: `${row.countryFlag ?? ''} ${row.country} · ${row.visaType}${row.jurisdiction ? ` · ${row.jurisdiction}` : ''} · ${formatBulkApplicantListingLabel(row)} · Created by ${resolveApplicationCreatorLabel(row.createdByEmail)}`,
+    meta: `${resolveApplicationVesselName(row)} · ${row.countryFlag ?? ''} ${row.country} · ${row.visaType}${row.jurisdiction ? ` · ${row.jurisdiction}` : ''} · ${formatBulkApplicantListingLabel(row)} · Created by ${resolveApplicationCreatorLabel(row.createdByEmail)}`,
     status: row.operationalStatus,
     statusColor: toneToGridColor(tone),
   }

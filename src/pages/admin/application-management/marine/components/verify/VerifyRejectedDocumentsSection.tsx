@@ -10,6 +10,7 @@ import {
 
 interface VerifyRejectedDocumentsSectionProps {
   entries: VerifyRejectedDocumentEntry[]
+  gridSx?: typeof VERIFY_DOCUMENT_GRID_SX
   onPreview: (entry: VerifyRejectedDocumentEntry) => void
   onVerify: (entry: VerifyRejectedDocumentEntry) => void
   onReject: (entry: VerifyRejectedDocumentEntry) => void
@@ -60,6 +61,7 @@ function RejectedDocumentCard({
 
 export function VerifyRejectedDocumentsSection({
   entries,
+  gridSx = VERIFY_DOCUMENT_GRID_SX,
   onPreview,
   onVerify,
   onReject,
@@ -105,7 +107,7 @@ export function VerifyRejectedDocumentsSection({
           </Box>
         </Stack>
 
-        <Box sx={VERIFY_DOCUMENT_GRID_SX}>
+        <Box sx={gridSx}>
           {entries.map(entry => (
             <RejectedDocumentCard
               key={`${entry.scope}-${entry.travelerId ?? 'global'}-${entry.document.documentId}`}

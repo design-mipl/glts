@@ -1,29 +1,22 @@
 import { useMemo, useState } from 'react'
 import { Box, CircularProgress, Stack } from '@mui/material'
-import { FileText } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import {
+  BaseCard,
   Button,
   EmptyState,
   FormField,
   Modal,
+  Tabs,
   Textarea,
   useToast,
 } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
 import { AdminRecordPageChrome } from '@/pages/admin/components/AdminRecordPageChrome'
-import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { useVerifyDocumentsWorkspace } from '../hooks/useVerifyDocumentsWorkspace'
 import { VerifyDocumentsOverview } from '../components/verify/VerifyDocumentsOverview'
-import { VerifyDocumentsTravelerSection } from '../components/verify/VerifyDocumentsTravelerSection'
-import { VerifyDocumentsTimeline } from '../components/verify/VerifyDocumentsTimeline'
-import { VerifyDocumentsSummary } from '../components/verify/VerifyDocumentsSummary'
-import {
-  VerifyDocumentChecklistSection,
-  VerifyGlobalDocumentChecklist,
-} from '../components/verify/VerifyDocumentChecklistSection'
-import { VerifyRejectedDocumentsSection } from '../components/verify/VerifyRejectedDocumentsSection'
+import { VerifyDocumentsPhaseContent } from '../components/verify/VerifyDocumentsPhaseContent'
 import {
   GltsDocumentUploadDrawer,
   type GltsDocumentUploadPayload,
@@ -34,6 +27,14 @@ import {
   isRejectedVerifyDocument,
   type VerifyRejectedDocumentEntry,
 } from '../utils/verifyDocumentsUtils'
+import { toApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
+
+const VERIFICATION_TABS = [
+  { label: 'Initial verification', value: 'initial' },
+  { label: 'Final verification', value: 'final' },
+] as const
+
+type VerificationTab = (typeof VERIFICATION_TABS)[number]['value']
 
 export function MarineVerifyDocumentsPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
@@ -48,6 +49,7 @@ export function MarineVerifyDocumentsPage() {
   } | null>(null)
   const [reviewComment, setReviewComment] = useState('')
   const [gltsUploadDocument, setGltsUploadDocument] = useState<ApplicantDocumentItem | null>(null)
+  const [verificationTab, setVerificationTab] = useState<VerificationTab>('initial')
 
   const workspace = useVerifyDocumentsWorkspace(applicationId)
   const {
@@ -81,6 +83,8 @@ export function MarineVerifyDocumentsPage() {
     () => collectRejectedVerifyDocuments(rows, globalDocuments),
     [rows, globalDocuments],
   )
+
+  const summaryOverview = useMemo(() => toApplicationReviewOverview(overview), [overview])
 
   const travelerChecklistDocuments = useMemo(
     () => selectedRow?.documents.filter(doc => !isRejectedVerifyDocument(doc)) ?? [],
@@ -227,86 +231,62 @@ export function MarineVerifyDocumentsPage() {
       <Stack spacing={2}>
         <VerifyDocumentsOverview overview={overview} />
 
-        <VerifyDocumentsTravelerSection
-          rows={rows}
-          isBulk={isBulk}
-          gltsApplicationId={overview.gltsApplicationId}
-          gltsBatchId={overview.gltsBatchId}
-          selectedTravelerId={selectedTravelerId}
-          onSelectTraveler={setSelectedTravelerId}
-        />
+        <BaseCard sx={{ overflow: 'hidden' }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
+            <Tabs
+              items={[...VERIFICATION_TABS]}
+              value={verificationTab}
+              onChange={value => setVerificationTab(value as VerificationTab)}
+              variant="underline"
+              size="sm"
+              sx={{ mb: 0, minHeight: 44 }}
+            />
+          </Box>
 
-        <VerifyDocumentsTimeline steps={timelineSteps} multiTraveler={rows.filter(r => r.status !== 'processing').length > 1} />
-
-        {selectedRow && detail ? (
-          <>
-            <VerifyDocumentsSummary
-              selectedRow={selectedRow}
+          <Stack spacing={2} sx={{ p: 2 }}>
+            <VerifyDocumentsPhaseContent
+              phase={verificationTab}
+              rows={rows}
+              isBulk={isBulk}
+              overview={overview}
+              summaryOverview={summaryOverview}
               detail={detail}
               applicationId={applicationId}
+              selectedTravelerId={selectedTravelerId}
+              onSelectTraveler={setSelectedTravelerId}
+              selectedRow={selectedRow}
+              timelineSteps={timelineSteps}
+              rejectedDocuments={rejectedDocuments}
+              travelerChecklistDocuments={travelerChecklistDocuments}
+              globalChecklistDocuments={globalChecklistDocuments}
+              onPreview={handlePreview}
+              onTravelerVerify={documentId => updateTravelerDoc(documentId, 'verified')}
+              onTravelerReject={document =>
+                openReviewDialog('traveler', document, 'rejected', selectedRow?.id)
+              }
+              onTravelerRequestReupload={document =>
+                openReviewDialog('traveler', document, 'needs_review', selectedRow?.id)
+              }
+              onGltsUpload={document => setGltsUploadDocument(document)}
+              onGlobalVerify={documentId => updateGlobalDoc(documentId, 'verified')}
+              onGlobalReject={document => openReviewDialog('global', document, 'rejected')}
+              onGlobalRequestReupload={document =>
+                openReviewDialog('global', document, 'needs_review')
+              }
+              onRejectedPreview={handleRejectedPreview}
+              onRejectedVerify={handleRejectedVerify}
+              onRejectedReject={handleRejectedReject}
+              onRejectedReupload={handleRejectedReupload}
+              onRejectedGltsUpload={handleRejectedGltsUpload}
+              onBack={() => navigate(listingPath)}
+              onSaveDraft={handleSaveDraft}
+              onSubmit={handleSubmit}
+              onViewForm={() =>
+                navigate(`/admin/application-management/marine/${applicationId}/view-form`)
+              }
             />
-
-            {rejectedDocuments.length > 0 ? (
-              <VerifyRejectedDocumentsSection
-                entries={rejectedDocuments}
-                onPreview={handleRejectedPreview}
-                onVerify={handleRejectedVerify}
-                onReject={handleRejectedReject}
-                onRequestReupload={handleRejectedReupload}
-                onGltsUpload={handleRejectedGltsUpload}
-              />
-            ) : null}
-
-            {travelerChecklistDocuments.length > 0 ? (
-              <VerifyDocumentChecklistSection
-                countryTitle={overview.countryName}
-                documents={travelerChecklistDocuments}
-                onPreview={documentId => handlePreview(documentId, 'traveler')}
-                onVerify={documentId => updateTravelerDoc(documentId, 'verified')}
-                onReject={document => openReviewDialog('traveler', document, 'rejected', selectedRow.id)}
-                onRequestReupload={document => openReviewDialog('traveler', document, 'needs_review', selectedRow.id)}
-                onGltsUpload={document => setGltsUploadDocument(document)}
-              />
-            ) : null}
-          </>
-        ) : null}
-
-        {rejectedDocuments.length > 0 && !selectedRow ? (
-          <VerifyRejectedDocumentsSection
-            entries={rejectedDocuments}
-            onPreview={handleRejectedPreview}
-            onVerify={handleRejectedVerify}
-            onReject={handleRejectedReject}
-            onRequestReupload={handleRejectedReupload}
-            onGltsUpload={handleRejectedGltsUpload}
-          />
-        ) : null}
-
-        <VerifyGlobalDocumentChecklist
-          documents={globalChecklistDocuments}
-          onPreview={documentId => handlePreview(documentId, 'global')}
-          onVerify={documentId => updateGlobalDoc(documentId, 'verified')}
-          onReject={document => openReviewDialog('global', document, 'rejected')}
-          onRequestReupload={document => openReviewDialog('global', document, 'needs_review')}
-        />
-
-        <AdminFullPageFormFooter
-          onCancel={() => navigate(listingPath)}
-          cancelLabel="Back to listing"
-          onDraft={handleSaveDraft}
-          draftLabel="Save draft"
-          onSave={handleSubmit}
-          saveLabel="Submit application"
-          extraActions={
-            <Button
-              label="View Form"
-              variant="outlined"
-              startIcon={<FileText size={14} />}
-              onClick={() => navigate(`/admin/application-management/marine/${applicationId}/view-form`)}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            />
-          }
-        />
+          </Stack>
+        </BaseCard>
       </Stack>
 
       <GltsDocumentUploadDrawer

@@ -119,7 +119,7 @@ export function ApplicationsListPage() {
         <CustomerListingToolbar
           searchValue={listing.tableState.searchQuery}
           onSearch={listing.handleSearch}
-          searchPlaceholder="Search by GLTS reference, applicant, company, passport, booker name, or visa type…"
+          searchPlaceholder="Search by GLTS reference, applicant, company, vessel, passport, booker name, or visa type…"
           onExport={handleExport}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
