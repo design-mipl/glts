@@ -1,26 +1,60 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Box, Card, Grid, Stack, Typography } from '@mui/material'
+import { Stack, Typography } from '@mui/material'
 import { CustomerDocumentChecklist, type CustomerChecklistItem } from '@/pages/customer/features/shared/components/CustomerPrimitives'
-import { UploadQueueTable } from './UploadQueueTable'
 import { checklistItemsFromRowDocuments, enrichChecklistWithCorrections, enrichGlobalChecklistWithCorrections, type ChecklistCorrectionRef } from '../utils/applicationSubmitKind'
 import { buildGlobalChecklistItems } from '../utils/globalDocumentChecklist'
 import { buildGlobalDocumentsForVerification } from '@/shared/services/applicationVerificationService'
 import { isSimpleDocumentRequirement } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import { SimpleDocumentRequirementPanel } from './documentWorkflow'
-import { ApplicationProcessingTimeline } from './ApplicationProcessingTimeline'
+import type { ApplicantDocumentItem } from '../data/applicationFlowData'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
 import { buildApplicationProcessingTimeline } from '@/shared/utils/applicationProcessingTimeline'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
-import { resolveApplicationReferenceDisplay } from '../utils/gltsReferenceIds'
+import type { ApplicationDetailViewModel } from '../types/applicationDetail.types'
+import { ApplicationReviewOverviewCard } from './review/ApplicationReviewOverviewCard'
+import { ApplicationReviewTimelineCard } from './review/ApplicationReviewTimelineCard'
+import { ApplicationReviewTravelerSection } from './review/ApplicationReviewTravelerSection'
+import { CustomerDocumentPreviewModal } from './CustomerDocumentPreviewModal'
 
 export type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
+
+type DocumentPreviewScope = 'traveler' | 'global'
+
+interface DocumentPreviewTarget {
+  item: CustomerChecklistItem
+  scope: DocumentPreviewScope
+}
+
+function resolvePreviewDocument(
+  target: DocumentPreviewTarget | null,
+  selectedRow: UploadQueueRow | null,
+  applicationId: string | undefined,
+  globalDocumentUploads: Record<string, { fileName: string; uploadedAt: string }>,
+): ApplicantDocumentItem | null {
+  if (!target) return null
+
+  const documentId = target.item.id.replace(/^global-/, '')
+
+  if (target.scope === 'traveler' && selectedRow) {
+    return selectedRow.documents.find(doc => doc.documentId === documentId) ?? null
+  }
+
+  if (target.scope === 'global' && applicationId) {
+    const globalDocs = buildGlobalDocumentsForVerification(applicationId, globalDocumentUploads)
+    return globalDocs.find(doc => doc.documentId === documentId) ?? null
+  }
+
+  return null
+}
 
 interface ApplicationReviewPanelsProps {
   rows: UploadQueueRow[]
   overview: ApplicationReviewOverview
   applicationId?: string
+  isBulk?: boolean
+  detail?: ApplicationDetailViewModel
   corrections?: ChecklistCorrectionRef[]
   globalDocumentUploads: Record<string, { fileName: string; uploadedAt: string }>
   timelineSteps?: ApplicationProcessingTimelineStep[]
@@ -45,6 +79,8 @@ export function ApplicationReviewPanels({
   rows,
   overview,
   applicationId,
+  isBulk = false,
+  detail,
   corrections = [],
   globalDocumentUploads,
   timelineSteps,
@@ -54,6 +90,7 @@ export function ApplicationReviewPanels({
   const colors = usePublicBrandColors()
   const readyRows = useMemo(() => queueReadyRows(rows), [rows])
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
+  const [previewTarget, setPreviewTarget] = useState<DocumentPreviewTarget | null>(null)
 
   useEffect(() => {
     if (readyRows.length === 0) {
@@ -81,154 +118,103 @@ export function ApplicationReviewPanels({
     const base = buildGlobalChecklistItems(globalDocumentUploads, globalDocs)
     return enrichGlobalChecklistWithCorrections(base, corrections)
   }, [applicationId, globalDocumentUploads, corrections])
-  const globalUploadEntries = Object.entries(globalDocumentUploads)
   const resolvedTimeline = useMemo(
     () => timelineSteps ?? buildSubmitTimeline(selectedRow),
     [timelineSteps, selectedRow],
   )
-  const { primaryId, batchId } = resolveApplicationReferenceDisplay(
-    overview.gltsApplicationId,
-    overview.gltsBatchId,
+  const travelerCount = readyRows.length > 0 ? readyRows.length : rows.length
+  const hasDocumentSections =
+    (selectedRow && checklist.length > 0) ||
+    globalChecklist.length > 0 ||
+    (selectedRow?.documents.some(d => isSimpleDocumentRequirement(d.documentId)) ?? false)
+  const previewDocument = useMemo(
+    () => resolvePreviewDocument(previewTarget, selectedRow, applicationId, globalDocumentUploads),
+    [previewTarget, selectedRow, applicationId, globalDocumentUploads],
   )
+  const previewGlobalFileName = useMemo(() => {
+    if (!previewTarget || previewTarget.scope !== 'global') return undefined
+    const documentId = previewTarget.item.id.replace(/^global-/, '')
+    return globalDocumentUploads[documentId]?.fileName
+  }, [previewTarget, globalDocumentUploads])
+
+  const handlePreviewItem = (item: CustomerChecklistItem, scope: DocumentPreviewScope) => {
+    setPreviewTarget({ item, scope })
+  }
 
   return (
-    <>
+    <Stack spacing={2}>
       {helperText ? (
-        <Typography sx={{ fontSize: 13, color: colors.textSecondary, mb: 2.5 }}>
-          {helperText}
-        </Typography>
+        <Typography sx={{ fontSize: 13, color: colors.textSecondary }}>{helperText}</Typography>
       ) : null}
 
-      {readyRows.length > 1 && (
-        <Card sx={{ p: 2, borderRadius: '12px', border: `1px solid ${colors.border}`, mb: 2 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 1 }}>Application overview</Typography>
-          {primaryId ? (
-            <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 1.5 }}>
-              <Typography sx={{ fontSize: 12, fontFamily: 'monospace', fontWeight: 700, color: colors.navy }}>
-                {primaryId}
-              </Typography>
-              {batchId ? (
-                <Typography sx={{ fontSize: 12, fontFamily: 'monospace', color: colors.textSecondary }}>
-                  · Batch {batchId}
-                </Typography>
+      <ApplicationReviewOverviewCard overview={overview} travelerCount={travelerCount} />
+
+      <ApplicationReviewTravelerSection
+        rows={rows}
+        selectedTravelerId={selectedRowId}
+        onSelectTraveler={setSelectedRowId}
+        isBulk={isBulk}
+        gltsApplicationId={overview.gltsApplicationId}
+        gltsBatchId={overview.gltsBatchId}
+        summaryOverview={overview}
+        detail={detail}
+        applicationId={applicationId}
+      />
+
+      <ApplicationReviewTimelineCard
+        steps={resolvedTimeline}
+        multiTraveler={readyRows.length > 1}
+      />
+
+      {hasDocumentSections ? (
+        <Stack spacing={2}>
+          {selectedRow ? (
+            <>
+              {selectedRow.documents.filter(d => isSimpleDocumentRequirement(d.documentId)).length > 0 ? (
+                <Stack spacing={1.5}>
+                  {selectedRow.documents
+                    .filter(d => isSimpleDocumentRequirement(d.documentId))
+                    .map(doc => (
+                      <SimpleDocumentRequirementPanel
+                        key={doc.documentId}
+                        document={doc}
+                        onChange={() => {}}
+                        readOnly
+                        travelerName={selectedRow.travelerName}
+                      />
+                    ))}
+                </Stack>
               ) : null}
-            </Stack>
+            </>
           ) : null}
-          <Grid container spacing={1}>
-            {[
-              ['Country', `${overview.countryFlag} ${overview.countryName}`],
-              ['Visa', overview.purposeLabel ? `${overview.visaTypeLabel} · ${overview.purposeLabel}` : overview.visaTypeLabel],
-              ['Travel', overview.travelDate || '—'],
-              ['Passport location', overview.issuedPassportLocationLabel || '—'],
-              ['Jurisdiction', overview.jurisdiction || '—'],
-              ['Travelers', String(readyRows.length)],
-            ].map(([k, v]) => (
-              <Grid size={{ xs: 6, sm: 3 }} key={k}>
-                <Typography sx={{ fontSize: 11, color: colors.textMuted }}>{k}</Typography>
-                <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{v}</Typography>
-              </Grid>
-            ))}
-          </Grid>
-        </Card>
-      )}
 
-      {rows.length > 0 ? (
-        <Box sx={{ mb: 2 }}>
-          <UploadQueueTable
-            rows={rows}
-            selectedId={selectedRowId}
-            onSelect={setSelectedRowId}
-            selectionMode
-            readOnly
-            singleListing={readyRows.length <= 1}
-            gltsApplicationId={overview.gltsApplicationId}
-            summaryOverview={overview}
-          />
-        </Box>
-      ) : null}
-
-      <Card sx={{ p: 2, borderRadius: '12px', border: `1px solid ${colors.border}`, mb: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: 13 }}>Processing timeline</Typography>
-          <Typography sx={{ fontSize: 11, color: colors.textMuted }}>
-            {readyRows.length > 1 ? 'Updates by selected traveler' : 'Single traveler flow'}
-          </Typography>
-        </Stack>
-        <ApplicationProcessingTimeline steps={resolvedTimeline} />
-      </Card>
-
-      {selectedRow ? (
-        <>
-          <Box sx={{ mb: 2 }}>
+          {selectedRow && checklist.length > 0 ? (
             <CustomerDocumentChecklist
               country={overview.countryName}
               items={checklist}
               onReuploadItem={onReuploadDocument}
+              onPreviewItem={item => handlePreviewItem(item, 'traveler')}
             />
-          </Box>
-
-          {selectedRow.documents.filter(d => isSimpleDocumentRequirement(d.documentId)).length > 0 ? (
-            <Stack spacing={1.5} sx={{ mb: 2 }}>
-              {selectedRow.documents
-                .filter(d => isSimpleDocumentRequirement(d.documentId))
-                .map(doc => (
-                  <SimpleDocumentRequirementPanel
-                    key={doc.documentId}
-                    document={doc}
-                    onChange={() => {}}
-                    readOnly
-                    travelerName={selectedRow.travelerName}
-                  />
-                ))}
-            </Stack>
           ) : null}
-        </>
+
+          {globalChecklist.length > 0 ? (
+            <CustomerDocumentChecklist
+              title="Common Document Checklist"
+              items={globalChecklist}
+              onReuploadItem={onReuploadDocument}
+              onPreviewItem={item => handlePreviewItem(item, 'global')}
+            />
+          ) : null}
+        </Stack>
       ) : null}
 
-      <Box sx={{ mb: 2 }}>
-        <CustomerDocumentChecklist
-          title="Common Document Checklist"
-          items={globalChecklist}
-          onReuploadItem={onReuploadDocument}
-        />
-      </Box>
-
-      {globalUploadEntries.length > 0 ? (
-        <Card sx={{ p: 2, borderRadius: '12px', border: `1px solid ${colors.border}`, mb: 2 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 1.5 }}>Uploaded common documents</Typography>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
-              gap: 1.5,
-            }}
-          >
-            {globalUploadEntries.map(([docId, meta]) => (
-              <Card
-                key={docId}
-                elevation={0}
-                sx={{
-                  p: 1.5,
-                  height: '100%',
-                  borderRadius: '10px',
-                  border: `1px solid ${colors.border}`,
-                  bgcolor: colors.white,
-                }}
-              >
-                <Typography sx={{ fontSize: 13, fontWeight: 700, color: colors.navy }}>
-                  {docId === 'loi' ? 'LOI (Letter of Intent)' : docId.toUpperCase()}
-                </Typography>
-                <Typography sx={{ fontSize: 12, color: colors.textSecondary, mt: 0.5 }}>
-                  {meta.fileName}
-                </Typography>
-                <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.75 }}>
-                  Uploaded {new Date(meta.uploadedAt).toLocaleDateString()}
-                </Typography>
-              </Card>
-            ))}
-          </Box>
-        </Card>
-      ) : null}
-    </>
+      <CustomerDocumentPreviewModal
+        open={Boolean(previewTarget && previewDocument)}
+        onClose={() => setPreviewTarget(null)}
+        document={previewDocument}
+        travelerRow={previewTarget?.scope === 'traveler' ? selectedRow : null}
+        globalFileName={previewGlobalFileName}
+      />
+    </Stack>
   )
 }

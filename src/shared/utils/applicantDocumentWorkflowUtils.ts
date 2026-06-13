@@ -396,3 +396,17 @@ export function downloadWorkflowDocument(doc: ApplicantDocumentItem, travelerNam
   link.click()
   URL.revokeObjectURL(url)
 }
+
+/** Whether a checklist document can be opened in preview (uploaded file or verified scan). */
+export function isApplicantDocumentPreviewable(doc: ApplicantDocumentItem): boolean {
+  if (isSimpleDocumentRequirement(doc.documentId)) {
+    return hasWorkflowFile(doc)
+  }
+
+  return (
+    doc.status === 'uploaded' ||
+    doc.status === 'verified' ||
+    doc.status === 'rejected' ||
+    doc.status === 'needs_review'
+  )
+}

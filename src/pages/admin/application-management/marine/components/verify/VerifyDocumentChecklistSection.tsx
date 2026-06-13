@@ -1,5 +1,4 @@
 import { Box, Divider, Stack, Typography } from '@mui/material'
-import { alpha, useTheme } from '@mui/material/styles'
 import { Eye, RotateCcw, ShieldCheck, Upload, XCircle } from 'lucide-react'
 import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
@@ -40,6 +39,15 @@ export const VERIFY_DOCUMENT_SPLIT_GRID_SX = {
   gridTemplateColumns: '1fr',
   gap: 1.5,
 } as const
+
+function getVerifyDocumentChecklistsPanelSx(colors: ReturnType<typeof usePublicBrandColors>) {
+  return {
+    p: 2,
+    borderWidth: 1,
+    borderColor: colors.checklistBorder,
+    bgcolor: colors.checklistMuted,
+  } as const
+}
 
 interface VerifyDocumentCardProps {
   document: ApplicantDocumentItem
@@ -277,27 +285,18 @@ export function VerifyDocumentChecklistsPanel({
   onGlobalReject,
   onGlobalRequestReupload,
 }: VerifyDocumentChecklistsPanelProps) {
-  const theme = useTheme()
   const colors = usePublicBrandColors()
   const showTravelerChecklist = travelerDocuments.length > 0
   const showGlobalChecklist = globalDocuments.length > 0
 
   if (!showTravelerChecklist && !showGlobalChecklist) return null
 
-  const isLight = theme.palette.mode === 'light'
+  const panelSx = getVerifyDocumentChecklistsPanelSx(colors)
 
   return (
-    <BaseCard
-      sx={{
-        p: 2,
-        borderWidth: 1,
-        borderColor: 'divider',
-        bgcolor: alpha(colors.navy, isLight ? 0.022 : 0.055),
-        backgroundImage: `linear-gradient(160deg, ${alpha(colors.navyMid, isLight ? 0.032 : 0.07)} 0%, transparent 72%)`,
-      }}
-    >
-      <Stack spacing={2}>
-        {showTravelerChecklist ? (
+    <Stack spacing={2}>
+      {showTravelerChecklist ? (
+        <BaseCard sx={panelSx}>
           <VerifyDocumentChecklistSection
             countryTitle={countryTitle}
             documents={travelerDocuments}
@@ -308,9 +307,10 @@ export function VerifyDocumentChecklistsPanel({
             onRequestReupload={onTravelerRequestReupload}
             onGltsUpload={onTravelerGltsUpload}
           />
-        ) : null}
-        {showTravelerChecklist && showGlobalChecklist ? <Divider /> : null}
-        {showGlobalChecklist ? (
+        </BaseCard>
+      ) : null}
+      {showGlobalChecklist ? (
+        <BaseCard sx={panelSx}>
           <VerifyDocumentChecklistSection
             countryTitle="Common Document Checklist"
             sectionTitle="Common Document Checklist"
@@ -321,8 +321,8 @@ export function VerifyDocumentChecklistsPanel({
             onReject={onGlobalReject}
             onRequestReupload={onGlobalRequestReupload}
           />
-        ) : null}
-      </Stack>
-    </BaseCard>
+        </BaseCard>
+      ) : null}
+    </Stack>
   )
 }
