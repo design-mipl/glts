@@ -9,7 +9,7 @@ import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker'
 import dayjs, { type Dayjs } from 'dayjs'
 import { Calendar } from 'lucide-react'
 import { FORM_CONTROL, formControlHeight, pickersOutlinedFieldSx } from '@/design-system/formControl'
-import { BORDER_RADIUS } from '@/design-system/tokens'
+import { BORDER_RADIUS, BORDER_WIDTH } from '@/design-system/tokens'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import {
   getCalendarHeatmapRiskLevel,
@@ -27,20 +27,72 @@ const calendarBodyMinHeight =
 
 /** Full-width day tiles — flex rows keep MUI week layout intact while stretching each cell. */
 const compactCalendarLayoutSx = {
+  overflow: 'hidden',
+  borderRadius: BORDER_RADIUS.lg,
+  '& .MuiPickersLayout-root, & [class*="MuiPickersLayout-root"]': {
+    width: '100%',
+    borderRadius: BORDER_RADIUS.lg,
+    overflow: 'hidden',
+    bgcolor: 'background.paper',
+  },
+  '& .MuiPickersLayout-contentWrapper, & [class*="MuiPickersLayout-contentWrapper"]': {
+    borderRadius: BORDER_RADIUS.lg,
+    overflow: 'hidden',
+  },
   '& .MuiDateCalendar-root': {
     width: '100%',
     maxWidth: '100%',
     height: 'auto',
     maxHeight: 'none',
+    borderRadius: BORDER_RADIUS.lg,
+    overflow: 'hidden',
+    bgcolor: 'background.paper',
   },
-  '& .MuiPickersCalendarHeader-root': {
+  '& .MuiPickersCalendarHeader-root, & [class*="MuiPicker.CalendarHeader-root"]': {
     px: 2,
     mt: 0,
-    mb: 0.5,
-    minHeight: 32,
+    mb: 1,
+    pb: 1,
+    minHeight: 38,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    borderBottom: `${BORDER_WIDTH.thin} solid`,
+    borderColor: 'divider',
+    borderTopLeftRadius: BORDER_RADIUS.lg,
+    borderTopRightRadius: BORDER_RADIUS.lg,
+    '& .MuiPickersArrowSwitcher-root, & [class*="MuiPickersArrowSwitcher-root"]': {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%',
+      mx: 0,
+      position: 'relative',
+    },
+    '& .MuiPickersArrowSwitcher-spacer': {
+      display: 'none',
+    },
+    '& .MuiPickersCalendarHeader-labelContainer': {
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      transform: 'translate(-50%, -50%)',
+      margin: 0,
+      pointerEvents: 'none',
+    },
     '& .MuiPickersCalendarHeader-label': {
       fontSize: 13,
       fontWeight: 700,
+      textAlign: 'center',
+      margin: 0,
+      pointerEvents: 'auto',
+    },
+    '& .MuiPickersArrowSwitcher-button': {
+      width: 36,
+      height: 36,
+      flexShrink: 0,
+      zIndex: 1,
     },
   },
   '& .MuiDayCalendar-header': {
@@ -69,6 +121,8 @@ const compactCalendarLayoutSx = {
     px: 2,
     pb: 1.5,
     boxSizing: 'border-box',
+    borderBottomLeftRadius: BORDER_RADIUS.lg,
+    borderBottomRightRadius: BORDER_RADIUS.lg,
   },
   '& .MuiDayCalendar-monthContainer': {
     width: '100%',
@@ -86,9 +140,11 @@ const compactCalendarLayoutSx = {
       mb: 0,
     },
   },
-  '& .MuiPicker.Layout-contentWrapper': {
+  '& .MuiPicker.Layout-contentWrapper, & .MuiPickersLayout-contentWrapper, & [class*="MuiPickersLayout-contentWrapper"]': {
     px: 2,
     pb: 1.5,
+    borderBottomLeftRadius: BORDER_RADIUS.lg,
+    borderBottomRightRadius: BORDER_RADIUS.lg,
   },
   '& .MuiDayCalendar-slideTransition': {
     minHeight: calendarBodyMinHeight,
@@ -107,12 +163,8 @@ const compactCalendarLayoutSx = {
   },
 } as const
 
-function riskTileStyles(
-  risk: CalendarRiskLevel,
-  colors: ReturnType<typeof usePublicBrandColors>,
-  muted: boolean,
-) {
-  const base = {
+function riskTileStyles(risk: CalendarRiskLevel, colors: ReturnType<typeof usePublicBrandColors>) {
+  return {
     safe: {
       backgroundColor: colors.greenMuted,
       color: colors.greenDark,
@@ -139,13 +191,6 @@ function riskTileStyles(
       borderColor: colors.border,
     },
   }[risk]
-
-  if (!muted) return base
-
-  return {
-    ...base,
-    opacity: 0.55,
-  }
 }
 
 interface TravelDateRiskCalendarProps {
@@ -166,19 +211,45 @@ function RiskPickersDay(props: PickersDayProps) {
   const { sx: daySx, outsideCurrentMonth, selected, ...dayProps } = props
   const iso = props.day.format('YYYY-MM-DD')
   const risk: CalendarRiskLevel = config ? getCalendarHeatmapRiskLevel(iso, config) : 'unavailable'
-  const tile = riskTileStyles(risk, colors, false)
+  const isOutsideMonth = Boolean(outsideCurrentMonth)
+  const tile = riskTileStyles(risk, colors)
+
+  const outsideMonthNeutralSx = {
+    backgroundColor: 'transparent',
+    color: colors.textMuted,
+    borderColor: 'transparent',
+    '&&': {
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+      color: colors.textMuted,
+    },
+    '&.MuiPickersDay-today': {
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+      color: colors.textMuted,
+    },
+    '&.Mui-selected, &.Mui-focusVisible, &.Mui-selected.Mui-focusVisible': {
+      backgroundColor: 'transparent',
+      color: colors.textMuted,
+      borderColor: 'transparent',
+    },
+    '@media (hover: hover) and (pointer: fine)': {
+      '&:hover': {
+        backgroundColor: colors.surface,
+        color: colors.textSecondary,
+        borderColor: 'transparent',
+      },
+    },
+  }
 
   const selectedBrandSx = {
     backgroundColor: colors.green,
     color: colors.onBrandFilled,
     borderColor: colors.greenDark,
+    transition: 'background-color 120ms ease, border-color 120ms ease',
     '&&': {
       backgroundColor: colors.green,
       borderColor: colors.greenDark,
-      color: colors.onBrandFilled,
-    },
-    '&:hover, &.Mui-focusVisible': {
-      backgroundColor: colors.greenDark,
       color: colors.onBrandFilled,
     },
     '&.MuiPickersDay-today': {
@@ -186,14 +257,17 @@ function RiskPickersDay(props: PickersDayProps) {
       borderColor: colors.greenDark,
       color: colors.onBrandFilled,
     },
-    '&.Mui-selected': {
+    '&.Mui-selected, &.Mui-focusVisible, &.Mui-selected.Mui-focusVisible': {
       backgroundColor: colors.green,
       color: colors.onBrandFilled,
       borderColor: colors.greenDark,
     },
-    '&.Mui-selected:hover, &.Mui-selected.Mui-focusVisible': {
-      backgroundColor: colors.greenDark,
-      color: colors.onBrandFilled,
+    '@media (hover: hover) and (pointer: fine)': {
+      '&:hover, &.Mui-selected:hover': {
+        backgroundColor: colors.greenDark,
+        color: colors.onBrandFilled,
+        borderColor: colors.greenDark,
+      },
     },
   }
 
@@ -201,13 +275,10 @@ function RiskPickersDay(props: PickersDayProps) {
     color: tile.color,
     backgroundColor: tile.backgroundColor,
     borderColor: tile.borderColor,
+    transition: 'background-color 120ms ease, border-color 120ms ease',
     '&&': {
       backgroundColor: tile.backgroundColor,
       borderColor: tile.borderColor,
-      color: tile.color,
-    },
-    '&:hover, &.Mui-focusVisible': {
-      backgroundColor: tile.backgroundColor,
       color: tile.color,
     },
     '&.MuiPickersDay-today': {
@@ -215,14 +286,17 @@ function RiskPickersDay(props: PickersDayProps) {
       borderColor: tile.borderColor,
       color: tile.color,
     },
-    '&.Mui-selected': {
+    '&.Mui-selected, &.Mui-focusVisible, &.Mui-selected.Mui-focusVisible': {
       backgroundColor: tile.backgroundColor,
       color: tile.color,
       borderColor: tile.borderColor,
     },
-    '&.Mui-selected:hover, &.Mui-selected.Mui-focusVisible': {
-      backgroundColor: tile.backgroundColor,
-      color: tile.color,
+    '@media (hover: hover) and (pointer: fine)': {
+      '&:hover, &.Mui-selected:hover': {
+        backgroundColor: tile.backgroundColor,
+        color: tile.color,
+        borderColor: tile.borderColor,
+      },
     },
   }
 
@@ -233,21 +307,24 @@ function RiskPickersDay(props: PickersDayProps) {
       selected={selected}
       disableRipple
       disableHighlightToday
+      onClick={(event, day) => {
+        dayProps.onClick?.(event, day)
+        ;(event.currentTarget as HTMLElement).blur()
+      }}
       sx={[
         ...(Array.isArray(daySx) ? daySx : daySx ? [daySx] : []),
         {
           flex: '1 1 0',
           minWidth: 0,
           height: CALENDAR_DAY_HEIGHT,
-          fontSize: '12px',
-          fontWeight: selected ? 700 : 600,
+          fontSize: isOutsideMonth && !selected ? '11px' : '12px',
+          fontWeight: selected ? 700 : isOutsideMonth ? 400 : 600,
           lineHeight: 1,
           borderRadius: '6px',
-          borderWidth: 1,
+          borderWidth: isOutsideMonth && !selected ? 0 : 1,
           borderStyle: 'solid',
-          ...(selected ? selectedBrandSx : riskTileSx),
-          opacity: outsideCurrentMonth ? 0.3 : tile.opacity,
-          ...(outsideCurrentMonth ? { pointerEvents: 'none' } : {}),
+          ...(selected ? selectedBrandSx : isOutsideMonth ? outsideMonthNeutralSx : riskTileSx),
+          opacity: selected ? 1 : isOutsideMonth ? 0.38 : 1,
         },
       ]}
     />
@@ -311,9 +388,15 @@ export function TravelDateRiskCalendar({ value, onChange, config }: TravelDateRi
             onChange={handleChange}
             format="DD/MM/YYYY"
             disableHighlightToday
+            showDaysOutsideCurrentMonth
+            fixedWeekNumber={CALENDAR_WEEKS_VISIBLE}
             slots={{ openPickerIcon: () => <Calendar size={16} />, day: RiskPickersDay }}
             slotProps={{
               desktopPaper: { sx: desktopPaperSx },
+              calendar: {
+                showDaysOutsideCurrentMonth: true,
+                fixedWeekNumber: CALENDAR_WEEKS_VISIBLE,
+              },
               textField: {
                 size: 'small',
                 fullWidth: true,
@@ -343,12 +426,18 @@ export function TravelDateRiskCalendar({ value, onChange, config }: TravelDateRi
               value={dayjsValue}
               onChange={handleChange}
               disableHighlightToday
+              showDaysOutsideCurrentMonth
+              fixedWeekNumber={CALENDAR_WEEKS_VISIBLE}
               slots={{
                 day: RiskPickersDay,
                 toolbar: () => null,
                 actionBar: () => null,
               }}
-              sx={{ width: '100%' }}
+              sx={{
+                width: '100%',
+                borderRadius: BORDER_RADIUS.lg,
+                overflow: 'hidden',
+              }}
             />
           </Box>
         )}

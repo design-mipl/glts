@@ -1,6 +1,5 @@
 import { Box } from '@mui/material'
 import type { ReactNode } from 'react'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { useStickyHeaderAtTop } from '@/shared/hooks/useStickyHeaderAtTop'
 
 export interface CustomerListingStickyHeaderProps {
@@ -13,7 +12,6 @@ export function CustomerListingStickyHeader({
   children,
   transparentBackground = true,
 }: CustomerListingStickyHeaderProps) {
-  const colors = usePublicBrandColors()
   const { sentinelRef, showSolidBackground } = useStickyHeaderAtTop(transparentBackground)
 
   return (
@@ -26,9 +24,9 @@ export function CustomerListingStickyHeader({
           position: 'sticky',
           top: 0,
           zIndex: 10,
-          bgcolor: showSolidBackground ? colors.surface : 'transparent',
+          bgcolor: showSolidBackground ? 'background.default' : 'transparent',
           transition: theme => theme.transitions.create('background-color', { duration: 200 }),
-          pb: 2,
+          pb: 1.25,
           mb: 0,
         }}
       >

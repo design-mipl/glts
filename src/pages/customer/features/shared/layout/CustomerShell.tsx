@@ -2,16 +2,21 @@ import { Box, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { CustomerSidebar, CUSTOMER_SIDEBAR_WIDTH } from './CustomerSidebar'
+import { CustomerSidebar } from './CustomerSidebar'
 import { CustomerTopbar } from './CustomerTopbar'
-import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { CustomerPageCanvasShell } from './CustomerPageCanvasShell'
+import { publicFonts } from '@/shared/theme/publicBrand'
+import {
+  getPortalMainPaddingSx,
+  PORTAL_MOBILE_NAV_BREAKPOINT,
+  PORTAL_SIDEBAR_WIDTH,
+} from '@/shared/theme/portalChromeLayout'
 
 export function CustomerShell() {
   const theme = useTheme()
   const location = useLocation()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const isMobile = useMediaQuery(theme.breakpoints.down(PORTAL_MOBILE_NAV_BREAKPOINT))
   const [mobileNav, setMobileNav] = useState(false)
-  const colors = usePublicBrandColors()
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setMobileNav(false))
@@ -24,14 +29,14 @@ export function CustomerShell() {
         display: 'flex',
         height: '100vh',
         overflow: 'hidden',
-        bgcolor: colors.surface,
+        bgcolor: 'background.default',
         fontFamily: publicFonts.body,
       }}
     >
       {!isMobile && (
         <Box
           sx={{
-            width: CUSTOMER_SIDEBAR_WIDTH,
+            width: PORTAL_SIDEBAR_WIDTH,
             flexShrink: 0,
             height: '100vh',
             zIndex: 1000,
@@ -56,14 +61,16 @@ export function CustomerShell() {
         <CustomerTopbar onMenuClick={() => setMobileNav(true)} />
         <Box
           component="main"
-          sx={{
+          sx={(theme) => ({
             flex: 1,
-            p: { xs: 2, md: 3 },
             overflowY: 'auto',
             overflowX: 'hidden',
-          }}
+            ...getPortalMainPaddingSx(theme),
+          })}
         >
-          <Outlet />
+          <CustomerPageCanvasShell>
+            <Outlet />
+          </CustomerPageCanvasShell>
         </Box>
       </Box>
     </Box>

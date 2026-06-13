@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { Box, Typography, Chip, Stack, Card, Grid, TextField, MenuItem, Divider } from '@mui/material'
+import { Box, Typography, Stack, Card, Grid, TextField, MenuItem, Divider } from '@mui/material'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import {
   getApplicableStatesForOffering,
@@ -16,6 +16,7 @@ import {
 } from '../../../../context/ApplicationFlowPolicyContext'
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import { FlowStepActions } from '../../../../components/create/FlowStepActions'
+import { ApplicationFlowContextChips } from '../../../../components/create/ApplicationFlowContextChips'
 import { RequirementPreviewCarousel } from '../../../../components/create/RequirementPreviewCarousel'
 import { TravelDateFieldWithFeasibility } from '../../../../components/create/TravelDateFieldWithFeasibility'
 
@@ -137,12 +138,22 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
 
   return (
     <Box sx={{ maxWidth: '100%', mx: 'auto', width: '100%' }}>
-      <Typography sx={{ fontWeight: 800, fontSize: { xs: 20, md: 22 }, color: colors.navy, mb: 0.5 }}>
-        Requirement preview
-      </Typography>
-      <Stack direction="row" flexWrap="wrap" gap={0.75} sx={{ mb: 2 }}>
-        <Chip label={state.visaTypeLabel} size="small" sx={{ fontWeight: 600 }} />
-        <Chip label={state.purposeLabel} size="small" variant="outlined" />
+      <Stack
+        direction="row"
+        alignItems="center"
+        flexWrap="wrap"
+        gap={1}
+        sx={{ mb: 2 }}
+      >
+        <Typography sx={{ fontWeight: 800, fontSize: { xs: 20, md: 22 }, color: colors.navy, m: 0 }}>
+          Requirement preview
+        </Typography>
+        <ApplicationFlowContextChips
+          countryFlag={state.countryFlag}
+          countryName={state.countryName}
+          visaTypeLabel={state.visaTypeLabel}
+          purposeLabel={state.purposeLabel}
+        />
       </Stack>
 
       <Grid container spacing={2} alignItems="stretch">
@@ -169,49 +180,55 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
             </Typography>
             <Divider sx={{ mb: 1.5, borderColor: colors.border }} />
             <Stack spacing={2}>
-              <Box>
-                <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
-                  Issued passport state
-                </Typography>
-                <TextField
-                  select
-                  size="small"
-                  fullWidth
-                  value={state.issuedPassportState}
-                  onChange={(e) => handleStateChange(e.target.value)}
-                  disabled={!hasStateOptions}
-                  inputProps={{ 'aria-label': 'Issued passport state' }}
-                  sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
-                >
-                  <MenuItem value="">
-                    <em>Select state</em>
-                  </MenuItem>
-                  {applicableStates.map((stateName) => (
-                    <MenuItem key={stateName} value={stateName}>
-                      {stateName}
-                    </MenuItem>
-                  ))}
-                </TextField>
-                {!hasStateOptions && (
-                  <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.5 }}>
-                    No applicable states configured for this visa type.
-                  </Typography>
-                )}
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
-                  Jurisdiction
-                </Typography>
-                <TextField
-                  size="small"
-                  fullWidth
-                  value={state.jurisdiction}
-                  disabled
-                  placeholder="Auto-filled from state"
-                  inputProps={{ 'aria-label': 'Jurisdiction' }}
-                  sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
-                />
-              </Box>
+              <Grid container spacing={1.5}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Box>
+                    <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
+                      Issued passport state
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      fullWidth
+                      value={state.issuedPassportState}
+                      onChange={(e) => handleStateChange(e.target.value)}
+                      disabled={!hasStateOptions}
+                      inputProps={{ 'aria-label': 'Issued passport state' }}
+                      sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
+                    >
+                      <MenuItem value="">
+                        <em>Select state</em>
+                      </MenuItem>
+                      {applicableStates.map((stateName) => (
+                        <MenuItem key={stateName} value={stateName}>
+                          {stateName}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                    {!hasStateOptions && (
+                      <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.5 }}>
+                        No applicable states configured for this visa type.
+                      </Typography>
+                    )}
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Box>
+                    <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
+                      Jurisdiction
+                    </Typography>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={state.jurisdiction}
+                      disabled
+                      placeholder="Auto-filled from state"
+                      inputProps={{ 'aria-label': 'Jurisdiction' }}
+                      sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
               <Box>
                 <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
                   Intended travel date

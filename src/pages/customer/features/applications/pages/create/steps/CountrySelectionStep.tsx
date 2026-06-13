@@ -3,17 +3,17 @@ import {
   Typography,
   Grid,
   Stack,
-  Button,
   TextField,
   InputAdornment,
 } from '@mui/material'
-import { ArrowRight, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { Select } from '@/design-system/UIComponents'
 import { useMemo, useState } from 'react'
 import { listPortalCountries } from '@/shared/services/countryMasterService'
 import { resolveApplicationFlowSegment } from '../../../utils/resolveApplicationFlowSegment'
-import { usePublicBrandColors, getPrimaryButtonSx } from '@/shared/theme/publicBrand'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { CustomerCountryCard } from '../../../components/CustomerCountryCard'
+import { FlowStepActions } from '../../../components/create/FlowStepActions'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
 import { useApplicationFlowPolicy, requiresFieldValidation } from '../../../context/ApplicationFlowPolicyContext'
 import { ensureFlowGltsApplicationId } from '../../../utils/gltsReferenceIds'
@@ -208,17 +208,11 @@ export function CountrySelectionStep({ state, onUpdate, onContinue }: CountrySel
         </Typography>
       )}
 
-      <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
-        <Button
-          variant="contained"
-          endIcon={<ArrowRight size={16} />}
-          onClick={handleContinue}
-          disabled={strict && !state.countryId}
-          sx={{ ...getPrimaryButtonSx(colors), fontSize: '13px' }}
-        >
-          Continue to visa type
-        </Button>
-      </Stack>
+      <FlowStepActions
+        onContinue={handleContinue}
+        continueLabel="Continue to visa type"
+        continueDisabled={strict && !state.countryId}
+      />
     </Box>
   )
 }

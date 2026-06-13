@@ -51,6 +51,7 @@ export function DashboardPage() {
   return (
     <Box>
       <CustomerPageHeader
+        prominent
         title={`${greeting()}, ${contactName.split(' ')[0]}.`}
         subtitle={
           isMarinePortal

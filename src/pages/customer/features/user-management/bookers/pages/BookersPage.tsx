@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button, ConfirmDialog, useToast } from '@/design-system/UIComponents'
-import { getPrimaryButtonSx, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { bookerManagementService } from '@/shared/services/bookerManagementService'
 import type { BookerUser } from '@/shared/types/bookerUser'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
@@ -24,7 +23,6 @@ import {
 } from '../utils/bookerListingUtils'
 
 export function BookersPage() {
-  const colors = usePublicBrandColors()
   const navigate = useNavigate()
   const { base, canAccessBookerManagement } = useCustomerPortalBase()
   const { showToast } = useToast()
@@ -122,15 +120,13 @@ export function BookersPage() {
         headerActions={
           <Button
             variant="contained"
-            startIcon={<Plus size={16} />}
+            label="Add booker"
+            startIcon={<Plus size={14} />}
             onClick={() => {
               setEditBooker(undefined)
               setDrawerOpen(true)
             }}
-            sx={{ ...getPrimaryButtonSx(colors) }}
-          >
-            Add booker
-          </Button>
+          />
         }
         toolbar={
           <CustomerListingToolbar

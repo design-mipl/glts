@@ -3,7 +3,6 @@ import { Typography } from '@mui/material'
 import { Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button, ConfirmDialog, useToast } from '@/design-system/UIComponents'
-import { getPrimaryButtonSx, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { adminManagementService } from '@/shared/services/adminManagementService'
 import type { AdminUser } from '@/shared/types/adminUser'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
@@ -24,7 +23,6 @@ import {
 } from '../utils/adminListingUtils'
 
 export function AdminListingPage() {
-  const colors = usePublicBrandColors()
   const navigate = useNavigate()
   const { base, canAccessAdminManagement } = useCustomerPortalBase()
   const { showToast } = useToast()
@@ -120,15 +118,13 @@ export function AdminListingPage() {
         headerActions={
           <Button
             variant="contained"
-            startIcon={<Plus size={16} />}
+            label="Add admin"
+            startIcon={<Plus size={14} />}
             onClick={() => {
               setEditAdmin(undefined)
               setDrawerOpen(true)
             }}
-            sx={{ ...getPrimaryButtonSx(colors) }}
-          >
-            Add admin
-          </Button>
+          />
         }
         toolbar={
           <CustomerListingToolbar

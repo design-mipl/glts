@@ -4,6 +4,10 @@ import type { LucideIcon } from 'lucide-react'
 import { AlertCircle, AlertTriangle, CheckCircle2, Circle, Clock, FileText } from 'lucide-react'
 import { Button, Tabs } from '@/design-system/UIComponents'
 import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '@/design-system/tokens'
+import {
+  PORTAL_RECORD_PAGE_TITLE_SX,
+  PORTAL_RECORD_PAGE_TITLE_VARIANT,
+} from '@/shared/theme/portalChromeLayout'
 import { publicShadows, usePublicBrandColors, type PublicBrandColors } from '@/shared/theme/publicBrand'
 
 export type CustomerTone = 'success' | 'warning' | 'info' | 'critical' | 'neutral'
@@ -36,20 +40,30 @@ export interface CustomerPageHeaderProps {
   badge?: string
   meta?: ReactNode
   action?: ReactNode
+  /** Larger welcome-style title for dashboard; default matches admin page headers (h2 / 20px). */
+  prominent?: boolean
 }
 
-export function CustomerPageHeader({ title, subtitle, eyebrow, badge, meta, action }: CustomerPageHeaderProps) {
+export function CustomerPageHeader({
+  title,
+  subtitle,
+  eyebrow,
+  badge,
+  meta,
+  action,
+  prominent = false,
+}: CustomerPageHeaderProps) {
   const colors = usePublicBrandColors()
 
   return (
     <Stack
-      direction={{ xs: 'column', sm: 'row' }}
+      direction={{ xs: 'column', md: 'row' }}
       justifyContent="space-between"
-      alignItems={{ xs: 'flex-start', sm: 'center' }}
+      alignItems={{ xs: 'flex-start', md: 'center' }}
       spacing={2}
-      sx={{ mb: 2.5 }}
+      sx={{ mb: prominent ? 2.5 : 3 }}
     >
-      <Box>
+      <Box sx={{ minWidth: 0 }}>
         <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" sx={{ mb: eyebrow || badge ? 0.75 : 0 }}>
           {eyebrow && (
             <Typography sx={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', color: colors.greenDark, textTransform: 'uppercase' }}>
@@ -58,17 +72,37 @@ export function CustomerPageHeader({ title, subtitle, eyebrow, badge, meta, acti
           )}
           {badge && <CustomerStatusChip label={badge} tone="info" />}
         </Stack>
-        <Typography sx={{ fontWeight: 800, fontSize: { xs: 22, md: 28 }, color: colors.navy, lineHeight: 1.15 }}>
-          {title}
-        </Typography>
+        {prominent ? (
+          <Typography sx={{ fontWeight: 800, fontSize: { xs: 22, md: 28 }, color: colors.navy, lineHeight: 1.15 }}>
+            {title}
+          </Typography>
+        ) : (
+          <Typography
+            variant={PORTAL_RECORD_PAGE_TITLE_VARIANT}
+            component="h1"
+            fontWeight={700}
+            color="text.primary"
+            sx={PORTAL_RECORD_PAGE_TITLE_SX}
+          >
+            {title}
+          </Typography>
+        )}
         {subtitle && (
-          <Typography sx={{ mt: 0.75, fontSize: 14, color: colors.textSecondary, maxWidth: 720 }}>
+          <Typography
+            variant={prominent ? undefined : 'body2'}
+            color={prominent ? undefined : 'text.secondary'}
+            sx={
+              prominent
+                ? { mt: 0.75, fontSize: 14, color: colors.textSecondary, maxWidth: 720 }
+                : { mt: 0.75, maxWidth: 720 }
+            }
+          >
             {subtitle}
           </Typography>
         )}
-        {meta && <Box sx={{ mt: 1.75 }}>{meta}</Box>}
+        {meta && <Box sx={{ mt: prominent ? 1.75 : 1.5 }}>{meta}</Box>}
       </Box>
-      {action && <Box sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}>{action}</Box>}
+      {action && <Box sx={{ flexShrink: 0, width: { xs: '100%', md: 'auto' } }}>{action}</Box>}
     </Stack>
   )
 }

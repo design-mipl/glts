@@ -8,6 +8,7 @@ import {
 } from '../../../../context/ApplicationFlowPolicyContext'
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import { FlowStepActions } from '../../../../components/create/FlowStepActions'
+import { ApplicationFlowContextChips } from '../../../../components/create/ApplicationFlowContextChips'
 import {
   getVisaOfferings,
   patchStateFromVisaOffering,
@@ -35,11 +36,16 @@ export function SingleVisaPurposeStep({
 
   return (
     <Box sx={{ maxWidth: '100%', mx: 'auto', width: '100%' }}>
-      <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ mb: 0.5 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: { xs: 20, md: 22 }, color: colors.navy }}>
+      <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1} sx={{ mb: 0.5 }}>
+        <Typography sx={{ fontWeight: 800, fontSize: { xs: 20, md: 22 }, color: colors.navy, m: 0 }}>
           Visa type & purpose
         </Typography>
-        <Chip label={`${state.countryFlag} ${state.countryName}`} size="small" sx={{ fontWeight: 600, fontSize: 11 }} />
+        <ApplicationFlowContextChips
+          countryFlag={state.countryFlag}
+          countryName={state.countryName}
+          showVisa={false}
+          showPurpose={false}
+        />
       </Stack>
       <Typography sx={{ fontSize: 13, color: colors.textSecondary, mb: 2.5 }}>
         Select the marine visa category for this destination. Requirements in the next step depend on this selection.

@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Box, Typography, IconButton, Stack, InputBase, Avatar, Menu as MuiMenu, Divider } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 import { Search, Bell, Menu, Wallet, Moon, Sun } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Toggle } from '@/design-system/UIComponents'
 import { useFoundationTheme } from '@/design-system/ThemeContext'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { PORTAL_MOBILE_NAV_BREAKPOINT, PORTAL_TOPBAR_HEIGHT } from '@/shared/theme/portalChromeLayout'
 import { useCustomerPortalBase } from '../hooks/useCustomerPortalBase'
 
 interface CustomerTopbarProps {
@@ -12,10 +14,12 @@ interface CustomerTopbarProps {
 }
 
 export function CustomerTopbar({ onMenuClick }: CustomerTopbarProps) {
+  const theme = useTheme()
   const navigate = useNavigate()
   const { base, contactName, isBusiness } = useCustomerPortalBase()
   const { isDark, setMode } = useFoundationTheme()
   const colors = usePublicBrandColors()
+  const isLight = theme.palette.mode === 'light'
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const initials = contactName
     .split(' ')
@@ -27,40 +31,63 @@ export function CustomerTopbar({ onMenuClick }: CustomerTopbarProps) {
   return (
     <Box
       sx={{
-        height: 56,
-        px: { xs: 2, md: 3 },
+        height: PORTAL_TOPBAR_HEIGHT,
+        flexShrink: 0,
+        px: { xs: 1.5, lg: 2 },
         display: 'flex',
         alignItems: 'center',
-        gap: 2,
-        bgcolor: colors.white,
-        borderBottom: `1px solid ${colors.border}`,
+        gap: 1,
+        bgcolor: 'background.paper',
+        borderBottom: `1px solid ${alpha(isLight ? '#000000' : '#ffffff', 0.06)}`,
       }}
     >
       {onMenuClick && (
-        <IconButton size="small" onClick={onMenuClick} sx={{ display: { md: 'none' } }}>
+        <IconButton
+          size="small"
+          onClick={onMenuClick}
+          sx={{
+            display: { [PORTAL_MOBILE_NAV_BREAKPOINT]: 'none' },
+            color: 'text.secondary',
+            width: 32,
+            height: 32,
+            flexShrink: 0,
+          }}
+        >
           <Menu size={20} />
         </IconButton>
       )}
       <Box
         sx={{
           flex: 1,
-          maxWidth: 420,
+          maxWidth: theme.spacing(70),
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          px: 1.5,
-          py: 0.75,
-          borderRadius: '8px',
-          border: `1px solid ${colors.border}`,
-          bgcolor: colors.surface,
+          height: theme.spacing(8.5),
+          px: { xs: 1, sm: 1.5 },
+          borderRadius: '100px',
+          bgcolor: alpha(isLight ? '#000000' : '#ffffff', isLight ? 0.05 : 0.07),
+          border: 'none',
         }}
       >
-        <Search size={16} color={colors.textMuted} />
+        <Search size={15} strokeWidth={1.75} color={theme.palette.text.disabled} />
         <InputBase
           placeholder={isBusiness ? 'Country, region or visa type' : 'Search applications, travelers…'}
-          sx={{ fontSize: '13px', flex: 1, color: colors.text }}
+          sx={{ fontSize: '13px', flex: 1, color: 'text.primary' }}
         />
-        <Typography sx={{ fontSize: '10px', color: colors.textMuted, display: { xs: 'none', sm: 'block' } }}>
+        <Typography
+          sx={{
+            fontSize: '11px',
+            color: 'text.disabled',
+            display: { xs: 'none', xl: 'block' },
+            bgcolor: alpha(isLight ? '#000000' : '#ffffff', 0.06),
+            borderRadius: '4px',
+            px: '5px',
+            py: '1px',
+            lineHeight: 1.6,
+            flexShrink: 0,
+          }}
+        >
           ⌘K
         </Typography>
       </Box>
@@ -69,15 +96,24 @@ export function CustomerTopbar({ onMenuClick }: CustomerTopbarProps) {
           size="small"
           aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           onClick={() => setMode(isDark ? 'light' : 'dark')}
+          sx={{ color: 'text.secondary', width: 34, height: 34 }}
         >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          {isDark ? <Sun size={18} strokeWidth={1.75} /> : <Moon size={18} strokeWidth={1.75} />}
         </IconButton>
-        <IconButton size="small" onClick={() => navigate(`${base}/notifications`)}>
-          <Bell size={18} />
+        <IconButton
+          size="small"
+          onClick={() => navigate(`${base}/notifications`)}
+          sx={{ color: 'text.secondary', width: 34, height: 34 }}
+        >
+          <Bell size={18} strokeWidth={1.75} />
         </IconButton>
         {isBusiness && (
-          <IconButton size="small" onClick={() => navigate(`${base}/profile`)}>
-            <Wallet size={18} />
+          <IconButton
+            size="small"
+            onClick={() => navigate(`${base}/profile`)}
+            sx={{ color: 'text.secondary', width: 34, height: 34 }}
+          >
+            <Wallet size={18} strokeWidth={1.75} />
           </IconButton>
         )}
         <Avatar

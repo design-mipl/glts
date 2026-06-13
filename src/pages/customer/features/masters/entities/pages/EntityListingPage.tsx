@@ -3,7 +3,6 @@ import { Typography } from '@mui/material'
 import { Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button, ConfirmDialog, useToast } from '@/design-system/UIComponents'
-import { getPrimaryButtonSx, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { entityMasterService } from '@/shared/services/entityMasterService'
 import type { EntityMaster } from '@/shared/types/entityMaster'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
@@ -24,7 +23,6 @@ import {
 } from '../utils/entityListingUtils'
 
 export function EntityListingPage() {
-  const colors = usePublicBrandColors()
   const navigate = useNavigate()
   const { base, canAccessMasters } = useCustomerPortalBase()
   const { showToast } = useToast()
@@ -150,15 +148,13 @@ export function EntityListingPage() {
         headerActions={
           <Button
             variant="contained"
-            startIcon={<Plus size={16} />}
+            label="Add entity"
+            startIcon={<Plus size={14} />}
             onClick={() => {
               setEditEntity(undefined)
               setDrawerOpen(true)
             }}
-            sx={{ ...getPrimaryButtonSx(colors) }}
-          >
-            Add entity
-          </Button>
+          />
         }
         toolbar={
           <CustomerListingToolbar

@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { Box, Typography, Card, Chip, IconButton } from '@mui/material'
+import { Box, Typography, Card, IconButton } from '@mui/material'
 import { Star } from 'lucide-react'
 import type { Country } from '@/shared/types/visa'
 import { getCountryHeroImageUrl } from '@/shared/services/visaService'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { isFastVisa } from '@/shared/utils/countryDisplay'
 
 interface CustomerCountryCardProps {
   country: Country
@@ -23,7 +22,6 @@ export function CustomerCountryCard({
 }: CustomerCountryCardProps) {
   const colors = usePublicBrandColors()
   const [imgError, setImgError] = useState(false)
-  const fast = isFastVisa(country)
 
   return (
     <Card
@@ -91,19 +89,6 @@ export function CustomerCountryCard({
             gap: 0.5,
           }}
         >
-          {fast && (
-            <Chip
-              label="Fast"
-              size="small"
-              sx={{
-                height: 20,
-                fontSize: '10px',
-                fontWeight: 700,
-                bgcolor: '#fff',
-                color: colors.greenDark,
-              }}
-            />
-          )}
           {onToggleFavorite ? (
             <IconButton
               size="small"

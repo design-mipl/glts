@@ -3,8 +3,8 @@ import { Box, Stack } from '@mui/material'
 import { useLocation } from 'react-router-dom'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import { Breadcrumb } from '@/design-system/UIComponents'
+import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '@/design-system/tokens'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
-import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { useApplicationFlowPolicy } from '../../context/ApplicationFlowPolicyContext'
 import { useApplicationFlowState } from '../../hooks/useApplicationFlowState'
 import type { CreateApplicationLocationState } from '../../utils/createApplicationNavigation'
@@ -23,7 +23,6 @@ import { SingleVisaPurposeStep } from './steps/single/SingleVisaPurposeStep'
 import { RequirementPreviewStep } from './steps/single/RequirementPreviewStep'
 
 export function CreateApplicationFlowPage() {
-  const colors = usePublicBrandColors()
   const navigate = useAppNavigate()
   const location = useLocation()
   const navState = (location.state ?? null) as CreateApplicationLocationState | null
@@ -96,82 +95,59 @@ export function CreateApplicationFlowPage() {
   const canAdvance = canAdvanceFromStep(step, state, policy)
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        maxWidth: '100%',
-        minHeight: 'calc(100vh - 56px)',
-        bgcolor: colors.surface,
-        fontFamily: publicFonts.body,
-      }}
-    >
+    <Box sx={{ width: '100%' }}>
+      <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 1.5 }}>
+        <Breadcrumb items={breadcrumb} />
+      </Stack>
+
       <Box
         sx={{
           width: '100%',
-          maxWidth: '100%',
-          mx: { xs: -2, md: -3 },
-          px: { xs: 2, md: 3 },
-          py: { xs: 2, md: 3 },
-          boxSizing: 'border-box',
+          border: `${BORDER_WIDTH.thin} solid`,
+          borderColor: 'divider',
+          borderRadius: BORDER_RADIUS.lg,
+          bgcolor: 'background.paper',
+          boxShadow: SHADOWS.sm,
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 1.5 }}>
-          <Breadcrumb items={breadcrumb} />
-        </Stack>
-
         <Box
           sx={{
-            width: '100%',
-            maxWidth: '100%',
-            border: `1px solid ${colors.border}`,
-            borderRadius: '14px',
-            bgcolor: colors.white,
-            boxShadow: '0 1px 3px rgba(15,23,42,0.06)',
-            overflow: 'hidden',
+            px: { xs: 2, md: 3 },
+            py: 1.5,
+            borderBottom: `${BORDER_WIDTH.thin} solid`,
+            borderColor: 'divider',
           }}
         >
-          <Box
-            sx={{
-              px: { xs: 2, md: 3 },
-              py: 1.5,
-              borderBottom: `1px solid ${colors.border}`,
-              position: 'sticky',
-              top: 0,
-              zIndex: 10,
-              bgcolor: colors.white,
-            }}
-          >
-            <ApplicationFlowStepper
-              steps={flowSteps}
-              activeIndex={stepIndex}
-              onStepClick={handleStepClick}
-              onPrevious={goBack}
-              onNext={goNext}
-              disablePrevious={stepIndex <= 0}
-              disableNext={stepIndex >= APPLICATION_FLOW_STEPS.length - 1 || !canAdvance}
-            />
-          </Box>
+          <ApplicationFlowStepper
+            steps={flowSteps}
+            activeIndex={stepIndex}
+            onStepClick={handleStepClick}
+            onPrevious={goBack}
+            onNext={goNext}
+            disablePrevious={stepIndex <= 0}
+            disableNext={stepIndex >= APPLICATION_FLOW_STEPS.length - 1 || !canAdvance}
+          />
+        </Box>
 
-          <Box sx={{ p: { xs: 2, md: 3 }, width: '100%', boxSizing: 'border-box' }}>
-            {step === 'country' && (
-              <CountrySelectionStep state={state} onUpdate={update} onContinue={goNext} />
-            )}
-            {step === 'visa' && (
-              <SingleVisaPurposeStep state={state} onUpdate={update} onContinue={goNext} />
-            )}
-            {step === 'requirements' && (
-              <RequirementPreviewStep state={state} onUpdate={update} onContinue={goNext} />
-            )}
-            {step === 'upload' && (
-              <BulkApplicationUploadPage state={state} onUpdate={update} onContinue={goNext} />
-            )}
-            {step === 'details' && (
-              <DetailsStep state={state} onUpdate={update} onContinue={goNext} />
-            )}
-            {step === 'submit' && (
-              <ApplicationSubmitStep state={state} onSubmitted={reset} />
-            )}
-          </Box>
+        <Box sx={{ p: { xs: 2, md: 3 }, width: '100%', boxSizing: 'border-box' }}>
+          {step === 'country' && (
+            <CountrySelectionStep state={state} onUpdate={update} onContinue={goNext} />
+          )}
+          {step === 'visa' && (
+            <SingleVisaPurposeStep state={state} onUpdate={update} onContinue={goNext} />
+          )}
+          {step === 'requirements' && (
+            <RequirementPreviewStep state={state} onUpdate={update} onContinue={goNext} />
+          )}
+          {step === 'upload' && (
+            <BulkApplicationUploadPage state={state} onUpdate={update} onContinue={goNext} />
+          )}
+          {step === 'details' && (
+            <DetailsStep state={state} onUpdate={update} onContinue={goNext} />
+          )}
+          {step === 'submit' && (
+            <ApplicationSubmitStep state={state} onSubmitted={reset} />
+          )}
         </Box>
       </Box>
     </Box>
