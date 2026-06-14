@@ -412,6 +412,7 @@ Admin tables should standardize:
 - Pagination.
 - Empty/loading states.
 - Export only when useful and permission-allowed.
+- Column widths: use `widthSize` with `LISTING_COLUMN_WIDTHS` from `src/design-system/listingColumnWidths.ts` (reference: `templateDemoColumns.tsx`). Actions resolve to `xs` (60px); unset data columns default to `lg` (180px).
 
 Prefer `AdminListingTable` (wraps embedded `DataTable` with column filters) inside `AdminListingShell` rather than standalone `DataTable` with its own toolbar on admin listing pages.
 
@@ -805,7 +806,7 @@ Optional parts:
 - Bulk actions.
 - Export.
 - Column visibility.
-- Advanced filters.
+- Filter popover (module-specific selects via toolbar `filterPopover`).
 - Saved views.
 
 Standard order:
@@ -814,8 +815,7 @@ Standard order:
 Header
 KPI row
 Tabs, if needed
-Toolbar
-Advanced filters
+Toolbar (search, Filter popover, export, columns, grid toggle)
 Table/Grid
 Pagination
 ```
@@ -824,7 +824,7 @@ Listing implementation standard:
 
 - Use `ListingTemplatePage.tsx` as the reference source of truth for listing composition order and behavior.
 - Do not use queue-template or customer-listing-template variants as separate scaffolds; compose all listings from the same canonical listing recipe.
-- Compose each admin listing with: `AdminListingShell`, `AdminListingStickyHeader`, `AdminListingToolbar`, `AdminListingAdvancedFilters`, `AdminListingTable` or `AdminListingGrid`, and `Pagination` — or approved surface-specific wrappers that preserve the same UX sequence.
+- Compose each admin listing with: `AdminListingShell`, `AdminListingStickyHeader`, `AdminListingToolbar` (Filter popover via `filterPopover` or preset `filter`), `AdminListingTable` or `AdminListingGrid`, and `Pagination` — or approved surface-specific wrappers that preserve the same UX sequence.
 - Use design-system table primitives inside `AdminListingTable`: `DataTable`, `ColumnFilter`, `RowActions`, and `Pagination`.
 - **Actions column:** last column, `key: 'actions'`, sticky right, fixed width, header **Actions**, `RowActions` in cells; data columns use ellipsis so content does not overflow into the action column.
 - Keep module-specific columns, row actions, status tabs, export behavior, route paths, and permissions in the feature folder.

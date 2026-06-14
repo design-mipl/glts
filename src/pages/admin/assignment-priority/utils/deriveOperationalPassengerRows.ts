@@ -45,12 +45,19 @@ function invoiceContextForApplication(applicationId: string): {
   }
 }
 
+function localIsoDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function defaultOverlay(
   priority: AssignmentPriority = 'Medium',
   passengerStatus: PassengerOperationalStatus = 'Pending Assignment',
 ): OperationalPassengerOverlay {
   const now = new Date()
-  const operationalDate = now.toISOString().slice(0, 10)
+  const operationalDate = localIsoDate(now)
   const slaDue = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString()
   return {
     priority,

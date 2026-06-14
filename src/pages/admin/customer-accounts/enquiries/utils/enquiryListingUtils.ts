@@ -1,9 +1,15 @@
 import type { EnquiryCustomerInfo, EnquiryRecord, EnquiryStatus } from '@/shared/types/enquiry'
+import { formatMasterDate } from '@/pages/admin/masters/utils/masterListingUtils'
 import {
   formatEnquiryInquirySource,
   formatEnquiryProcessingType,
 } from '../config/enquiryFormConfig'
 import { enquiryStatusLabel } from '../config/enquiryStatusConfig'
+
+export function formatEnquiryDate(iso: string | undefined): string {
+  if (!iso?.trim()) return '—'
+  return formatMasterDate(iso)
+}
 
 export type EnquiryListingTab = 'all' | 'new' | 'active' | 'converted' | 'closed'
 
@@ -141,7 +147,7 @@ export function getEnquiryCellValue(record: EnquiryRecord, key: string): string 
     case 'status':
       return enquiryStatusLabel[record.status]
     case 'enquiryDate':
-      return record.enquiryDate ? new Date(record.enquiryDate).toLocaleDateString() : ''
+      return formatEnquiryDate(record.enquiryDate)
     case 'id':
       return record.id
     default:
@@ -274,7 +280,7 @@ export function exportEnquiriesToCsv(rows: EnquiryRecord[]): string {
   const lines = rows.map((row) =>
     [
       row.id,
-      row.enquiryDate ? new Date(row.enquiryDate).toLocaleDateString() : '',
+      formatEnquiryDate(row.enquiryDate),
       row.customer.companyOrCustomerName,
       row.customer.customerType,
       row.customer.contactPersonName,

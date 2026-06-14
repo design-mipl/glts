@@ -10,6 +10,10 @@ export interface TravelTicketWorkflow {
   ticketNumber?: string
   airlineTravelMode?: string
   travelDate?: string
+  /** GLTS arrangement cost (INR). */
+  arrangementAmount?: string
+  vendorId?: string
+  vendorName?: string
   remarks?: string
   /** @deprecated Use remarks — kept for merge compatibility */
   notes?: string
@@ -21,6 +25,10 @@ export interface InsuranceWorkflow {
   insuranceProvider?: string
   validFrom?: string
   validTo?: string
+  /** GLTS arrangement cost (INR). */
+  arrangementAmount?: string
+  vendorId?: string
+  vendorName?: string
   remarks?: string
   /** @deprecated Use validFrom/validTo — kept for merge compatibility */
   travelStartDate?: string
@@ -203,6 +211,23 @@ function insuranceValidTo(w: InsuranceWorkflow | undefined): string | undefined 
   return w?.validTo?.trim() || w?.travelEndDate?.trim() || undefined
 }
 
+function formatArrangementAmountLabel(amount: string | undefined): string | null {
+  const trimmed = amount?.trim()
+  if (!trimmed) return null
+  const num = Number(trimmed)
+  if (Number.isNaN(num)) return `Amount: ${trimmed}`
+  return `Amount: ₹${num.toLocaleString('en-IN')}`
+}
+
+function appendCommercialDetails(
+  parts: string[],
+  workflow?: { arrangementAmount?: string; vendorName?: string },
+) {
+  const amountLabel = formatArrangementAmountLabel(workflow?.arrangementAmount)
+  if (amountLabel) parts.push(amountLabel)
+  if (workflow?.vendorName?.trim()) parts.push(`Vendor: ${workflow.vendorName.trim()}`)
+}
+
 export function formatWorkflowSummary(doc: ApplicantDocumentItem): string | null {
   if (!isSimpleDocumentRequirement(doc.documentId)) return null
 
@@ -214,6 +239,7 @@ export function formatWorkflowSummary(doc: ApplicantDocumentItem): string | null
   if (doc.documentId === 'travel-ticket') {
     const w = doc.travelTicket
     if (w?.fileName?.trim()) parts.push(w.fileName.trim())
+    appendCommercialDetails(parts, w)
     if (w?.ticketNumber?.trim()) parts.push(`Ticket: ${w.ticketNumber.trim()}`)
     if (w?.airlineTravelMode?.trim()) parts.push(w.airlineTravelMode.trim())
     if (w?.travelDate?.trim()) parts.push(`Travel: ${w.travelDate.trim()}`)
@@ -224,6 +250,7 @@ export function formatWorkflowSummary(doc: ApplicantDocumentItem): string | null
 
   const w = doc.insurance
   if (w?.fileName?.trim()) parts.push(w.fileName.trim())
+  appendCommercialDetails(parts, w)
   if (w?.policyNumber?.trim()) parts.push(`Policy: ${w.policyNumber.trim()}`)
   if (w?.insuranceProvider?.trim()) parts.push(w.insuranceProvider.trim())
   const from = insuranceValidFrom(w)
@@ -241,6 +268,9 @@ export function emptyTravelTicketWorkflow(): TravelTicketWorkflow {
     ticketNumber: '',
     airlineTravelMode: '',
     travelDate: '',
+    arrangementAmount: '',
+    vendorId: '',
+    vendorName: '',
     remarks: '',
   }
 }
@@ -252,6 +282,9 @@ export function emptyInsuranceWorkflow(): InsuranceWorkflow {
     insuranceProvider: '',
     validFrom: '',
     validTo: '',
+    arrangementAmount: '',
+    vendorId: '',
+    vendorName: '',
     remarks: '',
   }
 }

@@ -48,7 +48,7 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
       size="sm"
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ width: '100%' }}>
-          <Button variant="outlined" color="secondary" onClick={handleClose}>
+          <Button variant="neutral" onClick={handleClose}>
             Cancel
           </Button>
           <Button variant="contained" color="primary" onClick={handleSubmit}>

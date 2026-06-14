@@ -46,8 +46,7 @@ export function TeamDetailSummary({ team, onEdit, onToggleStatus }: TeamDetailSu
             <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
               <Button
                 label="Edit team"
-                variant="outlined"
-                color="secondary"
+                variant="neutral"
                 startIcon={<Pencil size={14} />}
                 onClick={onEdit}
               />

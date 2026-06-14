@@ -211,7 +211,7 @@ export function AdminProfileWorkspace() {
         size="sm"
         footer={
           <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ width: '100%' }}>
-            <Button variant="outlined" color="secondary" onClick={() => setEditAccountOpen(false)}>
+            <Button variant="neutral" onClick={() => setEditAccountOpen(false)}>
               Cancel
             </Button>
             <Button variant="contained" color="primary" onClick={handleSaveName}>
@@ -234,7 +234,7 @@ export function AdminProfileWorkspace() {
         size="sm"
         footer={
           <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ width: '100%' }}>
-            <Button variant="outlined" color="secondary" onClick={() => setPasswordModalOpen(false)}>
+            <Button variant="neutral" onClick={() => setPasswordModalOpen(false)}>
               Cancel
             </Button>
             <Button

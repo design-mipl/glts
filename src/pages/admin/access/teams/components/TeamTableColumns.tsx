@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { Eye, PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import { masterStatusColor, masterStatusLabel } from '@/pages/admin/masters/config/masterStatusConfig'
 import { formatMasterDate } from '@/pages/admin/masters/utils/masterListingUtils'
 import { teamService } from '@/shared/services/teamService'
@@ -35,7 +36,7 @@ export function buildTeamColumns({
     {
       key: 'name',
       label: 'Team Name',
-      minWidth: 160,
+      widthSize: adminListingColumnWidthSize('name'),
       sortable: true,
       filterable: true,
       searchable: true,
@@ -43,7 +44,7 @@ export function buildTeamColumns({
     {
       key: 'description',
       label: 'Description',
-      minWidth: 220,
+      widthSize: adminListingColumnWidthSize('description'),
       sortable: false,
       filterable: false,
       render: (_, row) => (
@@ -59,7 +60,7 @@ export function buildTeamColumns({
     {
       key: 'totalUsers',
       label: 'Total Users',
-      width: 110,
+      widthSize: adminListingColumnWidthSize('count'),
       sortable: true,
       filterable: false,
       render: (_, row) => teamService.countUsers(row.id),
@@ -67,7 +68,7 @@ export function buildTeamColumns({
     {
       key: 'status',
       label: 'Status',
-      width: 100,
+      widthSize: adminListingColumnWidthSize('status'),
       sortable: false,
       filterable: true,
       render: (_, row) => (
@@ -81,7 +82,7 @@ export function buildTeamColumns({
     {
       key: 'createdAudit',
       label: 'Created By',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       sortable: true,
       filterable: true,
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
@@ -89,7 +90,7 @@ export function buildTeamColumns({
     {
       key: 'updatedAudit',
       label: 'Updated By',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       sortable: true,
       filterable: true,
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
@@ -102,7 +103,6 @@ export function buildTeamColumns({
       searchable: false,
       hideable: false,
       align: 'center',
-      width: 60,
       render: (_, row) => {
         const isActive = row.status === 'active'
         const actions: RowAction[] = [

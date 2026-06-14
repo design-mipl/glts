@@ -12,7 +12,12 @@ import { CustomerListingTable } from '@/pages/customer/features/shared/component
 import { CustomerListingPagination } from '@/pages/customer/features/shared/components/listing/CustomerListingPagination'
 import { CustomerListingGrid } from '@/pages/customer/features/shared/components/listing/CustomerListingGrid'
 import { CustomerEmptyState } from '@/pages/customer/features/shared/components/CustomerPrimitives'
-import { BookerAdvancedFilters } from '../components/BookerAdvancedFilters'
+import {
+  BookerAdvancedFilterFields,
+  EMPTY_BOOKER_LIST_FILTERS,
+  hasBookerFiltersActive,
+  type BookerListFilters,
+} from '../components/BookerAdvancedFilters'
 import { BookerFormDrawer } from '../components/BookerFormDrawer'
 import { buildBookerColumns } from '../components/BookerTableColumns'
 import {
@@ -29,9 +34,7 @@ export function BookersPage() {
 
   const [rows, setRows] = useState<BookerUser[]>([])
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [locationFilter, setLocationFilter] = useState('all')
-  const [createdByFilter, setCreatedByFilter] = useState('all')
+  const [listFilters, setListFilters] = useState<BookerListFilters>(EMPTY_BOOKER_LIST_FILTERS)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editBooker, setEditBooker] = useState<BookerUser | undefined>()
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -49,12 +52,12 @@ export function BookersPage() {
 
   const filteredByAdvanced = useMemo(() => {
     return rows.filter(row => {
-      if (statusFilter !== 'all' && row.status !== statusFilter) return false
-      if (locationFilter !== 'all' && row.location !== locationFilter) return false
-      if (createdByFilter !== 'all' && row.createdBy !== createdByFilter) return false
+      if (listFilters.status !== 'all' && row.status !== listFilters.status) return false
+      if (listFilters.location !== 'all' && row.location !== listFilters.location) return false
+      if (listFilters.createdBy !== 'all' && row.createdBy !== listFilters.createdBy) return false
       return true
     })
-  }, [rows, statusFilter, locationFilter, createdByFilter])
+  }, [rows, listFilters])
 
   const listing = useCustomerListing({
     rows: filteredByAdvanced,
@@ -142,24 +145,18 @@ export function BookersPage() {
             columns={columns.filter(c => c.key !== 'actions').map(c => ({ key: c.key, label: c.label }))}
             hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
             onHiddenColumnKeysChange={keys => listing.setTableState(s => ({ ...s, hiddenColumnKeys: keys }))}
-          />
-        }
-        advancedFilters={
-          <BookerAdvancedFilters
-            status={statusFilter}
-            location={locationFilter}
-            createdBy={createdByFilter}
-            onStatusChange={v => {
-              setStatusFilter(v)
-              listing.setTableState(s => ({ ...s, page: 0 }))
-            }}
-            onLocationChange={v => {
-              setLocationFilter(v)
-              listing.setTableState(s => ({ ...s, page: 0 }))
-            }}
-            onCreatedByChange={v => {
-              setCreatedByFilter(v)
-              listing.setTableState(s => ({ ...s, page: 0 }))
+            filterPopover={{
+              active: hasBookerFiltersActive(listFilters),
+              value: listFilters,
+              onApply: next => {
+                setListFilters(next)
+                listing.setTableState(s => ({ ...s, page: 0 }))
+              },
+              onClear: () => setListFilters(EMPTY_BOOKER_LIST_FILTERS),
+              hasActive: hasBookerFiltersActive,
+              children: (draft, patch) => (
+                <BookerAdvancedFilterFields draft={draft} patch={patch} />
+              ),
             }}
           />
         }

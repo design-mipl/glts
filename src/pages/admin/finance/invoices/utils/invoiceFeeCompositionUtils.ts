@@ -25,7 +25,8 @@ import {
   defaultLineItemFields,
   roundMoney,
 } from '@/shared/utils/invoiceCalculations'
-import { INVOICE_COMPOSITION_FEE_LABELS } from '../config/invoiceFeeCategoryLabels'
+import { applicationArrangedExpenseService } from '@/shared/services/applicationArrangedExpenseService'
+import { arrangedExpenseToMiscFeeRow } from '@/shared/utils/applicationArrangedExpenseUtils'
 import type {
   ApplicantFeeBundle,
   BulkApplicationFeeCard,
@@ -36,6 +37,7 @@ import type {
   SimpleFeeField,
   SingleApplicationFeeCard,
 } from '../types/invoiceFeeComposition.types'
+import { INVOICE_COMPOSITION_FEE_LABELS } from '../config/invoiceFeeCategoryLabels'
 
 const FEE = INVOICE_COMPOSITION_FEE_LABELS
 
@@ -107,6 +109,23 @@ export function getMiscellaneousFeeTypeOptions() {
   return [...fromMaster, { value: CUSTOM_FEE_TYPE_VALUE, label: FEE.miscellaneousFees.customOption, defaultPrice: 0 }]
 }
 
+function attachArrangedMiscFees(
+  applicationId: string,
+  applicantId: string,
+  target: { miscellaneousFees: RepeatableFeeRow[] },
+) {
+  const expenses = applicationArrangedExpenseService.listForApplicant(applicationId, applicantId)
+  for (const expense of expenses) {
+    const row = arrangedExpenseToMiscFeeRow(expense)
+    const index = target.miscellaneousFees.findIndex(item => item.id === row.id)
+    if (index >= 0) {
+      target.miscellaneousFees[index] = row
+    } else {
+      target.miscellaneousFees.push(row)
+    }
+  }
+}
+
 /** Actual billable travelers in the batch (matches fee editor and expanded panels). */
 export function getBulkBatchApplicantCount(batch: BulkBatchRow): number {
   return listBulkBatchApplicants(batch).length
@@ -145,22 +164,26 @@ export function listBulkBatchApplicants(batch: BulkBatchRow): ApplicantFeeBundle
   }
 
   const agreement = findAgreementForCompany(batch.companyName)
-  return queueRows.map(row => ({
-    applicantId: row.gltsApplicantId,
-    applicantName: row.travelerName,
-    passportNumber: row.passportNo,
-    country: batch.country,
-    visaType: batch.visaType,
-    gltsFees: { amount: defaultGltsAmount(agreement), notes: '' },
-    visaFees: { amount: defaultVisaAmount(agreement, batch.country), notes: '' },
-    handlingFees: [],
-    miscellaneousFees: [],
-  }))
+  return queueRows.map(row => {
+    const bundle: ApplicantFeeBundle = {
+      applicantId: row.gltsApplicantId,
+      applicantName: row.travelerName,
+      passportNumber: row.passportNo,
+      country: batch.country,
+      visaType: batch.visaType,
+      gltsFees: { amount: defaultGltsAmount(agreement), notes: '' },
+      visaFees: { amount: defaultVisaAmount(agreement, batch.country), notes: '' },
+      handlingFees: [],
+      miscellaneousFees: [],
+    }
+    attachArrangedMiscFees(batch.id, row.gltsApplicantId, bundle)
+    return bundle
+  })
 }
 
 function buildSingleCard(row: SingleApplicationRow): SingleApplicationFeeCard {
   const agreement = findAgreementForCompany(row.companyName ?? '')
-  return {
+  const card: SingleApplicationFeeCard = {
     applicationId: row.id,
     applicationName: resolveApplicationDisplayName(row),
     companyName: row.companyName ?? '—',
@@ -174,6 +197,8 @@ function buildSingleCard(row: SingleApplicationRow): SingleApplicationFeeCard {
     handlingFees: [],
     miscellaneousFees: [],
   }
+  attachArrangedMiscFees(row.id, `${row.id}-APL-001`, card)
+  return card
 }
 
 function buildBulkCard(row: BulkBatchRow): BulkApplicationFeeCard {
@@ -196,6 +221,8 @@ export function buildInitialFeeComposition(
   batchIds: string[],
   draft?: Invoice,
 ): InvoiceFeeCompositionState {
+  applicationArrangedExpenseService.syncFromApplications(applicationIds, batchIds)
+
   const singles = applicationIds
     .map(id => mockSingleApplications.find(r => r.id === id))
     .filter((r): r is SingleApplicationRow => Boolean(r))

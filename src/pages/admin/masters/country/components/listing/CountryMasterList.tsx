@@ -16,8 +16,13 @@ import {
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { countryMasterAdminService } from '@/shared/services/countryMasterAdminService'
-import type { CountryMaster } from '@/shared/types/countryMaster'
+import type { CountryMaster, CountryMasterListFilters } from '@/shared/types/countryMaster'
 import { CountryKpiRow } from '../CountryKpiRow'
+import {
+  CountryAdvancedFilterFields,
+  EMPTY_COUNTRY_MASTER_LIST_FILTERS,
+  hasCountryFiltersActive,
+} from '../CountryAdvancedFilters'
 import { buildCountryColumns } from '../CountryTableColumns'
 import { AddCountryModal } from '../workspace/drawers/AddCountryModal'
 import {
@@ -44,12 +49,13 @@ export function CountryMasterList({ onNavigateConfigure, onNavigateEdit }: Count
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [archiveTarget, setArchiveTarget] = useState<CountryMaster | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [filters, setFilters] = useState<CountryMasterListFilters>(EMPTY_COUNTRY_MASTER_LIST_FILTERS)
 
   const loadRows = useCallback(() => {
     setLoading(true)
-    setRows(countryMasterAdminService.list())
+    setRows(countryMasterAdminService.list(filters))
     setLoading(false)
-  }, [])
+  }, [filters])
 
   useEffect(() => {
     loadRows()
@@ -86,6 +92,11 @@ export function CountryMasterList({ onNavigateConfigure, onNavigateEdit }: Count
     [columns],
   )
 
+  const regionOptions = useMemo(() => {
+    const regions = [...new Set(countryMasterAdminService.list().map((row) => row.region))].sort()
+    return regions.map((region) => ({ value: region, label: region }))
+  }, [])
+
   const emptyState = useMemo(() => getCountryEmptyState('all', () => setAddOpen(true)), [])
 
   const handleExport = useCallback(() => {
@@ -96,16 +107,6 @@ export function CountryMasterList({ onNavigateConfigure, onNavigateEdit }: Count
       variant: 'success',
     })
   }, [listing.filteredRows, showToast])
-
-  const handleRefresh = useCallback(() => {
-    loadRows()
-    showToast({ title: 'List refreshed', variant: 'info' })
-  }, [loadRows, showToast])
-
-  const handleClearFilters = useCallback(() => {
-    listing.handleSearch('')
-    listing.setColumnFilters({})
-  }, [listing])
 
   const handleConfirmArchive = async () => {
     if (!archiveTarget) return
@@ -158,10 +159,23 @@ export function CountryMasterList({ onNavigateConfigure, onNavigateEdit }: Count
             onHiddenColumnKeysChange={(keys) =>
               listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
             }
-            moreMenuItems={[
-              { label: 'Refresh list', onClick: handleRefresh },
-              { label: 'Clear all filters', onClick: handleClearFilters },
-            ]}
+            filterPopover={{
+              active: hasCountryFiltersActive(filters),
+              value: filters,
+              onApply: (next) => {
+                setFilters(next)
+                listing.setTableState((state) => ({ ...state, page: 0 }))
+              },
+              onClear: () => setFilters(EMPTY_COUNTRY_MASTER_LIST_FILTERS),
+              hasActive: hasCountryFiltersActive,
+              children: (draft, patch) => (
+                <CountryAdvancedFilterFields
+                  draft={draft}
+                  patch={patch}
+                  regionOptions={regionOptions}
+                />
+              ),
+            }}
           />
         }
         listingContent={

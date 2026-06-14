@@ -150,7 +150,7 @@ export function AgreementPricingMatrixTable({
         title={data.pricingMatrix.some((r) => r.id === editRow?.id) ? 'Edit pricing' : 'Add pricing'}
         footer={
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button label="Cancel" variant="outlined" color="secondary" onClick={() => setEditRow(null)} />
+            <Button label="Cancel" variant="neutral" onClick={() => setEditRow(null)} />
             <Button label="Save" onClick={saveEdit} />
           </Stack>
         }

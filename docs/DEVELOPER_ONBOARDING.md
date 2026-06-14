@@ -680,8 +680,9 @@ Use these for list-heavy admin, operations, and customer workflows. Prefer the h
 | `DataTable` | Main table engine | Core table; admin listings via `AdminListingTable` wrapper |
 | `AdminListingTable` | Admin listing embedded table | Column filters, sticky header, no duplicate toolbar |
 | `AdminListingShell` | Admin listing page frame | Header, KPIs, tabs, toolbar slot, table/grid, footer |
-| `AdminListingToolbar` | Listing search/actions row | Export, view toggle, column picker, more menu |
-| `AdminListingAdvancedFilters` | Module filter row | Country, status, priority selects |
+| `AdminListingToolbar` | Listing search/actions row | Filter popover, export, view toggle, column picker |
+| `ListingFilterPopoverShell` | Filter popover shell | Draft filters, Apply/Clear, anchored to toolbar |
+| `AdminListingFilterPopover` | Standard admin filter preset | Country, status, priority fields |
 | `TableToolbar` | Search/actions above a standalone table | Non-listing-shell table pages |
 | `ColumnHeader` | Sortable/filterable headers | Actions column shows **Actions** label when `key === 'actions'` |
 | `FilterPanel` | Multi-filter form/panel | Status, country, visa type, assigned user filters |
@@ -737,8 +738,8 @@ Admin-specific composition lives in `src/pages/admin/components/`. These are not
 |-----------|------------|
 | `AdminListingShell` | Listing page frame (header, KPIs, tabs, toolbar, content, footer) |
 | `AdminListingStickyHeader` | Sticky listing title + primary CTA |
-| `AdminListingToolbar` | Search, export, table/grid toggle, column picker |
-| `AdminListingAdvancedFilters` | Module-specific filter row |
+| `AdminListingToolbar` | Search, Filter popover, export, table/grid toggle, column picker |
+| `ListingFilterPopoverShell` | Shared filter popover shell (Apply/Clear) |
 | `AdminListingTable` | Embedded `DataTable` + column filters |
 | `AdminListingGrid` | Card grid listing mode |
 | `AdminDetailShell` | Detail page frame + breadcrumbs |
@@ -803,7 +804,7 @@ Use this stack for customer-facing list screens such as applications, bookers, d
 | Component/hook | Location | Use it for |
 |----------------|----------|------------|
 | `PortalListingShell` | [`src/pages/customer/features/shared/components/listing/PortalListingShell.tsx`](../src/pages/customer/features/shared/components/listing/PortalListingShell.tsx) | Page title, header actions, KPI row, tabs, toolbar, table/grid, pagination container |
-| `PortalListingToolbar` | [`src/pages/customer/features/shared/components/listing/PortalListingToolbar.tsx`](../src/pages/customer/features/shared/components/listing/PortalListingToolbar.tsx) | Search, export, table/grid toggle, column picker, more menu |
+| `CustomerListingToolbar` | [`src/pages/customer/features/shared/components/listing/CustomerListingToolbar.tsx`](../src/pages/customer/features/shared/components/listing/CustomerListingToolbar.tsx) | Search, Filter popover, export, table/grid toggle, column picker |
 | `PortalListingTable` | [`src/pages/customer/features/shared/components/listing/PortalListingTable.tsx`](../src/pages/customer/features/shared/components/listing/PortalListingTable.tsx) | Embedded `DataTable` with column filters and no duplicated toolbar/pagination |
 | `PortalListingGrid` | [`src/pages/customer/features/shared/components/listing/PortalListingGrid.tsx`](../src/pages/customer/features/shared/components/listing/PortalListingGrid.tsx) | Card/grid alternative for small screens or user-selected grid view |
 | `PortalListingPagination` | [`src/pages/customer/features/shared/components/listing/PortalListingPagination.tsx`](../src/pages/customer/features/shared/components/listing/PortalListingPagination.tsx) | Footer pagination wrapper |
@@ -1292,8 +1293,8 @@ Current legacy template decision:
 - The billing scaffold has been removed; do not recreate it as a production import target.
 - Use `src/pages/admin/_tools/TemplateShowcase/pages/ListingTemplatePage.tsx` as the mandatory listing reference module for future listing standardization.
 - Do not use queue-template or customer-listing-template variants as separate listing scaffolds.
-- Match the same listing composition sequence: sticky header, optional KPI row, optional tabs, toolbar, advanced filters, table/grid content, and pagination footer.
-- Reuse the listing primitives from that pattern (`AdminListingShell`, `AdminListingStickyHeader`, `AdminListingToolbar`, `AdminListingAdvancedFilters`, `AdminListingTable`, `AdminListingGrid`, and `Pagination`) or approved surface wrappers preserving the same UX structure.
+- Match the same listing composition sequence: sticky header, optional KPI row, optional tabs, toolbar (with Filter popover), table/grid content, and pagination footer.
+- Reuse the listing primitives from that pattern (`AdminListingShell`, `AdminListingStickyHeader`, `AdminListingToolbar`, `ListingFilterPopoverShell`, `AdminListingTable`, `AdminListingGrid`, and `Pagination`) or approved surface wrappers preserving the same UX structure.
 - Keep invoice contracts, invoice status rules, TDS/net receivable calculations, line items, client options, payment workflows, and financial audit behavior out of reusable design-system templates.
 - Promote only neutral mechanics, such as listing shells, filter/table wrappers, detail primitives, form surfaces, and dashboard/queue layout slots.
 

@@ -106,7 +106,7 @@ export function UserPermissionConfigurationPage() {
 
   const footer = (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'flex-end' }}>
-      <Button label="Back" variant="outlined" color="secondary" onClick={handleBack} disabled={loading} />
+      <Button label="Back" variant="neutral" onClick={handleBack} disabled={loading} />
       {!isReadOnly ? (
         <>
           <Button

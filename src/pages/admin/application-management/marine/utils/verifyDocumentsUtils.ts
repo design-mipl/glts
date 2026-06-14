@@ -8,12 +8,12 @@ import { buildProcessingTimelineFromQueueRow } from '@/shared/utils/applicationP
 import { isApplicantDocumentSatisfied } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import type { BadgeProps } from '@/design-system/UIComponents/Display/Badge'
 
-export type VerifyDocumentBadgeLabel = 'Needs review' | 'Rejected' | 'Verified'
+export type VerifyDocumentBadgeLabel = 'Pending' | 'Rejected' | 'Verified'
 
 function toVerifyDocumentBadgeLabel(status: ApplicantDocumentStatus): VerifyDocumentBadgeLabel {
   if (status === 'verified') return 'Verified'
   if (status === 'rejected') return 'Rejected'
-  return 'Needs review'
+  return 'Pending'
 }
 
 export function buildVerifyTimeline(

@@ -95,8 +95,7 @@ export default function ConfirmDialog({
           }}
         >
           <Button
-            variant="outlined"
-            color="secondary"
+            variant="neutral"
             onClick={onClose}
             disabled={isLoading}
           >

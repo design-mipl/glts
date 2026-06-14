@@ -122,10 +122,6 @@ export function CorporateAccountListingPage() {
           onHiddenColumnKeysChange={(keys) =>
             listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
           }
-          moreMenuItems={[
-            { label: 'Refresh list', onClick: () => void loadRows() },
-            { label: 'Clear search', onClick: () => listing.handleSearch('') },
-          ]}
         />
       }
       listingContent={

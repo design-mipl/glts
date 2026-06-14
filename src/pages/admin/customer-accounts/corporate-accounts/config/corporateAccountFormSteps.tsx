@@ -1,6 +1,9 @@
 import type { AdminStepperFormStep } from '@/pages/admin/components/AdminStepperFormShell'
+import type { AdminFullPageFormSection } from '@/pages/admin/components/AdminFullPageFormShell'
 import { ADMIN_STEPPER_FORM_LAYOUT } from '@/pages/admin/components/adminOverlayFormLayout'
+import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CorporateAccountFormData } from '@/shared/types/corporateAccount'
+import type { CorporateAccountSectionId } from '@/shared/utils/corporateAccountValidation'
 import { CorporateAccountAdminsSection } from '../components/CorporateAccountAdminsSection'
 import { CorporateAccountAgreementSelectStep } from '../components/CorporateAccountAgreementSelectStep'
 import { CorporateAccountEntitiesSection } from '../components/CorporateAccountEntitiesSection'
@@ -9,6 +12,62 @@ import { CorporateAccountReviewPanel } from '../components/CorporateAccountRevie
 import { CorporateAccountSuperAdminFields } from '../components/CorporateAccountSuperAdminFields'
 import { CorporateAccountVesselsSection } from '../components/CorporateAccountVesselsSection'
 import { CorporateAccountWorkflowConfigFields } from '../components/CorporateAccountWorkflowConfigFields'
+
+export const CORPORATE_ACCOUNT_WORKSPACE_SECTIONS: {
+  id: CorporateAccountSectionId
+  navId: string
+  label: string
+  description: string
+}[] = [
+  {
+    id: 'agreement',
+    navId: 'section-agreement',
+    label: 'Select agreement',
+    description: 'Choose an approved commercial agreement to inherit terms and entities.',
+  },
+  {
+    id: 'workflow',
+    navId: 'section-workflow',
+    label: 'Workflow configuration',
+    description: 'Enable marine, corporate, retail, and bulk upload workflows for this account.',
+  },
+  {
+    id: 'super-admin',
+    navId: 'section-super-admin',
+    label: 'Super admin',
+    description: 'Set up the primary portal administrator and credentials.',
+  },
+  {
+    id: 'admins',
+    navId: 'section-admins',
+    label: 'Admins',
+    description: 'Add optional administrators with scoped portal access.',
+  },
+  {
+    id: 'entities',
+    navId: 'section-entities',
+    label: 'Entity setup',
+    description: 'Add billing and operational entities for this corporate account.',
+  },
+  {
+    id: 'vessels',
+    navId: 'section-vessels',
+    label: 'Vessel setup',
+    description: 'Link vessels to entities for marine workflow applications.',
+  },
+  {
+    id: 'activation',
+    navId: 'section-activation',
+    label: 'Portal activation',
+    description: 'Control login, application creation, bulk upload, and visibility settings.',
+  },
+  {
+    id: 'review',
+    navId: 'section-review',
+    label: 'Review & activate',
+    description: 'Confirm account details and activate portal access.',
+  },
+]
 
 interface BuildCorporateAccountFormStepsOptions {
   corporateAccountId?: string
@@ -20,17 +79,16 @@ export function buildCorporateAccountFormSteps(
   onChange: (next: CorporateAccountFormData) => void,
   options: BuildCorporateAccountFormStepsOptions,
 ): AdminStepperFormStep[] {
-  return [
-    {
-      id: 'agreement',
-      label: 'Select agreement',
-      description: 'Approved commercial agreement',
-      sections: [
+  const hasApprovedAgreements = commercialAgreementService.listApprovedForOnboarding().length > 0
+
+  const agreementSections: AdminFullPageFormSection[] = hasApprovedAgreements
+    ? [
         {
           id: 'agreement-primary',
           title: 'Agreement selection',
           description: 'Only approved agreements not yet linked to an active account are listed.',
-          columns: ADMIN_STEPPER_FORM_LAYOUT.primarySectionColumns,
+          span: 2,
+          columns: 1,
           children: (
             <CorporateAccountAgreementSelectStep
               data={formData}
@@ -45,6 +103,7 @@ export function buildCorporateAccountFormSteps(
           title: 'Commercial summary',
           description: 'Inherited terms from the selected agreement.',
           importance: 'secondary',
+          span: 2,
           columns: ADMIN_STEPPER_FORM_LAYOUT.primarySectionColumns,
           children: (
             <CorporateAccountAgreementSelectStep
@@ -55,7 +114,31 @@ export function buildCorporateAccountFormSteps(
             />
           ),
         },
-      ],
+      ]
+    : [
+        {
+          id: 'agreement-empty',
+          title: 'Agreement selection',
+          description: 'Only approved agreements not yet linked to an active account are listed.',
+          span: 2,
+          columns: 1,
+          children: (
+            <CorporateAccountAgreementSelectStep
+              data={formData}
+              onChange={onChange}
+              onSelectAgreement={options.onSelectAgreement}
+              variant="selection"
+            />
+          ),
+        },
+      ]
+
+  return [
+    {
+      id: 'agreement',
+      label: 'Select agreement',
+      description: 'Approved commercial agreement',
+      sections: agreementSections,
     },
     {
       id: 'workflow',
@@ -98,58 +181,31 @@ export function buildCorporateAccountFormSteps(
       id: 'admins',
       label: 'Admins',
       description: 'Additional administrators',
-      sections: [
-        {
-          id: 'admins-primary',
-          title: 'Additional admins',
-          description: 'Optional administrators with scoped portal access.',
-          span: 2,
-          columns: 1,
-          children: <CorporateAccountAdminsSection data={formData} onChange={onChange} />,
-        },
-      ],
+      children: <CorporateAccountAdminsSection data={formData} onChange={onChange} />,
     },
     {
       id: 'entities',
       label: 'Entity setup',
       description: 'Corporate entities',
-      sections: [
-        {
-          id: 'entities-primary',
-          title: 'Entities',
-          description: 'Add billing and operational entities for this corporate account.',
-          span: 2,
-          columns: 1,
-          children: (
-            <CorporateAccountEntitiesSection
-              data={formData}
-              corporateAccountId={options.corporateAccountId}
-              onChange={onChange}
-            />
-          ),
-        },
-      ],
+      children: (
+        <CorporateAccountEntitiesSection
+          data={formData}
+          corporateAccountId={options.corporateAccountId}
+          onChange={onChange}
+        />
+      ),
     },
     {
       id: 'vessels',
       label: 'Vessel setup',
       description: 'Linked vessels',
-      sections: [
-        {
-          id: 'vessels-primary',
-          title: 'Vessels',
-          description: 'Link vessels to entities for marine workflow applications.',
-          span: 2,
-          columns: 1,
-          children: (
-            <CorporateAccountVesselsSection
-              data={formData}
-              corporateAccountId={options.corporateAccountId}
-              onChange={onChange}
-            />
-          ),
-        },
-      ],
+      children: (
+        <CorporateAccountVesselsSection
+          data={formData}
+          corporateAccountId={options.corporateAccountId}
+          onChange={onChange}
+        />
+      ),
     },
     {
       id: 'activation',

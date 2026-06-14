@@ -1,6 +1,7 @@
 import { Eye, PencilLine, Power, PowerOff, Trash2 } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { DocumentMaster } from '@/shared/types/documentMaster'
 import { richTextToPlainText } from '@/shared/utils/richTextUtils'
 import {
@@ -26,16 +27,16 @@ export function buildDocumentColumns({
     {
       key: 'documentType',
       label: 'Document Type',
+      widthSize: adminListingColumnWidthSize('service'),
       sortable: false,
       searchable: true,
       hideable: false,
-      minWidth: 180,
     },
     {
       key: 'description',
       label: 'Description',
+      widthSize: adminListingColumnWidthSize('description'),
       sortable: false,
-      minWidth: 240,
       render: (_, row) => {
         const plainDescription = richTextToPlainText(row.description)
         return (
@@ -57,9 +58,9 @@ export function buildDocumentColumns({
     {
       key: 'status',
       label: 'Status',
+      widthSize: adminListingColumnWidthSize('status'),
       sortable: false,
       filterable: false,
-      minWidth: 100,
       render: (_, row) => (
         <Badge
           label={documentStatusLabel[row.status]}
@@ -71,8 +72,8 @@ export function buildDocumentColumns({
     {
       key: 'createdAt',
       label: 'Created Date',
+      widthSize: adminListingColumnWidthSize('date'),
       sortable: false,
-      minWidth: 130,
       render: (_, row) => formatDocumentDate(row.createdAt),
     },
     {
@@ -83,7 +84,6 @@ export function buildDocumentColumns({
       searchable: false,
       hideable: false,
       align: 'center',
-      width: 60,
       render: (_, row) => {
         const isActive = row.status === 'active'
         const actions: RowAction[] = [

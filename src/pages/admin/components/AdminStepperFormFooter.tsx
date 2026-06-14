@@ -58,8 +58,7 @@ export function AdminStepperFormFooter({
     >
       {onCancel ? (
         <Button
-          variant="outlined"
-          color="secondary"
+          variant="neutral"
           onClick={onCancel}
           disabled={isDisabled}
           fullWidth
@@ -91,8 +90,7 @@ export function AdminStepperFormFooter({
         ) : null}
         <Button
           label="Back"
-          variant="outlined"
-          color="secondary"
+          variant="neutral"
           disabled={isDisabled || activeStep === 0}
           onClick={onBack}
           sx={{ width: { xs: '100%', sm: 'auto' } }}

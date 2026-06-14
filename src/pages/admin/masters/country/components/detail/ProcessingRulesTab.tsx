@@ -132,7 +132,7 @@ export function ProcessingRulesTab({ country, segment }: ProcessingRulesTabProps
 
       <Button
         label="Edit processing rules"
-        variant="outlined"
+        variant="neutral"
         onClick={() => navigate(`/admin/masters/country/${country.id}/edit?step=0`)}
         sx={{ mt: 2 }}
       />

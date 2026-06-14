@@ -7,7 +7,7 @@ import type { ElementType, MouseEventHandler, ReactNode } from 'react'
 import { BUTTON, buttonPaddingCss } from '../../../formControl'
 
 type ButtonColor = 'primary' | 'secondary' | 'error' | 'success' | 'warning' | 'info'
-type ButtonVariant = 'contained' | 'outlined' | 'text' | 'soft'
+type ButtonVariant = 'contained' | 'outlined' | 'text' | 'soft' | 'neutral'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
 export interface ButtonProps {
@@ -62,6 +62,20 @@ function getVariantSx(
     info: theme.palette.info,
   }
   const pal = paletteMap[color]
+
+  if (variant === 'neutral') {
+    return {
+      bgcolor: 'action.hover',
+      color: 'text.primary',
+      border: '1px solid',
+      borderColor: alpha(theme.palette.text.primary, 0.1),
+      boxShadow: 'none',
+      '&:hover:not(:disabled)': {
+        bgcolor: 'action.selected',
+        borderColor: alpha(theme.palette.text.primary, 0.14),
+      },
+    }
+  }
 
   if (variant === 'soft') {
     return {
@@ -121,14 +135,16 @@ export default function Button({
 }: ButtonProps) {
   const theme = useTheme()
   const isSoft = variant === 'soft'
-  const muiVariant = isSoft ? 'text' : (variant as 'contained' | 'outlined' | 'text')
+  const isNeutral = variant === 'neutral'
+  const muiVariant = isSoft || isNeutral ? 'text' : (variant as 'contained' | 'outlined' | 'text')
+  const muiColor = isNeutral ? 'inherit' : color
   const muiSize = size === 'sm' ? 'small' : size === 'lg' ? 'large' : 'medium'
   const linkProps = href ? ({ component: Link as ElementType, to: href } as object) : {}
 
   return (
     <MuiButton
       variant={muiVariant}
-      color={color}
+      color={muiColor}
       size={muiSize}
       disabled={disabled || loading}
       fullWidth={fullWidth}

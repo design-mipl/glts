@@ -94,16 +94,6 @@ export function UserListingPage() {
     showToast({ title: 'Export started', variant: 'success' })
   }, [listing.filteredRows, showToast])
 
-  const handleRefresh = useCallback(() => {
-    loadRows()
-    showToast({ title: 'List refreshed', variant: 'info' })
-  }, [loadRows, showToast])
-
-  const handleClearFilters = useCallback(() => {
-    listing.handleSearch('')
-    listing.setColumnFilters({})
-  }, [listing])
-
   const handleConfirmStatus = () => {
     if (!statusTarget) return
     if (
@@ -140,8 +130,6 @@ export function UserListingPage() {
       ? alpha(theme.palette.common.white, 0.04)
       : alpha(theme.palette.common.black, 0.02)
 
-  const hasActiveFilters = Boolean(listing.tableState.searchQuery)
-
   const statusDialogDescription = statusTarget
     ? statusTarget.isSuperAdmin &&
       statusTarget.status === 'active' &&
@@ -175,12 +163,6 @@ export function UserListingPage() {
             onHiddenColumnKeysChange={(keys) =>
               listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
             }
-            moreMenuItems={[
-              { label: 'Refresh list', onClick: handleRefresh },
-              ...(hasActiveFilters
-                ? [{ label: 'Clear all filters', onClick: handleClearFilters }]
-                : []),
-            ]}
           />
         }
         listingContent={

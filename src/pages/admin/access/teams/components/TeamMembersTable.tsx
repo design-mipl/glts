@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Box, Typography } from '@mui/material'
 import type { Column } from '@/design-system/UIComponents'
 import { Badge } from '@/design-system/UIComponents'
-import { AdminListingTable } from '@/pages/admin/components/listing'
+import { AdminListingTable, adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import { masterStatusColor, masterStatusLabel } from '@/pages/admin/masters/config/masterStatusConfig'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
@@ -20,28 +20,28 @@ function buildMemberColumns(): Column<MemberRow>[] {
     {
       key: 'fullName',
       label: 'User Name',
-      minWidth: 160,
+      widthSize: adminListingColumnWidthSize('name'),
       sortable: true,
       filterable: true,
     },
     {
       key: 'email',
       label: 'Email',
-      minWidth: 200,
+      widthSize: adminListingColumnWidthSize('email'),
       sortable: false,
       filterable: true,
     },
     {
       key: 'designation',
       label: 'Designation',
-      minWidth: 140,
+      widthSize: adminListingColumnWidthSize('service'),
       sortable: false,
       filterable: true,
     },
     {
       key: 'status',
       label: 'Status',
-      width: 100,
+      widthSize: adminListingColumnWidthSize('status'),
       sortable: false,
       filterable: true,
       render: (_, row) => (

@@ -213,11 +213,6 @@ export function InvoiceListingPage() {
     [listing],
   )
 
-  const handleClearFilters = useCallback(() => {
-    listing.handleSearch('')
-    listing.setColumnFilters({})
-  }, [listing])
-
   const handleShareConfirm = () => {
     if (!shareTarget) return
     invoiceService.share(shareTarget.id, shareValue)
@@ -347,11 +342,6 @@ export function InvoiceListingPage() {
             onHiddenColumnKeysChange={keys =>
               listing.setTableState(state => ({ ...state, hiddenColumnKeys: keys }))
             }
-            moreMenuItems={[
-              { label: 'Billing reports', onClick: () => navigate(`${LISTING_PATH}/reports`) },
-              { label: 'Refresh list', onClick: loadRows },
-              { label: 'Clear all filters', onClick: handleClearFilters },
-            ]}
           />
         }
         listingContent={

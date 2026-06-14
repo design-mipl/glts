@@ -42,7 +42,7 @@ export function StatusUpdateModal({
       subtitle="Status changes are audit logged and should include context."
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button label="Cancel" variant="outlined" onClick={onClose} />
+          <Button label="Cancel" variant="neutral" onClick={onClose} />
           <Button label="Update Status" onClick={onSubmit} disabled={!canSubmit} />
         </Stack>
       }

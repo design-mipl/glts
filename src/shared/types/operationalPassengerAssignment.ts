@@ -26,8 +26,6 @@ export type AssignmentListingTab =
   | 'carry_forward'
   | 'completed'
 
-export type AssignmentPageView = 'assignment_queue' | 'operations_desk'
-
 export type OperationalDateFilterPreset =
   | 'today'
   | 'yesterday'
@@ -107,6 +105,8 @@ export interface OperationalPassengerRow {
   processingStageDates?: import('@/shared/types/applicationProcessingTimeline').ApplicationProcessingStageDates
 }
 
+export type AssignmentSlaFilter = '' | 'at_risk' | 'due_today' | 'on_track'
+
 export interface AssignmentQueueFilters {
   datePreset: OperationalDateFilterPreset
   customDateFrom?: string
@@ -115,7 +115,10 @@ export interface AssignmentQueueFilters {
   team: string
   assignedUser: string
   priority: string
+  country: string
+  visaType: string
   status: string
+  sla: string
   search: string
 }
 

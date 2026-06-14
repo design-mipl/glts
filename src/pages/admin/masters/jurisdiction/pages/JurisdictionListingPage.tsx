@@ -89,16 +89,6 @@ export function JurisdictionListingPage() {
     showToast({ title: 'Export started', variant: 'success' })
   }, [listing.filteredRows, showToast])
 
-  const handleRefresh = useCallback(() => {
-    loadRows()
-    showToast({ title: 'List refreshed', variant: 'info' })
-  }, [loadRows, showToast])
-
-  const handleClearFilters = useCallback(() => {
-    listing.handleSearch('')
-    listing.setColumnFilters({})
-  }, [listing])
-
   const handleConfirmStatus = () => {
     if (!statusTarget) return
     setActionLoading(true)
@@ -118,8 +108,6 @@ export function JurisdictionListingPage() {
     theme.palette.mode === 'dark'
       ? alpha(theme.palette.common.white, 0.04)
       : alpha(theme.palette.common.black, 0.02)
-
-  const hasActiveFilters = Boolean(listing.tableState.searchQuery)
 
   return (
     <>
@@ -144,12 +132,6 @@ export function JurisdictionListingPage() {
             onHiddenColumnKeysChange={(keys) =>
               listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
             }
-            moreMenuItems={[
-              { label: 'Refresh list', onClick: handleRefresh },
-              ...(hasActiveFilters
-                ? [{ label: 'Clear all filters', onClick: handleClearFilters }]
-                : []),
-            ]}
           />
         }
         listingContent={

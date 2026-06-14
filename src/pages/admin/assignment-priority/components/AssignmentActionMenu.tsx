@@ -5,9 +5,7 @@ export type AssignmentAdminAction =
   | 'reassign'
   | 'add_notes'
   | 'move_next_date'
-  | 'open_application'
-  | 'open_passenger_detail'
-  | 'view_timeline'
+  | 'view_details'
 
 export type DeskPassengerAction =
   | 'update_status'

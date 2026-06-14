@@ -81,6 +81,11 @@ export function VerifyDocumentCard({
   const showReuploadRequest = customerUpload
   const showGltsUpload =
     arrangeByGlts && !hasFile && onGltsUpload && isSimpleDocumentRequirement(document.documentId)
+  const pendingGltsArrangement = arrangeByGlts && !hasFile
+  const isVerified = status === 'verified'
+  const isRejected = status === 'rejected'
+  const showVerifyRejectActions = !pendingGltsArrangement && !isVerified && !isRejected
+  const showPreview = isVerified || (hasFile && !pendingGltsArrangement)
   const reqType = requirementTypeLabel(document)
   const displayStatus = verifyDocumentBadgeLabel(document)
 
@@ -101,7 +106,7 @@ export function VerifyDocumentCard({
               </Typography>
             ) : null}
           </Typography>
-          {displayStatus !== 'Needs review' ? (
+          {displayStatus ? (
             <Badge
               label={displayStatus}
               color={documentBadgeColor(status, document)}
@@ -126,7 +131,7 @@ export function VerifyDocumentCard({
               {workflowSummary}
             </Typography>
           ) : null}
-          {document.reviewComment?.trim() ? (
+          {document.reviewComment?.trim() && !isVerified ? (
             <Box
               sx={{
                 px: 1.25,
@@ -168,23 +173,26 @@ export function VerifyDocumentCard({
                 onClick={onGltsUpload}
               />
             ) : null}
-            <Button
-              label="Verify"
-              variant="outlined"
-              size="sm"
-              startIcon={<ShieldCheck size={14} />}
-              onClick={onVerify}
-              disabled={!hasFile && arrangeByGlts}
-            />
-            <Button
-              label="Reject"
-              variant="outlined"
-              color="error"
-              size="sm"
-              startIcon={<XCircle size={14} />}
-              onClick={onReject}
-            />
-            {showReuploadRequest ? (
+            {showVerifyRejectActions ? (
+              <>
+                <Button
+                  label="Verify"
+                  variant="outlined"
+                  size="sm"
+                  startIcon={<ShieldCheck size={14} />}
+                  onClick={onVerify}
+                />
+                <Button
+                  label="Reject"
+                  variant="outlined"
+                  color="error"
+                  size="sm"
+                  startIcon={<XCircle size={14} />}
+                  onClick={onReject}
+                />
+              </>
+            ) : null}
+            {showReuploadRequest && showVerifyRejectActions ? (
               <Button
                 label="Request Re-upload"
                 variant="text"
@@ -194,14 +202,16 @@ export function VerifyDocumentCard({
               />
             ) : null}
           </Stack>
-          <Button
-            label="Preview"
-            variant="outlined"
-            size="sm"
-            startIcon={<Eye size={14} />}
-            onClick={onPreview}
-            disabled={previewDisabled}
-          />
+          {showPreview ? (
+            <Button
+              label="Preview"
+              variant="outlined"
+              size="sm"
+              startIcon={<Eye size={14} />}
+              onClick={onPreview}
+              disabled={previewDisabled}
+            />
+          ) : null}
         </Stack>
       </Stack>
     </BaseCard>
@@ -215,7 +225,7 @@ interface VerifyDocumentChecklistSectionProps {
   documents: ApplicantDocumentItem[]
   gridSx?: typeof VERIFY_DOCUMENT_GRID_SX
   onPreview: (documentId: string) => void
-  onVerify: (documentId: string) => void
+  onVerify: (document: ApplicantDocumentItem) => void
   onReject: (document: ApplicantDocumentItem) => void
   onRequestReupload: (document: ApplicantDocumentItem) => void
   onGltsUpload?: (document: ApplicantDocumentItem) => void
@@ -243,7 +253,7 @@ export function VerifyDocumentChecklistSection({
             key={doc.documentId}
             document={doc}
             onPreview={() => onPreview(doc.documentId)}
-            onVerify={() => onVerify(doc.documentId)}
+            onVerify={() => onVerify(doc)}
             onReject={() => onReject(doc)}
             onRequestReupload={() => onRequestReupload(doc)}
             onGltsUpload={onGltsUpload ? () => onGltsUpload(doc) : undefined}
@@ -260,12 +270,12 @@ interface VerifyDocumentChecklistsPanelProps {
   globalDocuments: ApplicantDocumentItem[]
   gridSx?: typeof VERIFY_DOCUMENT_GRID_SX
   onTravelerPreview: (documentId: string) => void
-  onTravelerVerify: (documentId: string) => void
+  onTravelerVerify: (document: ApplicantDocumentItem) => void
   onTravelerReject: (document: ApplicantDocumentItem) => void
   onTravelerRequestReupload: (document: ApplicantDocumentItem) => void
   onTravelerGltsUpload?: (document: ApplicantDocumentItem) => void
   onGlobalPreview: (documentId: string) => void
-  onGlobalVerify: (documentId: string) => void
+  onGlobalVerify: (document: ApplicantDocumentItem) => void
   onGlobalReject: (document: ApplicantDocumentItem) => void
   onGlobalRequestReupload: (document: ApplicantDocumentItem) => void
 }

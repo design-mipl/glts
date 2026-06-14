@@ -1,6 +1,16 @@
 import type { CorporateAccountFormData } from '@/shared/types/corporateAccount'
 import { isValidEmail, isValidMobile } from '@/shared/utils/contactValidation'
 
+export type CorporateAccountSectionId =
+  | 'agreement'
+  | 'workflow'
+  | 'super-admin'
+  | 'admins'
+  | 'entities'
+  | 'vessels'
+  | 'activation'
+  | 'review'
+
 export function createEmptyCorporateAccountFormData(): CorporateAccountFormData {
   return {
     agreementId: '',
@@ -57,6 +67,24 @@ export function validateCorporateAccountStep(step: number, data: CorporateAccoun
     }
   }
   return issues
+}
+
+export function corporateAccountSectionComplete(
+  sectionId: CorporateAccountSectionId,
+  data: CorporateAccountFormData,
+): boolean {
+  switch (sectionId) {
+    case 'agreement':
+      return Boolean(data.agreementId)
+    case 'super-admin':
+      return validateCorporateAccountStep(2, data).length === 0
+    case 'admins':
+      return validateCorporateAccountStep(3, data).length === 0
+    case 'review':
+      return validateForActivation(data).ok
+    default:
+      return Boolean(data.agreementId)
+  }
 }
 
 export function validateForActivation(data: CorporateAccountFormData): { ok: boolean; issues: string[] } {

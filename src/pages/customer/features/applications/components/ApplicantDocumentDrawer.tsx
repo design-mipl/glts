@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Box, Typography, Stack, Button, Chip, Divider } from '@mui/material'
+import { Box, Typography, Stack, Button as MuiButton, Chip, Divider } from '@mui/material'
 import { CheckCircle2, Upload, Eye } from 'lucide-react'
-import { Drawer } from '@/design-system/UIComponents'
+import { Button, Drawer } from '@/design-system/UIComponents'
 import { usePublicBrandColors, getPrimaryButtonSx, getOutlinedButtonSx, mergeButtonSx } from '@/shared/theme/publicBrand'
 import { overlayFooterButtonSx } from '@/design-system/UIComponents/Feedback/overlayHeaderTypography'
 import type { ApplicantDocumentItem, UploadQueueRow } from '../data/applicationFlowData'
@@ -240,16 +240,16 @@ export function ApplicantDocumentDrawer({
       width={920}
       footer={
         <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
-          <Button variant="outlined" onClick={onClose} sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx)}>
+          <Button variant="neutral" onClick={onClose} sx={overlayFooterButtonSx}>
             Close
           </Button>
-          <Button
+          <MuiButton
             variant="contained"
             onClick={handleSaveAndNext}
             sx={mergeButtonSx(getPrimaryButtonSx(colors), overlayFooterButtonSx)}
           >
             Save & continue
-          </Button>
+          </MuiButton>
         </Stack>
       }
     >
@@ -369,17 +369,17 @@ export function ApplicantDocumentDrawer({
                   {activeDoc.documentId === 'passport' && <PassportPreviewCard row={row} />}
 
                   <Stack direction="row" spacing={1} flexWrap="wrap">
-                    <Button
+                    <MuiButton
                       variant="outlined"
                       startIcon={<Upload size={16} />}
                       onClick={handleMarkUploaded}
                       sx={getOutlinedButtonSx()}
                     >
                       {isDocumentComplete(activeDoc) ? 'Re-upload' : 'Upload document'}
-                    </Button>
-                    <Button variant="outlined" startIcon={<Eye size={16} />} sx={getOutlinedButtonSx()}>
+                    </MuiButton>
+                    <MuiButton variant="outlined" startIcon={<Eye size={16} />} sx={getOutlinedButtonSx()}>
                       Preview
-                    </Button>
+                    </MuiButton>
                   </Stack>
 
                   <Divider />

@@ -97,8 +97,7 @@ export function AdminStepperFormShell({
           >
             <Button
               label="Back"
-              variant="outlined"
-              color="secondary"
+              variant="neutral"
               disabled={activeStep === 0}
               onClick={() => onActiveStepChange(Math.max(0, activeStep - 1))}
               sx={{ width: { xs: '100%', sm: 'auto' } }}

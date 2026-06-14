@@ -2,7 +2,6 @@ import { useRef, useState } from 'react'
 import {
   Box, Typography, InputBase, IconButton, Badge,
   Tooltip, Fade, Button, useTheme, useMediaQuery,
-  Popover, FormGroup, FormControlLabel, Checkbox, Divider,
 } from '@mui/material'
 import { Search, Filter, Columns, X } from 'lucide-react'
 import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '../../../tokens'
@@ -10,6 +9,7 @@ import type { Column, FilterRule, BulkAction } from '../types'
 import FilterPanel from '../FilterPanel'
 import FilterChip from '../FilterChip'
 import BulkActions from '../BulkActions'
+import ColumnPickerPopover from '../ColumnPickerPopover'
 
 export interface TableToolbarProps {
   title?: string
@@ -58,20 +58,6 @@ export default function TableToolbar({
   const hideableColumns = columns.filter((c) => c.hideable !== false)
   const columnPickerEnabled =
     showColumnPicker !== false && hideableColumns.length >= 2
-
-  const visibleHideableCount = hideableColumns.filter(
-    (c) => !hiddenColumnKeys.includes(c.key),
-  ).length
-
-  function toggleColumnHidden(key: string) {
-    const isHidden = hiddenColumnKeys.includes(key)
-    if (isHidden) {
-      onHiddenColumnKeysChange(hiddenColumnKeys.filter((k) => k !== key))
-      return
-    }
-    if (visibleHideableCount <= 1) return
-    onHiddenColumnKeysChange([...hiddenColumnKeys, key])
-  }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -159,54 +145,18 @@ export default function TableToolbar({
                     <Columns size={18} />
                   </IconButton>
                 </Tooltip>
-                <Popover
+                <ColumnPickerPopover
                   open={Boolean(columnAnchor)}
                   anchorEl={columnAnchor}
                   onClose={() => setColumnAnchor(null)}
-                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                  slotProps={{ paper: { sx: { minWidth: 220, p: 1.5 } } }}
-                >
-                  <Typography variant="caption" color="text.secondary" sx={{ px: 0.5, display: 'block', mb: 1 }}>
-                    Show columns
-                  </Typography>
-                  <FormGroup sx={{ gap: 0.25 }}>
-                    {hideableColumns.map((col) => {
-                      const checked = !hiddenColumnKeys.includes(col.key)
-                      const disableUncheck = checked && visibleHideableCount <= 1
-                      return (
-                        <FormControlLabel
-                          key={col.key}
-                          control={
-                            <Checkbox
-                              size="small"
-                              checked={checked}
-                              disabled={disableUncheck}
-                              onChange={() => toggleColumnHidden(col.key)}
-                            />
-                          }
-                          label={col.label || col.key}
-                          sx={{ mr: 0, '& .MuiFormControlLabel-label': { fontSize: 14 } }}
-                        />
-                      )
-                    })}
-                  </FormGroup>
-                  {hiddenColumnKeys.length > 0 && (
-                    <>
-                      <Divider sx={{ my: 1 }} />
-                      <Button
-                        size="small"
-                        fullWidth
-                        onClick={() => {
-                          onHiddenColumnKeysChange([])
-                          setColumnAnchor(null)
-                        }}
-                      >
-                        Reset columns
-                      </Button>
-                    </>
-                  )}
-                </Popover>
+                  columns={hideableColumns.map(col => ({
+                    key: col.key,
+                    label: col.label || col.key,
+                    hideable: col.hideable,
+                  }))}
+                  hiddenColumnKeys={hiddenColumnKeys}
+                  onHiddenColumnKeysChange={onHiddenColumnKeysChange}
+                />
               </>
             )}
 

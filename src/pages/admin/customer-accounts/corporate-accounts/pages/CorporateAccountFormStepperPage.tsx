@@ -1,13 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Box, CircularProgress } from '@mui/material'
+import { Box, CircularProgress, Divider, Stack, Typography } from '@mui/material'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { BreadcrumbItem } from '@/design-system/UIComponents'
 import { ConfirmDialog, EmptyState, useToast } from '@/design-system/UIComponents'
+import { AdminFormSectionsLayout } from '@/pages/admin/components/AdminFormSectionsLayout'
 import { AdminStepperFormFooter } from '@/pages/admin/components/AdminStepperFormFooter'
-import { AdminStepperFormShell } from '@/pages/admin/components/AdminStepperFormShell'
 import { corporateAccountService } from '@/shared/services/corporateAccountService'
-import { validateCorporateAccountStep } from '@/shared/utils/corporateAccountValidation'
-import { buildCorporateAccountFormSteps } from '../config/corporateAccountFormSteps'
+import {
+  corporateAccountSectionComplete,
+  validateCorporateAccountStep,
+} from '@/shared/utils/corporateAccountValidation'
+import { CorporateAccountWorkspaceShell } from '../components/CorporateAccountWorkspaceShell'
+import {
+  buildCorporateAccountFormSteps,
+  CORPORATE_ACCOUNT_WORKSPACE_SECTIONS,
+} from '../config/corporateAccountFormSteps'
 import { useCorporateAccountForm } from '../hooks/useCorporateAccountForm'
 
 interface CorporateAccountFormStepperPageProps {
@@ -42,6 +49,19 @@ export function CorporateAccountFormStepperPage({
     [formData, setFormData, savedId, hydrateFromAgreement],
   )
 
+  const activeSection = CORPORATE_ACCOUNT_WORKSPACE_SECTIONS[activeStep]
+  const isLastStep = activeStep === CORPORATE_ACCOUNT_WORKSPACE_SECTIONS.length - 1
+
+  const sectionNav = useMemo(
+    () =>
+      CORPORATE_ACCOUNT_WORKSPACE_SECTIONS.map((section) => ({
+        id: section.navId,
+        label: section.label,
+        complete: corporateAccountSectionComplete(section.id, formData),
+      })),
+    [formData],
+  )
+
   useEffect(() => {
     if (mode === 'edit' && accountId) {
       loadFromAccount(accountId)
@@ -53,6 +73,14 @@ export function CorporateAccountFormStepperPage({
     if (agreementId) hydrateFromAgreement(agreementId)
     setLoading(false)
   }, [mode, accountId, loadFromAccount, searchParams, hydrateFromAgreement])
+
+  useEffect(() => {
+    const stepParam = searchParams.get('step')
+    if (!stepParam) return
+    const step = Number.parseInt(stepParam, 10)
+    if (Number.isNaN(step) || step < 0 || step >= CORPORATE_ACCOUNT_WORKSPACE_SECTIONS.length) return
+    setActiveStep(step)
+  }, [searchParams])
 
   if (loading) {
     return (
@@ -72,13 +100,23 @@ export function CorporateAccountFormStepperPage({
     )
   }
 
+  const goToStep = (step: number) => {
+    const clamped = Math.max(0, Math.min(CORPORATE_ACCOUNT_WORKSPACE_SECTIONS.length - 1, step))
+    setActiveStep(clamped)
+  }
+
+  const goToSectionNav = (navId: string) => {
+    const index = CORPORATE_ACCOUNT_WORKSPACE_SECTIONS.findIndex((section) => section.navId === navId)
+    if (index >= 0) goToStep(index)
+  }
+
   const tryAdvance = (): boolean => {
     const issues = validateCorporateAccountStep(activeStep, formData)
     if (issues.length > 0) {
       showToast({ title: 'Complete required fields', description: issues.join('; '), variant: 'error' })
       return false
     }
-    setActiveStep((s) => Math.min(steps.length - 1, s + 1))
+    goToStep(activeStep + 1)
     return true
   }
 
@@ -115,23 +153,49 @@ export function CorporateAccountFormStepperPage({
     navigate(cancelHref)
   }
 
+  const currentStep = steps[activeStep]
+
+  const renderActiveSection = () => {
+    if (currentStep.review) return currentStep.review
+    if (currentStep.sections) {
+      return <AdminFormSectionsLayout sections={currentStep.sections} variant="page" />
+    }
+    if (currentStep.children != null) {
+      return <Box sx={{ width: '100%' }}>{currentStep.children}</Box>
+    }
+    return null
+  }
+
   return (
     <>
-      <AdminStepperFormShell
+      <CorporateAccountWorkspaceShell
         breadcrumbs={breadcrumbs}
-        steps={steps}
-        activeStep={activeStep}
-        onActiveStepChange={setActiveStep}
-        onStepClick={(index) => {
-          if (index <= activeStep) setActiveStep(index)
-        }}
+        title={mode === 'create' ? 'Create corporate account' : 'Edit corporate account'}
+        description="Link an approved agreement, configure portal access, and activate the corporate account."
+        sections={sectionNav}
+        activeSectionId={activeSection.navId}
+        onSectionClick={goToSectionNav}
+        centerPanel={
+          <Stack spacing={3}>
+            <Box sx={{ px: 0.5 }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: 15 }}>
+                {activeSection.label}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75, maxWidth: 560 }}>
+                {activeSection.description}
+              </Typography>
+            </Box>
+            <Divider />
+            <Box sx={{ px: 0.5, pt: 0.5 }}>{renderActiveSection()}</Box>
+          </Stack>
+        }
         footer={
           <AdminStepperFormFooter
             activeStep={activeStep}
-            isLastStep={activeStep === steps.length - 1}
+            isLastStep={isLastStep}
             onCancel={handleCancel}
             onDraft={handleSaveDraft}
-            onBack={() => setActiveStep((s) => Math.max(0, s - 1))}
+            onBack={() => goToStep(activeStep - 1)}
             onNext={tryAdvance}
             onSubmit={handleActivate}
             submitLabel="Activate account"
@@ -139,6 +203,7 @@ export function CorporateAccountFormStepperPage({
           />
         }
       />
+
       <ConfirmDialog
         open={cancelOpen}
         onClose={() => setCancelOpen(false)}

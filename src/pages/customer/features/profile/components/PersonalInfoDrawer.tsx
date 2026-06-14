@@ -44,7 +44,7 @@ export function PersonalInfoDrawer({ open, onClose, account, onSave }: PersonalI
       width={480}
       footer={
         <Stack spacing={1} sx={{ width: '100%' }}>
-          <Button variant="outlined" color="secondary" fullWidth onClick={onClose}>
+          <Button variant="neutral" fullWidth onClick={onClose}>
             Cancel
           </Button>
           <Button variant="contained" color="primary" fullWidth onClick={handleSave}>

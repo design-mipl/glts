@@ -1,57 +1,71 @@
-import { Stack } from '@mui/material'
 import { Select } from '@/design-system/UIComponents'
+import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 import { BOOKER_LOCATIONS } from '@/shared/data/mockBookerUsers'
 import { bookerManagementService } from '@/shared/services/bookerManagementService'
 
-interface BookerAdvancedFiltersProps {
+export interface BookerListFilters {
   status: string
   location: string
   createdBy: string
-  onStatusChange: (value: string) => void
-  onLocationChange: (value: string) => void
-  onCreatedByChange: (value: string) => void
 }
 
-export function BookerAdvancedFilters({
-  status,
-  location,
-  createdBy,
-  onStatusChange,
-  onLocationChange,
-  onCreatedByChange,
-}: BookerAdvancedFiltersProps) {
+export const EMPTY_BOOKER_LIST_FILTERS: BookerListFilters = {
+  status: 'all',
+  location: 'all',
+  createdBy: 'all',
+}
+
+export interface BookerAdvancedFilterFieldsProps {
+  draft: BookerListFilters
+  patch: (partial: Partial<BookerListFilters>) => void
+}
+
+export function BookerAdvancedFilterFields({ draft, patch }: BookerAdvancedFilterFieldsProps) {
   const createdByOptions = bookerManagementService.getCreatedByOptions()
 
   return (
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ width: '100%' }}>
-      <Select
-        value={status}
-        onChange={v => onStatusChange(String(v))}
-        options={[
-          { value: 'all', label: 'All statuses' },
-          { value: 'active', label: 'Active' },
-          { value: 'inactive', label: 'Inactive' },
-        ]}
-        sx={{ minWidth: { sm: 160 } }}
-      />
-      <Select
-        value={location}
-        onChange={v => onLocationChange(String(v))}
-        options={[
-          { value: 'all', label: 'All locations' },
-          ...BOOKER_LOCATIONS.map(loc => ({ value: loc, label: loc })),
-        ]}
-        sx={{ minWidth: { sm: 180 } }}
-      />
-      <Select
-        value={createdBy}
-        onChange={v => onCreatedByChange(String(v))}
-        options={[
-          { value: 'all', label: 'All creators' },
-          ...createdByOptions.map(name => ({ value: name, label: name })),
-        ]}
-        sx={{ minWidth: { sm: 180 } }}
-      />
-    </Stack>
+    <>
+      <ListingFilterField label="Status">
+        <Select
+          value={draft.status}
+          onChange={(v) => patch({ status: String(v) })}
+          options={[
+            { value: 'all', label: 'All statuses' },
+            { value: 'active', label: 'Active' },
+            { value: 'inactive', label: 'Inactive' },
+          ]}
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Location">
+        <Select
+          value={draft.location}
+          onChange={(v) => patch({ location: String(v) })}
+          options={[
+            { value: 'all', label: 'All locations' },
+            ...BOOKER_LOCATIONS.map((loc) => ({ value: loc, label: loc })),
+          ]}
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Created by">
+        <Select
+          value={draft.createdBy}
+          onChange={(v) => patch({ createdBy: String(v) })}
+          options={[
+            { value: 'all', label: 'All creators' },
+            ...createdByOptions.map((name) => ({ value: name, label: name })),
+          ]}
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+    </>
   )
+}
+
+export function hasBookerFiltersActive(filters: BookerListFilters): boolean {
+  return filters.status !== 'all' || filters.location !== 'all' || filters.createdBy !== 'all'
 }

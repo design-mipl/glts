@@ -1,5 +1,6 @@
 import {
   GLTS_BATCH_IDS,
+  MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID,
   mockBulkBatches,
   mockSingleApplications,
   type ApplicantDocumentItem,
@@ -142,15 +143,13 @@ function getDemoVerificationSeeds(applicationId: string): VerificationDocumentOv
         travelerRowId: 'q1',
         documentId: 'travel-ticket',
         status: 'missing',
-        comment: 'Upload crew travel ticket or confirmed booking for the joining port.',
         updatedAt,
       },
       {
         scope: 'traveler',
         travelerRowId: 'q1',
         documentId: 'insurance',
-        status: 'needs_review',
-        comment: 'Marine travel insurance must list vessel name and policy dates covering the contract.',
+        status: 'missing',
         updatedAt,
       },
       {
@@ -219,9 +218,26 @@ function getDemoWorkflowPatches(applicationId: string): VerificationDocumentWork
         scope: 'traveler',
         travelerRowId: 'q1',
         documentId: 'insurance',
-        handlingMode: 'upload_by_applicant',
-        insurance: { fileName: 'marine_insurance_policy.pdf' },
-        status: 'uploaded',
+        handlingMode: 'arrange_by_glts',
+        updatedAt,
+      },
+    ]
+  }
+
+  if (applicationId === MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID) {
+    return [
+      {
+        scope: 'traveler',
+        travelerRowId: `${MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID}-q1`,
+        documentId: 'travel-ticket',
+        handlingMode: 'arrange_by_glts',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId: `${MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID}-q1`,
+        documentId: 'insurance',
+        handlingMode: 'arrange_by_glts',
         updatedAt,
       },
     ]

@@ -67,7 +67,7 @@ export function RecordPaymentModal({
       loading={loading}
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button label="Cancel" variant="outlined" onClick={onClose} />
+          <Button label="Cancel" variant="neutral" onClick={onClose} />
           <Button label="Record payment" onClick={onSubmit} loading={loading} disabled={!canSubmit} />
         </Stack>
       }

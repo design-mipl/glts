@@ -110,7 +110,7 @@ export function ChecklistTab({ country, segment }: ChecklistTabProps) {
       ))}
       <Button
         label="Edit checklist"
-        variant="outlined"
+        variant="neutral"
         onClick={() => navigate(`/admin/masters/country/${country.id}/edit?step=3`)}
         sx={{ alignSelf: 'flex-start' }}
       />

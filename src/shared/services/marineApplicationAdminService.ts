@@ -16,6 +16,8 @@ import {
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import { loadSession } from '@/shared/auth/session'
+import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
+import { teamService } from '@/shared/services/teamService'
 
 export type MarineApplicationRow = SingleApplicationRow | BulkBatchRow
 
@@ -141,6 +143,43 @@ export const marineApplicationAdminService = {
 
   getDetail(applicationId?: string): ApplicationDetailViewModel {
     return customerPortalService.getApplicationDetail(applicationId, { ignoreAccessControl: true })
+  },
+
+  assignTeam(
+    applicationId: string,
+    teamId: string,
+    userId: string,
+  ): MarineApplicationRow | undefined {
+    const team = teamService.getById(teamId)
+    const user = adminPortalUserService.getById(userId)
+    if (!team || team.status !== 'active' || !user || user.status !== 'active' || user.teamId !== teamId) {
+      return undefined
+    }
+
+    const lastUpdated = new Date().toISOString().slice(0, 10)
+    const singleIndex = mockSingleApplications.findIndex(row => row.id === applicationId)
+    if (singleIndex >= 0) {
+      mockSingleApplications[singleIndex] = {
+        ...mockSingleApplications[singleIndex],
+        assignedTeamId: teamId,
+        assignedUserId: userId,
+        lastUpdated,
+      }
+      return mockSingleApplications[singleIndex]
+    }
+
+    const bulkIndex = mockBulkBatches.findIndex(row => row.id === applicationId)
+    if (bulkIndex >= 0) {
+      mockBulkBatches[bulkIndex] = {
+        ...mockBulkBatches[bulkIndex],
+        assignedTeamId: teamId,
+        assignedUserId: userId,
+        lastUpdated,
+      }
+      return mockBulkBatches[bulkIndex]
+    }
+
+    return undefined
   },
 
   createAndSubmitFromFlow(state: ApplicationFlowState): { id: string; kind: 'single' | 'bulk' } {

@@ -17,6 +17,8 @@ interface ViewFormDocumentVaultProps {
   selectedRow: UploadQueueRow
   detail: ApplicationDetailViewModel
   submission?: FormAssistSubmissionDraft
+  /** When true, document list is expanded on mount (e.g. finance expense detail). */
+  defaultExpanded?: boolean
 }
 
 function VaultRow({
@@ -95,9 +97,10 @@ export function ViewFormDocumentVault({
   selectedRow,
   detail,
   submission,
+  defaultExpanded = false,
 }: ViewFormDocumentVaultProps) {
   const { showToast } = useToast()
-  const [expanded, setExpanded] = useState(true)
+  const [expanded, setExpanded] = useState(defaultExpanded)
   const [downloadingAll, setDownloadingAll] = useState(false)
 
   const items = useMemo(
@@ -171,11 +174,13 @@ export function ViewFormDocumentVault({
         alignItems="center"
         justifyContent="space-between"
         spacing={1.5}
+        role="button"
+        aria-expanded={expanded}
         sx={{
           px: 2,
           py: 1.25,
           cursor: 'pointer',
-          bgcolor: 'action.hover',
+          bgcolor: 'background.paper',
         }}
         onClick={() => setExpanded(prev => !prev)}
       >
@@ -216,7 +221,15 @@ export function ViewFormDocumentVault({
       </Stack>
 
       <Collapse in={expanded}>
-        <Box sx={{ px: 2, py: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Box
+          sx={{
+            px: 2,
+            py: 2,
+            borderTop: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13, mb: 1.5 }}>
             All traveler, global, and submission files for {selectedRow.travelerName}. Download individually or use
             Download all above.

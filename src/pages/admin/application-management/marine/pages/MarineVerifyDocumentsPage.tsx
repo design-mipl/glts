@@ -5,6 +5,7 @@ import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import {
   BaseCard,
   Button,
+  ConfirmDialog,
   EmptyState,
   FormField,
   Modal,
@@ -22,6 +23,8 @@ import {
   type GltsDocumentUploadPayload,
 } from '../components/verify/GltsDocumentUploadDrawer'
 import { resolveHandlingMode } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import { applicationArrangedExpenseService } from '@/shared/services/applicationArrangedExpenseService'
+import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import {
   collectRejectedVerifyDocuments,
   isRejectedVerifyDocument,
@@ -50,6 +53,12 @@ export function MarineVerifyDocumentsPage() {
   const [reviewComment, setReviewComment] = useState('')
   const [gltsUploadDocument, setGltsUploadDocument] = useState<ApplicantDocumentItem | null>(null)
   const [verificationTab, setVerificationTab] = useState<VerificationTab>('initial')
+  const [verifyDialog, setVerifyDialog] = useState<{
+    scope: 'traveler' | 'global'
+    travelerId?: string
+    documentId: string
+    documentName: string
+  } | null>(null)
 
   const workspace = useVerifyDocumentsWorkspace(applicationId)
   const {
@@ -63,7 +72,6 @@ export function MarineVerifyDocumentsPage() {
     selectedRow,
     timelineSteps,
     globalDocuments,
-    updateTravelerDoc,
     updateTravelerDocForRow,
     updateTravelerDocumentWorkflow,
     updateGlobalDoc,
@@ -168,18 +176,46 @@ export function MarineVerifyDocumentsPage() {
     setReviewComment('')
   }
 
+  const openVerifyDialog = (
+    scope: 'traveler' | 'global',
+    document: ApplicantDocumentItem,
+    travelerId?: string,
+  ) => {
+    setVerifyDialog({
+      scope,
+      travelerId,
+      documentId: document.documentId,
+      documentName: document.name,
+    })
+  }
+
+  const closeVerifyDialog = () => {
+    setVerifyDialog(null)
+  }
+
+  const confirmVerifyDocument = () => {
+    if (!verifyDialog) return
+    if (verifyDialog.scope === 'traveler') {
+      const rowId = verifyDialog.travelerId ?? selectedRow?.id
+      if (!rowId) return
+      updateTravelerDocForRow(rowId, verifyDialog.documentId, 'verified')
+    } else {
+      updateGlobalDoc(verifyDialog.documentId, 'verified')
+    }
+    showToast({
+      title: 'Document verified',
+      description: `${verifyDialog.documentName} marked as verified.`,
+      variant: 'success',
+    })
+    closeVerifyDialog()
+  }
+
   const handleRejectedPreview = (entry: VerifyRejectedDocumentEntry) => {
     handlePreview(entry.document.documentId, entry.scope)
   }
 
   const handleRejectedVerify = (entry: VerifyRejectedDocumentEntry) => {
-    if (entry.scope === 'global') {
-      updateGlobalDoc(entry.document.documentId, 'verified')
-      return
-    }
-    if (entry.travelerId) {
-      updateTravelerDocForRow(entry.travelerId, entry.document.documentId, 'verified')
-    }
+    openVerifyDialog(entry.scope, entry.document, entry.travelerId)
   }
 
   const handleRejectedReject = (entry: VerifyRejectedDocumentEntry) => {
@@ -260,7 +296,7 @@ export function MarineVerifyDocumentsPage() {
               travelerChecklistDocuments={travelerChecklistDocuments}
               globalChecklistDocuments={globalChecklistDocuments}
               onPreview={handlePreview}
-              onTravelerVerify={documentId => updateTravelerDoc(documentId, 'verified')}
+              onTravelerVerify={document => openVerifyDialog('traveler', document, selectedRow?.id)}
               onTravelerReject={document =>
                 openReviewDialog('traveler', document, 'rejected', selectedRow?.id)
               }
@@ -268,7 +304,7 @@ export function MarineVerifyDocumentsPage() {
                 openReviewDialog('traveler', document, 'needs_review', selectedRow?.id)
               }
               onGltsUpload={document => setGltsUploadDocument(document)}
-              onGlobalVerify={documentId => updateGlobalDoc(documentId, 'verified')}
+              onGlobalVerify={document => openVerifyDialog('global', document)}
               onGlobalReject={document => openReviewDialog('global', document, 'rejected')}
               onGlobalRequestReupload={document =>
                 openReviewDialog('global', document, 'needs_review')
@@ -303,13 +339,40 @@ export function MarineVerifyDocumentsPage() {
               ? { travelTicket: payload.travelTicket }
               : { insurance: payload.insurance }),
           })
+          if (selectedRow) {
+            applicationArrangedExpenseService.upsertFromGltsDocumentUpload({
+              applicationId,
+              isBulk,
+              travelerRowId: selectedRow.id,
+              applicantId: selectedRow.gltsApplicantId,
+              applicantName: selectedRow.travelerName,
+              document: gltsUploadDocument,
+              payload,
+              companyName: detail.application?.entityName?.trim(),
+            })
+            applicationExpenseManagementService.syncApplication(applicationId)
+          }
           showToast({
             title: 'Document saved',
-            description: `${gltsUploadDocument.name} uploaded by GLTS.`,
+            description: `${gltsUploadDocument.name} uploaded by GLTS and mapped to billing expenses.`,
             variant: 'success',
           })
           setGltsUploadDocument(null)
         }}
+      />
+
+      <ConfirmDialog
+        open={Boolean(verifyDialog)}
+        onClose={closeVerifyDialog}
+        onConfirm={confirmVerifyDocument}
+        title="Verify document?"
+        description={
+          verifyDialog
+            ? `Confirm that ${verifyDialog.documentName} meets verification requirements. This will mark the document as verified.`
+            : undefined
+        }
+        confirmLabel="Verify"
+        cancelLabel="Cancel"
       />
 
       <Modal
@@ -323,7 +386,7 @@ export function MarineVerifyDocumentsPage() {
         }
         footer={
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button label="Cancel" variant="outlined" onClick={closeReviewDialog} />
+            <Button label="Cancel" variant="neutral" onClick={closeReviewDialog} />
             <Button label={reviewActionLabel} color="error" onClick={submitReviewAction} disabled={!isReviewCommentValid} />
           </Stack>
         }

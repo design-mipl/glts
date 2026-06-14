@@ -179,16 +179,6 @@ export function DocumentListingPage() {
     }
   }, [activeTab, listing.filteredRows, clientListing.filteredRows, showToast])
 
-  const handleRefresh = useCallback(() => {
-    loadRows()
-    showToast({ title: 'List refreshed', variant: 'info' })
-  }, [loadRows, showToast])
-
-  const handleClearFilters = useCallback(() => {
-    activeListing.handleSearch('')
-    activeListing.setColumnFilters({})
-  }, [activeListing])
-
   const handleTabChange = (tab: DocumentConfigurationTab) => {
     setActiveTab(tab)
     listing.setTableState((state) => ({ ...state, page: 0 }))
@@ -268,8 +258,6 @@ export function DocumentListingPage() {
       ? `${activeDocument.documentType} (${activeDocument.id})`
       : clientStatusTarget?.documentType
 
-  const hasActiveFilters = Boolean(activeListing.tableState.searchQuery)
-
   const pageDescription =
     activeTab === 'documents'
       ? 'Maintain standard document types used across country and visa checklists.'
@@ -316,12 +304,6 @@ export function DocumentListingPage() {
             onHiddenColumnKeysChange={(keys) =>
               activeListing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
             }
-            moreMenuItems={[
-              { label: 'Refresh list', onClick: handleRefresh },
-              ...(hasActiveFilters
-                ? [{ label: 'Clear all filters', onClick: handleClearFilters }]
-                : []),
-            ]}
           />
         }
         listingContent={

@@ -126,13 +126,6 @@ export function ApplicationsListPage() {
           columns={toolbarColumns}
           hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
           onHiddenColumnKeysChange={keys => listing.setTableState(s => ({ ...s, hiddenColumnKeys: keys }))}
-          moreMenuItems={[
-            { label: 'Refresh list', onClick: () => showToast({ title: 'Refreshed', variant: 'info' }) },
-            {
-              label: 'Download bulk template',
-              onClick: () => navigate(`${base}/applications/new`),
-            },
-          ]}
         />
       }
       table={

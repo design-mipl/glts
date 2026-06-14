@@ -8,10 +8,12 @@ import { AdminWorkspaceShell } from '@/pages/admin/components/AdminWorkspaceShel
 import { AdminStepperFormFooter } from '@/pages/admin/components/AdminStepperFormFooter'
 import { useViewFormWorkspace } from '../hooks/useViewFormWorkspace'
 import { CopyAssistFieldSections } from '../components/view-form/CopyAssistField'
+import { ViewFormAssistHeaderSection } from '../components/view-form/ViewFormAssistHeaderSection'
 import { ViewFormSubmissionSection } from '../components/view-form/ViewFormSubmissionSection'
 import { ViewFormDocumentVault } from '../components/view-form/ViewFormDocumentVault'
 import { VerifyDocumentsTimeline } from '../components/verify/VerifyDocumentsTimeline'
 import { buildFormAssistFieldSectionsForStep } from '../utils/formAssistFieldBuilder'
+import { buildOverviewFromDetail } from '../utils/verifyDocumentsUtils'
 
 export function MarineViewFormPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
@@ -46,6 +48,14 @@ export function MarineViewFormPage() {
 
   const listingPath = '/admin/application-management/marine'
   const verifyPath = `/admin/application-management/marine/${applicationId}`
+
+  const overview = useMemo(
+    () =>
+      applicationId && detail
+        ? buildOverviewFromDetail(applicationId, isBulk, rows, detail.application)
+        : null,
+    [applicationId, detail, isBulk, rows],
+  )
 
   const sectionNav = useMemo(
     () =>
@@ -161,7 +171,7 @@ export function MarineViewFormPage() {
       ) : (
         <Badge label={currentStep.label} color="info" size="sm" />
       )}
-      <Button label="Back to verify" variant="outlined" onClick={() => navigate(verifyPath)} />
+      <Button label="Back to verify" variant="neutral" onClick={() => navigate(verifyPath)} />
     </Stack>
   )
 
@@ -173,12 +183,15 @@ export function MarineViewFormPage() {
         ]}
       >
         <Stack spacing={2}>
-          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-              {selectedRow.travelerName} · {selectedRow.passportNo}
-              {detail.application?.jurisdiction ? ` · ${detail.application.jurisdiction}` : ''}
-            </Typography>
-          </Stack>
+          {overview ? (
+            <ViewFormAssistHeaderSection
+              overview={overview}
+              description={`${selectedRow.travelerName} · ${selectedRow.passportNo}${
+                detail.application?.jurisdiction ? ` · ${detail.application.jurisdiction}` : ''
+              }`}
+              headerActions={headerActions}
+            />
+          ) : null}
 
           <VerifyDocumentsTimeline steps={timelineSteps} multiTraveler={rows.length > 1} />
 
@@ -192,8 +205,8 @@ export function MarineViewFormPage() {
           <AdminWorkspaceShell
             hidePageChrome
             breadcrumbs={[]}
-            title="External portal form assist"
-            headerActions={headerActions}
+            title=""
+            showTitleCard={false}
             navTitle="Steps"
             sections={sectionNav}
             activeSectionId={currentStep.id}

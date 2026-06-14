@@ -31,7 +31,7 @@ export function AddFollowupModal({ open, value, onClose, onChange, onSubmit }: A
       subtitle="Track upcoming communication and responsibilities."
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button label="Cancel" variant="outlined" onClick={onClose} />
+          <Button label="Cancel" variant="neutral" onClick={onClose} />
           <Button label="Save Follow-up" onClick={onSubmit} />
         </Stack>
       }

@@ -12,7 +12,12 @@ import { CustomerListingToolbar } from '@/pages/customer/features/shared/compone
 import { CustomerListingTable } from '@/pages/customer/features/shared/components/listing/CustomerListingTable'
 import { CustomerListingPagination } from '@/pages/customer/features/shared/components/listing/CustomerListingPagination'
 import { CustomerListingGrid } from '@/pages/customer/features/shared/components/listing/CustomerListingGrid'
-import { EntityAdvancedFilters } from '../components/EntityAdvancedFilters'
+import {
+  EntityAdvancedFilterFields,
+  EMPTY_ENTITY_LIST_FILTERS,
+  hasEntityFiltersActive,
+  type EntityListFilters,
+} from '../components/EntityAdvancedFilters'
 import { EntityFormDrawer } from '../components/EntityFormDrawer'
 import { buildEntityColumns } from '../components/EntityTableColumns'
 import {
@@ -29,8 +34,7 @@ export function EntityListingPage() {
 
   const [rows, setRows] = useState<EntityMaster[]>([])
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
-  const [countryFilter, setCountryFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [listFilters, setListFilters] = useState<EntityListFilters>(EMPTY_ENTITY_LIST_FILTERS)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editEntity, setEditEntity] = useState<EntityMaster | undefined>()
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -48,11 +52,11 @@ export function EntityListingPage() {
 
   const filteredByAdvanced = useMemo(() => {
     return rows.filter(row => {
-      if (countryFilter !== 'all' && row.country !== countryFilter) return false
-      if (statusFilter !== 'all' && row.status !== statusFilter) return false
+      if (listFilters.country !== 'all' && row.country !== listFilters.country) return false
+      if (listFilters.status !== 'all' && row.status !== listFilters.status) return false
       return true
     })
-  }, [rows, countryFilter, statusFilter])
+  }, [rows, listFilters])
 
   const listing = useCustomerListing({
     rows: filteredByAdvanced,
@@ -170,20 +174,22 @@ export function EntityListingPage() {
             columns={columns.filter(c => c.key !== 'actions').map(c => ({ key: c.key, label: c.label }))}
             hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
             onHiddenColumnKeysChange={keys => listing.setTableState(s => ({ ...s, hiddenColumnKeys: keys }))}
-          />
-        }
-        advancedFilters={
-          <EntityAdvancedFilters
-            country={countryFilter}
-            status={statusFilter}
-            countryOptions={countryOptions}
-            onCountryChange={v => {
-              setCountryFilter(v)
-              listing.setTableState(s => ({ ...s, page: 0 }))
-            }}
-            onStatusChange={v => {
-              setStatusFilter(v)
-              listing.setTableState(s => ({ ...s, page: 0 }))
+            filterPopover={{
+              active: hasEntityFiltersActive(listFilters),
+              value: listFilters,
+              onApply: next => {
+                setListFilters(next)
+                listing.setTableState(s => ({ ...s, page: 0 }))
+              },
+              onClear: () => setListFilters(EMPTY_ENTITY_LIST_FILTERS),
+              hasActive: hasEntityFiltersActive,
+              children: (draft, patch) => (
+                <EntityAdvancedFilterFields
+                  draft={draft}
+                  patch={patch}
+                  countryOptions={countryOptions}
+                />
+              ),
             }}
           />
         }

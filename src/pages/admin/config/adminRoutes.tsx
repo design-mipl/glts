@@ -49,6 +49,12 @@ import {
   InvoiceDetailPage,
   InvoiceListingPage,
 } from '../finance/invoices'
+import { ExpenseFinanceRoutes } from '../finance/expenses/ExpenseFinanceRoutes'
+import {
+  ApplicationExpenseDetailPage,
+  ExpenseApprovalQueuePage,
+  ExpenseListingPage,
+} from '../finance/expenses'
 import { TeamDetailPage, TeamListingPage } from '../access/teams'
 import {
   CreateUserPage,
@@ -60,6 +66,12 @@ import {
 import ComponentLibrary from '../_tools/ComponentLibrary'
 import TemplateShowcaseRoutes from '../_tools/TemplateShowcase'
 import { OperationalCaseHandlingPage } from '../ground-operations/case-handling'
+import {
+  CreateVendorPage,
+  EditVendorPage,
+  VendorDetailPage,
+  VendorListingPage,
+} from '../vendor-management/vendors'
 import {
   B2bAssignmentQueuePage,
   CorporateAssignmentQueuePage,
@@ -137,13 +149,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     kind: 'coming-soon',
   },
 
-  {
-    path: 'finance/expenses',
-    title: 'Expense management',
-    description: 'This module is under development.',
-    eyebrow: 'Finance, billing & collections',
-    kind: 'coming-soon',
-  },
   {
     path: 'finance/payments',
     title: 'Payment & collections',
@@ -466,6 +471,38 @@ export function AdminRoutes() {
         }
       />
       <Route
+        path="vendor-management/vendors"
+        element={
+          <PermissionGuard>
+            <VendorListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="vendor-management/vendors/new"
+        element={
+          <PermissionGuard>
+            <CreateVendorPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="vendor-management/vendors/:vendorId/edit"
+        element={
+          <PermissionGuard>
+            <EditVendorPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="vendor-management/vendors/:vendorId"
+        element={
+          <PermissionGuard>
+            <VendorDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
         path="assignment-priority/marine"
         element={
           <PermissionGuard>
@@ -507,6 +544,11 @@ export function AdminRoutes() {
           element={<GenerateInvoiceWorkspacePage creditNoteMode />}
         />
         <Route path=":invoiceId" element={<InvoiceDetailPage />} />
+      </Route>
+      <Route path="finance/expenses" element={<ExpenseFinanceRoutes />}>
+        <Route index element={<ExpenseListingPage />} />
+        <Route path="approval-queue" element={<ExpenseApprovalQueuePage />} />
+        <Route path=":applicationId" element={<ApplicationExpenseDetailPage />} />
       </Route>
       <Route
         path="access/teams"

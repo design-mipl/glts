@@ -1,6 +1,7 @@
 import { Eye, PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import { corporateAccountService } from '@/shared/services/corporateAccountService'
 import type { CorporateAccount } from '@/shared/types/corporateAccount'
 import { workflowTypeColor, workflowTypeLabel } from '../../agreements/config/agreementStatusConfig'
@@ -25,22 +26,59 @@ export function buildCorporateAccountColumns({
   }
 
   return [
-    { key: 'companyId', label: 'Company ID', sortable: true, searchable: true, hideable: false, minWidth: 110 },
-    { key: 'companyName', label: 'Company Name', sortable: true, searchable: true, minWidth: 200 },
+    {
+      key: 'companyId',
+      label: 'Company ID',
+      widthSize: adminListingColumnWidthSize('code'),
+      sortable: true,
+      searchable: true,
+      hideable: false,
+    },
+    {
+      key: 'companyName',
+      label: 'Company Name',
+      widthSize: adminListingColumnWidthSize('company'),
+      sortable: true,
+      searchable: true,
+    },
     {
       key: 'workflowType',
       label: 'Workflow Type',
+      widthSize: adminListingColumnWidthSize('service'),
       filterable: true,
-      minWidth: 120,
       render: (_, row) => getWorkflowBadge(row.workflowType),
     },
-    { key: 'superAdmin', label: 'Super Admin', minWidth: 150, searchable: true },
-    { key: 'totalAdmins', label: 'Total Admins', sortable: true, minWidth: 100, align: 'center' },
-    { key: 'totalEntities', label: 'Total Entities', sortable: true, minWidth: 110, align: 'center' },
-    { key: 'totalVessels', label: 'Total Vessels', sortable: true, minWidth: 110, align: 'center' },
+    {
+      key: 'superAdmin',
+      label: 'Super Admin',
+      widthSize: adminListingColumnWidthSize('assignee'),
+      searchable: true,
+    },
+    {
+      key: 'totalAdmins',
+      label: 'Total Admins',
+      widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      align: 'center',
+    },
+    {
+      key: 'totalEntities',
+      label: 'Total Entities',
+      widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      align: 'center',
+    },
+    {
+      key: 'totalVessels',
+      label: 'Total Vessels',
+      widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      align: 'center',
+    },
     {
       key: 'portalStatus',
       label: 'Portal Status',
+      widthSize: adminListingColumnWidthSize('status'),
       filterable: true,
       render: (_, row) => (
         <Badge label={corporatePortalStatusLabel[row.portalStatus]} color={corporatePortalStatusColor[row.portalStatus]} size="sm" />
@@ -49,8 +87,8 @@ export function buildCorporateAccountColumns({
     {
       key: 'updatedAt',
       label: 'Last Updated',
+      widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      minWidth: 120,
       render: (_, row) => new Date(row.updatedAt).toLocaleDateString(),
     },
     {
@@ -61,7 +99,6 @@ export function buildCorporateAccountColumns({
       searchable: false,
       hideable: false,
       align: 'center',
-      width: 56,
       render: (_, row) => {
         const counts = corporateAccountService.getCounts(row)
         const actions: RowAction[] = [

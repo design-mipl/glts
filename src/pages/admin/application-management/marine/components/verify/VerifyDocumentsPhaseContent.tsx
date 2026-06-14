@@ -35,11 +35,11 @@ interface VerifyDocumentsPhaseContentProps {
   travelerChecklistDocuments: ApplicantDocumentItem[]
   globalChecklistDocuments: ApplicantDocumentItem[]
   onPreview: (documentId: string, scope: 'traveler' | 'global') => void
-  onTravelerVerify: (documentId: string) => void
+  onTravelerVerify: (document: ApplicantDocumentItem) => void
   onTravelerReject: (document: ApplicantDocumentItem) => void
   onTravelerRequestReupload: (document: ApplicantDocumentItem) => void
   onGltsUpload: (document: ApplicantDocumentItem) => void
-  onGlobalVerify: (documentId: string) => void
+  onGlobalVerify: (document: ApplicantDocumentItem) => void
   onGlobalReject: (document: ApplicantDocumentItem) => void
   onGlobalRequestReupload: (document: ApplicantDocumentItem) => void
   onRejectedPreview: (entry: VerifyRejectedDocumentEntry) => void

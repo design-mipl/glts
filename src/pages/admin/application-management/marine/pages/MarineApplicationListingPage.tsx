@@ -17,7 +17,23 @@ import {
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
+import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
+import { teamService } from '@/shared/services/teamService'
+import {
+  EMPTY_APPLICATION_LISTING_FILTERS,
+} from '@/pages/customer/features/applications/types/applicationListing.types'
+import {
+  applyAdvancedFilters,
+  getFilterOptions,
+} from '@/pages/customer/features/applications/utils/applicationListingUtils'
+import type { ApplicationListingFilterState } from '@/pages/customer/features/applications/types/applicationListing.types'
+import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { MarineApplicationKpiRow } from '../components/MarineApplicationKpiRow'
+import {
+  MarineApplicationAdvancedFilterFields,
+  hasMarineApplicationFiltersActive,
+} from '../components/MarineApplicationAdvancedFilters'
+import { MarineApplicationAssignTeamModal } from '../components/MarineApplicationAssignTeamModal'
 import { buildMarineApplicationColumns } from '../components/MarineApplicationTableColumns'
 import {
   downloadMarineApplicationCsv,
@@ -36,10 +52,13 @@ export function MarineApplicationListingPage() {
   const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<MarineApplicationListingTab>('all')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [assignTarget, setAssignTarget] = useState<MarineApplicationRow | null>(null)
+  const [filters, setFilters] = useState<ApplicationListingFilterState>(EMPTY_APPLICATION_LISTING_FILTERS)
 
   const { singles, bulks } = useMemo(
     () => marineApplicationAdminService.listSubmittedMarineApplications(),
-    [],
+    [refreshKey],
   )
 
   const allRows = useMemo(() => getAllMarineListingRows(singles, bulks), [singles, bulks])
@@ -49,16 +68,57 @@ export function MarineApplicationListingPage() {
     [allRows, activeTab],
   )
 
+  const filterOptions = useMemo(
+    () => getFilterOptions(singles, bulks),
+    [singles, bulks],
+  )
+
+  const advancedFilteredRows = useMemo(
+    () =>
+      applyAdvancedFilters(tabFilteredRows as ApplicationListingRow[], filters) as MarineApplicationRow[],
+    [tabFilteredRows, filters],
+  )
+
   const listing = useCustomerListing({
-    rows: tabFilteredRows,
+    rows: advancedFilteredRows,
     getCellValue: getMarineApplicationCellValue,
     searchMatch: matchesMarineApplicationSearch,
     initialPageSize: 10,
   })
 
+  const openAssignTeam = useCallback((row: MarineApplicationRow) => {
+    setAssignTarget(row)
+  }, [])
+
+  const handleAssignTeamSubmit = useCallback(
+    (teamId: string, userId: string) => {
+      if (!assignTarget) return
+      const updated = marineApplicationAdminService.assignTeam(assignTarget.id, teamId, userId)
+      if (!updated) {
+        showToast({
+          title: 'Assignment failed',
+          description: 'Could not assign the selected team and user.',
+          variant: 'error',
+        })
+        return
+      }
+
+      const teamName = teamService.getById(teamId)?.name ?? 'Team'
+      const userName = adminPortalUserService.getById(userId)?.fullName ?? 'User'
+      setAssignTarget(null)
+      setRefreshKey(key => key + 1)
+      showToast({
+        title: 'Team assigned',
+        description: `${assignTarget.id} assigned to ${teamName} · ${userName}`,
+        variant: 'success',
+      })
+    },
+    [assignTarget, showToast],
+  )
+
   const columns = useMemo(
-    () => buildMarineApplicationColumns({ navigate, showToast }),
-    [navigate, showToast],
+    () => buildMarineApplicationColumns({ navigate, showToast, onAssignTeam: openAssignTeam }),
+    [navigate, showToast, openAssignTeam],
   )
 
   const toolbarColumns = useMemo(
@@ -83,11 +143,6 @@ export function MarineApplicationListingPage() {
       variant: 'success',
     })
   }, [listing.filterSourceRows, showToast])
-
-  const handleClearFilters = useCallback(() => {
-    listing.handleSearch('')
-    listing.setColumnFilters({})
-  }, [listing])
 
   const handleTabChange = useCallback(
     (tab: MarineApplicationListingTab) => {
@@ -116,6 +171,7 @@ export function MarineApplicationListingPage() {
       : alpha(theme.palette.common.black, 0.02)
 
   return (
+    <>
     <AdminListingShell
       stickyPageHeader={
         <AdminListingStickyHeader
@@ -153,10 +209,29 @@ export function MarineApplicationListingPage() {
           onHiddenColumnKeysChange={keys =>
             listing.setTableState(state => ({ ...state, hiddenColumnKeys: keys }))
           }
-          moreMenuItems={[
-            { label: 'Refresh list', onClick: () => showToast({ title: 'List refreshed', variant: 'info' }) },
-            { label: 'Clear all filters', onClick: handleClearFilters },
-          ]}
+          filterPopover={{
+            active: hasMarineApplicationFiltersActive(filters),
+            value: filters,
+            onApply: (next) => {
+              setFilters(next)
+              listing.setTableState((state) => ({ ...state, page: 0 }))
+            },
+            onClear: () => setFilters(EMPTY_APPLICATION_LISTING_FILTERS),
+            hasActive: hasMarineApplicationFiltersActive,
+            width: 'wide',
+            scrollable: true,
+            children: (draft, patch) => (
+              <MarineApplicationAdvancedFilterFields
+                draft={draft}
+                patch={patch}
+                options={{
+                  countries: filterOptions.countries,
+                  visaTypes: filterOptions.visaTypes,
+                  createdByOptions: filterOptions.createdByOptions,
+                }}
+              />
+            ),
+          }}
         />
       }
       listingContent={
@@ -196,5 +271,12 @@ export function MarineApplicationListingPage() {
         </Box>
       }
     />
+      <MarineApplicationAssignTeamModal
+        open={Boolean(assignTarget)}
+        record={assignTarget}
+        onClose={() => setAssignTarget(null)}
+        onSubmit={handleAssignTeamSubmit}
+      />
+    </>
   )
 }

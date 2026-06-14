@@ -16,7 +16,7 @@ import {
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { serviceMasterService } from '@/shared/services/serviceMasterService'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
-import { ServiceAdvancedFilters } from '../components/ServiceAdvancedFilters'
+import { ServiceAdvancedFilterFields, hasServiceFiltersActive } from '../components/ServiceAdvancedFilters'
 import { buildServiceColumns } from '../components/ServiceTableColumns'
 import { ServiceFormDrawer } from '../components/ServiceFormDrawer'
 import type { ServiceMasterListFilters } from '@/shared/types/serviceMaster'
@@ -92,17 +92,6 @@ export function ServiceListingPage() {
     showToast({ title: 'Export started', variant: 'success' })
   }, [listing.filteredRows, showToast])
 
-  const handleRefresh = useCallback(() => {
-    loadRows()
-    showToast({ title: 'List refreshed', variant: 'info' })
-  }, [loadRows, showToast])
-
-  const handleClearFilters = useCallback(() => {
-    listing.handleSearch('')
-    listing.setColumnFilters({})
-    setFilters({ serviceType: 'all' })
-  }, [listing])
-
   const handleConfirmStatus = () => {
     if (!statusTarget) return
     setActionLoading(true)
@@ -122,9 +111,6 @@ export function ServiceListingPage() {
     theme.palette.mode === 'dark'
       ? alpha(theme.palette.common.white, 0.04)
       : alpha(theme.palette.common.black, 0.02)
-
-  const hasActiveFilters =
-    Boolean(listing.tableState.searchQuery) || (filters.serviceType ?? 'all') !== 'all'
 
   return (
     <>
@@ -149,20 +135,23 @@ export function ServiceListingPage() {
             onHiddenColumnKeysChange={(keys) =>
               listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
             }
-            moreMenuItems={[
-              { label: 'Refresh list', onClick: handleRefresh },
-              ...(hasActiveFilters
-                ? [{ label: 'Clear all filters', onClick: handleClearFilters }]
-                : []),
-            ]}
+            filterPopover={{
+              active: hasServiceFiltersActive(filters),
+              value: filters,
+              onApply: (next) => {
+                setFilters(next)
+                listing.setTableState((state) => ({ ...state, page: 0 }))
+              },
+              onClear: () => setFilters({ serviceType: 'all' }),
+              hasActive: hasServiceFiltersActive,
+              children: (draft, patch) => (
+                <ServiceAdvancedFilterFields draft={draft} patch={patch} />
+              ),
+            }}
           />
         }
         listingContent={
-          <>
-            <Box sx={{ px: 2, pt: 0, pb: 1.5 }}>
-              <ServiceAdvancedFilters filters={filters} onChange={setFilters} />
-            </Box>
-            <AdminListingTable
+          <AdminListingTable
             columns={columns}
             data={listing.paginatedRows}
             filterSourceData={listing.filterSourceRows}
@@ -180,7 +169,6 @@ export function ServiceListingPage() {
             emptyDescription={emptyState.emptyDescription}
             emptyAction={emptyState.emptyAction}
           />
-          </>
         }
         footer={
           <Box sx={{ bgcolor: footerBg }}>

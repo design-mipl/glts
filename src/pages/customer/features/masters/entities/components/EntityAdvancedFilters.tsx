@@ -1,42 +1,58 @@
-import { Stack } from '@mui/material'
 import { Select } from '@/design-system/UIComponents'
+import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 
-interface EntityAdvancedFiltersProps {
+export interface EntityListFilters {
   country: string
   status: string
-  countryOptions: string[]
-  onCountryChange: (value: string) => void
-  onStatusChange: (value: string) => void
 }
 
-export function EntityAdvancedFilters({
-  country,
-  status,
+export const EMPTY_ENTITY_LIST_FILTERS: EntityListFilters = {
+  country: 'all',
+  status: 'all',
+}
+
+export interface EntityAdvancedFilterFieldsProps {
+  draft: EntityListFilters
+  patch: (partial: Partial<EntityListFilters>) => void
+  countryOptions: string[]
+}
+
+export function EntityAdvancedFilterFields({
+  draft,
+  patch,
   countryOptions,
-  onCountryChange,
-  onStatusChange,
-}: EntityAdvancedFiltersProps) {
+}: EntityAdvancedFilterFieldsProps) {
   return (
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ width: '100%' }}>
-      <Select
-        value={country}
-        onChange={v => onCountryChange(String(v))}
-        options={[
-          { value: 'all', label: 'All countries' },
-          ...countryOptions.map(c => ({ value: c, label: c })),
-        ]}
-        sx={{ minWidth: { sm: 180 } }}
-      />
-      <Select
-        value={status}
-        onChange={v => onStatusChange(String(v))}
-        options={[
-          { value: 'all', label: 'All statuses' },
-          { value: 'active', label: 'Active' },
-          { value: 'inactive', label: 'Inactive' },
-        ]}
-        sx={{ minWidth: { sm: 160 } }}
-      />
-    </Stack>
+    <>
+      <ListingFilterField label="Country">
+        <Select
+          value={draft.country}
+          onChange={(v) => patch({ country: String(v) })}
+          options={[
+            { value: 'all', label: 'All countries' },
+            ...countryOptions.map((c) => ({ value: c, label: c })),
+          ]}
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Status">
+        <Select
+          value={draft.status}
+          onChange={(v) => patch({ status: String(v) })}
+          options={[
+            { value: 'all', label: 'All statuses' },
+            { value: 'active', label: 'Active' },
+            { value: 'inactive', label: 'Inactive' },
+          ]}
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+    </>
   )
+}
+
+export function hasEntityFiltersActive(filters: EntityListFilters): boolean {
+  return filters.country !== 'all' || filters.status !== 'all'
 }

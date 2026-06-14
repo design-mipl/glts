@@ -85,8 +85,7 @@ export default function FormActions({
           }}
         >
           <Button
-            variant="outlined"
-            color="secondary"
+            variant="neutral"
             onClick={onCancel}
             disabled={disabled || loading}
             fullWidth

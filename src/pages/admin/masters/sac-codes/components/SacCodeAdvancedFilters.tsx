@@ -1,27 +1,34 @@
-import { Stack } from '@mui/material'
 import { Select } from '@/design-system/UIComponents'
+import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 import type { SacCodeMasterListFilters } from '@/shared/types/sacCodeMaster'
 import { SAC_CATEGORY_OPTIONS } from '../config/sacCategoryOptions'
 
-export interface SacCodeAdvancedFiltersProps {
-  filters: SacCodeMasterListFilters
-  onChange: (next: SacCodeMasterListFilters) => void
+export const EMPTY_SAC_CODE_LIST_FILTERS: SacCodeMasterListFilters = {
+  category: 'all',
 }
 
-export function SacCodeAdvancedFilters({ filters, onChange }: SacCodeAdvancedFiltersProps) {
+export interface SacCodeAdvancedFilterFieldsProps {
+  draft: SacCodeMasterListFilters
+  patch: (partial: Partial<SacCodeMasterListFilters>) => void
+}
+
+export function SacCodeAdvancedFilterFields({ draft, patch }: SacCodeAdvancedFilterFieldsProps) {
   return (
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} useFlexGap flexWrap="wrap">
+    <ListingFilterField label="Category">
       <Select
-        label="Category"
         placeholder="Select category"
-        value={filters.category ?? 'all'}
+        value={draft.category ?? 'all'}
         onChange={(value) =>
-          onChange({ ...filters, category: value as SacCodeMasterListFilters['category'] })
+          patch({ category: value as SacCodeMasterListFilters['category'] })
         }
         options={[{ value: 'all', label: 'All categories' }, ...SAC_CATEGORY_OPTIONS]}
         size="sm"
-        sx={{ minWidth: 180 }}
+        fullWidth
       />
-    </Stack>
+    </ListingFilterField>
   )
+}
+
+export function hasSacCodeFiltersActive(filters: SacCodeMasterListFilters): boolean {
+  return (filters.category ?? 'all') !== 'all'
 }

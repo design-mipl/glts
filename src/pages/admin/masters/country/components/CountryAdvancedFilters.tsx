@@ -1,90 +1,105 @@
-import { Stack } from '@mui/material'
 import { Select } from '@/design-system/UIComponents'
+import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 import type { CountryMasterListFilters } from '@/shared/types/countryMaster'
 import { COUNTRY_STATUS_OPTIONS, PROCESSING_TYPE_OPTIONS } from '../config/countryProcessingConfig'
 import { COUNTRY_LISTING_TABS } from '../config/countrySegmentConfig'
 
-export interface CountryAdvancedFiltersProps {
-  filters: CountryMasterListFilters
-  onChange: (next: CountryMasterListFilters) => void
-  showSegmentFilter: boolean
-  regionOptions: { value: string; label: string }[]
-  onClear: () => void
+export const EMPTY_COUNTRY_MASTER_LIST_FILTERS: CountryMasterListFilters = {
+  status: 'all',
+  segment: 'all',
+  processingType: 'all',
+  region: 'all',
 }
 
-export function CountryAdvancedFilters({
-  filters,
-  onChange,
-  showSegmentFilter,
+export interface CountryAdvancedFilterFieldsProps {
+  draft: CountryMasterListFilters
+  patch: (partial: Partial<CountryMasterListFilters>) => void
+  regionOptions: { value: string; label: string }[]
+  showSegmentFilter?: boolean
+}
+
+export function CountryAdvancedFilterFields({
+  draft,
+  patch,
   regionOptions,
-}: CountryAdvancedFiltersProps) {
+  showSegmentFilter = true,
+}: CountryAdvancedFilterFieldsProps) {
   return (
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} useFlexGap flexWrap="wrap">
-      <Select
-        placeholder="All statuses"
-        value={filters.status === 'all' ? '' : (filters.status ?? '')}
-        onChange={(value) =>
-          onChange({
-            ...filters,
-            status: (value ? value : 'all') as CountryMasterListFilters['status'],
-          })
-        }
-        options={COUNTRY_STATUS_OPTIONS}
-        size="sm"
-        clearable
-        fullWidth
-        sx={{ minWidth: { xs: '100%', sm: 160 } }}
-      />
-      <Select
-        placeholder="All regions"
-        value={filters.region === 'all' ? '' : (filters.region ?? '')}
-        onChange={(value) =>
-          onChange({
-            ...filters,
-            region: value ? String(value) : 'all',
-          })
-        }
-        options={regionOptions}
-        size="sm"
-        clearable
-        fullWidth
-        sx={{ minWidth: { xs: '100%', sm: 160 } }}
-      />
-      <Select
-        placeholder="All types"
-        value={filters.processingType === 'all' ? '' : (filters.processingType ?? '')}
-        onChange={(value) =>
-          onChange({
-            ...filters,
-            processingType: (value ? value : 'all') as CountryMasterListFilters['processingType'],
-          })
-        }
-        options={PROCESSING_TYPE_OPTIONS}
-        size="sm"
-        clearable
-        fullWidth
-        sx={{ minWidth: { xs: '100%', sm: 180 } }}
-      />
-      {showSegmentFilter ? (
+    <>
+      <ListingFilterField label="Status">
         <Select
-          placeholder="All segments"
-          value={filters.segment === 'all' ? '' : (filters.segment ?? '')}
+          placeholder="All statuses"
+          value={draft.status === 'all' ? '' : (draft.status ?? '')}
           onChange={(value) =>
-            onChange({
-              ...filters,
-              segment: (value ? value : 'all') as CountryMasterListFilters['segment'],
+            patch({
+              status: (value ? value : 'all') as CountryMasterListFilters['status'],
             })
           }
-          options={COUNTRY_LISTING_TABS.filter((t) => t.value !== 'all').map((t) => ({
-            value: t.value,
-            label: t.label,
-          }))}
+          options={COUNTRY_STATUS_OPTIONS}
           size="sm"
           clearable
           fullWidth
-          sx={{ minWidth: { xs: '100%', sm: 200 } }}
         />
+      </ListingFilterField>
+      <ListingFilterField label="Region">
+        <Select
+          placeholder="All regions"
+          value={draft.region === 'all' ? '' : (draft.region ?? '')}
+          onChange={(value) =>
+            patch({
+              region: value ? String(value) : 'all',
+            })
+          }
+          options={regionOptions}
+          size="sm"
+          clearable
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Processing type">
+        <Select
+          placeholder="All types"
+          value={draft.processingType === 'all' ? '' : (draft.processingType ?? '')}
+          onChange={(value) =>
+            patch({
+              processingType: (value ? value : 'all') as CountryMasterListFilters['processingType'],
+            })
+          }
+          options={PROCESSING_TYPE_OPTIONS}
+          size="sm"
+          clearable
+          fullWidth
+        />
+      </ListingFilterField>
+      {showSegmentFilter ? (
+        <ListingFilterField label="Segment">
+          <Select
+            placeholder="All segments"
+            value={draft.segment === 'all' ? '' : (draft.segment ?? '')}
+            onChange={(value) =>
+              patch({
+                segment: (value ? value : 'all') as CountryMasterListFilters['segment'],
+              })
+            }
+            options={COUNTRY_LISTING_TABS.filter((t) => t.value !== 'all').map((t) => ({
+              value: t.value,
+              label: t.label,
+            }))}
+            size="sm"
+            clearable
+            fullWidth
+          />
+        </ListingFilterField>
       ) : null}
-    </Stack>
+    </>
+  )
+}
+
+export function hasCountryFiltersActive(filters: CountryMasterListFilters): boolean {
+  return (
+    (filters.status ?? 'all') !== 'all' ||
+    (filters.segment ?? 'all') !== 'all' ||
+    (filters.processingType ?? 'all') !== 'all' ||
+    (filters.region ?? 'all') !== 'all'
   )
 }

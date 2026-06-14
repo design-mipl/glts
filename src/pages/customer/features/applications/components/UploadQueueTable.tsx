@@ -11,7 +11,7 @@ import {
   Button,
   IconButton,
 } from '@mui/material'
-import { ChevronRight, Download, Pause } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { usePublicBrandColors, getPrimaryButtonSx } from '@/shared/theme/publicBrand'
 import {
   requiresFieldValidation,
@@ -147,18 +147,6 @@ export function UploadQueueTable({
             />
           )}
         </Stack>
-        {!readOnly && !selectionMode && (
-          <Stack direction="row" spacing={1}>
-            <Button startIcon={<Download size={14} />} sx={{ textTransform: 'none' }}>
-              Export CSV
-            </Button>
-            {!singleListing && (
-              <Button startIcon={<Pause size={14} />} variant="outlined" sx={{ textTransform: 'none' }}>
-                Pause
-              </Button>
-            )}
-          </Stack>
-        )}
       </Stack>
 
       <Box sx={{ overflowX: 'auto' }}>

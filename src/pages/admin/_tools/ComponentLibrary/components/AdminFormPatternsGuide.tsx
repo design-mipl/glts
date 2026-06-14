@@ -11,6 +11,7 @@ import {
 } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { AdminDrawerFormShell } from '@/pages/admin/components/AdminDrawerFormShell'
 import { AdminFullPageFormShell } from '@/pages/admin/components/AdminFullPageFormShell'
+import { AdminStepperFormFooter } from '@/pages/admin/components/AdminStepperFormFooter'
 import { AdminStepperFormShell } from '@/pages/admin/components/AdminStepperFormShell'
 import {
   ADMIN_DRAWER_FORM_GUIDANCE,
@@ -116,6 +117,7 @@ export function AdminFormPatternsGuide() {
   const [modalOpen, setModalOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [stepperStep, setStepperStep] = useState(0)
+  const stepperSteps = buildTemplateStepperDemoSteps(formData, setFormData)
 
   return (
     <Stack spacing={5}>
@@ -153,7 +155,7 @@ export function AdminFormPatternsGuide() {
             <strong>Section cards:</strong> primary + secondary surfaces (see swatches above).
           </Rule>
           <Rule>
-            <strong>Footer:</strong> <code>AdminFullPageFormFooter</code> (Cancel · draft · Save).
+            <strong>Footer:</strong> <code>AdminFullPageFormFooter</code> (Cancel neutral · draft · Save).
           </Rule>
         </PatternRules>
         <AdminFullPageFormShell
@@ -315,9 +317,19 @@ export function AdminFormPatternsGuide() {
             { label: 'Templates', href: '/admin/tools/templates' },
             { label: 'Stepper' },
           ]}
-          steps={buildTemplateStepperDemoSteps(formData, setFormData)}
+          steps={stepperSteps}
           activeStep={stepperStep}
           onActiveStepChange={setStepperStep}
+          footer={
+            <AdminStepperFormFooter
+              activeStep={stepperStep}
+              isLastStep={stepperStep >= stepperSteps.length - 1}
+              onCancel={() => setStepperStep(0)}
+              onBack={() => setStepperStep((s) => Math.max(0, s - 1))}
+              onNext={() => setStepperStep((s) => s + 1)}
+              onSubmit={() => setStepperStep(0)}
+            />
+          }
         />
       </Stack>
     </Stack>

@@ -28,7 +28,7 @@ export function ApplicationReviewTravelerSection({
   applicationId,
 }: ApplicationReviewTravelerSectionProps) {
   const readyRows = rows.filter(r => r.status !== 'processing')
-  const singleListing = readyRows.length <= 1
+  const singleListing = !isBulk && readyRows.length <= 1
 
   if (rows.length === 0) {
     return (

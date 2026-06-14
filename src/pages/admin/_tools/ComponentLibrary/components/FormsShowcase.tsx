@@ -497,7 +497,7 @@ export function FormsShowcase() {
 
         {/* ── FormActions ── */}
         <Grid size={12}>
-          <SectionHeader title="FormActions" description="Consistent action bar with primary, secondary, and ghost buttons." />
+          <SectionHeader title="FormActions" description="Consistent action bar — neutral cancel, contained save." />
           <Box
             sx={{
               bgcolor: 'background.paper',

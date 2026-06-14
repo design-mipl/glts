@@ -26,7 +26,6 @@ interface CustomerListingShellProps {
   tabValue?: string
   onTabChange?: (value: string) => void
   toolbar: ReactNode
-  advancedFilters?: ReactNode
   table: ReactNode
   pagination: ReactNode
 }
@@ -41,7 +40,6 @@ export function CustomerListingShell({
   tabValue,
   onTabChange,
   toolbar,
-  advancedFilters,
   table,
   pagination,
 }: CustomerListingShellProps) {
@@ -123,20 +121,6 @@ export function CustomerListingShell({
         >
           {toolbar}
         </Box>
-
-        {advancedFilters && (
-          <Box
-            sx={{
-              px: 2,
-              py: 1.5,
-              borderBottom: `${BORDER_WIDTH.thin} solid`,
-              borderColor: 'divider',
-              bgcolor: 'action.hover',
-            }}
-          >
-            {advancedFilters}
-          </Box>
-        )}
 
         {table}
         {pagination}

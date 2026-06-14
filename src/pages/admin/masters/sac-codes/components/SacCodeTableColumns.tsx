@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import { taxMasterService } from '@/shared/services/taxMasterService'
 import type { SacCodeMaster } from '@/shared/types/sacCodeMaster'
 import { MasterAudienceTags } from '../../components/MasterAudienceTags'
@@ -32,13 +33,27 @@ export function buildSacCodeColumns({
   onToggleStatus,
 }: ColumnHandlers): Column<SacCodeMaster>[] {
   return [
-    { key: 'sacCode', label: 'SAC Code', minWidth: 100, searchable: true },
-    { key: 'sacTitle', label: 'SAC Title', minWidth: 180, searchable: true },
-    { key: 'category', label: 'Category', minWidth: 130 },
+    {
+      key: 'sacCode',
+      label: 'SAC Code',
+      widthSize: adminListingColumnWidthSize('code'),
+      searchable: true,
+    },
+    {
+      key: 'sacTitle',
+      label: 'SAC Title',
+      widthSize: adminListingColumnWidthSize('name'),
+      searchable: true,
+    },
+    {
+      key: 'category',
+      label: 'Category',
+      widthSize: adminListingColumnWidthSize('service'),
+    },
     {
       key: 'defaultGst',
       label: 'Default GST %',
-      width: 120,
+      widthSize: adminListingColumnWidthSize('count'),
       render: (_, row) => {
         const pct = taxMasterService.getGstPercent(row.defaultGstRateId)
         return pct != null ? `${pct}%` : '—'
@@ -47,7 +62,7 @@ export function buildSacCodeColumns({
     {
       key: 'defaultTds',
       label: 'Applicable TDS %',
-      width: 120,
+      widthSize: adminListingColumnWidthSize('count'),
       render: (_, row) => {
         const pct = taxMasterService.getTdsPercent(row.defaultTdsSectionId)
         return pct != null ? `${pct}%` : '—'
@@ -56,7 +71,7 @@ export function buildSacCodeColumns({
     {
       key: 'applicableFor',
       label: 'Applicable For',
-      minWidth: 200,
+      widthSize: adminListingColumnWidthSize('description'),
       render: (_, row) => (
         <MasterAudienceTags items={toApplicabilityTagItems(row.applicableFor)} />
       ),
@@ -64,7 +79,7 @@ export function buildSacCodeColumns({
     {
       key: 'status',
       label: 'Status',
-      width: 100,
+      widthSize: adminListingColumnWidthSize('status'),
       render: (_, row) => (
         <Badge
           label={masterStatusLabel[row.status]}
@@ -76,13 +91,13 @@ export function buildSacCodeColumns({
     {
       key: 'createdAudit',
       label: 'Created By / Date',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
     },
     {
       key: 'updatedAudit',
       label: 'Updated By / Date',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
     },
     {
@@ -93,7 +108,6 @@ export function buildSacCodeColumns({
       searchable: false,
       hideable: false,
       align: 'center',
-      width: 60,
       render: (_, row) => {
         const isActive = row.status === 'active'
         const actions: RowAction[] = [

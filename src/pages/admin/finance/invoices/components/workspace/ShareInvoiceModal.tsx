@@ -37,7 +37,7 @@ export function ShareInvoiceModal({
       loading={loading}
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button label="Cancel" variant="outlined" onClick={onClose} />
+          <Button label="Cancel" variant="neutral" onClick={onClose} />
           <Button label="Send invoice" onClick={onSubmit} loading={loading} />
         </Stack>
       }

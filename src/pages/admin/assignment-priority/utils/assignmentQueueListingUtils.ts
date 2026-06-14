@@ -7,7 +7,7 @@ import type {
   OperationalDateFilterPreset,
   OperationalPassengerRow,
 } from '@/shared/types/operationalPassengerAssignment'
-import { ASSIGNMENT_PRIORITIES, PASSENGER_OPERATIONAL_STATUSES } from '@/shared/types/operationalPassengerAssignment'
+import { ASSIGNMENT_PRIORITIES } from '@/shared/types/operationalPassengerAssignment'
 import { ASSIGNMENT_CITY_TEAMS } from '@/shared/types/operationalPassengerAssignment'
 import { assignmentPriorityLabel } from '../config/assignmentPriorityConfig'
 import { passengerStatusLabel } from '../config/assignmentStatusConfig'
@@ -28,7 +28,10 @@ export const EMPTY_ASSIGNMENT_QUEUE_FILTERS: AssignmentQueueFilters = {
   team: '',
   assignedUser: '',
   priority: '',
+  country: '',
+  visaType: '',
   status: '',
+  sla: '',
   search: '',
 }
 
@@ -58,6 +61,11 @@ function addDays(date: Date, days: number): Date {
   return d
 }
 
+function parseLocalDateString(isoDate: string): Date {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  return startOfDay(new Date(year, month - 1, day))
+}
+
 export function resolveDateRange(
   preset: OperationalDateFilterPreset,
   from?: string,
@@ -80,8 +88,8 @@ export function resolveDateRange(
       return { from: start, to: endOfDay(end) }
     }
     case 'custom': {
-      const customFrom = from ? startOfDay(new Date(from)) : today
-      const customTo = to ? endOfDay(new Date(to)) : endOfDay(today)
+      const customFrom = from ? parseLocalDateString(from) : today
+      const customTo = to ? endOfDay(parseLocalDateString(to)) : endOfDay(today)
       return { from: customFrom, to: customTo }
     }
     case 'today':
@@ -97,7 +105,7 @@ function matchesOperationalDate(
   to?: string,
 ): boolean {
   const range = resolveDateRange(preset, from, to)
-  const rowDate = startOfDay(new Date(row.operationalDate))
+  const rowDate = parseLocalDateString(row.operationalDate)
   return rowDate >= range.from && rowDate <= range.to
 }
 
@@ -107,6 +115,61 @@ export function isSlaAtRisk(row: OperationalPassengerRow): boolean {
   const now = Date.now()
   const fourHours = 4 * 60 * 60 * 1000
   return due <= now || due - now <= fourHours
+}
+
+export type AssignmentSlaDisplayState = 'critical' | 'due_today' | 'on_track' | 'none'
+
+export function getSlaDisplayState(row: OperationalPassengerRow): AssignmentSlaDisplayState {
+  if (row.passengerStatus === 'Completed') return 'none'
+  if (isSlaAtRisk(row)) return 'critical'
+
+  const dueDay = new Date(row.slaDueAt).toISOString().slice(0, 10)
+  const today = new Date().toISOString().slice(0, 10)
+  if (dueDay === today) return 'due_today'
+  return 'on_track'
+}
+
+export function formatSlaDisplayLabel(row: OperationalPassengerRow): string {
+  const state = getSlaDisplayState(row)
+  if (state === 'none') return '—'
+  if (state === 'critical') {
+    const timer = formatSlaTimer(row)
+    const normalized = timer.startsWith('-') ? timer.slice(1).trim() : timer
+    return `🔴 ${normalized}`
+  }
+  if (state === 'due_today') return '🟠 Due Today'
+  return '🟢 On Track'
+}
+
+export function getSlaBadgeColor(row: OperationalPassengerRow): 'error' | 'warning' | 'success' | 'neutral' {
+  const state = getSlaDisplayState(row)
+  if (state === 'critical') return 'error'
+  if (state === 'due_today') return 'warning'
+  if (state === 'on_track') return 'success'
+  return 'neutral'
+}
+
+export function formatTravelDateLabel(travelDate: string): string {
+  if (!travelDate) return '✈️ —'
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(travelDate)
+    ? parseLocalDateString(travelDate)
+    : new Date(travelDate)
+  if (Number.isNaN(parsed.getTime())) return `✈️ ${travelDate}`
+  const formatted = parsed.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+  return `✈️ ${formatted}`
+}
+
+function matchesSlaFilter(row: OperationalPassengerRow, slaFilter: string): boolean {
+  if (!slaFilter) return true
+  const state = getSlaDisplayState(row)
+  if (slaFilter === 'at_risk') return state === 'critical'
+  if (slaFilter === 'due_today') return state === 'due_today'
+  if (slaFilter === 'on_track') return state === 'on_track'
+  return true
 }
 
 export function formatSlaTimer(row: OperationalPassengerRow): string {
@@ -157,7 +220,10 @@ export function applyAssignmentQueueFilters(
     if (filters.team && row.assignedTeam !== filters.team) return false
     if (filters.assignedUser && row.assignedUser !== filters.assignedUser) return false
     if (filters.priority && row.priority !== filters.priority) return false
+    if (filters.country && row.country !== filters.country) return false
+    if (filters.visaType && row.visaType !== filters.visaType) return false
     if (filters.status && row.passengerStatus !== filters.status) return false
+    if (!matchesSlaFilter(row, filters.sla)) return false
     if (filters.search && !matchesAssignmentSearch(row, filters.search)) return false
     return true
   })
@@ -187,10 +253,13 @@ export function matchesAssignmentSearch(row: OperationalPassengerRow, query: str
 
 export function getAssignmentCellValue(row: OperationalPassengerRow, key: string): string {
   switch (key) {
-    case 'priority':
-      return assignmentPriorityLabel[row.priority]
+    case 'passenger':
     case 'passengerName':
       return row.passengerName
+    case 'priority':
+      return assignmentPriorityLabel[row.priority]
+    case 'application':
+      return `${row.country} ${row.visaType} ${row.gltsApplicationId} ${row.companyName} ${row.travelDate}`.trim()
     case 'applicationId':
       return row.gltsApplicationId
     case 'companyName':
@@ -205,18 +274,23 @@ export function getAssignmentCellValue(row: OperationalPassengerRow, key: string
       return row.visaType
     case 'travelDate':
       return row.travelDate
+    case 'assignment':
+      return `${row.assignedTeam || ''} ${row.assignedUser || ''}`.trim()
     case 'assignedTeam':
       return row.assignedTeam || '—'
     case 'assignedUser':
       return row.assignedUser || '—'
     case 'operationalDate':
       return row.operationalDate
+    case 'status':
     case 'passengerStatus':
-      return passengerStatusLabel[row.passengerStatus]
+      return `${passengerStatusLabel[row.passengerStatus]} ${row.submissionStatus}`.trim()
     case 'submissionStatus':
       return row.submissionStatus
+    case 'sla':
+      return row.slaDueAt
     case 'slaTimer':
-      return formatSlaTimer(row)
+      return formatSlaDisplayLabel(row)
     case 'lastUpdated':
       return row.lastUpdated
     case 'operationalRemarks':
@@ -249,21 +323,32 @@ export function getAssignmentFilterOptions(rows: OperationalPassengerRow[]) {
   const jurisdictions = new Set<string>()
   const teams = new Set<string>()
   const users = new Set<string>()
+  const countries = new Set<string>()
+  const visaTypes = new Set<string>()
 
   for (const row of rows) {
     if (row.jurisdiction && row.jurisdiction !== '—') jurisdictions.add(row.jurisdiction)
     if (row.assignedTeam) teams.add(row.assignedTeam)
     if (row.assignedUser) users.add(row.assignedUser)
+    if (row.country) countries.add(row.country)
+    if (row.visaType) visaTypes.add(row.visaType)
   }
 
   return {
     jurisdictions: Array.from(jurisdictions).sort(),
     teams: ASSIGNMENT_CITY_TEAMS.filter(t => teams.size === 0 || teams.has(t)),
     users: Array.from(users).sort(),
+    countries: Array.from(countries).sort(),
+    visaTypes: Array.from(visaTypes).sort(),
     priorities: ASSIGNMENT_PRIORITIES,
-    statuses: PASSENGER_OPERATIONAL_STATUSES,
   }
 }
+
+export const ASSIGNMENT_SLA_FILTER_OPTIONS = [
+  { value: 'at_risk', label: 'At risk' },
+  { value: 'due_today', label: 'Due today' },
+  { value: 'on_track', label: 'On track' },
+] as const
 
 export function getAssignmentTabEmptyState(tab: AssignmentListingTab): EmptyStateProps {
   const map: Record<AssignmentListingTab, EmptyStateProps> = {

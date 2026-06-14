@@ -1,5 +1,6 @@
 import type { Column } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { Invoice } from '@/shared/types/invoice'
 import { formatInr, getInvoiceApplicationCount } from '@/shared/utils/invoiceCalculations'
 import {
@@ -14,72 +15,97 @@ import { buildInvoiceRowActions, type InvoiceRowActionHandlers } from '../utils/
 
 export function buildInvoiceColumns(handlers: InvoiceRowActionHandlers): Column<Invoice>[] {
   return [
-    { key: 'invoiceId', label: 'Invoice ID', sortable: true, searchable: true, hideable: false, minWidth: 130 },
+    {
+      key: 'invoiceId',
+      label: 'Invoice ID',
+      widthSize: adminListingColumnWidthSize('code'),
+      sortable: true,
+      searchable: true,
+      hideable: false,
+    },
     {
       key: 'invoiceType',
       label: 'Invoice Type',
+      widthSize: adminListingColumnWidthSize('service'),
       filterable: true,
-      minWidth: 160,
       render: (_, row) => (
         <Badge label={invoiceTypeLabel[row.invoiceType]} color={invoiceTypeColor[row.invoiceType]} size="sm" />
       ),
     },
-    { key: 'companyName', label: 'Company Name', sortable: true, searchable: true, minWidth: 180 },
-    { key: 'billingEntity', label: 'Billing Entity', sortable: true, searchable: true, minWidth: 180 },
-    { key: 'vessel', label: 'Vessel', sortable: true, searchable: true, minWidth: 140 },
+    {
+      key: 'companyName',
+      label: 'Company Name',
+      widthSize: adminListingColumnWidthSize('company'),
+      sortable: true,
+      searchable: true,
+    },
+    {
+      key: 'billingEntity',
+      label: 'Billing Entity',
+      widthSize: adminListingColumnWidthSize('company'),
+      sortable: true,
+      searchable: true,
+    },
+    {
+      key: 'vessel',
+      label: 'Vessel',
+      widthSize: adminListingColumnWidthSize('name'),
+      sortable: true,
+      searchable: true,
+    },
     {
       key: 'gltsReference',
       label: 'GLTS Reference',
+      widthSize: adminListingColumnWidthSize('code'),
       sortable: true,
       searchable: true,
-      minWidth: 150,
       render: (_, row) => row.gltsReferences.join(', ') || '—',
     },
     {
       key: 'batchId',
       label: 'Batch ID',
+      widthSize: adminListingColumnWidthSize('code'),
       sortable: true,
       searchable: true,
-      minWidth: 140,
       render: (_, row) => row.batchIds.join(', ') || '—',
     },
     {
       key: 'totalApplications',
       label: 'Total Applications',
+      widthSize: adminListingColumnWidthSize('count'),
       sortable: true,
       align: 'right',
-      width: 120,
       render: (_, row) => String(getInvoiceApplicationCount(row)),
     },
     {
       key: 'invoiceAmount',
       label: 'Invoice Amount',
+      widthSize: 'md',
       sortable: true,
       align: 'right',
-      minWidth: 120,
       render: (_, row) => formatInr(row.totals.finalAmount),
     },
     {
       key: 'advanceAdjusted',
       label: 'Advance Adjusted',
+      widthSize: 'md',
       sortable: true,
       align: 'right',
-      minWidth: 120,
       render: (_, row) => formatInr(row.totals.advanceAdjusted),
     },
     {
       key: 'balancePayable',
       label: 'Balance Payable',
+      widthSize: 'md',
       sortable: true,
       align: 'right',
-      minWidth: 120,
       render: (_, row) => formatInr(row.totals.balancePayable),
     },
     {
       key: 'invoiceStatus',
       label: 'Invoice Status',
+      widthSize: adminListingColumnWidthSize('status'),
       filterable: true,
-      minWidth: 130,
       render: (_, row) => (
         <Badge
           label={invoiceStatusLabel[row.invoiceStatus]}
@@ -91,8 +117,8 @@ export function buildInvoiceColumns(handlers: InvoiceRowActionHandlers): Column<
     {
       key: 'paymentStatus',
       label: 'Payment Status',
+      widthSize: adminListingColumnWidthSize('status'),
       filterable: true,
-      minWidth: 120,
       render: (_, row) => (
         <Badge
           label={paymentStatusLabel[row.paymentStatus]}
@@ -101,13 +127,23 @@ export function buildInvoiceColumns(handlers: InvoiceRowActionHandlers): Column<
         />
       ),
     },
-    { key: 'invoiceDate', label: 'Invoice Date', sortable: true, minWidth: 110 },
-    { key: 'dueDate', label: 'Due Date', sortable: true, minWidth: 110 },
+    {
+      key: 'invoiceDate',
+      label: 'Invoice Date',
+      widthSize: adminListingColumnWidthSize('date'),
+      sortable: true,
+    },
+    {
+      key: 'dueDate',
+      label: 'Due Date',
+      widthSize: adminListingColumnWidthSize('date'),
+      sortable: true,
+    },
     {
       key: 'lastUpdated',
       label: 'Last Updated',
+      widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      minWidth: 110,
       render: (_, row) => new Date(row.lastUpdated).toLocaleDateString(),
     },
     {
@@ -118,7 +154,6 @@ export function buildInvoiceColumns(handlers: InvoiceRowActionHandlers): Column<
       searchable: false,
       hideable: false,
       align: 'center',
-      width: 56,
       render: (_, row) => <RowActions row={row} actions={buildInvoiceRowActions(row, handlers)} />,
     },
   ]

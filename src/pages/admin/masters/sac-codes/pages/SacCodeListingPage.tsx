@@ -15,8 +15,13 @@ import {
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { sacCodeMasterService } from '@/shared/services/sacCodeMasterService'
-import type { SacCodeMaster } from '@/shared/types/sacCodeMaster'
+import type { SacCodeMaster, SacCodeMasterListFilters } from '@/shared/types/sacCodeMaster'
 import { SacCodeFormDrawer } from '../components/SacCodeFormDrawer'
+import {
+  SacCodeAdvancedFilterFields,
+  EMPTY_SAC_CODE_LIST_FILTERS,
+  hasSacCodeFiltersActive,
+} from '../components/SacCodeAdvancedFilters'
 import { buildSacCodeColumns } from '../components/SacCodeTableColumns'
 import {
   downloadSacCodeCsv,
@@ -35,12 +40,13 @@ export function SacCodeListingPage() {
   const [statusOpen, setStatusOpen] = useState(false)
   const [statusTarget, setStatusTarget] = useState<SacCodeMaster | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [filters, setFilters] = useState<SacCodeMasterListFilters>(EMPTY_SAC_CODE_LIST_FILTERS)
 
   const loadRows = useCallback(() => {
     setLoading(true)
-    setRows(sacCodeMasterService.list())
+    setRows(sacCodeMasterService.list(filters))
     setLoading(false)
-  }, [])
+  }, [filters])
 
   useEffect(() => {
     loadRows()
@@ -89,16 +95,6 @@ export function SacCodeListingPage() {
     showToast({ title: 'Export started', variant: 'success' })
   }, [listing.filteredRows, showToast])
 
-  const handleRefresh = useCallback(() => {
-    loadRows()
-    showToast({ title: 'List refreshed', variant: 'info' })
-  }, [loadRows, showToast])
-
-  const handleClearFilters = useCallback(() => {
-    listing.handleSearch('')
-    listing.setColumnFilters({})
-  }, [listing])
-
   const handleConfirmStatus = () => {
     if (!statusTarget) return
     setActionLoading(true)
@@ -118,8 +114,6 @@ export function SacCodeListingPage() {
     theme.palette.mode === 'dark'
       ? alpha(theme.palette.common.white, 0.04)
       : alpha(theme.palette.common.black, 0.02)
-
-  const hasActiveFilters = Boolean(listing.tableState.searchQuery)
 
   return (
     <>
@@ -144,12 +138,19 @@ export function SacCodeListingPage() {
             onHiddenColumnKeysChange={(keys) =>
               listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
             }
-            moreMenuItems={[
-              { label: 'Refresh list', onClick: handleRefresh },
-              ...(hasActiveFilters
-                ? [{ label: 'Clear all filters', onClick: handleClearFilters }]
-                : []),
-            ]}
+            filterPopover={{
+              active: hasSacCodeFiltersActive(filters),
+              value: filters,
+              onApply: (next) => {
+                setFilters(next)
+                listing.setTableState((state) => ({ ...state, page: 0 }))
+              },
+              onClear: () => setFilters(EMPTY_SAC_CODE_LIST_FILTERS),
+              hasActive: hasSacCodeFiltersActive,
+              children: (draft, patch) => (
+                <SacCodeAdvancedFilterFields draft={draft} patch={patch} />
+              ),
+            }}
           />
         }
         listingContent={

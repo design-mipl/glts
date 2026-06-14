@@ -33,7 +33,6 @@ import {
   resolveFlowBatchId,
 } from '../../../utils/gltsReferenceIds'
 import { REQUIRED_GLOBAL_CHECKLIST_DOCUMENTS } from '../../../utils/globalDocumentChecklist'
-import { buildApplicationReviewOverviewFromFlowState } from '../../../utils/applicationReviewOverview'
 
 interface BulkApplicationUploadPageProps {
   state: ApplicationFlowState
@@ -412,14 +411,6 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
   }
 
   const isSingleListing = rows.length === 1
-  const summaryOverview = useMemo(
-    () =>
-      buildApplicationReviewOverviewFromFlowState(state, {
-        gltsApplicationId,
-        gltsBatchId,
-      }),
-    [state, gltsApplicationId, gltsBatchId],
-  )
 
   const handleAddEmptyApplicant = useCallback(() => {
     const gltsApplicationId = ensureFlowGltsApplicationId(state)
@@ -636,7 +627,6 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
           }
           singleListing={isSingleListing}
           gltsApplicationId={gltsApplicationId}
-          summaryOverview={summaryOverview}
         />
       )}
 

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { Column } from '@/design-system/UIComponents'
-import { AdminListingTable } from '@/pages/admin/components/listing'
+import { AdminListingTable, adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import type { AdminPortalUserActivityLog } from '@/shared/types/adminPortalUser'
 import { formatUserDateTime, getActivityLogCellValue } from '../utils/userListingUtils'
@@ -16,21 +16,21 @@ function buildActivityColumns(): Column<LogRow>[] {
     {
       key: 'activity',
       label: 'Activity',
-      minWidth: 220,
+      widthSize: adminListingColumnWidthSize('activityLog'),
       sortable: false,
       filterable: true,
     },
     {
       key: 'doneBy',
       label: 'Done By',
-      minWidth: 140,
+      widthSize: adminListingColumnWidthSize('assignee'),
       sortable: true,
       filterable: true,
     },
     {
       key: 'timestamp',
       label: 'Date & Time',
-      width: 180,
+      widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
       filterable: false,
       render: (_, row) => formatUserDateTime(row.timestamp),

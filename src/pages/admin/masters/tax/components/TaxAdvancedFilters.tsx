@@ -1,26 +1,21 @@
-import { Stack } from '@mui/material'
 import { Select } from '@/design-system/UIComponents'
+import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 import type { TaxMasterListFilters } from '@/shared/types/taxMaster'
 import { TDS_APPLICABLE_ON_OPTIONS } from '@/shared/services/taxMasterService'
-import type { TaxConfigurationTab } from '../config/taxTabs'
 
-export interface TaxAdvancedFiltersProps {
-  activeTab: TaxConfigurationTab
-  filters: TaxMasterListFilters
-  onChange: (next: TaxMasterListFilters) => void
+export interface TaxAdvancedFilterFieldsProps {
+  draft: TaxMasterListFilters
+  patch: (partial: Partial<TaxMasterListFilters>) => void
 }
 
-export function TaxAdvancedFilters({ activeTab, filters, onChange }: TaxAdvancedFiltersProps) {
-  if (activeTab !== 'tds') return null
-
+export function TaxAdvancedFilterFields({ draft, patch }: TaxAdvancedFilterFieldsProps) {
   return (
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} useFlexGap flexWrap="wrap">
+    <ListingFilterField label="Applicable on">
       <Select
         placeholder="All applicability"
-        value={filters.applicableOn === 'all' ? '' : (filters.applicableOn ?? '')}
+        value={draft.applicableOn === 'all' ? '' : (draft.applicableOn ?? '')}
         onChange={(value) =>
-          onChange({
-            ...filters,
+          patch({
             applicableOn: (value ? value : 'all') as TaxMasterListFilters['applicableOn'],
           })
         }
@@ -28,8 +23,11 @@ export function TaxAdvancedFilters({ activeTab, filters, onChange }: TaxAdvanced
         size="sm"
         clearable
         fullWidth
-        sx={{ minWidth: { xs: '100%', sm: 220 } }}
       />
-    </Stack>
+    </ListingFilterField>
   )
+}
+
+export function hasTaxFiltersActive(filters: TaxMasterListFilters): boolean {
+  return Boolean(filters.applicableOn && filters.applicableOn !== 'all')
 }

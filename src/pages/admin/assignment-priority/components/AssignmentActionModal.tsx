@@ -8,10 +8,10 @@ import { PASSENGER_STATUS_OPTIONS } from '../config/assignmentStatusConfig'
 import type { AssignmentAdminAction, DeskPassengerAction } from './AssignmentActionMenu'
 
 export type AssignmentActionPayload =
-  | { action: 'assign_user'; team: string; user: string }
+  | { action: 'assign_user'; team: string; user: string; priority: string }
   | { action: 'change_priority'; priority: string }
   | { action: 'update_status'; status: PassengerOperationalStatus }
-  | { action: 'reassign'; team: string; user: string }
+  | { action: 'reassign'; team: string; user: string; priority: string }
   | { action: 'add_notes'; notes: string }
   | { action: 'move_next_date' }
   | { action: 'upload_proof'; fileName: string }
@@ -81,7 +81,7 @@ export function AssignmentActionModal({
   const handleConfirm = () => {
     switch (action) {
       case 'assign_user':
-        onConfirm({ action, team, user })
+        onConfirm({ action, team, user, priority })
         break
       case 'change_priority':
         onConfirm({ action, priority })
@@ -90,7 +90,7 @@ export function AssignmentActionModal({
         onConfirm({ action, status })
         break
       case 'reassign':
-        onConfirm({ action: 'reassign', team, user })
+        onConfirm({ action: 'reassign', team, user, priority })
         break
       case 'add_notes':
         onConfirm({ action, notes })
@@ -127,7 +127,7 @@ export function AssignmentActionModal({
       size="sm"
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button label="Cancel" variant="outlined" onClick={onClose} />
+          <Button label="Cancel" variant="neutral" onClick={onClose} />
           <Button label="Confirm" onClick={handleConfirm} />
         </Stack>
       }
@@ -140,6 +140,15 @@ export function AssignmentActionModal({
             </FormField>
             <FormField label="Assigned user">
               <Select value={user} onChange={v => setUser(String(v))} options={EXECUTIVE_OPTIONS} size="sm" fullWidth />
+            </FormField>
+            <FormField label="Priority">
+              <Select
+                value={priority}
+                onChange={v => setPriority(String(v))}
+                options={ASSIGNMENT_PRIORITY_OPTIONS}
+                size="sm"
+                fullWidth
+              />
             </FormField>
           </>
         ) : null}

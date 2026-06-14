@@ -1,38 +1,22 @@
-import { Box, Stack } from '@mui/material'
-import { Button, Input, Select } from '@/design-system/UIComponents'
+import { Box } from '@mui/material'
+import { Input, Select } from '@/design-system/UIComponents'
+import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
+import { listingToolbarFiltersContainerSx } from '@/design-system/listingToolbarChrome'
 import type {
-  OperationalCaseListFilters,
   OperationalDateFilterPreset,
   OperationsDeskFilters,
 } from '@/shared/types/operationalCaseHandling'
 import { DATE_FILTER_OPTIONS } from '../utils/operationalCaseHandlingUtils'
 
 interface FilterOptions {
-  countries: string[]
   statuses: string[]
   priorities: string[]
   cityTeams: string[]
+  executives: string[]
+  countries: string[]
+  jurisdictions: string[]
+  applications: string[]
 }
-
-interface PriorityQueueFilterBarProps {
-  variant: 'priority_queue'
-  filters: OperationalCaseListFilters
-  onFiltersChange: (filters: OperationalCaseListFilters) => void
-  options: FilterOptions
-  onClear: () => void
-  hasActiveFilters: boolean
-}
-
-interface OperationsDeskFilterBarProps {
-  variant: 'operations_desk'
-  filters: OperationsDeskFilters
-  onFiltersChange: (filters: OperationsDeskFilters) => void
-  options: Pick<FilterOptions, 'statuses' | 'cityTeams'>
-  onClear: () => void
-  hasActiveFilters: boolean
-}
-
-type CaseHandlingFilterBarProps = PriorityQueueFilterBarProps | OperationsDeskFilterBarProps
 
 function DateFilterFields({
   datePreset,
@@ -51,152 +35,175 @@ function DateFilterFields({
 }) {
   return (
     <>
-      <Select
-        value={datePreset}
-        onChange={value => onDatePresetChange(String(value) as OperationalDateFilterPreset)}
-        options={DATE_FILTER_OPTIONS}
-        placeholder="Date"
-        size="sm"
-        fullWidth
-      />
+      <ListingFilterField label="Operational date">
+        <Select
+          value={datePreset}
+          onChange={(value) => onDatePresetChange(String(value) as OperationalDateFilterPreset)}
+          options={DATE_FILTER_OPTIONS}
+          placeholder="Date"
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
       {datePreset === 'custom' ? (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-            gap: 1,
-            gridColumn: { md: 'span 2' },
-          }}
-        >
-          <Input
-            type="date"
-            size="sm"
-            value={customDateFrom ?? ''}
-            onChange={onCustomFromChange}
-            placeholder="From"
-          />
-          <Input
-            type="date"
-            size="sm"
-            value={customDateTo ?? ''}
-            onChange={onCustomToChange}
-            placeholder="To"
-          />
+        <Box sx={listingToolbarFiltersContainerSx()}>
+          <ListingFilterField label="From">
+            <Input
+              type="date"
+              size="sm"
+              value={customDateFrom ?? ''}
+              onChange={onCustomFromChange}
+              placeholder="From"
+            />
+          </ListingFilterField>
+          <ListingFilterField label="To">
+            <Input
+              type="date"
+              size="sm"
+              value={customDateTo ?? ''}
+              onChange={onCustomToChange}
+              placeholder="To"
+            />
+          </ListingFilterField>
         </Box>
       ) : null}
     </>
   )
 }
 
-export function CaseHandlingFilterBar(props: CaseHandlingFilterBarProps) {
-  if (props.variant === 'operations_desk') {
-    const { filters, onFiltersChange, options, onClear, hasActiveFilters } = props
-    return (
-      <Stack spacing={1}>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(4, 1fr)',
-            },
-            gap: 1,
-          }}
-        >
-          <DateFilterFields
-            datePreset={filters.datePreset}
-            customDateFrom={filters.customDateFrom}
-            customDateTo={filters.customDateTo}
-            onDatePresetChange={preset => onFiltersChange({ ...filters, datePreset: preset })}
-            onCustomFromChange={value => onFiltersChange({ ...filters, customDateFrom: value })}
-            onCustomToChange={value => onFiltersChange({ ...filters, customDateTo: value })}
-          />
-          <Select
-            value={filters.status}
-            onChange={value => onFiltersChange({ ...filters, status: String(value) })}
-            options={options.statuses.map(s => ({ value: s, label: s }))}
-            placeholder="All statuses"
-            size="sm"
-            clearable
-            fullWidth
-          />
-          <Select
-            value={filters.team}
-            onChange={value => onFiltersChange({ ...filters, team: String(value) })}
-            options={options.cityTeams.map(t => ({ value: t, label: t }))}
-            placeholder="All teams"
-            size="sm"
-            clearable
-            fullWidth
-          />
-        </Box>
-        {hasActiveFilters && (
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button label="Clear filters" variant="text" size="sm" onClick={onClear} />
-          </Box>
-        )}
-      </Stack>
-    )
-  }
+export interface OperationsDeskFilterFieldsProps {
+  draft: OperationsDeskFilters
+  patch: (partial: Partial<OperationsDeskFilters>) => void
+  options: FilterOptions
+}
 
-  const { filters, onFiltersChange, options, onClear, hasActiveFilters } = props
-
+export function OperationsDeskFilterFields({
+  draft,
+  patch,
+  options,
+}: OperationsDeskFilterFieldsProps) {
   return (
-    <Stack spacing={1}>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, 1fr)',
-            md: 'repeat(4, 1fr)',
-            lg: 'repeat(4, 1fr)',
-          },
-          gap: 1,
-        }}
-      >
-        <DateFilterFields
-          datePreset={filters.datePreset}
-          customDateFrom={filters.customDateFrom}
-          customDateTo={filters.customDateTo}
-          onDatePresetChange={preset => onFiltersChange({ ...filters, datePreset: preset })}
-          onCustomFromChange={value => onFiltersChange({ ...filters, customDateFrom: value })}
-          onCustomToChange={value => onFiltersChange({ ...filters, customDateTo: value })}
-        />
+    <>
+      <DateFilterFields
+        datePreset={draft.datePreset}
+        customDateFrom={draft.customDateFrom}
+        customDateTo={draft.customDateTo}
+        onDatePresetChange={(preset) => patch({ datePreset: preset })}
+        onCustomFromChange={(value) => patch({ customDateFrom: value })}
+        onCustomToChange={(value) => patch({ customDateTo: value })}
+      />
+      <ListingFilterField label="Batch / Application">
         <Select
-          value={filters.priority}
-          onChange={value => onFiltersChange({ ...filters, priority: String(value) })}
-          options={options.priorities.map(p => ({ value: p, label: p }))}
+          value={draft.applicationId}
+          onChange={(value) => patch({ applicationId: String(value) })}
+          options={options.applications.map((id) => ({ value: id, label: id }))}
+          placeholder="All applications"
+          size="sm"
+          clearable
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Status">
+        <Select
+          value={draft.status}
+          onChange={(value) => patch({ status: String(value) })}
+          options={options.statuses.map((s) => ({ value: s, label: s }))}
+          placeholder="All statuses"
+          size="sm"
+          clearable
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Team">
+        <Select
+          value={draft.team}
+          onChange={(value) => patch({ team: String(value) })}
+          options={options.cityTeams.map((t) => ({ value: t, label: t }))}
+          placeholder="All teams"
+          size="sm"
+          clearable
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Executive">
+        <Select
+          value={draft.executive}
+          onChange={(value) => patch({ executive: String(value) })}
+          options={options.executives.map((e) => ({ value: e, label: e }))}
+          placeholder="All executives"
+          size="sm"
+          clearable
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Priority">
+        <Select
+          value={draft.priority}
+          onChange={(value) => patch({ priority: String(value) })}
+          options={options.priorities.map((p) => ({ value: p, label: p }))}
           placeholder="All priorities"
           size="sm"
           clearable
           fullWidth
         />
+      </ListingFilterField>
+      <ListingFilterField label="Visa country">
         <Select
-          value={filters.cityTeam}
-          onChange={value => onFiltersChange({ ...filters, cityTeam: String(value) })}
-          options={options.cityTeams.map(t => ({ value: t, label: t }))}
-          placeholder="All city teams"
-          size="sm"
-          clearable
-          fullWidth
-        />
-        <Select
-          value={filters.country}
-          onChange={value => onFiltersChange({ ...filters, country: String(value) })}
-          options={options.countries.map(c => ({ value: c, label: c }))}
+          value={draft.visaCountry}
+          onChange={(value) => patch({ visaCountry: String(value) })}
+          options={options.countries.map((c) => ({ value: c, label: c }))}
           placeholder="All countries"
           size="sm"
           clearable
           fullWidth
         />
+      </ListingFilterField>
+      <ListingFilterField label="Jurisdiction">
+        <Select
+          value={draft.jurisdiction}
+          onChange={(value) => patch({ jurisdiction: String(value) })}
+          options={options.jurisdictions.map((j) => ({ value: j, label: j }))}
+          placeholder="All jurisdictions"
+          size="sm"
+          clearable
+          fullWidth
+        />
+      </ListingFilterField>
+      <Box sx={listingToolbarFiltersContainerSx()}>
+        <ListingFilterField label="Joining from">
+          <Input
+            type="date"
+            size="sm"
+            value={draft.joiningDateFrom}
+            onChange={(value) => patch({ joiningDateFrom: value })}
+            placeholder="From"
+          />
+        </ListingFilterField>
+        <ListingFilterField label="Joining to">
+          <Input
+            type="date"
+            size="sm"
+            value={draft.joiningDateTo}
+            onChange={(value) => patch({ joiningDateTo: value })}
+            placeholder="To"
+          />
+        </ListingFilterField>
       </Box>
-      {hasActiveFilters && (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button label="Clear filters" variant="text" size="sm" onClick={onClear} />
-        </Box>
-      )}
-    </Stack>
+    </>
+  )
+}
+
+export function hasOperationsDeskFiltersActive(filters: OperationsDeskFilters): boolean {
+  return (
+    Boolean(filters.status) ||
+    Boolean(filters.team) ||
+    Boolean(filters.executive) ||
+    Boolean(filters.priority) ||
+    Boolean(filters.visaCountry) ||
+    Boolean(filters.jurisdiction) ||
+    Boolean(filters.applicationId) ||
+    Boolean(filters.joiningDateFrom) ||
+    Boolean(filters.joiningDateTo) ||
+    filters.datePreset !== 'today'
   )
 }

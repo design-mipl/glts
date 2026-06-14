@@ -1,27 +1,30 @@
-import { Stack } from '@mui/material'
 import { Select } from '@/design-system/UIComponents'
+import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 import type { ServiceMasterListFilters } from '@/shared/types/serviceMaster'
 import { SERVICE_TYPE_OPTIONS } from '../config/serviceTypeConfig'
 
-export interface ServiceAdvancedFiltersProps {
-  filters: ServiceMasterListFilters
-  onChange: (next: ServiceMasterListFilters) => void
+export interface ServiceAdvancedFilterFieldsProps {
+  draft: ServiceMasterListFilters
+  patch: (partial: Partial<ServiceMasterListFilters>) => void
 }
 
-export function ServiceAdvancedFilters({ filters, onChange }: ServiceAdvancedFiltersProps) {
+export function ServiceAdvancedFilterFields({ draft, patch }: ServiceAdvancedFilterFieldsProps) {
   return (
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} useFlexGap flexWrap="wrap">
+    <ListingFilterField label="Service type">
       <Select
-        label="Service type"
         placeholder="Select service type"
-        value={filters.serviceType ?? 'all'}
+        value={draft.serviceType ?? 'all'}
         onChange={(value) =>
-          onChange({ ...filters, serviceType: value as ServiceMasterListFilters['serviceType'] })
+          patch({ serviceType: value as ServiceMasterListFilters['serviceType'] })
         }
         options={[{ value: 'all', label: 'All types' }, ...SERVICE_TYPE_OPTIONS]}
         size="sm"
-        sx={{ minWidth: 180 }}
+        fullWidth
       />
-    </Stack>
+    </ListingFilterField>
   )
+}
+
+export function hasServiceFiltersActive(filters: ServiceMasterListFilters): boolean {
+  return (filters.serviceType ?? 'all') !== 'all'
 }

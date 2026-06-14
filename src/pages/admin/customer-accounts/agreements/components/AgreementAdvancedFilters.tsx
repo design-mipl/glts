@@ -1,43 +1,22 @@
-import { Box } from '@mui/material'
-import { Button, Input, Select } from '@/design-system/UIComponents'
+import { Input, Select } from '@/design-system/UIComponents'
+import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 import { companyMasterService } from '@/shared/services/companyMasterService'
 import type { AgreementAdvancedFilterState } from '../utils/agreementListingUtils'
 import { AGREEMENT_WORKFLOW_OPTIONS } from '../config/agreementStatusConfig'
 
-interface AgreementAdvancedFiltersProps {
-  filters: AgreementAdvancedFilterState
-  onFiltersChange: (filters: AgreementAdvancedFilterState) => void
-  onClearFilters: () => void
-  hasActiveFilters: boolean
+export interface AgreementAdvancedFilterFieldsProps {
+  draft: AgreementAdvancedFilterState
+  patch: (partial: Partial<AgreementAdvancedFilterState>) => void
 }
 
-export function AgreementAdvancedFilters({
-  filters,
-  onFiltersChange,
-  onClearFilters,
-  hasActiveFilters,
-}: AgreementAdvancedFiltersProps) {
-  const patch = (partial: Partial<AgreementAdvancedFilterState>) =>
-    onFiltersChange({ ...filters, ...partial })
-
+export function AgreementAdvancedFilterFields({ draft, patch }: AgreementAdvancedFilterFieldsProps) {
   const companyOptions = companyMasterService.getSelectOptions()
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, 1fr)',
-            md: 'repeat(3, 1fr)',
-            lg: 'repeat(4, 1fr)',
-          },
-          gap: 1.5,
-        }}
-      >
+    <>
+      <ListingFilterField label="Agreement type">
         <Select
-          value={filters.agreementType}
+          value={draft.agreementType}
           onChange={(v) => patch({ agreementType: String(v) })}
           options={[
             { value: 'all', label: 'All agreement types' },
@@ -48,8 +27,10 @@ export function AgreementAdvancedFilters({
           size="sm"
           fullWidth
         />
+      </ListingFilterField>
+      <ListingFilterField label="Billing type">
         <Select
-          value={filters.billingType}
+          value={draft.billingType}
           onChange={(v) => patch({ billingType: String(v) })}
           options={[
             { value: 'all', label: 'All billing types' },
@@ -61,8 +42,10 @@ export function AgreementAdvancedFilters({
           size="sm"
           fullWidth
         />
+      </ListingFilterField>
+      <ListingFilterField label="Workflow type">
         <Select
-          value={filters.workflowType}
+          value={draft.workflowType}
           onChange={(v) => patch({ workflowType: String(v) })}
           options={[
             { value: 'all', label: 'All workflow types' },
@@ -72,8 +55,10 @@ export function AgreementAdvancedFilters({
           size="sm"
           fullWidth
         />
+      </ListingFilterField>
+      <ListingFilterField label="Status">
         <Select
-          value={filters.status}
+          value={draft.status}
           onChange={(v) => patch({ status: String(v) })}
           options={[
             { value: 'all', label: 'All statuses' },
@@ -88,8 +73,10 @@ export function AgreementAdvancedFilters({
           size="sm"
           fullWidth
         />
+      </ListingFilterField>
+      <ListingFilterField label="Company">
         <Select
-          value={filters.companyId}
+          value={draft.companyId}
           onChange={(v) => patch({ companyId: String(v) })}
           options={[
             { value: 'all', label: 'All companies' },
@@ -99,35 +86,36 @@ export function AgreementAdvancedFilters({
           size="sm"
           fullWidth
         />
+      </ListingFilterField>
+      <ListingFilterField label="Entity name">
         <Input
-          value={filters.entityName}
+          value={draft.entityName}
           onChange={(v) => patch({ entityName: v })}
           placeholder="Entity name"
           size="sm"
           fullWidth
         />
+      </ListingFilterField>
+      <ListingFilterField label="Updated from">
         <Input
           type="date"
-          value={filters.dateFrom}
+          value={draft.dateFrom}
           onChange={(v) => patch({ dateFrom: v })}
           placeholder="Updated from"
           size="sm"
           fullWidth
         />
+      </ListingFilterField>
+      <ListingFilterField label="Updated to">
         <Input
           type="date"
-          value={filters.dateTo}
+          value={draft.dateTo}
           onChange={(v) => patch({ dateTo: v })}
           placeholder="Updated to"
           size="sm"
           fullWidth
         />
-      </Box>
-      {hasActiveFilters ? (
-        <Box>
-          <Button label="Clear filters" variant="outlined" color="secondary" size="sm" onClick={onClearFilters} />
-        </Box>
-      ) : null}
-    </Box>
+      </ListingFilterField>
+    </>
   )
 }

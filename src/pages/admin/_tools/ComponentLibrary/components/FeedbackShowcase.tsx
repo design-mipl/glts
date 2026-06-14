@@ -70,7 +70,7 @@ export function FeedbackShowcase() {
               This is the modal body. You can put any content here â€” forms, details, confirmations.
             </Typography>
             <Stack direction="row" gap={1} sx={{ mt: 3 }} justifyContent="flex-end">
-              <Button variant="outlined" onClick={() => setModalOpen(false)}>Cancel</Button>
+              <Button variant="neutral" onClick={() => setModalOpen(false)}>Cancel</Button>
               <Button variant="contained" onClick={() => setModalOpen(false)}>Confirm</Button>
             </Stack>
           </Modal>

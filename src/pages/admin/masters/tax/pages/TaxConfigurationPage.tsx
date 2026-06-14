@@ -20,7 +20,7 @@ import { GstRateFormModal } from '../components/GstRateFormModal'
 import { buildGstRateColumns } from '../components/GstRateTableColumns'
 import { TdsSectionFormModal } from '../components/TdsSectionFormModal'
 import { buildTdsSectionColumns } from '../components/TdsSectionTableColumns'
-import { TaxAdvancedFilters } from '../components/TaxAdvancedFilters'
+import { TaxAdvancedFilterFields, hasTaxFiltersActive } from '../components/TaxAdvancedFilters'
 import { TAX_CONFIGURATION_TABS, type TaxConfigurationTab } from '../config/taxTabs'
 import {
   downloadGstRateCsv,
@@ -143,17 +143,6 @@ export function TaxConfigurationPage() {
     showToast({ title: 'Export started', variant: 'success' })
   }, [activeTab, gstListing.filteredRows, tdsListing.filteredRows, showToast])
 
-  const handleRefresh = useCallback(() => {
-    loadRows()
-    showToast({ title: 'List refreshed', variant: 'info' })
-  }, [loadRows, showToast])
-
-  const handleClearFilters = useCallback(() => {
-    setFilters(EMPTY_FILTERS)
-    listing.handleSearch('')
-    listing.setColumnFilters({})
-  }, [listing])
-
   const handleTabChange = (tab: TaxConfigurationTab) => {
     setActiveTab(tab)
     setFilters(EMPTY_FILTERS)
@@ -193,10 +182,6 @@ export function TaxConfigurationPage() {
       ? statusTarget.slabName
       : statusTarget?.sectionCode
 
-  const hasActiveFilters =
-    (activeTab === 'tds' && filters.applicableOn && filters.applicableOn !== 'all') ||
-    Boolean(listing.tableState.searchQuery)
-
   return (
     <>
       <AdminListingShell
@@ -220,32 +205,38 @@ export function TaxConfigurationPage() {
         tabValue={activeTab}
         onTabChange={(value) => handleTabChange(value as TaxConfigurationTab)}
         toolbar={
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <AdminListingToolbar
-              searchValue={listing.tableState.searchQuery}
-              onSearch={listing.handleSearch}
-              searchPlaceholder={
-                activeTab === 'gst'
-                  ? 'Search slab name, rate, or description…'
-                  : 'Search section code, rate, or description…'
-              }
-              onExport={handleExport}
-              columns={toolbarColumns}
-              hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
-              onHiddenColumnKeysChange={(keys) =>
-                listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
-              }
-              moreMenuItems={[
-                { label: 'Refresh list', onClick: handleRefresh },
-                ...(hasActiveFilters
-                  ? [{ label: 'Clear all filters', onClick: handleClearFilters }]
-                  : []),
-              ]}
-            />
-            {activeTab === 'tds' ? (
-              <TaxAdvancedFilters activeTab={activeTab} filters={filters} onChange={setFilters} />
-            ) : null}
-          </Box>
+          <AdminListingToolbar
+            searchValue={listing.tableState.searchQuery}
+            onSearch={listing.handleSearch}
+            searchPlaceholder={
+              activeTab === 'gst'
+                ? 'Search slab name, rate, or description…'
+                : 'Search section code, rate, or description…'
+            }
+            onExport={handleExport}
+            columns={toolbarColumns}
+            hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
+            onHiddenColumnKeysChange={(keys) =>
+              listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
+            }
+            filterPopover={
+              activeTab === 'tds'
+                ? {
+                    active: hasTaxFiltersActive(filters),
+                    value: filters,
+                    onApply: (next) => {
+                      setFilters(next)
+                      listing.setTableState((state) => ({ ...state, page: 0 }))
+                    },
+                    onClear: () => setFilters(EMPTY_FILTERS),
+                    hasActive: hasTaxFiltersActive,
+                    children: (draft, patch) => (
+                      <TaxAdvancedFilterFields draft={draft} patch={patch} />
+                    ),
+                  }
+                : undefined
+            }
+          />
         }
         listingContent={
           activeTab === 'gst' ? (

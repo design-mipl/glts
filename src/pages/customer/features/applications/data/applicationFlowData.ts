@@ -44,6 +44,8 @@ export interface SingleApplicationRow {
   appointmentDate?: string
   poReference?: string
   processingStageDates?: ApplicationProcessingStageDates
+  assignedTeamId?: string
+  assignedUserId?: string
 }
 
 export interface BulkBatchRow {
@@ -76,6 +78,8 @@ export interface BulkBatchRow {
   appointmentDate?: string
   poReference?: string
   processingStageDates?: ApplicationProcessingStageDates
+  assignedTeamId?: string
+  assignedUserId?: string
 }
 
 export interface ExtractedField {
@@ -152,6 +156,9 @@ export const GLTS_BATCH_IDS = {
   schengenCrew: 'GLTS-BAT-2026-041',
   japanGroup: 'GLTS-BAT-2026-038',
 } as const
+
+/** Marine single-application demo — applicant chose GLTS to arrange ticket and insurance. */
+export const MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID = 'GLTS-APP-2026-744' as const
 
 function singleRow(
   partial: Omit<SingleApplicationRow, 'recordType' | 'status' | 'statusTone'> & {
@@ -635,6 +642,32 @@ export const mockBulkBatches: BulkBatchRow[] = [
     customerSegment: 'marine',
   }),
   bulkRow({
+    id: 'GLTS-MAR-1025',
+    companyName: 'Oceanic Crew Management Pvt Ltd',
+    vesselName: 'MV Green Horizon',
+    primaryApplicantName: 'Rajesh Kumar',
+    country: 'China',
+    countryFlag: '🇨🇳',
+    visaType: 'M Type Visa',
+    jurisdiction: 'Delhi',
+    totalApplicants: 5,
+    verifiedApplicants: 5,
+    pendingCorrections: 0,
+    processed: 5,
+    errors: 0,
+    travelDate: '2026-06-28',
+    submissionDate: '2026-06-12',
+    createdAt: '2026-06-01',
+    lastUpdated: '2026-06-13',
+    processingStage: 'Embassy processing',
+    operationalStatus: 'Submitted',
+    createdByEmail: 'crewdesk@oceaniccrew.com',
+    createdByRole: 'booker',
+    customerSegment: 'marine',
+    assignedTeamId: 'team-marine',
+    assignedUserId: 'user-marine-2',
+  }),
+  bulkRow({
     id: 'GLTS-BAT-2026-025',
     companyName: 'Asia Connect Ltd',
     primaryApplicantName: 'Mei Lin',
@@ -742,6 +775,76 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
     confidence: 94,
     status: 'verified',
     fields: hiroshiFields.map(f => ({ ...f, value: f.key === 'surname' ? 'CHEN' : f.key === 'given' ? 'MIKE' : f.value })),
+  },
+  {
+    id: 'q-mar-1',
+    fileName: 'crew_green_01.pdf',
+    gltsApplicationId: 'GLTS-MAR-1025',
+    gltsApplicantId: 'GLTS-APL-M1025-01',
+    sequenceNo: 1,
+    travelerName: 'RAJESH KUMAR',
+    passportNo: 'IN8829103',
+    expiry: '15 Aug 2031',
+    nationality: 'IND',
+    confidence: 97,
+    status: 'verified',
+    fields: hiroshiFields.map(f => ({ ...f, value: f.key === 'surname' ? 'KUMAR' : f.key === 'given' ? 'RAJESH' : f.value })),
+  },
+  {
+    id: 'q-mar-2',
+    fileName: 'crew_green_02.pdf',
+    gltsApplicationId: 'GLTS-MAR-1025',
+    gltsApplicantId: 'GLTS-APL-M1025-02',
+    sequenceNo: 2,
+    travelerName: 'VIKRAM SINGH',
+    passportNo: 'IN7738291',
+    expiry: '22 Nov 2030',
+    nationality: 'IND',
+    confidence: 96,
+    status: 'verified',
+    fields: hiroshiFields.map(f => ({ ...f, value: f.key === 'surname' ? 'SINGH' : f.key === 'given' ? 'VIKRAM' : f.value })),
+  },
+  {
+    id: 'q-mar-3',
+    fileName: 'crew_green_03.pdf',
+    gltsApplicationId: 'GLTS-MAR-1025',
+    gltsApplicantId: 'GLTS-APL-M1025-03',
+    sequenceNo: 3,
+    travelerName: 'ANIL MEHTA',
+    passportNo: 'IN6647182',
+    expiry: '09 Jun 2032',
+    nationality: 'IND',
+    confidence: 95,
+    status: 'verified',
+    fields: hiroshiFields.map(f => ({ ...f, value: f.key === 'surname' ? 'MEHTA' : f.key === 'given' ? 'ANIL' : f.value })),
+  },
+  {
+    id: 'q-mar-4',
+    fileName: 'crew_green_04.pdf',
+    gltsApplicationId: 'GLTS-MAR-1025',
+    gltsApplicantId: 'GLTS-APL-M1025-04',
+    sequenceNo: 4,
+    travelerName: 'SURESH NAIR',
+    passportNo: 'IN5596073',
+    expiry: '20 Dec 2029',
+    nationality: 'IND',
+    confidence: 94,
+    status: 'verified',
+    fields: hiroshiFields.map(f => ({ ...f, value: f.key === 'surname' ? 'NAIR' : f.key === 'given' ? 'SURESH' : f.value })),
+  },
+  {
+    id: 'q-mar-5',
+    fileName: 'crew_green_05.pdf',
+    gltsApplicationId: 'GLTS-MAR-1025',
+    gltsApplicantId: 'GLTS-APL-M1025-05',
+    sequenceNo: 5,
+    travelerName: 'DEEPAK PILLAI',
+    passportNo: 'IN4485964',
+    expiry: '03 Jan 2033',
+    nationality: 'IND',
+    confidence: 93,
+    status: 'verified',
+    fields: hiroshiFields.map(f => ({ ...f, value: f.key === 'surname' ? 'PILLAI' : f.key === 'given' ? 'DEEPAK' : f.value })),
   },
   {
     id: 'q6',

@@ -1,14 +1,13 @@
 import { Box, Typography } from '@mui/material'
 import {
   ClipboardCheck,
-  Clock3,
-  Eye,
   FileText,
   MessageSquarePlus,
   UserCog,
 } from 'lucide-react'
 import type { NavigateFunction } from 'react-router-dom'
 import { Badge, RowActions, type Column, type Toast } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { BulkBatchRow, SingleApplicationRow } from '@/pages/customer/features/applications/data/applicationFlowData'
 import {
   getApplicationOperationalTone,
@@ -37,9 +36,10 @@ function operationalStatusBadgeColor(
 function buildRowActions(
   navigate: NavigateFunction,
   showToast: ToastFn,
-  rowId: string,
+  onAssignTeam: (row: MarineApplicationRow) => void,
+  row: MarineApplicationRow,
 ) {
-  const detailPath = `/admin/application-management/marine/${rowId}`
+  const detailPath = `/admin/application-management/marine/${row.id}`
 
   return [
     {
@@ -51,22 +51,6 @@ function buildRowActions(
       label: 'View Form',
       icon: <FileText size={16} />,
       onClick: () => navigate(`${detailPath}/view-form`),
-    },
-    {
-      label: 'View Details',
-      icon: <Eye size={16} />,
-      onClick: () => navigate(detailPath),
-      divider: true,
-    },
-    {
-      label: 'Timeline',
-      icon: <Clock3 size={16} />,
-      onClick: () =>
-        showToast({
-          title: 'Timeline',
-          description: 'Application timeline will open here.',
-          variant: 'info',
-        }),
     },
     {
       label: 'Add Remarks',
@@ -81,12 +65,7 @@ function buildRowActions(
     {
       label: 'Assign Team',
       icon: <UserCog size={16} />,
-      onClick: () =>
-        showToast({
-          title: 'Assign team',
-          description: 'Team assignment dialog will open here.',
-          variant: 'info',
-        }),
+      onClick: () => onAssignTeam(row),
     },
   ]
 }
@@ -94,16 +73,19 @@ function buildRowActions(
 export interface MarineApplicationTableColumnsParams {
   navigate: NavigateFunction
   showToast: ToastFn
+  onAssignTeam: (row: MarineApplicationRow) => void
 }
 
 export function buildMarineApplicationColumns({
   navigate,
   showToast,
+  onAssignTeam,
 }: MarineApplicationTableColumnsParams): Column<MarineApplicationRow>[] {
   return [
     {
       key: 'id',
       label: 'GLTS reference',
+      widthSize: adminListingColumnWidthSize('code'),
       sortable: true,
       filterable: false,
       render: (value: string, row: MarineApplicationRow) => (
@@ -129,6 +111,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'applicantName',
       label: 'Applicant',
+      widthSize: adminListingColumnWidthSize('name'),
       sortable: false,
       filterable: false,
       render: (_: unknown, row: MarineApplicationRow) => (
@@ -142,6 +125,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'companyName',
       label: 'Company name',
+      widthSize: adminListingColumnWidthSize('company'),
       sortable: true,
       filterable: true,
       render: (_: unknown, row: MarineApplicationRow) => (
@@ -153,6 +137,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'countryVisa',
       label: 'Country / Visa',
+      widthSize: adminListingColumnWidthSize('applicationSummary'),
       sortable: true,
       filterable: true,
       render: (_: unknown, row: MarineApplicationRow) => (
@@ -169,6 +154,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'jurisdiction',
       label: 'Jurisdiction',
+      widthSize: adminListingColumnWidthSize('jurisdiction'),
       sortable: true,
       filterable: true,
       render: (value: string) => (
@@ -177,10 +163,17 @@ export function buildMarineApplicationColumns({
         </Typography>
       ),
     },
-    { key: 'travelDate', label: 'Travel date', sortable: true, filterable: true },
+    {
+      key: 'travelDate',
+      label: 'Travel date',
+      widthSize: adminListingColumnWidthSize('date'),
+      sortable: true,
+      filterable: true,
+    },
     {
       key: 'createdBy',
       label: 'Created by',
+      widthSize: adminListingColumnWidthSize('stackedAssignment'),
       sortable: true,
       filterable: true,
       render: (_: unknown, row: MarineApplicationRow) => (
@@ -197,6 +190,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'operationalStatus',
       label: 'Status',
+      widthSize: adminListingColumnWidthSize('status'),
       sortable: true,
       filterable: true,
       render: (_: unknown, row: MarineApplicationRow) => (
@@ -210,6 +204,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'processingStage',
       label: 'Processing stage',
+      widthSize: adminListingColumnWidthSize('description'),
       sortable: false,
       filterable: true,
       render: (value: string) => (
@@ -218,7 +213,13 @@ export function buildMarineApplicationColumns({
         </Typography>
       ),
     },
-    { key: 'lastUpdated', label: 'Last updated', sortable: true, filterable: false },
+    {
+      key: 'lastUpdated',
+      label: 'Last updated',
+      widthSize: adminListingColumnWidthSize('date'),
+      sortable: true,
+      filterable: false,
+    },
     {
       key: 'actions',
       label: '',
@@ -226,9 +227,8 @@ export function buildMarineApplicationColumns({
       filterable: false,
       searchable: false,
       hideable: false,
-      width: 60,
       render: (_: unknown, row: MarineApplicationRow) => (
-        <RowActions actions={buildRowActions(navigate, showToast, row.id)} row={row} />
+        <RowActions actions={buildRowActions(navigate, showToast, onAssignTeam, row)} row={row} />
       ),
     },
   ]

@@ -18,7 +18,7 @@ export interface AdminFullPageFormFooterProps {
 
 /**
  * Standard full-page form footer actions — matches DS FormActions button hierarchy:
- * Cancel (outlined secondary) · optional draft (soft) · extras · Save (contained primary)
+ * Cancel (neutral gray) · optional draft (soft) · extras · Save (contained primary)
  */
 export function AdminFullPageFormFooter({
   onCancel,
@@ -46,8 +46,7 @@ export function AdminFullPageFormFooter({
     >
       {onCancel ? (
         <Button
-          variant="outlined"
-          color="secondary"
+          variant="neutral"
           onClick={onCancel}
           disabled={isDisabled}
           fullWidth

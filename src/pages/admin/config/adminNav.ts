@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Shield,
   SlidersHorizontal,
+  Truck,
   Wrench,
 } from 'lucide-react'
 import type { NavConfig } from '@/design-system/UIComponents'
@@ -66,10 +67,16 @@ export const adminNav: NavConfig[] = [
     label: 'Ground operations',
     icon: createElement(Activity, iconProps),
     children: [
-      { type: 'item', label: 'Operational case handling', href: '/admin/ground-operations/case-handling' },
+      { type: 'item', label: 'Operations Desk', href: '/admin/ground-operations/case-handling' },
       { type: 'item', label: 'Tracking & logistics', href: '/admin/ground-operations/logistics' },
       { type: 'item', label: 'Expense & fund management', href: '/admin/ground-operations/funds' },
     ],
+  },
+  {
+    type: 'group',
+    label: 'Vendor Management',
+    icon: createElement(Truck, iconProps),
+    children: [{ type: 'item', label: 'Vendors', href: '/admin/vendor-management/vendors' }],
   },
   {
     type: 'group',

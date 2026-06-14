@@ -23,7 +23,6 @@ import { getTravelDateFeasibilityForOffering } from '@/shared/services/countryMa
 import { getRequirementPreviewCards } from '../../../data/singleApplicationFlowData'
 import { TravelDateFeasibilityCard } from '../../../components/create/TravelDateFeasibilityCard'
 import { UploadQueueTable } from '../../../components/UploadQueueTable'
-import { buildApplicationReviewOverviewFromFlowState } from '../../../utils/applicationReviewOverview'
 
 interface BulkApplicationReviewStepProps {
   state: ApplicationFlowState
@@ -97,10 +96,6 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
   }
 
   const passportStateLabel = state.issuedPassportState || state.issuedPassportLocationId || '—'
-  const summaryOverview = useMemo(
-    () => buildApplicationReviewOverviewFromFlowState(state),
-    [state],
-  )
 
   return (
     <Box sx={{ width: '100%', maxWidth: '100%' }}>
@@ -148,7 +143,6 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
             readOnly
             singleListing={isSingleListing}
             gltsApplicationId={state.gltsApplicationId || undefined}
-            summaryOverview={summaryOverview}
           />
         </Box>
       )}

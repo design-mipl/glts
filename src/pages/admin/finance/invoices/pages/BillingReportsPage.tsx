@@ -66,7 +66,7 @@ export function BillingReportsPage() {
             </Typography>
           </Box>
           <Stack direction="row" spacing={1}>
-            <Button label="Back to listing" variant="outlined" onClick={() => navigate(LISTING_PATH)} />
+            <Button label="Back to listing" variant="neutral" onClick={() => navigate(LISTING_PATH)} />
             <Button label="Export CSV" onClick={handleExport} />
           </Stack>
         </Stack>

@@ -3,10 +3,17 @@ import { GLTS_APPLICATION_IDS } from '@/pages/customer/data/portalIds'
 import { GLTS_BATCH_IDS } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { OperationalPassengerOverlay } from '@/shared/types/operationalPassengerAssignment'
 
+function localIsoDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function daysFromNow(days: number): string {
   const d = new Date()
   d.setDate(d.getDate() + days)
-  return d.toISOString().slice(0, 10)
+  return localIsoDate(d)
 }
 
 function hoursFromNow(hours: number): string {
