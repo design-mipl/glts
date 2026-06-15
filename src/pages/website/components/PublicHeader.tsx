@@ -78,7 +78,6 @@ export function PublicHeader() {
   const scrolled = useScrolledHeader()
   const { pathname } = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   const isWide = useMediaQuery(theme.breakpoints.up('desktop'))
@@ -91,7 +90,6 @@ export function PublicHeader() {
   const handleSearchSubmit = () => {
     const q = searchQuery.trim()
     navigate(q ? `/countries?search=${encodeURIComponent(q)}` : '/countries')
-    setSearchOpen(false)
     setSearchQuery('')
   }
 
@@ -209,54 +207,6 @@ export function PublicHeader() {
 
           {/* ——— Right: actions ——— */}
           <Stack direction="row" alignItems="center" spacing={{ xs: 0.75, md: 1.25 }} sx={{ justifySelf: 'end' }}>
-            {isTablet && (
-              <>
-                {searchOpen && isWide ? (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: '12px',
-                      border: `1px solid ${colors.greenBright}`,
-                      bgcolor: colors.white,
-                      boxShadow: `0 0 0 3px ${alpha(colors.greenBright, 0.12)}`,
-                      width: 200,
-                    }}
-                  >
-                    <Search size={16} color={colors.textMuted} />
-                    <InputBase
-                      autoFocus
-                      placeholder="Country…"
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') handleSearchSubmit()
-                        if (e.key === 'Escape') setSearchOpen(false)
-                      }}
-                      sx={{ fontSize: '13px', flex: 1 }}
-                    />
-                  </Box>
-                ) : (
-                  <IconButton
-                    size="small"
-                    onClick={() => (isWide ? setSearchOpen(true) : navigate('/countries'))}
-                    aria-label="Search destinations"
-                    sx={{
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: '10px',
-                      bgcolor: colors.surface,
-                      '&:hover': { bgcolor: colors.greenMuted, borderColor: colors.green },
-                    }}
-                  >
-                    <Search size={18} color={colors.navy} />
-                  </IconButton>
-                )}
-              </>
-            )}
-
             {isWide && (
               <Button
                 component="a"
@@ -276,31 +226,6 @@ export function PublicHeader() {
                 Sign in
               </Button>
             )}
-
-            <Button
-              component="a"
-              href="/countries"
-              variant="contained"
-              endIcon={isWide ? <ArrowRight size={16} /> : undefined}
-              sx={{
-                background: `linear-gradient(135deg, ${colors.green} 0%, ${colors.greenBright} 100%)`,
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: { xs: '13px', md: '14px' },
-                px: { xs: 2, md: 2.5 },
-                py: { xs: 0.85, md: 1 },
-                borderRadius: '12px',
-                textTransform: 'none',
-                boxShadow: `0 2px 10px rgba(115, 192, 100, 0.35)`,
-                whiteSpace: 'nowrap',
-                '&:hover': {
-                  background: `linear-gradient(135deg, ${colors.greenBright} 0%, ${colors.greenDark} 100%)`,
-                  boxShadow: `0 4px 16px rgba(115, 192, 100, 0.4)`,
-                },
-              }}
-            >
-              {isWide ? 'Start application' : 'Apply'}
-            </Button>
 
             {!isTablet && (
               <IconButton

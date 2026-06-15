@@ -1,6 +1,8 @@
 import { Grid, Typography, Box } from '@mui/material'
 import { Globe } from 'lucide-react'
 import type { Country } from '@/shared/types/visa'
+import type { ExploreFilters } from '../../../components/ExploreFilterBar'
+import { applyExploreFilters } from '../../../utils/applyExploreFilters'
 import { CountryCard } from './CountryCard'
 import { publicTypography, usePublicBrandColors } from '../../../theme/publicSiteTokens'
 
@@ -11,6 +13,7 @@ interface CountryGridProps {
   selectedVisaTypes: string[]
   priceRange: [number, number]
   sortBy: string
+  exploreFilters: ExploreFilters
 }
 
 export function CountryGrid({
@@ -20,9 +23,10 @@ export function CountryGrid({
   selectedVisaTypes: _selectedVisaTypes,
   priceRange,
   sortBy,
+  exploreFilters,
 }: CountryGridProps) {
   const colors = usePublicBrandColors()
-  let filtered = countries
+  let filtered = applyExploreFilters(countries, exploreFilters)
 
   if (searchTerm.trim()) {
     const q = searchTerm.toLowerCase()

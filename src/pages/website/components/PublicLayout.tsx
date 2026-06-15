@@ -4,6 +4,7 @@ import { PublicHeader } from './PublicHeader'
 import { FooterSection } from '../pages/LandingPage/components/FooterSection'
 import { MobileStickyCta } from './MobileStickyCta'
 import { publicFonts } from '../theme/publicSiteTokens'
+import { useLenis } from '../hooks/useLenis'
 
 interface PublicLayoutProps {
   children: ReactNode
@@ -11,6 +12,7 @@ interface PublicLayoutProps {
 }
 
 export function PublicLayout({ children, hideFooter = false }: PublicLayoutProps) {
+  useLenis()
   return (
     <Box
       sx={{
