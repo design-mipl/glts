@@ -1,6 +1,6 @@
 import { Box, Typography, MenuItem, Select } from '@mui/material'
 import { Zap, Plane, ClipboardList, Umbrella } from 'lucide-react'
-import { publicFonts, publicLightColors, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { publicFonts, publicLightColors, usePublicBrandColors } from '../theme/publicSiteTokens'
 
 export interface ExploreFilters {
   visaDelivery: string

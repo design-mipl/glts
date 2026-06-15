@@ -2,168 +2,89 @@ import { useMemo, useState } from 'react'
 import {
   Box,
   Typography,
-  TextField,
-  InputAdornment,
   Button,
   Stack,
-  Chip,
   Grid,
 } from '@mui/material'
-import { Search, ArrowRight, SlidersHorizontal } from 'lucide-react'
+import { alpha } from '@mui/material/styles'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { getAllCountries, filterCountries } from '@/shared/services/visaService'
+import { getAllCountries } from '@/shared/services/visaService'
 import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
 import { PublicContainer } from '../../../components/PublicContainer'
-import { ExploreFilterBar, type ExploreFilters } from './ExploreFilterBar'
+import { defaultExploreFilters, applyExploreFilters } from '../../../utils/applyExploreFilters'
 import { DestinationListingCard } from '../../../components/DestinationListingCard'
+import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
 
-const defaultFilters: ExploreFilters = {
-  visaDelivery: 'Any Time',
-  visaType: 'All Visa Types',
-  documents: 'Any Documents',
-  holidays: 'Select Dates',
-}
+const HOMEPAGE_PAGE_SIZE = 8
+const HOMEPAGE_MAX_VISIBLE = 12
 
 export function ExploreSection() {
   const colors = usePublicBrandColors()
   const navigate = useNavigate()
-  const [search, setSearch] = useState('')
-  const [filters, setFilters] = useState<ExploreFilters>(defaultFilters)
-  const [showFilters, setShowFilters] = useState(true)
+  const [page, setPage] = useState(0)
 
   const countries = useMemo(() => {
-    let list = filterCountries({
-      visaType: filters.visaType === 'All Visa Types' ? undefined : filters.visaType,
-    })
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      list = list.filter(
-        c =>
-          c.name.toLowerCase().includes(q) ||
-          c.region.toLowerCase().includes(q) ||
-          c.cities.toLowerCase().includes(q),
-      )
-    }
-    if (filters.visaDelivery === 'Under 24 hours') {
-      list = list.filter(c => c.fastMinutes && c.fastMinutes <= 1440)
-    } else if (filters.visaDelivery === 'Under 1 week') {
-      list = list.filter(c => !c.processingTime.includes('110'))
-    }
+    const list = applyExploreFilters(getAllCountries(), defaultExploreFilters)
     return [...list].sort((a, b) => {
       if (a.trending !== b.trending) return a.trending ? -1 : 1
       return b.trendingPercent - a.trendingPercent
     })
-  }, [filters, search])
+  }, [])
+
+  const homepageCountries = useMemo(
+    () => countries.slice(0, HOMEPAGE_MAX_VISIBLE),
+    [countries],
+  )
+  const totalPages = Math.max(1, Math.ceil(homepageCountries.length / HOMEPAGE_PAGE_SIZE))
+  const visibleCountries = homepageCountries.slice(
+    page * HOMEPAGE_PAGE_SIZE,
+    (page + 1) * HOMEPAGE_PAGE_SIZE,
+  )
+  const hasMultiplePages = homepageCountries.length > HOMEPAGE_PAGE_SIZE
+  const hasMoreOnFullListing =
+    countries.length > homepageCountries.length || getAllCountries().length > HOMEPAGE_MAX_VISIBLE
 
   return (
     <Box
       component="section"
       sx={{
         bgcolor: colors.surface,
-        pt: { xs: 3, md: 4 },
-        pb: { xs: 5, md: 7 },
+        py: landingSectionPy,
+        borderTop: `1px solid ${colors.borderSoft}`,
       }}
     >
       <PublicContainer variant="hero">
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ md: 'flex-end' }}
-          spacing={2}
-          sx={{ mb: 3 }}
-        >
-          <Box>
-            <Chip
-              label="Visas on time, guaranteed"
-              size="small"
-              sx={{
-                mb: 1.5,
-                fontWeight: 700,
-                fontSize: '11px',
-                bgcolor: colors.greenMuted,
-                color: colors.greenDark,
-                border: `1px solid ${colors.green}`,
-              }}
-            />
-            <Typography
-              sx={{
-                fontFamily: publicFonts.heading,
-                fontWeight: 800,
-                fontSize: { xs: '28px', md: '36px' },
-                color: colors.navy,
-                lineHeight: 1.15,
-                mb: 0.75,
-              }}
-            >
-              Where are you traveling?
-            </Typography>
-            <Typography sx={{ fontSize: '15px', color: colors.textSecondary, maxWidth: 520 }}>
-              {getAllCountries().length} destinations · Indian passport · Pick a country to start
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            endIcon={<ArrowRight size={18} />}
-            onClick={() => navigate('/countries')}
+        <Box sx={{ mb: landingSectionHeaderMb }}>
+          <Typography
             sx={{
-              bgcolor: colors.greenBright,
+              fontSize: '11px',
               fontWeight: 700,
-              textTransform: 'none',
-              borderRadius: '12px',
-              px: 3,
-              alignSelf: { xs: 'stretch', md: 'auto' },
-              '&:hover': { bgcolor: colors.greenDark },
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: colors.greenBright,
+              mb: 1.5,
             }}
           >
-            Browse all destinations
-          </Button>
-        </Stack>
-
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: showFilters ? 2 : 3 }}>
-          <TextField
-            placeholder="Search country or region…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            fullWidth
-            size="small"
+            Destination Explorer
+          </Typography>
+          <Typography
+            component="h2"
             sx={{
-              maxWidth: { md: 360 },
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '12px',
-                bgcolor: colors.white,
-                fontSize: '14px',
-              },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search size={18} color={colors.textMuted} />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Button
-            variant="outlined"
-            startIcon={<SlidersHorizontal size={16} />}
-            onClick={() => setShowFilters(v => !v)}
-            sx={{
-              textTransform: 'none',
-              borderColor: colors.border,
+              fontFamily: publicFonts.heading,
+              fontWeight: 800,
+              fontSize: { xs: '28px', md: '36px' },
               color: colors.navy,
-              borderRadius: '12px',
-              bgcolor: colors.white,
-              flexShrink: 0,
+              lineHeight: 1.15,
+              mb: 0.75,
             }}
           >
-            Filters
-          </Button>
-        </Stack>
-
-        {showFilters && (
-          <Box sx={{ mb: 3, overflowX: 'auto', pb: 0.5 }}>
-            <ExploreFilterBar filters={filters} onChange={setFilters} />
-          </Box>
-        )}
+            Where are you travelling?
+          </Typography>
+          <Typography sx={{ fontSize: '15px', color: colors.textSecondary, maxWidth: 520 }}>
+            {getAllCountries().length} destinations · Indian passport · Pick a country to start
+          </Typography>
+        </Box>
 
         {countries.length === 0 ? (
           <Box
@@ -176,31 +97,106 @@ export function ExploreSection() {
             }}
           >
             <Typography sx={{ fontWeight: 600, color: colors.navy }}>
-              No destinations match your filters
+              No destinations available
             </Typography>
-            <Button
-              sx={{ mt: 2, textTransform: 'none' }}
-              onClick={() => {
-                setSearch('')
-                setFilters(defaultFilters)
-              }}
-            >
-              Clear filters
-            </Button>
           </Box>
         ) : (
-          <Grid container spacing={2}>
-            {countries.map(country => (
-              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={country.id}>
-                <DestinationListingCard country={country} />
-              </Grid>
-            ))}
-          </Grid>
-        )}
+          <>
+            <Grid container spacing={2}>
+              {visibleCountries.map(country => (
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={country.id}>
+                  <DestinationListingCard country={country} />
+                </Grid>
+              ))}
+            </Grid>
 
-        <Typography sx={{ fontSize: '13px', color: colors.textMuted, mt: 2 }}>
-          Showing {countries.length} of {getAllCountries().length} destinations
-        </Typography>
+            {(hasMultiplePages || hasMoreOnFullListing) && (
+              <Box
+                sx={{
+                  mt: { xs: 4, md: 5 },
+                  mx: 'auto',
+                  maxWidth: 520,
+                  p: { xs: 1.25, sm: 1.5 },
+                  borderRadius: '16px',
+                  bgcolor: alpha(colors.white, 0.72),
+                  backdropFilter: 'blur(14px)',
+                  WebkitBackdropFilter: 'blur(14px)',
+                  border: `1px solid ${alpha(colors.border, 0.9)}`,
+                  boxShadow: '0 4px 24px rgba(15, 23, 42, 0.05)',
+                }}
+              >
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="center"
+                  spacing={1}
+                  sx={{ flexWrap: 'wrap', gap: 1 }}
+                >
+                  {hasMultiplePages && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<ArrowLeft size={16} />}
+                      disabled={page === 0}
+                      onClick={() => setPage(p => Math.max(0, p - 1))}
+                      sx={{
+                        textTransform: 'none',
+                        borderColor: colors.border,
+                        color: colors.navy,
+                        borderRadius: '10px',
+                        bgcolor: alpha(colors.white, 0.8),
+                        fontWeight: 600,
+                        minWidth: { xs: '100%', sm: 110 },
+                      }}
+                    >
+                      Previous
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="contained"
+                    size="small"
+                    endIcon={<ArrowRight size={16} />}
+                    onClick={() => navigate('/countries')}
+                    sx={{
+                      textTransform: 'none',
+                      borderRadius: '10px',
+                      bgcolor: colors.greenBright,
+                      fontWeight: 700,
+                      px: 2.5,
+                      flex: { xs: '1 1 100%', sm: '0 1 auto' },
+                      minWidth: { sm: 180 },
+                      '&:hover': { bgcolor: colors.greenDark },
+                    }}
+                  >
+                    More destinations
+                  </Button>
+
+                  {hasMultiplePages && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      endIcon={<ArrowRight size={16} />}
+                      disabled={page >= totalPages - 1}
+                      onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                      sx={{
+                        textTransform: 'none',
+                        borderColor: colors.border,
+                        color: colors.navy,
+                        borderRadius: '10px',
+                        bgcolor: alpha(colors.white, 0.8),
+                        fontWeight: 600,
+                        minWidth: { xs: '100%', sm: 110 },
+                      }}
+                    >
+                      Next
+                    </Button>
+                  )}
+                </Stack>
+              </Box>
+            )}
+          </>
+        )}
       </PublicContainer>
     </Box>
   )

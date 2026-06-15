@@ -5,6 +5,8 @@ import { FilterSidebar } from './components/FilterSidebar'
 import { SearchAndSort } from './components/SearchAndSort'
 import { CountryGrid } from './components/CountryGrid'
 import { PublicContainer } from '../../components/PublicContainer'
+import { ExploreFilterBar } from '../../components/ExploreFilterBar'
+import { defaultExploreFilters } from '../../utils/applyExploreFilters'
 import { publicFonts, publicTypography, usePublicBrandColors } from '../../theme/publicSiteTokens'
 
 const trendingTags = ['Schengen +12%', 'Turkey +10%', 'Japan +8%', 'UAE +6%']
@@ -17,6 +19,7 @@ export function CountryListingPage() {
   const [selectedVisaTypes, setSelectedVisaTypes] = useState<string[]>([])
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 20000])
   const [sortBy, setSortBy] = useState('rating')
+  const [exploreFilters, setExploreFilters] = useState(defaultExploreFilters)
 
   if (loading) {
     return (
@@ -81,6 +84,10 @@ export function CountryListingPage() {
 
       <Box sx={{ py: { xs: 6, md: 8 } }}>
         <PublicContainer>
+          <Box sx={{ mb: 4, overflowX: 'auto', pb: 0.5 }}>
+            <ExploreFilterBar filters={exploreFilters} onChange={setExploreFilters} />
+          </Box>
+
           <Grid container spacing={4}>
             <Grid size={{ xs: 12, md: 3 }}>
               <FilterSidebar
@@ -106,6 +113,7 @@ export function CountryListingPage() {
                 selectedVisaTypes={selectedVisaTypes}
                 priceRange={priceRange}
                 sortBy={sortBy}
+                exploreFilters={exploreFilters}
               />
             </Grid>
           </Grid>

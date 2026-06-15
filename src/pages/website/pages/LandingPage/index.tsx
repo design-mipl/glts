@@ -1,9 +1,13 @@
 import { Box } from '@mui/material'
 import { HeroSection } from './components/HeroSection'
-import { ExploreSection } from './components/ExploreSection'
-import { FeaturesSection } from './components/FeaturesSection'
+import { TrustIndicatorsSection } from './components/TrustIndicatorsSection'
+import { VisaServicesSection } from './components/VisaServicesSection'
 import { HowItWorks } from './components/HowItWorks'
-import { PortalCards } from './components/PortalCards'
+import { ExploreSection } from './components/ExploreSection'
+import { SpecializedSolutionsSection } from './components/SpecializedSolutionsSection'
+import { VisaMasterSection } from './components/VisaMasterSection'
+import { AdditionalServicesSection } from './components/AdditionalServicesSection'
+import { VisaRefusalSupportSection } from './components/VisaRefusalSupportSection'
 import { TestimonialSection } from './components/TestimonialSection'
 import { FAQSection } from './components/FAQSection'
 import { usePublicBrandColors } from '../../theme/publicSiteTokens'
@@ -13,10 +17,14 @@ export function LandingPage() {
   return (
     <Box sx={{ width: '100%', bgcolor: colors.white }}>
       <HeroSection />
-      <ExploreSection />
-      <FeaturesSection />
+      <TrustIndicatorsSection />
+      <VisaServicesSection />
       <HowItWorks />
-      <PortalCards />
+      <ExploreSection />
+      <SpecializedSolutionsSection />
+      <VisaMasterSection />
+      <AdditionalServicesSection />
+      <VisaRefusalSupportSection />
       <TestimonialSection />
       <FAQSection />
     </Box>

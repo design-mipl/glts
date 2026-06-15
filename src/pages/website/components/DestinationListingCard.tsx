@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Box, Typography, Chip } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { BaseCard } from '@/design-system/UIComponents'
 import type { Country } from '@/shared/types/visa'
 import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
 import { getCountryHeroImageUrl } from '@/shared/services/visaService'
-import { formatEtaShort, isFastVisa } from '@/shared/utils/countryDisplay'
+import { formatEtaShort } from '@/shared/utils/countryDisplay'
 import { publicFonts, usePublicBrandColors } from '../theme/publicSiteTokens'
 
 interface DestinationListingCardProps {
@@ -17,7 +17,6 @@ export function DestinationListingCard({ country, href }: DestinationListingCard
   const [imgError, setImgError] = useState(false)
   const link = href ?? `/countries/${country.id}`
   const eta = formatEtaShort(country.processingTime)
-  const fast = isFastVisa(country)
 
   return (
     <Box
@@ -46,85 +45,65 @@ export function DestinationListingCard({ country, href }: DestinationListingCard
           },
         }}
       >
-        {/* Photo header — no overlay */}
-        <Box
-          sx={{
-            position: 'relative',
-            height: 112,
-            borderRadius: '12px',
-            overflow: 'hidden',
-            mb: 1.5,
-            bgcolor: colors.surfaceAlt,
-          }}
-        >
-          {imgError ? (
-            <Box
-              sx={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: `linear-gradient(145deg, ${colors.navyLight} 0%, ${colors.navy} 100%)`,
-              }}
-            >
-              <CountryFlagVisual flag={country.flags} size={48} />
-            </Box>
-          ) : (
-            <Box
-              component="img"
-              src={getCountryHeroImageUrl(country)}
-              alt={country.name}
-              loading="lazy"
-              onError={() => setImgError(true)}
-              sx={{
-                display: 'block',
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-              }}
-            />
-          )}
+        <Box sx={{ position: 'relative', mb: 2.25 }}>
+          <Box
+            sx={{
+              height: 112,
+              borderRadius: '12px',
+              overflow: 'hidden',
+              bgcolor: colors.surfaceAlt,
+            }}
+          >
+            {imgError ? (
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: `linear-gradient(145deg, ${colors.navyLight} 0%, ${colors.navy} 100%)`,
+                }}
+              >
+                <CountryFlagVisual flag={country.flags} countryCode={country.code} size={48} />
+              </Box>
+            ) : (
+              <Box
+                component="img"
+                src={getCountryHeroImageUrl(country)}
+                alt={country.name}
+                loading="lazy"
+                onError={() => setImgError(true)}
+                sx={{
+                  display: 'block',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
+            )}
+          </Box>
 
           <Box
             sx={{
               position: 'absolute',
-              top: 8,
-              left: 8,
-              width: 28,
-              height: 28,
+              bottom: -16,
+              right: 12,
+              width: 34,
+              height: 34,
               borderRadius: '50%',
               bgcolor: colors.white,
-              border: `1px solid ${colors.border}`,
+              border: `2px solid ${colors.white}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '14px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+              boxShadow: '0 2px 10px rgba(15, 23, 42, 0.14)',
+              zIndex: 1,
+              overflow: 'hidden',
             }}
           >
-            <CountryFlagVisual flag={country.flags} size={14} />
+            <CountryFlagVisual flag={country.flags} countryCode={country.code} size={30} />
           </Box>
-
-          {fast && (
-            <Chip
-              label="Fast"
-              size="small"
-              sx={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                height: 22,
-                fontSize: '11px',
-                fontWeight: 700,
-                bgcolor: colors.white,
-                color: colors.greenDark,
-                border: `1px solid ${colors.border}`,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                '& .MuiChip-label': { px: 1 },
-              }}
-            />
-          )}
         </Box>
 
         {/* Title row */}
@@ -198,21 +177,6 @@ export function DestinationListingCard({ country, href }: DestinationListingCard
           </Box>
         </Box>
 
-        {country.trending && (
-          <Chip
-            label={`Trending +${country.trendingPercent}%`}
-            size="small"
-            sx={{
-              mt: 1.25,
-              height: 22,
-              fontSize: '10px',
-              fontWeight: 700,
-              bgcolor: '#FEF3C7',
-              color: '#92400E',
-              '& .MuiChip-label': { px: 1 },
-            }}
-          />
-        )}
       </BaseCard>
     </Box>
   )
