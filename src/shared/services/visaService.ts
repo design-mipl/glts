@@ -1,4 +1,5 @@
 import type { Country, VisaCategory } from '../types/visa'
+import { getLocalCountryHeroImageUrl } from '../assets/countryHeroImages'
 import { isImageSource } from '../utils/imageSource'
 
 /** Destination cover photos (Unsplash). IDs verified — many legacy slugs now 404. */
@@ -6,6 +7,9 @@ const IMG = (photoId: string, width = 640) =>
   `https://images.unsplash.com/${photoId}?auto=format&fit=crop&w=${width}&h=${Math.round(width * 0.7)}&q=80`
 
 export function getCountryHeroImageUrl(country: Country, width = 640): string {
+  const local = getLocalCountryHeroImageUrl(country.code)
+  if (local) return local
+
   const id = country.heroPhotoId?.trim() ?? ''
   if (!id) return ''
   if (isImageSource(id)) return id
@@ -33,7 +37,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'e-Visa',
     validity: '90 days',
     documentsNeeded: ['Photo', 'Passport'],
-    heroPhotoId: 'photo-1540959733332-eab4deabeeaf',
+    heroPhotoId: 'photo-1493976040374-ae243c022105',
     fastMinutes: 180,
     cities: 'Tokyo · Osaka · Kyoto',
   }),
@@ -68,7 +72,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'Sticker',
     validity: '10 years',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1488646953014-85cb44e25828',
+    heroPhotoId: 'photo-1496442226666-8d4d0e62e6e9',
     cities: 'New York · San Francisco',
   }),
   country({
@@ -85,7 +89,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'e-Visa',
     validity: '30 days',
     documentsNeeded: ['Passport'],
-    heroPhotoId: 'photo-1563492065599-3520f775eeed',
+    heroPhotoId: 'photo-1565967510819-646a961070f8',
     fastMinutes: 90,
     cities: 'Singapore city',
   }),
@@ -103,7 +107,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'e-Visa',
     validity: '90 days',
     documentsNeeded: ['Photo', 'Passport'],
-    heroPhotoId: 'photo-1548013146-72479768bada',
+    heroPhotoId: 'photo-1547471080-1efc575b5be7',
     fastMinutes: 59,
     cities: 'Nairobi · Mombasa',
   }),
@@ -121,7 +125,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'Sticker',
     validity: '30-90 days',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements', 'Invitation letter'],
-    heroPhotoId: 'photo-1552832230-c0197dd311b5',
+    heroPhotoId: 'photo-1508804185872-d7badad00f7d',
     fastMinutes: 480,
     cities: 'Beijing · Shanghai · Guangzhou',
   }),
@@ -157,7 +161,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'e-Visa',
     validity: '90 days',
     documentsNeeded: ['Photo', 'Passport', 'Financial proof'],
-    heroPhotoId: 'photo-1523482580672-f109ba8cb9be',
+    heroPhotoId: 'photo-1506973035872-a4ec16b8e8d9',
     fastMinutes: 360,
     cities: 'Sydney · Melbourne · Perth',
   }),
@@ -175,7 +179,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'e-Visa',
     validity: '30-90 days',
     documentsNeeded: ['Photo', 'Passport', 'Travel itinerary'],
-    heroPhotoId: 'photo-1528164344705-47542687000d',
+    heroPhotoId: 'photo-1470003013390-7ee345eae766',
     fastMinutes: 300,
     cities: 'Taipei · Kaohsiung · Taichung',
   }),
@@ -193,7 +197,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'Sticker',
     validity: '90 days',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1528909514045-2fa4ac7a08ba',
+    heroPhotoId: 'photo-1555994798-cf42f8d4f426',
     fastMinutes: 720,
     cities: 'Brussels · Antwerp · Bruges',
   }),
@@ -211,7 +215,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'Sticker',
     validity: '90 days',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1508599589929-1f3f7a8b7a2b',
+    heroPhotoId: 'photo-1534351590666-13e3e96a5017',
     fastMinutes: 720,
     cities: 'Amsterdam · Rotterdam · The Hague',
   }),
@@ -229,7 +233,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'Sticker',
     validity: '10 years',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1488646953014-85cb44e25828',
+    heroPhotoId: 'photo-1496442226666-8d4d0e62e6e9',
     cities: 'New York · San Francisco',
   }),
   country({
@@ -246,7 +250,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'Sticker',
     validity: '30-59 days',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1507525428034-b723cf961d3e',
+    heroPhotoId: 'photo-1518509562-4278-48d4afd60bec',
     fastMinutes: 360,
     cities: 'Manila · Cebu · Boracay',
   }),
@@ -264,7 +268,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'Sticker',
     validity: '90 days',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1535189043414-47a3b1b05bb5',
+    heroPhotoId: 'photo-1517154429923-8779f729cfb2',
     fastMinutes: 420,
     cities: 'Seoul · Busan · Incheon',
   }),
@@ -282,7 +286,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'Sticker',
     validity: '30-90 days',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1553530666-ba11a7da3888',
+    heroPhotoId: 'photo-1539020142533-21ee0d62b4da',
     fastMinutes: 480,
     cities: 'Casablanca · Marrakech · Rabat',
   }),
@@ -300,7 +304,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'Sticker',
     validity: 'Up to 10 years',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1509042239860-f550ce710b93',
+    heroPhotoId: 'photo-1516571168981-78e095bbccd3',
     fastMinutes: 1440,
     cities: 'Toronto · Vancouver · Montreal',
   }),

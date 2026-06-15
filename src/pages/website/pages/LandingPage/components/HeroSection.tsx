@@ -4,95 +4,31 @@ import {
   Button,
   Stack,
   Chip,
-  TextField,
   Grid,
   Card,
   Divider,
 } from '@mui/material'
 import {
   ArrowRight,
-  Search,
-  Shield,
-  Zap,
-  Star,
-  Globe,
-  Calendar,
-  Users,
-  Mic,
-  Plane,
+  Check,
+  FileCheck,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { PublicContainer } from '../../../components/PublicContainer'
+import { landingHeroMinHeight } from '../landingPageSpacing'
 import { publicFonts, publicShadows, usePublicBrandColors, brandPrimaryGreenRgb } from '@/shared/theme/publicBrand'
-import { getAllCountries } from '@/shared/services/visaService'
 
-const tryLinks = [
-  'Schengen for honeymoon',
-  'Bahrain transit',
-  'Dubai 30-day',
-  'UK student visa',
+const trustIndicators = ['Expert Review', 'Live Tracking', 'Country-Specific Guidance']
+
+const reviewChecklist = [
+  { label: 'Passport verified', done: true },
+  { label: 'Documents matched', done: true },
+  { label: 'Embassy requirements', done: true },
 ]
-
-const trustRow = [
-  { icon: Shield, label: 'ISO 27001' },
-  { icon: Zap, label: '99.2% on-time' },
-  { icon: Star, label: '4.9 · 42k reviews' },
-]
-
-function SearchField({
-  icon: Icon,
-  label,
-  value,
-  placeholder,
-}: {
-  icon: typeof Search
-  label: string
-  value?: string
-  placeholder?: string
-}) {
-  const colors = usePublicBrandColors()
-
-  return (
-    <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 140 }, px: { sm: 1.5 }, py: { xs: 1, sm: 0 } }}>
-      <Typography
-        sx={{
-          fontSize: '10px',
-          fontWeight: 700,
-          color: colors.textMuted,
-          letterSpacing: '0.06em',
-          textTransform: 'uppercase',
-          mb: 0.5,
-          display: { xs: 'none', sm: 'block' },
-        }}
-      >
-        {label}
-      </Typography>
-      <Stack direction="row" alignItems="center" spacing={1}>
-        <Icon size={16} color={colors.textMuted} />
-        <TextField
-          variant="standard"
-          placeholder={placeholder ?? value}
-          defaultValue={value}
-          fullWidth
-          InputProps={{ disableUnderline: true }}
-          sx={{
-            '& .MuiInputBase-input': {
-              fontSize: '13px',
-              fontWeight: 600,
-              color: colors.navy,
-              p: 0,
-            },
-          }}
-        />
-      </Stack>
-    </Box>
-  )
-}
 
 export function HeroSection() {
   const colors = usePublicBrandColors()
   const navigate = useNavigate()
-  const destCount = getAllCountries().length
 
   return (
     <Box
@@ -101,8 +37,9 @@ export function HeroSection() {
         position: 'relative',
         overflow: 'hidden',
         bgcolor: '#F4FAF6',
-        pt: { xs: 4, md: 6 },
-        pb: { xs: 6, md: 8 },
+        minHeight: landingHeroMinHeight,
+        display: 'flex',
+        alignItems: 'center',
       }}
     >
       {/* Decorative shapes */}
@@ -133,25 +70,10 @@ export function HeroSection() {
         }}
       />
 
-      <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1 }}>
+      <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1, width: '100%' }}>
         <Grid container spacing={{ xs: 5, lg: 6 }} alignItems="center">
           {/* Left — copy & search */}
           <Grid size={{ xs: 12, lg: 6 }}>
-            <Chip
-              icon={<Globe size={14} />}
-              label={`Visa engine · ${destCount} destinations`}
-              sx={{
-                mb: 2.5,
-                height: 32,
-                fontWeight: 600,
-                fontSize: '12px',
-                bgcolor: colors.greenMuted,
-                color: colors.greenDark,
-                border: `1px solid ${colors.green}44`,
-                '& .MuiChip-icon': { color: colors.greenBright },
-              }}
-            />
-
             <Typography
               component="h1"
               sx={{
@@ -161,72 +83,49 @@ export function HeroSection() {
                 lineHeight: 1.08,
                 letterSpacing: '-1.5px',
                 color: colors.navy,
-                mb: 2,
+                mb: 2.5,
               }}
             >
-              Your visa,{' '}
+              Visas Done Right —{' '}
               <Box component="span" sx={{ color: colors.greenBright }}>
-                in days—
+                Before They Go Wrong.
               </Box>
-              <br />
-              not weeks.
             </Typography>
 
-            <Typography
-              sx={{
-                fontSize: { xs: '15px', md: '16px' },
-                lineHeight: 1.65,
-                color: colors.textSecondary,
-                maxWidth: 520,
-                mb: 3,
-              }}
-            >
-              Upload your passport. We extract every detail, match you to the right visa, and walk
-              you through what to do next. Built for solo travelers, corporate teams, and marine
-              crews.
-            </Typography>
+            <Box sx={{ maxWidth: 520, mb: 3 }}>
+              <Stack spacing={0.75} sx={{ mb: 2 }}>
+                {['Expert-led review.', 'Tech-enabled tracking.', 'Zero guesswork.'].map(line => (
+                  <Typography
+                    key={line}
+                    sx={{
+                      fontSize: { xs: '16px', md: '17px' },
+                      fontWeight: 600,
+                      lineHeight: 1.5,
+                      color: colors.navy,
+                    }}
+                  >
+                    {line}
+                  </Typography>
+                ))}
+              </Stack>
+              <Typography
+                sx={{
+                  fontSize: { xs: '15px', md: '16px' },
+                  fontWeight: 700,
+                  lineHeight: 1.5,
+                  color: colors.greenDark,
+                }}
+              >
+                We review before you submit.
+              </Typography>
+            </Box>
 
-            {/* Pill search */}
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', md: 'row' },
-                alignItems: { md: 'center' },
-                gap: { xs: 1.5, md: 0 },
-                p: { xs: 2, md: 1 },
-                pr: { md: 1 },
-                bgcolor: colors.white,
-                borderRadius: '999px',
-                border: `1px solid ${colors.border}`,
-                boxShadow: '0 8px 32px rgba(15, 23, 42, 0.06)',
-                maxWidth: 600,
-                mb: 2,
-              }}
-            >
-              <SearchField
-                icon={Search}
-                label="Destination"
-                placeholder="Type a country, city or 'family trip'…"
-              />
-              <Divider
-                orientation="vertical"
-                flexItem
-                sx={{ display: { xs: 'none', md: 'block' }, borderColor: colors.border }}
-              />
-              <SearchField icon={Calendar} label="Dates" value="Mar 12 – 28" />
-              <Divider
-                orientation="vertical"
-                flexItem
-                sx={{ display: { xs: 'none', md: 'block' }, borderColor: colors.border }}
-              />
-              <SearchField icon={Users} label="Travelers" value="2 travelers" />
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 3 }}>
               <Button
                 variant="contained"
                 onClick={() => navigate('/countries')}
                 endIcon={<ArrowRight size={16} />}
                 sx={{
-                  flexShrink: 0,
-                  mx: { md: 0.5 },
                   px: 3,
                   py: 1.25,
                   borderRadius: '999px',
@@ -235,56 +134,66 @@ export function HeroSection() {
                   fontSize: '14px',
                   textTransform: 'none',
                   whiteSpace: 'nowrap',
-                  alignSelf: { xs: 'stretch', md: 'center' },
                   '&:hover': { bgcolor: colors.greenDark },
                 }}
               >
-                Find visa
+                Start visa assistance
               </Button>
-            </Box>
-
-            {/* Try chips */}
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ flexWrap: 'wrap', gap: 1, mb: 3 }}>
-              <Typography sx={{ fontSize: '12px', fontWeight: 600, color: colors.textMuted }}>
-                Try
-              </Typography>
-              {tryLinks.map(label => (
-                <Chip
-                  key={label}
-                  label={label}
-                  size="small"
-                  onClick={() => navigate('/countries')}
-                  sx={{
-                    height: 28,
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    bgcolor: colors.white,
-                    border: `1px solid ${colors.border}`,
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: colors.greenMuted },
-                  }}
-                />
-              ))}
-              <Chip
-                icon={<Mic size={12} />}
-                label="Voice"
-                size="small"
+              <Button
+                variant="outlined"
+                href="/track"
                 sx={{
-                  height: 28,
-                  fontSize: '11px',
+                  px: 3,
+                  py: 1.25,
+                  borderRadius: '999px',
+                  borderColor: colors.border,
+                  color: colors.navy,
                   fontWeight: 700,
-                  bgcolor: colors.greenBright,
-                  color: '#fff',
-                  '& .MuiChip-icon': { color: '#fff' },
+                  fontSize: '14px',
+                  textTransform: 'none',
+                  bgcolor: colors.white,
+                  '&:hover': {
+                    borderColor: colors.greenBright,
+                    bgcolor: colors.greenMuted,
+                  },
                 }}
-              />
+              >
+                Book consultation
+              </Button>
             </Stack>
 
-            {/* Trust */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              {[
+                { value: '25+', label: 'Years experience' },
+                { value: '450K+', label: 'Visas processed' },
+                { value: '190+', label: 'Countries covered' },
+              ].map(({ value, label }) => (
+                <Grid size={{ xs: 4 }} key={label}>
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontFamily: publicFonts.heading,
+                        fontSize: { xs: '22px', sm: '26px' },
+                        fontWeight: 800,
+                        color: colors.greenBright,
+                        lineHeight: 1,
+                        mb: 0.5,
+                      }}
+                    >
+                      {value}
+                    </Typography>
+                    <Typography sx={{ fontSize: '12px', fontWeight: 600, color: colors.textSecondary }}>
+                      {label}
+                    </Typography>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5} sx={{ flexWrap: 'wrap', gap: 2 }}>
-              {trustRow.map(({ icon: Icon, label }) => (
+              {trustIndicators.map(label => (
                 <Stack key={label} direction="row" spacing={1} alignItems="center">
-                  <Icon size={16} color={colors.greenBright} strokeWidth={2.5} />
+                  <Check size={16} color={colors.greenBright} strokeWidth={2.5} />
                   <Typography sx={{ fontSize: '13px', fontWeight: 600, color: colors.textSecondary }}>
                     {label}
                   </Typography>
@@ -319,7 +228,7 @@ export function HeroSection() {
               >
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                   <Chip
-                    label="Approved"
+                    label="Ready to submit"
                     size="small"
                     sx={{
                       height: 24,
@@ -340,58 +249,46 @@ export function HeroSection() {
                   />
                 </Stack>
 
-                <Grid container spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                  <Grid size={5}>
-                    <Typography sx={{ fontSize: '10px', fontWeight: 700, color: colors.textMuted }}>
-                      FROM
-                    </Typography>
-                    <Typography sx={{ fontSize: '22px', fontWeight: 800, color: colors.navy, lineHeight: 1.1 }}>
-                      IND
-                    </Typography>
-                    <Typography sx={{ fontSize: '11px', color: colors.textSecondary }}>New Delhi</Typography>
-                  </Grid>
-                  <Grid size={2} sx={{ display: 'flex', justifyContent: 'center' }}>
-                    <Box
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: '50%',
-                        bgcolor: colors.greenMuted,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Plane size={18} color={colors.greenBright} />
-                    </Box>
-                  </Grid>
-                  <Grid size={5} sx={{ textAlign: 'right' }}>
-                    <Typography sx={{ fontSize: '10px', fontWeight: 700, color: colors.textMuted }}>
-                      TO
-                    </Typography>
-                    <Typography sx={{ fontSize: '22px', fontWeight: 800, color: colors.navy, lineHeight: 1.1 }}>
-                      FRA
-                    </Typography>
-                    <Typography sx={{ fontSize: '11px', color: colors.textSecondary }}>Schengen · 90d</Typography>
-                  </Grid>
-                </Grid>
+                <Box sx={{ mb: 2 }}>
+                  <Typography sx={{ fontSize: '10px', fontWeight: 700, color: colors.textMuted, letterSpacing: '0.05em', mb: 0.5 }}>
+                    PRE-SUBMISSION REVIEW
+                  </Typography>
+                  <Typography sx={{ fontSize: '18px', fontWeight: 800, color: colors.navy, lineHeight: 1.2, mb: 0.5 }}>
+                    Schengen Tourist · Germany
+                  </Typography>
+                  <Typography sx={{ fontSize: '12px', color: colors.textSecondary }}>
+                    1 applicant · 90-day stay · Submitted after expert sign-off
+                  </Typography>
+                </Box>
 
                 <Divider sx={{ borderStyle: 'dashed', mb: 2 }} />
 
-                <Grid container spacing={1} sx={{ mb: 2 }}>
-                  {[
-                    { label: 'TYPE', value: 'Tourist · C' },
-                    { label: 'STAY', value: '21 days' },
-                    { label: 'ETA', value: '12 days' },
-                  ].map(({ label, value }) => (
-                    <Grid size={4} key={label}>
-                      <Typography sx={{ fontSize: '9px', fontWeight: 700, color: colors.textMuted, letterSpacing: '0.05em' }}>
+                <Stack spacing={1.25} sx={{ mb: 2 }}>
+                  {reviewChecklist.map(({ label, done }) => (
+                    <Stack key={label} direction="row" spacing={1.25} alignItems="center">
+                      <Box
+                        sx={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: '6px',
+                          bgcolor: done ? colors.greenMuted : colors.white,
+                          border: `1px solid ${done ? colors.green + '44' : colors.border}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {done ? (
+                          <FileCheck size={13} color={colors.greenBright} strokeWidth={2.5} />
+                        ) : null}
+                      </Box>
+                      <Typography sx={{ fontSize: '12px', fontWeight: 600, color: colors.navy }}>
                         {label}
                       </Typography>
-                      <Typography sx={{ fontSize: '12px', fontWeight: 700, color: colors.navy }}>{value}</Typography>
-                    </Grid>
+                    </Stack>
                   ))}
-                </Grid>
+                </Stack>
 
                 <Box
                   sx={{
@@ -440,10 +337,10 @@ export function HeroSection() {
                   </Box>
                   <Box>
                     <Typography sx={{ fontSize: '13px', fontWeight: 800, color: colors.navy }}>
-                      Strong profile · 94 Greenlight Score
+                      Expert review complete · 94% readiness
                     </Typography>
                     <Typography sx={{ fontSize: '11px', color: colors.textSecondary, lineHeight: 1.4 }}>
-                      Approval probability based on 1.2k similar applicants
+                      Documents verified and embassy requirements confirmed before submission
                     </Typography>
                   </Box>
                 </Box>
