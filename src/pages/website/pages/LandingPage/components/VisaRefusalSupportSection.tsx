@@ -12,9 +12,9 @@ export function VisaRefusalSupportSection() {
       id="refusal-support"
       component="section"
       sx={{
-        bgcolor: colors.navy,
+        bgcolor: colors.white,
         py: landingSectionPy,
-        borderTop: `1px solid rgba(255, 255, 255, 0.08)`,
+        borderTop: `1px solid ${colors.borderSoft}`,
       }}
     >
       <PublicContainer variant="hero">
@@ -27,8 +27,9 @@ export function VisaRefusalSupportSection() {
             gap: 3,
             p: { xs: 3, md: 4 },
             borderRadius: '20px',
-            bgcolor: 'rgba(255, 255, 255, 0.06)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
+            bgcolor: colors.navy,
+            border: `1px solid rgba(255, 255, 255, 0.12)`,
+            boxShadow: '0 16px 48px rgba(0, 31, 63, 0.18)',
           }}
         >
           <Stack direction="row" spacing={2.5} alignItems="flex-start" sx={{ flex: 1 }}>

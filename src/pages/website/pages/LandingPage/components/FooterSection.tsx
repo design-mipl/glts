@@ -1,4 +1,5 @@
 import { Box, Typography, Link, Divider, Stack, Grid, Chip } from '@mui/material'
+import { FooterWorldMapWatermark } from '../../../components/FooterWorldMapWatermark'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { GREENLIGHT_LOGO_DARK_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
@@ -16,12 +17,15 @@ export function FooterSection() {
     <Box
       component="footer"
       sx={{
+        position: 'relative',
+        overflow: 'hidden',
         backgroundColor: colors.navy,
         color: '#fff',
         py: { xs: 10, md: 14 },
       }}
     >
-      <PublicContainer>
+      <FooterWorldMapWatermark />
+      <PublicContainer sx={{ position: 'relative', zIndex: 1 }}>
         <Grid container spacing={{ xs: 6, md: 8 }} sx={{ mb: 10 }}>
           <Grid size={{ xs: 12, md: 4 }}>
             <Box

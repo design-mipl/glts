@@ -220,23 +220,6 @@ const COUNTRIES: Country[] = [
     cities: 'Amsterdam · Rotterdam · The Hague',
   }),
   country({
-    id: '19',
-    name: 'United States of America',
-    code: 'US',
-    region: 'Americas',
-    processingTime: '110 days',
-    price: 14200,
-    rating: 64,
-    flags: '🇺🇸',
-    trending: false,
-    trendingPercent: 4,
-    visaCategory: 'Sticker',
-    validity: '10 years',
-    documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1496442226666-8d4d0e62e6e9',
-    cities: 'New York · San Francisco',
-  }),
-  country({
     id: '20',
     name: 'Philippines',
     code: 'PH',
@@ -308,6 +291,24 @@ const COUNTRIES: Country[] = [
     fastMinutes: 1440,
     cities: 'Toronto · Vancouver · Montreal',
   }),
+  country({
+    id: '24',
+    name: 'United Arab Emirates',
+    code: 'AE',
+    region: 'Middle East',
+    processingTime: '5-8 days',
+    price: 4800,
+    rating: 91,
+    flags: '🇦🇪',
+    trending: true,
+    trendingPercent: 7,
+    visaCategory: 'e-Visa',
+    validity: '30-60 days',
+    documentsNeeded: ['Photo', 'Passport', 'Hotel booking'],
+    heroPhotoId: 'photo-1512453979798-5ea266f8880c',
+    fastMinutes: 240,
+    cities: 'Dubai · Abu Dhabi',
+  }),
 ]
 
 /** Portal application flow — visa options vary by destination */
@@ -373,10 +374,6 @@ const VISA_TYPES_BY_COUNTRY: Record<string, PortalVisaOption[]> = {
   '18': [
     visaOpt('nl-tourist', 'Tourist', 'Leisure travel'),
     visaOpt('nl-business', 'Business', 'Meetings & conferences'),
-  ],
-  '19': [
-    visaOpt('usa-b1b2', 'B1/B2 Visitor', 'Tourism & business meetings'),
-    visaOpt('usa-c1', 'Transit (C1)', 'Airport connection'),
   ],
   '20': [
     visaOpt('ph-tourist', 'Tourist', 'Leisure travel'),

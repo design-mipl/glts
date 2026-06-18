@@ -1,5 +1,34 @@
 import type { Country } from '@/shared/types/visa'
-import type { ExploreFilters } from '../components/ExploreFilterBar'
+
+export interface ExploreFilters {
+  visaDelivery: string
+  visaType: string
+  documents: string
+  holidays: string
+}
+
+export const exploreFilterDefs = [
+  {
+    key: 'visaDelivery' as const,
+    label: 'VISA DELIVERY',
+    options: ['Any Time', 'Under 24 hours', 'Under 1 week'],
+  },
+  {
+    key: 'visaType' as const,
+    label: 'TYPE',
+    options: ['All Visa Types', 'e-Visa', 'Sticker', 'Visa on arrival'],
+  },
+  {
+    key: 'documents' as const,
+    label: 'DOCUMENTS',
+    options: ['Any Documents', 'Passport only', 'Photo + Passport'],
+  },
+  {
+    key: 'holidays' as const,
+    label: 'HOLIDAYS',
+    options: ['Select Dates', 'Next 30 days', 'Next 90 days'],
+  },
+] as const
 
 export const defaultExploreFilters: ExploreFilters = {
   visaDelivery: 'Any Time',

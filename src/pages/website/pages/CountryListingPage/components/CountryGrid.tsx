@@ -1,10 +1,10 @@
 import { Grid, Typography, Box } from '@mui/material'
 import { Globe } from 'lucide-react'
 import type { Country } from '@/shared/types/visa'
-import type { ExploreFilters } from '../../../components/ExploreFilterBar'
+import type { ExploreFilters } from '../../../utils/applyExploreFilters'
 import { applyExploreFilters } from '../../../utils/applyExploreFilters'
 import { CountryCard } from './CountryCard'
-import { publicTypography, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { usePublicBrandColors } from '../../../theme/publicSiteTokens'
 
 interface CountryGridProps {
   countries: Country[]
@@ -69,24 +69,12 @@ export function CountryGrid({
   }
 
   return (
-    <>
-      <Typography
-        sx={{
-          fontSize: publicTypography.body,
-          color: colors.textSecondary,
-          fontWeight: 600,
-          mb: 4,
-        }}
-      >
-        {filtered.length} results
-      </Typography>
-      <Grid container spacing={2}>
-        {filtered.map(country => (
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={country.id}>
-            <CountryCard country={country} />
-          </Grid>
-        ))}
-      </Grid>
-    </>
+    <Grid container spacing={2}>
+      {filtered.map(country => (
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={country.id}>
+          <CountryCard country={country} />
+        </Grid>
+      ))}
+    </Grid>
   )
 }

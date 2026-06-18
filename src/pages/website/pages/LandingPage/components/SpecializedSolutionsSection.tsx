@@ -1,8 +1,13 @@
-import { Box, Typography, Grid, Card, Stack } from '@mui/material'
-import { Anchor, Building2, User, Users, ArrowRight } from 'lucide-react'
+import { useState } from 'react'
+import { Box, Typography, Stack } from '@mui/material'
+import { Anchor, Building2, User, ArrowRight, type LucideIcon } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
-import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { publicFonts, usePublicBrandColors, brandPrimaryGreenRgb } from '../../../theme/publicSiteTokens'
+import {
+  travelSolutionImages,
+  SOLUTION_CARD_IMAGE_HEIGHT,
+} from '../../../assets/landingPageImages'
 
 const solutions = [
   {
@@ -10,108 +15,149 @@ const solutions = [
     icon: Anchor,
     title: 'Marine Crew Travel',
     description: 'Crew visa handling for vessels, offshore teams, and port-of-call deployments.',
-    href: '/business',
+    href: '/marine-crew',
+    image: travelSolutionImages.marine,
   },
   {
     id: 'corporate',
     icon: Building2,
     title: 'Corporate Travel Management',
     description: 'Business visa ops with compliance dashboards, bulk filing, and account support.',
-    href: '/business',
+    href: '/corporate',
+    image: travelSolutionImages.corporate,
   },
   {
     id: 'retail',
     icon: User,
-    title: 'Retail Travelers',
+    title: 'B2B Travelers',
     description: 'Individual visa assistance for tourists, students, families, and professionals.',
     href: '/countries',
+    image: travelSolutionImages.retail,
   },
-  {
-    id: 'group',
-    icon: Users,
-    title: 'Group Travel Services',
-    description: 'Coordinated visa processing for delegations, tours, and multi-traveler batches.',
-    href: '/business',
-  },
-]
+] as const
+
+const CARD_RADIUS = '20px'
+const TRANSITION_MS = '300ms'
+const TRANSITION_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
 function SolutionCard({
-  icon: Icon,
+  icon: _icon,
   title,
   description,
   href,
-}: (typeof solutions)[number]) {
+  image,
+}: {
+  icon: LucideIcon
+  title: string
+  description: string
+  href: string
+  image: { src: string; fallback: string; alt: string }
+}) {
   const colors = usePublicBrandColors()
+  const [imgSrc, setImgSrc] = useState(image.src)
 
   return (
-    <Card
+    <Box
       component="a"
       href={href}
       sx={{
-        height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        p: 3,
-        borderRadius: '16px',
+        width: '100%',
+        height: '100%',
+        borderRadius: CARD_RADIUS,
         border: `1px solid ${colors.border}`,
-        boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+        boxShadow: '0 4px 20px rgba(15, 23, 42, 0.06)',
         bgcolor: colors.white,
         textDecoration: 'none',
         color: 'inherit',
-        transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s',
-        '&:hover': {
-          borderColor: `${colors.greenBright}66`,
-          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
-          transform: 'translateY(-2px)',
+        overflow: 'hidden',
+        transition: `border-color ${TRANSITION_MS} ease, box-shadow ${TRANSITION_MS} ease, transform ${TRANSITION_MS} ${TRANSITION_EASE}`,
+        '@media (hover: hover)': {
+          '&:hover': {
+            borderColor: `rgba(${brandPrimaryGreenRgb}, 0.4)`,
+            boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
+            transform: 'translateY(-6px)',
+            '& .solution-card-image': {
+              transform: 'scale(1.06)',
+            },
+          },
         },
       }}
     >
       <Box
         sx={{
-          width: 48,
-          height: 48,
-          borderRadius: '14px',
-          bgcolor: colors.greenMuted,
-          border: `1px solid ${colors.green}33`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mb: 2,
+          position: 'relative',
+          width: '100%',
+          height: SOLUTION_CARD_IMAGE_HEIGHT,
+          flexShrink: 0,
+          overflow: 'hidden',
+          bgcolor: colors.surfaceAlt,
+          borderTopLeftRadius: CARD_RADIUS,
+          borderTopRightRadius: CARD_RADIUS,
         }}
       >
-        <Icon size={22} color={colors.greenBright} strokeWidth={2.25} />
+        <Box
+          component="img"
+          className="solution-card-image"
+          src={imgSrc}
+          alt={image.alt}
+          loading="lazy"
+          onError={() => setImgSrc(image.fallback)}
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center',
+            display: 'block',
+            transition: `transform ${TRANSITION_MS} ${TRANSITION_EASE}`,
+            willChange: 'transform',
+          }}
+        />
       </Box>
 
-      <Typography
+      <Box
         sx={{
-          fontFamily: publicFonts.heading,
-          fontSize: '18px',
-          fontWeight: 800,
-          color: colors.navy,
-          lineHeight: 1.25,
-          mb: 1,
-        }}
-      >
-        {title}
-      </Typography>
-
-      <Typography
-        sx={{
-          fontSize: '14px',
-          color: colors.textSecondary,
-          lineHeight: 1.6,
-          mb: 2,
+          display: 'flex',
+          flexDirection: 'column',
           flex: 1,
+          p: { xs: 2.25, md: 2.5 },
         }}
       >
-        {description}
-      </Typography>
+        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 1 }}>
+          <Typography
+            sx={{
+              fontFamily: publicFonts.heading,
+              fontSize: '18px',
+              fontWeight: 800,
+              color: colors.navy,
+              lineHeight: 1.25,
+            }}
+          >
+            {title}
+          </Typography>
+        </Stack>
 
-      <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: colors.greenBright }}>
-        <Typography sx={{ fontSize: '13px', fontWeight: 700 }}>Learn more</Typography>
-        <ArrowRight size={15} strokeWidth={2.5} />
-      </Stack>
-    </Card>
+        <Typography
+          sx={{
+            fontSize: '14px',
+            color: colors.textSecondary,
+            lineHeight: 1.65,
+            mb: 2,
+            flex: 1,
+          }}
+        >
+          {description}
+        </Typography>
+
+        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: colors.greenBright }}>
+          <Typography sx={{ fontSize: '13px', fontWeight: 700 }}>Learn More</Typography>
+          <ArrowRight size={15} strokeWidth={2.5} />
+        </Stack>
+      </Box>
+    </Box>
   )
 }
 
@@ -154,7 +200,7 @@ export function SpecializedSolutionsSection() {
               mb: 1.25,
             }}
           >
-            Travel solutions for every need.
+            Travel Solutions
           </Typography>
 
           <Typography
@@ -164,18 +210,26 @@ export function SpecializedSolutionsSection() {
               lineHeight: 1.65,
             }}
           >
-            Purpose-built workflows for marine crews, corporate teams, retail travelers, and group
-            movements — each linking to a dedicated experience.
+            Purpose-built workflows for marine crews, corporate teams, and retail travelers — each
+            linking to a dedicated experience.
           </Typography>
         </Box>
 
-        <Grid container spacing={2.5}>
-          {solutions.map(solution => (
-            <Grid size={{ xs: 12, sm: 6 }} key={solution.id}>
-              <SolutionCard {...solution} />
-            </Grid>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: 'repeat(3, minmax(0, 1fr))',
+            },
+            gap: { xs: 2, md: 2.5 },
+            alignItems: 'stretch',
+          }}
+        >
+          {solutions.map((solution) => (
+            <SolutionCard key={solution.id} {...solution} />
           ))}
-        </Grid>
+        </Box>
       </PublicContainer>
     </Box>
   )

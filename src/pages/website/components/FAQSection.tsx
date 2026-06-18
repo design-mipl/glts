@@ -1,43 +1,28 @@
 import { useState } from 'react'
 import { Box, Typography, Button, Collapse } from '@mui/material'
 import { ArrowRight, ChevronDown } from 'lucide-react'
-import { PublicContainer } from '../../../components/PublicContainer'
-import { publicTypography, publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
-import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
+import { PublicContainer } from './PublicContainer'
+import { publicTypography, publicFonts, usePublicBrandColors } from '../theme/publicSiteTokens'
+import { landingSectionHeaderMb, landingSectionPy } from '../pages/LandingPage/landingPageSpacing'
 
-const faqs = [
-  {
-    q: 'How fast is fast?',
-    a: 'Median eVisa: 3.4 days. Embassy stamps: 12–18 days. We show you the exact ETA before you pay.',
-  },
-  {
-    q: 'What if my application is rejected?',
-    a: 'We refund the service fee and re-file at no extra cost. Our team reviews before submission to reduce this risk.',
-  },
-  {
-    q: 'Do you store my passport?',
-    a: 'No. Encrypted at rest, purged 30 days after approval. We comply with GDPR and ISO 27001.',
-  },
-  {
-    q: 'Marine crew without a fixed address?',
-    a: "We accept seaman book + employer letter in lieu of utility bills and rental agreements.",
-  },
-  {
-    q: 'Can I manage multiple travelers at once?',
-    a: 'Yes. Corporate and marine accounts support bulk CSV uploads, team dashboards, and parallel filing.',
-  },
-  {
-    q: 'Do you support all nationalities?',
-    a: 'We support 192 destination countries and most major nationalities. Check your eligibility on the country page.',
-  },
-]
+export interface FAQItem {
+  q: string
+  a: string
+}
 
-export function FAQSection() {
+export interface FAQSectionProps {
+  faqs: FAQItem[]
+  title?: string
+}
+
+const DEFAULT_TITLE = "FAQ's"
+
+export function FAQSection({ faqs, title = DEFAULT_TITLE }: FAQSectionProps) {
   const colors = usePublicBrandColors()
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
 
   const toggle = (index: number) => {
-    setExpanded(prev => {
+    setExpanded((prev) => {
       const next = new Set(prev)
       if (next.has(index)) next.delete(index)
       else next.add(index)
@@ -67,7 +52,7 @@ export function FAQSection() {
               fontSize: publicTypography.h2,
             }}
           >
-            FAQ&apos;s
+            {title}
           </Typography>
           <Button
             variant="text"
