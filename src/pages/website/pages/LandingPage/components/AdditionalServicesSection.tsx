@@ -1,39 +1,147 @@
-import { Box, Typography, Grid, Card, Stack } from '@mui/material'
-import { Shield, Plane, Hotel, Banknote, FileText } from 'lucide-react'
+import { useState } from 'react'
+import { Box, Typography, Stack } from '@mui/material'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
-import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { publicFonts, usePublicBrandColors, brandPrimaryGreenRgb } from '../../../theme/publicSiteTokens'
+import { additionalTravelServices } from '../../../assets/landingPageImages'
 
-const services = [
-  {
-    icon: Shield,
-    title: 'Travel Insurance',
-    description: 'Coverage aligned to your itinerary and embassy requirements.',
-  },
-  {
-    icon: Plane,
-    title: 'Flight Assistance',
-    description: 'Booking support and itinerary documentation for visa applications.',
-  },
-  {
-    icon: Hotel,
-    title: 'Hotel Bookings',
-    description: 'Confirmed stays that meet proof-of-accommodation standards.',
-  },
-  {
-    icon: Banknote,
-    title: 'Forex Assistance',
-    description: 'Competitive rates and documentation for travel funds.',
-  },
-  {
-    icon: FileText,
-    title: 'Documentation Support',
-    description: 'Itineraries, invitation letters, and supporting paperwork handled end-to-end.',
-  },
-]
+const IMAGE_RADIUS = '22px'
+const THUMB_RADIUS = '14px'
+const TRANSITION_MS = 0.4
+
+function ServiceImage({
+  src,
+  fallback,
+  alt,
+  sx,
+}: {
+  src: string
+  fallback: string
+  alt: string
+  sx?: object
+}) {
+  const [imgSrc, setImgSrc] = useState(src)
+
+  return (
+    <Box
+      component="img"
+      src={imgSrc}
+      alt={alt}
+      loading="lazy"
+      onError={() => setImgSrc(fallback)}
+      sx={{
+        display: 'block',
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        ...sx,
+      }}
+    />
+  )
+}
+
+function ServiceThumbnails({
+  activeIndex,
+  onSelect,
+}: {
+  activeIndex: number
+  onSelect: (index: number) => void
+}) {
+  const colors = usePublicBrandColors()
+
+  return (
+    <Stack
+      direction="row"
+      spacing={{ xs: 1.25, sm: 1.5 }}
+      role="tablist"
+      aria-label="Additional travel services"
+      sx={{
+        overflowX: 'auto',
+        width: '100%',
+        pt: { xs: 2.5, md: 3 },
+        pb: 0.5,
+        '&::-webkit-scrollbar': { height: 4 },
+        '&::-webkit-scrollbar-thumb': {
+          bgcolor: colors.border,
+          borderRadius: 2,
+        },
+      }}
+    >
+      {additionalTravelServices.map((service, index) => {
+        const isActive = index === activeIndex
+
+        return (
+          <Box
+            key={service.id}
+            component="button"
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            aria-label={service.title}
+            onClick={() => onSelect(index)}
+            sx={{
+              flex: '1 1 0',
+              minWidth: { xs: 72, sm: 80, md: 88 },
+              maxWidth: { xs: 130, md: 140 },
+              p: 0,
+              border: 'none',
+              cursor: 'pointer',
+              bgcolor: 'transparent',
+              borderRadius: THUMB_RADIUS,
+              overflow: 'hidden',
+              position: 'relative',
+              outline: isActive ? `2px solid ${colors.greenBright}` : `2px solid transparent`,
+              outlineOffset: 2,
+              boxShadow: isActive
+                ? `0 8px 24px rgba(${brandPrimaryGreenRgb}, 0.28)`
+                : '0 4px 14px rgba(15, 23, 42, 0.08)',
+              opacity: isActive ? 1 : 0.72,
+              transform: isActive ? 'scale(1)' : 'scale(0.98)',
+              transition:
+                'opacity 280ms ease, transform 280ms ease, outline-color 280ms ease, box-shadow 280ms ease',
+              '@media (hover: hover)': {
+                '&:hover': {
+                  opacity: 1,
+                  transform: 'scale(1.02)',
+                  boxShadow: '0 10px 28px rgba(15, 23, 42, 0.14)',
+                },
+              },
+            }}
+          >
+            <Box
+              sx={{
+                position: 'relative',
+                width: '100%',
+                height: { xs: 96, sm: 104, md: 112 },
+                overflow: 'hidden',
+              }}
+            >
+              <ServiceImage src={service.image.src} fallback={service.image.fallback} alt="" />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  bgcolor: isActive ? 'transparent' : 'rgba(0, 31, 63, 0.22)',
+                  transition: 'background-color 280ms ease',
+                }}
+              />
+            </Box>
+          </Box>
+        )
+      })}
+    </Stack>
+  )
+}
 
 export function AdditionalServicesSection() {
   const colors = usePublicBrandColors()
+  const prefersReducedMotion = useReducedMotion()
+  const [activeIndex, setActiveIndex] = useState(0)
+  const activeService = additionalTravelServices[activeIndex]
+  const transition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: TRANSITION_MS, ease: [0.22, 1, 0.36, 1] as const }
 
   return (
     <Box
@@ -63,7 +171,7 @@ export function AdditionalServicesSection() {
             component="h2"
             sx={{
               fontFamily: publicFonts.heading,
-              fontSize: { xs: '26px', md: '32px' },
+              fontSize: { xs: '26px', md: '36px' },
               fontWeight: 800,
               color: colors.navy,
               lineHeight: 1.15,
@@ -71,7 +179,7 @@ export function AdditionalServicesSection() {
               mb: 1.25,
             }}
           >
-            Additional travel services
+            Additional Travel Services
           </Typography>
 
           <Typography
@@ -86,58 +194,101 @@ export function AdditionalServicesSection() {
           </Typography>
         </Box>
 
-        <Grid container spacing={2}>
-          {services.map(({ icon: Icon, title, description }) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={title}>
-              <Card
-                sx={{
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+            gap: { xs: 3, md: 5, lg: 8 },
+            alignItems: 'stretch',
+            minHeight: { lg: 440 },
+          }}
+        >
+          <Box
+            sx={{
+              position: 'relative',
+              width: '100%',
+              height: { xs: 'auto', lg: '100%' },
+              minHeight: { xs: 260, sm: 300, md: 340, lg: '100%' },
+              borderRadius: IMAGE_RADIUS,
+              overflow: 'hidden',
+              boxShadow: '0 20px 56px rgba(15, 23, 42, 0.12)',
+              border: `1px solid ${colors.borderSoft}`,
+              bgcolor: colors.surfaceAlt,
+            }}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeService.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={transition}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
                   height: '100%',
-                  p: 2.5,
-                  borderRadius: '16px',
-                  border: `1px solid ${colors.border}`,
-                  boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
-                  bgcolor: colors.surface,
-                  transition: 'border-color 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    borderColor: `${colors.greenBright}55`,
-                    boxShadow: '0 6px 20px rgba(15, 23, 42, 0.06)',
-                  },
                 }}
               >
-                <Stack spacing={1.5}>
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: '11px',
-                      bgcolor: colors.white,
-                      border: `1px solid ${colors.border}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Icon size={18} color={colors.greenBright} strokeWidth={2.25} />
-                  </Box>
+                <ServiceImage
+                  src={activeService.image.src}
+                  fallback={activeService.image.fallback}
+                  alt={activeService.image.alt}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </Box>
+
+          <Stack
+            spacing={0}
+            sx={{
+              minWidth: 0,
+              height: { lg: '100%' },
+              minHeight: { lg: 440 },
+              justifyContent: 'space-between',
+            }}
+          >
+            <Box sx={{ pt: { xs: 0, lg: 0 } }}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeService.id}
+                  initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: prefersReducedMotion ? 0 : -8 }}
+                  transition={transition}
+                >
                   <Typography
+                    component="h3"
                     sx={{
                       fontFamily: publicFonts.heading,
-                      fontSize: '15px',
+                      fontSize: { xs: '28px', md: '34px', lg: '38px' },
                       fontWeight: 800,
                       color: colors.navy,
-                      lineHeight: 1.3,
+                      lineHeight: 1.12,
+                      letterSpacing: '-0.5px',
+                      mb: 2,
                     }}
                   >
-                    {title}
+                    {activeService.title}
                   </Typography>
-                  <Typography sx={{ fontSize: '13px', color: colors.textSecondary, lineHeight: 1.55 }}>
-                    {description}
+
+                  <Typography
+                    sx={{
+                      fontSize: { xs: '16px', md: '17px' },
+                      color: colors.textSecondary,
+                      lineHeight: 1.7,
+                      maxWidth: 520,
+                    }}
+                  >
+                    {activeService.description}
                   </Typography>
-                </Stack>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                </motion.div>
+              </AnimatePresence>
+            </Box>
+
+            <ServiceThumbnails activeIndex={activeIndex} onSelect={setActiveIndex} />
+          </Stack>
+        </Box>
       </PublicContainer>
     </Box>
   )

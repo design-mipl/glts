@@ -1,15 +1,13 @@
-import { Box, Grid, Typography, CircularProgress, Chip, Stack } from '@mui/material'
+import { Box, Grid, CircularProgress } from '@mui/material'
 import { useState } from 'react'
 import { useCountries } from '@/shared/hooks/useCountries'
 import { FilterSidebar } from './components/FilterSidebar'
 import { SearchAndSort } from './components/SearchAndSort'
 import { CountryGrid } from './components/CountryGrid'
+import { DestinationsHeroSection } from './components/DestinationsHeroSection'
 import { PublicContainer } from '../../components/PublicContainer'
-import { ExploreFilterBar } from '../../components/ExploreFilterBar'
 import { defaultExploreFilters } from '../../utils/applyExploreFilters'
-import { publicFonts, publicTypography, usePublicBrandColors } from '../../theme/publicSiteTokens'
-
-const trendingTags = ['Schengen +12%', 'Turkey +10%', 'Japan +8%', 'UAE +6%']
+import { usePublicBrandColors } from '../../theme/publicSiteTokens'
 
 export function CountryListingPage() {
   const colors = usePublicBrandColors()
@@ -31,72 +29,21 @@ export function CountryListingPage() {
 
   return (
     <Box sx={{ bgcolor: colors.surface, minHeight: 'calc(100vh - 80px)', pb: { xs: 12, md: 4 } }}>
-      <Box
-        sx={{
-          bgcolor: '#fff',
-          borderBottom: `1px solid ${colors.border}`,
-          py: { xs: 6, md: 8 },
-        }}
-      >
-        <PublicContainer>
-          <Typography
-            component="h1"
-            sx={{
-              fontFamily: publicFonts.heading,
-              fontSize: publicTypography.h2,
-              fontWeight: 800,
-              color: colors.navy,
-              mb: 2,
-            }}
-          >
-            {countries.length} destinations
-          </Typography>
-          <Typography sx={{ fontSize: publicTypography.body, color: colors.textSecondary, mb: 4 }}>
-            Sorted by your nationality · Indian passport · Travel from Mar 2026
-          </Typography>
-          <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap alignItems="center">
-            <Typography
-              sx={{
-                fontSize: publicTypography.overline,
-                fontWeight: 700,
-                letterSpacing: '0.8px',
-                color: colors.textMuted,
-              }}
-            >
-              TRENDING
-            </Typography>
-            {trendingTags.map(tag => (
-              <Chip
-                key={tag}
-                label={tag}
-                sx={{
-                  bgcolor: '#fff',
-                  border: `1px solid ${colors.border}`,
-                  fontWeight: 600,
-                  fontSize: '13px',
-                  height: 36,
-                }}
-              />
-            ))}
-          </Stack>
-        </PublicContainer>
-      </Box>
+      <DestinationsHeroSection destinationCount={countries.length} />
 
       <Box sx={{ py: { xs: 6, md: 8 } }}>
         <PublicContainer>
-          <Box sx={{ mb: 4, overflowX: 'auto', pb: 0.5 }}>
-            <ExploreFilterBar filters={exploreFilters} onChange={setExploreFilters} />
-          </Box>
-
           <Grid container spacing={4}>
             <Grid size={{ xs: 12, md: 3 }}>
               <FilterSidebar
                 filters={{ regions: selectedRegions, priceRange, visaTypes: selectedVisaTypes }}
+                exploreFilters={exploreFilters}
                 onFiltersChange={({ regions, priceRange: pr, visaTypes }) => {
                   setSelectedRegions(regions)
                   setPriceRange(pr)
                   setSelectedVisaTypes(visaTypes)
                 }}
+                onExploreFiltersChange={setExploreFilters}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 9 }}>

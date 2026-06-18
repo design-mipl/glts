@@ -15,6 +15,7 @@ import { useTheme, alpha } from '@mui/material/styles'
 import { Menu, X, ShieldCheck, Search, User, ArrowRight } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { Button as DsButton } from '@/design-system/UIComponents'
 import { useScrolledHeader } from '../hooks/useScrolledHeader'
 import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, publicShadows, usePublicBrandColors } from '../theme/publicSiteTokens'
@@ -24,8 +25,8 @@ const NAV_HEIGHT = 72
 
 const navLinks = [
   { label: 'Destinations', href: '/countries' },
-  { label: 'Marine Crew', href: '/business' },
-  { label: 'Corporate', href: '/business' },
+  { label: 'Marine Crew', href: '/marine-crew' },
+  { label: 'Corporate', href: '/corporate' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'Track', href: '/track', shortLabel: 'Track' },
 ]
@@ -53,14 +54,19 @@ function NavLink({
         fontWeight: active ? 700 : 500,
         fontSize: compact ? '13px' : '14px',
         px: compact ? 1.25 : 1.75,
-        py: 0.75,
+        py: 1,
+        height: 40,
         minWidth: 'auto',
+        lineHeight: 1,
         textTransform: 'none',
         fontFamily: publicFonts.body,
         borderRadius: '10px',
         bgcolor: active ? colors.greenMuted : 'transparent',
         transition: 'color 0.2s, background-color 0.2s',
         whiteSpace: 'nowrap',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         '&:hover': {
           color: colors.navy,
           bgcolor: colors.greenMuted,
@@ -116,18 +122,22 @@ export function PublicHeader() {
         <PublicContainer
           variant="hero"
           sx={{
-            display: 'grid',
-            gridTemplateColumns: showCenterNav
-              ? 'auto 1fr auto'
-              : 'auto 1fr auto',
+            position: 'relative',
+            display: 'flex',
             alignItems: 'center',
-            gap: { xs: 1, md: 2 },
+            justifyContent: 'space-between',
             height: '100%',
             width: '100%',
+            gap: 2,
           }}
         >
           {/* ——— Left: brand ——— */}
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1.5}
+            sx={{ minWidth: 0, flexShrink: 0, zIndex: 2 }}
+          >
             <Box
               component="a"
               href="/"
@@ -181,15 +191,17 @@ export function PublicHeader() {
 
           {/* ——— Center: navigation ——— */}
           {showCenterNav ? (
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="center"
-              spacing={0.25}
+            <Box
               sx={{
-                minWidth: 0,
-                overflow: 'hidden',
-                px: 1,
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: { md: 0.5, lg: 0.75 },
+                zIndex: 1,
               }}
             >
               {navLinks.map(({ label, href, shortLabel }) => (
@@ -201,31 +213,25 @@ export function PublicHeader() {
                   compact={!isWide}
                 />
               ))}
-            </Stack>
-          ) : (
-            <Box />
-          )}
+            </Box>
+          ) : null}
 
           {/* ——— Right: actions ——— */}
-          <Stack direction="row" alignItems="center" spacing={{ xs: 0.75, md: 1.25 }} sx={{ justifySelf: 'end' }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={{ xs: 0.75, md: 1.25 }}
+            sx={{ flexShrink: 0, zIndex: 2, ml: 'auto' }}
+          >
             {isWide && (
-              <Button
-                component="a"
+              <DsButton
                 href="/sign-in"
+                variant="soft"
+                color="primary"
                 startIcon={<User size={16} />}
-                sx={{
-                  color: colors.textSecondary,
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  textTransform: 'none',
-                  borderRadius: '10px',
-                  px: 1.5,
-                  minWidth: 'auto',
-                  '&:hover': { color: colors.navy, bgcolor: colors.surface },
-                }}
               >
                 Sign in
-              </Button>
+              </DsButton>
             )}
 
             {!isTablet && (
