@@ -1,57 +1,155 @@
-import { Box, Typography, Grid, Card } from '@mui/material'
-import {
-  Palmtree,
-  Briefcase,
-  GraduationCap,
-  HardHat,
-  Users,
-  AlertCircle,
-} from 'lucide-react'
+import { useState } from 'react'
+import { Box, Typography, Grid } from '@mui/material'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
 import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { visaServiceShowcaseImages } from '../../../assets/landingPageImages'
+import { destinationCardCarouselGap } from '../../../components/destinationCardGrid'
 
 const visaServices = [
   {
-    icon: Palmtree,
+    id: 'tourist',
     title: 'Tourist Visa',
     description: 'Leisure travel with expert document review and embassy-ready filing.',
-    href: '/countries',
+    image: visaServiceShowcaseImages.tourist,
   },
   {
-    icon: Briefcase,
+    id: 'business',
     title: 'Business Visa',
     description: 'Meetings, conferences, and short-term business visits handled with compliance.',
-    href: '/countries',
+    image: visaServiceShowcaseImages.business,
   },
   {
-    icon: GraduationCap,
+    id: 'student',
     title: 'Student Visa',
     description: 'Admission-aligned documentation and category guidance for study abroad.',
-    href: '/countries',
+    image: visaServiceShowcaseImages.student,
   },
   {
-    icon: HardHat,
+    id: 'work',
     title: 'Work Visa',
     description: 'Employment visas with employer documentation and eligibility checks.',
-    href: '/countries',
+    image: visaServiceShowcaseImages.work,
   },
   {
-    icon: Users,
+    id: 'family-visit',
     title: 'Family Visit Visa',
     description: 'Visit relatives abroad with invitation letters and proof requirements covered.',
-    href: '/countries',
+    image: visaServiceShowcaseImages.familyVisit,
   },
   {
-    icon: AlertCircle,
+    id: 'refusal-support',
     title: 'Visa Refusal Support',
     description: 'Refusal review, gap analysis, and reapplication strategy from specialists.',
-    href: '#refusal-support',
+    image: visaServiceShowcaseImages.refusalSupport,
   },
 ]
 
+type VisaServiceCardProps = (typeof visaServices)[number] & {
+  minHeight: { xs: number; md: number }
+  objectPosition?: string
+}
+
+function VisaServiceImageCard({
+  title,
+  description,
+  image,
+  minHeight,
+  objectPosition = 'center',
+}: VisaServiceCardProps) {
+  const [imageSrc, setImageSrc] = useState<string>(image.src)
+
+  return (
+    <Box
+      sx={{
+        position: 'relative',
+        minHeight,
+        height: '100%',
+        borderRadius: '22px',
+        overflow: 'hidden',
+        boxShadow: '0 10px 26px rgba(2, 20, 39, 0.16)',
+        isolation: 'isolate',
+        '& img': {
+          transition: 'transform 0.5s ease',
+        },
+        '&:hover': {
+          boxShadow: '0 14px 34px rgba(2, 20, 39, 0.22)',
+        },
+        '&:hover img': {
+          transform: 'scale(1.04)',
+        },
+      }}
+    >
+      <Box
+        component="img"
+        src={imageSrc}
+        alt={image.alt}
+        loading="lazy"
+        onError={() => setImageSrc(image.fallback)}
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition,
+        }}
+      />
+      <Box
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'linear-gradient(180deg, rgba(0, 22, 46, 0.12) 20%, rgba(0, 22, 46, 0.72) 72%, rgba(0, 22, 46, 0.9) 100%)',
+        }}
+      />
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          p: { xs: 2.25, md: 2.75 },
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+        }}
+      >
+        <Typography
+          sx={{
+            fontFamily: publicFonts.heading,
+            fontSize: { xs: '21px', md: '23px' },
+            fontWeight: 800,
+            color: '#fff',
+            lineHeight: 1.15,
+            mb: 0.8,
+            letterSpacing: '-0.03em',
+          }}
+        >
+          {title}
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: { xs: '14px', md: '14.5px' },
+            color: 'rgba(255, 255, 255, 0.9)',
+            lineHeight: 1.5,
+            maxWidth: 360,
+          }}
+        >
+          {description}
+        </Typography>
+      </Box>
+    </Box>
+  )
+}
+
 export function VisaServicesSection() {
   const colors = usePublicBrandColors()
+  const tourist = visaServices[0]
+  const business = visaServices[1]
+  const student = visaServices[2]
+  const work = visaServices[3]
+  const familyVisit = visaServices[4]
+  const refusalSupport = visaServices[5]
 
   return (
     <Box
@@ -104,64 +202,52 @@ export function VisaServicesSection() {
           </Typography>
         </Box>
 
-        <Grid container spacing={2}>
-          {visaServices.map(({ icon: Icon, title, description, href }) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={title}>
-              <Card
-                component="a"
-                href={href}
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  p: 2.5,
-                  borderRadius: '16px',
-                  border: `1px solid ${colors.border}`,
-                  boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
-                  bgcolor: colors.white,
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s',
-                  '&:hover': {
-                    borderColor: `${colors.greenBright}66`,
-                    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: '12px',
-                    bgcolor: colors.greenMuted,
-                    border: `1px solid ${colors.green}33`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 2,
-                  }}
-                >
-                  <Icon size={20} color={colors.greenBright} strokeWidth={2.25} />
-                </Box>
-                <Typography
-                  sx={{
-                    fontFamily: publicFonts.heading,
-                    fontSize: '17px',
-                    fontWeight: 800,
-                    color: colors.navy,
-                    lineHeight: 1.3,
-                    mb: 0.75,
-                  }}
-                >
-                  {title}
-                </Typography>
-                <Typography sx={{ fontSize: '14px', color: colors.textSecondary, lineHeight: 1.55 }}>
-                  {description}
-                </Typography>
-              </Card>
-            </Grid>
-          ))}
+        <Grid container spacing={destinationCardCarouselGap}>
+          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+            <VisaServiceImageCard
+              {...tourist}
+              minHeight={{ xs: 300, md: 520 }}
+              objectPosition="center center"
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: destinationCardCarouselGap, height: '100%' }}>
+              <VisaServiceImageCard
+                {...business}
+                minHeight={{ xs: 240, md: 248 }}
+                objectPosition="center 35%"
+              />
+              <VisaServiceImageCard
+                {...student}
+                minHeight={{ xs: 240, md: 248 }}
+                objectPosition="center 32%"
+              />
+            </Box>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+            <VisaServiceImageCard
+              {...work}
+              minHeight={{ xs: 300, md: 520 }}
+              objectPosition="center center"
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: destinationCardCarouselGap, height: '100%' }}>
+              <VisaServiceImageCard
+                {...familyVisit}
+                minHeight={{ xs: 240, md: 248 }}
+                objectPosition="center 30%"
+              />
+              <VisaServiceImageCard
+                {...refusalSupport}
+                minHeight={{ xs: 240, md: 248 }}
+                objectPosition="center 45%"
+              />
+            </Box>
+          </Grid>
         </Grid>
       </PublicContainer>
     </Box>

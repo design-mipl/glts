@@ -1,25 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Box, Typography, Avatar, Stack } from '@mui/material'
-import { Star, Plane, MapPin, Cloud } from 'lucide-react'
+import { Star, MapPin, Cloud, Icon, Ship, Plane, type IconNode } from 'lucide-react'
 import {
   motion,
   useMotionValueEvent,
   useTransform,
   type MotionValue,
 } from 'framer-motion'
-import { PublicContainer } from '../../../components/PublicContainer'
+import { PublicContainer } from './PublicContainer'
 import {
   publicFonts,
   publicShadows,
   usePublicBrandColors,
   brandPrimaryGreenRgb,
-} from '../../../theme/publicSiteTokens'
-import { landingSectionHeaderMb, PUBLIC_NAV_HEIGHT_PX } from '../landingPageSpacing'
+} from '../theme/publicSiteTokens'
+import { landingSectionHeaderMb, PUBLIC_NAV_HEIGHT_PX } from '../pages/LandingPage/landingPageSpacing'
 import {
   useTestimonialScrollProgress,
   useVisibleTestimonialCount,
   type ScrollDirection,
-} from '../../../hooks/useTestimonialScrollProgress'
+} from '../hooks/useTestimonialScrollProgress'
 
 const CARD_GAP = 24
 const CARD_HEIGHT = 300
@@ -27,56 +27,34 @@ const COMMENT_HEIGHT = 132
 const SCROLL_STEP_VH = 0.62
 const WAYPOINT_COUNT = 5
 
-const testimonials = [
-  {
-    quote:
-      'GreenLight handled my Canada visitor visa flawlessly. The team guided me through every document and kept me updated throughout the process.',
-    name: 'Priya Sharma',
-    service: 'Canada Visitor Visa',
-    initials: 'PS',
-    avatarBg: 'linear-gradient(135deg, #73C064 0%, #4A8F3F 100%)',
-  },
-  {
-    quote:
-      'We rotated 312 crew across 14 ports last quarter without a single missed sailing. Their marine travel desk is an extension of our operations team.',
-    name: 'Hiroshi Kondo',
-    service: 'Marine Crew Travel Services',
-    initials: 'HK',
-    avatarBg: 'linear-gradient(135deg, #0A2540 0%, #1E4D6B 100%)',
-  },
-  {
-    quote:
-      'After a refusal, their specialists rebuilt my case file and coached me through the reapplication. Schengen approved on the second attempt.',
-    name: 'Amara Okafor',
-    service: 'Visa Refusal Support',
-    initials: 'AO',
-    avatarBg: 'linear-gradient(135deg, #5A9A4E 0%, #73C064 100%)',
-  },
-  {
-    quote:
-      'Our university placed 48 exchange students across Europe. GreenLight handled bulk documentation and embassy coordination flawlessly.',
-    name: 'Dr. Elena Vasquez',
-    service: 'Student Visa Program',
-    initials: 'EV',
-    avatarBg: 'linear-gradient(135deg, #123B5C 0%, #0A2540 100%)',
-  },
-  {
-    quote:
-      'From document checklist to courier tracking, everything was transparent. Business visa to Singapore processed ahead of my conference deadline.',
-    name: 'Rajesh Mehta',
-    service: 'Singapore Business Visa',
-    initials: 'RM',
-    avatarBg: 'linear-gradient(135deg, #4A8F3F 0%, #73C064 100%)',
-  },
-  {
-    quote:
-      'Family of four, four different visa types, one coordinator. They made a complex Japan trip feel effortless from start to finish.',
-    name: 'Sarah & James Chen',
-    service: 'Family Travel Package',
-    initials: 'SC',
-    avatarBg: 'linear-gradient(135deg, #1E4D6B 0%, #73C064 100%)',
-  },
+const userTieIcon: IconNode = [
+  ['circle', { cx: '12', cy: '7', r: '4', key: 'head' }],
+  ['path', { d: 'M19 21v-2a7 7 0 0 0-14 0v2', key: 'body' }],
+  ['path', { d: 'M12 11v6', key: 'tie-line' }],
+  ['path', { d: 'm10 13 2-2 2 2', key: 'tie-knot' }],
+  ['path', { d: 'M10.5 15h3', key: 'tie-cross' }],
 ]
+
+export interface TestimonialItem {
+  quote: string
+  name: string
+  service: string
+  initials: string
+  avatarBg: string
+  avatarSrc: string
+  rating?: number
+}
+
+export interface TestimonialSectionProps {
+  testimonials: TestimonialItem[]
+  title?: string
+  subtitle?: string
+  markerIcon?: 'profile' | 'ship' | 'plane'
+}
+
+const DEFAULT_TITLE = 'Trusted by Travelers Worldwide'
+const DEFAULT_SUBTITLE =
+  'Thousands of travelers, families, students, professionals, and marine crew members trust us for smooth visa processing and travel support.'
 
 function FloatingCloud({
   top,
@@ -118,9 +96,11 @@ function FloatingCloud({
 function FlightPathProgress({
   progress,
   direction,
+  markerIcon,
 }: {
   progress: MotionValue<number>
   direction: ScrollDirection
+  markerIcon: 'profile' | 'ship' | 'plane'
 }) {
   const colors = usePublicBrandColors()
   const [displayProgress, setDisplayProgress] = useState(0)
@@ -267,11 +247,68 @@ function FlightPathProgress({
               justifyContent: 'center',
             }}
           >
-            <Plane size={16} color={colors.greenBright} fill={`rgba(${brandPrimaryGreenRgb}, 0.15)`} strokeWidth={2.25} />
+            {markerIcon === 'ship' ? (
+              <Ship
+                size={16}
+                color={colors.greenBright}
+                fill={`rgba(${brandPrimaryGreenRgb}, 0.15)`}
+                strokeWidth={2.25}
+              />
+            ) : markerIcon === 'plane' ? (
+              <Plane
+                size={16}
+                color={colors.greenBright}
+                fill={`rgba(${brandPrimaryGreenRgb}, 0.15)`}
+                strokeWidth={2.25}
+              />
+            ) : (
+              <Icon
+                iconNode={userTieIcon}
+                size={16}
+                color={colors.greenBright}
+                fill={`rgba(${brandPrimaryGreenRgb}, 0.15)`}
+                strokeWidth={2.25}
+              />
+            )}
           </Box>
         </Box>
       </Box>
     </Box>
+  )
+}
+
+function StarRating({ rating }: { rating: number }) {
+  const colors = usePublicBrandColors()
+
+  return (
+    <Stack direction="row" spacing={0.3} aria-hidden>
+      {Array.from({ length: 5 }).map((_, index) => {
+        const fillAmount = Math.min(Math.max(rating - index, 0), 1)
+
+        if (fillAmount >= 1) {
+          return (
+            <Star key={index} size={14} color={colors.greenBright} fill={colors.greenBright} />
+          )
+        }
+
+        if (fillAmount > 0) {
+          return (
+            <Box key={index} sx={{ position: 'relative', width: 14, height: 14, flexShrink: 0 }}>
+              <Star
+                size={14}
+                color={colors.greenBright}
+                style={{ position: 'absolute', inset: 0, opacity: 0.28 }}
+              />
+              <Box sx={{ position: 'absolute', inset: 0, width: '50%', overflow: 'hidden' }}>
+                <Star size={14} color={colors.greenBright} fill={colors.greenBright} />
+              </Box>
+            </Box>
+          )
+        }
+
+        return <Star key={index} size={14} color={colors.greenBright} style={{ opacity: 0.28 }} />
+      })}
+    </Stack>
   )
 }
 
@@ -281,8 +318,10 @@ function TestimonialCard({
   service,
   initials,
   avatarBg,
+  avatarSrc,
+  rating = 4.5,
   cardWidth,
-}: (typeof testimonials)[number] & { cardWidth: number }) {
+}: TestimonialItem & { cardWidth: number }) {
   const colors = usePublicBrandColors()
 
   return (
@@ -306,8 +345,10 @@ function TestimonialCard({
         },
       }}
     >
-      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1.5 }}>
+      <Stack direction="row" alignItems="flex-start" spacing={1.5} sx={{ mb: 1.5 }}>
         <Avatar
+          src={avatarSrc}
+          alt={name}
           sx={{
             width: 44,
             height: 44,
@@ -321,9 +362,24 @@ function TestimonialCard({
         >
           {initials}
         </Avatar>
-        <Typography sx={{ fontWeight: 700, fontSize: '15px', color: colors.navy, lineHeight: 1.3 }}>
-          {name}
-        </Typography>
+        <Box sx={{ minWidth: 0, pt: 0.25 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: '15px', color: colors.navy, lineHeight: 1.3 }}>
+            {name}
+          </Typography>
+          <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mt: 0.5 }}>
+            <StarRating rating={rating} />
+            <Typography
+              sx={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: colors.textMuted,
+                lineHeight: 1,
+              }}
+            >
+              ({rating.toFixed(1)})
+            </Typography>
+          </Stack>
+        </Box>
       </Stack>
 
       <Box
@@ -359,17 +415,16 @@ function TestimonialCard({
       >
         &ldquo;{quote}&rdquo;
       </Typography>
-
-      <Stack direction="row" spacing={0.3} sx={{ mt: 'auto' }}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Star key={i} size={14} color={colors.greenBright} fill={colors.greenBright} />
-        ))}
-      </Stack>
     </Box>
   )
 }
 
-export function TestimonialSection() {
+export function TestimonialSection({
+  testimonials,
+  title = DEFAULT_TITLE,
+  subtitle = DEFAULT_SUBTITLE,
+  markerIcon = 'profile',
+}: TestimonialSectionProps) {
   const colors = usePublicBrandColors()
   const sectionRef = useRef<HTMLElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
@@ -488,31 +543,6 @@ export function TestimonialSection() {
 
         <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1 }}>
           <Box sx={{ maxWidth: 720, mb: landingSectionHeaderMb, mx: 'auto', textAlign: 'center' }}>
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                px: 2,
-                py: 0.75,
-                mb: 2,
-                borderRadius: '999px',
-                bgcolor: colors.greenMuted,
-                border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.2)`,
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: colors.greenDark,
-                }}
-              >
-                Testimonials & Success Stories
-              </Typography>
-            </Box>
-
             <Typography
               component="h2"
               sx={{
@@ -525,7 +555,7 @@ export function TestimonialSection() {
                 letterSpacing: '-0.02em',
               }}
             >
-              Trusted by Travelers Worldwide
+              {title}
             </Typography>
 
             <Typography
@@ -537,12 +567,11 @@ export function TestimonialSection() {
                 mx: 'auto',
               }}
             >
-              Thousands of travelers, families, students, professionals, and marine crew members trust
-              us for smooth visa processing and travel support.
+              {subtitle}
             </Typography>
           </Box>
 
-          <FlightPathProgress progress={smoothProgress} direction={direction} />
+          <FlightPathProgress progress={smoothProgress} direction={direction} markerIcon={markerIcon} />
 
           <Box
             ref={viewportRef}

@@ -7,8 +7,16 @@ import {
   Button,
   Card,
   Slider,
+  Select,
+  MenuItem,
+  FormControl,
 } from '@mui/material'
 import { getRegions } from '@/shared/services/visaService'
+import {
+  defaultExploreFilters,
+  exploreFilterDefs,
+  type ExploreFilters,
+} from '../../../utils/applyExploreFilters'
 import { publicLayout, publicShadows, usePublicBrandColors } from '../../../theme/publicSiteTokens'
 
 interface Filters {
@@ -19,7 +27,9 @@ interface Filters {
 
 interface FilterSidebarProps {
   filters: Filters
+  exploreFilters: ExploreFilters
   onFiltersChange: (filters: Filters) => void
+  onExploreFiltersChange: (filters: ExploreFilters) => void
 }
 
 const visaTypeOptions = ['eVisa', 'Visa on arrival', 'Embassy stamp']
@@ -29,7 +39,12 @@ const visaTypeIds: Record<string, string> = {
   'Embassy stamp': 'embassy',
 }
 
-export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) {
+export function FilterSidebar({
+  filters,
+  exploreFilters,
+  onFiltersChange,
+  onExploreFiltersChange,
+}: FilterSidebarProps) {
   const colors = usePublicBrandColors()
   const regions = getRegions()
 
@@ -69,12 +84,44 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
         </Typography>
         <Button
           size="small"
-          onClick={() => onFiltersChange({ regions: [], priceRange: [0, 20000], visaTypes: [] })}
+          onClick={() => {
+            onFiltersChange({ regions: [], priceRange: [0, 20000], visaTypes: [] })
+            onExploreFiltersChange(defaultExploreFilters)
+          }}
           sx={{ color: colors.greenBright, fontWeight: 600, textTransform: 'none', minWidth: 'auto' }}
         >
           Reset
         </Button>
       </Box>
+
+      {exploreFilterDefs.map(({ key, label, options }) => (
+        <Box key={key} sx={{ mb: 5 }}>
+          <Typography sx={{ fontSize: '12px', fontWeight: 700, color: colors.textMuted, mb: 2 }}>
+            {label}
+          </Typography>
+          <FormControl fullWidth size="small">
+            <Select
+              value={exploreFilters[key]}
+              onChange={e => onExploreFiltersChange({ ...exploreFilters, [key]: e.target.value })}
+              displayEmpty
+              sx={{
+                fontSize: '15px',
+                borderRadius: '10px',
+                bgcolor: colors.surface,
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: colors.border },
+                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: colors.border },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: colors.greenBright },
+              }}
+            >
+              {options.map(opt => (
+                <MenuItem key={opt} value={opt} sx={{ fontSize: '15px' }}>
+                  {opt}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+      ))}
 
       <Box sx={{ mb: 5 }}>
         <Typography sx={{ fontSize: '12px', fontWeight: 700, color: colors.textMuted, mb: 2 }}>
