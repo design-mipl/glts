@@ -4,6 +4,7 @@ import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import {
   requiresFieldValidation,
+  isWebsiteFlowPolicy,
   useApplicationFlowPolicy,
 } from '../../../../context/ApplicationFlowPolicyContext'
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
@@ -31,6 +32,7 @@ export function SingleVisaPurposeStep({
   const colors = usePublicBrandColors()
   const { policy } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
+  const isWebsite = isWebsiteFlowPolicy(policy)
   const flowSegment = resolveApplicationFlowSegment(policy)
   const options = getVisaOfferings(state.countryId, true, flowSegment)
 
@@ -48,13 +50,16 @@ export function SingleVisaPurposeStep({
         />
       </Stack>
       <Typography sx={{ fontSize: 13, color: colors.textSecondary, mb: 2.5 }}>
-        Select the marine visa category for this destination. Requirements in the next step depend on this selection.
+        {isWebsite
+          ? 'Select the visa type for this destination. Requirements in the next step depend on this selection.'
+          : 'Select the marine visa category for this destination. Requirements in the next step depend on this selection.'}
       </Typography>
 
       {options.length === 0 ? (
         <Typography sx={{ fontSize: 13, color: colors.textMuted, mb: 2 }}>
-          No marine visa types are configured for {state.countryName} yet. Choose another destination or contact
-          GLTS operations to enable marine filing for this country.
+          {isWebsite
+            ? `No visa types are configured for ${state.countryName} yet. Choose another destination or contact GLTS support.`
+            : `No marine visa types are configured for ${state.countryName} yet. Choose another destination or contact GLTS operations to enable marine filing for this country.`}
         </Typography>
       ) : null}
 

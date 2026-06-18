@@ -23,6 +23,7 @@ import {
 } from '../../../utils/uploadQueueDocuments'
 import {
   requiresFieldValidation,
+  isWebsiteFlowPolicy,
   useApplicationFlowPolicy,
 } from '../../../context/ApplicationFlowPolicyContext'
 import { FlowStepActions } from '../../../components/create/FlowStepActions'
@@ -136,8 +137,10 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { base } = useCustomerPortalBase()
-  const { policy } = useApplicationFlowPolicy()
+  const { policy, listingPath } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
+  const isWebsite = isWebsiteFlowPolicy(policy)
+  const draftListingPath = listingPath || (isWebsite ? '/countries' : `${base}/applications`)
   const [drawerRowId, setDrawerRowId] = useState<string | null>(null)
   const [pendingGlobalDocId, setPendingGlobalDocId] = useState<string | null>(null)
   const globalUploadInputRef = useRef<HTMLInputElement>(null)
@@ -364,10 +367,12 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
     })
     showToast({
       title: 'Draft saved',
-      description: 'Application moved to Draft applications.',
+      description: isWebsite
+        ? 'Resume from the Apply flow when you return.'
+        : 'Application moved to Draft applications.',
       variant: 'success',
     })
-    navigate(`${base}/applications`)
+    navigate(draftListingPath)
   }
 
   const handleGlobalUploadClick = (docId: string) => {
