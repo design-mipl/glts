@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { Box, Typography, Stack, Card } from '@mui/material'
-import { Check } from 'lucide-react'
+import { Box } from '@mui/material'
 import { SolutionPageSection } from '../../components/solutionPage/SolutionPageSection'
+import { RetainerPlanCards } from '../../components/solutionPage/RetainerPlanCards'
 import { CommonDestinationsSection } from '../../components/CommonDestinationsSection'
 import { VisaCategoryCardsSection } from '../../components/VisaCategoryCardsSection'
 import { WhyAccuracySplitSection } from '../../components/WhyAccuracySplitSection'
@@ -11,7 +11,7 @@ import { FAQSection } from '../../components/FAQSection'
 import { SolutionFinalCtaSection } from '../../components/solutionPage/SolutionFinalCtaSection'
 import { WorkflowTimelineSection } from '../../components/workflowTimeline/WorkflowTimelineSection'
 import { resolveDestinationCountries } from '../../utils/resolveDestinationCountries'
-import { usePublicBrandColors, brandPrimaryGreenRgb } from '../../theme/publicSiteTokens'
+import { usePublicBrandColors } from '../../theme/publicSiteTokens'
 import { MarineHero } from './components/MarineHero'
 import { CompaniesWeWorkWithSection } from './components/CompaniesWeWorkWithSection'
 import {
@@ -72,28 +72,7 @@ export function MarineCrewVisaPage() {
       </SolutionPageSection>
 
       <SolutionPageSection id="marine-retainer-plans" title="Marine Retainer Plans">
-        <Card
-          sx={{
-            p: { xs: 3, md: 4 },
-            borderRadius: '16px',
-            border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.2)`,
-            bgcolor: colors.greenMuted,
-            boxShadow: 'none',
-            maxWidth: 640,
-          }}
-        >
-          <Typography sx={{ fontSize: '15px', fontWeight: 600, color: colors.navy, mb: 2 }}>
-            Retainer plans may include:
-          </Typography>
-          <Stack spacing={1.5}>
-            {marineRetainerPlans.map((item) => (
-              <Stack key={item} direction="row" spacing={1.25} alignItems="center">
-                <Check size={16} color={colors.greenDark} strokeWidth={2.5} />
-                <Typography sx={{ fontSize: '15px', color: colors.navy }}>{item}</Typography>
-              </Stack>
-            ))}
-          </Stack>
-        </Card>
+        <RetainerPlanCards items={marineRetainerPlans} />
       </SolutionPageSection>
 
       <TestimonialSection

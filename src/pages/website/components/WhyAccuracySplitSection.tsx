@@ -106,7 +106,7 @@ export function WhyAccuracySplitSection({
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: '1.05fr 1fr' },
             gap: { xs: 3, md: 5 },
-            alignItems: 'start',
+            alignItems: { xs: 'start', md: 'center' },
           }}
         >
           <Box sx={{ position: 'relative' }}>
@@ -154,7 +154,7 @@ export function WhyAccuracySplitSection({
             ) : null}
           </Box>
 
-          <Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <Typography
               component="h2"
               sx={{
