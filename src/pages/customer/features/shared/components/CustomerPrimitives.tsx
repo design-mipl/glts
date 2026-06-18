@@ -1,7 +1,7 @@
 import { Box, Card, Chip, Divider, LinearProgress, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { AlertCircle, CheckCircle2, Circle, Clock, Eye, FileText } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Circle, Clock, Eye, FileText, Upload } from 'lucide-react'
 import { Button, Tabs } from '@/design-system/UIComponents'
 import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '@/design-system/tokens'
 import {
@@ -341,6 +341,7 @@ export interface CustomerChecklistItem {
   id: string
   label: string
   required?: boolean
+  originalDocument?: boolean
   status: CustomerChecklistItemStatus
   /** Legacy workflow label; chip text uses the four standard statuses from `status`. */
   statusLabel?: string
@@ -398,16 +399,25 @@ function CustomerDocumentChecklistItemCard({
   item,
   onReuploadItem,
   onPreviewItem,
+  onSecondaryAction,
+  secondaryActionLabel = 'Sent',
+  requirePreviewableForPreview = true,
 }: {
   item: CustomerChecklistItem
   onReuploadItem?: (item: CustomerChecklistItem) => void
   onPreviewItem?: (item: CustomerChecklistItem) => void
+  onSecondaryAction?: (item: CustomerChecklistItem) => void
+  secondaryActionLabel?: string
+  requirePreviewableForPreview?: boolean
 }) {
   const colors = usePublicBrandColors()
   const isInvalid = item.status === 'invalid'
   const isPending = item.status === 'pending' || item.status === 'missing'
   const showUploadAction = isInvalid || isPending
-  const showPreviewAction = Boolean(item.previewable && onPreviewItem)
+  const showSecondaryAction = Boolean(onSecondaryAction)
+  const showPreviewAction = Boolean(
+    onPreviewItem && (!requirePreviewableForPreview || item.previewable),
+  )
   const showComment = Boolean(item.reviewComment?.trim()) && (isInvalid || isPending)
   const statusLabel = getChecklistItemStatusLabel(item)
   const statusTone = getChecklistItemStatusTone(item)
@@ -460,7 +470,7 @@ function CustomerDocumentChecklistItemCard({
           ) : null}
         </Stack>
 
-        {showPreviewAction || (showUploadAction && onReuploadItem) ? (
+        {showPreviewAction || showSecondaryAction || (showUploadAction && onReuploadItem) ? (
           <>
             <Divider />
             <Stack
@@ -470,13 +480,27 @@ function CustomerDocumentChecklistItemCard({
               spacing={1}
               sx={{ width: '100%', flexShrink: 0 }}
             >
-              <Box sx={{ minWidth: 0 }}>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
                 {showUploadAction && onReuploadItem ? (
-                  <Button variant="outlined" size="sm" onClick={() => onReuploadItem(item)}>
-                    Upload document
+                  <Button
+                    variant="outlined"
+                    size="sm"
+                    startIcon={<Upload size={14} />}
+                    onClick={() => onReuploadItem(item)}
+                  >
+                    Upload
                   </Button>
                 ) : null}
-              </Box>
+                {showSecondaryAction ? (
+                  <Button
+                    variant="soft"
+                    size="sm"
+                    onClick={() => onSecondaryAction?.(item)}
+                  >
+                    {secondaryActionLabel}
+                  </Button>
+                ) : null}
+              </Stack>
               {showPreviewAction ? (
                 <Button
                   variant="outlined"
@@ -538,10 +562,16 @@ function CustomerChecklistItemGrid({
   items,
   onReuploadItem,
   onPreviewItem,
+  onSecondaryAction,
+  secondaryActionLabel,
+  requirePreviewableForPreview,
 }: {
   items: CustomerChecklistItem[]
   onReuploadItem?: (item: CustomerChecklistItem) => void
   onPreviewItem?: (item: CustomerChecklistItem) => void
+  onSecondaryAction?: (item: CustomerChecklistItem) => void
+  secondaryActionLabel?: string
+  requirePreviewableForPreview?: boolean
 }) {
   return (
     <Box sx={CUSTOMER_DOCUMENT_CHECKLIST_GRID_SX}>
@@ -551,6 +581,9 @@ function CustomerChecklistItemGrid({
           item={item}
           onReuploadItem={onReuploadItem}
           onPreviewItem={onPreviewItem}
+          onSecondaryAction={onSecondaryAction}
+          secondaryActionLabel={secondaryActionLabel}
+          requirePreviewableForPreview={requirePreviewableForPreview}
         />
       ))}
     </Box>
@@ -561,10 +594,16 @@ function CustomerChecklistRejectedPanel({
   items,
   onReuploadItem,
   onPreviewItem,
+  onSecondaryAction,
+  secondaryActionLabel,
+  requirePreviewableForPreview,
 }: {
   items: CustomerChecklistItem[]
   onReuploadItem?: (item: CustomerChecklistItem) => void
   onPreviewItem?: (item: CustomerChecklistItem) => void
+  onSecondaryAction?: (item: CustomerChecklistItem) => void
+  secondaryActionLabel?: string
+  requirePreviewableForPreview?: boolean
 }) {
   const colors = usePublicBrandColors()
   const toneStyles = getToneStyles(colors)
@@ -581,8 +620,21 @@ function CustomerChecklistRejectedPanel({
           items={items}
           onReuploadItem={onReuploadItem}
           onPreviewItem={onPreviewItem}
+          onSecondaryAction={onSecondaryAction}
+          secondaryActionLabel={secondaryActionLabel}
+          requirePreviewableForPreview={requirePreviewableForPreview}
         />
       </Stack>
+    </Card>
+  )
+}
+
+export function CustomerChecklistPanel({ children }: { children: ReactNode }) {
+  const colors = usePublicBrandColors()
+
+  return (
+    <Card elevation={0} sx={getCustomerChecklistPanelSx(colors)}>
+      {children}
     </Card>
   )
 }
@@ -592,13 +644,7 @@ function CustomerChecklistDocumentsPanel({
 }: {
   children: ReactNode
 }) {
-  const colors = usePublicBrandColors()
-
-  return (
-    <Card elevation={0} sx={getCustomerChecklistPanelSx(colors)}>
-      {children}
-    </Card>
-  )
+  return <CustomerChecklistPanel>{children}</CustomerChecklistPanel>
 }
 
 const CHECKLIST_STATUS_SORT_ORDER: Record<CustomerChecklistDisplayStatus, number> = {
@@ -628,14 +674,25 @@ export function CustomerDocumentChecklist({
   items,
   onReuploadItem,
   onPreviewItem,
+  onSecondaryAction,
+  secondaryActionLabel,
+  requirePreviewableForPreview,
+  embedded = false,
 }: {
   country?: string
   title?: string
   items: CustomerChecklistItem[]
   onReuploadItem?: (item: CustomerChecklistItem) => void
   onPreviewItem?: (item: CustomerChecklistItem) => void
+  onSecondaryAction?: (item: CustomerChecklistItem) => void
+  secondaryActionLabel?: string
+  requirePreviewableForPreview?: boolean
+  /** When true, omits the outer panel card (parent supplies the container). */
+  embedded?: boolean
 }) {
-  const sectionTitle = title ?? (country ? `Checklist · ${country}` : 'Document checklist')
+  const secondaryLabel = secondaryActionLabel ?? 'Sent'
+  const needsPreviewable = requirePreviewableForPreview ?? true
+  const sectionTitle = title ?? (country ? `Checklist · ${country}` : 'Document check')
   const rejectedItems = sortChecklistItemsByStatus(items.filter(isRejectedCustomerChecklistItem))
   const remainingItems = sortChecklistItemsByStatus(items.filter(item => !isRejectedCustomerChecklistItem(item)))
 
@@ -645,19 +702,39 @@ export function CustomerDocumentChecklist({
         items={rejectedItems}
         onReuploadItem={onReuploadItem}
         onPreviewItem={onPreviewItem}
+        onSecondaryAction={onSecondaryAction}
+        secondaryActionLabel={secondaryLabel}
+        requirePreviewableForPreview={needsPreviewable}
       />
 
       {remainingItems.length > 0 ? (
-        <CustomerChecklistDocumentsPanel>
+        embedded ? (
           <Stack spacing={1.5}>
             <CustomerChecklistSectionTitle>{sectionTitle}</CustomerChecklistSectionTitle>
             <CustomerChecklistItemGrid
               items={remainingItems}
               onReuploadItem={onReuploadItem}
               onPreviewItem={onPreviewItem}
+              onSecondaryAction={onSecondaryAction}
+              secondaryActionLabel={secondaryLabel}
+              requirePreviewableForPreview={needsPreviewable}
             />
           </Stack>
-        </CustomerChecklistDocumentsPanel>
+        ) : (
+          <CustomerChecklistDocumentsPanel>
+            <Stack spacing={1.5}>
+              <CustomerChecklistSectionTitle>{sectionTitle}</CustomerChecklistSectionTitle>
+              <CustomerChecklistItemGrid
+                items={remainingItems}
+                onReuploadItem={onReuploadItem}
+                onPreviewItem={onPreviewItem}
+                onSecondaryAction={onSecondaryAction}
+                secondaryActionLabel={secondaryLabel}
+                requirePreviewableForPreview={needsPreviewable}
+              />
+            </Stack>
+          </CustomerChecklistDocumentsPanel>
+        )
       ) : null}
     </Stack>
   )

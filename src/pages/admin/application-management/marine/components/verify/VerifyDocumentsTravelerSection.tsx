@@ -10,7 +10,7 @@ interface VerifyDocumentsTravelerSectionProps {
   gltsBatchId?: string
   summaryOverview: ApplicationReviewOverview
   detail?: ApplicationDetailViewModel
-  applicationId?: string
+  summaryApplicationId?: string
   selectedTravelerId: string | null
   onSelectTraveler: (id: string) => void
 }
@@ -22,7 +22,7 @@ export function VerifyDocumentsTravelerSection({
   gltsBatchId,
   summaryOverview,
   detail,
-  applicationId,
+  summaryApplicationId,
   selectedTravelerId,
   onSelectTraveler,
 }: VerifyDocumentsTravelerSectionProps) {
@@ -36,7 +36,7 @@ export function VerifyDocumentsTravelerSection({
       gltsBatchId={gltsBatchId}
       summaryOverview={summaryOverview}
       detail={detail}
-      applicationId={applicationId}
+      summaryApplicationId={summaryApplicationId}
     />
   )
 }

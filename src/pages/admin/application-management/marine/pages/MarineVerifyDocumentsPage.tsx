@@ -9,7 +9,6 @@ import {
   EmptyState,
   FormField,
   Modal,
-  Tabs,
   Textarea,
   useToast,
 } from '@/design-system/UIComponents'
@@ -32,13 +31,6 @@ import {
 } from '../utils/verifyDocumentsUtils'
 import { toApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
 
-const VERIFICATION_TABS = [
-  { label: 'Initial verification', value: 'initial' },
-  { label: 'Final verification', value: 'final' },
-] as const
-
-type VerificationTab = (typeof VERIFICATION_TABS)[number]['value']
-
 export function MarineVerifyDocumentsPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
   const navigate = useAppNavigate()
@@ -52,7 +44,6 @@ export function MarineVerifyDocumentsPage() {
   } | null>(null)
   const [reviewComment, setReviewComment] = useState('')
   const [gltsUploadDocument, setGltsUploadDocument] = useState<ApplicantDocumentItem | null>(null)
-  const [verificationTab, setVerificationTab] = useState<VerificationTab>('initial')
   const [verifyDialog, setVerifyDialog] = useState<{
     scope: 'traveler' | 'global'
     travelerId?: string
@@ -75,6 +66,7 @@ export function MarineVerifyDocumentsPage() {
     updateTravelerDocForRow,
     updateTravelerDocumentWorkflow,
     updateGlobalDoc,
+    updateTravelerOriginalCollection,
     saveDraft,
     submitVerification,
   } = workspace
@@ -93,6 +85,18 @@ export function MarineVerifyDocumentsPage() {
   )
 
   const summaryOverview = useMemo(() => toApplicationReviewOverview(overview), [overview])
+
+  const checklistContext = useMemo(() => {
+    const app = detail?.application
+    if (!app) return {}
+    if (app.country === 'China' && app.visaType === 'M Type Visa') {
+      return { countryId: '13', visaOfferingId: 'cn-m-type' }
+    }
+    if (app.country === 'China' && app.visaType === 'G Type Visa') {
+      return { countryId: '13', visaOfferingId: 'cn-g-type' }
+    }
+    return {}
+  }, [detail?.application])
 
   const travelerChecklistDocuments = useMemo(
     () => selectedRow?.documents.filter(doc => !isRejectedVerifyDocument(doc)) ?? [],
@@ -268,20 +272,9 @@ export function MarineVerifyDocumentsPage() {
         <VerifyDocumentsOverview overview={overview} />
 
         <BaseCard sx={{ overflow: 'hidden' }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
-            <Tabs
-              items={[...VERIFICATION_TABS]}
-              value={verificationTab}
-              onChange={value => setVerificationTab(value as VerificationTab)}
-              variant="underline"
-              size="sm"
-              sx={{ mb: 0, minHeight: 44 }}
-            />
-          </Box>
-
           <Stack spacing={2} sx={{ p: 2 }}>
             <VerifyDocumentsPhaseContent
-              phase={verificationTab}
+              phase="final"
               rows={rows}
               isBulk={isBulk}
               overview={overview}
@@ -314,6 +307,19 @@ export function MarineVerifyDocumentsPage() {
               onRejectedReject={handleRejectedReject}
               onRejectedReupload={handleRejectedReupload}
               onRejectedGltsUpload={handleRejectedGltsUpload}
+              countryId={checklistContext.countryId}
+              visaOfferingId={checklistContext.visaOfferingId}
+              onOriginalCollectionChange={collection => {
+                if (!selectedRow) return
+                updateTravelerOriginalCollection(selectedRow.id, collection)
+              }}
+              onOriginalReceivedSubmit={() => {
+                showToast({
+                  title: 'Physical documents updated',
+                  description: 'Received status and remarks saved.',
+                  variant: 'success',
+                })
+              }}
               onBack={() => navigate(listingPath)}
               onSaveDraft={handleSaveDraft}
               onSubmit={handleSubmit}
@@ -348,7 +354,6 @@ export function MarineVerifyDocumentsPage() {
               applicantName: selectedRow.travelerName,
               document: gltsUploadDocument,
               payload,
-              companyName: detail.application?.entityName?.trim(),
             })
             applicationExpenseManagementService.syncApplication(applicationId)
           }

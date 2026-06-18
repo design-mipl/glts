@@ -18,9 +18,12 @@ import { EntityListingPage } from './features/masters/entities/pages/EntityListi
 import { EntityDetailPage } from './features/masters/entities/pages/EntityDetailPage'
 import { VesselListingPage } from './features/masters/vessels/pages/VesselListingPage'
 import { VesselDetailPage } from './features/masters/vessels/pages/VesselDetailPage'
-import { FinanceComingSoonPage } from './features/finance/pages/FinanceComingSoonPage'
-import { CustomerInvoicesListPage } from './features/finance/pages/CustomerInvoicesListPage'
-import { FINANCE_NAV_ITEMS } from './features/finance/config/financeNav'
+import { FinanceOverviewPage } from './features/finance/pages/FinanceOverviewPage'
+import { InvoiceListingPage } from './features/finance/pages/InvoiceListingPage'
+import { InvoiceDetailPage } from './features/finance/pages/InvoiceDetailPage'
+import { PaymentListingPage } from './features/finance/pages/PaymentListingPage'
+import { PaymentDetailPage } from './features/finance/pages/PaymentDetailPage'
+import { OutstandingStatementsPage } from './features/finance/pages/OutstandingStatementsPage'
 
 export function CustomerPortalApp() {
   return (
@@ -33,13 +36,15 @@ export function CustomerPortalApp() {
         <Route path="applications/new" element={<CreateApplicationFlowPage />} />
         <Route path="applications/:applicationId" element={<ApplicationDetailPage />} />
         <Route path="finance" element={<Navigate to="finance/overview" replace />} />
-        {FINANCE_NAV_ITEMS.map(item =>
-          item.path === 'finance/invoices' ? (
-            <Route key={item.path} path={item.path} element={<CustomerInvoicesListPage />} />
-          ) : (
-            <Route key={item.path} path={item.path} element={<FinanceComingSoonPage />} />
-          ),
-        )}
+        <Route path="finance/overview" element={<FinanceOverviewPage />} />
+        <Route path="finance/invoices" element={<InvoiceListingPage />} />
+        <Route path="finance/invoices/:invoiceId" element={<InvoiceDetailPage />} />
+        <Route path="finance/payments" element={<PaymentListingPage />} />
+        <Route path="finance/payments/:paymentId" element={<PaymentDetailPage />} />
+        <Route path="finance/outstanding" element={<OutstandingStatementsPage />} />
+        <Route path="finance/advance-payments" element={<Navigate to="../overview" replace />} />
+        <Route path="finance/payment-history" element={<Navigate to="../payments" replace />} />
+        <Route path="finance/receipts" element={<Navigate to="../payments" replace />} />
         <Route path="applications/new/single" element={<Navigate to="../new" replace />} />
         <Route path="applications/new/bulk" element={<Navigate to="../new" replace />} />
         <Route path="documents" element={<PlaceholderPage title="Documents vault" />} />

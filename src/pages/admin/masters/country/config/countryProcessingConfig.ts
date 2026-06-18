@@ -4,6 +4,7 @@ import type {
   ProcessingType,
   VisaApplicationWindow,
   VisaApplicationWindowUnit,
+  VisaMode,
 } from '@/shared/types/countryMaster'
 
 export { PROCESSING_TYPE_LABELS }
@@ -51,6 +52,20 @@ export const VISA_CATEGORY_SELECT_OPTIONS = VISA_CATEGORY_OPTIONS.map((value) =>
   value,
   label: value,
 }))
+
+export const VISA_MODE_LABELS: Record<VisaMode, string> = {
+  e_visa: 'e-Visa',
+  sticker_visa: 'Sticker Visa',
+  paper_visa: 'Paper Visa',
+}
+
+export const DEFAULT_VISA_MODE: VisaMode = 'e_visa'
+
+export const VISA_MODE_SELECT_OPTIONS: { value: VisaMode; label: string }[] = [
+  { value: 'e_visa', label: VISA_MODE_LABELS.e_visa },
+  { value: 'sticker_visa', label: VISA_MODE_LABELS.sticker_visa },
+  { value: 'paper_visa', label: VISA_MODE_LABELS.paper_visa },
+]
 
 export const PROCESSING_TIME_OPTIONS = [
   '3 business days',

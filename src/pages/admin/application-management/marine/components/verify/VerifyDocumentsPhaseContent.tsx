@@ -1,10 +1,12 @@
+import { useEffect, useMemo, useState } from 'react'
 import { FileText } from 'lucide-react'
 import { Grid, Stack } from '@mui/material'
-import { Button } from '@/design-system/UIComponents'
+import { Button, Tabs } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
+import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
 import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
 import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { VerifyDocumentsTravelerSection } from './VerifyDocumentsTravelerSection'
@@ -12,12 +14,22 @@ import { VerifyDocumentsTimeline } from './VerifyDocumentsTimeline'
 import {
   VERIFY_DOCUMENT_SPLIT_GRID_SX,
   VerifyDocumentChecklistsPanel,
+  VerifyDocumentsTabPanel,
 } from './VerifyDocumentChecklistSection'
 import { VerifyRejectedDocumentsSection } from './VerifyRejectedDocumentsSection'
 import { VerifyFinalVerificationChecklist } from './VerifyFinalVerificationChecklist'
-import type { VerifyOverviewData, VerifyRejectedDocumentEntry } from '../../utils/verifyDocumentsUtils'
+import { VerifyOriginalDocumentsSection } from './VerifyOriginalDocumentsSection'
+import {
+  isOriginalVerifyDocument,
+  type VerifyOverviewData,
+  type VerifyRejectedDocumentEntry,
+} from '../../utils/verifyDocumentsUtils'
+import { resolveOriginalRequiredDocuments } from '@/shared/utils/originalDocumentCollectionUtils'
+import { PHYSICAL_DOCUMENT_LABEL } from '@/shared/constants/documentRequirementLabels'
 
 export type VerifyDocumentsPhase = 'initial' | 'final'
+
+type VerifyDocumentsTab = 'checklist' | 'original'
 
 interface VerifyDocumentsPhaseContentProps {
   phase: VerifyDocumentsPhase
@@ -47,6 +59,10 @@ interface VerifyDocumentsPhaseContentProps {
   onRejectedReject: (entry: VerifyRejectedDocumentEntry) => void
   onRejectedReupload: (entry: VerifyRejectedDocumentEntry) => void
   onRejectedGltsUpload: (entry: VerifyRejectedDocumentEntry) => void
+  countryId?: string
+  visaOfferingId?: string
+  onOriginalCollectionChange?: (collection: OriginalDocumentCollectionState) => void
+  onOriginalReceivedSubmit?: (collection: OriginalDocumentCollectionState) => void
   onBack: () => void
   onSaveDraft: () => void
   onSubmit: () => void
@@ -81,6 +97,10 @@ export function VerifyDocumentsPhaseContent({
   onRejectedReject,
   onRejectedReupload,
   onRejectedGltsUpload,
+  countryId,
+  visaOfferingId,
+  onOriginalCollectionChange,
+  onOriginalReceivedSubmit,
   onBack,
   onSaveDraft,
   onSubmit,
@@ -89,6 +109,33 @@ export function VerifyDocumentsPhaseContent({
   const isFinalPhase = phase === 'final'
   const saveLabel = isFinalPhase ? 'Complete final verification' : 'Submit application'
   const splitGridSx = isFinalPhase ? VERIFY_DOCUMENT_SPLIT_GRID_SX : undefined
+  const [activeTab, setActiveTab] = useState<VerifyDocumentsTab>('checklist')
+
+  const digitalTravelerDocuments = useMemo(
+    () => travelerChecklistDocuments.filter(doc => !isOriginalVerifyDocument(doc)),
+    [travelerChecklistDocuments],
+  )
+
+  const showOriginalTab = useMemo(() => {
+    if (countryId && visaOfferingId) {
+      return resolveOriginalRequiredDocuments(countryId, visaOfferingId).length > 0
+    }
+    return selectedRow?.documents.some(doc => doc.originalDocument) ?? false
+  }, [countryId, visaOfferingId, selectedRow?.documents])
+
+  useEffect(() => {
+    if (!showOriginalTab && activeTab === 'original') {
+      setActiveTab('checklist')
+    }
+  }, [showOriginalTab, activeTab])
+
+  const tabItems = useMemo(
+    () => [
+      { value: 'checklist', label: 'Document check' },
+      ...(showOriginalTab ? [{ value: 'original', label: PHYSICAL_DOCUMENT_LABEL }] : []),
+    ],
+    [showOriginalTab],
+  )
 
   const rejectedDocumentsSection =
     rejectedDocuments.length > 0 ? (
@@ -106,7 +153,7 @@ export function VerifyDocumentsPhaseContent({
   const documentChecklistsSection = (
     <VerifyDocumentChecklistsPanel
       countryTitle={overview.countryName}
-      travelerDocuments={selectedRow && detail ? travelerChecklistDocuments : []}
+      travelerDocuments={selectedRow && detail ? digitalTravelerDocuments : []}
       globalDocuments={globalChecklistDocuments}
       gridSx={splitGridSx}
       onTravelerPreview={documentId => onPreview(documentId, 'traveler')}
@@ -121,11 +168,37 @@ export function VerifyDocumentsPhaseContent({
     />
   )
 
+  const originalDocumentsSection = (
+    <VerifyOriginalDocumentsSection
+      selectedRow={selectedRow}
+      countryId={countryId}
+      visaOfferingId={visaOfferingId}
+      onCollectionChange={onOriginalCollectionChange}
+      onReceivedSubmit={onOriginalReceivedSubmit}
+    />
+  )
+
   const documentsPane = (
-    <Stack spacing={2}>
-      {rejectedDocumentsSection}
-      {documentChecklistsSection}
-    </Stack>
+    <VerifyDocumentsTabPanel>
+      <Stack spacing={2}>
+        {tabItems.length > 1 ? (
+          <Tabs
+            value={activeTab}
+            onChange={value => setActiveTab(value as VerifyDocumentsTab)}
+            variant="underline"
+            size="sm"
+            items={tabItems}
+          />
+        ) : null}
+        {activeTab === 'checklist' ? (
+          <>
+            {rejectedDocumentsSection}
+            {documentChecklistsSection}
+          </>
+        ) : null}
+        {activeTab === 'original' ? originalDocumentsSection : null}
+      </Stack>
+    </VerifyDocumentsTabPanel>
   )
 
   return (
@@ -137,7 +210,7 @@ export function VerifyDocumentsPhaseContent({
         gltsBatchId={overview.gltsBatchId}
         summaryOverview={summaryOverview}
         detail={detail}
-        applicationId={applicationId}
+        summaryApplicationId={applicationId}
         selectedTravelerId={selectedTravelerId}
         onSelectTraveler={onSelectTraveler}
       />

@@ -1,0 +1,174 @@
+import type { QuotationRecord } from '@/shared/types/quotation'
+import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { getCurrentVersion } from '@/shared/utils/quotationValidation'
+import {
+  quotationSharedStatusLabel,
+  quotationSourceTypeLabel,
+  quotationVersionStatusLabel,
+  workflowTypeLabel,
+} from '../config/quotationStatusConfig'
+
+export interface QuotationAdvancedFilterState {
+  quotationNo: string
+  companyName: string
+  workflowType: string
+  approvalStatus: string
+  sharedStatus: string
+  dateFrom: string
+  dateTo: string
+}
+
+export const INITIAL_QUOTATION_ADVANCED_FILTERS: QuotationAdvancedFilterState = {
+  quotationNo: '',
+  companyName: '',
+  workflowType: 'all',
+  approvalStatus: 'all',
+  sharedStatus: 'all',
+  dateFrom: '',
+  dateTo: '',
+}
+
+export function matchesQuotationSearch(record: QuotationRecord, query: string): boolean {
+  const q = query.trim().toLowerCase()
+  if (!q) return true
+  const version = getCurrentVersion(record)
+  return (
+    record.quotationNo.toLowerCase().includes(q) ||
+    record.id.toLowerCase().includes(q) ||
+    record.customer.companyName.toLowerCase().includes(q) ||
+    record.customer.contactPersonName.toLowerCase().includes(q) ||
+    quotationSourceTypeLabel[record.sourceType].toLowerCase().includes(q) ||
+    workflowTypeLabel[record.workflowType].toLowerCase().includes(q) ||
+    (version ? quotationVersionStatusLabel[version.status].toLowerCase().includes(q) : false)
+  )
+}
+
+export function matchesQuotationAdvancedFilters(
+  record: QuotationRecord,
+  filters: QuotationAdvancedFilterState,
+): boolean {
+  const version = getCurrentVersion(record)
+  if (filters.quotationNo.trim()) {
+    const q = filters.quotationNo.trim().toLowerCase()
+    if (!record.quotationNo.toLowerCase().includes(q) && !record.id.toLowerCase().includes(q)) return false
+  }
+  if (filters.companyName.trim()) {
+    const q = filters.companyName.trim().toLowerCase()
+    if (!record.customer.companyName.toLowerCase().includes(q)) return false
+  }
+  if (filters.workflowType !== 'all' && record.workflowType !== filters.workflowType) return false
+  if (filters.approvalStatus !== 'all' && version?.status !== filters.approvalStatus) return false
+  if (filters.sharedStatus !== 'all' && record.sharedStatus !== filters.sharedStatus) return false
+  if (filters.dateFrom && record.createdAt.slice(0, 10) < filters.dateFrom) return false
+  if (filters.dateTo && record.createdAt.slice(0, 10) > filters.dateTo) return false
+  return true
+}
+
+export function getQuotationCellValue(record: QuotationRecord, columnKey: string): string {
+  const version = getCurrentVersion(record)
+  switch (columnKey) {
+    case 'quotationNo':
+      return record.quotationNo
+    case 'companyName':
+      return record.customer.companyName
+    case 'sourceType':
+      return quotationSourceTypeLabel[record.sourceType]
+    case 'workflowType':
+      return workflowTypeLabel[record.workflowType]
+    case 'totalAmount':
+      return version ? formatInr(version.totals.grandTotal) : '—'
+    case 'currentVersion':
+      return version?.versionLabel ?? '—'
+    case 'approvalStatus':
+      return version ? quotationVersionStatusLabel[version.status] : '—'
+    case 'sharedStatus':
+      return quotationSharedStatusLabel[record.sharedStatus]
+    case 'validTill':
+      return record.validTill || '—'
+    case 'createdAt':
+      return new Date(record.createdAt).toLocaleDateString()
+    default:
+      return ''
+  }
+}
+
+export function hasActiveQuotationFilters(filters: QuotationAdvancedFilterState): boolean {
+  return (
+    Boolean(filters.quotationNo.trim()) ||
+    Boolean(filters.companyName.trim()) ||
+    filters.workflowType !== 'all' ||
+    filters.approvalStatus !== 'all' ||
+    filters.sharedStatus !== 'all' ||
+    Boolean(filters.dateFrom) ||
+    Boolean(filters.dateTo)
+  )
+}
+
+export function getQuotationEmptyState(hasSearch: boolean) {
+  if (hasSearch) {
+    return {
+      emptyTitle: 'No quotations match your search',
+      emptyDescription: 'Try adjusting filters or search terms.',
+    }
+  }
+  return {
+    emptyTitle: 'No quotations yet',
+    emptyDescription: 'Create a direct quotation or convert an enquiry to get started.',
+    emptyAction: { label: 'Create Quotation' },
+  }
+}
+
+export function mapQuotationRowsToGridItems(rows: QuotationRecord[]) {
+  return rows.map((row) => {
+    const version = getCurrentVersion(row)
+    return {
+      id: row.id,
+      title: row.quotationNo,
+      subtitle: row.customer.companyName,
+      meta: [
+        quotationSourceTypeLabel[row.sourceType],
+        version ? quotationVersionStatusLabel[version.status] : '—',
+      ].join(' · '),
+      badge: version ? formatInr(version.totals.grandTotal) : '—',
+    }
+  })
+}
+
+export function downloadQuotationCsv(rows: QuotationRecord[]) {
+  const header = [
+    'Quotation No',
+    'Company',
+    'Type',
+    'Workflow',
+    'Total',
+    'Version',
+    'Approval',
+    'Shared',
+    'Valid Till',
+    'Created',
+  ]
+  const lines = rows.map((r) => {
+    const version = getCurrentVersion(r)
+    return [
+      r.quotationNo,
+      r.customer.companyName,
+      quotationSourceTypeLabel[r.sourceType],
+      workflowTypeLabel[r.workflowType],
+      version ? String(version.totals.grandTotal) : '',
+      version?.versionLabel ?? '',
+      version ? quotationVersionStatusLabel[version.status] : '',
+      quotationSharedStatusLabel[r.sharedStatus],
+      r.validTill,
+      new Date(r.createdAt).toLocaleDateString(),
+    ]
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(',')
+  })
+  const blob = new Blob([[header.join(','), ...lines].join('\n')], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'quotations.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}

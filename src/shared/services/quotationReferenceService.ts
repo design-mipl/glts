@@ -1,4 +1,4 @@
-import { SEED_QUOTATION_REFERENCES } from '@/shared/data/mockQuotationReferences'
+import { quotationService } from '@/shared/services/quotationService'
 import type { QuotationReference, QuotationReferenceListFilters } from '@/shared/types/quotationReference'
 
 function normalizeQuery(query?: string) {
@@ -8,7 +8,7 @@ function normalizeQuery(query?: string) {
 export const quotationReferenceService = {
   list(filters: QuotationReferenceListFilters = {}): QuotationReference[] {
     const q = normalizeQuery(filters.query)
-    let rows = [...SEED_QUOTATION_REFERENCES]
+    let rows = quotationService.listReferences()
     if (q) {
       rows = rows.filter(
         (r) =>
@@ -22,16 +22,11 @@ export const quotationReferenceService = {
   },
 
   getById(id: string): QuotationReference | undefined {
-    return SEED_QUOTATION_REFERENCES.find((r) => r.id === id)
+    return quotationService.toReference(id)
   },
 
   getSelectOptions(): { value: string; label: string; gstNumber: string; quotationId: string }[] {
-    return SEED_QUOTATION_REFERENCES.map((r) => ({
-      value: r.id,
-      label: r.companyName,
-      gstNumber: r.gstNumber,
-      quotationId: r.quotationId,
-    }))
+    return quotationService.getApprovedSelectOptions()
   },
 
   search(query: string): QuotationReference[] {

@@ -212,6 +212,7 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         state.visaOfferingId,
         passportFields,
         fallbackIndex - 1,
+        state.jurisdictionId || undefined,
       )
       const { documentsComplete, documentsTotal } = countDocumentProgress(documents)
       const additionalDetails = resolveApplicantAdditionalDetails(row.additionalDetails)
@@ -224,7 +225,7 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         additionalDetails,
       })
     },
-    [canBuildChecklist, ensureRowAdditionalDetails, state.countryId, state.visaOfferingId],
+    [canBuildChecklist, ensureRowAdditionalDetails, state.countryId, state.visaOfferingId, state.jurisdictionId],
   )
 
   useEffect(() => {
@@ -653,6 +654,9 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         row={drawerRow}
         onClose={() => setDrawerRowId(null)}
         onUpdateRow={handleRowUpdate}
+        countryId={state.countryId}
+        visaOfferingId={state.visaOfferingId}
+        jurisdictionId={state.jurisdictionId || undefined}
       />
     </Box>
   )

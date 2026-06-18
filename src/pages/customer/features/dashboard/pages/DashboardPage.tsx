@@ -17,6 +17,8 @@ import {
   CustomerStatusChip,
   getCustomerStatusTone,
 } from '@/pages/customer/features/shared/components/CustomerPrimitives'
+import { GLTS_NOTIFICATION_IDS } from '../../../data/portalIds'
+import { customerFinanceService } from '@/shared/services/customerFinanceService'
 
 function greeting(): string {
   const h = new Date().getHours()
@@ -264,7 +266,22 @@ export function DashboardPage() {
             >
               <Stack spacing={1.25}>
                 {dashboard.notifications.map(n => (
-                  <Box key={n.id} sx={{ opacity: n.read ? 0.7 : 1 }}>
+                  <Box
+                    key={n.id}
+                    sx={{
+                      opacity: n.read ? 0.7 : 1,
+                      cursor: n.id === GLTS_NOTIFICATION_IDS.invoice ? 'pointer' : 'default',
+                      '&:hover': n.id === GLTS_NOTIFICATION_IDS.invoice ? { opacity: 1 } : undefined,
+                    }}
+                    onClick={() => {
+                      if (n.id !== GLTS_NOTIFICATION_IDS.invoice) return
+                      const inv = customerFinanceService
+                        .listSessionInvoices()
+                        .find(i => i.invoiceId.includes('8821'))
+                      if (inv) navigate(`${base}/finance/invoices/${inv.id}`)
+                      else navigate(`${base}/finance/invoices`)
+                    }}
+                  >
                     <Typography sx={{ fontSize: 13, fontWeight: n.read ? 600 : 800, color: colors.navy }}>{n.title}</Typography>
                     <Typography sx={{ fontSize: 11, color: colors.textMuted }}>{n.time}</Typography>
                   </Box>

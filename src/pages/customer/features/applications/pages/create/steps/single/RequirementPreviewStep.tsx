@@ -6,6 +6,7 @@ import {
   getRequirementPreviewCards,
   getTravelFeasibilityConfig,
   getVisaApplicationWindow,
+  offeringRequiresJurisdictionSelection,
   resolveJurisdictionForOfferingState,
 } from '@/shared/services/countryMasterService'
 import { DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS } from '@/shared/constants/travelDateFeasibility'
@@ -31,30 +32,39 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
   const { policy } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
 
+  const requiresJurisdiction = useMemo(
+    () => offeringRequiresJurisdictionSelection(state.countryId, state.visaOfferingId),
+    [state.countryId, state.visaOfferingId],
+  )
+
   const applicableStates = useMemo(
     () => getApplicableStatesForOffering(state.countryId, state.visaOfferingId),
     [state.countryId, state.visaOfferingId],
   )
-  const hasStateOptions = applicableStates.length > 0
 
   const resolvedJurisdiction = useMemo(
     () =>
-      state.issuedPassportState
+      requiresJurisdiction && state.issuedPassportState
         ? resolveJurisdictionForOfferingState(
             state.countryId,
             state.visaOfferingId,
             state.issuedPassportState,
           )
         : undefined,
-    [state.countryId, state.visaOfferingId, state.issuedPassportState],
+    [
+      requiresJurisdiction,
+      state.countryId,
+      state.visaOfferingId,
+      state.issuedPassportState,
+    ],
   )
 
   const jurisdictionId = resolvedJurisdiction?.id ?? state.jurisdictionId
 
   const cards = useMemo(() => {
-    if (hasStateOptions && !jurisdictionId) return []
+    if (requiresJurisdiction && !jurisdictionId) return []
     return getRequirementPreviewCards(state.countryId, state.visaOfferingId, jurisdictionId || undefined)
-  }, [hasStateOptions, jurisdictionId, state.countryId, state.visaOfferingId])
+  }, [requiresJurisdiction, jurisdictionId, state.countryId, state.visaOfferingId])
 
   const travelDateBounds = useMemo(
     () => getTravelDateInputBounds(getVisaApplicationWindow(state.countryId)),
@@ -74,6 +84,13 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
   )
 
   useEffect(() => {
+    if (!requiresJurisdiction) {
+      if (state.issuedPassportState || state.jurisdictionId || state.jurisdiction) {
+        onUpdate({ issuedPassportState: '', jurisdictionId: '', jurisdiction: '' })
+      }
+      return
+    }
+
     if (!state.issuedPassportState) {
       if (state.jurisdictionId || state.jurisdiction) {
         onUpdate({ jurisdictionId: '', jurisdiction: '' })
@@ -106,6 +123,7 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
   }, [
     applicableStates,
     onUpdate,
+    requiresJurisdiction,
     resolvedJurisdiction,
     state.issuedPassportState,
     state.jurisdiction,
@@ -130,9 +148,8 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
         state.visaOfferingId &&
           cards.length > 0 &&
           state.travelDate &&
-          state.issuedPassportState &&
-          state.jurisdictionId &&
-          state.jurisdiction,
+          (!requiresJurisdiction ||
+            (state.issuedPassportState && state.jurisdictionId && state.jurisdiction)),
       )
     : true
 
@@ -176,59 +193,55 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
                 mb: 1,
               }}
             >
-              Travel & jurisdiction
+              {requiresJurisdiction ? 'Travel & jurisdiction' : 'Travel details'}
             </Typography>
             <Divider sx={{ mb: 1.5, borderColor: colors.border }} />
             <Stack spacing={2}>
-              <Grid container spacing={1.5}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box>
-                    <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
-                      Issued passport state
-                    </Typography>
-                    <TextField
-                      select
-                      size="small"
-                      fullWidth
-                      value={state.issuedPassportState}
-                      onChange={(e) => handleStateChange(e.target.value)}
-                      disabled={!hasStateOptions}
-                      inputProps={{ 'aria-label': 'Issued passport state' }}
-                      sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
-                    >
-                      <MenuItem value="">
-                        <em>Select state</em>
-                      </MenuItem>
-                      {applicableStates.map((stateName) => (
-                        <MenuItem key={stateName} value={stateName}>
-                          {stateName}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                    {!hasStateOptions && (
-                      <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.5 }}>
-                        No applicable states configured for this visa type.
+              {requiresJurisdiction ? (
+                <Grid container spacing={1.5}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box>
+                      <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
+                        Issued passport state
                       </Typography>
-                    )}
-                  </Box>
+                      <TextField
+                        select
+                        size="small"
+                        fullWidth
+                        value={state.issuedPassportState}
+                        onChange={(e) => handleStateChange(e.target.value)}
+                        inputProps={{ 'aria-label': 'Issued passport state' }}
+                        sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
+                      >
+                        <MenuItem value="">
+                          <em>Select state</em>
+                        </MenuItem>
+                        {applicableStates.map((stateName) => (
+                          <MenuItem key={stateName} value={stateName}>
+                            {stateName}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box>
+                      <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
+                        Jurisdiction
+                      </Typography>
+                      <TextField
+                        size="small"
+                        fullWidth
+                        value={state.jurisdiction}
+                        disabled
+                        placeholder="Auto-filled from state"
+                        inputProps={{ 'aria-label': 'Jurisdiction' }}
+                        sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
+                      />
+                    </Box>
+                  </Grid>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box>
-                    <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
-                      Jurisdiction
-                    </Typography>
-                    <TextField
-                      size="small"
-                      fullWidth
-                      value={state.jurisdiction}
-                      disabled
-                      placeholder="Auto-filled from state"
-                      inputProps={{ 'aria-label': 'Jurisdiction' }}
-                      sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
+              ) : null}
               <Box>
                 <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
                   Intended travel date
@@ -250,7 +263,10 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <RequirementPreviewCarousel cards={cards} />
+          <RequirementPreviewCarousel
+            cards={cards}
+            requiresJurisdictionSelection={requiresJurisdiction}
+          />
         </Grid>
       </Grid>
 

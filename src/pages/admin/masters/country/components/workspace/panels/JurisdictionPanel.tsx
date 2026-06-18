@@ -11,6 +11,7 @@ import {
 } from '../../../config/documentDescriptionRichText'
 import { COUNTRY_WORKSPACE_LAYOUT } from '../../../config/countryWorkspaceLayout'
 import { normalizeGltsScopeRichText, normalizeRichTextForSave } from '@/shared/utils/richTextUtils'
+import { PHYSICAL_DOCUMENTS_REQUIRED_LABEL } from '@/shared/constants/documentRequirementLabels'
 import { generateDocumentRuleId } from '@/shared/data/countryJurisdictionDefaults'
 import { countryMasterAdminService } from '@/shared/services/countryMasterAdminService'
 import type {
@@ -267,7 +268,7 @@ export function JurisdictionPanel({
         <Toggle
           checked={jurisdiction.processingRules.originalDocumentsRequired}
           onChange={(v) => patchJurisdiction({ processingRules: { ...jurisdiction.processingRules, originalDocumentsRequired: v } })}
-          label="Original Documents Required"
+          label={PHYSICAL_DOCUMENTS_REQUIRED_LABEL}
           disabled={readOnly}
         />
         <Toggle

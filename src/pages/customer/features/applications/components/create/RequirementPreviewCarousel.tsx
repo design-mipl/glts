@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Box, Typography, Card, Stack, Chip, Link, Divider, keyframes } from '@mui/material'
+import { Box, Typography, Card, Stack, Link, Divider, keyframes } from '@mui/material'
 import { ArrowLeft, FileSearch, FileText } from 'lucide-react'
 import { RichTextContent } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { DOCUMENT_OWNER_TYPE_LABELS } from '@/shared/constants/documentOwnerType'
 import type { DocumentOwnerType, RequirementPreviewCard } from '@/shared/types/countryMaster'
 import { CustomerTabs } from '@/pages/customer/features/shared/components/CustomerPrimitives'
+import { DocumentRequirementTags } from '../DocumentRequirementTags'
 
 interface RequirementPreviewCarouselProps {
   cards: RequirementPreviewCard[]
+  requiresJurisdictionSelection?: boolean
 }
 
 const PLACEHOLDER_TAB_LABELS = ['Seafarer', 'Company', 'Shipping Agent', 'GLTS']
@@ -32,7 +34,10 @@ function tabLabel(card: RequirementPreviewCard): string {
   return labels[card.variant] ?? card.title
 }
 
-export function RequirementPreviewCarousel({ cards }: RequirementPreviewCarouselProps) {
+export function RequirementPreviewCarousel({
+  cards,
+  requiresJurisdictionSelection = true,
+}: RequirementPreviewCarouselProps) {
   const colors = usePublicBrandColors()
   const [activeTab, setActiveTab] = useState(cards[0]?.id ?? '')
 
@@ -56,7 +61,12 @@ export function RequirementPreviewCarousel({ cards }: RequirementPreviewCarousel
   )
 
   if (cards.length === 0) {
-    return <RequirementPreviewEmptyState colors={colors} />
+    return (
+      <RequirementPreviewEmptyState
+        colors={colors}
+        requiresJurisdictionSelection={requiresJurisdictionSelection}
+      />
+    )
   }
 
   const card = cards.find((entry) => entry.id === activeTab) ?? cards[0]
@@ -144,8 +154,10 @@ function RequirementPreviewSectionShell({
 
 function RequirementPreviewEmptyState({
   colors,
+  requiresJurisdictionSelection = true,
 }: {
   colors: ReturnType<typeof usePublicBrandColors>
+  requiresJurisdictionSelection?: boolean
 }) {
   return (
     <RequirementPreviewSectionShell colors={colors}>
@@ -198,26 +210,30 @@ function RequirementPreviewEmptyState({
             Document requirements preview
           </Typography>
           <Typography sx={{ fontSize: 12, color: colors.textSecondary, maxWidth: 300, lineHeight: 1.5 }}>
-            Choose an issued passport state on the left to load jurisdiction-specific documents, samples, and GLTS scope.
+            {requiresJurisdictionSelection
+              ? 'Choose an issued passport state on the left to load jurisdiction-specific documents, samples, and GLTS scope.'
+              : 'Document requirements for this visa type will appear here once configured in country master.'}
           </Typography>
-          <Stack
-            direction="row"
-            spacing={0.5}
-            alignItems="center"
-            sx={{
-              mt: 0.5,
-              px: 1.25,
-              py: 0.75,
-              borderRadius: '999px',
-              bgcolor: colors.surfaceAlt,
-              border: `1px solid ${colors.border}`,
-            }}
-          >
-            <ArrowLeft size={14} color={colors.textMuted} />
-            <Typography sx={{ fontSize: 11, fontWeight: 600, color: colors.textMuted }}>
-              Start with passport state
-            </Typography>
-          </Stack>
+          {requiresJurisdictionSelection ? (
+            <Stack
+              direction="row"
+              spacing={0.5}
+              alignItems="center"
+              sx={{
+                mt: 0.5,
+                px: 1.25,
+                py: 0.75,
+                borderRadius: '999px',
+                bgcolor: colors.surfaceAlt,
+                border: `1px solid ${colors.border}`,
+              }}
+            >
+              <ArrowLeft size={14} color={colors.textMuted} />
+              <Typography sx={{ fontSize: 11, fontWeight: 600, color: colors.textMuted }}>
+                Start with passport state
+              </Typography>
+            </Stack>
+          ) : null}
         </Stack>
 
         <Stack spacing={1} sx={{ px: 0.5, pb: 0.5, flex: 1 }}>
@@ -284,16 +300,9 @@ function RequirementPreviewCardPanel({
             <Stack key={doc.id} spacing={0.75} sx={{ py: 1.25 }}>
               <Stack direction="row" alignItems="center" spacing={0.75} flexWrap="wrap">
                 <Typography sx={{ fontSize: 13, fontWeight: 700, color: colors.navy }}>{doc.name}</Typography>
-                <Chip
-                  label={doc.mandatory ? 'Mandatory' : 'Optional'}
-                  size="small"
-                  sx={{
-                    height: 20,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    bgcolor: doc.mandatory ? colors.greenMuted : colors.surfaceAlt,
-                    color: doc.mandatory ? colors.greenDark : colors.textMuted,
-                  }}
+                <DocumentRequirementTags
+                  mandatory={doc.mandatory}
+                  originalDocument={doc.originalDocument}
                 />
               </Stack>
 

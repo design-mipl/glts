@@ -39,6 +39,7 @@ export interface FlowDraftLikeState {
   purposeLabel: string
   travelDate: string
   jurisdiction?: string
+  jurisdictionId?: string
   entityId?: string
   entityName?: string
   contactPerson?: string

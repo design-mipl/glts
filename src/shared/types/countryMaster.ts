@@ -13,6 +13,8 @@ export type ProcessingType =
 
 export type VisaTypeStatus = 'active' | 'inactive'
 
+export type VisaMode = 'e_visa' | 'sticker_visa' | 'paper_visa'
+
 export type VisaApplicationWindowUnit = 'days' | 'weeks' | 'months'
 
 export interface VisaApplicationWindow {
@@ -55,6 +57,7 @@ export interface CountryDocumentMapping {
   ocrSupported?: boolean
   description?: string
   formatNotes?: string
+  originalDocument?: boolean
 }
 
 /** Reference to Document Master — name from master; description may be overridden per country. */
@@ -64,6 +67,7 @@ export interface CountryDocumentChecklistItem {
   sortOrder: number
   /** Country-specific description; falls back to Document Master when empty. */
   description?: string
+  originalDocument?: boolean
 }
 
 export interface CountryProcessingRules {
@@ -95,6 +99,7 @@ export interface CountryJurisdictionDocumentRule {
   ocrEnabled: boolean
   multipleUpload: boolean
   commonDocument: boolean
+  originalDocument: boolean
   ownerType?: DocumentOwnerType
   description?: string
   hasSample?: boolean
@@ -131,12 +136,19 @@ export interface CountryVisaType {
   id: string
   name: string
   visaCategory: string
+  visaMode?: VisaMode
   processingTime: string
   entryType: string
   validity: string
   stayDuration: string
   prioritySupport: boolean
   status: VisaTypeStatus
+  /** When enabled, embassy/VFS jurisdictions can be configured for this visa type. */
+  jurisdictionEnabled?: boolean
+  /** Document rules configured directly on the visa type when jurisdiction is disabled. */
+  documents?: CountryJurisdictionDocumentRule[]
+  /** GLTS service scope when jurisdiction is disabled. */
+  gltsScope?: string
   pricing?: number
   jurisdictions: CountryVisaJurisdiction[]
   /** Visa-type / application-specific documents (in addition to segment common documents). */
@@ -204,6 +216,7 @@ export interface RequirementDocumentRow {
   id: string
   name: string
   mandatory: boolean
+  originalDocument?: boolean
   remarks?: string
   description?: string
   hasSample?: boolean
@@ -321,6 +334,7 @@ export interface DocumentWorkspaceItem {
   description: string
   formatNotes?: string
   remarks?: string
+  originalDocument?: boolean
   status?: DocumentVerificationStatus
   ocrSupported?: boolean
   ocrMismatchAlert?: string

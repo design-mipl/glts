@@ -12,6 +12,7 @@ import {
   Link,
 } from '@mui/material'
 import { Eye, EyeOff } from 'lucide-react'
+import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
 
 interface LoginFormPanelProps {
@@ -57,7 +58,7 @@ export function LoginFormPanel({
     >
       <Box
         component="img"
-        src="/greenlight_logo.jpg"
+        src={GREENLIGHT_LOGO_SRC}
         alt="Greenlight"
         sx={{
           height: 40,

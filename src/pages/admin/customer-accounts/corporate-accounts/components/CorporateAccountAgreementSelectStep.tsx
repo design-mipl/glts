@@ -6,13 +6,37 @@ import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPa
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CorporateAccountFormData } from '@/shared/types/corporateAccount'
 import { agreementEmbeddedTableSx } from '../../agreements/components/agreementFormLayout'
-import { billingTypeLabel, workflowTypeLabel } from '../../agreements/config/agreementStatusConfig'
+import {
+  agreementStatusLabel,
+  billingTypeLabel,
+  workflowTypeLabel,
+} from '../../agreements/config/agreementStatusConfig'
+import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 
 interface CorporateAccountAgreementSelectStepProps {
   data: CorporateAccountFormData
-  onChange: (next: CorporateAccountFormData) => void
   onSelectAgreement: (agreementId: string) => void
+  corporateAccountId?: string
   variant?: 'selection' | 'summary'
+}
+
+function buildAgreementSelectOptions(
+  approved: CommercialAgreement[],
+  selected?: CommercialAgreement,
+): { value: string; label: string }[] {
+  const options = approved.map((a) => ({
+    value: a.id,
+    label: `${a.companyName} · ${a.agreementId}`,
+  }))
+
+  if (selected && !approved.some((a) => a.id === selected.id)) {
+    options.unshift({
+      value: selected.id,
+      label: `${selected.companyName} · ${selected.agreementId} (${agreementStatusLabel[selected.status]})`,
+    })
+  }
+
+  return [{ value: '', label: 'Select approved agreement…' }, ...options]
 }
 
 function CommercialSummaryPlaceholder() {
@@ -55,13 +79,16 @@ function NoApprovedAgreementsState({ onGoToAgreements }: { onGoToAgreements: () 
 
 export function CorporateAccountAgreementSelectStep({
   data,
-  onChange,
   onSelectAgreement,
+  corporateAccountId,
   variant = 'selection',
 }: CorporateAccountAgreementSelectStepProps) {
   const navigate = useNavigate()
-  const approved = commercialAgreementService.listApprovedForOnboarding()
+  const approved = commercialAgreementService.listApprovedForOnboarding({
+    excludeCorporateAccountId: corporateAccountId,
+  })
   const selected = data.agreementId ? commercialAgreementService.getById(data.agreementId) : undefined
+  const selectOptions = buildAgreementSelectOptions(approved, selected)
 
   if (variant === 'summary') {
     if (!selected) {
@@ -79,16 +106,11 @@ export function CorporateAccountAgreementSelectStep({
         <FormField label="Billing type">
           <Input value={billingTypeLabel[selected.billingType]} disabled fullWidth />
         </FormField>
-        <AdminFullPageFormFieldSpan>
-          <FormField label="Branch">
-            <Input value={data.branch} onChange={(v) => onChange({ ...data, branch: v })} placeholder="Assigned branch" fullWidth />
-          </FormField>
-        </AdminFullPageFormFieldSpan>
       </>
     )
   }
 
-  if (approved.length === 0) {
+  if (selectOptions.length <= 1) {
     return (
       <NoApprovedAgreementsState onGoToAgreements={() => navigate('/admin/customer-accounts/agreements')} />
     )
@@ -100,13 +122,7 @@ export function CorporateAccountAgreementSelectStep({
         <Select
           value={data.agreementId}
           onChange={(v) => onSelectAgreement(String(v))}
-          options={[
-            { value: '', label: 'Select approved agreement…' },
-            ...approved.map((a) => ({
-              value: a.id,
-              label: `${a.companyName} · ${a.agreementId}`,
-            })),
-          ]}
+          options={selectOptions}
           fullWidth
         />
       </FormField>

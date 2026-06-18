@@ -1,5 +1,6 @@
 import { buildDefaultPassportIssueLocations } from '@/shared/data/passportIssueLocationDefaults'
 import {
+  checklistToJurisdictionDocuments,
   defaultJurisdictionsForVisa,
   singleJurisdictionForVisa,
 } from '@/shared/data/countryJurisdictionDefaults'
@@ -67,6 +68,59 @@ function visaType(
   }
 }
 
+function eVisaGltsScopeBullets(lines: string[]): string {
+  const items = lines
+    .map((line) =>
+      line
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;'),
+    )
+    .map((line) => `<li>${line}</li>`)
+    .join('')
+  return `<ul>${items}</ul>`
+}
+
+const DEFAULT_E_VISA_GLTS_SCOPE_LINES = [
+  'Online application preparation and document validation',
+  'e-Visa portal submission on behalf of applicant',
+  'Payment coordination and receipt management',
+  'Status tracking and approval notification',
+] as const
+
+/** e-Visa visa type with jurisdiction disabled — documents and GLTS scope live on the visa type. */
+function eVisaType(
+  partial: Omit<
+    CountryVisaType,
+    | 'applicationDocuments'
+    | 'status'
+    | 'prioritySupport'
+    | 'jurisdictions'
+    | 'visaMode'
+    | 'jurisdictionEnabled'
+    | 'documents'
+    | 'gltsScope'
+  > & {
+    countryName: string
+    gltsScopeLines?: string[]
+    applicationDocuments?: CountryDocumentChecklistItem[]
+    status?: CountryVisaType['status']
+    prioritySupport?: boolean
+  },
+): CountryVisaType {
+  const applicationDocuments = partial.applicationDocuments ?? stdApplicationDocuments
+  const { countryName: _countryName, gltsScopeLines, ...rest } = partial
+  return visaType({
+    ...rest,
+    applicationDocuments,
+    visaMode: 'e_visa',
+    jurisdictionEnabled: false,
+    jurisdictions: [],
+    documents: checklistToJurisdictionDocuments(applicationDocuments),
+    gltsScope: eVisaGltsScopeBullets(gltsScopeLines ?? [...DEFAULT_E_VISA_GLTS_SCOPE_LINES]),
+  })
+}
+
 function segment(
   partial: Omit<CountrySegmentConfig, 'processingRules' | 'commonDocuments'> & {
     processingRules?: CountrySegmentConfig['processingRules']
@@ -100,6 +154,44 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           purposeLabel: 'Tourism',
           jurisdictions: [
             singleJurisdictionForVisa('delhi', 'Delhi', 'Default', stdApplicationDocuments),
+          ],
+        }),
+        eVisaType({
+          id: 'jp-evisa-tourist',
+          name: 'e-Visa · Tourist',
+          visaCategory: 'Tourism',
+          pricing: 3200,
+          processingTime: '3–5 business days',
+          entryType: 'Single entry',
+          validity: '90 days',
+          stayDuration: '90 days',
+          purposeId: 'tourism',
+          purposeLabel: 'Tourism',
+          countryName: 'Japan',
+          gltsScopeLines: [
+            'Online e-Visa application completion and submission',
+            'Passport and photo validation against Japan e-Visa portal rules',
+            'Travel itinerary review and document checklist guidance',
+            'Approval tracking and e-Visa delivery to applicant',
+          ],
+        }),
+        eVisaType({
+          id: 'jp-evisa-business',
+          name: 'e-Visa · Business',
+          visaCategory: 'Business',
+          pricing: 3800,
+          processingTime: '4–6 business days',
+          entryType: 'Single entry',
+          validity: '90 days',
+          stayDuration: 'As per invitation',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Business meeting',
+          countryName: 'Japan',
+          gltsScopeLines: [
+            'Business e-Visa application preparation and portal filing',
+            'Invitation letter and corporate document review',
+            'Compliance check before online submission',
+            'Status updates and approval notification',
           ],
         }),
       ],
@@ -324,6 +416,166 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
       ],
     }),
   ],
+  '6': [
+    segment({
+      segment: 'retail',
+      enabled: true,
+      visaTypes: [
+        eVisaType({
+          id: 'sg-evisa-tourist',
+          name: 'Tourist e-Visa',
+          visaCategory: 'Tourism',
+          pricing: 2100,
+          processingTime: '2–4 business days',
+          entryType: 'Single entry',
+          validity: '30 days',
+          stayDuration: '30 days',
+          purposeId: 'tourism',
+          purposeLabel: 'Tourism',
+          countryName: 'Singapore',
+        }),
+        eVisaType({
+          id: 'sg-evisa-business',
+          name: 'Business e-Visa',
+          visaCategory: 'Business',
+          pricing: 2600,
+          processingTime: '3–5 business days',
+          entryType: 'Single entry',
+          validity: '30 days',
+          stayDuration: 'As per invitation',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Business meeting',
+          countryName: 'Singapore',
+        }),
+      ],
+    }),
+    segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
+    segment({ segment: 'marine', enabled: false, visaTypes: [] }),
+    segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
+  ],
+  '10': [
+    segment({
+      segment: 'retail',
+      enabled: true,
+      visaTypes: [
+        eVisaType({
+          id: 'ke-eta-tourist',
+          name: 'eTA · Tourist',
+          visaCategory: 'Tourism',
+          pricing: 3500,
+          processingTime: '1–2 business days',
+          entryType: 'Single entry',
+          validity: '90 days',
+          stayDuration: '90 days',
+          purposeId: 'tourism',
+          purposeLabel: 'Tourism',
+          countryName: 'Kenya',
+          gltsScopeLines: [
+            'Kenya eTA application filing and document upload',
+            'Passport validity and photo compliance check',
+            'Payment coordination for government eTA fee',
+            'eTA approval tracking and delivery',
+          ],
+        }),
+        eVisaType({
+          id: 'ke-eta-business',
+          name: 'eTA · Business',
+          visaCategory: 'Business',
+          pricing: 4200,
+          processingTime: '2–3 business days',
+          entryType: 'Single entry',
+          validity: '90 days',
+          stayDuration: 'As per invitation',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Business meeting',
+          countryName: 'Kenya',
+        }),
+      ],
+    }),
+    segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
+    segment({ segment: 'marine', enabled: false, visaTypes: [] }),
+    segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
+  ],
+  '15': [
+    segment({
+      segment: 'retail',
+      enabled: true,
+      visaTypes: [
+        eVisaType({
+          id: 'au-evisa-visitor',
+          name: 'Visitor e-Visa',
+          visaCategory: 'Tourism',
+          pricing: 6400,
+          processingTime: '5–8 business days',
+          entryType: 'Multiple entry',
+          validity: '12 months',
+          stayDuration: '90 days per visit',
+          purposeId: 'tourism',
+          purposeLabel: 'Tourism',
+          countryName: 'Australia',
+          gltsScopeLines: [
+            'Australia visitor e-Visa application preparation',
+            'Financial proof and travel history document review',
+            'Immigration portal submission and fee payment',
+            'e-Visa grant notification and document delivery',
+          ],
+        }),
+        eVisaType({
+          id: 'au-evisa-business',
+          name: 'Business Visitor e-Visa',
+          visaCategory: 'Business',
+          pricing: 7200,
+          processingTime: '6–10 business days',
+          entryType: 'Single / multiple entry',
+          validity: '12 months',
+          stayDuration: '90 days per visit',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Business meeting',
+          countryName: 'Australia',
+        }),
+      ],
+    }),
+    segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
+    segment({ segment: 'marine', enabled: false, visaTypes: [] }),
+    segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
+  ],
+  '16': [
+    segment({
+      segment: 'retail',
+      enabled: true,
+      visaTypes: [
+        eVisaType({
+          id: 'tw-evisa-tourist',
+          name: 'e-Visa · Tourist',
+          visaCategory: 'Tourism',
+          pricing: 4100,
+          processingTime: '4–7 business days',
+          entryType: 'Single entry',
+          validity: '90 days',
+          stayDuration: '30 days',
+          purposeId: 'tourism',
+          purposeLabel: 'Tourism',
+          countryName: 'Taiwan',
+        }),
+        eVisaType({
+          id: 'tw-evisa-business',
+          name: 'e-Visa · Business',
+          visaCategory: 'Business',
+          pricing: 4800,
+          processingTime: '5–8 business days',
+          entryType: 'Single entry',
+          validity: '90 days',
+          stayDuration: 'As per invitation',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Business meeting',
+          countryName: 'Taiwan',
+        }),
+      ],
+    }),
+    segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
+    segment({ segment: 'marine', enabled: false, visaTypes: [] }),
+    segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
+  ],
 }
 
 const DEFAULT_SEGMENTS: CountrySegmentConfig[] = [
@@ -488,15 +740,20 @@ function normalizeJurisdictionGltsScope(jurisdiction: CountryVisaJurisdiction): 
   }
 }
 
+function normalizeVisaTypeGltsScope(visaType: CountryVisaType): CountryVisaType {
+  return {
+    ...visaType,
+    gltsScope: visaType.gltsScope ? normalizeGltsScopeRichText(visaType.gltsScope) : visaType.gltsScope,
+    jurisdictions: visaType.jurisdictions.map(normalizeJurisdictionGltsScope),
+  }
+}
+
 function normalizeMasterGltsScopes(master: CountryMaster): CountryMaster {
   return {
     ...master,
     segments: master.segments.map((segment) => ({
       ...segment,
-      visaTypes: segment.visaTypes.map((visaType) => ({
-        ...visaType,
-        jurisdictions: visaType.jurisdictions.map(normalizeJurisdictionGltsScope),
-      })),
+      visaTypes: segment.visaTypes.map(normalizeVisaTypeGltsScope),
     })),
   }
 }

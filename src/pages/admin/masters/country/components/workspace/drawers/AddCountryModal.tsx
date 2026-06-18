@@ -3,11 +3,8 @@ import { FormField, FormSection, Input, Modal, Select, useToast } from '@/design
 import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { ADMIN_MODAL_FORM_LAYOUT } from '@/pages/admin/components/adminOverlayFormLayout'
 import { countryMasterAdminService } from '@/shared/services/countryMasterAdminService'
-import type { CountryMasterStatus, ProcessingType } from '@/shared/types/countryMaster'
-import {
-  COUNTRY_STATUS_OPTIONS,
-  PROCESSING_TYPE_OPTIONS,
-} from '../../../config/countryProcessingConfig'
+import type { CountryMasterStatus } from '@/shared/types/countryMaster'
+import { COUNTRY_STATUS_OPTIONS } from '../../../config/countryProcessingConfig'
 
 interface AddCountryModalProps {
   open: boolean
@@ -21,7 +18,6 @@ export function AddCountryModal({ open, onClose, onCreated }: AddCountryModalPro
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
   const [region, setRegion] = useState('')
-  const [processingType, setProcessingType] = useState<ProcessingType>('embassy')
   const [status, setStatus] = useState<CountryMasterStatus>('draft')
 
   useEffect(() => {
@@ -29,7 +25,6 @@ export function AddCountryModal({ open, onClose, onCreated }: AddCountryModalPro
       setName('')
       setCode('')
       setRegion('')
-      setProcessingType('embassy')
       setStatus('draft')
     }
   }, [open])
@@ -64,7 +59,6 @@ export function AddCountryModal({ open, onClose, onCreated }: AddCountryModalPro
     )
     const record = countryMasterAdminService.create({
       ...formData,
-      processingType,
       status,
     })
     setLoading(false)
@@ -93,14 +87,6 @@ export function AddCountryModal({ open, onClose, onCreated }: AddCountryModalPro
         </FormField>
         <FormField label="Region" required>
           <Input value={region} onChange={setRegion} placeholder="e.g. Asia" size="sm" />
-        </FormField>
-        <FormField label="Processing Type">
-          <Select
-            value={processingType}
-            onChange={(v) => setProcessingType(v as ProcessingType)}
-            options={PROCESSING_TYPE_OPTIONS}
-            size="sm"
-          />
         </FormField>
         <FormField label="Status">
           <Select

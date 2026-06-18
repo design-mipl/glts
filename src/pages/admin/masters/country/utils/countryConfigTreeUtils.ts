@@ -2,9 +2,15 @@ import type {
   BusinessSegment,
   ConfigNodeStatus,
   CountryMaster,
+  CountryVisaType,
 } from '@/shared/types/countryMaster'
 import { SEGMENT_LABELS } from '../config/countrySegmentConfig'
 import { getCountryConfigWarnings } from '@/shared/utils/countryConfigValidation'
+import {
+  shouldShowJurisdictionNodes,
+} from '@/shared/utils/jurisdictionRequirementPreview'
+
+export { shouldShowJurisdictionNodes }
 
 export type ConfigTreeNodeType =
   | 'overview'
@@ -23,6 +29,8 @@ export interface ConfigTreeNode {
   jurisdictionId?: string
   status: ConfigNodeStatus
   enabled: boolean
+  /** Leaf hierarchy row — bullet instead of expand chevron or empty spacer. */
+  showHierarchyBullet?: boolean
   children: ConfigTreeNode[]
   depth: number
 }
@@ -31,6 +39,14 @@ export function parseConfigNodePath(path: string | null | undefined): string {
   if (!path || path === 'overview') return 'overview'
   if (path === 'review') return 'review'
   return path
+}
+
+/** Leaf visa types with jurisdiction disabled (e-Visa or explicit toggle off) show a hierarchy bullet. */
+export function shouldShowVisaTypeHierarchyBullet(
+  visaType: Pick<CountryVisaType, 'jurisdictionEnabled' | 'jurisdictions' | 'visaMode'>,
+): boolean {
+  if (shouldShowJurisdictionNodes(visaType)) return false
+  return visaType.jurisdictionEnabled === false || visaType.visaMode === 'e_visa'
 }
 
 export function buildConfigTree(country: CountryMaster): ConfigTreeNode[] {
@@ -65,26 +81,29 @@ export function buildConfigTree(country: CountryMaster): ConfigTreeNode[] {
             ? 'warning'
             : 'enabled'
 
-      const jurChildren: ConfigTreeNode[] = (vt.jurisdictions ?? []).map((jur) => {
-        const jurPath = `${vtPath}/${jur.id}`
-        return {
-          id: jurPath,
-          path: jurPath,
-          type: 'jurisdiction' as const,
-          label: jur.name,
-          segment: seg.segment,
-          visaTypeId: vt.id,
-          jurisdictionId: jur.id,
-          status: (warningPaths.has(jurPath)
-            ? 'warning'
-            : jur.status === 'active'
-              ? 'enabled'
-              : 'disabled') as ConfigNodeStatus,
-          enabled: jur.status === 'active',
-          children: [],
-          depth: 3,
-        }
-      })
+      const jurChildren: ConfigTreeNode[] = shouldShowJurisdictionNodes(vt)
+        ? (vt.jurisdictions ?? []).map((jur) => {
+            const jurPath = `${vtPath}/${jur.id}`
+            return {
+              id: jurPath,
+              path: jurPath,
+              type: 'jurisdiction' as const,
+              label: jur.name,
+              segment: seg.segment,
+              visaTypeId: vt.id,
+              jurisdictionId: jur.id,
+              status: (warningPaths.has(jurPath)
+                ? 'warning'
+                : jur.status === 'active'
+                  ? 'enabled'
+                  : 'disabled') as ConfigNodeStatus,
+              enabled: jur.status === 'active',
+              showHierarchyBullet: true,
+              children: [],
+              depth: 3,
+            }
+          })
+        : []
 
       return {
         id: vtPath,
@@ -95,6 +114,7 @@ export function buildConfigTree(country: CountryMaster): ConfigTreeNode[] {
         visaTypeId: vt.id,
         status: vtStatus,
         enabled: vt.status === 'active',
+        showHierarchyBullet: shouldShowVisaTypeHierarchyBullet(vt),
         children: jurChildren,
         depth: 2,
       }

@@ -1,4 +1,6 @@
+import type { ReactNode } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
+import type { SxProps, Theme } from '@mui/material/styles'
 import { Eye, RotateCcw, ShieldCheck, Upload, XCircle } from 'lucide-react'
 import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
@@ -10,7 +12,10 @@ import {
   simpleDocumentUploadActionLabel,
   type SimpleDocumentRequirementId,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
-import { documentBadgeColor, verifyDocumentBadgeLabel } from '../../utils/verifyDocumentsUtils'
+import {
+  documentBadgeColor,
+  verifyDocumentBadgeLabel,
+} from '../../utils/verifyDocumentsUtils'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 
 const VERIFY_DOCUMENT_CARD_SX = {
@@ -33,20 +38,39 @@ export const VERIFY_DOCUMENT_GRID_SX = {
   gap: 1.5,
 } as const
 
-/** Single-column grid for the documents pane in a 50/50 final verification layout. */
+/** Two-column grid for document cards inside the 50/50 final verification layout. */
 export const VERIFY_DOCUMENT_SPLIT_GRID_SX = {
   display: 'grid',
-  gridTemplateColumns: '1fr',
+  gridTemplateColumns: {
+    xs: '1fr',
+    sm: 'repeat(2, minmax(0, 1fr))',
+  },
   gap: 1.5,
 } as const
 
-function getVerifyDocumentChecklistsPanelSx(colors: ReturnType<typeof usePublicBrandColors>) {
+export type VerifyDocumentGridSx = SxProps<Theme>
+
+function getVerifyDocumentPanelSx(
+  colors: ReturnType<typeof usePublicBrandColors>,
+  variant: 'outer' | 'colored',
+) {
   return {
     p: 2,
     borderWidth: 1,
     borderColor: colors.checklistBorder,
-    bgcolor: colors.checklistMuted,
+    bgcolor: variant === 'outer' ? 'background.paper' : colors.checklistMuted,
+    boxShadow: 'none',
   } as const
+}
+
+export function VerifyDocumentsTabPanel({ children }: { children: ReactNode }) {
+  const colors = usePublicBrandColors()
+
+  return (
+    <BaseCard sx={getVerifyDocumentPanelSx(colors, 'outer')}>
+      {children}
+    </BaseCard>
+  )
 }
 
 interface VerifyDocumentCardProps {
@@ -223,7 +247,7 @@ interface VerifyDocumentChecklistSectionProps {
   /** When set, used as the full section heading instead of `Checklist · {countryTitle}`. */
   sectionTitle?: string
   documents: ApplicantDocumentItem[]
-  gridSx?: typeof VERIFY_DOCUMENT_GRID_SX
+  gridSx?: VerifyDocumentGridSx
   onPreview: (documentId: string) => void
   onVerify: (document: ApplicantDocumentItem) => void
   onReject: (document: ApplicantDocumentItem) => void
@@ -268,7 +292,7 @@ interface VerifyDocumentChecklistsPanelProps {
   countryTitle: string
   travelerDocuments: ApplicantDocumentItem[]
   globalDocuments: ApplicantDocumentItem[]
-  gridSx?: typeof VERIFY_DOCUMENT_GRID_SX
+  gridSx?: VerifyDocumentGridSx
   onTravelerPreview: (documentId: string) => void
   onTravelerVerify: (document: ApplicantDocumentItem) => void
   onTravelerReject: (document: ApplicantDocumentItem) => void
@@ -301,7 +325,7 @@ export function VerifyDocumentChecklistsPanel({
 
   if (!showTravelerChecklist && !showGlobalChecklist) return null
 
-  const panelSx = getVerifyDocumentChecklistsPanelSx(colors)
+  const panelSx = getVerifyDocumentPanelSx(colors, 'colored')
 
   return (
     <Stack spacing={2}>

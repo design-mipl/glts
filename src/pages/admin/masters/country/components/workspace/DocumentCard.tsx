@@ -13,6 +13,7 @@ import {
 import { Badge, BaseCard, RichTextContent, RowActions, Toggle } from '@/design-system/UIComponents'
 import type { RowAction } from '@/design-system/UIComponents'
 import { getDocumentOwnerTypeLabel } from '@/pages/admin/masters/country/config/documentOwnerTypeConfig'
+import { PHYSICAL_DOCUMENT_LABEL } from '@/shared/constants/documentRequirementLabels'
 import { documentMasterService } from '@/shared/services/documentMasterService'
 import type { BusinessSegment, CountryJurisdictionDocumentRule } from '@/shared/types/countryMaster'
 import { AddDocumentModal, documentFormResultToRulePatch } from './drawers/AddDocumentModal'
@@ -33,6 +34,8 @@ const DOCUMENT_CARD_SX = {
 interface DocumentCardProps {
   segment: BusinessSegment
   rule: CountryJurisdictionDocumentRule
+  /** Hidden for visa-type documents when jurisdiction is disabled (e-Visa flow). */
+  showPhysicalDocumentToggle?: boolean
   onChange: (next: CountryJurisdictionDocumentRule) => void
   onDuplicate?: () => void
   onDelete?: () => void
@@ -91,6 +94,7 @@ function SampleDocumentBadge({ fileName, url }: { fileName: string; url?: string
 export function DocumentCard({
   segment,
   rule,
+  showPhysicalDocumentToggle = true,
   onChange,
   onDuplicate,
   onDelete,
@@ -107,7 +111,11 @@ export function DocumentCard({
   const description = rule.description || master?.description
 
   const patch = (partial: Partial<CountryJurisdictionDocumentRule>) =>
-    onChange({ ...rule, ...partial })
+    onChange({
+      ...rule,
+      ...partial,
+      ...(showPhysicalDocumentToggle ? {} : { originalDocument: false }),
+    })
 
   const actions: RowAction[] = readOnly ? [] : [
     {
@@ -217,6 +225,14 @@ export function DocumentCard({
             label="Common Document"
             disabled={readOnly}
           />
+          {showPhysicalDocumentToggle ? (
+            <Toggle
+              checked={rule.originalDocument ?? false}
+              onChange={(v) => patch({ originalDocument: v })}
+              label={PHYSICAL_DOCUMENT_LABEL}
+              disabled={readOnly}
+            />
+          ) : null}
         </Stack>
       </Stack>
 

@@ -68,6 +68,7 @@ interface DocSpec {
   description?: string
   sample?: { fileName: string; url: string }
   commonDocument?: boolean
+  originalDocument?: boolean
 }
 
 function escapeHtml(text: string): string {
@@ -91,6 +92,7 @@ function docRule(
   options?: {
     mandatory?: boolean
     commonDocument?: boolean
+    originalDocument?: boolean
     description?: string
     sample?: { fileName: string; url: string }
   },
@@ -105,6 +107,7 @@ function docRule(
     ocrEnabled: documentId === 'passport',
     multipleUpload: false,
     commonDocument: options?.commonDocument ?? false,
+    originalDocument: options?.originalDocument ?? false,
     ownerType,
     description: options?.description,
     hasSample: Boolean(sample),
@@ -130,6 +133,7 @@ function ownerDocs(
       description: item.description,
       sample: item.sample,
       commonDocument: item.commonDocument,
+      originalDocument: item.originalDocument,
     }),
   )
 }
@@ -140,39 +144,46 @@ const CHINA_G_TYPE_SEAFARER: DocSpec[] = [
   {
     id: 'passport',
     docId: 'passport',
+    originalDocument: true,
     description:
       'Valid passport bio-data pages with minimum six months validity remaining for China visa filing.',
   },
   {
     id: 'old-passport',
     docId: 'old-passport',
+    originalDocument: true,
     description:
       'Previous or expired passport copy when embassy requires travel history or cancelled passport verification.',
   },
   {
     id: 'cdc',
     docId: 'cdc',
+    originalDocument: true,
     description: 'Continuous Discharge Certificate of the seafarer containing service and vessel records.',
   },
   {
     id: 'old-cdc',
     docId: 'old-cdc',
+    originalDocument: true,
     description:
       'Superseded CDC copy retained when embassy requires complete seafarer service continuity.',
   },
   {
     id: 'photo',
     docId: 'photo',
+    originalDocument: true,
     description: 'Recent passport-size photograph meeting China embassy specifications for visa submission.',
   },
   {
     id: 'personal-details-form',
     docId: 'personal-details-form',
+    originalDocument: true,
     description: 'Completed personal particulars form as required by the China visa application process.',
   },
   {
     id: 'stcw-certificate',
     docId: 'stcw-certificate',
+    originalDocument: true,
     description: 'STCW training and competency certificates for the seafarer rank being deployed.',
   },
   {

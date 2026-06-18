@@ -5,6 +5,7 @@ import { DocumentCard } from './DocumentCard'
 interface DocumentCardListProps {
   segment: BusinessSegment
   rules: CountryJurisdictionDocumentRule[]
+  showPhysicalDocumentToggle?: boolean
   onChange: (rule: CountryJurisdictionDocumentRule) => void
   onDuplicate?: (rule: CountryJurisdictionDocumentRule) => void
   onDelete?: (rule: CountryJurisdictionDocumentRule) => void
@@ -15,6 +16,7 @@ interface DocumentCardListProps {
 export function DocumentCardList({
   segment,
   rules,
+  showPhysicalDocumentToggle = true,
   onChange,
   onDuplicate,
   onDelete,
@@ -42,6 +44,7 @@ export function DocumentCardList({
           key={rule.id}
           segment={segment}
           rule={rule}
+          showPhysicalDocumentToggle={showPhysicalDocumentToggle}
           onChange={onChange}
           onDuplicate={onDuplicate ? () => onDuplicate(rule) : undefined}
           onDelete={onDelete ? () => onDelete(rule) : undefined}

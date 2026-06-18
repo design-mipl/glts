@@ -1,6 +1,7 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { PencilLine, Power, PowerOff, Send } from 'lucide-react'
 import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
+import { teamService } from '@/shared/services/teamService'
 import type { CorporateAccount } from '@/shared/types/corporateAccount'
 import { workflowTypeColor, workflowTypeLabel } from '../../agreements/config/agreementStatusConfig'
 import { corporatePortalStatusColor, corporatePortalStatusLabel } from '../config/corporateAccountStatusConfig'
@@ -21,6 +22,12 @@ export function CorporateAccountDetailSummary({
   onSendCredentials,
 }: CorporateAccountDetailSummaryProps) {
   const workflowKey = account.workflowType as keyof typeof workflowTypeLabel
+  const assignedTeamName = account.assignedTeamId ? teamService.getById(account.assignedTeamId)?.name : undefined
+  const assignedUserCount = account.assignedUserIds?.length ?? 0
+  const assignmentSummary =
+    assignedTeamName || assignedUserCount > 0
+      ? `${assignedTeamName ?? 'No team'} · ${assignedUserCount} assigned user${assignedUserCount === 1 ? '' : 's'}`
+      : null
 
   return (
     <BaseCard>
@@ -34,6 +41,11 @@ export function CorporateAccountDetailSummary({
               <Typography variant="body2" color="text.secondary">
                 {account.companyId} · {workflowTypeLabel[workflowKey]} · {account.branch || 'No branch'}
               </Typography>
+              {assignmentSummary ? (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                  {assignmentSummary}
+                </Typography>
+              ) : null}
             </Box>
             <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
               {account.portalStatus === 'draft' && onEdit ? (

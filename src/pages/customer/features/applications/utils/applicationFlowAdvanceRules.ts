@@ -1,5 +1,6 @@
 import type { ApplicationFlowPolicy } from '../context/ApplicationFlowPolicyContext'
 import type { ApplicationFlowState } from '../hooks/useApplicationFlowState'
+import { offeringRequiresJurisdictionSelection } from '@/shared/services/countryMasterService'
 
 export const APPLICATION_FLOW_STEPS = [
   'country',
@@ -39,9 +40,10 @@ export function canAdvanceFromStep(
       return Boolean(
         state.visaOfferingId &&
           state.travelDate &&
-          (state.issuedPassportState || state.issuedPassportLocationId) &&
-          state.jurisdictionId &&
-          state.jurisdiction,
+          (!offeringRequiresJurisdictionSelection(state.countryId, state.visaOfferingId) ||
+            ((state.issuedPassportState || state.issuedPassportLocationId) &&
+              state.jurisdictionId &&
+              state.jurisdiction)),
       )
     case 'upload':
       return state.uploadQueueRows.length > 0

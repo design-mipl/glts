@@ -19,7 +19,7 @@ import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/us
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import { CustomerDocumentChecklist } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 import { defaultChecklist } from '../../../data/applicationFlowData'
-import { getTravelDateFeasibilityForOffering } from '@/shared/services/countryMasterService'
+import { getTravelDateFeasibilityForOffering, offeringRequiresJurisdictionSelection } from '@/shared/services/countryMasterService'
 import { getRequirementPreviewCards } from '../../../data/singleApplicationFlowData'
 import { TravelDateFeasibilityCard } from '../../../components/create/TravelDateFeasibilityCard'
 import { UploadQueueTable } from '../../../components/UploadQueueTable'
@@ -95,7 +95,42 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
     navigate(`${base}/applications`)
   }
 
+  const requiresJurisdiction = useMemo(
+    () => offeringRequiresJurisdictionSelection(state.countryId, state.visaOfferingId),
+    [state.countryId, state.visaOfferingId],
+  )
+
   const passportStateLabel = state.issuedPassportState || state.issuedPassportLocationId || '—'
+
+  const batchSummaryRows = useMemo(
+    () =>
+      [
+        ['Country', `${state.countryFlag} ${state.countryName}`],
+        ['Visa', `${state.visaTypeLabel} · ${state.purposeLabel}`],
+        ['Travel', state.travelDate || '—'],
+        ...(requiresJurisdiction
+          ? ([
+              ['Passport state', passportStateLabel],
+              ['Jurisdiction', state.jurisdiction || '—'],
+            ] as const)
+          : []),
+        ['Applicants', String(readyRows.length)],
+        ['Documents progress', docsTotal > 0 ? `${docsComplete}/${docsTotal} across travelers` : '—'],
+      ] as const,
+    [
+      docsComplete,
+      docsTotal,
+      passportStateLabel,
+      readyRows.length,
+      requiresJurisdiction,
+      state.countryFlag,
+      state.countryName,
+      state.jurisdiction,
+      state.purposeLabel,
+      state.travelDate,
+      state.visaTypeLabel,
+    ],
+  )
 
   return (
     <Box sx={{ width: '100%', maxWidth: '100%' }}>
@@ -116,15 +151,7 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
         <Card sx={{ p: 2, borderRadius: '12px', border: `1px solid ${colors.border}`, mb: 2 }}>
           <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 1.5 }}>Batch summary</Typography>
           <Grid container spacing={1}>
-            {[
-              ['Country', `${state.countryFlag} ${state.countryName}`],
-              ['Visa', `${state.visaTypeLabel} · ${state.purposeLabel}`],
-              ['Travel', state.travelDate || '—'],
-              ['Passport state', passportStateLabel],
-              ['Jurisdiction', state.jurisdiction || '—'],
-              ['Applicants', String(readyRows.length)],
-              ['Documents progress', docsTotal > 0 ? `${docsComplete}/${docsTotal} across travelers` : '—'],
-            ].map(([k, v]) => (
+            {batchSummaryRows.map(([k, v]) => (
               <Grid size={{ xs: 6, md: 4 }} key={k}>
                 <Typography sx={{ fontSize: 11, color: colors.textMuted }}>{k}</Typography>
                 <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{v}</Typography>

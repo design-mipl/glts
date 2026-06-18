@@ -6,6 +6,7 @@ import type {
 } from '../types/applicationListing.types'
 import type { ApplicantAdditionalDetails } from '../config/applicantAdditionalDetailsConfig'
 import type { ApplicantBasicDetails } from '../config/applicantBasicDetailsConfig'
+import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
 import type { CustomerPortalRole } from '@/shared/auth/session'
 import { statusToneFromOperational } from '../components/listing/applicationStatus'
 import { GLTS_APPLICATION_IDS } from '../../../data/portalIds'
@@ -103,6 +104,12 @@ export interface ApplicantDocumentItem {
   documentId: string
   name: string
   required: boolean
+  /** Country-master description for this document requirement. */
+  description?: string
+  /** Physical original required per country master jurisdiction rule. */
+  originalDocument?: boolean
+  /** GLTS marked the physical original as received (admin verification workflow). */
+  originalDocumentReceived?: boolean
   status: ApplicantDocumentStatus
   /** Admin review note shown to the customer when a document is rejected or needs re-upload. */
   reviewComment?: string
@@ -141,6 +148,8 @@ export interface UploadQueueRow {
   additionalDetails?: ApplicantAdditionalDetails
   /** Per-traveler identity fields in the applicant drawer. */
   basicDetails?: ApplicantBasicDetails
+  /** Physical original document collection intake for this traveler. */
+  originalDocumentCollection?: OriginalDocumentCollectionState
   /** Milestone timestamps for the horizontal processing timeline. */
   processingStageDates?: ApplicationProcessingStageDates
 }

@@ -9,7 +9,7 @@ import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/us
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import { CustomerDocumentChecklist } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 import { defaultChecklist } from '../../../../data/applicationFlowData'
-import { getTravelDateFeasibilityForOffering } from '@/shared/services/countryMasterService'
+import { getTravelDateFeasibilityForOffering, offeringRequiresJurisdictionSelection } from '@/shared/services/countryMasterService'
 import {
   getDocumentWorkspaceItems,
   getRequirementPreviewCards,
@@ -28,6 +28,31 @@ export function SingleApplicationReviewStep({ state, onBack, onSubmitted }: Sing
   const { showToast } = useToast()
   const [declared, setDeclared] = useState(false)
 
+  const requiresJurisdiction = useMemo(
+    () => offeringRequiresJurisdictionSelection(state.countryId, state.visaOfferingId),
+    [state.countryId, state.visaOfferingId],
+  )
+
+  const applicantSummaryRows = useMemo(
+    () =>
+      [
+        ['Name', state.applicantName],
+        ['Passport', state.passportNumber],
+        ['Country', `${state.countryFlag} ${state.countryName}`],
+        ['Visa', `${state.visaTypeLabel} · ${state.purposeLabel}`],
+        ['Travel', state.travelDate || '—'],
+        ['Return (optional)', state.expectedReturnDate || '—'],
+        ...(requiresJurisdiction
+          ? ([
+              ['Passport state', state.issuedPassportState || state.issuedPassportLocationId || '—'],
+              ['Jurisdiction', state.jurisdiction || '—'],
+            ] as const)
+          : []),
+        ['Entry', state.entryType || '—'],
+      ] as const,
+    [requiresJurisdiction, state],
+  )
+
   const checklist = defaultChecklist(state.countryName)
   const missingCount = checklist.filter(i => i.status === 'missing').length
   const requirementCards = useMemo(
@@ -35,7 +60,12 @@ export function SingleApplicationReviewStep({ state, onBack, onSubmitted }: Sing
     [state.countryId, state.visaOfferingId, state.jurisdictionId],
   )
   const totalDocs = requirementCards.reduce((n, c) => n + (c.documents?.length ?? 0), 0)
-  const uploadedDocs = getDocumentWorkspaceItems(state.countryId, state.visaOfferingId)
+  const uploadedDocs = getDocumentWorkspaceItems(
+    state.countryId,
+    state.visaOfferingId,
+    'normal',
+    state.jurisdictionId || undefined,
+  )
   const travelDateFeasibility = useMemo(
     () =>
       state.travelDate && state.countryId && state.visaOfferingId
@@ -81,17 +111,7 @@ export function SingleApplicationReviewStep({ state, onBack, onSubmitted }: Sing
       <Card sx={{ p: 2, borderRadius: '12px', border: `1px solid ${colors.border}`, mb: 2 }}>
         <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 1.5 }}>Applicant summary</Typography>
         <Grid container spacing={1}>
-          {[
-            ['Name', state.applicantName],
-            ['Passport', state.passportNumber],
-            ['Country', `${state.countryFlag} ${state.countryName}`],
-            ['Visa', `${state.visaTypeLabel} · ${state.purposeLabel}`],
-            ['Travel', state.travelDate || '—'],
-            ['Return (optional)', state.expectedReturnDate || '—'],
-            ['Passport state', state.issuedPassportState || state.issuedPassportLocationId || '—'],
-            ['Jurisdiction', state.jurisdiction || '—'],
-            ['Entry', state.entryType || '—'],
-          ].map(([k, v]) => (
+          {applicantSummaryRows.map(([k, v]) => (
             <Grid size={{ xs: 6 }} key={k}>
               <Typography sx={{ fontSize: 11, color: colors.textMuted }}>{k}</Typography>
               <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{v}</Typography>

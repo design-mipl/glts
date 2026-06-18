@@ -13,6 +13,10 @@ export const COUNTRY_WORKSPACE_SEARCH_ROW_SX = {
   display: 'flex',
   alignItems: 'center',
   flexShrink: 0,
+  boxSizing: 'border-box',
+  height: COUNTRY_WORKSPACE_SEARCH_ROW_HEIGHT_PX,
+  minHeight: COUNTRY_WORKSPACE_SEARCH_ROW_HEIGHT_PX,
+  maxHeight: COUNTRY_WORKSPACE_SEARCH_ROW_HEIGHT_PX,
   py: 1.25,
   borderBottom: 1,
   borderColor: 'divider',
@@ -40,6 +44,14 @@ export const COUNTRY_WORKSPACE_TREE_INDENT = {
   /** Branch content indent after the guide line. */
   childBranchPaddingLeftPx: 25,
 } as const
+
+/** Matches DS IconButton `sm` scaled for compact tree rows. */
+export const COUNTRY_WORKSPACE_TREE_ACTION_SLOT_PX = 24
+
+export const COUNTRY_WORKSPACE_TREE_ROW_HEIGHT_PX = 30
+
+/** Vertical gap between sibling tree node rows. */
+export const COUNTRY_WORKSPACE_TREE_ROW_GAP_PX = 4
 
 export const COUNTRY_WORKSPACE_LAYOUT = {
   treeWidth: 248,

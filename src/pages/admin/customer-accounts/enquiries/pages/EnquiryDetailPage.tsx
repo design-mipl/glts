@@ -279,7 +279,7 @@ export function EnquiryDetailPage() {
             showToast({ title: `Quotation ${result.quotationId} generated`, variant: 'success' })
             setConvertModalOpen(false)
             await reload()
-            navigate('/admin/customer-accounts/quotations')
+            navigate(`/admin/customer-accounts/quotations/${result.quotationId}`)
             return
           }
           setConversionIssues(result.validation?.issues ?? ['Unable to convert enquiry'])

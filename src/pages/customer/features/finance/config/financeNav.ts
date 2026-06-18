@@ -1,13 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import {
-  Wallet,
-  LayoutGrid,
-  FileText,
-  Banknote,
-  AlertCircle,
-  History,
-  Receipt,
-} from 'lucide-react'
+import { Wallet, LayoutGrid, FileText, Banknote, AlertCircle } from 'lucide-react'
 
 export interface FinanceNavItem {
   path: string
@@ -17,22 +9,30 @@ export interface FinanceNavItem {
 }
 
 export const FINANCE_NAV_ITEMS: FinanceNavItem[] = [
-  { path: 'finance/overview', label: 'Overview', icon: LayoutGrid, pageTitle: 'Overview' },
-  { path: 'finance/invoices', label: 'Invoices', icon: FileText, pageTitle: 'Invoices' },
   {
-    path: 'finance/advance-payments',
-    label: 'Advance payments',
+    path: 'finance/overview',
+    label: 'Finance Overview',
+    icon: LayoutGrid,
+    pageTitle: 'Finance Overview',
+  },
+  {
+    path: 'finance/invoices',
+    label: 'Invoice Management',
+    icon: FileText,
+    pageTitle: 'Invoice Management',
+  },
+  {
+    path: 'finance/payments',
+    label: 'Payment Management',
     icon: Banknote,
-    pageTitle: 'Advance payments',
+    pageTitle: 'Payment Management',
   },
-  { path: 'finance/outstanding', label: 'Outstanding', icon: AlertCircle, pageTitle: 'Outstanding' },
   {
-    path: 'finance/payment-history',
-    label: 'Payment history',
-    icon: History,
-    pageTitle: 'Payment history',
+    path: 'finance/outstanding',
+    label: 'Outstanding & Statements',
+    icon: AlertCircle,
+    pageTitle: 'Outstanding & Statements',
   },
-  { path: 'finance/receipts', label: 'Receipts', icon: Receipt, pageTitle: 'Receipts' },
 ]
 
 export const FINANCE_NAV_PARENT = {

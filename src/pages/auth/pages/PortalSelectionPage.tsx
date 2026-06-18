@@ -1,6 +1,7 @@
 import { Box, Typography, Button, Stack } from '@mui/material'
 import { Building2, Cog, ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
 
 const PORTALS = [
@@ -55,7 +56,7 @@ export function PortalSelectionPage() {
         ← Back to website
       </Button>
 
-      <Box component="img" src="/greenlight_logo.jpg" alt="Greenlight" sx={{ height: 48, mb: 3, borderRadius: '10px' }} />
+      <Box component="img" src={GREENLIGHT_LOGO_SRC} alt="Greenlight" sx={{ height: 48, mb: 3, borderRadius: '10px' }} />
 
       <Typography
         sx={{

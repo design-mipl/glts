@@ -20,6 +20,13 @@ import {
   EditCorporateAccountPage,
 } from '../customer-accounts/corporate-accounts'
 import {
+  CreateQuotationPage,
+  EditQuotationPage,
+  QuotationDetailPage,
+  QuotationListingPage,
+  QuotationPdfPreviewPage,
+} from '../customer-accounts/quotations'
+import {
   CountryConfigWorkspacePage,
   CountryListingPage,
   EditCountryConfigWorkspacePage,
@@ -97,13 +104,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     description: 'Real-time overview of applications, operations, and finance.',
     eyebrow: 'Admin',
     kind: 'dashboard',
-  },
-  {
-    path: 'customer-accounts/quotations',
-    title: 'Quotation management',
-    description: 'This module is under development.',
-    eyebrow: 'Customer & accounts',
-    kind: 'coming-soon',
   },
   {
     path: 'customer-accounts/corporate-admins',
@@ -311,6 +311,46 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <AgreementDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/quotations"
+        element={
+          <PermissionGuard>
+            <QuotationListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/quotations/new"
+        element={
+          <PermissionGuard>
+            <CreateQuotationPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/quotations/:quotationId/edit"
+        element={
+          <PermissionGuard>
+            <EditQuotationPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/quotations/:quotationId/pdf"
+        element={
+          <PermissionGuard>
+            <QuotationPdfPreviewPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="customer-accounts/quotations/:quotationId"
+        element={
+          <PermissionGuard>
+            <QuotationDetailPage />
           </PermissionGuard>
         }
       />

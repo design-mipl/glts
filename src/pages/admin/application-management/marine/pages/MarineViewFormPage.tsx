@@ -1,19 +1,45 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Box, CircularProgress, Divider, Stack, Typography } from '@mui/material'
 import { useParams } from 'react-router-dom'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
-import { Badge, Button, EmptyState, Select, useToast } from '@/design-system/UIComponents'
+import {
+  Badge,
+  Button,
+  ConfirmDialog,
+  EmptyState,
+  FormField,
+  Modal,
+  Select,
+  Textarea,
+  useToast,
+} from '@/design-system/UIComponents'
+import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
 import { AdminRecordPageChrome } from '@/pages/admin/components/AdminRecordPageChrome'
 import { AdminWorkspaceShell } from '@/pages/admin/components/AdminWorkspaceShell'
 import { AdminStepperFormFooter } from '@/pages/admin/components/AdminStepperFormFooter'
+import { applicationArrangedExpenseService } from '@/shared/services/applicationArrangedExpenseService'
+import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
+import { resolveHandlingMode } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import { useViewFormWorkspace } from '../hooks/useViewFormWorkspace'
+import { useVerifyDocumentsWorkspace } from '../hooks/useVerifyDocumentsWorkspace'
 import { CopyAssistFieldSections } from '../components/view-form/CopyAssistField'
 import { ViewFormAssistHeaderSection } from '../components/view-form/ViewFormAssistHeaderSection'
 import { ViewFormSubmissionSection } from '../components/view-form/ViewFormSubmissionSection'
 import { ViewFormDocumentVault } from '../components/view-form/ViewFormDocumentVault'
+import { ViewFormWorkspaceTabs } from '../components/view-form/ViewFormWorkspaceTabs'
+import { ViewFormQcCheckSection } from '../components/view-form/ViewFormQcCheckSection'
 import { VerifyDocumentsTimeline } from '../components/verify/VerifyDocumentsTimeline'
+import {
+  GltsDocumentUploadDrawer,
+  type GltsDocumentUploadPayload,
+} from '../components/verify/GltsDocumentUploadDrawer'
 import { buildFormAssistFieldSectionsForStep } from '../utils/formAssistFieldBuilder'
-import { buildOverviewFromDetail } from '../utils/verifyDocumentsUtils'
+import {
+  buildOverviewFromDetail,
+  collectRejectedVerifyDocuments,
+  isRejectedVerifyDocument,
+  type VerifyRejectedDocumentEntry,
+} from '../utils/verifyDocumentsUtils'
 
 export function MarineViewFormPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
@@ -21,6 +47,8 @@ export function MarineViewFormPage() {
   const { showToast } = useToast()
 
   const workspace = useViewFormWorkspace(applicationId)
+  const verifyWorkspace = useVerifyDocumentsWorkspace(applicationId)
+
   const {
     notFound,
     detail,
@@ -44,7 +72,45 @@ export function MarineViewFormPage() {
     externallySubmitted,
     timelineSteps,
     completedStepIds,
+    reload: reloadViewForm,
   } = workspace
+
+  const {
+    globalDocuments,
+    updateTravelerDocForRow,
+    updateTravelerDocumentWorkflow,
+    updateGlobalDoc,
+    updateTravelerOriginalCollection,
+    reload: reloadVerify,
+    setSelectedTravelerId: setVerifyTravelerId,
+  } = verifyWorkspace
+
+  const [reviewDialog, setReviewDialog] = useState<{
+    scope: 'traveler' | 'global'
+    travelerId?: string
+    documentId: string
+    documentName: string
+    status: Extract<ApplicantDocumentStatus, 'rejected' | 'needs_review'>
+  } | null>(null)
+  const [reviewComment, setReviewComment] = useState('')
+  const [gltsUploadDocument, setGltsUploadDocument] = useState<ApplicantDocumentItem | null>(null)
+  const [verifyDialog, setVerifyDialog] = useState<{
+    scope: 'traveler' | 'global'
+    travelerId?: string
+    documentId: string
+    documentName: string
+  } | null>(null)
+
+  useEffect(() => {
+    if (selectedTravelerId) {
+      setVerifyTravelerId(selectedTravelerId)
+    }
+  }, [selectedTravelerId, setVerifyTravelerId])
+
+  const syncWorkspaceAfterDocumentChange = () => {
+    reloadVerify()
+    reloadViewForm()
+  }
 
   const listingPath = '/admin/application-management/marine'
   const verifyPath = `/admin/application-management/marine/${applicationId}`
@@ -57,6 +123,33 @@ export function MarineViewFormPage() {
     [applicationId, detail, isBulk, rows],
   )
 
+  const checklistContext = useMemo(() => {
+    const app = detail?.application
+    if (!app) return {}
+    if (app.country === 'China' && app.visaType === 'M Type Visa') {
+      return { countryId: '13', visaOfferingId: 'cn-m-type' }
+    }
+    if (app.country === 'China' && app.visaType === 'G Type Visa') {
+      return { countryId: '13', visaOfferingId: 'cn-g-type' }
+    }
+    return {}
+  }, [detail?.application])
+
+  const rejectedDocuments = useMemo(
+    () => collectRejectedVerifyDocuments(rows, globalDocuments),
+    [rows, globalDocuments],
+  )
+
+  const travelerChecklistDocuments = useMemo(
+    () => selectedRow?.documents.filter(doc => !isRejectedVerifyDocument(doc)) ?? [],
+    [selectedRow],
+  )
+
+  const globalChecklistDocuments = useMemo(
+    () => globalDocuments.filter(doc => !isRejectedVerifyDocument(doc)),
+    [globalDocuments],
+  )
+
   const sectionNav = useMemo(
     () =>
       steps.map(step => ({
@@ -66,6 +159,10 @@ export function MarineViewFormPage() {
       })),
     [steps, completedStepIds],
   )
+
+  const reviewActionLabel = reviewDialog?.status === 'rejected' ? 'Reject' : 'Request re-upload'
+  const reviewDialogTitle = reviewDialog ? `${reviewActionLabel} document` : ''
+  const isReviewCommentValid = reviewComment.trim().length > 0
 
   if (!applicationId) {
     return (
@@ -105,6 +202,17 @@ export function MarineViewFormPage() {
     )
   }
 
+  const handlePreview = (documentId: string, scope: 'traveler' | 'global') => {
+    showToast({
+      title: 'Preview',
+      description:
+        documentId === 'passport'
+          ? 'Passport preview will open here.'
+          : `Preview for ${documentId} (${scope}) will open here.`,
+      variant: 'info',
+    })
+  }
+
   const handleSaveDraft = () => {
     saveDraft()
     showToast({ title: 'Draft saved', description: 'Form assist progress saved.', variant: 'success' })
@@ -132,6 +240,105 @@ export function MarineViewFormPage() {
     const index = steps.findIndex(step => step.id === stepId)
     if (index < 0) return
     setActiveStep(index)
+  }
+
+  const openReviewDialog = (
+    scope: 'traveler' | 'global',
+    document: ApplicantDocumentItem,
+    status: Extract<ApplicantDocumentStatus, 'rejected' | 'needs_review'>,
+    travelerId?: string,
+  ) => {
+    setReviewDialog({
+      scope,
+      travelerId,
+      documentId: document.documentId,
+      documentName: document.name,
+      status,
+    })
+    setReviewComment('')
+  }
+
+  const openVerifyDialog = (
+    scope: 'traveler' | 'global',
+    document: ApplicantDocumentItem,
+    travelerId?: string,
+  ) => {
+    setVerifyDialog({
+      scope,
+      travelerId,
+      documentId: document.documentId,
+      documentName: document.name,
+    })
+  }
+
+  const closeVerifyDialog = () => {
+    setVerifyDialog(null)
+  }
+
+  const confirmVerifyDocument = () => {
+    if (!verifyDialog) return
+    if (verifyDialog.scope === 'traveler') {
+      const rowId = verifyDialog.travelerId ?? selectedRow?.id
+      if (!rowId) return
+      updateTravelerDocForRow(rowId, verifyDialog.documentId, 'verified')
+    } else {
+      updateGlobalDoc(verifyDialog.documentId, 'verified')
+    }
+    syncWorkspaceAfterDocumentChange()
+    showToast({
+      title: 'Document verified',
+      description: `${verifyDialog.documentName} marked as verified.`,
+      variant: 'success',
+    })
+    closeVerifyDialog()
+  }
+
+  const handleRejectedPreview = (entry: VerifyRejectedDocumentEntry) => {
+    handlePreview(entry.document.documentId, entry.scope)
+  }
+
+  const handleRejectedVerify = (entry: VerifyRejectedDocumentEntry) => {
+    openVerifyDialog(entry.scope, entry.document, entry.travelerId)
+  }
+
+  const handleRejectedReject = (entry: VerifyRejectedDocumentEntry) => {
+    openReviewDialog(entry.scope, entry.document, 'rejected', entry.travelerId)
+  }
+
+  const handleRejectedReupload = (entry: VerifyRejectedDocumentEntry) => {
+    openReviewDialog(entry.scope, entry.document, 'needs_review', entry.travelerId)
+  }
+
+  const handleRejectedGltsUpload = (entry: VerifyRejectedDocumentEntry) => {
+    if (entry.scope !== 'traveler') return
+    setGltsUploadDocument(entry.document)
+    if (entry.travelerId) {
+      setSelectedTravelerId(entry.travelerId)
+    }
+  }
+
+  const closeReviewDialog = () => {
+    setReviewDialog(null)
+    setReviewComment('')
+  }
+
+  const submitReviewAction = () => {
+    if (!reviewDialog || !isReviewCommentValid) return
+    const comment = reviewComment.trim()
+    if (reviewDialog.scope === 'traveler') {
+      const rowId = reviewDialog.travelerId ?? selectedRow?.id
+      if (!rowId) return
+      updateTravelerDocForRow(rowId, reviewDialog.documentId, reviewDialog.status, comment)
+    } else {
+      updateGlobalDoc(reviewDialog.documentId, reviewDialog.status, comment)
+    }
+    syncWorkspaceAfterDocumentChange()
+    showToast({
+      title: `${reviewActionLabel} saved`,
+      description: `Comment added for ${reviewDialog.documentName}.`,
+      variant: 'success',
+    })
+    closeReviewDialog()
   }
 
   const renderStepContent = () => {
@@ -171,75 +378,211 @@ export function MarineViewFormPage() {
       ) : (
         <Badge label={currentStep.label} color="info" size="sm" />
       )}
-      <Button label="Back to verify" variant="neutral" onClick={() => navigate(verifyPath)} />
     </Stack>
   )
 
   return (
-      <AdminRecordPageChrome
-        breadcrumbs={[
-          { label: 'Application Management', href: listingPath },
-          { label: 'View Form' },
-        ]}
-      >
-        <Stack spacing={2}>
-          {overview ? (
-            <ViewFormAssistHeaderSection
-              overview={overview}
-              description={`${selectedRow.travelerName} · ${selectedRow.passportNo}${
-                detail.application?.jurisdiction ? ` · ${detail.application.jurisdiction}` : ''
-              }`}
-              headerActions={headerActions}
-            />
-          ) : null}
-
-          <VerifyDocumentsTimeline steps={timelineSteps} multiTraveler={rows.length > 1} />
-
-          <ViewFormDocumentVault
-            applicationId={applicationId}
-            selectedRow={selectedRow}
-            detail={detail}
-            submission={submission}
+    <AdminRecordPageChrome
+      breadcrumbs={[
+        { label: 'Application Management', href: listingPath },
+        { label: 'View Form' },
+      ]}
+    >
+      <Stack spacing={2}>
+        {overview ? (
+          <ViewFormAssistHeaderSection
+            overview={overview}
+            description={`${selectedRow.travelerName} · ${selectedRow.passportNo}${
+              detail.application?.jurisdiction ? ` · ${detail.application.jurisdiction}` : ''
+            }`}
+            headerActions={headerActions}
           />
+        ) : null}
 
-          <AdminWorkspaceShell
-            hidePageChrome
-            breadcrumbs={[]}
-            title=""
-            showTitleCard={false}
-            navTitle="Steps"
-            sections={sectionNav}
-            activeSectionId={currentStep.id}
-            onSectionClick={goToStep}
-            centerPanel={
-              <Stack spacing={3}>
-                <Box sx={{ px: 0.5 }}>
-                  <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: 15 }}>
-                    {currentStep.label}
-                  </Typography>
-                </Box>
-                <Divider />
-                <Box sx={{ px: 0.5, pt: 0.5 }}>{renderStepContent()}</Box>
-              </Stack>
-            }
-            footer={
-              <AdminStepperFormFooter
-                activeStep={activeStepIndex}
-                isLastStep={isLastStep}
-                onCancel={() => navigate(verifyPath)}
-                cancelLabel="Back to verify"
-                onDraft={externallySubmitted ? undefined : handleSaveDraft}
-                draftLabel="Save draft"
-                onBack={() => setActiveStep(Math.max(0, activeStepIndex - 1))}
-                onNext={requestStepContinue}
-                nextLabel="Continue"
-                onSubmit={externallySubmitted ? undefined : handleMarkSubmitted}
-                submitLabel="Mark as submitted"
-                disabled={externallySubmitted}
+        <VerifyDocumentsTimeline steps={timelineSteps} multiTraveler={rows.length > 1} />
+
+        <ViewFormWorkspaceTabs
+          qcPanel={
+            overview ? (
+              <ViewFormQcCheckSection
+                overview={overview}
+                detail={detail}
+                selectedRow={selectedRow}
+                rejectedDocuments={rejectedDocuments}
+                travelerChecklistDocuments={travelerChecklistDocuments}
+                globalChecklistDocuments={globalChecklistDocuments}
+                countryId={checklistContext.countryId}
+                visaOfferingId={checklistContext.visaOfferingId}
+                onPreview={handlePreview}
+                onTravelerVerify={document => openVerifyDialog('traveler', document, selectedRow?.id)}
+                onTravelerReject={document =>
+                  openReviewDialog('traveler', document, 'rejected', selectedRow?.id)
+                }
+                onTravelerRequestReupload={document =>
+                  openReviewDialog('traveler', document, 'needs_review', selectedRow?.id)
+                }
+                onGltsUpload={document => setGltsUploadDocument(document)}
+                onGlobalVerify={document => openVerifyDialog('global', document)}
+                onGlobalReject={document => openReviewDialog('global', document, 'rejected')}
+                onGlobalRequestReupload={document =>
+                  openReviewDialog('global', document, 'needs_review')
+                }
+                onRejectedPreview={handleRejectedPreview}
+                onRejectedVerify={handleRejectedVerify}
+                onRejectedReject={handleRejectedReject}
+                onRejectedReupload={handleRejectedReupload}
+                onRejectedGltsUpload={handleRejectedGltsUpload}
+                onOriginalCollectionChange={collection => {
+                  if (!selectedRow) return
+                  updateTravelerOriginalCollection(selectedRow.id, collection)
+                  syncWorkspaceAfterDocumentChange()
+                }}
+                onOriginalReceivedSubmit={() => {
+                  showToast({
+                    title: 'Physical documents updated',
+                    description: 'Received status and remarks saved.',
+                    variant: 'success',
+                  })
+                }}
               />
-            }
+            ) : null
+          }
+          formPanel={
+            <>
+              <ViewFormDocumentVault
+                applicationId={applicationId}
+                selectedRow={selectedRow}
+                detail={detail}
+                submission={submission}
+              />
+
+              <AdminWorkspaceShell
+                hidePageChrome
+                breadcrumbs={[]}
+                title=""
+                showTitleCard={false}
+                navTitle="Steps"
+                sections={sectionNav}
+                activeSectionId={currentStep.id}
+                onSectionClick={goToStep}
+                centerPanel={
+                  <Stack spacing={3}>
+                    <Box sx={{ px: 0.5 }}>
+                      <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: 15 }}>
+                        {currentStep.label}
+                      </Typography>
+                    </Box>
+                    <Divider />
+                    <Box sx={{ px: 0.5, pt: 0.5 }}>{renderStepContent()}</Box>
+                  </Stack>
+                }
+                footer={
+                  <AdminStepperFormFooter
+                    activeStep={activeStepIndex}
+                    isLastStep={isLastStep}
+                    onCancel={() => navigate(verifyPath)}
+                    cancelLabel="Back to verify"
+                    onDraft={externallySubmitted ? undefined : handleSaveDraft}
+                    draftLabel="Save draft"
+                    onBack={() => setActiveStep(Math.max(0, activeStepIndex - 1))}
+                    onNext={requestStepContinue}
+                    nextLabel="Continue"
+                    onSubmit={externallySubmitted ? undefined : handleMarkSubmitted}
+                    submitLabel="Mark as submitted"
+                    disabled={externallySubmitted}
+                  />
+                }
+              />
+            </>
+          }
+        />
+      </Stack>
+
+      <GltsDocumentUploadDrawer
+        open={Boolean(gltsUploadDocument)}
+        document={gltsUploadDocument}
+        onClose={() => setGltsUploadDocument(null)}
+        onSave={(payload: GltsDocumentUploadPayload) => {
+          if (!gltsUploadDocument) return
+          const mode = resolveHandlingMode(gltsUploadDocument) ?? 'arrange_by_glts'
+          updateTravelerDocumentWorkflow(gltsUploadDocument.documentId, {
+            handlingMode: mode,
+            status: 'uploaded',
+            ...(gltsUploadDocument.documentId === 'travel-ticket'
+              ? { travelTicket: payload.travelTicket }
+              : { insurance: payload.insurance }),
+          })
+          if (selectedRow) {
+            applicationArrangedExpenseService.upsertFromGltsDocumentUpload({
+              applicationId,
+              isBulk,
+              travelerRowId: selectedRow.id,
+              applicantId: selectedRow.gltsApplicantId,
+              applicantName: selectedRow.travelerName,
+              document: gltsUploadDocument,
+              payload,
+            })
+            applicationExpenseManagementService.syncApplication(applicationId)
+          }
+          syncWorkspaceAfterDocumentChange()
+          showToast({
+            title: 'Document saved',
+            description: `${gltsUploadDocument.name} uploaded by GLTS and mapped to billing expenses.`,
+            variant: 'success',
+          })
+          setGltsUploadDocument(null)
+        }}
+      />
+
+      <ConfirmDialog
+        open={Boolean(verifyDialog)}
+        onClose={closeVerifyDialog}
+        onConfirm={confirmVerifyDocument}
+        title="Verify document?"
+        description={
+          verifyDialog
+            ? `Confirm that ${verifyDialog.documentName} meets verification requirements. This will mark the document as verified.`
+            : undefined
+        }
+        confirmLabel="Verify"
+        cancelLabel="Cancel"
+      />
+
+      <Modal
+        open={Boolean(reviewDialog)}
+        onClose={closeReviewDialog}
+        title={reviewDialogTitle}
+        subtitle={
+          reviewDialog
+            ? `${reviewDialog.documentName} · ${reviewDialog.scope === 'traveler' ? 'Traveler document' : 'Global document'}`
+            : undefined
+        }
+        footer={
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Button label="Cancel" variant="neutral" onClick={closeReviewDialog} />
+            <Button
+              label={reviewActionLabel}
+              color="error"
+              onClick={submitReviewAction}
+              disabled={!isReviewCommentValid}
+            />
+          </Stack>
+        }
+      >
+        <FormField
+          label="Comment"
+          required
+          helperText="Comment is required and will be visible in the customer portal."
+        >
+          <Textarea
+            value={reviewComment}
+            onChange={setReviewComment}
+            placeholder="Add clear instruction for the customer"
+            minRows={4}
+            fullWidth
           />
-        </Stack>
-      </AdminRecordPageChrome>
+        </FormField>
+      </Modal>
+    </AdminRecordPageChrome>
   )
 }

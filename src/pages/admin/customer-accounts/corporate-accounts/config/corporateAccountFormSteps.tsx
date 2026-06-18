@@ -58,8 +58,8 @@ export const CORPORATE_ACCOUNT_WORKSPACE_SECTIONS: {
   {
     id: 'activation',
     navId: 'section-activation',
-    label: 'Portal activation',
-    description: 'Control login, application creation, bulk upload, and visibility settings.',
+    label: 'Assign user',
+    description: 'Select a team and assign users from User Management to this client.',
   },
   {
     id: 'review',
@@ -79,7 +79,10 @@ export function buildCorporateAccountFormSteps(
   onChange: (next: CorporateAccountFormData) => void,
   options: BuildCorporateAccountFormStepsOptions,
 ): AdminStepperFormStep[] {
-  const hasApprovedAgreements = commercialAgreementService.listApprovedForOnboarding().length > 0
+  const approvedForOnboarding = commercialAgreementService.listApprovedForOnboarding({
+    excludeCorporateAccountId: options.corporateAccountId,
+  })
+  const hasApprovedAgreements = approvedForOnboarding.length > 0 || Boolean(formData.agreementId)
 
   const agreementSections: AdminFullPageFormSection[] = hasApprovedAgreements
     ? [
@@ -92,8 +95,8 @@ export function buildCorporateAccountFormSteps(
           children: (
             <CorporateAccountAgreementSelectStep
               data={formData}
-              onChange={onChange}
               onSelectAgreement={options.onSelectAgreement}
+              corporateAccountId={options.corporateAccountId}
               variant="selection"
             />
           ),
@@ -108,8 +111,8 @@ export function buildCorporateAccountFormSteps(
           children: (
             <CorporateAccountAgreementSelectStep
               data={formData}
-              onChange={onChange}
               onSelectAgreement={options.onSelectAgreement}
+              corporateAccountId={options.corporateAccountId}
               variant="summary"
             />
           ),
@@ -125,8 +128,8 @@ export function buildCorporateAccountFormSteps(
           children: (
             <CorporateAccountAgreementSelectStep
               data={formData}
-              onChange={onChange}
               onSelectAgreement={options.onSelectAgreement}
+              corporateAccountId={options.corporateAccountId}
               variant="selection"
             />
           ),
@@ -209,18 +212,9 @@ export function buildCorporateAccountFormSteps(
     },
     {
       id: 'activation',
-      label: 'Portal activation',
-      description: 'Access permissions',
-      sections: [
-        {
-          id: 'activation-primary',
-          title: 'Portal access permissions',
-          description: 'Control login, application creation, bulk upload, and visibility settings.',
-          span: 2,
-          columns: 1,
-          children: <CorporateAccountPortalActivationFields data={formData} onChange={onChange} />,
-        },
-      ],
+      label: 'Assign user',
+      description: 'Team and user assignment',
+      children: <CorporateAccountPortalActivationFields data={formData} onChange={onChange} />,
     },
     {
       id: 'review',

@@ -129,6 +129,7 @@ export function checklistItemsFromRowDocuments(
   id: string
   label: string
   required: boolean
+  originalDocument?: boolean
   status: CustomerChecklistItemStatus
   statusLabel?: string
   reviewComment?: string
@@ -137,6 +138,7 @@ export function checklistItemsFromRowDocuments(
     id: doc.documentId,
     label: doc.name,
     required: doc.required,
+    originalDocument: doc.originalDocument,
     status: mapDocToChecklistStatus(doc),
     statusLabel: isSimpleDocumentRequirement(doc.documentId) ? documentStatusLabel(doc) : undefined,
     reviewComment: doc.reviewComment,

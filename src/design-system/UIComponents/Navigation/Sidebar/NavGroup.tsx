@@ -80,12 +80,13 @@ export default function NavGroup({
               height: 32,
               borderRadius: BORDER_RADIUS.sm,
               cursor: 'pointer',
-              color: navigation.textSecondary,
+              color: active ? navigation.activeText : navigation.textSecondary,
+              bgcolor: active ? navigation.activeBg : 'transparent',
               mx: '8px',
               transition: 'all 0.2s ease',
               '&:hover': {
-                bgcolor: navigation.hover,
-                color: navigation.textPrimary,
+                bgcolor: active ? navigation.activeBg : navigation.hover,
+                color: active ? navigation.activeText : navigation.textPrimary,
               },
             }}
           >

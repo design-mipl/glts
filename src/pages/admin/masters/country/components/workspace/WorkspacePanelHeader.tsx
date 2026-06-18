@@ -2,7 +2,7 @@ import { Box, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 import { FORM_CONTROL } from '@/design-system/formControl'
 import {
-  COUNTRY_WORKSPACE_SEARCH_ROW_HEIGHT_PX,
+  COUNTRY_WORKSPACE_SEARCH_ROW_FIELD_HEIGHT,
   COUNTRY_WORKSPACE_SEARCH_ROW_SX,
 } from '../../config/countryWorkspaceLayout'
 import type { WorkspacePanelMeta } from '../../utils/countryWorkspacePanelUtils'
@@ -19,8 +19,6 @@ export function WorkspacePanelHeader({ meta, actions }: WorkspacePanelHeaderProp
         ...COUNTRY_WORKSPACE_SEARCH_ROW_SX,
         bgcolor: 'background.paper',
         px: { xs: 2, sm: 2.5, md: 3 },
-        minHeight: COUNTRY_WORKSPACE_SEARCH_ROW_HEIGHT_PX,
-        boxSizing: 'border-box',
       }}
     >
       <Stack
@@ -28,16 +26,23 @@ export function WorkspacePanelHeader({ meta, actions }: WorkspacePanelHeaderProp
         alignItems="center"
         justifyContent="space-between"
         spacing={1.5}
-        sx={{ width: '100%', minWidth: 0, flex: 1 }}
+        sx={{ width: '100%', minWidth: 0, minHeight: COUNTRY_WORKSPACE_SEARCH_ROW_FIELD_HEIGHT }}
       >
-        <Box sx={{ minWidth: 0 }}>
+        <Box
+          sx={{
+            minWidth: 0,
+            minHeight: COUNTRY_WORKSPACE_SEARCH_ROW_FIELD_HEIGHT,
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
           <Typography
             variant="body2"
             fontWeight={FORM_CONTROL.labelFontWeight}
             color="text.primary"
             sx={{
               fontSize: FORM_CONTROL.fontSize,
-              lineHeight: 1.2,
+              lineHeight: 1.4,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',

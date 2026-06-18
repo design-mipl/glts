@@ -10,6 +10,7 @@ import { CorporateAccountDetailSummary } from '../components/CorporateAccountDet
 import {
   ActivityTab,
   AdminsTab,
+  AssignedUsersTab,
   BillingTab,
   DocumentsTab,
   EntitiesTab,
@@ -116,6 +117,11 @@ export function CorporateAccountDetailPage() {
             items={[
               { label: 'Overview', value: 'overview' },
               { label: 'Admins', value: 'admins', badge: corporateAccountService.getCounts(account).totalAdmins },
+              {
+                label: 'Assigned users',
+                value: 'assigned-users',
+                badge: account.assignedUserIds?.length ?? 0,
+              },
               { label: 'Entities', value: 'entities', badge: account.entityIds.length },
               { label: 'Vessels', value: 'vessels', badge: account.vesselIds.length },
               { label: 'Billing configuration', value: 'billing' },
@@ -132,6 +138,7 @@ export function CorporateAccountDetailPage() {
         <Box sx={{ p: 2.5 }}>
           {activeTab === 'overview' ? <OverviewTab account={account} /> : null}
           {activeTab === 'admins' ? <AdminsTab account={account} onSendLogin={handleSendLogin} /> : null}
+          {activeTab === 'assigned-users' ? <AssignedUsersTab account={account} /> : null}
           {activeTab === 'entities' ? <EntitiesTab account={account} /> : null}
           {activeTab === 'vessels' ? <VesselsTab account={account} /> : null}
           {activeTab === 'billing' ? <BillingTab account={account} /> : null}

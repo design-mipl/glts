@@ -34,6 +34,7 @@ export function enrichRequirementDocumentRow(
     name: master?.documentType ?? row.name ?? documentId ?? row.id,
     description,
     remarks: description ? undefined : row.remarks,
+    originalDocument: row.originalDocument,
     hasSample: row.hasSample,
     sampleDocumentName: row.sampleDocumentName,
     sampleDocumentUrl: row.sampleDocumentUrl,
@@ -46,6 +47,7 @@ function documentRuleToRow(rule: CountryJurisdictionDocumentRule): RequirementDo
       id: rule.id,
       name: '',
       mandatory: rule.mandatory,
+      originalDocument: rule.originalDocument,
       description: rule.description,
       remarks: rule.validationRules,
       hasSample: rule.hasSample,
@@ -76,6 +78,27 @@ export function resolveJurisdictionForState(
     .find((jurisdiction) => jurisdiction.applicableStates.includes(normalized))
 }
 
+/** Embassy/VFS jurisdiction workflow applies when jurisdictions are configured and enabled. */
+export function shouldShowJurisdictionNodes(
+  visaType: Pick<CountryVisaType, 'jurisdictionEnabled' | 'jurisdictions' | 'visaMode'> | undefined,
+): boolean {
+  if (!visaType) return false
+  if (visaType.jurisdictionEnabled === false) return false
+  if (visaType.visaMode === 'e_visa' && visaType.jurisdictionEnabled !== true) return false
+  if (visaType.jurisdictionEnabled === true) {
+    return (visaType.jurisdictions?.length ?? 0) > 0
+  }
+  return (visaType.jurisdictions?.length ?? 0) > 0
+}
+
+/** Application flow — passport state + jurisdiction fields only when states are configured. */
+export function visaTypeRequiresJurisdictionSelection(
+  visaType: CountryVisaType | undefined,
+): boolean {
+  if (!shouldShowJurisdictionNodes(visaType)) return false
+  return getApplicableStatesForVisaType(visaType).length > 0
+}
+
 export function getApplicableStatesForVisaType(visaType: CountryVisaType | undefined): string[] {
   if (!visaType) return []
   const states = new Set<string>()
@@ -104,6 +127,36 @@ export function buildRequirementPreviewCardsFromJurisdiction(
   }
 
   const gltsScope = jurisdiction.gltsScope?.trim()
+  if (gltsScope && richTextToPlainText(gltsScope).length > 0) {
+    cards.push({
+      id: 'glts',
+      title: 'GLTS',
+      variant: 'glts',
+      gltsScopeHtml: gltsScope,
+    })
+  }
+
+  return cards
+}
+
+export function buildRequirementPreviewCardsFromVisaType(
+  visaType: CountryVisaType,
+): RequirementPreviewCard[] {
+  const rules = (visaType.documents ?? [])
+    .filter((rule) => rule.group !== 'optional')
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+
+  const cards: RequirementPreviewCard[] = []
+  if (rules.length) {
+    cards.push({
+      id: 'visa-type-documents',
+      title: 'Documents',
+      variant: 'embassy',
+      documents: rules.map(documentRuleToRow),
+    })
+  }
+
+  const gltsScope = visaType.gltsScope?.trim()
   if (gltsScope && richTextToPlainText(gltsScope).length > 0) {
     cards.push({
       id: 'glts',

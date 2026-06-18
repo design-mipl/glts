@@ -1,8 +1,10 @@
-import { Grid, Stack, Typography } from '@mui/material'
+import { Box, Grid, Stack, Typography } from '@mui/material'
 import { Badge, Button } from '@/design-system/UIComponents'
+import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import { corporateAccountService } from '@/shared/services/corporateAccountService'
 import { entityMasterService } from '@/shared/services/entityMasterService'
+import { teamService } from '@/shared/services/teamService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
 import type { CorporateAccount } from '@/shared/types/corporateAccount'
 import {
@@ -13,8 +15,21 @@ import {
   workflowTypeLabel,
 } from '../../../agreements/config/agreementStatusConfig'
 
+function resolveAssignedTeamName(account: CorporateAccount) {
+  return account.assignedTeamId ? teamService.getById(account.assignedTeamId)?.name ?? '—' : '—'
+}
+
+function resolveAssignedUsers(account: CorporateAccount) {
+  return (account.assignedUserIds ?? [])
+    .map((id) => adminPortalUserService.getById(id))
+    .filter((user): user is NonNullable<typeof user> => Boolean(user))
+}
+
 export function OverviewTab({ account }: { account: CorporateAccount }) {
   const counts = corporateAccountService.getCounts(account)
+  const assignedTeamName = resolveAssignedTeamName(account)
+  const assignedUsers = resolveAssignedUsers(account)
+
   return (
     <Grid container spacing={2}>
       <Grid size={{ xs: 12, md: 4 }}>
@@ -29,6 +44,18 @@ export function OverviewTab({ account }: { account: CorporateAccount }) {
         <Typography variant="caption" color="text.secondary">Entities / Vessels</Typography>
         <Typography variant="body2">{counts.totalEntities} / {counts.totalVessels}</Typography>
       </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <Typography variant="caption" color="text.secondary">Assigned team</Typography>
+        <Typography variant="body2" fontWeight={600}>{assignedTeamName}</Typography>
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <Typography variant="caption" color="text.secondary">Assigned users</Typography>
+        <Typography variant="body2">
+          {assignedUsers.length > 0
+            ? `${assignedUsers.length} · ${assignedUsers.map((user) => user.fullName).join(', ')}`
+            : '—'}
+        </Typography>
+      </Grid>
       <Grid size={{ xs: 12 }}>
         <Typography variant="caption" color="text.secondary">Workflow flags</Typography>
         <Typography variant="body2">
@@ -36,6 +63,35 @@ export function OverviewTab({ account }: { account: CorporateAccount }) {
         </Typography>
       </Grid>
     </Grid>
+  )
+}
+
+export function AssignedUsersTab({ account }: { account: CorporateAccount }) {
+  const assignedTeamName = resolveAssignedTeamName(account)
+  const assignedUsers = resolveAssignedUsers(account)
+
+  return (
+    <Stack spacing={2}>
+      <Box>
+        <Typography variant="caption" color="text.secondary">Assigned team</Typography>
+        <Typography variant="body2" fontWeight={600}>{assignedTeamName}</Typography>
+      </Box>
+      {assignedUsers.length === 0 ? (
+        <Typography variant="body2" color="text.secondary">No internal users assigned from User Management.</Typography>
+      ) : (
+        <Stack spacing={1}>
+          {assignedUsers.map((user) => (
+            <Stack
+              key={user.id}
+              sx={{ border: 1, borderColor: 'divider', borderRadius: 1.5, px: 1.25, py: 0.9 }}
+            >
+              <Typography variant="body2" fontWeight={600}>{user.fullName}</Typography>
+              <Typography variant="caption" color="text.secondary">{user.email}</Typography>
+            </Stack>
+          ))}
+        </Stack>
+      )}
+    </Stack>
   )
 }
 

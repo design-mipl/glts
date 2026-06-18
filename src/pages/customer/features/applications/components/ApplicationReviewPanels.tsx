@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Stack, Typography } from '@mui/material'
-import { CustomerDocumentChecklist, type CustomerChecklistItem } from '@/pages/customer/features/shared/components/CustomerPrimitives'
+import { type CustomerChecklistItem } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 import { checklistItemsFromRowDocuments, enrichChecklistWithCorrections, enrichGlobalChecklistWithCorrections, type ChecklistCorrectionRef } from '../utils/applicationSubmitKind'
 import { buildGlobalChecklistItems } from '../utils/globalDocumentChecklist'
 import { buildGlobalDocumentsForVerification } from '@/shared/services/applicationVerificationService'
 import { isSimpleDocumentRequirement } from '@/shared/utils/applicantDocumentWorkflowUtils'
-import { SimpleDocumentRequirementPanel } from './documentWorkflow'
 import type { ApplicantDocumentItem } from '../data/applicationFlowData'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
@@ -16,6 +15,7 @@ import type { ApplicationDetailViewModel } from '../types/applicationDetail.type
 import { ApplicationReviewOverviewCard } from './review/ApplicationReviewOverviewCard'
 import { ApplicationReviewTimelineCard } from './review/ApplicationReviewTimelineCard'
 import { ApplicationReviewTravelerSection } from './review/ApplicationReviewTravelerSection'
+import { ApplicationReviewDocumentsSection } from './review/ApplicationReviewDocumentsSection'
 import { CustomerDocumentPreviewModal } from './CustomerDocumentPreviewModal'
 
 export type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
@@ -123,10 +123,21 @@ export function ApplicationReviewPanels({
     [timelineSteps, selectedRow],
   )
   const travelerCount = readyRows.length > 0 ? readyRows.length : rows.length
-  const hasDocumentSections =
-    (selectedRow && checklist.length > 0) ||
-    globalChecklist.length > 0 ||
-    (selectedRow?.documents.some(d => isSimpleDocumentRequirement(d.documentId)) ?? false)
+  const hasDocumentSections = useMemo(() => {
+    if (!selectedRow) return globalChecklist.length > 0
+    const hasDigital =
+      selectedRow.documents.some(
+        d =>
+          !d.originalDocument &&
+          (isSimpleDocumentRequirement(d.documentId) || checklist.some(c => c.id === d.documentId)),
+      ) ||
+      checklist.some(item => {
+        const doc = selectedRow.documents.find(d => d.documentId === item.id)
+        return !doc?.originalDocument
+      })
+    const hasOriginal = selectedRow.documents.some(d => d.originalDocument)
+    return hasDigital || hasOriginal || globalChecklist.length > 0
+  }, [selectedRow, checklist, globalChecklist])
   const previewDocument = useMemo(
     () => resolvePreviewDocument(previewTarget, selectedRow, applicationId, globalDocumentUploads),
     [previewTarget, selectedRow, applicationId, globalDocumentUploads],
@@ -158,7 +169,7 @@ export function ApplicationReviewPanels({
         gltsBatchId={overview.gltsBatchId}
         summaryOverview={overview}
         detail={detail}
-        applicationId={applicationId}
+        summaryApplicationId={applicationId}
       />
 
       <ApplicationReviewTimelineCard
@@ -166,46 +177,15 @@ export function ApplicationReviewPanels({
         multiTraveler={readyRows.length > 1}
       />
 
-      {hasDocumentSections ? (
-        <Stack spacing={2}>
-          {selectedRow ? (
-            <>
-              {selectedRow.documents.filter(d => isSimpleDocumentRequirement(d.documentId)).length > 0 ? (
-                <Stack spacing={1.5}>
-                  {selectedRow.documents
-                    .filter(d => isSimpleDocumentRequirement(d.documentId))
-                    .map(doc => (
-                      <SimpleDocumentRequirementPanel
-                        key={doc.documentId}
-                        document={doc}
-                        onChange={() => {}}
-                        readOnly
-                        travelerName={selectedRow.travelerName}
-                      />
-                    ))}
-                </Stack>
-              ) : null}
-            </>
-          ) : null}
-
-          {selectedRow && checklist.length > 0 ? (
-            <CustomerDocumentChecklist
-              country={overview.countryName}
-              items={checklist}
-              onReuploadItem={onReuploadDocument}
-              onPreviewItem={item => handlePreviewItem(item, 'traveler')}
-            />
-          ) : null}
-
-          {globalChecklist.length > 0 ? (
-            <CustomerDocumentChecklist
-              title="Common Document Checklist"
-              items={globalChecklist}
-              onReuploadItem={onReuploadDocument}
-              onPreviewItem={item => handlePreviewItem(item, 'global')}
-            />
-          ) : null}
-        </Stack>
+      {hasDocumentSections && selectedRow ? (
+        <ApplicationReviewDocumentsSection
+          countryName={overview.countryName}
+          selectedRow={selectedRow}
+          checklistItems={checklist}
+          globalChecklistItems={globalChecklist}
+          onReuploadDocument={onReuploadDocument}
+          onPreviewItem={handlePreviewItem}
+        />
       ) : null}
 
       <CustomerDocumentPreviewModal

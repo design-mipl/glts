@@ -32,6 +32,8 @@ export function createEmptyCorporateAccountFormData(): CorporateAccountFormData 
       role: 'super_admin',
     },
     admins: [],
+    assignedTeamId: '',
+    assignedUserIds: [],
     entityIds: [],
     vesselIds: [],
     portalActivation: {
@@ -66,6 +68,10 @@ export function validateCorporateAccountStep(step: number, data: CorporateAccoun
       else if (!isValidEmail(admin.emailAddress)) issues.push(`Admin ${i + 1}: invalid email`)
     }
   }
+  if (step === 6) {
+    if (!data.assignedTeamId) issues.push('Select a team')
+    if (data.assignedUserIds.length === 0) issues.push('Assign at least one user')
+  }
   return issues
 }
 
@@ -80,6 +86,8 @@ export function corporateAccountSectionComplete(
       return validateCorporateAccountStep(2, data).length === 0
     case 'admins':
       return validateCorporateAccountStep(3, data).length === 0
+    case 'activation':
+      return validateCorporateAccountStep(6, data).length === 0
     case 'review':
       return validateForActivation(data).ok
     default:
@@ -92,6 +100,8 @@ export function validateForActivation(data: CorporateAccountFormData): { ok: boo
   if (!data.agreementId) issues.push('Agreement is required')
   if (!data.superAdmin.fullName.trim()) issues.push('Super admin is required')
   if (!data.superAdmin.emailAddress.trim()) issues.push('Super admin email is required')
+  if (!data.assignedTeamId) issues.push('Assigned team is required')
+  if (data.assignedUserIds.length === 0) issues.push('At least one assigned user is required')
   return { ok: issues.length === 0, issues }
 }
 

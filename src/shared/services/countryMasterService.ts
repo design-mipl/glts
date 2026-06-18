@@ -1,4 +1,8 @@
 import { ACCOUNT_MAPPED_COUNTRY_IDS, getMockCountryMasters } from '@/shared/data/mockCountryMasters'
+import {
+  checklistToDocumentMappings,
+  resolveOfferingDocumentChecklistItems,
+} from '@/shared/data/countryMasterDefaults'
 import type { Country } from '@/shared/types/visa'
 import type {
   BusinessSegment,
@@ -6,6 +10,7 @@ import type {
   CountryVisaType,
   CountryVisaJurisdiction,
   CountryVisaOffering,
+  CountrySegmentConfig,
   VisaApplicationWindow,
   DocumentWorkspaceItem,
   PassportIssueLocation,
@@ -25,9 +30,12 @@ import {
 } from '@/shared/utils/portalCountryDisplay'
 import {
   buildRequirementPreviewCardsFromJurisdiction,
+  buildRequirementPreviewCardsFromVisaType,
   enrichRequirementDocumentRow,
   getApplicableStatesForVisaType,
   resolveJurisdictionForState,
+  shouldShowJurisdictionNodes,
+  visaTypeRequiresJurisdictionSelection,
 } from '@/shared/utils/jurisdictionRequirementPreview'
 import { DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS } from '@/shared/constants/travelDateFeasibility'
 import {
@@ -272,6 +280,25 @@ export function getVisaTypeForOffering(
   return undefined
 }
 
+export function getSegmentForOffering(
+  countryId: string,
+  offeringId: string,
+): CountrySegmentConfig | undefined {
+  const master = getCountryMasterById(countryId)
+  if (!master) return undefined
+  return master.segments.find((segment) =>
+    segment.visaTypes.some((visaType) => visaType.id === offeringId),
+  )
+}
+
+/** Physical originals apply only when embassy/VFS jurisdiction workflow is active. */
+export function offeringAllowsPhysicalOriginalDocuments(
+  countryId: string,
+  offeringId: string,
+): boolean {
+  return shouldShowJurisdictionNodes(getVisaTypeForOffering(countryId, offeringId))
+}
+
 export function getJurisdictionForOffering(
   countryId: string,
   offeringId: string,
@@ -291,6 +318,13 @@ export function resolveJurisdictionForOfferingState(
   stateName: string,
 ): CountryVisaJurisdiction | undefined {
   return resolveJurisdictionForState(getVisaTypeForOffering(countryId, offeringId), stateName)
+}
+
+export function offeringRequiresJurisdictionSelection(
+  countryId: string,
+  offeringId: string,
+): boolean {
+  return visaTypeRequiresJurisdictionSelection(getVisaTypeForOffering(countryId, offeringId))
 }
 
 export function getVisaApplicationWindow(countryId: string): VisaApplicationWindow | undefined {
@@ -373,6 +407,11 @@ export function getRequirementPreviewCards(
     }
   }
 
+  if (visaType && !shouldShowJurisdictionNodes(visaType)) {
+    const visaTypeCards = buildRequirementPreviewCardsFromVisaType(visaType)
+    if (visaTypeCards.length) return visaTypeCards
+  }
+
   if (jurisdictionDriven) return []
 
   const offering = getVisaOfferingById(countryId, offeringId)
@@ -388,20 +427,31 @@ export function getDocumentWorkspaceItems(
   countryId: string,
   offeringId: string,
   processingType: 'normal' | 'express' = 'normal',
+  jurisdictionId?: string,
 ): DocumentWorkspaceItem[] {
   const offering = getVisaOfferingById(countryId, offeringId)
   if (!offering) return []
+
+  const visaType = getVisaTypeForOffering(countryId, offeringId)
+  const segment = getSegmentForOffering(countryId, offeringId)
+  const checklist = resolveOfferingDocumentChecklistItems(
+    visaType,
+    segment?.commonDocuments ?? [],
+    jurisdictionId,
+  )
+  const documentMappings = checklistToDocumentMappings(checklist)
 
   const isCrew = offering.workflowProfile === 'crew'
   const isChina = countryId === '13'
   const isExpress = processingType === 'express'
 
-  return offering.documentMappings.map((doc, index) => {
+  return documentMappings.map((doc, index) => {
     const base: DocumentWorkspaceItem = {
       id: doc.documentId,
       name: doc.name,
       required: doc.mandatory,
       description: doc.description ?? `${doc.name} as per country master checklist.`,
+      originalDocument: doc.originalDocument ?? false,
       formatNotes: doc.formatNotes,
       remarks: doc.remarks,
       ocrSupported: doc.ocrSupported,

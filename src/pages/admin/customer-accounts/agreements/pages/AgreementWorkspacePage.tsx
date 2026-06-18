@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Box, CircularProgress, Divider, Stack, Typography } from '@mui/material'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { BreadcrumbItem } from '@/design-system/UIComponents'
 import { ConfirmDialog, EmptyState, useToast } from '@/design-system/UIComponents'
 import { AdminStepperFormFooter } from '@/pages/admin/components/AdminStepperFormFooter'
@@ -14,7 +14,6 @@ import { AgreementCustomerSourceSection } from '../components/workspace/Agreemen
 import { AgreementEntitiesTable } from '../components/workspace/AgreementEntitiesTable'
 import { AgreementOnboardingDocumentsSection } from '../components/workspace/AgreementOnboardingDocumentsSection'
 import { AgreementPricingMatrixTable } from '../components/workspace/AgreementPricingMatrixTable'
-import { AgreementSummaryPanel } from '../components/workspace/AgreementSummaryPanel'
 import { AgreementTaxConfigSection } from '../components/workspace/AgreementTaxConfigSection'
 import { AgreementWorkspaceShell } from '../components/workspace/AgreementWorkspaceShell'
 import { agreementStatusLabel } from '../config/agreementStatusConfig'
@@ -44,6 +43,7 @@ export function AgreementWorkspacePage({
   cancelHref,
 }: AgreementWorkspacePageProps) {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { showToast } = useToast()
   const [loading, setLoading] = useState(mode === 'edit')
   const [cancelOpen, setCancelOpen] = useState(false)
@@ -89,6 +89,14 @@ export function AgreementWorkspacePage({
     }
     setLoading(false)
   }, [mode, agreementId, loadFromAgreement])
+
+  useEffect(() => {
+    if (mode !== 'create') return
+    const quotationId = searchParams.get('quotationId')
+    if (quotationId) {
+      hydrateFromQuotation(quotationId)
+    }
+  }, [mode, searchParams, hydrateFromQuotation])
 
   const sectionNav = useMemo(
     () =>
@@ -259,21 +267,16 @@ export function AgreementWorkspacePage({
         )
       case 'approval':
         return (
-          <Stack spacing={2.5}>
-            <AgreementSummaryPanel
-              formData={formData}
-              agreementId={agreementDisplayId}
-              statusLabel={statusLabel}
-            />
-            <AgreementApprovalSection
-              data={formData}
-              agreementRecordId={savedId ?? agreementId}
-              status={recordStatus}
-              onSubmit={recordStatus === 'draft' ? handleSubmit : undefined}
-              onApprove={recordStatus === 'submitted' ? handleApprove : undefined}
-              onReject={recordStatus === 'submitted' ? () => setRejectOpen(true) : undefined}
-            />
-          </Stack>
+          <AgreementApprovalSection
+            data={formData}
+            agreementRecordId={savedId ?? agreementId}
+            agreementDisplayId={agreementDisplayId}
+            status={recordStatus}
+            statusLabel={statusLabel}
+            onSubmit={recordStatus === 'draft' ? handleSubmit : undefined}
+            onApprove={recordStatus === 'submitted' ? handleApprove : undefined}
+            onReject={recordStatus === 'submitted' ? () => setRejectOpen(true) : undefined}
+          />
         )
       default:
         return null

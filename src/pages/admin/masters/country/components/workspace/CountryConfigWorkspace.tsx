@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, CircularProgress } from '@mui/material'
 import { ClipboardCheck, Pencil } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -13,6 +13,7 @@ import { useCountryConfigWorkspace } from '../../hooks/useCountryConfigWorkspace
 import { ConfigTree } from './ConfigTree'
 import { WorkspacePageHeader } from './WorkspacePageHeader'
 import { WorkspacePanelHeader } from './WorkspacePanelHeader'
+import { shouldShowJurisdictionNodes } from '../../utils/countryConfigTreeUtils'
 import { getWorkspacePanelMeta } from '../../utils/countryWorkspacePanelUtils'
 import { AddJurisdictionDrawer } from './drawers/AddJurisdictionDrawer'
 import { AddVisaTypeDrawer } from './drawers/AddVisaTypeDrawer'
@@ -112,6 +113,18 @@ export function CountryConfigWorkspace({ countryId, mode }: CountryConfigWorkspa
     if (!treeCountry) return null
     return getWorkspacePanelMeta(treeCountry, activeNode, nodeParts)
   }, [treeCountry, activeNode, nodeParts])
+
+  useEffect(() => {
+    if (!treeCountry || nodeParts.type !== 'jurisdiction') return
+    const { segment, visaTypeId } = nodeParts
+    if (!segment || !visaTypeId) return
+    const visaType = treeCountry.segments
+      .find((entry) => entry.segment === segment)
+      ?.visaTypes.find((entry) => entry.id === visaTypeId)
+    if (visaType && !shouldShowJurisdictionNodes(visaType)) {
+      selectNode(`${segment}/${visaTypeId}`)
+    }
+  }, [treeCountry, nodeParts, selectNode])
 
   const { shellPaddingX, stickyFooterZIndex } = ADMIN_FULL_PAGE_FORM_LAYOUT
   const panelPadding = { xs: 2, sm: 2.5, md: 3 }
@@ -215,10 +228,12 @@ export function CountryConfigWorkspace({ countryId, mode }: CountryConfigWorkspa
       case 'visaType':
         return nodeParts.segment && nodeParts.visaTypeId ? (
           <VisaTypePanel
+            countryId={countryId}
             segment={nodeParts.segment}
             visaTypeId={nodeParts.visaTypeId}
             formData={formData}
             onChange={handleFormChange}
+            onRefresh={refreshFromService}
             onAddJurisdiction={() => openJurDrawer(nodeParts.segment!, nodeParts.visaTypeId!)}
             onSelectJurisdiction={(jurId) =>
               selectNode(`${nodeParts.segment}/${nodeParts.visaTypeId}/${jurId}`)

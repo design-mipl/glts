@@ -89,6 +89,8 @@ export interface InvoiceAttachment {
   uploadedAt: string
 }
 
+export type PaymentVerificationStatus = 'pending' | 'verified' | 'rejected'
+
 export interface InvoicePaymentRecord {
   id: string
   date: string
@@ -96,6 +98,11 @@ export interface InvoicePaymentRecord {
   method: string
   reference: string
   status: PaymentStatus
+  receiptNumber?: string
+  verificationStatus?: PaymentVerificationStatus
+  accountsNotes?: string
+  proofUploadedAt?: string
+  proofFileName?: string
   tdsPercentage?: number
   tdsAmount?: number
 }

@@ -32,7 +32,7 @@ export function VerifyFinalVerificationChecklist() {
       <Box sx={{ px: 2, pt: 2, pb: 1.5, flexShrink: 0 }}>
         <Stack direction="row" alignItems="baseline" justifyContent="space-between" flexWrap="wrap" gap={1}>
           <Typography variant="subtitle2" fontWeight={700}>
-            Document verification checklist
+            OPS Team – Document Checklist
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
             {completedCount} of {DOCUMENT_VERIFICATION_CHECKLIST_ITEM_COUNT} confirmed

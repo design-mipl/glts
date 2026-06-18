@@ -178,7 +178,7 @@ export function buildOperationalAssignmentTableColumns(
     {
       key: 'application',
       label: 'Application',
-      widthSize: adminListingColumnWidthSize('applicationSummary'),
+      widthSize: adminListingColumnWidthSize('statusGroup'),
       sortable: true,
       searchable: true,
       render: (_value, row: OperationalPassengerRow) => <ApplicationCell row={row} />,
@@ -195,7 +195,7 @@ export function buildOperationalAssignmentTableColumns(
     {
       key: 'assignment',
       label: 'Assignment',
-      widthSize: adminListingColumnWidthSize('stackedAssignment'),
+      widthSize: adminListingColumnWidthSize('statusGroup'),
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => <AssignmentCell row={row} />,
     },

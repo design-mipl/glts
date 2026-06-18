@@ -13,7 +13,7 @@ export interface ApplicationReviewTravelerSectionProps {
   gltsBatchId?: string
   summaryOverview: ApplicationReviewOverview
   detail?: ApplicationDetailViewModel
-  applicationId?: string
+  summaryApplicationId?: string
 }
 
 export function ApplicationReviewTravelerSection({
@@ -25,7 +25,7 @@ export function ApplicationReviewTravelerSection({
   gltsBatchId,
   summaryOverview,
   detail,
-  applicationId,
+  summaryApplicationId,
 }: ApplicationReviewTravelerSectionProps) {
   const readyRows = rows.filter(r => r.status !== 'processing')
   const singleListing = !isBulk && readyRows.length <= 1
@@ -50,7 +50,7 @@ export function ApplicationReviewTravelerSection({
       gltsBatchId={isBulk ? gltsBatchId : undefined}
       summaryOverview={summaryOverview}
       summaryDetail={detail}
-      summaryApplicationId={applicationId}
+      summaryApplicationId={summaryApplicationId}
     />
   )
 }

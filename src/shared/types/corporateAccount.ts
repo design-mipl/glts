@@ -49,6 +49,8 @@ export interface CorporateAccount {
   workflowConfig: CorporateWorkflowConfig
   superAdmin?: CorporateAdminUser
   admins: CorporateAdminUser[]
+  assignedTeamId?: string
+  assignedUserIds?: string[]
   entityIds: string[]
   vesselIds: string[]
   portalActivation: CorporatePortalActivation
@@ -68,6 +70,8 @@ export interface CorporateAccountFormData {
   workflowConfig: CorporateWorkflowConfig
   superAdmin: Omit<CorporateAdminUser, 'id' | 'credentialsSentAt' | 'lastLoginAt'>
   admins: Omit<CorporateAdminUser, 'id' | 'credentialsSentAt' | 'lastLoginAt'>[]
+  assignedTeamId: string
+  assignedUserIds: string[]
   entityIds: string[]
   vesselIds: string[]
   portalActivation: CorporatePortalActivation

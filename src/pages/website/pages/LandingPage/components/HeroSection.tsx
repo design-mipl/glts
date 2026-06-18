@@ -16,6 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { landingHeroMinHeight } from '../landingPageSpacing'
+import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, publicShadows, usePublicBrandColors, brandPrimaryGreenRgb } from '@/shared/theme/publicBrand'
 
 const trustIndicators = ['Expert Review', 'Live Tracking', 'Country-Specific Guidance']
@@ -243,7 +244,7 @@ export function HeroSection() {
                   </Typography>
                   <Box
                     component="img"
-                    src="/sm_logo.jpg"
+                    src={GREENLIGHT_LOGO_SRC}
                     alt=""
                     sx={{ width: 28, height: 28, borderRadius: '8px', objectFit: 'cover' }}
                   />

@@ -5,11 +5,12 @@ import type { VerifyRejectedDocumentEntry } from '../../utils/verifyDocumentsUti
 import {
   VERIFY_DOCUMENT_GRID_SX,
   VerifyDocumentCard,
+  type VerifyDocumentGridSx,
 } from './VerifyDocumentChecklistSection'
 
 interface VerifyRejectedDocumentsSectionProps {
   entries: VerifyRejectedDocumentEntry[]
-  gridSx?: typeof VERIFY_DOCUMENT_GRID_SX
+  gridSx?: VerifyDocumentGridSx
   onPreview: (entry: VerifyRejectedDocumentEntry) => void
   onVerify: (entry: VerifyRejectedDocumentEntry) => void
   onReject: (entry: VerifyRejectedDocumentEntry) => void
@@ -64,6 +65,7 @@ export function VerifyRejectedDocumentsSection({
         borderWidth: 1,
         borderColor: 'divider',
         bgcolor: alpha(theme.palette.error.main, 0.06),
+        boxShadow: 'none',
       }}
     >
       <Stack spacing={1.5}>

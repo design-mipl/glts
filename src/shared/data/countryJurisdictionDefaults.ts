@@ -40,6 +40,7 @@ export function checklistToJurisdictionDocuments(
     ocrEnabled: item.documentId === 'passport',
     multipleUpload: false,
     commonDocument: group === 'common',
+    originalDocument: false,
     ownerType: SEED_DOCUMENT_OWNER_TYPES[item.documentId],
     description: item.description,
     acceptedFormats: item.documentId === 'photo' ? ['JPG', 'PNG'] : ['PDF', 'JPG', 'PNG'],
