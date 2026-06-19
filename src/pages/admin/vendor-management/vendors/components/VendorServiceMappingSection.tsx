@@ -51,7 +51,7 @@ export function VendorServiceMappingSection({ data, onChange }: VendorServiceMap
     <Stack spacing={2}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Typography variant="body2" color="text.secondary">
-          Map services from Service Master with vendor and client billing rates.
+          Map services from Service Master with vendor rates.
         </Typography>
         <Button label="Add service" startIcon={<Plus size={14} />} onClick={openAdd} />
       </Stack>
@@ -71,12 +71,6 @@ export function VendorServiceMappingSection({ data, onChange }: VendorServiceMap
                 <TableCell sx={agreementEmbeddedTableHeadCellSx} align="right">
                   Vendor rate
                 </TableCell>
-                <TableCell sx={agreementEmbeddedTableHeadCellSx} align="right">
-                  Client billing rate
-                </TableCell>
-                <TableCell sx={agreementEmbeddedTableHeadCellSx} align="right">
-                  Margin
-                </TableCell>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>GST</TableCell>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>Status</TableCell>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx} align="center">
@@ -91,8 +85,6 @@ export function VendorServiceMappingSection({ data, onChange }: VendorServiceMap
                   <TableRow key={mapping.id}>
                     <TableCell>{service?.serviceName ?? mapping.serviceMasterId}</TableCell>
                     <TableCell align="right">{formatInr(mapping.vendorRate)}</TableCell>
-                    <TableCell align="right">{formatInr(mapping.clientBillingRate)}</TableCell>
-                    <TableCell align="right">{formatInr(mapping.margin)}</TableCell>
                     <TableCell>
                       <Badge label={mapping.gstApplicable ? 'Yes' : 'No'} color={mapping.gstApplicable ? 'success' : 'neutral'} size="sm" />
                     </TableCell>
