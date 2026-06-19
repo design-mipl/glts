@@ -2,13 +2,14 @@ import { Box, Typography } from '@mui/material'
 import { CalendarClock, Eye, PencilLine, RefreshCcw, UserCog } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
 import {
   enquiryCustomerTypeColor,
   enquiryInquirySourceColor,
   formatEnquiryInquirySource,
 } from '../config/enquiryFormConfig'
-import { formatEnquiryContactSecondary } from '../utils/enquiryListingUtils'
+import { formatEnquiryContactSecondary, formatEnquiryDate } from '../utils/enquiryListingUtils'
 import {
   enquiryStatusColor,
   enquiryStatusLabel,
@@ -30,20 +31,33 @@ export function buildEnquiryColumns({
   onOpenFollowup,
 }: ColumnHandlers): Column<EnquiryRecord>[] {
   return [
-    { key: 'id', label: 'Enquiry ID', sortable: true, searchable: true, hideable: false, minWidth: 120 },
-    { key: 'enquiryDate', label: 'Enquiry Date', sortable: true, minWidth: 130 },
+    {
+      key: 'id',
+      label: 'Enquiry ID',
+      widthSize: adminListingColumnWidthSize('code'),
+      sortable: true,
+      searchable: true,
+      hideable: false,
+    },
+    {
+      key: 'enquiryDate',
+      label: 'Enquiry Date',
+      widthSize: adminListingColumnWidthSize('date'),
+      sortable: true,
+      render: (_, row) => formatEnquiryDate(row.enquiryDate),
+    },
     {
       key: 'companyOrCustomerName',
       label: 'Company / Customer',
-      minWidth: 200,
+      widthSize: adminListingColumnWidthSize('company'),
       searchable: true,
       render: (_, row) => row.customer.companyOrCustomerName,
     },
     {
       key: 'customerType',
       label: 'Customer Type',
+      widthSize: adminListingColumnWidthSize('count'),
       filterable: true,
-      minWidth: 120,
       render: (_, row) => (
         <Badge label={row.customer.customerType} color={enquiryCustomerTypeColor[row.customer.customerType]} size="sm" />
       ),
@@ -51,7 +65,7 @@ export function buildEnquiryColumns({
     {
       key: 'contactPerson',
       label: 'Contact person',
-      minWidth: 200,
+      widthSize: adminListingColumnWidthSize('stackedAssignment'),
       searchable: true,
       render: (_, row) => (
         <Box>
@@ -67,8 +81,8 @@ export function buildEnquiryColumns({
     {
       key: 'inquirySource',
       label: 'Inquiry Source',
+      widthSize: adminListingColumnWidthSize('vendor'),
       filterable: true,
-      minWidth: 140,
       render: (_, row) => (
         <Badge
           label={formatEnquiryInquirySource(row.salesDetails.inquirySource)}
@@ -80,18 +94,19 @@ export function buildEnquiryColumns({
     {
       key: 'countryRequirement',
       label: 'Country',
-      minWidth: 140,
+      widthSize: adminListingColumnWidthSize('country'),
       render: (_, row) => row.visaRequirement.countries.join(', '),
     },
     {
       key: 'visaType',
       label: 'Visa Type',
-      minWidth: 150,
+      widthSize: adminListingColumnWidthSize('service'),
       render: (_, row) => row.visaRequirement.visaType,
     },
     {
       key: 'status',
       label: 'Status',
+      widthSize: adminListingColumnWidthSize('status'),
       filterable: true,
       render: (_, row) => (
         <Badge label={enquiryStatusLabel[row.status]} color={enquiryStatusColor[row.status]} size="sm" />
@@ -105,7 +120,6 @@ export function buildEnquiryColumns({
       searchable: false,
       hideable: false,
       align: 'center',
-      width: 60,
       render: (_, row) => {
         const actions: RowAction[] = [
           { label: 'Open Detail', icon: <Eye size={14} />, onClick: () => onOpenDetail(row) },

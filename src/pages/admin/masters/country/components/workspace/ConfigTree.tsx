@@ -5,15 +5,20 @@ import { IconButton, Input } from '@/design-system/UIComponents'
 import type { CountryMaster } from '@/shared/types/countryMaster'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import {
+  COUNTRY_WORKSPACE_SEARCH_ROW_FIELD_HEIGHT,
+  COUNTRY_WORKSPACE_TREE_ACTION_SLOT_PX,
   COUNTRY_WORKSPACE_TREE_HIERARCHY_MUTED,
   COUNTRY_WORKSPACE_TREE_HIERARCHY_MUTED_HOVER,
   COUNTRY_WORKSPACE_TREE_INDENT,
+  COUNTRY_WORKSPACE_TREE_ROW_GAP_PX,
+  COUNTRY_WORKSPACE_TREE_ROW_HEIGHT_PX,
   COUNTRY_WORKSPACE_TREE_SX,
 } from '../../config/countryWorkspaceLayout'
 import {
   buildConfigTree,
   filterConfigTree,
   getExpandedPathsForNode,
+  shouldShowVisaTypeHierarchyBullet,
   type ConfigTreeNode,
 } from '../../utils/countryConfigTreeUtils'
 import { useCountryWorkspaceMode } from './countryWorkspaceModeContext'
@@ -63,6 +68,48 @@ function getTreeRowHoverBackground(
 const { chevronColumnPx, guideLineLeftPx, childBranchPaddingLeftPx, rowPaddingLeft } =
   COUNTRY_WORKSPACE_TREE_INDENT
 
+const HIERARCHY_BULLET_COLOR = {
+  segment: 'rgba(13, 148, 136, 0.55)',
+  visaType: 'rgba(124, 58, 237, 0.55)',
+  jurisdiction: 'rgba(234, 88, 12, 0.55)',
+} as const
+
+function TreeHierarchyBullet({
+  nodeType,
+  isActive,
+}: {
+  nodeType: ConfigTreeNode['type']
+  isActive: boolean
+}) {
+  const bulletColor =
+    nodeType === 'segment' || nodeType === 'visaType' || nodeType === 'jurisdiction'
+      ? HIERARCHY_BULLET_COLOR[nodeType]
+      : 'text.secondary'
+
+  return (
+    <Box
+      sx={{
+        width: chevronColumnPx,
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Box
+        component="span"
+        aria-hidden
+        sx={{
+          width: isActive ? 6 : 5,
+          height: isActive ? 6 : 5,
+          borderRadius: '50%',
+          bgcolor: bulletColor,
+        }}
+      />
+    </Box>
+  )
+}
+
 export function ConfigTree({
   country,
   activeNode,
@@ -103,11 +150,46 @@ export function ConfigTree({
     return country.segments.find((s) => s.segment === segmentKey)?.enabled ?? false
   }
 
+  const isJurisdictionEnabledForVisaType = (segmentKey?: string, visaTypeId?: string) => {
+    if (!segmentKey || !visaTypeId) return false
+    const visaType = country.segments
+      .find((s) => s.segment === segmentKey)
+      ?.visaTypes.find((v) => v.id === visaTypeId)
+    return visaType?.jurisdictionEnabled === true
+  }
+
+  const resolveVisaType = (node: ConfigTreeNode) => {
+    if (node.type !== 'visaType' || !node.segment || !node.visaTypeId) return undefined
+    return country.segments
+      .find((segment) => segment.segment === node.segment)
+      ?.visaTypes.find((visaType) => visaType.id === node.visaTypeId)
+  }
+
   const renderNode = (node: ConfigTreeNode) => {
     const isActive = node.path === activeNode
     const hasChildren = node.children.length > 0
     const isExpanded = expanded.has(node.path) || Boolean(search.trim())
     const isMuted = node.status === 'disabled'
+    const visaType = resolveVisaType(node)
+    const showVisaTypeBullet =
+      node.type === 'visaType' &&
+      (visaType ? shouldShowVisaTypeHierarchyBullet(visaType) : Boolean(node.showHierarchyBullet))
+
+    const showAddVisaType =
+      !readOnly && node.type === 'segment' && node.enabled && Boolean(onAddVisaType)
+    const showAddJurisdiction =
+      !readOnly &&
+      node.type === 'visaType' &&
+      node.enabled &&
+      isSegmentEnabled(node.segment) &&
+      isJurisdictionEnabledForVisaType(node.segment, node.visaTypeId) &&
+      Boolean(onAddJurisdiction) &&
+      Boolean(node.segment) &&
+      Boolean(node.visaTypeId)
+    const reserveActionSlot =
+      !readOnly &&
+      ((node.type === 'segment' && node.enabled && Boolean(onAddVisaType)) ||
+        (node.type === 'visaType' && node.enabled && isSegmentEnabled(node.segment)))
 
     return (
       <Box key={node.id}>
@@ -117,9 +199,11 @@ export function ConfigTree({
           spacing={0.75}
           sx={{
             mr: 0.75,
-            py: 0.625,
             pl: rowPaddingLeft,
             pr: 0.5,
+            minHeight: COUNTRY_WORKSPACE_TREE_ROW_HEIGHT_PX,
+            height: COUNTRY_WORKSPACE_TREE_ROW_HEIGHT_PX,
+            boxSizing: 'border-box',
             borderRadius: 1.25,
             cursor: 'pointer',
             opacity: isMuted ? 0.5 : 1,
@@ -148,6 +232,8 @@ export function ConfigTree({
             >
               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </Box>
+          ) : showVisaTypeBullet || node.showHierarchyBullet ? (
+            <TreeHierarchyBullet nodeType={node.type} isActive={isActive} />
           ) : (
             <Box sx={{ width: chevronColumnPx, flexShrink: 0 }} />
           )}
@@ -159,42 +245,52 @@ export function ConfigTree({
           >
             {node.label}
           </Typography>
-          {!readOnly && node.type === 'segment' && node.enabled && onAddVisaType ? (
-            <Box sx={{ flexShrink: 0 }}>
-              <IconButton
-                size="sm"
-                icon={<Plus size={14} />}
-                aria-label="Add visa type"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onAddVisaType(node.path)
-                }}
-              />
-            </Box>
-          ) : null}
-          {!readOnly &&
-          node.type === 'visaType' &&
-          node.enabled &&
-          isSegmentEnabled(node.segment) &&
-          onAddJurisdiction &&
-          node.segment &&
-          node.visaTypeId ? (
-            <Box sx={{ flexShrink: 0 }}>
-              <IconButton
-                size="sm"
-                icon={<Plus size={14} />}
-                aria-label="Add jurisdiction"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onAddJurisdiction(node.segment!, node.visaTypeId!)
-                }}
-              />
+          {reserveActionSlot ? (
+            <Box
+              sx={{
+                width: COUNTRY_WORKSPACE_TREE_ACTION_SLOT_PX,
+                minWidth: COUNTRY_WORKSPACE_TREE_ACTION_SLOT_PX,
+                height: COUNTRY_WORKSPACE_TREE_ACTION_SLOT_PX,
+                maxHeight: COUNTRY_WORKSPACE_TREE_ROW_HEIGHT_PX,
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {showAddVisaType ? (
+                <IconButton
+                  size="sm"
+                  icon={<Plus size={14} />}
+                  aria-label="Add visa type"
+                  onClick={() => onAddVisaType!(node.path)}
+                />
+              ) : null}
+              {showAddJurisdiction ? (
+                <IconButton
+                  size="sm"
+                  icon={<Plus size={14} />}
+                  aria-label="Add jurisdiction"
+                  onClick={() => onAddJurisdiction!(node.segment!, node.visaTypeId!)}
+                />
+              ) : null}
             </Box>
           ) : null}
         </Stack>
         {hasChildren ? (
           <Collapse in={isExpanded}>
-            <Box sx={{ position: 'relative', pl: `${childBranchPaddingLeftPx}px`, zIndex: 1 }}>
+            <Box
+              sx={{
+                position: 'relative',
+                pl: `${childBranchPaddingLeftPx}px`,
+                zIndex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: `${COUNTRY_WORKSPACE_TREE_ROW_GAP_PX}px`,
+                pt: `${COUNTRY_WORKSPACE_TREE_ROW_GAP_PX}px`,
+              }}
+            >
               <Box
                 aria-hidden
                 sx={{
@@ -226,9 +322,17 @@ export function ConfigTree({
           size="sm"
           fullWidth
           startAdornment={<Search size={14} />}
+          sx={{ '& .MuiOutlinedInput-root': { height: COUNTRY_WORKSPACE_SEARCH_ROW_FIELD_HEIGHT } }}
         />
       </Box>
-      <Box sx={COUNTRY_WORKSPACE_TREE_SX.scrollArea}>
+      <Box
+        sx={{
+          ...COUNTRY_WORKSPACE_TREE_SX.scrollArea,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: `${COUNTRY_WORKSPACE_TREE_ROW_GAP_PX}px`,
+        }}
+      >
         {overviewNode ? renderNode(overviewNode) : null}
         {overviewNode && segmentNodes.length > 0 ? <Divider sx={TREE_SECTION_DIVIDER_SX} /> : null}
         {segmentNodes.map(renderNode)}

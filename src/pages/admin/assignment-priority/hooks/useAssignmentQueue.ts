@@ -4,7 +4,6 @@ import { applyColumnFilters, INITIAL_TABLE_STATE, sortRows } from '@/pages/custo
 import { operationalPassengerAssignmentService } from '@/shared/services/operationalPassengerAssignmentService'
 import type {
   AssignmentListingTab,
-  AssignmentPageView,
   AssignmentQueueFilters,
   OperationalPassengerRow,
 } from '@/shared/types/operationalPassengerAssignment'
@@ -17,7 +16,6 @@ import {
 } from '../utils/assignmentQueueListingUtils'
 
 export function useAssignmentQueue(segmentConfig: AssignmentSegmentConfig) {
-  const [pageView, setPageView] = useState<AssignmentPageView>('assignment_queue')
   const [listingTab, setListingTab] = useState<AssignmentListingTab>('all')
   const [queueFilters, setQueueFilters] = useState<AssignmentQueueFilters>(EMPTY_ASSIGNMENT_QUEUE_FILTERS)
   const [tableState, setTableState] = useState<TableState>(INITIAL_TABLE_STATE)
@@ -72,11 +70,6 @@ export function useAssignmentQueue(segmentConfig: AssignmentSegmentConfig) {
     setTableState(state => ({ ...state, page: 0 }))
   }, [])
 
-  const handlePageViewChange = useCallback((view: AssignmentPageView) => {
-    setPageView(view)
-    setTableState(state => ({ ...state, page: 0 }))
-  }, [])
-
   const handleSearch = useCallback((value: string) => {
     setSearchValue(value)
     setTableState(state => ({ ...state, page: 0 }))
@@ -98,7 +91,6 @@ export function useAssignmentQueue(segmentConfig: AssignmentSegmentConfig) {
   }, [])
 
   return {
-    pageView,
     listingTab,
     queueFilters,
     setQueueFilters,
@@ -113,7 +105,6 @@ export function useAssignmentQueue(segmentConfig: AssignmentSegmentConfig) {
     selectedPassengerId,
     selectedPassenger,
     searchValue,
-    handlePageViewChange,
     handleListingTabChange,
     handleSearch,
     clearFilters,

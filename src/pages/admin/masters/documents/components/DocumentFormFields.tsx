@@ -1,8 +1,12 @@
 import { Box } from '@mui/material'
-import { FormField, FormSection, Input, Select, Textarea } from '@/design-system/UIComponents'
+import { FormField, FormSection, Input, RichTextEditor, Select } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import type { DocumentMasterFormData } from '@/shared/types/documentMaster'
 import { documentStatusLabel } from '../config/documentStatusConfig'
+import {
+  DOCUMENT_MASTER_RICH_TEXT_MIN_HEIGHT,
+  DOCUMENT_MASTER_RICH_TEXT_TOOLBAR,
+} from '../config/documentMasterRichText'
 
 interface DocumentFormFieldsProps {
   formData: DocumentMasterFormData
@@ -61,25 +65,25 @@ export function DocumentFormFields({
       </FormField>
       {variant === 'modal' ? (
         <AdminFullPageFormFieldSpan>
-          <FormField label="Description">
-            <Textarea
+          <FormField label="Description" optional>
+            <RichTextEditor
               value={formData.description}
               onChange={(value) => patch({ description: value })}
               placeholder="Explain what this document is and where it is used"
-              rows={4}
-              fullWidth
+              minHeight={DOCUMENT_MASTER_RICH_TEXT_MIN_HEIGHT}
+              toolbar={DOCUMENT_MASTER_RICH_TEXT_TOOLBAR}
             />
           </FormField>
         </AdminFullPageFormFieldSpan>
       ) : (
         <Box sx={{ gridColumn: { xs: '1', md: '1 / -1' } }}>
-          <FormField label="Description">
-            <Textarea
+          <FormField label="Description" optional>
+            <RichTextEditor
               value={formData.description}
               onChange={(value) => patch({ description: value })}
               placeholder="Explain what this document is and where it is used"
-              rows={4}
-              fullWidth
+              minHeight={DOCUMENT_MASTER_RICH_TEXT_MIN_HEIGHT}
+              toolbar={DOCUMENT_MASTER_RICH_TEXT_TOOLBAR}
             />
           </FormField>
         </Box>

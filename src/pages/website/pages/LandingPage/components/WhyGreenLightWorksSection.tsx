@@ -36,7 +36,6 @@ const methodologySlides = [
     ],
     layout: 'content-left' as const,
     image: methodologyCarouselImages.whatWeDo,
-    cta: { label: 'See how it works', href: '#how-it-works' },
   },
   {
     id: 'why-greenlight',
@@ -147,7 +146,7 @@ function SlideContent({
   title: string
   description: string
   items: readonly string[]
-  cta: { label: string; href: string }
+  cta?: { label: string; href: string }
 }) {
   const colors = usePublicBrandColors()
 
@@ -218,21 +217,23 @@ function SlideContent({
         ))}
       </Stack>
 
-      <Box sx={{ pt: { xs: 0.5, md: 1 } }}>
-        <Button
-          component="a"
-          href={cta.href}
-          variant="contained"
-          endIcon={<ArrowRight size={18} />}
-          sx={{
-            ...getMarketingPrimaryButtonSx(colors),
-            px: 3.5,
-            alignSelf: 'flex-start',
-          }}
-        >
-          {cta.label}
-        </Button>
-      </Box>
+      {cta ? (
+        <Box sx={{ pt: { xs: 0.5, md: 1 } }}>
+          <Button
+            component="a"
+            href={cta.href}
+            variant="contained"
+            endIcon={<ArrowRight size={18} />}
+            sx={{
+              ...getMarketingPrimaryButtonSx(colors),
+              px: 3.5,
+              alignSelf: 'flex-start',
+            }}
+          >
+            {cta.label}
+          </Button>
+        </Box>
+      ) : null}
     </Stack>
   )
 }

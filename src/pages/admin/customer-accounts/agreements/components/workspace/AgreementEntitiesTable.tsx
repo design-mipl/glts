@@ -127,7 +127,7 @@ export function AgreementEntitiesTable({
         title={editEntity && data.entities.some((e) => e.id === editEntity.id) ? 'Edit entity' : 'Add entity'}
         footer={
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button label="Cancel" variant="outlined" color="secondary" onClick={() => setEditEntity(null)} />
+            <Button label="Cancel" variant="neutral" onClick={() => setEditEntity(null)} />
             <Button label="Save" onClick={saveEntity} />
           </Stack>
         }

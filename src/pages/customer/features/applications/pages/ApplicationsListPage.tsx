@@ -119,20 +119,13 @@ export function ApplicationsListPage() {
         <CustomerListingToolbar
           searchValue={listing.tableState.searchQuery}
           onSearch={listing.handleSearch}
-          searchPlaceholder="Search by GLTS reference, applicant, company, passport, booker name, or visa type…"
+          searchPlaceholder="Search by GLTS reference, applicant, company, vessel, passport, booker name, or visa type…"
           onExport={handleExport}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           columns={toolbarColumns}
           hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
           onHiddenColumnKeysChange={keys => listing.setTableState(s => ({ ...s, hiddenColumnKeys: keys }))}
-          moreMenuItems={[
-            { label: 'Refresh list', onClick: () => showToast({ title: 'Refreshed', variant: 'info' }) },
-            {
-              label: 'Download bulk template',
-              onClick: () => navigate(`${base}/applications/new`),
-            },
-          ]}
         />
       }
       table={

@@ -114,13 +114,13 @@ Before marking a listing module complete, verify:
 - Sticky page header (`AdminPageHeader` for admin)
 - KPI row when useful
 - Tabs when workflow has multiple record views (e.g. single/bulk/draft/submitted)
-- Toolbar: search, export, column picker, table/grid toggle, more menu
-- Advanced filter row (module-specific selects)
+- Toolbar: search, Filter popover, export, column picker, table/grid toggle
 - Tab-specific columns and empty states with CTA
 - Table and grid view modes
 - Pagination footer
 - Toast feedback on export/refresh
 - Row actions and row click to detail (admin modules)
+- Column widths: use `widthSize` with `LISTING_COLUMN_WIDTHS`; see `templateDemoColumns.tsx` — avoid ad-hoc pixel literals in new admin listings
 - Actions column: `key: 'actions'`, sticky right, fixed width, header label **Actions**, `RowActions` per row; other columns must ellipsis and not bleed into actions column
 
 ### DataTable action column
@@ -140,11 +140,10 @@ Required composition order:
 1. Sticky header
 2. Optional KPI row
 3. Optional tabs
-4. Toolbar (search, export, table/grid toggle, column picker, more menu)
-5. Advanced filters row (module-specific)
-6. Table or grid listing content
-7. Pagination footer
-8. Empty/loading states and row actions
+4. Toolbar (search, Filter popover, export, table/grid toggle, column picker)
+5. Table or grid listing content
+6. Pagination footer
+7. Empty/loading states and row actions
 
 Exception policy:
 

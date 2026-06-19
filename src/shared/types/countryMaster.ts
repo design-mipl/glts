@@ -13,6 +13,8 @@ export type ProcessingType =
 
 export type VisaTypeStatus = 'active' | 'inactive'
 
+export type VisaMode = 'e_visa' | 'sticker_visa' | 'paper_visa'
+
 export type VisaApplicationWindowUnit = 'days' | 'weeks' | 'months'
 
 export interface VisaApplicationWindow {
@@ -20,11 +22,26 @@ export interface VisaApplicationWindow {
   value: number
 }
 
+export interface TravelDateRiskThresholds {
+  /** Red when buffer working days is below this (default 5). */
+  escalationBufferDays: number
+  /** Green when buffer is above this (default 10); amber between escalation and safe. */
+  safeBufferDays: number
+}
+
 export type ConfigNodeStatus = 'enabled' | 'disabled' | 'draft' | 'warning'
 
 export type JurisdictionPriorityLevel = 'standard' | 'express' | 'urgent'
 
 export type JurisdictionDocumentGroup = 'common' | 'jurisdiction' | 'optional'
+
+export type DocumentOwnerType =
+  | 'seafarer'
+  | 'applicant'
+  | 'company'
+  | 'shipping_agent'
+  | 'inviting_company'
+  | 'inviting_family_friend'
 
 export type WorkflowProfile = 'standard' | 'crew'
 
@@ -40,6 +57,7 @@ export interface CountryDocumentMapping {
   ocrSupported?: boolean
   description?: string
   formatNotes?: string
+  originalDocument?: boolean
 }
 
 /** Reference to Document Master — name from master; description may be overridden per country. */
@@ -49,6 +67,7 @@ export interface CountryDocumentChecklistItem {
   sortOrder: number
   /** Country-specific description; falls back to Document Master when empty. */
   description?: string
+  originalDocument?: boolean
 }
 
 export interface CountryProcessingRules {
@@ -80,7 +99,12 @@ export interface CountryJurisdictionDocumentRule {
   ocrEnabled: boolean
   multipleUpload: boolean
   commonDocument: boolean
+  originalDocument: boolean
+  ownerType?: DocumentOwnerType
   description?: string
+  hasSample?: boolean
+  sampleDocumentName?: string
+  sampleDocumentUrl?: string
   acceptedFormats?: string[]
   validationRules?: string
   sortOrder: number
@@ -104,18 +128,27 @@ export interface CountryVisaJurisdiction {
   applicableStates: string[]
   processingRules: CountryJurisdictionProcessingRules
   documents: CountryJurisdictionDocumentRule[]
+  /** GLTS service scope and responsibilities for this jurisdiction. */
+  gltsScope?: string
 }
 
 export interface CountryVisaType {
   id: string
   name: string
   visaCategory: string
+  visaMode?: VisaMode
   processingTime: string
   entryType: string
   validity: string
   stayDuration: string
   prioritySupport: boolean
   status: VisaTypeStatus
+  /** When enabled, embassy/VFS jurisdictions can be configured for this visa type. */
+  jurisdictionEnabled?: boolean
+  /** Document rules configured directly on the visa type when jurisdiction is disabled. */
+  documents?: CountryJurisdictionDocumentRule[]
+  /** GLTS service scope when jurisdiction is disabled. */
+  gltsScope?: string
   pricing?: number
   jurisdictions: CountryVisaJurisdiction[]
   /** Visa-type / application-specific documents (in addition to segment common documents). */
@@ -183,17 +216,23 @@ export interface RequirementDocumentRow {
   id: string
   name: string
   mandatory: boolean
+  originalDocument?: boolean
   remarks?: string
+  description?: string
   hasSample?: boolean
+  sampleDocumentName?: string
+  sampleDocumentUrl?: string
 }
 
 export interface RequirementPreviewCard {
   id: string
   title: string
+  ownerType?: DocumentOwnerType
   arrangedBy?: string
   alertNote?: string
   documents?: RequirementDocumentRow[]
   scopeItems?: string[]
+  gltsScopeHtml?: string
   variant: RequirementPreviewVariant
 }
 
@@ -226,6 +265,7 @@ export interface CountryMaster {
   validity: string
   fastMinutes?: number
   visaApplicationWindow?: VisaApplicationWindow
+  travelDateRiskThresholds?: TravelDateRiskThresholds
   passportIssueLocations: PassportIssueLocation[]
   segments: CountrySegmentConfig[]
   /** Synced flat list for legacy consumers */
@@ -255,6 +295,7 @@ export interface CountryMasterFormData {
   validity: string
   fastMinutes?: number
   visaApplicationWindow: VisaApplicationWindow
+  travelDateRiskThresholds: TravelDateRiskThresholds
   passportIssueLocations: PassportIssueLocation[]
   segments: CountrySegmentConfig[]
 }
@@ -293,6 +334,7 @@ export interface DocumentWorkspaceItem {
   description: string
   formatNotes?: string
   remarks?: string
+  originalDocument?: boolean
   status?: DocumentVerificationStatus
   ocrSupported?: boolean
   ocrMismatchAlert?: string

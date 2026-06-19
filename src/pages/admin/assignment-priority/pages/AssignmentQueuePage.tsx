@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Box, Stack, alpha, useTheme } from '@mui/material'
+import { Box, alpha, useTheme } from '@mui/material'
 import { RefreshCw } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { Button, Pagination, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
@@ -18,17 +17,18 @@ import type {
 } from '@/shared/types/operationalPassengerAssignment'
 import type { CityTeam } from '@/shared/types/operationalCaseHandling'
 import { AssignmentActionModal, type AssignmentActionPayload } from '../components/AssignmentActionModal'
-import type { AssignmentAdminAction, DeskPassengerAction } from '../components/AssignmentActionMenu'
-import { AssignmentAdvancedFilters } from '../components/AssignmentAdvancedFilters'
+import type { AssignmentAdminAction } from '../components/AssignmentActionMenu'
+import { AssignmentAdvancedFilterFields, hasAssignmentQueueFiltersActive } from '../components/AssignmentAdvancedFilters'
 import { AssignmentKpiRow } from '../components/AssignmentKpiRow'
 import { AssignmentPassengerDetailDrawer } from '../components/AssignmentPassengerDetailDrawer'
 import { buildAssignmentTableColumns } from '../components/AssignmentTableColumns'
-import { OperationsDeskPanel } from '../components/OperationsDeskPanel'
+import { buildOperationalAssignmentTableColumns } from '../components/AssignmentOperationalTableColumns'
 import type { AssignmentSegmentConfig } from '../config/assignmentSegmentConfig'
 import { useAssignmentQueue } from '../hooks/useAssignmentQueue'
 import {
   computeAssignmentKpis,
   downloadAssignmentCsv,
+  formatSlaDisplayLabel,
   getAssignmentCellValue,
   getAssignmentFilterOptions,
   getAssignmentTabEmptyState,
@@ -40,16 +40,14 @@ interface AssignmentQueuePageProps {
 
 export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps) {
   const theme = useTheme()
-  const navigate = useNavigate()
   const { showToast } = useToast()
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [actionModal, setActionModal] = useState<{
-    action: AssignmentAdminAction | DeskPassengerAction
+    action: AssignmentAdminAction
     record: OperationalPassengerRow
   } | null>(null)
 
   const {
-    pageView,
     listingTab,
     queueFilters,
     setQueueFilters,
@@ -63,7 +61,6 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
     total,
     selectedPassenger,
     searchValue,
-    handlePageViewChange,
     handleListingTabChange,
     handleSearch,
     clearFilters,
@@ -77,12 +74,17 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
   const kpis = useMemo(() => computeAssignmentKpis(allRows), [allRows])
   const emptyState = useMemo(() => getAssignmentTabEmptyState(listingTab), [listingTab])
 
+  const isOperationalListing = segmentConfig.listingLayout === 'operational'
+
   const hasActiveFilters = Boolean(
     queueFilters.jurisdiction ||
       queueFilters.team ||
       queueFilters.assignedUser ||
       queueFilters.priority ||
+      queueFilters.country ||
+      queueFilters.visaType ||
       queueFilters.status ||
+      queueFilters.sla ||
       queueFilters.datePreset !== 'today' ||
       searchValue ||
       Object.values(columnFilters).some(values => values.length > 0) ||
@@ -90,22 +92,22 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
   )
 
   const columns = useMemo(
-    () =>
-      buildAssignmentTableColumns({
-        segmentConfig,
-        navigate,
-        showToast,
-        onAction: (action, row) => {
-          if (action === 'open_passenger_detail' || action === 'view_timeline') {
+    () => {
+      const columnParams = {
+        onAction: (action: AssignmentAdminAction, row: OperationalPassengerRow) => {
+          if (action === 'view_details') {
             selectPassenger(row)
             return
           }
-          if (action === 'open_application') return
           setActionModal({ action, record: row })
         },
-        onOpenDetail: selectPassenger,
-      }),
-    [segmentConfig, navigate, showToast, selectPassenger],
+      }
+
+      return isOperationalListing
+        ? buildOperationalAssignmentTableColumns(columnParams)
+        : buildAssignmentTableColumns(columnParams)
+    },
+    [isOperationalListing, selectPassenger],
   )
 
   const toolbarColumns = useMemo(
@@ -138,6 +140,7 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
               id,
               payload.team as CityTeam,
               payload.user,
+              payload.priority as AssignmentPriority,
             )
           case 'change_priority':
             return operationalPassengerAssignmentService.setPriority(id, payload.priority as AssignmentPriority)
@@ -148,6 +151,7 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
               id,
               payload.team as CityTeam,
               payload.user,
+              payload.priority as AssignmentPriority,
             )
           case 'add_notes':
             return operationalPassengerAssignmentService.appendRemark(id, payload.notes)
@@ -170,20 +174,20 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
     [actionModal, mutateAndRefresh, showToast],
   )
 
-  const handleDeskAction = useCallback((action: DeskPassengerAction, row: OperationalPassengerRow) => {
-    setActionModal({ action, record: row })
-  }, [])
-
   const gridItems = useMemo(
     () =>
       paginatedRows.map(row => ({
         id: row.id,
         title: row.passengerName,
-        subtitle: row.gltsApplicationId,
-        meta: `${row.priority} · ${row.passengerStatus}`,
+        subtitle: isOperationalListing
+          ? `${row.country} • ${row.visaType}`
+          : row.gltsApplicationId,
+        meta: isOperationalListing
+          ? `${row.priority} · ${formatSlaDisplayLabel(row)}`
+          : `${row.priority} · ${row.passengerStatus}`,
         status: row.passengerStatus,
       })),
-    [paginatedRows],
+    [paginatedRows, isOperationalListing],
   )
 
   const footerBg =
@@ -192,14 +196,7 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
       : alpha(theme.palette.common.black, 0.02)
 
   const listingBody =
-    pageView === 'operations_desk' ? (
-      <OperationsDeskPanel
-        rows={allRows}
-        selectedId={selectedPassenger?.id}
-        onSelect={selectPassenger}
-        onAction={handleDeskAction}
-      />
-    ) : viewMode === 'table' ? (
+    viewMode === 'table' ? (
       <AdminListingTable
         columns={columns}
         data={paginatedRows}
@@ -232,7 +229,8 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
             actions={
               <Button
                 label="Refresh queue"
-                variant="outlined"
+                variant="neutral"
+                size="sm"
                 startIcon={<RefreshCw size={14} />}
                 onClick={() => {
                   refresh()
@@ -242,87 +240,63 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
             }
           />
         }
-        kpis={pageView === 'assignment_queue' ? <AssignmentKpiRow kpis={kpis} /> : undefined}
-        tabs={
-          pageView === 'assignment_queue'
-            ? [
-                { value: 'all', label: 'All' },
-                { value: 'pending_assignment', label: 'Pending assignment' },
-                { value: 'assigned', label: 'Assigned' },
-                { value: 'in_progress', label: 'In progress' },
-                { value: 'carry_forward', label: 'Carry forward' },
-                { value: 'completed', label: 'Completed' },
-              ]
-            : undefined
-        }
-        tabValue={pageView === 'assignment_queue' ? listingTab : undefined}
-        onTabChange={
-          pageView === 'assignment_queue'
-            ? value => handleListingTabChange(value as AssignmentListingTab)
-            : undefined
-        }
+        kpis={<AssignmentKpiRow kpis={kpis} />}
+        tabs={[
+          { value: 'all', label: 'All' },
+          { value: 'pending_assignment', label: 'Pending assignment' },
+          { value: 'assigned', label: 'Assigned' },
+          { value: 'in_progress', label: 'In progress' },
+          { value: 'carry_forward', label: 'Carry forward' },
+          { value: 'completed', label: 'Completed' },
+        ]}
+        tabValue={listingTab}
+        onTabChange={value => handleListingTabChange(value as AssignmentListingTab)}
         toolbar={
-          <Stack spacing={1.5}>
-            <Stack direction="row" spacing={1} sx={{ mb: pageView === 'assignment_queue' ? 0 : -0.5 }}>
-              <Button
-                variant={pageView === 'assignment_queue' ? 'contained' : 'outlined'}
-                size="sm"
-                label="Assignment queue"
-                onClick={() => handlePageViewChange('assignment_queue')}
-              />
-              <Button
-                variant={pageView === 'operations_desk' ? 'contained' : 'outlined'}
-                size="sm"
-                label="Operations desk"
-                onClick={() => handlePageViewChange('operations_desk')}
-              />
-            </Stack>
-            {pageView === 'assignment_queue' ? (
-              <>
-                <AdminListingToolbar
-                  searchValue={searchValue}
-                  onSearch={handleSearch}
-                  searchPlaceholder="Search passenger, application ID, company, jurisdiction…"
-                  onExport={handleExport}
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                  columns={toolbarColumns}
-                  hiddenColumnKeys={tableState.hiddenColumnKeys}
-                  onHiddenColumnKeysChange={keys =>
-                    setTableState(state => ({ ...state, hiddenColumnKeys: keys }))
-                  }
-                  moreMenuItems={[
-                    { label: 'Refresh queue', onClick: refresh },
-                    { label: 'Clear all filters', onClick: handleClearFilters },
-                  ]}
-                />
-                <AssignmentAdvancedFilters
-                  filters={queueFilters}
-                  onFiltersChange={next => {
-                    setQueueFilters(next)
-                    setTableState(state => ({ ...state, page: 0 }))
-                  }}
+          <AdminListingToolbar
+            searchValue={searchValue}
+            onSearch={handleSearch}
+            searchPlaceholder="Search passenger, application ID, company, jurisdiction…"
+            onExport={handleExport}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            columns={toolbarColumns}
+            hiddenColumnKeys={tableState.hiddenColumnKeys}
+            onHiddenColumnKeysChange={keys =>
+              setTableState(state => ({ ...state, hiddenColumnKeys: keys }))
+            }
+            filterPopover={{
+              active: hasActiveFilters,
+              value: queueFilters,
+              onApply: next => {
+                setQueueFilters(next)
+                setTableState(state => ({ ...state, page: 0 }))
+              },
+              onClear: handleClearFilters,
+              hasActive: value => hasAssignmentQueueFiltersActive(value, isOperationalListing),
+              width: 'wide',
+              scrollable: true,
+              children: (draft, patch) => (
+                <AssignmentAdvancedFilterFields
+                  draft={draft}
+                  patch={patch}
                   options={filterOptions}
-                  onClear={handleClearFilters}
-                  hasActiveFilters={hasActiveFilters}
+                  extendedFilters={isOperationalListing}
                 />
-              </>
-            ) : null}
-          </Stack>
+              ),
+            }}
+          />
         }
         listingContent={listingBody}
         footer={
-          pageView === 'assignment_queue' ? (
-            <Box sx={{ bgcolor: footerBg }}>
-              <Pagination
-                page={tableState.page}
-                pageSize={tableState.pageSize}
-                total={total}
-                onPage={page => setTableState(state => ({ ...state, page }))}
-                onPageSize={pageSize => setTableState(state => ({ ...state, pageSize, page: 0 }))}
-              />
-            </Box>
-          ) : undefined
+          <Box sx={{ bgcolor: footerBg }}>
+            <Pagination
+              page={tableState.page}
+              pageSize={tableState.pageSize}
+              total={total}
+              onPage={page => setTableState(state => ({ ...state, page }))}
+              onPageSize={pageSize => setTableState(state => ({ ...state, pageSize, page: 0 }))}
+            />
+          </Box>
         }
       />
 

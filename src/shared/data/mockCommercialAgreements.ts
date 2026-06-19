@@ -362,7 +362,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     companyId: 'CMP-1006',
     companyName: 'BlueWave Corporate Mobility',
     customerSourceMode: 'quotation',
-    referenceQuotationId: 'QT-006',
+    referenceQuotationId: 'QT-003',
     agreementType: 'agreemented',
     workflowType: 'mixed',
     billingType: 'mixed',

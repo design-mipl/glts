@@ -66,12 +66,6 @@ export function AgreementPricingMatrixTable({
 
   return (
     <Box sx={{ width: '100%' }}>
-      {!readOnly ? (
-        <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1.5 }}>
-          <Button label="Add pricing" size="sm" startIcon={<Plus size={14} />} onClick={() => setEditRow(newRow(data.workflowType))} />
-        </Stack>
-      ) : null}
-
       {errors.pricingMatrix ? (
         <Typography variant="caption" color="error.main" sx={{ mb: 1, display: 'block' }}>
           {errors.pricingMatrix}
@@ -150,7 +144,7 @@ export function AgreementPricingMatrixTable({
         title={data.pricingMatrix.some((r) => r.id === editRow?.id) ? 'Edit pricing' : 'Add pricing'}
         footer={
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button label="Cancel" variant="outlined" color="secondary" onClick={() => setEditRow(null)} />
+            <Button label="Cancel" variant="neutral" onClick={() => setEditRow(null)} />
             <Button label="Save" onClick={saveEdit} />
           </Stack>
         }

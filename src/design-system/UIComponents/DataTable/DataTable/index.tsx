@@ -9,6 +9,13 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '../../../tokens'
 import type { FoundationBreakpointKey } from '../../../breakpoints'
 import type { Column, TableState, BulkAction } from '../types'
+import {
+  CHECKBOX_COLUMN_WIDTH,
+  EXPAND_COLUMN_WIDTH,
+  getDataTableColWidth,
+  getDataTableColumnWidthSx,
+  getDataTableLayoutWidth,
+} from '../columnLayout'
 import ColumnHeader from '../ColumnHeader'
 import EmptyState from '../EmptyState'
 import ExpandedRow from '../ExpandedRow'
@@ -57,9 +64,6 @@ function getHideDisplay(hideBelow?: FoundationBreakpointKey) {
   if (!hideBelow) return undefined
   return { xs: 'none', [hideBelow]: 'table-cell' }
 }
-
-const EXPAND_COLUMN_WIDTH = 48
-const ACTION_COLUMN_WIDTH = 60
 
 function isStickyEndColumn(col: Column) {
   if (col.stickyEnd === false) return false
@@ -179,6 +183,10 @@ export default function DataTable({
 
   const totalRows = total ?? data.length
   const stickyEndRight = renderExpanded ? EXPAND_COLUMN_WIDTH : 0
+  const tableLayoutWidth = useMemo(
+    () => getDataTableLayoutWidth(visibleTableColumns, { bulkActions: !!bulkActions, renderExpanded: !!renderExpanded }),
+    [visibleTableColumns, bulkActions, renderExpanded],
+  )
 
   // State handlers
   const handleSort = (key: string) => {
@@ -363,6 +371,7 @@ export default function DataTable({
 
       <TableContainer
         sx={{
+          width: '100%',
           maxHeight: height !== 'auto' ? height : undefined,
           overflowX: 'auto',
           mt: embedded ? 0 : 1,
@@ -375,8 +384,11 @@ export default function DataTable({
         <Table
           stickyHeader={stickyHeader}
           size="small"
-          sx={
-            embedded
+          sx={{
+            tableLayout: 'fixed',
+            width: '100%',
+            minWidth: tableLayoutWidth,
+            ...(embedded
               ? {
                   '& th': {
                     fontSize: '12px',
@@ -385,9 +397,17 @@ export default function DataTable({
                   },
                   '& td': { fontSize: '13px' },
                 }
-              : undefined
-          }
+              : undefined),
+          }}
         >
+          <colgroup>
+            {bulkActions && <col style={{ width: CHECKBOX_COLUMN_WIDTH }} />}
+            {visibleTableColumns.map((col) => {
+              const width = getDataTableColWidth(col, isStickyEndColumn(col))
+              return <col key={col.key} style={{ width }} />
+            })}
+            {renderExpanded && <col style={{ width: EXPAND_COLUMN_WIDTH }} />}
+          </colgroup>
           {/* Header */}
           <TableHead>
             <TableRow>
@@ -407,7 +427,7 @@ export default function DataTable({
               {visibleTableColumns.map((col) => {
                 const stickyEnd = isStickyEndColumn(col)
                 const stickyStart = isStickyStartColumn(col)
-                const actionWidth = stickyEnd ? (col.width ?? ACTION_COLUMN_WIDTH) : undefined
+                const columnWidthSx = getDataTableColumnWidthSx(col, stickyEnd)
                 return (
                 <TableCell
                   key={col.key}
@@ -420,9 +440,7 @@ export default function DataTable({
                     zIndex: stickyEnd ? 5 : stickyStart ? 4 : 3,
                     borderBottom: '2px solid',
                     borderColor: 'divider',
-                    width: actionWidth ?? col.width,
-                    minWidth: stickyEnd ? actionWidth : col.minWidth,
-                    maxWidth: stickyEnd ? actionWidth : undefined,
+                    ...columnWidthSx,
                     boxShadow: stickyEnd
                       ? getStickyEdgeShadow('end', isDark)
                       : stickyStart
@@ -521,7 +539,7 @@ export default function DataTable({
                       const stickyEnd = isStickyEndColumn(col)
                       const stickyStart = isStickyStartColumn(col)
                       const stickyCellBg = getStickyCellBg(isSelected, isEven, theme, isDark)
-                      const actionWidth = stickyEnd ? (col.width ?? ACTION_COLUMN_WIDTH) : undefined
+                      const columnWidthSx = getDataTableColumnWidthSx(col, stickyEnd)
 
                       const cellContent = isEditing ? (
                         <InlineEdit
@@ -548,9 +566,7 @@ export default function DataTable({
                             lineHeight: '20px',
                             borderBottom: '1px solid',
                             borderColor: 'divider',
-                            width: actionWidth ?? col.width,
-                            minWidth: stickyEnd ? actionWidth : col.minWidth,
-                            maxWidth: stickyEnd ? actionWidth : (col.width ?? col.minWidth ?? 240),
+                            ...columnWidthSx,
                             position: stickyEnd || stickyStart ? 'sticky' : undefined,
                             left: stickyStart ? 0 : undefined,
                             right: stickyEnd ? stickyEndRight : undefined,

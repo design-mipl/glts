@@ -5,6 +5,7 @@ import {
 import { companyMasterService } from '@/shared/services/companyMasterService'
 import { getMockCorporateAccounts } from '@/shared/data/mockCorporateAccounts'
 import { quotationReferenceService } from '@/shared/services/quotationReferenceService'
+import { quotationService } from '@/shared/services/quotationService'
 import type {
   AgreementActivity,
   CommercialAgreement,
@@ -221,17 +222,7 @@ export const commercialAgreementService = {
   },
 
   hydrateFromQuotation(quotationId: string): Partial<CommercialAgreementFormData> | undefined {
-    const quotation = quotationReferenceService.getById(quotationId)
-    if (!quotation) return undefined
-    return {
-      customerSourceMode: 'quotation',
-      referenceQuotationId: quotationId,
-      existingCompanyId: quotation.companyId ?? '',
-      company: { ...quotation.company },
-      workflowType: quotation.workflowType,
-      billingType: quotation.billingType,
-      pricingMatrix: quotation.pricingMatrix.map((row) => ({ ...row, id: `pr-${Date.now()}-${Math.random()}` })),
-    }
+    return quotationService.hydrateAgreementFromQuotation(quotationId)
   },
 
   hydrateFromExistingCustomer(companyId: string): Partial<CommercialAgreementFormData> | undefined {
@@ -391,10 +382,14 @@ export const commercialAgreementService = {
     return { ...data, agreementType, documents: merged }
   },
 
-  listApprovedForOnboarding(): CommercialAgreement[] {
+  listApprovedForOnboarding(options?: { excludeCorporateAccountId?: string }): CommercialAgreement[] {
     const activeAccountAgreementIds = new Set(
       getMockCorporateAccounts()
-        .filter((a) => a.portalStatus === 'active' || a.portalStatus === 'draft')
+        .filter(
+          (a) =>
+            (a.portalStatus === 'active' || a.portalStatus === 'draft') &&
+            a.id !== options?.excludeCorporateAccountId,
+        )
         .map((a) => a.agreementId),
     )
     return this.list({ status: 'approved' }).filter((a) => !activeAccountAgreementIds.has(a.id))

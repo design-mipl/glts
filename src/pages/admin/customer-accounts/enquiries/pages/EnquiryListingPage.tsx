@@ -190,11 +190,6 @@ export function EnquiryListingPage() {
     },
   ]
 
-  const handleRefresh = useCallback(async () => {
-    await loadRows()
-    showToast({ title: 'List refreshed', variant: 'info' })
-  }, [showToast])
-
   const handleExport = useCallback(() => {
     downloadEnquiryCsv(listing.filterSourceRows)
     showToast({
@@ -203,11 +198,6 @@ export function EnquiryListingPage() {
       variant: 'success',
     })
   }, [listing.filterSourceRows, showToast])
-
-  const handleClearFilters = useCallback(() => {
-    listing.handleSearch('')
-    listing.setColumnFilters({})
-  }, [listing])
 
   const handleTabChange = useCallback(
     (tab: EnquiryListingTab) => {
@@ -262,10 +252,6 @@ export function EnquiryListingPage() {
             onHiddenColumnKeysChange={(keys) =>
               listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
             }
-            moreMenuItems={[
-              { label: 'Refresh list', onClick: () => void handleRefresh() },
-              { label: 'Clear all filters', onClick: handleClearFilters },
-            ]}
           />
         }
         listingContent={

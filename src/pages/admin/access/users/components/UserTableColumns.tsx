@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { Eye, KeyRound, PencilLine, Power, PowerOff, Shield } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import { masterStatusColor, masterStatusLabel } from '@/pages/admin/masters/config/masterStatusConfig'
 import { formatMasterDate } from '@/pages/admin/masters/utils/masterListingUtils'
 import { teamService } from '@/shared/services/teamService'
@@ -40,7 +41,7 @@ export function buildUserColumns({
     {
       key: 'fullName',
       label: 'User Name',
-      minWidth: 160,
+      widthSize: adminListingColumnWidthSize('name'),
       sortable: true,
       filterable: true,
       searchable: true,
@@ -48,21 +49,21 @@ export function buildUserColumns({
     {
       key: 'email',
       label: 'Email',
-      minWidth: 200,
+      widthSize: adminListingColumnWidthSize('email'),
       sortable: false,
       filterable: true,
     },
     {
       key: 'phone',
       label: 'Phone Number',
-      width: 130,
+      widthSize: 'md',
       sortable: false,
       filterable: false,
     },
     {
       key: 'team',
       label: 'Team',
-      minWidth: 140,
+      widthSize: adminListingColumnWidthSize('assignee'),
       sortable: false,
       filterable: true,
       render: (_, row) => teamService.getById(row.teamId)?.name ?? '—',
@@ -70,14 +71,14 @@ export function buildUserColumns({
     {
       key: 'designation',
       label: 'Designation',
-      minWidth: 140,
+      widthSize: adminListingColumnWidthSize('service'),
       sortable: false,
       filterable: true,
     },
     {
       key: 'status',
       label: 'Status',
-      width: 100,
+      widthSize: adminListingColumnWidthSize('status'),
       sortable: false,
       filterable: true,
       render: (_, row) => (
@@ -91,7 +92,7 @@ export function buildUserColumns({
     {
       key: 'lastLogin',
       label: 'Last Login',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
       filterable: false,
       render: (_, row) => (
@@ -103,7 +104,7 @@ export function buildUserColumns({
     {
       key: 'createdAudit',
       label: 'Created By',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       sortable: true,
       filterable: true,
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
@@ -111,7 +112,7 @@ export function buildUserColumns({
     {
       key: 'updatedAudit',
       label: 'Updated By',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       sortable: true,
       filterable: true,
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
@@ -124,7 +125,6 @@ export function buildUserColumns({
       searchable: false,
       hideable: false,
       align: 'center',
-      width: 60,
       render: (_, row) => {
         const isActive = row.status === 'active'
         const actions: RowAction[] = [

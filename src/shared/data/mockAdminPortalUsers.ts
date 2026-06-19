@@ -1,6 +1,25 @@
 import { superAdminFullPermissions } from '@/shared/utils/adminPermissionEngine'
 import type { AdminPortalUser } from '@/shared/types/adminPortalUser'
 
+function applicationManagementPermissions(): AdminPortalUser['permissions'] {
+  const perms = superAdminFullPermissions()
+  const allowed = ['application_management', 'ground_operations']
+  for (const key of Object.keys(perms)) {
+    if (!allowed.includes(key)) {
+      perms[key] = {
+        preset: 'view_only',
+        submodules: Object.fromEntries(
+          Object.entries(perms[key].submodules).map(([subId]) => [
+            subId,
+            { create: false, view: true, update: false },
+          ]),
+        ),
+      }
+    }
+  }
+  return perms
+}
+
 export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
   {
     id: 'user-super-admin',
@@ -52,24 +71,7 @@ export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
     lastLoginAt: '2026-05-30T10:45:00.000Z',
     isSuperAdmin: false,
     passwordSetupType: 'auto_email_invite',
-    permissions: (() => {
-      const perms = superAdminFullPermissions()
-      const allowed = ['application_management', 'ground_operations']
-      for (const key of Object.keys(perms)) {
-        if (!allowed.includes(key)) {
-          perms[key] = {
-            preset: 'view_only',
-            submodules: Object.fromEntries(
-              Object.entries(perms[key].submodules).map(([subId]) => [
-                subId,
-                { create: false, view: true, update: false },
-              ]),
-            ),
-          }
-        }
-      }
-      return perms
-    })(),
+    permissions: applicationManagementPermissions(),
     createdBy: 'Rajan Mehta',
     updatedBy: 'Rajan Mehta',
     createdAt: '2025-11-15T09:30:00.000Z',
@@ -90,6 +92,111 @@ export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
         timestamp: '2026-05-28T14:20:00.000Z',
       },
     ],
+  },
+  {
+    id: 'user-marine-1',
+    fullName: 'Arun Krishnan',
+    email: 'arun.krishnan@glts.com',
+    phone: '+91 98760 11223',
+    employeeId: 'GLTS-041',
+    teamId: 'team-marine',
+    designation: 'Marine Operations Executive',
+    roleTemplateId: 'operations_admin',
+    profilePhotoUrl: null,
+    status: 'active',
+    lastLoginAt: '2026-05-31T09:20:00.000Z',
+    isSuperAdmin: false,
+    passwordSetupType: 'auto_email_invite',
+    permissions: applicationManagementPermissions(),
+    createdBy: 'Rajan Mehta',
+    updatedBy: 'Rajan Mehta',
+    createdAt: '2026-01-05T10:00:00.000Z',
+    updatedAt: '2026-05-31T09:20:00.000Z',
+    activityLogs: [],
+  },
+  {
+    id: 'user-marine-2',
+    fullName: 'Sneha Patel',
+    email: 'sneha.patel@glts.com',
+    phone: '+91 98111 22334',
+    employeeId: 'GLTS-042',
+    teamId: 'team-marine',
+    designation: 'Marine Visa Specialist',
+    roleTemplateId: 'operations_admin',
+    profilePhotoUrl: null,
+    status: 'active',
+    lastLoginAt: '2026-05-29T11:10:00.000Z',
+    isSuperAdmin: false,
+    passwordSetupType: 'auto_email_invite',
+    permissions: applicationManagementPermissions(),
+    createdBy: 'Rajan Mehta',
+    updatedBy: 'Rajan Mehta',
+    createdAt: '2026-01-08T10:00:00.000Z',
+    updatedAt: '2026-05-29T11:10:00.000Z',
+    activityLogs: [],
+  },
+  {
+    id: 'user-retail-1',
+    fullName: 'Karan Mehta',
+    email: 'karan.mehta@glts.com',
+    phone: '+91 98222 33445',
+    employeeId: 'GLTS-043',
+    teamId: 'team-retail',
+    designation: 'Retail Applications Executive',
+    roleTemplateId: 'operations_admin',
+    profilePhotoUrl: null,
+    status: 'active',
+    lastLoginAt: '2026-05-28T15:00:00.000Z',
+    isSuperAdmin: false,
+    passwordSetupType: 'auto_email_invite',
+    permissions: applicationManagementPermissions(),
+    createdBy: 'Priya Sharma',
+    updatedBy: 'Priya Sharma',
+    createdAt: '2026-01-10T10:00:00.000Z',
+    updatedAt: '2026-05-28T15:00:00.000Z',
+    activityLogs: [],
+  },
+  {
+    id: 'user-corporate-1',
+    fullName: 'Meera Shah',
+    email: 'meera.shah@glts.com',
+    phone: '+91 98333 44556',
+    employeeId: 'GLTS-044',
+    teamId: 'team-corporate',
+    designation: 'Corporate Applications Manager',
+    roleTemplateId: 'customer_accounts_admin',
+    profilePhotoUrl: null,
+    status: 'active',
+    lastLoginAt: '2026-05-27T13:30:00.000Z',
+    isSuperAdmin: false,
+    passwordSetupType: 'auto_email_invite',
+    permissions: applicationManagementPermissions(),
+    createdBy: 'Priya Sharma',
+    updatedBy: 'Priya Sharma',
+    createdAt: '2026-01-12T10:00:00.000Z',
+    updatedAt: '2026-05-27T13:30:00.000Z',
+    activityLogs: [],
+  },
+  {
+    id: 'user-b2b-1',
+    fullName: 'Pooja Sharma',
+    email: 'pooja.sharma@glts.com',
+    phone: '+91 98444 55667',
+    employeeId: 'GLTS-045',
+    teamId: 'team-b2b-agent',
+    designation: 'B2B Agent Coordinator',
+    roleTemplateId: 'customer_accounts_admin',
+    profilePhotoUrl: null,
+    status: 'active',
+    lastLoginAt: '2026-05-26T10:15:00.000Z',
+    isSuperAdmin: false,
+    passwordSetupType: 'auto_email_invite',
+    permissions: applicationManagementPermissions(),
+    createdBy: 'Rajan Mehta',
+    updatedBy: 'Rajan Mehta',
+    createdAt: '2026-01-15T10:00:00.000Z',
+    updatedAt: '2026-05-26T10:15:00.000Z',
+    activityLogs: [],
   },
   {
     id: 'user-fin-1',

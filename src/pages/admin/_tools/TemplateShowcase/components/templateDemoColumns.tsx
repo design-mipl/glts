@@ -29,15 +29,22 @@ export function buildTemplateListingColumns(
   { onOpenDetail }: TemplateColumnHandlers,
 ): Column<TemplateDemoRecord>[] {
   const columns: Column<TemplateDemoRecord>[] = [
-    { key: 'reference', label: 'Reference', sortable: true, searchable: true, minWidth: 140, hideable: false },
-    { key: 'name', label: 'Name', sortable: true, searchable: true, minWidth: 260 },
-    { key: 'country', label: 'Country', sortable: true, filterable: true, minWidth: 160 },
+    {
+      key: 'reference',
+      label: 'Reference',
+      sortable: true,
+      searchable: true,
+      widthSize: 'md',
+      hideable: false,
+    },
+    { key: 'name', label: 'Name', sortable: true, searchable: true, widthSize: 'xxl' },
+    { key: 'country', label: 'Country', sortable: true, filterable: true, widthSize: 'md' },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
       filterable: true,
-      minWidth: 120,
+      widthSize: 'sm',
       render: (_, row) => <Badge label={row.status} color={statusColor(row.status)} size="sm" />,
     },
     {
@@ -45,15 +52,15 @@ export function buildTemplateListingColumns(
       label: 'Priority',
       sortable: true,
       filterable: true,
-      minWidth: 120,
+      widthSize: 'sm',
       render: (_, row) => <Badge label={priorityLabel(row.priority)} color={priorityColor(row.priority)} size="sm" />,
     },
-    { key: 'assignee', label: 'Assignee', sortable: true, searchable: true, minWidth: 170 },
-    { key: 'updatedAt', label: 'Updated', sortable: true, minWidth: 120 },
+    { key: 'assignee', label: 'Assignee', sortable: true, searchable: true, widthSize: 'lg' },
+    { key: 'updatedAt', label: 'Updated', sortable: true, widthSize: 'md' },
   ]
 
   if (activeTab === 'bulk') {
-    columns.splice(2, 0, { key: 'recordKind', label: 'Type', sortable: true, minWidth: 100 })
+    columns.splice(2, 0, { key: 'recordKind', label: 'Type', sortable: true, widthSize: 'sm' })
   }
 
   columns.push({
@@ -64,7 +71,6 @@ export function buildTemplateListingColumns(
     searchable: false,
     hideable: false,
     align: 'center',
-    width: 60,
     render: (_, row) => {
       const actions: RowAction[] = [
         { label: 'View details', onClick: () => onOpenDetail(row) },

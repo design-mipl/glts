@@ -59,9 +59,9 @@ function CountryGrid({
   onToggleFavorite: (id: string) => void
 }) {
   return (
-    <Grid container spacing={1.5} sx={{ mb: 1 }}>
+    <Grid container spacing={2} sx={{ mb: 1 }}>
       {countries.map(c => (
-        <Grid size={{ xs: 6, sm: 4, md: 3 }} key={c.id}>
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={c.id}>
           <CustomerCountryCard
             country={c}
             selected={state.countryId === c.id}

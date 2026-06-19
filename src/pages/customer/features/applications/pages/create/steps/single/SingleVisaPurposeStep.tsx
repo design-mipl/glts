@@ -4,14 +4,17 @@ import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import {
   requiresFieldValidation,
+  isWebsiteFlowPolicy,
   useApplicationFlowPolicy,
 } from '../../../../context/ApplicationFlowPolicyContext'
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import { FlowStepActions } from '../../../../components/create/FlowStepActions'
+import { ApplicationFlowContextChips } from '../../../../components/create/ApplicationFlowContextChips'
 import {
   getVisaOfferings,
   patchStateFromVisaOffering,
 } from '@/shared/services/countryMasterService'
+import { resolveApplicationFlowSegment } from '../../../../utils/resolveApplicationFlowSegment'
 
 interface SingleVisaPurposeStepProps {
   state: ApplicationFlowState
@@ -29,19 +32,36 @@ export function SingleVisaPurposeStep({
   const colors = usePublicBrandColors()
   const { policy } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
-  const options = getVisaOfferings(state.countryId)
+  const isWebsite = isWebsiteFlowPolicy(policy)
+  const flowSegment = resolveApplicationFlowSegment(policy)
+  const options = getVisaOfferings(state.countryId, true, flowSegment)
 
   return (
     <Box sx={{ maxWidth: '100%', mx: 'auto', width: '100%' }}>
-      <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ mb: 0.5 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: { xs: 20, md: 22 }, color: colors.navy }}>
+      <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1} sx={{ mb: 0.5 }}>
+        <Typography sx={{ fontWeight: 800, fontSize: { xs: 20, md: 22 }, color: colors.navy, m: 0 }}>
           Visa type & purpose
         </Typography>
-        <Chip label={`${state.countryFlag} ${state.countryName}`} size="small" sx={{ fontWeight: 600, fontSize: 11 }} />
+        <ApplicationFlowContextChips
+          countryFlag={state.countryFlag}
+          countryName={state.countryName}
+          showVisa={false}
+          showPurpose={false}
+        />
       </Stack>
       <Typography sx={{ fontSize: 13, color: colors.textSecondary, mb: 2.5 }}>
-        Select the visa category and purpose of visit. Requirements in the next step depend on this selection.
+        {isWebsite
+          ? 'Select the visa type for this destination. Requirements in the next step depend on this selection.'
+          : 'Select the marine visa category for this destination. Requirements in the next step depend on this selection.'}
       </Typography>
+
+      {options.length === 0 ? (
+        <Typography sx={{ fontSize: 13, color: colors.textMuted, mb: 2 }}>
+          {isWebsite
+            ? `No visa types are configured for ${state.countryName} yet. Choose another destination or contact GLTS support.`
+            : `No marine visa types are configured for ${state.countryName} yet. Choose another destination or contact GLTS operations to enable marine filing for this country.`}
+        </Typography>
+      ) : null}
 
       <Grid container spacing={1.5}>
         {options.map(opt => {

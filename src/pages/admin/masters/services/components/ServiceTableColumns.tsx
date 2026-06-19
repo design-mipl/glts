@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
 import { MasterAudienceTags } from '../../components/MasterAudienceTags'
 import { toApplicabilityTagItems } from '../../config/masterAudienceTagConfig'
@@ -33,11 +34,16 @@ export function buildServiceColumns({
   onToggleStatus,
 }: ColumnHandlers): Column<ServiceMaster>[] {
   return [
-    { key: 'serviceName', label: 'Service Name', minWidth: 200, searchable: true },
+    {
+      key: 'serviceName',
+      label: 'Service Name',
+      widthSize: adminListingColumnWidthSize('service'),
+      searchable: true,
+    },
     {
       key: 'serviceType',
       label: 'Service Type',
-      width: 110,
+      widthSize: adminListingColumnWidthSize('count'),
       render: (_, row) => (
         <Badge label={serviceTypeLabel[row.serviceType]} color="neutral" size="sm" />
       ),
@@ -45,13 +51,13 @@ export function buildServiceColumns({
     {
       key: 'defaultPrice',
       label: 'Default Price',
-      width: 120,
+      widthSize: adminListingColumnWidthSize('count'),
       render: (_, row) => formatServicePrice(row),
     },
     {
       key: 'applicableFor',
       label: 'Applicable For',
-      minWidth: 200,
+      widthSize: adminListingColumnWidthSize('description'),
       render: (_, row) => (
         <MasterAudienceTags items={toApplicabilityTagItems(row.applicableFor)} />
       ),
@@ -59,7 +65,7 @@ export function buildServiceColumns({
     {
       key: 'mappedSacCode',
       label: 'Mapped SAC Code',
-      minWidth: 160,
+      widthSize: adminListingColumnWidthSize('code'),
       render: (_, row) => (
         <span
           style={{
@@ -78,7 +84,7 @@ export function buildServiceColumns({
     {
       key: 'status',
       label: 'Status',
-      width: 100,
+      widthSize: adminListingColumnWidthSize('status'),
       render: (_, row) => (
         <Badge
           label={masterStatusLabel[row.status]}
@@ -90,13 +96,13 @@ export function buildServiceColumns({
     {
       key: 'createdAudit',
       label: 'Created By / Date',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
     },
     {
       key: 'updatedAudit',
       label: 'Updated By / Date',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
     },
     {
@@ -107,7 +113,6 @@ export function buildServiceColumns({
       searchable: false,
       hideable: false,
       align: 'center',
-      width: 60,
       render: (_, row) => {
         const isActive = row.status === 'active'
         const actions: RowAction[] = [

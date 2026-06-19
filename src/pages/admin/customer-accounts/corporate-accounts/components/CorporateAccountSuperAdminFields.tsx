@@ -26,7 +26,9 @@ export function CorporateAccountSuperAdminFields({
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} useFlexGap flexWrap="wrap">
         <Button
           label="Send login email"
+          size="sm"
           variant="outlined"
+          color="secondary"
           onClick={() => {
             const pwd = generateTemporaryPassword()
             update({ temporaryPassword: pwd })
@@ -39,7 +41,9 @@ export function CorporateAccountSuperAdminFields({
         />
         <Button
           label="Generate temporary password"
+          size="sm"
           variant="outlined"
+          color="secondary"
           onClick={() => {
             const pwd = generateTemporaryPassword()
             update({ temporaryPassword: pwd })

@@ -18,7 +18,10 @@ import {
   getApplicationTypeLabel,
   getApplicationTypeTone,
 } from './applicationStatus'
-import { resolveApplicationCompanyName } from '../../utils/applicationCompanyUtils'
+import {
+  resolveApplicationCompanyName,
+  resolveApplicationVesselName,
+} from '../../utils/applicationCompanyUtils'
 import {
   resolveApplicationCreatorLabel,
   resolveApplicationCreatorRoleLabel,
@@ -193,6 +196,18 @@ export function buildUnifiedApplicationColumns({
       render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
         <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
           {resolveApplicationCompanyName(row)}
+        </Typography>
+      ),
+    },
+    {
+      key: 'vesselName',
+      label: 'Vessel name',
+      sortable: true,
+      filterable: true,
+      width: 160,
+      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationVesselName(row)}
         </Typography>
       ),
     },

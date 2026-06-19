@@ -1,6 +1,7 @@
 import { Archive, Copy, Settings } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import { countryMasterAdminService } from '@/shared/services/countryMasterAdminService'
 import type { BusinessSegment, CountryMaster } from '@/shared/types/countryMaster'
 import {
@@ -30,33 +31,33 @@ export function buildCountryColumns({
     {
       key: 'name',
       label: 'Country Name',
+      widthSize: adminListingColumnWidthSize('name'),
       sortable: true,
       searchable: true,
       hideable: false,
-      minWidth: 160,
       render: (_, row) => <span style={{ fontWeight: 600 }}>{row.name}</span>,
     },
     {
       key: 'code',
       label: 'Country Code',
+      widthSize: adminListingColumnWidthSize('code'),
       sortable: true,
       searchable: true,
-      minWidth: 110,
       render: (_, row) => <span>{row.code}</span>,
     },
     {
       key: 'region',
       label: 'Region',
+      widthSize: adminListingColumnWidthSize('country'),
       sortable: true,
       searchable: true,
-      minWidth: 120,
       render: (_, row) => <span>{row.region}</span>,
     },
     {
       key: 'segments',
       label: 'Enabled Segments',
+      widthSize: adminListingColumnWidthSize('description'),
       sortable: false,
-      minWidth: 200,
       render: (_, row) => (
         <MasterAudienceTags
           items={toSegmentTagItems(countryMasterAdminService.getEnabledSegments(row))}
@@ -66,8 +67,8 @@ export function buildCountryColumns({
     {
       key: 'visaTypeCount',
       label: 'Total Visa Types',
+      widthSize: adminListingColumnWidthSize('count'),
       sortable: true,
-      minWidth: 120,
       render: (_, row) => {
         const count = countryMasterAdminService.getAggregates(row, seg).visaTypeCount
         return <span>{count}</span>
@@ -76,15 +77,15 @@ export function buildCountryColumns({
     {
       key: 'updatedAt',
       label: 'Last Updated',
+      widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      minWidth: 120,
       render: (_, row) => <span title={row.updatedAt}>{formatCountryDate(row.updatedAt)}</span>,
     },
     {
       key: 'status',
       label: 'Status',
+      widthSize: adminListingColumnWidthSize('status'),
       sortable: true,
-      minWidth: 100,
       render: (_, row) => (
         <Badge
           label={COUNTRY_STATUS_LABELS[row.status]}
@@ -95,7 +96,6 @@ export function buildCountryColumns({
     {
       key: 'actions',
       label: '',
-      width: 56,
       hideable: false,
       sortable: false,
       filterable: false,

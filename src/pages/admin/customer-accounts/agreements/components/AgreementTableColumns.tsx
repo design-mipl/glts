@@ -1,6 +1,7 @@
 import { Eye, PencilLine, ShieldCheck, XCircle } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { deriveAdvanceRuleSummary } from '@/shared/utils/commercialAgreementValidation'
 import {
@@ -26,20 +27,33 @@ export function buildAgreementColumns({
   onReject,
 }: ColumnHandlers): Column<CommercialAgreement>[] {
   return [
-    { key: 'agreementId', label: 'Agreement ID', sortable: true, searchable: true, hideable: false, minWidth: 130 },
-    { key: 'companyName', label: 'Company Name', sortable: true, searchable: true, minWidth: 200 },
+    {
+      key: 'agreementId',
+      label: 'Agreement ID',
+      widthSize: adminListingColumnWidthSize('code'),
+      sortable: true,
+      searchable: true,
+      hideable: false,
+    },
+    {
+      key: 'companyName',
+      label: 'Company Name',
+      widthSize: adminListingColumnWidthSize('company'),
+      sortable: true,
+      searchable: true,
+    },
     {
       key: 'billingType',
       label: 'Billing Type',
+      widthSize: adminListingColumnWidthSize('service'),
       filterable: true,
-      minWidth: 110,
       render: (_, row) => <Badge label={billingTypeLabel[row.billingType]} color={billingTypeColor[row.billingType]} size="sm" />,
     },
     {
       key: 'workflowType',
       label: 'Workflow Type',
+      widthSize: adminListingColumnWidthSize('service'),
       filterable: true,
-      minWidth: 120,
       render: (_, row) => (
         <Badge label={workflowTypeLabel[row.workflowType]} color={workflowTypeColor[row.workflowType]} size="sm" />
       ),
@@ -47,15 +61,15 @@ export function buildAgreementColumns({
     {
       key: 'totalEntities',
       label: 'Total Entities',
+      widthSize: adminListingColumnWidthSize('count'),
       sortable: true,
-      minWidth: 110,
       render: (_, row) => row.entities.length,
     },
     {
       key: 'creditLimit',
       label: 'Credit Limit',
+      widthSize: 'md',
       sortable: true,
-      minWidth: 120,
       render: (_, row) =>
         row.billingConfig.creditLimit
           ? `₹${row.billingConfig.creditLimit.toLocaleString('en-IN')}`
@@ -64,12 +78,13 @@ export function buildAgreementColumns({
     {
       key: 'advanceRule',
       label: 'Advance Rule',
-      minWidth: 130,
+      widthSize: 'md',
       render: (_, row) => deriveAdvanceRuleSummary(row.billingType, row.billingConfig),
     },
     {
       key: 'status',
       label: 'Status',
+      widthSize: adminListingColumnWidthSize('status'),
       filterable: true,
       render: (_, row) => (
         <Badge label={agreementStatusLabel[row.status]} color={agreementStatusColor[row.status]} size="sm" />
@@ -78,8 +93,8 @@ export function buildAgreementColumns({
     {
       key: 'updatedAt',
       label: 'Last Updated',
+      widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      minWidth: 120,
       render: (_, row) => new Date(row.updatedAt).toLocaleDateString(),
     },
     {
@@ -90,7 +105,6 @@ export function buildAgreementColumns({
       searchable: false,
       hideable: false,
       align: 'center',
-      width: 56,
       render: (_, row) => {
         const actions: RowAction[] = [
           { label: 'View', icon: <Eye size={14} />, onClick: () => onOpenDetail(row) },

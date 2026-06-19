@@ -10,6 +10,7 @@ import type {
   CountryVisaType,
   WorkflowProfile,
 } from '@/shared/types/countryMaster'
+import { shouldShowJurisdictionNodes } from '@/shared/utils/jurisdictionRequirementPreview'
 
 const COMMON_DOCUMENT_IDS = new Set(['passport', 'photo'])
 
@@ -21,6 +22,7 @@ type LegacyChecklistItem = CountryDocumentChecklistItem & {
   description?: string
   formatNotes?: string
   hasSample?: boolean
+  originalDocument?: boolean
 }
 
 type LegacyVisaType = CountryVisaType & { checklist?: LegacyChecklistItem[] }
@@ -35,6 +37,7 @@ function slimChecklistItem(item: LegacyChecklistItem, sortOrder: number): Countr
     mandatory: item.mandatory,
     sortOrder: item.sortOrder ?? sortOrder,
     description: item.description,
+    originalDocument: item.originalDocument,
   }
 }
 
@@ -55,6 +58,16 @@ function splitLegacyChecklist(items: LegacyChecklistItem[]): {
   return { common, application }
 }
 
+function normalizeVisaTypeJurisdictionEnabled(
+  visaType: Pick<CountryVisaType, 'jurisdictionEnabled' | 'jurisdictions' | 'visaMode'>,
+): boolean {
+  if (visaType.jurisdictionEnabled === true || visaType.jurisdictionEnabled === false) {
+    return visaType.jurisdictionEnabled
+  }
+  if (visaType.visaMode === 'e_visa') return false
+  return (visaType.jurisdictions?.length ?? 0) > 0
+}
+
 /** Normalizes legacy `checklist` arrays into common + application document lists. */
 export function normalizeCountrySegments(segments: LegacySegment[]): CountrySegmentConfig[] {
   return segments.map((seg) => {
@@ -68,6 +81,8 @@ export function normalizeCountrySegments(segments: LegacySegment[]): CountrySegm
       return {
         ...vt,
         jurisdictions: vt.jurisdictions ?? [],
+        documents: vt.documents ?? [],
+        jurisdictionEnabled: normalizeVisaTypeJurisdictionEnabled(vt),
         applicationDocuments: hasExplicitApplication
           ? legacyVt.applicationDocuments!.map((item, i) =>
               slimChecklistItem(item as LegacyChecklistItem, i),
@@ -145,22 +160,57 @@ export function ensureAllSegments(segments: CountrySegmentConfig[]): CountrySegm
   return ALL_SEGMENTS.map((segment) => bySegment.get(segment) ?? emptySegment(segment, false))
 }
 
+function mergeDocumentMapping(
+  existing: CountryDocumentMapping,
+  incoming: CountryDocumentMapping,
+): CountryDocumentMapping {
+  const preferDescription = (left?: string, right?: string) => {
+    const leftText = left?.trim()
+    const rightText = right?.trim()
+    if (!leftText) return rightText
+    if (!rightText) return leftText
+    return rightText.length >= leftText.length ? rightText : leftText
+  }
+
+  return {
+    ...existing,
+    ...incoming,
+    mandatory: existing.mandatory || incoming.mandatory,
+    originalDocument: Boolean(existing.originalDocument || incoming.originalDocument),
+    description: preferDescription(existing.description, incoming.description),
+    hasSample: Boolean(existing.hasSample || incoming.hasSample),
+    ocrSupported: Boolean(existing.ocrSupported || incoming.ocrSupported),
+  }
+}
+
 export function checklistToDocumentMappings(
   checklist: CountryDocumentChecklistItem[],
 ): CountryDocumentMapping[] {
-  return [...checklist]
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((item) => {
-      const master = documentMasterService.getById(item.documentId)
-      return {
-        documentId: item.documentId,
-        name: master?.documentType ?? item.documentId,
-        mandatory: item.mandatory,
-        description: item.description?.trim() || master?.description,
-        ocrSupported: item.documentId === 'passport',
-        hasSample: item.documentId === 'passport' || item.documentId === 'cdc',
-      }
-    })
+  const sorted = [...checklist].sort((a, b) => a.sortOrder - b.sortOrder)
+  const byId = new Map<string, CountryDocumentMapping>()
+  const order: string[] = []
+
+  for (const item of sorted) {
+    const master = documentMasterService.getById(item.documentId)
+    const mapping: CountryDocumentMapping = {
+      documentId: item.documentId,
+      name: master?.documentType ?? item.documentId,
+      mandatory: item.mandatory,
+      description: item.description?.trim() || master?.description,
+      originalDocument: item.originalDocument ?? false,
+      ocrSupported: item.documentId === 'passport',
+      hasSample: item.documentId === 'passport' || item.documentId === 'cdc',
+    }
+    const previous = byId.get(item.documentId)
+    if (previous) {
+      byId.set(item.documentId, mergeDocumentMapping(previous, mapping))
+    } else {
+      byId.set(item.documentId, mapping)
+      order.push(item.documentId)
+    }
+  }
+
+  return order.map((documentId) => byId.get(documentId)!)
 }
 
 function jurisdictionRulesToChecklist(
@@ -173,17 +223,85 @@ function jurisdictionRulesToChecklist(
       mandatory: rule.mandatory,
       sortOrder: index,
       description: rule.description,
+      originalDocument: rule.originalDocument,
+    }))
+}
+
+function visaTypeDocumentRulesToChecklist(
+  rules: CountryJurisdictionDocumentRule[],
+  allowPhysicalOriginal: boolean,
+): CountryDocumentChecklistItem[] {
+  return [...rules]
+    .filter((rule) => rule.group !== 'optional')
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((rule, index) => ({
+      documentId: rule.documentId,
+      mandatory: rule.mandatory,
+      sortOrder: index,
+      description: rule.description,
+      originalDocument: allowPhysicalOriginal ? Boolean(rule.originalDocument) : false,
     }))
 }
 
 export function resolveVisaApplicationDocuments(visaType: CountryVisaType): CountryDocumentChecklistItem[] {
-  const primaryJurisdiction = visaType.jurisdictions?.[0]
-  if (primaryJurisdiction?.documents?.length) {
-    return jurisdictionRulesToChecklist(
-      primaryJurisdiction.documents.filter((d) => d.group !== 'optional'),
-    )
+  if (shouldShowJurisdictionNodes(visaType)) {
+    const primaryJurisdiction = visaType.jurisdictions?.find((j) => j.status === 'active')
+    if (primaryJurisdiction?.documents?.length) {
+      return jurisdictionRulesToChecklist(
+        primaryJurisdiction.documents.filter((d) => d.group !== 'optional'),
+      )
+    }
+    return []
   }
-  return visaType.applicationDocuments
+
+  const visaTypeRules = visaType.documents ?? []
+  if (visaTypeRules.length) {
+    return visaTypeDocumentRulesToChecklist(visaTypeRules, false)
+  }
+
+  return (visaType.applicationDocuments ?? []).map((item, index) => ({
+    ...item,
+    sortOrder: item.sortOrder ?? index,
+    originalDocument: false,
+  }))
+}
+
+/**
+ * Resolves the merged common + application checklist for a portal offering.
+ * When jurisdiction is enabled, uses the selected jurisdiction's document rules.
+ * When disabled (e-Visa), uses visa-type rules with physical originals forced off.
+ */
+export function resolveOfferingDocumentChecklistItems(
+  visaType: CountryVisaType | undefined,
+  commonDocuments: CountryDocumentChecklistItem[],
+  jurisdictionId?: string,
+): CountryDocumentChecklistItem[] {
+  if (!visaType) return commonDocuments
+
+  let applicationDocs: CountryDocumentChecklistItem[]
+
+  if (shouldShowJurisdictionNodes(visaType)) {
+    const jurisdiction =
+      (jurisdictionId
+        ? visaType.jurisdictions?.find((j) => j.id === jurisdictionId && j.status === 'active')
+        : undefined) ??
+      visaType.jurisdictions?.find((j) => j.status === 'active')
+
+    applicationDocs = jurisdiction?.documents?.length
+      ? jurisdictionRulesToChecklist(jurisdiction.documents.filter((d) => d.group !== 'optional'))
+      : []
+  } else {
+    const visaTypeRules = visaType.documents ?? []
+    applicationDocs = visaTypeRules.length
+      ? visaTypeDocumentRulesToChecklist(visaTypeRules, false)
+      : (visaType.applicationDocuments ?? []).map((item, index) => ({
+          ...item,
+          sortOrder: item.sortOrder ?? index,
+          originalDocument: false,
+        }))
+  }
+
+  return mergeSegmentChecklist(commonDocuments, applicationDocs)
 }
 
 export function mergeSegmentChecklist(

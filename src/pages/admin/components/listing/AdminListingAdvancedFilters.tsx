@@ -1,5 +1,6 @@
 import { Box } from '@mui/material'
 import { Button, Select } from '@/design-system/UIComponents'
+import { listingToolbarFiltersGridSx } from '@/design-system/listingToolbarChrome'
 
 export interface AdminListingFilterState {
   country: string
@@ -23,6 +24,10 @@ interface AdminListingAdvancedFiltersProps {
   hasActiveFilters: boolean
 }
 
+/**
+ * @deprecated Inline filter rows are replaced by the Filter popover on AdminListingToolbar.
+ * Use AdminListingStandardFilterFields inside filterPopover or the toolbar `filter` preset.
+ */
 export function AdminListingAdvancedFilters({
   filters,
   onFiltersChange,
@@ -37,15 +42,11 @@ export function AdminListingAdvancedFilters({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
       <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, 1fr)',
-            md: 'repeat(3, 1fr)',
-          },
-          gap: 1.5,
-        }}
+        sx={listingToolbarFiltersGridSx({
+          xs: '1fr',
+          sm: 'repeat(2, 1fr)',
+          md: 'repeat(3, 1fr)',
+        })}
       >
         <Select
           value={filters.country}
@@ -77,7 +78,7 @@ export function AdminListingAdvancedFilters({
       </Box>
       {hasActiveFilters && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button label="Clear filters" variant="text" size="sm" onClick={onClearFilters} />
+          <Button label="Clear filters" variant="neutral" size="sm" onClick={onClearFilters} />
         </Box>
       )}
     </Box>

@@ -8,7 +8,7 @@ For implementation rules, see [root CLAUDE.md](../../../../CLAUDE.md).
 
 Every module should have:
 
-1. **Listing page** — sticky header, KPIs, tabs (when needed), toolbar (search/export/columns/grid/more), advanced filters, tab-specific columns/empty states, table/grid, pagination, toasts, row actions.
+1. **Listing page** — sticky header, KPIs, tabs (when needed), toolbar (search/Filter popover/export/columns/grid), tab-specific columns/empty states, table/grid, pagination, toasts, row actions.
 2. **Form pages** — create/edit via modal, drawer, full-page, or stepper surface.
 3. **Detail page** — summary header, status, primary actions, sections, and optional activity.
 4. **Navigation** — page-surface-owned route entry with predictable active state.
@@ -131,7 +131,7 @@ Do not add module-specific hardcoded paths to shared navigation. If nested route
 ## Checklist before client demo
 
 - [ ] `npm run build` passes
-- [ ] Listing: header, KPI if useful, tabs if useful, toolbar, filters, table/grid, pagination
+- [ ] Listing: header, KPI if useful, tabs if useful, toolbar with Filter popover, table/grid, pagination
 - [ ] Modal, drawer, full-page, or stepper form chosen by workflow complexity
 - [ ] Detail page with status, actions, sections, and activity/audit when relevant
 - [ ] Nav: no badges, correct page-surface ownership, correct active state

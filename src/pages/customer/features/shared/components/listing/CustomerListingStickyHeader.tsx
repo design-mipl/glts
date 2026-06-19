@@ -1,0 +1,37 @@
+import { Box } from '@mui/material'
+import type { ReactNode } from 'react'
+import { useStickyHeaderAtTop } from '@/shared/hooks/useStickyHeaderAtTop'
+
+export interface CustomerListingStickyHeaderProps {
+  children: ReactNode
+  /** Transparent at scroll top; solid backdrop once the page scrolls. Default: true. */
+  transparentBackground?: boolean
+}
+
+export function CustomerListingStickyHeader({
+  children,
+  transparentBackground = true,
+}: CustomerListingStickyHeaderProps) {
+  const { sentinelRef, showSolidBackground } = useStickyHeaderAtTop(transparentBackground)
+
+  return (
+    <>
+      {transparentBackground ? (
+        <Box ref={sentinelRef} aria-hidden sx={{ height: 1, pointerEvents: 'none' }} />
+      ) : null}
+      <Box
+        sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          bgcolor: showSolidBackground ? 'background.default' : 'transparent',
+          transition: theme => theme.transitions.create('background-color', { duration: 200 }),
+          pb: 1.25,
+          mb: 0,
+        }}
+      >
+        {children}
+      </Box>
+    </>
+  )
+}

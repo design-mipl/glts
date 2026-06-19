@@ -21,7 +21,7 @@ export function EnquiryQuickActions({
 }: EnquiryQuickActionsProps) {
   return (
     <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-      <Button label="Edit Enquiry" variant="outlined" startIcon={<FileCheck2 size={14} />} onClick={onEdit} />
+      <Button label="Edit Enquiry" variant="neutral" startIcon={<FileCheck2 size={14} />} onClick={onEdit} />
       <Button label="Assign Team" variant="outlined" startIcon={<UserCog size={14} />} onClick={onAssign} />
       <Button label="Add Follow-up" variant="outlined" startIcon={<CalendarPlus size={14} />} onClick={onFollowup} />
       <Button label="Update Status" variant="outlined" startIcon={<ArrowRightLeft size={14} />} onClick={onStatus} />

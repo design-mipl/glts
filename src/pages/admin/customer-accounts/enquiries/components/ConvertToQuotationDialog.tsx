@@ -25,7 +25,7 @@ export function ConvertToQuotationDialog({
       loading={loading}
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button label="Cancel" variant="outlined" onClick={onClose} />
+          <Button label="Cancel" variant="neutral" onClick={onClose} />
           <Button label="Approve Conversion" onClick={onConfirm} />
         </Stack>
       }

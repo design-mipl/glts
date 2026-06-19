@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Box, Grid, Stack, Typography } from '@mui/material'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   BaseCard,
   ConfirmDialog,
   EmptyState,
+  RichTextContent,
   useToast,
 } from '@/design-system/UIComponents'
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
@@ -12,6 +13,7 @@ import { documentMasterService } from '@/shared/services/documentMasterService'
 import type { DocumentMasterStatus } from '@/shared/types/documentMaster'
 import { DocumentDeleteDialog } from '../components/DocumentDeleteDialog'
 import { DocumentDetailSummary } from '../components/DocumentDetailSummary'
+import { DocumentFormModal } from '../components/DocumentFormModal'
 import { documentStatusLabel } from '../config/documentStatusConfig'
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
@@ -30,7 +32,9 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 export function DocumentDetailPage() {
   const { showToast } = useToast()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { documentId } = useParams<{ documentId: string }>()
+  const [editOpen, setEditOpen] = useState(false)
   const [statusOpen, setStatusOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
@@ -42,6 +46,12 @@ export function DocumentDetailPage() {
   }, [documentId, refreshKey])
 
   const reload = () => setRefreshKey((k) => k + 1)
+
+  useEffect(() => {
+    if (searchParams.get('edit') !== '1' || !documentId) return
+    setEditOpen(true)
+    navigate(`/admin/masters/documents/${documentId}`, { replace: true })
+  }, [documentId, navigate, searchParams])
 
   if (!documentId) {
     return (
@@ -117,7 +127,7 @@ export function DocumentDetailPage() {
         summary={
           <DocumentDetailSummary
             document={document}
-            onEdit={() => navigate(`/admin/masters/documents/${document.id}/edit`)}
+            onEdit={() => setEditOpen(true)}
             onToggleStatus={() => setStatusOpen(true)}
             onDelete={() => setDeleteOpen(true)}
           />
@@ -137,7 +147,18 @@ export function DocumentDetailPage() {
                   <ReadOnlyField label="Status" value={documentStatusLabel[document.status]} />
                 </Grid>
                 <Grid size={{ xs: 12 }}>
-                  <ReadOnlyField label="Description" value={document.description} />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Description
+                    </Typography>
+                    {document.description ? (
+                      <RichTextContent content={document.description} sx={{ mt: 0.5 }} />
+                    ) : (
+                      <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                        --
+                      </Typography>
+                    )}
+                  </Box>
                 </Grid>
               </Grid>
             </Stack>
@@ -164,6 +185,14 @@ export function DocumentDetailPage() {
         description={`Set "${document.documentType}" to ${document.status === 'active' ? 'inactive' : 'active'}?`}
         confirmLabel={document.status === 'active' ? 'Deactivate' : 'Activate'}
         loading={actionLoading}
+      />
+
+      <DocumentFormModal
+        open={editOpen}
+        record={document}
+        navigateToDetailOnCreate={false}
+        onClose={() => setEditOpen(false)}
+        onSaved={reload}
       />
 
       <DocumentDeleteDialog

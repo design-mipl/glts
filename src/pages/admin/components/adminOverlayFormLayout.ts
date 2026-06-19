@@ -22,7 +22,7 @@ export const ADMIN_MODAL_FORM_GUIDANCE = {
   shell: 'Modal',
   fieldPattern:
     'FormSection (2 columns) + FormField + Input/Select — same grid as full-page/drawer; use AdminFullPageFormFieldSpan for full-width rows',
-  footer: 'Modal footer slot — Cancel (outlined) + Save (contained)',
+  footer: 'Modal footer slot — Cancel (neutral) + Save (contained)',
   whenToUse: 'Quick create/edit with few fields; no primary/secondary section cards inside the dialog.',
 } as const
 
@@ -60,7 +60,7 @@ export const ADMIN_STEPPER_FORM_GUIDANCE = {
   shell: 'AdminStepperFormShell — breadcrumb + back · stepper · section cards · footer',
   fieldPattern:
     'Both primary + secondary section cards on the details step (same grid as full-page form), then review on neutral surface',
-  footer: 'Back / Next / Submit in a dedicated footer band below a divider (same as full-page form footer)',
+  footer: 'AdminStepperFormFooter — Cancel/Back (neutral) · draft (soft) · Next/Submit (contained)',
   whenToUse: 'Long or staged workflows where users complete one group of fields at a time.',
 } as const
 

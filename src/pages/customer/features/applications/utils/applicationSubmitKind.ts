@@ -1,7 +1,9 @@
 import {
   documentStatusLabel,
+  isApplicantDocumentPreviewable,
   isSimpleDocumentRequirement,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import type { CustomerChecklistItemStatus } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 import type { ApplicationSubmitKind, UploadQueueRow } from '../data/applicationFlowData'
 
 export interface ChecklistCorrectionRef {
@@ -46,13 +48,13 @@ export function enrichChecklistWithCorrections<
     id: string
     label: string
     required: boolean
-    status: 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified'
+    status: CustomerChecklistItemStatus
     reviewComment?: string
   },
 >(items: T[], corrections: ChecklistCorrectionRef[], travelerName?: string): T[] {
   return items.map(item => {
     if (item.reviewComment?.trim()) return item
-    if (item.status !== 'invalid' && item.status !== 'missing') return item
+    if (item.status !== 'invalid' && item.status !== 'missing' && item.status !== 'pending') return item
 
     const match = findCorrectionForChecklistItem(item, corrections, travelerName, 'traveler')
     if (match?.reason?.trim()) {
@@ -75,13 +77,13 @@ export function enrichGlobalChecklistWithCorrections<
     id: string
     label: string
     required?: boolean
-    status: 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified'
+    status: CustomerChecklistItemStatus
     reviewComment?: string
   },
 >(items: T[], corrections: ChecklistCorrectionRef[]): T[] {
   return items.map(item => {
     if (item.reviewComment?.trim()) return item
-    if (item.status !== 'invalid' && item.status !== 'missing') return item
+    if (item.status !== 'invalid' && item.status !== 'missing' && item.status !== 'pending') return item
 
     const match = findCorrectionForChecklistItem(item, corrections, undefined, 'global')
     if (match?.reason?.trim()) {
@@ -99,11 +101,10 @@ export function enrichGlobalChecklistWithCorrections<
   })
 }
 
-function mapDocToChecklistStatus(
-  doc: UploadQueueRow['documents'][number],
-): 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified' {
+function mapDocToChecklistStatus(doc: UploadQueueRow['documents'][number]): CustomerChecklistItemStatus {
   if (doc.status === 'verified') return 'verified'
-  if (doc.status === 'rejected' || doc.status === 'needs_review') return 'invalid'
+  if (doc.status === 'rejected') return 'invalid'
+  if (doc.status === 'needs_review') return 'under_review'
   if (isSimpleDocumentRequirement(doc.documentId)) {
     const label = documentStatusLabel(doc)
     if (
@@ -111,15 +112,15 @@ function mapDocToChecklistStatus(
       label === 'Arranged by GLTS' ||
       label.includes('Uploaded by GLTS')
     ) {
-      return 'uploaded'
+      return 'under_review'
     }
     if (label.includes('Pending GLTS') || label === 'Customer Will Upload') {
       return 'pending'
     }
-    if (label === 'Not Selected') return 'missing'
+    if (label === 'Not Selected') return 'pending'
   }
-  if (doc.status === 'uploaded') return 'uploaded'
-  return 'missing'
+  if (doc.status === 'uploaded') return 'under_review'
+  return 'pending'
 }
 
 export function checklistItemsFromRowDocuments(
@@ -128,7 +129,8 @@ export function checklistItemsFromRowDocuments(
   id: string
   label: string
   required: boolean
-  status: 'uploaded' | 'missing' | 'invalid' | 'pending' | 'verified'
+  originalDocument?: boolean
+  status: CustomerChecklistItemStatus
   statusLabel?: string
   reviewComment?: string
 }> {
@@ -136,8 +138,10 @@ export function checklistItemsFromRowDocuments(
     id: doc.documentId,
     label: doc.name,
     required: doc.required,
+    originalDocument: doc.originalDocument,
     status: mapDocToChecklistStatus(doc),
     statusLabel: isSimpleDocumentRequirement(doc.documentId) ? documentStatusLabel(doc) : undefined,
     reviewComment: doc.reviewComment,
+    previewable: isApplicantDocumentPreviewable(doc),
   }))
 }

@@ -3,16 +3,17 @@ import {
   Typography,
   Grid,
   Stack,
-  Button,
   TextField,
   InputAdornment,
 } from '@mui/material'
-import { ArrowRight, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { Select } from '@/design-system/UIComponents'
 import { useMemo, useState } from 'react'
 import { listPortalCountries } from '@/shared/services/countryMasterService'
-import { usePublicBrandColors, getPrimaryButtonSx } from '@/shared/theme/publicBrand'
+import { resolveApplicationFlowSegment } from '../../../utils/resolveApplicationFlowSegment'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { CustomerCountryCard } from '../../../components/CustomerCountryCard'
+import { FlowStepActions } from '../../../components/create/FlowStepActions'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
 import { useApplicationFlowPolicy, requiresFieldValidation } from '../../../context/ApplicationFlowPolicyContext'
 import { ensureFlowGltsApplicationId } from '../../../utils/gltsReferenceIds'
@@ -43,9 +44,9 @@ function CountryGrid({
   onToggleFavorite: (id: string) => void
 }) {
   return (
-    <Grid container spacing={1.5} sx={{ mb: 1 }}>
+    <Grid container spacing={2} sx={{ mb: 1 }}>
       {countries.map(c => (
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }} key={c.id}>
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={c.id}>
           <CustomerCountryCard
             country={c}
             selected={state.countryId === c.id}
@@ -85,8 +86,10 @@ export function CountrySelectionStep({ state, onUpdate, onContinue }: CountrySel
   const [sortMode, setSortMode] = useState<CountrySortMode>('default')
   const { favoriteIds, isFavorite, toggleFavorite } = useFavoriteCountries()
 
+  const flowSegment = resolveApplicationFlowSegment(policy)
+
   const filtered = useMemo(() => {
-    const all = listPortalCountries()
+    const all = listPortalCountries({ portalDisplaySegment: flowSegment })
     const q = query.trim().toLowerCase()
     if (!q) return all
     return all.filter(
@@ -95,7 +98,7 @@ export function CountrySelectionStep({ state, onUpdate, onContinue }: CountrySel
         c.region.toLowerCase().includes(q) ||
         c.cities.toLowerCase().includes(q),
     )
-  }, [query])
+  }, [query, flowSegment])
 
   const { favorites, others } = useMemo(
     () => orderCountriesForDisplay(filtered, favoriteIds, sortMode),
@@ -205,17 +208,11 @@ export function CountrySelectionStep({ state, onUpdate, onContinue }: CountrySel
         </Typography>
       )}
 
-      <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
-        <Button
-          variant="contained"
-          endIcon={<ArrowRight size={16} />}
-          onClick={handleContinue}
-          disabled={strict && !state.countryId}
-          sx={{ ...getPrimaryButtonSx(colors), fontSize: '13px' }}
-        >
-          Continue to visa type
-        </Button>
-      </Stack>
+      <FlowStepActions
+        onContinue={handleContinue}
+        continueLabel="Continue to visa type"
+        continueDisabled={strict && !state.countryId}
+      />
     </Box>
   )
 }

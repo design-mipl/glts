@@ -3,7 +3,6 @@ import { Typography } from '@mui/material'
 import { Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button, ConfirmDialog, useToast } from '@/design-system/UIComponents'
-import { getPrimaryButtonSx, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { adminManagementService } from '@/shared/services/adminManagementService'
 import type { AdminUser } from '@/shared/types/adminUser'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
@@ -13,7 +12,12 @@ import { CustomerListingToolbar } from '@/pages/customer/features/shared/compone
 import { CustomerListingTable } from '@/pages/customer/features/shared/components/listing/CustomerListingTable'
 import { CustomerListingPagination } from '@/pages/customer/features/shared/components/listing/CustomerListingPagination'
 import { CustomerListingGrid } from '@/pages/customer/features/shared/components/listing/CustomerListingGrid'
-import { AdminAdvancedFilters } from '../components/AdminAdvancedFilters'
+import {
+  AdminAdvancedFilterFields,
+  EMPTY_ADMIN_LIST_FILTERS,
+  hasAdminListFiltersActive,
+  type AdminListFilters,
+} from '../components/AdminAdvancedFilters'
 import { AdminFormDrawer } from '../components/AdminFormDrawer'
 import { buildAdminColumns } from '../components/AdminTableColumns'
 import {
@@ -24,15 +28,13 @@ import {
 } from '../utils/adminListingUtils'
 
 export function AdminListingPage() {
-  const colors = usePublicBrandColors()
   const navigate = useNavigate()
   const { base, canAccessAdminManagement } = useCustomerPortalBase()
   const { showToast } = useToast()
 
   const [rows, setRows] = useState<AdminUser[]>([])
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [locationFilter, setLocationFilter] = useState('all')
+  const [listFilters, setListFilters] = useState<AdminListFilters>(EMPTY_ADMIN_LIST_FILTERS)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editAdmin, setEditAdmin] = useState<AdminUser | undefined>()
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -50,11 +52,11 @@ export function AdminListingPage() {
 
   const filteredByAdvanced = useMemo(() => {
     return rows.filter(row => {
-      if (statusFilter !== 'all' && row.status !== statusFilter) return false
-      if (locationFilter !== 'all' && row.location !== locationFilter) return false
+      if (listFilters.status !== 'all' && row.status !== listFilters.status) return false
+      if (listFilters.location !== 'all' && row.location !== listFilters.location) return false
       return true
     })
-  }, [rows, statusFilter, locationFilter])
+  }, [rows, listFilters])
 
   const listing = useCustomerListing({
     rows: filteredByAdvanced,
@@ -120,15 +122,13 @@ export function AdminListingPage() {
         headerActions={
           <Button
             variant="contained"
-            startIcon={<Plus size={16} />}
+            label="Add admin"
+            startIcon={<Plus size={14} />}
             onClick={() => {
               setEditAdmin(undefined)
               setDrawerOpen(true)
             }}
-            sx={{ ...getPrimaryButtonSx(colors) }}
-          >
-            Add admin
-          </Button>
+          />
         }
         toolbar={
           <CustomerListingToolbar
@@ -144,19 +144,18 @@ export function AdminListingPage() {
             columns={columns.filter(c => c.key !== 'actions').map(c => ({ key: c.key, label: c.label }))}
             hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
             onHiddenColumnKeysChange={keys => listing.setTableState(s => ({ ...s, hiddenColumnKeys: keys }))}
-          />
-        }
-        advancedFilters={
-          <AdminAdvancedFilters
-            status={statusFilter}
-            location={locationFilter}
-            onStatusChange={v => {
-              setStatusFilter(v)
-              listing.setTableState(s => ({ ...s, page: 0 }))
-            }}
-            onLocationChange={v => {
-              setLocationFilter(v)
-              listing.setTableState(s => ({ ...s, page: 0 }))
+            filterPopover={{
+              active: hasAdminListFiltersActive(listFilters),
+              value: listFilters,
+              onApply: next => {
+                setListFilters(next)
+                listing.setTableState(s => ({ ...s, page: 0 }))
+              },
+              onClear: () => setListFilters(EMPTY_ADMIN_LIST_FILTERS),
+              hasActive: hasAdminListFiltersActive,
+              children: (draft, patch) => (
+                <AdminAdvancedFilterFields draft={draft} patch={patch} />
+              ),
             }}
           />
         }

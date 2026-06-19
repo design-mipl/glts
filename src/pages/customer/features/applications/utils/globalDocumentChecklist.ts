@@ -1,6 +1,7 @@
 import type { CustomerChecklistItem } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 import type { ApplicantDocumentItem } from '../data/applicationFlowData'
 import type { GlobalDocumentUploadMeta } from '../hooks/useApplicationFlowState'
+import { isApplicantDocumentPreviewable } from '@/shared/utils/applicantDocumentWorkflowUtils'
 
 export interface GlobalChecklistDocument {
   documentId: string
@@ -20,12 +21,13 @@ function mapDocumentToChecklistItem(doc: ApplicantDocumentItem): CustomerCheckli
     status:
       doc.status === 'verified'
         ? 'verified'
-        : doc.status === 'uploaded'
-          ? 'uploaded'
-          : doc.status === 'rejected' || doc.status === 'needs_review'
-            ? 'invalid'
-            : 'missing',
+        : doc.status === 'rejected'
+          ? 'invalid'
+          : doc.status === 'needs_review' || doc.status === 'uploaded'
+            ? 'under_review'
+            : 'pending',
     reviewComment: doc.reviewComment,
+    previewable: isApplicantDocumentPreviewable(doc),
   }
 }
 
@@ -41,6 +43,7 @@ export function buildGlobalChecklistItems(
     id: `global-${doc.documentId}`,
     label: doc.name,
     required: doc.required,
-    status: uploads?.[doc.documentId] ? 'uploaded' : 'missing',
+    status: uploads?.[doc.documentId] ? 'under_review' : 'pending',
+    previewable: Boolean(uploads?.[doc.documentId]),
   }))
 }

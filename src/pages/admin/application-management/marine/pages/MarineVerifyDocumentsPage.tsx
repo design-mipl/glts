@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Box, CircularProgress, Stack } from '@mui/material'
-import { FileText } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import {
+  BaseCard,
   Button,
+  ConfirmDialog,
   EmptyState,
   FormField,
   Modal,
@@ -13,27 +14,22 @@ import {
 } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
 import { AdminRecordPageChrome } from '@/pages/admin/components/AdminRecordPageChrome'
-import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { useVerifyDocumentsWorkspace } from '../hooks/useVerifyDocumentsWorkspace'
 import { VerifyDocumentsOverview } from '../components/verify/VerifyDocumentsOverview'
-import { VerifyDocumentsTravelerSection } from '../components/verify/VerifyDocumentsTravelerSection'
-import { VerifyDocumentsTimeline } from '../components/verify/VerifyDocumentsTimeline'
-import { VerifyDocumentsSummary } from '../components/verify/VerifyDocumentsSummary'
-import {
-  VerifyDocumentChecklistSection,
-  VerifyGlobalDocumentChecklist,
-} from '../components/verify/VerifyDocumentChecklistSection'
-import { VerifyRejectedDocumentsSection } from '../components/verify/VerifyRejectedDocumentsSection'
+import { VerifyDocumentsPhaseContent } from '../components/verify/VerifyDocumentsPhaseContent'
 import {
   GltsDocumentUploadDrawer,
   type GltsDocumentUploadPayload,
 } from '../components/verify/GltsDocumentUploadDrawer'
 import { resolveHandlingMode } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import { applicationArrangedExpenseService } from '@/shared/services/applicationArrangedExpenseService'
+import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import {
   collectRejectedVerifyDocuments,
   isRejectedVerifyDocument,
   type VerifyRejectedDocumentEntry,
 } from '../utils/verifyDocumentsUtils'
+import { toApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
 
 export function MarineVerifyDocumentsPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
@@ -48,6 +44,12 @@ export function MarineVerifyDocumentsPage() {
   } | null>(null)
   const [reviewComment, setReviewComment] = useState('')
   const [gltsUploadDocument, setGltsUploadDocument] = useState<ApplicantDocumentItem | null>(null)
+  const [verifyDialog, setVerifyDialog] = useState<{
+    scope: 'traveler' | 'global'
+    travelerId?: string
+    documentId: string
+    documentName: string
+  } | null>(null)
 
   const workspace = useVerifyDocumentsWorkspace(applicationId)
   const {
@@ -61,10 +63,10 @@ export function MarineVerifyDocumentsPage() {
     selectedRow,
     timelineSteps,
     globalDocuments,
-    updateTravelerDoc,
     updateTravelerDocForRow,
     updateTravelerDocumentWorkflow,
     updateGlobalDoc,
+    updateTravelerOriginalCollection,
     saveDraft,
     submitVerification,
   } = workspace
@@ -81,6 +83,20 @@ export function MarineVerifyDocumentsPage() {
     () => collectRejectedVerifyDocuments(rows, globalDocuments),
     [rows, globalDocuments],
   )
+
+  const summaryOverview = useMemo(() => toApplicationReviewOverview(overview), [overview])
+
+  const checklistContext = useMemo(() => {
+    const app = detail?.application
+    if (!app) return {}
+    if (app.country === 'China' && app.visaType === 'M Type Visa') {
+      return { countryId: '13', visaOfferingId: 'cn-m-type' }
+    }
+    if (app.country === 'China' && app.visaType === 'G Type Visa') {
+      return { countryId: '13', visaOfferingId: 'cn-g-type' }
+    }
+    return {}
+  }, [detail?.application])
 
   const travelerChecklistDocuments = useMemo(
     () => selectedRow?.documents.filter(doc => !isRejectedVerifyDocument(doc)) ?? [],
@@ -164,18 +180,46 @@ export function MarineVerifyDocumentsPage() {
     setReviewComment('')
   }
 
+  const openVerifyDialog = (
+    scope: 'traveler' | 'global',
+    document: ApplicantDocumentItem,
+    travelerId?: string,
+  ) => {
+    setVerifyDialog({
+      scope,
+      travelerId,
+      documentId: document.documentId,
+      documentName: document.name,
+    })
+  }
+
+  const closeVerifyDialog = () => {
+    setVerifyDialog(null)
+  }
+
+  const confirmVerifyDocument = () => {
+    if (!verifyDialog) return
+    if (verifyDialog.scope === 'traveler') {
+      const rowId = verifyDialog.travelerId ?? selectedRow?.id
+      if (!rowId) return
+      updateTravelerDocForRow(rowId, verifyDialog.documentId, 'verified')
+    } else {
+      updateGlobalDoc(verifyDialog.documentId, 'verified')
+    }
+    showToast({
+      title: 'Document verified',
+      description: `${verifyDialog.documentName} marked as verified.`,
+      variant: 'success',
+    })
+    closeVerifyDialog()
+  }
+
   const handleRejectedPreview = (entry: VerifyRejectedDocumentEntry) => {
     handlePreview(entry.document.documentId, entry.scope)
   }
 
   const handleRejectedVerify = (entry: VerifyRejectedDocumentEntry) => {
-    if (entry.scope === 'global') {
-      updateGlobalDoc(entry.document.documentId, 'verified')
-      return
-    }
-    if (entry.travelerId) {
-      updateTravelerDocForRow(entry.travelerId, entry.document.documentId, 'verified')
-    }
+    openVerifyDialog(entry.scope, entry.document, entry.travelerId)
   }
 
   const handleRejectedReject = (entry: VerifyRejectedDocumentEntry) => {
@@ -227,86 +271,64 @@ export function MarineVerifyDocumentsPage() {
       <Stack spacing={2}>
         <VerifyDocumentsOverview overview={overview} />
 
-        <VerifyDocumentsTravelerSection
-          rows={rows}
-          isBulk={isBulk}
-          gltsApplicationId={overview.gltsApplicationId}
-          gltsBatchId={overview.gltsBatchId}
-          selectedTravelerId={selectedTravelerId}
-          onSelectTraveler={setSelectedTravelerId}
-        />
-
-        <VerifyDocumentsTimeline steps={timelineSteps} multiTraveler={rows.filter(r => r.status !== 'processing').length > 1} />
-
-        {selectedRow && detail ? (
-          <>
-            <VerifyDocumentsSummary
-              selectedRow={selectedRow}
+        <BaseCard sx={{ overflow: 'hidden' }}>
+          <Stack spacing={2} sx={{ p: 2 }}>
+            <VerifyDocumentsPhaseContent
+              phase="final"
+              rows={rows}
+              isBulk={isBulk}
+              overview={overview}
+              summaryOverview={summaryOverview}
               detail={detail}
               applicationId={applicationId}
+              selectedTravelerId={selectedTravelerId}
+              onSelectTraveler={setSelectedTravelerId}
+              selectedRow={selectedRow}
+              timelineSteps={timelineSteps}
+              rejectedDocuments={rejectedDocuments}
+              travelerChecklistDocuments={travelerChecklistDocuments}
+              globalChecklistDocuments={globalChecklistDocuments}
+              onPreview={handlePreview}
+              onTravelerVerify={document => openVerifyDialog('traveler', document, selectedRow?.id)}
+              onTravelerReject={document =>
+                openReviewDialog('traveler', document, 'rejected', selectedRow?.id)
+              }
+              onTravelerRequestReupload={document =>
+                openReviewDialog('traveler', document, 'needs_review', selectedRow?.id)
+              }
+              onGltsUpload={document => setGltsUploadDocument(document)}
+              onGlobalVerify={document => openVerifyDialog('global', document)}
+              onGlobalReject={document => openReviewDialog('global', document, 'rejected')}
+              onGlobalRequestReupload={document =>
+                openReviewDialog('global', document, 'needs_review')
+              }
+              onRejectedPreview={handleRejectedPreview}
+              onRejectedVerify={handleRejectedVerify}
+              onRejectedReject={handleRejectedReject}
+              onRejectedReupload={handleRejectedReupload}
+              onRejectedGltsUpload={handleRejectedGltsUpload}
+              countryId={checklistContext.countryId}
+              visaOfferingId={checklistContext.visaOfferingId}
+              onOriginalCollectionChange={collection => {
+                if (!selectedRow) return
+                updateTravelerOriginalCollection(selectedRow.id, collection)
+              }}
+              onOriginalReceivedSubmit={() => {
+                showToast({
+                  title: 'Physical documents updated',
+                  description: 'Received status and remarks saved.',
+                  variant: 'success',
+                })
+              }}
+              onBack={() => navigate(listingPath)}
+              onSaveDraft={handleSaveDraft}
+              onSubmit={handleSubmit}
+              onViewForm={() =>
+                navigate(`/admin/application-management/marine/${applicationId}/view-form`)
+              }
             />
-
-            {rejectedDocuments.length > 0 ? (
-              <VerifyRejectedDocumentsSection
-                entries={rejectedDocuments}
-                onPreview={handleRejectedPreview}
-                onVerify={handleRejectedVerify}
-                onReject={handleRejectedReject}
-                onRequestReupload={handleRejectedReupload}
-                onGltsUpload={handleRejectedGltsUpload}
-              />
-            ) : null}
-
-            {travelerChecklistDocuments.length > 0 ? (
-              <VerifyDocumentChecklistSection
-                countryTitle={overview.countryName}
-                documents={travelerChecklistDocuments}
-                onPreview={documentId => handlePreview(documentId, 'traveler')}
-                onVerify={documentId => updateTravelerDoc(documentId, 'verified')}
-                onReject={document => openReviewDialog('traveler', document, 'rejected', selectedRow.id)}
-                onRequestReupload={document => openReviewDialog('traveler', document, 'needs_review', selectedRow.id)}
-                onGltsUpload={document => setGltsUploadDocument(document)}
-              />
-            ) : null}
-          </>
-        ) : null}
-
-        {rejectedDocuments.length > 0 && !selectedRow ? (
-          <VerifyRejectedDocumentsSection
-            entries={rejectedDocuments}
-            onPreview={handleRejectedPreview}
-            onVerify={handleRejectedVerify}
-            onReject={handleRejectedReject}
-            onRequestReupload={handleRejectedReupload}
-            onGltsUpload={handleRejectedGltsUpload}
-          />
-        ) : null}
-
-        <VerifyGlobalDocumentChecklist
-          documents={globalChecklistDocuments}
-          onPreview={documentId => handlePreview(documentId, 'global')}
-          onVerify={documentId => updateGlobalDoc(documentId, 'verified')}
-          onReject={document => openReviewDialog('global', document, 'rejected')}
-          onRequestReupload={document => openReviewDialog('global', document, 'needs_review')}
-        />
-
-        <AdminFullPageFormFooter
-          onCancel={() => navigate(listingPath)}
-          cancelLabel="Back to listing"
-          onDraft={handleSaveDraft}
-          draftLabel="Save draft"
-          onSave={handleSubmit}
-          saveLabel="Submit application"
-          extraActions={
-            <Button
-              label="View Form"
-              variant="outlined"
-              startIcon={<FileText size={14} />}
-              onClick={() => navigate(`/admin/application-management/marine/${applicationId}/view-form`)}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            />
-          }
-        />
+          </Stack>
+        </BaseCard>
       </Stack>
 
       <GltsDocumentUploadDrawer
@@ -323,13 +345,39 @@ export function MarineVerifyDocumentsPage() {
               ? { travelTicket: payload.travelTicket }
               : { insurance: payload.insurance }),
           })
+          if (selectedRow) {
+            applicationArrangedExpenseService.upsertFromGltsDocumentUpload({
+              applicationId,
+              isBulk,
+              travelerRowId: selectedRow.id,
+              applicantId: selectedRow.gltsApplicantId,
+              applicantName: selectedRow.travelerName,
+              document: gltsUploadDocument,
+              payload,
+            })
+            applicationExpenseManagementService.syncApplication(applicationId)
+          }
           showToast({
             title: 'Document saved',
-            description: `${gltsUploadDocument.name} uploaded by GLTS.`,
+            description: `${gltsUploadDocument.name} uploaded by GLTS and mapped to billing expenses.`,
             variant: 'success',
           })
           setGltsUploadDocument(null)
         }}
+      />
+
+      <ConfirmDialog
+        open={Boolean(verifyDialog)}
+        onClose={closeVerifyDialog}
+        onConfirm={confirmVerifyDocument}
+        title="Verify document?"
+        description={
+          verifyDialog
+            ? `Confirm that ${verifyDialog.documentName} meets verification requirements. This will mark the document as verified.`
+            : undefined
+        }
+        confirmLabel="Verify"
+        cancelLabel="Cancel"
       />
 
       <Modal
@@ -343,7 +391,7 @@ export function MarineVerifyDocumentsPage() {
         }
         footer={
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button label="Cancel" variant="outlined" onClick={closeReviewDialog} />
+            <Button label="Cancel" variant="neutral" onClick={closeReviewDialog} />
             <Button label={reviewActionLabel} color="error" onClick={submitReviewAction} disabled={!isReviewCommentValid} />
           </Stack>
         }

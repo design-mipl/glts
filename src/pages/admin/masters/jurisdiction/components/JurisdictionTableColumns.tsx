@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { JurisdictionMaster } from '@/shared/types/jurisdictionMaster'
 import { masterStatusColor, masterStatusLabel } from '../../config/masterStatusConfig'
 import { formatMasterDate } from '../../utils/masterListingUtils'
@@ -32,7 +33,7 @@ export function buildJurisdictionColumns({
     {
       key: 'name',
       label: 'Jurisdiction Name',
-      minWidth: 200,
+      widthSize: adminListingColumnWidthSize('name'),
       sortable: true,
       filterable: true,
       searchable: true,
@@ -40,7 +41,7 @@ export function buildJurisdictionColumns({
     {
       key: 'description',
       label: 'Description',
-      minWidth: 220,
+      widthSize: adminListingColumnWidthSize('description'),
       sortable: false,
       filterable: false,
       searchable: true,
@@ -57,7 +58,7 @@ export function buildJurisdictionColumns({
     {
       key: 'status',
       label: 'Status',
-      width: 100,
+      widthSize: adminListingColumnWidthSize('status'),
       sortable: false,
       filterable: true,
       render: (_, row) => (
@@ -71,7 +72,7 @@ export function buildJurisdictionColumns({
     {
       key: 'createdAudit',
       label: 'Created By / Date',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       sortable: true,
       filterable: true,
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
@@ -79,7 +80,7 @@ export function buildJurisdictionColumns({
     {
       key: 'updatedAudit',
       label: 'Updated By / Date',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       sortable: true,
       filterable: true,
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
@@ -92,7 +93,6 @@ export function buildJurisdictionColumns({
       searchable: false,
       hideable: false,
       align: 'center',
-      width: 60,
       render: (_, row) => {
         const isActive = row.status === 'active'
         const actions: RowAction[] = [

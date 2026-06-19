@@ -16,7 +16,7 @@ export function StepConfirmModal({ open, onClose, onConfirm }: StepConfirmModalP
       size="sm"
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
-          <Button label="Go back" variant="outlined" color="secondary" onClick={onClose} />
+          <Button label="Go back" variant="neutral" onClick={onClose} />
           <Button label="Yes continue" variant="contained" onClick={onConfirm} />
         </Stack>
       }

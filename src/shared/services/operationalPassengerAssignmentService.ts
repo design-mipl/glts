@@ -21,7 +21,11 @@ function nowIso() {
 }
 
 function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10)
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 function formatDisplayDate(iso: string): string {
@@ -177,23 +181,47 @@ export const operationalPassengerAssignmentService = {
     })
   },
 
-  assignUser(id: string, team: CityTeam | '', user: string): OperationalPassengerRow | undefined {
+  assignUser(
+    id: string,
+    team: CityTeam | '',
+    user: string,
+    priority?: AssignmentPriority,
+  ): OperationalPassengerRow | undefined {
     return mutate(id, overlay => {
       overlay.assignedTeam = team
       overlay.assignedUser = user
       overlay.passengerStatus = user ? 'Assigned' : 'Pending Assignment'
+      if (priority) {
+        overlay.priority = priority
+        if (priority === 'Urgent' || priority === 'High') {
+          overlay.escalated = overlay.carryForward
+        }
+      }
       appendHistory(overlay, team, user, 'User assigned')
-      appendTimeline(overlay, user ? `Assigned to ${user}` : 'Assignment cleared')
+      const priorityNote = priority ? ` · ${priority} priority` : ''
+      appendTimeline(overlay, user ? `Assigned to ${user}${priorityNote}` : 'Assignment cleared')
     })
   },
 
-  reassign(id: string, team: CityTeam | '', user: string): OperationalPassengerRow | undefined {
+  reassign(
+    id: string,
+    team: CityTeam | '',
+    user: string,
+    priority?: AssignmentPriority,
+  ): OperationalPassengerRow | undefined {
     return mutate(id, overlay => {
       overlay.assignedTeam = team
       overlay.assignedUser = user
       overlay.passengerStatus = 'Assigned'
+      if (priority) {
+        overlay.priority = priority
+        if (priority === 'Urgent' || priority === 'High') {
+          overlay.escalated = overlay.carryForward
+        }
+      }
       appendHistory(overlay, team, user, 'Reassigned')
-      appendTimeline(overlay, `Reassigned to ${user || team || 'unassigned'}`)
+      const priorityNote = priority ? ` · ${priority} priority` : ''
+      appendTimeline(overlay, `Reassigned to ${user || team || 'unassigned'}${priorityNote}`)
     })
   },
 

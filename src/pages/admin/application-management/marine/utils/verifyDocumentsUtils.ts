@@ -5,13 +5,18 @@ import type {
 } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
 import { buildProcessingTimelineFromQueueRow } from '@/shared/utils/applicationProcessingTimeline'
-import { adminDocumentBadgeStatus } from '@/shared/services/applicationVerificationService'
-import {
-  documentStatusLabel,
-  isApplicantDocumentSatisfied,
-  isSimpleDocumentRequirement,
-} from '@/shared/utils/applicantDocumentWorkflowUtils'
+import { isApplicantDocumentSatisfied } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import type { BadgeProps } from '@/design-system/UIComponents/Display/Badge'
+
+export type VerifyDocumentBadgeLabel = 'Pending' | 'Rejected' | 'Verified'
+
+export type VerifyOriginalDocumentBadgeLabel = 'Pending' | 'Received' | 'Rejected' | 'Verified'
+
+function toVerifyDocumentBadgeLabel(status: ApplicantDocumentStatus): VerifyDocumentBadgeLabel {
+  if (status === 'verified') return 'Verified'
+  if (status === 'rejected') return 'Rejected'
+  return 'Pending'
+}
 
 export function buildVerifyTimeline(
   row: UploadQueueRow | null,
@@ -39,39 +44,38 @@ export function documentBadgeColor(
   status: ApplicantDocumentStatus,
   doc?: ApplicantDocumentItem,
 ): BadgeProps['color'] {
-  if (doc && isSimpleDocumentRequirement(doc.documentId)) {
-    const label = documentStatusLabel(doc)
-    if (label === 'Verified' || label === 'Arranged by GLTS') return 'success'
-    if (label === 'Rejected' || label === 'Re-upload Requested') return 'error'
-    if (label.includes('Uploaded') || label === 'Under Verification') return 'info'
-    return 'warning'
-  }
-  const badge = adminDocumentBadgeStatus(status)
-  switch (badge) {
-    case 'verified':
-      return 'success'
-    case 'rejected':
-      return 'error'
-    case 'uploaded':
-      return 'info'
-    default:
-      return 'warning'
-  }
+  const label = toVerifyDocumentBadgeLabel(doc?.status ?? status)
+
+  if (label === 'Verified') return 'success'
+  if (label === 'Rejected') return 'error'
+  return 'warning'
 }
 
-export function documentBadgeLabel(status: ApplicantDocumentStatus): string {
-  const badge = adminDocumentBadgeStatus(status)
-  if (badge === 'verified') return 'verified'
-  if (badge === 'rejected') return 'rejected'
-  if (status === 'needs_review') return 'uploaded'
-  return badge
+export function verifyDocumentBadgeLabel(doc: ApplicantDocumentItem): VerifyDocumentBadgeLabel {
+  return toVerifyDocumentBadgeLabel(doc.status)
 }
 
-export function verifyDocumentBadgeLabel(doc: ApplicantDocumentItem): string {
-  if (isSimpleDocumentRequirement(doc.documentId)) {
-    return documentStatusLabel(doc)
-  }
-  return documentBadgeLabel(doc.status)
+export function verifyOriginalDocumentBadgeLabel(
+  doc: ApplicantDocumentItem,
+): VerifyOriginalDocumentBadgeLabel {
+  if (doc.status === 'verified') return 'Verified'
+  if (doc.status === 'rejected') return 'Rejected'
+  if (doc.originalDocumentReceived) return 'Received'
+  return 'Pending'
+}
+
+export function originalDocumentBadgeColor(
+  doc: ApplicantDocumentItem,
+): BadgeProps['color'] {
+  const label = verifyOriginalDocumentBadgeLabel(doc)
+  if (label === 'Verified') return 'success'
+  if (label === 'Rejected') return 'error'
+  if (label === 'Received') return 'info'
+  return 'warning'
+}
+
+export function isOriginalVerifyDocument(doc: ApplicantDocumentItem): boolean {
+  return doc.originalDocument === true
 }
 
 export interface VerifyOverviewData {
@@ -140,9 +144,15 @@ export function buildOverviewFromDetail(
 ): VerifyOverviewData {
   const readyRows = rows.filter(r => r.status !== 'processing')
   const firstRow = rows[0]
+  const batchId = isBulk ? applicationId : undefined
+  const rowAppId = firstRow?.gltsApplicationId?.trim() || undefined
   return {
-    gltsApplicationId: firstRow?.gltsApplicationId ?? applicationId,
-    gltsBatchId: isBulk ? applicationId : undefined,
+    gltsApplicationId: isBulk
+      ? rowAppId && rowAppId !== batchId
+        ? rowAppId
+        : undefined
+      : rowAppId ?? applicationId,
+    gltsBatchId: batchId,
     countryName: app?.country ?? '—',
     countryFlag: app?.countryFlag ?? '',
     visaTypeLabel: app?.visaType ?? '—',

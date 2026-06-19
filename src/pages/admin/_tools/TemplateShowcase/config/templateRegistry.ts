@@ -28,14 +28,15 @@ export const TEMPLATE_RECIPES: TemplateRecipeDefinition[] = [
     id: 'listing',
     title: 'Listing module',
     description:
-      'Full admin listing: sticky AdminPageHeader, KPIs, tabs, advanced filters, table/grid toggle, column picker, toasts, row actions, and FilterPanel.',
+      'Full admin listing: sticky AdminPageHeader, KPIs, tabs, Filter popover on toolbar, table/grid toggle, column picker, toasts, row actions, and FilterPanel.',
     category: 'listing',
     path: `${BASE}/listing`,
     components: [
       'AdminListingShell',
       'AdminListingStickyHeader',
       'AdminListingToolbar',
-      'AdminListingAdvancedFilters',
+      'AdminListingFilterPopover',
+      'ListingFilterPopoverShell',
       'AdminListingTable',
       'AdminListingGrid',
       'Tabs',

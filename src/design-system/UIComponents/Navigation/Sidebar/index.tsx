@@ -62,11 +62,45 @@ export function isNavActive(href: string | undefined, currentPath: string): bool
   return pathNorm.startsWith(`${hrefNorm}/`)
 }
 
+function getGroupModulePrefix(children: NavConfig[] | undefined): string | null {
+  const hrefs =
+    children
+      ?.filter((child): child is NavConfig & { href: string } => child.type === 'item' && Boolean(child.href))
+      .map((child) => normalizeNavPath(child.href)) ?? []
+
+  if (hrefs.length === 0) return null
+
+  let prefix = hrefs[0]
+  for (const href of hrefs.slice(1)) {
+    while (prefix && !href.startsWith(prefix)) {
+      const slash = prefix.lastIndexOf('/')
+      if (slash <= 0) {
+        prefix = ''
+        break
+      }
+      prefix = prefix.slice(0, slash)
+    }
+  }
+
+  return prefix || null
+}
+
 function isGroupChildActive(children: NavConfig[] | undefined, currentPath: string): boolean {
   if (!children) return false
-  return children.some(
-    (child) => child.type === 'item' && isNavActive(child.href, currentPath),
-  )
+
+  if (
+    children.some(
+      (child) => child.type === 'item' && isNavActive(child.href, currentPath),
+    )
+  ) {
+    return true
+  }
+
+  const modulePrefix = getGroupModulePrefix(children)
+  if (!modulePrefix || modulePrefix === '/admin') return false
+
+  const pathNorm = normalizeNavPath(currentPath)
+  return pathNorm === modulePrefix || pathNorm.startsWith(`${modulePrefix}/`)
 }
 
 export function renderNavConfig(
@@ -228,17 +262,25 @@ function SidebarContent({
         <Box
           sx={{
             height: TOPBAR_HEIGHT,
-            display: 'flex',
+            display: 'grid',
+            gridTemplateColumns: '28px 1fr 28px',
             alignItems: 'center',
-            justifyContent: 'space-between',
             px: '12px',
             flexShrink: 0,
             borderBottom: `1px solid ${navigation.border}`,
             overflow: 'hidden',
-            gap: 1.5,
+            columnGap: 1.5,
           }}
         >
-          <Stack direction="row" alignItems="center" gap={1.5} sx={{ minWidth: 0, flex: 1 }}>
+          <Box aria-hidden />
+
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="center"
+            gap={1.5}
+            sx={{ minWidth: 0, transform: 'translateX(-12px)' }}
+          >
             {logo ?? <DefaultLogoMark logoMark={logoMark} />}
             {!logo && appName ? (
               <Typography
@@ -265,6 +307,7 @@ function SidebarContent({
               height: 28,
               color: navigation.textSecondary,
               flexShrink: 0,
+              justifySelf: 'end',
               '&:hover': {
                 color: navigation.textPrimary,
                 background: navigation.hover,

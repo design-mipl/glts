@@ -69,7 +69,7 @@ export function CustomerListingTable<T extends object>({
   }
 
   return (
-    <Box sx={{ overflowX: 'auto' }}>
+    <Box sx={{ width: '100%', overflowX: 'auto' }}>
       <DataTable
         columns={columns}
         data={data}

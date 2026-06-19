@@ -3,6 +3,7 @@ import { Building2, Clock, MapPin, Trash2 } from 'lucide-react'
 import { BaseCard, RowActions, Toggle } from '@/design-system/UIComponents'
 import type { RowAction } from '@/design-system/UIComponents'
 import type { CountryVisaJurisdiction, VisaTypeStatus } from '@/shared/types/countryMaster'
+import { formatJurisdictionProcessingDays } from '../../utils/jurisdictionProcessingTime'
 import { useCountryWorkspaceMode } from './countryWorkspaceModeContext'
 
 interface JurisdictionCardListProps {
@@ -89,7 +90,7 @@ function JurisdictionCard({ jurisdiction, onClick, onStatusChange, onDelete }: J
               <Clock size={14} />
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-              {jurisdiction.processingTime || '—'}
+              {formatJurisdictionProcessingDays(jurisdiction.processingTime)}
             </Typography>
           </Stack>
         </Stack>

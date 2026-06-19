@@ -9,7 +9,6 @@ import {
 import type { BulkAction } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
-  AdminListingAdvancedFilters,
   AdminListingGrid,
   AdminListingStickyHeader,
   AdminListingTable,
@@ -57,8 +56,6 @@ export function ListingTemplatePage() {
 
   const filterOptions = useMemo(() => getTemplateFilterOptions(TEMPLATE_DEMO_ROWS), [])
 
-  const hasActiveFilters = Boolean(advancedFilters.country || advancedFilters.status || advancedFilters.priority)
-
   const columns = useMemo(
     () =>
       buildTemplateListingColumns(activeTab, {
@@ -81,10 +78,6 @@ export function ListingTemplatePage() {
       description: 'Your listing export will download shortly.',
       variant: 'success',
     })
-  }, [showToast])
-
-  const handleRefresh = useCallback(() => {
-    showToast({ title: 'List refreshed', variant: 'info' })
   }, [showToast])
 
   const handleClearFilters = useCallback(() => {
@@ -141,37 +134,30 @@ export function ListingTemplatePage() {
         tabValue={activeTab}
         onTabChange={(value) => handleTabChange(value as TemplateListingTab)}
         toolbar={
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <AdminListingToolbar
-              searchValue={listing.tableState.searchQuery}
-              onSearch={listing.handleSearch}
-              searchPlaceholder="Search by reference, name, country, or assignee…"
-              onExport={handleExport}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              columns={toolbarColumns}
-              hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
-              onHiddenColumnKeysChange={(keys) =>
-                listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
-              }
-              moreMenuItems={[
-                { label: 'Refresh list', onClick: handleRefresh },
-                { label: 'Clear all filters', onClick: handleClearFilters },
-              ]}
-            />
-            <AdminListingAdvancedFilters
-              filters={advancedFilters}
-              onFiltersChange={(next) => {
+          <AdminListingToolbar
+            searchValue={listing.tableState.searchQuery}
+            onSearch={listing.handleSearch}
+            searchPlaceholder="Search by reference, name, country, or assignee…"
+            filter={{
+              filters: advancedFilters,
+              onApply: (next) => {
                 setAdvancedFilters(next)
                 listing.setTableState((state) => ({ ...state, page: 0 }))
-              }}
-              onClearFilters={handleClearFilters}
-              countries={filterOptions.countries}
-              statuses={filterOptions.statuses}
-              priorities={filterOptions.priorities}
-              hasActiveFilters={hasActiveFilters}
-            />
-          </Box>
+              },
+              onClear: handleClearFilters,
+              countries: filterOptions.countries,
+              statuses: filterOptions.statuses,
+              priorities: filterOptions.priorities,
+            }}
+            onExport={handleExport}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            columns={toolbarColumns}
+            hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
+            onHiddenColumnKeysChange={(keys) =>
+              listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
+            }
+          />
         }
         listingContent={
           viewMode === 'table' ? (

@@ -9,6 +9,7 @@ import {
   useToast,
 } from '@/design-system/UIComponents'
 import type { Column, RowAction, TableState } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import { INITIAL_TABLE_STATE } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import type { DashboardQueueRow, Priority, SlaStatus } from '../data/operationsDashboardMock'
 
@@ -45,21 +46,47 @@ function buildQueueColumns(
   showToast: (toast: { title: string; variant: 'info' }) => void,
 ): Column<DashboardQueueRow>[] {
   return [
-    { key: 'applicationId', label: 'Application ID', minWidth: 140, sortable: true, hideable: false },
-    { key: 'applicant', label: 'Applicant', minWidth: 180, sortable: true },
-    { key: 'country', label: 'Country', minWidth: 120, sortable: true },
-    { key: 'visaType', label: 'Visa Type', minWidth: 140, sortable: true },
-    { key: 'assignedTeam', label: 'Assigned Team', minWidth: 150, sortable: true },
+    {
+      key: 'applicationId',
+      label: 'Application ID',
+      widthSize: adminListingColumnWidthSize('code'),
+      sortable: true,
+      hideable: false,
+    },
+    {
+      key: 'applicant',
+      label: 'Applicant',
+      widthSize: adminListingColumnWidthSize('name'),
+      sortable: true,
+    },
+    {
+      key: 'country',
+      label: 'Country',
+      widthSize: adminListingColumnWidthSize('country'),
+      sortable: true,
+    },
+    {
+      key: 'visaType',
+      label: 'Visa Type',
+      widthSize: adminListingColumnWidthSize('service'),
+      sortable: true,
+    },
+    {
+      key: 'assignedTeam',
+      label: 'Assigned Team',
+      widthSize: adminListingColumnWidthSize('assignee'),
+      sortable: true,
+    },
     {
       key: 'slaStatus',
       label: 'SLA Status',
-      minWidth: 110,
+      widthSize: adminListingColumnWidthSize('sla'),
       render: (_, row) => <Badge label={slaLabel(row.slaStatus)} color={slaColor(row.slaStatus)} size="sm" />,
     },
     {
       key: 'priority',
       label: 'Priority',
-      minWidth: 90,
+      widthSize: adminListingColumnWidthSize('priority'),
       render: (_, row) => (
         <Badge label={priorityLabel(row.priority)} color={priorityColor(row.priority)} size="sm" />
       ),
@@ -67,7 +94,6 @@ function buildQueueColumns(
     {
       key: 'actions',
       label: '',
-      width: 60,
       sortable: false,
       filterable: false,
       searchable: false,

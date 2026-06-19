@@ -1,6 +1,7 @@
 import { Box, Typography, Link, Divider, Stack, Grid, Chip } from '@mui/material'
 import { FooterWorldMapWatermark } from '../../../components/FooterWorldMapWatermark'
 import { PublicContainer } from '../../../components/PublicContainer'
+import { GREENLIGHT_LOGO_DARK_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
 
 const footerSections = {
@@ -29,7 +30,7 @@ export function FooterSection() {
           <Grid size={{ xs: 12, md: 4 }}>
             <Box
               component="img"
-              src="/greenlight_logo.jpg"
+              src={GREENLIGHT_LOGO_DARK_SRC}
               alt="Greenlight"
               sx={{ height: 48, width: 'auto', maxWidth: 200, mb: 3, display: 'block' }}
             />

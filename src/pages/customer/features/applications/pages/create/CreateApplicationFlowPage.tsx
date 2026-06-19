@@ -1,11 +1,15 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Box, Stack } from '@mui/material'
 import { useLocation } from 'react-router-dom'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
+import { getCountryById } from '@/shared/services/visaService'
 import { Breadcrumb } from '@/design-system/UIComponents'
+import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '@/design-system/tokens'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
-import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { useApplicationFlowPolicy } from '../../context/ApplicationFlowPolicyContext'
+import {
+  isWebsiteFlowPolicy,
+  useApplicationFlowPolicy,
+} from '../../context/ApplicationFlowPolicyContext'
 import { useApplicationFlowState } from '../../hooks/useApplicationFlowState'
 import type { CreateApplicationLocationState } from '../../utils/createApplicationNavigation'
 import {
@@ -22,8 +26,16 @@ import { ApplicationSubmitStep } from './steps/ApplicationSubmitStep'
 import { SingleVisaPurposeStep } from './steps/single/SingleVisaPurposeStep'
 import { RequirementPreviewStep } from './steps/single/RequirementPreviewStep'
 
-export function CreateApplicationFlowPage() {
-  const colors = usePublicBrandColors()
+export interface CreateApplicationFlowPageProps {
+  /** When set (e.g. from website country detail), skip country step after seeding state. */
+  preselectedCountryId?: string
+  initialStep?: ApplicationFlowStep
+}
+
+export function CreateApplicationFlowPage({
+  preselectedCountryId,
+  initialStep = 'country',
+}: CreateApplicationFlowPageProps = {}) {
   const navigate = useAppNavigate()
   const location = useLocation()
   const navState = (location.state ?? null) as CreateApplicationLocationState | null
@@ -35,31 +47,90 @@ export function CreateApplicationFlowPage() {
     storageKey,
   })
 
-  const [step, setStep] = useState<ApplicationFlowStep>('country')
+  const [step, setStep] = useState<ApplicationFlowStep>(initialStep)
   const stepIndex = APPLICATION_FLOW_STEPS.indexOf(step)
+  const preselectApplied = useRef(false)
   const { base } = useCustomerPortalBase()
+  const isWebsite = isWebsiteFlowPolicy(policy)
 
   const cancelListingPath =
-    listingPath || (policy === 'admin' ? '/admin/application-management/marine' : `${base}/applications`)
+    listingPath ||
+    (policy === 'admin'
+      ? '/admin/application-management/marine'
+      : isWebsite
+        ? '/countries'
+        : `${base}/applications`)
 
   const breadcrumb =
     breadcrumbItems.length > 0
       ? breadcrumbItems
-      : [
-          { label: 'Application Management', href: `${base}/applications` },
-          { label: 'Application creation' },
-        ]
+      : isWebsite
+        ? [{ label: 'Home', href: '/' }, { label: 'Apply' }]
+        : [
+            { label: 'Application Management', href: `${base}/applications` },
+            { label: 'Application creation' },
+          ]
+
+  useEffect(() => {
+    if (!preselectedCountryId || preselectApplied.current) return
+    const country = getCountryById(preselectedCountryId)
+    if (!country) return
+
+    preselectApplied.current = true
+    update({
+      countryId: country.id,
+      countryName: country.name,
+      countryFlag: country.flags,
+      visaOfferingId: '',
+      visaType: '',
+      visaTypeLabel: '',
+      purpose: '',
+      purposeLabel: '',
+      entryType: '',
+    })
+    setStep('visa')
+  }, [preselectedCountryId, update])
 
   useEffect(() => {
     if (!navState?.freshStart && !navState?.resumeDraft) return
 
     if (navState.freshStart) {
+      preselectApplied.current = false
       reset()
-      setStep('country')
+      if (preselectedCountryId) {
+        const country = getCountryById(preselectedCountryId)
+        if (country) {
+          preselectApplied.current = true
+          update({
+            countryId: country.id,
+            countryName: country.name,
+            countryFlag: country.flags,
+            visaOfferingId: '',
+            visaType: '',
+            visaTypeLabel: '',
+            purpose: '',
+            purposeLabel: '',
+            entryType: '',
+          })
+          setStep('visa')
+        } else {
+          setStep('country')
+        }
+      } else {
+        setStep('country')
+      }
     }
 
     navigate(location.pathname, { replace: true, state: null })
-  }, [location.pathname, navState?.freshStart, navState?.resumeDraft, navigate, reset])
+  }, [
+    location.pathname,
+    navState?.freshStart,
+    navState?.resumeDraft,
+    navigate,
+    preselectedCountryId,
+    reset,
+    update,
+  ])
 
   const flowSteps = useMemo(
     () =>
@@ -96,82 +167,59 @@ export function CreateApplicationFlowPage() {
   const canAdvance = canAdvanceFromStep(step, state, policy)
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        maxWidth: '100%',
-        minHeight: 'calc(100vh - 56px)',
-        bgcolor: colors.surface,
-        fontFamily: publicFonts.body,
-      }}
-    >
+    <Box sx={{ width: '100%' }}>
+      <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 1.5 }}>
+        <Breadcrumb items={breadcrumb} />
+      </Stack>
+
       <Box
         sx={{
           width: '100%',
-          maxWidth: '100%',
-          mx: { xs: -2, md: -3 },
-          px: { xs: 2, md: 3 },
-          py: { xs: 2, md: 3 },
-          boxSizing: 'border-box',
+          border: `${BORDER_WIDTH.thin} solid`,
+          borderColor: 'divider',
+          borderRadius: BORDER_RADIUS.lg,
+          bgcolor: 'background.paper',
+          boxShadow: SHADOWS.sm,
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 1.5 }}>
-          <Breadcrumb items={breadcrumb} />
-        </Stack>
-
         <Box
           sx={{
-            width: '100%',
-            maxWidth: '100%',
-            border: `1px solid ${colors.border}`,
-            borderRadius: '14px',
-            bgcolor: colors.white,
-            boxShadow: '0 1px 3px rgba(15,23,42,0.06)',
-            overflow: 'hidden',
+            px: { xs: 2, md: 3 },
+            py: 1.5,
+            borderBottom: `${BORDER_WIDTH.thin} solid`,
+            borderColor: 'divider',
           }}
         >
-          <Box
-            sx={{
-              px: { xs: 2, md: 3 },
-              py: 1.5,
-              borderBottom: `1px solid ${colors.border}`,
-              position: 'sticky',
-              top: 0,
-              zIndex: 10,
-              bgcolor: colors.white,
-            }}
-          >
-            <ApplicationFlowStepper
-              steps={flowSteps}
-              activeIndex={stepIndex}
-              onStepClick={handleStepClick}
-              onPrevious={goBack}
-              onNext={goNext}
-              disablePrevious={stepIndex <= 0}
-              disableNext={stepIndex >= APPLICATION_FLOW_STEPS.length - 1 || !canAdvance}
-            />
-          </Box>
+          <ApplicationFlowStepper
+            steps={flowSteps}
+            activeIndex={stepIndex}
+            onStepClick={handleStepClick}
+            onPrevious={goBack}
+            onNext={goNext}
+            disablePrevious={stepIndex <= 0}
+            disableNext={stepIndex >= APPLICATION_FLOW_STEPS.length - 1 || !canAdvance}
+          />
+        </Box>
 
-          <Box sx={{ p: { xs: 2, md: 3 }, width: '100%', boxSizing: 'border-box' }}>
-            {step === 'country' && (
-              <CountrySelectionStep state={state} onUpdate={update} onContinue={goNext} />
-            )}
-            {step === 'visa' && (
-              <SingleVisaPurposeStep state={state} onUpdate={update} onContinue={goNext} />
-            )}
-            {step === 'requirements' && (
-              <RequirementPreviewStep state={state} onUpdate={update} onContinue={goNext} />
-            )}
-            {step === 'upload' && (
-              <BulkApplicationUploadPage state={state} onUpdate={update} onContinue={goNext} />
-            )}
-            {step === 'details' && (
-              <DetailsStep state={state} onUpdate={update} onContinue={goNext} />
-            )}
-            {step === 'submit' && (
-              <ApplicationSubmitStep state={state} onSubmitted={reset} />
-            )}
-          </Box>
+        <Box sx={{ p: { xs: 2, md: 3 }, width: '100%', boxSizing: 'border-box' }}>
+          {step === 'country' && (
+            <CountrySelectionStep state={state} onUpdate={update} onContinue={goNext} />
+          )}
+          {step === 'visa' && (
+            <SingleVisaPurposeStep state={state} onUpdate={update} onContinue={goNext} />
+          )}
+          {step === 'requirements' && (
+            <RequirementPreviewStep state={state} onUpdate={update} onContinue={goNext} />
+          )}
+          {step === 'upload' && (
+            <BulkApplicationUploadPage state={state} onUpdate={update} onContinue={goNext} />
+          )}
+          {step === 'details' && (
+            <DetailsStep state={state} onUpdate={update} onContinue={goNext} />
+          )}
+          {step === 'submit' && (
+            <ApplicationSubmitStep state={state} onSubmitted={reset} />
+          )}
         </Box>
       </Box>
     </Box>

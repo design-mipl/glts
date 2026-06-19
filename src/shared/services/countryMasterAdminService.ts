@@ -8,6 +8,7 @@ import {
   generateDocumentRuleId,
   generateJurisdictionId,
 } from '@/shared/data/countryJurisdictionDefaults'
+import { DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS } from '@/shared/constants/travelDateFeasibility'
 import {
   ensureAllSegments,
   emptySegment,
@@ -96,6 +97,8 @@ function masterToFormData(master: CountryMaster): CountryMasterFormData {
     fastMinutes: master.fastMinutes,
     visaApplicationWindow:
       master.visaApplicationWindow ?? { unit: 'days' as const, value: 30 },
+    travelDateRiskThresholds:
+      master.travelDateRiskThresholds ?? { ...DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS },
     passportIssueLocations: master.passportIssueLocations ?? [],
     segments: master.segments,
   }
@@ -388,6 +391,7 @@ export const countryMasterAdminService = {
       id: generateVisaTypeId(),
       prioritySupport: false,
       jurisdictions: [],
+      documents: data.documents ?? [],
       applicationDocuments: data.applicationDocuments ?? [],
       ...data,
     }
@@ -571,6 +575,8 @@ export const countryMasterAdminService = {
     documentId: string,
     group: JurisdictionDocumentGroup,
     description?: string,
+    ownerType?: CountryJurisdictionDocumentRule['ownerType'],
+    sampleDocument?: { fileName: string; url: string },
   ): CountryMaster | undefined {
     const rule: CountryJurisdictionDocumentRule = {
       id: generateDocumentRuleId(),
@@ -580,7 +586,12 @@ export const countryMasterAdminService = {
       ocrEnabled: documentId === 'passport',
       multipleUpload: false,
       commonDocument: group === 'common',
+      originalDocument: false,
+      ownerType,
       description: description?.trim() || undefined,
+      hasSample: Boolean(sampleDocument?.url),
+      sampleDocumentName: sampleDocument?.fileName,
+      sampleDocumentUrl: sampleDocument?.url,
       acceptedFormats: ['PDF', 'JPG', 'PNG'],
       sortOrder: 0,
     }
@@ -687,6 +698,142 @@ export const countryMasterAdminService = {
     )
   },
 
+  upsertVisaTypeDocument(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    rule: CountryJurisdictionDocumentRule,
+  ): CountryMaster | undefined {
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? {
+                ...s,
+                visaTypes: s.visaTypes.map((vt) => {
+                  if (vt.id !== visaTypeId) return vt
+                  const documents = vt.documents ?? []
+                  const exists = documents.some((d) => d.id === rule.id)
+                  return {
+                    ...vt,
+                    documents: exists
+                      ? documents.map((d) => (d.id === rule.id ? rule : d))
+                      : [...documents, rule],
+                  }
+                }),
+              }
+            : s,
+        ),
+      ),
+    )
+  },
+
+  addVisaTypeDocumentFromMaster(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    documentId: string,
+    group: JurisdictionDocumentGroup,
+    description?: string,
+    ownerType?: CountryJurisdictionDocumentRule['ownerType'],
+    sampleDocument?: { fileName: string; url: string },
+  ): CountryMaster | undefined {
+    const rule: CountryJurisdictionDocumentRule = {
+      id: generateDocumentRuleId(),
+      documentId,
+      group,
+      mandatory: group !== 'optional',
+      ocrEnabled: documentId === 'passport',
+      multipleUpload: false,
+      commonDocument: group === 'common',
+      originalDocument: false,
+      ownerType,
+      description: description?.trim() || undefined,
+      hasSample: Boolean(sampleDocument?.url),
+      sampleDocumentName: sampleDocument?.fileName,
+      sampleDocumentUrl: sampleDocument?.url,
+      acceptedFormats: ['PDF', 'JPG', 'PNG'],
+      sortOrder: 0,
+    }
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? {
+                ...s,
+                visaTypes: s.visaTypes.map((vt) => {
+                  if (vt.id !== visaTypeId) return vt
+                  const documents = vt.documents ?? []
+                  return {
+                    ...vt,
+                    documents: [...documents, { ...rule, sortOrder: documents.length }],
+                  }
+                }),
+              }
+            : s,
+        ),
+      ),
+    )
+  },
+
+  reorderVisaTypeDocuments(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    documentIds: string[],
+  ): CountryMaster | undefined {
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? {
+                ...s,
+                visaTypes: s.visaTypes.map((vt) => {
+                  if (vt.id !== visaTypeId) return vt
+                  const documents = vt.documents ?? []
+                  const byId = new Map(documents.map((d) => [d.id, d]))
+                  const reordered = documentIds
+                    .map((id, index) => {
+                      const doc = byId.get(id)
+                      return doc ? { ...doc, sortOrder: index } : null
+                    })
+                    .filter((d): d is CountryJurisdictionDocumentRule => d !== null)
+                  return { ...vt, documents: reordered }
+                }),
+              }
+            : s,
+        ),
+      ),
+    )
+  },
+
+  removeVisaTypeDocument(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    documentRuleId: string,
+  ): CountryMaster | undefined {
+    return updateMaster(countryId, (master) =>
+      mapSegments(master, (segments) =>
+        segments.map((s) =>
+          s.segment === segment
+            ? {
+                ...s,
+                visaTypes: s.visaTypes.map((vt) =>
+                  vt.id === visaTypeId
+                    ? {
+                        ...vt,
+                        documents: (vt.documents ?? []).filter((d) => d.id !== documentRuleId),
+                      }
+                    : vt,
+                ),
+              }
+            : s,
+        ),
+      ),
+    )
+  },
+
   createEmptyCountryFormData(name: string, code: string, region: string): CountryMasterFormData {
     return {
       code,
@@ -707,6 +854,7 @@ export const countryMasterAdminService = {
       visaCategory: 'Tourism',
       validity: '30 days',
       visaApplicationWindow: { unit: 'days', value: 30 },
+      travelDateRiskThresholds: { ...DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS },
       passportIssueLocations: [],
       segments: ensureAllSegments([
         emptySegment('retail', true),

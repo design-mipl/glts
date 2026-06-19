@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { GstRate } from '@/shared/types/taxMaster'
 import { masterStatusColor, masterStatusLabel } from '../../config/masterStatusConfig'
 import { formatMasterDate } from '../../utils/masterListingUtils'
@@ -29,17 +30,22 @@ export function buildGstRateColumns({
   onToggleStatus,
 }: ColumnHandlers): Column<GstRate>[] {
   return [
-    { key: 'slabName', label: 'Slab Name', minWidth: 140, searchable: true },
+    {
+      key: 'slabName',
+      label: 'Slab Name',
+      widthSize: adminListingColumnWidthSize('name'),
+      searchable: true,
+    },
     {
       key: 'ratePercent',
       label: 'Rate %',
-      width: 90,
+      widthSize: adminListingColumnWidthSize('count'),
       render: (_, row) => `${row.ratePercent}%`,
     },
     {
       key: 'description',
       label: 'Description',
-      minWidth: 200,
+      widthSize: adminListingColumnWidthSize('description'),
       render: (_, row) => (
         <span
           style={{
@@ -58,7 +64,7 @@ export function buildGstRateColumns({
     {
       key: 'status',
       label: 'Status',
-      width: 100,
+      widthSize: adminListingColumnWidthSize('status'),
       render: (_, row) => (
         <Badge
           label={masterStatusLabel[row.status]}
@@ -70,13 +76,13 @@ export function buildGstRateColumns({
     {
       key: 'createdAudit',
       label: 'Created By / Date',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
     },
     {
       key: 'updatedAudit',
       label: 'Updated By / Date',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
     },
     {
@@ -87,7 +93,6 @@ export function buildGstRateColumns({
       searchable: false,
       hideable: false,
       align: 'center',
-      width: 60,
       render: (_, row) => {
         const isActive = row.status === 'active'
         const actions: RowAction[] = [

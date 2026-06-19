@@ -44,8 +44,7 @@ export function UserDetailSummary({
               />
               <Button
                 label="Edit user"
-                variant="outlined"
-                color="secondary"
+                variant="neutral"
                 startIcon={<Pencil size={14} />}
                 onClick={onEdit}
               />

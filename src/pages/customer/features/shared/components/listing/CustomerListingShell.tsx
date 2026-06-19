@@ -1,8 +1,13 @@
-import { Box, Typography, Card } from '@mui/material'
+import { Box, Stack, Typography, Card } from '@mui/material'
 import type { ReactNode } from 'react'
 import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '@/design-system/tokens'
 import { Tabs } from '@/design-system/UIComponents'
+import {
+  PORTAL_RECORD_PAGE_TITLE_SX,
+  PORTAL_RECORD_PAGE_TITLE_VARIANT,
+} from '@/shared/theme/portalChromeLayout'
 import { CustomerListingKpis, type CustomerKpiItem } from './CustomerListingKpis'
+import { CustomerListingStickyHeader } from './CustomerListingStickyHeader'
 
 export interface CustomerListingTab {
   value: string
@@ -21,7 +26,6 @@ interface CustomerListingShellProps {
   tabValue?: string
   onTabChange?: (value: string) => void
   toolbar: ReactNode
-  advancedFilters?: ReactNode
   table: ReactNode
   pagination: ReactNode
 }
@@ -36,40 +40,48 @@ export function CustomerListingShell({
   tabValue,
   onTabChange,
   toolbar,
-  advancedFilters,
   table,
   pagination,
 }: CustomerListingShellProps) {
+  const defaultHeader =
+    !stickyPageHeader && (title || headerActions) ? (
+      <Box sx={{ mb: 3 }}>
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          alignItems={{ xs: 'flex-start', md: 'center' }}
+          justifyContent="space-between"
+          spacing={2}
+        >
+          {title && (
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                variant={PORTAL_RECORD_PAGE_TITLE_VARIANT}
+                component="h1"
+                fontWeight={700}
+                color="text.primary"
+                sx={PORTAL_RECORD_PAGE_TITLE_SX}
+              >
+                {title}
+              </Typography>
+              {subtitle && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75, maxWidth: 720 }}>
+                  {subtitle}
+                </Typography>
+              )}
+            </Box>
+          )}
+          {headerActions && (
+            <Box sx={{ flexShrink: 0, width: { xs: '100%', md: 'auto' } }}>{headerActions}</Box>
+          )}
+        </Stack>
+      </Box>
+    ) : null
+
+  const headerContent = stickyPageHeader ?? defaultHeader
+
   return (
     <Box>
-      {stickyPageHeader ?? (
-        (title || headerActions) && (
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              justifyContent: 'space-between',
-              alignItems: { xs: 'flex-start', sm: 'center' },
-              gap: 2,
-              mb: 2,
-            }}
-          >
-            {title && (
-              <Box>
-                <Typography variant="h1" sx={{ fontSize: { xs: '22px', md: '26px' }, fontWeight: 700 }}>
-                  {title}
-                </Typography>
-                {subtitle && (
-                  <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>{subtitle}</Typography>
-                )}
-              </Box>
-            )}
-            {headerActions && (
-              <Box sx={{ display: 'flex', gap: 1, flexShrink: 0, flexWrap: 'wrap' }}>{headerActions}</Box>
-            )}
-          </Box>
-        )
-      )}
+      {headerContent ? <CustomerListingStickyHeader>{headerContent}</CustomerListingStickyHeader> : null}
 
       {kpis && kpis.length > 0 && <CustomerListingKpis items={kpis} />}
 
@@ -109,20 +121,6 @@ export function CustomerListingShell({
         >
           {toolbar}
         </Box>
-
-        {advancedFilters && (
-          <Box
-            sx={{
-              px: 2,
-              py: 1.5,
-              borderBottom: `${BORDER_WIDTH.thin} solid`,
-              borderColor: 'divider',
-              bgcolor: 'action.hover',
-            }}
-          >
-            {advancedFilters}
-          </Box>
-        )}
 
         {table}
         {pagination}

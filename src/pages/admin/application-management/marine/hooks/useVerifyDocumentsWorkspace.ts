@@ -11,6 +11,7 @@ import type {
   InsuranceWorkflow,
   TravelTicketWorkflow,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
 import {
   buildOverviewFromDetail,
   buildVerifyTimeline,
@@ -144,6 +145,35 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
     [applicationId],
   )
 
+  const updateTravelerOriginalReceived = useCallback(
+    (rowId: string, documentId: string, received: boolean) => {
+      if (!applicationId) return
+      setWorkspace(
+        applicationVerificationService.updateTravelerOriginalDocumentReceived(
+          applicationId,
+          rowId,
+          documentId,
+          received,
+        ),
+      )
+    },
+    [applicationId],
+  )
+
+  const updateTravelerOriginalCollection = useCallback(
+    (rowId: string, collection: OriginalDocumentCollectionState) => {
+      if (!applicationId) return
+      setWorkspace(
+        applicationVerificationService.updateTravelerOriginalCollection(
+          applicationId,
+          rowId,
+          collection,
+        ),
+      )
+    },
+    [applicationId],
+  )
+
   const updateGlobalDoc = useCallback(
     (documentId: string, status: ApplicantDocumentStatus, comment?: string) => {
       if (!applicationId) return
@@ -208,6 +238,8 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
     globalDocuments,
     updateTravelerDoc,
     updateTravelerDocForRow,
+    updateTravelerOriginalReceived,
+    updateTravelerOriginalCollection,
     updateTravelerDocumentWorkflow,
     updateGlobalDoc,
     saveDraft,

@@ -32,7 +32,7 @@ export function CorporateAccountWorkflowConfigFields({ data, onChange }: Corpora
   return (
     <Stack spacing={2}>
       <ToggleRow label="Marine workflow enabled" checked={data.workflowConfig.marineWorkflowEnabled} onChange={(v) => update({ marineWorkflowEnabled: v })} />
-      <ToggleRow label="Bulk upload enabled" checked={data.workflowConfig.bulkUploadEnabled} onChange={(v) => update({ bulkUploadEnabled: v })} />
+      <ToggleRow label="B2B agent" checked={data.workflowConfig.bulkUploadEnabled} onChange={(v) => update({ bulkUploadEnabled: v })} />
       <ToggleRow label="Retail workflow enabled" checked={data.workflowConfig.retailWorkflowEnabled} onChange={(v) => update({ retailWorkflowEnabled: v })} />
       <ToggleRow label="Corporate workflow enabled" checked={data.workflowConfig.corporateWorkflowEnabled} onChange={(v) => update({ corporateWorkflowEnabled: v })} />
     </Stack>

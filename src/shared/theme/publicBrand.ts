@@ -15,6 +15,10 @@ export interface PublicBrandColors {
   greenBright: string
   greenDark: string
   greenMuted: string
+  criticalMuted: string
+  criticalBorder: string
+  checklistMuted: string
+  checklistBorder: string
   white: string
   surface: string
   surfaceAlt: string
@@ -37,6 +41,10 @@ export const publicLightColors: PublicBrandColors = {
   greenBright: '#73C064',
   greenDark: '#5A9A4E',
   greenMuted: 'rgba(115, 192, 100, 0.12)',
+  criticalMuted: '#FEF2F2',
+  criticalBorder: '#FECACA',
+  checklistMuted: '#F2F5F9',
+  checklistBorder: '#E2E8F0',
   white: '#FFFFFF',
   surface: '#F8FAFC',
   surfaceAlt: '#F1F5F9',
@@ -57,6 +65,10 @@ export const publicDarkColors: PublicBrandColors = {
   greenBright: '#8FD67F',
   greenDark: '#5A9A4E',
   greenMuted: 'rgba(115, 192, 100, 0.14)',
+  criticalMuted: '#2D1818',
+  criticalBorder: '#5C2E2E',
+  checklistMuted: '#151D2B',
+  checklistBorder: '#334155',
   white: '#111827',
   surface: '#0F172A',
   surfaceAlt: '#1E293B',

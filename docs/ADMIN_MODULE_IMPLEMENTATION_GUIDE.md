@@ -62,7 +62,7 @@ src/pages/admin/<domain>/<feature>/
 ├── components/
 │   ├── <Feature>TableColumns.tsx     # Column[] + RowActions
 │   ├── <Feature>KpiRow.tsx           # optional
-│   └── <Feature>AdvancedFilters.tsx  # or reuse AdminListingAdvancedFilters pattern
+│   └── <Feature>AdvancedFilters.tsx  # fields-only; wired via toolbar filterPopover
 ├── hooks/
 │   └── use<Feature>Listing.ts        # data + filter state (or shared hook)
 ├── data/                             # mock/config until API
@@ -86,11 +86,10 @@ src/pages/admin/<domain>/<feature>/
 2. Sticky page header — `AdminListingStickyHeader` (title + primary CTA)
 3. Optional KPI row
 4. Optional tabs (segment record views)
-5. Toolbar — `AdminListingToolbar` (search, export, table/grid toggle, column picker, more menu)
-6. Advanced filters — `AdminListingAdvancedFilters` (module-specific selects)
-7. Listing content — `AdminListingTable` **or** `AdminListingGrid`
-8. Pagination footer — DS `Pagination`
-9. Empty / loading states + toast feedback on export/refresh
+5. Toolbar — `AdminListingToolbar` (search, **Filter popover**, export, column picker, table/grid toggle)
+6. Listing content — `AdminListingTable` **or** `AdminListingGrid`
+7. Pagination footer — DS `Pagination`
+8. Empty / loading states + toast feedback on export/refresh
 
 ### Shell components
 
@@ -98,8 +97,9 @@ src/pages/admin/<domain>/<feature>/
 |-----------|----------|------|
 | `AdminListingShell` | `src/pages/admin/components/AdminListingShell.tsx` | Page frame: header, KPIs, tabs, toolbar slot, content, footer |
 | `AdminListingStickyHeader` | `src/pages/admin/components/listing/` | Sticky title + actions |
-| `AdminListingToolbar` | `src/pages/admin/components/listing/` | Search, view toggle, export, column picker |
-| `AdminListingAdvancedFilters` | `src/pages/admin/components/listing/` | Module filter row (country, status, etc.) |
+| `AdminListingToolbar` | `src/pages/admin/components/listing/` | Search, Filter popover, export, column picker, view toggle |
+| `ListingFilterPopoverShell` | `src/design-system/listingFilterPopoverShell.tsx` | Shared popover shell (draft, Apply, Clear) |
+| `AdminListingFilterPopover` | `src/pages/admin/components/listing/` | Preset country/status/priority filter popover |
 | `AdminListingTable` | `src/pages/admin/components/listing/` | Embedded `DataTable` + column filters |
 | `AdminListingGrid` | `src/pages/admin/components/listing/` | Card grid alternative |
 
@@ -111,11 +111,48 @@ src/pages/admin/<domain>/<feature>/
 - Use `sortable: false`, `filterable: false`, `searchable: false` on the actions column.
 - Prefer `AdminListingTable` over raw `DataTable` in admin listings — it wires column filters and embedded table chrome.
 
+### Column widths
+
+Use shared listing width tokens — do not scatter ad-hoc pixel literals in new modules.
+
+| Token | px | Typical use |
+|-------|-----|-------------|
+| `xxs` | 48 | Checkbox / expand (system) |
+| `xs` | 60 | Actions |
+| `sm` | 100 | Priority, SLA, counts, short badges |
+| `md` | 140 | Country, jurisdiction, dates, codes |
+| `lg` | 180 | Name, company, assignee (default data column) |
+| `xl` | 240 | Status groups, vendors, services |
+| `xxl` | 320 | Application summaries, stacked cells |
+| `xxxl` | 400 | Remarks, descriptions, activity logs |
+
+**Source files:**
+
+- Tokens: `src/design-system/listingColumnWidths.ts` (`LISTING_COLUMN_WIDTHS`)
+- Column API: set `widthSize: 'sm'` on `Column` definitions (preferred)
+- Semantic presets: `adminListingColumnWidthSize()` / `adminListingColumnWidth()` from `src/pages/admin/components/listing/adminListingColumnPresets.ts`
+- Reference columns: `src/pages/admin/_tools/TemplateShowcase/components/templateDemoColumns.tsx`
+
+**Semantic preset roles** (map to tokens above):
+
+| Role | Token | Typical use |
+|------|-------|-------------|
+| `status` | `sm` | Single status badge |
+| `audit` | `lg` | Created/updated-by + date stacked cell |
+| `email` | `xxl` | Email addresses |
+| `statusGroup` | `xl` | Two stacked status badges |
+| `applicationSummary` | `xxl` | Stacked application/country cells |
+| `description` | `xxxl` | Long text, tag lists, remarks |
+
+**Resolution order** (in `columnLayout.ts`): actions → explicit `width` → `minWidth` → `widthSize` → default `lg` (180px).
+
+Leave the actions column without a manual width — `key: 'actions'` resolves to `xs` (60px) automatically.
+
 ### Module-specific (keep in feature folder)
 
 - Column definitions and `RowActions` handlers
 - Tab definitions and tab-specific column sets
-- Advanced filter fields and options
+- Filter field components and options (render inside `filterPopover` on the toolbar)
 - Routes (row click → detail, CTA → create)
 - Permissions, export format, bulk action logic
 
@@ -127,6 +164,7 @@ src/pages/admin/<domain>/<feature>/
 - [ ] Table **and** grid modes if applicable
 - [ ] Tab-specific empty states with CTA where useful
 - [ ] Row actions + row click to detail
+- [ ] Column widths use `widthSize` / `LISTING_COLUMN_WIDTHS` (see `templateDemoColumns.tsx`); avoid ad-hoc pixel literals unless documented
 - [ ] Toast on export / refresh / bulk actions
 - [ ] Responsive: mobile card view via `DataTable` built-in behavior
 

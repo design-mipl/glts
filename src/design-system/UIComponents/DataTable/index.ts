@@ -4,6 +4,9 @@ export type { DataTableProps } from './DataTable'
 export { default as TableToolbar } from './TableToolbar'
 export type { TableToolbarProps } from './TableToolbar'
 
+export { default as ColumnPickerPopover } from './ColumnPickerPopover'
+export type { ColumnPickerPopoverProps, ColumnPickerItem } from './ColumnPickerPopover'
+
 export { default as ColumnHeader } from './ColumnHeader'
 export type { ColumnHeaderProps } from './ColumnHeader'
 
@@ -51,3 +54,19 @@ export type {
   SearchResult,
   SearchResults,
 } from './types'
+
+export {
+  ACTION_COLUMN_WIDTH,
+  CHECKBOX_COLUMN_WIDTH,
+  DEFAULT_COLUMN_MIN_WIDTH,
+  getDataTableColWidth,
+  getDataTableColumnWidthSx,
+  getDataTableLayoutWidth,
+  resolveColumnWidthPx,
+} from './columnLayout'
+export type { ListingColumnWidthSize } from '../../listingColumnWidths'
+export {
+  LISTING_COLUMN_WIDTHS,
+  LISTING_COLUMN_DEFAULT_WIDTH,
+  resolveListingColumnWidth,
+} from '../../listingColumnWidths'

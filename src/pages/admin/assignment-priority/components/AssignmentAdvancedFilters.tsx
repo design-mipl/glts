@@ -1,131 +1,192 @@
-import { Box, Stack } from '@mui/material'
-import { Button, Input, Select } from '@/design-system/UIComponents'
+import { Input, Select } from '@/design-system/UIComponents'
+import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 import type {
   AssignmentQueueFilters,
   OperationalDateFilterPreset,
 } from '@/shared/types/operationalPassengerAssignment'
 import { ASSIGNMENT_PRIORITY_OPTIONS } from '../config/assignmentPriorityConfig'
 import { PASSENGER_STATUS_OPTIONS } from '../config/assignmentStatusConfig'
-import { DATE_FILTER_OPTIONS } from '../utils/assignmentQueueListingUtils'
+import {
+  ASSIGNMENT_SLA_FILTER_OPTIONS,
+  DATE_FILTER_OPTIONS,
+} from '../utils/assignmentQueueListingUtils'
 
-interface AssignmentAdvancedFiltersProps {
-  filters: AssignmentQueueFilters
-  onFiltersChange: (filters: AssignmentQueueFilters) => void
+export interface AssignmentAdvancedFilterFieldsProps {
+  draft: AssignmentQueueFilters
+  patch: (partial: Partial<AssignmentQueueFilters>) => void
   options: {
     jurisdictions: string[]
     teams: string[]
     users: string[]
+    countries: string[]
+    visaTypes: string[]
   }
-  onClear: () => void
-  hasActiveFilters: boolean
+  extendedFilters?: boolean
 }
 
-export function AssignmentAdvancedFilters({
-  filters,
-  onFiltersChange,
+export function AssignmentAdvancedFilterFields({
+  draft,
+  patch,
   options,
-  onClear,
-  hasActiveFilters,
-}: AssignmentAdvancedFiltersProps) {
-  const update = (partial: Partial<AssignmentQueueFilters>) => {
-    onFiltersChange({ ...filters, ...partial })
-  }
-
+  extendedFilters = false,
+}: AssignmentAdvancedFilterFieldsProps) {
   return (
-    <Stack spacing={1}>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, 1fr)',
-            md: 'repeat(3, 1fr)',
-            lg: 'repeat(6, 1fr)',
-          },
-          gap: 1,
-        }}
-      >
+    <>
+      <ListingFilterField label="Date">
         <Select
-          value={filters.datePreset}
-          onChange={value => update({ datePreset: String(value) as OperationalDateFilterPreset })}
+          value={draft.datePreset}
+          onChange={(value) => patch({ datePreset: String(value) as OperationalDateFilterPreset })}
           options={[...DATE_FILTER_OPTIONS]}
           placeholder="Date"
           size="sm"
           fullWidth
         />
-        {filters.datePreset === 'custom' ? (
-          <>
+      </ListingFilterField>
+      {draft.datePreset === 'custom' ? (
+        <>
+          <ListingFilterField label="From">
             <Input
               type="date"
               size="sm"
-              value={filters.customDateFrom ?? ''}
-              onChange={v => update({ customDateFrom: v })}
+              value={draft.customDateFrom ?? ''}
+              onChange={(v) => patch({ customDateFrom: v })}
               placeholder="From"
             />
+          </ListingFilterField>
+          <ListingFilterField label="To">
             <Input
               type="date"
               size="sm"
-              value={filters.customDateTo ?? ''}
-              onChange={v => update({ customDateTo: v })}
+              value={draft.customDateTo ?? ''}
+              onChange={(v) => patch({ customDateTo: v })}
               placeholder="To"
             />
-          </>
-        ) : null}
+          </ListingFilterField>
+        </>
+      ) : null}
+      <ListingFilterField label="Priority">
         <Select
-          value={filters.jurisdiction}
-          onChange={value => update({ jurisdiction: String(value) })}
-          options={[
-            { value: '', label: 'All jurisdictions' },
-            ...options.jurisdictions.map(j => ({ value: j, label: j })),
-          ]}
-          placeholder="Jurisdiction"
-          size="sm"
-          fullWidth
-        />
-        <Select
-          value={filters.team}
-          onChange={value => update({ team: String(value) })}
-          options={[
-            { value: '', label: 'All teams' },
-            ...options.teams.map(t => ({ value: t, label: t })),
-          ]}
-          placeholder="Team"
-          size="sm"
-          fullWidth
-        />
-        <Select
-          value={filters.assignedUser}
-          onChange={value => update({ assignedUser: String(value) })}
-          options={[
-            { value: '', label: 'All users' },
-            ...options.users.map(u => ({ value: u, label: u })),
-          ]}
-          placeholder="Assigned user"
-          size="sm"
-          fullWidth
-        />
-        <Select
-          value={filters.priority}
-          onChange={value => update({ priority: String(value) })}
+          value={draft.priority}
+          onChange={(value) => patch({ priority: String(value) })}
           options={[{ value: '', label: 'All priorities' }, ...ASSIGNMENT_PRIORITY_OPTIONS]}
           placeholder="Priority"
           size="sm"
           fullWidth
         />
+      </ListingFilterField>
+      <ListingFilterField label="Country">
         <Select
-          value={filters.status}
-          onChange={value => update({ status: String(value) })}
-          options={[{ value: '', label: 'All statuses' }, ...PASSENGER_STATUS_OPTIONS]}
-          placeholder="Status"
+          value={draft.country}
+          onChange={(value) => patch({ country: String(value) })}
+          options={[
+            { value: '', label: 'All countries' },
+            ...options.countries.map((c) => ({ value: c, label: c })),
+          ]}
+          placeholder="Country"
           size="sm"
           fullWidth
         />
-      </Box>
-      {hasActiveFilters ? (
-        <Box>
-          <Button label="Clear filters" variant="text" size="sm" onClick={onClear} />
-        </Box>
+      </ListingFilterField>
+      {extendedFilters ? (
+        <ListingFilterField label="Visa type">
+          <Select
+            value={draft.visaType}
+            onChange={(value) => patch({ visaType: String(value) })}
+            options={[
+              { value: '', label: 'All visa types' },
+              ...options.visaTypes.map((v) => ({ value: v, label: v })),
+            ]}
+            placeholder="Visa type"
+            size="sm"
+            fullWidth
+          />
+        </ListingFilterField>
       ) : null}
-    </Stack>
+      <ListingFilterField label="Jurisdiction">
+        <Select
+          value={draft.jurisdiction}
+          onChange={(value) => patch({ jurisdiction: String(value) })}
+          options={[
+            { value: '', label: 'All jurisdictions' },
+            ...options.jurisdictions.map((j) => ({ value: j, label: j })),
+          ]}
+          placeholder="Jurisdiction"
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Team">
+        <Select
+          value={draft.team}
+          onChange={(value) => patch({ team: String(value) })}
+          options={[
+            { value: '', label: 'All teams' },
+            ...options.teams.map((t) => ({ value: t, label: t })),
+          ]}
+          placeholder="Team"
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Assigned user">
+        <Select
+          value={draft.assignedUser}
+          onChange={(value) => patch({ assignedUser: String(value) })}
+          options={[
+            { value: '', label: 'All users' },
+            ...options.users.map((u) => ({ value: u, label: u })),
+          ]}
+          placeholder="Assigned user"
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+      {extendedFilters ? (
+        <>
+          <ListingFilterField label="Status">
+            <Select
+              value={draft.status}
+              onChange={(value) => patch({ status: String(value) })}
+              options={[{ value: '', label: 'All statuses' }, ...PASSENGER_STATUS_OPTIONS]}
+              placeholder="Status"
+              size="sm"
+              fullWidth
+            />
+          </ListingFilterField>
+          <ListingFilterField label="SLA">
+            <Select
+              value={draft.sla}
+              onChange={(value) => patch({ sla: String(value) })}
+              options={[{ value: '', label: 'All SLA states' }, ...ASSIGNMENT_SLA_FILTER_OPTIONS]}
+              placeholder="SLA"
+              size="sm"
+              fullWidth
+            />
+          </ListingFilterField>
+        </>
+      ) : null}
+    </>
+  )
+}
+
+export function hasAssignmentQueueFiltersActive(
+  filters: AssignmentQueueFilters,
+  extendedFilters = false,
+): boolean {
+  const base =
+    Boolean(filters.jurisdiction) ||
+    Boolean(filters.team) ||
+    Boolean(filters.assignedUser) ||
+    Boolean(filters.priority) ||
+    Boolean(filters.country) ||
+    filters.datePreset !== 'today'
+
+  if (!extendedFilters) return base
+
+  return (
+    base ||
+    Boolean(filters.visaType) ||
+    Boolean(filters.status) ||
+    Boolean(filters.sla)
   )
 }

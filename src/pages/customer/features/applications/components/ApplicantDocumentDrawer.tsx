@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Box, Typography, Stack, Button, Chip, Divider } from '@mui/material'
+import { Box, Typography, Stack, Button as MuiButton, Chip, Divider } from '@mui/material'
 import { CheckCircle2, Upload, Eye } from 'lucide-react'
-import { Drawer } from '@/design-system/UIComponents'
+import { Button, Drawer } from '@/design-system/UIComponents'
 import { usePublicBrandColors, getPrimaryButtonSx, getOutlinedButtonSx, mergeButtonSx } from '@/shared/theme/publicBrand'
 import { overlayFooterButtonSx } from '@/design-system/UIComponents/Feedback/overlayHeaderTypography'
 import type { ApplicantDocumentItem, UploadQueueRow } from '../data/applicationFlowData'
@@ -26,11 +26,21 @@ import {
   documentStatusLabel,
   isSimpleDocumentRequirement,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import { getDocumentWorkspaceItems } from '@/shared/services/countryMasterService'
 import { SimpleDocumentRequirementPanel } from './documentWorkflow'
+import { DocumentRequirementTags } from './DocumentRequirementTags'
 import { requiresFieldValidation, useApplicationFlowPolicy } from '../context/ApplicationFlowPolicyContext'
-import { countDocumentProgress, isDocumentComplete } from '../utils/uploadQueueDocuments'
+import { countDocumentProgress, isDocumentComplete, normalizeUploadQueueRow } from '../utils/uploadQueueDocuments'
+import { OriginalDocumentCollectionPanel } from './originalCollection/OriginalDocumentCollectionPanel'
+import type { ApplicantDrawerSection } from './ApplicantDrawerSidebar'
+import {
+  ensureOriginalDocumentCollectionState,
+  resolveOriginalRequiredDocuments,
+  toggleOriginalDocumentReceived,
+} from '@/shared/utils/originalDocumentCollectionUtils'
+import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
 
-type DrawerSection = 'basic' | 'documents' | 'additional'
+type DrawerSection = ApplicantDrawerSection
 
 interface ApplicantDocumentDrawerProps {
   open: boolean
@@ -39,6 +49,9 @@ interface ApplicantDocumentDrawerProps {
   onUpdateRow: (row: UploadQueueRow) => void
   /** When true, document workflow is view-only (submitted application). */
   documentsReadOnly?: boolean
+  countryId?: string
+  visaOfferingId?: string
+  jurisdictionId?: string
 }
 
 function sectionSummaryChipSx(
@@ -89,6 +102,9 @@ export function ApplicantDocumentDrawer({
   onClose,
   onUpdateRow,
   documentsReadOnly = false,
+  countryId,
+  visaOfferingId,
+  jurisdictionId,
 }: ApplicantDocumentDrawerProps) {
   const colors = usePublicBrandColors()
   const { policy } = useApplicationFlowPolicy()
@@ -97,10 +113,61 @@ export function ApplicantDocumentDrawer({
   const [activeDocId, setActiveDocId] = useState<string>('passport')
 
   const documents = row?.documents ?? []
-  const activeDoc = useMemo(
-    () => documents.find(d => d.documentId === activeDocId) ?? documents[0],
-    [documents, activeDocId],
+
+  const originalRequiredDocuments = useMemo(() => {
+    if (!countryId || !visaOfferingId) return []
+    return resolveOriginalRequiredDocuments(countryId, visaOfferingId, jurisdictionId)
+  }, [countryId, visaOfferingId, jurisdictionId])
+
+  const showOriginalSection = originalRequiredDocuments.length > 0
+
+  const resolvedOriginalCollection = useMemo(() => {
+    if (!showOriginalSection) return undefined
+    return ensureOriginalDocumentCollectionState(
+      row?.originalDocumentCollection,
+      originalRequiredDocuments,
+    )
+  }, [row?.originalDocumentCollection, originalRequiredDocuments, showOriginalSection])
+
+  const workspaceMeta = useMemo(() => {
+    if (!countryId || !visaOfferingId) {
+      return new Map<string, { description: string; required: boolean; originalDocument: boolean }>()
+    }
+
+    const byId = new Map<string, { description: string; required: boolean; originalDocument: boolean }>()
+    for (const doc of getDocumentWorkspaceItems(countryId, visaOfferingId, 'normal', jurisdictionId)) {
+      const previous = byId.get(doc.id)
+      byId.set(doc.id, {
+        description: doc.description?.trim() || previous?.description || '',
+        required: doc.required || previous?.required || false,
+        originalDocument: Boolean(doc.originalDocument),
+      })
+    }
+    return byId
+  }, [countryId, visaOfferingId, jurisdictionId])
+
+  const enrichedDocuments = useMemo(
+    () =>
+      documents.map(doc => {
+        const meta = workspaceMeta.get(doc.documentId)
+        return {
+          ...doc,
+          description: doc.description?.trim() || meta?.description,
+          required: meta?.required ?? doc.required ?? true,
+          originalDocument: meta != null ? Boolean(meta.originalDocument) : Boolean(doc.originalDocument),
+        }
+      }),
+    [documents, workspaceMeta],
   )
+
+  const activeDoc = useMemo(
+    () => enrichedDocuments.find(d => d.documentId === activeDocId) ?? enrichedDocuments[0],
+    [enrichedDocuments, activeDocId],
+  )
+
+  const activeDocDescription = activeDoc?.description?.trim()
+  const activeDocMandatory = activeDoc?.required ?? true
+  const activeDocOriginal = activeDoc?.originalDocument ?? false
 
   const resolvedBasicDetails = useMemo(
     () => (row ? resolveApplicantBasicDetails(row) : null),
@@ -152,6 +219,27 @@ export function ApplicantDocumentDrawer({
     onUpdateRow(applyBasicDetailsToRow(row, patch))
   }
 
+  const handleOriginalCollectionChange = (next: OriginalDocumentCollectionState) => {
+    if (!row) return
+    const nextDocuments = row.documents.map(doc => {
+      const receivedItem = next.receivedDocuments.find(item => item.documentId === doc.documentId)
+      if (!receivedItem || !doc.originalDocument) return doc
+      return { ...doc, originalDocumentReceived: receivedItem.received }
+    })
+    onUpdateRow({
+      ...row,
+      originalDocumentCollection: next,
+      documents: nextDocuments,
+    })
+  }
+
+  const handleOriginalDocumentToggle = (documentId: string, received: boolean) => {
+    if (!resolvedOriginalCollection) return
+    handleOriginalCollectionChange(
+      toggleOriginalDocumentReceived(resolvedOriginalCollection, documentId, received),
+    )
+  }
+
   const handleFieldChange = (key: string, value: string) => {
     if (!row || !activeDoc) return
     const fields = (activeDoc.fields ?? []).map(f => (f.key === key ? { ...f, value } : f))
@@ -182,6 +270,48 @@ export function ApplicantDocumentDrawer({
     setActiveDocId(selectFirstDocId(row))
   }, [open, row?.id])
 
+  useEffect(() => {
+    if (!open || !row || !showOriginalSection || !resolvedOriginalCollection) return
+    if (row.originalDocumentCollection) return
+    onUpdateRow({ ...row, originalDocumentCollection: resolvedOriginalCollection })
+  }, [open, row, showOriginalSection, resolvedOriginalCollection, onUpdateRow])
+
+  useEffect(() => {
+    if (!showOriginalSection && activeSection === 'original') {
+      setActiveSection('documents')
+    }
+  }, [showOriginalSection, activeSection])
+
+  useEffect(() => {
+    if (!open || !row || !countryId || !visaOfferingId) return
+    const normalized = normalizeUploadQueueRow(row, {
+      countryId,
+      visaOfferingId,
+      jurisdictionId,
+      countryLabel: '',
+      passportFields: row.fields ?? [],
+    })
+    const currentSig = row.documents
+      .map(doc => `${doc.documentId}:${doc.required ? 1 : 0}:${doc.originalDocument ? 1 : 0}`)
+      .join('|')
+    const nextSig = normalized.documents
+      .map(doc => `${doc.documentId}:${doc.required ? 1 : 0}:${doc.originalDocument ? 1 : 0}`)
+      .join('|')
+    const collectionChanged =
+      Boolean(row.originalDocumentCollection) !== Boolean(normalized.originalDocumentCollection)
+    if (currentSig === nextSig && !collectionChanged) return
+    onUpdateRow(normalized)
+  }, [
+    open,
+    row?.id,
+    row?.documents,
+    row?.originalDocumentCollection,
+    countryId,
+    visaOfferingId,
+    jurisdictionId,
+    onUpdateRow,
+  ])
+
   const handleMarkUploaded = () => {
     if (!activeDoc) return
     const nextStatus = activeDoc.documentId === 'passport' ? 'verified' : 'uploaded'
@@ -199,6 +329,11 @@ export function ApplicantDocumentDrawer({
 
     if (activeSection === 'additional') {
       onClose()
+      return
+    }
+
+    if (activeSection === 'original') {
+      setActiveSection('additional')
       return
     }
 
@@ -224,6 +359,10 @@ export function ApplicantDocumentDrawer({
         return
       }
     }
+    if (showOriginalSection) {
+      setActiveSection('original')
+      return
+    }
     setActiveSection('additional')
   }
 
@@ -240,16 +379,16 @@ export function ApplicantDocumentDrawer({
       width={920}
       footer={
         <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
-          <Button variant="outlined" onClick={onClose} sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx)}>
+          <Button variant="neutral" onClick={onClose} sx={overlayFooterButtonSx}>
             Close
           </Button>
-          <Button
+          <MuiButton
             variant="contained"
             onClick={handleSaveAndNext}
             sx={mergeButtonSx(getPrimaryButtonSx(colors), overlayFooterButtonSx)}
           >
             Save & continue
-          </Button>
+          </MuiButton>
         </Stack>
       }
     >
@@ -294,7 +433,7 @@ export function ApplicantDocumentDrawer({
             basicDetails={resolvedBasicDetails}
             basicComplete={basicProgress.complete}
             basicTotal={basicProgress.total}
-            documents={documents}
+            documents={enrichedDocuments}
             activeDocumentId={activeSection === 'documents' ? activeDoc?.documentId : undefined}
             documentsComplete={progress.documentsComplete}
             documentsTotal={progress.documentsTotal}
@@ -302,6 +441,10 @@ export function ApplicantDocumentDrawer({
               setActiveSection('documents')
               setActiveDocId(documentId)
             }}
+            showOriginalSection={showOriginalSection}
+            originalCollection={resolvedOriginalCollection}
+            onOriginalDocumentToggle={handleOriginalDocumentToggle}
+            documentsReadOnly={documentsReadOnly}
             additionalDetails={resolvedAdditionalDetails}
             additionalStatusLabel={additionalStatusLabel}
           />
@@ -328,6 +471,15 @@ export function ApplicantDocumentDrawer({
             </Stack>
           )}
 
+          {activeSection === 'original' && resolvedOriginalCollection ? (
+            <OriginalDocumentCollectionPanel
+              documents={originalRequiredDocuments}
+              state={resolvedOriginalCollection}
+              onChange={handleOriginalCollectionChange}
+              readOnly={documentsReadOnly}
+            />
+          ) : null}
+
           {activeSection === 'additional' && (
             <Stack spacing={1.5} sx={{ flex: 1, minHeight: 0 }}>
               <Typography sx={{ fontWeight: 800, fontSize: 16, color: colors.navy }}>Additional details</Typography>
@@ -341,21 +493,39 @@ export function ApplicantDocumentDrawer({
 
           {activeSection === 'documents' && activeDoc && (
             <Stack spacing={2}>
-              <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
-                <Typography sx={{ fontWeight: 800, fontSize: 16, color: colors.navy }}>{activeDoc.name}</Typography>
-                <Chip
-                  label={documentStatusLabel(activeDoc)}
-                  size="small"
-                  sx={sectionSummaryChipSx(
-                    colors,
-                    isDocumentComplete(activeDoc)
-                      ? 'complete'
-                      : activeDoc.status === 'needs_review' || activeDoc.status === 'rejected'
-                        ? 'progress'
-                        : 'neutral',
-                  )}
-                />
+              <Stack spacing={0.75}>
+                <Stack direction="row" alignItems="flex-start" justifyContent="space-between" flexWrap="wrap" gap={1}>
+                  <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0 }}>
+                    <Stack direction="row" alignItems="center" spacing={0.75} flexWrap="wrap" useFlexGap>
+                      <Typography sx={{ fontWeight: 800, fontSize: 16, color: colors.navy }}>
+                        {activeDoc.name}
+                      </Typography>
+                      <DocumentRequirementTags
+                        mandatory={activeDocMandatory}
+                        originalDocument={activeDocOriginal}
+                      />
+                    </Stack>
+                  </Stack>
+                  <Chip
+                    label={documentStatusLabel(activeDoc)}
+                    size="small"
+                    sx={sectionSummaryChipSx(
+                      colors,
+                      isDocumentComplete(activeDoc)
+                        ? 'complete'
+                        : activeDoc.status === 'needs_review' || activeDoc.status === 'rejected'
+                          ? 'progress'
+                          : 'neutral',
+                    )}
+                  />
+                </Stack>
               </Stack>
+
+              {activeDocDescription ? (
+                <Typography sx={{ fontSize: 13, color: colors.textSecondary, lineHeight: 1.5 }}>
+                  {activeDocDescription}
+                </Typography>
+              ) : null}
 
               {isSimpleDocumentRequirement(activeDoc.documentId) ? (
                 <SimpleDocumentRequirementPanel
@@ -369,17 +539,17 @@ export function ApplicantDocumentDrawer({
                   {activeDoc.documentId === 'passport' && <PassportPreviewCard row={row} />}
 
                   <Stack direction="row" spacing={1} flexWrap="wrap">
-                    <Button
+                    <MuiButton
                       variant="outlined"
                       startIcon={<Upload size={16} />}
                       onClick={handleMarkUploaded}
                       sx={getOutlinedButtonSx()}
                     >
                       {isDocumentComplete(activeDoc) ? 'Re-upload' : 'Upload document'}
-                    </Button>
-                    <Button variant="outlined" startIcon={<Eye size={16} />} sx={getOutlinedButtonSx()}>
+                    </MuiButton>
+                    <MuiButton variant="outlined" startIcon={<Eye size={16} />} sx={getOutlinedButtonSx()}>
                       Preview
-                    </Button>
+                    </MuiButton>
                   </Stack>
 
                   <Divider />
@@ -404,7 +574,9 @@ export function ApplicantDocumentDrawer({
                       <Stack direction="row" spacing={1} alignItems="center">
                         <CheckCircle2 size={16} color={colors.textMuted} />
                         <Typography sx={{ fontSize: 13, color: colors.textSecondary }}>
-                          Upload this document to extract and verify fields.
+                          {activeDocDescription
+                            ? 'Upload this document to continue. Fields will be available after upload when applicable.'
+                            : 'Upload this document to extract and verify fields.'}
                         </Typography>
                       </Stack>
                     </Box>

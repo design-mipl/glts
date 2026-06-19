@@ -10,6 +10,8 @@ export interface AssignmentSegmentConfig {
   queueSubtitle: string
   applicationListPath: string
   routePath: string
+  /** Compact operational queue layout for dense assignment management screens. */
+  listingLayout?: 'standard' | 'operational'
 }
 
 export const ASSIGNMENT_SEGMENTS: Record<AssignmentSegmentKey, AssignmentSegmentConfig> = {
@@ -21,6 +23,7 @@ export const ASSIGNMENT_SEGMENTS: Record<AssignmentSegmentKey, AssignmentSegment
     queueSubtitle: 'Passenger-level operational assignment, priority, and SLA visibility for marine submissions.',
     applicationListPath: '/admin/application-management/marine',
     routePath: '/admin/assignment-priority/marine',
+    listingLayout: 'operational',
   },
   b2b: {
     key: 'b2b',
@@ -45,7 +48,7 @@ export const ASSIGNMENT_SEGMENTS: Record<AssignmentSegmentKey, AssignmentSegment
     segment: 'retail',
     label: 'Retail',
     queueTitle: 'Retail assignment queue',
-    queueSubtitle: 'Retail passenger assignment, carry-forward handling, and operations desk routing.',
+    queueSubtitle: 'Retail passenger assignment and carry-forward handling after submission.',
     applicationListPath: '/admin/application-management/retail',
     routePath: '/admin/assignment-priority/retail',
   },

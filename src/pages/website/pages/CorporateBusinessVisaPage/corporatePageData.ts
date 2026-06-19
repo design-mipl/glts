@@ -237,3 +237,11 @@ export const corporateAdditionalServiceCards = [
       'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1200&h=900&q=90',
   },
 ] as const
+
+export const corporateRetainerPlans = [
+  'Dedicated corporate account manager',
+  'Priority visa processing',
+  'Documentation management',
+  'Monthly activity and status reporting',
+  'Escalation handling',
+] as const

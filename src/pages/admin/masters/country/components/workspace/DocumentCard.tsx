@@ -4,15 +4,19 @@ import {
   ArrowDown,
   ArrowUp,
   Copy,
+  FileText,
   PencilLine,
+  Tag,
   Trash2,
   Upload,
 } from 'lucide-react'
-import { BaseCard, RichTextContent, RowActions, Toggle } from '@/design-system/UIComponents'
+import { Badge, BaseCard, RichTextContent, RowActions, Toggle } from '@/design-system/UIComponents'
 import type { RowAction } from '@/design-system/UIComponents'
+import { getDocumentOwnerTypeLabel } from '@/pages/admin/masters/country/config/documentOwnerTypeConfig'
+import { PHYSICAL_DOCUMENT_LABEL } from '@/shared/constants/documentRequirementLabels'
 import { documentMasterService } from '@/shared/services/documentMasterService'
-import type { CountryJurisdictionDocumentRule } from '@/shared/types/countryMaster'
-import { EditDocumentDescriptionModal } from './drawers/EditDocumentDescriptionModal'
+import type { BusinessSegment, CountryJurisdictionDocumentRule } from '@/shared/types/countryMaster'
+import { AddDocumentModal, documentFormResultToRulePatch } from './drawers/AddDocumentModal'
 import { useCountryWorkspaceMode } from './countryWorkspaceModeContext'
 
 const DOCUMENT_CARD_SX = {
@@ -28,7 +32,10 @@ const DOCUMENT_CARD_SX = {
 } as const
 
 interface DocumentCardProps {
+  segment: BusinessSegment
   rule: CountryJurisdictionDocumentRule
+  /** Hidden for visa-type documents when jurisdiction is disabled (e-Visa flow). */
+  showPhysicalDocumentToggle?: boolean
   onChange: (next: CountryJurisdictionDocumentRule) => void
   onDuplicate?: () => void
   onDelete?: () => void
@@ -49,8 +56,45 @@ function MetaRow({ icon, text }: { icon: ReactNode; text: string }) {
   )
 }
 
+function SampleDocumentBadge({ fileName, url }: { fileName: string; url?: string }) {
+  const badge = (
+    <Badge
+      label="Sample"
+      color="info"
+      variant="soft"
+      size="md"
+      icon={<FileText size={12} strokeWidth={2.25} />}
+      sx={url ? { cursor: 'pointer' } : undefined}
+    />
+  )
+
+  if (!url) return badge
+
+  return (
+    <Box
+      component="a"
+      href={url}
+      download={fileName}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={fileName}
+      sx={{
+        display: 'inline-flex',
+        textDecoration: 'none',
+        color: 'inherit',
+        borderRadius: '9999px',
+        '&:hover': { opacity: 0.88 },
+      }}
+    >
+      {badge}
+    </Box>
+  )
+}
+
 export function DocumentCard({
+  segment,
   rule,
+  showPhysicalDocumentToggle = true,
   onChange,
   onDuplicate,
   onDelete,
@@ -60,25 +104,24 @@ export function DocumentCard({
   canMoveDown,
 }: DocumentCardProps) {
   const { readOnly } = useCountryWorkspaceMode()
-  const [editDescriptionOpen, setEditDescriptionOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   const master = documentMasterService.getById(rule.documentId)
   const name = master?.documentType ?? rule.documentId
+  const ownerTypeLabel = getDocumentOwnerTypeLabel(rule.ownerType)
   const description = rule.description || master?.description
-  const editInitialDescription = rule.description ?? master?.description ?? ''
 
   const patch = (partial: Partial<CountryJurisdictionDocumentRule>) =>
-    onChange({ ...rule, ...partial })
+    onChange({
+      ...rule,
+      ...partial,
+      ...(showPhysicalDocumentToggle ? {} : { originalDocument: false }),
+    })
 
   const actions: RowAction[] = readOnly ? [] : [
     {
-      label: 'Edit description',
+      label: 'Edit document',
       icon: <PencilLine size={14} />,
-      onClick: () => setEditDescriptionOpen(true),
-    },
-    {
-      label: rule.multipleUpload ? 'Disable multiple upload' : 'Enable multiple upload',
-      icon: <Upload size={14} />,
-      onClick: () => patch({ multipleUpload: !rule.multipleUpload }),
+      onClick: () => setEditOpen(true),
     },
     ...(onDuplicate
       ? [{ label: 'Duplicate', icon: <Copy size={14} />, onClick: () => onDuplicate() }]
@@ -120,9 +163,33 @@ export function DocumentCard({
     <BaseCard sx={DOCUMENT_CARD_SX}>
       <Stack spacing={1.5}>
         <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1}>
-          <Typography variant="subtitle2" fontWeight={700} sx={{ minWidth: 0, flex: 1 }}>
-            {name}
-          </Typography>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            flexWrap="wrap"
+            useFlexGap
+            sx={{ minWidth: 0, flex: 1 }}
+          >
+            <Typography variant="subtitle2" fontWeight={700}>
+              {name}
+            </Typography>
+            {ownerTypeLabel ? (
+              <Badge
+                label={ownerTypeLabel}
+                color="info"
+                variant="soft"
+                size="md"
+                icon={<Tag size={12} strokeWidth={2.25} />}
+              />
+            ) : null}
+            {rule.hasSample && rule.sampleDocumentName ? (
+              <SampleDocumentBadge
+                fileName={rule.sampleDocumentName}
+                url={rule.sampleDocumentUrl}
+              />
+            ) : null}
+          </Stack>
           {actions.length > 0 ? (
             <Box onClick={(e) => e.stopPropagation()} sx={{ flexShrink: 0 }}>
               <RowActions actions={actions} row={rule} />
@@ -158,14 +225,27 @@ export function DocumentCard({
             label="Common Document"
             disabled={readOnly}
           />
+          {showPhysicalDocumentToggle ? (
+            <Toggle
+              checked={rule.originalDocument ?? false}
+              onChange={(v) => patch({ originalDocument: v })}
+              label={PHYSICAL_DOCUMENT_LABEL}
+              disabled={readOnly}
+            />
+          ) : null}
         </Stack>
       </Stack>
 
-      <EditDocumentDescriptionModal
-        open={editDescriptionOpen}
-        initialDescription={editInitialDescription}
-        onClose={() => setEditDescriptionOpen(false)}
-        onSave={(nextDescription) => patch({ description: nextDescription })}
+      <AddDocumentModal
+        open={editOpen}
+        segment={segment}
+        group={rule.group}
+        editRule={rule}
+        onClose={() => setEditOpen(false)}
+        onSubmit={(result) => {
+          patch(documentFormResultToRulePatch(result))
+          setEditOpen(false)
+        }}
       />
     </BaseCard>
   )

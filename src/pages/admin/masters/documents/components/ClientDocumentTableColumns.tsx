@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { ClientDocumentMaster } from '@/shared/types/clientDocumentMaster'
 import { MasterAudienceTags } from '../../components/MasterAudienceTags'
 import { toApplicabilityTagItems } from '../../config/masterAudienceTagConfig'
@@ -34,14 +35,14 @@ export function buildClientDocumentColumns({
     {
       key: 'documentType',
       label: 'Document Type',
-      minWidth: 180,
+      widthSize: adminListingColumnWidthSize('service'),
       searchable: true,
       hideable: false,
     },
     {
       key: 'description',
       label: 'Description',
-      minWidth: 240,
+      widthSize: adminListingColumnWidthSize('description'),
       render: (_, row) => (
         <span
           style={{
@@ -60,7 +61,7 @@ export function buildClientDocumentColumns({
     {
       key: 'applicableFor',
       label: 'Applicable For',
-      minWidth: 200,
+      widthSize: adminListingColumnWidthSize('description'),
       render: (_, row) => (
         <MasterAudienceTags items={toApplicabilityTagItems(row.applicableFor)} />
       ),
@@ -68,7 +69,7 @@ export function buildClientDocumentColumns({
     {
       key: 'status',
       label: 'Status',
-      width: 100,
+      widthSize: adminListingColumnWidthSize('status'),
       render: (_, row) => (
         <Badge
           label={masterStatusLabel[row.status]}
@@ -80,13 +81,13 @@ export function buildClientDocumentColumns({
     {
       key: 'createdAudit',
       label: 'Created By / Date',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
     },
     {
       key: 'updatedAudit',
       label: 'Updated By / Date',
-      width: 150,
+      widthSize: adminListingColumnWidthSize('audit'),
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
     },
     {
@@ -97,7 +98,6 @@ export function buildClientDocumentColumns({
       searchable: false,
       hideable: false,
       align: 'center',
-      width: 60,
       render: (_, row) => {
         const isActive = row.status === 'active'
         const actions: RowAction[] = [

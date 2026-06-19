@@ -6,6 +6,7 @@ import type {
 } from '../types/applicationListing.types'
 import type { ApplicantAdditionalDetails } from '../config/applicantAdditionalDetailsConfig'
 import type { ApplicantBasicDetails } from '../config/applicantBasicDetailsConfig'
+import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
 import type { CustomerPortalRole } from '@/shared/auth/session'
 import { statusToneFromOperational } from '../components/listing/applicationStatus'
 import { GLTS_APPLICATION_IDS } from '../../../data/portalIds'
@@ -24,6 +25,7 @@ export interface SingleApplicationRow {
   applicantName: string
   passportNumber: string
   companyName?: string
+  vesselName?: string
   country: string
   countryFlag?: string
   visaType: string
@@ -43,12 +45,15 @@ export interface SingleApplicationRow {
   appointmentDate?: string
   poReference?: string
   processingStageDates?: ApplicationProcessingStageDates
+  assignedTeamId?: string
+  assignedUserId?: string
 }
 
 export interface BulkBatchRow {
   id: string
   recordType: Extract<ApplicationRecordType, 'bulk'>
   companyName: string
+  vesselName?: string
   /** Lead passenger shown in listings as "Name × count". */
   primaryApplicantName?: string
   country: string
@@ -74,6 +79,8 @@ export interface BulkBatchRow {
   appointmentDate?: string
   poReference?: string
   processingStageDates?: ApplicationProcessingStageDates
+  assignedTeamId?: string
+  assignedUserId?: string
 }
 
 export interface ExtractedField {
@@ -97,6 +104,12 @@ export interface ApplicantDocumentItem {
   documentId: string
   name: string
   required: boolean
+  /** Country-master description for this document requirement. */
+  description?: string
+  /** Physical original required per country master jurisdiction rule. */
+  originalDocument?: boolean
+  /** GLTS marked the physical original as received (admin verification workflow). */
+  originalDocumentReceived?: boolean
   status: ApplicantDocumentStatus
   /** Admin review note shown to the customer when a document is rejected or needs re-upload. */
   reviewComment?: string
@@ -135,6 +148,8 @@ export interface UploadQueueRow {
   additionalDetails?: ApplicantAdditionalDetails
   /** Per-traveler identity fields in the applicant drawer. */
   basicDetails?: ApplicantBasicDetails
+  /** Physical original document collection intake for this traveler. */
+  originalDocumentCollection?: OriginalDocumentCollectionState
   /** Milestone timestamps for the horizontal processing timeline. */
   processingStageDates?: ApplicationProcessingStageDates
 }
@@ -150,6 +165,9 @@ export const GLTS_BATCH_IDS = {
   schengenCrew: 'GLTS-BAT-2026-041',
   japanGroup: 'GLTS-BAT-2026-038',
 } as const
+
+/** Marine single-application demo — applicant chose GLTS to arrange ticket and insurance. */
+export const MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID = 'GLTS-APP-2026-744' as const
 
 function singleRow(
   partial: Omit<SingleApplicationRow, 'recordType' | 'status' | 'statusTone'> & {
@@ -188,6 +206,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Priya Sharma',
     passportNumber: 'Z1234567',
     companyName: 'Oceanic Marine Ltd',
+    vesselName: 'MV Oceanic Star',
     country: 'Schengen',
     countryFlag: '🇫🇷',
     visaType: 'Sticker · Type C',
@@ -312,6 +331,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Oliver Grant',
     passportNumber: 'XK9283746',
     companyName: 'Apex Marine Logistics',
+    vesselName: 'MV Pacific Horizon',
     country: 'Japan',
     countryFlag: '🇯🇵',
     visaType: 'eVisa · Tourist',
@@ -333,6 +353,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Sofia Petrov',
     passportNumber: 'TR3528471',
     companyName: 'Apex Marine Logistics',
+    vesselName: 'MV Gulf Runner',
     country: 'UAE',
     countryFlag: '🇦🇪',
     visaType: 'e-Visa · 14d',
@@ -353,6 +374,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Mateo Alvarez',
     passportNumber: 'NQ5528931',
     companyName: 'BlueWave Marine Agency',
+    vesselName: 'MV Atlantic Crest',
     country: 'Schengen',
     countryFlag: '🇪🇸',
     visaType: 'Crew · Type C',
@@ -372,6 +394,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Asha Nair',
     passportNumber: 'IN3387214',
     companyName: 'Neptune Crew Services',
+    vesselName: 'MV Eastern Pearl',
     country: 'Japan',
     countryFlag: '🇯🇵',
     visaType: 'Crew · Transit',
@@ -391,6 +414,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Kenji Sato',
     passportNumber: 'JP7742019',
     companyName: 'Apex Marine Logistics',
+    vesselName: 'MV Lion City',
     country: 'Singapore',
     countryFlag: '🇸🇬',
     visaType: 'Crew · Multi-entry',
@@ -410,6 +434,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     applicantName: 'Liam O Connor',
     passportNumber: 'IE2298810',
     companyName: 'Oceanic Marine Ltd',
+    vesselName: 'MV Oceanic Star',
     country: 'UK',
     countryFlag: '🇬🇧',
     visaType: 'Crew · Standard',
@@ -464,6 +489,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: GLTS_BATCH_IDS.schengenCrew,
     companyName: 'Oceanic Marine Ltd',
+    vesselName: 'MV Oceanic Star',
     primaryApplicantName: 'Brendan Ryan',
     country: 'Schengen',
     countryFlag: '🇫🇷',
@@ -554,6 +580,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: 'GLTS-BAT-2026-029',
     companyName: 'Seafarer Solutions',
+    vesselName: 'MV Pacific Horizon',
     primaryApplicantName: 'Andreas Klein',
     country: 'Schengen',
     countryFlag: '🇩🇪',
@@ -578,6 +605,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: 'GLTS-BAT-2026-021',
     companyName: 'Harborline Crewing Co',
+    vesselName: 'MV Atlantic Crest',
     primaryApplicantName: 'Luca Bergstrom',
     country: 'Schengen',
     countryFlag: '🇫🇷',
@@ -601,6 +629,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   bulkRow({
     id: 'GLTS-BAT-2026-018',
     companyName: 'NorthSea Manning',
+    vesselName: 'MV Eastern Pearl',
     primaryApplicantName: 'Erik Johansson',
     country: 'Japan',
     countryFlag: '🇯🇵',
@@ -620,6 +649,32 @@ export const mockBulkBatches: BulkBatchRow[] = [
     createdByEmail: 'dispatch@northseamanning.com',
     createdByRole: 'booker',
     customerSegment: 'marine',
+  }),
+  bulkRow({
+    id: 'GLTS-MAR-1025',
+    companyName: 'Oceanic Crew Management Pvt Ltd',
+    vesselName: 'MV Green Horizon',
+    primaryApplicantName: 'Rajesh Kumar',
+    country: 'China',
+    countryFlag: '🇨🇳',
+    visaType: 'M Type Visa',
+    jurisdiction: 'Delhi',
+    totalApplicants: 5,
+    verifiedApplicants: 5,
+    pendingCorrections: 0,
+    processed: 5,
+    errors: 0,
+    travelDate: '2026-06-28',
+    submissionDate: '2026-06-12',
+    createdAt: '2026-06-01',
+    lastUpdated: '2026-06-13',
+    processingStage: 'Embassy processing',
+    operationalStatus: 'Submitted',
+    createdByEmail: 'crewdesk@oceaniccrew.com',
+    createdByRole: 'booker',
+    customerSegment: 'marine',
+    assignedTeamId: 'team-marine',
+    assignedUserId: 'user-marine-2',
   }),
   bulkRow({
     id: 'GLTS-BAT-2026-025',
@@ -729,6 +784,76 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
     confidence: 94,
     status: 'verified',
     fields: hiroshiFields.map(f => ({ ...f, value: f.key === 'surname' ? 'CHEN' : f.key === 'given' ? 'MIKE' : f.value })),
+  },
+  {
+    id: 'q-mar-1',
+    fileName: 'crew_green_01.pdf',
+    gltsApplicationId: 'GLTS-MAR-1025',
+    gltsApplicantId: 'GLTS-APL-M1025-01',
+    sequenceNo: 1,
+    travelerName: 'RAJESH KUMAR',
+    passportNo: 'IN8829103',
+    expiry: '15 Aug 2031',
+    nationality: 'IND',
+    confidence: 97,
+    status: 'verified',
+    fields: hiroshiFields.map(f => ({ ...f, value: f.key === 'surname' ? 'KUMAR' : f.key === 'given' ? 'RAJESH' : f.value })),
+  },
+  {
+    id: 'q-mar-2',
+    fileName: 'crew_green_02.pdf',
+    gltsApplicationId: 'GLTS-MAR-1025',
+    gltsApplicantId: 'GLTS-APL-M1025-02',
+    sequenceNo: 2,
+    travelerName: 'VIKRAM SINGH',
+    passportNo: 'IN7738291',
+    expiry: '22 Nov 2030',
+    nationality: 'IND',
+    confidence: 96,
+    status: 'verified',
+    fields: hiroshiFields.map(f => ({ ...f, value: f.key === 'surname' ? 'SINGH' : f.key === 'given' ? 'VIKRAM' : f.value })),
+  },
+  {
+    id: 'q-mar-3',
+    fileName: 'crew_green_03.pdf',
+    gltsApplicationId: 'GLTS-MAR-1025',
+    gltsApplicantId: 'GLTS-APL-M1025-03',
+    sequenceNo: 3,
+    travelerName: 'ANIL MEHTA',
+    passportNo: 'IN6647182',
+    expiry: '09 Jun 2032',
+    nationality: 'IND',
+    confidence: 95,
+    status: 'verified',
+    fields: hiroshiFields.map(f => ({ ...f, value: f.key === 'surname' ? 'MEHTA' : f.key === 'given' ? 'ANIL' : f.value })),
+  },
+  {
+    id: 'q-mar-4',
+    fileName: 'crew_green_04.pdf',
+    gltsApplicationId: 'GLTS-MAR-1025',
+    gltsApplicantId: 'GLTS-APL-M1025-04',
+    sequenceNo: 4,
+    travelerName: 'SURESH NAIR',
+    passportNo: 'IN5596073',
+    expiry: '20 Dec 2029',
+    nationality: 'IND',
+    confidence: 94,
+    status: 'verified',
+    fields: hiroshiFields.map(f => ({ ...f, value: f.key === 'surname' ? 'NAIR' : f.key === 'given' ? 'SURESH' : f.value })),
+  },
+  {
+    id: 'q-mar-5',
+    fileName: 'crew_green_05.pdf',
+    gltsApplicationId: 'GLTS-MAR-1025',
+    gltsApplicantId: 'GLTS-APL-M1025-05',
+    sequenceNo: 5,
+    travelerName: 'DEEPAK PILLAI',
+    passportNo: 'IN4485964',
+    expiry: '03 Jan 2033',
+    nationality: 'IND',
+    confidence: 93,
+    status: 'verified',
+    fields: hiroshiFields.map(f => ({ ...f, value: f.key === 'surname' ? 'PILLAI' : f.key === 'given' ? 'DEEPAK' : f.value })),
   },
   {
     id: 'q6',

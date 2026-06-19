@@ -2,13 +2,15 @@ import { Box, Drawer, IconButton } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { ChevronLeft, LogOut } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { GreenlightLogoExpanded } from '@/components/brand/GreenlightLogo'
 import { NavItem, renderNavConfig } from '@/design-system/UIComponents'
 import { clearSession } from '@/shared/auth/session'
+import { PORTAL_SIDEBAR_WIDTH, PORTAL_TOPBAR_HEIGHT } from '@/shared/theme/portalChromeLayout'
 import { useCustomerPortalBase } from '../hooks/useCustomerPortalBase'
 import { buildCustomerFooterNavConfig, buildCustomerNavConfig } from '../config/customerNav'
 
-export const CUSTOMER_SIDEBAR_WIDTH = 240
-const TOPBAR_HEIGHT = 56
+/** @deprecated Use PORTAL_SIDEBAR_WIDTH — kept for import stability. */
+export const CUSTOMER_SIDEBAR_WIDTH = PORTAL_SIDEBAR_WIDTH
 
 interface CustomerSidebarProps {
   mobile?: boolean
@@ -60,7 +62,7 @@ function SidebarPanel({
   return (
     <Box
       sx={{
-        width: fullWidth ? '100%' : CUSTOMER_SIDEBAR_WIDTH,
+        width: fullWidth ? '100%' : PORTAL_SIDEBAR_WIDTH,
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
@@ -72,7 +74,7 @@ function SidebarPanel({
     >
       <Box
         sx={{
-          height: TOPBAR_HEIGHT,
+          height: PORTAL_TOPBAR_HEIGHT,
           flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
@@ -82,12 +84,7 @@ function SidebarPanel({
           gap: 1,
         }}
       >
-        <Box
-          component="img"
-          src="/greenlight_logo.jpg"
-          alt="Greenlight Travel Solutions"
-          sx={{ height: 28, maxWidth: 160 }}
-        />
+        <GreenlightLogoExpanded />
         {onClose && (
           <IconButton
             size="small"
@@ -167,8 +164,8 @@ export function CustomerSidebar({ mobile, open, onClose }: CustomerSidebarProps)
             boxSizing: 'border-box',
             bgcolor: (t) => t.foundation.navigation.background,
             [theme.breakpoints.up('sm')]: {
-              width: CUSTOMER_SIDEBAR_WIDTH,
-              maxWidth: CUSTOMER_SIDEBAR_WIDTH,
+              width: PORTAL_SIDEBAR_WIDTH,
+              maxWidth: PORTAL_SIDEBAR_WIDTH,
             },
           },
         }}

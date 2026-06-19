@@ -110,13 +110,17 @@ export const DASHBOARD_KPIS: DashboardKpiMetric[] = [
 export const PIPELINE_STAGES: PipelineStage[] = [
   { id: 'draft', label: 'Draft', total: 124, delayed: 8, progress: 'on_track' },
   { id: 'documents_pending', label: 'Documents Pending', total: 186, delayed: 22, progress: 'at_risk' },
-  { id: 'verification', label: 'Verification', total: 148, delayed: 14, progress: 'at_risk' },
-  { id: 'qc', label: 'QC', total: 92, delayed: 6, progress: 'on_track' },
-  { id: 'submission', label: 'Submission', total: 96, delayed: 11, progress: 'at_risk' },
-  { id: 'appointment', label: 'Appointment', total: 74, delayed: 9, progress: 'delayed' },
-  { id: 'embassy', label: 'Embassy Processing', total: 218, delayed: 18, progress: 'on_track' },
-  { id: 'passport_ready', label: 'Passport Ready', total: 64, delayed: 3, progress: 'on_track' },
+  { id: 'verification_pending', label: 'Verification Pending', total: 148, delayed: 14, progress: 'at_risk' },
+  { id: 'qc_pending', label: 'QC Pending', total: 92, delayed: 6, progress: 'on_track' },
+  { id: 'appointment_pending', label: 'Appointment Pending', total: 74, delayed: 9, progress: 'delayed' },
+  { id: 'submission_pending', label: 'Submission Pending', total: 96, delayed: 11, progress: 'at_risk' },
+  { id: 'submitted', label: 'Submitted', total: 88, delayed: 7, progress: 'on_track' },
+  { id: 'embassy_processing', label: 'Embassy Processing', total: 218, delayed: 18, progress: 'on_track' },
+  { id: 'collection_pending', label: 'Collection Pending', total: 78, delayed: 10, progress: 'at_risk' },
+  { id: 'collected', label: 'Collected', total: 66, delayed: 4, progress: 'on_track' },
+  { id: 'passport_status', label: 'Passport Status', total: 64, delayed: 3, progress: 'on_track' },
   { id: 'delivered', label: 'Delivered', total: 412, delayed: 0, progress: 'on_track' },
+  { id: 'completed', label: 'Completed', total: 376, delayed: 0, progress: 'on_track' },
 ]
 
 export const VERIFICATION_QUEUE: DashboardQueueRow[] = [

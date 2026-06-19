@@ -24,12 +24,14 @@ import {
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import { getDocumentWorkspaceItems } from '../../../../data/singleApplicationFlowData'
+import { DocumentRequirementTags } from '../../../../components/DocumentRequirementTags'
 import { singleExtractedFields } from '../../../../data/applicationFlowData'
 import type { ApplicantDocumentItem, UploadQueueRow } from '../../../../data/applicationFlowData'
 import { SimpleDocumentRequirementPanel } from '../../../../components/documentWorkflow'
 import {
   normalizeUploadQueueRow,
   withDocumentProgress,
+  applicantDocumentChecklistSignature,
 } from '../../../../utils/uploadQueueDocuments'
 import { FlowStepActions } from '../../../../components/create/FlowStepActions'
 
@@ -125,8 +127,14 @@ export function DocumentUploadWorkspaceStep({
 }: DocumentUploadWorkspaceStepProps) {
   const colors = usePublicBrandColors()
   const workspaceDocs = useMemo(
-    () => getDocumentWorkspaceItems(state.countryId, state.visaOfferingId, state.processingType),
-    [state.countryId, state.visaOfferingId, state.processingType],
+    () =>
+      getDocumentWorkspaceItems(
+        state.countryId,
+        state.visaOfferingId,
+        state.processingType,
+        state.jurisdictionId || undefined,
+      ),
+    [state.countryId, state.visaOfferingId, state.processingType, state.jurisdictionId],
   )
 
   const queueRow = useMemo(() => buildSingleQueueRow(state), [state])
@@ -136,11 +144,18 @@ export function DocumentUploadWorkspaceStep({
     const normalized = normalizeUploadQueueRow(queueRow, {
       countryId: state.countryId,
       visaOfferingId: state.visaOfferingId,
+      jurisdictionId: state.jurisdictionId || undefined,
       countryLabel: state.countryName,
       passportFields: queueRow.fields?.length ? queueRow.fields : singleExtractedFields,
     })
     return normalized.documents
-  }, [queueRow, state.countryId, state.visaOfferingId, state.countryName])
+  }, [
+    queueRow,
+    state.countryId,
+    state.visaOfferingId,
+    state.jurisdictionId,
+    state.countryName,
+  ])
 
   useEffect(() => {
     if (!state.countryId || !state.visaOfferingId) return
@@ -148,22 +163,26 @@ export function DocumentUploadWorkspaceStep({
     const normalized = normalizeUploadQueueRow(base, {
       countryId: state.countryId,
       visaOfferingId: state.visaOfferingId,
+      jurisdictionId: state.jurisdictionId || undefined,
       countryLabel: state.countryName,
       passportFields: base.fields?.length ? base.fields : singleExtractedFields,
     })
     const current = state.uploadQueueRows[0]
-    const idsMatch =
-      current &&
-      current.documents.length === normalized.documents.length &&
-      normalized.documents.every((d, i) => d.documentId === current.documents[i]?.documentId)
-    if (idsMatch) return
+    const currentSig = current ? applicantDocumentChecklistSignature(current.documents) : ''
+    const nextSig = applicantDocumentChecklistSignature(normalized.documents)
+    const collectionChanged =
+      Boolean(current?.originalDocumentCollection) !== Boolean(normalized.originalDocumentCollection)
+    if (currentSig === nextSig && !collectionChanged) return
     onUpdate({ uploadQueueRows: [normalized] })
   }, [
     state.countryId,
     state.visaOfferingId,
+    state.jurisdictionId,
     state.countryName,
     state.gltsApplicationId,
-    state.uploadQueueRows.length,
+    state.uploadQueueRows[0]?.documents,
+    state.uploadQueueRows[0]?.originalDocumentCollection,
+    onUpdate,
   ])
 
   const documentsById = useMemo(
@@ -294,10 +313,13 @@ export function DocumentUploadWorkspaceStep({
                         <FileText size={14} color={colors.textSecondary} />
                         <Typography sx={{ fontSize: 15, fontWeight: 700, color: colors.navy }}>{doc.name}</Typography>
                       </Stack>
-                      <Stack direction="row" spacing={0.75} alignItems="center">
-                        <Typography sx={{ fontSize: 11, color: colors.textSecondary, fontWeight: 700 }}>
-                          {doc.required ? 'Mandatory' : 'Optional'}
-                        </Typography>
+                      <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+                        <DocumentRequirementTags
+                          mandatory={doc.required}
+                          originalDocument={
+                            applicantDoc?.originalDocument ?? (doc.originalDocument ? true : false)
+                          }
+                        />
                         {applicantDoc ? (
                           <CustomerStatusChip
                             label={statusLabel}

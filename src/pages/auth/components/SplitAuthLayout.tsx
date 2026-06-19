@@ -1,6 +1,7 @@
 import { Box, Typography, Button, Stack } from '@mui/material'
 import { ArrowLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { GREENLIGHT_LOGO_DARK_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
 
 /** Travel-industry hero imagery (corporate / aviation / airport) */
@@ -67,7 +68,7 @@ export function SplitAuthLayout({ variant, headline, subline, children }: SplitA
           sx={{ position: 'relative', zIndex: 1, p: 3 }}
         >
           <Box component="a" href="/" sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box component="img" src="/greenlight_logo.jpg" alt="Greenlight" sx={{ height: 36, borderRadius: '8px' }} />
+            <Box component="img" src={GREENLIGHT_LOGO_DARK_SRC} alt="Greenlight" sx={{ height: 36, borderRadius: '8px' }} />
           </Box>
           <Button
             component="a"

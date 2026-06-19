@@ -13,7 +13,7 @@ import { SUBMITTED_OPERATIONAL_STATUSES } from '../types/applicationListing.type
 import type { ApplicationListingRow } from '../types/applicationListing.types'
 import { isBulkRow } from '../types/applicationListing.types'
 import { getApplicationTypeLabel } from '../components/listing/applicationStatus'
-import { resolveApplicationCompanyName } from './applicationCompanyUtils'
+import { resolveApplicationCompanyName, resolveApplicationVesselName } from './applicationCompanyUtils'
 import { resolveApplicationCreatorLabel, getApplicationCreatorOptions } from './applicationCreatorUtils'
 
 export function getAllListingRows(singles: SingleApplicationRow[], bulks: BulkBatchRow[]): ApplicationListingRow[] {
@@ -58,6 +58,8 @@ export function matchesListingSearch(row: ApplicationListingRow, query: string):
   if (getApplicationTypeLabel(row.recordType).toLowerCase().includes(s)) return true
   const company = resolveApplicationCompanyName(row).toLowerCase()
   if (company.includes(s)) return true
+  const vessel = resolveApplicationVesselName(row).toLowerCase()
+  if (vessel !== '—' && vessel.includes(s)) return true
 
   if (isBulkRow(row)) {
     return (
@@ -108,6 +110,7 @@ export function getListingCellValue(row: ApplicationListingRow, key: string): st
     return isBulkRow(row) ? formatBulkApplicantListingLabel(row) : row.applicantName
   }
   if (key === 'companyName') return resolveApplicationCompanyName(row)
+  if (key === 'vesselName') return resolveApplicationVesselName(row)
   if (key === 'jurisdiction') return row.jurisdiction?.trim() || '—'
   if (isBulkRow(row)) {
     if (key === 'totalApplicants') return String(row.totalApplicants)

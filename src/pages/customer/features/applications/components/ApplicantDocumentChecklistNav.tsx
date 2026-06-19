@@ -11,9 +11,9 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { documentStatusLabel } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import { isDocumentComplete } from '../utils/uploadQueueDocuments'
 import type { ApplicantDocumentItem } from '../data/applicationFlowData'
+import { DocumentRequirementTags } from './DocumentRequirementTags'
 
 type DocStatusTone = 'success' | 'warning' | 'neutral'
 
@@ -136,36 +136,12 @@ export function ApplicantDocumentChecklistNav({
                     <StatusIcon tone={tone} colors={colors} />
                   </Box>
 
-                  <Typography
-                    sx={{
-                      fontSize: 11.5,
-                      fontWeight: 600,
-                      color:
-                        tone === 'success'
-                          ? colors.greenDark
-                          : tone === 'warning'
-                            ? '#B45309'
-                            : colors.textMuted,
-                      mt: 0.25,
-                    }}
-                  >
-                    {documentStatusLabel(doc)}
-                  </Typography>
-
-                  {!doc.required ? (
-                    <Typography
-                      sx={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: colors.textMuted,
-                        mt: 0.5,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
-                      }}
-                    >
-                      Optional
-                    </Typography>
-                  ) : null}
+                  <Box sx={{ mt: 0.75 }}>
+                    <DocumentRequirementTags
+                      mandatory={doc.required}
+                      originalDocument={doc.originalDocument}
+                    />
+                  </Box>
                 </Box>
               </Box>
             </Box>

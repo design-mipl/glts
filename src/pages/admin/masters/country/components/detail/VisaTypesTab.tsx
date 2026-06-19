@@ -81,7 +81,7 @@ export function VisaTypesTab({ country, segment }: VisaTypesTabProps) {
       ))}
       <Button
         label="Edit visa types"
-        variant="outlined"
+        variant="neutral"
         onClick={() => navigate(`/admin/masters/country/${country.id}/edit?step=2`)}
         sx={{ alignSelf: 'flex-start' }}
       />

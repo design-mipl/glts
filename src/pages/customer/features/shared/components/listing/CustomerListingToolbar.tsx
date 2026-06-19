@@ -1,24 +1,39 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   Box,
-  Popover,
-  FormGroup,
-  FormControlLabel,
-  Checkbox,
-  Typography,
-  Divider,
   IconButton,
-  Menu,
-  MenuItem,
   Tooltip,
 } from '@mui/material'
-import { Download, Grid3x3, List, Columns, MoreVertical } from 'lucide-react'
-import { Button, SearchInput } from '@/design-system/UIComponents'
+import { Download, Grid3x3, List, Columns, Filter } from 'lucide-react'
+import { Button, ColumnPickerPopover, SearchInput } from '@/design-system/UIComponents'
+import {
+  ListingFilterPopoverShell,
+  type ListingFilterPopoverWidth,
+} from '@/design-system/listingFilterPopoverShell'
+import {
+  listingToolbarActionsSx,
+  listingToolbarIconButtonSx,
+  listingToolbarRootSx,
+  listingToolbarSearchSx,
+  listingToolbarViewToggleButtonSx,
+  listingToolbarViewToggleSx,
+} from '@/design-system/listingToolbarChrome'
 
 export interface CustomerListingToolbarColumn {
   key: string
   label: string
   hideable?: boolean
+}
+
+export interface CustomerListingToolbarFilterPopoverConfig<T = unknown> {
+  active?: boolean
+  value: T
+  onApply: (value: T) => void
+  onClear: () => void
+  hasActive?: (value: T) => boolean
+  width?: ListingFilterPopoverWidth
+  scrollable?: boolean
+  children: (draft: T, patch: (partial: Partial<T>) => void) => ReactNode
 }
 
 export interface CustomerListingToolbarProps {
@@ -31,7 +46,8 @@ export interface CustomerListingToolbarProps {
   columns?: CustomerListingToolbarColumn[]
   hiddenColumnKeys?: string[]
   onHiddenColumnKeysChange?: (keys: string[]) => void
-  moreMenuItems?: { label: string; onClick: () => void }[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  filterPopover?: CustomerListingToolbarFilterPopoverConfig<any>
 }
 
 export function CustomerListingToolbar({
@@ -44,45 +60,64 @@ export function CustomerListingToolbar({
   columns = [],
   hiddenColumnKeys = [],
   onHiddenColumnKeysChange,
-  moreMenuItems = [],
+  filterPopover,
 }: CustomerListingToolbarProps) {
   const [columnAnchor, setColumnAnchor] = useState<HTMLElement | null>(null)
-  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null)
+  const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null)
 
   const hideableColumns = columns.filter(c => c.hideable !== false && c.key !== 'actions')
   const columnPickerEnabled = hideableColumns.length >= 2 && Boolean(onHiddenColumnKeysChange)
-  const visibleHideableCount = hideableColumns.filter(c => !hiddenColumnKeys.includes(c.key)).length
-
-  const toggleColumnHidden = (key: string) => {
-    if (!onHiddenColumnKeysChange) return
-    const isHidden = hiddenColumnKeys.includes(key)
-    if (isHidden) {
-      onHiddenColumnKeysChange(hiddenColumnKeys.filter(k => k !== key))
-      return
-    }
-    if (visibleHideableCount <= 1) return
-    onHiddenColumnKeysChange([...hiddenColumnKeys, key])
-  }
+  const filterActive = filterPopover?.active ?? false
 
   return (
-    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', width: '100%', flexWrap: 'wrap' }}>
+    <Box sx={listingToolbarRootSx()}>
       <SearchInput
         value={searchValue}
         onChange={onSearch}
         placeholder={searchPlaceholder}
         size="sm"
-        sx={{
-          width: { xs: '100%', sm: 280 },
-          flex: { xs: '1 1 100%', sm: '0 0 280px' },
-        }}
+        sx={listingToolbarSearchSx()}
       />
 
-      <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', ml: { xs: 0, sm: 'auto' }, flexShrink: 0 }}>
+      <Box sx={listingToolbarActionsSx()}>
+        {filterPopover && (
+          <>
+            <Button
+              variant="neutral"
+              size="sm"
+              startIcon={<Filter size={14} strokeWidth={1.75} />}
+              onClick={(event) => setFilterAnchor(event.currentTarget)}
+              sx={
+                filterActive
+                  ? { borderColor: 'primary.main', color: 'primary.main' }
+                  : undefined
+              }
+            >
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                Filter
+              </Box>
+            </Button>
+            <ListingFilterPopoverShell
+              open={Boolean(filterAnchor)}
+              anchorEl={filterAnchor}
+              onClose={() => setFilterAnchor(null)}
+              value={filterPopover.value}
+              onApply={filterPopover.onApply}
+              onClear={filterPopover.onClear}
+              hasActive={filterPopover.hasActive}
+              width={filterPopover.width}
+              scrollable={filterPopover.scrollable}
+            >
+              {filterPopover.children}
+            </ListingFilterPopoverShell>
+          </>
+        )}
+
         {onExport && (
           <Button
-            variant="outlined"
-            color="secondary"
-            startIcon={<Download size={16} strokeWidth={1.75} />}
+            variant="neutral"
+            size="sm"
+            startIcon={<Download size={14} strokeWidth={1.75} />}
             onClick={onExport}
           >
             <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
@@ -91,115 +126,45 @@ export function CustomerListingToolbar({
           </Button>
         )}
 
-        {columnPickerEnabled && (
+        {columnPickerEnabled && onHiddenColumnKeysChange && (
           <>
             <Tooltip title="Columns">
               <IconButton
                 size="small"
                 onClick={e => setColumnAnchor(e.currentTarget)}
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  color: hiddenColumnKeys.length > 0 ? 'primary.main' : 'text.secondary',
-                }}
+                sx={listingToolbarIconButtonSx(hiddenColumnKeys.length > 0)}
               >
                 <Columns size={16} />
               </IconButton>
             </Tooltip>
-            <Popover
+            <ColumnPickerPopover
               open={Boolean(columnAnchor)}
               anchorEl={columnAnchor}
               onClose={() => setColumnAnchor(null)}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-              slotProps={{ paper: { sx: { minWidth: 220, p: 1.5 } } }}
-            >
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                Show columns
-              </Typography>
-              <FormGroup>
-                {hideableColumns.map(col => {
-                  const checked = !hiddenColumnKeys.includes(col.key)
-                  return (
-                    <FormControlLabel
-                      key={col.key}
-                      control={
-                        <Checkbox
-                          size="small"
-                          checked={checked}
-                          disabled={checked && visibleHideableCount <= 1}
-                          onChange={() => toggleColumnHidden(col.key)}
-                        />
-                      }
-                      label={col.label}
-                      sx={{ '& .MuiFormControlLabel-label': { fontSize: 14 } }}
-                    />
-                  )
-                })}
-              </FormGroup>
-              {hiddenColumnKeys.length > 0 && (
-                <>
-                  <Divider sx={{ my: 1 }} />
-                  <Button fullWidth onClick={() => onHiddenColumnKeysChange?.([])}>
-                    Reset columns
-                  </Button>
-                </>
-              )}
-            </Popover>
+              columns={hideableColumns}
+              hiddenColumnKeys={hiddenColumnKeys}
+              onHiddenColumnKeysChange={onHiddenColumnKeysChange}
+            />
           </>
         )}
 
         {onViewModeChange && (
-          <Box sx={{ display: 'flex', border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
+          <Box sx={listingToolbarViewToggleSx()}>
             <IconButton
               size="small"
               onClick={() => onViewModeChange('grid')}
-              sx={{
-                borderRadius: 0,
-                bgcolor: viewMode === 'grid' ? 'action.selected' : 'transparent',
-              }}
+              sx={listingToolbarViewToggleButtonSx(viewMode === 'grid')}
             >
               <Grid3x3 size={16} />
             </IconButton>
             <IconButton
               size="small"
               onClick={() => onViewModeChange('table')}
-              sx={{
-                borderRadius: 0,
-                bgcolor: viewMode === 'table' ? 'action.selected' : 'transparent',
-              }}
+              sx={listingToolbarViewToggleButtonSx(viewMode === 'table')}
             >
               <List size={16} />
             </IconButton>
           </Box>
-        )}
-
-        {moreMenuItems.length > 0 && (
-          <>
-            <Tooltip title="More options">
-              <IconButton
-                size="small"
-                onClick={e => setMoreAnchor(e.currentTarget)}
-                sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}
-              >
-                <MoreVertical size={16} />
-              </IconButton>
-            </Tooltip>
-            <Menu anchorEl={moreAnchor} open={Boolean(moreAnchor)} onClose={() => setMoreAnchor(null)}>
-              {moreMenuItems.map(item => (
-                <MenuItem
-                  key={item.label}
-                  onClick={() => {
-                    item.onClick()
-                    setMoreAnchor(null)
-                  }}
-                >
-                  {item.label}
-                </MenuItem>
-              ))}
-            </Menu>
-          </>
         )}
       </Box>
     </Box>

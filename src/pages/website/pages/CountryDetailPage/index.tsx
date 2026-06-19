@@ -346,7 +346,7 @@ export function CountryDetailPage() {
           <Button
             variant="contained"
             size="large"
-            href="/retail/applications/new"
+            href={`/apply/new?country=${country.id}`}
             sx={{ ...getMarketingPrimaryButtonSx(colors), px: 5, py: 1.75 }}
           >
             Start Application

@@ -1,3 +1,4 @@
+import { quotationService } from './quotationService'
 import type {
   EnquiryActivityLog,
   EnquiryAssignment,
@@ -667,10 +668,12 @@ export const enquiryService = {
       makeActivity('converted_to_quotation', 'Converted to quotation', 'Quotation record generated', actor),
     )
 
+    const quotation = quotationService.createFromEnquiry(target, actor)
+
     return {
       ok: true,
       validation,
-      quotationId: `QT-${enquiryId.replace('ENQ-', '')}`,
+      quotationId: quotation.id,
     }
   },
 

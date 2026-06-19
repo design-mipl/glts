@@ -55,6 +55,20 @@ export const publicHeroVisualMinHeight = {
   lg: 340,
 } as const
 
+/** Compact vertical padding for the landing page hero (content sits below sticky nav). */
+export const landingPageHeroPy = {
+  xs: 6,
+  md: 8,
+  lg: 9,
+} as const
+
+/** Landing hero min height — taller than content-only, shorter than full viewport. */
+export const landingPageHeroMinHeight = {
+  xs: 'auto',
+  md: 400,
+  lg: 420,
+} as const
+
 /** Minimum hero section height on tablet/desktop for consistent page rhythm. */
 export const publicHeroSectionMinHeight = {
   xs: 'auto',

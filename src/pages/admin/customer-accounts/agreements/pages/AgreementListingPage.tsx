@@ -14,13 +14,18 @@ import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCu
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { AgreementKpiRow } from '../components/AgreementKpiRow'
+import { AgreementAdvancedFilterFields } from '../components/AgreementAdvancedFilters'
 import { buildAgreementColumns } from '../components/AgreementTableColumns'
 import {
   downloadAgreementCsv,
   getAgreementCellValue,
   getAgreementEmptyState,
+  hasActiveAgreementFilters,
+  INITIAL_AGREEMENT_ADVANCED_FILTERS,
   mapAgreementRowsToGridItems,
+  matchesAgreementAdvancedFilters,
   matchesAgreementSearch,
+  type AgreementAdvancedFilterState,
 } from '../utils/agreementListingUtils'
 
 export function AgreementListingPage() {
@@ -32,6 +37,7 @@ export function AgreementListingPage() {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [rejectTarget, setRejectTarget] = useState<CommercialAgreement>()
   const [rejectOpen, setRejectOpen] = useState(false)
+  const [filters, setFilters] = useState<AgreementAdvancedFilterState>(INITIAL_AGREEMENT_ADVANCED_FILTERS)
   const loadRows = useCallback(async () => {
     setLoading(true)
     setRows(commercialAgreementService.list())
@@ -42,8 +48,13 @@ export function AgreementListingPage() {
     void loadRows()
   }, [loadRows])
 
+  const filteredRows = useMemo(
+    () => rows.filter((row) => matchesAgreementAdvancedFilters(row, filters)),
+    [rows, filters],
+  )
+
   const listing = useCustomerListing({
-    rows,
+    rows: filteredRows,
     getCellValue: getAgreementCellValue,
     searchMatch: matchesAgreementSearch,
     initialPageSize: 10,
@@ -134,10 +145,21 @@ export function AgreementListingPage() {
             onHiddenColumnKeysChange={(keys) =>
               listing.setTableState((state) => ({ ...state, hiddenColumnKeys: keys }))
             }
-            moreMenuItems={[
-              { label: 'Refresh list', onClick: () => void loadRows() },
-              { label: 'Clear search', onClick: () => listing.handleSearch('') },
-            ]}
+            filterPopover={{
+              active: hasActiveAgreementFilters(filters),
+              value: filters,
+              onApply: (next) => {
+                setFilters(next)
+                listing.setTableState((state) => ({ ...state, page: 0 }))
+              },
+              onClear: () => setFilters(INITIAL_AGREEMENT_ADVANCED_FILTERS),
+              hasActive: hasActiveAgreementFilters,
+              width: 'wide',
+              scrollable: true,
+              children: (draft, patch) => (
+                <AgreementAdvancedFilterFields draft={draft} patch={patch} />
+              ),
+            }}
           />
         }
         listingContent={

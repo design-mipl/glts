@@ -4,13 +4,18 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import LinkExtension from '@tiptap/extension-link'
 import UnderlineExtension from '@tiptap/extension-underline'
-import {
-  Box, IconButton, Tooltip, Divider, Typography, useTheme,
-} from '@mui/material'
+import { Box, Divider, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { Bold, Italic, Underline, Strikethrough, List, ListOrdered, Quote, Code, Link, Undo, Redo } from 'lucide-react'
-import { BORDER_RADIUS, BORDER_WIDTH } from '../../../tokens'
+import {
+  FORM_CONTROL,
+  formControlBorderDefault,
+  formControlFieldBackground,
+} from '../../../formControl'
+import IconButton from '../../Primitives/IconButton'
 import { getRichTextProseSx } from './richTextProseStyles'
+
+const TOOLBAR_ICON_SIZE = 14
 
 export type ToolbarItem =
   | 'bold' | 'italic' | 'underline' | 'strike'
@@ -43,45 +48,27 @@ const DEFAULT_TOOLBAR: ToolbarItem[] = [
   'link', 'undo', 'redo',
 ]
 
-function ToolbarButton({
-  title,
-  active,
-  disabled,
-  onClick,
-  children,
-}: {
-  title: string
-  active?: boolean
-  disabled?: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  const theme = useTheme()
+function H1Icon() {
   return (
-    <Tooltip title={title}>
-      <span>
-        <IconButton
-          size="small"
-          disabled={disabled}
-          onClick={onClick}
-          sx={{
-            borderRadius: 0.5,
-            p: 0.5,
-            color: active ? 'primary.main' : 'text.secondary',
-            bgcolor: active ? alpha(theme.palette.primary.main, 0.1) : undefined,
-            '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) },
-          }}
-        >
-          {children}
-        </IconButton>
-      </span>
-    </Tooltip>
+    <Typography sx={{ fontSize: TOOLBAR_ICON_SIZE, fontWeight: 700, lineHeight: 1 }}>
+      H1
+    </Typography>
   )
 }
-
-function H1Icon() { return <Typography sx={{ fontSize: 14, fontWeight: 700, lineHeight: 1, px: 0.25 }}>H1</Typography> }
-function H2Icon() { return <Typography sx={{ fontSize: 13, fontWeight: 700, lineHeight: 1, px: 0.25 }}>H2</Typography> }
-function H3Icon() { return <Typography sx={{ fontSize: 12, fontWeight: 700, lineHeight: 1, px: 0.25 }}>H3</Typography> }
+function H2Icon() {
+  return (
+    <Typography sx={{ fontSize: TOOLBAR_ICON_SIZE, fontWeight: 700, lineHeight: 1 }}>
+      H2
+    </Typography>
+  )
+}
+function H3Icon() {
+  return (
+    <Typography sx={{ fontSize: TOOLBAR_ICON_SIZE, fontWeight: 700, lineHeight: 1 }}>
+      H3
+    </Typography>
+  )
+}
 
 export default function RichTextEditor({
   value,
@@ -96,9 +83,9 @@ export default function RichTextEditor({
   toolbar = DEFAULT_TOOLBAR,
 }: RichTextEditorProps) {
   const theme = useTheme()
-  const isDark = theme.palette.mode === 'dark'
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       UnderlineExtension,
@@ -122,39 +109,42 @@ export default function RichTextEditor({
     }
   }, [value]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const borderColor = error
-    ? theme.palette.error.main
-    : theme.palette.divider
+  const borderColor = error ? theme.palette.error.main : formControlBorderDefault(theme)
 
   const renderToolbarItem = (item: ToolbarItem, index: number) => {
     if (item === 'divider') {
-      return <Divider key={`div-${index}`} orientation="vertical" flexItem sx={{ mx: 0.25 }} />
+      return (
+        <Divider
+          key={`div-${index}`}
+          orientation="vertical"
+          flexItem
+          sx={{ mx: 0.25, my: 0.5, height: 20, alignSelf: 'center' }}
+        />
+      )
     }
-
-    if (!editor) return null
 
     const map: Record<Exclude<ToolbarItem, 'divider'>, { title: string; icon: React.ReactNode; active: boolean; action: () => void }> = {
       bold: {
         title: 'Bold (⌘B)',
-        icon: <Bold size={16} />,
+        icon: <Bold size={TOOLBAR_ICON_SIZE} strokeWidth={2} />,
         active: editor.isActive('bold'),
         action: () => editor.chain().focus().toggleBold().run(),
       },
       italic: {
         title: 'Italic (⌘I)',
-        icon: <Italic size={16} />,
+        icon: <Italic size={TOOLBAR_ICON_SIZE} strokeWidth={2} />,
         active: editor.isActive('italic'),
         action: () => editor.chain().focus().toggleItalic().run(),
       },
       underline: {
         title: 'Underline (⌘U)',
-        icon: <Underline size={16} />,
+        icon: <Underline size={TOOLBAR_ICON_SIZE} strokeWidth={2} />,
         active: editor.isActive('underline'),
         action: () => editor.chain().focus().toggleUnderline().run(),
       },
       strike: {
         title: 'Strikethrough',
-        icon: <Strikethrough size={16} />,
+        icon: <Strikethrough size={TOOLBAR_ICON_SIZE} strokeWidth={2} />,
         active: editor.isActive('strike'),
         action: () => editor.chain().focus().toggleStrike().run(),
       },
@@ -178,31 +168,31 @@ export default function RichTextEditor({
       },
       bulletList: {
         title: 'Bullet list',
-        icon: <List size={16} />,
+        icon: <List size={TOOLBAR_ICON_SIZE} strokeWidth={2} />,
         active: editor.isActive('bulletList'),
         action: () => editor.chain().focus().toggleBulletList().run(),
       },
       orderedList: {
         title: 'Ordered list',
-        icon: <ListOrdered size={16} />,
+        icon: <ListOrdered size={TOOLBAR_ICON_SIZE} strokeWidth={2} />,
         active: editor.isActive('orderedList'),
         action: () => editor.chain().focus().toggleOrderedList().run(),
       },
       blockquote: {
         title: 'Blockquote',
-        icon: <Quote size={16} />,
+        icon: <Quote size={TOOLBAR_ICON_SIZE} strokeWidth={2} />,
         active: editor.isActive('blockquote'),
         action: () => editor.chain().focus().toggleBlockquote().run(),
       },
       codeBlock: {
         title: 'Code block',
-        icon: <Code size={16} />,
+        icon: <Code size={TOOLBAR_ICON_SIZE} strokeWidth={2} />,
         active: editor.isActive('codeBlock'),
         action: () => editor.chain().focus().toggleCodeBlock().run(),
       },
       link: {
         title: 'Link',
-        icon: <Link size={16} />,
+        icon: <Link size={TOOLBAR_ICON_SIZE} strokeWidth={2} />,
         active: editor.isActive('link'),
         action: () => {
           const prev = editor.getAttributes('link').href as string ?? ''
@@ -214,13 +204,13 @@ export default function RichTextEditor({
       },
       undo: {
         title: 'Undo (⌘Z)',
-        icon: <Undo size={16} />,
+        icon: <Undo size={TOOLBAR_ICON_SIZE} strokeWidth={2} />,
         active: false,
         action: () => editor.chain().focus().undo().run(),
       },
       redo: {
         title: 'Redo (⌘⇧Z)',
-        icon: <Redo size={16} />,
+        icon: <Redo size={TOOLBAR_ICON_SIZE} strokeWidth={2} />,
         active: false,
         action: () => editor.chain().focus().redo().run(),
       },
@@ -228,9 +218,16 @@ export default function RichTextEditor({
 
     const btn = map[item]
     return (
-      <ToolbarButton key={item} title={btn.title} active={btn.active} onClick={btn.action} disabled={disabled}>
-        {btn.icon}
-      </ToolbarButton>
+      <IconButton
+        key={item}
+        tooltip={btn.title}
+        icon={btn.icon}
+        size="sm"
+        variant={btn.active ? 'soft' : 'default'}
+        color={btn.active ? 'primary' : 'default'}
+        onClick={btn.action}
+        disabled={disabled}
+      />
     )
   }
 
@@ -251,12 +248,13 @@ export default function RichTextEditor({
       )}
       <Box
         sx={{
-          border: `${BORDER_WIDTH.thin} solid`,
+          border: `${FORM_CONTROL.borderWidth} solid`,
           borderColor,
-          borderRadius: BORDER_RADIUS.md,
+          borderRadius: FORM_CONTROL.borderRadius,
           overflow: 'hidden',
+          bgcolor: formControlFieldBackground(theme),
           opacity: disabled ? 0.6 : 1,
-          transition: 'all 0.2s ease',
+          transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
           '&:focus-within': {
             borderColor: error ? 'error.main' : 'primary.main',
             boxShadow: error
@@ -266,20 +264,24 @@ export default function RichTextEditor({
         }}
       >
         {/* Toolbar */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 0.25,
-            p: 0.75,
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            bgcolor: isDark ? alpha(theme.palette.common.white, 0.02) : alpha(theme.palette.text.primary, 0.02),
-          }}
-        >
-          {toolbar.map(renderToolbarItem)}
-        </Box>
+        {editor ? (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 0.5,
+              px: 1,
+              py: 0.75,
+              minHeight: 40,
+              borderBottom: '1px solid',
+              borderColor: alpha(theme.palette.text.primary, 0.1),
+              bgcolor: alpha(theme.palette.text.primary, 0.02),
+            }}
+          >
+            {toolbar.map(renderToolbarItem)}
+          </Box>
+        ) : null}
 
         {/* Editor content */}
         <Box
@@ -291,16 +293,12 @@ export default function RichTextEditor({
             px: 1.75,
             py: 1.5,
             bgcolor: 'transparent',
-            '& .ProseMirror': {
-              outline: 'none',
-              minHeight,
-              '& p.is-editor-empty:first-of-type::before': {
-                content: 'attr(data-placeholder)',
-                color: theme.palette.text.disabled,
-                pointerEvents: 'none',
-                float: 'left',
-                height: 0,
-              },
+            '& .ProseMirror p.is-editor-empty:first-of-type::before': {
+              content: 'attr(data-placeholder)',
+              color: theme.palette.text.disabled,
+              pointerEvents: 'none',
+              float: 'left',
+              height: 0,
             },
           }}
         >

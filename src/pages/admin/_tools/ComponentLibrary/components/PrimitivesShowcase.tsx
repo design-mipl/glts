@@ -17,7 +17,7 @@ import {
   Divider,
   Tooltip,
 } from '@/design-system/UIComponents'
-import { Search, Plus, Trash2, Edit, Download } from 'lucide-react'
+import { Search, Plus, Trash2, Edit, Download, ChevronDown } from 'lucide-react'
 
 function ShowcaseSection({
   title,
@@ -83,7 +83,7 @@ export function PrimitivesShowcase() {
         <Grid size={12}>
           <ShowcaseSection
             title="Button"
-            description="Primary, secondary, text, and soft variants with consistent sizing and focus rings."
+            description="Primary, outlined, text, soft, and neutral (cancel, export, edit, filters) variants with consistent sizing and focus rings."
           >
             <Stack gap={2}>
               <Stack direction="row" gap={1.5} flexWrap="wrap" alignItems="center">
@@ -91,6 +91,7 @@ export function PrimitivesShowcase() {
                 <Button variant="outlined">Secondary</Button>
                 <Button variant="text">Text</Button>
                 <Button variant="soft">Soft</Button>
+                <Button variant="neutral">Neutral</Button>
                 <Button variant="soft" color="primary">
                   Save draft
                 </Button>
@@ -116,9 +117,13 @@ export function PrimitivesShowcase() {
                 </Button>
               </Stack>
               <Stack direction="row" gap={1.5} flexWrap="wrap" alignItems="center">
-                <Button variant="outlined" color="secondary">
-                  Cancel
+                <Button variant="neutral" size="sm">
+                  Export
                 </Button>
+                <Button variant="neutral" size="sm" endIcon={<ChevronDown size={14} />}>
+                  More
+                </Button>
+                <Button variant="neutral">Cancel</Button>
                 <Button variant="contained" color="primary">
                   Save
                 </Button>

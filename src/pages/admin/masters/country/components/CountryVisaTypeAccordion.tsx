@@ -2,8 +2,12 @@ import { useState } from 'react'
 import { Box, Collapse, Grid, IconButton, Stack, Typography } from '@mui/material'
 import { ChevronDown, Copy, Trash2 } from 'lucide-react'
 import { Button, FormField, Input, Select } from '@/design-system/UIComponents'
-import type { CountryVisaType, VisaTypeStatus } from '@/shared/types/countryMaster'
-import { VISA_CATEGORY_OPTIONS } from '../config/countryProcessingConfig'
+import type { CountryVisaType, VisaMode, VisaTypeStatus } from '@/shared/types/countryMaster'
+import {
+  DEFAULT_VISA_MODE,
+  VISA_CATEGORY_OPTIONS,
+  VISA_MODE_SELECT_OPTIONS,
+} from '../config/countryProcessingConfig'
 
 function purposeIdFromLabel(label: string): string | undefined {
   const slug = label
@@ -99,6 +103,15 @@ export function CountryVisaTypeAccordion({
               </FormField>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
+              <FormField label="Visa mode">
+                <Select
+                  value={visaType.visaMode ?? DEFAULT_VISA_MODE}
+                  onChange={(value) => patch({ visaMode: value as VisaMode })}
+                  options={VISA_MODE_SELECT_OPTIONS}
+                />
+              </FormField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
               <FormField label="Purpose of visit">
                 <Input
                   value={visaType.purposeLabel ?? ''}
@@ -188,6 +201,7 @@ export function CountryFormVisaTypesStep({ data, onChange }: CountryVisaTypesSte
       id: newVisaTypeId(),
       name: '',
       visaCategory: 'Tourism',
+      visaMode: DEFAULT_VISA_MODE,
       processingTime: '',
       entryType: '',
       validity: '',
@@ -196,6 +210,7 @@ export function CountryFormVisaTypesStep({ data, onChange }: CountryVisaTypesSte
       status: 'active',
       jurisdictions: [],
       applicationDocuments: [],
+      documents: [],
     }
     updateSegmentVisaTypes(segment, [...seg.visaTypes, next])
   }

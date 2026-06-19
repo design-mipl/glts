@@ -23,6 +23,7 @@ import {
 } from '../../../utils/uploadQueueDocuments'
 import {
   requiresFieldValidation,
+  isWebsiteFlowPolicy,
   useApplicationFlowPolicy,
 } from '../../../context/ApplicationFlowPolicyContext'
 import { FlowStepActions } from '../../../components/create/FlowStepActions'
@@ -136,8 +137,10 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { base } = useCustomerPortalBase()
-  const { policy } = useApplicationFlowPolicy()
+  const { policy, listingPath } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
+  const isWebsite = isWebsiteFlowPolicy(policy)
+  const draftListingPath = listingPath || (isWebsite ? '/countries' : `${base}/applications`)
   const [drawerRowId, setDrawerRowId] = useState<string | null>(null)
   const [pendingGlobalDocId, setPendingGlobalDocId] = useState<string | null>(null)
   const globalUploadInputRef = useRef<HTMLInputElement>(null)
@@ -212,6 +215,7 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         state.visaOfferingId,
         passportFields,
         fallbackIndex - 1,
+        state.jurisdictionId || undefined,
       )
       const { documentsComplete, documentsTotal } = countDocumentProgress(documents)
       const additionalDetails = resolveApplicantAdditionalDetails(row.additionalDetails)
@@ -224,7 +228,7 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         additionalDetails,
       })
     },
-    [canBuildChecklist, ensureRowAdditionalDetails, state.countryId, state.visaOfferingId],
+    [canBuildChecklist, ensureRowAdditionalDetails, state.countryId, state.visaOfferingId, state.jurisdictionId],
   )
 
   useEffect(() => {
@@ -363,10 +367,12 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
     })
     showToast({
       title: 'Draft saved',
-      description: 'Application moved to Draft applications.',
+      description: isWebsite
+        ? 'Resume from the Apply flow when you return.'
+        : 'Application moved to Draft applications.',
       variant: 'success',
     })
-    navigate(`${base}/applications`)
+    navigate(draftListingPath)
   }
 
   const handleGlobalUploadClick = (docId: string) => {
@@ -627,7 +633,6 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
           }
           singleListing={isSingleListing}
           gltsApplicationId={gltsApplicationId}
-          gltsBatchId={gltsBatchId}
         />
       )}
 
@@ -654,6 +659,9 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         row={drawerRow}
         onClose={() => setDrawerRowId(null)}
         onUpdateRow={handleRowUpdate}
+        countryId={state.countryId}
+        visaOfferingId={state.visaOfferingId}
+        jurisdictionId={state.jurisdictionId || undefined}
       />
     </Box>
   )

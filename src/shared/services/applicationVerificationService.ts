@@ -1,5 +1,6 @@
 import {
   GLTS_BATCH_IDS,
+  MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID,
   mockBulkBatches,
   mockSingleApplications,
   type ApplicantDocumentItem,
@@ -24,6 +25,7 @@ import {
   type InsuranceWorkflow,
   type TravelTicketWorkflow,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
 
 const VERIFICATION_STORAGE_KEY = 'glts:application-verification'
 
@@ -35,6 +37,8 @@ export interface VerificationDocumentOverride {
   documentId: string
   status: ApplicantDocumentStatus
   comment?: string
+  /** Physical original received by GLTS operations. */
+  originalDocumentReceived?: boolean
   updatedAt: string
 }
 
@@ -56,6 +60,8 @@ export interface ApplicationVerificationRecord {
   submittedAt?: string
   documentOverrides: VerificationDocumentOverride[]
   documentWorkflowPatches?: VerificationDocumentWorkflowPatch[]
+  /** Per-traveler original document collection intake keyed by upload queue row id. */
+  originalDocumentCollections?: Record<string, OriginalDocumentCollectionState>
 }
 
 type VerificationStore = Record<string, ApplicationVerificationRecord>
@@ -142,15 +148,13 @@ function getDemoVerificationSeeds(applicationId: string): VerificationDocumentOv
         travelerRowId: 'q1',
         documentId: 'travel-ticket',
         status: 'missing',
-        comment: 'Upload crew travel ticket or confirmed booking for the joining port.',
         updatedAt,
       },
       {
         scope: 'traveler',
         travelerRowId: 'q1',
         documentId: 'insurance',
-        status: 'needs_review',
-        comment: 'Marine travel insurance must list vessel name and policy dates covering the contract.',
+        status: 'missing',
         updatedAt,
       },
       {
@@ -219,9 +223,26 @@ function getDemoWorkflowPatches(applicationId: string): VerificationDocumentWork
         scope: 'traveler',
         travelerRowId: 'q1',
         documentId: 'insurance',
-        handlingMode: 'upload_by_applicant',
-        insurance: { fileName: 'marine_insurance_policy.pdf' },
-        status: 'uploaded',
+        handlingMode: 'arrange_by_glts',
+        updatedAt,
+      },
+    ]
+  }
+
+  if (applicationId === MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID) {
+    return [
+      {
+        scope: 'traveler',
+        travelerRowId: `${MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID}-q1`,
+        documentId: 'travel-ticket',
+        handlingMode: 'arrange_by_glts',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId: `${MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID}-q1`,
+        documentId: 'insurance',
+        handlingMode: 'arrange_by_glts',
         updatedAt,
       },
     ]
@@ -400,6 +421,7 @@ function applyOverridesToRow(
   overrides: VerificationDocumentOverride[],
   workflowPatches: VerificationDocumentWorkflowPatch[],
   applicationId: string,
+  originalCollection?: OriginalDocumentCollectionState,
 ): UploadQueueRow {
   const rowOverrides = overrides.filter(
     o => o.scope === 'traveler' && overrideMatchesRow(row, o),
@@ -414,6 +436,9 @@ function applyOverridesToRow(
         ...next,
         status: override.status,
         reviewComment: resolveOverrideComment(applicationId, override),
+        ...(override.originalDocumentReceived !== undefined
+          ? { originalDocumentReceived: override.originalDocumentReceived }
+          : {}),
       }
     } else if (next.status === 'rejected' || next.status === 'needs_review') {
       if (!next.reviewComment?.trim()) {
@@ -435,12 +460,17 @@ function applyOverridesToRow(
     return next
   })
 
-  const hasChanges =
+  const hasDocChanges =
     rowOverrides.length > 0 ||
     rowWorkflowPatches.length > 0 ||
     documents.some((doc, index) => doc !== row.documents[index])
 
-  return hasChanges ? withDocumentProgress({ ...row, documents }) : row
+  let nextRow = hasDocChanges ? withDocumentProgress({ ...row, documents }) : row
+  const collection = originalCollection ?? row.originalDocumentCollection
+  if (collection) {
+    nextRow = { ...nextRow, originalDocumentCollection: collection }
+  }
+  return nextRow
 }
 
 function allRequiredVerified(rows: UploadQueueRow[]): boolean {
@@ -478,6 +508,7 @@ export function mergeVerificationIntoDetail(
       record.documentOverrides,
       record.documentWorkflowPatches ?? [],
       applicationId,
+      record.originalDocumentCollections?.[row.id],
     ),
   )
   const operationalStatus =
@@ -547,6 +578,19 @@ function findListingRow(applicationId: string): SingleApplicationRow | BulkBatch
   return singles.find(r => r.id === applicationId) ?? bulks.find(r => r.id === applicationId)
 }
 
+function findTravelerDocumentOverride(
+  record: ApplicationVerificationRecord,
+  travelerRowId: string,
+  documentId: string,
+): VerificationDocumentOverride | undefined {
+  return record.documentOverrides.find(
+    o =>
+      o.scope === 'traveler' &&
+      o.travelerRowId === travelerRowId &&
+      o.documentId === documentId,
+  )
+}
+
 export const applicationVerificationService = {
   getWorkspace(applicationId: string) {
     const listingRow = findListingRow(applicationId)
@@ -573,6 +617,7 @@ export const applicationVerificationService = {
     comment?: string,
   ) {
     const record = getRecord(applicationId)
+    const existing = findTravelerDocumentOverride(record, travelerRowId, documentId)
     const without = record.documentOverrides.filter(
       o =>
         !(
@@ -591,10 +636,97 @@ export const applicationVerificationService = {
           documentId,
           status,
           comment: comment?.trim() ? comment.trim() : undefined,
+          originalDocumentReceived: existing?.originalDocumentReceived,
           updatedAt: new Date().toISOString(),
         },
       ],
     }
+    saveRecord(next)
+    return this.getWorkspace(applicationId)
+  },
+
+  updateTravelerOriginalDocumentReceived(
+    applicationId: string,
+    travelerRowId: string,
+    documentId: string,
+    received: boolean,
+  ) {
+    const record = getRecord(applicationId)
+    const existing = findTravelerDocumentOverride(record, travelerRowId, documentId)
+    const workspace = this.getWorkspace(applicationId)
+    let status: ApplicantDocumentStatus = existing?.status ?? 'uploaded'
+    if (workspace.ok && workspace.detail) {
+      const row = workspace.detail.uploadQueueRows.find(r => r.id === travelerRowId)
+      const doc = row?.documents.find(d => d.documentId === documentId)
+      if (doc) status = doc.status
+    }
+    const without = record.documentOverrides.filter(
+      o =>
+        !(
+          o.scope === 'traveler' &&
+          o.travelerRowId === travelerRowId &&
+          o.documentId === documentId
+        ),
+    )
+    const next: ApplicationVerificationRecord = {
+      ...record,
+      documentOverrides: [
+        ...without,
+        {
+          scope: 'traveler',
+          travelerRowId,
+          documentId,
+          status,
+          comment: existing?.comment,
+          originalDocumentReceived: received,
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+    }
+    saveRecord(next)
+    return this.getWorkspace(applicationId)
+  },
+
+  updateTravelerOriginalCollection(
+    applicationId: string,
+    travelerRowId: string,
+    collection: OriginalDocumentCollectionState,
+  ) {
+    const record = getRecord(applicationId)
+    let documentOverrides = [...record.documentOverrides]
+
+    for (const item of collection.receivedDocuments) {
+      const existing = findTravelerDocumentOverride(record, travelerRowId, item.documentId)
+      documentOverrides = documentOverrides.filter(
+        o =>
+          !(
+            o.scope === 'traveler' &&
+            o.travelerRowId === travelerRowId &&
+            o.documentId === item.documentId
+          ),
+      )
+      if (item.received || existing) {
+        documentOverrides.push({
+          scope: 'traveler',
+          travelerRowId,
+          documentId: item.documentId,
+          status: existing?.status ?? 'uploaded',
+          comment: existing?.comment,
+          originalDocumentReceived: item.received,
+          updatedAt: new Date().toISOString(),
+        })
+      }
+    }
+
+    const next: ApplicationVerificationRecord = {
+      ...record,
+      originalDocumentCollections: {
+        ...(record.originalDocumentCollections ?? {}),
+        [travelerRowId]: collection,
+      },
+      documentOverrides,
+    }
+
     saveRecord(next)
     return this.getWorkspace(applicationId)
   },
@@ -649,6 +781,8 @@ export const applicationVerificationService = {
           travelerRowId,
           documentId,
           status: patch.status,
+          originalDocumentReceived: findTravelerDocumentOverride(record, travelerRowId, documentId)
+            ?.originalDocumentReceived,
           updatedAt: workflowPatch.updatedAt,
         },
       ]

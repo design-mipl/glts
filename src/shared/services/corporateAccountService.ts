@@ -3,6 +3,7 @@ import {
   setMockCorporateAccountsStore,
 } from '@/shared/data/mockCorporateAccounts'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
+import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
 import type {
   CorporateAccount,
   CorporateAccountActivity,
@@ -71,6 +72,8 @@ function formToAccount(data: CorporateAccountFormData): Omit<CorporateAccount, '
     workflowConfig: data.workflowConfig,
     superAdmin,
     admins: data.admins.map((a) => ({ ...a, id: generateAdminId() })),
+    assignedTeamId: data.assignedTeamId || undefined,
+    assignedUserIds: [...data.assignedUserIds],
     entityIds: data.entityIds,
     vesselIds: data.vesselIds,
     portalActivation: data.portalActivation,
@@ -109,6 +112,13 @@ export const corporateAccountService = {
   },
 
   accountToFormData(account: CorporateAccount): CorporateAccountFormData {
+    const assignedUserIds = [...(account.assignedUserIds ?? [])]
+    const assignedTeamId =
+      account.assignedTeamId ??
+      (assignedUserIds.length > 0
+        ? adminPortalUserService.getById(assignedUserIds[0])?.teamId ?? ''
+        : '')
+
     return {
       agreementId: account.agreementId,
       companyId: account.companyId,
@@ -133,6 +143,8 @@ export const corporateAccountService = {
         role: a.role,
         temporaryPassword: a.temporaryPassword,
       })),
+      assignedTeamId,
+      assignedUserIds,
       entityIds: [...account.entityIds],
       vesselIds: [...account.vesselIds],
       portalActivation: { ...account.portalActivation },
@@ -157,6 +169,8 @@ export const corporateAccountService = {
       },
       superAdmin: { fullName: '', phoneNumber: '', emailAddress: '', role: 'super_admin' },
       admins: [],
+      assignedTeamId: '',
+      assignedUserIds: [],
       entityIds: [],
       vesselIds: [],
       portalActivation: {

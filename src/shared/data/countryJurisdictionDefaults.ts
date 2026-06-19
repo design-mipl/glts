@@ -3,8 +3,15 @@ import type {
   CountryJurisdictionDocumentRule,
   CountryJurisdictionProcessingRules,
   CountryVisaJurisdiction,
+  DocumentOwnerType,
   JurisdictionDocumentGroup,
 } from '@/shared/types/countryMaster'
+
+const SEED_DOCUMENT_OWNER_TYPES: Partial<Record<string, DocumentOwnerType>> = {
+  passport: 'applicant',
+  'travel-ticket': 'company',
+  insurance: 'applicant',
+}
 
 export const DEFAULT_JURISDICTION_PROCESSING_RULES: CountryJurisdictionProcessingRules = {
   biometricsRequired: false,
@@ -33,6 +40,8 @@ export function checklistToJurisdictionDocuments(
     ocrEnabled: item.documentId === 'passport',
     multipleUpload: false,
     commonDocument: group === 'common',
+    originalDocument: false,
+    ownerType: SEED_DOCUMENT_OWNER_TYPES[item.documentId],
     description: item.description,
     acceptedFormats: item.documentId === 'photo' ? ['JPG', 'PNG'] : ['PDF', 'JPG', 'PNG'],
     validationRules: item.mandatory ? 'Required for submission' : undefined,
@@ -64,7 +73,7 @@ export function defaultJurisdictionsForVisa(
       name: 'Delhi',
       embassyOrVfs: `Chinese Embassy — ${countryName}`,
       submissionCenter: 'VFS Delhi',
-      processingTime: '8–12 business days',
+      processingTime: '10',
       priorityLevel: 'standard',
       status: 'active',
       applicableStates: ['Delhi', 'Haryana', 'Rajasthan', 'Uttar Pradesh'],
@@ -81,7 +90,7 @@ export function defaultJurisdictionsForVisa(
       name: 'Mumbai',
       embassyOrVfs: `Chinese Consulate — Mumbai`,
       submissionCenter: 'VFS Mumbai',
-      processingTime: '10–14 business days',
+      processingTime: '12',
       priorityLevel: 'standard',
       status: 'active',
       applicableStates: ['Maharashtra', 'Goa', 'Gujarat'],
@@ -110,7 +119,7 @@ export function singleJurisdictionForVisa(
     name,
     embassyOrVfs: `Chinese Embassy — ${countryName}`,
     submissionCenter: `VFS ${name}`,
-    processingTime: '10–14 business days',
+    processingTime: '12',
     priorityLevel: 'standard',
     status: 'active',
     applicableStates: ['All states'],

@@ -16,6 +16,7 @@ export interface DrawerProps {
   onClose: () => void
   title?: string
   subtitle?: string
+  headerExtra?: ReactNode
   children: ReactNode
   footer?: ReactNode
   anchor?: MuiDrawerProps['anchor']
@@ -32,6 +33,7 @@ export default function Drawer({
   onClose,
   title,
   subtitle,
+  headerExtra,
   children,
   footer,
   anchor = 'right',
@@ -75,12 +77,12 @@ export default function Drawer({
         },
       }}
     >
-      {(title || subtitle || !hideCloseButton) && (
+      {(title || subtitle || headerExtra || !hideCloseButton) && (
         <Box
           sx={{
             display: 'flex',
             gap: tokens.spacing[3],
-            alignItems: subtitle ? 'flex-start' : 'center',
+            alignItems: subtitle || headerExtra ? 'flex-start' : 'center',
             justifyContent: 'space-between',
             px: tokens.spacing[3],
             py: tokens.spacing[2],
@@ -88,7 +90,7 @@ export default function Drawer({
             backgroundColor: 'background.paper',
           }}
         >
-          <Box sx={{ minWidth: 0, pr: tokens.spacing[2] }}>
+          <Box sx={{ minWidth: 0, pr: tokens.spacing[2], flex: 1 }}>
             {title ? (
               <Typography component="h2" sx={overlayHeaderTitleSx}>
                 {title}
@@ -98,6 +100,11 @@ export default function Drawer({
               <Typography sx={{ ...overlayHeaderSubtitleSx, mt: tokens.spacing[1] }}>
                 {subtitle}
               </Typography>
+            ) : null}
+            {headerExtra ? (
+              <Box sx={{ mt: tokens.spacing[1.5], display: 'flex', flexWrap: 'wrap', gap: tokens.spacing[1] }}>
+                {headerExtra}
+              </Box>
             ) : null}
           </Box>
           {!hideCloseButton ? (

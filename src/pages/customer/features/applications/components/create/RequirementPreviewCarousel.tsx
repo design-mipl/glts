@@ -1,25 +1,43 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Box, Typography, Card, Stack, Chip, Button, Grid } from '@mui/material'
-import { Eye, AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Box, Typography, Card, Stack, Link, Divider, keyframes } from '@mui/material'
+import { ArrowLeft, FileSearch, FileText } from 'lucide-react'
+import { RichTextContent } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { DOCUMENT_OWNER_TYPE_LABELS } from '@/shared/constants/documentOwnerType'
+import type { DocumentOwnerType, RequirementPreviewCard } from '@/shared/types/countryMaster'
 import { CustomerTabs } from '@/pages/customer/features/shared/components/CustomerPrimitives'
-import type { RequirementPreviewCard } from '../../data/singleApplicationFlowData'
+import { DocumentRequirementTags } from '../DocumentRequirementTags'
 
 interface RequirementPreviewCarouselProps {
   cards: RequirementPreviewCard[]
+  requiresJurisdictionSelection?: boolean
 }
 
+const PLACEHOLDER_TAB_LABELS = ['Seafarer', 'Company', 'Shipping Agent', 'GLTS']
+
+const skeletonPulse = keyframes`
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.65; }
+`
+
 function tabLabel(card: RequirementPreviewCard): string {
+  if (card.ownerType) {
+    return DOCUMENT_OWNER_TYPE_LABELS[card.ownerType as DocumentOwnerType]
+  }
+  if (card.variant === 'glts') return 'GLTS'
   const labels: Record<RequirementPreviewCard['variant'], string> = {
-    crew: 'Crew documents',
-    shipping: 'Shipping company',
-    embassy: 'Embassy',
-    glts: 'GLTS scope',
+    crew: 'Seafarer',
+    shipping: 'Company',
+    embassy: 'Shipping Agent',
+    glts: 'GLTS',
   }
   return labels[card.variant] ?? card.title
 }
 
-export function RequirementPreviewCarousel({ cards }: RequirementPreviewCarouselProps) {
+export function RequirementPreviewCarousel({
+  cards,
+  requiresJurisdictionSelection = true,
+}: RequirementPreviewCarouselProps) {
   const colors = usePublicBrandColors()
   const [activeTab, setActiveTab] = useState(cards[0]?.id ?? '')
 
@@ -28,14 +46,14 @@ export function RequirementPreviewCarousel({ cards }: RequirementPreviewCarousel
       setActiveTab('')
       return
     }
-    if (!cards.some(card => card.id === activeTab)) {
+    if (!cards.some((card) => card.id === activeTab)) {
       setActiveTab(cards[0].id)
     }
   }, [cards, activeTab])
 
   const tabItems = useMemo(
     () =>
-      cards.map(card => ({
+      cards.map((card) => ({
         value: card.id,
         label: tabLabel(card),
       })),
@@ -44,39 +62,212 @@ export function RequirementPreviewCarousel({ cards }: RequirementPreviewCarousel
 
   if (cards.length === 0) {
     return (
-      <Card
-        sx={{
-          p: 2.5,
-          borderRadius: '14px',
-          border: `1px solid ${colors.border}`,
-          bgcolor: colors.surface,
-        }}
-      >
-        <Typography sx={{ fontSize: 13, color: colors.textSecondary, textAlign: 'center', lineHeight: 1.5 }}>
-          Requirement preview is unavailable until a visa type and purpose are selected on the previous step.
-        </Typography>
-      </Card>
+      <RequirementPreviewEmptyState
+        colors={colors}
+        requiresJurisdictionSelection={requiresJurisdictionSelection}
+      />
     )
   }
 
-  const card = cards.find(c => c.id === activeTab) ?? cards[0]
+  const card = cards.find((entry) => entry.id === activeTab) ?? cards[0]
 
   return (
-    <Box>
+    <RequirementPreviewSectionShell colors={colors}>
       <CustomerTabs value={activeTab} onChange={setActiveTab} items={tabItems} />
-
-      <Card
-        sx={{
-          p: { xs: 2, md: 2.5 },
-          borderRadius: '14px',
-          border: `1px solid ${colors.border}`,
-          boxShadow: '0 1px 3px rgba(15,23,42,0.06)',
-          minHeight: card.variant === 'glts' ? 0 : 280,
-        }}
+      <RequirementPreviewContentShell
+        colors={colors}
+        minHeight={card.variant === 'glts' ? 0 : 220}
       >
         <RequirementPreviewCardPanel card={card} colors={colors} />
-      </Card>
+      </RequirementPreviewContentShell>
+    </RequirementPreviewSectionShell>
+  )
+}
+
+function RequirementPreviewContentShell({
+  colors,
+  children,
+  minHeight = 220,
+  dashed = false,
+}: {
+  colors: ReturnType<typeof usePublicBrandColors>
+  children: ReactNode
+  minHeight?: number
+  dashed?: boolean
+}) {
+  return (
+    <Box
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight,
+        mt: 1,
+        overflow: 'auto',
+        borderRadius: '10px',
+        border: `1px ${dashed ? 'dashed' : 'solid'} ${colors.border}`,
+        bgcolor: colors.white,
+        px: { xs: 1.5, md: 2 },
+        py: { xs: 1.25, md: 1.5 },
+      }}
+    >
+      {children}
     </Box>
+  )
+}
+
+function RequirementPreviewSectionShell({
+  colors,
+  children,
+}: {
+  colors: ReturnType<typeof usePublicBrandColors>
+  children: ReactNode
+}) {
+  return (
+    <Card
+      sx={{
+        p: { xs: 1.25, md: 1.5 },
+        borderRadius: '12px',
+        border: `1px solid ${colors.border}`,
+        bgcolor: colors.surface,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <Typography
+        sx={{
+          fontSize: 12,
+          fontWeight: 700,
+          color: colors.textSecondary,
+          textTransform: 'uppercase',
+          mb: 0.75,
+        }}
+      >
+        Document requirements
+      </Typography>
+      <Divider sx={{ borderColor: colors.border, mb: 1 }} />
+      {children}
+    </Card>
+  )
+}
+
+function RequirementPreviewEmptyState({
+  colors,
+  requiresJurisdictionSelection = true,
+}: {
+  colors: ReturnType<typeof usePublicBrandColors>
+  requiresJurisdictionSelection?: boolean
+}) {
+  return (
+    <RequirementPreviewSectionShell colors={colors}>
+      <Stack
+        direction="row"
+        spacing={2}
+        flexWrap="wrap"
+        useFlexGap
+        sx={{
+          mb: 1.5,
+          pb: 1,
+          borderBottom: `1px solid ${colors.border}`,
+          opacity: 0.55,
+          pointerEvents: 'none',
+          userSelect: 'none',
+        }}
+      >
+        {PLACEHOLDER_TAB_LABELS.map((label, index) => (
+          <Typography
+            key={label}
+            sx={{
+              fontSize: 13,
+              fontWeight: index === 0 ? 700 : 500,
+              color: index === 0 ? colors.navy : colors.textMuted,
+              borderBottom: index === 0 ? `2px solid ${colors.navy}` : '2px solid transparent',
+              pb: 0.75,
+            }}
+          >
+            {label}
+          </Typography>
+        ))}
+      </Stack>
+
+      <RequirementPreviewContentShell colors={colors} minHeight={280} dashed>
+        <Stack alignItems="center" textAlign="center" spacing={1.25} sx={{ py: 2.5, px: 1 }}>
+          <Box
+            sx={{
+              width: 52,
+              height: 52,
+              borderRadius: '14px',
+              display: 'grid',
+              placeItems: 'center',
+              bgcolor: colors.greenMuted,
+              color: colors.greenDark,
+            }}
+          >
+            <FileSearch size={24} />
+          </Box>
+          <Typography sx={{ fontSize: 15, fontWeight: 800, color: colors.navy, lineHeight: 1.35 }}>
+            Document requirements preview
+          </Typography>
+          <Typography sx={{ fontSize: 12, color: colors.textSecondary, maxWidth: 300, lineHeight: 1.5 }}>
+            {requiresJurisdictionSelection
+              ? 'Choose an issued passport state on the left to load jurisdiction-specific documents, samples, and GLTS scope.'
+              : 'Document requirements for this visa type will appear here once configured in country master.'}
+          </Typography>
+          {requiresJurisdictionSelection ? (
+            <Stack
+              direction="row"
+              spacing={0.5}
+              alignItems="center"
+              sx={{
+                mt: 0.5,
+                px: 1.25,
+                py: 0.75,
+                borderRadius: '999px',
+                bgcolor: colors.surfaceAlt,
+                border: `1px solid ${colors.border}`,
+              }}
+            >
+              <ArrowLeft size={14} color={colors.textMuted} />
+              <Typography sx={{ fontSize: 11, fontWeight: 600, color: colors.textMuted }}>
+                Start with passport state
+              </Typography>
+            </Stack>
+          ) : null}
+        </Stack>
+
+        <Stack spacing={1} sx={{ px: 0.5, pb: 0.5, flex: 1 }}>
+          {[0, 1, 2].map((index) => (
+            <Box
+              key={index}
+              sx={{
+                py: 1.25,
+                px: 1.25,
+                borderRadius: '10px',
+                border: `1px dashed ${colors.border}`,
+                bgcolor: colors.white,
+                animation: `${skeletonPulse} 2.4s ease-in-out infinite`,
+                animationDelay: `${index * 0.35}s`,
+              }}
+            >
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
+                <Box
+                  sx={{
+                    width: `${58 - index * 6}%`,
+                    height: 10,
+                    borderRadius: '4px',
+                    bgcolor: colors.surfaceAlt,
+                  }}
+                />
+                <Box sx={{ width: 52, height: 16, borderRadius: '999px', bgcolor: colors.surfaceAlt }} />
+              </Stack>
+              <Box sx={{ width: '92%', height: 8, borderRadius: '4px', bgcolor: colors.surfaceAlt, mb: 0.5 }} />
+              <Box sx={{ width: '72%', height: 8, borderRadius: '4px', bgcolor: colors.surfaceAlt }} />
+            </Box>
+          ))}
+        </Stack>
+      </RequirementPreviewContentShell>
+    </RequirementPreviewSectionShell>
   )
 }
 
@@ -87,105 +278,77 @@ function RequirementPreviewCardPanel({
   card: RequirementPreviewCard
   colors: ReturnType<typeof usePublicBrandColors>
 }) {
+  if (card.variant === 'glts' && card.gltsScopeHtml) {
+    return <GltsScopeRichTextPanel content={card.gltsScopeHtml} colors={colors} />
+  }
+
   return (
     <>
-      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1} sx={{ mb: 1.5 }}>
-        <Box>
-          <Typography sx={{ fontWeight: 800, fontSize: '16px', color: colors.navy }}>{card.title}</Typography>
-          {card.arrangedBy && (
-            <Chip
-              label={`Arranged by: ${card.arrangedBy}`}
-              size="small"
-              sx={{ mt: 1, height: 22, fontSize: 11, fontWeight: 700, bgcolor: colors.surfaceAlt }}
-            />
-          )}
-        </Box>
-      </Stack>
+      {card.alertNote ? (
+        <Typography sx={{ fontSize: 12, color: colors.textSecondary, mb: 1.5, lineHeight: 1.45, px: 1.5 }}>
+          {card.alertNote}
+        </Typography>
+      ) : null}
 
-      {card.alertNote && (
+      {card.documents ? (
         <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            mb: 2,
-            p: 1.25,
-            borderRadius: '10px',
-            bgcolor: 'rgba(245, 158, 11, 0.12)',
-            border: '1px solid rgba(245, 158, 11, 0.28)',
-          }}
+          spacing={0}
+          divider={<Divider sx={{ borderColor: colors.border }} />}
+          sx={{ px: 1.5 }}
         >
-          <AlertTriangle size={16} color="#B45309" style={{ flexShrink: 0, marginTop: 2 }} />
-          <Typography sx={{ fontSize: 12, color: '#92400E', lineHeight: 1.45 }}>{card.alertNote}</Typography>
-        </Stack>
-      )}
+          {card.documents.map((doc) => (
+            <Stack key={doc.id} spacing={0.75} sx={{ py: 1.25 }}>
+              <Stack direction="row" alignItems="center" spacing={0.75} flexWrap="wrap">
+                <Typography sx={{ fontSize: 13, fontWeight: 700, color: colors.navy }}>{doc.name}</Typography>
+                <DocumentRequirementTags
+                  mandatory={doc.mandatory}
+                  originalDocument={doc.originalDocument}
+                />
+              </Stack>
 
-      {card.documents && (
-        <Stack spacing={1}>
-          {card.documents.map(doc => (
-            <Stack
-              key={doc.id}
-              direction="row"
-              alignItems="center"
-              spacing={1}
-              sx={{
-                py: 1,
-                px: 1.25,
-                borderRadius: '10px',
-                border: `1px solid ${colors.border}`,
-                bgcolor: colors.surface,
-              }}
-            >
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Stack direction="row" alignItems="center" spacing={0.75} flexWrap="wrap">
-                  <Typography sx={{ fontSize: 13, fontWeight: 700, color: colors.navy }}>{doc.name}</Typography>
-                  <Chip
-                    label={doc.mandatory ? 'Mandatory' : 'Optional'}
-                    size="small"
-                    sx={{
-                      height: 20,
-                      fontSize: 10,
-                      fontWeight: 700,
-                      bgcolor: doc.mandatory ? colors.greenMuted : colors.surfaceAlt,
-                      color: doc.mandatory ? colors.greenDark : colors.textMuted,
-                    }}
-                  />
+              {doc.description ? (
+                <Box
+                  sx={{
+                    '& p, & li': { fontSize: 12, color: colors.textSecondary, m: 0, lineHeight: 1.45 },
+                    '& ul, & ol': { m: 0, pl: 2.25 },
+                  }}
+                >
+                  <RichTextContent content={doc.description} />
+                </Box>
+              ) : doc.remarks ? (
+                <Typography sx={{ fontSize: 12, color: colors.textSecondary, lineHeight: 1.45 }}>
+                  {doc.remarks}
+                </Typography>
+              ) : null}
+
+              {doc.hasSample && doc.sampleDocumentName && doc.sampleDocumentUrl ? (
+                <Stack direction="row" spacing={0.75} alignItems="center">
+                  <FileText size={13} color={colors.textMuted} />
+                  <Typography sx={{ fontSize: 12, color: colors.textSecondary }}>Sample:</Typography>
+                  <Link
+                    href={doc.sampleDocumentUrl}
+                    download={doc.sampleDocumentName}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ fontSize: 12, fontWeight: 500 }}
+                  >
+                    {doc.sampleDocumentName}
+                  </Link>
                 </Stack>
-                {doc.remarks && (
-                  <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.25 }}>{doc.remarks}</Typography>
-                )}
-              </Box>
-              {doc.hasSample && (
-                <Button startIcon={<Eye size={14} />} sx={{ textTransform: 'none' }}>
-                  Sample
-                </Button>
-              )}
-              <Chip label="Guidance only" size="small" variant="outlined" sx={{ height: 22, fontSize: 10 }} />
+              ) : null}
             </Stack>
           ))}
         </Stack>
-      )}
-
-      {card.scopeItems && card.variant === 'glts' && <GltsScopePanel items={card.scopeItems} colors={colors} />}
-
-      {card.scopeItems && card.variant !== 'glts' && (
-        <Stack spacing={1}>
-          {card.scopeItems.map(item => (
-            <Stack key={item} direction="row" spacing={1} alignItems="center">
-              <CheckCircle2 size={16} color={colors.greenBright} />
-              <Typography sx={{ fontSize: 13, fontWeight: 600, color: colors.navy }}>{item}</Typography>
-            </Stack>
-          ))}
-        </Stack>
-      )}
+      ) : null}
     </>
   )
 }
 
-function GltsScopePanel({
-  items,
+function GltsScopeRichTextPanel({
+  content,
   colors,
 }: {
-  items: string[]
+  content: string
   colors: ReturnType<typeof usePublicBrandColors>
 }) {
   return (
@@ -202,51 +365,24 @@ function GltsScopePanel({
           border: `1px solid ${colors.greenBright}33`,
         }}
       >
-        <Sparkles size={16} color={colors.greenBright} />
         <Typography sx={{ fontSize: 12, fontWeight: 700, color: colors.greenDark, lineHeight: 1.4 }}>
-          GLTS manages the full application lifecycle for this visa.
+          GLTS service scope for this jurisdiction
         </Typography>
       </Stack>
 
-      <Grid container spacing={1}>
-        {items.map((item, i) => (
-          <Grid size={{ xs: 12, sm: 6 }} key={item}>
-            <Stack
-              direction="row"
-              alignItems="flex-start"
-              spacing={1}
-              sx={{
-                height: '100%',
-                p: 1.25,
-                borderRadius: '10px',
-                border: `1px solid ${colors.border}`,
-                bgcolor: colors.surface,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: '6px',
-                  bgcolor: colors.greenMuted,
-                  color: colors.greenDark,
-                  fontSize: 11,
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                {i + 1}
-              </Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, color: colors.navy, lineHeight: 1.35, minWidth: 0 }}>
-                {item}
-              </Typography>
-            </Stack>
-          </Grid>
-        ))}
-      </Grid>
+      <Box
+        sx={{
+          p: 1.5,
+          borderRadius: '10px',
+          border: `1px solid ${colors.border}`,
+          bgcolor: colors.white,
+          '& p': { fontSize: 13, color: colors.navy, m: 0, mb: 0.75, lineHeight: 1.45 },
+          '& ul': { m: 0, pl: 2.5 },
+          '& li': { fontSize: 13, color: colors.navy, lineHeight: 1.45 },
+        }}
+      >
+        <RichTextContent content={content} />
+      </Box>
     </Stack>
   )
 }

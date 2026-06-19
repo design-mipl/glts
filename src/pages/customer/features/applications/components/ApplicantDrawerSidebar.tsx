@@ -2,6 +2,13 @@ import { Stack, Typography } from '@mui/material'
 import type { ApplicantAdditionalDetails } from '../config/applicantAdditionalDetailsConfig'
 import type { ApplicantBasicDetails } from '../config/applicantBasicDetailsConfig'
 import type { ApplicantDocumentItem } from '../data/applicationFlowData'
+import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
+import { PHYSICAL_DOCUMENTS_LABEL } from '@/shared/constants/documentRequirementLabels'
+import {
+  originalCollectionCollapsedHint,
+  originalCollectionSummaryLabel,
+  originalCollectionSummaryVariant,
+} from '@/shared/utils/originalDocumentCollectionUtils'
 import {
   ApplicantAdditionalDetailsCollapsedHint,
   ApplicantAdditionalDetailsNavPreview,
@@ -16,9 +23,10 @@ import {
   drawerNavSummaryPill,
   type DrawerNavSummaryVariant,
 } from './ApplicantDrawerNavSection'
+import { OriginalDocumentChecklistNav } from './originalCollection/OriginalDocumentChecklistNav'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 
-export type ApplicantDrawerSection = 'basic' | 'documents' | 'additional'
+export type ApplicantDrawerSection = 'basic' | 'documents' | 'original' | 'additional'
 
 interface ApplicantDrawerSidebarProps {
   activeSection: ApplicantDrawerSection
@@ -31,6 +39,10 @@ interface ApplicantDrawerSidebarProps {
   documentsComplete: number
   documentsTotal: number
   onDocumentSelect: (documentId: string) => void
+  showOriginalSection: boolean
+  originalCollection?: OriginalDocumentCollectionState
+  onOriginalDocumentToggle: (documentId: string, received: boolean) => void
+  documentsReadOnly?: boolean
   additionalDetails: ApplicantAdditionalDetails
   additionalStatusLabel: string
 }
@@ -58,12 +70,25 @@ export function ApplicantDrawerSidebar({
   documentsComplete,
   documentsTotal,
   onDocumentSelect,
+  showOriginalSection,
+  originalCollection,
+  onOriginalDocumentToggle,
+  documentsReadOnly = false,
   additionalDetails,
   additionalStatusLabel,
 }: ApplicantDrawerSidebarProps) {
   const colors = usePublicBrandColors()
 
   const documentsActive = activeSection === 'documents'
+  const originalActive = activeSection === 'original'
+  const additionalStep = showOriginalSection ? 4 : 3
+
+  const originalSummary = originalCollection
+    ? originalCollectionSummaryLabel(originalCollection)
+    : 'Not started'
+  const originalVariant = originalCollection
+    ? originalCollectionSummaryVariant(originalCollection)
+    : 'neutral'
 
   return (
     <Stack
@@ -95,7 +120,7 @@ export function ApplicantDrawerSidebar({
 
       <ApplicantDrawerNavSection
         step={2}
-        title="Document checklist"
+        title="Document check"
         selected={documentsActive}
         expanded={documentsActive}
         fillAvailableHeight={documentsActive}
@@ -120,8 +145,30 @@ export function ApplicantDrawerSidebar({
         />
       </ApplicantDrawerNavSection>
 
+      {showOriginalSection && originalCollection ? (
+        <ApplicantDrawerNavSection
+          step={3}
+          title={PHYSICAL_DOCUMENTS_LABEL}
+          selected={originalActive}
+          expanded={originalActive}
+          onSelect={() => onSectionChange('original')}
+          summary={drawerNavSummaryPill(originalSummary, colors, originalVariant)}
+          collapsedHint={
+            <Typography sx={{ fontSize: 11.5, color: colors.textMuted, lineHeight: 1.4 }}>
+              {originalCollectionCollapsedHint(originalCollection)}
+            </Typography>
+          }
+        >
+          <OriginalDocumentChecklistNav
+            items={originalCollection.receivedDocuments}
+            onToggle={onOriginalDocumentToggle}
+            readOnly={documentsReadOnly}
+          />
+        </ApplicantDrawerNavSection>
+      ) : null}
+
       <ApplicantDrawerNavSection
-        step={3}
+        step={additionalStep}
         title="Additional details"
         selected={activeSection === 'additional'}
         expanded={activeSection === 'additional'}

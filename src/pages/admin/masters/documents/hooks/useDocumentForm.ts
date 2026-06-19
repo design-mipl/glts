@@ -1,10 +1,18 @@
 import { useMemo, useState } from 'react'
-import type { DocumentMasterFormData } from '@/shared/types/documentMaster'
+import type { DocumentMaster, DocumentMasterFormData } from '@/shared/types/documentMaster'
 
 export const INITIAL_DOCUMENT_FORM: DocumentMasterFormData = {
   documentType: '',
   description: '',
   status: 'inactive',
+}
+
+export function documentToFormData(row: DocumentMaster): DocumentMasterFormData {
+  return {
+    documentType: row.documentType,
+    description: row.description,
+    status: row.status,
+  }
 }
 
 export function useDocumentForm(initialData?: DocumentMasterFormData) {

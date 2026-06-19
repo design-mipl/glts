@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import type { FoundationBreakpointKey } from '../../breakpoints'
+import type { ListingColumnWidthSize } from '../../listingColumnWidths'
 
 export type SortDirection = 'asc' | 'desc' | null
 
@@ -21,6 +22,8 @@ export type Column<T = any> = {
   type?: ColumnType
   width?: number | string
   minWidth?: number
+  /** Standard listing width token — preferred over ad-hoc `width` / `minWidth` in admin listings. */
+  widthSize?: ListingColumnWidthSize
   sortable?: boolean
   filterable?: boolean
   searchable?: boolean

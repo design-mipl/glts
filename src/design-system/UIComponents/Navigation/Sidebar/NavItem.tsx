@@ -44,6 +44,8 @@ export default function NavItem({
   const fontSize = isSubItem ? '12.5px' : '13px'
   const fontWeight = active ? 600 : isSubItem ? 400 : 450
 
+  const collapsedTopLevel = collapsed && !isSubItem
+
   const rootSx = {
     display: isSubItem ? 'grid' : 'flex',
     gridTemplateColumns: isSubItem
@@ -51,9 +53,14 @@ export default function NavItem({
       : undefined,
     columnGap: isSubItem ? `${NAV_ITEM_GAP_PX}px` : undefined,
     alignItems: 'center',
-    gap: isSubItem ? undefined : `${NAV_ITEM_GAP_PX}px`,
-    px: `${NAV_ITEM_PX_PX}px`,
-    ...(!isSubItem && { mx: `${NAV_ITEM_MX_PX}px` }),
+    gap: collapsedTopLevel ? 0 : isSubItem ? undefined : `${NAV_ITEM_GAP_PX}px`,
+    px: collapsedTopLevel ? 0 : `${NAV_ITEM_PX_PX}px`,
+    ...(!isSubItem && !collapsedTopLevel && { mx: `${NAV_ITEM_MX_PX}px` }),
+    ...(collapsedTopLevel && {
+      justifyContent: 'center',
+      width: 32,
+      mx: 'auto',
+    }),
     height,
     borderRadius: isSubItem ? BORDER_RADIUS.sm : tokens.borderRadius.md,
     ...(isSubItem && {
@@ -81,7 +88,7 @@ export default function NavItem({
         ? (isSubItem ? theme.palette.primary.main : navigation.activeText)
         : navigation.textPrimary,
     },
-    ...(!isSubItem && { width: '100%' }),
+    ...(!isSubItem && !collapsedTopLevel && { width: '100%' }),
     minWidth: 0,
     boxSizing: 'border-box' as const,
   }
@@ -173,13 +180,11 @@ export default function NavItem({
   const labelEl = (
     <Box
       sx={{
-        display: 'flex',
+        display: collapsed ? 'none' : 'flex',
         alignItems: 'center',
         flex: 1,
         minWidth: 0,
         overflow: 'hidden',
-        opacity: collapsed ? 0 : 1,
-        transition: `opacity ${tokens.transition.normal}`,
         whiteSpace: 'nowrap',
       }}
     >

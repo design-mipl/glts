@@ -202,5 +202,6 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
     externallySubmitted,
     timelineSteps,
     completedStepIds: assistRecord?.completedStepIds ?? [],
+    reload,
   }
 }

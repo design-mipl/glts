@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { Stack } from '@mui/material'
 import { Plus } from 'lucide-react'
-import { Button, FormField, Input, MultiSelect, Select, Toggle } from '@/design-system/UIComponents'
+import { Button, FormField, Input, MultiSelect, RichTextEditor, Select, Toggle } from '@/design-system/UIComponents'
 import { AdminFormSectionsLayout } from '@/pages/admin/components/AdminFormSectionsLayout'
 import { AdminOverlayFormSection } from '@/pages/admin/components/AdminOverlayFormSection'
 import type { AdminFullPageFormSection } from '@/pages/admin/components/AdminFullPageFormShell'
+import {
+  GLTS_SCOPE_RICH_TEXT_MIN_HEIGHT,
+  GLTS_SCOPE_RICH_TEXT_TOOLBAR,
+} from '../../../config/documentDescriptionRichText'
 import { COUNTRY_WORKSPACE_LAYOUT } from '../../../config/countryWorkspaceLayout'
+import { normalizeGltsScopeRichText, normalizeRichTextForSave } from '@/shared/utils/richTextUtils'
+import { PHYSICAL_DOCUMENTS_REQUIRED_LABEL } from '@/shared/constants/documentRequirementLabels'
 import { generateDocumentRuleId } from '@/shared/data/countryJurisdictionDefaults'
 import { countryMasterAdminService } from '@/shared/services/countryMasterAdminService'
 import type {
@@ -51,6 +57,7 @@ function buildReorderedDocumentIds(
 }
 
 interface JurisdictionDocumentSectionProps {
+  segment: BusinessSegment
   title: string
   group: JurisdictionDocumentGroup
   allDocuments: CountryJurisdictionDocumentRule[]
@@ -63,6 +70,7 @@ interface JurisdictionDocumentSectionProps {
 }
 
 function JurisdictionDocumentSection({
+  segment,
   title,
   group,
   allDocuments,
@@ -83,7 +91,7 @@ function JurisdictionDocumentSection({
       headerAction={
         readOnly ? undefined : (
           <Button
-            label="Add From Document Master"
+            label="Add document"
             size="sm"
             startIcon={<Plus size={14} />}
             onClick={onAdd}
@@ -92,6 +100,7 @@ function JurisdictionDocumentSection({
       }
     >
       <DocumentCardList
+        segment={segment}
         rules={rules}
         onChange={onChange}
         onDuplicate={onDuplicate}
@@ -103,6 +112,7 @@ function JurisdictionDocumentSection({
   )
 }
 import { INDIAN_STATE_SELECT_OPTIONS } from '../../../config/indianStates'
+import { parseJurisdictionProcessingDays } from '../../../utils/jurisdictionProcessingTime'
 import { DocumentCardList } from '../DocumentCardList'
 import { AddDocumentModal } from '../drawers/AddDocumentModal'
 import { useCountryWorkspaceMode } from '../countryWorkspaceModeContext'
@@ -185,8 +195,14 @@ export function JurisdictionPanel({
           <FormField label="Submission Center">
             <Input value={jurisdiction.submissionCenter} onChange={(v) => patchJurisdiction({ submissionCenter: v })} size="sm" readonly={readOnly} />
           </FormField>
-          <FormField label="Processing Time">
-            <Input value={jurisdiction.processingTime} onChange={(v) => patchJurisdiction({ processingTime: v })} size="sm" readonly={readOnly} />
+          <FormField label="Processing Time (days)">
+            <Input
+              type="number"
+              value={parseJurisdictionProcessingDays(jurisdiction.processingTime)}
+              onChange={(v) => patchJurisdiction({ processingTime: v.trim() })}
+              size="sm"
+              readonly={readOnly}
+            />
           </FormField>
           <FormField label="Status">
             <Select
@@ -252,7 +268,7 @@ export function JurisdictionPanel({
         <Toggle
           checked={jurisdiction.processingRules.originalDocumentsRequired}
           onChange={(v) => patchJurisdiction({ processingRules: { ...jurisdiction.processingRules, originalDocumentsRequired: v } })}
-          label="Original Documents Required"
+          label={PHYSICAL_DOCUMENTS_REQUIRED_LABEL}
           disabled={readOnly}
         />
         <Toggle
@@ -264,6 +280,7 @@ export function JurisdictionPanel({
       </AdminOverlayFormSection>
 
       <JurisdictionDocumentSection
+        segment={segment}
         title="Jurisdiction Specific Documents"
         group="jurisdiction"
         allDocuments={jurisdiction.documents}
@@ -306,11 +323,29 @@ export function JurisdictionPanel({
         }}
       />
 
+      <AdminOverlayFormSection
+        title="GLTS Scope (optional)"
+        importance="secondary"
+        columns={1}
+      >
+        <RichTextEditor
+          value={normalizeGltsScopeRichText(jurisdiction.gltsScope ?? '')}
+          onChange={(v) =>
+            patchJurisdiction({ gltsScope: normalizeRichTextForSave(normalizeGltsScopeRichText(v)) })
+          }
+          placeholder="e.g. Document verification, appointment booking, embassy submission, and status tracking"
+          minHeight={GLTS_SCOPE_RICH_TEXT_MIN_HEIGHT}
+          toolbar={GLTS_SCOPE_RICH_TEXT_TOOLBAR}
+          disabled={readOnly}
+        />
+      </AdminOverlayFormSection>
+
       <AddDocumentModal
         open={addDocOpen}
+        segment={segment}
         group="jurisdiction"
         onClose={() => setAddDocOpen(false)}
-        onAdd={({ documentId, description }) => {
+        onSubmit={({ documentId, description, ownerType, sampleDocument }) => {
           countryMasterAdminService.addJurisdictionDocumentFromMaster(
             countryId,
             segment,
@@ -319,6 +354,8 @@ export function JurisdictionPanel({
             documentId,
             'jurisdiction',
             description,
+            ownerType,
+            sampleDocument,
           )
           onRefresh()
           setAddDocOpen(false)

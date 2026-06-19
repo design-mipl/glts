@@ -17,6 +17,7 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Button as DsButton } from '@/design-system/UIComponents'
 import { useScrolledHeader } from '../hooks/useScrolledHeader'
+import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, publicShadows, usePublicBrandColors } from '../theme/publicSiteTokens'
 import { PublicContainer } from './PublicContainer'
 
@@ -149,7 +150,7 @@ export function PublicHeader() {
             >
               <Box
                 component="img"
-                src="/greenlight_logo.jpg"
+                src={GREENLIGHT_LOGO_SRC}
                 alt="Greenlight Travel Solutions"
                 sx={{
                   height: { xs: 34, md: 40 },
@@ -271,7 +272,7 @@ export function PublicHeader() {
             borderBottom: `1px solid ${colors.border}`,
           }}
         >
-          <Box component="img" src="/greenlight_logo.jpg" alt="" sx={{ height: 36 }} />
+          <Box component="img" src={GREENLIGHT_LOGO_SRC} alt="" sx={{ height: 36 }} />
           <IconButton size="small" onClick={() => setDrawerOpen(false)} aria-label="Close menu">
             <X size={20} />
           </IconButton>
@@ -373,7 +374,7 @@ export function PublicHeader() {
           </Button>
           <Button
             component="a"
-            href="/countries"
+            href="/apply/new"
             fullWidth
             variant="contained"
             endIcon={<ArrowRight size={18} />}
