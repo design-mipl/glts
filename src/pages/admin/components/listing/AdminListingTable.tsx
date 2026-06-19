@@ -72,7 +72,7 @@ export function AdminListingTable<T extends object>({
   }, [activeFilterColumn, filterSourceData, getCellValue])
 
   return (
-    <Box sx={{ overflowX: 'auto' }}>
+    <Box sx={{ width: '100%', overflowX: 'auto' }}>
       <DataTable
         columns={columns}
         enableColumnSort={enableColumnSort}

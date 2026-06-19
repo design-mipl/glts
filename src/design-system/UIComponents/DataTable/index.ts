@@ -59,6 +59,7 @@ export {
   ACTION_COLUMN_WIDTH,
   CHECKBOX_COLUMN_WIDTH,
   DEFAULT_COLUMN_MIN_WIDTH,
+  getDataTableColWidth,
   getDataTableColumnWidthSx,
   getDataTableLayoutWidth,
   resolveColumnWidthPx,
