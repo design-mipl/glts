@@ -1,5 +1,15 @@
-import { Checkbox, FormField, Input } from '@/design-system/UIComponents'
+import { Box, Typography } from '@mui/material'
+import { useMemo } from 'react'
+import { FormField, Select } from '@/design-system/UIComponents'
+import { taxMasterService } from '@/shared/services/taxMasterService'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
+import {
+  AGREEMENT_TAX_APPLICABLE_OPTIONS,
+  resolveAgreementGstRateId,
+  resolveAgreementTdsSectionId,
+  syncAgreementGstFromRateId,
+  syncAgreementTdsFromSectionId,
+} from '../../utils/agreementTaxUtils'
 import { agreementFieldError } from '../agreementFormLayout'
 
 interface AgreementTaxConfigSectionProps {
@@ -15,53 +25,115 @@ export function AgreementTaxConfigSection({
   onChange,
   readOnly = false,
 }: AgreementTaxConfigSectionProps) {
+  const { billingConfig } = data
+  const gstOptions = useMemo(() => taxMasterService.listActiveGstOptions(), [])
+  const tdsOptions = useMemo(() => taxMasterService.listActiveTdsOptions(), [])
+
+  const gstRateId = resolveAgreementGstRateId(billingConfig)
+  const tdsSectionId = resolveAgreementTdsSectionId(billingConfig)
+
   const updateBilling = (patch: Partial<CommercialAgreementFormData['billingConfig']>) => {
-    onChange({ ...data, billingConfig: { ...data.billingConfig, ...patch } })
+    onChange({ ...data, billingConfig: { ...billingConfig, ...patch } })
   }
 
   if (readOnly) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
-        <div>GST applicable: {data.billingConfig.gstApplicable ? 'Yes' : 'No'}</div>
-        <div>GST %: {data.billingConfig.gstPercentage}</div>
-        <div>TDS applicable: {data.billingConfig.tdsApplicable ? 'Yes' : 'No'}</div>
-        <div>TDS %: {data.billingConfig.tdsPercentage}</div>
-      </div>
+      <Box
+        sx={{
+          pl: 2,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+          gap: 2,
+        }}
+      >
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          GST applicable: {billingConfig.gstApplicable ? 'Yes' : 'No'}
+        </Typography>
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          GST rate:{' '}
+          {billingConfig.gstApplicable
+            ? taxMasterService.getGstLabel(gstRateId) || `${billingConfig.gstPercentage}%`
+            : '—'}
+        </Typography>
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          TDS applicable: {billingConfig.tdsApplicable ? 'Yes' : 'No'}
+        </Typography>
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          TDS section:{' '}
+          {billingConfig.tdsApplicable
+            ? taxMasterService.getTdsLabel(tdsSectionId) || `${billingConfig.tdsPercentage}%`
+            : '—'}
+        </Typography>
+      </Box>
     )
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
-      <Checkbox
-        label="GST applicable"
-        checked={data.billingConfig.gstApplicable}
-        onChange={(checked) => updateBilling({ gstApplicable: checked })}
-      />
-      <FormField label="GST percentage" {...agreementFieldError(errors, 'gstPercentage')}>
-        <Input
-          type="number"
-          value={String(data.billingConfig.gstPercentage)}
-          onChange={(v) => updateBilling({ gstPercentage: Number(v) || 0 })}
-          placeholder="Enter GST percentage"
+    <Box
+      sx={{
+        pl: 2,
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+        gap: 2,
+      }}
+    >
+      <FormField label="GST applicable" required>
+        <Select
+          value={billingConfig.gstApplicable ? 'yes' : 'no'}
+          onChange={(v) => {
+            const applicable = String(v) === 'yes'
+            if (!applicable) {
+              updateBilling({ gstApplicable: false, gstPercentage: 0 })
+              return
+            }
+            const defaultRateId = gstRateId || String(gstOptions[0]?.value ?? '')
+            updateBilling(syncAgreementGstFromRateId(defaultRateId))
+          }}
+          options={[...AGREEMENT_TAX_APPLICABLE_OPTIONS]}
+          placeholder="Select option"
           fullWidth
-          disabled={!data.billingConfig.gstApplicable}
         />
       </FormField>
-      <Checkbox
-        label="TDS applicable"
-        checked={data.billingConfig.tdsApplicable}
-        onChange={(checked) => updateBilling({ tdsApplicable: checked })}
-      />
-      <FormField label="TDS percentage" {...agreementFieldError(errors, 'tdsPercentage')}>
-        <Input
-          type="number"
-          value={String(data.billingConfig.tdsPercentage)}
-          onChange={(v) => updateBilling({ tdsPercentage: Number(v) || 0 })}
-          placeholder="Enter TDS percentage"
+
+      <FormField label="GST rate" required {...agreementFieldError(errors, 'gstPercentage')}>
+        <Select
+          value={gstRateId}
+          onChange={(v) => updateBilling(syncAgreementGstFromRateId(String(v)))}
+          options={gstOptions}
+          placeholder="Select GST rate"
           fullWidth
-          disabled={!data.billingConfig.tdsApplicable}
+          disabled={!billingConfig.gstApplicable}
         />
       </FormField>
-    </div>
+
+      <FormField label="TDS applicable" required>
+        <Select
+          value={billingConfig.tdsApplicable ? 'yes' : 'no'}
+          onChange={(v) => {
+            const applicable = String(v) === 'yes'
+            if (!applicable) {
+              updateBilling({ tdsApplicable: false, tdsPercentage: 0 })
+              return
+            }
+            const defaultSectionId = tdsSectionId || String(tdsOptions[0]?.value ?? '')
+            updateBilling(syncAgreementTdsFromSectionId(defaultSectionId))
+          }}
+          options={[...AGREEMENT_TAX_APPLICABLE_OPTIONS]}
+          placeholder="Select option"
+          fullWidth
+        />
+      </FormField>
+
+      <FormField label="TDS section" {...agreementFieldError(errors, 'tdsPercentage')}>
+        <Select
+          value={tdsSectionId}
+          onChange={(v) => updateBilling(syncAgreementTdsFromSectionId(String(v)))}
+          options={tdsOptions}
+          placeholder="Select TDS section"
+          fullWidth
+          disabled={!billingConfig.tdsApplicable}
+        />
+      </FormField>
+    </Box>
   )
 }

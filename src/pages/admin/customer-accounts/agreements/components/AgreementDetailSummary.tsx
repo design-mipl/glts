@@ -1,7 +1,8 @@
 import { Box, Stack, Typography } from '@mui/material'
-import { ArrowRight, PencilLine, Send, ShieldCheck, XCircle } from 'lucide-react'
+import { ArrowRight, PencilLine, PauseCircle, Send } from 'lucide-react'
 import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
+import { formatAgreementDate } from '../utils/agreementFormUtils'
 import {
   agreementStatusColor,
   agreementStatusLabel,
@@ -9,6 +10,10 @@ import {
   agreementTypeLabel,
   billingTypeColor,
   billingTypeLabel,
+  canEditAgreement,
+  canMarkReadyForActivation,
+  canProceedToCorporateAccount,
+  canUpdateAgreementHoldOrTerminate,
   workflowTypeColor,
   workflowTypeLabel,
 } from '../config/agreementStatusConfig'
@@ -16,19 +21,17 @@ import {
 interface AgreementDetailSummaryProps {
   agreement: CommercialAgreement
   onEdit?: () => void
-  onSubmit?: () => void
-  onApprove?: () => void
-  onReject?: () => void
+  onMarkReady?: () => void
   onProceedToCorporate?: () => void
+  onUpdateStatus?: () => void
 }
 
 export function AgreementDetailSummary({
   agreement,
   onEdit,
-  onSubmit,
-  onApprove,
-  onReject,
+  onMarkReady,
   onProceedToCorporate,
+  onUpdateStatus,
 }: AgreementDetailSummaryProps) {
   return (
     <BaseCard>
@@ -41,11 +44,17 @@ export function AgreementDetailSummary({
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {agreement.agreementId} · {workflowTypeLabel[agreement.workflowType]} ·{' '}
-                {billingTypeLabel[agreement.billingType]}
+                {billingTypeLabel[agreement.billingType]} · Start {formatAgreementDate(agreement.startDate)} · Expires{' '}
+                {formatAgreementDate(agreement.endDate)}
               </Typography>
+              {agreement.statusRemarks ? (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
+                  Latest status remarks: {agreement.statusRemarks}
+                </Typography>
+              ) : null}
             </Box>
             <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-              {(agreement.status === 'draft' || agreement.status === 'submitted') && onEdit ? (
+              {canEditAgreement(agreement.status) && onEdit ? (
                 <Button
                   label="Edit"
                   size="sm"
@@ -54,28 +63,29 @@ export function AgreementDetailSummary({
                   onClick={onEdit}
                 />
               ) : null}
-              {agreement.status === 'draft' && onSubmit ? (
-                <Button label="Submit agreement" size="sm" startIcon={<Send size={14} />} onClick={onSubmit} />
-              ) : null}
-              {agreement.status === 'submitted' && onApprove ? (
-                <Button label="Approve" size="sm" startIcon={<ShieldCheck size={14} />} onClick={onApprove} />
-              ) : null}
-              {agreement.status === 'submitted' && onReject ? (
+              {canMarkReadyForActivation(agreement.status) && onMarkReady ? (
                 <Button
-                  label="Reject"
+                  label="Mark ready for activation"
                   size="sm"
-                  variant="outlined"
-                  color="error"
-                  startIcon={<XCircle size={14} />}
-                  onClick={onReject}
+                  startIcon={<Send size={14} />}
+                  onClick={onMarkReady}
                 />
               ) : null}
-              {agreement.status === 'approved' && onProceedToCorporate ? (
+              {canProceedToCorporateAccount(agreement.status) && onProceedToCorporate ? (
                 <Button
                   label="Proceed to corporate accounts"
                   size="sm"
                   startIcon={<ArrowRight size={14} />}
                   onClick={onProceedToCorporate}
+                />
+              ) : null}
+              {canUpdateAgreementHoldOrTerminate(agreement.status) && onUpdateStatus ? (
+                <Button
+                  label="Update status"
+                  size="sm"
+                  variant="outlined"
+                  startIcon={<PauseCircle size={14} />}
+                  onClick={onUpdateStatus}
                 />
               ) : null}
             </Stack>

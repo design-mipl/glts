@@ -79,8 +79,8 @@ export function useAgreementForm(initial?: CommercialAgreementFormData) {
   }, [])
 
   const hydrateFromQuotation = useCallback(
-    (quotationId: string) => {
-      const patch = commercialAgreementService.hydrateFromQuotation(quotationId)
+    (quotationId: string, versionId?: string) => {
+      const patch = commercialAgreementService.hydrateFromQuotation(quotationId, versionId)
       if (!patch) return
       setFormData((prev) => ({
         ...prev,

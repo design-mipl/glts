@@ -27,23 +27,25 @@ export function AgreementCustomerSourceSection({
 
   return (
     <Stack spacing={3}>
-      <RadioGroup
-        value={data.customerSourceMode}
-        onChange={(value) => {
-          onChange({
-            ...data,
-            customerSourceMode: value as CommercialAgreementFormData['customerSourceMode'],
-            referenceQuotationId: '',
-            existingCompanyId: '',
-          })
-        }}
-        orientation="vertical"
-        options={[
-          { label: 'From reference quotation', value: 'quotation' },
-          { label: 'Existing customer', value: 'existing' },
-          { label: 'Add new customer', value: 'new' },
-        ]}
-      />
+      <Box sx={{ pl: 2 }}>
+        <RadioGroup
+          value={data.customerSourceMode}
+          onChange={(value) => {
+            onChange({
+              ...data,
+              customerSourceMode: value as CommercialAgreementFormData['customerSourceMode'],
+              referenceQuotationId: '',
+              existingCompanyId: '',
+            })
+          }}
+          orientation="vertical"
+          options={[
+            { label: 'From reference quotation', value: 'quotation' },
+            { label: 'Existing customer', value: 'existing' },
+            { label: 'Add new customer', value: 'new' },
+          ]}
+        />
+      </Box>
 
       {data.customerSourceMode === 'quotation' || data.customerSourceMode === 'existing' ? (
         <Box sx={{ maxWidth: 560 }}>

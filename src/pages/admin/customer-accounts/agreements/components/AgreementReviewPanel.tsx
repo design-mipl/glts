@@ -4,6 +4,7 @@ import { alpha, useTheme } from '@mui/material/styles'
 import { Badge } from '@/design-system/UIComponents'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
 import { deriveAdvanceRuleSummary } from '@/shared/utils/commercialAgreementValidation'
+import { splitAgreementDocuments } from '@/shared/utils/agreementDocumentUtils'
 import { getSelectedFinanceContactPersons } from '@/shared/utils/agreementFinanceContacts'
 import {
   agreementTypeLabel,
@@ -12,6 +13,7 @@ import {
   onboardingDocumentStatusLabel,
   workflowTypeLabel,
 } from '../config/agreementStatusConfig'
+import { formatAgreementDate } from '../utils/agreementFormUtils'
 
 interface AgreementReviewPanelProps {
   data: CommercialAgreementFormData
@@ -56,6 +58,7 @@ function ReviewSection({ title, children }: { title: string; children: ReactNode
 export function AgreementReviewPanel({ data, agreementId, statusLabel }: AgreementReviewPanelProps) {
   const theme = useTheme()
   const selectedFinanceContacts = getSelectedFinanceContactPersons(data)
+  const { onboardingDocuments, agreementDocument } = splitAgreementDocuments(data.documents)
   const companyLabel =
     data.customerSourceMode === 'existing'
       ? data.company.companyName || data.existingCompanyId
@@ -149,6 +152,8 @@ export function AgreementReviewPanel({ data, agreementId, statusLabel }: Agreeme
           >
             <ReviewRow label="Agreement type" value={agreementTypeLabel[data.agreementType]} />
             <ReviewRow label="Workflow" value={workflowTypeLabel[data.workflowType]} />
+            <ReviewRow label="Agreement start date" value={formatAgreementDate(data.startDate)} />
+            <ReviewRow label="Agreement expiry date" value={formatAgreementDate(data.endDate)} />
             <ReviewRow label="Billing" value={billingTypeLabel[data.billingType]} />
             <ReviewRow
               label="Advance rule"
@@ -175,16 +180,37 @@ export function AgreementReviewPanel({ data, agreementId, statusLabel }: Agreeme
                 value={[contact.contactPerson, contact.email, contact.phone].filter(Boolean).join(' · ')}
               />
             ))}
-            <Stack direction="row" flexWrap="wrap" gap={0.75}>
-              {data.documents.map((doc) => (
+            <Stack spacing={1}>
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                Onboarding documents
+              </Typography>
+              <Stack direction="row" flexWrap="wrap" gap={0.75}>
+                {onboardingDocuments.map((doc) => (
+                  <Badge
+                    key={doc.documentKey}
+                    label={`${doc.name}: ${onboardingDocumentStatusLabel[doc.status]}`}
+                    color={doc.status === 'verified' || doc.status === 'uploaded' ? 'success' : 'neutral'}
+                    size="sm"
+                  />
+                ))}
+              </Stack>
+            </Stack>
+            {agreementDocument ? (
+              <Stack spacing={1}>
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                  Agreement document
+                </Typography>
                 <Badge
-                  key={doc.documentKey}
-                  label={`${doc.name}: ${onboardingDocumentStatusLabel[doc.status]}`}
-                  color={doc.status === 'verified' || doc.status === 'uploaded' ? 'success' : 'neutral'}
+                  label={`${agreementDocument.name}: ${onboardingDocumentStatusLabel[agreementDocument.status]}`}
+                  color={
+                    agreementDocument.status === 'verified' || agreementDocument.status === 'uploaded'
+                      ? 'success'
+                      : 'neutral'
+                  }
                   size="sm"
                 />
-              ))}
-            </Stack>
+              </Stack>
+            ) : null}
           </Stack>
         </ReviewSection>
       </Stack>

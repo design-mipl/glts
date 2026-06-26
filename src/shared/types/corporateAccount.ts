@@ -10,12 +10,15 @@ export interface CorporateAccountActivity {
   detail: string
 }
 
+export type CorporateAdminAccessStatus = 'active' | 'inactive'
+
 export interface CorporateAdminUser {
   id: string
   fullName: string
   phoneNumber: string
   emailAddress: string
   role: CorporateAdminRole
+  accessStatus?: CorporateAdminAccessStatus
   temporaryPassword?: string
   credentialsSentAt?: string
   lastLoginAt?: string

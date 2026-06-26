@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button, FormField, Input, Select } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
+import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import type { CorporateAccountFormData } from '@/shared/types/corporateAccount'
 import { agreementEmbeddedTableSx } from '../../agreements/components/agreementFormLayout'
 import {
@@ -11,7 +12,6 @@ import {
   billingTypeLabel,
   workflowTypeLabel,
 } from '../../agreements/config/agreementStatusConfig'
-import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 
 interface CorporateAccountAgreementSelectStepProps {
   data: CorporateAccountFormData
@@ -21,22 +21,22 @@ interface CorporateAccountAgreementSelectStepProps {
 }
 
 function buildAgreementSelectOptions(
-  approved: CommercialAgreement[],
+  readyAgreements: CommercialAgreement[],
   selected?: CommercialAgreement,
 ): { value: string; label: string }[] {
-  const options = approved.map((a) => ({
+  const options = readyAgreements.map((a) => ({
     value: a.id,
     label: `${a.companyName} · ${a.agreementId}`,
   }))
 
-  if (selected && !approved.some((a) => a.id === selected.id)) {
+  if (selected && !readyAgreements.some((a) => a.id === selected.id)) {
     options.unshift({
       value: selected.id,
       label: `${selected.companyName} · ${selected.agreementId} (${agreementStatusLabel[selected.status]})`,
     })
   }
 
-  return [{ value: '', label: 'Select approved agreement…' }, ...options]
+  return options
 }
 
 function CommercialSummaryPlaceholder() {
@@ -47,13 +47,13 @@ function CommercialSummaryPlaceholder() {
           <FileText size={32} strokeWidth={1.5} />
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 420, mx: 'auto', fontSize: 13 }}>
-          Select an approved agreement above to view commercial terms and assign a branch.
+          Select an agreement ready for activation above to view commercial terms and assign a branch.
         </Typography>
       </Box>
     </Box>
   )
 }
-function NoApprovedAgreementsState({ onGoToAgreements }: { onGoToAgreements: () => void }) {
+function NoReadyAgreementsState({ onGoToAgreements }: { onGoToAgreements: () => void }) {
   return (
     <Box sx={{ ...agreementEmbeddedTableSx, width: '100%' }}>
       <Box sx={{ py: 4, px: 3, textAlign: 'center' }}>
@@ -61,15 +61,15 @@ function NoApprovedAgreementsState({ onGoToAgreements }: { onGoToAgreements: () 
           <FileText size={40} strokeWidth={1.5} />
         </Box>
         <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.75 }}>
-          No approved agreements available
+          No agreements ready for activation
         </Typography>
         <Typography
           variant="body2"
           color="text.secondary"
           sx={{ mb: 2, maxWidth: 420, mx: 'auto', fontSize: 13 }}
         >
-          Approve a commercial agreement before creating a corporate account. Draft or submitted agreements must be
-          approved from Agreements & contracts first.
+          Mark a commercial agreement ready for activation before creating a corporate account. Draft agreements must be
+          completed from Agreements & contracts first.
         </Typography>
         <Button label="Go to agreements" size="sm" onClick={onGoToAgreements} />
       </Box>
@@ -84,11 +84,11 @@ export function CorporateAccountAgreementSelectStep({
   variant = 'selection',
 }: CorporateAccountAgreementSelectStepProps) {
   const navigate = useNavigate()
-  const approved = commercialAgreementService.listApprovedForOnboarding({
+  const readyAgreements = commercialAgreementService.listReadyForActivationForOnboarding({
     excludeCorporateAccountId: corporateAccountId,
   })
   const selected = data.agreementId ? commercialAgreementService.getById(data.agreementId) : undefined
-  const selectOptions = buildAgreementSelectOptions(approved, selected)
+  const selectOptions = buildAgreementSelectOptions(readyAgreements, selected)
 
   if (variant === 'summary') {
     if (!selected) {
@@ -110,19 +110,20 @@ export function CorporateAccountAgreementSelectStep({
     )
   }
 
-  if (selectOptions.length <= 1) {
+  if (selectOptions.length === 0) {
     return (
-      <NoApprovedAgreementsState onGoToAgreements={() => navigate('/admin/customer-accounts/agreements')} />
+      <NoReadyAgreementsState onGoToAgreements={() => navigate('/admin/customer-accounts/agreements')} />
     )
   }
 
   return (
     <AdminFullPageFormFieldSpan>
-      <FormField label="Approved agreement company" required>
+      <FormField label="Agreement company" required>
         <Select
           value={data.agreementId}
           onChange={(v) => onSelectAgreement(String(v))}
           options={selectOptions}
+          placeholder="Select agreement ready for activation…"
           fullWidth
         />
       </FormField>

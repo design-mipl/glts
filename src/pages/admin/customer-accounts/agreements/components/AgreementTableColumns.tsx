@@ -1,14 +1,17 @@
-import { Eye, PencilLine, ShieldCheck, XCircle } from 'lucide-react'
+import { Eye, PauseCircle, PencilLine } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { deriveAdvanceRuleSummary } from '@/shared/utils/commercialAgreementValidation'
+import { formatAgreementDate } from '../utils/agreementFormUtils'
 import {
   agreementStatusColor,
   agreementStatusLabel,
   billingTypeColor,
   billingTypeLabel,
+  canEditAgreement,
+  canUpdateAgreementHoldOrTerminate,
   workflowTypeColor,
   workflowTypeLabel,
 } from '../config/agreementStatusConfig'
@@ -16,15 +19,13 @@ import {
 interface ColumnHandlers {
   onOpenDetail: (row: CommercialAgreement) => void
   onOpenEdit: (row: CommercialAgreement) => void
-  onApprove: (row: CommercialAgreement) => void
-  onReject: (row: CommercialAgreement) => void
+  onUpdateStatus: (row: CommercialAgreement) => void
 }
 
 export function buildAgreementColumns({
   onOpenDetail,
   onOpenEdit,
-  onApprove,
-  onReject,
+  onUpdateStatus,
 }: ColumnHandlers): Column<CommercialAgreement>[] {
   return [
     {
@@ -82,6 +83,20 @@ export function buildAgreementColumns({
       render: (_, row) => deriveAdvanceRuleSummary(row.billingType, row.billingConfig),
     },
     {
+      key: 'startDate',
+      label: 'Agreement start date',
+      widthSize: adminListingColumnWidthSize('date'),
+      sortable: true,
+      render: (_, row) => formatAgreementDate(row.startDate),
+    },
+    {
+      key: 'endDate',
+      label: 'Agreement expiry date',
+      widthSize: adminListingColumnWidthSize('date'),
+      sortable: true,
+      render: (_, row) => formatAgreementDate(row.endDate),
+    },
+    {
       key: 'status',
       label: 'Status',
       widthSize: adminListingColumnWidthSize('status'),
@@ -109,15 +124,14 @@ export function buildAgreementColumns({
         const actions: RowAction[] = [
           { label: 'View', icon: <Eye size={14} />, onClick: () => onOpenDetail(row) },
         ]
-        if (row.status === 'draft' || row.status === 'submitted') {
+        if (canEditAgreement(row.status)) {
           actions.push({ label: 'Edit', icon: <PencilLine size={14} />, onClick: () => onOpenEdit(row) })
         }
-        if (row.status === 'submitted') {
-          actions.push({ label: 'Approve', icon: <ShieldCheck size={14} />, onClick: () => onApprove(row) })
+        if (canUpdateAgreementHoldOrTerminate(row.status)) {
           actions.push({
-            label: 'Reject',
-            icon: <XCircle size={14} />,
-            onClick: () => onReject(row),
+            label: 'Update status',
+            icon: <PauseCircle size={14} />,
+            onClick: () => onUpdateStatus(row),
           })
         }
         return <RowActions row={row} actions={actions} />

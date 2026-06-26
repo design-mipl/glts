@@ -14,6 +14,7 @@ interface AgreementOnboardingDocumentCardProps {
   onPreview: () => void
   onReplace: () => void
   onDownload: () => void
+  readOnly?: boolean
 }
 
 export function AgreementOnboardingDocumentCard({
@@ -22,6 +23,7 @@ export function AgreementOnboardingDocumentCard({
   onPreview,
   onReplace,
   onDownload,
+  readOnly = false,
 }: AgreementOnboardingDocumentCardProps) {
   const theme = useTheme()
   const uploaded = document.status === 'uploaded' || document.status === 'verified'
@@ -37,8 +39,8 @@ export function AgreementOnboardingDocumentCard({
         height: '100%',
       }}
     >
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1} sx={{ mb: 1.5 }}>
-        <Stack spacing={0.5} sx={{ minWidth: 0 }}>
+      <Stack spacing={0.5} sx={{ mb: 1.5, minWidth: 0 }}>
+        <Stack direction="row" alignItems="center" spacing={0.75} useFlexGap flexWrap="wrap">
           <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
             {document.name}
             {document.required ? (
@@ -47,11 +49,6 @@ export function AgreementOnboardingDocumentCard({
               </Typography>
             ) : null}
           </Typography>
-          {document.fileName ? (
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {document.fileName}
-            </Typography>
-          ) : null}
           <Badge
             label={onboardingDocumentStatusLabel[document.status]}
             color={onboardingDocumentStatusColor[document.status]}
@@ -63,15 +60,25 @@ export function AgreementOnboardingDocumentCard({
             }}
           />
         </Stack>
+        {document.fileName ? (
+          <Typography variant="caption" color="text.secondary" noWrap>
+            {document.fileName}
+            {document.uploadedAt
+              ? ` · Uploaded ${new Date(document.uploadedAt).toLocaleDateString()}`
+              : ''}
+          </Typography>
+        ) : null}
       </Stack>
       <Stack direction="row" flexWrap="wrap" gap={1}>
-        <Button
-          label={uploaded ? 'Replace' : 'Upload'}
-          variant="outlined"
-          size="sm"
-          startIcon={uploaded ? <RotateCcw size={14} /> : <Upload size={14} />}
-          onClick={uploaded ? onReplace : onUpload}
-        />
+        {!readOnly ? (
+          <Button
+            label={uploaded ? 'Replace' : 'Upload'}
+            variant="outlined"
+            size="sm"
+            startIcon={uploaded ? <RotateCcw size={14} /> : <Upload size={14} />}
+            onClick={uploaded ? onReplace : onUpload}
+          />
+        ) : null}
         <Button label="Preview" variant="outlined" size="sm" startIcon={<Eye size={14} />} onClick={onPreview} disabled={!uploaded} />
         <Button label="Download" variant="outlined" size="sm" startIcon={<Download size={14} />} onClick={onDownload} disabled={!uploaded} />
       </Stack>

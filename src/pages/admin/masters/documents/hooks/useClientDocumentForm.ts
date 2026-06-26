@@ -8,6 +8,7 @@ export const INITIAL_CLIENT_DOCUMENT_FORM: ClientDocumentMasterFormData = {
   documentType: '',
   description: '',
   applicableFor: [],
+  isMandatory: false,
   status: 'active',
 }
 
@@ -16,6 +17,7 @@ export function clientDocumentToFormData(row: ClientDocumentMaster): ClientDocum
     documentType: row.documentType,
     description: row.description,
     applicableFor: [...row.applicableFor],
+    isMandatory: row.isMandatory,
     status: row.status,
   }
 }

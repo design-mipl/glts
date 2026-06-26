@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { EnquiryFormData } from '@/shared/types/enquiry'
+import { getVisaRequirementItems } from '@/shared/utils/enquiryVisaRequirementUtils'
 
 export const INITIAL_ENQUIRY_FORM: EnquiryFormData = {
   customer: {
@@ -13,6 +14,7 @@ export const INITIAL_ENQUIRY_FORM: EnquiryFormData = {
     companyAddress: '',
   },
   visaRequirement: {
+    items: [],
     countries: [],
     visaType: '',
     purposeOfVisit: '',
@@ -70,8 +72,9 @@ export function useEnquiryForm(initialData?: EnquiryFormData) {
     if (!formData.customer.contactPersonName.trim()) next.contactPersonName = 'Contact person is required'
     if (!formData.customer.contactNumber.trim()) next.contactNumber = 'Contact number is required'
     if (!formData.customer.emailAddress.trim()) next.emailAddress = 'Email is required'
-    if (!formData.visaRequirement.countries.length) next.countries = 'At least one country is required'
-    if (!formData.visaRequirement.visaType.trim()) next.visaType = 'Visa type is required'
+    if (!getVisaRequirementItems(formData.visaRequirement).length) {
+      next.visaRequirements = 'Add at least one country requirement'
+    }
     if (!formData.salesDetails.inquirySource) next.inquirySource = 'Inquiry source is required'
     setErrors(next)
     return Object.keys(next).length === 0

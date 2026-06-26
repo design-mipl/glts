@@ -2,8 +2,6 @@ import type { AgreementPricingRow, AgreementWorkflowType } from './commercialAgr
 
 export type QuotationSourceType = 'enquiry' | 'direct'
 
-export type QuotationVersionStatus = 'draft' | 'submitted' | 'approved' | 'rejected'
-
 export type QuotationSharedStatus = 'not_shared' | 'shared'
 
 export interface QuotationCustomerInfo {
@@ -20,23 +18,14 @@ export interface QuotationPricingTotals {
   grandTotal: number
 }
 
-export interface QuotationApprovalEntry {
-  status: QuotationVersionStatus | 'shared'
-  actor: string
-  timestamp: string
-  remarks?: string
-}
-
 export interface QuotationPricingVersion {
   id: string
   versionLabel: string
   versionNumber: number
-  status: QuotationVersionStatus
   pricingMatrix: AgreementPricingRow[]
   totals: QuotationPricingTotals
   createdBy: string
   createdAt: string
-  approvalHistory: QuotationApprovalEntry[]
 }
 
 export interface QuotationAttachment {
@@ -66,6 +55,7 @@ export interface QuotationRecord {
   quotationDate: string
   validTill: string
   notes: string
+  gstRateId: string
   gstPercentage: number
   attachments: QuotationAttachment[]
   activities: QuotationActivity[]
@@ -75,6 +65,7 @@ export interface QuotationRecord {
   currentVersionId: string
   pricingVersions: QuotationPricingVersion[]
   convertedAgreementId?: string
+  convertedFromVersionId?: string
   createdAt: string
   createdBy: string
   updatedAt: string
@@ -88,6 +79,7 @@ export interface QuotationFormData {
   quotationDate: string
   validTill: string
   notes: string
+  gstRateId: string
   gstPercentage: number
   pricingMatrix: AgreementPricingRow[]
 }
@@ -96,7 +88,6 @@ export interface QuotationListingFilters {
   query?: string
   sourceType?: QuotationSourceType | 'all'
   workflowType?: AgreementWorkflowType | 'all'
-  approvalStatus?: QuotationVersionStatus | 'all'
   sharedStatus?: QuotationSharedStatus | 'all'
   dateFrom?: string
   dateTo?: string

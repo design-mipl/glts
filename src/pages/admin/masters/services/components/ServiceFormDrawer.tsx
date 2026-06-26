@@ -29,7 +29,7 @@ export function ServiceFormDrawer({ open, record, onClose, onSaved }: ServiceFor
     if (open) {
       reset(record ? serviceToFormData(record) : INITIAL_SERVICE_FORM)
     }
-  }, [open, record, reset])
+  }, [open, record?.id, reset])
 
   const handleClose = () => {
     if (loading) return

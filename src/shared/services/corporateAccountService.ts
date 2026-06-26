@@ -47,6 +47,32 @@ function generateActivityId(): string {
   return `ca-act-${Date.now()}-${Math.floor(Math.random() * 1000)}`
 }
 
+function normalizeAdmin(admin: CorporateAdminUser): CorporateAdminUser {
+  return { ...admin, accessStatus: admin.accessStatus ?? 'active' }
+}
+
+function normalizeAccount(account: CorporateAccount): CorporateAccount {
+  return {
+    ...account,
+    superAdmin: account.superAdmin ? normalizeAdmin(account.superAdmin) : undefined,
+    admins: account.admins.map(normalizeAdmin),
+  }
+}
+
+function updateAdminInAccount(
+  account: CorporateAccount,
+  adminId: string,
+  patch: Partial<CorporateAdminUser>,
+): CorporateAccount {
+  if (account.superAdmin?.id === adminId) {
+    return { ...account, superAdmin: { ...account.superAdmin, ...patch } }
+  }
+  return {
+    ...account,
+    admins: account.admins.map((admin) => (admin.id === adminId ? { ...admin, ...patch } : admin)),
+  }
+}
+
 function makeActivity(action: string, detail: string): CorporateAccountActivity {
   return {
     id: generateActivityId(),
@@ -59,7 +85,7 @@ function makeActivity(action: string, detail: string): CorporateAccountActivity 
 
 function formToAccount(data: CorporateAccountFormData): Omit<CorporateAccount, 'id' | 'createdAt' | 'updatedAt' | 'activities'> {
   const superAdmin: CorporateAdminUser | undefined = data.superAdmin.fullName.trim()
-    ? { ...data.superAdmin, id: generateAdminId() }
+    ? { ...data.superAdmin, id: generateAdminId(), accessStatus: 'active' }
     : undefined
   return {
     companyId: data.companyId,
@@ -71,7 +97,7 @@ function formToAccount(data: CorporateAccountFormData): Omit<CorporateAccount, '
     portalStatus: data.portalActivation.portalStatus,
     workflowConfig: data.workflowConfig,
     superAdmin,
-    admins: data.admins.map((a) => ({ ...a, id: generateAdminId() })),
+    admins: data.admins.map((a) => ({ ...a, id: generateAdminId(), accessStatus: 'active' as const })),
     assignedTeamId: data.assignedTeamId || undefined,
     assignedUserIds: [...data.assignedUserIds],
     entityIds: data.entityIds,
@@ -100,11 +126,12 @@ export const corporateAccountService = {
       )
     }
 
-    return rows.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    return rows.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).map(normalizeAccount)
   },
 
   getById(id: string): CorporateAccount | undefined {
-    return getStore().find((r) => r.id === id)
+    const account = getStore().find((r) => r.id === id)
+    return account ? normalizeAccount(account) : undefined
   },
 
   getByAgreementId(agreementId: string): CorporateAccount | undefined {
@@ -248,6 +275,9 @@ export const corporateAccountService = {
     const next = [...store]
     next[idx] = updated
     persist(next)
+    if (data.agreementId) {
+      commercialAgreementService.activateFromCorporateAccount(data.agreementId)
+    }
     return { ok: true, record: updated }
   },
 
@@ -304,7 +334,72 @@ export const corporateAccountService = {
   },
 
   resetPassword(accountId: string, adminId: string) {
-    return this.sendLoginEmail(accountId, adminId)
+    return this.changeAdminPassword(accountId, adminId)
+  },
+
+  changeAdminPassword(
+    accountId: string,
+    adminId: string,
+    password?: string,
+  ): ReturnType<typeof formatCredentialEmailPayload> | undefined {
+    const account = this.getById(accountId)
+    if (!account) return undefined
+    const allAdmins = [account.superAdmin, ...account.admins].filter(Boolean) as CorporateAdminUser[]
+    const admin = allAdmins.find((a) => a.id === adminId)
+    if (!admin) return undefined
+
+    const nextPassword = password?.trim() || generateTemporaryPassword()
+    const store = getStore()
+    const idx = store.findIndex((r) => r.id === accountId)
+    if (idx < 0) return undefined
+
+    const updatedAccount = updateAdminInAccount(store[idx], adminId, {
+      temporaryPassword: nextPassword,
+      credentialsSentAt: nowIso(),
+    })
+    const next = [...store]
+    next[idx] = {
+      ...updatedAccount,
+      updatedAt: nowIso(),
+      activities: [
+        makeActivity('Password updated', `Password reset for ${admin.emailAddress}`),
+        ...store[idx].activities,
+      ],
+    }
+    persist(next)
+    return formatCredentialEmailPayload(admin.emailAddress, nextPassword)
+  },
+
+  setAdminAccessStatus(
+    accountId: string,
+    adminId: string,
+    accessStatus: CorporateAdminUser['accessStatus'],
+  ): CorporateAccount | undefined {
+    const account = this.getById(accountId)
+    if (!account) return undefined
+    const allAdmins = [account.superAdmin, ...account.admins].filter(Boolean) as CorporateAdminUser[]
+    const admin = allAdmins.find((a) => a.id === adminId)
+    if (!admin) return undefined
+
+    const store = getStore()
+    const idx = store.findIndex((r) => r.id === accountId)
+    if (idx < 0) return undefined
+
+    const updatedAccount = updateAdminInAccount(store[idx], adminId, { accessStatus })
+    const next = [...store]
+    next[idx] = {
+      ...updatedAccount,
+      updatedAt: nowIso(),
+      activities: [
+        makeActivity(
+          accessStatus === 'active' ? 'User activated' : 'User deactivated',
+          `${admin.fullName} (${admin.emailAddress}) portal access ${accessStatus === 'active' ? 'enabled' : 'disabled'}`,
+        ),
+        ...store[idx].activities,
+      ],
+    }
+    persist(next)
+    return normalizeAccount(next[idx])
   },
 
   addEntityId(accountId: string, entityId: string): void {

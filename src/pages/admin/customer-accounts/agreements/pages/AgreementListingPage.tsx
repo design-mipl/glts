@@ -9,10 +9,11 @@ import {
   AdminListingToolbar,
 } from '@/pages/admin/components/listing'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
-import { Button, ConfirmDialog, Pagination, useToast } from '@/design-system/UIComponents'
+import { Button, Pagination, useToast } from '@/design-system/UIComponents'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
+import { AgreementStatusUpdateDialog } from '../components/AgreementStatusUpdateDialog'
 import { AgreementKpiRow } from '../components/AgreementKpiRow'
 import { AgreementAdvancedFilterFields } from '../components/AgreementAdvancedFilters'
 import { buildAgreementColumns } from '../components/AgreementTableColumns'
@@ -35,8 +36,9 @@ export function AgreementListingPage() {
   const [rows, setRows] = useState<CommercialAgreement[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
-  const [rejectTarget, setRejectTarget] = useState<CommercialAgreement>()
-  const [rejectOpen, setRejectOpen] = useState(false)
+  const [statusTarget, setStatusTarget] = useState<CommercialAgreement>()
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
+  const [statusUpdating, setStatusUpdating] = useState(false)
   const [filters, setFilters] = useState<AgreementAdvancedFilterState>(INITIAL_AGREEMENT_ADVANCED_FILTERS)
   const loadRows = useCallback(async () => {
     setLoading(true)
@@ -65,18 +67,9 @@ export function AgreementListingPage() {
       buildAgreementColumns({
         onOpenDetail: (row) => navigate(`/admin/customer-accounts/agreements/${row.id}`),
         onOpenEdit: (row) => navigate(`/admin/customer-accounts/agreements/${row.id}/edit`),
-        onApprove: (row) => {
-          const result = commercialAgreementService.approve(row.id)
-          if (!result.ok) {
-            showToast({ title: 'Cannot approve', description: result.issues.join('; '), variant: 'error' })
-            return
-          }
-          showToast({ title: 'Agreement approved', variant: 'success' })
-          void loadRows()
-        },
-        onReject: (row) => {
-          setRejectTarget(row)
-          setRejectOpen(true)
+        onUpdateStatus: (row) => {
+          setStatusTarget(row)
+          setStatusDialogOpen(true)
         },
       }),
     [navigate, showToast, loadRows],
@@ -106,12 +99,18 @@ export function AgreementListingPage() {
       ? alpha(theme.palette.common.white, 0.04)
       : alpha(theme.palette.common.black, 0.02)
 
-  const handleRejectConfirm = () => {
-    if (!rejectTarget) return
-    commercialAgreementService.reject(rejectTarget.id, 'Rejected by admin')
-    showToast({ title: 'Agreement rejected', variant: 'info' })
-    setRejectOpen(false)
-    setRejectTarget(undefined)
+  const handleStatusUpdate = (status: 'on_hold' | 'terminated', remarks: string) => {
+    if (!statusTarget) return
+    setStatusUpdating(true)
+    const updated = commercialAgreementService.updateHoldOrTerminateStatus(statusTarget.id, status, remarks)
+    setStatusUpdating(false)
+    if (!updated) {
+      showToast({ title: 'Unable to update status', description: 'Check remarks and current agreement status.', variant: 'error' })
+      return
+    }
+    setStatusDialogOpen(false)
+    setStatusTarget(undefined)
+    showToast({ title: 'Agreement status updated', variant: 'success' })
     void loadRows()
   }
 
@@ -203,14 +202,14 @@ export function AgreementListingPage() {
         }
       />
 
-      <ConfirmDialog
-        open={rejectOpen}
-        onClose={() => setRejectOpen(false)}
-        title="Reject agreement?"
-        description="This agreement will be marked as rejected."
-        confirmLabel="Reject"
-        variant="destructive"
-        onConfirm={handleRejectConfirm}
+      <AgreementStatusUpdateDialog
+        open={statusDialogOpen}
+        onClose={() => {
+          setStatusDialogOpen(false)
+          setStatusTarget(undefined)
+        }}
+        onConfirm={handleStatusUpdate}
+        loading={statusUpdating}
       />
     </>
   )

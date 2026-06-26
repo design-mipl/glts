@@ -58,6 +58,7 @@ export const clientDocumentMasterService = {
       documentType: data.documentType.trim(),
       description: data.description.trim(),
       applicableFor: [...data.applicableFor],
+      isMandatory: data.isMandatory,
       status: data.status,
       createdBy: actor,
       updatedBy: actor,
@@ -77,6 +78,7 @@ export const clientDocumentMasterService = {
       documentType: data.documentType.trim(),
       description: data.description.trim(),
       applicableFor: [...data.applicableFor],
+      isMandatory: data.isMandatory,
       status: data.status,
       updatedBy: getMasterActor(),
       updatedAt: nowIso(),
@@ -96,6 +98,7 @@ export const clientDocumentMasterService = {
       documentType: existing.documentType,
       description: existing.description,
       applicableFor: existing.applicableFor,
+      isMandatory: existing.isMandatory,
       status,
     })
   },

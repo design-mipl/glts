@@ -1,4 +1,4 @@
-import { Eye, FileText, PencilLine, Share2, ShieldCheck } from 'lucide-react'
+import { Eye, FileText, PencilLine, Share2, ArrowRight } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
@@ -10,8 +10,6 @@ import {
   quotationSharedStatusLabel,
   quotationSourceTypeColor,
   quotationSourceTypeLabel,
-  quotationVersionStatusColor,
-  quotationVersionStatusLabel,
   workflowTypeColor,
   workflowTypeLabel,
 } from '../config/quotationStatusConfig'
@@ -86,21 +84,11 @@ export function buildQuotationColumns({
       render: (_, row) => getCurrentVersion(row)?.versionLabel ?? '—',
     },
     {
-      key: 'approvalStatus',
-      label: 'Approval Status',
-      widthSize: adminListingColumnWidthSize('status'),
-      filterable: true,
-      render: (_, row) => {
-        const version = getCurrentVersion(row)
-        if (!version) return '—'
-        return (
-          <Badge
-            label={quotationVersionStatusLabel[version.status]}
-            color={quotationVersionStatusColor[version.status]}
-            size="sm"
-          />
-        )
-      },
+      key: 'versionCount',
+      label: 'Versions',
+      widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      render: (_, row) => String(row.pricingVersions.length),
     },
     {
       key: 'sharedStatus',
@@ -136,21 +124,19 @@ export function buildQuotationColumns({
       filterable: false,
       searchable: false,
       render: (_, row) => {
-        const version = getCurrentVersion(row)
+        const hasPricing = row.pricingVersions.some((v) => v.pricingMatrix.length > 0)
         const actions: RowAction[] = [
           { label: 'View', icon: <Eye size={14} />, onClick: () => onOpenDetail(row) },
+          { label: 'Edit', icon: <PencilLine size={14} />, onClick: () => onOpenEdit(row) },
         ]
-        if (version?.status === 'draft') {
-          actions.push({ label: 'Edit', icon: <PencilLine size={14} />, onClick: () => onOpenEdit(row) })
-        }
-        if (version?.status === 'approved' && row.sharedStatus === 'not_shared') {
+        if (row.sharedStatus === 'not_shared') {
           actions.push({ label: 'Share', icon: <Share2 size={14} />, onClick: () => onShare(row) })
         }
         actions.push({ label: 'Generate PDF', icon: <FileText size={14} />, onClick: () => onGeneratePdf(row) })
-        if (version?.status === 'approved' && !row.convertedAgreementId) {
+        if (!row.convertedAgreementId && hasPricing) {
           actions.push({
             label: 'Convert to Agreement',
-            icon: <ShieldCheck size={14} />,
+            icon: <ArrowRight size={14} />,
             onClick: () => onConvert(row),
           })
         }

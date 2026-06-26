@@ -4,7 +4,16 @@ export type AgreementWorkflowType = 'marine' | 'corporate' | 'b2b_agent' | 'mixe
 
 export type AgreementBillingType = 'credit' | 'advance' | 'mixed'
 
-export type AgreementStatus = 'draft' | 'submitted' | 'approved' | 'rejected' | 'expired' | 'inactive'
+export type AgreementStatus =
+  | 'draft'
+  | 'ready_for_activation'
+  | 'active'
+  | 'expired'
+  | 'on_hold'
+  | 'terminated'
+
+/** Statuses that require remarks when set via admin status update. */
+export type AgreementHoldTerminateStatus = 'on_hold' | 'terminated'
 
 export type CustomerSourceMode = 'quotation' | 'existing' | 'new'
 
@@ -88,7 +97,7 @@ export interface AgreementFinanceContacts {
   paymentFollowUpContact: string
 }
 
-export type AgreementFinanceContactSource = 'company' | 'parent_company' | 'entity'
+export type AgreementFinanceContactSource = 'company' | 'parent_company' | 'entity' | 'manual'
 
 export interface AgreementFinanceContactPerson {
   id: string
@@ -129,14 +138,14 @@ export interface CommercialAgreement {
   billingConfig: AgreementBillingConfig
   financeContacts: AgreementFinanceContacts
   financeContactPersons?: AgreementFinanceContactPerson[]
+  manualFinanceContacts?: AgreementFinanceContactPerson[]
   selectedFinanceContactIds?: string[]
   documents: AgreementOnboardingDocument[]
   createdAt: string
   updatedAt: string
-  submittedAt?: string
-  approvedAt?: string
-  rejectedAt?: string
-  rejectionReason?: string
+  readyForActivationAt?: string
+  activatedAt?: string
+  statusRemarks?: string
   activities: AgreementActivity[]
 }
 
@@ -157,6 +166,7 @@ export interface CommercialAgreementFormData {
   billingConfig: AgreementBillingConfig
   financeContacts: AgreementFinanceContacts
   financeContactPersons: AgreementFinanceContactPerson[]
+  manualFinanceContacts: AgreementFinanceContactPerson[]
   selectedFinanceContactIds: string[]
   documents: AgreementOnboardingDocument[]
 }
@@ -177,6 +187,9 @@ export interface AgreementApprovalValidation {
   ok: boolean
   issues: string[]
 }
+
+/** @deprecated Use AgreementActivationValidation */
+export type AgreementActivationValidation = AgreementApprovalValidation
 
 /** @deprecated Use customerSourceMode === 'existing' */
 export type LegacyCompanyMode = 'existing' | 'new'

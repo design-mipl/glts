@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { ServiceMaster, ServiceMasterFormData } from '@/shared/types/serviceMaster'
 
 export const INITIAL_SERVICE_FORM: ServiceMasterFormData = {
@@ -52,10 +52,10 @@ export function useServiceForm(initialData?: ServiceMasterFormData) {
     return Object.keys(next).length === 0
   }
 
-  const reset = (data?: ServiceMasterFormData) => {
+  const reset = useCallback((data?: ServiceMasterFormData) => {
     setFormData(data ?? INITIAL_SERVICE_FORM)
     setErrors({})
-  }
+  }, [])
 
   return { formData, setFormData, errors, isValid, validate, reset }
 }

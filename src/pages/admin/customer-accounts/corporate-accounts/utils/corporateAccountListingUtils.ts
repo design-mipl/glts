@@ -24,8 +24,6 @@ export function getCorporateAccountCellValue(record: CorporateAccount, columnKey
       return record.workflowType
     case 'superAdmin':
       return record.superAdmin?.fullName ?? '—'
-    case 'totalAdmins':
-      return String(counts.totalAdmins)
     case 'totalEntities':
       return String(counts.totalEntities)
     case 'totalVessels':

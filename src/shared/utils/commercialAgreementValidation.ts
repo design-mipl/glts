@@ -1,11 +1,18 @@
 import type {
   AgreementOnboardingDocument,
   AgreementType,
+  AgreementWorkflowType,
   CommercialAgreement,
   CommercialAgreementFormData,
 } from '@/shared/types/commercialAgreement'
 import {
+  buildAgreementDocumentsFromMaster,
+  mergeAgreementDocumentsWithExisting,
+  normalizeDocumentKey,
+} from '@/shared/utils/agreementDocumentUtils'
+import {
   getSelectedFinanceContactPersons,
+  extractManualFinanceContacts,
 } from '@/shared/utils/agreementFinanceContacts'
 
 export const AGREEMENT_FIELD_MESSAGES = {
@@ -27,6 +34,9 @@ export const AGREEMENT_FIELD_MESSAGES = {
   pricingCountry: 'Country is required',
   pricingVisaType: 'Visa type is required',
   pricingServicePreset: 'Service is required',
+  startDate: 'Agreement start date is required',
+  agreementExpiryDate: 'Agreement expiry date is required',
+  agreementExpiryAfterStart: 'Agreement expiry date must be on or after start date',
   billingType: 'Billing type is required',
   advanceType: 'Advance type is required',
   creditPeriod: 'Credit period is required',
@@ -42,29 +52,11 @@ export const AGREEMENT_FIELD_MESSAGES = {
   financeContactsRequired: 'Add company, parent company, or entity contacts before continuing',
 } as const
 
-export const AGREEMENT_DOCUMENT_DEFINITIONS: {
-  documentKey: string
-  name: string
-  alwaysRequired: boolean
-  agreementedOnly?: boolean
-}[] = [
-  { documentKey: 'billing_entity', name: 'Billing Entity Details', alwaysRequired: true },
-  { documentKey: 'company_registration', name: 'Company Registration Certificate', alwaysRequired: true },
-  { documentKey: 'gst_certificate', name: 'GST Certificate (if applicable)', alwaysRequired: false },
-  { documentKey: 'finance_contact', name: 'Accounts / Finance Team Contact Details', alwaysRequired: true },
-  { documentKey: 'invoice_submission', name: 'Additional Documents for Invoice / Statement Submission', alwaysRequired: false },
-  { documentKey: 'agreement_document', name: 'Agreement Document', alwaysRequired: false, agreementedOnly: true },
-]
-
-export function buildDefaultAgreementDocuments(agreementType: AgreementType): AgreementOnboardingDocument[] {
-  return AGREEMENT_DOCUMENT_DEFINITIONS.filter(
-    (d) => !d.agreementedOnly || agreementType === 'agreemented',
-  ).map((d) => ({
-    documentKey: d.documentKey,
-    name: d.name,
-    required: Boolean(d.alwaysRequired || (d.agreementedOnly && agreementType === 'agreemented')),
-    status: 'pending' as const,
-  }))
+export function buildDefaultAgreementDocuments(
+  agreementType: AgreementType,
+  workflowType: AgreementWorkflowType = 'marine',
+): AgreementOnboardingDocument[] {
+  return buildAgreementDocumentsFromMaster(workflowType, agreementType)
 }
 
 export function createDefaultBillingConfig(): CommercialAgreementFormData['billingConfig'] {
@@ -100,6 +92,11 @@ export function createEmptyAgreementFormData(): CommercialAgreementFormData {
       contactNumber: '',
       emailAddress: '',
       companyAddress: '',
+      countryId: '',
+      country: '',
+      state: '',
+      city: '',
+      pincode: '',
       billingEntityName: '',
       billingAddress: '',
       gstNumber: '',
@@ -122,8 +119,9 @@ export function createEmptyAgreementFormData(): CommercialAgreementFormData {
       paymentFollowUpContact: '',
     },
     financeContactPersons: [],
+    manualFinanceContacts: [],
     selectedFinanceContactIds: [],
-    documents: buildDefaultAgreementDocuments('agreemented'),
+    documents: buildDefaultAgreementDocuments('agreemented', 'marine'),
   }
 }
 
@@ -165,9 +163,18 @@ export function validateCustomerSource(data: CommercialAgreementFormData): Recor
   return errors
 }
 
+function validateAgreementTermDates(data: CommercialAgreementFormData, errors: Record<string, string>) {
+  if (!data.startDate.trim()) errors.startDate = AGREEMENT_FIELD_MESSAGES.startDate
+  if (!data.endDate.trim()) errors.endDate = AGREEMENT_FIELD_MESSAGES.agreementExpiryDate
+  if (data.startDate && data.endDate && data.endDate < data.startDate) {
+    errors.endDate = AGREEMENT_FIELD_MESSAGES.agreementExpiryAfterStart
+  }
+}
+
 export function validateCompanyInfo(data: CommercialAgreementFormData): Record<string, string> {
   const errors = validateCustomerSource(data)
   validateCompanyFields(data, errors)
+  validateAgreementTermDates(data, errors)
   return errors
 }
 
@@ -258,7 +265,7 @@ export type AgreementSectionId =
   | 'billing'
   | 'tax'
   | 'documents'
-  | 'approval'
+  | 'review'
 
 export function validateAgreementSection(
   sectionId: AgreementSectionId,
@@ -279,7 +286,7 @@ export function validateAgreementSection(
       return validateTax(data)
     case 'documents':
       return validateDocuments(data)
-    case 'approval':
+    case 'review':
       return {}
     default:
       return {}
@@ -305,7 +312,7 @@ export function validateAgreementStep(step: number, data: CommercialAgreementFor
     'entities',
     'billing',
     'documents',
-    'approval',
+    'review',
   ]
   const section = sectionIds[step]
   if (!section) return []
@@ -318,7 +325,7 @@ export function isAgreementFormData(
   return 'company' in agreement
 }
 
-export function validateForApproval(
+export function validateForActivation(
   agreement: CommercialAgreement | CommercialAgreementFormData,
   toFormData?: (record: CommercialAgreement) => CommercialAgreementFormData,
 ): {
@@ -346,6 +353,7 @@ export function validateForApproval(
           billingConfig: { ...createDefaultBillingConfig(), ...agreement.billingConfig },
           financeContacts: agreement.financeContacts,
           financeContactPersons: agreement.financeContactPersons ?? [],
+          manualFinanceContacts: extractManualFinanceContacts(agreement),
           selectedFinanceContactIds: agreement.selectedFinanceContactIds ?? [],
           documents: agreement.documents,
         }
@@ -356,7 +364,6 @@ export function validateForApproval(
   issues.push(...Object.values(fieldErrors))
 
   const docs = agreement.documents
-  const agreementType = agreement.agreementType
 
   for (const doc of docs) {
     if (!doc.required) continue
@@ -365,18 +372,60 @@ export function validateForApproval(
     }
   }
 
-  if (agreementType === 'agreemented') {
-    const agreementDoc = docs.find((d) => d.documentKey === 'agreement_document')
-    if (!agreementDoc || agreementDoc.status === 'pending' || agreementDoc.status === 'rejected') {
-      issues.push('Agreement document is required for agreemented type')
-    }
-  }
-
   if (agreement.pricingMatrix.length === 0) {
     issues.push('Pricing matrix must have at least one row')
   }
 
   return { ok: issues.length === 0, issues: [...new Set(issues)] }
+}
+
+/** @deprecated Use validateForActivation */
+export const validateForApproval = validateForActivation
+
+function todayDateString() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function resolveAgreementStatus(record: CommercialAgreement): CommercialAgreement['status'] {
+  const raw = record.status as string
+  let status: CommercialAgreement['status']
+
+  switch (raw) {
+    case 'draft':
+    case 'ready_for_activation':
+    case 'active':
+    case 'expired':
+    case 'on_hold':
+    case 'terminated':
+      status = raw
+      break
+    case 'submitted':
+      status = 'ready_for_activation'
+      break
+    case 'approved':
+      status = 'active'
+      break
+    case 'rejected':
+      status = 'terminated'
+      break
+    case 'inactive':
+      status = 'on_hold'
+      break
+    default:
+      status = 'draft'
+  }
+
+  if (
+    status !== 'terminated' &&
+    status !== 'on_hold' &&
+    status !== 'draft' &&
+    record.endDate &&
+    record.endDate < todayDateString()
+  ) {
+    return 'expired'
+  }
+
+  return status
 }
 
 export function normalizeLegacyAgreement(record: CommercialAgreement): CommercialAgreement {
@@ -389,13 +438,17 @@ export function normalizeLegacyAgreement(record: CommercialAgreement): Commercia
       ? record.selectedFinanceContactIds
       : financeContactPersons?.map((contact) => contact.id)
 
+  const manualFinanceContacts = extractManualFinanceContacts(record)
+
   return {
     ...record,
+    status: resolveAgreementStatus(record),
     customerSourceMode: record.customerSourceMode ?? 'existing',
     referenceQuotationId: record.referenceQuotationId,
     parentCompanyId: record.parentCompanyId,
     entities: record.entities ?? [],
     financeContactPersons,
+    manualFinanceContacts: manualFinanceContacts.length ? manualFinanceContacts : undefined,
     selectedFinanceContactIds,
     pricingMatrix: (record.pricingMatrix ?? []).map((row) => ({
       ...row,
@@ -412,5 +465,15 @@ export function normalizeLegacyAgreement(record: CommercialAgreement): Commercia
       processingBlockRule: record.billingConfig?.processingBlockRule ?? 'before_submission',
       serviceWiseBillingRules: record.billingConfig?.serviceWiseBillingRules ?? [],
     },
+    documents: mergeAgreementDocumentsWithExisting(
+      buildAgreementDocumentsFromMaster(
+        record.workflowType ?? 'marine',
+        record.agreementType ?? 'agreemented',
+      ),
+      (record.documents ?? []).map((doc) => ({
+        ...doc,
+        documentKey: normalizeDocumentKey(doc.documentKey),
+      })),
+    ),
   }
 }

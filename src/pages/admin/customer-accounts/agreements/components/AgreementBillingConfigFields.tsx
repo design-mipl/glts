@@ -1,8 +1,9 @@
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
-import { Checkbox, DatePicker, FormField, Input, Select, Toggle } from '@/design-system/UIComponents'
+import { Checkbox, FormField, Input, Select, Toggle } from '@/design-system/UIComponents'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
 import { AGREEMENT_WORKFLOW_OPTIONS } from '../config/agreementStatusConfig'
+import { AgreementTermDateFields } from './workspace/AgreementTermDateFields'
 
 interface AgreementBillingConfigFieldsProps {
   data: CommercialAgreementFormData
@@ -127,22 +128,7 @@ export function AgreementBillingConfigFields({
           fullWidth
         />
       </FormField>
-      <FormField label="Start date" required>
-        <DatePicker
-          value={data.startDate ? new Date(data.startDate) : null}
-          onChange={(date) => onChange({ ...data, startDate: date ? date.toISOString().slice(0, 10) : '' })}
-          fullWidth
-        />
-      </FormField>
-      <AdminFullPageFormFieldSpan>
-        <FormField label="End date" required>
-          <DatePicker
-            value={data.endDate ? new Date(data.endDate) : null}
-            onChange={(date) => onChange({ ...data, endDate: date ? date.toISOString().slice(0, 10) : '' })}
-            fullWidth
-          />
-        </FormField>
-      </AdminFullPageFormFieldSpan>
+      <AgreementTermDateFields data={data} onChange={onChange} />
     </>
   )
 }

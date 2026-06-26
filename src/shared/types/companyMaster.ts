@@ -17,6 +17,11 @@ export interface CompanyMaster {
   contactNumber: string
   emailAddress: string
   companyAddress: string
+  countryId: string
+  country: string
+  state: string
+  city: string
+  pincode: string
   billingEntityName: string
   billingAddress: string
   gstNumber: string
@@ -34,6 +39,11 @@ export interface CompanyMasterFormData {
   contactNumber: string
   emailAddress: string
   companyAddress: string
+  countryId: string
+  country: string
+  state: string
+  city: string
+  pincode: string
   billingEntityName: string
   billingAddress: string
   gstNumber: string

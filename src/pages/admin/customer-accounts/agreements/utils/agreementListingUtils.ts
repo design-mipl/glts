@@ -1,5 +1,6 @@
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { deriveAdvanceRuleSummary } from '@/shared/utils/commercialAgreementValidation'
+import { formatAgreementDate } from './agreementFormUtils'
 import {
   agreementStatusLabel,
   agreementTypeLabel,
@@ -86,9 +87,9 @@ export function getAgreementCellValue(record: CommercialAgreement, columnKey: st
     case 'advanceRule':
       return deriveAdvanceRuleSummary(record.billingType, record.billingConfig)
     case 'startDate':
-      return record.startDate || '—'
+      return formatAgreementDate(record.startDate)
     case 'endDate':
-      return record.endDate || '—'
+      return formatAgreementDate(record.endDate)
     case 'status':
       return agreementStatusLabel[record.status]
     case 'updatedAt':
@@ -107,6 +108,8 @@ export function downloadAgreementCsv(records: CommercialAgreement[]) {
     'Total Entities',
     'Credit Limit',
     'Advance Rule',
+    'Agreement start date',
+    'Agreement expiry date',
     'Status',
     'Last Updated',
   ]
@@ -119,6 +122,8 @@ export function downloadAgreementCsv(records: CommercialAgreement[]) {
       r.entities.length,
       r.billingConfig.creditLimit,
       deriveAdvanceRuleSummary(r.billingType, r.billingConfig),
+      formatAgreementDate(r.startDate),
+      formatAgreementDate(r.endDate),
       agreementStatusLabel[r.status],
       r.updatedAt,
     ].join(','),
@@ -138,7 +143,7 @@ export function mapAgreementRowsToGridItems(records: CommercialAgreement[]) {
     title: r.companyName,
     subtitle: r.agreementId,
     badge: agreementStatusLabel[r.status],
-    meta: `${workflowTypeLabel[r.workflowType]} · ${billingTypeLabel[r.billingType]} · ${r.entities.length} entities`,
+    meta: `${workflowTypeLabel[r.workflowType]} · ${billingTypeLabel[r.billingType]} · Expires ${formatAgreementDate(r.endDate)}`,
   }))
 }
 

@@ -41,7 +41,16 @@ export interface EnquiryCustomerInfo {
 
 export type EnquiryProcessingType = 'standard' | 'express' | 'urgent'
 
+export interface EnquiryVisaRequirementItem {
+  id: string
+  country: string
+  visaType: string
+  purposeOfVisit: string
+}
+
 export interface EnquiryVisaRequirement {
+  /** Per-country visa requirements — preferred source when present. */
+  items?: EnquiryVisaRequirementItem[]
   countries: string[]
   visaType: string
   purposeOfVisit: string

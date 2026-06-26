@@ -1,12 +1,13 @@
 import { Box, Grid, Stack, Typography } from '@mui/material'
-import { Badge, Button } from '@/design-system/UIComponents'
+import { KeyRound, Mail, UserCheck, UserX } from 'lucide-react'
+import { Badge, RowActions, type RowAction } from '@/design-system/UIComponents'
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import { corporateAccountService } from '@/shared/services/corporateAccountService'
 import { entityMasterService } from '@/shared/services/entityMasterService'
 import { teamService } from '@/shared/services/teamService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
-import type { CorporateAccount } from '@/shared/types/corporateAccount'
+import type { CorporateAccount, CorporateAdminUser } from '@/shared/types/corporateAccount'
 import {
   billingTypeColor,
   billingTypeLabel,
@@ -98,22 +99,90 @@ export function AssignedUsersTab({ account }: { account: CorporateAccount }) {
 export function AdminsTab({
   account,
   onSendLogin,
+  onChangePassword,
+  onSetAccessStatus,
 }: {
   account: CorporateAccount
   onSendLogin: (adminId: string) => void
+  onChangePassword: (admin: CorporateAdminUser) => void
+  onSetAccessStatus: (adminId: string, accessStatus: 'active' | 'inactive') => void
 }) {
-  const admins = [account.superAdmin, ...account.admins].filter(Boolean)
+  const admins = [account.superAdmin, ...account.admins].filter(Boolean) as CorporateAdminUser[]
+
+  const buildActions = (admin: CorporateAdminUser): RowAction[] => {
+    const isActive = (admin.accessStatus ?? 'active') === 'active'
+    const actions: RowAction[] = [
+      {
+        label: 'Send login email',
+        icon: <Mail size={14} />,
+        onClick: () => onSendLogin(admin.id),
+        disabled: !isActive,
+      },
+      {
+        label: 'Change password',
+        icon: <KeyRound size={14} />,
+        onClick: () => onChangePassword(admin),
+      },
+    ]
+
+    if (isActive) {
+      actions.push({
+        label: 'Deactivate user',
+        icon: <UserX size={14} />,
+        variant: 'destructive',
+        divider: true,
+        onClick: () => onSetAccessStatus(admin.id, 'inactive'),
+      })
+    } else {
+      actions.push({
+        label: 'Activate user',
+        icon: <UserCheck size={14} />,
+        divider: true,
+        onClick: () => onSetAccessStatus(admin.id, 'active'),
+      })
+    }
+
+    return actions
+  }
+
   return (
     <Stack spacing={1.5}>
-      {admins.map((admin) => (
-        <Stack key={admin!.id} direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={1}>
-          <Stack>
-            <Typography variant="body2" fontWeight={600}>{admin!.fullName}</Typography>
-            <Typography variant="caption" color="text.secondary">{admin!.role} · {admin!.emailAddress}</Typography>
+      {admins.map((admin) => {
+        const isActive = (admin.accessStatus ?? 'active') === 'active'
+        return (
+          <Stack
+            key={admin.id}
+            direction={{ xs: 'column', sm: 'row' }}
+            alignItems={{ xs: 'flex-start', sm: 'center' }}
+            justifyContent="space-between"
+            spacing={1}
+            sx={{
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1.5,
+              px: 1.25,
+              py: 1,
+            }}
+          >
+            <Stack spacing={0.35} sx={{ minWidth: 0 }}>
+              <Stack direction="row" alignItems="center" spacing={0.75} useFlexGap flexWrap="wrap">
+                <Typography variant="body2" fontWeight={600}>
+                  {admin.fullName}
+                </Typography>
+                <Badge
+                  label={isActive ? 'Active' : 'Inactive'}
+                  color={isActive ? 'success' : 'neutral'}
+                  size="sm"
+                />
+              </Stack>
+              <Typography variant="caption" color="text.secondary">
+                {admin.role.replace('_', ' ')} · {admin.emailAddress}
+              </Typography>
+            </Stack>
+            <RowActions row={admin} actions={buildActions(admin)} />
           </Stack>
-          <Button label="Send login email" size="sm" variant="outlined" onClick={() => onSendLogin(admin!.id)} />
-        </Stack>
-      ))}
+        )
+      })}
     </Stack>
   )
 }

@@ -2,34 +2,34 @@ import { Box, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useNavigate } from 'react-router-dom'
 import { Badge, Button } from '@/design-system/UIComponents'
-import { validateForApproval } from '@/shared/utils/commercialAgreementValidation'
-import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
+import { validateForActivation } from '@/shared/utils/commercialAgreementValidation'
+import type { AgreementStatus, CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
+import {
+  canMarkReadyForActivation,
+  canProceedToCorporateAccount,
+} from '../../config/agreementStatusConfig'
 import { AgreementReviewPanel } from '../AgreementReviewPanel'
 
-interface AgreementApprovalSectionProps {
+interface AgreementReviewSectionProps {
   data: CommercialAgreementFormData
   agreementRecordId?: string
   agreementDisplayId?: string
-  status?: string
+  status?: AgreementStatus
   statusLabel?: string
-  onSubmit?: () => void
-  onApprove?: () => void
-  onReject?: () => void
+  onMarkReady?: () => void
 }
 
-export function AgreementApprovalSection({
+export function AgreementReviewSection({
   data,
   agreementRecordId,
   agreementDisplayId,
   status = 'draft',
   statusLabel,
-  onSubmit,
-  onApprove,
-  onReject,
-}: AgreementApprovalSectionProps) {
+  onMarkReady,
+}: AgreementReviewSectionProps) {
   const theme = useTheme()
   const navigate = useNavigate()
-  const validation = validateForApproval(data)
+  const validation = validateForActivation(data)
 
   return (
     <Stack spacing={2}>
@@ -64,16 +64,14 @@ export function AgreementApprovalSection({
       </Box>
 
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-        {status === 'draft' && onSubmit ? (
-          <Button label="Submit agreement" onClick={onSubmit} disabled={!validation.ok} />
+        {canMarkReadyForActivation(status) && onMarkReady ? (
+          <Button
+            label="Mark ready for activation"
+            onClick={onMarkReady}
+            disabled={!validation.ok}
+          />
         ) : null}
-        {status === 'submitted' && onApprove ? (
-          <Button label="Approve agreement" onClick={onApprove} disabled={!validation.ok} />
-        ) : null}
-        {status === 'submitted' && onReject ? (
-          <Button label="Reject agreement" variant="outlined" color="secondary" onClick={onReject} />
-        ) : null}
-        {status === 'approved' && agreementRecordId ? (
+        {canProceedToCorporateAccount(status) && agreementRecordId ? (
           <Button
             label="Proceed to corporate accounts"
             onClick={() =>

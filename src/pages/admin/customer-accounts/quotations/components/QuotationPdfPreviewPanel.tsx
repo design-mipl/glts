@@ -1,7 +1,7 @@
 import { Box, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material'
 import type { QuotationRecord } from '@/shared/types/quotation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
-import { getLatestApprovedVersion, getCurrentVersion } from '@/shared/utils/quotationValidation'
+import { getLatestVersion, getCurrentVersion } from '@/shared/utils/quotationValidation'
 import { agreementEmbeddedTableHeadCellSx } from '../../agreements/components/agreementFormLayout'
 
 interface QuotationPdfPreviewPanelProps {
@@ -9,7 +9,7 @@ interface QuotationPdfPreviewPanelProps {
 }
 
 export function QuotationPdfPreviewPanel({ quotation }: QuotationPdfPreviewPanelProps) {
-  const version = getLatestApprovedVersion(quotation) ?? getCurrentVersion(quotation)
+  const version = getLatestVersion(quotation) ?? getCurrentVersion(quotation)
   const pricing = version?.pricingMatrix ?? []
 
   return (

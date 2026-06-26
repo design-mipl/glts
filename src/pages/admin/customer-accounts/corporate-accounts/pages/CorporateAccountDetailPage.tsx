@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Box, CircularProgress } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
-import { BaseCard, EmptyState, Tabs, useToast } from '@/design-system/UIComponents'
+import { BaseCard, ConfirmDialog, EmptyState, Tabs, useToast } from '@/design-system/UIComponents'
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { corporateAccountService } from '@/shared/services/corporateAccountService'
-import type { CorporateAccount } from '@/shared/types/corporateAccount'
+import type { CorporateAccount, CorporateAdminUser } from '@/shared/types/corporateAccount'
 import { PORTAL_LOGIN_URL } from '@/shared/utils/corporateAccountValidation'
+import { CorporateAccountAdminPasswordDialog } from '../components/CorporateAccountAdminPasswordDialog'
 import { CorporateAccountDetailSummary } from '../components/CorporateAccountDetailSummary'
 import {
   ActivityTab,
@@ -25,6 +26,10 @@ export function CorporateAccountDetailPage() {
   const [loading, setLoading] = useState(true)
   const [account, setAccount] = useState<CorporateAccount>()
   const [activeTab, setActiveTab] = useState('overview')
+  const [passwordAdmin, setPasswordAdmin] = useState<CorporateAdminUser>()
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
+  const [passwordUpdating, setPasswordUpdating] = useState(false)
+  const [accessTarget, setAccessTarget] = useState<{ adminId: string; accessStatus: 'active' | 'inactive' }>()
 
   const reload = useCallback(() => {
     if (!accountId) return
@@ -79,8 +84,48 @@ export function CorporateAccountDetailPage() {
     reload()
   }
 
+  const handleChangePassword = (password: string) => {
+    if (!passwordAdmin) return
+    setPasswordUpdating(true)
+    const payload = corporateAccountService.changeAdminPassword(account.id, passwordAdmin.id, password)
+    setPasswordUpdating(false)
+    if (!payload) {
+      showToast({ title: 'Could not update password', variant: 'error' })
+      return
+    }
+    setPasswordDialogOpen(false)
+    setPasswordAdmin(undefined)
+    showToast({
+      title: 'Password updated',
+      description: `${payload.username} · ${payload.temporaryPassword}`,
+      variant: 'success',
+    })
+    reload()
+  }
+
+  const handleConfirmAccessChange = () => {
+    if (!accessTarget) return
+    const { adminId, accessStatus } = accessTarget
+    const updated = corporateAccountService.setAdminAccessStatus(account.id, adminId, accessStatus)
+    setAccessTarget(undefined)
+    if (!updated) {
+      showToast({ title: 'Could not update user access', variant: 'error' })
+      return
+    }
+    showToast({
+      title: accessStatus === 'active' ? 'User activated' : 'User deactivated',
+      variant: 'success',
+    })
+    reload()
+  }
+
+  const accessTargetAdmin = accessTarget
+    ? [account.superAdmin, ...account.admins].find((admin) => admin?.id === accessTarget.adminId)
+    : undefined
+
   return (
-    <AdminDetailShell
+    <>
+      <AdminDetailShell
       breadcrumbs={[
         { label: 'Customer & accounts', href: '/admin/customer-accounts/corporate-accounts' },
         { label: 'Corporate accounts', href: '/admin/customer-accounts/corporate-accounts' },
@@ -137,7 +182,17 @@ export function CorporateAccountDetailPage() {
         </Box>
         <Box sx={{ p: 2.5 }}>
           {activeTab === 'overview' ? <OverviewTab account={account} /> : null}
-          {activeTab === 'admins' ? <AdminsTab account={account} onSendLogin={handleSendLogin} /> : null}
+          {activeTab === 'admins' ? (
+            <AdminsTab
+              account={account}
+              onSendLogin={handleSendLogin}
+              onChangePassword={(admin) => {
+                setPasswordAdmin(admin)
+                setPasswordDialogOpen(true)
+              }}
+              onSetAccessStatus={(adminId, accessStatus) => setAccessTarget({ adminId, accessStatus })}
+            />
+          ) : null}
           {activeTab === 'assigned-users' ? <AssignedUsersTab account={account} /> : null}
           {activeTab === 'entities' ? <EntitiesTab account={account} /> : null}
           {activeTab === 'vessels' ? <VesselsTab account={account} /> : null}
@@ -146,6 +201,34 @@ export function CorporateAccountDetailPage() {
           {activeTab === 'activity' ? <ActivityTab account={account} /> : null}
         </Box>
       </BaseCard>
+
+      <CorporateAccountAdminPasswordDialog
+        open={passwordDialogOpen}
+        admin={passwordAdmin}
+        onClose={() => {
+          setPasswordDialogOpen(false)
+          setPasswordAdmin(undefined)
+        }}
+        onConfirm={handleChangePassword}
+        loading={passwordUpdating}
+      />
+
+      <ConfirmDialog
+        open={Boolean(accessTarget)}
+        onClose={() => setAccessTarget(undefined)}
+        onConfirm={handleConfirmAccessChange}
+        title={accessTarget?.accessStatus === 'inactive' ? 'Deactivate user?' : 'Activate user?'}
+        description={
+          accessTargetAdmin
+            ? accessTarget?.accessStatus === 'inactive'
+              ? `${accessTargetAdmin.fullName} will lose portal login access until reactivated.`
+              : `${accessTargetAdmin.fullName} will be able to sign in to the corporate portal again.`
+            : 'Update portal access for this user.'
+        }
+        confirmLabel={accessTarget?.accessStatus === 'inactive' ? 'Deactivate' : 'Activate'}
+        variant={accessTarget?.accessStatus === 'inactive' ? 'destructive' : 'default'}
+      />
     </AdminDetailShell>
+    </>
   )
 }

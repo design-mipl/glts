@@ -1,5 +1,6 @@
 import type {
   AgreementBillingType,
+  AgreementHoldTerminateStatus,
   AgreementStatus,
   AgreementType,
   AgreementWorkflowType,
@@ -7,11 +8,11 @@ import type {
 
 export const agreementStatusLabel: Record<AgreementStatus, string> = {
   draft: 'Draft',
-  submitted: 'Pending Approval',
-  approved: 'Approved',
-  rejected: 'Rejected',
+  ready_for_activation: 'Ready for activation',
+  active: 'Active',
   expired: 'Expired',
-  inactive: 'Inactive',
+  on_hold: 'On hold',
+  terminated: 'Terminated',
 }
 
 export const agreementStatusColor: Record<
@@ -19,11 +20,41 @@ export const agreementStatusColor: Record<
   'neutral' | 'info' | 'warning' | 'success' | 'error'
 > = {
   draft: 'neutral',
-  submitted: 'info',
-  approved: 'success',
-  rejected: 'error',
+  ready_for_activation: 'info',
+  active: 'success',
   expired: 'warning',
-  inactive: 'neutral',
+  on_hold: 'warning',
+  terminated: 'error',
+}
+
+export const AGREEMENT_STATUS_FILTER_OPTIONS: { value: AgreementStatus; label: string }[] = [
+  { value: 'draft', label: agreementStatusLabel.draft },
+  { value: 'ready_for_activation', label: agreementStatusLabel.ready_for_activation },
+  { value: 'active', label: agreementStatusLabel.active },
+  { value: 'expired', label: agreementStatusLabel.expired },
+  { value: 'on_hold', label: agreementStatusLabel.on_hold },
+  { value: 'terminated', label: agreementStatusLabel.terminated },
+]
+
+export const AGREEMENT_HOLD_TERMINATE_OPTIONS: { value: AgreementHoldTerminateStatus; label: string }[] = [
+  { value: 'on_hold', label: agreementStatusLabel.on_hold },
+  { value: 'terminated', label: agreementStatusLabel.terminated },
+]
+
+export function canEditAgreement(status: AgreementStatus): boolean {
+  return status === 'draft' || status === 'ready_for_activation'
+}
+
+export function canMarkReadyForActivation(status: AgreementStatus): boolean {
+  return status === 'draft'
+}
+
+export function canProceedToCorporateAccount(status: AgreementStatus): boolean {
+  return status === 'ready_for_activation'
+}
+
+export function canUpdateAgreementHoldOrTerminate(status: AgreementStatus): boolean {
+  return status === 'active' || status === 'ready_for_activation' || status === 'expired'
 }
 
 export const agreementTypeLabel: Record<AgreementType, string> = {

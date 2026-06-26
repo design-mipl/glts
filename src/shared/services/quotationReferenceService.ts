@@ -26,7 +26,7 @@ export const quotationReferenceService = {
   },
 
   getSelectOptions(): { value: string; label: string; gstNumber: string; quotationId: string }[] {
-    return quotationService.getApprovedSelectOptions()
+    return quotationService.getConvertibleSelectOptions()
   },
 
   search(query: string): QuotationReference[] {

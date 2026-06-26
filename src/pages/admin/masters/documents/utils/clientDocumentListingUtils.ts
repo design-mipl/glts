@@ -9,6 +9,7 @@ import { formatMasterDate } from '../../utils/masterListingUtils'
 
 export function getClientDocumentCellValue(row: ClientDocumentMaster, key: string): string {
   if (key === 'status') return masterStatusLabel[row.status]
+  if (key === 'isMandatory') return row.isMandatory ? 'Yes' : 'No'
   if (key === 'createdAt') return formatMasterDate(row.createdAt)
   if (key === 'updatedAt') return formatMasterDate(row.updatedAt)
   if (key === 'applicableFor') return formatApplicabilityLabels(row.applicableFor)
@@ -44,6 +45,7 @@ export function downloadClientDocumentCsv(rows: ClientDocumentMaster[]) {
     'Document Type',
     'Description',
     'Applicable For',
+    'Mandatory',
     'Status',
     'Created By',
     'Updated By',
@@ -54,6 +56,7 @@ export function downloadClientDocumentCsv(rows: ClientDocumentMaster[]) {
       row.documentType,
       row.description.replace(/"/g, '""'),
       formatApplicabilityLabels(row.applicableFor as MasterApplicability[]),
+      row.isMandatory ? 'Yes' : 'No',
       masterStatusLabel[row.status],
       row.createdBy,
       row.updatedBy,
