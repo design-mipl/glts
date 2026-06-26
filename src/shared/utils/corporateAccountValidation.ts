@@ -34,6 +34,8 @@ export function createEmptyCorporateAccountFormData(): CorporateAccountFormData 
     admins: [],
     assignedTeamId: '',
     assignedUserIds: [],
+    teamLeaderTeamId: '',
+    teamLeaderUserIds: [],
     entityIds: [],
     vesselIds: [],
     portalActivation: {
@@ -69,6 +71,8 @@ export function validateCorporateAccountStep(step: number, data: CorporateAccoun
     }
   }
   if (step === 6) {
+    if (!data.teamLeaderTeamId) issues.push('Select a team for team leader')
+    if (data.teamLeaderUserIds.length === 0) issues.push('Assign at least one team leader')
     if (!data.assignedTeamId) issues.push('Select a team')
     if (data.assignedUserIds.length === 0) issues.push('Assign at least one user')
   }
@@ -100,6 +104,8 @@ export function validateForActivation(data: CorporateAccountFormData): { ok: boo
   if (!data.agreementId) issues.push('Agreement is required')
   if (!data.superAdmin.fullName.trim()) issues.push('Super admin is required')
   if (!data.superAdmin.emailAddress.trim()) issues.push('Super admin email is required')
+  if (!data.teamLeaderTeamId) issues.push('Team leader team is required')
+  if (data.teamLeaderUserIds.length === 0) issues.push('At least one team leader is required')
   if (!data.assignedTeamId) issues.push('Assigned team is required')
   if (data.assignedUserIds.length === 0) issues.push('At least one assigned user is required')
   return { ok: issues.length === 0, issues }

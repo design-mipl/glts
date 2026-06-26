@@ -54,6 +54,8 @@ export interface CorporateAccount {
   admins: CorporateAdminUser[]
   assignedTeamId?: string
   assignedUserIds?: string[]
+  teamLeaderTeamId?: string
+  teamLeaderUserIds?: string[]
   entityIds: string[]
   vesselIds: string[]
   portalActivation: CorporatePortalActivation
@@ -75,6 +77,8 @@ export interface CorporateAccountFormData {
   admins: Omit<CorporateAdminUser, 'id' | 'credentialsSentAt' | 'lastLoginAt'>[]
   assignedTeamId: string
   assignedUserIds: string[]
+  teamLeaderTeamId: string
+  teamLeaderUserIds: string[]
   entityIds: string[]
   vesselIds: string[]
   portalActivation: CorporatePortalActivation

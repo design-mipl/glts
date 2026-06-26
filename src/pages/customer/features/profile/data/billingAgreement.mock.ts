@@ -149,6 +149,28 @@ export const mockBillingAgreementData: BillingAgreementData = {
       status: 'available',
     },
   ],
+  onboardingDocuments: [
+    { id: 'doc-agreement', label: 'Agreement Copy', fileName: 'agreement-copy.pdf', status: 'available' },
+    { id: 'doc-gst', label: 'GST Certificate', fileName: 'gst-certificate.pdf', status: 'available' },
+    {
+      id: 'doc-registration',
+      label: 'Company Registration',
+      fileName: 'company-registration.pdf',
+      status: 'available',
+    },
+    {
+      id: 'doc-annexure',
+      label: 'Commercial Annexure',
+      fileName: 'commercial-annexure.pdf',
+      status: 'available',
+    },
+  ],
+  agreementDocument: {
+    id: 'doc-agreement',
+    label: 'Agreement Copy',
+    fileName: 'agreement-copy.pdf',
+    status: 'available',
+  },
   financeContactPersons: [
     {
       id: 'fc-company',

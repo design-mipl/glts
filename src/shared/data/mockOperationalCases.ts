@@ -6,6 +6,8 @@ import type {
   TeamCapacity,
 } from '@/shared/types/operationalCaseHandling'
 import {
+  APPLICATION_FEE_DEFAULT_RATES,
+  DEFAULT_APPLICATION_FEE_NAMES,
   DEFAULT_GROUND_SERVICE_NAMES,
   GROUND_SERVICE_DEFAULT_RATES,
   formatOperationalExpenseSummary,
@@ -30,6 +32,19 @@ function buildGroundServices(
   }))
 }
 
+function buildApplicationFees(
+  selected: Partial<Record<(typeof DEFAULT_APPLICATION_FEE_NAMES)[number], number>>,
+): GroundServiceLine[] {
+  return DEFAULT_APPLICATION_FEE_NAMES.map((name, index) => ({
+    id: `fee-${index}`,
+    serviceName: name,
+    selected: name in selected,
+    prefilledAmount: APPLICATION_FEE_DEFAULT_RATES[name],
+    actualAmount: selected[name] ?? APPLICATION_FEE_DEFAULT_RATES[name] ?? 0,
+    remarks: '',
+  }))
+}
+
 function timeline(
   events: Array<{ displayDate: string; label: string; actor?: string }>,
 ): OperationalCase['timeline'] {
@@ -42,14 +57,25 @@ function timeline(
   }))
 }
 
-function sumEstimated(services: GroundServiceLine[]): number {
-  return services.filter(s => s.selected).reduce((sum, s) => sum + s.prefilledAmount, 0)
+function sumEstimated(...serviceGroups: GroundServiceLine[][]): number {
+  return serviceGroups.reduce(
+    (total, services) => total + services.filter(s => s.selected).reduce((sum, s) => sum + s.prefilledAmount, 0),
+    0,
+  )
 }
 
-function sumActual(services: GroundServiceLine[], extras: OperationalCase['expenses']): number {
-  const serviceTotal = services.filter(s => s.selected).reduce((sum, s) => sum + s.actualAmount, 0)
+function sumActual(serviceGroups: GroundServiceLine[][], extras: OperationalCase['expenses']): number {
+  const serviceTotal = serviceGroups.reduce(
+    (total, services) => total + services.filter(s => s.selected).reduce((sum, s) => sum + s.actualAmount, 0),
+    0,
+  )
   const extraTotal = extras.reduce((sum, e) => sum + e.actualAmount, 0)
   return serviceTotal + extraTotal
+}
+
+function formatServicesSummary(...serviceGroups: GroundServiceLine[][]): string {
+  const names = serviceGroups.flatMap(services => services.filter(s => s.selected).map(s => s.serviceName))
+  return names.join(', ') || '—'
 }
 
 interface PassengerSeed {
@@ -70,6 +96,7 @@ interface PassengerSeed {
   assignedExecutive?: string
   assignedTeam?: OperationalCase['assignedTeam']
   groundServices?: Partial<Record<(typeof DEFAULT_GROUND_SERVICE_NAMES)[number], number>>
+  applicationFees?: Partial<Record<(typeof DEFAULT_APPLICATION_FEE_NAMES)[number], number>>
   expenses?: OperationalCase['expenses']
   biometricsScheduled?: string
   vfsStatus?: string
@@ -99,10 +126,11 @@ function buildPassengerCase(
   sequence: number,
   caseKey: string,
 ): OperationalCase {
-  const groundServices = buildGroundServices(passenger.groundServices ?? {})
+  const groundServices = buildGroundServices({})
+  const applicationFees = buildApplicationFees(passenger.applicationFees ?? {})
   const expenses = passenger.expenses ?? []
-  const estimated = sumEstimated(groundServices)
-  const actual = sumActual(groundServices, expenses)
+  const estimated = sumEstimated(applicationFees)
+  const actual = sumActual([applicationFees], expenses)
   const operationalId = formatOperationalId(batch.applicationId, sequence)
   const gltsApplicantId = `GLTS-APL-${batch.applicationId.slice(-4)}-${String(sequence).padStart(2, '0')}`
 
@@ -134,15 +162,12 @@ function buildPassengerCase(
     carryForward: passenger.carryForward ?? false,
     markedForOperations: passenger.markedForOperations ?? passenger.status !== 'Pending',
     delayed: passenger.delayed ?? false,
-    servicesSummary:
-      groundServices
-        .filter(s => s.selected)
-        .map(s => s.serviceName.split(' ')[0])
-        .join(', ') || '—',
+    servicesSummary: formatServicesSummary(applicationFees),
     estimatedExpense: estimated,
     actualExpense: actual,
     expenseSummary: formatOperationalExpenseSummary(estimated, actual),
     groundServices,
+    applicationFees,
     expenses,
     biometricsScheduled: passenger.biometricsScheduled,
     vfsStatus: passenger.vfsStatus,
@@ -194,6 +219,7 @@ const BATCH_SEEDS: BatchSeed[] = [
         nextAction: 'Biometrics Coordination',
         joiningDate: '2026-06-28',
         groundServices: { 'Biometrics Coordination': 2500, 'VFS Support': 1800, 'Local Travel': 1200 },
+        applicationFees: { 'VFS fees': 1200, 'Visa fees': 8500, Biometrics: 2500 },
         biometricsScheduled: '12 Jun 2026 · 14:30 · VFS Mumbai',
         timelineEvents: [
           { displayDate: '09 Jun', label: 'Assigned to Mumbai Team', actor: 'Ops Manager' },

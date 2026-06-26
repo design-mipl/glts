@@ -85,36 +85,50 @@ export function ViewFormSubmissionSection({
         title="Submission details"
         columns={2}
       >
-        <FormField label="Submission date" required>
+        <FormField label="Online Submission Date" required>
           <Input
             type="date"
             value={submission.submissionDate}
             onChange={v => onChange({ submissionDate: String(v) })}
+            placeholder="Select online submission date"
             size="sm"
             fullWidth
           />
         </FormField>
-        <FormField label="Submission reference number" required>
+        <FormField label="Online Submission Reference No." required>
           <Input
             value={submission.submissionReferenceNumber}
             onChange={v => onChange({ submissionReferenceNumber: String(v) })}
+            placeholder="e.g. VFS-ONL-2026-0142"
             size="sm"
             fullWidth
           />
         </FormField>
-        <FormField label="Submitted by" required>
+        <FormField label="Online Submitted By" required>
           <Input
             value={submission.submittedBy}
             onChange={v => onChange({ submittedBy: String(v) })}
+            placeholder="Enter officer or team name"
             size="sm"
             fullWidth
           />
         </FormField>
-        <FormField label="Tentative collection date" required>
+        <FormField label="VFS Submission Date">
+          <Input
+            type="date"
+            value={submission.vfsSubmissionDate}
+            onChange={v => onChange({ vfsSubmissionDate: String(v) })}
+            placeholder="Select VFS submission date"
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        <FormField label="Tentative Collection Date" required>
           <Input
             type="date"
             value={submission.tentativeCollectionDate}
             onChange={v => onChange({ tentativeCollectionDate: String(v) })}
+            placeholder="Select tentative collection date"
             size="sm"
             fullWidth
           />

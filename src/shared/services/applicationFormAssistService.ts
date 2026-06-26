@@ -13,6 +13,7 @@ export interface FormAssistSubmissionDraft {
   submissionDate: string
   submissionReferenceNumber: string
   submittedBy: string
+  vfsSubmissionDate: string
   tentativeCollectionDate: string
   confirmationPdfFileName: string
   invoicePdfFileName: string
@@ -40,6 +41,7 @@ export const EMPTY_FORM_ASSIST_SUBMISSION: FormAssistSubmissionDraft = {
   submissionDate: '',
   submissionReferenceNumber: '',
   submittedBy: '',
+  vfsSubmissionDate: '',
   tentativeCollectionDate: '',
   confirmationPdfFileName: '',
   invoicePdfFileName: '',
@@ -95,6 +97,7 @@ function normalizeSubmission(
     submissionReferenceNumber:
       submission.submissionReferenceNumber ?? legacy.appointmentReference ?? '',
     submittedBy: submission.submittedBy ?? '',
+    vfsSubmissionDate: submission.vfsSubmissionDate ?? '',
     tentativeCollectionDate: submission.tentativeCollectionDate ?? '',
     confirmationPdfFileName: submission.confirmationPdfFileName ?? legacy.confirmationPdfFileName ?? '',
     invoicePdfFileName: submission.invoicePdfFileName ?? legacy.invoicePdfFileName ?? '',
@@ -223,11 +226,11 @@ export const applicationFormAssistService = {
 
   validateSubmission(submission: FormAssistSubmissionDraft): string[] {
     const errors: string[] = []
-    if (!submission.submissionDate.trim()) errors.push('Submission date is required')
+    if (!submission.submissionDate.trim()) errors.push('Online submission date is required')
     if (!submission.submissionReferenceNumber.trim()) {
-      errors.push('Submission reference number is required')
+      errors.push('Online submission reference no. is required')
     }
-    if (!submission.submittedBy.trim()) errors.push('Submitted by is required')
+    if (!submission.submittedBy.trim()) errors.push('Online submitted by is required')
     if (!submission.tentativeCollectionDate.trim()) {
       errors.push('Tentative collection date is required')
     }

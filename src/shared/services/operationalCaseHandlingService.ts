@@ -2,7 +2,7 @@ import {
   SEED_OPERATIONAL_CASES,
   SEED_TEAM_CAPACITY,
 } from '@/shared/data/mockOperationalCases'
-import { ensureGroundServiceCatalog } from '@/pages/admin/ground-operations/case-handling/utils/operationalCaseHandlingUtils'
+import { ensureApplicationFeeCatalog, ensureGroundServiceCatalog } from '@/pages/admin/ground-operations/case-handling/utils/operationalCaseHandlingUtils'
 import type {
   CityTeam,
   GroundServiceLine,
@@ -60,6 +60,29 @@ function normalizeGroundServices(services: GroundServiceLine[]): GroundServiceLi
   return ensureGroundServiceCatalog(services.map(service => ({ ...service })))
 }
 
+function normalizeApplicationFees(services: GroundServiceLine[]): GroundServiceLine[] {
+  return ensureApplicationFeeCatalog(services.map(service => ({ ...service })))
+}
+
+function normalizeServiceLines(record: OperationalCase) {
+  record.groundServices = normalizeGroundServices(record.groundServices)
+  record.applicationFees = normalizeApplicationFees(record.applicationFees ?? [])
+}
+
+function selectedServiceLines(record: OperationalCase): GroundServiceLine[] {
+  return record.applicationFees.filter(service => service.selected)
+}
+
+function recomputeServiceTotals(record: OperationalCase) {
+  const selected = selectedServiceLines(record)
+  record.servicesSummary = selected.map(service => service.serviceName).join(', ') || '—'
+  record.estimatedExpense = selected.reduce((sum, service) => sum + service.prefilledAmount, 0)
+  const serviceActual = selected.reduce((sum, service) => sum + service.actualAmount, 0)
+  const extraActual = record.expenses.reduce((sum, expense) => sum + expense.actualAmount, 0)
+  record.actualExpense = serviceActual + extraActual
+  record.expenseSummary = `₹${record.estimatedExpense.toLocaleString('en-IN')} Est.${record.actualExpense > 0 ? ` · ₹${record.actualExpense.toLocaleString('en-IN')} Actual` : ''}`
+}
+
 function getRecord(id: string): OperationalCase | undefined {
   const index = findIndex(id)
   if (index < 0) return undefined
@@ -67,6 +90,7 @@ function getRecord(id: string): OperationalCase | undefined {
   return {
     ...record,
     groundServices: normalizeGroundServices(record.groundServices),
+    applicationFees: normalizeApplicationFees(record.applicationFees ?? []),
     expenses: [...record.expenses],
     timeline: [...record.timeline],
   }
@@ -76,12 +100,13 @@ function mutate(id: string, updater: (record: OperationalCase) => void): Operati
   const index = findIndex(id)
   if (index < 0) return undefined
   const record = caseStore[index]
-  record.groundServices = normalizeGroundServices(record.groundServices)
+  normalizeServiceLines(record)
   updater(record)
   touch(record)
   return {
     ...record,
     groundServices: normalizeGroundServices(record.groundServices),
+    applicationFees: normalizeApplicationFees(record.applicationFees ?? []),
     expenses: [...record.expenses],
     timeline: [...record.timeline],
   }
@@ -93,6 +118,7 @@ const OPERATIONAL_CUTOFF_HOUR = 18
 let caseStore: OperationalCase[] = SEED_OPERATIONAL_CASES.map(row => ({
   ...row,
   groundServices: normalizeGroundServices(row.groundServices),
+  applicationFees: normalizeApplicationFees(row.applicationFees ?? []),
   expenses: row.expenses.map(e => ({ ...e })),
   timeline: row.timeline.map(t => ({ ...t })),
 }))
@@ -151,6 +177,7 @@ export const operationalCaseHandlingService = {
       .map(row => ({
         ...row,
         groundServices: normalizeGroundServices(row.groundServices),
+        applicationFees: normalizeApplicationFees(row.applicationFees ?? []),
         expenses: row.expenses.map(e => ({ ...e })),
         timeline: row.timeline.map(t => ({ ...t })),
       }))
@@ -257,13 +284,16 @@ export const operationalCaseHandlingService = {
       const svc = record.groundServices.find(s => s.id === serviceId)
       if (!svc) return
       Object.assign(svc, patch)
-      const selected = record.groundServices.filter(s => s.selected)
-      record.servicesSummary = selected.map(s => s.serviceName.split(' ')[0]).join(', ') || '—'
-      record.estimatedExpense = selected.reduce((sum, s) => sum + s.prefilledAmount, 0)
-      const serviceActual = selected.reduce((sum, s) => sum + s.actualAmount, 0)
-      const extraActual = record.expenses.reduce((sum, e) => sum + e.actualAmount, 0)
-      record.actualExpense = serviceActual + extraActual
-      record.expenseSummary = `₹${record.estimatedExpense.toLocaleString('en-IN')} Est.${record.actualExpense > 0 ? ` · ₹${record.actualExpense.toLocaleString('en-IN')} Actual` : ''}`
+      recomputeServiceTotals(record)
+    })
+  },
+
+  updateApplicationFee(id: string, feeId: string, patch: Partial<GroundServiceLine>): OperationalCase | undefined {
+    return mutate(id, record => {
+      const fee = record.applicationFees.find(item => item.id === feeId)
+      if (!fee) return
+      Object.assign(fee, patch)
+      recomputeServiceTotals(record)
     })
   },
 
@@ -275,10 +305,7 @@ export const operationalCaseHandlingService = {
         isExtra: expense.isExtra ?? true,
       }
       record.expenses.push(item)
-      record.actualExpense =
-        record.groundServices.filter(s => s.selected).reduce((sum, s) => sum + s.actualAmount, 0) +
-        record.expenses.reduce((sum, e) => sum + e.actualAmount, 0)
-      record.expenseSummary = `₹${record.estimatedExpense.toLocaleString('en-IN')} Est.${record.actualExpense > 0 ? ` · ₹${record.actualExpense.toLocaleString('en-IN')} Actual` : ''}`
+      recomputeServiceTotals(record)
       appendTimeline(record, `Expense added · ${item.serviceName}`)
     })
   },
@@ -329,7 +356,8 @@ export const operationalCaseHandlingService = {
   resetToSeed() {
     caseStore = SEED_OPERATIONAL_CASES.map(row => ({
       ...row,
-      groundServices: row.groundServices.map(s => ({ ...s })),
+      groundServices: normalizeGroundServices(row.groundServices),
+      applicationFees: normalizeApplicationFees(row.applicationFees ?? []),
       expenses: row.expenses.map(e => ({ ...e })),
       timeline: row.timeline.map(t => ({ ...t })),
     }))

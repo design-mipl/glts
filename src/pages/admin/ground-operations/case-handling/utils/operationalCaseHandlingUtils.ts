@@ -8,7 +8,9 @@ import type {
   OperationsDeskGroupBy,
 } from '@/shared/types/operationalCaseHandling'
 import {
+  APPLICATION_FEE_DEFAULT_RATES,
   CITY_TEAMS,
+  DEFAULT_APPLICATION_FEE_NAMES,
   DEFAULT_GROUND_SERVICE_NAMES,
   GROUND_SERVICE_DEFAULT_RATES,
   OPERATIONAL_CASE_PRIORITIES,
@@ -280,13 +282,18 @@ export function getOperationsDeskEmptyState(): {
 }
 
 const DEFAULT_GROUND_SERVICE_NAME_SET = new Set<string>(DEFAULT_GROUND_SERVICE_NAMES)
+const DEFAULT_APPLICATION_FEE_NAME_SET = new Set<string>(DEFAULT_APPLICATION_FEE_NAMES)
 
-/** Ensures every catalog ground service appears on a case, preserving saved state. */
-export function ensureGroundServiceCatalog(services: GroundServiceLine[]): GroundServiceLine[] {
+function ensureServiceCatalog(
+  catalogNames: readonly string[],
+  defaultRates: Record<string, number>,
+  services: GroundServiceLine[],
+  idPrefix: string,
+): GroundServiceLine[] {
   const byName = new Map(services.map(service => [service.serviceName, service]))
   const catalog: GroundServiceLine[] = []
 
-  DEFAULT_GROUND_SERVICE_NAMES.forEach((name, index) => {
+  catalogNames.forEach((name, index) => {
     const existing = byName.get(name)
     if (existing) {
       catalog.push(existing)
@@ -294,10 +301,10 @@ export function ensureGroundServiceCatalog(services: GroundServiceLine[]): Groun
       return
     }
     catalog.push({
-      id: `svc-${index}`,
+      id: `${idPrefix}-${index}`,
       serviceName: name,
       selected: false,
-      prefilledAmount: GROUND_SERVICE_DEFAULT_RATES[name],
+      prefilledAmount: defaultRates[name] ?? 0,
       actualAmount: 0,
       remarks: '',
     })
@@ -310,6 +317,30 @@ export function ensureGroundServiceCatalog(services: GroundServiceLine[]): Groun
   return catalog
 }
 
+/** Ensures every catalog ground service appears on a case, preserving saved state. */
+export function ensureGroundServiceCatalog(services: GroundServiceLine[]): GroundServiceLine[] {
+  return ensureServiceCatalog(
+    DEFAULT_GROUND_SERVICE_NAMES,
+    GROUND_SERVICE_DEFAULT_RATES,
+    services,
+    'svc',
+  )
+}
+
+/** Ensures every VFS / application fee option appears on a case, preserving saved state. */
+export function ensureApplicationFeeCatalog(services: GroundServiceLine[]): GroundServiceLine[] {
+  return ensureServiceCatalog(
+    DEFAULT_APPLICATION_FEE_NAMES,
+    APPLICATION_FEE_DEFAULT_RATES,
+    services,
+    'fee',
+  )
+}
+
 export function isCatalogGroundServiceName(name: string): boolean {
   return DEFAULT_GROUND_SERVICE_NAME_SET.has(name)
+}
+
+export function isCatalogApplicationFeeName(name: string): boolean {
+  return DEFAULT_APPLICATION_FEE_NAME_SET.has(name)
 }

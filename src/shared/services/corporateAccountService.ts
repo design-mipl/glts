@@ -11,11 +11,8 @@ import type {
   CorporateAccountListFilters,
   CorporateAdminUser,
 } from '@/shared/types/corporateAccount'
-import {
-  formatCredentialEmailPayload,
-  generateTemporaryPassword,
-  validateForActivation,
-} from '@/shared/utils/corporateAccountValidation'
+import { entityMasterService } from '@/shared/services/entityMasterService'
+import { vesselMasterService } from '@/shared/services/vesselMasterService'
 
 const ADMIN_ACTOR = 'Admin User'
 
@@ -51,11 +48,28 @@ function normalizeAdmin(admin: CorporateAdminUser): CorporateAdminUser {
   return { ...admin, accessStatus: admin.accessStatus ?? 'active' }
 }
 
-function normalizeAccount(account: CorporateAccount): CorporateAccount {
+function resolveEntityIds(entityIds: string[]): string[] {
+  return entityIds.filter((id) => entityMasterService.getById(id))
+}
+
+function resolveVesselIds(vesselIds: string[]): string[] {
+  return vesselIds.filter((id) => vesselMasterService.getById(id))
+}
+
+function sanitizeAccountLinks(account: CorporateAccount): CorporateAccount {
   return {
     ...account,
-    superAdmin: account.superAdmin ? normalizeAdmin(account.superAdmin) : undefined,
-    admins: account.admins.map(normalizeAdmin),
+    entityIds: resolveEntityIds(account.entityIds),
+    vesselIds: resolveVesselIds(account.vesselIds),
+  }
+}
+
+function normalizeAccount(account: CorporateAccount): CorporateAccount {
+  const linked = sanitizeAccountLinks(account)
+  return {
+    ...linked,
+    superAdmin: linked.superAdmin ? normalizeAdmin(linked.superAdmin) : undefined,
+    admins: linked.admins.map(normalizeAdmin),
   }
 }
 
@@ -100,8 +114,10 @@ function formToAccount(data: CorporateAccountFormData): Omit<CorporateAccount, '
     admins: data.admins.map((a) => ({ ...a, id: generateAdminId(), accessStatus: 'active' as const })),
     assignedTeamId: data.assignedTeamId || undefined,
     assignedUserIds: [...data.assignedUserIds],
-    entityIds: data.entityIds,
-    vesselIds: data.vesselIds,
+    teamLeaderTeamId: data.teamLeaderTeamId || undefined,
+    teamLeaderUserIds: [...data.teamLeaderUserIds],
+    entityIds: resolveEntityIds(data.entityIds),
+    vesselIds: resolveVesselIds(data.vesselIds),
     portalActivation: data.portalActivation,
   }
 }
@@ -145,6 +161,12 @@ export const corporateAccountService = {
       (assignedUserIds.length > 0
         ? adminPortalUserService.getById(assignedUserIds[0])?.teamId ?? ''
         : '')
+    const teamLeaderUserIds = [...(account.teamLeaderUserIds ?? [])]
+    const teamLeaderTeamId =
+      account.teamLeaderTeamId ??
+      (teamLeaderUserIds.length > 0
+        ? adminPortalUserService.getById(teamLeaderUserIds[0])?.teamId ?? ''
+        : '')
 
     return {
       agreementId: account.agreementId,
@@ -172,6 +194,8 @@ export const corporateAccountService = {
       })),
       assignedTeamId,
       assignedUserIds,
+      teamLeaderTeamId,
+      teamLeaderUserIds,
       entityIds: [...account.entityIds],
       vesselIds: [...account.vesselIds],
       portalActivation: { ...account.portalActivation },
@@ -198,6 +222,8 @@ export const corporateAccountService = {
       admins: [],
       assignedTeamId: '',
       assignedUserIds: [],
+      teamLeaderTeamId: '',
+      teamLeaderUserIds: [],
       entityIds: [],
       vesselIds: [],
       portalActivation: {
@@ -427,10 +453,12 @@ export const corporateAccountService = {
   },
 
   getCounts(account: CorporateAccount) {
+    const entityIds = resolveEntityIds(account.entityIds)
+    const vesselIds = resolveVesselIds(account.vesselIds)
     return {
       totalAdmins: account.admins.length + (account.superAdmin ? 1 : 0),
-      totalEntities: account.entityIds.length,
-      totalVessels: account.vesselIds.length,
+      totalEntities: entityIds.length,
+      totalVessels: vesselIds.length,
     }
   },
 }

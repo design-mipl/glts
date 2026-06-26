@@ -1,3 +1,5 @@
+import type { AgreementOnboardingDocument } from '@/shared/types/commercialAgreement'
+
 export type DocumentStatus = 'verified' | 'pending' | 'expired' | 'missing'
 export type AgreementStatus = 'active' | 'expiring' | 'expired' | 'pending'
 export type PricingModel = 'credit' | 'advance' | 'mixed'
@@ -90,6 +92,8 @@ export interface AgreementDocument {
   label: string
   fileName?: string
   status: 'available' | 'pending'
+  uploadedAt?: string
+  sourceDocument?: AgreementOnboardingDocument
 }
 
 export interface FinanceContactsSummary {
@@ -156,6 +160,8 @@ export interface BillingAgreementData {
   pricingGroups: PricingGroup[]
   supportedOperations: SupportedOperations
   documents: AgreementDocument[]
+  onboardingDocuments: AgreementDocument[]
+  agreementDocument?: AgreementDocument
   financeContacts: FinanceContactsSummary
   financeContactPersons: FinanceContactPerson[]
   advanceAdjustmentPreview: AdvanceAdjustmentPreview

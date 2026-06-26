@@ -130,12 +130,12 @@ function OperationalCaseDetailContent({
         {activeTab === 'services' ? (
           <Stack spacing={2}>
             <Stack spacing={1.25}>
-              <SectionHeading>Ground services</SectionHeading>
+              <SectionHeading>VFS & application fees</SectionHeading>
               <GroundServicesChecklist
-                services={record.groundServices}
+                services={record.applicationFees}
                 readOnly={false}
-                onServiceChange={(serviceId, patch) => {
-                  operationalCaseHandlingService.updateGroundService(record.id, serviceId, patch)
+                onServiceChange={(feeId, patch) => {
+                  operationalCaseHandlingService.updateApplicationFee(record.id, feeId, patch)
                   onUpdated()
                 }}
               />

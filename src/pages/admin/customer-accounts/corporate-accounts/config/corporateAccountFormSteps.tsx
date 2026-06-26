@@ -213,7 +213,7 @@ export function buildCorporateAccountFormSteps(
     {
       id: 'activation',
       label: 'Assign user',
-      description: 'Team and user assignment',
+      description: 'Team leader and team assignment',
       children: <CorporateAccountPortalActivationFields data={formData} onChange={onChange} />,
     },
     {

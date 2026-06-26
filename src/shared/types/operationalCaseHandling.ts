@@ -89,6 +89,7 @@ export interface OperationalCase {
   estimatedExpense: number
   actualExpense: number
   groundServices: GroundServiceLine[]
+  applicationFees: GroundServiceLine[]
   expenses: OperationalExpense[]
   biometricsScheduled?: string
   vfsStatus?: string
@@ -184,6 +185,41 @@ export const GROUND_SERVICE_DEFAULT_RATES: Record<DefaultGroundServiceName, numb
   'Airport Assistance': 800,
   'Photo Making': 250,
   Other: 0,
+}
+
+export const DEFAULT_APPLICATION_FEE_NAMES = [
+  'VFS fees',
+  'Visa fees',
+  'Courier Service',
+  'Courier Assurance',
+  'SMS',
+  'Premium Lounge',
+  'Document uploading',
+  'Priority',
+  'Super Priority',
+  'Courier',
+  'Biometrics',
+  'One way',
+  'Two Way',
+] as const
+
+export type DefaultApplicationFeeName = (typeof DEFAULT_APPLICATION_FEE_NAMES)[number]
+
+/** Default prefilled amounts (INR) for VFS and application fee add-ons. */
+export const APPLICATION_FEE_DEFAULT_RATES: Record<DefaultApplicationFeeName, number> = {
+  'VFS fees': 1200,
+  'Visa fees': 8500,
+  'Courier Service': 650,
+  'Courier Assurance': 350,
+  SMS: 150,
+  'Premium Lounge': 2200,
+  'Document uploading': 450,
+  Priority: 1800,
+  'Super Priority': 3200,
+  Courier: 650,
+  Biometrics: 2500,
+  'One way': 900,
+  'Two Way': 1400,
 }
 
 export function formatOperationalId(applicationId: string, passengerSequence: number): string {
