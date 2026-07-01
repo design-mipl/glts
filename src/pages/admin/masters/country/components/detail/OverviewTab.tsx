@@ -42,6 +42,9 @@ export function OverviewTab({ country, segment }: OverviewTabProps) {
         <ReadOnlyField label="Status" value={COUNTRY_STATUS_LABELS[country.status]} />
       </Grid>
       <Grid size={{ xs: 12 }}>
+        <ReadOnlyField label="Application Tracking URL" value={country.applicationTrackingUrl ?? ''} />
+      </Grid>
+      <Grid size={{ xs: 12 }}>
         <ReadOnlyField label="Embassy / consulate notes" value={country.embassyNotes ?? ''} />
       </Grid>
       <Grid size={{ xs: 12 }}>

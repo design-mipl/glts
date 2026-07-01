@@ -1,17 +1,37 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Stack } from '@mui/material'
 import { Button, FormField, Input, Modal, Select, Textarea } from '@/design-system/UIComponents'
+import { vendorService } from '@/shared/services/vendorService'
 import type { OperationalPassengerRow, PassengerOperationalStatus } from '@/shared/types/operationalPassengerAssignment'
 import { ASSIGNMENT_CITY_TEAMS } from '@/shared/types/operationalPassengerAssignment'
+import {
+  ASSIGN_USER_VENDOR_ACTION_LABEL,
+  type AssignmentAssigneeType,
+} from '../config/assignmentActionConfig'
 import { ASSIGNMENT_PRIORITY_OPTIONS } from '../config/assignmentPriorityConfig'
 import { PASSENGER_STATUS_OPTIONS } from '../config/assignmentStatusConfig'
 import type { AssignmentAdminAction, DeskPassengerAction } from './AssignmentActionMenu'
+import { AssignmentAssigneeTypeToggle } from './AssignmentAssigneeTypeToggle'
 
 export type AssignmentActionPayload =
-  | { action: 'assign_user'; team: string; user: string; priority: string }
+  | {
+      action: 'assign_user'
+      assigneeType: AssignmentAssigneeType
+      team: string
+      user: string
+      vendor: string
+      priority: string
+    }
   | { action: 'change_priority'; priority: string }
   | { action: 'update_status'; status: PassengerOperationalStatus }
-  | { action: 'reassign'; team: string; user: string; priority: string }
+  | {
+      action: 'reassign'
+      assigneeType: AssignmentAssigneeType
+      team: string
+      user: string
+      vendor: string
+      priority: string
+    }
   | { action: 'add_notes'; notes: string }
   | { action: 'move_next_date' }
   | { action: 'upload_proof'; fileName: string }
@@ -29,7 +49,7 @@ interface AssignmentActionModalProps {
 }
 
 const ACTION_TITLES: Partial<Record<ModalAction, string>> = {
-  assign_user: 'Assign user',
+  assign_user: ASSIGN_USER_VENDOR_ACTION_LABEL,
   change_priority: 'Change priority',
   update_status: 'Update status',
   reassign: 'Reassign passenger',
@@ -49,6 +69,11 @@ const EXECUTIVE_OPTIONS = [
   { value: 'Rajan Mehta', label: 'Rajan Mehta' },
 ]
 
+function inferAssigneeType(record: OperationalPassengerRow): AssignmentAssigneeType {
+  if (!record.assignedTeam && record.assignedUser) return 'vendor'
+  return 'user'
+}
+
 export function AssignmentActionModal({
   open,
   action,
@@ -56,18 +81,32 @@ export function AssignmentActionModal({
   onClose,
   onConfirm,
 }: AssignmentActionModalProps) {
+  const [assigneeType, setAssigneeType] = useState<AssignmentAssigneeType>('user')
   const [priority, setPriority] = useState('Medium')
   const [team, setTeam] = useState('Mumbai Team')
   const [user, setUser] = useState('')
+  const [vendor, setVendor] = useState('')
   const [status, setStatus] = useState<PassengerOperationalStatus>('In Progress')
   const [notes, setNotes] = useState('')
   const [fileName, setFileName] = useState('')
 
+  const vendorOptions = useMemo(
+    () =>
+      vendorService.list({ status: 'active' }).map(row => ({
+        value: row.vendorName,
+        label: row.vendorName,
+      })),
+    [],
+  )
+
   useEffect(() => {
     if (!record) return
+    const nextAssigneeType = inferAssigneeType(record)
+    setAssigneeType(nextAssigneeType)
     setPriority(record.priority)
     setTeam(record.assignedTeam || 'Mumbai Team')
-    setUser(record.assignedUser)
+    setUser(nextAssigneeType === 'user' ? record.assignedUser : '')
+    setVendor(nextAssigneeType === 'vendor' ? record.assignedUser : '')
     setStatus(record.passengerStatus)
     setNotes('')
     setFileName('')
@@ -77,11 +116,14 @@ export function AssignmentActionModal({
 
   const title = ACTION_TITLES[action] ?? 'Update record'
   const subtitle = `${record.passengerName} · ${record.gltsApplicationId}`
+  const isAssigneeAction = action === 'assign_user' || action === 'reassign'
+  const canConfirmAssignee =
+    assigneeType === 'user' ? Boolean(user.trim()) : Boolean(vendor.trim())
 
   const handleConfirm = () => {
     switch (action) {
       case 'assign_user':
-        onConfirm({ action, team, user, priority })
+        onConfirm({ action, assigneeType, team, user, vendor, priority })
         break
       case 'change_priority':
         onConfirm({ action, priority })
@@ -90,7 +132,7 @@ export function AssignmentActionModal({
         onConfirm({ action, status })
         break
       case 'reassign':
-        onConfirm({ action: 'reassign', team, user, priority })
+        onConfirm({ action: 'reassign', assigneeType, team, user, vendor, priority })
         break
       case 'add_notes':
         onConfirm({ action, notes })
@@ -128,19 +170,46 @@ export function AssignmentActionModal({
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end">
           <Button label="Cancel" variant="neutral" onClick={onClose} />
-          <Button label="Confirm" onClick={handleConfirm} />
+          <Button
+            label="Confirm"
+            onClick={handleConfirm}
+            disabled={isAssigneeAction ? !canConfirmAssignee : false}
+          />
         </Stack>
       }
     >
       <Stack spacing={1.5} sx={{ pt: 0.5 }}>
-        {action === 'assign_user' || action === 'reassign' ? (
+        {isAssigneeAction ? (
           <>
-            <FormField label="Team">
-              <Select value={team} onChange={v => setTeam(String(v))} options={TEAM_OPTIONS} size="sm" fullWidth />
-            </FormField>
-            <FormField label="Assigned user">
-              <Select value={user} onChange={v => setUser(String(v))} options={EXECUTIVE_OPTIONS} size="sm" fullWidth />
-            </FormField>
+            <AssignmentAssigneeTypeToggle value={assigneeType} onChange={setAssigneeType} />
+            {assigneeType === 'user' ? (
+              <>
+                <FormField label="Team">
+                  <Select value={team} onChange={v => setTeam(String(v))} options={TEAM_OPTIONS} size="sm" fullWidth />
+                </FormField>
+                <FormField label="User">
+                  <Select
+                    value={user}
+                    onChange={v => setUser(String(v))}
+                    options={EXECUTIVE_OPTIONS}
+                    placeholder="Select user"
+                    size="sm"
+                    fullWidth
+                  />
+                </FormField>
+              </>
+            ) : (
+              <FormField label="Vendor">
+                <Select
+                  value={vendor}
+                  onChange={v => setVendor(String(v))}
+                  options={vendorOptions}
+                  placeholder="Select vendor"
+                  size="sm"
+                  fullWidth
+                />
+              </FormField>
+            )}
             <FormField label="Priority">
               <Select
                 value={priority}

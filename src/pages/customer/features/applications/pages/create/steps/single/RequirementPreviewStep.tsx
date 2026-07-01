@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { Box, Typography, Stack, Card, Grid, TextField, MenuItem, Divider } from '@mui/material'
+import { Box, Typography, Stack, Card, Grid, Divider } from '@mui/material'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import {
   getApplicableStatesForOffering,
@@ -7,10 +7,11 @@ import {
   getTravelFeasibilityConfig,
   getVisaApplicationWindow,
   offeringRequiresJurisdictionSelection,
+  resolveJurisdictionForOffering,
   resolveJurisdictionForOfferingState,
 } from '@/shared/services/countryMasterService'
 import { DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS } from '@/shared/constants/travelDateFeasibility'
-import { getTravelDateInputBounds } from '@/shared/utils/jurisdictionRequirementPreview'
+import { getTravelDateInputBounds, resolveJurisdictionMappingState } from '@/shared/utils/jurisdictionRequirementPreview'
 import {
   requiresFieldValidation,
   useApplicationFlowPolicy,
@@ -20,6 +21,8 @@ import { FlowStepActions } from '../../../../components/create/FlowStepActions'
 import { ApplicationFlowContextChips } from '../../../../components/create/ApplicationFlowContextChips'
 import { RequirementPreviewCarousel } from '../../../../components/create/RequirementPreviewCarousel'
 import { TravelDateFieldWithFeasibility } from '../../../../components/create/TravelDateFieldWithFeasibility'
+import { SearchableStateSelect } from '../../../../components/create/SearchableStateSelect'
+import { JurisdictionReadOnlyField } from '../../../../components/create/JurisdictionReadOnlyField'
 
 interface RequirementPreviewStepProps {
   state: ApplicationFlowState
@@ -42,19 +45,25 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
     [state.countryId, state.visaOfferingId],
   )
 
+  const jurisdictionMappingState = useMemo(
+    () => resolveJurisdictionMappingState(state.placeOfResidence, state.issuedPassportState),
+    [state.placeOfResidence, state.issuedPassportState],
+  )
+
   const resolvedJurisdiction = useMemo(
     () =>
-      requiresJurisdiction && state.issuedPassportState
-        ? resolveJurisdictionForOfferingState(
-            state.countryId,
-            state.visaOfferingId,
-            state.issuedPassportState,
-          )
+      requiresJurisdiction && jurisdictionMappingState
+        ? resolveJurisdictionForOffering(state.countryId, state.visaOfferingId, {
+            placeOfResidence: state.placeOfResidence,
+            issuedPassportState: state.issuedPassportState,
+          })
         : undefined,
     [
       requiresJurisdiction,
+      jurisdictionMappingState,
       state.countryId,
       state.visaOfferingId,
+      state.placeOfResidence,
       state.issuedPassportState,
     ],
   )
@@ -85,59 +94,107 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
 
   useEffect(() => {
     if (!requiresJurisdiction) {
-      if (state.issuedPassportState || state.jurisdictionId || state.jurisdiction) {
-        onUpdate({ issuedPassportState: '', jurisdictionId: '', jurisdiction: '' })
+      if (
+        state.issuedPassportState ||
+        state.placeOfResidence ||
+        state.jurisdictionId ||
+        state.jurisdiction
+      ) {
+        onUpdate({
+          issuedPassportState: '',
+          placeOfResidence: '',
+          jurisdictionId: '',
+          jurisdiction: '',
+        })
       }
       return
     }
 
-    if (!state.issuedPassportState) {
+    let nextPassportState = state.issuedPassportState
+    let nextPlaceOfResidence = state.placeOfResidence
+
+    if (nextPassportState && !applicableStates.includes(nextPassportState)) {
+      nextPassportState = ''
+    }
+    if (nextPlaceOfResidence && !applicableStates.includes(nextPlaceOfResidence)) {
+      nextPlaceOfResidence = ''
+    }
+
+    const mappingState = resolveJurisdictionMappingState(nextPlaceOfResidence, nextPassportState)
+    const jurisdiction = mappingState
+      ? resolveJurisdictionForOfferingState(state.countryId, state.visaOfferingId, mappingState)
+      : undefined
+
+    const patch: Partial<ApplicationFlowState> = {}
+
+    if (nextPassportState !== state.issuedPassportState) {
+      patch.issuedPassportState = nextPassportState
+    }
+    if (nextPlaceOfResidence !== state.placeOfResidence) {
+      patch.placeOfResidence = nextPlaceOfResidence
+    }
+
+    if (!mappingState) {
       if (state.jurisdictionId || state.jurisdiction) {
-        onUpdate({ jurisdictionId: '', jurisdiction: '' })
+        patch.jurisdictionId = ''
+        patch.jurisdiction = ''
       }
-      return
-    }
-
-    const stillValid = applicableStates.includes(state.issuedPassportState)
-    if (!stillValid) {
-      onUpdate({ issuedPassportState: '', jurisdictionId: '', jurisdiction: '' })
-      return
-    }
-
-    if (!resolvedJurisdiction) {
-      if (state.jurisdictionId || state.jurisdiction) {
-        onUpdate({ jurisdictionId: '', jurisdiction: '' })
-      }
-      return
-    }
-
-    if (
-      resolvedJurisdiction.id !== state.jurisdictionId ||
-      resolvedJurisdiction.name !== state.jurisdiction
+    } else if (
+      jurisdiction &&
+      (jurisdiction.id !== state.jurisdictionId || jurisdiction.name !== state.jurisdiction)
     ) {
-      onUpdate({
-        jurisdictionId: resolvedJurisdiction.id,
-        jurisdiction: resolvedJurisdiction.name,
-      })
+      patch.jurisdictionId = jurisdiction.id
+      patch.jurisdiction = jurisdiction.name
+    } else if (!jurisdiction && (state.jurisdictionId || state.jurisdiction)) {
+      patch.jurisdictionId = ''
+      patch.jurisdiction = ''
+    }
+
+    if (Object.keys(patch).length > 0) {
+      onUpdate(patch)
     }
   }, [
     applicableStates,
     onUpdate,
     requiresJurisdiction,
-    resolvedJurisdiction,
+    state.countryId,
     state.issuedPassportState,
     state.jurisdiction,
     state.jurisdictionId,
+    state.placeOfResidence,
+    state.visaOfferingId,
   ])
 
-  const handleStateChange = (stateName: string) => {
-    const jurisdiction = resolveJurisdictionForOfferingState(
-      state.countryId,
-      state.visaOfferingId,
-      stateName,
-    )
+  const handlePassportStateChange = (stateName: string) => {
+    if (state.placeOfResidence.trim()) {
+      onUpdate({ issuedPassportState: stateName })
+      return
+    }
+
+    const jurisdiction = stateName
+      ? resolveJurisdictionForOfferingState(state.countryId, state.visaOfferingId, stateName)
+      : undefined
+
     onUpdate({
       issuedPassportState: stateName,
+      jurisdictionId: jurisdiction?.id ?? '',
+      jurisdiction: jurisdiction?.name ?? '',
+    })
+  }
+
+  const handlePlaceOfResidenceChange = (stateName: string) => {
+    const jurisdiction = stateName
+      ? resolveJurisdictionForOfferingState(state.countryId, state.visaOfferingId, stateName)
+      : state.issuedPassportState
+        ? resolveJurisdictionForOfferingState(
+            state.countryId,
+            state.visaOfferingId,
+            state.issuedPassportState,
+          )
+        : undefined
+
+    onUpdate({
+      placeOfResidence: stateName,
       jurisdictionId: jurisdiction?.id ?? '',
       jurisdiction: jurisdiction?.name ?? '',
     })
@@ -149,7 +206,10 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
           cards.length > 0 &&
           state.travelDate &&
           (!requiresJurisdiction ||
-            (state.issuedPassportState && state.jurisdictionId && state.jurisdiction)),
+            (state.issuedPassportState &&
+              jurisdictionMappingState &&
+              state.jurisdictionId &&
+              state.jurisdiction)),
       )
     : true
 
@@ -204,39 +264,38 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
                       <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
                         Issued passport state
                       </Typography>
-                      <TextField
-                        select
-                        size="small"
-                        fullWidth
+                      <SearchableStateSelect
                         value={state.issuedPassportState}
-                        onChange={(e) => handleStateChange(e.target.value)}
-                        inputProps={{ 'aria-label': 'Issued passport state' }}
-                        sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
-                      >
-                        <MenuItem value="">
-                          <em>Select state</em>
-                        </MenuItem>
-                        {applicableStates.map((stateName) => (
-                          <MenuItem key={stateName} value={stateName}>
-                            {stateName}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                        options={applicableStates}
+                        onChange={handlePassportStateChange}
+                        placeholder="Select issuing state"
+                        aria-label="Issued passport state"
+                      />
                     </Box>
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Box>
                       <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
+                        Place of residence
+                      </Typography>
+                      <SearchableStateSelect
+                        value={state.placeOfResidence}
+                        options={applicableStates}
+                        onChange={handlePlaceOfResidenceChange}
+                        placeholder="Select place of residence"
+                        aria-label="Place of residence"
+                        clearable
+                      />
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Box>
+                      <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
                         Jurisdiction
                       </Typography>
-                      <TextField
-                        size="small"
-                        fullWidth
+                      <JurisdictionReadOnlyField
                         value={state.jurisdiction}
-                        disabled
-                        placeholder="Auto-filled from state"
-                        inputProps={{ 'aria-label': 'Jurisdiction' }}
-                        sx={{ '& .MuiInputBase-root': { bgcolor: colors.white } }}
+                        placeholder="Resolved from residence or issuing state"
                       />
                     </Box>
                   </Grid>

@@ -3,6 +3,7 @@ import {
   checklistToDocumentMappings,
   resolveOfferingDocumentChecklistItems,
 } from '@/shared/data/countryMasterDefaults'
+import { getDefaultQcChecklistTemplate, applyQcChecklistKindMetadata } from '@/shared/data/countryQcChecklistDefaults'
 import type { Country } from '@/shared/types/visa'
 import type {
   BusinessSegment,
@@ -11,6 +12,9 @@ import type {
   CountryVisaJurisdiction,
   CountryVisaOffering,
   CountrySegmentConfig,
+  CountryQcChecklistKind,
+  CountryQcChecklistTemplate,
+  CountryVfsServiceRate,
   VisaApplicationWindow,
   DocumentWorkspaceItem,
   PassportIssueLocation,
@@ -34,6 +38,7 @@ import {
   enrichRequirementDocumentRow,
   getApplicableStatesForVisaType,
   resolveJurisdictionForState,
+  resolveJurisdictionMappingState,
   shouldShowJurisdictionNodes,
   visaTypeRequiresJurisdictionSelection,
 } from '@/shared/utils/jurisdictionRequirementPreview'
@@ -92,6 +97,54 @@ export function listCountryMasters(options: ListCountryMastersOptions = {}): Cou
 
 export function getCountryMasterById(countryId: string): CountryMaster | undefined {
   return getMockCountryMasters().find(c => c.id === countryId)
+}
+
+export function getCountryMasterByName(countryName: string): CountryMaster | undefined {
+  const normalized = countryName.trim().toLowerCase()
+  if (!normalized) return undefined
+  return getMockCountryMasters().find(c => c.name.trim().toLowerCase() === normalized)
+}
+
+export function resolveOfferingIdsByLabels(
+  countryLabel: string,
+  visaTypeLabel: string,
+): { countryId: string; visaOfferingId: string } | undefined {
+  const master = getCountryMasterByName(countryLabel)
+  if (!master || !visaTypeLabel?.trim()) return undefined
+
+  const normalizedVisa = visaTypeLabel.trim().toLowerCase()
+  for (const segment of master.segments) {
+    const visaType = segment.visaTypes.find(
+      (entry) =>
+        entry.name.trim().toLowerCase() === normalizedVisa ||
+        entry.id.trim().toLowerCase() === normalizedVisa,
+    )
+    if (visaType) {
+      return { countryId: master.id, visaOfferingId: visaType.id }
+    }
+  }
+
+  return undefined
+}
+
+export function getCountryMasterByCode(countryCode: string): CountryMaster | undefined {
+  const normalized = countryCode.trim().toUpperCase()
+  if (!normalized) return undefined
+  return getMockCountryMasters().find(c => c.code.trim().toUpperCase() === normalized)
+}
+
+export function resolveApplicationTrackingUrl(input: {
+  countryId?: string
+  countryName?: string
+  countryCode?: string
+}): string | undefined {
+  const master =
+    (input.countryId ? getCountryMasterById(input.countryId) : undefined) ??
+    (input.countryName ? getCountryMasterByName(input.countryName) : undefined) ??
+    (input.countryCode ? getCountryMasterByCode(input.countryCode) : undefined)
+
+  const url = master?.applicationTrackingUrl?.trim()
+  return url || undefined
 }
 
 export function getPassportIssueLocations(countryId: string): PassportIssueLocation[] {
@@ -320,6 +373,62 @@ export function resolveJurisdictionForOfferingState(
   return resolveJurisdictionForState(getVisaTypeForOffering(countryId, offeringId), stateName)
 }
 
+export function resolveJurisdictionForOffering(
+  countryId: string,
+  offeringId: string,
+  options: {
+    placeOfResidence?: string
+    issuedPassportState?: string
+  },
+): CountryVisaJurisdiction | undefined {
+  const stateName = resolveJurisdictionMappingState(
+    options.placeOfResidence,
+    options.issuedPassportState,
+  )
+  if (!stateName) return undefined
+  return resolveJurisdictionForOfferingState(countryId, offeringId, stateName)
+}
+
+export function resolveJurisdictionIdByLabel(
+  countryId: string,
+  offeringId: string,
+  jurisdictionLabel?: string,
+): string | undefined {
+  if (!jurisdictionLabel?.trim()) return undefined
+  const visaType = getVisaTypeForOffering(countryId, offeringId)
+  if (!visaType) return undefined
+
+  const normalized = jurisdictionLabel.trim().toLowerCase()
+  const match = (visaType.jurisdictions ?? [])
+    .filter((jurisdiction) => jurisdiction.status === 'active')
+    .find(
+      (jurisdiction) =>
+        jurisdiction.name.trim().toLowerCase() === normalized ||
+        jurisdiction.id.trim().toLowerCase() === normalized,
+    )
+
+  return match?.id
+}
+
+export function resolveOfferingJurisdictionId(
+  countryId: string,
+  offeringId: string,
+  options?: {
+    jurisdictionLabel?: string
+    placeOfResidence?: string
+    issuedPassportState?: string
+  },
+): string | undefined {
+  const byLabel = resolveJurisdictionIdByLabel(countryId, offeringId, options?.jurisdictionLabel)
+  if (byLabel) return byLabel
+
+  const byState = resolveJurisdictionForOffering(countryId, offeringId, {
+    placeOfResidence: options?.placeOfResidence,
+    issuedPassportState: options?.issuedPassportState,
+  })
+  return byState?.id
+}
+
 export function offeringRequiresJurisdictionSelection(
   countryId: string,
   offeringId: string,
@@ -535,4 +644,54 @@ export function getPopularVisaLabels(countryId: string): string {
     .slice(0, 2)
     .map(o => o.visaTypeLabel)
     .join(' · ')
+}
+
+export function resolveOfferingQcChecklist(
+  countryId: string,
+  offeringId: string,
+  kind: CountryQcChecklistKind,
+  jurisdictionId?: string,
+): CountryQcChecklistTemplate {
+  const visaType = getVisaTypeForOffering(countryId, offeringId)
+  if (!visaType) return getDefaultQcChecklistTemplate(kind)
+
+  let template: CountryQcChecklistTemplate | undefined
+
+  if (shouldShowJurisdictionNodes(visaType)) {
+    const jurisdiction =
+      (jurisdictionId
+        ? visaType.jurisdictions?.find((j) => j.id === jurisdictionId && j.status === 'active')
+        : undefined) ??
+      visaType.jurisdictions?.find((j) => j.status === 'active')
+    template = kind === 'ops' ? jurisdiction?.opsQcChecklist : jurisdiction?.docsQcChecklist
+  } else {
+    template = kind === 'ops' ? visaType.opsQcChecklist : visaType.docsQcChecklist
+  }
+
+  const resolved = template ?? getDefaultQcChecklistTemplate(kind)
+  return applyQcChecklistKindMetadata(kind, resolved)
+}
+
+export function resolveOfferingVfsServiceRates(
+  countryId: string,
+  offeringId: string,
+  jurisdictionId?: string,
+): CountryVfsServiceRate[] {
+  const visaType = getVisaTypeForOffering(countryId, offeringId)
+  if (!visaType) return []
+
+  let rates: CountryVfsServiceRate[] | undefined
+
+  if (shouldShowJurisdictionNodes(visaType)) {
+    const jurisdiction =
+      (jurisdictionId
+        ? visaType.jurisdictions?.find((j) => j.id === jurisdictionId && j.status === 'active')
+        : undefined) ??
+      visaType.jurisdictions?.find((j) => j.status === 'active')
+    rates = jurisdiction?.vfsServiceRates
+  } else {
+    rates = visaType.vfsServiceRates
+  }
+
+  return [...(rates ?? [])].sort((a, b) => a.sortOrder - b.sortOrder)
 }

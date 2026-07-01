@@ -13,9 +13,62 @@ import {
   DEFAULT_APPLICATION_FEE_NAMES,
   DEFAULT_GROUND_SERVICE_NAMES,
   GROUND_SERVICE_DEFAULT_RATES,
+  LOGISTICS_STATUSES,
   OPERATIONAL_CASE_PRIORITIES,
   OPERATIONAL_CASE_STATUSES,
 } from '@/shared/types/operationalCaseHandling'
+
+export type OperationsDeskStatusTab = OperationalCaseStatus
+
+export const OPERATIONS_DESK_STATUS_TAB_ITEMS: {
+  value: OperationsDeskStatusTab
+  label: string
+}[] = [
+  { value: 'Pending', label: 'Pending' },
+  { value: 'Moved to Next Day', label: 'Moved to Next Day' },
+  { value: 'Document Submitted', label: 'Document Submitted' },
+  { value: 'Collected', label: 'Collected' },
+  { value: 'Dispatched', label: 'Dispatched' },
+  { value: 'Completed', label: 'Completed' },
+]
+
+export function filterOperationsDeskRowsByStatusTab(
+  rows: OperationalCase[],
+  tab: OperationsDeskStatusTab,
+): OperationalCase[] {
+  return rows.filter(row => row.status === tab)
+}
+
+export function buildOperationsDeskStatusTabs() {
+  return OPERATIONS_DESK_STATUS_TAB_ITEMS.map(tab => ({
+    value: tab.value,
+    label: tab.label,
+  }))
+}
+
+export type LogisticsStatusTab = (typeof LOGISTICS_STATUSES)[number]
+
+export const LOGISTICS_STATUS_TAB_ITEMS: {
+  value: LogisticsStatusTab
+  label: string
+}[] = LOGISTICS_STATUSES.map(status => ({
+  value: status,
+  label: status,
+}))
+
+export function filterLogisticsRowsByStatusTab(
+  rows: OperationalCase[],
+  tab: LogisticsStatusTab,
+): OperationalCase[] {
+  return rows.filter(row => row.status === tab)
+}
+
+export function buildLogisticsStatusTabs() {
+  return LOGISTICS_STATUS_TAB_ITEMS.map(tab => ({
+    value: tab.value,
+    label: tab.label,
+  }))
+}
 
 function startOfDay(date: Date): Date {
   const d = new Date(date)
@@ -129,6 +182,78 @@ export function applyOperationsDeskFilters(
     })
 }
 
+export function applyLogisticsDeskFilters(
+  rows: OperationalCase[],
+  filters: OperationsDeskFilters,
+): OperationalCase[] {
+  return rows
+    .filter(row => LOGISTICS_STATUSES.includes(row.status))
+    .filter(row => {
+      if (!matchesOperationalDate(row, filters.datePreset, filters.customDateFrom, filters.customDateTo)) {
+        return false
+      }
+      if (filters.status && row.status !== filters.status) return false
+      if (filters.team && row.assignedTeam !== filters.team) return false
+      if (filters.executive && row.assignedExecutive !== filters.executive) return false
+      if (filters.priority && row.priority !== filters.priority) return false
+      if (filters.visaCountry && row.country !== filters.visaCountry) return false
+      if (filters.jurisdiction && row.jurisdiction !== filters.jurisdiction) return false
+      if (filters.applicationId && row.applicationId !== filters.applicationId) return false
+      if (!matchesJoiningDate(row, filters.joiningDateFrom, filters.joiningDateTo)) return false
+      if (!matchesCaseSearch(row, filters.search)) return false
+      return true
+    })
+}
+
+export function getLogisticsFilterOptions(rows: OperationalCase[]) {
+  const uniq = (values: string[]) => [...new Set(values.filter(Boolean))].sort()
+
+  return {
+    countries: uniq(rows.map(r => r.country)),
+    jurisdictions: uniq(rows.map(r => r.jurisdiction)),
+    applications: uniq(rows.map(r => r.applicationId)),
+    executives: uniq(rows.map(r => r.assignedExecutive)),
+    statuses: [...LOGISTICS_STATUSES],
+    priorities: [...OPERATIONAL_CASE_PRIORITIES],
+    cityTeams: [...CITY_TEAMS],
+  }
+}
+
+export function getLogisticsDeskEmptyState(tab: LogisticsStatusTab = 'Document Submitted'): {
+  emptyTitle: string
+  emptyDescription: string
+} {
+  switch (tab) {
+    case 'Document Submitted':
+      return {
+        emptyTitle: 'No submitted cases',
+        emptyDescription:
+          'Passenger cases appear here after documents are submitted from the Operations Desk.',
+      }
+    case 'Collected':
+      return {
+        emptyTitle: 'No collected cases',
+        emptyDescription: 'Cases marked collected from Embassy/VFS appear here.',
+      }
+    case 'Dispatched':
+      return {
+        emptyTitle: 'No dispatched cases',
+        emptyDescription: 'Cases marked dispatched appear here.',
+      }
+    case 'Completed':
+      return {
+        emptyTitle: 'No completed cases',
+        emptyDescription: 'Cases auto-completed after dispatch appear here.',
+      }
+    default:
+      return {
+        emptyTitle: 'No records in Tracking & Logistics',
+        emptyDescription:
+          'Passenger cases appear here after documents are submitted from the Operations Desk.',
+      }
+  }
+}
+
 export interface OperationsDeskGroup {
   key: string
   label: string
@@ -221,18 +346,12 @@ export function statusBadgeColor(status: OperationalCaseStatus): 'neutral' | 'in
   switch (status) {
     case 'Completed':
       return 'success'
-    case 'Passport Collected':
-    case 'VFS Completed':
-    case 'Documents Verified':
+    case 'Dispatched':
+    case 'Collected':
+    case 'Document Submitted':
       return 'info'
     case 'Moved to Next Day':
-    case 'Biometrics Pending':
-    case 'VFS Pending':
-    case 'Courier Pending':
       return 'warning'
-    case 'VFS Scheduled':
-    case 'In Operations':
-      return 'info'
     case 'Pending':
       return 'neutral'
     default:
@@ -270,14 +389,49 @@ export const EMPTY_OPERATIONS_DESK_FILTERS: OperationsDeskFilters = {
   search: '',
 }
 
-export function getOperationsDeskEmptyState(): {
+export function getOperationsDeskEmptyState(tab: OperationsDeskStatusTab = 'Pending'): {
   emptyTitle: string
   emptyDescription: string
 } {
-  return {
-    emptyTitle: 'No passenger operational records on the desk',
-    emptyDescription:
-      'Passenger records appear here after assignment and handoff from Assignment & Priority Management.',
+  switch (tab) {
+    case 'Pending':
+      return {
+        emptyTitle: 'No pending cases',
+        emptyDescription:
+          'Assigned passenger records awaiting ground operations appear here.',
+      }
+    case 'Moved to Next Day':
+      return {
+        emptyTitle: 'No cases moved to next day',
+        emptyDescription: 'Cases manually moved to the next operational day appear here.',
+      }
+    case 'Document Submitted':
+      return {
+        emptyTitle: 'No submitted cases',
+        emptyDescription:
+          'Cases appear here after documents are submitted from the Operations tab.',
+      }
+    case 'Collected':
+      return {
+        emptyTitle: 'No collected cases',
+        emptyDescription: 'Cases marked collected in Tracking & Logistics appear here.',
+      }
+    case 'Dispatched':
+      return {
+        emptyTitle: 'No dispatched cases',
+        emptyDescription: 'Cases marked dispatched in Tracking & Logistics appear here.',
+      }
+    case 'Completed':
+      return {
+        emptyTitle: 'No completed cases',
+        emptyDescription: 'Cases auto-completed after dispatch appear here.',
+      }
+    default:
+      return {
+        emptyTitle: 'No passenger operational records on the desk',
+        emptyDescription:
+          'Passenger records appear here after assignment and handoff from Assignment & Priority Management.',
+      }
   }
 }
 

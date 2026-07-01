@@ -111,6 +111,7 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
         ...(requiresJurisdiction
           ? ([
               ['Passport state', passportStateLabel],
+              ['Place of residence', state.placeOfResidence || '—'],
               ['Jurisdiction', state.jurisdiction || '—'],
             ] as const)
           : []),
@@ -126,6 +127,7 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
       state.countryFlag,
       state.countryName,
       state.jurisdiction,
+      state.placeOfResidence,
       state.purposeLabel,
       state.travelDate,
       state.visaTypeLabel,

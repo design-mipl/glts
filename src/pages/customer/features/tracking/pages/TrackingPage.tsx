@@ -7,6 +7,8 @@ import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { GLTS_APPLICATION_IDS } from '../../../data/portalIds'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
+import { ApplicationTrackingUrlLink } from '@/shared/components/ApplicationTrackingUrlLink'
+import { resolveApplicationTrackingUrl } from '@/shared/services/countryMasterService'
 import {
   CustomerActionPanel,
   CustomerCard,
@@ -25,6 +27,7 @@ export function TrackingPage() {
   const [query, setQuery] = useState<string>(GLTS_APPLICATION_IDS.schengen)
   const tracking = customerPortalService.getTracking(query)
   const app = tracking.application
+  const embassyTrackingUrl = resolveApplicationTrackingUrl({ countryName: app.country })
   const timeline = useMemo<CustomerTimelineItem[]>(
     () =>
       tracking.timeline.map((stage) => ({
@@ -76,6 +79,19 @@ export function TrackingPage() {
                   { label: 'Country', value: `${app.countryFlag ?? ''} ${app.country}` },
                   { label: 'Current status', value: <CustomerStatusChip label={app.statusLabel} tone={getCustomerStatusTone(app.statusLabel)} /> },
                   { label: 'Estimated completion', value: app.eta ?? 'To be confirmed' },
+                  ...(embassyTrackingUrl
+                    ? [
+                        {
+                          label: 'Embassy / VFS tracking',
+                          value: (
+                            <ApplicationTrackingUrlLink
+                              countryName={app.country}
+                              label="Open tracking portal"
+                            />
+                          ),
+                        },
+                      ]
+                    : []),
                 ]}
               />
             </CustomerCard>

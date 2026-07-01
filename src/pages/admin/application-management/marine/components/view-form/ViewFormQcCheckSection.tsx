@@ -33,6 +33,7 @@ interface ViewFormQcCheckSectionProps {
   globalChecklistDocuments: ApplicantDocumentItem[]
   countryId?: string
   visaOfferingId?: string
+  jurisdictionId?: string
   onPreview: (documentId: string, scope: 'traveler' | 'global') => void
   onTravelerVerify: (document: ApplicantDocumentItem) => void
   onTravelerReject: (document: ApplicantDocumentItem) => void
@@ -48,6 +49,7 @@ interface ViewFormQcCheckSectionProps {
   onRejectedGltsUpload: (entry: VerifyRejectedDocumentEntry) => void
   onOriginalCollectionChange?: (collection: OriginalDocumentCollectionState) => void
   onOriginalReceivedSubmit?: (collection: OriginalDocumentCollectionState) => void
+  readOnly?: boolean
 }
 
 export function ViewFormQcCheckSection({
@@ -59,6 +61,7 @@ export function ViewFormQcCheckSection({
   globalChecklistDocuments,
   countryId,
   visaOfferingId,
+  jurisdictionId,
   onPreview,
   onTravelerVerify,
   onTravelerReject,
@@ -74,6 +77,7 @@ export function ViewFormQcCheckSection({
   onRejectedGltsUpload,
   onOriginalCollectionChange,
   onOriginalReceivedSubmit,
+  readOnly = false,
 }: ViewFormQcCheckSectionProps) {
   const [activeTab, setActiveTab] = useState<QcDocumentTab>('checklist')
 
@@ -108,6 +112,7 @@ export function ViewFormQcCheckSection({
       <VerifyRejectedDocumentsSection
         entries={rejectedDocuments}
         gridSx={VERIFY_DOCUMENT_SPLIT_GRID_SX}
+        previewOnly={readOnly}
         onPreview={onRejectedPreview}
         onVerify={onRejectedVerify}
         onReject={onRejectedReject}
@@ -122,6 +127,7 @@ export function ViewFormQcCheckSection({
       travelerDocuments={selectedRow && detail ? digitalTravelerDocuments : []}
       globalDocuments={globalChecklistDocuments}
       gridSx={VERIFY_DOCUMENT_SPLIT_GRID_SX}
+      previewOnly={readOnly}
       onTravelerPreview={documentId => onPreview(documentId, 'traveler')}
       onTravelerVerify={onTravelerVerify}
       onTravelerReject={onTravelerReject}
@@ -139,6 +145,7 @@ export function ViewFormQcCheckSection({
       selectedRow={selectedRow}
       countryId={countryId}
       visaOfferingId={visaOfferingId}
+      readOnly={readOnly}
       onCollectionChange={onOriginalCollectionChange}
       onReceivedSubmit={onOriginalReceivedSubmit}
     />
@@ -173,7 +180,12 @@ export function ViewFormQcCheckSection({
         {documentsPane}
       </Grid>
       <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0, display: 'flex' }}>
-        <QcCheckChecklist />
+        <QcCheckChecklist
+          countryId={countryId}
+          visaOfferingId={visaOfferingId}
+          jurisdictionId={jurisdictionId}
+          readOnly={readOnly}
+        />
       </Grid>
     </Grid>
   )

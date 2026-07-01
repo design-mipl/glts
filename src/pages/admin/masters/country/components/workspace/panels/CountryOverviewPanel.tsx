@@ -139,6 +139,18 @@ export function CountryOverviewPanel({
             />
           </FormField>
           <AdminFullPageFormFieldSpan>
+            <FormField label="Application Tracking URL" optional>
+              <Input
+                value={formData.applicationTrackingUrl}
+                onChange={(v) => patch({ applicationTrackingUrl: v })}
+                placeholder="https://visa.vfsglobal.com/..."
+                size="sm"
+                readonly={readOnly}
+                fullWidth
+              />
+            </FormField>
+          </AdminFullPageFormFieldSpan>
+          <AdminFullPageFormFieldSpan>
             <Divider sx={{ my: 2 }} />
           </AdminFullPageFormFieldSpan>
           <FormField label="Application window unit">

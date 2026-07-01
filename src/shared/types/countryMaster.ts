@@ -117,6 +117,41 @@ export interface CountryJurisdictionProcessingRules {
   appointmentMandatory: boolean
 }
 
+export type CountryQcChecklistKind = 'ops' | 'docs'
+
+export interface CountryQcChecklistItem {
+  id: string
+  label: string
+  sortOrder: number
+  enabled: boolean
+}
+
+export interface CountryQcChecklistSection {
+  id: string
+  title: string
+  sortOrder: number
+  enabled: boolean
+  items: CountryQcChecklistItem[]
+}
+
+export interface CountryQcChecklistTemplate {
+  title: string
+  subtitle: string
+  sections: CountryQcChecklistSection[]
+}
+
+/** VFS / embassy service rate configured at visa type or jurisdiction level. */
+export interface CountryVfsServiceRate {
+  id: string
+  serviceName: string
+  amount: number
+  /** When true, the configured rate is GST-inclusive. */
+  gstIncluded: boolean
+  sortOrder: number
+  /** @deprecated Legacy link to Embassy / VFS Fee Master imports. */
+  embassyFeeServiceId?: string
+}
+
 export interface CountryVisaJurisdiction {
   id: string
   name: string
@@ -130,6 +165,12 @@ export interface CountryVisaJurisdiction {
   documents: CountryJurisdictionDocumentRule[]
   /** GLTS service scope and responsibilities for this jurisdiction. */
   gltsScope?: string
+  /** OPS team verification checklist template for this jurisdiction. */
+  opsQcChecklist?: CountryQcChecklistTemplate
+  /** Documentation team QC checklist template for this jurisdiction. */
+  docsQcChecklist?: CountryQcChecklistTemplate
+  /** VFS service rates for this jurisdiction. */
+  vfsServiceRates?: CountryVfsServiceRate[]
 }
 
 export interface CountryVisaType {
@@ -149,6 +190,12 @@ export interface CountryVisaType {
   documents?: CountryJurisdictionDocumentRule[]
   /** GLTS service scope when jurisdiction is disabled. */
   gltsScope?: string
+  /** OPS team verification checklist when jurisdiction is disabled. */
+  opsQcChecklist?: CountryQcChecklistTemplate
+  /** Documentation team QC checklist when jurisdiction is disabled. */
+  docsQcChecklist?: CountryQcChecklistTemplate
+  /** VFS service rates when jurisdiction is disabled. */
+  vfsServiceRates?: CountryVfsServiceRate[]
   pricing?: number
   jurisdictions: CountryVisaJurisdiction[]
   /** Visa-type / application-specific documents (in addition to segment common documents). */
@@ -266,6 +313,8 @@ export interface CountryMaster {
   fastMinutes?: number
   visaApplicationWindow?: VisaApplicationWindow
   travelDateRiskThresholds?: TravelDateRiskThresholds
+  /** Embassy / VFS portal URL for tracking submitted applications. */
+  applicationTrackingUrl?: string
   passportIssueLocations: PassportIssueLocation[]
   segments: CountrySegmentConfig[]
   /** Synced flat list for legacy consumers */
@@ -296,6 +345,7 @@ export interface CountryMasterFormData {
   fastMinutes?: number
   visaApplicationWindow: VisaApplicationWindow
   travelDateRiskThresholds: TravelDateRiskThresholds
+  applicationTrackingUrl: string
   passportIssueLocations: PassportIssueLocation[]
   segments: CountrySegmentConfig[]
 }

@@ -145,19 +145,40 @@ export default function Modal({
         </Box>
       )}
 
-      <LoadingOverlay loading={loading} sx={{ zIndex: tokens.zIndex.raised }}>
-        <DialogContent
-          sx={{
-            position: 'relative',
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
+        <LoadingOverlay
+          loading={loading}
+          wrapperSx={{
             flex: 1,
-            overflowY: 'auto',
-            px: tokens.spacing[3],
-            py: tokens.spacing[3],
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
           }}
+          sx={{ zIndex: tokens.zIndex.raised }}
         >
-          {children}
-        </DialogContent>
-      </LoadingOverlay>
+          <DialogContent
+            sx={{
+              position: 'relative',
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              px: tokens.spacing[3],
+              py: tokens.spacing[3],
+            }}
+          >
+            {children}
+          </DialogContent>
+        </LoadingOverlay>
+      </Box>
 
       {footer ? (
         <Box

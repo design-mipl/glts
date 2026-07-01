@@ -5,8 +5,8 @@ import { Badge, BaseCard } from '@/design-system/UIComponents'
 import type { PipelineProgress, PipelineStage } from '../data/operationsDashboardMock'
 
 function progressLabel(progress: PipelineProgress): string {
-  if (progress === 'on_track') return 'On track'
-  if (progress === 'at_risk') return 'At risk'
+  if (progress === 'on_track') return 'On Track'
+  if (progress === 'at_risk') return 'At Risk'
   return 'Delayed'
 }
 
@@ -62,19 +62,25 @@ function StageCard({ stage }: { stage: PipelineStage }) {
 
 export interface DashboardPipelineTrackerProps {
   stages: PipelineStage[]
+  title?: string
+  subtitle?: string
 }
 
-export function DashboardPipelineTracker({ stages }: DashboardPipelineTrackerProps) {
+export function DashboardPipelineTracker({
+  stages,
+  title = 'Application pipeline',
+  subtitle = 'Stage volumes and delayed cases across the visa workflow',
+}: DashboardPipelineTrackerProps) {
   const theme = useTheme()
 
   return (
     <BaseCard>
       <Box sx={{ px: 2, pt: 2, pb: 1 }}>
         <Typography variant="subtitle2" fontWeight={700}>
-          Application pipeline
+          {title}
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          Stage volumes and delayed cases across the visa workflow
+          {subtitle}
         </Typography>
       </Box>
       <Box

@@ -48,8 +48,8 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
     submodules: [
       { id: 'expenses', label: 'Expense management' },
       { id: 'invoices', label: 'Billing & invoices' },
-      { id: 'payments', label: 'Payments & collections' },
-      { id: 'reconciliation', label: 'Reconciliation' },
+      { id: 'vendor_payments', label: 'Vendor payment' },
+      { id: 'fund_allocation', label: 'Fund allocation' },
     ],
   },
   {
@@ -67,7 +67,7 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
       { id: 'country', label: 'Country' },
       { id: 'jurisdiction', label: 'Jurisdiction Master' },
       { id: 'documents', label: 'Document master' },
-      { id: 'rates', label: 'Rate master' },
+      { id: 'rates', label: 'Embassy / VFS Fee Master' },
       { id: 'services', label: 'Service Master' },
       { id: 'sac_codes', label: 'SAC Code Master' },
       { id: 'tax', label: 'GST & TDS Master' },

@@ -13,15 +13,20 @@ import {
   Wrench,
 } from 'lucide-react'
 import type { NavConfig } from '@/design-system/UIComponents'
+import { ADMIN_DASHBOARDS } from './adminDashboards'
 
 const iconProps = { size: 16, strokeWidth: 1.75 }
 
 export const adminNav: NavConfig[] = [
   {
-    type: 'item',
+    type: 'group',
     label: 'Dashboard',
-    href: '/admin',
     icon: createElement(LayoutDashboard, iconProps),
+    children: ADMIN_DASHBOARDS.map((dashboard) => ({
+      type: 'item' as const,
+      label: dashboard.label,
+      href: dashboard.href,
+    })),
   },
   {
     type: 'divider',
@@ -85,8 +90,8 @@ export const adminNav: NavConfig[] = [
     children: [
       { type: 'item', label: 'Expense management', href: '/admin/finance/expenses' },
       { type: 'item', label: 'Billing & invoice management', href: '/admin/finance/invoices' },
-      { type: 'item', label: 'Payments & collections', href: '/admin/finance/payments' },
-      { type: 'item', label: 'Reconciliation', href: '/admin/finance/reconciliation' },
+      { type: 'item', label: 'Vendor payment', href: '/admin/finance/vendor-payments' },
+      { type: 'item', label: 'Fund allocation', href: '/admin/finance/fund-allocation' },
     ],
   },
   {
@@ -118,7 +123,7 @@ export const adminNav: NavConfig[] = [
       { type: 'item', label: 'Country', href: '/admin/masters/country' },
       { type: 'item', label: 'Jurisdiction Master', href: '/admin/masters/jurisdiction' },
       { type: 'item', label: 'Document master', href: '/admin/masters/documents' },
-      { type: 'item', label: 'Rate master', href: '/admin/masters/rates' },
+      { type: 'item', label: 'Embassy / VFS Fee Master', href: '/admin/masters/rates' },
       { type: 'item', label: 'Service Master', href: '/admin/masters/services' },
       { type: 'item', label: 'SAC Code Master', href: '/admin/masters/sac-codes' },
       { type: 'item', label: 'GST & TDS Master', href: '/admin/masters/tax' },

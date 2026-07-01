@@ -1,12 +1,24 @@
 import { useState } from 'react'
-import { Box, Typography, IconButton, Stack, InputBase, Avatar, Menu as MuiMenu, Divider } from '@mui/material'
+import {
+  Box,
+  Typography,
+  IconButton,
+  Stack,
+  InputBase,
+  Avatar,
+  Menu as MuiMenu,
+  MenuItem,
+  ListItemIcon,
+  Divider,
+} from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { Search, Bell, Menu, Wallet, Moon, Sun } from 'lucide-react'
+import { Search, Bell, Menu, Moon, Sun, User, LogOut } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Toggle } from '@/design-system/UIComponents'
 import { useFoundationTheme } from '@/design-system/ThemeContext'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { PORTAL_MOBILE_NAV_BREAKPOINT, PORTAL_TOPBAR_HEIGHT } from '@/shared/theme/portalChromeLayout'
+import { useCustomerLogout } from '../hooks/useCustomerLogout'
 import { useCustomerPortalBase } from '../hooks/useCustomerPortalBase'
 
 interface CustomerTopbarProps {
@@ -21,6 +33,7 @@ export function CustomerTopbar({ onMenuClick }: CustomerTopbarProps) {
   const colors = usePublicBrandColors()
   const isLight = theme.palette.mode === 'light'
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
+  const logout = useCustomerLogout()
   const initials = contactName
     .split(' ')
     .map(w => w[0])
@@ -94,28 +107,11 @@ export function CustomerTopbar({ onMenuClick }: CustomerTopbarProps) {
       <Stack direction="row" spacing={0.5} alignItems="center" sx={{ ml: 'auto' }}>
         <IconButton
           size="small"
-          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          onClick={() => setMode(isDark ? 'light' : 'dark')}
-          sx={{ color: 'text.secondary', width: 34, height: 34 }}
-        >
-          {isDark ? <Sun size={18} strokeWidth={1.75} /> : <Moon size={18} strokeWidth={1.75} />}
-        </IconButton>
-        <IconButton
-          size="small"
           onClick={() => navigate(`${base}/notifications`)}
           sx={{ color: 'text.secondary', width: 34, height: 34 }}
         >
           <Bell size={18} strokeWidth={1.75} />
         </IconButton>
-        {isBusiness && (
-          <IconButton
-            size="small"
-            onClick={() => navigate(`${base}/profile`)}
-            sx={{ color: 'text.secondary', width: 34, height: 34 }}
-          >
-            <Wallet size={18} strokeWidth={1.75} />
-          </IconButton>
-        )}
         <Avatar
           component="button"
           aria-label="Open customer menu"
@@ -147,6 +143,18 @@ export function CustomerTopbar({ onMenuClick }: CustomerTopbarProps) {
             <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>Customer portal</Typography>
           </Box>
           <Divider />
+          <MenuItem
+            onClick={() => {
+              setMenuAnchor(null)
+              navigate(`${base}/profile`)
+            }}
+            sx={{ py: '8px', gap: 1.5 }}
+          >
+            <ListItemIcon sx={{ minWidth: 'unset' }}>
+              <User size={16} strokeWidth={1.75} />
+            </ListItemIcon>
+            <Typography variant="body2">Profile</Typography>
+          </MenuItem>
           <Box sx={{ px: 2, py: 1.25 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
               <Stack direction="row" alignItems="center" spacing={1}>
@@ -160,6 +168,21 @@ export function CustomerTopbar({ onMenuClick }: CustomerTopbarProps) {
               />
             </Stack>
           </Box>
+          <Divider />
+          <MenuItem
+            onClick={() => {
+              setMenuAnchor(null)
+              logout()
+            }}
+            sx={{ py: '8px', gap: 1.5 }}
+          >
+            <ListItemIcon sx={{ minWidth: 'unset', color: 'error.main' }}>
+              <LogOut size={16} strokeWidth={1.75} />
+            </ListItemIcon>
+            <Typography variant="body2" color="error.main">
+              Log out
+            </Typography>
+          </MenuItem>
         </MuiMenu>
       </Stack>
     </Box>

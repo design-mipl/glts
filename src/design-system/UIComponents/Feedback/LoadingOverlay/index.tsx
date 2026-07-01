@@ -16,6 +16,7 @@ export interface LoadingOverlayProps {
   spinnerSize?: SpinnerSize
   label?: string
   sx?: SxProps<Theme>
+  wrapperSx?: SxProps<Theme>
 }
 
 export default function LoadingOverlay({
@@ -25,9 +26,10 @@ export default function LoadingOverlay({
   spinnerSize = 'md',
   label,
   sx,
+  wrapperSx,
 }: LoadingOverlayProps) {
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={[{ position: 'relative' }, ...(Array.isArray(wrapperSx) ? wrapperSx : wrapperSx ? [wrapperSx] : [])]}>
       {children}
       <Fade in={loading} mountOnEnter unmountOnExit timeout={200}>
         <Box

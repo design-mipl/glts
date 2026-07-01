@@ -34,6 +34,8 @@ import {
   type GltsDocumentUploadPayload,
 } from '../components/verify/GltsDocumentUploadDrawer'
 import { buildFormAssistFieldSectionsForStep } from '../utils/formAssistFieldBuilder'
+import { resolveMarineChecklistContext } from '../utils/marineChecklistContextUtils'
+import { isMarineReadOnlyWorkspace } from '../config/marineWorkspaceMode'
 import {
   buildOverviewFromDetail,
   collectRejectedVerifyDocuments,
@@ -52,6 +54,7 @@ export function MarineViewFormPage() {
   const {
     notFound,
     detail,
+    listingRow,
     rows,
     isBulk,
     selectedTravelerId,
@@ -123,17 +126,21 @@ export function MarineViewFormPage() {
     [applicationId, detail, isBulk, rows],
   )
 
-  const checklistContext = useMemo(() => {
-    const app = detail?.application
-    if (!app) return {}
-    if (app.country === 'China' && app.visaType === 'M Type Visa') {
-      return { countryId: '13', visaOfferingId: 'cn-m-type' }
-    }
-    if (app.country === 'China' && app.visaType === 'G Type Visa') {
-      return { countryId: '13', visaOfferingId: 'cn-g-type' }
-    }
-    return {}
-  }, [detail?.application])
+  const checklistContext = useMemo(
+    () =>
+      resolveMarineChecklistContext({
+        application: detail?.application,
+        listingRow,
+      }),
+    [detail?.application, listingRow],
+  )
+
+  const readOnly = useMemo(
+    () => Boolean(listingRow && isMarineReadOnlyWorkspace(listingRow)),
+    [listingRow],
+  )
+
+  const formLocked = readOnly || externallySubmitted
 
   const rejectedDocuments = useMemo(
     () => collectRejectedVerifyDocuments(rows, globalDocuments),
@@ -346,6 +353,11 @@ export function MarineViewFormPage() {
       return (
         <ViewFormSubmissionSection
           submission={submission}
+          country={listingRow?.country ?? detail?.countryName ?? ''}
+          visaType={listingRow?.visaType ?? detail?.visaTypeLabel ?? ''}
+          countryId={checklistContext.countryId}
+          visaOfferingId={checklistContext.visaOfferingId}
+          readOnly={readOnly}
           onChange={updateSubmission}
           onPickFile={pickSubmissionFile}
         />
@@ -373,8 +385,12 @@ export function MarineViewFormPage() {
           sx={{ minWidth: 240 }}
         />
       ) : null}
-      {externallySubmitted ? (
-        <Badge label="Externally submitted" color="success" size="sm" />
+      {externallySubmitted || readOnly ? (
+        <Badge
+          label={readOnly ? 'Post-submission view' : 'Externally submitted'}
+          color="success"
+          size="sm"
+        />
       ) : (
         <Badge label={currentStep.label} color="info" size="sm" />
       )}
@@ -385,7 +401,7 @@ export function MarineViewFormPage() {
     <AdminRecordPageChrome
       breadcrumbs={[
         { label: 'Application Management', href: listingPath },
-        { label: 'View Form' },
+        { label: readOnly ? 'View application' : 'View Form' },
       ]}
     >
       <Stack spacing={2}>
@@ -413,6 +429,8 @@ export function MarineViewFormPage() {
                 globalChecklistDocuments={globalChecklistDocuments}
                 countryId={checklistContext.countryId}
                 visaOfferingId={checklistContext.visaOfferingId}
+                jurisdictionId={checklistContext.jurisdictionId}
+                readOnly={readOnly}
                 onPreview={handlePreview}
                 onTravelerVerify={document => openVerifyDialog('traveler', document, selectedRow?.id)}
                 onTravelerReject={document =>
@@ -480,16 +498,17 @@ export function MarineViewFormPage() {
                   <AdminStepperFormFooter
                     activeStep={activeStepIndex}
                     isLastStep={isLastStep}
-                    onCancel={() => navigate(verifyPath)}
-                    cancelLabel="Back to verify"
-                    onDraft={externallySubmitted ? undefined : handleSaveDraft}
+                    onCancel={() => navigate(readOnly ? listingPath : verifyPath)}
+                    cancelLabel={readOnly ? 'Back to listing' : 'Back to verify'}
+                    onDraft={formLocked ? undefined : handleSaveDraft}
                     draftLabel="Save draft"
                     onBack={() => setActiveStep(Math.max(0, activeStepIndex - 1))}
                     onNext={requestStepContinue}
                     nextLabel="Continue"
-                    onSubmit={externallySubmitted ? undefined : handleMarkSubmitted}
+                    onSubmit={formLocked ? undefined : handleMarkSubmitted}
                     submitLabel="Mark as submitted"
-                    disabled={externallySubmitted}
+                    disabled={externallySubmitted && !readOnly}
+                    submissionLocked={formLocked}
                   />
                 }
               />

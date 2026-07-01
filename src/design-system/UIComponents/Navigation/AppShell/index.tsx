@@ -33,6 +33,8 @@ export interface AppShellProps {
   showSidebarUserProfile?: boolean
   /** Hides name/email text from topbar user menu (avatar/menu remains). */
   hideTopbarUserDetails?: boolean
+  /** Hides the notification bell in the topbar. */
+  hideTopbarNotificationBell?: boolean
 }
 
 function defaultSearch(): Promise<SearchResults> {
@@ -54,6 +56,7 @@ export default function AppShell({
   onSearch = defaultSearch,
   showSidebarUserProfile = false,
   hideTopbarUserDetails = false,
+  hideTopbarNotificationBell = false,
 }: AppShellProps) {
   const theme = useTheme()
   const location = useLocation()
@@ -223,6 +226,7 @@ export default function AppShell({
             onSearchClick={() => setPaletteOpen(true)}
             showMenuButton={!isDesktop}
             showUserDetails={!hideTopbarUserDetails}
+            showNotificationBell={!hideTopbarNotificationBell}
           />
         </Box>
 

@@ -78,6 +78,16 @@ export function resolveJurisdictionForState(
     .find((jurisdiction) => jurisdiction.applicableStates.includes(normalized))
 }
 
+/** Place of residence takes priority over issued passport state for jurisdiction mapping. */
+export function resolveJurisdictionMappingState(
+  placeOfResidence: string | undefined,
+  issuedPassportState: string | undefined,
+): string {
+  const residence = placeOfResidence?.trim() ?? ''
+  if (residence) return residence
+  return issuedPassportState?.trim() ?? ''
+}
+
 /** Embassy/VFS jurisdiction workflow applies when jurisdictions are configured and enabled. */
 export function shouldShowJurisdictionNodes(
   visaType: Pick<CountryVisaType, 'jurisdictionEnabled' | 'jurisdictions' | 'visaMode'> | undefined,

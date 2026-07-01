@@ -6,6 +6,7 @@ import {
 } from '@/shared/data/countryJurisdictionDefaults'
 import {
   chinaMarineGTypeDelhiJurisdiction,
+  chinaMarineGTypeMumbaiJurisdiction,
   chinaMarineMTypeDelhiJurisdiction,
   japanMarineCrewVisaJurisdictions,
 } from '@/shared/data/countryMarineMockConfig'
@@ -27,6 +28,8 @@ import type {
   CountryVisaType,
   ProcessingType,
 } from '@/shared/types/countryMaster'
+import { cloneDefaultVfsServiceRates } from '@/shared/data/countryVfsServiceRateDefaults'
+import { shouldShowJurisdictionNodes } from '@/shared/utils/jurisdictionRequirementPreview'
 import { normalizeGltsScopeRichText } from '@/shared/utils/richTextUtils'
 
 /** B2B customer account ↔ country mapping (admin-configured; mock). */
@@ -377,7 +380,10 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           applicationDocuments: crewApplicationDocuments,
           purposeId: 'transit',
           purposeLabel: 'Transit',
-          jurisdictions: [chinaMarineGTypeDelhiJurisdiction()],
+          jurisdictions: [
+            chinaMarineGTypeDelhiJurisdiction(),
+            chinaMarineGTypeMumbaiJurisdiction(),
+          ],
         }),
       ],
     }),
@@ -699,6 +705,7 @@ function buildMasterFromCountry(c: ReturnType<typeof getAllCountries>[0]): Count
             escalationBufferDays: 5,
             safeBufferDays: 10,
           },
+          applicationTrackingUrl: 'https://visa.vfsglobal.com/ind/en/chn/track-application',
         }
       : {}),
     processingType:
@@ -748,12 +755,40 @@ function normalizeVisaTypeGltsScope(visaType: CountryVisaType): CountryVisaType 
   }
 }
 
+function seedVfsServiceRatesIfMissing(visaType: CountryVisaType): CountryVisaType {
+  const defaults = cloneDefaultVfsServiceRates()
+
+  if (shouldShowJurisdictionNodes(visaType)) {
+    return {
+      ...visaType,
+      jurisdictions: visaType.jurisdictions.map((jurisdiction) =>
+        jurisdiction.vfsServiceRates?.length
+          ? jurisdiction
+          : { ...jurisdiction, vfsServiceRates: cloneDefaultVfsServiceRates() },
+      ),
+    }
+  }
+
+  if (visaType.vfsServiceRates?.length) return visaType
+
+  return {
+    ...visaType,
+    vfsServiceRates: defaults,
+  }
+}
+
+function normalizeVisaType(visaType: CountryVisaType, seedVfsRates: boolean): CountryVisaType {
+  const withGlts = normalizeVisaTypeGltsScope(visaType)
+  return seedVfsRates ? seedVfsServiceRatesIfMissing(withGlts) : withGlts
+}
+
 function normalizeMasterGltsScopes(master: CountryMaster): CountryMaster {
+  const seedVfsRates = master.status !== 'draft'
   return {
     ...master,
     segments: master.segments.map((segment) => ({
       ...segment,
-      visaTypes: segment.visaTypes.map(normalizeVisaTypeGltsScope),
+      visaTypes: segment.visaTypes.map((visaType) => normalizeVisaType(visaType, seedVfsRates)),
     })),
   }
 }

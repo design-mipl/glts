@@ -24,6 +24,8 @@ import { InvoiceDetailPage } from './features/finance/pages/InvoiceDetailPage'
 import { PaymentListingPage } from './features/finance/pages/PaymentListingPage'
 import { PaymentDetailPage } from './features/finance/pages/PaymentDetailPage'
 import { OutstandingStatementsPage } from './features/finance/pages/OutstandingStatementsPage'
+import { FaqPage } from './features/help-support/pages/HelpSupportHubPage'
+import { ContactSupportPage } from './features/help-support/pages/ContactSupportPage'
 
 export function CustomerPortalApp() {
   return (
@@ -35,14 +37,14 @@ export function CustomerPortalApp() {
         <Route path="applications" element={<ApplicationsListPage />} />
         <Route path="applications/new" element={<CreateApplicationFlowPage />} />
         <Route path="applications/:applicationId" element={<ApplicationDetailPage />} />
-        <Route path="finance" element={<Navigate to="finance/overview" replace />} />
+        <Route path="finance" element={<Navigate to="finance/invoices" replace />} />
         <Route path="finance/overview" element={<FinanceOverviewPage />} />
         <Route path="finance/invoices" element={<InvoiceListingPage />} />
         <Route path="finance/invoices/:invoiceId" element={<InvoiceDetailPage />} />
         <Route path="finance/payments" element={<PaymentListingPage />} />
         <Route path="finance/payments/:paymentId" element={<PaymentDetailPage />} />
         <Route path="finance/outstanding" element={<OutstandingStatementsPage />} />
-        <Route path="finance/advance-payments" element={<Navigate to="../overview" replace />} />
+        <Route path="finance/advance-payments" element={<Navigate to="../invoices" replace />} />
         <Route path="finance/payment-history" element={<Navigate to="../payments" replace />} />
         <Route path="finance/receipts" element={<Navigate to="../payments" replace />} />
         <Route path="applications/new/single" element={<Navigate to="../new" replace />} />
@@ -61,9 +63,13 @@ export function CustomerPortalApp() {
         <Route path="masters/vessels" element={<VesselListingPage />} />
         <Route path="masters/vessels/:vesselId" element={<VesselDetailPage />} />
         <Route path="notifications" element={<PlaceholderPage title="Notifications" />} />
-        <Route path="support" element={<PlaceholderPage title="Support" />} />
+        <Route path="support" element={<Navigate to="support/faq" replace />} />
+        <Route path="support/faq" element={<FaqPage />} />
+        <Route path="support/contact/*" element={<ContactSupportPage />} />
+        <Route path="support/:sectionId" element={<FaqPage />} />
         <Route path="settings" element={<Navigate to="../profile" replace />} />
         <Route path="marine/crew" element={<CrewUploadPage />} />
+        <Route path="*" element={<Navigate to="dashboard" replace relative="route" />} />
       </Route>
 
       {/* Legacy redirects */}
@@ -71,8 +77,6 @@ export function CustomerPortalApp() {
       <Route path="applications/new/docs" element={<Navigate to="../new" replace />} />
       <Route path="applications/new/essentials" element={<Navigate to="../new" replace />} />
       <Route path="applications/new/checkout" element={<Navigate to="../new" replace />} />
-
-      <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   )
 }

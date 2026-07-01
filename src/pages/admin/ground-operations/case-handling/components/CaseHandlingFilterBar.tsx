@@ -75,12 +75,14 @@ export interface OperationsDeskFilterFieldsProps {
   draft: OperationsDeskFilters
   patch: (partial: Partial<OperationsDeskFilters>) => void
   options: FilterOptions
+  hideStatusFilter?: boolean
 }
 
 export function OperationsDeskFilterFields({
   draft,
   patch,
   options,
+  hideStatusFilter = false,
 }: OperationsDeskFilterFieldsProps) {
   return (
     <>
@@ -103,17 +105,19 @@ export function OperationsDeskFilterFields({
           fullWidth
         />
       </ListingFilterField>
-      <ListingFilterField label="Status">
-        <Select
-          value={draft.status}
-          onChange={(value) => patch({ status: String(value) })}
-          options={options.statuses.map((s) => ({ value: s, label: s }))}
-          placeholder="All statuses"
-          size="sm"
-          clearable
-          fullWidth
-        />
-      </ListingFilterField>
+      {!hideStatusFilter ? (
+        <ListingFilterField label="Status">
+          <Select
+            value={draft.status}
+            onChange={(value) => patch({ status: String(value) })}
+            options={options.statuses.map((s) => ({ value: s, label: s }))}
+            placeholder="All statuses"
+            size="sm"
+            clearable
+            fullWidth
+          />
+        </ListingFilterField>
+      ) : null}
       <ListingFilterField label="Team">
         <Select
           value={draft.team}
@@ -193,9 +197,12 @@ export function OperationsDeskFilterFields({
   )
 }
 
-export function hasOperationsDeskFiltersActive(filters: OperationsDeskFilters): boolean {
+export function hasOperationsDeskFiltersActive(
+  filters: OperationsDeskFilters,
+  options?: { ignoreStatus?: boolean },
+): boolean {
   return (
-    Boolean(filters.status) ||
+    (!options?.ignoreStatus && Boolean(filters.status)) ||
     Boolean(filters.team) ||
     Boolean(filters.executive) ||
     Boolean(filters.priority) ||

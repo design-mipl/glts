@@ -14,6 +14,7 @@ interface VerifyOriginalDocumentsSectionProps {
   selectedRow: UploadQueueRow | null
   countryId?: string
   visaOfferingId?: string
+  readOnly?: boolean
   onCollectionChange?: (collection: OriginalDocumentCollectionState) => void
   onReceivedSubmit?: (collection: OriginalDocumentCollectionState) => void
 }
@@ -22,6 +23,7 @@ export function VerifyOriginalDocumentsSection({
   selectedRow,
   countryId,
   visaOfferingId,
+  readOnly = false,
   onCollectionChange,
   onReceivedSubmit,
 }: VerifyOriginalDocumentsSectionProps) {
@@ -77,9 +79,10 @@ export function VerifyOriginalDocumentsSection({
       <OriginalDocumentCollectionPanel
         documents={originalRequiredDocuments}
         state={resolvedCollection}
-        onChange={next => onCollectionChange?.(next)}
-        onReceivedSubmit={onReceivedSubmit}
-        showReceivedAction
+        onChange={readOnly ? undefined : next => onCollectionChange?.(next)}
+        onReceivedSubmit={readOnly ? undefined : onReceivedSubmit}
+        showReceivedAction={!readOnly}
+        readOnly={readOnly}
         variant="embedded"
       />
     </Box>
