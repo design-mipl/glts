@@ -1,7 +1,13 @@
-import { Grid } from '@mui/material'
+import { Box, Grid } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { BarChart, ChartCard, LineChart, MetricCard } from '@/design-system/UIComponents'
-import { useChartTheme } from '@/design-system/UIComponents/Charts/utils/chartTheme'
+import { BarChart, LineChart, MetricCard } from '@/design-system/UIComponents'
+import {
+  EXECUTIVE_CHART_HEIGHT,
+  ExecutiveChartPanel,
+  ExecutiveSectionHeader,
+  executiveCardLevel2Sx,
+} from '@/pages/admin/dashboard/components'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import type {
   SlaComplianceSegment,
   TeamProductivityMetric,
@@ -20,45 +26,52 @@ export function PerformanceAnalyticsSection({
   weeklyCompletion,
 }: PerformanceAnalyticsSectionProps) {
   const theme = useTheme()
-  const ct = useChartTheme()
+  const colors = usePublicBrandColors()
 
-  const slaChartData = slaCompliance.map((segment, index) => ({
+  const slaChartData = slaCompliance.map((segment) => ({
     segment: segment.segment,
     compliance: segment.compliancePct,
-    color: ct.colors[index % ct.colors.length],
   }))
 
   return (
-    <Grid container spacing={2}>
-      <Grid size={{ xs: 12, lg: 4 }}>
-        <ChartCard title="SLA compliance" subtitle="By business segment">
-          <BarChart
-            data={slaChartData}
-            bars={[{ key: 'compliance', label: 'Compliance %', color: theme.palette.primary.main }]}
-            xKey="segment"
-            height={200}
-            showLegend={false}
-          />
-        </ChartCard>
+    <Box>
+      <ExecutiveSectionHeader
+        title="Performance analytics"
+        description="SLA compliance, team productivity, and weekly completion trends."
+      />
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <ExecutiveChartPanel title="SLA compliance" subtitle="By business segment">
+            <BarChart
+              data={slaChartData}
+              bars={[{ key: 'compliance', label: 'Compliance %', color: theme.palette.primary.main }]}
+              xKey="segment"
+              height={EXECUTIVE_CHART_HEIGHT}
+              showLegend={false}
+            />
+          </ExecutiveChartPanel>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Box sx={{ ...executiveCardLevel2Sx(colors), height: '100%', p: 2 }}>
+            <MetricCard
+              title="Team productivity"
+              subtitle="Weighted across operational teams"
+              metrics={teamProductivity.map((m) => ({ label: m.label, value: m.value }))}
+            />
+          </Box>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <ExecutiveChartPanel title="Weekly completion trend" subtitle="Daily completed applications">
+            <LineChart
+              data={weeklyCompletion}
+              lines={[{ key: 'completed', label: 'Completed', color: theme.palette.success.main }]}
+              xKey="day"
+              height={EXECUTIVE_CHART_HEIGHT}
+              showLegend={false}
+            />
+          </ExecutiveChartPanel>
+        </Grid>
       </Grid>
-      <Grid size={{ xs: 12, lg: 4 }}>
-        <MetricCard
-          title="Team productivity"
-          subtitle="Weighted across operational teams"
-          metrics={teamProductivity.map((m) => ({ label: m.label, value: m.value }))}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, lg: 4 }}>
-        <ChartCard title="Weekly completion trend" subtitle="Daily completed applications">
-          <LineChart
-            data={weeklyCompletion}
-            lines={[{ key: 'completed', label: 'Completed', color: theme.palette.success.main }]}
-            xKey="day"
-            height={200}
-            showLegend={false}
-          />
-        </ChartCard>
-      </Grid>
-    </Grid>
+    </Box>
   )
 }

@@ -44,11 +44,12 @@ export function OperationalMonitoringSection({
   )
 
   return (
-    <Grid container spacing={2}>
+    <Grid container spacing={3}>
       <Grid size={{ xs: 12, lg: 6 }}>
         <DashboardSectionTable
           title="Escalations"
-          subtitle="Open escalations requiring management review"
+          subtitle="Open escalations requiring management review."
+          actionLabel="Review cases"
           columns={escalationColumns}
           data={escalations}
           rowKey="id"
@@ -60,7 +61,8 @@ export function OperationalMonitoringSection({
       <Grid size={{ xs: 12, lg: 6 }}>
         <DashboardSectionTable
           title="No movement cases"
-          subtitle="Applications with no activity beyond configured SLA"
+          subtitle="Applications with no activity beyond configured SLA."
+          actionLabel="Open queue"
           columns={noMovementColumns}
           data={noMovementCases}
           rowKey="id"

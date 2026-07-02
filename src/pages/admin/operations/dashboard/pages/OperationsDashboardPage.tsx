@@ -1,27 +1,34 @@
 import { Box, Stack } from '@mui/material'
-import { AdminPageHeader } from '@/pages/admin/components/AdminPageHeader'
 import { BaseCard, Button, LoadingOverlay } from '@/design-system/UIComponents'
+import {
+  ExecutiveCompactHeader,
+  NeedsImmediateAttentionSection,
+} from '@/pages/admin/dashboard/components'
+import { EXECUTIVE_DASHBOARD_SPACING } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
+import { useToast } from '@/design-system/UIComponents'
 import { DashboardFiltersBar } from '../components/DashboardFiltersBar'
 import { ExecutiveKpiSection } from '../components/sections/ExecutiveKpiSection'
 import { ExecutivePipelineSection } from '../components/sections/ExecutivePipelineSection'
-import { TeamWorkloadAlertsSection } from '../components/sections/TeamWorkloadAlertsSection'
+import { TeamWorkloadSection } from '../components/sections/TeamWorkloadSection'
 import { VerificationPassportSection } from '../components/sections/VerificationPassportSection'
 import { PerformanceAnalyticsSection } from '../components/sections/PerformanceAnalyticsSection'
 import { BusinessPerformanceSection } from '../components/sections/BusinessPerformanceSection'
 import { OperationalMonitoringSection } from '../components/sections/OperationalMonitoringSection'
+import { resolveExecutiveAlertIcon } from '../utils/executiveAlertIcons'
 import { useAdminDashboard } from '../hooks/useAdminDashboard'
 
 export function OperationsDashboardPage() {
   const dashboard = useAdminDashboard()
+  const { showToast } = useToast()
   const isLoading = dashboard.status === 'loading'
 
   if (dashboard.status === 'error') {
     return (
       <Box>
-        <AdminPageHeader
+        <ExecutiveCompactHeader
           eyebrow="Dashboard"
           title="Admin dashboard"
-          description="Executive command center for management visibility."
+          subtitle="Executive command center for management visibility."
         />
         <BaseCard sx={{ p: 3, textAlign: 'center' }}>
           <Button label="Retry loading dashboard" onClick={dashboard.retry} />
@@ -32,25 +39,34 @@ export function OperationsDashboardPage() {
 
   return (
     <Box>
-      <AdminPageHeader
+      <ExecutiveCompactHeader
         eyebrow="Dashboard"
         title="Admin dashboard"
-        description="Executive command center for management visibility."
-        actions={
+        subtitle="Executive command center for management visibility across operations, documentation, and finance."
+        filters={
           <DashboardFiltersBar filters={dashboard.filters} onChange={dashboard.setFilters} />
         }
       />
 
       <LoadingOverlay loading={isLoading} label="Loading dashboard...">
-        <Stack spacing={2} sx={{ opacity: isLoading ? 0.6 : 1, transition: 'opacity 200ms ease' }}>
+        <Stack
+          spacing={EXECUTIVE_DASHBOARD_SPACING.section}
+          sx={{ opacity: isLoading ? 0.6 : 1, transition: 'opacity 200ms ease', pb: 2 }}
+        >
           <ExecutiveKpiSection metrics={dashboard.kpis} />
-          <ExecutivePipelineSection stages={dashboard.pipelineStages} />
-          <TeamWorkloadAlertsSection
-            teamWorkload={dashboard.teamWorkload}
-            criticalAlerts={dashboard.criticalAlerts}
-            getCellValue={dashboard.getTeamWorkloadCellValue}
-            loading={isLoading}
+          <NeedsImmediateAttentionSection
+            alerts={dashboard.criticalAlerts}
+            resolveIcon={resolveExecutiveAlertIcon}
+            onViewAlert={(alert) =>
+              showToast({
+                title: `Opening ${alert.title}`,
+                description: `${alert.count} cases need review.`,
+                variant: 'info',
+              })
+            }
           />
+          <ExecutivePipelineSection stages={dashboard.pipelineStages} />
+          <TeamWorkloadSection teamWorkload={dashboard.teamWorkload} />
           <VerificationPassportSection
             verificationQueue={dashboard.verificationQueue}
             passportSummary={dashboard.passportSummary}

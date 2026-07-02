@@ -65,6 +65,11 @@ import {
   ExpenseApprovalQueuePage,
   ExpenseListingPage,
 } from '../finance/expenses'
+import { VendorBillingRoutes } from '../finance/vendor-billing/VendorBillingRoutes'
+import {
+  VendorBillingDetailPage,
+  VendorBillingListingPage,
+} from '../finance/vendor-billing'
 import { TeamDetailPage, TeamListingPage } from '../access/teams'
 import {
   CreateUserPage,
@@ -158,13 +163,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     kind: 'coming-soon',
   },
 
-  {
-    path: 'finance/vendor-payments',
-    title: 'Vendor payment',
-    description: 'This module is under development.',
-    eyebrow: 'Finance, billing & collections',
-    kind: 'coming-soon',
-  },
   {
     path: 'finance/fund-allocation',
     title: 'Fund allocation',
@@ -606,6 +604,10 @@ export function AdminRoutes() {
         <Route index element={<ExpenseListingPage />} />
         <Route path="approval-queue" element={<ExpenseApprovalQueuePage />} />
         <Route path=":applicationId" element={<ApplicationExpenseDetailPage />} />
+      </Route>
+      <Route path="finance/vendor-billing" element={<VendorBillingRoutes />}>
+        <Route index element={<VendorBillingListingPage />} />
+        <Route path=":vendorId" element={<VendorBillingDetailPage />} />
       </Route>
       <Route
         path="access/teams"

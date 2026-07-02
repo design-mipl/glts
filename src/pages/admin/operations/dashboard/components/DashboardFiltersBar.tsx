@@ -16,19 +16,19 @@ export interface DashboardFiltersBarProps {
 export function DashboardFiltersBar({ filters, onChange }: DashboardFiltersBarProps) {
   return (
     <Stack
-      direction={{ xs: 'column', sm: 'row' }}
-      spacing={1.5}
-      alignItems={{ xs: 'stretch', sm: 'flex-end' }}
+      direction={{ xs: 'column', lg: 'row' }}
+      spacing={1.25}
+      alignItems={{ xs: 'stretch', lg: 'flex-end' }}
       flexWrap="wrap"
       useFlexGap
-      sx={{ width: { xs: '100%', md: 'auto' }, minWidth: { md: 520 } }}
+      sx={{ width: '100%' }}
     >
       <DateRangePicker
         label="Date range"
         size="sm"
         value={filters.dateRange}
         onChange={(dateRange) => onChange({ ...filters, dateRange })}
-        sx={{ minWidth: { sm: 200 } }}
+        sx={{ flex: { lg: '1 1 180px' }, minWidth: { sm: 180 } }}
       />
       <Select
         label="Country"
@@ -36,7 +36,7 @@ export function DashboardFiltersBar({ filters, onChange }: DashboardFiltersBarPr
         value={filters.country}
         onChange={(country) => onChange({ ...filters, country: String(country) })}
         options={COUNTRY_FILTER_OPTIONS}
-        sx={{ minWidth: { sm: 140 } }}
+        sx={{ flex: { lg: '1 1 130px' }, minWidth: { sm: 130 } }}
       />
       <Select
         label="Branch"
@@ -44,7 +44,7 @@ export function DashboardFiltersBar({ filters, onChange }: DashboardFiltersBarPr
         value={filters.branch}
         onChange={(branch) => onChange({ ...filters, branch: String(branch) })}
         options={BRANCH_FILTER_OPTIONS}
-        sx={{ minWidth: { sm: 130 } }}
+        sx={{ flex: { lg: '1 1 120px' }, minWidth: { sm: 120 } }}
       />
       <Select
         label="Application type"
@@ -54,7 +54,7 @@ export function DashboardFiltersBar({ filters, onChange }: DashboardFiltersBarPr
           onChange({ ...filters, applicationType: String(applicationType) })
         }
         options={APPLICATION_TYPE_OPTIONS}
-        sx={{ minWidth: { sm: 140 } }}
+        sx={{ flex: { lg: '1 1 140px' }, minWidth: { sm: 140 } }}
       />
       <Select
         label="Team"
@@ -62,7 +62,7 @@ export function DashboardFiltersBar({ filters, onChange }: DashboardFiltersBarPr
         value={filters.team}
         onChange={(team) => onChange({ ...filters, team: String(team) })}
         options={TEAM_FILTER_OPTIONS}
-        sx={{ minWidth: { sm: 150 } }}
+        sx={{ flex: { lg: '1 1 140px' }, minWidth: { sm: 140 } }}
       />
     </Stack>
   )

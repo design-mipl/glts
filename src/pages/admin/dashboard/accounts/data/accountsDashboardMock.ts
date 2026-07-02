@@ -261,7 +261,7 @@ export const ACCOUNTS_KPIS: AccountsKpiMetric[] = [
     trend: 'up',
     accent: 'warning',
     iconKey: 'vendor',
-    href: '/admin/finance/vendor-payments?filter=pending',
+    href: '/admin/finance/vendor-billing?filter=pending',
   },
   {
     id: 'collections-today',

@@ -21,6 +21,8 @@ import {
 import { resolveOriginalRequiredDocuments } from '@/shared/utils/originalDocumentCollectionUtils'
 import { PHYSICAL_DOCUMENT_LABEL } from '@/shared/constants/documentRequirementLabels'
 import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
+import type { CountryQcChecklistTemplate } from '@/shared/types/countryMaster'
+import type { QcCheckOutcome } from '../../config/qcCheckChecklistConfig'
 
 type QcDocumentTab = 'checklist' | 'original'
 
@@ -33,7 +35,15 @@ interface ViewFormQcCheckSectionProps {
   globalChecklistDocuments: ApplicantDocumentItem[]
   countryId?: string
   visaOfferingId?: string
-  jurisdictionId?: string
+  docsQcTemplate: CountryQcChecklistTemplate
+  docsQcChecked: Record<string, boolean>
+  docsQcOutcome: QcCheckOutcome | ''
+  onDocsQcCheckedChange: (itemId: string, value: boolean) => void
+  onDocsQcOutcomeChange: (outcome: QcCheckOutcome | '') => void
+  onDocsQcSubmit?: () => void
+  docsQcSubmitLabel?: string
+  docsQcSubmitHint?: string
+  docsQcSubmitDisabled?: boolean
   onPreview: (documentId: string, scope: 'traveler' | 'global') => void
   onTravelerVerify: (document: ApplicantDocumentItem) => void
   onTravelerReject: (document: ApplicantDocumentItem) => void
@@ -61,7 +71,6 @@ export function ViewFormQcCheckSection({
   globalChecklistDocuments,
   countryId,
   visaOfferingId,
-  jurisdictionId,
   onPreview,
   onTravelerVerify,
   onTravelerReject,
@@ -78,6 +87,15 @@ export function ViewFormQcCheckSection({
   onOriginalCollectionChange,
   onOriginalReceivedSubmit,
   readOnly = false,
+  docsQcTemplate,
+  docsQcChecked,
+  docsQcOutcome,
+  onDocsQcCheckedChange,
+  onDocsQcOutcomeChange,
+  onDocsQcSubmit,
+  docsQcSubmitLabel,
+  docsQcSubmitHint,
+  docsQcSubmitDisabled,
 }: ViewFormQcCheckSectionProps) {
   const [activeTab, setActiveTab] = useState<QcDocumentTab>('checklist')
 
@@ -181,9 +199,15 @@ export function ViewFormQcCheckSection({
       </Grid>
       <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0, display: 'flex' }}>
         <QcCheckChecklist
-          countryId={countryId}
-          visaOfferingId={visaOfferingId}
-          jurisdictionId={jurisdictionId}
+          template={docsQcTemplate}
+          checked={docsQcChecked}
+          outcome={docsQcOutcome}
+          onCheckedChange={onDocsQcCheckedChange}
+          onOutcomeChange={onDocsQcOutcomeChange}
+          submitLabel={docsQcSubmitLabel}
+          submitHint={docsQcSubmitHint}
+          submitDisabled={docsQcSubmitDisabled}
+          onSubmit={onDocsQcSubmit}
           readOnly={readOnly}
         />
       </Grid>

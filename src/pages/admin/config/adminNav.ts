@@ -78,10 +78,10 @@ export const adminNav: NavConfig[] = [
     ],
   },
   {
-    type: 'group',
+    type: 'item',
     label: 'Vendor Management',
     icon: createElement(Truck, iconProps),
-    children: [{ type: 'item', label: 'Vendors', href: '/admin/vendor-management/vendors' }],
+    href: '/admin/vendor-management/vendors',
   },
   {
     type: 'group',
@@ -90,7 +90,7 @@ export const adminNav: NavConfig[] = [
     children: [
       { type: 'item', label: 'Expense management', href: '/admin/finance/expenses' },
       { type: 'item', label: 'Billing & invoice management', href: '/admin/finance/invoices' },
-      { type: 'item', label: 'Vendor payment', href: '/admin/finance/vendor-payments' },
+      { type: 'item', label: 'Vendor billing', href: '/admin/finance/vendor-billing' },
       { type: 'item', label: 'Fund allocation', href: '/admin/finance/fund-allocation' },
     ],
   },

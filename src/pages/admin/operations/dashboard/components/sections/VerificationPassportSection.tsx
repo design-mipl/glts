@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { Box, Grid, Stack, Typography } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
 import { useNavigate } from 'react-router-dom'
-import { BaseCard, useToast } from '@/design-system/UIComponents'
+import { useToast } from '@/design-system/UIComponents'
+import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { DashboardSectionTable } from '../DashboardSectionTable'
 import { buildPassportTransitColumns } from '../columns/passportTransitColumns'
 import { buildVerificationQueueColumns } from '../columns/verificationQueueColumns'
@@ -12,34 +13,41 @@ import type {
   VerificationQueueRow,
 } from '../../data/operationsDashboardMock'
 
-function PassportSummaryCard({
+function PassportStatCard({
   label,
   value,
-  accent,
+  tone,
 }: {
   label: string
   value: number
-  accent: 'primary' | 'warning' | 'success'
+  tone: 'warning' | 'info' | 'success'
 }) {
-  const theme = useTheme()
-  const color = theme.palette[accent].main
+  const colors = usePublicBrandColors()
+  const toneMap = {
+    warning: { bg: 'rgba(245, 158, 11, 0.12)', text: '#B45309' },
+    info: { bg: 'rgba(59, 130, 246, 0.12)', text: '#2563EB' },
+    success: { bg: colors.greenMuted, text: colors.greenDark },
+  }
+  const style = toneMap[tone]
 
   return (
-    <BaseCard sx={{ flex: 1, minWidth: 0 }}>
-      <Box sx={{ p: 1.5 }}>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          fontWeight={600}
-          sx={{ textTransform: 'uppercase', letterSpacing: 0.4 }}
-        >
-          {label}
-        </Typography>
-        <Typography variant="h6" fontWeight={700} sx={{ mt: 0.5, color }}>
-          {value.toLocaleString()}
-        </Typography>
-      </Box>
-    </BaseCard>
+    <Box
+      sx={{
+        flex: 1,
+        minWidth: 0,
+        p: 1.5,
+        borderRadius: '12px',
+        border: `1px solid ${colors.border}`,
+        bgcolor: style.bg,
+      }}
+    >
+      <Typography sx={{ fontSize: 10, fontWeight: 800, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+        {label}
+      </Typography>
+      <Typography sx={{ fontSize: 24, fontWeight: 900, color: style.text, lineHeight: 1.1, mt: 0.5 }}>
+        {value.toLocaleString()}
+      </Typography>
+    </Box>
   )
 }
 
@@ -61,6 +69,7 @@ export function VerificationPassportSection({
   loading = false,
 }: VerificationPassportSectionProps) {
   const navigate = useNavigate()
+  const colors = usePublicBrandColors()
   const { showToast } = useToast()
 
   const verificationColumns = useMemo(
@@ -75,11 +84,12 @@ export function VerificationPassportSection({
   const passportColumns = useMemo(() => buildPassportTransitColumns(), [])
 
   return (
-    <Grid container spacing={2}>
-      <Grid size={{ xs: 12, lg: 7.8 }}>
+    <Grid container spacing={3}>
+      <Grid size={{ xs: 12, lg: 8 }}>
         <DashboardSectionTable
           title="Pending verification queue"
-          subtitle="Applications awaiting document verification and QC"
+          subtitle="Applications awaiting document verification and QC."
+          actionLabel="View queue"
           columns={verificationColumns}
           data={verificationQueue}
           rowKey="id"
@@ -88,38 +98,37 @@ export function VerificationPassportSection({
           onViewAll={() => navigate('/admin/application-management/marine')}
         />
       </Grid>
-      <Grid size={{ xs: 12, lg: 4.2 }}>
-        <Stack spacing={2}>
-          <BaseCard>
-            <Box sx={{ px: 2, pt: 2, pb: 1 }}>
-              <Typography variant="subtitle2" fontWeight={700}>
-                Passport tracker
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Delivery status and in-transit passports
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={1} sx={{ px: 2, pb: 2 }}>
-              <PassportSummaryCard
-                label="Not Out For Delivery"
+      <Grid size={{ xs: 12, lg: 4 }}>
+        <Stack spacing={2.5}>
+          <Box sx={{ ...executiveCardLevel2Sx(colors), p: 2 }}>
+            <Typography sx={{ fontWeight: 800, fontSize: 15, color: colors.navy }}>
+              Passport tracker
+            </Typography>
+            <Typography sx={{ fontSize: 12, color: colors.textMuted, mt: 0.25, mb: 1.5 }}>
+              Delivery status summary
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <PassportStatCard
+                label="Not out for delivery"
                 value={passportSummary.notOutForDelivery}
-                accent="warning"
+                tone="warning"
               />
-              <PassportSummaryCard
-                label="In Transit"
+              <PassportStatCard
+                label="In transit"
                 value={passportSummary.inTransit}
-                accent="primary"
+                tone="info"
               />
-              <PassportSummaryCard
+              <PassportStatCard
                 label="Delivered"
                 value={passportSummary.delivered}
-                accent="success"
+                tone="success"
               />
             </Stack>
-          </BaseCard>
+          </Box>
           <DashboardSectionTable
-            title="In-transit passports"
-            subtitle="Recent courier movements"
+            title="Recent in-transit passports"
+            subtitle="Courier movements and delivery ETAs."
+            actionLabel="View details"
             columns={passportColumns}
             data={passportTransit}
             rowKey="id"

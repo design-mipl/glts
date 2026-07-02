@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
-import { BaseCard, Checkbox, RadioGroup } from '@/design-system/UIComponents'
+import { BaseCard, Button, Checkbox, RadioGroup } from '@/design-system/UIComponents'
 import type { CountryQcChecklistTemplate } from '@/shared/types/countryMaster'
 import {
   countEnabledQcChecklistItems,
@@ -21,6 +21,10 @@ interface QcChecklistExecutePanelProps {
   outcomeLabel: string
   outcomeOptions: QcChecklistOutcomeOption[]
   readOnly?: boolean
+  actionLabel?: string
+  actionDisabled?: boolean
+  actionHint?: string
+  onAction?: () => void
 }
 
 export function QcChecklistExecutePanel({
@@ -32,6 +36,10 @@ export function QcChecklistExecutePanel({
   outcomeLabel,
   outcomeOptions,
   readOnly = false,
+  actionLabel,
+  actionDisabled = false,
+  actionHint,
+  onAction,
 }: QcChecklistExecutePanelProps) {
   const sections = useMemo(() => getExecutableQcChecklistSections(template), [template])
   const totalItems = useMemo(() => countEnabledQcChecklistItems(template), [template])
@@ -126,6 +134,21 @@ export function QcChecklistExecutePanel({
             '& .MuiRadio-root': { py: 0.25 },
           }}
         />
+        {actionLabel && onAction ? (
+          <Stack spacing={0.75} sx={{ mt: 1.25 }}>
+            <Button
+              label={actionLabel}
+              onClick={onAction}
+              disabled={readOnly || actionDisabled}
+              size="sm"
+            />
+            {actionHint ? (
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.4 }}>
+                {actionHint}
+              </Typography>
+            ) : null}
+          </Stack>
+        ) : null}
       </Box>
     </BaseCard>
   )

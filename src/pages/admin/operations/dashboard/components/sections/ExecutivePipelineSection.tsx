@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { DashboardPipelineTracker } from '../DashboardPipelineTracker'
 import type { PipelineStage } from '../../data/operationsDashboardMock'
 
@@ -6,5 +7,12 @@ export interface ExecutivePipelineSectionProps {
 }
 
 export function ExecutivePipelineSection({ stages }: ExecutivePipelineSectionProps) {
-  return <DashboardPipelineTracker stages={stages} title="Application lifecycle pipeline" />
+  const navigate = useNavigate()
+
+  return (
+    <DashboardPipelineTracker
+      stages={stages}
+      onViewPipeline={() => navigate('/admin/application-management/marine')}
+    />
+  )
 }

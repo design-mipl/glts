@@ -1,27 +1,64 @@
 import { Box, Grid, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { BarChart, ChartCard, DonutChart } from '@/design-system/UIComponents'
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
+import { BarChart, DonutChart } from '@/design-system/UIComponents'
 import { useChartTheme } from '@/design-system/UIComponents/Charts/utils/chartTheme'
-import { BaseCard } from '@/design-system/UIComponents'
+import { Badge } from '@/design-system/UIComponents'
+import {
+  EXECUTIVE_CHART_HEIGHT,
+  ExecutiveChartPanel,
+  ExecutiveSectionHeader,
+  executiveCardLevel2Sx,
+} from '@/pages/admin/dashboard/components'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import type { DistributionSlice, RevenueSnapshot } from '../../data/operationsDashboardMock'
 
-function RevenueStatCard({ label, value }: { label: string; value: string }) {
+function RevenueKpiBlock({
+  label,
+  value,
+  trend,
+  statusLabel,
+  statusColor,
+}: {
+  label: string
+  value: string
+  trend: number
+  statusLabel: string
+  statusColor: 'success' | 'warning' | 'info'
+}) {
+  const colors = usePublicBrandColors()
+  const isUp = trend >= 0
+  const TrendIcon = isUp ? ArrowUpRight : ArrowDownRight
+
   return (
-    <BaseCard sx={{ height: '100%' }}>
-      <Box sx={{ p: 2 }}>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          fontWeight={600}
-          sx={{ textTransform: 'uppercase', letterSpacing: 0.4 }}
-        >
-          {label}
-        </Typography>
-        <Typography variant="h5" fontWeight={700} sx={{ mt: 0.5 }}>
+    <Box
+      sx={{
+        p: 1.75,
+        borderRadius: '12px',
+        border: `1px solid ${colors.border}`,
+        bgcolor: colors.surface,
+        height: '100%',
+      }}
+    >
+      <Typography sx={{ fontSize: 11, fontWeight: 800, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.35 }}>
+        {label}
+      </Typography>
+      <Stack direction="row" alignItems="baseline" justifyContent="space-between" sx={{ mt: 0.75 }}>
+        <Typography sx={{ fontSize: 22, fontWeight: 900, color: colors.navy, lineHeight: 1 }}>
           {value}
         </Typography>
+        <Stack direction="row" alignItems="center" spacing={0.25}>
+          <TrendIcon size={14} color={isUp ? colors.greenDark : '#DC2626'} />
+          <Typography sx={{ fontSize: 11, fontWeight: 700, color: isUp ? colors.greenDark : '#DC2626' }}>
+            {isUp ? '+' : ''}
+            {trend}%
+          </Typography>
+        </Stack>
+      </Stack>
+      <Box sx={{ mt: 1 }}>
+        <Badge label={statusLabel} color={statusColor} size="sm" />
       </Box>
-    </BaseCard>
+    </Box>
   )
 }
 
@@ -36,10 +73,7 @@ function DistributionChart({
 }) {
   const theme = useTheme()
   const ct = useChartTheme()
-  const barData = slices.map((slice) => ({
-    label: slice.label,
-    value: slice.value,
-  }))
+  const barData = slices.map((slice) => ({ label: slice.label, value: slice.value }))
   const donutData = slices.map((slice, i) => ({
     key: slice.key,
     label: slice.label,
@@ -49,24 +83,19 @@ function DistributionChart({
   const total = slices.reduce((sum, s) => sum + s.value, 0)
 
   return (
-    <ChartCard title={title} subtitle={subtitle}>
+    <ExecutiveChartPanel title={title} subtitle={subtitle}>
       {slices.length <= 4 ? (
-        <DonutChart
-          data={donutData}
-          height={160}
-          centerValue={String(total)}
-          centerLabel="Total"
-        />
+        <DonutChart data={donutData} height={EXECUTIVE_CHART_HEIGHT - 20} centerValue={String(total)} centerLabel="Total" />
       ) : (
         <BarChart
           data={barData}
           bars={[{ key: 'value', label: 'Applications', color: theme.palette.primary.main }]}
           xKey="label"
-          height={160}
+          height={EXECUTIVE_CHART_HEIGHT - 20}
           showLegend={false}
         />
       )}
-    </ChartCard>
+    </ExecutiveChartPanel>
   )
 }
 
@@ -83,108 +112,98 @@ export function BusinessPerformanceSection({
   visaTypeDistribution,
   segmentDistribution,
 }: BusinessPerformanceSectionProps) {
+  const colors = usePublicBrandColors()
   const theme = useTheme()
+  const onTarget = revenueSnapshot.revenueVsTarget >= 100
 
   return (
-    <Grid container spacing={2}>
-      <Grid size={{ xs: 12, lg: 6 }}>
-        <BaseCard sx={{ height: '100%' }}>
-          <Box sx={{ px: 2, pt: 2, pb: 1 }}>
-            <Typography variant="subtitle2" fontWeight={700}>
+    <Box>
+      <ExecutiveSectionHeader
+        title="Revenue & application distribution"
+        description="Billing performance and active pipeline mix across channels."
+      />
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Box sx={{ ...executiveCardLevel2Sx(colors), p: 2, height: '100%' }}>
+            <Typography sx={{ fontWeight: 800, fontSize: 15, color: colors.navy, mb: 0.25 }}>
               Revenue snapshot
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Billing performance across the organization
+            <Typography sx={{ fontSize: 12, color: colors.textMuted, mb: 2 }}>
+              Recognized billing and target attainment
             </Typography>
-          </Box>
-          <Grid container spacing={2} sx={{ px: 2, pb: 2 }}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <RevenueStatCard label="Revenue Today" value={revenueSnapshot.revenueToday} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <RevenueStatCard label="MTD Revenue" value={revenueSnapshot.mtdRevenue} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <RevenueStatCard label="YTD Revenue" value={revenueSnapshot.ytdRevenue} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <BaseCard sx={{ height: '100%' }}>
-                <Box sx={{ p: 2 }}>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight={600}
-                    sx={{ textTransform: 'uppercase', letterSpacing: 0.4 }}
-                  >
-                    Revenue vs Target
+            <Grid container spacing={1.5}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <RevenueKpiBlock
+                  label="Revenue today"
+                  value={revenueSnapshot.revenueToday}
+                  trend={6.7}
+                  statusLabel="Above yesterday"
+                  statusColor="success"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <RevenueKpiBlock
+                  label="MTD revenue"
+                  value={revenueSnapshot.mtdRevenue}
+                  trend={4.2}
+                  statusLabel="On pace"
+                  statusColor="info"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <RevenueKpiBlock
+                  label="YTD revenue"
+                  value={revenueSnapshot.ytdRevenue}
+                  trend={8.1}
+                  statusLabel="Growing"
+                  statusColor="success"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Box
+                  sx={{
+                    p: 1.75,
+                    borderRadius: '12px',
+                    border: `1px solid ${colors.border}`,
+                    bgcolor: alpha(onTarget ? theme.palette.success.main : theme.palette.warning.main, 0.08),
+                    height: '100%',
+                  }}
+                >
+                  <Typography sx={{ fontSize: 11, fontWeight: 800, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.35 }}>
+                    Revenue vs target
                   </Typography>
                   <Typography
-                    variant="h5"
-                    fontWeight={700}
                     sx={{
-                      mt: 0.5,
-                      color:
-                        revenueSnapshot.revenueVsTarget >= 100
-                          ? 'success.main'
-                          : 'warning.main',
+                      fontSize: 22,
+                      fontWeight: 900,
+                      mt: 0.75,
+                      color: onTarget ? 'success.main' : 'warning.main',
                     }}
                   >
                     {revenueSnapshot.revenueVsTarget}%
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      display: 'inline-block',
-                      mt: 0.5,
-                      px: 1,
-                      py: 0.25,
-                      borderRadius: '10px',
-                      bgcolor: alpha(
-                        revenueSnapshot.revenueVsTarget >= 100
-                          ? theme.palette.success.main
-                          : theme.palette.warning.main,
-                        0.12,
-                      ),
-                    }}
-                  >
-                    {revenueSnapshot.revenueVsTarget >= 100 ? 'On target' : 'Below target'}
-                  </Typography>
+                  <Box sx={{ mt: 1 }}>
+                    <Badge label={onTarget ? 'On target' : 'Below target'} color={onTarget ? 'success' : 'warning'} size="sm" />
+                  </Box>
                 </Box>
-              </BaseCard>
+              </Grid>
             </Grid>
-          </Grid>
-        </BaseCard>
-      </Grid>
-      <Grid size={{ xs: 12, lg: 6 }}>
-        <Stack spacing={2}>
-          <Typography variant="subtitle2" fontWeight={700} sx={{ px: 0.5 }}>
-            Application distribution
-          </Typography>
+          </Box>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
-              <DistributionChart
-                title="By country"
-                subtitle="Active pipeline"
-                slices={countryDistribution}
-              />
+              <DistributionChart title="By country" subtitle="Active pipeline" slices={countryDistribution} />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <DistributionChart
-                title="By visa type"
-                subtitle="Case mix"
-                slices={visaTypeDistribution}
-              />
+              <DistributionChart title="By visa type" subtitle="Case mix" slices={visaTypeDistribution} />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <DistributionChart
-                title="By segment"
-                subtitle="Business channel"
-                slices={segmentDistribution}
-              />
+              <DistributionChart title="By segment" subtitle="Business channel" slices={segmentDistribution} />
             </Grid>
           </Grid>
-        </Stack>
+        </Grid>
       </Grid>
-    </Grid>
+    </Box>
   )
 }
