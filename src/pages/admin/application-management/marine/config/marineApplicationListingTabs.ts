@@ -1,4 +1,5 @@
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
+import { isApplicationVfsSubmissionPending } from '@/shared/utils/applicationProcessingQueueUtils'
 
 export type MarineApplicationListingTab =
   | 'all'
@@ -18,10 +19,10 @@ export const MARINE_APPLICATION_LISTING_TABS: ReadonlyArray<{
 }> = [
   { value: 'all', label: 'All applications' },
   { value: 'draft', label: 'Draft' },
-  { value: 'verification_pending', label: 'Verification pending' },
-  { value: 'online_submission_pending', label: 'Online submission pending' },
-  { value: 'vfs_submission_pending', label: 'VFS submission pending' },
-  { value: 'collection_pending', label: 'Collection pending' },
+  { value: 'verification_pending', label: 'Verification Pending' },
+  { value: 'online_submission_pending', label: 'Submission Pending' },
+  { value: 'vfs_submission_pending', label: 'Embassy/VFS Submission Pending' },
+  { value: 'collection_pending', label: 'Collection Pending' },
   { value: 'collected', label: 'Collected' },
   { value: 'dispatched', label: 'Dispatched' },
 ]
@@ -53,10 +54,7 @@ export function resolveMarineApplicationQueueTab(
     return 'collection_pending'
   }
 
-  if (
-    row.processingStage === 'Appointment Booked' ||
-    row.operationalStatus === 'Appointment Booked'
-  ) {
+  if (isApplicationVfsSubmissionPending(row)) {
     return 'vfs_submission_pending'
   }
 

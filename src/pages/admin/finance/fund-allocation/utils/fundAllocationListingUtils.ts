@@ -1,0 +1,208 @@
+import type { EmptyStateProps } from '@/design-system/UIComponents'
+import { getApplicationCustomerSegmentLabel } from '@/shared/config/applicationCustomerSegmentConfig'
+import type {
+  FundAllocationListingTab,
+  FundAllocationPassengerRow,
+  FundAllocationQueueFilters,
+} from '@/shared/types/fundAllocation'
+import { customerSegmentDisplayLabel } from '../config/fundAllocationStatusConfig'
+import { formatInr } from '@/shared/utils/invoiceCalculations'
+
+export const EMPTY_FUND_ALLOCATION_FILTERS: FundAllocationQueueFilters = {
+  customerSegment: '',
+  country: '',
+  visaType: '',
+  jurisdiction: '',
+  search: '',
+}
+
+export function filterRowsByListingTab(
+  rows: FundAllocationPassengerRow[],
+  tab: FundAllocationListingTab,
+): FundAllocationPassengerRow[] {
+  return rows.filter(row => row.allocationStatus === tab)
+}
+
+export function applyFundAllocationFilters(
+  rows: FundAllocationPassengerRow[],
+  filters: FundAllocationQueueFilters,
+): FundAllocationPassengerRow[] {
+  return rows.filter(row => {
+    if (filters.customerSegment && row.customerSegment !== filters.customerSegment) return false
+    if (filters.country && row.country !== filters.country) return false
+    if (filters.visaType && row.visaType !== filters.visaType) return false
+    if (filters.jurisdiction && row.jurisdiction !== filters.jurisdiction) return false
+    if (filters.search && !matchesFundAllocationSearch(row, filters.search)) return false
+    return true
+  })
+}
+
+export function matchesFundAllocationSearch(row: FundAllocationPassengerRow, query: string): boolean {
+  const q = query.trim().toLowerCase()
+  if (!q) return true
+
+  return [
+    row.passengerName,
+    row.gltsApplicationId,
+    row.gltsApplicantId,
+    row.companyName,
+    row.country,
+    row.visaType,
+    row.jurisdiction,
+    row.passportNo,
+    customerSegmentDisplayLabel(row.customerSegment),
+    getApplicationCustomerSegmentLabel(row.customerSegment),
+  ]
+    .join(' ')
+    .toLowerCase()
+    .includes(q)
+}
+
+export function getFundAllocationCellValue(row: FundAllocationPassengerRow, key: string): string {
+  switch (key) {
+    case 'passenger':
+    case 'passengerName':
+      return row.passengerName
+    case 'customerType':
+    case 'customerSegment':
+      return customerSegmentDisplayLabel(row.customerSegment)
+    case 'application':
+      return `${row.country} ${row.visaType} ${row.gltsApplicationId} ${row.companyName}`.trim()
+    case 'applicationId':
+      return row.gltsApplicationId
+    case 'companyName':
+      return row.companyName
+    case 'countryVisa':
+      return `${row.country} ${row.visaType}`.trim()
+    case 'country':
+      return row.country
+    case 'jurisdiction':
+      return row.jurisdiction
+    case 'travelDate':
+      return row.travelDate
+    case 'appointmentDate':
+      return row.appointmentDate
+    case 'submissionStatus':
+      return row.submissionStatus
+    case 'allocationStatus':
+      return row.allocationStatus
+    case 'allocatedAmount':
+      return row.allocatedAmount > 0 ? formatInr(row.allocatedAmount) : '—'
+    case 'suggestedAmount':
+      return row.suggestedAllocationAmount > 0 ? formatInr(row.suggestedAllocationAmount) : '—'
+    case 'totalAmount':
+      return row.totalAmount > 0 ? formatInr(row.totalAmount) : '—'
+    case 'allocatedBy':
+      return row.allocatedBy || '—'
+    case 'creditCardName':
+      return row.creditCardName || '—'
+    case 'lastUpdated':
+      return row.lastUpdated
+    default:
+      return ''
+  }
+}
+
+export function getFundAllocationFilterOptions(rows: FundAllocationPassengerRow[]) {
+  const countries = new Set<string>()
+  const visaTypes = new Set<string>()
+  const jurisdictions = new Set<string>()
+
+  for (const row of rows) {
+    if (row.country) countries.add(row.country)
+    if (row.visaType) visaTypes.add(row.visaType)
+    if (row.jurisdiction && row.jurisdiction !== '—') jurisdictions.add(row.jurisdiction)
+  }
+
+  return {
+    countries: Array.from(countries).sort(),
+    visaTypes: Array.from(visaTypes).sort(),
+    jurisdictions: Array.from(jurisdictions).sort(),
+  }
+}
+
+export function getFundAllocationTabEmptyState(tab: FundAllocationListingTab): EmptyStateProps {
+  const map: Record<FundAllocationListingTab, EmptyStateProps> = {
+    pending_allocation: {
+      title: 'No passengers pending fund allocation',
+      description:
+        'Passengers from Embassy/VFS Submission Pending applications appear here for finance fund release.',
+    },
+    allocated: {
+      title: 'No allocated passengers',
+      description: 'Passengers with released VFS submission funds will appear in this tab.',
+    },
+  }
+  return map[tab]
+}
+
+export function computeFundAllocationKpis(rows: FundAllocationPassengerRow[]) {
+  const pending = rows.filter(row => row.allocationStatus === 'pending_allocation')
+  const allocated = rows.filter(row => row.allocationStatus === 'allocated')
+
+  return {
+    totalPassengers: rows.length,
+    pendingAllocation: pending.length,
+    allocatedPassengers: allocated.length,
+    pendingAmount: pending.reduce((sum, row) => sum + row.suggestedAllocationAmount, 0),
+    allocatedAmount: allocated.reduce((sum, row) => sum + row.allocatedAmount, 0),
+  }
+}
+
+export function downloadFundAllocationCsv(rows: FundAllocationPassengerRow[]) {
+  const headers = [
+    'Passenger Name',
+    'Customer Type',
+    'Application ID',
+    'GLTS Applicant ID',
+    'Company Name',
+    'Visa Country',
+    'Visa Type',
+    'Jurisdiction',
+    'Travel Date',
+    'Appointment Date',
+    'Submission Status',
+    'Allocation Status',
+    'Catalog Total',
+    'Total Value',
+    'Allocated Amount',
+    'Payment Card',
+    'Allocated By',
+    'Last Updated',
+  ]
+
+  const lines = rows.map(row =>
+    [
+      row.passengerName,
+      customerSegmentDisplayLabel(row.customerSegment),
+      row.gltsApplicationId,
+      row.gltsApplicantId,
+      row.companyName,
+      row.country,
+      row.visaType,
+      row.jurisdiction,
+      row.travelDate,
+      row.appointmentDate,
+      row.submissionStatus,
+      row.allocationStatus,
+      row.suggestedAllocationAmount,
+      row.totalAmount,
+      row.allocatedAmount,
+      row.creditCardName,
+      row.allocatedBy,
+      row.lastUpdated,
+    ]
+      .map(value => `"${String(value).replace(/"/g, '""')}"`)
+      .join(','),
+  )
+
+  const csv = [headers.join(','), ...lines].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `fund-allocation-${new Date().toISOString().slice(0, 10)}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+

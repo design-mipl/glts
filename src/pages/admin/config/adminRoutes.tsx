@@ -71,6 +71,7 @@ import {
   VendorBillingDetailPage,
   VendorBillingListingPage,
 } from '../finance/vendor-billing'
+import { FundAllocationListingPage } from '../finance/fund-allocation'
 import { TeamDetailPage, TeamListingPage } from '../access/teams'
 import {
   CreateUserPage,
@@ -161,14 +162,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     title: 'Ground expense & fund management',
     description: 'This module is under development.',
     eyebrow: 'Ground operations',
-    kind: 'coming-soon',
-  },
-
-  {
-    path: 'finance/fund-allocation',
-    title: 'Fund allocation',
-    description: 'This module is under development.',
-    eyebrow: 'Finance, billing & collections',
     kind: 'coming-soon',
   },
 
@@ -611,6 +604,14 @@ export function AdminRoutes() {
         <Route index element={<VendorBillingListingPage />} />
         <Route path=":vendorId" element={<VendorBillingDetailPage />} />
       </Route>
+      <Route
+        path="finance/fund-allocation"
+        element={
+          <PermissionGuard>
+            <FundAllocationListingPage />
+          </PermissionGuard>
+        }
+      />
       <Route
         path="access/teams"
         element={

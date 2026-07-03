@@ -70,7 +70,7 @@ export function MarineApplicationKpiRow({ rows }: MarineApplicationKpiRowProps) 
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <KpiCard
-          label="Verification pending"
+          label="Verification Pending"
           value={metrics.verificationPending}
           icon={Clock}
           iconColor={theme.palette.info.main}

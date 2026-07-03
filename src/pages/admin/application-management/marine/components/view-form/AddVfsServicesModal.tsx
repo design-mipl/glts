@@ -2,16 +2,21 @@ import { Box, Divider, Stack, Typography } from '@mui/material'
 import { Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Checkbox, Input, Modal } from '@/design-system/UIComponents'
-import { resolveOfferingVfsServiceRates } from '@/shared/services/countryMasterService'
-import { embassyVfsFeeMasterService } from '@/shared/services/embassyVfsFeeMasterService'
 import type { FormAssistVfsServiceChargeLine } from '@/shared/services/applicationFormAssistService'
+import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
-  addVfsServicesModalContentSx,
-  addVfsServicesModalEmptyStateSx,
-  addVfsServicesModalLayout,
-  addVfsServicesModalListSx,
-  addVfsServicesModalServiceRowSx,
-} from './addVfsServicesModalLayout'
+  isVfsPickerServiceSelected,
+  mapVfsPickerServicesToChargeLines,
+  resolveVfsPickerServices,
+  sumVfsPickerServiceAmounts,
+  type VfsPickerService,
+} from '@/shared/utils/vfsServicePickerUtils'
+import {
+  vfsServicePickerEmptyStateSx,
+  vfsServicePickerLayout,
+  vfsServicePickerListSx,
+  vfsServicePickerServiceRowSx,
+} from '@/shared/utils/vfsServicePickerLayout'
 
 interface AddVfsServicesModalProps {
   open: boolean
@@ -25,74 +30,20 @@ interface AddVfsServicesModalProps {
   onAdd: (lines: FormAssistVfsServiceChargeLine[]) => void
 }
 
-interface PickerService {
-  id: string
-  serviceName: string
-  amount: number
-  gstIncluded?: boolean
-  embassyFeeServiceId?: string
-}
-
-function resolvePickerServices(
-  country: string,
-  visaType: string,
-  countryId?: string,
-  visaOfferingId?: string,
-  jurisdictionId?: string,
-): PickerService[] {
-  if (countryId && visaOfferingId) {
-    const rates = resolveOfferingVfsServiceRates(countryId, visaOfferingId, jurisdictionId)
-    if (rates.length > 0) {
-      return rates.map(rate => ({
-        id: rate.id,
-        serviceName: rate.serviceName,
-        amount: rate.amount,
-        gstIncluded: rate.gstIncluded,
-        embassyFeeServiceId: rate.embassyFeeServiceId,
-      }))
-    }
-  }
-
-  const rateCard = embassyVfsFeeMasterService.resolveRateCardForApplication(country, visaType)
-  return rateCard.services.map(service => ({
-    id: service.id,
-    serviceName: service.serviceName,
-    amount: service.amount,
-    embassyFeeServiceId: service.id,
-  }))
-}
-
-function formatInr(amount: number): string {
-  return `₹${amount.toLocaleString('en-IN')}`
-}
-
 function ContextLine({ label, value }: { label: string; value: string }) {
   return (
     <Stack direction="row" spacing={1} alignItems="baseline">
       <Typography
         variant="body2"
         color="text.secondary"
-        sx={{ fontSize: addVfsServicesModalLayout.bodyFontSize, minWidth: addVfsServicesModalLayout.contextLabelMinWidth }}
+        sx={{ fontSize: vfsServicePickerLayout.bodyFontSize, minWidth: vfsServicePickerLayout.contextLabelMinWidth }}
       >
         {label}
       </Typography>
-      <Typography variant="body2" sx={{ fontSize: addVfsServicesModalLayout.bodyFontSize, fontWeight: 600 }}>
+      <Typography variant="body2" sx={{ fontSize: vfsServicePickerLayout.bodyFontSize, fontWeight: 600 }}>
         {value || '—'}
       </Typography>
     </Stack>
-  )
-}
-
-function isServiceAlreadyAdded(
-  service: PickerService,
-  existingCharges: FormAssistVfsServiceChargeLine[],
-): boolean {
-  return existingCharges.some(
-    line =>
-      line.id === service.id ||
-      line.embassyFeeServiceId === service.id ||
-      (service.embassyFeeServiceId != null && line.embassyFeeServiceId === service.embassyFeeServiceId) ||
-      line.serviceName.trim().toLowerCase() === service.serviceName.trim().toLowerCase(),
   )
 }
 
@@ -118,12 +69,19 @@ export function AddVfsServicesModal({
   }, [open])
 
   const catalogServices = useMemo(
-    () => resolvePickerServices(country, visaType, countryId, visaOfferingId, jurisdictionId),
+    () =>
+      resolveVfsPickerServices({
+        country,
+        visaType,
+        countryId,
+        visaOfferingId,
+        jurisdictionId,
+      }),
     [country, countryId, jurisdictionId, visaOfferingId, visaType],
   )
 
   const availableServices = useMemo(
-    () => catalogServices.filter(service => !isServiceAlreadyAdded(service, existingCharges)),
+    () => catalogServices.filter(service => !isVfsPickerServiceSelected(service, existingCharges)),
     [catalogServices, existingCharges],
   )
 
@@ -139,7 +97,7 @@ export function AddVfsServicesModal({
   )
 
   const selectedTotal = useMemo(
-    () => selectedServices.reduce((sum, service) => sum + service.amount, 0),
+    () => sumVfsPickerServiceAmounts(selectedServices),
     [selectedServices],
   )
 
@@ -157,14 +115,7 @@ export function AddVfsServicesModal({
 
   const handleAdd = () => {
     if (selectedServices.length === 0) return
-    const lines: FormAssistVfsServiceChargeLine[] = selectedServices.map((service, index) => ({
-      id: `vfs-charge-${service.id}-${Date.now()}-${index}`,
-      embassyFeeServiceId: service.embassyFeeServiceId ?? service.id,
-      serviceName: service.serviceName,
-      amount: service.amount,
-      gstIncluded: service.gstIncluded,
-    }))
-    onAdd(lines)
+    onAdd(mapVfsPickerServicesToChargeLines(selectedServices))
     handleClose()
   }
 
@@ -183,10 +134,10 @@ export function AddVfsServicesModal({
           sx={{ width: '100%' }}
         >
           <Stack spacing={0.25}>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: addVfsServicesModalLayout.bodyFontSize }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: vfsServicePickerLayout.bodyFontSize }}>
               Selected Services: {selectedServices.length}
             </Typography>
-            <Typography variant="body2" fontWeight={600} sx={{ fontSize: addVfsServicesModalLayout.bodyFontSize }}>
+            <Typography variant="body2" fontWeight={600} sx={{ fontSize: vfsServicePickerLayout.bodyFontSize }}>
               Total Amount: {formatInr(selectedTotal)}
             </Typography>
           </Stack>
@@ -201,7 +152,7 @@ export function AddVfsServicesModal({
         </Stack>
       }
     >
-      <Stack spacing={2} sx={addVfsServicesModalContentSx}>
+      <Stack spacing={2}>
         <Stack spacing={0.75}>
           <ContextLine label="Country" value={country} />
           <ContextLine label="Visa Type" value={visaType} />
@@ -210,7 +161,7 @@ export function AddVfsServicesModal({
         <Divider />
 
         <Stack spacing={1}>
-          <Typography variant="body2" fontWeight={600} sx={{ fontSize: addVfsServicesModalLayout.bodyFontSize }}>
+          <Typography variant="body2" fontWeight={600} sx={{ fontSize: vfsServicePickerLayout.bodyFontSize }}>
             Search Service
           </Typography>
           <Input
@@ -225,10 +176,10 @@ export function AddVfsServicesModal({
 
         <Divider />
 
-        <Box sx={addVfsServicesModalListSx}>
+        <Box sx={vfsServicePickerListSx}>
           {filteredServices.length === 0 ? (
-            <Box sx={addVfsServicesModalEmptyStateSx}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: addVfsServicesModalLayout.bodyFontSize }}>
+            <Box sx={vfsServicePickerEmptyStateSx}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: vfsServicePickerLayout.bodyFontSize }}>
                 {availableServices.length === 0
                   ? 'All configured services for this country and visa type are already added.'
                   : 'No services match your search.'}
@@ -236,26 +187,26 @@ export function AddVfsServicesModal({
             </Box>
           ) : (
             <Stack divider={<Divider />}>
-              {filteredServices.map(service => (
+              {filteredServices.map((service: VfsPickerService) => (
                 <Stack
                   key={service.id}
                   direction="row"
                   alignItems="center"
                   spacing={1}
-                  sx={addVfsServicesModalServiceRowSx}
+                  sx={vfsServicePickerServiceRowSx}
                 >
                   <Checkbox
                     checked={selectedIds.includes(service.id)}
                     onChange={checked => toggleService(service.id, checked)}
                     size="sm"
                   />
-                  <Typography variant="body2" sx={{ flex: 1, fontSize: addVfsServicesModalLayout.bodyFontSize }}>
+                  <Typography variant="body2" sx={{ flex: 1, fontSize: vfsServicePickerLayout.bodyFontSize }}>
                     {service.serviceName}
                   </Typography>
                   <Typography
                     variant="body2"
                     sx={{
-                      fontSize: addVfsServicesModalLayout.bodyFontSize,
+                      fontSize: vfsServicePickerLayout.bodyFontSize,
                       fontVariantNumeric: 'tabular-nums',
                       fontWeight: 600,
                     }}

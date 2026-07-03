@@ -80,32 +80,29 @@ export function getMarineApplicationEmptyState(
     case 'draft':
       return {
         emptyTitle: 'No draft applications',
-        emptyDescription:
-          'Applications saved as drafts in the customer portal appear here before submission to GLTS.',
+        emptyDescription: 'Draft application created in the Customer Portal.',
       }
     case 'verification_pending':
       return {
         emptyTitle: 'No applications pending verification',
-        emptyDescription:
-          'Submitted applications awaiting document verification, checklist validation, and operations review appear here.',
+        emptyDescription: 'Document verification and Operations verification pending.',
       }
     case 'online_submission_pending':
       return {
-        emptyTitle: 'No applications pending online submission',
+        emptyTitle: 'No applications pending submission',
         emptyDescription:
-          'Verified applications awaiting form preparation, internal QC, and embassy portal submission appear here.',
+          'Form submission and QC completed; application is ready for Embassy/VFS submission.',
       }
     case 'vfs_submission_pending':
       return {
-        emptyTitle: 'No applications pending VFS submission',
+        emptyTitle: 'No applications pending Embassy/VFS submission',
         emptyDescription:
-          'Applications with completed online submission awaiting physical VFS or embassy submission appear here.',
+          'Online submission completed, but Embassy/VFS submission is pending.',
       }
     case 'collection_pending':
       return {
         emptyTitle: 'No applications pending collection',
-        emptyDescription:
-          'Applications submitted to the embassy or VFS awaiting passport or document collection appear here.',
+        emptyDescription: 'Awaiting passport/document collection after submission.',
       }
     case 'collected':
       return {
