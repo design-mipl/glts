@@ -52,7 +52,7 @@ export function AdminOverlayFormSection({
             {title}
           </Typography>
           {description ? (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: 13 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: 12 }}>
               {description}
             </Typography>
           ) : null}

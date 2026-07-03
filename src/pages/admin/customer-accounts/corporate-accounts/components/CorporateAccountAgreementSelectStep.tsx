@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import { FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button, FormField, Input, Select } from '@/design-system/UIComponents'
@@ -6,15 +6,18 @@ import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPa
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import type { CorporateAccountFormData } from '@/shared/types/corporateAccount'
+import { isSelectableCorporateWorkflowType } from '@/shared/utils/corporateAccountWorkflow'
 import { agreementEmbeddedTableSx } from '../../agreements/components/agreementFormLayout'
 import {
   agreementStatusLabel,
   billingTypeLabel,
   workflowTypeLabel,
 } from '../../agreements/config/agreementStatusConfig'
+import { CorporateAccountWorkflowConfigFields } from './CorporateAccountWorkflowConfigFields'
 
 interface CorporateAccountAgreementSelectStepProps {
   data: CorporateAccountFormData
+  onChange: (next: CorporateAccountFormData) => void
   onSelectAgreement: (agreementId: string) => void
   corporateAccountId?: string
   variant?: 'selection' | 'summary'
@@ -47,12 +50,13 @@ function CommercialSummaryPlaceholder() {
           <FileText size={32} strokeWidth={1.5} />
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 420, mx: 'auto', fontSize: 13 }}>
-          Select an agreement ready for activation above to view commercial terms and assign a branch.
+          Select an agreement ready for activation above to view commercial terms.
         </Typography>
       </Box>
     </Box>
   )
 }
+
 function NoReadyAgreementsState({ onGoToAgreements }: { onGoToAgreements: () => void }) {
   return (
     <Box sx={{ ...agreementEmbeddedTableSx, width: '100%' }}>
@@ -79,6 +83,7 @@ function NoReadyAgreementsState({ onGoToAgreements }: { onGoToAgreements: () => 
 
 export function CorporateAccountAgreementSelectStep({
   data,
+  onChange,
   onSelectAgreement,
   corporateAccountId,
   variant = 'selection',
@@ -89,6 +94,9 @@ export function CorporateAccountAgreementSelectStep({
   })
   const selected = data.agreementId ? commercialAgreementService.getById(data.agreementId) : undefined
   const selectOptions = buildAgreementSelectOptions(readyAgreements, selected)
+  const configuredWorkflowLabel = isSelectableCorporateWorkflowType(data.workflowType)
+    ? workflowTypeLabel[data.workflowType]
+    : '—'
 
   if (variant === 'summary') {
     if (!selected) {
@@ -101,7 +109,7 @@ export function CorporateAccountAgreementSelectStep({
           <Input value={selected.companyName} disabled fullWidth />
         </FormField>
         <FormField label="Workflow type">
-          <Input value={workflowTypeLabel[selected.workflowType]} disabled fullWidth />
+          <Input value={configuredWorkflowLabel} disabled fullWidth />
         </FormField>
         <FormField label="Billing type">
           <Input value={billingTypeLabel[selected.billingType]} disabled fullWidth />
@@ -117,16 +125,19 @@ export function CorporateAccountAgreementSelectStep({
   }
 
   return (
-    <AdminFullPageFormFieldSpan>
-      <FormField label="Agreement company" required>
-        <Select
-          value={data.agreementId}
-          onChange={(v) => onSelectAgreement(String(v))}
-          options={selectOptions}
-          placeholder="Select agreement ready for activation…"
-          fullWidth
-        />
-      </FormField>
-    </AdminFullPageFormFieldSpan>
+    <Stack spacing={2}>
+      <AdminFullPageFormFieldSpan>
+        <FormField label="Agreement company" required>
+          <Select
+            value={data.agreementId}
+            onChange={(v) => onSelectAgreement(String(v))}
+            options={selectOptions}
+            placeholder="Select agreement ready for activation…"
+            fullWidth
+          />
+        </FormField>
+      </AdminFullPageFormFieldSpan>
+      {data.agreementId ? <CorporateAccountWorkflowConfigFields data={data} onChange={onChange} /> : null}
+    </Stack>
   )
 }

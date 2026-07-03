@@ -11,7 +11,6 @@ import { CorporateAccountPortalActivationFields } from '../components/CorporateA
 import { CorporateAccountReviewPanel } from '../components/CorporateAccountReviewPanel'
 import { CorporateAccountSuperAdminFields } from '../components/CorporateAccountSuperAdminFields'
 import { CorporateAccountVesselsSection } from '../components/CorporateAccountVesselsSection'
-import { CorporateAccountWorkflowConfigFields } from '../components/CorporateAccountWorkflowConfigFields'
 
 export const CORPORATE_ACCOUNT_WORKSPACE_SECTIONS: {
   id: CorporateAccountSectionId
@@ -23,13 +22,7 @@ export const CORPORATE_ACCOUNT_WORKSPACE_SECTIONS: {
     id: 'agreement',
     navId: 'section-agreement',
     label: 'Select agreement',
-    description: 'Choose an approved commercial agreement to inherit terms and entities.',
-  },
-  {
-    id: 'workflow',
-    navId: 'section-workflow',
-    label: 'Workflow configuration',
-    description: 'Enable marine, corporate, retail, and bulk upload workflows for this account.',
+    description: 'Choose a commercial agreement ready for activation and select the portal workflow.',
   },
   {
     id: 'super-admin',
@@ -79,22 +72,24 @@ export function buildCorporateAccountFormSteps(
   onChange: (next: CorporateAccountFormData) => void,
   options: BuildCorporateAccountFormStepsOptions,
 ): AdminStepperFormStep[] {
-  const approvedForOnboarding = commercialAgreementService.listApprovedForOnboarding({
+  const readyForActivation = commercialAgreementService.listReadyForActivationForOnboarding({
     excludeCorporateAccountId: options.corporateAccountId,
   })
-  const hasApprovedAgreements = approvedForOnboarding.length > 0 || Boolean(formData.agreementId)
+  const hasReadyAgreements = readyForActivation.length > 0 || Boolean(formData.agreementId)
 
-  const agreementSections: AdminFullPageFormSection[] = hasApprovedAgreements
+  const agreementSections: AdminFullPageFormSection[] = hasReadyAgreements
     ? [
         {
           id: 'agreement-primary',
           title: 'Agreement selection',
-          description: 'Only approved agreements not yet linked to an active account are listed.',
+          description:
+            'Ready for activation only — agreements not yet linked to a corporate account.',
           span: 2,
           columns: 1,
           children: (
             <CorporateAccountAgreementSelectStep
               data={formData}
+              onChange={onChange}
               onSelectAgreement={options.onSelectAgreement}
               corporateAccountId={options.corporateAccountId}
               variant="selection"
@@ -111,6 +106,7 @@ export function buildCorporateAccountFormSteps(
           children: (
             <CorporateAccountAgreementSelectStep
               data={formData}
+              onChange={onChange}
               onSelectAgreement={options.onSelectAgreement}
               corporateAccountId={options.corporateAccountId}
               variant="summary"
@@ -122,12 +118,14 @@ export function buildCorporateAccountFormSteps(
         {
           id: 'agreement-empty',
           title: 'Agreement selection',
-          description: 'Only approved agreements not yet linked to an active account are listed.',
+          description:
+            'Ready for activation only — agreements not yet linked to a corporate account.',
           span: 2,
           columns: 1,
           children: (
             <CorporateAccountAgreementSelectStep
               data={formData}
+              onChange={onChange}
               onSelectAgreement={options.onSelectAgreement}
               corporateAccountId={options.corporateAccountId}
               variant="selection"
@@ -140,23 +138,8 @@ export function buildCorporateAccountFormSteps(
     {
       id: 'agreement',
       label: 'Select agreement',
-      description: 'Approved commercial agreement',
+      description: 'Agreement and portal workflow',
       sections: agreementSections,
-    },
-    {
-      id: 'workflow',
-      label: 'Workflow configuration',
-      description: 'Portal workflow toggles',
-      sections: [
-        {
-          id: 'workflow-primary',
-          title: 'Workflow configuration',
-          description: 'Enable marine, corporate, retail, and bulk upload workflows for this account.',
-          span: 2,
-          columns: 1,
-          children: <CorporateAccountWorkflowConfigFields data={formData} onChange={onChange} />,
-        },
-      ],
     },
     {
       id: 'super-admin',
@@ -173,7 +156,7 @@ export function buildCorporateAccountFormSteps(
         {
           id: 'super-admin-secondary',
           title: 'Portal credentials',
-          description: 'Send login email or generate a temporary password.',
+          description: 'Enter a portal password or generate a temporary one.',
           importance: 'secondary',
           columns: 1,
           children: <CorporateAccountSuperAdminFields data={formData} onChange={onChange} variant="credentials" />,

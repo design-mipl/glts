@@ -75,7 +75,7 @@ export function useEnquiryForm(initialData?: EnquiryFormData) {
     if (!getVisaRequirementItems(formData.visaRequirement).length) {
       next.visaRequirements = 'Add at least one country requirement'
     }
-    if (!formData.salesDetails.inquirySource) next.inquirySource = 'Inquiry source is required'
+    if (!formData.salesDetails.inquirySource) next.inquirySource = 'Enquiry source is required'
     setErrors(next)
     return Object.keys(next).length === 0
   }

@@ -68,11 +68,6 @@ export function EnquiryVisaRequirementSection({
       setDraftError(visaTypeOptions.length === 0 ? 'No visa types configured for this country' : 'Visa type is required')
       return
     }
-    if (items.some((item) => item.country === countryName)) {
-      setDraftError('This country is already added')
-      return
-    }
-
     updateItems([
       ...items,
       {
@@ -151,14 +146,8 @@ export function EnquiryVisaRequirementSection({
             fullWidth
           />
         </FormField>
-        <Button label="Add requirement" startIcon={<Plus size={14} />} onClick={handleAdd} />
+        <Button label="Add country requirement" startIcon={<Plus size={14} />} onClick={handleAdd} />
       </Stack>
-
-      {draftError === 'This country is already added' ? (
-        <Typography variant="caption" color="error">
-          {draftError}
-        </Typography>
-      ) : null}
 
       {listError ? (
         <Typography variant="caption" color="error">

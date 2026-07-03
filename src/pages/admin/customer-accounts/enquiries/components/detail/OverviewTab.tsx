@@ -62,7 +62,7 @@ export function OverviewTab({ enquiry, onUploadAttachment }: OverviewTabProps) {
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <Field
-              label="Inquiry Source"
+              label="Enquiry Source"
               value={formatEnquiryInquirySource(enquiry.salesDetails.inquirySource)}
             />
           </Grid>
@@ -71,7 +71,7 @@ export function OverviewTab({ enquiry, onUploadAttachment }: OverviewTabProps) {
 
       <BaseCard sx={{ p: 2 }}>
         <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
-          Visa Requirement Details
+          Country Visa Requirement Details
         </Typography>
         {visaItems.length === 0 ? (
           <Typography variant="body2" color="text.secondary">

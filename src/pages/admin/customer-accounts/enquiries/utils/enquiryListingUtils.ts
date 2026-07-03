@@ -272,7 +272,7 @@ export function exportEnquiriesToCsv(rows: EnquiryRecord[]): string {
     'Contact Person',
     'Contact',
     'Email',
-    'Inquiry Source',
+    'Enquiry Source',
     'Country',
     'Visa Type',
     'Status',

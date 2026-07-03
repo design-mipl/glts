@@ -122,8 +122,8 @@ export const adminNav: NavConfig[] = [
     children: [
       { type: 'item', label: 'Country', href: '/admin/masters/country' },
       { type: 'item', label: 'Jurisdiction Master', href: '/admin/masters/jurisdiction' },
+      { type: 'item', label: 'Credit Card Master', href: '/admin/masters/credit-card' },
       { type: 'item', label: 'Document master', href: '/admin/masters/documents' },
-      { type: 'item', label: 'Embassy / VFS Fee Master', href: '/admin/masters/rates' },
       { type: 'item', label: 'Service Master', href: '/admin/masters/services' },
       { type: 'item', label: 'SAC Code Master', href: '/admin/masters/sac-codes' },
       { type: 'item', label: 'GST & TDS Master', href: '/admin/masters/tax' },

@@ -65,7 +65,9 @@ export function mapCorporateAccountRowsToGridItems(records: CorporateAccount[]) 
 export function getCorporateAccountEmptyState(hasSearch: boolean) {
   return {
     emptyTitle: hasSearch ? 'No corporate accounts match your search' : 'No corporate accounts yet',
-    emptyDescription: hasSearch ? 'Try a different search term.' : 'Create a corporate account from an approved agreement.',
+    emptyDescription: hasSearch
+      ? 'Try a different search term.'
+      : 'Create a corporate account from an agreement ready for activation.',
     emptyAction: hasSearch ? undefined : { label: 'Create corporate account', onClick: () => {} },
   }
 }

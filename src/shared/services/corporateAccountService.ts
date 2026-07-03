@@ -13,6 +13,11 @@ import type {
 } from '@/shared/types/corporateAccount'
 import { entityMasterService } from '@/shared/services/entityMasterService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
+import {
+  accountTypeFromWorkflow,
+  isSelectableCorporateWorkflowType,
+  workflowConfigFromType,
+} from '@/shared/utils/corporateAccountWorkflow'
 
 const ADMIN_ACTOR = 'Admin User'
 
@@ -205,19 +210,24 @@ export const corporateAccountService = {
   hydrateFromAgreement(agreementId: string): CorporateAccountFormData | undefined {
     const agreement = commercialAgreementService.getById(agreementId)
     if (!agreement) return undefined
+    const inheritedWorkflowType = isSelectableCorporateWorkflowType(agreement.workflowType)
+      ? agreement.workflowType
+      : ''
     return {
       agreementId: agreement.id,
       companyId: agreement.companyId,
       companyName: agreement.companyName,
-      workflowType: agreement.workflowType,
-      accountType: agreement.workflowType === 'marine' ? 'marine' : 'corporate',
+      workflowType: inheritedWorkflowType,
+      accountType: inheritedWorkflowType ? accountTypeFromWorkflow(inheritedWorkflowType) : 'corporate',
       branch: '',
-      workflowConfig: {
-        marineWorkflowEnabled: agreement.workflowType === 'marine' || agreement.workflowType === 'mixed',
-        bulkUploadEnabled: agreement.workflowType === 'marine',
-        retailWorkflowEnabled: agreement.workflowType === 'retail' || agreement.workflowType === 'mixed',
-        corporateWorkflowEnabled: agreement.workflowType === 'corporate' || agreement.workflowType === 'mixed',
-      },
+      workflowConfig: inheritedWorkflowType
+        ? workflowConfigFromType(inheritedWorkflowType)
+        : {
+            marineWorkflowEnabled: false,
+            bulkUploadEnabled: false,
+            retailWorkflowEnabled: false,
+            corporateWorkflowEnabled: false,
+          },
       superAdmin: { fullName: '', phoneNumber: '', emailAddress: '', role: 'super_admin' },
       admins: [],
       assignedTeamId: '',
@@ -230,7 +240,7 @@ export const corporateAccountService = {
         portalStatus: 'draft',
         loginAccess: true,
         applicationCreationAccess: true,
-        bulkUploadAccess: agreement.workflowType === 'marine',
+        bulkUploadAccess: false,
         invoiceVisibility: true,
         trackingVisibility: true,
       },

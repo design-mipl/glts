@@ -192,7 +192,7 @@ export function buildQuotationFormSections({
   if (fromEnquiry && selectedEnquiry) {
     sections.push({
       id: 'visa-requirements',
-      title: 'Visa Requirement Details',
+      title: 'Country Visa Requirement Details',
       span: 2,
       columns: 1,
       importance: 'primary',

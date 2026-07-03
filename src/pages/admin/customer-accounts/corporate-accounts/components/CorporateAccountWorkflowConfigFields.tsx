@@ -1,40 +1,44 @@
-import { Stack } from '@mui/material'
-import { Toggle } from '@/design-system/UIComponents'
+import type { AgreementWorkflowType } from '@/shared/types/commercialAgreement'
 import type { CorporateAccountFormData } from '@/shared/types/corporateAccount'
+import {
+  CORPORATE_ACCOUNT_WORKFLOW_OPTIONS,
+  accountTypeFromWorkflow,
+  isSelectableCorporateWorkflowType,
+  workflowConfigFromType,
+} from '@/shared/utils/corporateAccountWorkflow'
+import { FormField, Select } from '@/design-system/UIComponents'
 
 interface CorporateAccountWorkflowConfigFieldsProps {
   data: CorporateAccountFormData
   onChange: (next: CorporateAccountFormData) => void
 }
 
-function ToggleRow({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string
-  checked: boolean
-  onChange: (checked: boolean) => void
-}) {
-  return (
-    <Stack direction="row" alignItems="center" spacing={1.5}>
-      <Toggle checked={checked} onChange={onChange} />
-      <span style={{ fontSize: 13, fontWeight: 600 }}>{label}</span>
-    </Stack>
-  )
-}
-
 export function CorporateAccountWorkflowConfigFields({ data, onChange }: CorporateAccountWorkflowConfigFieldsProps) {
-  const update = (patch: Partial<CorporateAccountFormData['workflowConfig']>) => {
-    onChange({ ...data, workflowConfig: { ...data.workflowConfig, ...patch } })
+  const handleWorkflowChange = (value: string) => {
+    const workflowType = value as AgreementWorkflowType
+    onChange({
+      ...data,
+      workflowType,
+      accountType: accountTypeFromWorkflow(workflowType),
+      workflowConfig: workflowConfigFromType(workflowType),
+      portalActivation: {
+        ...data.portalActivation,
+        bulkUploadAccess: false,
+      },
+    })
   }
 
+  const selectValue = isSelectableCorporateWorkflowType(data.workflowType) ? data.workflowType : ''
+
   return (
-    <Stack spacing={2}>
-      <ToggleRow label="Marine workflow enabled" checked={data.workflowConfig.marineWorkflowEnabled} onChange={(v) => update({ marineWorkflowEnabled: v })} />
-      <ToggleRow label="B2B agent" checked={data.workflowConfig.bulkUploadEnabled} onChange={(v) => update({ bulkUploadEnabled: v })} />
-      <ToggleRow label="Retail workflow enabled" checked={data.workflowConfig.retailWorkflowEnabled} onChange={(v) => update({ retailWorkflowEnabled: v })} />
-      <ToggleRow label="Corporate workflow enabled" checked={data.workflowConfig.corporateWorkflowEnabled} onChange={(v) => update({ corporateWorkflowEnabled: v })} />
-    </Stack>
+    <FormField label="Workflow type" required>
+      <Select
+        value={selectValue}
+        onChange={(v) => handleWorkflowChange(String(v))}
+        options={CORPORATE_ACCOUNT_WORKFLOW_OPTIONS}
+        placeholder="Select workflow…"
+        fullWidth
+      />
+    </FormField>
   )
 }

@@ -150,7 +150,7 @@ export function buildEnquiryFormSections({
             </FormField>
           </AdminFullPageFormFieldSpan>
           <FormField
-            label="Inquiry Source"
+            label="Enquiry Source"
             required
             error={Boolean(errors.inquirySource)}
             helperText={errors.inquirySource}
@@ -172,7 +172,7 @@ export function buildEnquiryFormSections({
     },
     {
       id: 'visa',
-      title: 'Visa Requirement Details',
+      title: 'Country Visa Requirement Details',
       columns: 1 as const,
       children: (
         <AdminFullPageFormFieldSpan>

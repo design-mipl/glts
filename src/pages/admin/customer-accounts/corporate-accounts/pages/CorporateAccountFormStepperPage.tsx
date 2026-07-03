@@ -171,7 +171,7 @@ export function CorporateAccountFormStepperPage({
       <CorporateAccountWorkspaceShell
         breadcrumbs={breadcrumbs}
         title={mode === 'create' ? 'Create corporate account' : 'Edit corporate account'}
-        description="Link an approved agreement, configure portal access, and activate the corporate account."
+        description="Link an agreement ready for activation, configure portal access, and activate the corporate account."
         sections={sectionNav}
         activeSectionId={activeSection.navId}
         onSectionClick={goToSectionNav}

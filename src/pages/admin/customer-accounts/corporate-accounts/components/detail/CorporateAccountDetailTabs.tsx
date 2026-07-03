@@ -86,9 +86,9 @@ export function OverviewTab({ account }: { account: CorporateAccount }) {
         </Typography>
       </Grid>
       <Grid size={{ xs: 12 }}>
-        <Typography variant="caption" color="text.secondary">Workflow flags</Typography>
-        <Typography variant="body2">
-          Marine {account.workflowConfig.marineWorkflowEnabled ? 'on' : 'off'} · Bulk {account.workflowConfig.bulkUploadEnabled ? 'on' : 'off'} · Retail {account.workflowConfig.retailWorkflowEnabled ? 'on' : 'off'} · Corporate {account.workflowConfig.corporateWorkflowEnabled ? 'on' : 'off'}
+        <Typography variant="caption" color="text.secondary">Workflow</Typography>
+        <Typography variant="body2" fontWeight={600}>
+          {workflowTypeLabel[account.workflowType as keyof typeof workflowTypeLabel] ?? account.workflowType}
         </Typography>
       </Grid>
     </Grid>

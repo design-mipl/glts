@@ -35,6 +35,7 @@ import {
   DocumentDetailPage,
   DocumentListingPage,
 } from '../masters/documents'
+import { CreditCardListingPage } from '../masters/credit-card'
 import { JurisdictionListingPage } from '../masters/jurisdiction'
 import { SacCodeListingPage } from '../masters/sac-codes'
 import { ServiceListingPage } from '../masters/services'
@@ -186,13 +187,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     kind: 'coming-soon',
   },
 
-  {
-    path: 'masters/rates',
-    title: 'Embassy / VFS Fee Master',
-    description: 'This module is under development.',
-    eyebrow: 'Masters',
-    kind: 'coming-soon',
-  },
   {
     path: 'operations/*',
     title: 'Operations visibility',
@@ -458,6 +452,14 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <JurisdictionListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/credit-card"
+        element={
+          <PermissionGuard>
+            <CreditCardListingPage />
           </PermissionGuard>
         }
       />
