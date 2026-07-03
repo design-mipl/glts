@@ -1,9 +1,6 @@
 import type { CorporateAccountFormData } from '@/shared/types/corporateAccount'
 import { isValidEmail, isValidMobile } from '@/shared/utils/contactValidation'
-import {
-  isSelectableCorporateWorkflowType,
-  workflowConfigFromType,
-} from '@/shared/utils/corporateAccountWorkflow'
+import { isSelectableCorporateWorkflowType } from '@/shared/utils/corporateAccountWorkflow'
 
 export type CorporateAccountSectionId =
   | 'agreement'
@@ -19,10 +16,15 @@ export function createEmptyCorporateAccountFormData(): CorporateAccountFormData 
     agreementId: '',
     companyId: '',
     companyName: '',
-    workflowType: 'marine',
-    accountType: 'marine',
+    workflowType: '',
+    accountType: 'corporate',
     branch: '',
-    workflowConfig: workflowConfigFromType('marine'),
+    workflowConfig: {
+      marineWorkflowEnabled: false,
+      bulkUploadEnabled: false,
+      retailWorkflowEnabled: false,
+      corporateWorkflowEnabled: false,
+    },
     superAdmin: {
       fullName: '',
       phoneNumber: '',

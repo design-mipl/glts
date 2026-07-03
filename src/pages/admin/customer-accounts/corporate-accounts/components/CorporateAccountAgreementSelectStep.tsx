@@ -6,12 +6,10 @@ import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPa
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import type { CorporateAccountFormData } from '@/shared/types/corporateAccount'
-import { isSelectableCorporateWorkflowType } from '@/shared/utils/corporateAccountWorkflow'
 import { agreementEmbeddedTableSx } from '../../agreements/components/agreementFormLayout'
 import {
   agreementStatusLabel,
   billingTypeLabel,
-  workflowTypeLabel,
 } from '../../agreements/config/agreementStatusConfig'
 import { CorporateAccountWorkflowConfigFields } from './CorporateAccountWorkflowConfigFields'
 
@@ -94,9 +92,6 @@ export function CorporateAccountAgreementSelectStep({
   })
   const selected = data.agreementId ? commercialAgreementService.getById(data.agreementId) : undefined
   const selectOptions = buildAgreementSelectOptions(readyAgreements, selected)
-  const configuredWorkflowLabel = isSelectableCorporateWorkflowType(data.workflowType)
-    ? workflowTypeLabel[data.workflowType]
-    : '—'
 
   if (variant === 'summary') {
     if (!selected) {
@@ -107,9 +102,6 @@ export function CorporateAccountAgreementSelectStep({
       <>
         <FormField label="Company">
           <Input value={selected.companyName} disabled fullWidth />
-        </FormField>
-        <FormField label="Workflow type">
-          <Input value={configuredWorkflowLabel} disabled fullWidth />
         </FormField>
         <FormField label="Billing type">
           <Input value={billingTypeLabel[selected.billingType]} disabled fullWidth />
@@ -137,7 +129,7 @@ export function CorporateAccountAgreementSelectStep({
           />
         </FormField>
       </AdminFullPageFormFieldSpan>
-      {data.agreementId ? <CorporateAccountWorkflowConfigFields data={data} onChange={onChange} /> : null}
+      <CorporateAccountWorkflowConfigFields data={data} onChange={onChange} />
     </Stack>
   )
 }

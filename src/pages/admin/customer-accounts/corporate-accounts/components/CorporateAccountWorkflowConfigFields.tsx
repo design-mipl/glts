@@ -13,7 +13,10 @@ interface CorporateAccountWorkflowConfigFieldsProps {
   onChange: (next: CorporateAccountFormData) => void
 }
 
-export function CorporateAccountWorkflowConfigFields({ data, onChange }: CorporateAccountWorkflowConfigFieldsProps) {
+export function CorporateAccountWorkflowConfigFields({
+  data,
+  onChange,
+}: CorporateAccountWorkflowConfigFieldsProps) {
   const handleWorkflowChange = (value: string) => {
     const workflowType = value as AgreementWorkflowType
     onChange({
@@ -37,6 +40,7 @@ export function CorporateAccountWorkflowConfigFields({ data, onChange }: Corpora
         onChange={(v) => handleWorkflowChange(String(v))}
         options={CORPORATE_ACCOUNT_WORKFLOW_OPTIONS}
         placeholder="Select workflow…"
+        disabled={!data.agreementId}
         fullWidth
       />
     </FormField>

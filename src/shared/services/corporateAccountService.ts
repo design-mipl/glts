@@ -16,6 +16,7 @@ import { vesselMasterService } from '@/shared/services/vesselMasterService'
 import {
   accountTypeFromWorkflow,
   isSelectableCorporateWorkflowType,
+  workflowConfigFromAgreementType,
   workflowConfigFromType,
 } from '@/shared/utils/corporateAccountWorkflow'
 
@@ -218,16 +219,15 @@ export const corporateAccountService = {
       companyId: agreement.companyId,
       companyName: agreement.companyName,
       workflowType: inheritedWorkflowType,
-      accountType: inheritedWorkflowType ? accountTypeFromWorkflow(inheritedWorkflowType) : 'corporate',
+      accountType: inheritedWorkflowType
+        ? accountTypeFromWorkflow(inheritedWorkflowType)
+        : agreement.workflowType === 'marine'
+          ? 'marine'
+          : 'corporate',
       branch: '',
       workflowConfig: inheritedWorkflowType
         ? workflowConfigFromType(inheritedWorkflowType)
-        : {
-            marineWorkflowEnabled: false,
-            bulkUploadEnabled: false,
-            retailWorkflowEnabled: false,
-            corporateWorkflowEnabled: false,
-          },
+        : workflowConfigFromAgreementType(agreement.workflowType),
       superAdmin: { fullName: '', phoneNumber: '', emailAddress: '', role: 'super_admin' },
       admins: [],
       assignedTeamId: '',

@@ -8,6 +8,18 @@ export const CORPORATE_ACCOUNT_WORKFLOW_OPTIONS: { value: AgreementWorkflowType;
   { value: 'b2b_agent', label: 'B2B Agent' },
 ]
 
+export function workflowConfigFromAgreementType(workflowType: AgreementWorkflowType): CorporateWorkflowConfig {
+  if (workflowType === 'mixed') {
+    return {
+      marineWorkflowEnabled: true,
+      bulkUploadEnabled: false,
+      retailWorkflowEnabled: true,
+      corporateWorkflowEnabled: true,
+    }
+  }
+  return workflowConfigFromType(workflowType)
+}
+
 export function workflowConfigFromType(workflowType: AgreementWorkflowType): CorporateWorkflowConfig {
   return {
     marineWorkflowEnabled: workflowType === 'marine',
