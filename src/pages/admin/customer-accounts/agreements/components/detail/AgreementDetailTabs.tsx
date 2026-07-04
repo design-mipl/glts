@@ -1,14 +1,13 @@
-import { Stack, Typography } from '@mui/material'
-import { Grid } from '@mui/material'
-import { Badge } from '@/design-system/UIComponents'
+import type { ReactNode } from 'react'
+import { Box, Divider, Grid, Stack, Typography } from '@mui/material'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import { deriveAdvanceRuleSummary } from '@/shared/utils/commercialAgreementValidation'
+import { formatAgreementDate } from '../../utils/agreementFormUtils'
 import {
-  billingTypeColor,
+  agreementTypeLabel,
   billingTypeLabel,
   customerSourceModeLabel,
-  workflowTypeColor,
   workflowTypeLabel,
 } from '../../config/agreementStatusConfig'
 import { getSelectedFinanceContactPersons } from '@/shared/utils/agreementFinanceContacts'
@@ -22,70 +21,119 @@ interface TabProps {
   agreement: CommercialAgreement
 }
 
-export function OverviewTab({ agreement }: TabProps) {
-  const financeContacts = getSelectedFinanceContactPersons(
-    commercialAgreementService.agreementToFormData(agreement),
-  )
+function OverviewField({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <Stack spacing={3}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Company
-          </Typography>
-          <Typography variant="body2" fontWeight={600}>
-            {agreement.companyName}
-          </Typography>
+    <Stack spacing={0.35}>
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      {typeof value === 'string' || typeof value === 'number' ? (
+        <Typography variant="body2" color="text.primary" sx={{ wordBreak: 'break-word' }}>
+          {value || '—'}
+        </Typography>
+      ) : (
+        value
+      )}
+    </Stack>
+  )
+}
+
+function OverviewSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Box>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', mb: 1.25, letterSpacing: '0.02em' }}
+      >
+        {title}
+      </Typography>
+      {children}
+    </Box>
+  )
+}
+
+export function OverviewTab({ agreement }: TabProps) {
+  const formData = commercialAgreementService.agreementToFormData(agreement)
+  const financeContacts = getSelectedFinanceContactPersons(formData)
+  const primaryFinanceContact = financeContacts[0]
+
+  const contactPerson =
+    formData.company.contactPersonName.trim() ||
+    agreement.financeContacts.accountsSpocName.trim() ||
+    primaryFinanceContact?.contactPerson ||
+    '—'
+  const contactEmail =
+    formData.company.emailAddress.trim() ||
+    agreement.financeContacts.accountsTeamEmail.trim() ||
+    primaryFinanceContact?.email ||
+    '—'
+  const contactPhone =
+    formData.company.contactNumber.trim() ||
+    agreement.financeContacts.accountsContactNumber.trim() ||
+    primaryFinanceContact?.phone ||
+    '—'
+
+  return (
+    <Stack spacing={2.5} divider={<Divider />}>
+      <OverviewSection title="Company & contact">
+        <Grid container spacing={1.75}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField label="Company" value={agreement.companyName} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField label="Customer source" value={customerSourceModeLabel[agreement.customerSourceMode]} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField label="Contact person" value={contactPerson} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField label="Contact email" value={contactEmail} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField label="Contact phone" value={contactPhone} />
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Customer source
-          </Typography>
-          <Typography variant="body2">{customerSourceModeLabel[agreement.customerSourceMode]}</Typography>
+      </OverviewSection>
+
+      <OverviewSection title="Agreement & billing">
+        <Grid container spacing={1.75}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField label="Workflow" value={workflowTypeLabel[agreement.workflowType]} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField label="Billing type" value={billingTypeLabel[agreement.billingType]} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField label="Agreement type" value={agreementTypeLabel[agreement.agreementType]} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField label="Start date" value={formatAgreementDate(agreement.startDate)} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField label="Expiry date" value={formatAgreementDate(agreement.endDate)} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField label="Entities" value={String(agreement.entities.length)} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField
+              label="Credit limit"
+              value={
+                agreement.billingConfig.creditLimit
+                  ? `₹${agreement.billingConfig.creditLimit.toLocaleString('en-IN')}`
+                  : '—'
+              }
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 8 }}>
+            <OverviewField
+              label="Advance rule"
+              value={deriveAdvanceRuleSummary(agreement.billingType, agreement.billingConfig)}
+            />
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Workflow
-          </Typography>
-          <Badge label={workflowTypeLabel[agreement.workflowType]} color={workflowTypeColor[agreement.workflowType]} size="sm" />
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Billing
-          </Typography>
-          <Badge label={billingTypeLabel[agreement.billingType]} color={billingTypeColor[agreement.billingType]} size="sm" />
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Entities
-          </Typography>
-          <Typography variant="body2">{agreement.entities.length}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Credit limit
-          </Typography>
-          <Typography variant="body2">
-            {agreement.billingConfig.creditLimit
-              ? `₹${agreement.billingConfig.creditLimit.toLocaleString('en-IN')}`
-              : '—'}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Advance rule
-          </Typography>
-          <Typography variant="body2">
-            {deriveAdvanceRuleSummary(agreement.billingType, agreement.billingConfig)}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Finance contacts
-          </Typography>
-          <Typography variant="body2">{financeContacts.length}</Typography>
-        </Grid>
-      </Grid>
+      </OverviewSection>
     </Stack>
   )
 }

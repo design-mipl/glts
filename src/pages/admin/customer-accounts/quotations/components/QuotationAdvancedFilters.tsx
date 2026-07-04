@@ -39,22 +39,6 @@ export function QuotationAdvancedFilterFields({ draft, patch }: QuotationAdvance
           fullWidth
         />
       </ListingFilterField>
-      <ListingFilterField label="Approval Status">
-        <Select
-          value={draft.approvalStatus}
-          onChange={(v) => patch({ approvalStatus: String(v) })}
-          options={[
-            { value: 'all', label: 'All statuses' },
-            { value: 'draft', label: 'Draft' },
-            { value: 'submitted', label: 'Submitted' },
-            { value: 'approved', label: 'Approved' },
-            { value: 'rejected', label: 'Rejected' },
-          ]}
-          placeholder="Approval status"
-          size="sm"
-          fullWidth
-        />
-      </ListingFilterField>
       <ListingFilterField label="Shared Status">
         <Select
           value={draft.sharedStatus}

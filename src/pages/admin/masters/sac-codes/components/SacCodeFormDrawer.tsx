@@ -29,7 +29,7 @@ export function SacCodeFormDrawer({ open, record, onClose, onSaved }: SacCodeFor
     if (open) {
       reset(record ? sacCodeToFormData(record) : INITIAL_SAC_CODE_FORM)
     }
-  }, [open, record, reset])
+  }, [open, record?.id, reset])
 
   const handleClose = () => {
     if (loading) return

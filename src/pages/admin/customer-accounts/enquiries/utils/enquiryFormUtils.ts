@@ -1,9 +1,10 @@
 import type { EnquiryFormData, EnquiryRecord } from '@/shared/types/enquiry'
+import { normalizeVisaRequirement } from '@/shared/utils/enquiryVisaRequirementUtils'
 
 export function enquiryRecordToFormData(record: EnquiryRecord): EnquiryFormData {
   return {
     customer: { ...record.customer },
-    visaRequirement: { ...record.visaRequirement },
+    visaRequirement: normalizeVisaRequirement({ ...record.visaRequirement }),
     operationalRequirements: { ...record.operationalRequirements },
     salesDetails: { ...record.salesDetails },
     notes: { ...record.notes },

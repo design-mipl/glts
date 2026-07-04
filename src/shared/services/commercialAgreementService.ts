@@ -13,13 +13,18 @@ import type {
   CommercialAgreementListFilters,
 } from '@/shared/types/commercialAgreement'
 import {
-  buildDefaultAgreementDocuments,
   createEmptyAgreementFormData,
   normalizeLegacyAgreement,
-  validateForApproval,
+  validateForActivation,
 } from '@/shared/utils/commercialAgreementValidation'
+import type { AgreementHoldTerminateStatus } from '@/shared/types/commercialAgreement'
+import {
+  buildAgreementDocumentsFromMaster,
+  mergeAgreementDocumentsWithExisting,
+} from '@/shared/utils/agreementDocumentUtils'
 import {
   syncFinanceContactsFromSources,
+  extractManualFinanceContacts,
 } from '@/shared/utils/agreementFinanceContacts'
 
 const ADMIN_ACTOR = 'Admin User'
@@ -104,6 +109,7 @@ function formToAgreement(
     billingConfig: synced.billingConfig,
     financeContacts: synced.financeContacts,
     financeContactPersons: synced.financeContactPersons,
+    manualFinanceContacts: synced.manualFinanceContacts,
     selectedFinanceContactIds: synced.selectedFinanceContactIds,
     documents: synced.documents,
   }
@@ -194,6 +200,11 @@ export const commercialAgreementService = {
             contactNumber: company.contactNumber,
             emailAddress: company.emailAddress,
             companyAddress: company.companyAddress,
+            countryId: company.countryId ?? '',
+            country: company.country ?? '',
+            state: company.state ?? '',
+            city: company.city ?? '',
+            pincode: company.pincode ?? '',
             billingEntityName: company.billingEntityName,
             billingAddress: company.billingAddress,
             gstNumber: company.gstNumber,
@@ -213,6 +224,7 @@ export const commercialAgreementService = {
       financeContactPersons: normalized.financeContactPersons
         ? [...normalized.financeContactPersons]
         : [],
+      manualFinanceContacts: extractManualFinanceContacts(normalized),
       selectedFinanceContactIds: normalized.selectedFinanceContactIds
         ? [...normalized.selectedFinanceContactIds]
         : [],
@@ -221,8 +233,11 @@ export const commercialAgreementService = {
     return syncFinanceContactsFromSources(base)
   },
 
-  hydrateFromQuotation(quotationId: string): Partial<CommercialAgreementFormData> | undefined {
-    return quotationService.hydrateAgreementFromQuotation(quotationId)
+  hydrateFromQuotation(
+    quotationId: string,
+    versionId?: string,
+  ): Partial<CommercialAgreementFormData> | undefined {
+    return quotationService.hydrateAgreementFromQuotation(quotationId, versionId)
   },
 
   hydrateFromExistingCustomer(companyId: string): Partial<CommercialAgreementFormData> | undefined {
@@ -239,6 +254,11 @@ export const commercialAgreementService = {
         contactNumber: company.contactNumber,
         emailAddress: company.emailAddress,
         companyAddress: company.companyAddress,
+        countryId: company.countryId ?? '',
+        country: company.country ?? '',
+        state: company.state ?? '',
+        city: company.city ?? '',
+        pincode: company.pincode ?? '',
         billingEntityName: company.billingEntityName,
         billingAddress: company.billingAddress,
         gstNumber: company.gstNumber,
@@ -266,7 +286,10 @@ export const commercialAgreementService = {
         const updated: CommercialAgreement = {
           ...existing,
           ...formToAgreement(data, companyId, companyName),
-          status: existing.status === 'submitted' ? 'submitted' : 'draft',
+          status:
+            existing.status === 'draft' || existing.status === 'ready_for_activation'
+              ? existing.status
+              : existing.status,
           updatedAt: ts,
           activities: [makeActivity('Draft saved', 'Agreement draft updated'), ...existing.activities],
         }
@@ -290,17 +313,24 @@ export const commercialAgreementService = {
     return record
   },
 
-  submit(id: string, data: CommercialAgreementFormData): CommercialAgreement {
+  markReadyForActivation(id: string, data: CommercialAgreementFormData): CommercialAgreement {
     const draft = this.saveDraft(id, data)
+    const validation = validateForActivation(draft, (r) => this.agreementToFormData(r))
+    if (!validation.ok) {
+      throw new Error(validation.issues.join('; '))
+    }
     const store = getStore()
     const idx = store.findIndex((r) => r.id === draft.id)
     if (idx < 0) return draft
     const updated: CommercialAgreement = {
       ...store[idx],
-      status: 'submitted',
-      submittedAt: nowIso(),
+      status: 'ready_for_activation',
+      readyForActivationAt: nowIso(),
       updatedAt: nowIso(),
-      activities: [makeActivity('Submitted', 'Agreement submitted for approval'), ...store[idx].activities],
+      activities: [
+        makeActivity('Ready for activation', 'Agreement marked ready for corporate account activation'),
+        ...store[idx].activities,
+      ],
     }
     const next = [...store]
     next[idx] = updated
@@ -308,44 +338,96 @@ export const commercialAgreementService = {
     return updated
   },
 
-  approve(id: string): { ok: true; record: CommercialAgreement } | { ok: false; issues: string[] } {
-    const record = this.getById(id)
-    if (!record) return { ok: false, issues: ['Agreement not found'] }
-    const validation = validateForApproval(record, (r) => this.agreementToFormData(r))
-    if (!validation.ok) return { ok: false, issues: validation.issues }
+  /** @deprecated Use markReadyForActivation */
+  submit(id: string, data: CommercialAgreementFormData): CommercialAgreement {
+    return this.markReadyForActivation(id, data)
+  },
 
+  activateFromCorporateAccount(agreementId: string): CommercialAgreement | undefined {
     const store = getStore()
-    const idx = store.findIndex((r) => r.id === id)
+    const idx = store.findIndex((r) => r.id === agreementId)
+    if (idx < 0) return undefined
+    const record = store[idx]
+    if (record.status === 'terminated' || record.status === 'on_hold') return record
     const updated: CommercialAgreement = {
       ...record,
-      status: 'approved',
-      approvedAt: nowIso(),
+      status: 'active',
+      activatedAt: record.activatedAt ?? nowIso(),
       updatedAt: nowIso(),
-      activities: [makeActivity('Approved', 'Agreement approved'), ...record.activities],
+      activities: [makeActivity('Activated', 'Agreement activated via corporate account'), ...record.activities],
     }
     const next = [...store]
     next[idx] = updated
     persist(next)
-    return { ok: true, record: updated }
+    return updated
   },
 
-  reject(id: string, reason: string): CommercialAgreement | undefined {
+  updateHoldOrTerminateStatus(
+    id: string,
+    status: AgreementHoldTerminateStatus,
+    remarks: string,
+  ): CommercialAgreement | undefined {
+    const trimmed = remarks.trim()
+    if (!trimmed) return undefined
     const store = getStore()
     const idx = store.findIndex((r) => r.id === id)
     if (idx < 0) return undefined
+    const record = store[idx]
+    if (record.status !== 'active' && record.status !== 'ready_for_activation' && record.status !== 'expired') {
+      return undefined
+    }
+    const label = status === 'on_hold' ? 'On hold' : 'Terminated'
     const updated: CommercialAgreement = {
-      ...store[idx],
-      status: 'rejected',
-      rejectedAt: nowIso(),
-      rejectionReason: reason,
+      ...record,
+      status,
+      statusRemarks: trimmed,
       updatedAt: nowIso(),
-      activities: [makeActivity('Rejected', reason || 'Agreement rejected'), ...store[idx].activities],
+      activities: [makeActivity(label, trimmed), ...record.activities],
     }
     const next = [...store]
     next[idx] = updated
     persist(next)
     return updated
   },
+
+  /** @deprecated Removed approval workflow */
+  approve(id: string): { ok: true; record: CommercialAgreement } | { ok: false; issues: string[] } {
+    const record = this.getById(id)
+    if (!record) return { ok: false, issues: ['Agreement not found'] }
+    if (record.status !== 'ready_for_activation') {
+      return { ok: false, issues: ['Agreement is not ready for activation'] }
+    }
+    const activated = this.activateFromCorporateAccount(id)
+    if (!activated) return { ok: false, issues: ['Unable to activate agreement'] }
+    return { ok: true, record: activated }
+  },
+
+  /** @deprecated Removed approval workflow */
+  reject(_id: string, _reason: string): CommercialAgreement | undefined {
+    return undefined
+  },
+
+  listReadyForActivationForOnboarding(options?: { excludeCorporateAccountId?: string }): CommercialAgreement[] {
+    const activeAccountAgreementIds = new Set(
+      getMockCorporateAccounts()
+        .filter(
+          (a) =>
+            (a.portalStatus === 'active' || a.portalStatus === 'draft') &&
+            a.id !== options?.excludeCorporateAccountId,
+        )
+        .map((a) => a.agreementId),
+    )
+    return this.list({ status: 'ready_for_activation' }).filter((a) => !activeAccountAgreementIds.has(a.id))
+  },
+
+  /** @deprecated Use listReadyForActivationForOnboarding */
+  listApprovedForOnboarding(options?: { excludeCorporateAccountId?: string }): CommercialAgreement[] {
+    return this.listReadyForActivationForOnboarding(options)
+  },
+
+  validateForActivation,
+  /** @deprecated Use validateForActivation */
+  validateForApproval: validateForActivation,
 
   updateDocumentStatus(
     agreementId: string,
@@ -373,27 +455,17 @@ export const commercialAgreementService = {
     data: CommercialAgreementFormData,
     agreementType: CommercialAgreementFormData['agreementType'],
   ): CommercialAgreementFormData {
-    const existing = data.documents
-    const defaults = buildDefaultAgreementDocuments(agreementType)
-    const merged = defaults.map((d) => {
-      const prev = existing.find((e) => e.documentKey === d.documentKey)
-      return prev ? { ...d, status: prev.status, fileName: prev.fileName, uploadedAt: prev.uploadedAt } : d
-    })
+    const defaults = buildAgreementDocumentsFromMaster(data.workflowType, agreementType, data.documents)
+    const merged = mergeAgreementDocumentsWithExisting(defaults, data.documents)
     return { ...data, agreementType, documents: merged }
   },
 
-  listApprovedForOnboarding(options?: { excludeCorporateAccountId?: string }): CommercialAgreement[] {
-    const activeAccountAgreementIds = new Set(
-      getMockCorporateAccounts()
-        .filter(
-          (a) =>
-            (a.portalStatus === 'active' || a.portalStatus === 'draft') &&
-            a.id !== options?.excludeCorporateAccountId,
-        )
-        .map((a) => a.agreementId),
-    )
-    return this.list({ status: 'approved' }).filter((a) => !activeAccountAgreementIds.has(a.id))
+  syncDocumentsForWorkflow(
+    data: CommercialAgreementFormData,
+    workflowType: CommercialAgreementFormData['workflowType'],
+  ): CommercialAgreementFormData {
+    const defaults = buildAgreementDocumentsFromMaster(workflowType, data.agreementType, data.documents)
+    const merged = mergeAgreementDocumentsWithExisting(defaults, data.documents)
+    return { ...data, workflowType, documents: merged }
   },
-
-  validateForApproval,
 }

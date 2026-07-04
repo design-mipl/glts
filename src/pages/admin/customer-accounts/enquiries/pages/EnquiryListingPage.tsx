@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
 import { Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import type { BulkAction } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   Button,
@@ -157,39 +156,6 @@ export function EnquiryListingPage() {
     [activeEnquiryStatus],
   )
 
-  const bulkActions: BulkAction[] = [
-    {
-      label: 'Bulk Status Update',
-      onClick: (selected) => {
-        if (selected.length === 0) return
-        if (selected.length > 1) {
-          showToast({
-            title: 'Select one enquiry',
-            description: 'Select one enquiry at a time for status updates.',
-            variant: 'info',
-          })
-          return
-        }
-        openStatus(selected[0] as EnquiryRecord)
-      },
-    },
-    {
-      label: 'Bulk Assignment',
-      onClick: (selected) => {
-        if (selected.length === 0) return
-        if (selected.length > 1) {
-          showToast({
-            title: 'Select one enquiry',
-            description: 'Select one enquiry at a time for assignment updates.',
-            variant: 'info',
-          })
-          return
-        }
-        openAssignment(selected[0] as EnquiryRecord)
-      },
-    },
-  ]
-
   const handleExport = useCallback(() => {
     downloadEnquiryCsv(listing.filterSourceRows)
     showToast({
@@ -268,7 +234,6 @@ export function EnquiryListingPage() {
               getCellValue={getEnquiryCellValue}
               onRowClick={(row) => navigate(`/admin/customer-accounts/enquiries/${row.id}`)}
               loading={loading}
-              bulkActions={bulkActions}
               stickyHeader
               emptyTitle={emptyState.emptyTitle}
               emptyDescription={emptyState.emptyDescription}

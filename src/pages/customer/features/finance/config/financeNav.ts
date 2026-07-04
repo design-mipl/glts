@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Wallet, LayoutGrid, FileText, Banknote, AlertCircle } from 'lucide-react'
+import { Wallet, FileText, Banknote } from 'lucide-react'
 
 export interface FinanceNavItem {
   path: string
@@ -9,12 +9,6 @@ export interface FinanceNavItem {
 }
 
 export const FINANCE_NAV_ITEMS: FinanceNavItem[] = [
-  {
-    path: 'finance/overview',
-    label: 'Finance Overview',
-    icon: LayoutGrid,
-    pageTitle: 'Finance Overview',
-  },
   {
     path: 'finance/invoices',
     label: 'Invoice Management',
@@ -26,12 +20,6 @@ export const FINANCE_NAV_ITEMS: FinanceNavItem[] = [
     label: 'Payment Management',
     icon: Banknote,
     pageTitle: 'Payment Management',
-  },
-  {
-    path: 'finance/outstanding',
-    label: 'Outstanding & Statements',
-    icon: AlertCircle,
-    pageTitle: 'Outstanding & Statements',
   },
 ]
 

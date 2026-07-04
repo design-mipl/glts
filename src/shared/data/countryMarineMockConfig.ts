@@ -1,4 +1,12 @@
 import { jurisdiction } from '@/shared/data/countryJurisdictionDefaults'
+import {
+  buildChinaGTypeDelhiDocsQcChecklist,
+  buildChinaGTypeDelhiOpsQcChecklist,
+  buildChinaGTypeMumbaiDocsQcChecklist,
+  buildChinaGTypeMumbaiOpsQcChecklist,
+  buildChinaMTypeDelhiDocsQcChecklist,
+  buildChinaMTypeDelhiOpsQcChecklist,
+} from '@/shared/data/countryChinaQcChecklists'
 import { MOCK_DOCUMENT_SAMPLE_TEMPLATES } from '@/shared/data/mockDocumentSampleTemplates'
 import type {
   CountryJurisdictionDocumentRule,
@@ -19,6 +27,19 @@ const CHINA_DELHI_STATES = [
   'Uttarakhand',
   'Rajasthan',
 ] as const
+
+const CHINA_MUMBAI_STATES = [
+  'Maharashtra',
+  'Goa',
+  'Gujarat',
+  'Madhya Pradesh',
+  'Chhattisgarh',
+  'Daman',
+  'Diu',
+  'Dadra & Nagar Haveli',
+] as const
+
+const CHINA_MUMBAI_CONSULATE = 'Chinese Consulate — Mumbai'
 
 const CHINA_MARINE_PROCESSING_RULES = {
   biometricsRequired: false,
@@ -460,6 +481,19 @@ const JAPAN_CREW_KOLKATA_GLTS_SCOPE = gltsScope([
   'Passport submission and collection',
 ])
 
+function buildChinaGTypeMumbaiDocuments(): CountryJurisdictionDocumentRule[] {
+  const prefix = 'cn-g-mumbai'
+  const seafarer = ownerDocs(prefix, 'seafarer', CHINA_G_TYPE_SEAFARER)
+  const company = ownerDocs(prefix, 'company', CHINA_G_TYPE_COMPANY, seafarer.length)
+  const foreign = ownerDocs(
+    prefix,
+    'shipping_agent',
+    CHINA_G_TYPE_FOREIGN_AGENT,
+    seafarer.length + company.length,
+  )
+  return [...seafarer, ...company, ...foreign]
+}
+
 function buildChinaGTypeDelhiDocuments(): CountryJurisdictionDocumentRule[] {
   const prefix = 'cn-g-delhi'
   const seafarer = ownerDocs(prefix, 'seafarer', CHINA_G_TYPE_SEAFARER)
@@ -509,6 +543,7 @@ function buildJapanCrewKolkataDocuments(): CountryJurisdictionDocumentRule[] {
 function chinaDelhiJurisdiction(
   documents: CountryJurisdictionDocumentRule[],
   gltsScopeText: string,
+  qcChecklists?: Pick<CountryVisaJurisdiction, 'opsQcChecklist' | 'docsQcChecklist'>,
 ): CountryVisaJurisdiction {
   return jurisdiction({
     id: 'delhi',
@@ -522,6 +557,30 @@ function chinaDelhiJurisdiction(
     processingRules: { ...CHINA_MARINE_PROCESSING_RULES },
     gltsScope: gltsScopeText,
     documents,
+    ...(qcChecklists?.opsQcChecklist ? { opsQcChecklist: qcChecklists.opsQcChecklist } : {}),
+    ...(qcChecklists?.docsQcChecklist ? { docsQcChecklist: qcChecklists.docsQcChecklist } : {}),
+  })
+}
+
+function chinaMumbaiJurisdiction(
+  documents: CountryJurisdictionDocumentRule[],
+  gltsScopeText: string,
+  qcChecklists?: Pick<CountryVisaJurisdiction, 'opsQcChecklist' | 'docsQcChecklist'>,
+): CountryVisaJurisdiction {
+  return jurisdiction({
+    id: 'mumbai',
+    name: 'Mumbai',
+    embassyOrVfs: CHINA_MUMBAI_CONSULATE,
+    submissionCenter: 'VFS Mumbai',
+    processingTime: '10',
+    priorityLevel: 'standard',
+    status: 'active',
+    applicableStates: [...CHINA_MUMBAI_STATES],
+    processingRules: { ...CHINA_MARINE_PROCESSING_RULES },
+    gltsScope: gltsScopeText,
+    documents,
+    ...(qcChecklists?.opsQcChecklist ? { opsQcChecklist: qcChecklists.opsQcChecklist } : {}),
+    ...(qcChecklists?.docsQcChecklist ? { docsQcChecklist: qcChecklists.docsQcChecklist } : {}),
   })
 }
 
@@ -550,11 +609,24 @@ function japanCrewJurisdiction(
 }
 
 export function chinaMarineGTypeDelhiJurisdiction(): CountryVisaJurisdiction {
-  return chinaDelhiJurisdiction(buildChinaGTypeDelhiDocuments(), CHINA_G_TYPE_GLTS_SCOPE)
+  return chinaDelhiJurisdiction(buildChinaGTypeDelhiDocuments(), CHINA_G_TYPE_GLTS_SCOPE, {
+    opsQcChecklist: buildChinaGTypeDelhiOpsQcChecklist(),
+    docsQcChecklist: buildChinaGTypeDelhiDocsQcChecklist(),
+  })
+}
+
+export function chinaMarineGTypeMumbaiJurisdiction(): CountryVisaJurisdiction {
+  return chinaMumbaiJurisdiction(buildChinaGTypeMumbaiDocuments(), CHINA_G_TYPE_GLTS_SCOPE, {
+    opsQcChecklist: buildChinaGTypeMumbaiOpsQcChecklist(),
+    docsQcChecklist: buildChinaGTypeMumbaiDocsQcChecklist(),
+  })
 }
 
 export function chinaMarineMTypeDelhiJurisdiction(): CountryVisaJurisdiction {
-  return chinaDelhiJurisdiction(buildChinaMTypeDelhiDocuments(), CHINA_M_TYPE_GLTS_SCOPE)
+  return chinaDelhiJurisdiction(buildChinaMTypeDelhiDocuments(), CHINA_M_TYPE_GLTS_SCOPE, {
+    opsQcChecklist: buildChinaMTypeDelhiOpsQcChecklist(),
+    docsQcChecklist: buildChinaMTypeDelhiDocsQcChecklist(),
+  })
 }
 
 export function japanMarineCrewVisaJurisdictions(): CountryVisaJurisdiction[] {

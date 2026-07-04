@@ -181,6 +181,27 @@ export const operationalPassengerAssignmentService = {
     })
   },
 
+  assignVendor(
+    id: string,
+    vendor: string,
+    priority?: AssignmentPriority,
+  ): OperationalPassengerRow | undefined {
+    return mutate(id, overlay => {
+      overlay.assignedTeam = ''
+      overlay.assignedUser = vendor
+      overlay.passengerStatus = vendor ? 'Assigned' : 'Pending Assignment'
+      if (priority) {
+        overlay.priority = priority
+        if (priority === 'Urgent' || priority === 'High') {
+          overlay.escalated = overlay.carryForward
+        }
+      }
+      appendHistory(overlay, '', vendor, 'Vendor assigned')
+      const priorityNote = priority ? ` · ${priority} priority` : ''
+      appendTimeline(overlay, vendor ? `Assigned to vendor ${vendor}${priorityNote}` : 'Vendor assignment cleared')
+    })
+  },
+
   assignUser(
     id: string,
     team: CityTeam | '',
@@ -208,10 +229,16 @@ export const operationalPassengerAssignmentService = {
     team: CityTeam | '',
     user: string,
     priority?: AssignmentPriority,
+    assigneeType: 'user' | 'vendor' = 'user',
   ): OperationalPassengerRow | undefined {
     return mutate(id, overlay => {
-      overlay.assignedTeam = team
-      overlay.assignedUser = user
+      if (assigneeType === 'vendor') {
+        overlay.assignedTeam = ''
+        overlay.assignedUser = user
+      } else {
+        overlay.assignedTeam = team
+        overlay.assignedUser = user
+      }
       overlay.passengerStatus = 'Assigned'
       if (priority) {
         overlay.priority = priority
@@ -219,9 +246,12 @@ export const operationalPassengerAssignmentService = {
           overlay.escalated = overlay.carryForward
         }
       }
-      appendHistory(overlay, team, user, 'Reassigned')
+      const historyNote = assigneeType === 'vendor' ? 'Vendor reassigned' : 'Reassigned'
+      appendHistory(overlay, assigneeType === 'vendor' ? '' : team, user, historyNote)
       const priorityNote = priority ? ` · ${priority} priority` : ''
-      appendTimeline(overlay, `Reassigned to ${user || team || 'unassigned'}${priorityNote}`)
+      const assigneeLabel =
+        assigneeType === 'vendor' ? `vendor ${user}` : user || team || 'unassigned'
+      appendTimeline(overlay, `Reassigned to ${assigneeLabel}${priorityNote}`)
     })
   },
 

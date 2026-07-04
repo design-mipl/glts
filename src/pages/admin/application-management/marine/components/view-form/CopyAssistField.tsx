@@ -6,12 +6,14 @@ import type { FormAssistField, FormAssistFieldSection } from '../../utils/formAs
 
 interface CopyAssistFieldProps {
   field: FormAssistField
+  disabled?: boolean
 }
 
-export function CopyAssistField({ field }: CopyAssistFieldProps) {
+export function CopyAssistField({ field, disabled = false }: CopyAssistFieldProps) {
   const { showToast } = useToast()
 
   const handleCopy = async () => {
+    if (disabled) return
     if (field.value === '—') {
       showToast({ title: 'Nothing to copy', description: 'This field has no value.', variant: 'info' })
       return
@@ -46,6 +48,7 @@ export function CopyAssistField({ field }: CopyAssistFieldProps) {
           icon={<Copy size={16} />}
           aria-label={`Copy ${field.label}`}
           size="sm"
+          disabled={disabled}
           onClick={() => void handleCopy()}
         />
       </Stack>
@@ -69,9 +72,10 @@ export function CopyAssistFieldList({ fields }: CopyAssistFieldListProps) {
 
 interface CopyAssistFieldSectionsProps {
   sections: FormAssistFieldSection[]
+  disabled?: boolean
 }
 
-export function CopyAssistFieldSections({ sections }: CopyAssistFieldSectionsProps) {
+export function CopyAssistFieldSections({ sections, disabled = false }: CopyAssistFieldSectionsProps) {
   return (
     <Stack spacing={2}>
       {sections.map((section, index) => (
@@ -82,7 +86,7 @@ export function CopyAssistFieldSections({ sections }: CopyAssistFieldSectionsPro
           importance={index === 0 ? 'primary' : 'secondary'}
         >
           {section.fields.map(field => (
-            <CopyAssistField key={`${section.id}-${field.id}`} field={field} />
+            <CopyAssistField key={`${section.id}-${field.id}`} field={field} disabled={disabled} />
           ))}
         </AdminOverlayFormSection>
       ))}

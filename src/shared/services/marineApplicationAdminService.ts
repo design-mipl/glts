@@ -121,7 +121,17 @@ function buildSubmittedBulkRow(
   }
 }
 
+function filterMarineSegment(rows: MarineApplicationRow[]): MarineApplicationRow[] {
+  return rows.filter(isMarineSegment)
+}
+
 export const marineApplicationAdminService = {
+  listMarineApplications(): { singles: SingleApplicationRow[]; bulks: BulkBatchRow[] } {
+    const singles = filterMarineSegment(mockSingleApplications) as SingleApplicationRow[]
+    const bulks = filterMarineSegment(mockBulkBatches) as BulkBatchRow[]
+    return { singles, bulks }
+  },
+
   listSubmittedMarineApplications(): { singles: SingleApplicationRow[]; bulks: BulkBatchRow[] } {
     const singles = filterMarineSubmitted(mockSingleApplications) as SingleApplicationRow[]
     const bulks = filterMarineSubmitted(mockBulkBatches) as BulkBatchRow[]

@@ -5,7 +5,9 @@ import { Button, Checkbox, FormField, FormSection, Input, Modal, Select } from '
 import type { AgreementPricingRow, AgreementWorkflowType } from '@/shared/types/commercialAgreement'
 import {
   agreementEmbeddedTableHeadCellSx,
+  agreementEmbeddedTableScrollSx,
   agreementEmbeddedTableSx,
+  agreementEmbeddedTableMinWidthSx,
 } from '../../agreements/components/agreementFormLayout'
 import {
   getCountrySelectOptions,
@@ -93,7 +95,8 @@ export function QuotationPricingMatrixTable({
             </Typography>
           </Box>
         ) : (
-          <Table size="small" sx={{ width: '100%' }}>
+          <Box sx={agreementEmbeddedTableScrollSx}>
+          <Table size="small" sx={agreementEmbeddedTableMinWidthSx}>
             <TableHead>
               <TableRow>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>Country</TableCell>
@@ -143,6 +146,7 @@ export function QuotationPricingMatrixTable({
               ))}
             </TableBody>
           </Table>
+          </Box>
         )}
       </Box>
 
@@ -215,7 +219,7 @@ export function QuotationPricingMatrixTable({
                 fullWidth
               />
             </FormField>
-            <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', pl: 1.5 }}>
               <Checkbox
                 label="GST applicable"
                 checked={editRow.gstApplicable}

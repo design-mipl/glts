@@ -4,7 +4,6 @@ import { getCurrentVersion } from '@/shared/utils/quotationValidation'
 import {
   quotationSharedStatusLabel,
   quotationSourceTypeLabel,
-  quotationVersionStatusLabel,
   workflowTypeLabel,
 } from '../config/quotationStatusConfig'
 
@@ -12,7 +11,6 @@ export interface QuotationAdvancedFilterState {
   quotationNo: string
   companyName: string
   workflowType: string
-  approvalStatus: string
   sharedStatus: string
   dateFrom: string
   dateTo: string
@@ -22,7 +20,6 @@ export const INITIAL_QUOTATION_ADVANCED_FILTERS: QuotationAdvancedFilterState = 
   quotationNo: '',
   companyName: '',
   workflowType: 'all',
-  approvalStatus: 'all',
   sharedStatus: 'all',
   dateFrom: '',
   dateTo: '',
@@ -39,7 +36,7 @@ export function matchesQuotationSearch(record: QuotationRecord, query: string): 
     record.customer.contactPersonName.toLowerCase().includes(q) ||
     quotationSourceTypeLabel[record.sourceType].toLowerCase().includes(q) ||
     workflowTypeLabel[record.workflowType].toLowerCase().includes(q) ||
-    (version ? quotationVersionStatusLabel[version.status].toLowerCase().includes(q) : false)
+    (version?.versionLabel.toLowerCase().includes(q) ?? false)
   )
 }
 
@@ -47,7 +44,6 @@ export function matchesQuotationAdvancedFilters(
   record: QuotationRecord,
   filters: QuotationAdvancedFilterState,
 ): boolean {
-  const version = getCurrentVersion(record)
   if (filters.quotationNo.trim()) {
     const q = filters.quotationNo.trim().toLowerCase()
     if (!record.quotationNo.toLowerCase().includes(q) && !record.id.toLowerCase().includes(q)) return false
@@ -57,7 +53,6 @@ export function matchesQuotationAdvancedFilters(
     if (!record.customer.companyName.toLowerCase().includes(q)) return false
   }
   if (filters.workflowType !== 'all' && record.workflowType !== filters.workflowType) return false
-  if (filters.approvalStatus !== 'all' && version?.status !== filters.approvalStatus) return false
   if (filters.sharedStatus !== 'all' && record.sharedStatus !== filters.sharedStatus) return false
   if (filters.dateFrom && record.createdAt.slice(0, 10) < filters.dateFrom) return false
   if (filters.dateTo && record.createdAt.slice(0, 10) > filters.dateTo) return false
@@ -79,8 +74,8 @@ export function getQuotationCellValue(record: QuotationRecord, columnKey: string
       return version ? formatInr(version.totals.grandTotal) : '—'
     case 'currentVersion':
       return version?.versionLabel ?? '—'
-    case 'approvalStatus':
-      return version ? quotationVersionStatusLabel[version.status] : '—'
+    case 'versionCount':
+      return String(record.pricingVersions.length)
     case 'sharedStatus':
       return quotationSharedStatusLabel[record.sharedStatus]
     case 'validTill':
@@ -97,7 +92,6 @@ export function hasActiveQuotationFilters(filters: QuotationAdvancedFilterState)
     Boolean(filters.quotationNo.trim()) ||
     Boolean(filters.companyName.trim()) ||
     filters.workflowType !== 'all' ||
-    filters.approvalStatus !== 'all' ||
     filters.sharedStatus !== 'all' ||
     Boolean(filters.dateFrom) ||
     Boolean(filters.dateTo)
@@ -127,7 +121,7 @@ export function mapQuotationRowsToGridItems(rows: QuotationRecord[]) {
       subtitle: row.customer.companyName,
       meta: [
         quotationSourceTypeLabel[row.sourceType],
-        version ? quotationVersionStatusLabel[version.status] : '—',
+        `${row.pricingVersions.length} version(s)`,
       ].join(' · '),
       badge: version ? formatInr(version.totals.grandTotal) : '—',
     }
@@ -141,8 +135,8 @@ export function downloadQuotationCsv(rows: QuotationRecord[]) {
     'Type',
     'Workflow',
     'Total',
-    'Version',
-    'Approval',
+    'Current Version',
+    'Versions',
     'Shared',
     'Valid Till',
     'Created',
@@ -156,7 +150,7 @@ export function downloadQuotationCsv(rows: QuotationRecord[]) {
       workflowTypeLabel[r.workflowType],
       version ? String(version.totals.grandTotal) : '',
       version?.versionLabel ?? '',
-      version ? quotationVersionStatusLabel[version.status] : '',
+      String(r.pricingVersions.length),
       quotationSharedStatusLabel[r.sharedStatus],
       r.validTill,
       new Date(r.createdAt).toLocaleDateString(),

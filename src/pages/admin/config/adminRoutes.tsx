@@ -35,11 +35,15 @@ import {
   DocumentDetailPage,
   DocumentListingPage,
 } from '../masters/documents'
+import { CreditCardListingPage } from '../masters/credit-card'
 import { JurisdictionListingPage } from '../masters/jurisdiction'
 import { SacCodeListingPage } from '../masters/sac-codes'
 import { ServiceListingPage } from '../masters/services'
 import { TaxConfigurationPage } from '../masters/tax'
 import { OperationsDashboardPage } from '../operations/dashboard/pages/OperationsDashboardPage'
+import { OperationsConsultantDashboardPage } from '../dashboard/operations'
+import { DocumentationDashboardPage } from '../dashboard/documentation'
+import { AccountsDashboardPage } from '../dashboard/accounts'
 import { AdminProfilePage } from '../profile/AdminProfilePage'
 import {
   MarineApplicationListingPage,
@@ -62,6 +66,12 @@ import {
   ExpenseApprovalQueuePage,
   ExpenseListingPage,
 } from '../finance/expenses'
+import { VendorBillingRoutes } from '../finance/vendor-billing/VendorBillingRoutes'
+import {
+  VendorBillingDetailPage,
+  VendorBillingListingPage,
+} from '../finance/vendor-billing'
+import { FundAllocationListingPage } from '../finance/fund-allocation'
 import { TeamDetailPage, TeamListingPage } from '../access/teams'
 import {
   CreateUserPage,
@@ -73,6 +83,7 @@ import {
 import ComponentLibrary from '../_tools/ComponentLibrary'
 import TemplateShowcaseRoutes from '../_tools/TemplateShowcase'
 import { OperationalCaseHandlingPage } from '../ground-operations/case-handling'
+import { LogisticsListingPage } from '../ground-operations/logistics'
 import {
   CreateVendorPage,
   EditVendorPage,
@@ -85,6 +96,7 @@ import {
   MarineAssignmentQueuePage,
   RetailAssignmentQueuePage,
 } from '../assignment-priority'
+import { ADMIN_DASHBOARDS } from './adminDashboards'
 
 type AdminRouteKind = 'coming-soon' | 'dashboard' | 'operations' | 'profile' | 'tools'
 
@@ -97,14 +109,25 @@ interface AdminRouteDefinition {
   kind: AdminRouteKind
 }
 
+const adminDashboardRoutes: AdminRouteDefinition[] = ADMIN_DASHBOARDS.filter(
+  (dashboard) => dashboard.status === 'coming-soon',
+).map((dashboard) => ({
+  path: dashboard.href.replace('/admin/', ''),
+  title: dashboard.title,
+  description: dashboard.description,
+  eyebrow: 'Dashboard',
+  kind: 'coming-soon' as const,
+}))
+
 const adminRoutes: AdminRouteDefinition[] = [
   {
     index: true,
-    title: 'Dashboard',
-    description: 'Real-time overview of applications, operations, and finance.',
-    eyebrow: 'Admin',
+    title: ADMIN_DASHBOARDS[0].title,
+    description: ADMIN_DASHBOARDS[0].description,
+    eyebrow: 'Dashboard',
     kind: 'dashboard',
   },
+  ...adminDashboardRoutes,
   {
     path: 'customer-accounts/corporate-admins',
     title: 'Corporate admins',
@@ -135,32 +158,10 @@ const adminRoutes: AdminRouteDefinition[] = [
     kind: 'coming-soon',
   },
   {
-    path: 'ground-operations/logistics',
-    title: 'Physical tracking & logistics',
-    description: 'This module is under development.',
-    eyebrow: 'Ground operations',
-    kind: 'coming-soon',
-  },
-  {
     path: 'ground-operations/funds',
     title: 'Ground expense & fund management',
     description: 'This module is under development.',
     eyebrow: 'Ground operations',
-    kind: 'coming-soon',
-  },
-
-  {
-    path: 'finance/payments',
-    title: 'Payment & collections',
-    description: 'This module is under development.',
-    eyebrow: 'Finance, billing & collections',
-    kind: 'coming-soon',
-  },
-  {
-    path: 'finance/reconciliation',
-    title: 'Reconciliation & financial tracking',
-    description: 'This module is under development.',
-    eyebrow: 'Finance, billing & collections',
     kind: 'coming-soon',
   },
 
@@ -179,13 +180,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     kind: 'coming-soon',
   },
 
-  {
-    path: 'masters/rates',
-    title: 'Rate master',
-    description: 'This module is under development.',
-    eyebrow: 'Masters',
-    kind: 'coming-soon',
-  },
   {
     path: 'operations/*',
     title: 'Operations visibility',
@@ -455,6 +449,14 @@ export function AdminRoutes() {
         }
       />
       <Route
+        path="masters/credit-card"
+        element={
+          <PermissionGuard>
+            <CreditCardListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
         path="masters/sac-codes"
         element={
           <PermissionGuard>
@@ -507,6 +509,14 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <OperationalCaseHandlingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="ground-operations/logistics"
+        element={
+          <PermissionGuard>
+            <LogisticsListingPage />
           </PermissionGuard>
         }
       />
@@ -590,6 +600,18 @@ export function AdminRoutes() {
         <Route path="approval-queue" element={<ExpenseApprovalQueuePage />} />
         <Route path=":applicationId" element={<ApplicationExpenseDetailPage />} />
       </Route>
+      <Route path="finance/vendor-billing" element={<VendorBillingRoutes />}>
+        <Route index element={<VendorBillingListingPage />} />
+        <Route path=":vendorId" element={<VendorBillingDetailPage />} />
+      </Route>
+      <Route
+        path="finance/fund-allocation"
+        element={
+          <PermissionGuard>
+            <FundAllocationListingPage />
+          </PermissionGuard>
+        }
+      />
       <Route
         path="access/teams"
         element={
@@ -652,6 +674,30 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <TemplateShowcaseRoutes />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard/operations"
+        element={
+          <PermissionGuard>
+            <OperationsConsultantDashboardPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard/documentation"
+        element={
+          <PermissionGuard>
+            <DocumentationDashboardPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard/accounts"
+        element={
+          <PermissionGuard>
+            <AccountsDashboardPage />
           </PermissionGuard>
         }
       />

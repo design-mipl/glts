@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Box, CircularProgress } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
-import { BaseCard, ConfirmDialog, EmptyState, Tabs, useToast } from '@/design-system/UIComponents'
+import { BaseCard, EmptyState, Tabs, useToast } from '@/design-system/UIComponents'
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { AgreementDetailSummary } from '../components/AgreementDetailSummary'
+import { AgreementStatusUpdateDialog } from '../components/AgreementStatusUpdateDialog'
+import { canUpdateAgreementHoldOrTerminate } from '../config/agreementStatusConfig'
 import {
   ActivityTab,
   BillingConfigurationTab,
@@ -23,7 +25,8 @@ export function AgreementDetailPage() {
   const [loading, setLoading] = useState(true)
   const [agreement, setAgreement] = useState<CommercialAgreement>()
   const [activeTab, setActiveTab] = useState('overview')
-  const [rejectOpen, setRejectOpen] = useState(false)
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
+  const [statusUpdating, setStatusUpdating] = useState(false)
 
   const reload = useCallback(() => {
     if (!agreementId) return
@@ -53,32 +56,36 @@ export function AgreementDetailPage() {
     )
   }
 
-  const handleSubmit = () => {
+  const handleMarkReady = () => {
     const formData = commercialAgreementService.agreementToFormData(agreement)
-    const validation = commercialAgreementService.validateForApproval(formData)
+    const validation = commercialAgreementService.validateForActivation(formData)
     if (!validation.ok) {
-      showToast({ title: 'Cannot submit', description: validation.issues.join('; '), variant: 'error' })
+      showToast({ title: 'Cannot mark ready', description: validation.issues.join('; '), variant: 'error' })
       return
     }
-    commercialAgreementService.submit(agreement.id, formData)
-    showToast({ title: 'Agreement submitted', variant: 'success' })
-    reload()
+    try {
+      commercialAgreementService.markReadyForActivation(agreement.id, formData)
+      showToast({ title: 'Agreement ready for activation', variant: 'success' })
+      reload()
+    } catch (error) {
+      showToast({
+        title: 'Cannot mark ready',
+        description: error instanceof Error ? error.message : 'Validation failed',
+        variant: 'error',
+      })
+    }
   }
 
-  const handleApprove = () => {
-    const result = commercialAgreementService.approve(agreement.id)
-    if (!result.ok) {
-      showToast({ title: 'Cannot approve', description: result.issues.join('; '), variant: 'error' })
+  const handleStatusUpdate = (status: 'on_hold' | 'terminated', remarks: string) => {
+    setStatusUpdating(true)
+    const updated = commercialAgreementService.updateHoldOrTerminateStatus(agreement.id, status, remarks)
+    setStatusUpdating(false)
+    if (!updated) {
+      showToast({ title: 'Unable to update status', description: 'Check remarks and current agreement status.', variant: 'error' })
       return
     }
-    showToast({ title: 'Agreement approved', variant: 'success' })
-    reload()
-  }
-
-  const handleReject = () => {
-    commercialAgreementService.reject(agreement.id, 'Rejected from detail page')
-    showToast({ title: 'Agreement rejected', variant: 'info' })
-    setRejectOpen(false)
+    setStatusDialogOpen(false)
+    showToast({ title: 'Agreement status updated', variant: 'success' })
     reload()
   }
 
@@ -94,12 +101,15 @@ export function AgreementDetailPage() {
           <AgreementDetailSummary
             agreement={agreement}
             onEdit={() => navigate(`/admin/customer-accounts/agreements/${agreement.id}/edit`)}
-            onSubmit={agreement.status === 'draft' ? handleSubmit : undefined}
-            onApprove={agreement.status === 'submitted' ? handleApprove : undefined}
-            onReject={agreement.status === 'submitted' ? () => setRejectOpen(true) : undefined}
+            onMarkReady={agreement.status === 'draft' ? handleMarkReady : undefined}
             onProceedToCorporate={
-              agreement.status === 'approved'
+              agreement.status === 'ready_for_activation'
                 ? () => navigate(`/admin/customer-accounts/corporate-accounts/new?agreementId=${agreement.id}`)
+                : undefined
+            }
+            onUpdateStatus={
+              canUpdateAgreementHoldOrTerminate(agreement.status)
+                ? () => setStatusDialogOpen(true)
                 : undefined
             }
           />
@@ -135,14 +145,11 @@ export function AgreementDetailPage() {
         </BaseCard>
       </AdminDetailShell>
 
-      <ConfirmDialog
-        open={rejectOpen}
-        onClose={() => setRejectOpen(false)}
-        title="Reject agreement?"
-        description="This agreement will be marked as rejected."
-        confirmLabel="Reject"
-        variant="destructive"
-        onConfirm={handleReject}
+      <AgreementStatusUpdateDialog
+        open={statusDialogOpen}
+        onClose={() => setStatusDialogOpen(false)}
+        onConfirm={handleStatusUpdate}
+        loading={statusUpdating}
       />
     </>
   )

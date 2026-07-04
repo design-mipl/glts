@@ -1,102 +1,100 @@
-import { useMemo, useState } from 'react'
-import { Box, Grid, Stack } from '@mui/material'
-import { AdminPageHeader } from '@/pages/admin/components/AdminPageHeader'
+import { Box, Stack } from '@mui/material'
+import { BaseCard, Button, LoadingOverlay } from '@/design-system/UIComponents'
+import {
+  ExecutiveCompactHeader,
+  NeedsImmediateAttentionSection,
+} from '@/pages/admin/dashboard/components'
+import { EXECUTIVE_DASHBOARD_SPACING } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
+import { useToast } from '@/design-system/UIComponents'
 import { DashboardFiltersBar } from '../components/DashboardFiltersBar'
-import { DashboardKpiRow } from '../components/DashboardKpiRow'
-import { DashboardPipelineTracker } from '../components/DashboardPipelineTracker'
-import { DashboardQueueTable } from '../components/DashboardQueueTable'
-import { DashboardCriticalAlerts } from '../components/DashboardCriticalAlerts'
-import { DashboardActivityPanel } from '../components/DashboardActivityPanel'
-import { DashboardQuickActions } from '../components/DashboardQuickActions'
-import { DashboardAnalyticsSection } from '../components/DashboardAnalyticsSection'
-import { DashboardFinanceSnapshot } from '../components/DashboardFinanceSnapshot'
-import {
-  CHANNEL_DISTRIBUTION,
-  CORRECTION_QUEUE,
-  COUNTRY_APPLICATION_BARS,
-  CRITICAL_ALERTS,
-  DAILY_APPLICATION_TREND,
-  DASHBOARD_KPIS,
-  DEFAULT_DASHBOARD_FILTERS,
-  FINANCE_KPIS,
-  PIPELINE_STAGES,
-  RECENT_ACTIVITY,
-  RECENT_INVOICES,
-  SUBMISSION_QUEUE,
-  VERIFICATION_QUEUE,
-  type DashboardFilters,
-} from '../data/operationsDashboardMock'
-import {
-  filterChannelDistribution,
-  filterCountryChartData,
-  filterInvoices,
-  filterQueueRows,
-  scaleKpis,
-  scalePipelineStages,
-} from '../utils/applyDashboardFilters'
+import { ExecutiveKpiSection } from '../components/sections/ExecutiveKpiSection'
+import { ExecutivePipelineSection } from '../components/sections/ExecutivePipelineSection'
+import { TeamWorkloadSection } from '../components/sections/TeamWorkloadSection'
+import { VerificationPassportSection } from '../components/sections/VerificationPassportSection'
+import { PerformanceAnalyticsSection } from '../components/sections/PerformanceAnalyticsSection'
+import { BusinessPerformanceSection } from '../components/sections/BusinessPerformanceSection'
+import { OperationalMonitoringSection } from '../components/sections/OperationalMonitoringSection'
+import { resolveExecutiveAlertIcon } from '../utils/executiveAlertIcons'
+import { useAdminDashboard } from '../hooks/useAdminDashboard'
 
 export function OperationsDashboardPage() {
-  const [filters, setFilters] = useState<DashboardFilters>(DEFAULT_DASHBOARD_FILTERS)
+  const dashboard = useAdminDashboard()
+  const { showToast } = useToast()
+  const isLoading = dashboard.status === 'loading'
 
-  const kpis = useMemo(() => scaleKpis(DASHBOARD_KPIS, filters), [filters])
-  const pipelineStages = useMemo(() => scalePipelineStages(PIPELINE_STAGES, filters), [filters])
-  const verificationQueue = useMemo(() => filterQueueRows(VERIFICATION_QUEUE, filters), [filters])
-  const submissionQueue = useMemo(() => filterQueueRows(SUBMISSION_QUEUE, filters), [filters])
-  const correctionQueue = useMemo(() => filterQueueRows(CORRECTION_QUEUE, filters), [filters])
-  const countryBars = useMemo(() => filterCountryChartData(COUNTRY_APPLICATION_BARS, filters), [filters])
-  const channelSlices = useMemo(() => filterChannelDistribution(CHANNEL_DISTRIBUTION, filters), [filters])
-  const invoices = useMemo(() => filterInvoices(RECENT_INVOICES, filters), [filters])
+  if (dashboard.status === 'error') {
+    return (
+      <Box>
+        <ExecutiveCompactHeader
+          eyebrow="Dashboard"
+          title="Admin dashboard"
+          subtitle="Executive command center for management visibility."
+        />
+        <BaseCard sx={{ p: 3, textAlign: 'center' }}>
+          <Button label="Retry loading dashboard" onClick={dashboard.retry} />
+        </BaseCard>
+      </Box>
+    )
+  }
 
   return (
     <Box>
-      <AdminPageHeader
-        title="Dashboard"
-        description="Real-time overview of applications, operations, and finance."
-        actions={<DashboardFiltersBar filters={filters} onChange={setFilters} />}
+      <ExecutiveCompactHeader
+        eyebrow="Dashboard"
+        title="Admin dashboard"
+        subtitle="Executive command center for management visibility across operations, documentation, and finance."
+        filters={
+          <DashboardFiltersBar filters={dashboard.filters} onChange={dashboard.setFilters} />
+        }
       />
 
-      <Stack spacing={2}>
-        <DashboardKpiRow metrics={kpis} />
-
-        <DashboardPipelineTracker stages={pipelineStages} />
-
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <Stack spacing={2}>
-              <DashboardQueueTable
-                title="Pending verification queue"
-                subtitle="Document QC and compliance review"
-                rows={verificationQueue}
-              />
-              <DashboardQueueTable
-                title="Submission queue"
-                subtitle="Ready for embassy filing"
-                rows={submissionQueue}
-              />
-              <DashboardQueueTable
-                title="Correction requests"
-                subtitle="Applicant or ops corrections pending"
-                rows={correctionQueue}
-              />
-            </Stack>
-          </Grid>
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <Stack spacing={2}>
-              <DashboardCriticalAlerts alerts={CRITICAL_ALERTS} />
-              <DashboardActivityPanel items={RECENT_ACTIVITY} />
-              <DashboardQuickActions />
-            </Stack>
-          </Grid>
-        </Grid>
-
-        <DashboardAnalyticsSection
-          dailyTrend={DAILY_APPLICATION_TREND}
-          countryBars={countryBars}
-          channelSlices={channelSlices}
-        />
-
-        <DashboardFinanceSnapshot kpis={FINANCE_KPIS} invoices={invoices} />
-      </Stack>
+      <LoadingOverlay loading={isLoading} label="Loading dashboard...">
+        <Stack
+          spacing={EXECUTIVE_DASHBOARD_SPACING.section}
+          sx={{ opacity: isLoading ? 0.6 : 1, transition: 'opacity 200ms ease', pb: 2 }}
+        >
+          <ExecutiveKpiSection metrics={dashboard.kpis} />
+          <NeedsImmediateAttentionSection
+            alerts={dashboard.criticalAlerts}
+            resolveIcon={resolveExecutiveAlertIcon}
+            onViewAlert={(alert) =>
+              showToast({
+                title: `Opening ${alert.title}`,
+                description: `${alert.count} cases need review.`,
+                variant: 'info',
+              })
+            }
+          />
+          <ExecutivePipelineSection stages={dashboard.pipelineStages} />
+          <TeamWorkloadSection teamWorkload={dashboard.teamWorkload} />
+          <VerificationPassportSection
+            verificationQueue={dashboard.verificationQueue}
+            passportSummary={dashboard.passportSummary}
+            passportTransit={dashboard.passportTransit}
+            getVerificationCellValue={dashboard.getVerificationQueueCellValue}
+            getPassportTransitCellValue={dashboard.getPassportTransitCellValue}
+            loading={isLoading}
+          />
+          <PerformanceAnalyticsSection
+            slaCompliance={dashboard.slaCompliance}
+            teamProductivity={dashboard.teamProductivity}
+            weeklyCompletion={dashboard.weeklyCompletion}
+          />
+          <BusinessPerformanceSection
+            revenueSnapshot={dashboard.revenueSnapshot}
+            countryDistribution={dashboard.countryDistribution}
+            visaTypeDistribution={dashboard.visaTypeDistribution}
+            segmentDistribution={dashboard.segmentDistribution}
+          />
+          <OperationalMonitoringSection
+            escalations={dashboard.escalations}
+            noMovementCases={dashboard.noMovementCases}
+            getEscalationCellValue={dashboard.getEscalationCellValue}
+            getNoMovementCellValue={dashboard.getNoMovementCellValue}
+            loading={isLoading}
+          />
+        </Stack>
+      </LoadingOverlay>
     </Box>
   )
 }

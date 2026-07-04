@@ -1,13 +1,14 @@
 import { Stack, Typography } from '@mui/material'
 import { Badge } from '@/design-system/UIComponents'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
-import { validateForApproval } from '@/shared/utils/commercialAgreementValidation'
+import { validateForActivation } from '@/shared/utils/commercialAgreementValidation'
 import {
   agreementTypeLabel,
   billingTypeLabel,
   customerSourceModeLabel,
   workflowTypeLabel,
 } from '../../config/agreementStatusConfig'
+import { formatAgreementDate } from '../../utils/agreementFormUtils'
 
 interface AgreementSummaryPanelProps {
   formData: CommercialAgreementFormData
@@ -38,7 +39,7 @@ export function AgreementSummaryPanel({ formData, agreementId, statusLabel = 'Dr
     (d) => d.status === 'uploaded' || d.status === 'verified',
   ).length
   const requiredDocs = formData.documents.filter((d) => d.required).length
-  const validation = validateForApproval(formData)
+  const validation = validateForActivation(formData)
 
   return (
     <Stack spacing={2}>
@@ -53,6 +54,8 @@ export function AgreementSummaryPanel({ formData, agreementId, statusLabel = 'Dr
         <SummaryRow label="Workflow" value={workflowTypeLabel[formData.workflowType]} />
         <SummaryRow label="Billing" value={billingTypeLabel[formData.billingType]} />
         <SummaryRow label="Agreement type" value={agreementTypeLabel[formData.agreementType]} />
+        <SummaryRow label="Agreement start date" value={formatAgreementDate(formData.startDate)} />
+        <SummaryRow label="Agreement expiry date" value={formatAgreementDate(formData.endDate)} />
         <SummaryRow label="Entities" value={String(formData.entities.length)} />
         <SummaryRow label="Pricing rows" value={String(formData.pricingMatrix.length)} />
         <SummaryRow label="Documents" value={`${uploadedDocs}/${requiredDocs} required`} />
@@ -61,7 +64,7 @@ export function AgreementSummaryPanel({ formData, agreementId, statusLabel = 'Dr
       {!validation.ok ? (
         <Stack spacing={0.75}>
           <Typography variant="caption" color="text.secondary" fontWeight={600}>
-            Approval blockers
+            Activation blockers
           </Typography>
           {validation.issues.slice(0, 5).map((issue) => (
             <Badge key={issue} label={issue} color="warning" size="sm" />
@@ -73,7 +76,7 @@ export function AgreementSummaryPanel({ formData, agreementId, statusLabel = 'Dr
           ) : null}
         </Stack>
       ) : (
-        <Badge label="Ready for approval" color="success" size="sm" />
+        <Badge label="Ready for activation" color="success" size="sm" />
       )}
     </Stack>
   )

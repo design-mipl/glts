@@ -259,7 +259,7 @@ export function getAssignmentCellValue(row: OperationalPassengerRow, key: string
     case 'priority':
       return assignmentPriorityLabel[row.priority]
     case 'application':
-      return `${row.country} ${row.visaType} ${row.gltsApplicationId} ${row.companyName} ${row.travelDate}`.trim()
+      return `${row.country} ${row.visaType} ${row.gltsApplicationId} ${row.companyName}`.trim()
     case 'applicationId':
       return row.gltsApplicationId
     case 'companyName':

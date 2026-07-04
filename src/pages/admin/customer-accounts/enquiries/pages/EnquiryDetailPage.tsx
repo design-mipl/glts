@@ -4,12 +4,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Tabs, BaseCard, EmptyState, useToast } from '@/design-system/UIComponents'
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { enquiryService } from '@/shared/services/enquiryService'
-import type { EnquiryStatus } from '@/shared/types/enquiry'
 import { AddFollowupModal, type FollowupModalValue } from '../components/AddFollowupModal'
 import { AssignmentModal, type AssignmentModalValue } from '../components/AssignmentModal'
 import { ConvertToQuotationDialog } from '../components/ConvertToQuotationDialog'
 import { EnquiryDetailSummary } from '../components/EnquiryDetailSummary'
-import { StatusUpdateModal } from '../components/StatusUpdateModal'
 import { ActivityTimelineTab } from '../components/detail/ActivityTimelineTab'
 import { AssignmentOwnershipTab } from '../components/detail/AssignmentOwnershipTab'
 import { FollowupsTab } from '../components/detail/FollowupsTab'
@@ -45,13 +43,10 @@ export function EnquiryDetailPage() {
   const { loading, enquiry, reload } = useEnquiryDetailState(enquiryId)
 
   const [activeTab, setActiveTab] = useState('overview')
-  const [statusModalOpen, setStatusModalOpen] = useState(false)
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false)
   const [followupModalOpen, setFollowupModalOpen] = useState(false)
   const [convertModalOpen, setConvertModalOpen] = useState(false)
 
-  const [statusValue, setStatusValue] = useState('under_discussion')
-  const [statusReason, setStatusReason] = useState('')
   const [assignmentValue, setAssignmentValue] = useState(initialAssignment)
   const [followupValue, setFollowupValue] = useState(initialFollowup)
   const [conversionIssues, setConversionIssues] = useState<string[]>([])
@@ -65,11 +60,6 @@ export function EnquiryDetailPage() {
       { label: 'Team notes', value: 'notes' },
       { label: 'Assignment', value: 'assignment' },
     ],
-    [enquiry],
-  )
-
-  const allowedStatuses = useMemo(
-    () => (enquiry ? enquiryService.getAllowedStatusTransitions(enquiry.status) : []),
     [enquiry],
   )
 
@@ -107,29 +97,11 @@ export function EnquiryDetailPage() {
           <EnquiryDetailSummary
             enquiry={enquiry}
             onEdit={() => navigate(`/admin/customer-accounts/enquiries/${enquiry.id}/edit`)}
-            onAssign={() => {
-              setAssignmentValue({
-                assignedTeam: enquiry.assignment.assignedTeam ?? '',
-                assignedUser: enquiry.assignment.assignedUser ?? '',
-                branch: enquiry.assignment.branch ?? '',
-                priority: enquiry.assignment.priority,
-                slaTarget: enquiry.assignment.slaTarget?.slice(0, 10) ?? '',
-                assignmentNotes: enquiry.assignment.assignmentNotes ?? '',
-              })
-              setAssignmentModalOpen(true)
-            }}
-            onFollowup={() => setFollowupModalOpen(true)}
-            onStatus={() => {
-              setStatusValue(enquiry.status)
-              setStatusReason('')
-              setStatusModalOpen(true)
-            }}
             onConvert={async () => {
               const validation = await enquiryService.validateConversion(enquiry.id)
               setConversionIssues(validation.issues)
               setConvertModalOpen(true)
             }}
-            onNotes={() => setActiveTab('notes')}
           />
         }
       >
@@ -192,35 +164,6 @@ export function EnquiryDetailPage() {
           </Box>
         </BaseCard>
       </AdminDetailShell>
-
-      <StatusUpdateModal
-        open={statusModalOpen}
-        value={statusValue}
-        reason={statusReason}
-        allowedStatuses={allowedStatuses}
-        onClose={() => setStatusModalOpen(false)}
-        onStatusChange={setStatusValue}
-        onReasonChange={setStatusReason}
-        onSubmit={async () => {
-          const result = await enquiryService.updateStatus(
-            enquiry.id,
-            statusValue as EnquiryStatus,
-            getEnquiryActor(),
-            statusReason,
-          )
-          if (!result.ok) {
-            showToast({
-              title: 'Status update failed',
-              description: 'message' in result ? result.message : 'Invalid status transition',
-              variant: 'error',
-            })
-            return
-          }
-          setStatusModalOpen(false)
-          showToast({ title: 'Status updated', variant: 'success' })
-          await reload()
-        }}
-      />
 
       <AssignmentModal
         open={assignmentModalOpen}

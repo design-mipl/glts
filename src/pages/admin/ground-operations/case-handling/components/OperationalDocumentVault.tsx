@@ -30,6 +30,16 @@ function buildVaultItems(record: OperationalCase): VaultItem[] {
     }
   })
 
+  record.applicationFees.forEach(fee => {
+    if (fee.receiptFileName) {
+      items.push({
+        id: `fee-${fee.id}`,
+        category: `${fee.serviceName} receipt`,
+        fileName: fee.receiptFileName,
+      })
+    }
+  })
+
   record.expenses.forEach(expense => {
     if (expense.receiptFileName) {
       items.push({

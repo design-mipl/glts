@@ -24,6 +24,7 @@ import {
   getSlaBadgeColor,
 } from '../utils/assignmentQueueListingUtils'
 import type { AssignmentTableColumnsParams } from './AssignmentTableColumns'
+import { ASSIGN_USER_VENDOR_ACTION_LABEL } from '../config/assignmentActionConfig'
 
 function operationalStatusBadgeColor(status: string): 'success' | 'warning' | 'info' | 'error' | 'neutral' {
   const tone = getApplicationOperationalTone(status)
@@ -39,7 +40,7 @@ function buildRowActions(params: AssignmentTableColumnsParams, row: OperationalP
 
   return [
     {
-      label: 'Assign user',
+      label: ASSIGN_USER_VENDOR_ACTION_LABEL,
       icon: <UserPlus size={16} />,
       onClick: () => onAction('assign_user', row),
     },
@@ -106,9 +107,6 @@ function ApplicationCell({ row }: { row: OperationalPassengerRow }) {
       </Typography>
       <Typography variant="body2" noWrap sx={stackedLineTertiarySx}>
         {row.companyName || '—'}
-      </Typography>
-      <Typography variant="body2" noWrap sx={{ ...stackedLineTertiarySx, mt: 0.125 }}>
-        {formatTravelDateLabel(row.travelDate)}
       </Typography>
     </Box>
   )
@@ -190,6 +188,17 @@ export function buildOperationalAssignmentTableColumns(
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => (
         <Badge label={row.jurisdiction || '—'} color="info" />
+      ),
+    },
+    {
+      key: 'travelDate',
+      label: 'Travel Date',
+      widthSize: adminListingColumnWidthSize('date'),
+      sortable: true,
+      render: (_value, row: OperationalPassengerRow) => (
+        <Typography variant="body2" noWrap sx={{ fontSize: 13 }}>
+          {formatTravelDateLabel(row.travelDate)}
+        </Typography>
       ),
     },
     {

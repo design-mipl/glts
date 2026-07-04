@@ -8,6 +8,7 @@ import {
 } from '@/pages/admin/components/adminRecordPageTitle'
 import { toApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
 import { resolveApplicationReferenceDisplay } from '@/pages/customer/features/applications/utils/gltsReferenceIds'
+import { ApplicationTrackingUrlLink } from '@/shared/components/ApplicationTrackingUrlLink'
 import type { VerifyOverviewData } from '../../utils/verifyDocumentsUtils'
 
 interface ViewFormAssistHeaderSectionProps {
@@ -100,6 +101,11 @@ export function ViewFormAssistHeaderSection({
                 </Grid>
               ))}
             </Grid>
+            <ApplicationTrackingUrlLink
+              countryName={reviewOverview.countryName}
+              label="Track on embassy / VFS portal"
+              sx={{ mt: 1.5 }}
+            />
           </Box>
         </Stack>
       </Box>

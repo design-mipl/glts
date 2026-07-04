@@ -9,13 +9,16 @@ import type {
 } from '@/shared/types/quotation'
 import type { QuotationReference } from '@/shared/types/quotationReference'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
+import { enquiryService } from '@/shared/services/enquiryService'
+import { buildQuotationFormDataFromEnquiry } from '@/shared/utils/quotationFormMapping'
 import { computePricingTotals } from '@/shared/utils/quotationCalculations'
+import { resolveQuotationGstRateId } from '@/shared/utils/quotationGstUtils'
 import {
   getCurrentVersion,
-  getLatestApprovedVersion,
+  getLatestVersion,
+  getVersionById,
   validateForConvert,
   validateForShare,
-  validateForSubmit,
 } from '@/shared/utils/quotationValidation'
 
 function nowIso() {
@@ -62,7 +65,7 @@ function cloneMatrix(matrix: AgreementPricingRow[]): AgreementPricingRow[] {
   return matrix.map((row) => ({ ...row, id: `pr-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` }))
 }
 
-function createDraftVersion(
+function createPricingVersionSnapshot(
   versionNumber: number,
   pricingMatrix: AgreementPricingRow[],
   gstPercentage: number,
@@ -72,20 +75,13 @@ function createDraftVersion(
     id: id('qver'),
     versionLabel: `V${versionNumber}`,
     versionNumber,
-    status: 'draft',
     pricingMatrix: cloneMatrix(pricingMatrix),
     totals: computePricingTotals(pricingMatrix, gstPercentage),
     createdBy: actor,
     createdAt: nowIso(),
-    approvalHistory: [],
   }
 }
 
-function mapEnquiryWorkflow(customerType: EnquiryRecord['customer']['customerType']): QuotationRecord['workflowType'] {
-  if (customerType === 'marine') return 'marine'
-  if (customerType === 'corporate') return 'corporate'
-  return 'retail'
-}
 
 function formToRecord(
   data: QuotationFormData,
@@ -93,7 +89,7 @@ function formToRecord(
   existing?: QuotationRecord,
 ): QuotationRecord {
   const timestamp = nowIso()
-  const version = createDraftVersion(1, data.pricingMatrix, data.gstPercentage, actor)
+  const version = createPricingVersionSnapshot(1, data.pricingMatrix, data.gstPercentage, actor)
   return {
     id: existing?.id ?? generateInternalId(),
     quotationNo: existing?.quotationNo ?? generateQuotationNo(),
@@ -104,6 +100,7 @@ function formToRecord(
     quotationDate: data.quotationDate,
     validTill: data.validTill,
     notes: data.notes,
+    gstRateId: data.gstRateId,
     gstPercentage: data.gstPercentage,
     attachments: existing?.attachments ?? [],
     activities: existing?.activities ?? [makeActivity('Created', 'Quotation created', actor)],
@@ -113,6 +110,7 @@ function formToRecord(
     currentVersionId: existing?.currentVersionId ?? version.id,
     pricingVersions: existing?.pricingVersions ?? [version],
     convertedAgreementId: existing?.convertedAgreementId,
+    convertedFromVersionId: existing?.convertedFromVersionId,
     createdAt: existing?.createdAt ?? timestamp,
     createdBy: existing?.createdBy ?? actor,
     updatedAt: timestamp,
@@ -120,8 +118,8 @@ function formToRecord(
 }
 
 function recordToReference(record: QuotationRecord): QuotationReference | undefined {
-  const approved = getLatestApprovedVersion(record)
-  if (!approved) return undefined
+  const version = getLatestVersion(record)
+  if (!version || version.pricingMatrix.length === 0) return undefined
   return {
     id: record.id,
     quotationId: record.quotationNo,
@@ -139,12 +137,17 @@ function recordToReference(record: QuotationRecord): QuotationReference | undefi
       contactNumber: record.customer.contactNumber,
       emailAddress: record.customer.emailAddress,
       companyAddress: record.customer.companyAddress,
+      countryId: '',
+      country: '',
+      state: '',
+      city: '',
+      pincode: '',
       billingEntityName: record.customer.companyName,
       billingAddress: record.customer.companyAddress,
       gstNumber: '',
       panNumber: '',
     },
-    pricingMatrix: cloneMatrix(approved.pricingMatrix),
+    pricingMatrix: cloneMatrix(version.pricingMatrix),
   }
 }
 
@@ -153,7 +156,6 @@ export const quotationService = {
     const {
       sourceType = 'all',
       workflowType = 'all',
-      approvalStatus = 'all',
       sharedStatus = 'all',
       dateFrom,
       dateTo,
@@ -165,9 +167,6 @@ export const quotationService = {
     if (sourceType !== 'all') rows = rows.filter((r) => r.sourceType === sourceType)
     if (workflowType !== 'all') rows = rows.filter((r) => r.workflowType === workflowType)
     if (sharedStatus !== 'all') rows = rows.filter((r) => r.sharedStatus === sharedStatus)
-    if (approvalStatus !== 'all') {
-      rows = rows.filter((r) => getCurrentVersion(r)?.status === approvalStatus)
-    }
     if (dateFrom) rows = rows.filter((r) => r.createdAt.slice(0, 10) >= dateFrom)
     if (dateTo) rows = rows.filter((r) => r.createdAt.slice(0, 10) <= dateTo)
     if (q) {
@@ -187,6 +186,11 @@ export const quotationService = {
 
   createDirect(data: QuotationFormData, actor: string): QuotationRecord {
     const record = formToRecord(data, actor)
+    if (data.sourceType === 'enquiry' && data.enquiryId) {
+      record.activities.unshift(
+        makeActivity('Created from enquiry', `Linked to enquiry ${data.enquiryId}`, actor),
+      )
+    }
     const store = getStore()
     store.unshift(record)
     persist(store)
@@ -194,23 +198,7 @@ export const quotationService = {
   },
 
   createFromEnquiry(enquiry: EnquiryRecord, actor: string): QuotationRecord {
-    const data: QuotationFormData = {
-      sourceType: 'enquiry',
-      enquiryId: enquiry.id,
-      workflowType: mapEnquiryWorkflow(enquiry.customer.customerType),
-      customer: {
-        companyName: enquiry.customer.companyOrCustomerName,
-        contactPersonName: enquiry.customer.contactPersonName,
-        contactNumber: enquiry.customer.contactNumber,
-        emailAddress: enquiry.customer.emailAddress,
-        companyAddress: enquiry.customer.companyAddress ?? '',
-      },
-      quotationDate: nowIso().slice(0, 10),
-      validTill: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
-      notes: enquiry.notes.initialDiscussionNotes ?? '',
-      gstPercentage: 18,
-      pricingMatrix: [],
-    }
+    const data = buildQuotationFormDataFromEnquiry(enquiry)
     const record = formToRecord(data, actor)
     record.activities.unshift(makeActivity('Created from enquiry', `Converted from ${enquiry.id}`, actor))
     const store = getStore()
@@ -221,7 +209,7 @@ export const quotationService = {
 
   updateQuotation(
     quotationId: string,
-    patch: Partial<Pick<QuotationRecord, 'customer' | 'quotationDate' | 'validTill' | 'notes' | 'gstPercentage' | 'workflowType'>>,
+    patch: Partial<Pick<QuotationRecord, 'customer' | 'quotationDate' | 'validTill' | 'notes' | 'gstRateId' | 'gstPercentage' | 'workflowType'>>,
     actor: string,
   ): { ok: boolean; record?: QuotationRecord; issues?: string[] } {
     const store = getStore()
@@ -251,9 +239,6 @@ export const quotationService = {
     const record = store[index]!
     const version = getCurrentVersion(record)
     if (!version) return { ok: false, issues: ['Current version not found'] }
-    if (version.status !== 'draft') {
-      return { ok: false, issues: ['Create a new pricing version to edit approved or submitted pricing'] }
-    }
     version.pricingMatrix = pricingMatrix
     version.totals = computePricingTotals(pricingMatrix, record.gstPercentage)
     record.updatedAt = nowIso()
@@ -264,7 +249,11 @@ export const quotationService = {
 
   saveForm(quotationId: string | undefined, data: QuotationFormData, actor: string): QuotationRecord {
     if (!quotationId) {
-      return this.createDirect(data, actor)
+      const record = this.createDirect(data, actor)
+      if (data.sourceType === 'enquiry' && data.enquiryId) {
+        void enquiryService.markQuotationLinked(data.enquiryId, record.id, actor, 'draft')
+      }
+      return record
     }
     const store = getStore()
     const index = store.findIndex((r) => r.id === quotationId)
@@ -275,10 +264,11 @@ export const quotationService = {
     record.quotationDate = data.quotationDate
     record.validTill = data.validTill
     record.notes = data.notes
+    record.gstRateId = data.gstRateId
     record.gstPercentage = data.gstPercentage
     record.updatedAt = nowIso()
     const version = getCurrentVersion(record)
-    if (version?.status === 'draft') {
+    if (version) {
       version.pricingMatrix = data.pricingMatrix
       version.totals = computePricingTotals(data.pricingMatrix, data.gstPercentage)
     }
@@ -295,7 +285,7 @@ export const quotationService = {
     const source = record.pricingVersions.find((v) => v.id === versionId)
     if (!source) return { ok: false, issues: ['Version not found'] }
     const nextNumber = Math.max(...record.pricingVersions.map((v) => v.versionNumber)) + 1
-    const newVersion = createDraftVersion(nextNumber, source.pricingMatrix, record.gstPercentage, actor)
+    const newVersion = createPricingVersionSnapshot(nextNumber, source.pricingMatrix, record.gstPercentage, actor)
     record.pricingVersions.push(newVersion)
     record.currentVersionId = newVersion.id
     record.updatedAt = nowIso()
@@ -317,53 +307,6 @@ export const quotationService = {
     return this.duplicatePricingVersion(quotationId, current?.id ?? record.pricingVersions[0]!.id, actor)
   },
 
-  submitForApproval(quotationId: string, actor: string) {
-    const validation = validateForSubmit(this.getById(quotationId)!)
-    if (!validation.ok) return { ok: false, issues: validation.issues }
-    const store = getStore()
-    const record = store.find((r) => r.id === quotationId)
-    if (!record) return { ok: false, issues: ['Quotation not found'] }
-    const version = getCurrentVersion(record)!
-    version.status = 'submitted'
-    version.approvalHistory.push({ status: 'submitted', actor, timestamp: nowIso() })
-    record.updatedAt = nowIso()
-    record.activities.unshift(makeActivity('Submitted', `${version.versionLabel} submitted for approval`, actor))
-    persist(store)
-    return { ok: true, record }
-  },
-
-  approve(quotationId: string, actor: string, remarks?: string) {
-    const store = getStore()
-    const record = store.find((r) => r.id === quotationId)
-    if (!record) return { ok: false, issues: ['Quotation not found'] }
-    const version = getCurrentVersion(record)
-    if (!version || version.status !== 'submitted') {
-      return { ok: false, issues: ['Only submitted versions can be approved'] }
-    }
-    version.status = 'approved'
-    version.approvalHistory.push({ status: 'approved', actor, timestamp: nowIso(), remarks })
-    record.updatedAt = nowIso()
-    record.activities.unshift(makeActivity('Approved', `${version.versionLabel} approved`, actor))
-    persist(store)
-    return { ok: true, record }
-  },
-
-  reject(quotationId: string, actor: string, remarks?: string) {
-    const store = getStore()
-    const record = store.find((r) => r.id === quotationId)
-    if (!record) return { ok: false, issues: ['Quotation not found'] }
-    const version = getCurrentVersion(record)
-    if (!version || version.status !== 'submitted') {
-      return { ok: false, issues: ['Only submitted versions can be rejected'] }
-    }
-    version.status = 'rejected'
-    version.approvalHistory.push({ status: 'rejected', actor, timestamp: nowIso(), remarks })
-    record.updatedAt = nowIso()
-    record.activities.unshift(makeActivity('Rejected', `${version.versionLabel} rejected`, actor))
-    persist(store)
-    return { ok: true, record }
-  },
-
   share(quotationId: string, actor: string, _payload: QuotationSharePayload) {
     const record = this.getById(quotationId)
     if (!record) return { ok: false, issues: ['Quotation not found'] }
@@ -371,11 +314,9 @@ export const quotationService = {
     if (!validation.ok) return { ok: false, issues: validation.issues }
     const store = getStore()
     const target = store.find((r) => r.id === quotationId)!
-    const version = getCurrentVersion(target)!
     target.sharedStatus = 'shared'
     target.sharedAt = nowIso()
     target.sharedBy = actor
-    version.approvalHistory.push({ status: 'shared', actor, timestamp: nowIso() })
     target.updatedAt = nowIso()
     target.activities.unshift(makeActivity('Shared', 'Quotation shared with customer', actor))
     persist(store)
@@ -412,21 +353,29 @@ export const quotationService = {
     return { ok: true, record }
   },
 
-  markConverted(quotationId: string, agreementId?: string) {
+  markConverted(quotationId: string, versionId: string, agreementId?: string) {
     const store = getStore()
     const record = store.find((r) => r.id === quotationId)
     if (!record) return { ok: false, issues: ['Quotation not found'] }
-    const validation = validateForConvert(record)
+    const validation = validateForConvert(record, versionId)
     if (!validation.ok) return { ok: false, issues: validation.issues }
+    const version = getVersionById(record, versionId)
     record.convertedAgreementId = agreementId ?? 'pending'
+    record.convertedFromVersionId = version?.id
     record.updatedAt = nowIso()
+    record.activities.unshift(
+      makeActivity('Converted', `Converted ${version?.versionLabel ?? 'pricing version'} to agreement`, 'System'),
+    )
     persist(store)
     return { ok: true, record }
   },
 
-  getApprovedSelectOptions() {
+  getConvertibleSelectOptions() {
     return this.list()
-      .filter((r) => getLatestApprovedVersion(r))
+      .filter((r) => {
+        const version = getLatestVersion(r)
+        return version && version.pricingMatrix.length > 0 && !r.convertedAgreementId
+      })
       .map((r) => ({
         value: r.id,
         label: r.customer.companyName,
@@ -447,11 +396,14 @@ export const quotationService = {
       .filter((r): r is QuotationReference => Boolean(r))
   },
 
-  hydrateAgreementFromQuotation(quotationId: string): Partial<CommercialAgreementFormData> | undefined {
+  hydrateAgreementFromQuotation(
+    quotationId: string,
+    versionId?: string,
+  ): Partial<CommercialAgreementFormData> | undefined {
     const record = this.getById(quotationId)
     if (!record) return undefined
-    const approved = getLatestApprovedVersion(record)
-    if (!approved) return undefined
+    const version = versionId ? getVersionById(record, versionId) : getLatestVersion(record)
+    if (!version || version.pricingMatrix.length === 0) return undefined
     return {
       customerSourceMode: 'quotation',
       referenceQuotationId: quotationId,
@@ -463,6 +415,11 @@ export const quotationService = {
         contactNumber: record.customer.contactNumber,
         emailAddress: record.customer.emailAddress,
         companyAddress: record.customer.companyAddress,
+        countryId: '',
+        country: '',
+        state: '',
+        city: '',
+        pincode: '',
         billingEntityName: record.customer.companyName,
         billingAddress: record.customer.companyAddress,
         gstNumber: '',
@@ -470,7 +427,7 @@ export const quotationService = {
       },
       workflowType: record.workflowType,
       billingType: 'credit',
-      pricingMatrix: cloneMatrix(approved.pricingMatrix),
+      pricingMatrix: cloneMatrix(version.pricingMatrix),
       billingConfig: {
         creditBillingEnabled: true,
         billingCycle: 'monthly',
@@ -500,6 +457,7 @@ export const quotationService = {
       quotationDate: record.quotationDate,
       validTill: record.validTill,
       notes: record.notes,
+      gstRateId: resolveQuotationGstRateId(record),
       gstPercentage: record.gstPercentage,
       pricingMatrix: version ? [...version.pricingMatrix] : [],
     }

@@ -1,15 +1,11 @@
 import { Box, Divider, Stack, Typography } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
 import type { ReactNode } from 'react'
 import { BaseCard } from '@/design-system/UIComponents'
 import type { BreadcrumbItem } from '@/design-system/UIComponents'
+import { AdminFormSectionsLayout } from './AdminFormSectionsLayout'
 import { AdminRecordPageChrome } from './AdminRecordPageChrome'
-import {
-  ADMIN_FULL_PAGE_FORM_LAYOUT,
-  getAdminFullPageFormSectionCardSx,
-  getAdminFullPageFormSectionTitleColor,
-  type AdminFullPageFormSectionImportance,
-} from './adminFullPageFormLayout'
+import { ADMIN_FULL_PAGE_FORM_LAYOUT } from './adminFullPageFormLayout'
+import type { AdminFullPageFormSectionImportance } from './adminFullPageFormLayout'
 import {
   ADMIN_RECORD_PAGE_TITLE_SX,
   ADMIN_RECORD_PAGE_TITLE_VARIANT,
@@ -47,9 +43,7 @@ export function AdminFullPageFormShell({
   sections,
   footer,
 }: AdminFullPageFormShellProps) {
-  const theme = useTheme()
-  const { shellPaddingX, sectionGridGap, fieldGridGap, sectionPadding, sectionBorderRadius, stickyFooterZIndex } =
-    ADMIN_FULL_PAGE_FORM_LAYOUT
+  const { shellPaddingX, stickyFooterZIndex } = ADMIN_FULL_PAGE_FORM_LAYOUT
 
   return (
     <AdminRecordPageChrome breadcrumbs={breadcrumbs}>
@@ -96,74 +90,8 @@ export function AdminFullPageFormShell({
           <Divider sx={{ mt: 2, mb: 2.5 }} />
         </Box>
 
-        <Box
-          sx={{
-            px: shellPaddingX,
-            pb: 2.5,
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-            gap: sectionGridGap,
-          }}
-        >
-          {sections.map((section) => {
-            const importance = section.importance ?? 'primary'
-            const sectionCardSx = getAdminFullPageFormSectionCardSx(importance, theme)
-
-            return (
-              <Box
-                key={section.id}
-                sx={{
-                  gridColumn: { xs: '1 / -1', md: section.span === 2 ? '1 / -1' : 'auto' },
-                  borderRadius: sectionBorderRadius,
-                  p: sectionPadding,
-                  ...sectionCardSx,
-                }}
-              >
-                <Stack
-                  direction="row"
-                  alignItems="flex-start"
-                  justifyContent="space-between"
-                  spacing={1}
-                >
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography
-                      variant="subtitle2"
-                      fontWeight={600}
-                      color={getAdminFullPageFormSectionTitleColor(importance)}
-                    >
-                      {section.title}
-                    </Typography>
-                    {section.description ? (
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        {section.description}
-                      </Typography>
-                    ) : null}
-                  </Box>
-                  {section.headerAction ? <Box sx={{ flexShrink: 0 }}>{section.headerAction}</Box> : null}
-                </Stack>
-
-                <Divider sx={{ my: 2 }} />
-
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: {
-                      xs: '1fr',
-                      md:
-                        (section.columns ?? 2) === 1
-                          ? '1fr'
-                          : section.columns === 3
-                            ? 'repeat(3, minmax(0, 1fr))'
-                            : 'repeat(2, minmax(0, 1fr))',
-                    },
-                    gap: fieldGridGap,
-                  }}
-                >
-                  {section.children}
-                </Box>
-              </Box>
-            )
-          })}
+        <Box sx={{ px: shellPaddingX, pb: 2.5 }}>
+          <AdminFormSectionsLayout sections={sections} variant="page" fieldColumnsFrom="sm" />
         </Box>
 
         <Box

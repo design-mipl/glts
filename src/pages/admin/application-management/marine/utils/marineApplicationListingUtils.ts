@@ -6,50 +6,21 @@ import { resolveApplicationCreatorLabel } from '@/pages/customer/features/applic
 import { getListingCellValue } from '@/pages/customer/features/applications/utils/applicationListingUtils'
 import { mapApplicationRowsToGridItems } from '@/pages/customer/features/applications/utils/applicationListingGrid'
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
+import {
+  isMarineApplicationInQueueTab,
+  type MarineApplicationListingTab,
+} from '../config/marineApplicationListingTabs'
 
-export type MarineApplicationListingTab =
-  | 'all'
-  | 'new_applications'
-  | 'under_verification'
-  | 'ready_for_submission'
-  | 'embassy_processing'
-  | 'visa_approved'
-  | 'completed'
-
-const UNDER_VERIFICATION_STATUSES = new Set([
-  'Verification Pending',
-  'Under Review',
-  'Pending Documents',
-  'Correction Required',
-])
+export type { MarineApplicationListingTab } from '../config/marineApplicationListingTabs'
 
 export function filterMarineRowsByTab(
   rows: MarineApplicationRow[],
   tab: MarineApplicationListingTab,
 ): MarineApplicationRow[] {
-  switch (tab) {
-    case 'new_applications':
-      return rows.filter(row => row.operationalStatus === 'Submitted')
-    case 'under_verification':
-      return rows.filter(
-        row =>
-          row.processingStage === 'Document verification' ||
-          UNDER_VERIFICATION_STATUSES.has(row.operationalStatus),
-      )
-    case 'ready_for_submission':
-      return rows.filter(row => row.processingStage === 'Embassy submission')
-    case 'embassy_processing':
-      return rows.filter(row => row.processingStage === 'Embassy processing')
-    case 'visa_approved':
-      return rows.filter(
-        row =>
-          row.processingStage === 'Passport dispatch' || row.operationalStatus === 'Passport Ready',
-      )
-    case 'completed':
-      return rows.filter(row => row.operationalStatus === 'Completed')
-    default:
-      return rows
+  if (tab === 'all') {
+    return rows
   }
+  return rows.filter(row => isMarineApplicationInQueueTab(row, tab))
 }
 
 export function matchesMarineApplicationSearch(row: MarineApplicationRow, query: string): boolean {
@@ -81,21 +52,17 @@ export function getMarineApplicationCellValue(row: MarineApplicationRow, key: st
 }
 
 export function computeMarineListingKpis(rows: MarineApplicationRow[]) {
-  const underVerification = rows.filter(
-    row =>
-      row.processingStage === 'Document verification' ||
-      UNDER_VERIFICATION_STATUSES.has(row.operationalStatus),
+  const verificationPending = rows.filter(row =>
+    isMarineApplicationInQueueTab(row, 'verification_pending'),
   ).length
   const pendingCorrections = rows.filter(row => row.operationalStatus === 'Correction Required').length
-  const completed = rows.filter(
-    row => row.operationalStatus === 'Completed' || row.operationalStatus === 'Passport Ready',
-  ).length
+  const dispatched = rows.filter(row => isMarineApplicationInQueueTab(row, 'dispatched')).length
 
   return {
     total: rows.length,
-    underVerification,
+    verificationPending,
     pendingCorrections,
-    completed,
+    dispatched,
   }
 }
 
@@ -110,40 +77,49 @@ export function getMarineApplicationEmptyState(
   onCreate?: () => void,
 ): MarineApplicationEmptyState {
   switch (tab) {
-    case 'new_applications':
+    case 'draft':
       return {
-        emptyTitle: 'No new applications',
-        emptyDescription: 'Applications appear here once customers submit from the portal.',
+        emptyTitle: 'No draft applications',
+        emptyDescription: 'Draft application created in the Customer Portal.',
       }
-    case 'under_verification':
+    case 'verification_pending':
       return {
-        emptyTitle: 'No applications under verification',
-        emptyDescription: 'Document verification and review-stage applications appear here.',
+        emptyTitle: 'No applications pending verification',
+        emptyDescription: 'Document verification and Operations verification pending.',
       }
-    case 'ready_for_submission':
+    case 'online_submission_pending':
       return {
-        emptyTitle: 'No applications ready for submission',
-        emptyDescription: 'Applications cleared for embassy submission appear here.',
+        emptyTitle: 'No applications pending submission',
+        emptyDescription:
+          'Form submission and QC completed; application is ready for Embassy/VFS submission.',
       }
-    case 'embassy_processing':
+    case 'vfs_submission_pending':
       return {
-        emptyTitle: 'No applications in embassy processing',
-        emptyDescription: 'Applications at the embassy processing stage appear here.',
+        emptyTitle: 'No applications pending Embassy/VFS submission',
+        emptyDescription:
+          'Online submission completed, but Embassy/VFS submission is pending.',
       }
-    case 'visa_approved':
+    case 'collection_pending':
       return {
-        emptyTitle: 'No visa approved applications',
-        emptyDescription: 'Visa approved and passport-ready applications appear here.',
+        emptyTitle: 'No applications pending collection',
+        emptyDescription: 'Awaiting passport/document collection after submission.',
       }
-    case 'completed':
+    case 'collected':
       return {
-        emptyTitle: 'No completed applications',
-        emptyDescription: 'Completed marine applications appear here.',
+        emptyTitle: 'No collected applications',
+        emptyDescription:
+          'Passports or documents collected from the embassy or VFS and pending dispatch appear here.',
+      }
+    case 'dispatched':
+      return {
+        emptyTitle: 'No dispatched applications',
+        emptyDescription:
+          'Applications with passports or documents dispatched or handed over to the customer appear here.',
       }
     default:
       return {
-        emptyTitle: 'No submitted applications',
-        emptyDescription: 'Submitted marine applications from the customer portal appear here.',
+        emptyTitle: 'No applications',
+        emptyDescription: 'Marine applications from the customer portal appear here across all operational stages.',
         emptyAction: onCreate ? { label: 'Create application', onClick: onCreate } : undefined,
       }
   }

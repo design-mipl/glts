@@ -1,11 +1,9 @@
 import { useMemo } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
 import { RefreshCw } from 'lucide-react'
-import { Button, Pagination, Select, useToast } from '@/design-system/UIComponents'
+import { Button, Pagination, Tabs, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import { AdminListingStickyHeader, AdminListingToolbar } from '@/pages/admin/components/listing'
-import { OPERATIONS_DESK_GROUP_BY_OPTIONS } from '@/shared/types/operationalCaseHandling'
-import type { OperationsDeskGroupBy } from '@/shared/types/operationalCaseHandling'
 import {
   OperationsDeskFilterFields,
   hasOperationsDeskFiltersActive,
@@ -16,6 +14,7 @@ import { useOperationalCaseHandling } from '../hooks/useOperationalCaseHandling'
 import {
   getFilterOptions,
   getOperationsDeskEmptyState,
+  type OperationsDeskStatusTab,
 } from '../utils/operationalCaseHandlingUtils'
 
 export function OperationalCaseHandlingPage() {
@@ -25,8 +24,9 @@ export function OperationalCaseHandlingPage() {
   const {
     deskFilters,
     setDeskFilters,
-    groupBy,
-    setGroupBy,
+    statusTab,
+    setStatusTab,
+    statusTabs,
     tableState,
     setTableState,
     allRows,
@@ -39,12 +39,13 @@ export function OperationalCaseHandlingPage() {
     selectCase,
     closeDetail,
     refresh,
+    handleDocumentsSubmitted,
   } = useOperationalCaseHandling()
 
   const filterOptions = useMemo(() => getFilterOptions(allRows), [allRows])
-  const emptyState = useMemo(() => getOperationsDeskEmptyState(), [])
+  const emptyState = useMemo(() => getOperationsDeskEmptyState(statusTab), [statusTab])
 
-  const hasActiveFilters = hasOperationsDeskFiltersActive(deskFilters)
+  const hasActiveFilters = hasOperationsDeskFiltersActive(deskFilters, { ignoreStatus: true })
 
   const footerBg =
     theme.palette.mode === 'dark'
@@ -73,6 +74,24 @@ export function OperationalCaseHandlingPage() {
         }
         toolbar={
           <Stack spacing={1.25}>
+            <Box
+              sx={{
+                mx: -2,
+                px: 2,
+                borderBottom: 1,
+                borderColor: 'divider',
+              }}
+            >
+              <Tabs
+                value={statusTab}
+                onChange={value => setStatusTab(value as OperationsDeskStatusTab)}
+                variant="underline"
+                size="sm"
+                scrollable
+                items={statusTabs}
+                sx={{ mb: 0, minHeight: 40 }}
+              />
+            </Box>
             <AdminListingToolbar
               searchValue={searchValue}
               onSearch={handleSearch}
@@ -92,7 +111,7 @@ export function OperationalCaseHandlingPage() {
                   setTableState(state => ({ ...state, page: 0 }))
                 },
                 onClear: clearFilters,
-                hasActive: hasOperationsDeskFiltersActive,
+                hasActive: filters => hasOperationsDeskFiltersActive(filters, { ignoreStatus: true }),
                 width: 'wide',
                 scrollable: true,
                 children: (draft, patch) => (
@@ -100,33 +119,17 @@ export function OperationalCaseHandlingPage() {
                     draft={draft}
                     patch={patch}
                     options={filterOptions}
+                    hideStatusFilter
                   />
                 ),
               }}
             />
-            <Box sx={{ pb: 0.5 }}>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
-                <Box sx={{ minWidth: { sm: 220 }, maxWidth: { sm: 280 } }}>
-                  <Select
-                    value={groupBy}
-                    onChange={value => {
-                      setGroupBy(String(value) as OperationsDeskGroupBy)
-                      setTableState(state => ({ ...state, page: 0 }))
-                    }}
-                    options={OPERATIONS_DESK_GROUP_BY_OPTIONS}
-                    placeholder="Group by"
-                    size="sm"
-                    fullWidth
-                  />
-                </Box>
-              </Stack>
-            </Box>
           </Stack>
         }
         listingContent={
           <OperationsDeskCardList
             groups={paginatedGroups}
-            groupBy={groupBy}
+            groupBy="none"
             selectedId={selectedCase?.id}
             onSelect={selectCase}
             emptyTitle={emptyState.emptyTitle}
@@ -153,6 +156,7 @@ export function OperationalCaseHandlingPage() {
         record={selectedCase ?? null}
         onClose={closeDetail}
         onUpdated={refresh}
+        onSubmitted={handleDocumentsSubmitted}
       />
     </>
   )

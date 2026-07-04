@@ -1,23 +1,38 @@
-import { Grid, Stack, Typography } from '@mui/material'
+import { Grid, Stack } from '@mui/material'
 import { useRef } from 'react'
 import { useToast } from '@/design-system/UIComponents'
-import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
+import type { AgreementOnboardingDocument, CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
+import {
+  downloadAgreementDocument,
+  previewAgreementDocument,
+} from '@/shared/utils/agreementDocumentFileUtils'
+import { normalizeDocumentKey } from '@/shared/utils/agreementDocumentUtils'
 import { AgreementOnboardingDocumentCard } from './AgreementOnboardingDocumentCard'
 
 interface AgreementOnboardingDocumentCardsProps {
+  documents: AgreementOnboardingDocument[]
   data: CommercialAgreementFormData
   onChange: (next: CommercialAgreementFormData) => void
+  readOnly?: boolean
 }
 
-export function AgreementOnboardingDocumentCards({ data, onChange }: AgreementOnboardingDocumentCardsProps) {
+export function AgreementOnboardingDocumentCards({
+  documents,
+  data,
+  onChange,
+  readOnly = false,
+}: AgreementOnboardingDocumentCardsProps) {
   const { showToast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const activeDocKeyRef = useRef<string>('')
 
-  const updateDocument = (documentKey: string, patch: Partial<CommercialAgreementFormData['documents'][0]>) => {
+  const updateDocument = (documentKey: string, patch: Partial<AgreementOnboardingDocument>) => {
+    const normalizedKey = normalizeDocumentKey(documentKey)
     onChange({
       ...data,
-      documents: data.documents.map((d) => (d.documentKey === documentKey ? { ...d, ...patch } : d)),
+      documents: data.documents.map((doc) =>
+        normalizeDocumentKey(doc.documentKey) === normalizedKey ? { ...doc, ...patch } : doc,
+      ),
     })
   }
 
@@ -38,39 +53,48 @@ export function AgreementOnboardingDocumentCards({ data, onChange }: AgreementOn
     event.target.value = ''
   }
 
+  const handlePreview = (doc: AgreementOnboardingDocument) => {
+    if (!doc.fileName) {
+      showToast({ title: 'No file to preview', variant: 'warning' })
+      return
+    }
+    previewAgreementDocument(doc)
+  }
+
+  const handleDownload = (doc: AgreementOnboardingDocument) => {
+    if (!doc.fileName) {
+      showToast({ title: 'No file to download', variant: 'warning' })
+      return
+    }
+    downloadAgreementDocument(doc)
+    showToast({ title: 'Download started', description: doc.fileName, variant: 'success' })
+  }
+
   return (
     <Stack spacing={1.5}>
-      {data.agreementType === 'agreemented' ? (
-        <Typography variant="caption" color="text.secondary">
-          Agreement document upload is mandatory for agreemented type.
-        </Typography>
-      ) : null}
       <Grid container spacing={2}>
-        {data.documents.map((doc) => (
+        {documents.map((doc) => (
           <Grid key={doc.documentKey} size={{ xs: 12, md: 6 }}>
             <AgreementOnboardingDocumentCard
               document={doc}
+              readOnly={readOnly}
               onUpload={() => triggerUpload(doc.documentKey)}
               onReplace={() => triggerUpload(doc.documentKey)}
-              onPreview={() =>
-                showToast({
-                  title: 'Preview',
-                  description: doc.fileName ? `Previewing ${doc.fileName}` : 'Upload a document first.',
-                  variant: 'info',
-                })
-              }
-              onDownload={() =>
-                showToast({
-                  title: 'Download',
-                  description: doc.fileName ? `Downloading ${doc.fileName}` : 'No file to download.',
-                  variant: 'info',
-                })
-              }
+              onPreview={() => handlePreview(doc)}
+              onDownload={() => handleDownload(doc)}
             />
           </Grid>
         ))}
       </Grid>
-      <input ref={fileInputRef} type="file" accept=".pdf,image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+      {!readOnly ? (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,image/*"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+      ) : null}
     </Stack>
   )
 }

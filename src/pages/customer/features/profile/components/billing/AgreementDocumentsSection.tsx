@@ -1,4 +1,4 @@
-import { Box, Card, Stack, Typography } from '@mui/material'
+import { Box, Card, Divider, Stack, Typography } from '@mui/material'
 import { Download, Eye, FileText } from 'lucide-react'
 import { IconButton, useToast } from '@/design-system/UIComponents'
 import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '@/design-system/tokens'
@@ -8,118 +8,167 @@ import {
 } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 import { CustomerDetailSection } from '@/pages/customer/features/shared/components/detail'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import {
+  downloadAgreementDocument,
+  isAgreementDocumentFileAvailable,
+  previewAgreementDocument,
+} from '@/shared/utils/agreementDocumentFileUtils'
 import type { AgreementDocument } from '../../types/accountWorkspace'
 
 export interface AgreementDocumentsSectionProps {
-  documents: AgreementDocument[]
+  onboardingDocuments: AgreementDocument[]
+  agreementDocument?: AgreementDocument
 }
 
-export function AgreementDocumentsSection({ documents }: AgreementDocumentsSectionProps) {
-  const colors = usePublicBrandColors()
+function DocumentCardRow({ documents, colors }: { documents: AgreementDocument[]; colors: ReturnType<typeof usePublicBrandColors> }) {
   const { showToast } = useToast()
 
   const handlePreview = (doc: AgreementDocument) => {
-    showToast({ title: 'Preview opened', description: doc.fileName ?? doc.label, variant: 'info' })
+    if (!doc.sourceDocument || !isAgreementDocumentFileAvailable(doc.sourceDocument)) {
+      showToast({ title: 'No file to preview', variant: 'warning' })
+      return
+    }
+    previewAgreementDocument(doc.sourceDocument)
   }
 
   const handleDownload = (doc: AgreementDocument) => {
+    if (!doc.sourceDocument || !isAgreementDocumentFileAvailable(doc.sourceDocument)) {
+      showToast({ title: 'No file to download', variant: 'warning' })
+      return
+    }
+    downloadAgreementDocument(doc.sourceDocument)
     showToast({ title: 'Download started', description: doc.fileName ?? doc.label, variant: 'success' })
   }
 
+  if (documents.length === 0) {
+    return (
+      <Typography variant="body2" color="text.secondary">
+        No documents on file yet.
+      </Typography>
+    )
+  }
+
   return (
-    <CustomerDetailSection title="Agreement documents">
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          flexWrap: 'nowrap',
-          gap: 1.5,
-          overflowX: 'auto',
-          pb: 0.25,
-        }}
-      >
-        {documents.map(doc => {
-          const isAvailable = doc.status === 'available'
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'row',
+        flexWrap: 'nowrap',
+        gap: 1.5,
+        overflowX: 'auto',
+        pb: 0.25,
+      }}
+    >
+      {documents.map((doc) => {
+        const isAvailable = doc.status === 'available'
+        const canOpen = doc.sourceDocument ? isAgreementDocumentFileAvailable(doc.sourceDocument) : false
 
-          return (
-            <Card
-              key={doc.id}
-              elevation={0}
-              sx={{
-                flex: '1 1 0',
-                minWidth: 148,
-                maxWidth: 220,
-                p: 1.25,
-                border: `${BORDER_WIDTH.thin} solid`,
-                borderColor: 'divider',
-                borderRadius: BORDER_RADIUS.lg,
-                boxShadow: SHADOWS.sm,
-                bgcolor: 'background.paper',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 1,
-              }}
-            >
-              <Stack direction="row" spacing={1.25} alignItems="flex-start">
-                <Box
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    flexShrink: 0,
-                    borderRadius: BORDER_RADIUS.md,
-                    display: 'grid',
-                    placeItems: 'center',
-                    bgcolor: colors.surfaceAlt,
-                    color: colors.navy,
-                  }}
-                >
-                  <FileText size={18} strokeWidth={2} />
-                </Box>
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography sx={{ fontSize: 13, fontWeight: 600, lineHeight: 1.35 }} noWrap title={doc.label}>
-                    {doc.label}
+        return (
+          <Card
+            key={doc.id}
+            elevation={0}
+            sx={{
+              flex: '1 1 0',
+              minWidth: 148,
+              maxWidth: 220,
+              p: 1.25,
+              border: `${BORDER_WIDTH.thin} solid`,
+              borderColor: 'divider',
+              borderRadius: BORDER_RADIUS.lg,
+              boxShadow: SHADOWS.sm,
+              bgcolor: 'background.paper',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+            }}
+          >
+            <Stack direction="row" spacing={1.25} alignItems="flex-start">
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  flexShrink: 0,
+                  borderRadius: BORDER_RADIUS.md,
+                  display: 'grid',
+                  placeItems: 'center',
+                  bgcolor: colors.surfaceAlt,
+                  color: colors.navy,
+                }}
+              >
+                <FileText size={18} strokeWidth={2} />
+              </Box>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 600, lineHeight: 1.35 }} noWrap title={doc.label}>
+                  {doc.label}
+                </Typography>
+                {doc.fileName ? (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.25 }}
+                    noWrap
+                    title={doc.fileName}
+                  >
+                    {doc.fileName}
                   </Typography>
-                  {doc.fileName ? (
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: 'block', mt: 0.25 }}
-                      noWrap
-                      title={doc.fileName}
-                    >
-                      {doc.fileName}
-                    </Typography>
-                  ) : null}
-                </Box>
-              </Stack>
+                ) : null}
+                {doc.uploadedAt ? (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+                    Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
+                  </Typography>
+                ) : null}
+              </Box>
+            </Stack>
 
-              <CustomerStatusChip
-                label={isAvailable ? 'Available' : 'Pending'}
-                tone={getCustomerStatusTone(isAvailable ? 'active' : 'pending')}
+            <CustomerStatusChip
+              label={isAvailable ? 'Available' : 'Pending'}
+              tone={getCustomerStatusTone(isAvailable ? 'active' : 'pending')}
+            />
+
+            <Stack direction="row" spacing={0.5} justifyContent="flex-end" sx={{ mt: 'auto' }}>
+              <IconButton
+                variant="outlined"
+                size="sm"
+                tooltip="Preview"
+                icon={<Eye size={14} />}
+                onClick={() => handlePreview(doc)}
+                disabled={!canOpen}
               />
+              <IconButton
+                variant="outlined"
+                size="sm"
+                tooltip="Download"
+                icon={<Download size={14} />}
+                onClick={() => handleDownload(doc)}
+                disabled={!canOpen}
+              />
+            </Stack>
+          </Card>
+        )
+      })}
+    </Box>
+  )
+}
 
-              <Stack direction="row" spacing={0.5} justifyContent="flex-end" sx={{ mt: 'auto' }}>
-                <IconButton
-                  variant="outlined"
-                  size="sm"
-                  tooltip="Preview"
-                  icon={<Eye size={14} />}
-                  onClick={() => handlePreview(doc)}
-                  disabled={!isAvailable}
-                />
-                <IconButton
-                  variant="outlined"
-                  size="sm"
-                  tooltip="Download"
-                  icon={<Download size={14} />}
-                  onClick={() => handleDownload(doc)}
-                  disabled={!isAvailable}
-                />
-              </Stack>
-            </Card>
-          )
-        })}
-      </Box>
-    </CustomerDetailSection>
+export function AgreementDocumentsSection({
+  onboardingDocuments,
+  agreementDocument,
+}: AgreementDocumentsSectionProps) {
+  const colors = usePublicBrandColors()
+
+  return (
+    <Stack spacing={2.5}>
+      <CustomerDetailSection title="Onboarding documents">
+        <DocumentCardRow documents={onboardingDocuments} colors={colors} />
+      </CustomerDetailSection>
+      {agreementDocument ? (
+        <>
+          <Divider />
+          <CustomerDetailSection title="Agreement document">
+            <DocumentCardRow documents={[agreementDocument]} colors={colors} />
+          </CustomerDetailSection>
+        </>
+      ) : null}
+    </Stack>
   )
 }

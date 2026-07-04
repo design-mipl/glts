@@ -12,10 +12,10 @@ export function FollowupsTab({ enquiry, onAdd, onMarkComplete }: FollowupsTabPro
   return (
     <Stack spacing={1.5}>
       <Stack direction="row" justifyContent="flex-end">
-        <Button label="Add Follow-up" onClick={onAdd} />
+        <Button label="Add Follow-up" size="sm" onClick={onAdd} />
       </Stack>
       {enquiry.followups.map((entry) => (
-        <BaseCard key={entry.id} sx={{ p: 2 }}>
+        <BaseCard key={entry.id} sx={{ p: 2, boxShadow: 'none' }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} justifyContent="space-between">
             <Stack spacing={0.5}>
               <Typography variant="subtitle2">{entry.followupType.toUpperCase()}</Typography>
@@ -27,7 +27,7 @@ export function FollowupsTab({ enquiry, onAdd, onMarkComplete }: FollowupsTabPro
             <Stack direction="row" spacing={1} alignItems="center">
               <Badge label={entry.followupStatus} color={entry.followupStatus === 'completed' ? 'success' : 'warning'} size="sm" />
               {entry.followupStatus !== 'completed' ? (
-                <Button label="Mark Completed" variant="outlined" onClick={() => onMarkComplete(entry.id)} />
+                <Button label="Mark Completed" size="sm" variant="outlined" onClick={() => onMarkComplete(entry.id)} />
               ) : null}
             </Stack>
           </Stack>

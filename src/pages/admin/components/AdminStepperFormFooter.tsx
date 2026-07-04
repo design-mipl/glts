@@ -16,6 +16,8 @@ export interface AdminStepperFormFooterProps {
   submitLabel?: string
   loading?: boolean
   disabled?: boolean
+  /** Hides draft/submit actions; on the last step the primary submit button is omitted. */
+  submissionLocked?: boolean
 }
 
 /**
@@ -36,6 +38,7 @@ export function AdminStepperFormFooter({
   submitLabel = 'Submit',
   loading = false,
   disabled = false,
+  submissionLocked = false,
 }: AdminStepperFormFooterProps) {
   const isDisabled = disabled || loading
 
@@ -103,7 +106,7 @@ export function AdminStepperFormFooter({
             disabled={isDisabled}
             sx={{ width: { xs: '100%', sm: 'auto' } }}
           />
-        ) : (
+        ) : submissionLocked ? null : (
           <Button
             label={submitLabel}
             variant="contained"

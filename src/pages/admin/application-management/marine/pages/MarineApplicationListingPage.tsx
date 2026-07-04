@@ -15,7 +15,8 @@ import {
   AdminListingToolbar,
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
-import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
+import { marineApplicationAdminService, isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
+import { isMarineReadOnlyWorkspace } from '../config/marineWorkspaceMode'
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
 import { teamService } from '@/shared/services/teamService'
@@ -35,6 +36,7 @@ import {
 } from '../components/MarineApplicationAdvancedFilters'
 import { MarineApplicationAssignTeamModal } from '../components/MarineApplicationAssignTeamModal'
 import { buildMarineApplicationColumns } from '../components/MarineApplicationTableColumns'
+import { MARINE_APPLICATION_LISTING_TABS } from '../config/marineApplicationListingTabs'
 import {
   downloadMarineApplicationCsv,
   filterMarineRowsByTab,
@@ -57,7 +59,7 @@ export function MarineApplicationListingPage() {
   const [filters, setFilters] = useState<ApplicationListingFilterState>(EMPTY_APPLICATION_LISTING_FILTERS)
 
   const { singles, bulks } = useMemo(
-    () => marineApplicationAdminService.listSubmittedMarineApplications(),
+    () => marineApplicationAdminService.listMarineApplications(),
     [refreshKey],
   )
 
@@ -155,9 +157,20 @@ export function MarineApplicationListingPage() {
 
   const handleRowClick = useCallback(
     (row: MarineApplicationRow) => {
-      navigate(`/admin/application-management/marine/${row.id}`)
+      if (!isCustomerSubmitted(row)) {
+        showToast({
+          title: 'Draft application',
+          description: 'Submit this application before opening document verification.',
+          variant: 'info',
+        })
+        return
+      }
+      const detailPath = `/admin/application-management/marine/${row.id}`
+      navigate(
+        isMarineReadOnlyWorkspace(row) ? `${detailPath}/view-form` : detailPath,
+      )
     },
-    [navigate],
+    [navigate, showToast],
   )
 
   const gridItems = useMemo(
@@ -176,7 +189,7 @@ export function MarineApplicationListingPage() {
       stickyPageHeader={
         <AdminListingStickyHeader
           title="Application Management"
-          description="Operational workspace for submitted applications"
+          description="Operational workspace for marine applications across the full submission pipeline"
           actions={
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               <Button label="Create application" startIcon={<Plus size={14} />} onClick={handleCreate} />
@@ -185,15 +198,10 @@ export function MarineApplicationListingPage() {
         />
       }
       kpis={<MarineApplicationKpiRow rows={allRows} />}
-      tabs={[
-        { value: 'all', label: 'All applications' },
-        { value: 'new_applications', label: 'New applications' },
-        { value: 'under_verification', label: 'Under verification' },
-        { value: 'ready_for_submission', label: 'Ready for submission' },
-        { value: 'embassy_processing', label: 'Embassy processing' },
-        { value: 'visa_approved', label: 'Visa approved' },
-        { value: 'completed', label: 'Completed' },
-      ]}
+      tabs={MARINE_APPLICATION_LISTING_TABS.map(tab => ({
+        value: tab.value,
+        label: tab.label,
+      }))}
       tabValue={activeTab}
       onTabChange={value => handleTabChange(value as MarineApplicationListingTab)}
       toolbar={

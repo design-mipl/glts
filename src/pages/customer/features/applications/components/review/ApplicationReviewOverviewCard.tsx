@@ -67,6 +67,12 @@ export function ApplicationReviewOverviewCard({
         {[
           ['Country', `${overview.countryFlag} ${overview.countryName}`],
           ['Visa', visaLabel],
+          ...(overview.issuedPassportLocationLabel
+            ? ([['Passport state', overview.issuedPassportLocationLabel]] as const)
+            : []),
+          ...(overview.placeOfResidenceLabel
+            ? ([['Place of residence', overview.placeOfResidenceLabel]] as const)
+            : []),
           ['Jurisdiction', overview.jurisdiction || '—'],
           ['Travel', overview.travelDate || '—'],
           ['Travelers', String(travelerCount)],

@@ -39,6 +39,7 @@ export function AdminShell({ children }: AdminShellProps) {
         onSignOut={signOut}
         onProfileClick={goToProfile}
         hideTopbarUserDetails
+        hideTopbarNotificationBell
       >
         <AdminPageCanvasShell>{children}</AdminPageCanvasShell>
       </AppShell>

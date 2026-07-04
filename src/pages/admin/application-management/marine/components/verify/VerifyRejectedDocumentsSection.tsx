@@ -11,6 +11,7 @@ import {
 interface VerifyRejectedDocumentsSectionProps {
   entries: VerifyRejectedDocumentEntry[]
   gridSx?: VerifyDocumentGridSx
+  previewOnly?: boolean
   onPreview: (entry: VerifyRejectedDocumentEntry) => void
   onVerify: (entry: VerifyRejectedDocumentEntry) => void
   onReject: (entry: VerifyRejectedDocumentEntry) => void
@@ -20,6 +21,7 @@ interface VerifyRejectedDocumentsSectionProps {
 
 function RejectedDocumentCard({
   entry,
+  previewOnly = false,
   onPreview,
   onVerify,
   onReject,
@@ -27,6 +29,7 @@ function RejectedDocumentCard({
   onGltsUpload,
 }: {
   entry: VerifyRejectedDocumentEntry
+  previewOnly?: boolean
   onPreview: () => void
   onVerify: () => void
   onReject: () => void
@@ -36,6 +39,7 @@ function RejectedDocumentCard({
   return (
     <VerifyDocumentCard
       document={entry.document}
+      previewOnly={previewOnly}
       onPreview={onPreview}
       onVerify={onVerify}
       onReject={onReject}
@@ -48,6 +52,7 @@ function RejectedDocumentCard({
 export function VerifyRejectedDocumentsSection({
   entries,
   gridSx = VERIFY_DOCUMENT_GRID_SX,
+  previewOnly = false,
   onPreview,
   onVerify,
   onReject,
@@ -83,6 +88,7 @@ export function VerifyRejectedDocumentsSection({
             <RejectedDocumentCard
               key={`${entry.scope}-${entry.travelerId ?? 'global'}-${entry.document.documentId}`}
               entry={entry}
+              previewOnly={previewOnly}
               onPreview={() => onPreview(entry)}
               onVerify={() => onVerify(entry)}
               onReject={() => onReject(entry)}

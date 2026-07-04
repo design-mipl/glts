@@ -24,7 +24,7 @@ export function InternalNotesTab({ value, onChange, onSave }: InternalNotesTabPr
             fullWidth
           />
           <Stack direction="row" justifyContent="flex-end">
-            <Button label="Save Note" onClick={onSave} />
+            <Button label="Save Note" size="sm" onClick={onSave} />
           </Stack>
         </Stack>
       </BaseCard>

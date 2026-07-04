@@ -67,6 +67,7 @@ export function buildApplicationSummaryItems(
     ],
     ['Travel', overview.travelDate || '—'],
     ['Passport location', overview.issuedPassportLocationLabel || '—'],
+    ['Place of residence', overview.placeOfResidenceLabel || '—'],
     ['Jurisdiction', overview.jurisdiction || '—'],
     ['Nationality', row.nationality],
     ['Passport expiry', row.expiry],

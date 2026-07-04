@@ -120,6 +120,7 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
           travelDate: state.travelDate,
           issuedPassportLocationLabel:
             state.issuedPassportState || state.issuedPassportLocationId || undefined,
+          placeOfResidenceLabel: state.placeOfResidence || undefined,
           jurisdiction: state.jurisdiction,
           gltsApplicationId: state.gltsApplicationId || undefined,
           gltsBatchId: state.gltsBatchId || undefined,

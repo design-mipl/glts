@@ -57,8 +57,8 @@ export function AgreementKpiRow({ agreements }: AgreementKpiRowProps) {
   const theme = useTheme()
   const total = agreements.length
   const draft = agreements.filter((a) => a.status === 'draft').length
-  const submitted = agreements.filter((a) => a.status === 'submitted').length
-  const approved = agreements.filter((a) => a.status === 'approved').length
+  const ready = agreements.filter((a) => a.status === 'ready_for_activation').length
+  const active = agreements.filter((a) => a.status === 'active').length
 
   return (
     <Grid container spacing={1.5} sx={{ mb: 0.5 }}>
@@ -69,10 +69,10 @@ export function AgreementKpiRow({ agreements }: AgreementKpiRowProps) {
         <KpiCard label="Draft" value={draft} icon={FileText} iconColor={theme.palette.text.secondary} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <KpiCard label="Pending approval" value={submitted} icon={Send} iconColor={theme.palette.info.main} />
+        <KpiCard label="Ready for activation" value={ready} icon={Send} iconColor={theme.palette.info.main} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <KpiCard label="Approved" value={approved} icon={CheckCircle2} iconColor={theme.palette.success.main} />
+        <KpiCard label="Active" value={active} icon={CheckCircle2} iconColor={theme.palette.success.main} />
       </Grid>
     </Grid>
   )

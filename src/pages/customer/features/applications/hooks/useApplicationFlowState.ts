@@ -25,6 +25,8 @@ export interface ApplicationFlowState {
   expectedReturnDate: string
   /** Selected passport issuing state — maps to visa jurisdiction via applicable states. */
   issuedPassportState: string
+  /** Current place of residence — takes priority over passport state for jurisdiction mapping. */
+  placeOfResidence: string
   /** @deprecated Use issuedPassportState — kept for stored session compatibility. */
   issuedPassportLocationId: string
   /** Resolved country master jurisdiction id for document requirements. */
@@ -78,6 +80,7 @@ const defaultState: ApplicationFlowState = {
   billingAddress: '',
   expectedReturnDate: '',
   issuedPassportState: '',
+  placeOfResidence: '',
   issuedPassportLocationId: '',
   jurisdictionId: '',
   jurisdiction: '',
@@ -143,6 +146,7 @@ function loadStored(storageKey: string): ApplicationFlowState {
       ...defaultState,
       ...rest,
       issuedPassportState,
+      placeOfResidence: typeof parsed.placeOfResidence === 'string' ? parsed.placeOfResidence : '',
       jurisdictionId: typeof parsed.jurisdictionId === 'string' ? parsed.jurisdictionId : '',
       gltsApplicationId: typeof parsed.gltsApplicationId === 'string' ? parsed.gltsApplicationId : '',
       gltsBatchId: typeof parsed.gltsBatchId === 'string' ? parsed.gltsBatchId : '',

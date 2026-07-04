@@ -1,8 +1,13 @@
 import type { BusinessSegment } from '@/shared/types/countryMaster'
 import type { AgreementWorkflowType } from '@/shared/types/commercialAgreement'
+import { applicabilityForWorkflow } from '@/shared/utils/agreementDocumentUtils'
+import { getCompanyCityOptions, getCompanyStateOptions } from '@/shared/utils/companyAddressOptions'
 import { countryMasterAdminService } from '@/shared/services/countryMasterAdminService'
 import { serviceMasterService } from '@/shared/services/serviceMasterService'
-import type { MasterApplicability } from '@/shared/types/masterCommon'
+
+export { getCompanyAddressCountryOptions, getCompanyCityOptions, getCompanyStateOptions } from '@/shared/utils/companyAddressOptions'
+
+export { applicabilityForWorkflow }
 
 export function workflowToSegment(workflow: AgreementWorkflowType): BusinessSegment | undefined {
   switch (workflow) {
@@ -19,18 +24,6 @@ export function workflowToSegment(workflow: AgreementWorkflowType): BusinessSegm
     default:
       return undefined
   }
-}
-
-/** Applicability segments shown in Service Master for each agreement workflow. */
-function applicabilityForWorkflow(workflow: AgreementWorkflowType): MasterApplicability[] {
-  const map: Record<AgreementWorkflowType, MasterApplicability[]> = {
-    marine: ['marine'],
-    corporate: ['corporate', 'b2b'],
-    b2b_agent: ['b2b', 'corporate'],
-    retail: ['retail'],
-    mixed: ['marine', 'corporate', 'b2b', 'retail'],
-  }
-  return map[workflow] ?? ['marine', 'corporate', 'b2b', 'retail']
 }
 
 export function getCountrySelectOptions() {

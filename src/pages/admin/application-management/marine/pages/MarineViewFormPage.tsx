@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, CircularProgress, Divider, Stack, Typography } from '@mui/material'
+import Autocomplete from '@mui/material/Autocomplete'
+import TextField from '@mui/material/TextField'
 import { useParams } from 'react-router-dom'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import {
@@ -9,7 +11,6 @@ import {
   EmptyState,
   FormField,
   Modal,
-  Select,
   Textarea,
   useToast,
 } from '@/design-system/UIComponents'
@@ -34,6 +35,19 @@ import {
   type GltsDocumentUploadPayload,
 } from '../components/verify/GltsDocumentUploadDrawer'
 import { buildFormAssistFieldSectionsForStep } from '../utils/formAssistFieldBuilder'
+import { resolveMarineChecklistContext } from '../utils/marineChecklistContextUtils'
+import { isMarineReadOnlyWorkspace, resolveMarineWorkspaceMode } from '../config/marineWorkspaceMode'
+import type { QcCheckOutcome } from '../config/qcCheckChecklistConfig'
+import {
+  resolveDocsQcTemplate,
+  resolveFormViewTabEnabled,
+} from '../utils/marineDocsQcCheckUtils'
+import {
+  applicationMarineQcCheckService,
+  type MarineDocsQcCheckRecord,
+} from '@/shared/services/applicationMarineQcCheckService'
+import { autocompleteSlotProps, formControlHeight, outlinedFieldSx } from '@/design-system/formControl'
+import { useTheme } from '@mui/material/styles'
 import {
   buildOverviewFromDetail,
   collectRejectedVerifyDocuments,
@@ -45,6 +59,7 @@ export function MarineViewFormPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
   const navigate = useAppNavigate()
   const { showToast } = useToast()
+  const theme = useTheme()
 
   const workspace = useViewFormWorkspace(applicationId)
   const verifyWorkspace = useVerifyDocumentsWorkspace(applicationId)
@@ -52,6 +67,7 @@ export function MarineViewFormPage() {
   const {
     notFound,
     detail,
+    listingRow,
     rows,
     isBulk,
     selectedTravelerId,
@@ -123,17 +139,109 @@ export function MarineViewFormPage() {
     [applicationId, detail, isBulk, rows],
   )
 
-  const checklistContext = useMemo(() => {
-    const app = detail?.application
-    if (!app) return {}
-    if (app.country === 'China' && app.visaType === 'M Type Visa') {
-      return { countryId: '13', visaOfferingId: 'cn-m-type' }
+  const checklistContext = useMemo(
+    () =>
+      resolveMarineChecklistContext({
+        application: detail?.application,
+        listingRow,
+      }),
+    [detail?.application, listingRow],
+  )
+
+  const readOnly = useMemo(
+    () => Boolean(listingRow && isMarineReadOnlyWorkspace(listingRow)),
+    [listingRow],
+  )
+
+  const formLocked = readOnly || externallySubmitted
+
+  const docsQcTemplate = useMemo(
+    () =>
+      resolveDocsQcTemplate(
+        checklistContext.countryId,
+        checklistContext.visaOfferingId,
+        checklistContext.jurisdictionId,
+      ),
+    [checklistContext],
+  )
+
+  const [docsQcRecord, setDocsQcRecord] = useState<MarineDocsQcCheckRecord | null>(null)
+
+  useEffect(() => {
+    if (!applicationId || !selectedRow || !listingRow) {
+      setDocsQcRecord(null)
+      return
     }
-    if (app.country === 'China' && app.visaType === 'G Type Visa') {
-      return { countryId: '13', visaOfferingId: 'cn-g-type' }
+    const mode = resolveMarineWorkspaceMode(listingRow)
+    const record = applicationMarineQcCheckService.ensureRecord(
+      applicationId,
+      selectedRow.id,
+      mode === 'readonly' ? { seedCompleted: true, template: docsQcTemplate } : undefined,
+    )
+    setDocsQcRecord(record)
+  }, [applicationId, selectedRow?.id, listingRow, docsQcTemplate])
+
+  const formViewUnlocked = useMemo(
+    () => resolveFormViewTabEnabled(listingRow, docsQcRecord),
+    [listingRow, docsQcRecord],
+  )
+  const formInteractionDisabled = !formViewUnlocked
+  const docsQcReadyForSubmit = useMemo(
+    () => (docsQcRecord ? applicationMarineQcCheckService.isComplete(docsQcTemplate, docsQcRecord) : false),
+    [docsQcRecord, docsQcTemplate],
+  )
+  const docsQcSubmitted = useMemo(
+    () => (docsQcRecord ? applicationMarineQcCheckService.isSubmitted(docsQcRecord) : false),
+    [docsQcRecord],
+  )
+
+  const handleDocsQcCheckedChange = useCallback(
+    (itemId: string, value: boolean) => {
+      if (!applicationId || !selectedRow || readOnly) return
+      const next = applicationMarineQcCheckService.updateChecked(
+        applicationId,
+        selectedRow.id,
+        itemId,
+        value,
+        docsQcTemplate,
+      )
+      setDocsQcRecord(next)
+    },
+    [applicationId, selectedRow, readOnly, docsQcTemplate],
+  )
+
+  const handleDocsQcOutcomeChange = useCallback(
+    (outcome: QcCheckOutcome | '') => {
+      if (!applicationId || !selectedRow || readOnly) return
+      const next = applicationMarineQcCheckService.updateOutcome(
+        applicationId,
+        selectedRow.id,
+        outcome,
+        docsQcTemplate,
+      )
+      setDocsQcRecord(next)
+    },
+    [applicationId, selectedRow, readOnly, docsQcTemplate],
+  )
+
+  const handleSubmitDocsQc = useCallback(() => {
+    if (!applicationId || !selectedRow || readOnly) return
+    const next = applicationMarineQcCheckService.submit(applicationId, selectedRow.id, docsQcTemplate)
+    if (!next) {
+      showToast({
+        title: 'Complete checklist first',
+        description: 'Confirm all QC checklist items and set outcome to Verified & ready for submission.',
+        variant: 'warning',
+      })
+      return
     }
-    return {}
-  }, [detail?.application])
+    setDocsQcRecord(next)
+    showToast({
+      title: 'QC check submitted',
+      description: 'Form view is now unlocked for this traveler.',
+      variant: 'success',
+    })
+  }, [applicationId, selectedRow, readOnly, docsQcTemplate, showToast])
 
   const rejectedDocuments = useMemo(
     () => collectRejectedVerifyDocuments(rows, globalDocuments),
@@ -346,6 +454,11 @@ export function MarineViewFormPage() {
       return (
         <ViewFormSubmissionSection
           submission={submission}
+          country={listingRow?.country ?? detail?.countryName ?? ''}
+          visaType={listingRow?.visaType ?? detail?.visaTypeLabel ?? ''}
+          countryId={checklistContext.countryId}
+          visaOfferingId={checklistContext.visaOfferingId}
+          readOnly={readOnly || formInteractionDisabled}
           onChange={updateSubmission}
           onPickFile={pickSubmissionFile}
         />
@@ -355,6 +468,7 @@ export function MarineViewFormPage() {
     return (
       <CopyAssistFieldSections
         sections={buildFormAssistFieldSectionsForStep(currentStep.id, formContext)}
+        disabled={formInteractionDisabled}
       />
     )
   }
@@ -362,19 +476,39 @@ export function MarineViewFormPage() {
   const headerActions = (
     <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
       {isBulk && rows.length > 1 ? (
-        <Select
-          value={selectedTravelerId ?? ''}
-          onChange={v => setSelectedTravelerId(String(v))}
-          options={rows.map(r => ({
-            value: r.id,
-            label: `${r.travelerName} · ${r.passportNo}`,
-          }))}
-          size="sm"
-          sx={{ minWidth: 240 }}
+        <Autocomplete
+          options={rows}
+          value={rows.find(r => r.id === selectedTravelerId) ?? null}
+          onChange={(_, next) => setSelectedTravelerId(next?.id ?? '')}
+          getOptionLabel={option => `${option.travelerName} · ${option.passportNo}`}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
+          fullWidth={false}
+          openOnFocus
+          disableClearable
+          slotProps={autocompleteSlotProps(theme)}
+          sx={{
+            minWidth: 240,
+            ...outlinedFieldSx(theme, formControlHeight('sm')),
+          }}
+          renderInput={params => (
+            <TextField
+              {...params}
+              size="small"
+              placeholder="Search traveler"
+              inputProps={{
+                ...params.inputProps,
+                'aria-label': 'Search traveler',
+              }}
+            />
+          )}
         />
       ) : null}
-      {externallySubmitted ? (
-        <Badge label="Externally submitted" color="success" size="sm" />
+      {externallySubmitted || readOnly ? (
+        <Badge
+          label={readOnly ? 'Post-submission view' : 'Externally submitted'}
+          color="success"
+          size="sm"
+        />
       ) : (
         <Badge label={currentStep.label} color="info" size="sm" />
       )}
@@ -385,7 +519,7 @@ export function MarineViewFormPage() {
     <AdminRecordPageChrome
       breadcrumbs={[
         { label: 'Application Management', href: listingPath },
-        { label: 'View Form' },
+        { label: readOnly ? 'View application' : 'View Form' },
       ]}
     >
       <Stack spacing={2}>
@@ -402,6 +536,7 @@ export function MarineViewFormPage() {
         <VerifyDocumentsTimeline steps={timelineSteps} multiTraveler={rows.length > 1} />
 
         <ViewFormWorkspaceTabs
+          formViewEnabled={formViewUnlocked}
           qcPanel={
             overview ? (
               <ViewFormQcCheckSection
@@ -413,6 +548,20 @@ export function MarineViewFormPage() {
                 globalChecklistDocuments={globalChecklistDocuments}
                 countryId={checklistContext.countryId}
                 visaOfferingId={checklistContext.visaOfferingId}
+                docsQcTemplate={docsQcTemplate}
+                docsQcChecked={docsQcRecord?.checked ?? {}}
+                docsQcOutcome={docsQcRecord?.outcome ?? ''}
+                onDocsQcCheckedChange={handleDocsQcCheckedChange}
+                onDocsQcOutcomeChange={handleDocsQcOutcomeChange}
+                docsQcSubmitLabel={docsQcSubmitted ? 'QC submitted' : 'Submit QC check'}
+                docsQcSubmitDisabled={docsQcSubmitted || !docsQcReadyForSubmit}
+                docsQcSubmitHint={
+                  docsQcSubmitted
+                    ? 'QC already submitted. You can proceed in Form view.'
+                    : 'Submit QC after confirming every checklist item and selecting Verified & ready for submission.'
+                }
+                onDocsQcSubmit={handleSubmitDocsQc}
+                readOnly={readOnly}
                 onPreview={handlePreview}
                 onTravelerVerify={document => openVerifyDialog('traveler', document, selectedRow?.id)}
                 onTravelerReject={document =>
@@ -480,16 +629,17 @@ export function MarineViewFormPage() {
                   <AdminStepperFormFooter
                     activeStep={activeStepIndex}
                     isLastStep={isLastStep}
-                    onCancel={() => navigate(verifyPath)}
-                    cancelLabel="Back to verify"
-                    onDraft={externallySubmitted ? undefined : handleSaveDraft}
+                    onCancel={() => navigate(readOnly ? listingPath : verifyPath)}
+                    cancelLabel={readOnly ? 'Back to listing' : 'Back to verify'}
+                    onDraft={formLocked || formInteractionDisabled ? undefined : handleSaveDraft}
                     draftLabel="Save draft"
                     onBack={() => setActiveStep(Math.max(0, activeStepIndex - 1))}
-                    onNext={requestStepContinue}
+                    onNext={formInteractionDisabled ? undefined : requestStepContinue}
                     nextLabel="Continue"
-                    onSubmit={externallySubmitted ? undefined : handleMarkSubmitted}
+                    onSubmit={formLocked || formInteractionDisabled ? undefined : handleMarkSubmitted}
                     submitLabel="Mark as submitted"
-                    disabled={externallySubmitted}
+                    disabled={(externallySubmitted && !readOnly) || formInteractionDisabled}
+                    submissionLocked={formLocked}
                   />
                 }
               />

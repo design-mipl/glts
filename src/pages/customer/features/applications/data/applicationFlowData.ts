@@ -228,6 +228,46 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     },
   }),
   singleRow({
+    id: 'GLTS-APP-2026-880',
+    applicantName: 'Draft Crew Member',
+    passportNumber: 'IN9921044',
+    companyName: 'Oceanic Marine Ltd',
+    vesselName: 'MV Oceanic Star',
+    country: 'Singapore',
+    countryFlag: '🇸🇬',
+    visaType: 'Crew · Standard',
+    jurisdiction: 'Mumbai',
+    travelDate: '2026-06-15',
+    submissionDate: '',
+    createdAt: '2026-02-21',
+    lastUpdated: '2026-02-21',
+    processingStage: 'Intake',
+    operationalStatus: 'Draft',
+    createdByEmail: 'priya@glts.com',
+    createdByRole: 'booker',
+    customerSegment: 'marine',
+  }),
+  singleRow({
+    id: 'GLTS-APP-2026-881',
+    applicantName: 'Marco Silva',
+    passportNumber: 'BR4412098',
+    companyName: 'Harbor Line Crewing',
+    vesselName: 'MV Atlantic Crest',
+    country: 'Schengen',
+    countryFlag: '🇩🇪',
+    visaType: 'Crew · Type C',
+    jurisdiction: 'Mumbai',
+    travelDate: '2026-05-20',
+    submissionDate: '2026-02-18',
+    createdAt: '2026-02-12',
+    lastUpdated: '2026-02-20',
+    processingStage: 'Document verification',
+    operationalStatus: 'Verification Pending',
+    createdByEmail: 'ops@harborlinecrew.com',
+    createdByRole: 'admin',
+    customerSegment: 'marine',
+  }),
+  singleRow({
     id: GLTS_APPLICATION_IDS.japan,
     applicantName: 'Raj Kumar',
     passportNumber: 'M8829104',
@@ -959,6 +999,8 @@ export interface SingleApplicationFlowExtras {
   vesselName: string
   imoNumber: string
   joiningPort: string
+  issuedPassportState?: string
+  placeOfResidence?: string
   jurisdiction?: string
 }
 

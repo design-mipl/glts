@@ -211,7 +211,7 @@ function RequirementPreviewEmptyState({
           </Typography>
           <Typography sx={{ fontSize: 12, color: colors.textSecondary, maxWidth: 300, lineHeight: 1.5 }}>
             {requiresJurisdictionSelection
-              ? 'Choose an issued passport state on the left to load jurisdiction-specific documents, samples, and GLTS scope.'
+              ? 'Choose issued passport state and place of residence on the left. Jurisdiction follows place of residence when provided.'
               : 'Document requirements for this visa type will appear here once configured in country master.'}
           </Typography>
           {requiresJurisdictionSelection ? (
@@ -230,7 +230,7 @@ function RequirementPreviewEmptyState({
             >
               <ArrowLeft size={14} color={colors.textMuted} />
               <Typography sx={{ fontSize: 11, fontWeight: 600, color: colors.textMuted }}>
-                Start with passport state
+                Start with passport state or residence
               </Typography>
             </Stack>
           ) : null}

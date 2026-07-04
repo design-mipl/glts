@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Box, Stack, alpha, useTheme } from '@mui/material'
-import { ClipboardCheck, RefreshCw } from 'lucide-react'
+import { Box, alpha, useTheme } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
-import { Button, Pagination, useToast } from '@/design-system/UIComponents'
+import { Pagination, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   AdminListingGrid,
@@ -35,16 +34,12 @@ export function ExpenseListingPage() {
   const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<ExpenseListingTab>('marine')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
-  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     applicationExpenseManagementService.syncAllSubmitted()
-  }, [refreshKey])
+  }, [])
 
-  const tabRows = useMemo(
-    () => loadExpenseListingRows(activeTab),
-    [activeTab, refreshKey],
-  )
+  const tabRows = useMemo(() => loadExpenseListingRows(activeTab), [activeTab])
 
   const listing = useCustomerListing({
     rows: tabRows,
@@ -64,11 +59,6 @@ export function ExpenseListingPage() {
     [activeTab, listing.tableState.searchQuery],
   )
   const gridItems = useMemo(() => mapExpenseRowsToGridItems(listing.paginatedRows), [listing.paginatedRows])
-
-  const handleRefresh = useCallback(() => {
-    setRefreshKey(key => key + 1)
-    showToast({ title: 'Expenses refreshed', description: 'Synced application-linked expenses.', variant: 'success' })
-  }, [showToast])
 
   const handleExport = useCallback(() => {
     downloadExpenseListingCsv(listing.filterSourceRows)
@@ -95,22 +85,6 @@ export function ExpenseListingPage() {
         <AdminListingStickyHeader
           title="Expense management"
           description="Consolidated financial view of submitted applications and mapped expenses."
-          actions={
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              <Button
-                label="Approval queue"
-                variant="outlined"
-                startIcon={<ClipboardCheck size={14} />}
-                onClick={() => navigate(`${EXPENSE_LISTING_BASE_PATH}/approval-queue`)}
-              />
-              <Button
-                label="Refresh"
-                variant="neutral"
-                startIcon={<RefreshCw size={14} />}
-                onClick={handleRefresh}
-              />
-            </Stack>
-          }
         />
       }
       kpis={

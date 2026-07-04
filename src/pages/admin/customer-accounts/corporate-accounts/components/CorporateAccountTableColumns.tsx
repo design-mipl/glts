@@ -55,13 +55,6 @@ export function buildCorporateAccountColumns({
       searchable: true,
     },
     {
-      key: 'totalAdmins',
-      label: 'Total Admins',
-      widthSize: adminListingColumnWidthSize('count'),
-      sortable: true,
-      align: 'center',
-    },
-    {
       key: 'totalEntities',
       label: 'Total Entities',
       widthSize: adminListingColumnWidthSize('count'),

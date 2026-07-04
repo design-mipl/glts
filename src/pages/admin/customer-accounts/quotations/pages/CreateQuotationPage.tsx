@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useToast } from '@/design-system/UIComponents'
 import {
   AdminFullPageFormFooter,
@@ -20,28 +20,36 @@ const ACTOR = 'Admin User'
 
 export function CreateQuotationPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { showToast } = useToast()
-  const { formData, setFormData, errors, validate } = useQuotationForm()
+  const { formData, setFormData, selectedEnquiry, errors, validate, hydrateFromEnquiry, clearEnquirySelection } =
+    useQuotationForm()
   const [loading, setLoading] = useState(false)
   const addPricingHandlerRef = useRef<(() => void) | null>(null)
+  const enquiryHydratedRef = useRef<string | null>(null)
 
-  const save = async (submitAfter = false) => {
-    if (submitAfter && !validate()) return
+  const enquiryIdParam = searchParams.get('enquiryId')
+
+  useEffect(() => {
+    if (!enquiryIdParam || enquiryHydratedRef.current === enquiryIdParam) return
+    enquiryHydratedRef.current = enquiryIdParam
+    void hydrateFromEnquiry(enquiryIdParam).then((ok) => {
+      if (!ok) {
+        showToast({
+          title: 'Enquiry unavailable',
+          description: 'The enquiry was not found or is no longer eligible for quotation.',
+          variant: 'error',
+        })
+      }
+    })
+  }, [enquiryIdParam, hydrateFromEnquiry, showToast])
+
+  const save = async () => {
+    if (!validate()) return
     setLoading(true)
     const record = quotationService.saveForm(undefined, formData, ACTOR)
-    if (submitAfter) {
-      const result = quotationService.submitForApproval(record.id, ACTOR)
-      if (!result.ok) {
-        showToast({ title: 'Cannot submit', description: result.issues?.join('; '), variant: 'error' })
-        setLoading(false)
-        return
-      }
-      showToast({ title: 'Submitted for approval', variant: 'success' })
-      navigate(`/admin/customer-accounts/quotations/${record.id}`)
-    } else {
-      showToast({ title: 'Draft saved', variant: 'success' })
-      navigate(`/admin/customer-accounts/quotations/${record.id}`)
-    }
+    showToast({ title: 'Quotation saved', variant: 'success' })
+    navigate(`/admin/customer-accounts/quotations/${record.id}`)
     setLoading(false)
   }
 
@@ -49,15 +57,22 @@ export function CreateQuotationPage() {
     <AdminFullPageFormShell
       breadcrumbs={breadcrumbs}
       title="Create Quotation"
-      headerActions={<AdminFullPageFormHeaderSave loading={loading} onClick={() => void save(false)} />}
-      sections={buildQuotationFormSections({ formData, setFormData, errors, addPricingHandlerRef })}
+      headerActions={<AdminFullPageFormHeaderSave loading={loading} onClick={() => void save()} />}
+      sections={buildQuotationFormSections({
+        formData,
+        setFormData,
+        errors,
+        selectedEnquiry,
+        addPricingHandlerRef,
+        onSelectEnquiry: (enquiryId) => void hydrateFromEnquiry(enquiryId),
+        onClearEnquiry: clearEnquirySelection,
+      })}
       footer={
         <AdminFullPageFormFooter
           loading={loading}
           onCancel={() => navigate('/admin/customer-accounts/quotations')}
-          onDraft={() => void save(false)}
-          onSave={() => void save(true)}
-          saveLabel="Submit for Approval"
+          onSave={() => void save()}
+          saveLabel="Save Quotation"
         />
       }
     />

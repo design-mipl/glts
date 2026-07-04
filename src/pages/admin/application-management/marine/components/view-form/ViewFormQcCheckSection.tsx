@@ -21,6 +21,8 @@ import {
 import { resolveOriginalRequiredDocuments } from '@/shared/utils/originalDocumentCollectionUtils'
 import { PHYSICAL_DOCUMENT_LABEL } from '@/shared/constants/documentRequirementLabels'
 import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
+import type { CountryQcChecklistTemplate } from '@/shared/types/countryMaster'
+import type { QcCheckOutcome } from '../../config/qcCheckChecklistConfig'
 
 type QcDocumentTab = 'checklist' | 'original'
 
@@ -33,6 +35,15 @@ interface ViewFormQcCheckSectionProps {
   globalChecklistDocuments: ApplicantDocumentItem[]
   countryId?: string
   visaOfferingId?: string
+  docsQcTemplate: CountryQcChecklistTemplate
+  docsQcChecked: Record<string, boolean>
+  docsQcOutcome: QcCheckOutcome | ''
+  onDocsQcCheckedChange: (itemId: string, value: boolean) => void
+  onDocsQcOutcomeChange: (outcome: QcCheckOutcome | '') => void
+  onDocsQcSubmit?: () => void
+  docsQcSubmitLabel?: string
+  docsQcSubmitHint?: string
+  docsQcSubmitDisabled?: boolean
   onPreview: (documentId: string, scope: 'traveler' | 'global') => void
   onTravelerVerify: (document: ApplicantDocumentItem) => void
   onTravelerReject: (document: ApplicantDocumentItem) => void
@@ -48,6 +59,7 @@ interface ViewFormQcCheckSectionProps {
   onRejectedGltsUpload: (entry: VerifyRejectedDocumentEntry) => void
   onOriginalCollectionChange?: (collection: OriginalDocumentCollectionState) => void
   onOriginalReceivedSubmit?: (collection: OriginalDocumentCollectionState) => void
+  readOnly?: boolean
 }
 
 export function ViewFormQcCheckSection({
@@ -74,6 +86,16 @@ export function ViewFormQcCheckSection({
   onRejectedGltsUpload,
   onOriginalCollectionChange,
   onOriginalReceivedSubmit,
+  readOnly = false,
+  docsQcTemplate,
+  docsQcChecked,
+  docsQcOutcome,
+  onDocsQcCheckedChange,
+  onDocsQcOutcomeChange,
+  onDocsQcSubmit,
+  docsQcSubmitLabel,
+  docsQcSubmitHint,
+  docsQcSubmitDisabled,
 }: ViewFormQcCheckSectionProps) {
   const [activeTab, setActiveTab] = useState<QcDocumentTab>('checklist')
 
@@ -108,6 +130,7 @@ export function ViewFormQcCheckSection({
       <VerifyRejectedDocumentsSection
         entries={rejectedDocuments}
         gridSx={VERIFY_DOCUMENT_SPLIT_GRID_SX}
+        previewOnly={readOnly}
         onPreview={onRejectedPreview}
         onVerify={onRejectedVerify}
         onReject={onRejectedReject}
@@ -122,6 +145,7 @@ export function ViewFormQcCheckSection({
       travelerDocuments={selectedRow && detail ? digitalTravelerDocuments : []}
       globalDocuments={globalChecklistDocuments}
       gridSx={VERIFY_DOCUMENT_SPLIT_GRID_SX}
+      previewOnly={readOnly}
       onTravelerPreview={documentId => onPreview(documentId, 'traveler')}
       onTravelerVerify={onTravelerVerify}
       onTravelerReject={onTravelerReject}
@@ -139,6 +163,7 @@ export function ViewFormQcCheckSection({
       selectedRow={selectedRow}
       countryId={countryId}
       visaOfferingId={visaOfferingId}
+      readOnly={readOnly}
       onCollectionChange={onOriginalCollectionChange}
       onReceivedSubmit={onOriginalReceivedSubmit}
     />
@@ -173,7 +198,18 @@ export function ViewFormQcCheckSection({
         {documentsPane}
       </Grid>
       <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0, display: 'flex' }}>
-        <QcCheckChecklist />
+        <QcCheckChecklist
+          template={docsQcTemplate}
+          checked={docsQcChecked}
+          outcome={docsQcOutcome}
+          onCheckedChange={onDocsQcCheckedChange}
+          onOutcomeChange={onDocsQcOutcomeChange}
+          submitLabel={docsQcSubmitLabel}
+          submitHint={docsQcSubmitHint}
+          submitDisabled={docsQcSubmitDisabled}
+          onSubmit={onDocsQcSubmit}
+          readOnly={readOnly}
+        />
       </Grid>
     </Grid>
   )

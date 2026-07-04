@@ -58,7 +58,9 @@ export function deriveFinanceContactPersons(
     })
   }
 
-  return contacts
+  const manualContacts = data.manualFinanceContacts ?? []
+
+  return [...contacts, ...manualContacts]
 }
 
 export function financeContactsSummaryFromPersons(
@@ -130,7 +132,102 @@ export function financeContactSourceTypeLabel(sourceType: AgreementFinanceContac
       return 'Parent company'
     case 'entity':
       return 'Entity'
+    case 'manual':
+      return 'Manual'
     default:
       return sourceType
+  }
+}
+
+export function isManualFinanceContact(contact: AgreementFinanceContactPerson): boolean {
+  return contact.id.startsWith('fc-manual-')
+}
+
+export interface FinanceContactSourceOption {
+  value: string
+  label: string
+  sourceType: AgreementFinanceContactPerson['sourceType']
+  sourceId?: string
+  sourceLabel: string
+}
+
+export function getFinanceContactSourceOptions(
+  data: CommercialAgreementFormData,
+): FinanceContactSourceOption[] {
+  const options: FinanceContactSourceOption[] = []
+
+  if (data.company.companyName.trim()) {
+    options.push({
+      value: 'company:primary',
+      label: `Company · ${data.company.companyName.trim()}`,
+      sourceType: 'company',
+      sourceId: 'primary',
+      sourceLabel: data.company.companyName.trim(),
+    })
+  }
+
+  if (data.parentCompanyId) {
+    const parent = companyMasterService.getById(data.parentCompanyId)
+    if (parent) {
+      options.push({
+        value: `parent:${parent.id}`,
+        label: `Parent · ${parent.companyName}`,
+        sourceType: 'parent_company',
+        sourceId: parent.id,
+        sourceLabel: `Parent · ${parent.companyName}`,
+      })
+    }
+  }
+
+  for (const entity of data.entities) {
+    options.push({
+      value: `entity:${entity.id}`,
+      label: `Entity · ${entity.entityName.trim() || 'Untitled entity'}`,
+      sourceType: 'entity',
+      sourceId: entity.id,
+      sourceLabel: `Entity · ${entity.entityName.trim() || 'Untitled entity'}`,
+    })
+  }
+
+  options.push({
+    value: 'manual:standalone',
+    label: 'Manual contact',
+    sourceType: 'manual',
+    sourceLabel: 'Manual contact',
+  })
+
+  return options
+}
+
+export function getFinanceContactSourceValue(contact: AgreementFinanceContactPerson): string {
+  if (contact.sourceType === 'manual') return 'manual:standalone'
+  if (contact.sourceType === 'company' && contact.sourceId) return 'company:primary'
+  if (!contact.sourceId) return ''
+  if (contact.sourceType === 'parent_company') return `parent:${contact.sourceId}`
+  if (contact.sourceType === 'entity') return `entity:${contact.sourceId}`
+  return ''
+}
+
+export function extractManualFinanceContacts(
+  agreement: CommercialAgreement | CommercialAgreementFormData,
+): AgreementFinanceContactPerson[] {
+  if ('manualFinanceContacts' in agreement && agreement.manualFinanceContacts?.length) {
+    return [...agreement.manualFinanceContacts]
+  }
+  return (agreement.financeContactPersons ?? []).filter((contact) => contact.id.startsWith('fc-manual-'))
+}
+
+export function createEmptyManualFinanceContact(
+  data?: CommercialAgreementFormData,
+): AgreementFinanceContactPerson {
+  const firstSource = data ? getFinanceContactSourceOptions(data)[0] : undefined
+  return {
+    id: `fc-manual-${Date.now()}`,
+    sourceType: firstSource?.sourceType ?? 'manual',
+    sourceId: firstSource?.sourceId,
+    sourceLabel: firstSource?.sourceLabel ?? 'Manual contact',
+    contactPerson: '',
+    email: '',
+    phone: '',
   }
 }

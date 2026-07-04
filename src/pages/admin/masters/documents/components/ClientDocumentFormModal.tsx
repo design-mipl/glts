@@ -7,6 +7,7 @@ import {
   MultiSelect,
   Select,
   Textarea,
+  Toggle,
   useToast,
 } from '@/design-system/UIComponents'
 import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
@@ -104,6 +105,14 @@ export function ClientDocumentFormModal({
             ).map(([value, label]) => ({ value, label }))}
             size="sm"
             fullWidth
+          />
+        </FormField>
+        <FormField label="Mandatory">
+          <Toggle
+            checked={formData.isMandatory}
+            onChange={(checked) => setFormData({ ...formData, isMandatory: checked })}
+            label="Required during client onboarding"
+            size="sm"
           />
         </FormField>
         <AdminFullPageFormFieldSpan>

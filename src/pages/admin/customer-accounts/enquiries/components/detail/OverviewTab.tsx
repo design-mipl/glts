@@ -1,10 +1,14 @@
-import { Grid, Stack, Typography } from '@mui/material'
+import { Grid, Box, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material'
 import { BaseCard, Button } from '@/design-system/UIComponents'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
 import {
+  agreementEmbeddedTableHeadCellSx,
+  agreementEmbeddedTableSx,
+} from '@/pages/admin/customer-accounts/agreements/components/agreementFormLayout'
+import {
   formatEnquiryInquirySource,
-  formatEnquiryProcessingType,
 } from '../../config/enquiryFormConfig'
+import { getVisaRequirementItems, purposeOfVisitTableTextSx } from '@/shared/utils/enquiryVisaRequirementUtils'
 
 function Field({ label, value }: { label: string; value?: string | number | boolean }) {
   return (
@@ -29,6 +33,7 @@ export function OverviewTab({ enquiry, onUploadAttachment }: OverviewTabProps) {
     enquiry.notes.initialDiscussionNotes ||
     [enquiry.notes.customerExpectations, enquiry.notes.specialInstructions].filter(Boolean).join('\n\n') ||
     undefined
+  const visaItems = getVisaRequirementItems(enquiry.visaRequirement)
 
   return (
     <Stack spacing={2}>
@@ -57,7 +62,7 @@ export function OverviewTab({ enquiry, onUploadAttachment }: OverviewTabProps) {
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <Field
-              label="Inquiry Source"
+              label="Enquiry Source"
               value={formatEnquiryInquirySource(enquiry.salesDetails.inquirySource)}
             />
           </Grid>
@@ -66,25 +71,38 @@ export function OverviewTab({ enquiry, onUploadAttachment }: OverviewTabProps) {
 
       <BaseCard sx={{ p: 2 }}>
         <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
-          Visa Requirement Details
+          Country Visa Requirement Details
         </Typography>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Field label="Country Requirement" value={enquiry.visaRequirement.countries.join(', ')} />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Field label="Visa Type" value={enquiry.visaRequirement.visaType} />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Field label="Purpose of Visit" value={enquiry.visaRequirement.purposeOfVisit} />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Field
-              label="Processing Type"
-              value={formatEnquiryProcessingType(enquiry.visaRequirement.processingType)}
-            />
-          </Grid>
-        </Grid>
+        {visaItems.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            No country requirements recorded.
+          </Typography>
+        ) : (
+          <Box sx={agreementEmbeddedTableSx}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Country</TableCell>
+                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Visa Type</TableCell>
+                  <TableCell sx={{ ...agreementEmbeddedTableHeadCellSx, width: '36%' }}>Purpose of Visit</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {visaItems.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.country}</TableCell>
+                    <TableCell>{item.visaType}</TableCell>
+                    <TableCell sx={{ maxWidth: 0, width: '36%' }}>
+                      <Typography variant="body2" sx={purposeOfVisitTableTextSx}>
+                        {item.purposeOfVisit || '—'}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
+        )}
       </BaseCard>
 
       <BaseCard sx={{ p: 2 }}>

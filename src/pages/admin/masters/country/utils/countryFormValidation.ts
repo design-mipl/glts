@@ -55,6 +55,7 @@ export function createEmptyCountryFormData(): CountryMasterFormData {
     fastMinutes: undefined,
     visaApplicationWindow: { ...DEFAULT_VISA_APPLICATION_WINDOW },
     travelDateRiskThresholds: { ...DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS },
+    applicationTrackingUrl: '',
     passportIssueLocations: [],
     segments: ALL_SEGMENTS.map((segment) => emptySegment(segment, segment === 'retail')),
   }
@@ -84,6 +85,7 @@ export function countryMasterToFormData(
     fastMinutes: master.fastMinutes,
     visaApplicationWindow: master.visaApplicationWindow ?? { ...DEFAULT_VISA_APPLICATION_WINDOW },
     travelDateRiskThresholds: master.travelDateRiskThresholds ?? { ...DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS },
+    applicationTrackingUrl: master.applicationTrackingUrl ?? '',
     passportIssueLocations: master.passportIssueLocations ?? [],
     segments: ensureAllSegments(normalizeCountrySegments(structuredClone(master.segments))),
   }

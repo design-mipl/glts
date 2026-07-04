@@ -16,7 +16,7 @@ import {
 } from '../utils/assignmentQueueListingUtils'
 
 export function useAssignmentQueue(segmentConfig: AssignmentSegmentConfig) {
-  const [listingTab, setListingTab] = useState<AssignmentListingTab>('all')
+  const [listingTab, setListingTab] = useState<AssignmentListingTab>('pending_assignment')
   const [queueFilters, setQueueFilters] = useState<AssignmentQueueFilters>(EMPTY_ASSIGNMENT_QUEUE_FILTERS)
   const [tableState, setTableState] = useState<TableState>(INITIAL_TABLE_STATE)
   const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({})

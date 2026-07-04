@@ -2,7 +2,9 @@ import { Box, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
+import { entityMasterService } from '@/shared/services/entityMasterService'
 import { teamService } from '@/shared/services/teamService'
+import { vesselMasterService } from '@/shared/services/vesselMasterService'
 import type { CorporateAccountFormData } from '@/shared/types/corporateAccount'
 import { billingTypeLabel, workflowTypeLabel } from '../../agreements/config/agreementStatusConfig'
 import { corporatePortalStatusLabel } from '../config/corporateAccountStatusConfig'
@@ -35,10 +37,18 @@ export function CorporateAccountReviewPanel({ data }: CorporateAccountReviewPane
     assignedUserNames.length > 0
       ? `${assignedUserNames.length} · ${assignedUserNames.map((u) => `${u.fullName} (${u.email})`).join(', ')}`
       : '—'
+  const teamLeaderTeamName = data.teamLeaderTeamId ? teamService.getById(data.teamLeaderTeamId)?.name ?? '—' : '—'
+  const teamLeaderNames = data.teamLeaderUserIds
+    .map((id) => adminPortalUserService.getById(id))
+    .filter((user): user is NonNullable<typeof user> => Boolean(user))
+  const teamLeadersValue =
+    teamLeaderNames.length > 0
+      ? `${teamLeaderNames.length} · ${teamLeaderNames.map((u) => `${u.fullName} (${u.email})`).join(', ')}`
+      : '—'
   const counts = {
     totalAdmins: data.admins.length + (data.superAdmin.fullName ? 1 : 0),
-    totalEntities: data.entityIds.length,
-    totalVessels: data.vesselIds.length,
+    totalEntities: data.entityIds.filter((id) => entityMasterService.getById(id)).length,
+    totalVessels: data.vesselIds.filter((id) => vesselMasterService.getById(id)).length,
   }
   const statCards = [
     { label: 'Admins', value: String(counts.totalAdmins) },
@@ -110,6 +120,16 @@ export function CorporateAccountReviewPanel({ data }: CorporateAccountReviewPane
             <ReviewRow label="Portal status" value={corporatePortalStatusLabel[data.portalActivation.portalStatus]} />
             <ReviewRow label="Billing" value={agreement ? billingTypeLabel[agreement.billingType] : '—'} />
           </Box>
+        </Box>
+
+        <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1.5, px: 1.5, py: 1.25 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+            Team leader
+          </Typography>
+          <Stack spacing={0.9}>
+            <ReviewRow label="Team" value={teamLeaderTeamName} />
+            <ReviewRow label="Team leaders" value={teamLeadersValue} />
+          </Stack>
         </Box>
 
         <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1.5, px: 1.5, py: 1.25 }}>
