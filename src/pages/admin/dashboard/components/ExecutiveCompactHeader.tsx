@@ -21,10 +21,6 @@ export function ExecutiveCompactHeader({
   return (
     <Box
       sx={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        bgcolor: 'background.default',
         pb: 2,
         mb: 0.5,
       }}
