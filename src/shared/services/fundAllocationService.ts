@@ -211,6 +211,22 @@ export const fundAllocationService = {
     })
   },
 
+  allocateFundsBulk(
+    ids: string[],
+    buildInput: (record: FundAllocationPassengerRow) => FundAllocationActionInput | null,
+  ): FundAllocationPassengerRow[] {
+    const results: FundAllocationPassengerRow[] = []
+    for (const id of ids) {
+      const record = this.getById(id)
+      if (!record || record.allocationStatus !== 'pending_allocation') continue
+      const input = buildInput(record)
+      if (!input) continue
+      const updated = this.allocateFunds(id, input)
+      if (updated) results.push(updated)
+    }
+    return results
+  },
+
   resetStoreForDemo() {
     overlayStore = new Map(
       Object.entries(SEED_FUND_ALLOCATION_OVERLAYS).map(([entryId, overlay]) => [

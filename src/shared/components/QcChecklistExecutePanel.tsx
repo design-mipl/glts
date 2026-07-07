@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
 import { BaseCard, Button, Checkbox, RadioGroup } from '@/design-system/UIComponents'
-import type { CountryQcChecklistTemplate } from '@/shared/types/countryMaster'
+import type { CountryQcChecklistSection, CountryQcChecklistTemplate } from '@/shared/types/countryMaster'
 import {
   countEnabledQcChecklistItems,
   getExecutableQcChecklistSections,
@@ -10,6 +10,18 @@ import {
 export interface QcChecklistOutcomeOption {
   value: string
   label: string
+}
+
+function getSectionCheckState(section: CountryQcChecklistSection, checked: Record<string, boolean>) {
+  if (section.items.length === 0) {
+    return { checked: false, indeterminate: false }
+  }
+
+  const checkedCount = section.items.filter(item => Boolean(checked[item.id])).length
+  return {
+    checked: checkedCount === section.items.length,
+    indeterminate: checkedCount > 0 && checkedCount < section.items.length,
+  }
 }
 
 interface QcChecklistExecutePanelProps {
@@ -48,6 +60,15 @@ export function QcChecklistExecutePanel({
     [checked],
   )
 
+  const handleSectionCheckedChange = useCallback(
+    (section: CountryQcChecklistSection, value: boolean) => {
+      for (const item of section.items) {
+        onCheckedChange(item.id, value)
+      }
+    },
+    [onCheckedChange],
+  )
+
   return (
     <BaseCard
       sx={{
@@ -78,12 +99,27 @@ export function QcChecklistExecutePanel({
 
       <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 2, pb: 1 }}>
         <Stack spacing={2} divider={<Divider flexItem />}>
-          {sections.map((section) => (
+          {sections.map((section) => {
+            const sectionState = getSectionCheckState(section, checked)
+
+            return (
             <Stack key={section.id} spacing={0.75}>
-              <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
-                {section.title}
-              </Typography>
-              <Stack spacing={0}>
+              <Checkbox
+                size="sm"
+                label={section.title}
+                checked={sectionState.checked}
+                indeterminate={sectionState.indeterminate}
+                disabled={readOnly}
+                onChange={() => handleSectionCheckedChange(section, !sectionState.checked)}
+                sx={{
+                  mx: 0,
+                  alignItems: 'flex-start',
+                  '& .MuiFormControlLabel-root': { alignItems: 'flex-start', ml: 0 },
+                  '& .MuiCheckbox-root': { pt: 0.25, pb: 0.25 },
+                  '& .MuiFormControlLabel-label': { fontSize: 13, lineHeight: 1.45, fontWeight: 700 },
+                }}
+              />
+              <Stack spacing={0} sx={{ pl: 3 }}>
                 {section.items.map((item) => (
                   <Checkbox
                     key={item.id}
@@ -103,7 +139,8 @@ export function QcChecklistExecutePanel({
                 ))}
               </Stack>
             </Stack>
-          ))}
+            )
+          })}
         </Stack>
       </Box>
 

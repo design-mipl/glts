@@ -8,8 +8,10 @@ import { corporateAccountService } from '@/shared/services/corporateAccountServi
 import { entityMasterService } from '@/shared/services/entityMasterService'
 import { teamService } from '@/shared/services/teamService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
+import { bookerManagementService } from '@/shared/services/bookerManagementService'
 import { splitAgreementDocuments } from '@/shared/utils/agreementDocumentUtils'
 import type { CorporateAccount, CorporateAdminUser } from '@/shared/types/corporateAccount'
+import type { BookerUser } from '@/shared/types/bookerUser'
 import {
   billingTypeColor,
   billingTypeLabel,
@@ -55,8 +57,8 @@ export function OverviewTab({ account }: { account: CorporateAccount }) {
         <Typography variant="body2">{counts.totalAdmins}</Typography>
       </Grid>
       <Grid size={{ xs: 12, md: 4 }}>
-        <Typography variant="caption" color="text.secondary">Entities / Vessels</Typography>
-        <Typography variant="body2">{counts.totalEntities} / {counts.totalVessels}</Typography>
+        <Typography variant="caption" color="text.secondary">Entities / Vessels / Bookers</Typography>
+        <Typography variant="body2">{counts.totalEntities} / {counts.totalVessels} / {counts.totalBookers}</Typography>
       </Grid>
       <Grid size={{ xs: 12, md: 4 }}>
         <Typography variant="caption" color="text.secondary">Team leader team</Typography>
@@ -271,6 +273,106 @@ export function VesselsTab({ account }: { account: CorporateAccount }) {
         vessels.map((v) => (
           <Typography key={v!.id} variant="body2">{v!.vesselName} · {v!.vesselType} · {v!.status}</Typography>
         ))
+      )}
+    </Stack>
+  )
+}
+
+export function BookersTab({
+  account,
+  onSendLogin,
+  onChangePassword,
+  onSetStatus,
+}: {
+  account: CorporateAccount
+  onSendLogin: (bookerId: string) => void
+  onChangePassword: (booker: BookerUser) => void
+  onSetStatus: (bookerId: string, status: 'active' | 'inactive') => void
+}) {
+  const bookers = (account.bookerIds ?? [])
+    .map((id) => bookerManagementService.getById(id))
+    .filter((booker): booker is BookerUser => Boolean(booker))
+
+  const buildActions = (booker: BookerUser): RowAction[] => {
+    const isActive = booker.status === 'active'
+    const actions: RowAction[] = [
+      {
+        label: 'Send login email',
+        icon: <Mail size={14} />,
+        onClick: () => onSendLogin(booker.id),
+        disabled: !isActive,
+      },
+      {
+        label: 'Change password',
+        icon: <KeyRound size={14} />,
+        onClick: () => onChangePassword(booker),
+      },
+    ]
+
+    if (isActive) {
+      actions.push({
+        label: 'Deactivate user',
+        icon: <UserX size={14} />,
+        variant: 'destructive',
+        divider: true,
+        onClick: () => onSetStatus(booker.id, 'inactive'),
+      })
+    } else {
+      actions.push({
+        label: 'Activate user',
+        icon: <UserCheck size={14} />,
+        divider: true,
+        onClick: () => onSetStatus(booker.id, 'active'),
+      })
+    }
+
+    return actions
+  }
+
+  return (
+    <Stack spacing={1.5}>
+      {bookers.length === 0 ? (
+        <Typography variant="body2" color="text.secondary">No bookers linked.</Typography>
+      ) : (
+        bookers.map((booker) => {
+          const extras = (booker.additionalEmails ?? []).length
+          const emailSummary = extras > 0 ? `${booker.email} (+${extras} more)` : booker.email
+          const isActive = booker.status === 'active'
+
+          return (
+            <Stack
+              key={booker.id}
+              direction={{ xs: 'column', sm: 'row' }}
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              justifyContent="space-between"
+              spacing={1}
+              sx={{
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1.5,
+                px: 1.25,
+                py: 1,
+              }}
+            >
+              <Stack spacing={0.35} sx={{ minWidth: 0 }}>
+                <Stack direction="row" alignItems="center" spacing={0.75} useFlexGap flexWrap="wrap">
+                  <Typography variant="body2" fontWeight={600}>
+                    {booker.fullName}
+                  </Typography>
+                  <Badge
+                    label={isActive ? 'Active' : 'Inactive'}
+                    color={isActive ? 'success' : 'neutral'}
+                    size="sm"
+                  />
+                </Stack>
+                <Typography variant="caption" color="text.secondary">
+                  {emailSummary} · {booker.mobile || 'No mobile'}
+                </Typography>
+              </Stack>
+              <RowActions row={booker} actions={buildActions(booker)} />
+            </Stack>
+          )
+        })
       )}
     </Stack>
   )

@@ -1,7 +1,11 @@
-import { Select } from '@/design-system/UIComponents'
+import { DatePicker, Select } from '@/design-system/UIComponents'
 import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 import { APPLICATION_CUSTOMER_SEGMENT_OPTIONS } from '@/shared/config/applicationCustomerSegmentConfig'
 import type { FundAllocationQueueFilters } from '@/shared/types/fundAllocation'
+import {
+  formatFundAllocationFilterDate,
+  parseFundAllocationFilterDate,
+} from '../utils/fundAllocationListingUtils'
 
 export interface FundAllocationAdvancedFilterFieldsProps {
   draft: FundAllocationQueueFilters
@@ -18,7 +22,9 @@ export function hasFundAllocationFiltersActive(filters: FundAllocationQueueFilte
     filters.customerSegment ||
       filters.country ||
       filters.visaType ||
-      filters.jurisdiction,
+      filters.jurisdiction ||
+      filters.dateFrom ||
+      filters.dateTo,
   )
 }
 
@@ -74,6 +80,33 @@ export function FundAllocationAdvancedFilterFields({
             ...options.jurisdictions.map(jurisdiction => ({ value: jurisdiction, label: jurisdiction })),
           ]}
           placeholder="Jurisdiction"
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="VFS submission from">
+        <DatePicker
+          value={parseFundAllocationFilterDate(draft.dateFrom)}
+          onChange={from =>
+            patch({
+              dateFrom: formatFundAllocationFilterDate(from),
+            })
+          }
+          placeholder="DD/MM/YYYY"
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="VFS submission to">
+        <DatePicker
+          value={parseFundAllocationFilterDate(draft.dateTo)}
+          onChange={to =>
+            patch({
+              dateTo: formatFundAllocationFilterDate(to),
+            })
+          }
+          minDate={parseFundAllocationFilterDate(draft.dateFrom) ?? undefined}
+          placeholder="DD/MM/YYYY"
           size="sm"
           fullWidth
         />

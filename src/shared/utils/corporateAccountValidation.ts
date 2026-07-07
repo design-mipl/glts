@@ -8,6 +8,7 @@ export type CorporateAccountSectionId =
   | 'admins'
   | 'entities'
   | 'vessels'
+  | 'bookers'
   | 'activation'
   | 'review'
 
@@ -38,6 +39,7 @@ export function createEmptyCorporateAccountFormData(): CorporateAccountFormData 
     teamLeaderUserIds: [],
     entityIds: [],
     vesselIds: [],
+    bookerIds: [],
     portalActivation: {
       portalStatus: 'draft',
       loginAccess: true,
@@ -71,7 +73,7 @@ export function validateCorporateAccountStep(step: number, data: CorporateAccoun
       else if (!isValidEmail(admin.emailAddress)) issues.push(`Admin ${i + 1}: invalid email`)
     }
   }
-  if (step === 5) {
+  if (step === 6) {
     if (!data.teamLeaderTeamId) issues.push('Select a team for team leader')
     if (data.teamLeaderUserIds.length === 0) issues.push('Assign at least one team leader')
     if (!data.assignedTeamId) issues.push('Select a team')
@@ -92,7 +94,7 @@ export function corporateAccountSectionComplete(
     case 'admins':
       return validateCorporateAccountStep(2, data).length === 0
     case 'activation':
-      return validateCorporateAccountStep(5, data).length === 0
+      return validateCorporateAccountStep(6, data).length === 0
     case 'review':
       return validateForActivation(data).ok
     default:

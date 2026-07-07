@@ -9,6 +9,17 @@ import type {
   BookerUserListFilters,
 } from '@/shared/types/bookerUser'
 import type { ManagedUserActivity, ManagedUserDeleteResult, ManagedUserStatus } from '@/shared/types/managedUser'
+import {
+  formatCredentialEmailPayload,
+  generateTemporaryPassword,
+} from '@/shared/utils/corporateAccountValidation'
+
+export interface BookerCreateOptions {
+  corporateAccountId?: string
+  companyName?: string
+  createdBy?: string
+  createdById?: string
+}
 
 function nowIso() {
   return new Date().toISOString()
@@ -60,10 +71,23 @@ function resolveBookerCompanyName(): string {
   return 'Apex Marine Logistics'
 }
 
+function normalizeAdditionalEmails(emails: string[]): string[] {
+  const seen = new Set<string>()
+  const result: string[] = []
+  for (const raw of emails) {
+    const normalized = raw.trim().toLowerCase()
+    if (!normalized || seen.has(normalized)) continue
+    seen.add(normalized)
+    result.push(normalized)
+  }
+  return result
+}
+
 function formToBooker(data: BookerUserFormData, companyName: string) {
   return {
     fullName: data.fullName.trim(),
     email: data.email.trim().toLowerCase(),
+    additionalEmails: normalizeAdditionalEmails(data.additionalEmails),
     companyName: companyName.trim() || resolveBookerCompanyName(),
     mobile: data.mobile.trim(),
     location: data.location.trim(),
@@ -77,12 +101,16 @@ function formToBooker(data: BookerUserFormData, companyName: string) {
 
 export const bookerManagementService = {
   list(filters: BookerUserListFilters = {}): BookerUser[] {
-    const { status = 'all', location = 'all', createdBy = 'all', query, scopedToAdminId } = filters
+    const { status = 'all', location = 'all', createdBy = 'all', query, scopedToAdminId, corporateAccountId } = filters
     const q = normalizeQuery(query)
     let rows = [...bookerStore]
 
     if (scopedToAdminId) {
       rows = rows.filter(row => row.createdById === scopedToAdminId)
+    }
+
+    if (corporateAccountId) {
+      rows = rows.filter(row => row.corporateAccountId === corporateAccountId)
     }
 
     if (status !== 'all') {
@@ -102,7 +130,8 @@ export const bookerManagementService = {
         row =>
           row.fullName.toLowerCase().includes(q) ||
           row.email.toLowerCase().includes(q) ||
-          row.mobile.includes(q),
+          row.mobile.includes(q) ||
+          (row.additionalEmails ?? []).some(email => email.toLowerCase().includes(q)),
       )
     }
 
@@ -115,18 +144,27 @@ export const bookerManagementService = {
 
   isEmailTaken(email: string, excludeId?: string): boolean {
     const normalized = email.trim().toLowerCase()
-    return bookerStore.some(row => row.email === normalized && row.id !== excludeId)
+    if (!normalized) return false
+    return bookerStore.some(row => {
+      if (row.id === excludeId) return false
+      if (row.email === normalized) return true
+      return (row.additionalEmails ?? []).includes(normalized)
+    })
   },
 
-  create(data: BookerUserFormData): BookerUser {
+  create(data: BookerUserFormData, options: BookerCreateOptions = {}): BookerUser {
     const timestamp = nowIso()
-    const creator = resolveCreatorIds()
+    const creator = options.createdBy && options.createdById
+      ? { createdBy: options.createdBy, createdById: options.createdById }
+      : resolveCreatorIds()
+    const companyName = options.companyName?.trim() || resolveBookerCompanyName()
     const inviteDetail = data.sendInviteEmail
       ? `${data.fullName.trim()} invited via email.`
       : `${data.fullName.trim()} added without invite email.`
     const record: BookerUser = {
       id: generateBookerId(),
-      ...formToBooker(data, resolveBookerCompanyName()),
+      ...formToBooker(data, companyName),
+      corporateAccountId: options.corporateAccountId,
       ...creator,
       lastLogin: undefined,
       applicationCount: 0,
@@ -176,6 +214,8 @@ export const bookerManagementService = {
   },
 
   resendInvite(id: string): BookerUser | undefined {
+    const payload = this.sendLoginEmail(id)
+    if (!payload) return undefined
     const existing = bookerStore.find(row => row.id === id)
     if (!existing) return undefined
     const index = bookerStore.findIndex(row => row.id === id)
@@ -189,6 +229,51 @@ export const bookerManagementService = {
     }
     bookerStore = [...bookerStore.slice(0, index), updated, ...bookerStore.slice(index + 1)]
     return updated
+  },
+
+  sendLoginEmail(id: string): ReturnType<typeof formatCredentialEmailPayload> | undefined {
+    const existing = bookerStore.find(row => row.id === id)
+    if (!existing || existing.status !== 'active') return undefined
+
+    const password = existing.temporaryPassword ?? generateTemporaryPassword()
+    const index = bookerStore.findIndex(row => row.id === id)
+    const timestamp = nowIso()
+    const updated: BookerUser = {
+      ...existing,
+      temporaryPassword: password,
+      credentialsSentAt: timestamp,
+      updatedAt: timestamp,
+      activities: [
+        makeActivity('Credentials sent', `Login email sent to ${existing.email}`),
+        ...existing.activities,
+      ],
+    }
+    bookerStore = [...bookerStore.slice(0, index), updated, ...bookerStore.slice(index + 1)]
+    return formatCredentialEmailPayload(existing.email, password)
+  },
+
+  changePassword(
+    id: string,
+    password?: string,
+  ): ReturnType<typeof formatCredentialEmailPayload> | undefined {
+    const existing = bookerStore.find(row => row.id === id)
+    if (!existing) return undefined
+
+    const nextPassword = password?.trim() || generateTemporaryPassword()
+    const index = bookerStore.findIndex(row => row.id === id)
+    const timestamp = nowIso()
+    const updated: BookerUser = {
+      ...existing,
+      temporaryPassword: nextPassword,
+      credentialsSentAt: timestamp,
+      updatedAt: timestamp,
+      activities: [
+        makeActivity('Password updated', `Password reset for ${existing.email}`),
+        ...existing.activities,
+      ],
+    }
+    bookerStore = [...bookerStore.slice(0, index), updated, ...bookerStore.slice(index + 1)]
+    return formatCredentialEmailPayload(existing.email, nextPassword)
   },
 
   remove(id: string): ManagedUserDeleteResult {

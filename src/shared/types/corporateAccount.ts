@@ -58,6 +58,7 @@ export interface CorporateAccount {
   teamLeaderUserIds?: string[]
   entityIds: string[]
   vesselIds: string[]
+  bookerIds?: string[]
   portalActivation: CorporatePortalActivation
   createdAt: string
   updatedAt: string
@@ -81,6 +82,7 @@ export interface CorporateAccountFormData {
   teamLeaderUserIds: string[]
   entityIds: string[]
   vesselIds: string[]
+  bookerIds: string[]
   portalActivation: CorporatePortalActivation
 }
 

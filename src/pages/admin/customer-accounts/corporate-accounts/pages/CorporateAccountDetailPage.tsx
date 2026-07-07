@@ -3,8 +3,11 @@ import { Box, CircularProgress } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { BaseCard, ConfirmDialog, EmptyState, Tabs, useToast } from '@/design-system/UIComponents'
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
+import { BookerPasswordDialog } from '@/pages/customer/features/user-management/bookers/components/BookerPasswordDialog'
+import { bookerManagementService } from '@/shared/services/bookerManagementService'
 import { corporateAccountService } from '@/shared/services/corporateAccountService'
 import type { CorporateAccount, CorporateAdminUser } from '@/shared/types/corporateAccount'
+import type { BookerUser } from '@/shared/types/bookerUser'
 import { PORTAL_LOGIN_URL } from '@/shared/utils/corporateAccountValidation'
 import { CorporateAccountAdminPasswordDialog } from '../components/CorporateAccountAdminPasswordDialog'
 import { CorporateAccountDetailSummary } from '../components/CorporateAccountDetailSummary'
@@ -16,6 +19,7 @@ import {
   DocumentsTab,
   EntitiesTab,
   OverviewTab,
+  BookersTab,
   VesselsTab,
 } from '../components/detail/CorporateAccountDetailTabs'
 
@@ -30,6 +34,10 @@ export function CorporateAccountDetailPage() {
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
   const [passwordUpdating, setPasswordUpdating] = useState(false)
   const [accessTarget, setAccessTarget] = useState<{ adminId: string; accessStatus: 'active' | 'inactive' }>()
+  const [passwordBooker, setPasswordBooker] = useState<BookerUser>()
+  const [bookerPasswordDialogOpen, setBookerPasswordDialogOpen] = useState(false)
+  const [bookerPasswordUpdating, setBookerPasswordUpdating] = useState(false)
+  const [bookerAccessTarget, setBookerAccessTarget] = useState<{ bookerId: string; status: 'active' | 'inactive' }>()
 
   const reload = useCallback(() => {
     if (!accountId) return
@@ -123,6 +131,61 @@ export function CorporateAccountDetailPage() {
     ? [account.superAdmin, ...account.admins].find((admin) => admin?.id === accessTarget.adminId)
     : undefined
 
+  const handleSendBookerLogin = (bookerId: string) => {
+    const payload = bookerManagementService.sendLoginEmail(bookerId)
+    if (!payload) {
+      showToast({ title: 'Could not send credentials', variant: 'error' })
+      return
+    }
+    showToast({
+      title: 'Login credentials sent',
+      description: `${payload.portalUrl} · ${payload.username} · ${payload.temporaryPassword}`,
+      variant: 'success',
+    })
+    reload()
+  }
+
+  const handleChangeBookerPassword = (password: string) => {
+    if (!passwordBooker) return
+    setBookerPasswordUpdating(true)
+    const payload = bookerManagementService.changePassword(passwordBooker.id, password)
+    setBookerPasswordUpdating(false)
+    if (!payload) {
+      showToast({ title: 'Could not update password', variant: 'error' })
+      return
+    }
+    setBookerPasswordDialogOpen(false)
+    setPasswordBooker(undefined)
+    showToast({
+      title: 'Password updated',
+      description: `${payload.username} · ${payload.temporaryPassword}`,
+      variant: 'success',
+    })
+    reload()
+  }
+
+  const handleConfirmBookerAccessChange = () => {
+    if (!bookerAccessTarget) return
+    const { bookerId, status } = bookerAccessTarget
+    const updated = bookerManagementService.setStatus(bookerId, status)
+    setBookerAccessTarget(undefined)
+    if (!updated) {
+      showToast({ title: 'Could not update booker access', variant: 'error' })
+      return
+    }
+    showToast({
+      title: status === 'active' ? 'Booker activated' : 'Booker deactivated',
+      variant: 'success',
+    })
+    reload()
+  }
+
+  const bookerAccessTargetRecord = bookerAccessTarget
+    ? (account.bookerIds ?? [])
+        .map((id) => bookerManagementService.getById(id))
+        .find((booker) => booker?.id === bookerAccessTarget.bookerId)
+    : undefined
+
   return (
     <>
       <AdminDetailShell
@@ -169,6 +232,7 @@ export function CorporateAccountDetailPage() {
               },
               { label: 'Entities', value: 'entities', badge: corporateAccountService.getCounts(account).totalEntities },
               { label: 'Vessels', value: 'vessels', badge: corporateAccountService.getCounts(account).totalVessels },
+              { label: 'Bookers', value: 'bookers', badge: corporateAccountService.getCounts(account).totalBookers },
               { label: 'Billing configuration', value: 'billing' },
               { label: 'Documents', value: 'documents' },
               { label: 'Activity logs', value: 'activity', badge: account.activities.length },
@@ -196,6 +260,17 @@ export function CorporateAccountDetailPage() {
           {activeTab === 'assigned-users' ? <AssignedUsersTab account={account} /> : null}
           {activeTab === 'entities' ? <EntitiesTab account={account} /> : null}
           {activeTab === 'vessels' ? <VesselsTab account={account} /> : null}
+          {activeTab === 'bookers' ? (
+            <BookersTab
+              account={account}
+              onSendLogin={handleSendBookerLogin}
+              onChangePassword={(booker) => {
+                setPasswordBooker(booker)
+                setBookerPasswordDialogOpen(true)
+              }}
+              onSetStatus={(bookerId, status) => setBookerAccessTarget({ bookerId, status })}
+            />
+          ) : null}
           {activeTab === 'billing' ? <BillingTab account={account} /> : null}
           {activeTab === 'documents' ? <DocumentsTab account={account} /> : null}
           {activeTab === 'activity' ? <ActivityTab account={account} /> : null}
@@ -211,6 +286,33 @@ export function CorporateAccountDetailPage() {
         }}
         onConfirm={handleChangePassword}
         loading={passwordUpdating}
+      />
+
+      <BookerPasswordDialog
+        open={bookerPasswordDialogOpen}
+        booker={passwordBooker}
+        onClose={() => {
+          setBookerPasswordDialogOpen(false)
+          setPasswordBooker(undefined)
+        }}
+        onConfirm={handleChangeBookerPassword}
+        loading={bookerPasswordUpdating}
+      />
+
+      <ConfirmDialog
+        open={Boolean(bookerAccessTarget)}
+        onClose={() => setBookerAccessTarget(undefined)}
+        onConfirm={handleConfirmBookerAccessChange}
+        title={bookerAccessTarget?.status === 'inactive' ? 'Deactivate booker?' : 'Activate booker?'}
+        description={
+          bookerAccessTargetRecord
+            ? bookerAccessTarget?.status === 'inactive'
+              ? `${bookerAccessTargetRecord.fullName} will lose portal login access until reactivated.`
+              : `${bookerAccessTargetRecord.fullName} will be able to sign in to the corporate portal again.`
+            : 'Update portal access for this booker.'
+        }
+        confirmLabel={bookerAccessTarget?.status === 'inactive' ? 'Deactivate' : 'Activate'}
+        variant={bookerAccessTarget?.status === 'inactive' ? 'destructive' : 'default'}
       />
 
       <ConfirmDialog

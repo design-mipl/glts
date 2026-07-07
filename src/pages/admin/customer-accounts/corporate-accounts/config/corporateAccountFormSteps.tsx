@@ -11,6 +11,7 @@ import { CorporateAccountPortalActivationFields } from '../components/CorporateA
 import { CorporateAccountReviewPanel } from '../components/CorporateAccountReviewPanel'
 import { CorporateAccountSuperAdminFields } from '../components/CorporateAccountSuperAdminFields'
 import { CorporateAccountVesselsSection } from '../components/CorporateAccountVesselsSection'
+import { CorporateAccountBookersSection } from '../components/CorporateAccountBookersSection'
 
 export const CORPORATE_ACCOUNT_WORKSPACE_SECTIONS: {
   id: CorporateAccountSectionId
@@ -47,6 +48,12 @@ export const CORPORATE_ACCOUNT_WORKSPACE_SECTIONS: {
     navId: 'section-vessels',
     label: 'Vessel setup',
     description: 'Link vessels to entities for marine workflow applications.',
+  },
+  {
+    id: 'bookers',
+    navId: 'section-bookers',
+    label: 'Booker setup',
+    description: 'Add portal bookers who can create and manage visa applications.',
   },
   {
     id: 'activation',
@@ -187,6 +194,18 @@ export function buildCorporateAccountFormSteps(
       description: 'Linked vessels',
       children: (
         <CorporateAccountVesselsSection
+          data={formData}
+          corporateAccountId={options.corporateAccountId}
+          onChange={onChange}
+        />
+      ),
+    },
+    {
+      id: 'bookers',
+      label: 'Booker setup',
+      description: 'Portal bookers',
+      children: (
+        <CorporateAccountBookersSection
           data={formData}
           corporateAccountId={options.corporateAccountId}
           onChange={onChange}
