@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Box, alpha, useTheme } from '@mui/material'
-import { RefreshCw } from 'lucide-react'
-import { Button, Pagination, useToast } from '@/design-system/UIComponents'
+import { Box, Stack, alpha, useTheme } from '@mui/material'
+import { RefreshCw, Wallet } from 'lucide-react'
+import { BulkActions, Button, Pagination, type TableState, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   AdminListingGrid,
@@ -16,6 +16,10 @@ import {
   FundAllocationActionModal,
   type FundAllocationActionPayload,
 } from '../components/FundAllocationActionModal'
+import {
+  FundAllocationBulkActionModal,
+  type FundAllocationBulkConfirmPayload,
+} from '../components/FundAllocationBulkActionModal'
 import {
   FundAllocationAdvancedFilterFields,
   hasFundAllocationFiltersActive,
@@ -32,9 +36,12 @@ import {
   computeFundAllocationKpis,
   downloadFundAllocationCsv,
   getFundAllocationCellValue,
+  getFundAllocationCountryKey,
   getFundAllocationFilterOptions,
   getFundAllocationTabEmptyState,
+  sanitizeFundAllocationSelection,
 } from '../utils/fundAllocationListingUtils'
+import { computePassengerBulkAllocationInput } from '../utils/fundAllocationBulkUtils'
 import { customerSegmentDisplayLabel } from '../config/fundAllocationStatusConfig'
 
 export function FundAllocationListingPage() {
@@ -42,6 +49,7 @@ export function FundAllocationListingPage() {
   const { showToast } = useToast()
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [actionModalRecord, setActionModalRecord] = useState<FundAllocationPassengerRow | null>(null)
+  const [bulkModalRecords, setBulkModalRecords] = useState<FundAllocationPassengerRow[]>([])
 
   const {
     listingTab,
@@ -70,14 +78,64 @@ export function FundAllocationListingPage() {
   const emptyState = useMemo(() => getFundAllocationTabEmptyState(listingTab), [listingTab])
   const kpis = useMemo(() => computeFundAllocationKpis(allRows), [allRows])
 
+  const selectedRows = useMemo(
+    () => filterSourceRows.filter(row => tableState.selectedRows.includes(row.id)),
+    [filterSourceRows, tableState.selectedRows],
+  )
+
   const hasActiveFilters = Boolean(
     queueFilters.customerSegment ||
       queueFilters.country ||
       queueFilters.visaType ||
       queueFilters.jurisdiction ||
+      queueFilters.dateFrom ||
+      queueFilters.dateTo ||
       searchValue ||
       Object.values(columnFilters).some(values => values.length > 0) ||
       tableState.sortKey,
+  )
+
+  const handleTableStateChange = useCallback(
+    (next: TableState) => {
+      const { ids, rejected } = sanitizeFundAllocationSelection(
+        filterSourceRows,
+        next.selectedRows,
+        tableState.selectedRows,
+      )
+      if (rejected) {
+        showToast({
+          title: 'Different country',
+          description: 'Bulk allocation is only allowed for passengers in the same country.',
+          variant: 'warning',
+        })
+      }
+      setTableState({ ...next, selectedRows: ids })
+    },
+    [filterSourceRows, setTableState, showToast, tableState.selectedRows],
+  )
+
+  const openBulkAllocate = useCallback(
+    (rows: FundAllocationPassengerRow[]) => {
+      if (rows.length === 0) {
+        showToast({
+          title: 'Select passengers',
+          description: 'Select at least one passenger to allocate funds.',
+          variant: 'warning',
+        })
+        return
+      }
+      const countries = new Set(rows.map(getFundAllocationCountryKey))
+      if (countries.size > 1) {
+        showToast({
+          title: 'Different country',
+          description: 'Bulk allocation is only allowed for passengers in the same country.',
+          variant: 'warning',
+        })
+        return
+      }
+      setBulkModalRecords(rows)
+    },
+    [showToast],
   )
 
   const handleAction = useCallback(
@@ -100,6 +158,17 @@ export function FundAllocationListingPage() {
     () => columns.filter(col => col.key !== 'actions').map(col => ({ key: col.key, label: col.label })),
     [columns],
   )
+
+  const bulkActions = useMemo(() => {
+    if (listingTab !== 'pending_allocation') return undefined
+    return [
+      {
+        label: 'Allocate funds',
+        icon: <Wallet size={14} />,
+        onClick: (rows: FundAllocationPassengerRow[]) => openBulkAllocate(rows),
+      },
+    ]
+  }, [listingTab, openBulkAllocate])
 
   const handleExport = useCallback(() => {
     downloadFundAllocationCsv(filterSourceRows)
@@ -125,6 +194,28 @@ export function FundAllocationListingPage() {
     [actionModalRecord, mutateAndRefresh, showToast],
   )
 
+  const handleBulkAllocate = useCallback(
+    (records: FundAllocationPassengerRow[], payload: FundAllocationBulkConfirmPayload) => {
+      mutateAndRefresh(() => {
+        fundAllocationService.allocateFundsBulk(records.map(record => record.id), record =>
+          computePassengerBulkAllocationInput(record, payload.selectedServiceKeys, {
+            creditCardId: payload.creditCardId,
+            notes: payload.notes,
+          }),
+        )
+      })
+
+      setBulkModalRecords([])
+      setTableState(state => ({ ...state, selectedRows: [] }))
+      showToast({
+        title: 'Funds allocated',
+        description: `${records.length} passenger${records.length === 1 ? '' : 's'} updated.`,
+        variant: 'success',
+      })
+    },
+    [mutateAndRefresh, setTableState, showToast],
+  )
+
   const gridItems = useMemo(
     () =>
       paginatedRows.map(row => ({
@@ -144,21 +235,32 @@ export function FundAllocationListingPage() {
 
   const listingBody =
     viewMode === 'table' ? (
-      <AdminListingTable
-        columns={columns}
-        data={paginatedRows}
-        filterSourceData={filterSourceRows}
-        rowKey="id"
-        state={tableState}
-        onStateChange={setTableState}
-        columnFilters={columnFilters}
-        onColumnFiltersChange={setColumnFilters}
-        getCellValue={getFundAllocationCellValue}
-        onRowClick={selectPassenger}
-        stickyHeader
-        emptyTitle={emptyState.title}
-        emptyDescription={emptyState.description}
-      />
+      <Stack spacing={0}>
+        {listingTab === 'pending_allocation' && bulkActions && tableState.selectedRows.length > 0 ? (
+          <BulkActions
+            selectedRows={selectedRows}
+            actions={bulkActions}
+            onAction={(action, rows) => action.onClick(rows)}
+            onDeselectAll={() => setTableState(state => ({ ...state, selectedRows: [] }))}
+          />
+        ) : null}
+        <AdminListingTable
+          columns={columns}
+          data={paginatedRows}
+          filterSourceData={filterSourceRows}
+          rowKey="id"
+          state={tableState}
+          onStateChange={handleTableStateChange}
+          columnFilters={columnFilters}
+          onColumnFiltersChange={setColumnFilters}
+          getCellValue={getFundAllocationCellValue}
+          onRowClick={selectPassenger}
+          bulkActions={bulkActions}
+          stickyHeader
+          emptyTitle={emptyState.title}
+          emptyDescription={emptyState.description}
+        />
+      </Stack>
     ) : (
       <AdminListingGrid
         items={gridItems}
@@ -217,10 +319,7 @@ export function FundAllocationListingPage() {
             filterPopover={{
               active: hasActiveFilters,
               value: queueFilters,
-              onApply: next => {
-                setQueueFilters(next)
-                setTableState(state => ({ ...state, page: 0 }))
-              },
+              onApply: setQueueFilters,
               onClear: clearFilters,
               hasActive: hasFundAllocationFiltersActive,
               width: 'wide',
@@ -260,6 +359,13 @@ export function FundAllocationListingPage() {
         record={actionModalRecord}
         onClose={() => setActionModalRecord(null)}
         onConfirm={handleAllocate}
+      />
+
+      <FundAllocationBulkActionModal
+        open={bulkModalRecords.length > 0}
+        records={bulkModalRecords}
+        onClose={() => setBulkModalRecords([])}
+        onConfirm={handleBulkAllocate}
       />
     </>
   )

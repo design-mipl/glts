@@ -21,6 +21,8 @@ export interface DateRangePickerProps {
   helperText?: string
   size?: 'sm' | 'md'
   fullWidth?: boolean
+  /** `stacked` keeps start/end fields vertical — best for narrow filter popovers. */
+  layout?: 'auto' | 'inline' | 'stacked'
   sx?: SxProps<Theme>
 }
 
@@ -39,6 +41,7 @@ export default function DateRangePicker({
   helperText,
   size = 'sm',
   fullWidth = false,
+  layout = 'auto',
   sx,
 }: DateRangePickerProps) {
   const startVal = value?.[0] ?? null
@@ -53,18 +56,44 @@ export default function DateRangePicker({
   }
 
   return (
-    <Stack spacing={1} sx={sx}>
+    <Stack
+      spacing={1}
+      sx={{
+        width: fullWidth ? '100%' : undefined,
+        ...(layout === 'auto' ? { containerType: 'inline-size' } : undefined),
+        ...sx,
+      }}
+    >
       {label ? (
         <Typography component="span" sx={formFieldLabelSx()}>
           {label}
         </Typography>
       ) : null}
       <Stack
-        direction={{ xs: 'column', sm: 'row' }}
+        direction={layout === 'stacked' ? 'column' : layout === 'inline' ? 'row' : 'column'}
         spacing={1}
-        alignItems={{ sm: 'flex-start' }}
+        alignItems={layout === 'stacked' ? 'stretch' : layout === 'inline' ? 'flex-start' : 'stretch'}
+        sx={{
+          width: fullWidth ? '100%' : undefined,
+          ...(layout === 'auto'
+            ? {
+                '@container (min-width: 420px)': {
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                },
+              }
+            : undefined),
+        }}
       >
-        <Box sx={{ flex: 1, minWidth: 0, width: fullWidth ? '100%' : undefined }}>
+        <Box
+          sx={{
+            flex: fullWidth ? '1 1 auto' : undefined,
+            alignSelf: fullWidth ? 'stretch' : undefined,
+            minWidth: 0,
+            width: fullWidth ? '100%' : undefined,
+            display: fullWidth ? 'block' : undefined,
+          }}
+        >
           {startLabel ? (
             <Typography component="label" sx={formFieldLabelSx()}>
               {startLabel}
@@ -86,17 +115,37 @@ export default function DateRangePicker({
           variant="body2"
           color="text.secondary"
           sx={{
-            display: { xs: 'none', sm: 'flex' },
+            display:
+              layout === 'stacked'
+                ? 'none'
+                : layout === 'inline'
+                  ? 'flex'
+                  : 'none',
             alignItems: 'center',
             flexShrink: 0,
             fontSize: '12px',
             userSelect: 'none',
-            pt: startLabel || endLabel ? { sm: 3.25 } : { sm: 0.75 },
+            pt: startLabel || endLabel ? 3.25 : 0.75,
+            ...(layout === 'auto'
+              ? {
+                  '@container (min-width: 420px)': {
+                    display: 'flex',
+                  },
+                }
+              : undefined),
           }}
         >
           –
         </Typography>
-        <Box sx={{ flex: 1, minWidth: 0, width: fullWidth ? '100%' : undefined }}>
+        <Box
+          sx={{
+            flex: fullWidth ? '1 1 auto' : undefined,
+            alignSelf: fullWidth ? 'stretch' : undefined,
+            minWidth: 0,
+            width: fullWidth ? '100%' : undefined,
+            display: fullWidth ? 'block' : undefined,
+          }}
+        >
           {endLabel ? (
             <Typography component="label" sx={formFieldLabelSx()}>
               {endLabel}

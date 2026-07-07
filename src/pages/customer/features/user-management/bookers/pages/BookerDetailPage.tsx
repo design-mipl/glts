@@ -21,6 +21,7 @@ import {
   managedUserStatusLabel,
 } from '../../shared/utils/managedUserFormatters'
 import { BookerFormDrawer } from '../components/BookerFormDrawer'
+import { BookerPasswordDialog } from '../components/BookerPasswordDialog'
 import { useBookerDetailState } from '../hooks/useBookerDetailState'
 
 export function BookerDetailPage() {
@@ -36,6 +37,8 @@ export function BookerDetailPage() {
   const [statusOpen, setStatusOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
+  const [passwordUpdating, setPasswordUpdating] = useState(false)
 
   if (!canAccessBookerManagement) {
     return (
@@ -59,15 +62,38 @@ export function BookerDetailPage() {
     )
   }
 
-  const handleResendInvite = () => {
-    bookerManagementService.resendInvite(booker.id)
+  const handleSendLogin = () => {
+    const payload = bookerManagementService.sendLoginEmail(booker.id)
+    if (!payload) {
+      showToast({ title: 'Could not send credentials', variant: 'error' })
+      return
+    }
     reload()
     showToast({
-      title: 'Invite sent',
-      description: `Password reset / invite email sent to ${booker.email}.`,
+      title: 'Login credentials sent',
+      description: `${payload.portalUrl} · ${payload.username} · ${payload.temporaryPassword}`,
       variant: 'success',
     })
   }
+
+  const handleChangePassword = (password: string) => {
+    setPasswordUpdating(true)
+    const payload = bookerManagementService.changePassword(booker.id, password)
+    setPasswordUpdating(false)
+    if (!payload) {
+      showToast({ title: 'Could not update password', variant: 'error' })
+      return
+    }
+    setPasswordDialogOpen(false)
+    reload()
+    showToast({
+      title: 'Password updated',
+      description: `${payload.username} · ${payload.temporaryPassword}`,
+      variant: 'success',
+    })
+  }
+
+  const isActive = booker.status === 'active'
 
   return (
     <Box>
@@ -83,16 +109,19 @@ export function BookerDetailPage() {
       <CustomerPageHeader
         eyebrow="Booker management"
         title={booker.fullName}
-        subtitle={`${booker.designation || 'Booker'}${booker.location ? ` · ${booker.location}` : ''}`}
+        subtitle="Booker"
         badge={managedUserStatusLabel[booker.status]}
         action={
           <Stack direction="row" spacing={1} flexWrap="wrap">
             <Button variant="outlined" onClick={() => setDrawerOpen(true)}>Edit booker</Button>
-            <Button variant="outlined" onClick={() => setStatusOpen(true)}>
-              {booker.status === 'active' ? 'Inactivate' : 'Activate'}
+            <Button variant="outlined" onClick={handleSendLogin} disabled={!isActive}>
+              Send login email
             </Button>
-            <Button variant="outlined" onClick={handleResendInvite}>
-              Reset password / Resend invite
+            <Button variant="outlined" onClick={() => setPasswordDialogOpen(true)}>
+              Change password
+            </Button>
+            <Button variant="outlined" onClick={() => setStatusOpen(true)}>
+              {isActive ? 'Deactivate user' : 'Activate user'}
             </Button>
             <Button variant="outlined" color="error" onClick={() => setDeleteOpen(true)}>
               Delete / archive
@@ -109,9 +138,6 @@ export function BookerDetailPage() {
                 columns={1}
                 items={[
                   { label: 'Full name', value: booker.fullName },
-                  { label: 'Designation', value: booker.designation || '--' },
-                  { label: 'Department', value: booker.department || '--' },
-                  { label: 'Location', value: booker.location || '--' },
                   { label: 'Created by', value: booker.createdBy },
                   {
                     label: 'Status',
@@ -132,6 +158,13 @@ export function BookerDetailPage() {
                 columns={1}
                 items={[
                   { label: 'Email ID', value: booker.email },
+                  {
+                    label: 'Additional email IDs',
+                    value:
+                      (booker.additionalEmails ?? []).length > 0
+                        ? (booker.additionalEmails ?? []).join(', ')
+                        : '--',
+                  },
                   { label: 'Mobile number', value: booker.mobile || '--' },
                 ]}
               />
@@ -219,17 +252,30 @@ export function BookerDetailPage() {
         }}
       />
 
+      <BookerPasswordDialog
+        open={passwordDialogOpen}
+        booker={booker}
+        onClose={() => setPasswordDialogOpen(false)}
+        onConfirm={handleChangePassword}
+        loading={passwordUpdating}
+      />
+
       <ConfirmDialog
         open={statusOpen}
         onClose={() => setStatusOpen(false)}
-        title={booker.status === 'active' ? 'Inactivate booker?' : 'Activate booker?'}
-        description={`${booker.fullName} will be marked as ${booker.status === 'active' ? 'inactive' : 'active'}.`}
-        confirmLabel={booker.status === 'active' ? 'Inactivate' : 'Activate'}
+        title={isActive ? 'Deactivate user?' : 'Activate user?'}
+        description={
+          isActive
+            ? `${booker.fullName} will lose portal login access until reactivated.`
+            : `${booker.fullName} will be able to sign in to the corporate portal again.`
+        }
+        confirmLabel={isActive ? 'Deactivate' : 'Activate'}
+        variant={isActive ? 'destructive' : 'default'}
         onConfirm={() => {
           setActionLoading(true)
-          const next = booker.status === 'active' ? 'inactive' : 'active'
+          const next = isActive ? 'inactive' : 'active'
           bookerManagementService.setStatus(booker.id, next)
-          showToast({ title: `Booker ${next === 'active' ? 'activated' : 'inactivated'}`, variant: 'success' })
+          showToast({ title: `Booker ${next === 'active' ? 'activated' : 'deactivated'}`, variant: 'success' })
           reload()
           setStatusOpen(false)
           setActionLoading(false)

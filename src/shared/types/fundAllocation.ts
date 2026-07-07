@@ -55,6 +55,9 @@ export interface FundAllocationQueueFilters {
   country: string
   visaType: string
   jurisdiction: string
+  /** ISO date (yyyy-MM-dd) — filters on VFS submission date. */
+  dateFrom: string
+  dateTo: string
   search: string
 }
 

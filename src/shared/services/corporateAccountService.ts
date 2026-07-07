@@ -13,6 +13,7 @@ import type {
 } from '@/shared/types/corporateAccount'
 import { entityMasterService } from '@/shared/services/entityMasterService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
+import { bookerManagementService } from '@/shared/services/bookerManagementService'
 import {
   accountTypeFromWorkflow,
   isSelectableCorporateWorkflowType,
@@ -62,11 +63,16 @@ function resolveVesselIds(vesselIds: string[]): string[] {
   return vesselIds.filter((id) => vesselMasterService.getById(id))
 }
 
+function resolveBookerIds(bookerIds: string[]): string[] {
+  return bookerIds.filter((id) => bookerManagementService.getById(id))
+}
+
 function sanitizeAccountLinks(account: CorporateAccount): CorporateAccount {
   return {
     ...account,
     entityIds: resolveEntityIds(account.entityIds),
     vesselIds: resolveVesselIds(account.vesselIds),
+    bookerIds: resolveBookerIds(account.bookerIds ?? []),
   }
 }
 
@@ -124,6 +130,7 @@ function formToAccount(data: CorporateAccountFormData): Omit<CorporateAccount, '
     teamLeaderUserIds: [...data.teamLeaderUserIds],
     entityIds: resolveEntityIds(data.entityIds),
     vesselIds: resolveVesselIds(data.vesselIds),
+    bookerIds: resolveBookerIds(data.bookerIds),
     portalActivation: data.portalActivation,
   }
 }
@@ -204,6 +211,7 @@ export const corporateAccountService = {
       teamLeaderUserIds,
       entityIds: [...account.entityIds],
       vesselIds: [...account.vesselIds],
+      bookerIds: [...(account.bookerIds ?? [])],
       portalActivation: { ...account.portalActivation },
     }
   },
@@ -236,6 +244,7 @@ export const corporateAccountService = {
       teamLeaderUserIds: [],
       entityIds: [],
       vesselIds: [],
+      bookerIds: [],
       portalActivation: {
         portalStatus: 'draft',
         loginAccess: true,
@@ -462,13 +471,27 @@ export const corporateAccountService = {
     persist(next)
   },
 
+  addBookerId(accountId: string, bookerId: string): void {
+    const store = getStore()
+    const idx = store.findIndex((r) => r.id === accountId)
+    if (idx < 0) return
+    const bookerIds = (store[idx].bookerIds ?? []).includes(bookerId)
+      ? store[idx].bookerIds ?? []
+      : [...(store[idx].bookerIds ?? []), bookerId]
+    const next = [...store]
+    next[idx] = { ...store[idx], bookerIds, updatedAt: nowIso() }
+    persist(next)
+  },
+
   getCounts(account: CorporateAccount) {
     const entityIds = resolveEntityIds(account.entityIds)
     const vesselIds = resolveVesselIds(account.vesselIds)
+    const bookerIds = resolveBookerIds(account.bookerIds ?? [])
     return {
       totalAdmins: account.admins.length + (account.superAdmin ? 1 : 0),
       totalEntities: entityIds.length,
       totalVessels: vesselIds.length,
+      totalBookers: bookerIds.length,
     }
   },
 }

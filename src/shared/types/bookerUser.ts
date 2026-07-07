@@ -11,8 +11,11 @@ export interface BookerUser {
   id: string
   fullName: string
   email: string
+  /** Optional notification emails; login and invite use `email` */
+  additionalEmails?: string[]
   /** Parent company this booker submits applications under */
   companyName: string
+  corporateAccountId?: string
   mobile: string
   location: string
   designation: string
@@ -20,6 +23,8 @@ export interface BookerUser {
   role: BookerUserRole
   status: ManagedUserStatus
   notes: string
+  temporaryPassword?: string
+  credentialsSentAt?: string
   createdBy: string
   createdById: string
   lastLogin?: string
@@ -34,6 +39,7 @@ export interface BookerUser {
 export interface BookerUserFormData {
   fullName: string
   email: string
+  additionalEmails: string[]
   mobile: string
   location: string
   designation: string
@@ -50,4 +56,6 @@ export interface BookerUserListFilters {
   query?: string
   /** When set, only bookers created by this admin id are returned */
   scopedToAdminId?: string
+  /** When set, only bookers linked to this corporate account are returned */
+  corporateAccountId?: string
 }

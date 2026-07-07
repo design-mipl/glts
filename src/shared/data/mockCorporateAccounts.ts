@@ -43,6 +43,7 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
     ],
     entityIds: [GLTS_ENTITY_IDS.mumbaiBranch],
     vesselIds: [GLTS_VESSEL_IDS.oceanStar, GLTS_VESSEL_IDS.pacificGlory],
+    bookerIds: ['GLTS-BKR-003', 'GLTS-BKR-004', 'GLTS-BKR-005'],
     portalActivation: {
       portalStatus: 'active',
       loginAccess: true,
@@ -96,6 +97,7 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
     ],
     entityIds: [],
     vesselIds: [],
+    bookerIds: ['GLTS-BKR-006'],
     portalActivation: {
       portalStatus: 'draft',
       loginAccess: true,

@@ -4,6 +4,7 @@ import { commercialAgreementService } from '@/shared/services/commercialAgreemen
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
 import { entityMasterService } from '@/shared/services/entityMasterService'
 import { teamService } from '@/shared/services/teamService'
+import { bookerManagementService } from '@/shared/services/bookerManagementService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
 import type { CorporateAccountFormData } from '@/shared/types/corporateAccount'
 import { billingTypeLabel, workflowTypeLabel } from '../../agreements/config/agreementStatusConfig'
@@ -49,11 +50,13 @@ export function CorporateAccountReviewPanel({ data }: CorporateAccountReviewPane
     totalAdmins: data.admins.length + (data.superAdmin.fullName ? 1 : 0),
     totalEntities: data.entityIds.filter((id) => entityMasterService.getById(id)).length,
     totalVessels: data.vesselIds.filter((id) => vesselMasterService.getById(id)).length,
+    totalBookers: data.bookerIds.filter((id) => bookerManagementService.getById(id)).length,
   }
   const statCards = [
     { label: 'Admins', value: String(counts.totalAdmins) },
     { label: 'Entities', value: String(counts.totalEntities) },
     { label: 'Vessels', value: String(counts.totalVessels) },
+    { label: 'Bookers', value: String(counts.totalBookers) },
   ]
 
   return (
@@ -73,7 +76,7 @@ export function CorporateAccountReviewPanel({ data }: CorporateAccountReviewPane
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(4, minmax(0, 1fr))' },
             gap: 1,
           }}
         >

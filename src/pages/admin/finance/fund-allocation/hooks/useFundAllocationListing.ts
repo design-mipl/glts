@@ -66,19 +66,30 @@ export function useFundAllocationListing() {
 
   const handleListingTabChange = useCallback((tab: FundAllocationListingTab) => {
     setListingTab(tab)
-    setTableState(state => ({ ...state, page: 0 }))
+    setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
   }, [])
 
   const handleSearch = useCallback((value: string) => {
     setSearchValue(value)
-    setTableState(state => ({ ...state, page: 0 }))
+    setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
   }, [])
 
   const clearFilters = useCallback(() => {
     setQueueFilters(EMPTY_FUND_ALLOCATION_FILTERS)
     setSearchValue('')
     setColumnFilters({})
-    setTableState(state => ({ ...state, page: 0, sortKey: null, sortDirection: 'asc' }))
+    setTableState(state => ({
+      ...state,
+      page: 0,
+      sortKey: null,
+      sortDirection: 'asc',
+      selectedRows: [],
+    }))
+  }, [])
+
+  const setQueueFiltersAndResetSelection = useCallback((next: FundAllocationQueueFilters) => {
+    setQueueFilters(next)
+    setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
   }, [])
 
   const selectPassenger = useCallback((row: FundAllocationPassengerRow) => {
@@ -92,7 +103,7 @@ export function useFundAllocationListing() {
   return {
     listingTab,
     queueFilters,
-    setQueueFilters,
+    setQueueFilters: setQueueFiltersAndResetSelection,
     tableState,
     setTableState,
     columnFilters,

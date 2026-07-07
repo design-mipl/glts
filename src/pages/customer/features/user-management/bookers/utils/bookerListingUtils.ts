@@ -15,7 +15,8 @@ export function matchesBookerSearch(row: BookerUser, query: string): boolean {
   return (
     row.fullName.toLowerCase().includes(q) ||
     row.email.toLowerCase().includes(q) ||
-    row.mobile.includes(q)
+    row.mobile.includes(q) ||
+    (row.additionalEmails ?? []).some(email => email.toLowerCase().includes(q))
   )
 }
 

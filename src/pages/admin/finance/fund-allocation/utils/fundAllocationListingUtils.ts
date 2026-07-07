@@ -13,7 +13,70 @@ export const EMPTY_FUND_ALLOCATION_FILTERS: FundAllocationQueueFilters = {
   country: '',
   visaType: '',
   jurisdiction: '',
+  dateFrom: '',
+  dateTo: '',
   search: '',
+}
+
+export function parseFundAllocationFilterDate(value: string): Date | null {
+  if (!value.trim()) return null
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+export function formatFundAllocationFilterDate(date: Date | null): string {
+  if (!date) return ''
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function parseRowSubmissionDate(value: string): Date | null {
+  if (!value.trim()) return null
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+function isSubmissionDateInRange(row: FundAllocationPassengerRow, dateFrom: string, dateTo: string): boolean {
+  if (!dateFrom && !dateTo) return true
+  const rowDate = parseRowSubmissionDate(row.submissionDate)
+  if (!rowDate) return false
+
+  const from = parseFundAllocationFilterDate(dateFrom)
+  const to = parseFundAllocationFilterDate(dateTo)
+  if (from && rowDate < from) return false
+  if (to) {
+    const endOfDay = new Date(to)
+    endOfDay.setHours(23, 59, 59, 999)
+    if (rowDate > endOfDay) return false
+  }
+  return true
+}
+
+export function getFundAllocationCountryKey(row: FundAllocationPassengerRow): string {
+  return row.countryId ?? row.country
+}
+
+export function sanitizeFundAllocationSelection(
+  allRows: FundAllocationPassengerRow[],
+  selectedIds: string[],
+  previousIds: string[],
+): { ids: string[]; rejected: boolean } {
+  if (selectedIds.length === 0) return { ids: [], rejected: false }
+
+  const rowById = new Map(allRows.map(row => [row.id, row]))
+  const anchorId = previousIds[0] ?? selectedIds[0]
+  const anchor = rowById.get(anchorId)
+  if (!anchor) return { ids: selectedIds, rejected: false }
+
+  const anchorKey = getFundAllocationCountryKey(anchor)
+  const sanitized = selectedIds.filter(id => {
+    const row = rowById.get(id)
+    return row ? getFundAllocationCountryKey(row) === anchorKey : false
+  })
+
+  return { ids: sanitized, rejected: sanitized.length !== selectedIds.length }
 }
 
 export function filterRowsByListingTab(
@@ -32,6 +95,7 @@ export function applyFundAllocationFilters(
     if (filters.country && row.country !== filters.country) return false
     if (filters.visaType && row.visaType !== filters.visaType) return false
     if (filters.jurisdiction && row.jurisdiction !== filters.jurisdiction) return false
+    if (!isSubmissionDateInRange(row, filters.dateFrom, filters.dateTo)) return false
     if (filters.search && !matchesFundAllocationSearch(row, filters.search)) return false
     return true
   })
@@ -80,6 +144,8 @@ export function getFundAllocationCellValue(row: FundAllocationPassengerRow, key:
       return row.jurisdiction
     case 'travelDate':
       return row.travelDate
+    case 'submissionDate':
+      return row.submissionDate
     case 'appointmentDate':
       return row.appointmentDate
     case 'submissionStatus':
@@ -160,6 +226,7 @@ export function downloadFundAllocationCsv(rows: FundAllocationPassengerRow[]) {
     'Visa Type',
     'Jurisdiction',
     'Travel Date',
+    'VFS Submission Date',
     'Appointment Date',
     'Submission Status',
     'Allocation Status',
@@ -182,6 +249,7 @@ export function downloadFundAllocationCsv(rows: FundAllocationPassengerRow[]) {
       row.visaType,
       row.jurisdiction,
       row.travelDate,
+      row.submissionDate,
       row.appointmentDate,
       row.submissionStatus,
       row.allocationStatus,

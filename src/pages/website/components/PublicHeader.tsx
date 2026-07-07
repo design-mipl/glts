@@ -223,16 +223,15 @@ export function PublicHeader() {
             spacing={{ xs: 0.75, md: 1.25 }}
             sx={{ flexShrink: 0, zIndex: 2, ml: 'auto' }}
           >
-            {isWide && (
-              <DsButton
-                href="/sign-in"
-                variant="soft"
-                color="primary"
-                startIcon={<User size={16} />}
-              >
-                Sign in
-              </DsButton>
-            )}
+            <DsButton
+              href="/sign-in"
+              variant="soft"
+              color="primary"
+              size={isWide ? 'md' : 'sm'}
+              startIcon={<User size={isWide ? 16 : 14} />}
+            >
+              Sign in
+            </DsButton>
 
             {!isTablet && (
               <IconButton

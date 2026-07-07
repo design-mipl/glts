@@ -47,6 +47,7 @@ export function FundAllocationDetailDrawer({ open, record, onClose }: FundAlloca
           <DetailField label="Country / visa" value={`${record.country} • ${record.visaType}`} />
           <DetailField label="Jurisdiction" value={record.jurisdiction} />
           <DetailField label="Travel date" value={record.travelDate} />
+          <DetailField label="VFS submission date" value={record.submissionDate} />
           <DetailField label="Appointment date" value={record.appointmentDate} />
           <DetailField label="Submission status" value={record.submissionStatus} />
           <DetailField

@@ -186,6 +186,17 @@ export function buildFundAllocationTableColumns(
         </Typography>
       ),
     },
+    {
+      key: 'submissionDate',
+      label: 'VFS submission date',
+      widthSize: adminListingColumnWidthSize('date'),
+      sortable: true,
+      render: (_value, row) => (
+        <Typography variant="body2" noWrap sx={{ fontSize: 13 }}>
+          {formatTravelDateLabel(row.submissionDate)}
+        </Typography>
+      ),
+    },
     amountColumn,
     {
       key: 'status',
