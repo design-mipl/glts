@@ -117,6 +117,8 @@ export function AssignmentPassengerDetailDrawer({
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
             <ReadField label="Passenger name" value={record.passengerName} />
             <ReadField label="Passport" value={record.passportNo} />
+            <ReadField label="Phone number" value={record.passengerPhone} />
+            <ReadField label="Email address" value={record.passengerEmail} />
             <ReadField label="Applicant ID" value={record.gltsApplicantId} />
             <ReadField label="Sequence" value={String(record.sequenceNo)} />
             <ReadField label="Travel date" value={record.travelDate} />

@@ -40,6 +40,22 @@ export function getApplicationFeePaidByLabel(value?: ApplicationFeePaidBy): stri
   return APPLICATION_FEE_PAID_BY_OPTIONS.find(option => option.value === value)?.label ?? '—'
 }
 
+/** Ground-ops payment modes for on-site / case expense settlement. */
+export type OperationalPaymentMode = 'cash' | 'card' | 'cash_upi'
+
+export const OPERATIONAL_PAYMENT_MODE_OPTIONS: {
+  value: OperationalPaymentMode
+  label: string
+}[] = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'card', label: 'Card' },
+  { value: 'cash_upi', label: 'Cash + UPI' },
+]
+
+export function getOperationalPaymentModeLabel(value?: OperationalPaymentMode): string {
+  return OPERATIONAL_PAYMENT_MODE_OPTIONS.find(option => option.value === value)?.label ?? '—'
+}
+
 export interface GroundServiceLine {
   id: string
   serviceName: string
@@ -100,6 +116,11 @@ export interface OperationalCase {
   applicationFees: GroundServiceLine[]
   /** Who pays VFS & application fees for this case. */
   applicationFeesPaidBy?: ApplicationFeePaidBy
+  /** Payment date for ground-ops expense settlement (YYYY-MM-DD). */
+  paymentDate?: string
+  paymentMode?: OperationalPaymentMode
+  /** Credit Card Master id when payment mode is card. */
+  paymentCardId?: string
   expenses: OperationalExpense[]
   submissionDate?: string
   collectionDate?: string

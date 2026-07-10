@@ -137,6 +137,16 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
               return operationalPassengerAssignmentService.assignVendor(
                 id,
                 payload.vendor,
+                payload.team as CityTeam,
+                payload.user,
+                payload.priority as AssignmentPriority,
+              )
+            }
+            if (payload.assigneeType === 'passenger') {
+              return operationalPassengerAssignmentService.assignPassenger(
+                id,
+                payload.team as CityTeam,
+                payload.user,
                 payload.priority as AssignmentPriority,
               )
             }
@@ -151,21 +161,13 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
           case 'update_status':
             return operationalPassengerAssignmentService.updateStatus(id, payload.status)
           case 'reassign':
-            if (payload.assigneeType === 'vendor') {
-              return operationalPassengerAssignmentService.reassign(
-                id,
-                '',
-                payload.vendor,
-                payload.priority as AssignmentPriority,
-                'vendor',
-              )
-            }
             return operationalPassengerAssignmentService.reassign(
               id,
               payload.team as CityTeam,
               payload.user,
               payload.priority as AssignmentPriority,
-              'user',
+              payload.assigneeType,
+              payload.vendor,
             )
           case 'add_notes':
             return operationalPassengerAssignmentService.appendRemark(id, payload.notes)

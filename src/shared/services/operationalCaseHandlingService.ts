@@ -302,6 +302,30 @@ export const operationalCaseHandlingService = {
     })
   },
 
+  updatePaymentDetails(
+    id: string,
+    details: {
+      paymentDate?: string
+      paymentMode?: OperationalCase['paymentMode']
+      paymentCardId?: string
+    },
+  ): OperationalCase | undefined {
+    return mutate(id, record => {
+      if (details.paymentDate !== undefined) {
+        record.paymentDate = details.paymentDate
+      }
+      if (details.paymentMode !== undefined) {
+        record.paymentMode = details.paymentMode
+        if (details.paymentMode !== 'card') {
+          record.paymentCardId = ''
+        }
+      }
+      if (details.paymentCardId !== undefined) {
+        record.paymentCardId = details.paymentCardId
+      }
+    })
+  },
+
   addExpense(id: string, expense: Omit<OperationalExpense, 'id'>): OperationalCase | undefined {
     return mutate(id, record => {
       const item: OperationalExpense = {

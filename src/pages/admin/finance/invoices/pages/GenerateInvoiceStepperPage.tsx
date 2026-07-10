@@ -173,7 +173,7 @@ export function GenerateInvoiceStepperPage() {
   return (
     <AdminStepperFormShell
       breadcrumbs={[
-        { label: 'Billing & invoice management', href: LISTING_PATH },
+        { label: 'Billing & invoice', href: LISTING_PATH },
         { label: 'Generate invoice' },
       ]}
       steps={steps}

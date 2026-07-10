@@ -112,13 +112,20 @@ function ApplicationCell({ row }: { row: OperationalPassengerRow }) {
 }
 
 function AssignmentCell({ row }: { row: OperationalPassengerRow }) {
+  const secondary =
+    row.assigneeType === 'vendor' && row.assignedVendor
+      ? `${row.assignedVendor} · ${row.assignedUser || '—'}`
+      : row.assigneeType === 'passenger'
+        ? `Passenger · ${row.assignedUser || '—'}`
+        : row.assignedUser || '—'
+
   return (
     <Box sx={{ minWidth: 0 }}>
       <Typography variant="body2" noWrap sx={{ ...stackedLinePrimarySx, fontWeight: 500 }}>
         {row.assignedTeam || 'Unassigned'}
       </Typography>
       <Typography variant="body2" noWrap sx={stackedLineSecondarySx}>
-        {row.assignedUser || '—'}
+        {secondary}
       </Typography>
     </Box>
   )

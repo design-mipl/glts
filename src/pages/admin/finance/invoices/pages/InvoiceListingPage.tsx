@@ -307,7 +307,7 @@ export function InvoiceListingPage() {
       <AdminListingShell
         stickyPageHeader={
           <AdminListingStickyHeader
-            title="Billing & invoice management"
+            title="Billing & invoice"
             description="Operational invoice generation and finance tracking."
             actions={
               <Button

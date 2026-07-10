@@ -25,8 +25,8 @@ export const OPERATIONS_DESK_STATUS_TAB_ITEMS: {
   label: string
 }[] = [
   { value: 'Pending', label: 'Pending' },
-  { value: 'Moved to Next Day', label: 'Moved to Next Day' },
-  { value: 'Document Submitted', label: 'Document Submitted' },
+  { value: 'Document Submitted', label: 'Documents submitted' },
+  { value: 'Moved to Next Day', label: 'Moved to Next day' },
   { value: 'Collected', label: 'Collected' },
   { value: 'Dispatched', label: 'Dispatched' },
   { value: 'Completed', label: 'Completed' },

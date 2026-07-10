@@ -20,8 +20,15 @@ function hoursFromNow(hours: number): string {
   return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
 }
 
-function overlay(partial: OperationalPassengerOverlay): OperationalPassengerOverlay {
-  return partial
+function overlay(
+  partial: Omit<OperationalPassengerOverlay, 'assigneeType' | 'assignedVendor'> &
+    Partial<Pick<OperationalPassengerOverlay, 'assigneeType' | 'assignedVendor'>>,
+): OperationalPassengerOverlay {
+  return {
+    assigneeType: 'user',
+    assignedVendor: '',
+    ...partial,
+  }
 }
 
 /** Seed overlays keyed by operational passenger id (`applicationId:applicantId`). */

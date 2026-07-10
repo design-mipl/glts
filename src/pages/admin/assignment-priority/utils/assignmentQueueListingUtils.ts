@@ -242,6 +242,9 @@ export function matchesAssignmentSearch(row: OperationalPassengerRow, query: str
     row.jurisdiction,
     row.assignedTeam,
     row.assignedUser,
+    row.assignedVendor,
+    row.passengerPhone,
+    row.passengerEmail,
     row.passengerStatus,
     row.priority,
     row.operationalRemarks,
@@ -275,11 +278,17 @@ export function getAssignmentCellValue(row: OperationalPassengerRow, key: string
     case 'travelDate':
       return row.travelDate
     case 'assignment':
-      return `${row.assignedTeam || ''} ${row.assignedUser || ''}`.trim()
+      return `${row.assignedTeam || ''} ${row.assignedUser || ''} ${row.assignedVendor || ''}`.trim()
     case 'assignedTeam':
       return row.assignedTeam || '—'
     case 'assignedUser':
       return row.assignedUser || '—'
+    case 'assignedVendor':
+      return row.assignedVendor || '—'
+    case 'passengerPhone':
+      return row.passengerPhone
+    case 'passengerEmail':
+      return row.passengerEmail
     case 'operationalDate':
       return row.operationalDate
     case 'status':

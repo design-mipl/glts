@@ -85,11 +85,11 @@ export const adminNav: NavConfig[] = [
   },
   {
     type: 'group',
-    label: 'Finance, billing & collections',
+    label: 'Finance Operations',
     icon: createElement(HandCoins, iconProps),
     children: [
       { type: 'item', label: 'Expense management', href: '/admin/finance/expenses' },
-      { type: 'item', label: 'Billing & invoice management', href: '/admin/finance/invoices' },
+      { type: 'item', label: 'Billing & invoice', href: '/admin/finance/invoices' },
       { type: 'item', label: 'Vendor billing', href: '/admin/finance/vendor-billing' },
       { type: 'item', label: 'Fund allocation', href: '/admin/finance/fund-allocation' },
     ],

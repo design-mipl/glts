@@ -21,6 +21,7 @@ import { GroundServicesChecklist } from './GroundServicesChecklist'
 import { ApplicationFeePaidByField } from './ApplicationFeePaidByField'
 import { SubmissionVfsChargesSummary } from './SubmissionVfsChargesSummary'
 import { resolveOperationalCaseSubmissionSnapshot } from '@/shared/utils/operationalCaseSubmissionUtils'
+import { OperationalPaymentDetailsSection } from './OperationalPaymentDetailsSection'
 import { OperationalTimeline } from './OperationalTimeline'
 import { OperationalDocumentVault } from './OperationalDocumentVault'
 
@@ -220,6 +221,16 @@ function OperationalCaseDetailContent({
                         onUpdated()
                       }
                 }
+              />
+            </Stack>
+
+            <Divider />
+
+            <Stack spacing={1.25}>
+              <OperationalPaymentDetailsSection
+                record={record}
+                readOnly={isViewOnly}
+                onUpdated={onUpdated}
               />
             </Stack>
 

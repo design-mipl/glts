@@ -44,7 +44,7 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
   },
   {
     id: 'finance',
-    label: 'Finance, billing & collections',
+    label: 'Finance Operations',
     submodules: [
       { id: 'expenses', label: 'Expense management' },
       { id: 'invoices', label: 'Billing & invoices' },
