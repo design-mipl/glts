@@ -27,6 +27,7 @@ export function buildQuotationFormDataFromEnquiry(
       companyName: enquiry.customer.companyOrCustomerName,
       contactPersonName: enquiry.customer.contactPersonName ?? '',
       contactNumber: enquiry.customer.contactNumber ?? '',
+      alternateContactNumber: enquiry.customer.alternateContactNumber ?? '',
       emailAddress: enquiry.customer.emailAddress ?? '',
       companyAddress: enquiry.customer.companyAddress ?? '',
     },

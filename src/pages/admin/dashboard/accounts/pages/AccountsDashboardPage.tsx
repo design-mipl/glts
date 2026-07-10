@@ -1,6 +1,6 @@
 import { Box, Stack } from '@mui/material'
-import { AdminPageHeader } from '@/pages/admin/components/AdminPageHeader'
 import { BaseCard, Button, LoadingOverlay } from '@/design-system/UIComponents'
+import { ExecutiveCompactHeader } from '@/pages/admin/dashboard/components'
 import { AccountsDashboardFiltersBar } from '../components/AccountsDashboardFiltersBar'
 import { FinancialKpiSection } from '../components/sections/FinancialKpiSection'
 import { PendingCollectionsSection } from '../components/sections/PendingCollectionsSection'
@@ -19,10 +19,10 @@ export function AccountsDashboardPage() {
   if (dashboard.status === 'error') {
     return (
       <Box>
-        <AdminPageHeader
+        <ExecutiveCompactHeader
           eyebrow="Dashboard"
           title="Accounts dashboard"
-          description="Financial operations workspace for invoicing, collections, and reporting."
+          subtitle="Financial operations workspace for invoicing, collections, and reporting."
         />
         <BaseCard sx={{ p: 3, textAlign: 'center' }}>
           <Button label="Retry loading dashboard" onClick={dashboard.retry} />
@@ -33,11 +33,11 @@ export function AccountsDashboardPage() {
 
   return (
     <Box>
-      <AdminPageHeader
+      <ExecutiveCompactHeader
         eyebrow="Dashboard"
         title="Accounts dashboard"
-        description={`Financial operations workspace for ${dashboard.executiveName} — invoicing, collections, and reconciliation.`}
-        actions={
+        subtitle={`Financial operations workspace for ${dashboard.executiveName} — invoicing, collections, and reconciliation.`}
+        filters={
           <AccountsDashboardFiltersBar
             filters={dashboard.filters}
             onChange={dashboard.setFilters}

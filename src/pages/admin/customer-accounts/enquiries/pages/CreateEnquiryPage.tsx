@@ -12,8 +12,8 @@ import { useEnquiryForm } from '../hooks/useEnquiryForm'
 import { getEnquiryActor } from '../utils/enquiryActor'
 
 const breadcrumbs = [
-  { label: 'Customer & Accounts', href: '/admin/customer-accounts/enquiries' },
-  { label: 'Enquiry Management', href: '/admin/customer-accounts/enquiries' },
+  { label: 'Client Management', href: '/admin/customer-accounts/enquiries' },
+  { label: 'Lead Management', href: '/admin/customer-accounts/enquiries' },
   { label: 'Create Enquiry' },
 ]
 

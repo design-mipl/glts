@@ -100,7 +100,7 @@ export function CorporateAccountListingPage() {
     <AdminListingShell
       stickyPageHeader={
         <AdminListingStickyHeader
-          title="Corporate accounts"
+          title="Client Accounts"
           description="Operational customer account setup and portal activation"
           actions={<Button label="Create corporate account" startIcon={<Plus size={14} />} onClick={handleCreate} />}
         />

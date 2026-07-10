@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
 import { buildDocumentationApplicationsColumns } from '../columns/documentationApplicationsColumns'
+import { DOCUMENTATION_LISTING_TABLE_SX } from '../documentationTableTokens'
 import type { DocumentationApplicationRow } from '../../data/documentationDashboardMock'
 
 export interface MyApplicationsSectionProps {
@@ -35,6 +36,7 @@ export function MyApplicationsSection({
       getCellValue={getCellValue}
       loading={loading}
       pageSize={10}
+      tableSx={DOCUMENTATION_LISTING_TABLE_SX}
       onRowClick={(row) => navigate(row.applicationHref)}
       onViewAll={() => navigate('/admin/application-management/marine')}
     />

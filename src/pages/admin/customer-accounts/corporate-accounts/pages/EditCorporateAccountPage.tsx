@@ -9,8 +9,8 @@ export function EditCorporateAccountPage() {
       mode="edit"
       accountId={accountId}
       breadcrumbs={[
-        { label: 'Customer & accounts', href: '/admin/customer-accounts/corporate-accounts' },
-        { label: 'Corporate accounts', href: '/admin/customer-accounts/corporate-accounts' },
+        { label: 'Client Management', href: '/admin/customer-accounts/corporate-accounts' },
+        { label: 'Client Accounts', href: '/admin/customer-accounts/corporate-accounts' },
         { label: 'Edit corporate account' },
       ]}
       cancelHref="/admin/customer-accounts/corporate-accounts"

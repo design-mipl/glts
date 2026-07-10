@@ -106,8 +106,11 @@ export function CorporateAccountSuperAdminFields({
       <FormField label="Role">
         <Input value="Super Admin" disabled fullWidth />
       </FormField>
-      <FormField label="Phone number">
+      <FormField label="Mobile Number">
         <Input value={data.superAdmin.phoneNumber} onChange={(v) => update({ phoneNumber: v })} fullWidth />
+      </FormField>
+      <FormField label="Landline Number">
+        <Input value={data.superAdmin.landlineNumber ?? ''} onChange={(v) => update({ landlineNumber: v })} fullWidth />
       </FormField>
       <AdminFullPageFormFieldSpan>
         <FormField label="Email address" required>

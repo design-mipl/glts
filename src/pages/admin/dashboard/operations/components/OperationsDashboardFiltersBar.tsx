@@ -17,19 +17,20 @@ export function OperationsDashboardFiltersBar({
 }: OperationsDashboardFiltersBarProps) {
   return (
     <Stack
-      direction={{ xs: 'column', sm: 'row' }}
-      spacing={1.5}
-      alignItems={{ xs: 'stretch', sm: 'flex-end' }}
-      flexWrap="wrap"
+      direction={{ xs: 'column', md: 'row' }}
+      spacing={1.25}
+      alignItems={{ xs: 'stretch', md: 'flex-end' }}
+      flexWrap={{ xs: 'wrap', md: 'nowrap' }}
       useFlexGap
-      sx={{ width: { xs: '100%', md: 'auto' }, minWidth: { md: 420 } }}
+      sx={{ width: '100%' }}
     >
       <DateRangePicker
         label="Date range"
         size="sm"
+        layout="inline"
         value={filters.dateRange}
         onChange={(dateRange) => onChange({ ...filters, dateRange })}
-        sx={{ minWidth: { sm: 200 } }}
+        sx={{ flex: { md: '0 1 auto' }, minWidth: { sm: 280 } }}
       />
       <Select
         label="Country"
@@ -37,7 +38,7 @@ export function OperationsDashboardFiltersBar({
         value={filters.country}
         onChange={(country) => onChange({ ...filters, country: String(country) })}
         options={OPS_COUNTRY_FILTER_OPTIONS}
-        sx={{ minWidth: { sm: 140 } }}
+        sx={{ flex: { md: '1 1 140px' }, minWidth: { sm: 140 } }}
       />
       <Select
         label="Application type"
@@ -47,7 +48,7 @@ export function OperationsDashboardFiltersBar({
           onChange({ ...filters, applicationType: String(applicationType) })
         }
         options={OPS_APPLICATION_TYPE_OPTIONS}
-        sx={{ minWidth: { sm: 140 } }}
+        sx={{ flex: { md: '1 1 140px' }, minWidth: { sm: 140 } }}
       />
     </Stack>
   )

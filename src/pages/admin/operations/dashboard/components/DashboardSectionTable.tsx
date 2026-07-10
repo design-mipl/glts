@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Box } from '@mui/material'
+import type { SxProps, Theme } from '@mui/material/styles'
 import type { Column, TableState } from '@/design-system/UIComponents'
 import { AdminListingTable } from '@/pages/admin/components/listing'
 import { INITIAL_TABLE_STATE } from '@/pages/customer/features/shared/hooks/useCustomerListing'
@@ -25,6 +26,7 @@ export interface DashboardSectionTableProps<T extends object> {
   emptyTitle?: string
   emptyDescription?: string
   embedded?: boolean
+  tableSx?: SxProps<Theme>
 }
 
 export function DashboardSectionTable<T extends object>({
@@ -42,6 +44,7 @@ export function DashboardSectionTable<T extends object>({
   emptyTitle = 'No records found',
   emptyDescription = 'Adjust filters or check back later.',
   embedded = false,
+  tableSx,
 }: DashboardSectionTableProps<T>) {
   const colors = usePublicBrandColors()
   const [state, setState] = useState<TableState>({
@@ -53,7 +56,7 @@ export function DashboardSectionTable<T extends object>({
   const displayData = useMemo(() => data.slice(0, pageSize), [data, pageSize])
 
   const table = (
-    <Box sx={EXECUTIVE_TABLE_SX}>
+    <Box sx={[EXECUTIVE_TABLE_SX, ...(Array.isArray(tableSx) ? tableSx : tableSx ? [tableSx] : [])]}>
       <AdminListingTable
         columns={columns}
         data={displayData}

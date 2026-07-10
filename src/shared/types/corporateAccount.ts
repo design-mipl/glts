@@ -16,6 +16,7 @@ export interface CorporateAdminUser {
   id: string
   fullName: string
   phoneNumber: string
+  landlineNumber?: string
   emailAddress: string
   role: CorporateAdminRole
   accessStatus?: CorporateAdminAccessStatus

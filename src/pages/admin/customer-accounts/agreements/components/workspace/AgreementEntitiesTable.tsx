@@ -31,6 +31,7 @@ function emptyEntity(): AgreementEntity {
     contactPerson: '',
     email: '',
     phone: '',
+    landlineNumber: '',
     status: 'active',
   }
 }
@@ -174,11 +175,19 @@ export function AgreementEntitiesTable({
                 fullWidth
               />
             </FormField>
-            <FormField label="Phone number" required>
+            <FormField label="Mobile Number" required>
               <Input
                 value={editEntity.phone}
                 onChange={(v) => setEditEntity({ ...editEntity, phone: v })}
-                placeholder="Enter phone number"
+                placeholder="Enter mobile number"
+                fullWidth
+              />
+            </FormField>
+            <FormField label="Landline Number">
+              <Input
+                value={editEntity.landlineNumber ?? ''}
+                onChange={(v) => setEditEntity({ ...editEntity, landlineNumber: v })}
+                placeholder="Enter landline number"
                 fullWidth
               />
             </FormField>

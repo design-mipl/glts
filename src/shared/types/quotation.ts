@@ -8,6 +8,7 @@ export interface QuotationCustomerInfo {
   companyName: string
   contactPersonName: string
   contactNumber: string
+  alternateContactNumber?: string
   emailAddress: string
   companyAddress: string
 }

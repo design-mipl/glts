@@ -4,6 +4,7 @@ import { useToast } from '@/design-system/UIComponents'
 import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
 import { buildReadyForSubmissionColumns } from '../columns/readyForSubmissionColumns'
 import { buildSubmissionPendingColumns } from '../columns/submissionPendingColumns'
+import { DOCUMENTATION_LISTING_TABLE_SX } from '../documentationTableTokens'
 import type { ReadyForSubmissionRow, SubmissionPendingRow } from '../../data/documentationDashboardMock'
 
 export interface SubmissionManagementSectionProps {
@@ -44,6 +45,7 @@ export function SubmissionManagementSection({
           rowKey="id"
           getCellValue={getReadySubmissionCellValue}
           loading={loading}
+          tableSx={DOCUMENTATION_LISTING_TABLE_SX}
         />
       </Grid>
       <Grid size={{ xs: 12, lg: 6 }}>
@@ -55,6 +57,7 @@ export function SubmissionManagementSection({
           rowKey="id"
           getCellValue={getSubmissionPendingCellValue}
           loading={loading}
+          tableSx={DOCUMENTATION_LISTING_TABLE_SX}
         />
       </Grid>
     </Grid>

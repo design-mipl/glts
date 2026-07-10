@@ -9,7 +9,6 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
-import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import { getApplicationOperationalTone } from '@/pages/customer/features/applications/components/listing/applicationStatus'
 import type { OperationalPassengerRow } from '@/shared/types/operationalPassengerAssignment'
 import {
@@ -94,7 +93,7 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
     {
       key: 'passengerName',
       label: 'Passenger Name',
-      widthSize: adminListingColumnWidthSize('name'),
+      widthSize: 'md',
       sortable: true,
       searchable: true,
       render: (value, row: OperationalPassengerRow) => (
@@ -106,7 +105,7 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
     {
       key: 'priority',
       label: 'Priority',
-      widthSize: adminListingColumnWidthSize('priority'),
+      widthSize: 'sm',
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => (
         <Badge label={assignmentPriorityLabel[row.priority]} color={assignmentPriorityBadgeColor(row.priority)} />
@@ -115,7 +114,7 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
     {
       key: 'applicationId',
       label: 'Application ID / GLTS Reference',
-      widthSize: adminListingColumnWidthSize('code'),
+      widthSize: 'lg',
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => (
         <StackCell primary={row.gltsApplicationId} secondary={row.gltsApplicantId} />
@@ -124,13 +123,13 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
     {
       key: 'companyName',
       label: 'Company Name',
-      widthSize: adminListingColumnWidthSize('company'),
+      widthSize: 'lg',
       sortable: true,
     },
     {
       key: 'countryVisa',
       label: 'Visa Country + Visa Type',
-      widthSize: adminListingColumnWidthSize('country'),
+      widthSize: 'md',
       sortable: true,
       searchable: true,
       render: (_value, row: OperationalPassengerRow) => <CountryVisaCell row={row} />,
@@ -138,37 +137,37 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
     {
       key: 'jurisdiction',
       label: 'Jurisdiction',
-      widthSize: adminListingColumnWidthSize('jurisdiction'),
+      widthSize: 'md',
       sortable: true,
     },
     {
       key: 'travelDate',
       label: 'Travel Date',
-      widthSize: adminListingColumnWidthSize('date'),
+      widthSize: 'md',
       sortable: true,
     },
     {
       key: 'assignedTeam',
       label: 'Assigned Team',
-      widthSize: adminListingColumnWidthSize('assignee'),
+      widthSize: 'md',
       sortable: true,
     },
     {
       key: 'assignedUser',
       label: 'Assigned User',
-      widthSize: adminListingColumnWidthSize('assignee'),
+      widthSize: 'md',
       sortable: true,
     },
     {
       key: 'operationalDate',
       label: 'Operational Date',
-      widthSize: adminListingColumnWidthSize('date'),
+      widthSize: 'md',
       sortable: true,
     },
     {
       key: 'passengerStatus',
       label: 'Current Status',
-      widthSize: adminListingColumnWidthSize('statusGroup'),
+      widthSize: 'md',
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => (
         <Badge
@@ -180,7 +179,7 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
     {
       key: 'submissionStatus',
       label: 'Submission Status',
-      widthSize: adminListingColumnWidthSize('statusGroup'),
+      widthSize: 'md',
       sortable: true,
       render: (value, row: OperationalPassengerRow) => (
         <Badge
@@ -192,7 +191,7 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
     {
       key: 'slaTimer',
       label: 'SLA / Time Remaining',
-      widthSize: adminListingColumnWidthSize('sla'),
+      widthSize: 'sm',
       sortable: false,
       render: (_value, row: OperationalPassengerRow) => (
         <Badge
@@ -204,7 +203,7 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
     {
       key: 'lastUpdated',
       label: 'Last Updated',
-      widthSize: adminListingColumnWidthSize('date'),
+      widthSize: 'md',
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => (
         <Typography variant="body2" color="text.secondary" noWrap>
@@ -215,7 +214,7 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
     {
       key: 'operationalRemarks',
       label: 'Operational Remarks',
-      widthSize: adminListingColumnWidthSize('remarks'),
+      widthSize: 'lg',
       sortable: false,
       render: (_value, row: OperationalPassengerRow) => (
         <Typography variant="body2" color="text.secondary" noWrap title={row.operationalRemarks}>

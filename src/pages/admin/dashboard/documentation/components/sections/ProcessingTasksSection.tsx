@@ -5,6 +5,7 @@ import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/compon
 import { buildAppointmentToBookColumns } from '../columns/appointmentToBookColumns'
 import { buildFeeToPayColumns } from '../columns/feeToPayColumns'
 import { buildFormToFillColumns } from '../columns/formToFillColumns'
+import { DOCUMENTATION_LISTING_TABLE_SX } from '../documentationTableTokens'
 import type {
   AppointmentToBookRow,
   FeeToPayRow,
@@ -66,6 +67,7 @@ export function ProcessingTasksSection({
           getCellValue={getFormCellValue}
           loading={loading}
           pageSize={5}
+          tableSx={DOCUMENTATION_LISTING_TABLE_SX}
         />
       </Grid>
       <Grid size={{ xs: 12, lg: 4 }}>
@@ -78,6 +80,7 @@ export function ProcessingTasksSection({
           getCellValue={getFeeCellValue}
           loading={loading}
           pageSize={5}
+          tableSx={DOCUMENTATION_LISTING_TABLE_SX}
         />
       </Grid>
       <Grid size={{ xs: 12, lg: 4 }}>
@@ -90,6 +93,7 @@ export function ProcessingTasksSection({
           getCellValue={getAppointmentCellValue}
           loading={loading}
           pageSize={5}
+          tableSx={DOCUMENTATION_LISTING_TABLE_SX}
         />
       </Grid>
     </Grid>

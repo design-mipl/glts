@@ -22,7 +22,7 @@ export function AssignmentOwnershipTab({
               Branch: {enquiry.assignment.branch ?? '--'} · Priority: {enquiry.assignment.priority}
             </Typography>
           </Stack>
-          <Button label="Update Assignment" size="sm" onClick={onEdit} />
+          <Button label="Update Assignment" size="sm" onClick={onEdit} sx={{ minHeight: 28, height: 28 }} />
         </Stack>
       </BaseCard>
       {enquiry.assignment.ownershipHistory.map((history, index) => (

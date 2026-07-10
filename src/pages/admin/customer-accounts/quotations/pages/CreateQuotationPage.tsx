@@ -11,8 +11,8 @@ import { buildQuotationFormSections } from '../components/QuotationFormSections'
 import { useQuotationForm } from '../hooks/useQuotationForm'
 
 const breadcrumbs = [
-  { label: 'Customer & Accounts', href: '/admin/customer-accounts/quotations' },
-  { label: 'Quotation Management', href: '/admin/customer-accounts/quotations' },
+  { label: 'Client Management', href: '/admin/customer-accounts/quotations' },
+  { label: 'Quotations', href: '/admin/customer-accounts/quotations' },
   { label: 'Create Quotation' },
 ]
 

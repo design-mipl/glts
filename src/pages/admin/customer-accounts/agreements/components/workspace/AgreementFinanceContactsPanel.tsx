@@ -51,6 +51,7 @@ export function AgreementFinanceContactsPanel({
       contactPerson: editContact.contactPerson.trim(),
       email: editContact.email.trim(),
       phone: editContact.phone.trim(),
+      landlineNumber: editContact.landlineNumber?.trim() ?? '',
     })
     setEditContact(null)
   }
@@ -219,11 +220,19 @@ export function AgreementFinanceContactsPanel({
                 fullWidth
               />
             </FormField>
-            <FormField label="Phone number" required>
+            <FormField label="Mobile Number" required>
               <Input
                 value={editContact.phone}
                 onChange={(value) => setEditContact({ ...editContact, phone: value })}
-                placeholder="Enter phone number"
+                placeholder="Enter mobile number"
+                fullWidth
+              />
+            </FormField>
+            <FormField label="Landline Number">
+              <Input
+                value={editContact.landlineNumber ?? ''}
+                onChange={(value) => setEditContact({ ...editContact, landlineNumber: value })}
+                placeholder="Enter landline number"
                 fullWidth
               />
             </FormField>

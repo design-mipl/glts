@@ -1,6 +1,7 @@
 import type { EnquiryCustomerInfo, EnquiryRecord, EnquiryStatus } from '@/shared/types/enquiry'
 import { formatMasterDate } from '@/pages/admin/masters/utils/masterListingUtils'
 import {
+  formatEnquiryCustomerType,
   formatEnquiryInquirySource,
   formatEnquiryProcessingType,
 } from '../config/enquiryFormConfig'
@@ -11,7 +12,7 @@ export function formatEnquiryDate(iso: string | undefined): string {
   return formatMasterDate(iso)
 }
 
-export type EnquiryListingTab = 'all' | 'new' | 'active' | 'converted' | 'closed'
+export type EnquiryListingTab = 'all' | 'new' | 'active' | 'converted' | 'non_converted' | 'closed'
 
 const ACTIVE_STATUSES: EnquiryStatus[] = [
   'under_discussion',
@@ -21,8 +22,6 @@ const ACTIVE_STATUSES: EnquiryStatus[] = [
   'quotation_in_progress',
   'on_hold',
 ]
-
-const CLOSED_STATUSES: EnquiryStatus[] = ['closed', 'rejected']
 
 export interface EnquiryListingFilterState {
   country: string
@@ -60,8 +59,10 @@ export function filterEnquiryRowsByTab(rows: EnquiryRecord[], tab: EnquiryListin
       return rows.filter((row) => ACTIVE_STATUSES.includes(row.status))
     case 'converted':
       return rows.filter((row) => row.status === 'converted')
+    case 'non_converted':
+      return rows.filter((row) => row.status === 'rejected')
     case 'closed':
-      return rows.filter((row) => CLOSED_STATUSES.includes(row.status))
+      return rows.filter((row) => row.status === 'closed')
     default:
       return rows
   }
@@ -121,11 +122,19 @@ export function hasActiveEnquiryFilters(filters: EnquiryListingFilterState): boo
 }
 
 /** Phone and email line for stacked contact column and grid subtitle */
+export function getEnquiryContactDetails(
+  customer: Pick<EnquiryCustomerInfo, 'contactNumber' | 'emailAddress'>,
+): { phone: string; email: string } {
+  return {
+    phone: customer.contactNumber?.trim() ?? '',
+    email: customer.emailAddress?.trim() ?? '',
+  }
+}
+
 export function formatEnquiryContactSecondary(
   customer: Pick<EnquiryCustomerInfo, 'contactNumber' | 'emailAddress'>,
 ): string {
-  const phone = customer.contactNumber?.trim() ?? ''
-  const email = customer.emailAddress?.trim() ?? ''
+  const { phone, email } = getEnquiryContactDetails(customer)
   if (phone && email) return `${phone} · ${email}`
   return phone || email
 }
@@ -137,7 +146,7 @@ export function getEnquiryCellValue(record: EnquiryRecord, key: string): string 
     case 'contactPerson':
       return record.customer.contactPersonName
     case 'customerType':
-      return record.customer.customerType
+      return formatEnquiryCustomerType(record.customer.customerType)
     case 'inquirySource':
       return formatEnquiryInquirySource(record.salesDetails.inquirySource)
     case 'countryRequirement':
@@ -252,7 +261,12 @@ export function getEnquiryEmptyState(
     case 'closed':
       return {
         emptyTitle: 'No closed enquiries',
-        emptyDescription: 'Closed or rejected enquiries appear in this view.',
+        emptyDescription: 'Closed enquiries appear in this view.',
+      }
+    case 'non_converted':
+      return {
+        emptyTitle: 'No non converted enquiries',
+        emptyDescription: 'Enquiries that were not converted appear in this view.',
       }
     default:
       return {

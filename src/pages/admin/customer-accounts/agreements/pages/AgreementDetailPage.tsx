@@ -93,8 +93,8 @@ export function AgreementDetailPage() {
     <>
       <AdminDetailShell
         breadcrumbs={[
-          { label: 'Customer & accounts', href: '/admin/customer-accounts/agreements' },
-          { label: 'Agreements & contracts', href: '/admin/customer-accounts/agreements' },
+          { label: 'Client Management', href: '/admin/customer-accounts/agreements' },
+          { label: 'Agreements', href: '/admin/customer-accounts/agreements' },
           { label: agreement.agreementId },
         ]}
         summary={

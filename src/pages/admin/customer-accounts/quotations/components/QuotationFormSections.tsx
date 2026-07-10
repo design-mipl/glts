@@ -88,11 +88,21 @@ export function buildQuotationFormSections({
             fullWidth
           />
         </FormField>
-        <FormField label="Contact number" error={Boolean(errors.contactNumber)} helperText={errors.contactNumber}>
+        <FormField label="Mobile Number" error={Boolean(errors.contactNumber)} helperText={errors.contactNumber}>
           <Input
             value={formData.customer.contactNumber}
             onChange={(v) => patch({ customer: { ...formData.customer, contactNumber: v } })}
-            placeholder="Enter contact number"
+            placeholder="Enter mobile number"
+            fullWidth
+          />
+        </FormField>
+        <FormField label="Landline Number">
+          <Input
+            value={formData.customer.alternateContactNumber ?? ''}
+            onChange={(v) =>
+              patch({ customer: { ...formData.customer, alternateContactNumber: v } })
+            }
+            placeholder="Enter landline number"
             fullWidth
           />
         </FormField>

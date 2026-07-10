@@ -7,9 +7,10 @@ import type { EnquiryRecord } from '@/shared/types/enquiry'
 import {
   enquiryCustomerTypeColor,
   enquiryInquirySourceColor,
+  formatEnquiryCustomerType,
   formatEnquiryInquirySource,
 } from '../config/enquiryFormConfig'
-import { formatEnquiryContactSecondary, formatEnquiryDate } from '../utils/enquiryListingUtils'
+import { formatEnquiryDate, getEnquiryContactDetails } from '../utils/enquiryListingUtils'
 import {
   enquiryStatusColor,
   enquiryStatusLabel,
@@ -59,29 +60,43 @@ export function buildEnquiryColumns({
       widthSize: adminListingColumnWidthSize('count'),
       filterable: true,
       render: (_, row) => (
-        <Badge label={row.customer.customerType} color={enquiryCustomerTypeColor[row.customer.customerType]} size="sm" />
+        <Badge
+          label={formatEnquiryCustomerType(row.customer.customerType)}
+          color={enquiryCustomerTypeColor[row.customer.customerType]}
+          size="sm"
+        />
       ),
     },
     {
       key: 'contactPerson',
       label: 'Contact person',
-      widthSize: adminListingColumnWidthSize('stackedAssignment'),
+      widthSize: 'md',
       searchable: true,
-      render: (_, row) => (
-        <Box>
-          <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-            {row.customer.contactPersonName}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
-            {formatEnquiryContactSecondary(row.customer)}
-          </Typography>
-        </Box>
-      ),
+      render: (_, row) => {
+        const { phone, email } = getEnquiryContactDetails(row.customer)
+        return (
+          <Box>
+            <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+              {row.customer.contactPersonName}
+            </Typography>
+            {phone ? (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: 11 }}>
+                {phone}
+              </Typography>
+            ) : null}
+            {email ? (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: 11 }}>
+                {email}
+              </Typography>
+            ) : null}
+          </Box>
+        )
+      },
     },
     {
       key: 'inquirySource',
       label: 'Enquiry Source',
-      widthSize: adminListingColumnWidthSize('vendor'),
+      widthSize: adminListingColumnWidthSize('country'),
       filterable: true,
       render: (_, row) => (
         <Badge
@@ -100,7 +115,7 @@ export function buildEnquiryColumns({
     {
       key: 'visaType',
       label: 'Visa Type',
-      widthSize: adminListingColumnWidthSize('service'),
+      widthSize: 'md',
       render: (_, row) => row.visaRequirement.visaType,
     },
     {

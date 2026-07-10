@@ -44,6 +44,7 @@ export function buildQuotationColumns({
       widthSize: adminListingColumnWidthSize('company'),
       sortable: true,
       searchable: true,
+      render: (_, row) => row.customer.companyName || '—',
     },
     {
       key: 'sourceType',
@@ -61,7 +62,7 @@ export function buildQuotationColumns({
     {
       key: 'workflowType',
       label: 'Workflow Type',
-      widthSize: adminListingColumnWidthSize('service'),
+      widthSize: 'md',
       filterable: true,
       render: (_, row) => (
         <Badge label={workflowTypeLabel[row.workflowType]} color={workflowTypeColor[row.workflowType]} size="sm" />

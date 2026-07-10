@@ -29,9 +29,10 @@ export function FooterWorldMapWatermark() {
           left: '50%',
           top: '50%',
           transform: 'translate(-50%, -50%)',
-          width: { xs: '112%', sm: '106%', md: '100%' },
-          maxWidth: 'none',
-          height: 'auto',
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          objectPosition: 'center',
           opacity: { xs: 0.2, sm: 0.24, md: 0.26 },
           filter: 'brightness(0) invert(1)',
         }}

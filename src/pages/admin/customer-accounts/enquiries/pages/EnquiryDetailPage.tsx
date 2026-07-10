@@ -34,6 +34,7 @@ const initialFollowup: FollowupModalValue = {
   assignedUser: '',
   reminderRequired: true,
   followupStatus: 'scheduled',
+  outcome: '',
 }
 
 export function EnquiryDetailPage() {
@@ -89,8 +90,8 @@ export function EnquiryDetailPage() {
     <>
       <AdminDetailShell
         breadcrumbs={[
-          { label: 'Customer & Accounts', href: '/admin/customer-accounts/enquiries' },
-          { label: 'Enquiry Management', href: '/admin/customer-accounts/enquiries' },
+          { label: 'Client Management', href: '/admin/customer-accounts/enquiries' },
+          { label: 'Lead Management', href: '/admin/customer-accounts/enquiries' },
           { label: enquiry.id },
         ]}
         summary={

@@ -1,6 +1,6 @@
 import { Box, Stack } from '@mui/material'
-import { AdminPageHeader } from '@/pages/admin/components/AdminPageHeader'
 import { BaseCard, Button, LoadingOverlay } from '@/design-system/UIComponents'
+import { ExecutiveCompactHeader } from '@/pages/admin/dashboard/components'
 import { DocumentationDashboardFiltersBar } from '../components/DocumentationDashboardFiltersBar'
 import { TodayKpiSection } from '../components/sections/TodayKpiSection'
 import { MyApplicationsSection } from '../components/sections/MyApplicationsSection'
@@ -18,10 +18,10 @@ export function DocumentationDashboardPage() {
   if (dashboard.status === 'error') {
     return (
       <Box>
-        <AdminPageHeader
+        <ExecutiveCompactHeader
           eyebrow="Dashboard"
           title="Documentation dashboard"
-          description="Document processing and quality control workspace."
+          subtitle="Document processing and quality control workspace."
         />
         <BaseCard sx={{ p: 3, textAlign: 'center' }}>
           <Button label="Retry loading dashboard" onClick={dashboard.retry} />
@@ -32,11 +32,11 @@ export function DocumentationDashboardPage() {
 
   return (
     <Box>
-      <AdminPageHeader
+      <ExecutiveCompactHeader
         eyebrow="Dashboard"
         title="Documentation dashboard"
-        description={`Document processing queue for ${dashboard.executiveName} — applications assigned to you.`}
-        actions={
+        subtitle={`Document processing queue for ${dashboard.executiveName} — applications assigned to you.`}
+        filters={
           <DocumentationDashboardFiltersBar
             filters={dashboard.filters}
             onChange={dashboard.setFilters}

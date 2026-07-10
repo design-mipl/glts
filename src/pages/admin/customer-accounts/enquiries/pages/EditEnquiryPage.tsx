@@ -45,8 +45,8 @@ export function EditEnquiryPage() {
     : '/admin/customer-accounts/enquiries'
 
   const breadcrumbs = [
-    { label: 'Customer & Accounts', href: '/admin/customer-accounts/enquiries' },
-    { label: 'Enquiry Management', href: '/admin/customer-accounts/enquiries' },
+    { label: 'Client Management', href: '/admin/customer-accounts/enquiries' },
+    { label: 'Lead Management', href: '/admin/customer-accounts/enquiries' },
     { label: enquiryId ?? 'Edit', href: enquiryDetailHref },
     { label: 'Edit' },
   ]
