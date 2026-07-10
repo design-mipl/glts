@@ -18,6 +18,14 @@ export type EnquiryFollowupType = 'call' | 'email' | 'meeting' | 'whatsapp' | 'i
 
 export type EnquiryFollowupStatus = 'scheduled' | 'completed' | 'missed' | 'rescheduled'
 
+export type EnquiryFollowupOutcome =
+  | 'interested'
+  | 'quotation_sent'
+  | 'follow_up_required'
+  | 'no_response'
+  | 'change_in_plans'
+  | 'not_interested'
+
 export type EnquiryActivityType =
   | 'created'
   | 'status_updated'
@@ -114,6 +122,7 @@ export interface EnquiryFollowup {
   assignedUser: string
   reminderRequired: boolean
   followupStatus: EnquiryFollowupStatus
+  outcome?: EnquiryFollowupOutcome
   createdAt: string
   createdBy: string
 }

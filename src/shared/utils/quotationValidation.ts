@@ -5,7 +5,7 @@ export function validateQuotationForm(data: QuotationFormData): Record<string, s
   if (!data.customer.companyName.trim()) errors.companyName = 'Company name is required'
   if (!data.customer.contactPersonName.trim()) errors.contactPersonName = 'Contact person is required'
   if (!data.customer.contactNumber.trim() && !data.customer.emailAddress.trim()) {
-    errors.contactNumber = 'Contact number or email is required'
+    errors.contactNumber = 'Mobile number or email is required'
   }
   if (!data.quotationDate) errors.quotationDate = 'Quotation date is required'
   if (!data.validTill) errors.validTill = 'Valid till date is required'

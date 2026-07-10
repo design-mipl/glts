@@ -19,6 +19,11 @@ export function formatEnquiryInquirySource(source?: EnquirySource | string): str
   return enquiryInquirySourceOptions.find((option) => option.value === source)?.label ?? source
 }
 
+export function formatEnquiryCustomerType(type?: EnquiryCustomerType | string): string {
+  if (!type) return '--'
+  return enquiryCustomerTypeOptions.find((option) => option.value === type)?.label ?? type
+}
+
 export const enquiryProcessingTypeOptions: { label: string; value: EnquiryProcessingType }[] = [
   { label: 'Standard', value: 'standard' },
   { label: 'Express', value: 'express' },

@@ -42,25 +42,25 @@ export function OverviewTab({ enquiry, onUploadAttachment }: OverviewTabProps) {
           Customer &amp; Enquiry Information
         </Typography>
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Field label="Company / Customer Name" value={enquiry.customer.companyOrCustomerName} />
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Field label="Customer Type" value={enquiry.customer.customerType} />
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Field label="Contact Person" value={enquiry.customer.contactPersonName} />
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Field label="Contact" value={enquiry.customer.contactNumber} />
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Field label="Email" value={enquiry.customer.emailAddress} />
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Field label="Company Address" value={enquiry.customer.companyAddress} />
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Field
               label="Enquiry Source"
               value={formatEnquiryInquirySource(enquiry.salesDetails.inquirySource)}

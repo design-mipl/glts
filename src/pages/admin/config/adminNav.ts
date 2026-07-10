@@ -33,13 +33,13 @@ export const adminNav: NavConfig[] = [
   },
   {
     type: 'group',
-    label: 'Customer & accounts',
+    label: 'Client Management',
     icon: createElement(Building2, iconProps),
     children: [
-      { type: 'item', label: 'Enquiry management', href: '/admin/customer-accounts/enquiries' },
-      { type: 'item', label: 'Quotation management', href: '/admin/customer-accounts/quotations' },
-      { type: 'item', label: 'Agreements & contracts', href: '/admin/customer-accounts/agreements' },
-      { type: 'item', label: 'Corporate accounts', href: '/admin/customer-accounts/corporate-accounts' },
+      { type: 'item', label: 'Lead Management', href: '/admin/customer-accounts/enquiries' },
+      { type: 'item', label: 'Quotations', href: '/admin/customer-accounts/quotations' },
+      { type: 'item', label: 'Agreements', href: '/admin/customer-accounts/agreements' },
+      { type: 'item', label: 'Client Accounts', href: '/admin/customer-accounts/corporate-accounts' },
     ],
   },
   {

@@ -91,3 +91,11 @@ export function formatUserDateTime(iso: string): string {
     minute: '2-digit',
   })
 }
+
+export function formatUserTime(iso: string): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}

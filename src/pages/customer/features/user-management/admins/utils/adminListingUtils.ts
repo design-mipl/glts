@@ -2,7 +2,7 @@ import type { AdminUser } from '@/shared/types/adminUser'
 import { formatManagedUserDate } from '../../shared/utils/managedUserFormatters'
 
 export function getAdminCellValue(row: AdminUser, key: string): string {
-  if (key === 'name') return row.fullName
+  if (key === 'fullName' || key === 'name') return row.fullName
   if (key === 'lastLogin') return row.lastLogin ?? '--'
   if (key === 'lastUpdated') return formatManagedUserDate(row.updatedAt)
   if (key === 'status') return row.status

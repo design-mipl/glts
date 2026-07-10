@@ -13,20 +13,20 @@ export function buildEscalationColumns({
     {
       key: 'raisedBy',
       label: 'Raised By',
-      widthSize: adminListingColumnWidthSize('assignee'),
+      widthSize: adminListingColumnWidthSize('code'),
       sortable: false,
       hideable: false,
     },
     {
       key: 'escalationType',
       label: 'Escalation Type',
-      widthSize: adminListingColumnWidthSize('service'),
+      widthSize: adminListingColumnWidthSize('country'),
       sortable: false,
     },
     {
       key: 'currentOwner',
       label: 'Current Owner',
-      widthSize: adminListingColumnWidthSize('assignee'),
+      widthSize: adminListingColumnWidthSize('date'),
       sortable: false,
     },
     {

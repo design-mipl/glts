@@ -5,8 +5,8 @@ export function CreateAgreementPage() {
     <AgreementWorkspacePage
       mode="create"
       breadcrumbs={[
-        { label: 'Customer & accounts', href: '/admin/customer-accounts/agreements' },
-        { label: 'Agreements & contracts', href: '/admin/customer-accounts/agreements' },
+        { label: 'Client Management', href: '/admin/customer-accounts/agreements' },
+        { label: 'Agreements', href: '/admin/customer-accounts/agreements' },
         { label: 'Create agreement' },
       ]}
       cancelHref="/admin/customer-accounts/agreements"

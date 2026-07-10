@@ -41,6 +41,7 @@ export interface AgreementEntity {
   contactPerson: string
   email: string
   phone: string
+  landlineNumber?: string
   status: AgreementEntityStatus
 }
 
@@ -107,6 +108,7 @@ export interface AgreementFinanceContactPerson {
   contactPerson: string
   email: string
   phone: string
+  landlineNumber?: string
 }
 
 export interface AgreementOnboardingDocument {

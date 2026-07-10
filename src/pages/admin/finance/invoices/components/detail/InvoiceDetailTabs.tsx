@@ -1,5 +1,6 @@
 import {
   Box,
+  Divider,
   Grid,
   Stack,
   Table,
@@ -182,6 +183,7 @@ function TaxBreakdownTab({ invoice }: { invoice: Invoice }) {
         <Typography variant="body2">Additional charges</Typography>
         <Typography variant="body2">{formatInr(totals.additionalCharges)}</Typography>
       </Stack>
+      <Divider />
       <Stack direction="row" justifyContent="space-between">
         <Typography variant="body2" fontWeight={700}>
           Final amount

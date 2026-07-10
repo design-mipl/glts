@@ -51,6 +51,7 @@ const initialFollowup: FollowupModalValue = {
   assignedUser: '',
   reminderRequired: true,
   followupStatus: 'scheduled',
+  outcome: '',
 }
 
 export function EnquiryListingPage() {
@@ -186,7 +187,7 @@ export function EnquiryListingPage() {
       <AdminListingShell
         stickyPageHeader={
           <AdminListingStickyHeader
-            title="Enquiry Management"
+            title="Lead Management"
             description="Capture, qualify, assign, and progress customer enquiries toward quotation."
             actions={
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
@@ -197,10 +198,11 @@ export function EnquiryListingPage() {
         }
         kpis={<EnquiryKpiRow enquiries={rows} />}
         tabs={[
-          { value: 'all', label: 'All enquiries' },
+          { value: 'all', label: 'All Inquiries' },
           { value: 'new', label: 'New' },
           { value: 'active', label: 'Active' },
           { value: 'converted', label: 'Converted' },
+          { value: 'non_converted', label: 'Non Converted' },
           { value: 'closed', label: 'Closed' },
         ]}
         tabValue={activeTab}

@@ -1,5 +1,6 @@
-import { Stack } from '@mui/material'
+import { Box, Divider, Stack } from '@mui/material'
 import { Button, FormField, Input, Modal, Select, Textarea, Toggle } from '@/design-system/UIComponents'
+import { ADMIN_MODAL_FORM_LAYOUT } from '@/pages/admin/components/adminOverlayFormLayout'
 
 export interface FollowupModalValue {
   followupType: string
@@ -10,7 +11,23 @@ export interface FollowupModalValue {
   assignedUser: string
   reminderRequired: boolean
   followupStatus: string
+  outcome: string
 }
+
+const FOLLOWUP_OUTCOME_OPTIONS = [
+  { label: 'Interested', value: 'interested' },
+  { label: 'Quotation Sent', value: 'quotation_sent' },
+  { label: 'Follow-up Required', value: 'follow_up_required' },
+  { label: 'No Response', value: 'no_response' },
+  { label: 'Change in Plans', value: 'change_in_plans' },
+  { label: 'Not Interested', value: 'not_interested' },
+]
+
+const modalFieldRowSx = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  gap: ADMIN_MODAL_FORM_LAYOUT.fieldGridGap,
+} as const
 
 interface AddFollowupModalProps {
   open: boolean
@@ -29,6 +46,7 @@ export function AddFollowupModal({ open, value, onClose, onChange, onSubmit }: A
       onClose={onClose}
       title="Add Follow-up"
       subtitle="Track upcoming communication and responsibilities."
+      size="md"
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end">
           <Button label="Cancel" variant="neutral" onClick={onClose} />
@@ -52,18 +70,32 @@ export function AddFollowupModal({ open, value, onClose, onChange, onSubmit }: A
             fullWidth
           />
         </FormField>
-        <FormField label="Follow-up Date">
-          <Input type="date" value={value.followupDate} onChange={(next) => patch({ followupDate: next })} placeholder="Select date" fullWidth />
-        </FormField>
-        <FormField label="Follow-up Time">
-          <Input type="time" value={value.followupTime} onChange={(next) => patch({ followupTime: next })} placeholder="Select time" fullWidth />
-        </FormField>
+        <Box sx={modalFieldRowSx}>
+          <FormField label="Follow-up Date">
+            <Input
+              type="date"
+              value={value.followupDate}
+              onChange={(next) => patch({ followupDate: next })}
+              placeholder="Select date"
+              fullWidth
+            />
+          </FormField>
+          <FormField label="Follow-up Time">
+            <Input
+              type="time"
+              value={value.followupTime}
+              onChange={(next) => patch({ followupTime: next })}
+              placeholder="Select time"
+              fullWidth
+            />
+          </FormField>
+        </Box>
         <FormField label="Discussion Summary">
           <Textarea
             value={value.discussionSummary}
             onChange={(next) => patch({ discussionSummary: next })}
             placeholder="Summarize what was discussed"
-            minRows={3}
+            minRows={2}
             fullWidth
           />
         </FormField>
@@ -76,12 +108,21 @@ export function AddFollowupModal({ open, value, onClose, onChange, onSubmit }: A
             fullWidth
           />
         </FormField>
-        <FormField label="Assigned User">
-          <Input value={value.assignedUser} onChange={(next) => patch({ assignedUser: next })} placeholder="Who owns this follow-up" fullWidth />
-        </FormField>
-        <FormField label="Reminder Required">
-          <Toggle checked={value.reminderRequired} onChange={(next) => patch({ reminderRequired: next })} />
-        </FormField>
+        <Box sx={modalFieldRowSx}>
+          <FormField label="Assigned User">
+            <Input
+              value={value.assignedUser}
+              onChange={(next) => patch({ assignedUser: next })}
+              placeholder="Who owns this follow-up"
+              fullWidth
+            />
+          </FormField>
+          <FormField label="Reminder Required">
+            <Box sx={{ display: 'flex', alignItems: 'center', minHeight: 34 }}>
+              <Toggle checked={value.reminderRequired} onChange={(next) => patch({ reminderRequired: next })} />
+            </Box>
+          </FormField>
+        </Box>
         <FormField label="Follow-up Status">
           <Select
             value={value.followupStatus}
@@ -93,6 +134,18 @@ export function AddFollowupModal({ open, value, onClose, onChange, onSubmit }: A
               { label: 'Rescheduled', value: 'rescheduled' },
             ]}
             placeholder="Select follow-up status"
+            fullWidth
+          />
+        </FormField>
+
+        <Divider />
+
+        <FormField label="Outcome">
+          <Select
+            value={value.outcome}
+            onChange={(next) => patch({ outcome: String(next) })}
+            options={FOLLOWUP_OUTCOME_OPTIONS}
+            placeholder="Select outcome"
             fullWidth
           />
         </FormField>

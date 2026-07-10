@@ -12,6 +12,7 @@ export function createEmptyQuotationFormData(): QuotationFormData {
       companyName: '',
       contactPersonName: '',
       contactNumber: '',
+      alternateContactNumber: '',
       emailAddress: '',
       companyAddress: '',
     },

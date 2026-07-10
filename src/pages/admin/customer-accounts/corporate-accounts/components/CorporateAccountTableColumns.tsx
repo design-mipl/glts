@@ -44,14 +44,14 @@ export function buildCorporateAccountColumns({
     {
       key: 'workflowType',
       label: 'Workflow Type',
-      widthSize: adminListingColumnWidthSize('service'),
+      widthSize: 'md',
       filterable: true,
       render: (_, row) => getWorkflowBadge(row.workflowType),
     },
     {
       key: 'superAdmin',
       label: 'Super Admin',
-      widthSize: adminListingColumnWidthSize('assignee'),
+      widthSize: 'md',
       searchable: true,
     },
     {

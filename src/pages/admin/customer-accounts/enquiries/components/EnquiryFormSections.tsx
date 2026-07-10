@@ -1,3 +1,4 @@
+import type { SxProps, Theme } from '@mui/material/styles'
 import type { Dispatch, SetStateAction } from 'react'
 import {
   FileUpload,
@@ -34,6 +35,40 @@ function getNotesValue(formData: EnquiryFormData): string {
   )
 }
 
+/** Side-by-side Notes + Attachments columns share the same control height in the section grid. */
+const additionalInfoColumnSx: SxProps<Theme> = {
+  height: '100%',
+}
+
+const additionalInfoTextareaSx: SxProps<Theme> = {
+  flex: 1,
+  '& .MuiFormControl-root': {
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  '& .MuiInputBase-root': {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  '& textarea': {
+    height: '100% !important',
+    boxSizing: 'border-box',
+  },
+}
+
+const additionalInfoFileUploadSx: SxProps<Theme> = {
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  '& > .MuiBox-root:first-of-type': {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+}
+
 export function buildEnquiryFormSections({
   formData,
   setFormData,
@@ -48,7 +83,7 @@ export function buildEnquiryFormSections({
   }
 
   const notesField = (
-    <FormField label="Notes / Internal Remarks">
+    <FormField label="Notes / Internal Remarks" sx={additionalInfoColumnSx}>
       <Textarea
         value={getNotesValue(formData)}
         onChange={(value) =>
@@ -62,6 +97,7 @@ export function buildEnquiryFormSections({
         placeholder="Add notes or internal remarks for this enquiry"
         minRows={4}
         fullWidth
+        sx={additionalInfoTextareaSx}
       />
     </FormField>
   )
@@ -113,7 +149,7 @@ export function buildEnquiryFormSections({
             />
           </FormField>
           <FormField
-            label="Contact Number"
+            label="Mobile Number"
             required
             error={Boolean(errors.contactNumber)}
             helperText={errors.contactNumber}
@@ -121,7 +157,15 @@ export function buildEnquiryFormSections({
             <Input
               value={formData.customer.contactNumber}
               onChange={(value) => patch('customer', { contactNumber: value })}
-              placeholder="+91 98765 43210"
+              placeholder="Enter mobile number"
+              fullWidth
+            />
+          </FormField>
+          <FormField label="Landline Number">
+            <Input
+              value={formData.customer.alternateContactNumber ?? ''}
+              onChange={(value) => patch('customer', { alternateContactNumber: value })}
+              placeholder="Enter landline number"
               fullWidth
             />
           </FormField>
@@ -195,12 +239,13 @@ export function buildEnquiryFormSections({
         <>
           {showFileUpload ? notesField : <AdminFullPageFormFieldSpan>{notesField}</AdminFullPageFormFieldSpan>}
           {showFileUpload ? (
-            <FormField label="Attachments">
+            <FormField label="Attachments" sx={additionalInfoColumnSx}>
               <FileUpload
                 multiple
                 dropzoneTitle="Drag and drop files here, or browse"
                 dropzoneCaption="Passport samples, requirement documents, or supporting files"
                 browseLabel="Browse files"
+                sx={additionalInfoFileUploadSx}
                 onUpload={(files) =>
                   setFormData((prev) => ({
                     ...prev,

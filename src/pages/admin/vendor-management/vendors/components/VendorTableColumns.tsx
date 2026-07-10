@@ -1,7 +1,6 @@
 import { Eye, PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
-import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { Vendor } from '@/shared/types/vendor'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { paymentTermsLabel } from '../config/paymentTermsConfig'
@@ -25,7 +24,7 @@ export function buildVendorColumns({
     {
       key: 'vendorId',
       label: 'Vendor ID',
-      widthSize: adminListingColumnWidthSize('code'),
+      widthSize: 'md',
       sortable: true,
       searchable: true,
       hideable: false,
@@ -33,14 +32,14 @@ export function buildVendorColumns({
     {
       key: 'vendorName',
       label: 'Vendor Name',
-      widthSize: adminListingColumnWidthSize('company'),
+      widthSize: 'lg',
       sortable: true,
       searchable: true,
     },
     {
       key: 'vendorCategory',
       label: 'Vendor Category',
-      widthSize: adminListingColumnWidthSize('service'),
+      widthSize: 'md',
       filterable: true,
       render: (_, row) => (
         <Badge label={vendorCategoryLabel[row.vendorCategory]} color={vendorCategoryColor[row.vendorCategory]} size="sm" />
@@ -49,22 +48,21 @@ export function buildVendorColumns({
     {
       key: 'vendorType',
       label: 'Vendor Type',
-      widthSize: adminListingColumnWidthSize('status'),
+      widthSize: 'sm',
       filterable: true,
       render: (_, row) => vendorTypeLabel[row.vendorType],
     },
     {
       key: 'servicesCount',
       label: 'Services Count',
-      widthSize: adminListingColumnWidthSize('count'),
+      widthSize: 'sm',
       sortable: true,
-      align: 'center',
       render: (_, row) => row.serviceMappings.length,
     },
     {
       key: 'gstStatus',
       label: 'GST Status',
-      widthSize: adminListingColumnWidthSize('status'),
+      widthSize: 'md',
       filterable: true,
       render: (_, row) => (
         <Badge
@@ -77,22 +75,21 @@ export function buildVendorColumns({
     {
       key: 'paymentTerms',
       label: 'Payment Terms',
-      widthSize: adminListingColumnWidthSize('date'),
+      widthSize: 'md',
       filterable: true,
       render: (_, row) => paymentTermsLabel[row.commercial.paymentTerms],
     },
     {
       key: 'outstandingAmount',
       label: 'Outstanding Amount',
-      widthSize: adminListingColumnWidthSize('date'),
+      widthSize: 'md',
       sortable: true,
-      align: 'right',
       render: (_, row) => formatInr(row.outstandingAmount),
     },
     {
       key: 'status',
       label: 'Status',
-      widthSize: adminListingColumnWidthSize('status'),
+      widthSize: 'sm',
       filterable: true,
       render: (_, row) => (
         <Badge label={vendorStatusLabel[row.status]} color={vendorStatusColor[row.status]} size="sm" />
@@ -101,7 +98,7 @@ export function buildVendorColumns({
     {
       key: 'updatedAt',
       label: 'Last Updated',
-      widthSize: adminListingColumnWidthSize('date'),
+      widthSize: 'md',
       sortable: true,
       render: (_, row) => new Date(row.updatedAt).toLocaleDateString(),
     },

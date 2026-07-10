@@ -10,7 +10,6 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
-import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import { getApplicationOperationalTone } from '@/pages/customer/features/applications/components/listing/applicationStatus'
 import type { OperationalPassengerRow } from '@/shared/types/operationalPassengerAssignment'
 import {
@@ -155,7 +154,7 @@ export function buildOperationalAssignmentTableColumns(
     {
       key: 'passenger',
       label: 'Passenger',
-      widthSize: adminListingColumnWidthSize('name'),
+      widthSize: 'md',
       sortable: true,
       searchable: true,
       render: (_value, row: OperationalPassengerRow) => (
@@ -167,7 +166,7 @@ export function buildOperationalAssignmentTableColumns(
     {
       key: 'priority',
       label: 'Priority',
-      widthSize: adminListingColumnWidthSize('priority'),
+      widthSize: 'sm',
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => (
         <Badge label={assignmentPriorityLabel[row.priority]} color={assignmentPriorityBadgeColor(row.priority)} />
@@ -176,7 +175,7 @@ export function buildOperationalAssignmentTableColumns(
     {
       key: 'application',
       label: 'Application',
-      widthSize: adminListingColumnWidthSize('statusGroup'),
+      widthSize: 'lg',
       sortable: true,
       searchable: true,
       render: (_value, row: OperationalPassengerRow) => <ApplicationCell row={row} />,
@@ -184,7 +183,7 @@ export function buildOperationalAssignmentTableColumns(
     {
       key: 'jurisdiction',
       label: 'Jurisdiction',
-      widthSize: adminListingColumnWidthSize('jurisdiction'),
+      widthSize: 'md',
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => (
         <Badge label={row.jurisdiction || '—'} color="info" />
@@ -193,7 +192,7 @@ export function buildOperationalAssignmentTableColumns(
     {
       key: 'travelDate',
       label: 'Travel Date',
-      widthSize: adminListingColumnWidthSize('date'),
+      widthSize: 'md',
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => (
         <Typography variant="body2" noWrap sx={{ fontSize: 13 }}>
@@ -204,21 +203,21 @@ export function buildOperationalAssignmentTableColumns(
     {
       key: 'assignment',
       label: 'Assignment',
-      widthSize: adminListingColumnWidthSize('statusGroup'),
+      widthSize: 'md',
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => <AssignmentCell row={row} />,
     },
     {
       key: 'status',
       label: 'Status',
-      widthSize: adminListingColumnWidthSize('statusGroup'),
+      widthSize: 'md',
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => <StatusCell row={row} />,
     },
     {
       key: 'sla',
       label: 'SLA',
-      widthSize: adminListingColumnWidthSize('sla'),
+      widthSize: 'sm',
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => (
         <Badge label={formatSlaDisplayLabel(row)} color={getSlaBadgeColor(row)} />

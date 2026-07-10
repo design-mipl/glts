@@ -46,14 +46,14 @@ export function buildAgreementColumns({
     {
       key: 'billingType',
       label: 'Billing Type',
-      widthSize: adminListingColumnWidthSize('service'),
+      widthSize: 'md',
       filterable: true,
       render: (_, row) => <Badge label={billingTypeLabel[row.billingType]} color={billingTypeColor[row.billingType]} size="sm" />,
     },
     {
       key: 'workflowType',
       label: 'Workflow Type',
-      widthSize: adminListingColumnWidthSize('service'),
+      widthSize: 'md',
       filterable: true,
       render: (_, row) => (
         <Badge label={workflowTypeLabel[row.workflowType]} color={workflowTypeColor[row.workflowType]} size="sm" />
@@ -79,7 +79,7 @@ export function buildAgreementColumns({
     {
       key: 'advanceRule',
       label: 'Advance Rule',
-      widthSize: 'md',
+      widthSize: 'lg',
       render: (_, row) => deriveAdvanceRuleSummary(row.billingType, row.billingConfig),
     },
     {

@@ -4,6 +4,7 @@ import { useToast } from '@/design-system/UIComponents'
 import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
 import { buildDocCorrectionRequestColumns } from '../columns/docCorrectionRequestColumns'
 import { buildDocReviewQcColumns } from '../columns/docReviewQcColumns'
+import { DOCUMENTATION_LISTING_TABLE_SX } from '../documentationTableTokens'
 import type { DocCorrectionRequestRow, DocReviewQcRow } from '../../data/documentationDashboardMock'
 
 export interface QcCorrectionSectionProps {
@@ -46,6 +47,7 @@ export function QcCorrectionSection({
           rowKey="id"
           getCellValue={getReviewQcCellValue}
           loading={loading}
+          tableSx={DOCUMENTATION_LISTING_TABLE_SX}
         />
       </Grid>
       <Grid size={{ xs: 12, lg: 6 }}>
@@ -57,6 +59,7 @@ export function QcCorrectionSection({
           rowKey="id"
           getCellValue={getCorrectionCellValue}
           loading={loading}
+          tableSx={DOCUMENTATION_LISTING_TABLE_SX}
         />
       </Grid>
     </Grid>

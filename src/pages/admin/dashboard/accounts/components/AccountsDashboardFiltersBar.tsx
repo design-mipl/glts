@@ -19,19 +19,20 @@ export function AccountsDashboardFiltersBar({
 }: AccountsDashboardFiltersBarProps) {
   return (
     <Stack
-      direction={{ xs: 'column', sm: 'row' }}
-      spacing={1.5}
-      alignItems={{ xs: 'stretch', sm: 'flex-end' }}
-      flexWrap="wrap"
+      direction={{ xs: 'column', md: 'row' }}
+      spacing={1.25}
+      alignItems={{ xs: 'stretch', md: 'flex-end' }}
+      flexWrap={{ xs: 'wrap', md: 'nowrap' }}
       useFlexGap
-      sx={{ width: { xs: '100%', md: 'auto' }, minWidth: { md: 520 } }}
+      sx={{ width: '100%' }}
     >
       <DateRangePicker
         label="Date range"
         size="sm"
+        layout="inline"
         value={filters.dateRange}
         onChange={(dateRange) => onChange({ ...filters, dateRange })}
-        sx={{ minWidth: { sm: 200 } }}
+        sx={{ flex: { md: '0 1 auto' }, minWidth: { sm: 280 } }}
       />
       <Select
         label="Branch"
@@ -39,7 +40,7 @@ export function AccountsDashboardFiltersBar({
         value={filters.branch}
         onChange={(branch) => onChange({ ...filters, branch: String(branch) })}
         options={ACCOUNTS_BRANCH_OPTIONS}
-        sx={{ minWidth: { sm: 130 } }}
+        sx={{ flex: { md: '1 1 120px' }, minWidth: { sm: 120 } }}
       />
       <Select
         label="Customer type"
@@ -49,7 +50,7 @@ export function AccountsDashboardFiltersBar({
           onChange({ ...filters, customerType: String(customerType) })
         }
         options={ACCOUNTS_CUSTOMER_TYPE_OPTIONS}
-        sx={{ minWidth: { sm: 130 } }}
+        sx={{ flex: { md: '1 1 130px' }, minWidth: { sm: 130 } }}
       />
       <Select
         label="Company"
@@ -57,7 +58,7 @@ export function AccountsDashboardFiltersBar({
         value={filters.company}
         onChange={(company) => onChange({ ...filters, company: String(company) })}
         options={ACCOUNTS_COMPANY_OPTIONS}
-        sx={{ minWidth: { sm: 160 } }}
+        sx={{ flex: { md: '1 1 160px' }, minWidth: { sm: 150 } }}
       />
       <Select
         label="Invoice status"
@@ -67,7 +68,7 @@ export function AccountsDashboardFiltersBar({
           onChange({ ...filters, invoiceStatus: String(invoiceStatus) })
         }
         options={ACCOUNTS_INVOICE_STATUS_OPTIONS}
-        sx={{ minWidth: { sm: 140 } }}
+        sx={{ flex: { md: '1 1 140px' }, minWidth: { sm: 140 } }}
       />
     </Stack>
   )
