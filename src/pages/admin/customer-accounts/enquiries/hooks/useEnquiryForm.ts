@@ -70,7 +70,7 @@ export function useEnquiryForm(initialData?: EnquiryFormData) {
     const next: Record<string, string> = {}
     if (!formData.customer.companyOrCustomerName.trim()) next.companyOrCustomerName = 'Customer name is required'
     if (!formData.customer.contactPersonName.trim()) next.contactPersonName = 'Contact person is required'
-    if (!formData.customer.contactNumber.trim()) next.contactNumber = 'Contact number is required'
+    if (!formData.customer.contactNumber.trim()) next.contactNumber = 'Mobile number is required'
     if (!formData.customer.emailAddress.trim()) next.emailAddress = 'Email is required'
     if (!getVisaRequirementItems(formData.visaRequirement).length) {
       next.visaRequirements = 'Add at least one country requirement'

@@ -15,6 +15,7 @@ export interface CompanyMaster {
   industryType: string
   contactPersonName: string
   contactNumber: string
+  alternateContactNumber?: string
   emailAddress: string
   companyAddress: string
   countryId: string
@@ -37,6 +38,7 @@ export interface CompanyMasterFormData {
   industryType: string
   contactPersonName: string
   contactNumber: string
+  alternateContactNumber?: string
   emailAddress: string
   companyAddress: string
   countryId: string

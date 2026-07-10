@@ -34,8 +34,8 @@ export function EditQuotationPage() {
   }, [quotationId, loadFormData, navigate])
 
   const breadcrumbs = [
-    { label: 'Customer & Accounts', href: '/admin/customer-accounts/quotations' },
-    { label: 'Quotation Management', href: '/admin/customer-accounts/quotations' },
+    { label: 'Client Management', href: '/admin/customer-accounts/quotations' },
+    { label: 'Quotations', href: '/admin/customer-accounts/quotations' },
     { label: formData.customer.companyName || 'Edit Quotation' },
   ]
 

@@ -7,7 +7,6 @@ import {
 } from 'lucide-react'
 import type { NavigateFunction } from 'react-router-dom'
 import { Badge, RowActions, type Column, type Toast } from '@/design-system/UIComponents'
-import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { BulkBatchRow, SingleApplicationRow } from '@/pages/customer/features/applications/data/applicationFlowData'
 import {
   getApplicationOperationalTone,
@@ -115,7 +114,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'id',
       label: 'GLTS reference',
-      widthSize: adminListingColumnWidthSize('code'),
+      widthSize: 'md',
       sortable: true,
       filterable: false,
       render: (value: string, row: MarineApplicationRow) => (
@@ -141,7 +140,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'applicantName',
       label: 'Applicant',
-      widthSize: adminListingColumnWidthSize('name'),
+      widthSize: 'md',
       sortable: false,
       filterable: false,
       render: (_: unknown, row: MarineApplicationRow) => (
@@ -155,7 +154,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'companyName',
       label: 'Company name',
-      widthSize: adminListingColumnWidthSize('company'),
+      widthSize: 'lg',
       sortable: true,
       filterable: true,
       render: (_: unknown, row: MarineApplicationRow) => (
@@ -167,7 +166,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'countryVisa',
       label: 'Country / Visa',
-      widthSize: adminListingColumnWidthSize('applicationSummary'),
+      widthSize: 'md',
       sortable: true,
       filterable: true,
       render: (_: unknown, row: MarineApplicationRow) => (
@@ -184,7 +183,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'jurisdiction',
       label: 'Jurisdiction',
-      widthSize: adminListingColumnWidthSize('jurisdiction'),
+      widthSize: 'md',
       sortable: true,
       filterable: true,
       render: (value: string) => (
@@ -196,14 +195,14 @@ export function buildMarineApplicationColumns({
     {
       key: 'travelDate',
       label: 'Travel date',
-      widthSize: adminListingColumnWidthSize('date'),
+      widthSize: 'md',
       sortable: true,
       filterable: true,
     },
     {
       key: 'createdBy',
       label: 'Created by',
-      widthSize: adminListingColumnWidthSize('stackedAssignment'),
+      widthSize: 'md',
       sortable: true,
       filterable: true,
       render: (_: unknown, row: MarineApplicationRow) => (
@@ -220,7 +219,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'operationalStatus',
       label: 'Status',
-      widthSize: adminListingColumnWidthSize('status'),
+      widthSize: 'sm',
       sortable: true,
       filterable: true,
       render: (_: unknown, row: MarineApplicationRow) => (
@@ -234,7 +233,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'processingStage',
       label: 'Processing stage',
-      widthSize: adminListingColumnWidthSize('description'),
+      widthSize: 'md',
       sortable: false,
       filterable: true,
       render: (value: string) => (
@@ -246,7 +245,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'lastUpdated',
       label: 'Last updated',
-      widthSize: adminListingColumnWidthSize('date'),
+      widthSize: 'md',
       sortable: true,
       filterable: false,
     },

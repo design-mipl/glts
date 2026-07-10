@@ -26,9 +26,10 @@ export function DashboardFiltersBar({ filters, onChange }: DashboardFiltersBarPr
       <DateRangePicker
         label="Date range"
         size="sm"
+        layout="inline"
         value={filters.dateRange}
         onChange={(dateRange) => onChange({ ...filters, dateRange })}
-        sx={{ flex: { lg: '1 1 180px' }, minWidth: { sm: 180 } }}
+        sx={{ flex: { lg: '0 1 auto' }, minWidth: { sm: 300 } }}
       />
       <Select
         label="Country"

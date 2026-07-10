@@ -4,6 +4,7 @@ import { Alert } from '@/design-system/UIComponents'
 import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
 import { DocumentationCriticalAlertsPanel } from '../DocumentationCriticalAlertsPanel'
 import { buildDocumentationActivityColumns } from '../columns/documentationActivityColumns'
+import { DOCUMENTATION_LISTING_TABLE_SX } from '../documentationTableTokens'
 import type { DocumentationActivityRow, DocumentationCriticalAlert } from '../../data/documentationDashboardMock'
 
 export interface CriticalAlertsActivitySectionProps {
@@ -48,6 +49,7 @@ export function CriticalAlertsActivitySection({
             pageSize={8}
             emptyTitle="No activity yet"
             emptyDescription="Your documentation actions today will appear here."
+            tableSx={DOCUMENTATION_LISTING_TABLE_SX}
           />
         </Stack>
       </Grid>

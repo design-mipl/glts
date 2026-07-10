@@ -24,6 +24,7 @@ export function deriveFinanceContactPersons(
       contactPerson: data.company.contactPersonName.trim(),
       email: data.company.emailAddress.trim(),
       phone: data.company.contactNumber.trim(),
+      landlineNumber: data.company.alternateContactNumber?.trim() ?? '',
     })
   }
 
@@ -41,6 +42,7 @@ export function deriveFinanceContactPersons(
         contactPerson: parent.contactPersonName.trim(),
         email: parent.emailAddress.trim(),
         phone: parent.contactNumber.trim(),
+        landlineNumber: parent.alternateContactNumber?.trim() ?? '',
       })
     }
   }
@@ -55,6 +57,7 @@ export function deriveFinanceContactPersons(
       contactPerson: entity.contactPerson.trim(),
       email: entity.email.trim(),
       phone: entity.phone.trim(),
+      landlineNumber: entity.landlineNumber?.trim() ?? '',
     })
   }
 
@@ -229,5 +232,6 @@ export function createEmptyManualFinanceContact(
     contactPerson: '',
     email: '',
     phone: '',
+    landlineNumber: '',
   }
 }

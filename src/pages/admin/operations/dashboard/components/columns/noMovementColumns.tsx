@@ -26,13 +26,13 @@ export function buildNoMovementColumns({
     {
       key: 'consultant',
       label: 'Consultant',
-      widthSize: adminListingColumnWidthSize('assignee'),
+      widthSize: adminListingColumnWidthSize('count'),
       sortable: false,
     },
     {
       key: 'currentStage',
       label: 'Current Stage',
-      widthSize: adminListingColumnWidthSize('status'),
+      widthSize: adminListingColumnWidthSize('country'),
       sortable: false,
     },
     {

@@ -343,7 +343,7 @@ export default function DataTable({
     ? { py: '8px', px: '8px', fontSize: '13px' }
     : { py: '12px', px: '12px' }
   const compactHeaderCellSx = embedded
-    ? { py: '8px', px: '8px', verticalAlign: 'middle' as const }
+    ? { py: '8px', px: '8px', height: '34px', verticalAlign: 'middle' as const }
     : { py: '12px', px: '12px', verticalAlign: 'top' as const }
 
   const tableView = (

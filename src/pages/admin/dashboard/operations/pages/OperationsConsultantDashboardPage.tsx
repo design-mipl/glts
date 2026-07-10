@@ -1,6 +1,6 @@
 import { Box, Stack } from '@mui/material'
-import { AdminPageHeader } from '@/pages/admin/components/AdminPageHeader'
 import { BaseCard, Button, LoadingOverlay } from '@/design-system/UIComponents'
+import { ExecutiveCompactHeader } from '@/pages/admin/dashboard/components'
 import { OperationsDashboardFiltersBar } from '../components/OperationsDashboardFiltersBar'
 import { TodayKpiSection } from '../components/sections/TodayKpiSection'
 import { MyApplicationsSection } from '../components/sections/MyApplicationsSection'
@@ -18,10 +18,10 @@ export function OperationsConsultantDashboardPage() {
   if (dashboard.status === 'error') {
     return (
       <Box>
-        <AdminPageHeader
+        <ExecutiveCompactHeader
           eyebrow="Dashboard"
           title="Operations dashboard"
-          description="Work management dashboard for operations consultants."
+          subtitle="Work management dashboard for operations consultants."
         />
         <BaseCard sx={{ p: 3, textAlign: 'center' }}>
           <Button label="Retry loading dashboard" onClick={dashboard.retry} />
@@ -32,11 +32,11 @@ export function OperationsConsultantDashboardPage() {
 
   return (
     <Box>
-      <AdminPageHeader
+      <ExecutiveCompactHeader
         eyebrow="Dashboard"
         title="Operations dashboard"
-        description={`Work queue for ${dashboard.consultantName} — applications assigned to you.`}
-        actions={
+        subtitle={`Work queue for ${dashboard.consultantName} — applications assigned to you.`}
+        filters={
           <OperationsDashboardFiltersBar
             filters={dashboard.filters}
             onChange={dashboard.setFilters}

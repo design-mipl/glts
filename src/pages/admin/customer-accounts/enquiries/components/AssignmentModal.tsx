@@ -1,6 +1,13 @@
+import { useMemo } from 'react'
 import { Stack } from '@mui/material'
-import { Button, FormField, Input, Modal, Select, Textarea } from '@/design-system/UIComponents'
-import { enquiryPriorityOptions } from '../config/enquiryFilterConfig'
+import { Button, FormField, Input, Modal, Textarea } from '@/design-system/UIComponents'
+import { AssignmentSearchableSelect } from './AssignmentSearchableSelect'
+import {
+  getEnquiryAssignmentBranchOptions,
+  getEnquiryAssignmentPriorityOptions,
+  getEnquiryAssignmentTeamOptions,
+  getEnquiryAssignmentUserOptions,
+} from '../utils/enquiryAssignmentOptions'
 
 export interface AssignmentModalValue {
   assignedTeam: string
@@ -22,6 +29,14 @@ interface AssignmentModalProps {
 export function AssignmentModal({ open, value, onClose, onChange, onSubmit }: AssignmentModalProps) {
   const patch = (next: Partial<AssignmentModalValue>) => onChange({ ...value, ...next })
 
+  const teamOptions = useMemo(() => getEnquiryAssignmentTeamOptions(), [])
+  const userOptions = useMemo(
+    () => getEnquiryAssignmentUserOptions(value.assignedTeam),
+    [value.assignedTeam],
+  )
+  const branchOptions = useMemo(() => getEnquiryAssignmentBranchOptions(), [])
+  const priorityOptions = useMemo(() => getEnquiryAssignmentPriorityOptions(), [])
+
   return (
     <Modal
       open={open}
@@ -37,21 +52,35 @@ export function AssignmentModal({ open, value, onClose, onChange, onSubmit }: As
     >
       <Stack spacing={2}>
         <FormField label="Assigned Team">
-          <Input value={value.assignedTeam} onChange={(next) => patch({ assignedTeam: next })} placeholder="e.g. Marine Ops, Corporate Ops" fullWidth />
+          <AssignmentSearchableSelect
+            value={value.assignedTeam}
+            onChange={(assignedTeam) => patch({ assignedTeam })}
+            options={teamOptions}
+            placeholder="Select team"
+          />
         </FormField>
         <FormField label="Assigned User">
-          <Input value={value.assignedUser} onChange={(next) => patch({ assignedUser: next })} placeholder="Enter assignee name" fullWidth />
+          <AssignmentSearchableSelect
+            value={value.assignedUser}
+            onChange={(assignedUser) => patch({ assignedUser })}
+            options={userOptions}
+            placeholder="Select user"
+          />
         </FormField>
         <FormField label="Branch">
-          <Input value={value.branch} onChange={(next) => patch({ branch: next })} placeholder="e.g. Mumbai, Dubai" fullWidth />
+          <AssignmentSearchableSelect
+            value={value.branch}
+            onChange={(branch) => patch({ branch })}
+            options={branchOptions}
+            placeholder="Select branch"
+          />
         </FormField>
         <FormField label="Priority">
-          <Select
+          <AssignmentSearchableSelect
             value={value.priority}
-            onChange={(next) => patch({ priority: String(next) })}
-            options={enquiryPriorityOptions.slice(1)}
+            onChange={(priority) => patch({ priority })}
+            options={priorityOptions}
             placeholder="Select priority"
-            fullWidth
           />
         </FormField>
         <FormField label="SLA Target">

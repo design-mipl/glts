@@ -190,8 +190,8 @@ export function CorporateAccountDetailPage() {
     <>
       <AdminDetailShell
       breadcrumbs={[
-        { label: 'Customer & accounts', href: '/admin/customer-accounts/corporate-accounts' },
-        { label: 'Corporate accounts', href: '/admin/customer-accounts/corporate-accounts' },
+        { label: 'Client Management', href: '/admin/customer-accounts/corporate-accounts' },
+        { label: 'Client Accounts', href: '/admin/customer-accounts/corporate-accounts' },
         { label: account.companyName },
       ]}
       summary={

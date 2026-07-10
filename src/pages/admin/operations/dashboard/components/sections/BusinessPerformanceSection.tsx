@@ -123,7 +123,7 @@ export function BusinessPerformanceSection({
         description="Billing performance and active pipeline mix across channels."
       />
       <Grid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 6 }}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Box sx={{ ...executiveCardLevel2Sx(colors), p: 2, height: '100%' }}>
             <Typography sx={{ fontWeight: 800, fontSize: 15, color: colors.navy, mb: 0.25 }}>
               Revenue snapshot
@@ -190,7 +190,7 @@ export function BusinessPerformanceSection({
             </Grid>
           </Box>
         </Grid>
-        <Grid size={{ xs: 12, lg: 6 }}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <DistributionChart title="By country" subtitle="Active pipeline" slices={countryDistribution} />

@@ -110,7 +110,7 @@ export function QuotationListingPage() {
       <AdminListingShell
         stickyPageHeader={
           <AdminListingStickyHeader
-            title="Quotation Management"
+            title="Quotations"
             description="Create commercial proposals, manage pricing versions, and progress toward agreements."
             actions={<Button label="Create Quotation" startIcon={<Plus size={14} />} onClick={handleCreate} />}
           />

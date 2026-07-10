@@ -71,7 +71,7 @@ function NoReadyAgreementsState({ onGoToAgreements }: { onGoToAgreements: () => 
           sx={{ mb: 2, maxWidth: 420, mx: 'auto', fontSize: 13 }}
         >
           Mark a commercial agreement ready for activation before creating a corporate account. Draft agreements must be
-          completed from Agreements & contracts first.
+          completed from Agreements first.
         </Typography>
         <Button label="Go to agreements" size="sm" onClick={onGoToAgreements} />
       </Box>

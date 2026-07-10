@@ -130,14 +130,24 @@ export function AgreementCompanyInformationSection({
                 fullWidth
               />
             </FormField>
-            <FormField label="Contact number" required {...agreementFieldError(errors, 'contactNumber')}>
+            <FormField label="Mobile Number" required {...agreementFieldError(errors, 'contactNumber')}>
               <Input
                 value={data.company.contactNumber}
                 onChange={(v) => {
                   updateCompany({ contactNumber: v })
                   onClearError('contactNumber')
                 }}
-                placeholder="Enter contact number"
+                placeholder="Enter mobile number"
+                fullWidth
+              />
+            </FormField>
+            <FormField label="Landline Number">
+              <Input
+                value={data.company.alternateContactNumber ?? ''}
+                onChange={(v) => {
+                  updateCompany({ alternateContactNumber: v })
+                }}
+                placeholder="Enter landline number"
                 fullWidth
               />
             </FormField>

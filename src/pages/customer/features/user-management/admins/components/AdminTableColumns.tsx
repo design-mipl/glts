@@ -25,7 +25,14 @@ export function buildAdminColumns({
   onDelete,
 }: ColumnHandlers): Column<AdminUser>[] {
   return [
-    { key: 'name', label: 'Admin name', sortable: true, searchable: true, hideable: false, minWidth: 160 },
+    {
+      key: 'fullName',
+      label: 'Admin name',
+      sortable: true,
+      searchable: true,
+      hideable: false,
+      minWidth: 160,
+    },
     { key: 'email', label: 'Email', sortable: true, searchable: true, minWidth: 180 },
     { key: 'mobile', label: 'Mobile number', sortable: true, searchable: true, minWidth: 130 },
     { key: 'location', label: 'Location', sortable: true, filterable: true, minWidth: 120 },
