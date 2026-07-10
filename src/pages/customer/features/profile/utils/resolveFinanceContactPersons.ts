@@ -5,6 +5,7 @@ import {
   getSelectedFinanceContactPersons,
   resolveFinanceContactPersons,
 } from '@/shared/utils/agreementFinanceContacts'
+import { mapAgreementDocumentsForPortal } from '@/shared/utils/mapAgreementDocumentsForPortal'
 import type { BillingAgreementData, FinanceContactPerson } from '../types/accountWorkspace'
 import { CUSTOMER_PORTAL_AGREEMENT_ID } from '@/shared/utils/resolveCustomerPortalAgreement'
 import { deriveCountryVisaCoverageFromPricing } from './deriveAgreementOperations'
@@ -72,11 +73,20 @@ export function enrichBillingAgreementFromCommercialAgreement(
       }
     : billing.billingSummary
 
+  const mappedDocuments = mapAgreementDocumentsForPortal(agreement)
+  const fallbackOnboarding = billing.onboardingDocuments.length > 0 ? billing.onboardingDocuments : billing.documents
+  const onboardingDocuments =
+    mappedDocuments.onboardingDocuments.length > 0 ? mappedDocuments.onboardingDocuments : fallbackOnboarding
+  const agreementDocument = mappedDocuments.agreementDocument ?? billing.agreementDocument
+
   return {
     ...billing,
     financeContactPersons,
     financeContacts,
     billingSummary,
+    documents: onboardingDocuments,
+    onboardingDocuments,
+    agreementDocument,
     supportedOperations: {
       countryCoverage: deriveCountryVisaCoverageFromPricing(billing.pricingGroups),
     },

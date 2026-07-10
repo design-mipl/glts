@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { SacCodeMaster, SacCodeMasterFormData } from '@/shared/types/sacCodeMaster'
 
 export const INITIAL_SAC_CODE_FORM: SacCodeMasterFormData = {
@@ -46,10 +46,10 @@ export function useSacCodeForm(initialData?: SacCodeMasterFormData) {
     return Object.keys(next).length === 0
   }
 
-  const reset = (data?: SacCodeMasterFormData) => {
+  const reset = useCallback((data?: SacCodeMasterFormData) => {
     setFormData(data ?? INITIAL_SAC_CODE_FORM)
     setErrors({})
-  }
+  }, [])
 
   return { formData, setFormData, errors, isValid, validate, reset }
 }

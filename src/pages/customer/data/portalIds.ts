@@ -9,6 +9,10 @@ export const GLTS_APPLICATION_IDS = {
 export const GLTS_BOOKER_IDS = {
   priya: 'GLTS-BKR-001',
   james: 'GLTS-BKR-002',
+  anita: 'GLTS-BKR-003',
+  vikram: 'GLTS-BKR-004',
+  sofia: 'GLTS-BKR-005',
+  deepak: 'GLTS-BKR-006',
 } as const
 
 export const GLTS_ACTION_IDS = {

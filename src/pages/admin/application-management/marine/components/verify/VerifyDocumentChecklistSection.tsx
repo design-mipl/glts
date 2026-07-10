@@ -75,6 +75,7 @@ export function VerifyDocumentsTabPanel({ children }: { children: ReactNode }) {
 
 interface VerifyDocumentCardProps {
   document: ApplicantDocumentItem
+  previewOnly?: boolean
   onPreview: () => void
   onVerify: () => void
   onReject: () => void
@@ -84,6 +85,7 @@ interface VerifyDocumentCardProps {
 
 export function VerifyDocumentCard({
   document,
+  previewOnly = false,
   onPreview,
   onVerify,
   onReject,
@@ -108,8 +110,9 @@ export function VerifyDocumentCard({
   const pendingGltsArrangement = arrangeByGlts && !hasFile
   const isVerified = status === 'verified'
   const isRejected = status === 'rejected'
-  const showVerifyRejectActions = !pendingGltsArrangement && !isVerified && !isRejected
-  const showPreview = isVerified || (hasFile && !pendingGltsArrangement)
+  const showVerifyRejectActions =
+    !previewOnly && !pendingGltsArrangement && !isVerified && !isRejected
+  const showPreview = previewOnly || isVerified || (hasFile && !pendingGltsArrangement)
   const reqType = requirementTypeLabel(document)
   const displayStatus = verifyDocumentBadgeLabel(document)
 
@@ -188,7 +191,7 @@ export function VerifyDocumentCard({
           sx={{ width: '100%' }}
         >
           <Stack direction="row" flexWrap="wrap" gap={1} useFlexGap>
-            {showGltsUpload ? (
+            {showGltsUpload && !previewOnly ? (
               <Button
                 label={simpleDocumentUploadActionLabel(document.documentId as SimpleDocumentRequirementId)}
                 variant="contained"
@@ -248,6 +251,7 @@ interface VerifyDocumentChecklistSectionProps {
   sectionTitle?: string
   documents: ApplicantDocumentItem[]
   gridSx?: VerifyDocumentGridSx
+  previewOnly?: boolean
   onPreview: (documentId: string) => void
   onVerify: (document: ApplicantDocumentItem) => void
   onReject: (document: ApplicantDocumentItem) => void
@@ -260,6 +264,7 @@ export function VerifyDocumentChecklistSection({
   sectionTitle,
   documents,
   gridSx = VERIFY_DOCUMENT_GRID_SX,
+  previewOnly = false,
   onPreview,
   onVerify,
   onReject,
@@ -276,6 +281,7 @@ export function VerifyDocumentChecklistSection({
           <VerifyDocumentCard
             key={doc.documentId}
             document={doc}
+            previewOnly={previewOnly}
             onPreview={() => onPreview(doc.documentId)}
             onVerify={() => onVerify(doc)}
             onReject={() => onReject(doc)}
@@ -293,6 +299,7 @@ interface VerifyDocumentChecklistsPanelProps {
   travelerDocuments: ApplicantDocumentItem[]
   globalDocuments: ApplicantDocumentItem[]
   gridSx?: VerifyDocumentGridSx
+  previewOnly?: boolean
   onTravelerPreview: (documentId: string) => void
   onTravelerVerify: (document: ApplicantDocumentItem) => void
   onTravelerReject: (document: ApplicantDocumentItem) => void
@@ -309,6 +316,7 @@ export function VerifyDocumentChecklistsPanel({
   travelerDocuments,
   globalDocuments,
   gridSx,
+  previewOnly = false,
   onTravelerPreview,
   onTravelerVerify,
   onTravelerReject,
@@ -335,6 +343,7 @@ export function VerifyDocumentChecklistsPanel({
             countryTitle={countryTitle}
             documents={travelerDocuments}
             gridSx={gridSx}
+            previewOnly={previewOnly}
             onPreview={onTravelerPreview}
             onVerify={onTravelerVerify}
             onReject={onTravelerReject}
@@ -350,6 +359,7 @@ export function VerifyDocumentChecklistsPanel({
             sectionTitle="Common Document Checklist"
             documents={globalDocuments}
             gridSx={gridSx}
+            previewOnly={previewOnly}
             onPreview={onGlobalPreview}
             onVerify={onGlobalVerify}
             onReject={onGlobalReject}

@@ -5,6 +5,7 @@ export interface ClientDocumentMaster extends MasterAuditFields {
   documentType: string
   description: string
   applicableFor: MasterApplicability[]
+  isMandatory: boolean
   status: MasterRecordStatus
 }
 
@@ -12,6 +13,7 @@ export interface ClientDocumentMasterFormData {
   documentType: string
   description: string
   applicableFor: MasterApplicability[]
+  isMandatory: boolean
   status: MasterRecordStatus
 }
 

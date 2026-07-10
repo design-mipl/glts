@@ -1,10 +1,8 @@
 import type { Dispatch, SetStateAction } from 'react'
-import { Stack } from '@mui/material'
 import {
   FileUpload,
   FormField,
   Input,
-  MultiSelect,
   Select,
   Textarea,
 } from '@/design-system/UIComponents'
@@ -15,11 +13,10 @@ import {
 import type { EnquiryFormData } from '@/shared/types/enquiry'
 import {
   enquiryCustomerTypeOptions,
-  enquiryFormCountryOptions,
   enquiryInquirySourceOptions,
-  enquiryProcessingTypeOptions,
 } from '../config/enquiryFormConfig'
 import { getEnquiryActor } from '../utils/enquiryActor'
+import { EnquiryVisaRequirementSection } from './EnquiryVisaRequirementSection'
 
 export interface EnquiryFormSectionsProps {
   formData: EnquiryFormData
@@ -37,10 +34,6 @@ function getNotesValue(formData: EnquiryFormData): string {
   )
 }
 
-function getProcessingTypeValue(formData: EnquiryFormData): string {
-  return formData.visaRequirement.processingType || formData.visaRequirement.expectedProcessingTimeline || ''
-}
-
 export function buildEnquiryFormSections({
   formData,
   setFormData,
@@ -53,6 +46,25 @@ export function buildEnquiryFormSections({
       [section]: { ...(prev[section] as object), ...next },
     }))
   }
+
+  const notesField = (
+    <FormField label="Notes / Internal Remarks">
+      <Textarea
+        value={getNotesValue(formData)}
+        onChange={(value) =>
+          patch('notes', {
+            initialDiscussionNotes: value,
+            internalNotes: value,
+            customerExpectations: '',
+            specialInstructions: '',
+          })
+        }
+        placeholder="Add notes or internal remarks for this enquiry"
+        minRows={4}
+        fullWidth
+      />
+    </FormField>
+  )
 
   const sections: AdminFullPageFormSection[] = [
     {
@@ -138,7 +150,7 @@ export function buildEnquiryFormSections({
             </FormField>
           </AdminFullPageFormFieldSpan>
           <FormField
-            label="Inquiry Source"
+            label="Enquiry Source"
             required
             error={Boolean(errors.inquirySource)}
             helperText={errors.inquirySource}
@@ -160,58 +172,17 @@ export function buildEnquiryFormSections({
     },
     {
       id: 'visa',
-      title: 'Visa Requirement Details',
-      columns: 2 as const,
+      title: 'Country Visa Requirement Details',
+      columns: 1 as const,
       children: (
-        <>
-          <AdminFullPageFormFieldSpan>
-            <FormField
-              label="Country Requirement"
-              required
-              error={Boolean(errors.countries)}
-              helperText={errors.countries}
-            >
-              <MultiSelect
-                value={formData.visaRequirement.countries}
-                onChange={(value) => patch('visaRequirement', { countries: value.map(String) })}
-                options={enquiryFormCountryOptions}
-                placeholder="Select destination countries"
-                fullWidth
-              />
-            </FormField>
-          </AdminFullPageFormFieldSpan>
-          <FormField label="Visa Type" required error={Boolean(errors.visaType)} helperText={errors.visaType}>
-            <Input
-              value={formData.visaRequirement.visaType}
-              onChange={(value) => patch('visaRequirement', { visaType: value })}
-              placeholder="e.g. Tourist, Business, Crew Movement"
-              fullWidth
-            />
-          </FormField>
-          <FormField label="Purpose of Visit">
-            <Input
-              value={formData.visaRequirement.purposeOfVisit}
-              onChange={(value) => patch('visaRequirement', { purposeOfVisit: value })}
-              placeholder="e.g. Conference, family visit, crew change"
-              fullWidth
-            />
-          </FormField>
-          <FormField label="Processing Type">
-            <Select
-              value={getProcessingTypeValue(formData)}
-              onChange={(value) =>
-                patch('visaRequirement', {
-                  processingType: String(value) as typeof formData.visaRequirement.processingType,
-                  expectedProcessingTimeline: '',
-                })
-              }
-              options={enquiryProcessingTypeOptions}
-              placeholder="Select processing type"
-              clearable
-              fullWidth
-            />
-          </FormField>
-        </>
+        <AdminFullPageFormFieldSpan>
+          <EnquiryVisaRequirementSection
+            formData={formData}
+            setFormData={setFormData}
+            countriesError={errors.countries}
+            visaRequirementsError={errors.visaRequirements}
+          />
+        </AdminFullPageFormFieldSpan>
       ),
     },
     {
@@ -219,25 +190,10 @@ export function buildEnquiryFormSections({
       title: 'Additional Information',
       importance: 'secondary' as const,
       span: 2,
-      columns: 1,
+      columns: 2 as const,
       children: (
-        <Stack spacing={2}>
-          <FormField label="Notes / Internal Remarks">
-            <Textarea
-              value={getNotesValue(formData)}
-              onChange={(value) =>
-                patch('notes', {
-                  initialDiscussionNotes: value,
-                  internalNotes: value,
-                  customerExpectations: '',
-                  specialInstructions: '',
-                })
-              }
-              placeholder="Add notes or internal remarks for this enquiry"
-              minRows={4}
-              fullWidth
-            />
-          </FormField>
+        <>
+          {showFileUpload ? notesField : <AdminFullPageFormFieldSpan>{notesField}</AdminFullPageFormFieldSpan>}
           {showFileUpload ? (
             <FormField label="Attachments">
               <FileUpload
@@ -262,7 +218,7 @@ export function buildEnquiryFormSections({
               />
             </FormField>
           ) : null}
-        </Stack>
+        </>
       ),
     },
   ]

@@ -12,6 +12,7 @@ import type { Column, TableState, BulkAction } from '../types'
 import {
   CHECKBOX_COLUMN_WIDTH,
   EXPAND_COLUMN_WIDTH,
+  getDataTableColWidth,
   getDataTableColumnWidthSx,
   getDataTableLayoutWidth,
 } from '../columnLayout'
@@ -370,6 +371,7 @@ export default function DataTable({
 
       <TableContainer
         sx={{
+          width: '100%',
           maxHeight: height !== 'auto' ? height : undefined,
           overflowX: 'auto',
           mt: embedded ? 0 : 1,
@@ -384,7 +386,8 @@ export default function DataTable({
           size="small"
           sx={{
             tableLayout: 'fixed',
-            width: tableLayoutWidth,
+            width: '100%',
+            minWidth: tableLayoutWidth,
             ...(embedded
               ? {
                   '& th': {
@@ -400,7 +403,7 @@ export default function DataTable({
           <colgroup>
             {bulkActions && <col style={{ width: CHECKBOX_COLUMN_WIDTH }} />}
             {visibleTableColumns.map((col) => {
-              const { width } = getDataTableColumnWidthSx(col, isStickyEndColumn(col))
+              const width = getDataTableColWidth(col, isStickyEndColumn(col))
               return <col key={col.key} style={{ width }} />
             })}
             {renderExpanded && <col style={{ width: EXPAND_COLUMN_WIDTH }} />}

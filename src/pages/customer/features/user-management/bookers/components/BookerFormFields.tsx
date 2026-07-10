@@ -1,7 +1,8 @@
-import { FormField, Input, Select, Textarea, Toggle } from '@/design-system/UIComponents'
+import { Box, IconButton, Stack, Typography } from '@mui/material'
+import { Plus, Trash2 } from 'lucide-react'
+import { Button, FormField, Input, Select, Textarea, Toggle } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import type { BookerUserFormData } from '@/shared/types/bookerUser'
-import { BOOKER_LOCATIONS } from '@/shared/data/mockBookerUsers'
 
 interface BookerFormFieldsProps {
   variant: 'primary' | 'access' | 'notes'
@@ -56,6 +57,22 @@ export function BookerFormFields({ variant, formData, errors, onUpdate }: Booker
     )
   }
 
+  const updateAdditionalEmail = (index: number, value: string) => {
+    onUpdate({
+      additionalEmails: formData.additionalEmails.map((email, i) => (i === index ? value : email)),
+    })
+  }
+
+  const removeAdditionalEmail = (index: number) => {
+    onUpdate({
+      additionalEmails: formData.additionalEmails.filter((_, i) => i !== index),
+    })
+  }
+
+  const addAdditionalEmail = () => {
+    onUpdate({ additionalEmails: [...formData.additionalEmails, ''] })
+  }
+
   return (
     <>
       <FormField label="Booker name" required error={!!errors.fullName} helperText={errors.fullName}>
@@ -82,33 +99,61 @@ export function BookerFormFields({ variant, formData, errors, onUpdate }: Booker
           fullWidth
         />
       </FormField>
-      <FormField label="Location">
-        <Select
-          value={formData.location}
-          onChange={v => onUpdate({ location: String(v) })}
-          options={[
-            { value: '', label: 'Select location' },
-            ...BOOKER_LOCATIONS.map(loc => ({ value: loc, label: loc })),
-          ]}
-          fullWidth
-        />
-      </FormField>
-      <FormField label="Designation">
-        <Input
-          value={formData.designation}
-          onChange={v => onUpdate({ designation: v })}
-          placeholder="e.g. Travel Manager"
-          fullWidth
-        />
-      </FormField>
-      <FormField label="Department">
-        <Input
-          value={formData.department}
-          onChange={v => onUpdate({ department: v })}
-          placeholder="e.g. Travel Desk"
-          fullWidth
-        />
-      </FormField>
+      <AdminFullPageFormFieldSpan>
+        <Stack spacing={1}>
+          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: 13 }}>
+            Additional email IDs
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+            Optional. Login and invite use the primary email ID above.
+          </Typography>
+          {formData.additionalEmails.map((email, index) => {
+            const errorKey = `additionalEmails.${index}`
+            const errorMessage = errors[errorKey]
+            return (
+              <Stack key={index} direction="row" spacing={0.75} alignItems="flex-start">
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Input
+                    value={email}
+                    onChange={v => updateAdditionalEmail(index, v)}
+                    placeholder="additional@company.com"
+                    fullWidth
+                  />
+                  {errorMessage ? (
+                    <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5, fontSize: 12 }}>
+                      {errorMessage}
+                    </Typography>
+                  ) : null}
+                </Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '34px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <IconButton
+                    size="small"
+                    aria-label="Remove email ID"
+                    onClick={() => removeAdditionalEmail(index)}
+                    sx={{ p: 0.5 }}
+                  >
+                    <Trash2 size={14} />
+                  </IconButton>
+                </Box>
+              </Stack>
+            )
+          })}
+          <Button
+            label="Add email ID"
+            size="sm"
+            variant="neutral"
+            startIcon={<Plus size={14} />}
+            onClick={addAdditionalEmail}
+          />
+        </Stack>
+      </AdminFullPageFormFieldSpan>
     </>
   )
 }

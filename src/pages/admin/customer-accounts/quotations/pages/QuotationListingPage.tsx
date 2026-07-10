@@ -42,6 +42,7 @@ export function QuotationListingPage() {
   const [filters, setFilters] = useState<QuotationAdvancedFilterState>(INITIAL_QUOTATION_ADVANCED_FILTERS)
   const [shareTarget, setShareTarget] = useState<QuotationRecord>()
   const [convertTarget, setConvertTarget] = useState<QuotationRecord>()
+  const [convertVersionId, setConvertVersionId] = useState<string>()
 
   const loadRows = useCallback(async () => {
     setLoading(true)
@@ -72,7 +73,10 @@ export function QuotationListingPage() {
         onOpenEdit: (row) => navigate(`/admin/customer-accounts/quotations/${row.id}/edit`),
         onShare: (row) => setShareTarget(row),
         onGeneratePdf: (row) => navigate(`/admin/customer-accounts/quotations/${row.id}/pdf`),
-        onConvert: (row) => setConvertTarget(row),
+        onConvert: (row) => {
+          setConvertTarget(row)
+          setConvertVersionId(undefined)
+        },
       }),
     [navigate],
   )
@@ -202,12 +206,22 @@ export function QuotationListingPage() {
       <QuotationConvertDialog
         open={Boolean(convertTarget)}
         quotation={convertTarget}
-        onClose={() => setConvertTarget(undefined)}
-        onConfirm={() => {
-          if (!convertTarget) return
-          quotationService.markConverted(convertTarget.id)
+        initialVersionId={convertVersionId}
+        onClose={() => {
           setConvertTarget(undefined)
-          navigate(`/admin/customer-accounts/agreements/new?quotationId=${convertTarget.id}`)
+          setConvertVersionId(undefined)
+        }}
+        onConfirm={(versionId) => {
+          if (!convertTarget) return
+          const result = quotationService.markConverted(convertTarget.id, versionId)
+          if (!result.ok) {
+            showToast({ title: 'Cannot convert', description: result.issues?.join('; '), variant: 'error' })
+            return
+          }
+          const quotationId = convertTarget.id
+          setConvertTarget(undefined)
+          setConvertVersionId(undefined)
+          navigate(`/admin/customer-accounts/agreements/new?quotationId=${quotationId}&versionId=${versionId}`)
         }}
       />
     </>

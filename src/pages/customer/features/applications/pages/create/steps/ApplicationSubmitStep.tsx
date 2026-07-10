@@ -8,6 +8,7 @@ import { marineApplicationAdminService } from '@/shared/services/marineApplicati
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
 import {
   isAdminFlowPolicy,
+  isWebsiteFlowPolicy,
   requiresFieldValidation,
   useApplicationFlowPolicy,
 } from '../../../context/ApplicationFlowPolicyContext'
@@ -30,13 +31,15 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
   const { policy, listingPath } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
   const isAdmin = isAdminFlowPolicy(policy)
+  const isWebsite = isWebsiteFlowPolicy(policy)
   const [declared, setDeclared] = useState(false)
 
   const rows = state.uploadQueueRows
   const readyRows = useMemo(() => rows.filter(r => r.status !== 'processing'), [rows])
   const submitKind = useMemo(() => deriveApplicationSubmitKind(rows), [rows])
 
-  const cancelListingPath = listingPath || `${base}/applications`
+  const cancelListingPath = listingPath || (isWebsite ? '/countries' : `${base}/applications`)
+  const postSubmitBase = isWebsite ? '/retail' : base
 
   const handleSubmit = () => {
     if (isAdmin) {
@@ -67,7 +70,7 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
           : `${refId} is ready for GLTS review.`,
       variant: 'success',
     })
-    navigate(submitKind === 'single' ? `${base}/applications` : `${base}/applications/${refId}`)
+    navigate(submitKind === 'single' ? `${postSubmitBase}/applications` : `${postSubmitBase}/applications/${refId}`)
   }
 
   const handleDraft = () => {
@@ -75,7 +78,9 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
       title: 'Draft saved',
       description: isAdmin
         ? 'Resume from Marine applications when draft persistence is enabled.'
-        : 'Resume from Application Management → Draft applications.',
+        : isWebsite
+          ? 'Resume from the Apply flow when you return.'
+          : 'Resume from Application Management → Draft applications.',
       variant: 'info',
     })
     navigate(cancelListingPath)
@@ -99,7 +104,9 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
       <Typography sx={{ fontSize: 13, color: colors.textSecondary, mb: 2.5 }}>
         {isAdmin
           ? 'Review the application summary. Fields may be incomplete; submit when ready to add the record to marine operations.'
-          : 'Select a traveler from the listing to review their summary and document checklist before submission.'}
+          : isWebsite
+            ? 'Review each traveler summary and document checklist before submitting your application.'
+            : 'Select a traveler from the listing to review their summary and document checklist before submission.'}
       </Typography>
 
       <ApplicationReviewPanels
@@ -113,6 +120,7 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
           travelDate: state.travelDate,
           issuedPassportLocationLabel:
             state.issuedPassportState || state.issuedPassportLocationId || undefined,
+          placeOfResidenceLabel: state.placeOfResidence || undefined,
           jurisdiction: state.jurisdiction,
           gltsApplicationId: state.gltsApplicationId || undefined,
           gltsBatchId: state.gltsBatchId || undefined,

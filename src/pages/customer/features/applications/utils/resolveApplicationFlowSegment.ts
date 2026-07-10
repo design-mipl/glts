@@ -26,6 +26,7 @@ function workflowTypeToSegment(workflowType: AgreementWorkflowType): BusinessSeg
  */
 export function resolveApplicationFlowSegment(policy: ApplicationFlowPolicy): BusinessSegment {
   if (policy === 'admin') return 'marine'
+  if (policy === 'website') return 'retail'
 
   const session = loadSession()
   const agreement = resolveCustomerPortalAgreement(session)

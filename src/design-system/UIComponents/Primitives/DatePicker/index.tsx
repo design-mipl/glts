@@ -1,3 +1,4 @@
+import Box from '@mui/material/Box'
 import { DatePicker as MuiDatePicker } from '@mui/x-date-pickers/DatePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
@@ -6,7 +7,7 @@ import type { Dayjs } from 'dayjs'
 import { useTheme, alpha } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 import { Calendar } from 'lucide-react'
-import { FORM_CONTROL, formControlHeight, pickersOutlinedFieldSx } from '../../../formControl'
+import { FORM_CONTROL, formControlHeight, pickersFullWidthSx, pickersOutlinedFieldSx } from '../../../formControl'
 
 export interface DatePickerProps {
   label?: string
@@ -65,66 +66,73 @@ export default function DatePicker({
         marginRight: '4px',
       },
     },
+    ...(fullWidth ? [pickersFullWidthSx()] : []),
     ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
   ]
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <MuiDatePicker
-        label={label}
-        value={dayjsValue}
-        onChange={handleChange}
-        minDate={dayjsMin}
-        maxDate={dayjsMax}
-        disabled={disabled}
-        disablePast={disablePast}
-        disableFuture={disableFuture}
-        format={format}
-        slots={{ openPickerIcon: () => <Calendar size={16} /> }}
-        slotProps={{
-          textField: {
-            error,
-            helperText,
-            required,
-            size: 'small',
-            fullWidth,
-            variant: 'outlined',
-            hiddenLabel: !label,
-            placeholder: placeholder ?? (label ? undefined : format),
-            sx: sharedInputSx,
-            slotProps: {
-              formHelperText: { sx: { mx: 0, mt: '4px', fontSize: FORM_CONTROL.helperFontSize } },
+    <Box sx={{ width: fullWidth ? '100%' : undefined, minWidth: fullWidth ? 0 : undefined, display: fullWidth ? 'block' : undefined }}>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <MuiDatePicker
+          label={label}
+          value={dayjsValue}
+          onChange={handleChange}
+          minDate={dayjsMin}
+          maxDate={dayjsMax}
+          disabled={disabled}
+          disablePast={disablePast}
+          disableFuture={disableFuture}
+          format={format}
+          slots={{ openPickerIcon: () => <Calendar size={16} /> }}
+          sx={[
+            ...(fullWidth ? [pickersFullWidthSx()] : []),
+            ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+          ]}
+          slotProps={{
+            textField: {
+              error,
+              helperText,
+              required,
+              size: 'small',
+              fullWidth: fullWidth || undefined,
+              variant: 'outlined',
+              hiddenLabel: !label,
+              placeholder: placeholder ?? (label ? undefined : format),
+              sx: sharedInputSx,
+              slotProps: {
+                formHelperText: { sx: { mx: 0, mt: '4px', fontSize: FORM_CONTROL.helperFontSize } },
+              },
             },
-          },
-          openPickerButton: {
-            size: 'small',
-            sx: { color: 'text.secondary', mr: 0.5 },
-          },
-          desktopPaper: {
-            sx: {
-              mt: 0.5,
-              borderRadius: '8px',
-              border: '1px solid',
-              borderColor: 'divider',
-              boxShadow: theme.shadows[4],
-              '& .MuiPickersDay-root': {
-                borderRadius: '6px',
-                fontSize: '13px',
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                },
-                '&.Mui-selected': {
-                  backgroundColor: theme.palette.primary.main,
-                  '&:hover': { backgroundColor: theme.palette.primary.dark },
-                },
-                '&.MuiPickersDay-today:not(.Mui-selected)': {
-                  borderColor: theme.palette.primary.main,
+            openPickerButton: {
+              size: 'small',
+              sx: { color: 'text.secondary', mr: 0.5 },
+            },
+            desktopPaper: {
+              sx: {
+                mt: 0.5,
+                borderRadius: '8px',
+                border: '1px solid',
+                borderColor: 'divider',
+                boxShadow: theme.shadows[4],
+                '& .MuiPickersDay-root': {
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: theme.palette.primary.main,
+                    '&:hover': { backgroundColor: theme.palette.primary.dark },
+                  },
+                  '&.MuiPickersDay-today:not(.Mui-selected)': {
+                    borderColor: theme.palette.primary.main,
+                  },
                 },
               },
             },
-          },
-        }}
-      />
-    </LocalizationProvider>
+          }}
+        />
+      </LocalizationProvider>
+    </Box>
   )
 }

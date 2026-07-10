@@ -1,6 +1,6 @@
 import { Box, IconButton, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material'
-import { Copy, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Copy, Pencil, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button, Checkbox, FormField, FormSection, Input, Modal, Select } from '@/design-system/UIComponents'
 import type { AgreementPricingRow, CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
 import {
@@ -10,13 +10,19 @@ import {
   resolveServiceFee,
   workflowTypeDisplayLabel,
 } from '../../utils/agreementMasterOptions'
-import { agreementEmbeddedTableHeadCellSx, agreementEmbeddedTableSx } from '../agreementFormLayout'
+import {
+  agreementEmbeddedTableHeadCellSx,
+  agreementEmbeddedTableScrollSx,
+  agreementEmbeddedTableSx,
+  agreementEmbeddedTableMinWidthSx,
+} from '../agreementFormLayout'
 
 interface AgreementPricingMatrixTableProps {
   data: CommercialAgreementFormData
   errors: Record<string, string>
   onChange: (next: CommercialAgreementFormData) => void
   readOnly?: boolean
+  setAddPricingHandler?: (handler: (() => void) | null) => void
 }
 
 function newRow(workflowType: CommercialAgreementFormData['workflowType']): AgreementPricingRow {
@@ -39,6 +45,7 @@ export function AgreementPricingMatrixTable({
   errors,
   onChange,
   readOnly = false,
+  setAddPricingHandler,
 }: AgreementPricingMatrixTableProps) {
   const [editRow, setEditRow] = useState<AgreementPricingRow | null>(null)
   const countryOptions = useMemo(() => getCountrySelectOptions(), [])
@@ -64,6 +71,16 @@ export function AgreementPricingMatrixTable({
     setEditRow(null)
   }
 
+  useEffect(() => {
+    if (!setAddPricingHandler) return
+    if (readOnly) {
+      setAddPricingHandler(null)
+      return
+    }
+    setAddPricingHandler(() => setEditRow(newRow(data.workflowType)))
+    return () => setAddPricingHandler(null)
+  }, [readOnly, setAddPricingHandler, data.workflowType])
+
   return (
     <Box sx={{ width: '100%' }}>
       {errors.pricingMatrix ? (
@@ -75,15 +92,13 @@ export function AgreementPricingMatrixTable({
       <Box sx={agreementEmbeddedTableSx}>
         {data.pricingMatrix.length === 0 ? (
           <Box sx={{ py: 3, px: 2, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: 13 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
               No pricing rows yet. Add at least one country, visa type, and service from Service Master.
             </Typography>
-            {!readOnly ? (
-              <Button label="Add pricing" size="sm" startIcon={<Plus size={14} />} onClick={() => setEditRow(newRow(data.workflowType))} />
-            ) : null}
           </Box>
         ) : (
-          <Table size="small">
+          <Box sx={agreementEmbeddedTableScrollSx}>
+          <Table size="small" sx={agreementEmbeddedTableMinWidthSx}>
             <TableHead>
               <TableRow>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>Country</TableCell>
@@ -135,6 +150,7 @@ export function AgreementPricingMatrixTable({
               ))}
             </TableBody>
           </Table>
+          </Box>
         )}
       </Box>
 
@@ -207,7 +223,7 @@ export function AgreementPricingMatrixTable({
                 fullWidth
               />
             </FormField>
-            <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', pl: 1.5 }}>
               <Checkbox
                 label="GST applicable"
                 checked={editRow.gstApplicable}

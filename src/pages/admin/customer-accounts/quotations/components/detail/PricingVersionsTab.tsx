@@ -1,28 +1,31 @@
 import { useState } from 'react'
 import { IconButton, Stack, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material'
-import { Copy, Eye, Plus } from 'lucide-react'
+import { ArrowRight, Copy, Eye, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { Badge, Button, Drawer } from '@/design-system/UIComponents'
+import { Button, Modal } from '@/design-system/UIComponents'
 import { quotationService } from '@/shared/services/quotationService'
 import type { QuotationRecord } from '@/shared/types/quotation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { getCurrentVersion } from '@/shared/utils/quotationValidation'
-import {
-  quotationVersionStatusColor,
-  quotationVersionStatusLabel,
-} from '../../config/quotationStatusConfig'
 import { QuotationPricingMatrixTable } from '../QuotationPricingMatrixTable'
 import { QuotationPricingSummary } from '../QuotationPricingSummary'
 import { agreementEmbeddedTableHeadCellSx, agreementEmbeddedTableSx } from '../../../agreements/components/agreementFormLayout'
 
 const ACTOR = 'Admin User'
 
-export function PricingVersionsTab({ quotation, onReload }: { quotation: QuotationRecord; onReload: () => void }) {
+interface PricingVersionsTabProps {
+  quotation: QuotationRecord
+  onReload: () => void
+  onConvert: (versionId: string) => void
+}
+
+export function PricingVersionsTab({ quotation, onReload, onConvert }: PricingVersionsTabProps) {
   const navigate = useNavigate()
   const [viewVersionId, setViewVersionId] = useState<string>()
   const versions = [...quotation.pricingVersions].sort((a, b) => b.versionNumber - a.versionNumber)
   const viewVersion = versions.find((v) => v.id === viewVersionId)
   const current = getCurrentVersion(quotation)
+  const canConvert = !quotation.convertedAgreementId
 
   return (
     <Stack spacing={2}>
@@ -46,8 +49,8 @@ export function PricingVersionsTab({ quotation, onReload }: { quotation: Quotati
           <TableHead>
             <TableRow>
               <TableCell sx={agreementEmbeddedTableHeadCellSx}>Version</TableCell>
+              <TableCell sx={agreementEmbeddedTableHeadCellSx}>Pricing Rows</TableCell>
               <TableCell sx={agreementEmbeddedTableHeadCellSx}>Total Amount</TableCell>
-              <TableCell sx={agreementEmbeddedTableHeadCellSx}>Status</TableCell>
               <TableCell sx={agreementEmbeddedTableHeadCellSx}>Created By</TableCell>
               <TableCell sx={agreementEmbeddedTableHeadCellSx}>Created Date</TableCell>
               <TableCell align="right" sx={agreementEmbeddedTableHeadCellSx}>
@@ -62,14 +65,8 @@ export function PricingVersionsTab({ quotation, onReload }: { quotation: Quotati
                   {version.versionLabel}
                   {version.id === quotation.currentVersionId ? ' (Current)' : ''}
                 </TableCell>
+                <TableCell sx={{ fontSize: 13 }}>{version.pricingMatrix.length}</TableCell>
                 <TableCell sx={{ fontSize: 13 }}>{formatInr(version.totals.grandTotal)}</TableCell>
-                <TableCell sx={{ fontSize: 13 }}>
-                  <Badge
-                    label={quotationVersionStatusLabel[version.status]}
-                    color={quotationVersionStatusColor[version.status]}
-                    size="sm"
-                  />
-                </TableCell>
                 <TableCell sx={{ fontSize: 13 }}>{version.createdBy}</TableCell>
                 <TableCell sx={{ fontSize: 13 }}>{new Date(version.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell align="right">
@@ -87,6 +84,15 @@ export function PricingVersionsTab({ quotation, onReload }: { quotation: Quotati
                   >
                     <Copy size={14} />
                   </IconButton>
+                  {canConvert && version.pricingMatrix.length > 0 ? (
+                    <IconButton
+                      size="small"
+                      aria-label="Convert version to agreement"
+                      onClick={() => onConvert(version.id)}
+                    >
+                      <ArrowRight size={14} />
+                    </IconButton>
+                  ) : null}
                 </TableCell>
               </TableRow>
             ))}
@@ -94,10 +100,11 @@ export function PricingVersionsTab({ quotation, onReload }: { quotation: Quotati
         </Table>
       </Stack>
 
-      <Drawer
+      <Modal
         open={Boolean(viewVersion)}
         onClose={() => setViewVersionId(undefined)}
         title={viewVersion ? `${viewVersion.versionLabel} pricing snapshot` : 'Version'}
+        size="lg"
       >
         {viewVersion ? (
           <Stack spacing={2}>
@@ -110,7 +117,7 @@ export function PricingVersionsTab({ quotation, onReload }: { quotation: Quotati
             <QuotationPricingSummary totals={viewVersion.totals} gstPercentage={quotation.gstPercentage} />
           </Stack>
         ) : null}
-      </Drawer>
+      </Modal>
     </Stack>
   )
 }

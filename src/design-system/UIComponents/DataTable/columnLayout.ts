@@ -43,9 +43,17 @@ export function resolveColumnWidthPx(col: Column): number {
   return resolveColumnMinWidth(col)
 }
 
+/** Pixel width for `<col>` — used as the proportional weight when the table stretches to 100%. */
+export function getDataTableColWidth(col: Column, stickyEnd: boolean): number {
+  return stickyEnd ? resolveActionColumnWidth(col) : resolveColumnMinWidth(col)
+}
+
 export function getDataTableColumnWidthSx(col: Column, stickyEnd: boolean) {
-  const width = stickyEnd ? resolveActionColumnWidth(col) : resolveColumnMinWidth(col)
-  return { width, minWidth: width, maxWidth: width }
+  const width = getDataTableColWidth(col, stickyEnd)
+  if (stickyEnd) {
+    return { width, minWidth: width, maxWidth: width }
+  }
+  return { minWidth: width }
 }
 
 export function getDataTableLayoutWidth(
@@ -55,7 +63,7 @@ export function getDataTableLayoutWidth(
   let total = 0
   if (options.bulkActions) total += CHECKBOX_COLUMN_WIDTH
   for (const col of columns) {
-    total += getDataTableColumnWidthSx(col, isActionColumn(col)).width
+    total += getDataTableColWidth(col, isActionColumn(col))
   }
   if (options.renderExpanded) total += EXPAND_COLUMN_WIDTH
   return total

@@ -45,6 +45,7 @@ export function SingleApplicationReviewStep({ state, onBack, onSubmitted }: Sing
         ...(requiresJurisdiction
           ? ([
               ['Passport state', state.issuedPassportState || state.issuedPassportLocationId || '—'],
+              ['Place of residence', state.placeOfResidence || '—'],
               ['Jurisdiction', state.jurisdiction || '—'],
             ] as const)
           : []),

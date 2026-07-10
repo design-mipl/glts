@@ -17,7 +17,10 @@ export function BillingAgreementTab({ data }: BillingAgreementTabProps) {
         summary={data.billingSummary}
         billingConfig={data.billingConfig}
       />
-      <AgreementDocumentsSection documents={data.documents} />
+      <AgreementDocumentsSection
+        onboardingDocuments={data.onboardingDocuments}
+        agreementDocument={data.agreementDocument}
+      />
       <FinanceContactsSection financeContactPersons={data.financeContactPersons} />
     </>
   )

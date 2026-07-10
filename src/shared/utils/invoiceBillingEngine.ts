@@ -120,7 +120,7 @@ export function findAgreementForCompany(companyName: string): CommercialAgreemen
     .list()
     .find(
       a =>
-        a.status === 'approved' &&
+        a.status === 'active' &&
         (a.companyName.toLowerCase().includes(normalized) ||
           normalized.includes(a.companyName.toLowerCase().split(' ')[0] ?? '')),
     )

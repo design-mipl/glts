@@ -67,6 +67,14 @@ export function buildClientDocumentColumns({
       ),
     },
     {
+      key: 'isMandatory',
+      label: 'Mandatory',
+      widthSize: adminListingColumnWidthSize('status'),
+      render: (_, row) => (
+        <Badge label={row.isMandatory ? 'Yes' : 'No'} color={row.isMandatory ? 'warning' : 'neutral'} size="sm" />
+      ),
+    },
+    {
       key: 'status',
       label: 'Status',
       widthSize: adminListingColumnWidthSize('status'),

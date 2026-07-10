@@ -8,7 +8,6 @@ import {
 } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { AdminFullPageFormShell } from '@/pages/admin/components/AdminFullPageFormShell'
 import { quotationService } from '@/shared/services/quotationService'
-import { getCurrentVersion } from '@/shared/utils/quotationValidation'
 import { buildQuotationFormSections } from '../components/QuotationFormSections'
 import { useQuotationForm } from '../hooks/useQuotationForm'
 
@@ -21,7 +20,6 @@ export function EditQuotationPage() {
   const { formData, setFormData, errors, validate, loadFormData } = useQuotationForm()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [readOnlyPricing, setReadOnlyPricing] = useState(false)
   const addPricingHandlerRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
@@ -31,8 +29,6 @@ export function EditQuotationPage() {
       navigate('/admin/customer-accounts/quotations')
       return
     }
-    const version = getCurrentVersion(record)
-    setReadOnlyPricing(version?.status !== 'draft')
     loadFormData(quotationService.recordToFormData(record))
     setLoading(false)
   }, [quotationId, loadFormData, navigate])
@@ -43,22 +39,12 @@ export function EditQuotationPage() {
     { label: formData.customer.companyName || 'Edit Quotation' },
   ]
 
-  const save = async (submitAfter = false) => {
+  const save = async () => {
     if (!quotationId) return
-    if (submitAfter && !validate()) return
+    if (!validate()) return
     setSaving(true)
     quotationService.saveForm(quotationId, formData, ACTOR)
-    if (submitAfter) {
-      const result = quotationService.submitForApproval(quotationId, ACTOR)
-      if (!result.ok) {
-        showToast({ title: 'Cannot submit', description: result.issues?.join('; '), variant: 'error' })
-        setSaving(false)
-        return
-      }
-      showToast({ title: 'Submitted for approval', variant: 'success' })
-    } else {
-      showToast({ title: 'Quotation saved', variant: 'success' })
-    }
+    showToast({ title: 'Quotation saved', variant: 'success' })
     navigate(`/admin/customer-accounts/quotations/${quotationId}`)
     setSaving(false)
   }
@@ -75,15 +61,20 @@ export function EditQuotationPage() {
     <AdminFullPageFormShell
       breadcrumbs={breadcrumbs}
       title="Edit Quotation"
-      headerActions={<AdminFullPageFormHeaderSave loading={saving} onClick={() => void save(false)} />}
-      sections={buildQuotationFormSections({ formData, setFormData, errors, readOnlyPricing, addPricingHandlerRef })}
+      headerActions={<AdminFullPageFormHeaderSave loading={saving} onClick={() => void save()} />}
+      sections={buildQuotationFormSections({
+        formData,
+        setFormData,
+        errors,
+        addPricingHandlerRef,
+        showEnquirySelect: false,
+      })}
       footer={
         <AdminFullPageFormFooter
           loading={saving}
           onCancel={() => navigate(`/admin/customer-accounts/quotations/${quotationId}`)}
-          onDraft={() => void save(false)}
-          onSave={() => void save(true)}
-          saveLabel="Submit for Approval"
+          onSave={() => void save()}
+          saveLabel="Save Quotation"
         />
       }
     />

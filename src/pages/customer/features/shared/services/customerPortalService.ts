@@ -56,7 +56,7 @@ import { loadSession } from '@/shared/auth/session'
 import type { CustomerType } from '@/shared/auth/session'
 import { mapApplicationBillingTermsSummary } from '@/shared/utils/mapApplicationBillingTermsSummary'
 import type { ApplicationBillingTermsViewModel } from '@/shared/utils/mapApplicationBillingTermsSummary'
-import { resolveCustomerPortalAgreement } from '@/shared/utils/resolveCustomerPortalAgreement'
+import { resolveCustomerPortalAgreement, resolvePortalAgreementId } from '@/shared/utils/resolveCustomerPortalAgreement'
 import type { ApplicationCustomerSegment } from '../../applications/types/applicationListing.types'
 import type { ApplicationDetailViewModel, FlowDraftLikeState } from '../../applications/types/applicationDetail.types'
 
@@ -278,7 +278,8 @@ export const customerPortalService = {
     const session = loadSession()
     const personal =
       session?.userRole === 'booker' ? mockBookerPersonalAccountData : mockPersonalAccountData
-    const billing = enrichBillingAgreementFromCommercialAgreement(mockBillingAgreementData)
+    const agreementId = resolvePortalAgreementId(session)
+    const billing = enrichBillingAgreementFromCommercialAgreement(mockBillingAgreementData, agreementId)
     return {
       company: {
         ...mockCompanyProfileData,

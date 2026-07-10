@@ -1,11 +1,15 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Box, Stack } from '@mui/material'
 import { useLocation } from 'react-router-dom'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
+import { getCountryById } from '@/shared/services/visaService'
 import { Breadcrumb } from '@/design-system/UIComponents'
 import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '@/design-system/tokens'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
-import { useApplicationFlowPolicy } from '../../context/ApplicationFlowPolicyContext'
+import {
+  isWebsiteFlowPolicy,
+  useApplicationFlowPolicy,
+} from '../../context/ApplicationFlowPolicyContext'
 import { useApplicationFlowState } from '../../hooks/useApplicationFlowState'
 import type { CreateApplicationLocationState } from '../../utils/createApplicationNavigation'
 import {
@@ -22,7 +26,16 @@ import { ApplicationSubmitStep } from './steps/ApplicationSubmitStep'
 import { SingleVisaPurposeStep } from './steps/single/SingleVisaPurposeStep'
 import { RequirementPreviewStep } from './steps/single/RequirementPreviewStep'
 
-export function CreateApplicationFlowPage() {
+export interface CreateApplicationFlowPageProps {
+  /** When set (e.g. from website country detail), skip country step after seeding state. */
+  preselectedCountryId?: string
+  initialStep?: ApplicationFlowStep
+}
+
+export function CreateApplicationFlowPage({
+  preselectedCountryId,
+  initialStep = 'country',
+}: CreateApplicationFlowPageProps = {}) {
   const navigate = useAppNavigate()
   const location = useLocation()
   const navState = (location.state ?? null) as CreateApplicationLocationState | null
@@ -34,31 +47,90 @@ export function CreateApplicationFlowPage() {
     storageKey,
   })
 
-  const [step, setStep] = useState<ApplicationFlowStep>('country')
+  const [step, setStep] = useState<ApplicationFlowStep>(initialStep)
   const stepIndex = APPLICATION_FLOW_STEPS.indexOf(step)
+  const preselectApplied = useRef(false)
   const { base } = useCustomerPortalBase()
+  const isWebsite = isWebsiteFlowPolicy(policy)
 
   const cancelListingPath =
-    listingPath || (policy === 'admin' ? '/admin/application-management/marine' : `${base}/applications`)
+    listingPath ||
+    (policy === 'admin'
+      ? '/admin/application-management/marine'
+      : isWebsite
+        ? '/countries'
+        : `${base}/applications`)
 
   const breadcrumb =
     breadcrumbItems.length > 0
       ? breadcrumbItems
-      : [
-          { label: 'Application Management', href: `${base}/applications` },
-          { label: 'Application creation' },
-        ]
+      : isWebsite
+        ? [{ label: 'Home', href: '/' }, { label: 'Apply' }]
+        : [
+            { label: 'Application Management', href: `${base}/applications` },
+            { label: 'Application creation' },
+          ]
+
+  useEffect(() => {
+    if (!preselectedCountryId || preselectApplied.current) return
+    const country = getCountryById(preselectedCountryId)
+    if (!country) return
+
+    preselectApplied.current = true
+    update({
+      countryId: country.id,
+      countryName: country.name,
+      countryFlag: country.flags,
+      visaOfferingId: '',
+      visaType: '',
+      visaTypeLabel: '',
+      purpose: '',
+      purposeLabel: '',
+      entryType: '',
+    })
+    setStep('visa')
+  }, [preselectedCountryId, update])
 
   useEffect(() => {
     if (!navState?.freshStart && !navState?.resumeDraft) return
 
     if (navState.freshStart) {
+      preselectApplied.current = false
       reset()
-      setStep('country')
+      if (preselectedCountryId) {
+        const country = getCountryById(preselectedCountryId)
+        if (country) {
+          preselectApplied.current = true
+          update({
+            countryId: country.id,
+            countryName: country.name,
+            countryFlag: country.flags,
+            visaOfferingId: '',
+            visaType: '',
+            visaTypeLabel: '',
+            purpose: '',
+            purposeLabel: '',
+            entryType: '',
+          })
+          setStep('visa')
+        } else {
+          setStep('country')
+        }
+      } else {
+        setStep('country')
+      }
     }
 
     navigate(location.pathname, { replace: true, state: null })
-  }, [location.pathname, navState?.freshStart, navState?.resumeDraft, navigate, reset])
+  }, [
+    location.pathname,
+    navState?.freshStart,
+    navState?.resumeDraft,
+    navigate,
+    preselectedCountryId,
+    reset,
+    update,
+  ])
 
   const flowSteps = useMemo(
     () =>

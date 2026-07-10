@@ -10,12 +10,15 @@ export interface CorporateAccountActivity {
   detail: string
 }
 
+export type CorporateAdminAccessStatus = 'active' | 'inactive'
+
 export interface CorporateAdminUser {
   id: string
   fullName: string
   phoneNumber: string
   emailAddress: string
   role: CorporateAdminRole
+  accessStatus?: CorporateAdminAccessStatus
   temporaryPassword?: string
   credentialsSentAt?: string
   lastLoginAt?: string
@@ -51,8 +54,11 @@ export interface CorporateAccount {
   admins: CorporateAdminUser[]
   assignedTeamId?: string
   assignedUserIds?: string[]
+  teamLeaderTeamId?: string
+  teamLeaderUserIds?: string[]
   entityIds: string[]
   vesselIds: string[]
+  bookerIds?: string[]
   portalActivation: CorporatePortalActivation
   createdAt: string
   updatedAt: string
@@ -72,8 +78,11 @@ export interface CorporateAccountFormData {
   admins: Omit<CorporateAdminUser, 'id' | 'credentialsSentAt' | 'lastLoginAt'>[]
   assignedTeamId: string
   assignedUserIds: string[]
+  teamLeaderTeamId: string
+  teamLeaderUserIds: string[]
   entityIds: string[]
   vesselIds: string[]
+  bookerIds: string[]
   portalActivation: CorporatePortalActivation
 }
 

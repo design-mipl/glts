@@ -38,6 +38,8 @@ export interface FlowDraftLikeState {
   visaTypeLabel: string
   purposeLabel: string
   travelDate: string
+  issuedPassportState?: string
+  placeOfResidence?: string
   jurisdiction?: string
   jurisdictionId?: string
   entityId?: string

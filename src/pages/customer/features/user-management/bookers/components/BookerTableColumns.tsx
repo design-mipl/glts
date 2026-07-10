@@ -1,4 +1,4 @@
-import { Eye, KeyRound, PencilLine, Power, PowerOff, Trash2 } from 'lucide-react'
+import { Eye, KeyRound, Mail, PencilLine, Trash2, UserCheck, UserX } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { RowActions } from '@/design-system/UIComponents'
 import type { BookerUser } from '@/shared/types/bookerUser'
@@ -12,16 +12,18 @@ import {
 interface ColumnHandlers {
   onOpenDetail: (row: BookerUser) => void
   onOpenEdit: (row: BookerUser) => void
+  onSendLogin: (row: BookerUser) => void
+  onChangePassword: (row: BookerUser) => void
   onToggleStatus: (row: BookerUser) => void
-  onResendInvite: (row: BookerUser) => void
   onDelete: (row: BookerUser) => void
 }
 
 export function buildBookerColumns({
   onOpenDetail,
   onOpenEdit,
+  onSendLogin,
+  onChangePassword,
   onToggleStatus,
-  onResendInvite,
   onDelete,
 }: ColumnHandlers): Column<BookerUser>[] {
   return [
@@ -65,21 +67,46 @@ export function buildBookerColumns({
       filterable: false,
       searchable: false,
       render: (_, row) => {
+        const isActive = row.status === 'active'
         const actions: RowAction[] = [
           { label: 'View', icon: <Eye size={16} />, onClick: () => onOpenDetail(row) },
           { label: 'Edit', icon: <PencilLine size={16} />, onClick: () => onOpenEdit(row) },
           {
-            label: row.status === 'active' ? 'Inactivate' : 'Activate',
-            icon: row.status === 'active' ? <PowerOff size={16} /> : <Power size={16} />,
-            onClick: () => onToggleStatus(row),
+            label: 'Send login email',
+            icon: <Mail size={16} />,
+            onClick: () => onSendLogin(row),
+            disabled: !isActive,
           },
           {
-            label: 'Reset password / Resend invite',
+            label: 'Change password',
             icon: <KeyRound size={16} />,
-            onClick: () => onResendInvite(row),
+            onClick: () => onChangePassword(row),
           },
-          { label: 'Delete / archive', icon: <Trash2 size={16} />, onClick: () => onDelete(row), variant: 'destructive' },
         ]
+
+        if (isActive) {
+          actions.push({
+            label: 'Deactivate user',
+            icon: <UserX size={16} />,
+            onClick: () => onToggleStatus(row),
+            divider: true,
+          })
+        } else {
+          actions.push({
+            label: 'Activate user',
+            icon: <UserCheck size={16} />,
+            onClick: () => onToggleStatus(row),
+            divider: true,
+          })
+        }
+
+        actions.push({
+          label: 'Delete / archive',
+          icon: <Trash2 size={16} />,
+          onClick: () => onDelete(row),
+          variant: 'destructive',
+        })
+
         return <RowActions actions={actions} row={row} />
       },
     },

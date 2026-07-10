@@ -1,10 +1,15 @@
 import { Box, IconButton, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { Pencil, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Badge, Button, FormField, FormSection, Input, Modal, Select, Textarea } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import type { AgreementEntity, CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
-import { agreementEmbeddedTableHeadCellSx, agreementEmbeddedTableSx } from '../agreementFormLayout'
+import {
+  agreementEmbeddedTableHeadCellSx,
+  agreementEmbeddedTableScrollSx,
+  agreementEmbeddedTableSx,
+  agreementEmbeddedTableMinWidthSx,
+} from '../agreementFormLayout'
 
 interface AgreementEntitiesTableProps {
   data: CommercialAgreementFormData
@@ -14,6 +19,7 @@ interface AgreementEntitiesTableProps {
   onUpdateEntity: (entityId: string, patch: Partial<AgreementEntity>) => void
   onRemoveEntity: (entityId: string) => void
   readOnly?: boolean
+  setAddEntityHandler?: (handler: (() => void) | null) => void
 }
 
 function emptyEntity(): AgreementEntity {
@@ -37,14 +43,23 @@ export function AgreementEntitiesTable({
   onUpdateEntity,
   onRemoveEntity,
   readOnly = false,
+  setAddEntityHandler,
 }: AgreementEntitiesTableProps) {
   const [editEntity, setEditEntity] = useState<AgreementEntity | null>(null)
 
-  const openCreate = () => {
-    const id = onAddEntity()
-    const entity = data.entities.find((e) => e.id === id) ?? { ...emptyEntity(), id }
-    setEditEntity({ ...entity })
-  }
+  useEffect(() => {
+    if (!setAddEntityHandler) return
+    if (readOnly) {
+      setAddEntityHandler(null)
+      return
+    }
+    setAddEntityHandler(() => {
+      const id = onAddEntity()
+      const entity = data.entities.find((e) => e.id === id) ?? { ...emptyEntity(), id }
+      setEditEntity({ ...entity })
+    })
+    return () => setAddEntityHandler(null)
+  }, [readOnly, setAddEntityHandler, data.entities, onAddEntity])
 
   const saveEntity = () => {
     if (!editEntity) return
@@ -58,24 +73,16 @@ export function AgreementEntitiesTable({
 
   return (
     <Box sx={{ width: '100%' }}>
-      {!readOnly ? (
-        <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1.5 }}>
-          <Button label="Add entity" size="sm" startIcon={<Plus size={14} />} onClick={openCreate} />
-        </Stack>
-      ) : null}
-
       <Box sx={agreementEmbeddedTableSx}>
         {data.entities.length === 0 ? (
           <Box sx={{ py: 3, px: 2, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: 13 }}>
               No entities added yet. Entities are optional during agreement onboarding.
             </Typography>
-            {!readOnly ? (
-              <Button label="Add entity" size="sm" startIcon={<Plus size={14} />} onClick={openCreate} />
-            ) : null}
           </Box>
         ) : (
-          <Table size="small">
+          <Box sx={agreementEmbeddedTableScrollSx}>
+          <Table size="small" sx={agreementEmbeddedTableMinWidthSx}>
             <TableHead>
               <TableRow>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>Entity name</TableCell>
@@ -116,6 +123,7 @@ export function AgreementEntitiesTable({
               ))}
             </TableBody>
           </Table>
+          </Box>
         )}
       </Box>
 

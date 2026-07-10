@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Divider, Stack, Typography } from '@mui/material'
 import { Trash2 } from 'lucide-react'
 import { Button, FormField, IconButton, Select } from '@/design-system/UIComponents'
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
@@ -11,26 +11,57 @@ interface CorporateAccountPortalActivationFieldsProps {
   onChange: (next: CorporateAccountFormData) => void
 }
 
-export function CorporateAccountPortalActivationFields({ data, onChange }: CorporateAccountPortalActivationFieldsProps) {
-  const [pendingUserId, setPendingUserId] = useState<string>('')
+interface TeamMemberAssignmentFieldsProps {
+  sectionTitle: string
+  teamId: string
+  userIds: string[]
+  userLabel: string
+  teamPlaceholder: string
+  userPlaceholderTeamSelected: string
+  userPlaceholderNoTeam: string
+  addButtonLabel: string
+  listTitle: string
+  emptyListMessage: string
+  onTeamChange: (teamId: string) => void
+  onUserIdsChange: (userIds: string[]) => void
+}
+
+function TeamMemberAssignmentFields({
+  sectionTitle,
+  teamId,
+  userIds,
+  userLabel,
+  teamPlaceholder,
+  userPlaceholderTeamSelected,
+  userPlaceholderNoTeam,
+  addButtonLabel,
+  listTitle,
+  emptyListMessage,
+  onTeamChange,
+  onUserIdsChange,
+}: TeamMemberAssignmentFieldsProps) {
+  const [pendingUserId, setPendingUserId] = useState('')
 
   const teamOptions = [
     { value: '', label: 'Select team…' },
     ...teamService.listActiveOptions().map((opt) => ({ value: String(opt.value), label: opt.label })),
   ]
 
-  const teamUsers = data.assignedTeamId
-    ? adminPortalUserService.listByTeamId(data.assignedTeamId).filter((user) => user.status === 'active')
+  const teamUsers = teamId
+    ? adminPortalUserService.listByTeamId(teamId).filter((user) => user.status === 'active')
     : []
 
   const userOptions = [
-    { value: '', label: 'Select user…' },
-    ...teamUsers.map((user) => ({
-    value: user.id,
-    label: `${user.fullName} (${user.email})`,
-    })),
+    { value: '', label: `Select ${userLabel.toLowerCase()}…` },
+    ...teamUsers
+      .filter((user) => !userIds.includes(user.id))
+      .map((user) => ({
+        value: user.id,
+        label: `${user.fullName} (${user.email})`,
+      })),
   ]
-  const selectedUsers = data.assignedUserIds.map((id) => {
+
+  const selectedUsers = userIds.map((id) => {
     const user = teamUsers.find((member) => member.id === id) ?? adminPortalUserService.getById(id)
     return {
       id,
@@ -39,31 +70,26 @@ export function CorporateAccountPortalActivationFields({ data, onChange }: Corpo
     }
   })
 
-  const handleTeamChange = (teamId: string | number) => {
-    const nextTeamId = String(teamId)
-    onChange({
-      ...data,
-      assignedTeamId: nextTeamId,
-    })
+  const handleTeamChange = (nextTeamId: string | number) => {
+    onTeamChange(String(nextTeamId))
     setPendingUserId('')
   }
 
   const handleAddUser = () => {
-    if (!data.assignedTeamId || !pendingUserId) return
-    const nextAssigned = Array.from(new Set([...data.assignedUserIds, pendingUserId]))
-    onChange({ ...data, assignedUserIds: nextAssigned })
+    if (!teamId || !pendingUserId) return
+    onUserIdsChange(Array.from(new Set([...userIds, pendingUserId])))
     setPendingUserId('')
   }
 
   const handleRemoveUser = (userId: string) => {
-    onChange({
-      ...data,
-      assignedUserIds: data.assignedUserIds.filter((id) => id !== userId),
-    })
+    onUserIdsChange(userIds.filter((id) => id !== userId))
   }
 
   return (
-    <Stack spacing={2} sx={{ width: '100%', minWidth: 0 }}>
+    <Stack spacing={1.5} sx={{ width: '100%', minWidth: 0 }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+        {sectionTitle}
+      </Typography>
       <Stack
         direction={{ xs: 'column', lg: 'row' }}
         spacing={2}
@@ -81,27 +107,27 @@ export function CorporateAccountPortalActivationFields({ data, onChange }: Corpo
           }}
         >
           <Select
-            value={data.assignedTeamId}
+            value={teamId}
             onChange={handleTeamChange}
             options={teamOptions}
-            placeholder="Select team from User Management"
+            placeholder={teamPlaceholder}
             fullWidth
           />
         </FormField>
-        <FormField label="User" required sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+        <FormField label={userLabel} required sx={{ flex: 1, minWidth: 0, width: '100%' }}>
           <Select
             value={pendingUserId}
             onChange={(value) => setPendingUserId(String(value))}
             options={userOptions}
-            placeholder={data.assignedTeamId ? 'Select user from the selected team' : 'Select a team first'}
+            placeholder={teamId ? userPlaceholderTeamSelected : userPlaceholderNoTeam}
             fullWidth
-            disabled={!data.assignedTeamId}
+            disabled={!teamId}
           />
         </FormField>
         <Button
-          label="Add user"
+          label={addButtonLabel}
           onClick={handleAddUser}
-          disabled={!data.assignedTeamId || !pendingUserId}
+          disabled={!teamId || !pendingUserId}
           sx={{
             width: { xs: '100%', lg: 'auto' },
             minWidth: { lg: 110 },
@@ -121,11 +147,11 @@ export function CorporateAccountPortalActivationFields({ data, onChange }: Corpo
         }}
       >
         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.75 }}>
-          Added users
+          {listTitle}
         </Typography>
         {selectedUsers.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
-            No users added yet.
+            {emptyListMessage}
           </Typography>
         ) : (
           <Stack spacing={1}>
@@ -151,7 +177,7 @@ export function CorporateAccountPortalActivationFields({ data, onChange }: Corpo
                   size="sm"
                   color="error"
                   variant="soft"
-                  tooltip="Remove user"
+                  tooltip={`Remove ${userLabel.toLowerCase()}`}
                   onClick={() => handleRemoveUser(user.id)}
                 />
               </Stack>
@@ -159,6 +185,42 @@ export function CorporateAccountPortalActivationFields({ data, onChange }: Corpo
           </Stack>
         )}
       </Box>
+    </Stack>
+  )
+}
+
+export function CorporateAccountPortalActivationFields({ data, onChange }: CorporateAccountPortalActivationFieldsProps) {
+  return (
+    <Stack spacing={3} sx={{ width: '100%', minWidth: 0 }}>
+      <TeamMemberAssignmentFields
+        sectionTitle="Team leader"
+        teamId={data.teamLeaderTeamId}
+        userIds={data.teamLeaderUserIds}
+        userLabel="Team leader"
+        teamPlaceholder="Select team"
+        userPlaceholderTeamSelected="Select team leader from the selected team"
+        userPlaceholderNoTeam="Select a team first"
+        addButtonLabel="Add team leader"
+        listTitle="Added team leaders"
+        emptyListMessage="No team leaders added yet."
+        onTeamChange={(teamLeaderTeamId) => onChange({ ...data, teamLeaderTeamId })}
+        onUserIdsChange={(teamLeaderUserIds) => onChange({ ...data, teamLeaderUserIds })}
+      />
+      <Divider />
+      <TeamMemberAssignmentFields
+        sectionTitle="Team"
+        teamId={data.assignedTeamId}
+        userIds={data.assignedUserIds}
+        userLabel="User"
+        teamPlaceholder="Select team"
+        userPlaceholderTeamSelected="Select user from the selected team"
+        userPlaceholderNoTeam="Select a team first"
+        addButtonLabel="Add user"
+        listTitle="Added users"
+        emptyListMessage="No users added yet."
+        onTeamChange={(assignedTeamId) => onChange({ ...data, assignedTeamId })}
+        onUserIdsChange={(assignedUserIds) => onChange({ ...data, assignedUserIds })}
+      />
     </Stack>
   )
 }

@@ -16,6 +16,8 @@ export interface TopbarProps {
   onSearchClick?: () => void
   showMenuButton?: boolean
   showUserDetails?: boolean
+  /** When false, hides the notification bell affordance in the topbar. */
+  showNotificationBell?: boolean
 }
 
 export default function Topbar({
@@ -28,6 +30,7 @@ export default function Topbar({
   onSearchClick,
   showMenuButton = false,
   showUserDetails = true,
+  showNotificationBell = true,
 }: TopbarProps) {
   const theme = useTheme()
   const isLight = theme.palette.mode === 'light'
@@ -135,39 +138,43 @@ export default function Topbar({
 
       {/* RIGHT — bell + avatar */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        {/* Notification bell */}
-        <IconButton
-          size="small"
-          onClick={onNotificationClick}
-          sx={{
-            color: 'text.secondary',
-            width: 34,
-            height: 34,
-            flexShrink: 0,
-          }}
-        >
-          <Badge
-            badgeContent={notificationCount}
-            color="error"
-            max={99}
-            sx={{
-              '& .MuiBadge-badge': {
-                height: 14,
-                minWidth: 14,
-                fontSize: '9px',
-              },
-            }}
-          >
-            <Bell size={18} strokeWidth={1.75} />
-          </Badge>
-        </IconButton>
+        {showNotificationBell ? (
+          <>
+            {/* Notification bell */}
+            <IconButton
+              size="small"
+              onClick={onNotificationClick}
+              sx={{
+                color: 'text.secondary',
+                width: 34,
+                height: 34,
+                flexShrink: 0,
+              }}
+            >
+              <Badge
+                badgeContent={notificationCount}
+                color="error"
+                max={99}
+                sx={{
+                  '& .MuiBadge-badge': {
+                    height: 14,
+                    minWidth: 14,
+                    fontSize: '9px',
+                  },
+                }}
+              >
+                <Bell size={18} strokeWidth={1.75} />
+              </Badge>
+            </IconButton>
 
-        {/* Vertical divider */}
-        <Divider
-          orientation="vertical"
-          flexItem
-          sx={{ height: 18, alignSelf: 'center', mx: '4px', opacity: 0.25 }}
-        />
+            {/* Vertical divider */}
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ height: 18, alignSelf: 'center', mx: '4px', opacity: 0.25 }}
+            />
+          </>
+        ) : null}
 
         {/* Avatar + dropdown */}
         <UserMenu

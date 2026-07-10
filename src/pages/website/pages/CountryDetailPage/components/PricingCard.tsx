@@ -70,7 +70,7 @@ export function PricingCard({ country }: PricingCardProps) {
         fullWidth
         variant="contained"
         size="large"
-        href="/retail/applications/new"
+        href={`/apply/new?country=${country.id}`}
         sx={{ ...getMarketingPrimaryButtonSx(colors), py: 1.5, fontSize: '15px' }}
       >
         {country.fastMinutes ? `Get visa in ${country.fastMinutes} min` : 'Get started'}

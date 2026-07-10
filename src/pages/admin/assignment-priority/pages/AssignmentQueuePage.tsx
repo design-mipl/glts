@@ -19,14 +19,12 @@ import type { CityTeam } from '@/shared/types/operationalCaseHandling'
 import { AssignmentActionModal, type AssignmentActionPayload } from '../components/AssignmentActionModal'
 import type { AssignmentAdminAction } from '../components/AssignmentActionMenu'
 import { AssignmentAdvancedFilterFields, hasAssignmentQueueFiltersActive } from '../components/AssignmentAdvancedFilters'
-import { AssignmentKpiRow } from '../components/AssignmentKpiRow'
 import { AssignmentPassengerDetailDrawer } from '../components/AssignmentPassengerDetailDrawer'
 import { buildAssignmentTableColumns } from '../components/AssignmentTableColumns'
 import { buildOperationalAssignmentTableColumns } from '../components/AssignmentOperationalTableColumns'
 import type { AssignmentSegmentConfig } from '../config/assignmentSegmentConfig'
 import { useAssignmentQueue } from '../hooks/useAssignmentQueue'
 import {
-  computeAssignmentKpis,
   downloadAssignmentCsv,
   formatSlaDisplayLabel,
   getAssignmentCellValue,
@@ -71,7 +69,6 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
   } = useAssignmentQueue(segmentConfig)
 
   const filterOptions = useMemo(() => getAssignmentFilterOptions(allRows), [allRows])
-  const kpis = useMemo(() => computeAssignmentKpis(allRows), [allRows])
   const emptyState = useMemo(() => getAssignmentTabEmptyState(listingTab), [listingTab])
 
   const isOperationalListing = segmentConfig.listingLayout === 'operational'
@@ -136,6 +133,13 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
       mutateAndRefresh(() => {
         switch (payload.action) {
           case 'assign_user':
+            if (payload.assigneeType === 'vendor') {
+              return operationalPassengerAssignmentService.assignVendor(
+                id,
+                payload.vendor,
+                payload.priority as AssignmentPriority,
+              )
+            }
             return operationalPassengerAssignmentService.assignUser(
               id,
               payload.team as CityTeam,
@@ -147,11 +151,21 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
           case 'update_status':
             return operationalPassengerAssignmentService.updateStatus(id, payload.status)
           case 'reassign':
+            if (payload.assigneeType === 'vendor') {
+              return operationalPassengerAssignmentService.reassign(
+                id,
+                '',
+                payload.vendor,
+                payload.priority as AssignmentPriority,
+                'vendor',
+              )
+            }
             return operationalPassengerAssignmentService.reassign(
               id,
               payload.team as CityTeam,
               payload.user,
               payload.priority as AssignmentPriority,
+              'user',
             )
           case 'add_notes':
             return operationalPassengerAssignmentService.appendRemark(id, payload.notes)
@@ -240,9 +254,7 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
             }
           />
         }
-        kpis={<AssignmentKpiRow kpis={kpis} />}
         tabs={[
-          { value: 'all', label: 'All' },
           { value: 'pending_assignment', label: 'Pending assignment' },
           { value: 'assigned', label: 'Assigned' },
           { value: 'in_progress', label: 'In progress' },

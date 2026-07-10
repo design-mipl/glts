@@ -1,15 +1,17 @@
 import { createElement } from 'react'
 import {
-  Bell,
   Building2,
   Database,
   FileText,
   LayoutDashboard,
-  LifeBuoy,
   UserCog,
 } from 'lucide-react'
 import type { NavConfig } from '@/design-system/UIComponents'
 import { FINANCE_NAV_ITEMS, FINANCE_NAV_PARENT } from '@/pages/customer/features/finance/config/financeNav'
+import {
+  HELP_SUPPORT_NAV_ITEMS,
+  HELP_SUPPORT_NAV_PARENT,
+} from '@/pages/customer/features/help-support/config/helpSupportNav'
 
 const iconProps = { size: 16, strokeWidth: 1.75 }
 
@@ -119,16 +121,14 @@ export function buildCustomerNavConfig({
 export function buildCustomerFooterNavConfig(base: string): NavConfig[] {
   return [
     {
-      type: 'item',
-      label: 'Notifications',
-      href: `${base}/notifications`,
-      icon: createElement(Bell, iconProps),
-    },
-    {
-      type: 'item',
-      label: 'Support',
-      href: `${base}/support`,
-      icon: createElement(LifeBuoy, iconProps),
+      type: 'group',
+      label: HELP_SUPPORT_NAV_PARENT.label,
+      icon: createElement(HELP_SUPPORT_NAV_PARENT.icon, iconProps),
+      children: HELP_SUPPORT_NAV_ITEMS.map(item => ({
+        type: 'item' as const,
+        label: item.label,
+        href: `${base}/${item.path}`,
+      })),
     },
   ]
 }

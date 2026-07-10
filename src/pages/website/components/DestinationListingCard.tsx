@@ -1,5 +1,5 @@
 import type { Country } from '@/shared/types/visa'
-import { DestinationImageCard } from './DestinationImageCard'
+import { WebsiteListingCountryCard } from './WebsiteListingCountryCard'
 
 interface DestinationListingCardProps {
   country: Country
@@ -7,5 +7,5 @@ interface DestinationListingCardProps {
 }
 
 export function DestinationListingCard({ country, href }: DestinationListingCardProps) {
-  return <DestinationImageCard country={country} href={href} />
+  return <WebsiteListingCountryCard country={country} href={href} />
 }

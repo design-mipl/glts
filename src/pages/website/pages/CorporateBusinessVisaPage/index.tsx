@@ -1,9 +1,7 @@
 import { useMemo } from 'react'
-import { Box, Typography } from '@mui/material'
-import {
-  SolutionPageSection,
-  SolutionList,
-} from '../../components/solutionPage/SolutionPageSection'
+import { Box } from '@mui/material'
+import { SolutionPageSection, SolutionList } from '../../components/solutionPage/SolutionPageSection'
+import { RetainerPlanCards } from '../../components/solutionPage/RetainerPlanCards'
 import { CorporateHero } from './components/CorporateHero'
 import { WorkflowTimelineSection } from '../../components/workflowTimeline/WorkflowTimelineSection'
 import { CommonDestinationsSection } from '../../components/CommonDestinationsSection'
@@ -24,25 +22,9 @@ import {
   corporateDestinations,
   corporateVisaCategories,
   corporateAdditionalServiceCards,
+  corporateRetainerPlans,
 } from './corporatePageData'
 import { corporateProcessSteps } from './corporateWorkflowContent'
-
-const corporateRetainerPlans = [
-  'Dedicated corporate account manager',
-  'Priority visa processing',
-  'Documentation management',
-  'Monthly activity and status reporting',
-  'Escalation handling',
-]
-
-function SolutionSubheading({ children }: { children: string }) {
-  const colors = usePublicBrandColors()
-  return (
-    <Typography sx={{ fontSize: '15px', fontWeight: 600, color: colors.navy, mb: 1.5 }}>
-      {children}
-    </Typography>
-  )
-}
 
 export function CorporateBusinessVisaPage() {
   const colors = usePublicBrandColors()
@@ -88,8 +70,7 @@ export function CorporateBusinessVisaPage() {
       </SolutionPageSection>
 
       <SolutionPageSection id="corporate-visa-retainer-plans" title="Corporate Visa Retainer Plans">
-        <SolutionSubheading>Retainer plans may include:</SolutionSubheading>
-        <SolutionList items={corporateRetainerPlans} />
+        <RetainerPlanCards items={corporateRetainerPlans} />
       </SolutionPageSection>
 
       <TestimonialSection

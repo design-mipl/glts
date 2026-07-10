@@ -1,4 +1,9 @@
-import type { AgreementOnboardingDocument, CommercialAgreement } from '@/shared/types/commercialAgreement'
+import type {
+  AgreementOnboardingDocument,
+  AgreementType,
+  AgreementWorkflowType,
+  CommercialAgreement,
+} from '@/shared/types/commercialAgreement'
 import {
   buildDefaultAgreementDocuments,
   createDefaultBillingConfig,
@@ -20,13 +25,20 @@ function daysAgoDate(days: number) {
   return daysAgo(days).slice(0, 10)
 }
 
-const defaultDocs = (): AgreementOnboardingDocument[] =>
-  buildDefaultAgreementDocuments('agreemented').map((d) => ({
+function seededDocs(
+  agreementType: AgreementType,
+  workflowType: AgreementWorkflowType,
+  options?: { fileSuffix?: string; uploadedDaysAgo?: number },
+): AgreementOnboardingDocument[] {
+  const suffix = options?.fileSuffix ? `-${options.fileSuffix}` : ''
+  const uploadedAt = daysAgo(options?.uploadedDaysAgo ?? 2)
+  return buildDefaultAgreementDocuments(agreementType, workflowType).map((d) => ({
     ...d,
-    status: d.documentKey === 'billing_entity' ? 'verified' : 'uploaded',
-    fileName: `${d.documentKey}.pdf`,
-    uploadedAt: daysAgo(2),
+    status: d.documentKey === 'billing-entity' ? 'verified' : 'uploaded',
+    fileName: `${d.documentKey}${suffix}.pdf`,
+    uploadedAt,
   }))
+}
 
 export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
   {
@@ -39,7 +51,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     agreementType: 'agreemented',
     workflowType: 'marine',
     billingType: 'credit',
-    status: 'approved',
+    status: 'active',
     startDate: daysAgoDate(30),
     endDate: daysFromNow(335),
     entities: [
@@ -119,11 +131,11 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       invoiceSubmissionEmail: 'invoices@apexmarine.com',
       paymentFollowUpContact: 'finance@apexmarine.com',
     },
-    documents: defaultDocs(),
+    documents: seededDocs('agreemented', 'marine'),
     createdAt: daysAgo(45),
     updatedAt: daysAgo(5),
-    submittedAt: daysAgo(40),
-    approvedAt: daysAgo(35),
+    readyForActivationAt: daysAgo(40),
+    activatedAt: daysAgo(35),
     activities: [],
   },
   {
@@ -136,7 +148,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     agreementType: 'non_agreemented',
     workflowType: 'marine',
     billingType: 'advance',
-    status: 'submitted',
+    status: 'ready_for_activation',
     startDate: daysAgoDate(10),
     endDate: daysFromNow(355),
     entities: [
@@ -180,15 +192,10 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       invoiceSubmissionEmail: 'billing@oceaniccrew.com',
       paymentFollowUpContact: 'finance@oceaniccrew.com',
     },
-    documents: buildDefaultAgreementDocuments('non_agreemented').map((d) => ({
-      ...d,
-      status: d.documentKey === 'billing_entity' ? 'verified' : 'uploaded',
-      fileName: `${d.documentKey}.pdf`,
-      uploadedAt: daysAgo(2),
-    })),
+    documents: seededDocs('non_agreemented', 'marine'),
     createdAt: daysAgo(15),
     updatedAt: daysAgo(2),
-    submittedAt: daysAgo(2),
+    readyForActivationAt: daysAgo(2),
     activities: [],
   },
   {
@@ -225,7 +232,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       invoiceSubmissionEmail: '',
       paymentFollowUpContact: '',
     },
-    documents: buildDefaultAgreementDocuments('agreemented'),
+    documents: buildDefaultAgreementDocuments('agreemented', 'corporate'),
     createdAt: daysAgo(3),
     updatedAt: daysAgo(1),
     activities: [],
@@ -240,7 +247,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     agreementType: 'agreemented',
     workflowType: 'b2b_agent',
     billingType: 'advance',
-    status: 'inactive',
+    status: 'on_hold',
     startDate: daysAgoDate(90),
     endDate: daysAgoDate(1),
     entities: [
@@ -283,10 +290,10 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       invoiceSubmissionEmail: 'invoices@traveldeskb2b.com',
       paymentFollowUpContact: 'collections@traveldeskb2b.com',
     },
-    documents: defaultDocs(),
+    documents: seededDocs('agreemented', 'b2b_agent'),
     createdAt: daysAgo(100),
     updatedAt: daysAgo(10),
-    approvedAt: daysAgo(95),
+    activatedAt: daysAgo(95),
     activities: [],
   },
   {
@@ -344,16 +351,10 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       invoiceSubmissionEmail: 'invoices@harborretail.com',
       paymentFollowUpContact: 'collections@harborretail.com',
     },
-    documents: buildDefaultAgreementDocuments('non_agreemented').map((d) => ({
-      ...d,
-      status: d.documentKey === 'billing_entity' ? 'verified' : 'uploaded',
-      fileName: `${d.documentKey}-harbor.pdf`,
-      uploadedAt: daysAgo(210),
-    })),
+    documents: seededDocs('non_agreemented', 'retail', { fileSuffix: 'harbor', uploadedDaysAgo: 210 }),
     createdAt: daysAgo(390),
     updatedAt: daysAgo(20),
-    submittedAt: daysAgo(385),
-    approvedAt: daysAgo(375),
+    activatedAt: daysAgo(375),
     activities: [],
   },
   {
@@ -366,7 +367,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     agreementType: 'agreemented',
     workflowType: 'mixed',
     billingType: 'mixed',
-    status: 'rejected',
+    status: 'terminated',
     startDate: daysAgoDate(22),
     endDate: daysFromNow(343),
     entities: [
@@ -441,17 +442,10 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       invoiceSubmissionEmail: 'billing@bluewavecorp.com',
       paymentFollowUpContact: 'payables@bluewavecorp.com',
     },
-    documents: buildDefaultAgreementDocuments('agreemented').map((d) => ({
-      ...d,
-      status: d.documentKey === 'billing_entity' ? 'verified' : 'uploaded',
-      fileName: `${d.documentKey}-bluewave.pdf`,
-      uploadedAt: daysAgo(9),
-    })),
+    documents: seededDocs('agreemented', 'mixed', { fileSuffix: 'bluewave', uploadedDaysAgo: 9 }),
     createdAt: daysAgo(30),
     updatedAt: daysAgo(6),
-    submittedAt: daysAgo(12),
-    rejectedAt: daysAgo(6),
-    rejectionReason: 'Credit rule mismatch with submitted annexure.',
+    statusRemarks: 'Credit rule mismatch with submitted annexure.',
     activities: [],
   },
   {
@@ -463,7 +457,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     agreementType: 'agreemented',
     workflowType: 'b2b_agent',
     billingType: 'credit',
-    status: 'approved',
+    status: 'active',
     startDate: daysAgoDate(18),
     endDate: daysFromNow(347),
     entities: [
@@ -542,11 +536,10 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       invoiceSubmissionEmail: 'invoicehub@stratosb2b.com',
       paymentFollowUpContact: 'collections@stratosb2b.com',
     },
-    documents: defaultDocs(),
+    documents: seededDocs('agreemented', 'b2b_agent'),
     createdAt: daysAgo(25),
     updatedAt: daysAgo(4),
-    submittedAt: daysAgo(20),
-    approvedAt: daysAgo(18),
+    activatedAt: daysAgo(18),
     activities: [],
   },
   {
@@ -558,7 +551,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     agreementType: 'agreemented',
     workflowType: 'corporate',
     billingType: 'credit',
-    status: 'approved',
+    status: 'active',
     startDate: daysAgoDate(2),
     endDate: daysFromNow(362),
     entities: [
@@ -602,16 +595,10 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       invoiceSubmissionEmail: 'billing@vertexexec.com',
       paymentFollowUpContact: 'ap@vertexexec.com',
     },
-    documents: buildDefaultAgreementDocuments('agreemented').map((d) => ({
-      ...d,
-      status: d.documentKey === 'billing_entity' ? 'verified' : 'uploaded',
-      fileName: `${d.documentKey}-vertex.pdf`,
-      uploadedAt: daysAgo(1),
-    })),
+    documents: seededDocs('agreemented', 'corporate', { fileSuffix: 'vertex', uploadedDaysAgo: 1 }),
     createdAt: daysAgo(7),
     updatedAt: daysAgo(1),
-    submittedAt: daysAgo(2),
-    approvedAt: daysAgo(1),
+    activatedAt: daysAgo(1),
     activities: [],
   },
   {
@@ -623,7 +610,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     agreementType: 'agreemented',
     workflowType: 'marine',
     billingType: 'mixed',
-    status: 'approved',
+    status: 'active',
     startDate: daysAgoDate(120),
     endDate: daysFromNow(245),
     entities: [
@@ -701,26 +688,439 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       invoiceSubmissionEmail: 'invoices@pacificfleet.com',
       paymentFollowUpContact: 'finance@pacificfleet.com',
     },
-    documents: defaultDocs(),
+    documents: seededDocs('agreemented', 'marine'),
     createdAt: daysAgo(130),
     updatedAt: daysAgo(3),
-    submittedAt: daysAgo(125),
-    approvedAt: daysAgo(120),
+    activatedAt: daysAgo(120),
+    activities: [],
+  },
+  {
+    id: 'AGR-010',
+    agreementId: 'AGR-2024-010',
+    companyId: 'CMP-1010',
+    companyName: 'Nexus Global Mobility',
+    customerSourceMode: 'existing',
+    agreementType: 'agreemented',
+    workflowType: 'mixed',
+    billingType: 'mixed',
+    status: 'ready_for_activation',
+    startDate: daysAgoDate(14),
+    endDate: daysFromNow(351),
+    entities: [
+      {
+        id: 'ent-14',
+        entityName: 'Nexus Global Ahmedabad',
+        billingAddress: 'SG Highway, Ahmedabad 380015',
+        gstNumber: '24AABCN1234A1Z1',
+        contactPerson: 'Harsh Shah',
+        email: 'harsh@nexusglobal.com',
+        phone: '+91 9825019876',
+        status: 'active',
+      },
+    ],
+    pricingMatrix: [
+      {
+        id: 'pr-14',
+        country: 'UAE',
+        countryId: 'CNT-107',
+        visaType: 'Business Visa',
+        workflowType: 'Corporate',
+        servicePresetId: 'svc-corp-visa',
+        servicePresetName: 'Corporate business visa',
+        serviceFee: 6200,
+        gstApplicable: true,
+        remarks: '',
+      },
+      {
+        id: 'pr-15',
+        country: 'Kenya',
+        countryId: 'CNT-105',
+        visaType: 'Marine Visa',
+        workflowType: 'Marine',
+        servicePresetId: 'svc-marine-visa',
+        servicePresetName: 'Marine crew visa processing',
+        serviceFee: 4100,
+        gstApplicable: true,
+        remarks: '',
+      },
+    ],
+    miscellaneousCosts: [],
+    billingConfig: {
+      ...createDefaultBillingConfig(),
+      creditBillingEnabled: true,
+      billingCycle: 'monthly',
+      creditPeriodDays: 30,
+      creditLimit: 1800000,
+      advanceType: 'percentage',
+      advancePercentage: 40,
+      processingBlockRule: 'before_processing',
+      serviceWiseBillingRules: [
+        { servicePresetId: 'svc-corp-visa', servicePresetName: 'Corporate business visa', billingRule: 'credit' },
+        { servicePresetId: 'svc-marine-visa', servicePresetName: 'Marine crew visa processing', billingRule: 'advance' },
+      ],
+    },
+    financeContacts: {
+      accountsSpocName: 'Harsh Shah',
+      accountsTeamEmail: 'finance@nexusglobal.com',
+      accountsContactNumber: '+91 9825019876',
+      invoiceSubmissionEmail: 'invoices@nexusglobal.com',
+      paymentFollowUpContact: 'finance@nexusglobal.com',
+    },
+    documents: seededDocs('agreemented', 'mixed', { fileSuffix: 'nexus', uploadedDaysAgo: 5 }),
+    createdAt: daysAgo(16),
+    updatedAt: daysAgo(4),
+    readyForActivationAt: daysAgo(5),
+    activities: [],
+  },
+  {
+    id: 'AGR-011',
+    agreementId: 'AGR-2024-011',
+    companyId: 'CMP-1011',
+    companyName: 'Horizon Visa Consultants',
+    customerSourceMode: 'quotation',
+    referenceQuotationId: 'QT-005',
+    agreementType: 'agreemented',
+    workflowType: 'b2b_agent',
+    billingType: 'credit',
+    status: 'active',
+    startDate: daysAgoDate(28),
+    endDate: daysFromNow(337),
+    entities: [
+      {
+        id: 'ent-15',
+        entityName: 'Horizon Visa Kolkata HQ',
+        billingAddress: 'Park Street, Kolkata 700016',
+        gstNumber: '19AABCH5678B1Z3',
+        contactPerson: 'Subhash Banerjee',
+        email: 'subhash@horizonvisa.com',
+        phone: '+91 9830014567',
+        status: 'active',
+      },
+      {
+        id: 'ent-16',
+        entityName: 'Horizon Visa Delhi',
+        billingAddress: 'Connaught Place, New Delhi 110001',
+        gstNumber: '07AABCH5678B2Z4',
+        contactPerson: 'Ananya Das',
+        email: 'ananya@horizonvisa.com',
+        phone: '+91 9830014568',
+        status: 'active',
+      },
+    ],
+    pricingMatrix: [
+      {
+        id: 'pr-16',
+        country: 'UK',
+        countryId: 'CNT-106',
+        visaType: 'Business Visa',
+        workflowType: 'B2B Agent',
+        servicePresetId: 'svc-corp-visa',
+        servicePresetName: 'Corporate business visa',
+        serviceFee: 7800,
+        gstApplicable: true,
+        remarks: '',
+      },
+    ],
+    miscellaneousCosts: [],
+    billingConfig: {
+      ...createDefaultBillingConfig(),
+      creditBillingEnabled: true,
+      creditPeriodDays: 45,
+      creditLimit: 3200000,
+      gracePeriodDays: 10,
+    },
+    financeContacts: {
+      accountsSpocName: 'Subhash Banerjee',
+      accountsTeamEmail: 'accounts@horizonvisa.com',
+      accountsContactNumber: '+91 9830014567',
+      invoiceSubmissionEmail: 'billing@horizonvisa.com',
+      paymentFollowUpContact: 'accounts@horizonvisa.com',
+    },
+    documents: seededDocs('agreemented', 'b2b_agent', { fileSuffix: 'horizon', uploadedDaysAgo: 26 }),
+    createdAt: daysAgo(30),
+    updatedAt: daysAgo(2),
+    readyForActivationAt: daysAgo(27),
+    activatedAt: daysAgo(25),
+    activities: [],
+  },
+  {
+    id: 'AGR-012',
+    agreementId: 'AGR-2024-012',
+    companyId: 'CMP-1012',
+    companyName: 'Coastal Crew Solutions',
+    customerSourceMode: 'existing',
+    agreementType: 'agreemented',
+    workflowType: 'marine',
+    billingType: 'advance',
+    status: 'active',
+    startDate: daysAgoDate(130),
+    endDate: daysFromNow(235),
+    entities: [
+      {
+        id: 'ent-17',
+        entityName: 'Coastal Crew Visakhapatnam',
+        billingAddress: 'Port Area, Visakhapatnam 530001',
+        gstNumber: '37AABCC9012C1Z5',
+        contactPerson: 'Ramesh Naidu',
+        email: 'ramesh@coastalcrew.com',
+        phone: '+91 9701234567',
+        status: 'active',
+      },
+    ],
+    pricingMatrix: [
+      {
+        id: 'pr-17',
+        country: 'Philippines',
+        countryId: 'CNT-108',
+        visaType: 'Marine Visa',
+        workflowType: 'Marine',
+        servicePresetId: 'svc-marine-visa',
+        servicePresetName: 'Marine crew visa processing',
+        serviceFee: 3900,
+        gstApplicable: true,
+        remarks: '',
+      },
+    ],
+    miscellaneousCosts: [],
+    billingConfig: {
+      ...createDefaultBillingConfig(),
+      creditBillingEnabled: false,
+      advanceType: 'percentage',
+      advancePercentage: 100,
+      processingBlockRule: 'before_submission',
+    },
+    financeContacts: {
+      accountsSpocName: 'Ramesh Naidu',
+      accountsTeamEmail: 'accounts@coastalcrew.com',
+      accountsContactNumber: '+91 9701234567',
+      invoiceSubmissionEmail: 'invoices@coastalcrew.com',
+      paymentFollowUpContact: 'accounts@coastalcrew.com',
+    },
+    documents: seededDocs('agreemented', 'marine', { fileSuffix: 'coastal', uploadedDaysAgo: 120 }),
+    createdAt: daysAgo(135),
+    updatedAt: daysAgo(15),
+    readyForActivationAt: daysAgo(118),
+    activatedAt: daysAgo(115),
+    activities: [],
+  },
+  {
+    id: 'AGR-013',
+    agreementId: 'AGR-2024-013',
+    companyId: 'CMP-1001',
+    companyName: 'Apex Marine Logistics',
+    customerSourceMode: 'existing',
+    agreementType: 'agreemented',
+    workflowType: 'marine',
+    billingType: 'credit',
+    status: 'ready_for_activation',
+    startDate: daysAgoDate(7),
+    endDate: daysFromNow(358),
+    entities: [
+      {
+        id: 'ent-18',
+        entityName: 'Apex Marine Chennai',
+        billingAddress: 'Royapuram, Chennai 600013',
+        gstNumber: '33AABCA1234A3Z7',
+        contactPerson: 'Karthik Iyer',
+        email: 'chennai@apexmarine.com',
+        phone: '+91 9988776622',
+        status: 'active',
+      },
+    ],
+    pricingMatrix: [
+      {
+        id: 'pr-18',
+        country: 'Indonesia',
+        countryId: 'CNT-109',
+        visaType: 'Marine Visa',
+        workflowType: 'Marine',
+        servicePresetId: 'svc-marine-visa',
+        servicePresetName: 'Marine crew visa processing',
+        serviceFee: 2800,
+        gstApplicable: true,
+        remarks: '',
+      },
+    ],
+    miscellaneousCosts: [],
+    billingConfig: {
+      ...createDefaultBillingConfig(),
+      creditBillingEnabled: true,
+      creditPeriodDays: 30,
+      creditLimit: 750000,
+      gracePeriodDays: 7,
+    },
+    financeContacts: {
+      accountsSpocName: 'Karthik Iyer',
+      accountsTeamEmail: 'chennai@apexmarine.com',
+      accountsContactNumber: '+91 9988776622',
+      invoiceSubmissionEmail: 'invoices@apexmarine.com',
+      paymentFollowUpContact: 'finance@apexmarine.com',
+    },
+    documents: seededDocs('agreemented', 'marine', { fileSuffix: 'apex-chennai', uploadedDaysAgo: 3 }),
+    createdAt: daysAgo(10),
+    updatedAt: daysAgo(1),
+    readyForActivationAt: daysAgo(1),
+    activities: [],
+  },
+  {
+    id: 'AGR-014',
+    agreementId: 'AGR-2024-014',
+    companyId: 'CMP-1003',
+    companyName: 'Global Corporate Travel Ltd',
+    customerSourceMode: 'new',
+    agreementType: 'agreemented',
+    workflowType: 'corporate',
+    billingType: 'mixed',
+    status: 'ready_for_activation',
+    startDate: daysAgoDate(5),
+    endDate: daysFromNow(360),
+    entities: [
+      {
+        id: 'ent-19',
+        entityName: 'Global Corporate Bengaluru HQ',
+        billingAddress: 'MG Road, Bengaluru 560001',
+        gstNumber: '29AABCG9012C4Z8',
+        contactPerson: 'Anil Kapoor',
+        email: 'anil@globalcorp.com',
+        phone: '+91 9123456789',
+        status: 'active',
+      },
+    ],
+    pricingMatrix: [
+      {
+        id: 'pr-19',
+        country: 'Germany',
+        countryId: 'CNT-110',
+        visaType: 'Business Visa',
+        workflowType: 'Corporate',
+        servicePresetId: 'svc-corp-visa',
+        servicePresetName: 'Corporate business visa',
+        serviceFee: 9200,
+        gstApplicable: true,
+        remarks: '',
+      },
+      {
+        id: 'pr-20',
+        country: 'France',
+        countryId: 'CNT-111',
+        visaType: 'Business Visa',
+        workflowType: 'Corporate',
+        servicePresetId: 'svc-corp-visa',
+        servicePresetName: 'Corporate business visa',
+        serviceFee: 8800,
+        gstApplicable: true,
+        remarks: '',
+      },
+    ],
+    miscellaneousCosts: [],
+    billingConfig: {
+      ...createDefaultBillingConfig(),
+      creditBillingEnabled: true,
+      billingCycle: 'quarterly',
+      creditPeriodDays: 45,
+      creditLimit: 1500000,
+      advanceType: 'percentage',
+      advancePercentage: 50,
+      processingBlockRule: 'before_appointment',
+      serviceWiseBillingRules: [
+        { servicePresetId: 'svc-corp-visa', servicePresetName: 'Corporate business visa', billingRule: 'advance' },
+        { servicePresetId: 'svc-apostille', servicePresetName: 'Apostille & attestation', billingRule: 'credit' },
+      ],
+    },
+    financeContacts: {
+      accountsSpocName: 'Anil Kapoor',
+      accountsTeamEmail: 'anil@globalcorp.com',
+      accountsContactNumber: '+91 9123456789',
+      invoiceSubmissionEmail: 'billing@globalcorp.com',
+      paymentFollowUpContact: 'finance@globalcorp.com',
+    },
+    documents: seededDocs('agreemented', 'corporate', { fileSuffix: 'global-corp', uploadedDaysAgo: 4 }),
+    createdAt: daysAgo(8),
+    updatedAt: daysAgo(1),
+    readyForActivationAt: daysAgo(2),
+    activities: [],
+  },
+  {
+    id: 'AGR-015',
+    agreementId: 'AGR-2024-015',
+    companyId: 'CMP-1002',
+    companyName: 'Oceanic Crew Services',
+    customerSourceMode: 'quotation',
+    referenceQuotationId: 'QT-006',
+    agreementType: 'non_agreemented',
+    workflowType: 'marine',
+    billingType: 'advance',
+    status: 'ready_for_activation',
+    startDate: daysAgoDate(3),
+    endDate: daysFromNow(362),
+    entities: [
+      {
+        id: 'ent-20',
+        entityName: 'Oceanic Crew Mangalore',
+        billingAddress: 'Bunder, Mangalore 575001',
+        gstNumber: '29AABCO5678B3Z9',
+        contactPerson: 'Priya Nair',
+        email: 'mangalore@oceaniccrew.com',
+        phone: '+91 9876543220',
+        status: 'active',
+      },
+    ],
+    pricingMatrix: [
+      {
+        id: 'pr-21',
+        country: 'Malaysia',
+        countryId: 'CNT-112',
+        visaType: 'Marine Visa',
+        workflowType: 'Marine',
+        servicePresetId: 'svc-marine-visa',
+        servicePresetName: 'Marine crew visa processing',
+        serviceFee: 2100,
+        gstApplicable: true,
+        remarks: '',
+      },
+    ],
+    miscellaneousCosts: [],
+    billingConfig: {
+      ...createDefaultBillingConfig(),
+      creditBillingEnabled: false,
+      advanceType: 'full',
+      processingBlockRule: 'before_submission',
+    },
+    financeContacts: {
+      accountsSpocName: 'Priya Nair',
+      accountsTeamEmail: 'mangalore@oceaniccrew.com',
+      accountsContactNumber: '+91 9876543220',
+      invoiceSubmissionEmail: 'billing@oceaniccrew.com',
+      paymentFollowUpContact: 'finance@oceaniccrew.com',
+    },
+    documents: seededDocs('non_agreemented', 'marine', { fileSuffix: 'oceanic-mangalore', uploadedDaysAgo: 2 }),
+    createdAt: daysAgo(6),
+    updatedAt: daysAgo(1),
+    readyForActivationAt: daysAgo(1),
     activities: [],
   },
 ]
 
 const STORAGE_KEY = 'glts:commercial-agreements'
+/** Bump when `SEED_COMMERCIAL_AGREEMENTS` changes so dev browsers reload mock data. */
+const SEED_VERSION = 2
 
 let memoryStore: CommercialAgreement[] | null = null
 
 function loadStore(): CommercialAgreement[] {
   if (memoryStore) return memoryStore
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      memoryStore = JSON.parse(raw) as CommercialAgreement[]
-      return memoryStore
+    const versionKey = `${STORAGE_KEY}:version`
+    const cachedVersion = localStorage.getItem(versionKey)
+    if (cachedVersion !== String(SEED_VERSION)) {
+      localStorage.removeItem(STORAGE_KEY)
+      localStorage.setItem(versionKey, String(SEED_VERSION))
+    } else {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) {
+        memoryStore = JSON.parse(raw) as CommercialAgreement[]
+        return memoryStore
+      }
     }
   } catch {
     /* ignore */
@@ -744,4 +1144,10 @@ export function setMockCommercialAgreementsStore(rows: CommercialAgreement[]) {
 
 export function resetMockCommercialAgreementsCache() {
   memoryStore = null
+  try {
+    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(`${STORAGE_KEY}:version`)
+  } catch {
+    /* ignore */
+  }
 }

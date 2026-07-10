@@ -2,7 +2,7 @@ import {
   SEED_OPERATIONAL_CASES,
   SEED_TEAM_CAPACITY,
 } from '@/shared/data/mockOperationalCases'
-import { ensureGroundServiceCatalog } from '@/pages/admin/ground-operations/case-handling/utils/operationalCaseHandlingUtils'
+import { ensureApplicationFeeCatalog, ensureGroundServiceCatalog } from '@/pages/admin/ground-operations/case-handling/utils/operationalCaseHandlingUtils'
 import type {
   CityTeam,
   GroundServiceLine,
@@ -13,14 +13,22 @@ import type {
   OperationalTimelineEvent,
   TeamCapacity,
 } from '@/shared/types/operationalCaseHandling'
+import type {
+  LogisticsDispatchDetails,
+  LogisticsFinalQcChecks,
+} from '@/shared/types/logisticsDispatch'
+import {
+  isLogisticsStatus,
+  isOperationsDeskStatus,
+} from '@/shared/types/operationalCaseHandling'
+import {
+  isLogisticsFinalQcComplete,
+  validateLogisticsDispatchDetails,
+} from '@/shared/utils/logisticsDispatchUtils'
 import { getMasterActor } from '@/shared/utils/masterActor'
 
 function nowIso() {
   return new Date().toISOString()
-}
-
-function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10)
 }
 
 function formatDisplayDate(iso: string): string {
@@ -60,39 +68,64 @@ function normalizeGroundServices(services: GroundServiceLine[]): GroundServiceLi
   return ensureGroundServiceCatalog(services.map(service => ({ ...service })))
 }
 
-function getRecord(id: string): OperationalCase | undefined {
-  const index = findIndex(id)
-  if (index < 0) return undefined
-  const record = caseStore[index]
+function normalizeApplicationFees(services: GroundServiceLine[]): GroundServiceLine[] {
+  return ensureApplicationFeeCatalog(services.map(service => ({ ...service })))
+}
+
+function normalizeServiceLines(record: OperationalCase) {
+  record.groundServices = normalizeGroundServices(record.groundServices)
+  record.applicationFees = normalizeApplicationFees(record.applicationFees ?? [])
+}
+
+function selectedServiceLines(record: OperationalCase): GroundServiceLine[] {
+  return record.applicationFees.filter(service => service.selected)
+}
+
+function recomputeServiceTotals(record: OperationalCase) {
+  const selected = selectedServiceLines(record)
+  record.servicesSummary = selected.map(service => service.serviceName).join(', ') || '—'
+  record.estimatedExpense = selected.reduce((sum, service) => sum + service.prefilledAmount, 0)
+  const serviceActual = selected.reduce((sum, service) => sum + service.actualAmount, 0)
+  const extraActual = record.expenses.reduce((sum, expense) => sum + expense.actualAmount, 0)
+  record.actualExpense = serviceActual + extraActual
+  record.expenseSummary = `₹${record.estimatedExpense.toLocaleString('en-IN')} Est.${record.actualExpense > 0 ? ` · ₹${record.actualExpense.toLocaleString('en-IN')} Actual` : ''}`
+}
+
+function cloneOperationalCase(record: OperationalCase): OperationalCase {
   return {
     ...record,
     groundServices: normalizeGroundServices(record.groundServices),
+    applicationFees: normalizeApplicationFees(record.applicationFees ?? []),
     expenses: [...record.expenses],
     timeline: [...record.timeline],
+    finalQc: record.finalQc
+      ? { ...record.finalQc, checks: { ...record.finalQc.checks } }
+      : undefined,
+    dispatchDetails: record.dispatchDetails ? { ...record.dispatchDetails } : undefined,
   }
+}
+
+function getRecord(id: string): OperationalCase | undefined {
+  const index = findIndex(id)
+  if (index < 0) return undefined
+  return cloneOperationalCase(caseStore[index])
 }
 
 function mutate(id: string, updater: (record: OperationalCase) => void): OperationalCase | undefined {
   const index = findIndex(id)
   if (index < 0) return undefined
   const record = caseStore[index]
-  record.groundServices = normalizeGroundServices(record.groundServices)
+  normalizeServiceLines(record)
   updater(record)
   touch(record)
-  return {
-    ...record,
-    groundServices: normalizeGroundServices(record.groundServices),
-    expenses: [...record.expenses],
-    timeline: [...record.timeline],
-  }
+  return cloneOperationalCase(record)
 }
 
-/** Cutoff hour (24h) for auto carry-forward demo. */
-const OPERATIONAL_CUTOFF_HOUR = 18
 
 let caseStore: OperationalCase[] = SEED_OPERATIONAL_CASES.map(row => ({
   ...row,
   groundServices: normalizeGroundServices(row.groundServices),
+  applicationFees: normalizeApplicationFees(row.applicationFees ?? []),
   expenses: row.expenses.map(e => ({ ...e })),
   timeline: row.timeline.map(t => ({ ...t })),
 }))
@@ -119,42 +152,34 @@ function recomputeTeamCapacity() {
 }
 
 function applyAutoCarryForward() {
-  const now = new Date()
-  const today = todayIsoDate()
+  // Moved to Next Day is updated manually by the Operations team only.
+}
 
-  for (const record of caseStore) {
-    if (record.status === 'Completed') continue
-    if (record.operationalDate >= today) continue
-
-    const isStale =
-      record.operationalDate < today &&
-      (record.status === 'Pending' ||
-        record.status === 'In Operations' ||
-        record.status === 'Biometrics Pending')
-
-    if (isStale || (now.getHours() >= OPERATIONAL_CUTOFF_HOUR && record.operationalDate < today)) {
-      record.operationalDate = today
-      record.carryForward = true
-      record.movedToNextDayAt = nowIso()
-      record.status = 'Moved to Next Day'
-      appendTimeline(record, 'Moved to Next Day', 'System')
-      appendTimeline(record, 'Requeued for today', 'System')
-    }
-  }
+function mapStoreRows(): OperationalCase[] {
+  return caseStore
+    .map(row => ({
+      ...row,
+      groundServices: normalizeGroundServices(row.groundServices),
+      applicationFees: normalizeApplicationFees(row.applicationFees ?? []),
+      expenses: row.expenses.map(e => ({ ...e })),
+      timeline: row.timeline.map(t => ({ ...t })),
+    }))
+    .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime())
 }
 
 export const operationalCaseHandlingService = {
   list(): OperationalCase[] {
     applyAutoCarryForward()
     recomputeTeamCapacity()
-    return caseStore
-      .map(row => ({
-        ...row,
-        groundServices: normalizeGroundServices(row.groundServices),
-        expenses: row.expenses.map(e => ({ ...e })),
-        timeline: row.timeline.map(t => ({ ...t })),
-      }))
-      .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime())
+    return mapStoreRows()
+  },
+
+  listForOperationsDesk(): OperationalCase[] {
+    return this.list()
+  },
+
+  listForLogistics(): OperationalCase[] {
+    return this.list().filter(row => isLogisticsStatus(row.status))
   },
 
   getById(id: string): OperationalCase | undefined {
@@ -194,10 +219,6 @@ export const operationalCaseHandlingService = {
   markForOperations(id: string): OperationalCase | undefined {
     return mutate(id, record => {
       record.markedForOperations = true
-      if (record.status === 'Pending') {
-        record.status = 'In Operations'
-        record.progressPercent = Math.max(record.progressPercent, 25)
-      }
       appendTimeline(record, 'Reallocated to Operations Desk')
     })
   },
@@ -227,12 +248,14 @@ export const operationalCaseHandlingService = {
       record.status = status
       if (status === 'Completed') {
         record.progressPercent = 100
-      } else if (status === 'Passport Collected') {
+      } else if (status === 'Dispatched') {
         record.progressPercent = Math.max(record.progressPercent, 90)
-      } else if (status === 'VFS Completed') {
+      } else if (status === 'Collected') {
         record.progressPercent = Math.max(record.progressPercent, 75)
-      } else if (status === 'Biometrics Pending') {
-        record.progressPercent = Math.max(record.progressPercent, 40)
+      } else if (status === 'Document Submitted') {
+        record.progressPercent = Math.max(record.progressPercent, 50)
+      } else if (status === 'Moved to Next Day') {
+        record.progressPercent = Math.max(record.progressPercent, 20)
       }
       appendTimeline(record, `Status updated to ${status}`)
     })
@@ -257,13 +280,25 @@ export const operationalCaseHandlingService = {
       const svc = record.groundServices.find(s => s.id === serviceId)
       if (!svc) return
       Object.assign(svc, patch)
-      const selected = record.groundServices.filter(s => s.selected)
-      record.servicesSummary = selected.map(s => s.serviceName.split(' ')[0]).join(', ') || '—'
-      record.estimatedExpense = selected.reduce((sum, s) => sum + s.prefilledAmount, 0)
-      const serviceActual = selected.reduce((sum, s) => sum + s.actualAmount, 0)
-      const extraActual = record.expenses.reduce((sum, e) => sum + e.actualAmount, 0)
-      record.actualExpense = serviceActual + extraActual
-      record.expenseSummary = `₹${record.estimatedExpense.toLocaleString('en-IN')} Est.${record.actualExpense > 0 ? ` · ₹${record.actualExpense.toLocaleString('en-IN')} Actual` : ''}`
+      recomputeServiceTotals(record)
+    })
+  },
+
+  updateApplicationFee(id: string, feeId: string, patch: Partial<GroundServiceLine>): OperationalCase | undefined {
+    return mutate(id, record => {
+      const fee = record.applicationFees.find(item => item.id === feeId)
+      if (!fee) return
+      Object.assign(fee, patch)
+      recomputeServiceTotals(record)
+    })
+  },
+
+  updateApplicationFeesPaidBy(
+    id: string,
+    paidBy: NonNullable<OperationalCase['applicationFeesPaidBy']>,
+  ): OperationalCase | undefined {
+    return mutate(id, record => {
+      record.applicationFeesPaidBy = paidBy
     })
   },
 
@@ -275,10 +310,7 @@ export const operationalCaseHandlingService = {
         isExtra: expense.isExtra ?? true,
       }
       record.expenses.push(item)
-      record.actualExpense =
-        record.groundServices.filter(s => s.selected).reduce((sum, s) => sum + s.actualAmount, 0) +
-        record.expenses.reduce((sum, e) => sum + e.actualAmount, 0)
-      record.expenseSummary = `₹${record.estimatedExpense.toLocaleString('en-IN')} Est.${record.actualExpense > 0 ? ` · ₹${record.actualExpense.toLocaleString('en-IN')} Actual` : ''}`
+      recomputeServiceTotals(record)
       appendTimeline(record, `Expense added · ${item.serviceName}`)
     })
   },
@@ -289,32 +321,120 @@ export const operationalCaseHandlingService = {
     })
   },
 
-  updateBiometrics(id: string, scheduled: string): OperationalCase | undefined {
+  updateSubmissionDetails(
+    id: string,
+    details: {
+      submissionDate?: string
+      collectionDate?: string
+      submissionReferenceNumber?: string
+    },
+  ): OperationalCase | undefined {
     return mutate(id, record => {
-      record.biometricsScheduled = scheduled
-      record.status = 'Biometrics Pending'
-      record.progressPercent = Math.max(record.progressPercent, 40)
-      appendTimeline(record, 'Biometrics Scheduled')
-    })
-  },
-
-  updateVfsStatus(id: string, vfsStatus: string): OperationalCase | undefined {
-    return mutate(id, record => {
-      record.vfsStatus = vfsStatus
-      if (vfsStatus.toLowerCase().includes('completed') || vfsStatus.toLowerCase().includes('captured')) {
-        record.status = 'VFS Completed'
-        record.progressPercent = Math.max(record.progressPercent, 75)
+      if (details.submissionDate !== undefined) {
+        record.submissionDate = details.submissionDate
       }
-      appendTimeline(record, `VFS status · ${vfsStatus}`)
+      if (details.collectionDate !== undefined) {
+        record.collectionDate = details.collectionDate
+      }
+      if (details.submissionReferenceNumber !== undefined) {
+        record.submissionReferenceNumber = details.submissionReferenceNumber
+      }
+      appendTimeline(record, 'Submission details updated')
     })
   },
 
-  updatePassportCollection(id: string, status: string): OperationalCase | undefined {
+  submitDocuments(
+    id: string,
+    details: {
+      submissionDate: string
+      collectionDate?: string
+      submissionReferenceNumber: string
+    },
+  ): OperationalCase | undefined {
+    const submissionDate = details.submissionDate.trim()
+    const submissionReferenceNumber = details.submissionReferenceNumber.trim()
+    if (!submissionDate || !submissionReferenceNumber) return undefined
+
     return mutate(id, record => {
-      record.passportCollectionStatus = status
-      record.status = 'Passport Collected'
+      if (!isOperationsDeskStatus(record.status)) return
+
+      record.submissionDate = submissionDate
+      record.collectionDate = details.collectionDate?.trim() ?? record.collectionDate ?? ''
+      record.submissionReferenceNumber = submissionReferenceNumber
+      record.status = 'Document Submitted'
+      record.carryForward = false
+      record.progressPercent = Math.max(record.progressPercent, 50)
+      appendTimeline(record, 'Documents submitted to Embassy/VFS')
+    })
+  },
+
+  markCollected(id: string): OperationalCase | undefined {
+    return mutate(id, record => {
+      if (record.status !== 'Document Submitted') return
+      record.status = 'Collected'
+      record.progressPercent = Math.max(record.progressPercent, 75)
+      record.nextAction = 'Enter dispatch details'
+      appendTimeline(record, 'Passport/documents collected from Embassy/VFS', 'Tracking & Logistics')
+    })
+  },
+
+  saveFinalQc(
+    id: string,
+    payload: { checks: LogisticsFinalQcChecks; remarks: string },
+  ): OperationalCase | undefined {
+    if (!isLogisticsFinalQcComplete(payload.checks)) return undefined
+
+    return mutate(id, record => {
+      if (record.status !== 'Collected') return
+      if (record.dispatchDetails?.dispatchedAt) return
+
+      record.finalQc = {
+        checks: { ...payload.checks },
+        remarks: payload.remarks.trim(),
+        verifiedBy: getMasterActor(),
+        verifiedAt: nowIso(),
+        completed: true,
+      }
+      appendTimeline(record, 'Final QC completed', 'Tracking & Logistics')
+    })
+  },
+
+  dispatchPassport(id: string, details: LogisticsDispatchDetails): OperationalCase | undefined {
+    const validation = validateLogisticsDispatchDetails(details)
+    if (!validation.valid) return undefined
+
+    return mutate(id, record => {
+      if (record.status !== 'Collected') return
+
+      const dispatchSnapshot: LogisticsDispatchDetails = {
+        ...details,
+        dispatchedAt: nowIso(),
+      }
+
+      record.dispatchDetails = dispatchSnapshot
+      record.status = 'Dispatched'
       record.progressPercent = Math.max(record.progressPercent, 90)
-      appendTimeline(record, 'Passport Collected')
+      appendTimeline(
+        record,
+        `Passport dispatched via ${details.deliveryMethod}`,
+        'Tracking & Logistics',
+      )
+      record.status = 'Completed'
+      record.progressPercent = 100
+      record.nextAction = '—'
+      appendTimeline(record, 'Case completed', 'System')
+    })
+  },
+
+  markDispatched(id: string): OperationalCase | undefined {
+    return mutate(id, record => {
+      if (record.status !== 'Collected') return
+      record.status = 'Dispatched'
+      record.progressPercent = Math.max(record.progressPercent, 90)
+      appendTimeline(record, 'Passport/documents dispatched', 'Tracking & Logistics')
+      record.status = 'Completed'
+      record.progressPercent = 100
+      appendTimeline(record, 'Case completed', 'System')
     })
   },
 
@@ -329,7 +449,8 @@ export const operationalCaseHandlingService = {
   resetToSeed() {
     caseStore = SEED_OPERATIONAL_CASES.map(row => ({
       ...row,
-      groundServices: row.groundServices.map(s => ({ ...s })),
+      groundServices: normalizeGroundServices(row.groundServices),
+      applicationFees: normalizeApplicationFees(row.applicationFees ?? []),
       expenses: row.expenses.map(e => ({ ...e })),
       timeline: row.timeline.map(t => ({ ...t })),
     }))

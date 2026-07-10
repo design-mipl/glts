@@ -19,6 +19,7 @@ import {
   type BookerListFilters,
 } from '../components/BookerAdvancedFilters'
 import { BookerFormDrawer } from '../components/BookerFormDrawer'
+import { BookerPasswordDialog } from '../components/BookerPasswordDialog'
 import { buildBookerColumns } from '../components/BookerTableColumns'
 import {
   downloadBookerCsv,
@@ -41,6 +42,9 @@ export function BookersPage() {
   const [statusOpen, setStatusOpen] = useState(false)
   const [activeRecord, setActiveRecord] = useState<BookerUser | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [passwordBooker, setPasswordBooker] = useState<BookerUser>()
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
+  const [passwordUpdating, setPasswordUpdating] = useState(false)
 
   const loadRows = useCallback(() => {
     setRows(bookerManagementService.listForSession())
@@ -76,12 +80,35 @@ export function BookersPage() {
     setDrawerOpen(true)
   }
 
-  const handleResendInvite = (record: BookerUser) => {
-    bookerManagementService.resendInvite(record.id)
+  const handleSendLogin = (record: BookerUser) => {
+    const payload = bookerManagementService.sendLoginEmail(record.id)
+    if (!payload) {
+      showToast({ title: 'Could not send credentials', variant: 'error' })
+      return
+    }
     loadRows()
     showToast({
-      title: 'Invite sent',
-      description: `Password reset / invite email sent to ${record.email}.`,
+      title: 'Login credentials sent',
+      description: `${payload.portalUrl} · ${payload.username} · ${payload.temporaryPassword}`,
+      variant: 'success',
+    })
+  }
+
+  const handleChangePassword = (password: string) => {
+    if (!passwordBooker) return
+    setPasswordUpdating(true)
+    const payload = bookerManagementService.changePassword(passwordBooker.id, password)
+    setPasswordUpdating(false)
+    if (!payload) {
+      showToast({ title: 'Could not update password', variant: 'error' })
+      return
+    }
+    setPasswordDialogOpen(false)
+    setPasswordBooker(undefined)
+    loadRows()
+    showToast({
+      title: 'Password updated',
+      description: `${payload.username} · ${payload.temporaryPassword}`,
       variant: 'success',
     })
   }
@@ -91,11 +118,15 @@ export function BookersPage() {
       buildBookerColumns({
         onOpenDetail: row => navigate(`${base}/users/bookers/${row.id}`),
         onOpenEdit: openEdit,
+        onSendLogin: handleSendLogin,
+        onChangePassword: record => {
+          setPasswordBooker(record)
+          setPasswordDialogOpen(true)
+        },
         onToggleStatus: record => {
           setActiveRecord(record)
           setStatusOpen(true)
         },
-        onResendInvite: handleResendInvite,
         onDelete: record => {
           setActiveRecord(record)
           setDeleteOpen(true)
@@ -208,18 +239,36 @@ export function BookersPage() {
         }}
       />
 
+      <BookerPasswordDialog
+        open={passwordDialogOpen}
+        booker={passwordBooker}
+        onClose={() => {
+          setPasswordDialogOpen(false)
+          setPasswordBooker(undefined)
+        }}
+        onConfirm={handleChangePassword}
+        loading={passwordUpdating}
+      />
+
       <ConfirmDialog
         open={statusOpen}
         onClose={() => setStatusOpen(false)}
-        title={activeRecord?.status === 'active' ? 'Inactivate booker?' : 'Activate booker?'}
-        description={`${activeRecord?.fullName ?? 'This booker'} will be marked as ${activeRecord?.status === 'active' ? 'inactive' : 'active'}.`}
-        confirmLabel={activeRecord?.status === 'active' ? 'Inactivate' : 'Activate'}
+        title={activeRecord?.status === 'active' ? 'Deactivate user?' : 'Activate user?'}
+        description={
+          activeRecord
+            ? activeRecord.status === 'active'
+              ? `${activeRecord.fullName} will lose portal login access until reactivated.`
+              : `${activeRecord.fullName} will be able to sign in to the corporate portal again.`
+            : 'Update portal access for this booker.'
+        }
+        confirmLabel={activeRecord?.status === 'active' ? 'Deactivate' : 'Activate'}
+        variant={activeRecord?.status === 'active' ? 'destructive' : 'default'}
         onConfirm={() => {
           if (!activeRecord) return
           setActionLoading(true)
           const next = activeRecord.status === 'active' ? 'inactive' : 'active'
           bookerManagementService.setStatus(activeRecord.id, next)
-          showToast({ title: `Booker ${next === 'active' ? 'activated' : 'inactivated'}`, variant: 'success' })
+          showToast({ title: `Booker ${next === 'active' ? 'activated' : 'deactivated'}`, variant: 'success' })
           loadRows()
           setStatusOpen(false)
           setActiveRecord(null)

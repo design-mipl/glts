@@ -24,6 +24,8 @@ import {
 import { resolveHandlingMode } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import { applicationArrangedExpenseService } from '@/shared/services/applicationArrangedExpenseService'
 import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
+import { resolveMarineChecklistContext } from '../utils/marineChecklistContextUtils'
+import { isMarineReadOnlyWorkspace } from '../config/marineWorkspaceMode'
 import {
   collectRejectedVerifyDocuments,
   isRejectedVerifyDocument,
@@ -55,6 +57,7 @@ export function MarineVerifyDocumentsPage() {
   const {
     notFound,
     detail,
+    listingRow,
     overview,
     rows,
     isBulk,
@@ -86,17 +89,19 @@ export function MarineVerifyDocumentsPage() {
 
   const summaryOverview = useMemo(() => toApplicationReviewOverview(overview), [overview])
 
-  const checklistContext = useMemo(() => {
-    const app = detail?.application
-    if (!app) return {}
-    if (app.country === 'China' && app.visaType === 'M Type Visa') {
-      return { countryId: '13', visaOfferingId: 'cn-m-type' }
-    }
-    if (app.country === 'China' && app.visaType === 'G Type Visa') {
-      return { countryId: '13', visaOfferingId: 'cn-g-type' }
-    }
-    return {}
-  }, [detail?.application])
+  const checklistContext = useMemo(
+    () =>
+      resolveMarineChecklistContext({
+        application: detail?.application,
+        listingRow,
+      }),
+    [detail?.application, listingRow],
+  )
+
+  const readOnly = useMemo(
+    () => Boolean(listingRow && isMarineReadOnlyWorkspace(listingRow)),
+    [listingRow],
+  )
 
   const travelerChecklistDocuments = useMemo(
     () => selectedRow?.documents.filter(doc => !isRejectedVerifyDocument(doc)) ?? [],
@@ -265,7 +270,7 @@ export function MarineVerifyDocumentsPage() {
     <AdminRecordPageChrome
       breadcrumbs={[
         { label: 'Application Management', href: listingPath },
-        { label: 'Verify Documents' },
+        { label: readOnly ? 'View application' : 'Verify Documents' },
       ]}
     >
       <Stack spacing={2}>
@@ -309,6 +314,7 @@ export function MarineVerifyDocumentsPage() {
               onRejectedGltsUpload={handleRejectedGltsUpload}
               countryId={checklistContext.countryId}
               visaOfferingId={checklistContext.visaOfferingId}
+              jurisdictionId={checklistContext.jurisdictionId}
               onOriginalCollectionChange={collection => {
                 if (!selectedRow) return
                 updateTravelerOriginalCollection(selectedRow.id, collection)
@@ -326,6 +332,7 @@ export function MarineVerifyDocumentsPage() {
               onViewForm={() =>
                 navigate(`/admin/application-management/marine/${applicationId}/view-form`)
               }
+              readOnly={readOnly}
             />
           </Stack>
         </BaseCard>

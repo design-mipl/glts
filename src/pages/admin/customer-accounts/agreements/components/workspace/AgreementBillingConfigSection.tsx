@@ -4,6 +4,7 @@ import { Button, FormField, Input, Select } from '@/design-system/UIComponents'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
 import { getServiceOptions } from '../../utils/agreementMasterOptions'
 import { advanceTypeLabel, processingBlockRuleLabel } from '../../config/agreementStatusConfig'
+import { formatAgreementDate } from '../../utils/agreementFormUtils'
 import { agreementEmbeddedTableHeadCellSx, agreementEmbeddedTableSx, agreementFieldError } from '../agreementFormLayout'
 
 interface AgreementBillingConfigSectionProps {
@@ -39,6 +40,8 @@ export function AgreementBillingConfigSection({
   if (readOnly) {
     return (
       <Stack spacing={1.5}>
+        <Typography variant="body2">Agreement start date: {formatAgreementDate(data.startDate)}</Typography>
+        <Typography variant="body2">Agreement expiry date: {formatAgreementDate(data.endDate)}</Typography>
         <Typography variant="body2">Billing type: {data.billingType}</Typography>
         {data.billingType === 'credit' ? (
           <>

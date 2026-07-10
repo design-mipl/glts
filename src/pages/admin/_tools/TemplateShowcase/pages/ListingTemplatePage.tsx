@@ -6,7 +6,6 @@ import {
   Pagination,
   useToast,
 } from '@/design-system/UIComponents'
-import type { BulkAction } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   AdminListingGrid,
@@ -93,18 +92,6 @@ export function ListingTemplatePage() {
   }, [listing])
 
   const gridItems = useMemo(() => mapTemplateRowsToGridItems(listing.paginatedRows), [listing.paginatedRows])
-  const bulkActions: BulkAction[] = [
-    {
-      label: 'Bulk update status',
-      onClick: () => {
-        showToast({
-          title: 'Bulk action',
-          description: 'Wire this to module-specific bulk status update.',
-          variant: 'info',
-        })
-      },
-    },
-  ]
 
   const footerBg =
     theme.palette.mode === 'dark'
@@ -171,7 +158,6 @@ export function ListingTemplatePage() {
               columnFilters={listing.columnFilters}
               onColumnFiltersChange={listing.setColumnFilters}
               getCellValue={getTemplateCellValue}
-              bulkActions={bulkActions}
               onRowClick={() =>
                 showToast({ title: 'Row opened', description: 'Wire row click to detail route in production.', variant: 'info' })
               }

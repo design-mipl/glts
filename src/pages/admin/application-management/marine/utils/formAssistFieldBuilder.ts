@@ -62,7 +62,7 @@ const FORM_ASSIST_STEP_SECTIONS: Record<string, FormAssistFieldSectionDefinition
     {
       id: 'visa-information',
       title: 'Visa information',
-      fieldIds: ['visa', 'jurisdiction'],
+      fieldIds: ['visa', 'issuedPassportState', 'placeOfResidence', 'jurisdiction'],
     },
   ],
   employment: [
@@ -135,6 +135,8 @@ export interface FormAssistContext {
     vesselName?: string
     imoNumber?: string
     joiningPort?: string
+    issuedPassportState?: string
+    placeOfResidence?: string
     jurisdiction?: string
   }
 }
@@ -211,6 +213,16 @@ export function buildFormAssistFieldsForStep(
         field('visa', 'Visa', app?.visaType ?? ''),
         field('country', 'Country', app?.country ?? ''),
         field(
+          'issuedPassportState',
+          'Issued passport state',
+          extras.issuedPassportState ?? '',
+        ),
+        field(
+          'placeOfResidence',
+          'Place of residence',
+          extras.placeOfResidence ?? '',
+        ),
+        field(
           'jurisdiction',
           'Jurisdiction',
           app?.jurisdiction ?? extras.jurisdiction ?? '',
@@ -261,6 +273,8 @@ export function resolveFormAssistFlowExtras(applicationId: string): SingleApplic
     vesselName: '',
     imoNumber: '',
     joiningPort: '',
+    issuedPassportState: '',
+    placeOfResidence: '',
     jurisdiction: '',
   }
   const flowState = readSavedFlowState()
@@ -275,6 +289,8 @@ export function resolveFormAssistFlowExtras(applicationId: string): SingleApplic
     vesselName: flowState.vesselName || fromSeed.vesselName,
     imoNumber: flowState.imoNumber || fromSeed.imoNumber,
     joiningPort: flowState.portOfRegistry || fromSeed.joiningPort,
+    issuedPassportState: flowState.issuedPassportState || fromSeed.issuedPassportState,
+    placeOfResidence: flowState.placeOfResidence || fromSeed.placeOfResidence,
     jurisdiction: flowState.jurisdiction || fromSeed.jurisdiction,
   }
 }

@@ -1,18 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
+import dayjs from 'dayjs'
 import {
   Badge,
   Button,
+  DatePicker,
   Drawer,
   FormField,
   Input,
   Tabs,
-  Textarea,
+  useToast,
 } from '@/design-system/UIComponents'
 import type { OperationalCase } from '@/shared/types/operationalCaseHandling'
+import { isLogisticsStatus, isOperationsDeskStatus } from '@/shared/types/operationalCaseHandling'
 import { operationalCaseHandlingService } from '@/shared/services/operationalCaseHandlingService'
+import { ApplicationTrackingUrlLink } from '@/shared/components/ApplicationTrackingUrlLink'
+import { resolveApplicationTrackingUrl } from '@/shared/services/countryMasterService'
 import { priorityBadgeColor, statusBadgeColor, formatJoiningDate } from '../utils/operationalCaseHandlingUtils'
 import { GroundServicesChecklist } from './GroundServicesChecklist'
+import { ApplicationFeePaidByField } from './ApplicationFeePaidByField'
+import { SubmissionVfsChargesSummary } from './SubmissionVfsChargesSummary'
+import { resolveOperationalCaseSubmissionSnapshot } from '@/shared/utils/operationalCaseSubmissionUtils'
 import { OperationalTimeline } from './OperationalTimeline'
 import { OperationalDocumentVault } from './OperationalDocumentVault'
 
@@ -22,7 +30,7 @@ type DetailTab = 'overview' | 'services' | 'operations' | 'timeline'
 
 const DETAIL_TABS = [
   { label: 'Overview & Documents', value: 'overview' },
-  { label: 'Services & Expenses', value: 'services' },
+  { label: 'Services', value: 'services' },
   { label: 'Operations', value: 'operations' },
   { label: 'Timeline', value: 'timeline' },
 ] as const
@@ -32,6 +40,7 @@ interface OperationalCaseDetailDrawerProps {
   record: OperationalCase | null
   onClose: () => void
   onUpdated: () => void
+  onSubmitted?: () => void
 }
 
 function ReadField({ label, value }: { label: string; value: string }) {
@@ -55,29 +64,61 @@ function SectionHeading({ children }: { children: string }) {
   )
 }
 
+function parseDateString(value: string | undefined): Date | null {
+  if (!value?.trim()) return null
+  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY'], true)
+  return parsed.isValid() ? parsed.toDate() : null
+}
+
+function formatDateForStorage(date: Date | null): string {
+  if (!date) return ''
+  return dayjs(date).format('YYYY-MM-DD')
+}
+
+function formatDisplayDate(value: string | undefined): string {
+  if (!value?.trim()) return '—'
+  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY'], true)
+  return parsed.isValid() ? parsed.format('DD MMM YYYY') : value
+}
+
 function OperationalCaseDetailContent({
   record,
   onUpdated,
+  onSubmitted,
 }: {
   record: OperationalCase
   onUpdated: () => void
+  onSubmitted?: () => void
 }) {
+  const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<DetailTab>('overview')
-  const [remarks, setRemarks] = useState(record.remarks)
-  const [biometrics, setBiometrics] = useState(record.biometricsScheduled ?? '')
-  const [vfsStatus, setVfsStatus] = useState(record.vfsStatus ?? '')
-  const [passportStatus, setPassportStatus] = useState(record.passportCollectionStatus ?? '')
+  const [submissionDate, setSubmissionDate] = useState(record.submissionDate ?? '')
+  const [collectionDate, setCollectionDate] = useState(record.collectionDate ?? '')
+  const [submissionReferenceNumber, setSubmissionReferenceNumber] = useState(
+    record.submissionReferenceNumber ?? '',
+  )
+  const trackingUrl = resolveApplicationTrackingUrl({ countryName: record.country })
+  const canEditCase = isOperationsDeskStatus(record.status)
+  const isViewOnly = isLogisticsStatus(record.status)
+  const submissionSnapshot = useMemo(
+    () => resolveOperationalCaseSubmissionSnapshot(record),
+    [record],
+  )
 
   useEffect(() => {
     setActiveTab('overview')
   }, [record.id])
 
   useEffect(() => {
-    setRemarks(record.remarks)
-    setBiometrics(record.biometricsScheduled ?? '')
-    setVfsStatus(record.vfsStatus ?? '')
-    setPassportStatus(record.passportCollectionStatus ?? '')
-  }, [record.id, record.remarks, record.biometricsScheduled, record.vfsStatus, record.passportCollectionStatus])
+    setSubmissionDate(record.submissionDate ?? '')
+    setCollectionDate(record.collectionDate ?? '')
+    setSubmissionReferenceNumber(record.submissionReferenceNumber ?? '')
+  }, [
+    record.id,
+    record.submissionDate,
+    record.collectionDate,
+    record.submissionReferenceNumber,
+  ])
 
   return (
     <Stack spacing={0}>
@@ -129,15 +170,56 @@ function OperationalCaseDetailContent({
 
         {activeTab === 'services' ? (
           <Stack spacing={2}>
+            {isViewOnly && record.groundServices.some(service => service.selected) ? (
+              <Stack spacing={1.25}>
+                <SectionHeading>Ground services</SectionHeading>
+                <GroundServicesChecklist
+                  services={record.groundServices.filter(service => service.selected)}
+                  readOnly
+                />
+              </Stack>
+            ) : null}
+
+            {isViewOnly && record.groundServices.some(service => service.selected) ? <Divider /> : null}
+
             <Stack spacing={1.25}>
-              <SectionHeading>Ground services</SectionHeading>
+              <SectionHeading>VFS & application fees</SectionHeading>
+              <SubmissionVfsChargesSummary snapshot={submissionSnapshot} />
+              <Stack spacing={0.75}>
+                <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12, color: 'text.primary' }}>
+                  On-site fees & supplements
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+                  Record additional VFS charges handled by the ground operations team.
+                </Typography>
+              </Stack>
               <GroundServicesChecklist
-                services={record.groundServices}
-                readOnly={false}
-                onServiceChange={(serviceId, patch) => {
-                  operationalCaseHandlingService.updateGroundService(record.id, serviceId, patch)
-                  onUpdated()
-                }}
+                services={
+                  isViewOnly
+                    ? record.applicationFees.filter(service => service.selected)
+                    : record.applicationFees
+                }
+                readOnly={isViewOnly}
+                onServiceChange={
+                  isViewOnly
+                    ? undefined
+                    : (feeId, patch) => {
+                        operationalCaseHandlingService.updateApplicationFee(record.id, feeId, patch)
+                        onUpdated()
+                      }
+                }
+              />
+              <ApplicationFeePaidByField
+                value={record.applicationFeesPaidBy ?? 'passenger'}
+                readOnly={isViewOnly}
+                onChange={
+                  isViewOnly
+                    ? undefined
+                    : paidBy => {
+                        operationalCaseHandlingService.updateApplicationFeesPaidBy(record.id, paidBy)
+                        onUpdated()
+                      }
+                }
               />
             </Stack>
 
@@ -191,98 +273,137 @@ function OperationalCaseDetailContent({
         {activeTab === 'operations' ? (
           <Stack spacing={2}>
             <Stack spacing={1.25}>
-              <SectionHeading>Biometrics coordination</SectionHeading>
-              <FormField label="Schedule">
-                <Input
-                  size="sm"
-                  value={biometrics}
-                  onChange={setBiometrics}
-                  placeholder="e.g. 12 Jun 2026 · 14:30 · VFS Mumbai"
-                />
-              </FormField>
-              <Box>
-                <Button
-                  label="Save biometrics schedule"
-                  size="sm"
-                  onClick={() => {
-                    operationalCaseHandlingService.updateBiometrics(record.id, biometrics)
-                    onUpdated()
-                  }}
-                />
+              <SectionHeading>Submission details</SectionHeading>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
+                {canEditCase ? (
+                  <>
+                    <FormField label="Submission Date">
+                      <DatePicker
+                        value={parseDateString(submissionDate)}
+                        onChange={date => setSubmissionDate(formatDateForStorage(date))}
+                        placeholder="Select submission date"
+                        size="sm"
+                        fullWidth
+                      />
+                    </FormField>
+                    <FormField label="Collection Date">
+                      <DatePicker
+                        value={parseDateString(collectionDate)}
+                        onChange={date => setCollectionDate(formatDateForStorage(date))}
+                        placeholder="Select collection date"
+                        size="sm"
+                        fullWidth
+                      />
+                    </FormField>
+                  </>
+                ) : (
+                  <>
+                    <ReadField
+                      label="Submission Date"
+                      value={formatDisplayDate(record.submissionDate)}
+                    />
+                    <ReadField
+                      label="Collection Date"
+                      value={formatDisplayDate(record.collectionDate)}
+                    />
+                  </>
+                )}
               </Box>
+              {canEditCase ? (
+                <FormField label="Submission Reference No.">
+                  <Input
+                    size="sm"
+                    value={submissionReferenceNumber}
+                    onChange={setSubmissionReferenceNumber}
+                    placeholder="e.g. VFS-ONL-2026-0142"
+                    fullWidth
+                  />
+                </FormField>
+              ) : (
+                <ReadField
+                  label="Submission Reference No."
+                  value={record.submissionReferenceNumber ?? ''}
+                />
+              )}
+              {canEditCase ? (
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  <Button
+                    label="Submit"
+                    size="sm"
+                    onClick={() => {
+                      if (!submissionDate.trim() || !submissionReferenceNumber.trim()) {
+                        showToast({
+                          title: 'Missing required fields',
+                          description: 'Submission date and reference number are required to submit.',
+                          variant: 'error',
+                        })
+                        return
+                      }
+                      const updated = operationalCaseHandlingService.submitDocuments(record.id, {
+                        submissionDate,
+                        collectionDate,
+                        submissionReferenceNumber,
+                      })
+                      if (!updated) {
+                        showToast({
+                          title: 'Unable to submit',
+                          description: 'Submit is only available for Pending or Moved to Next Day cases.',
+                          variant: 'error',
+                        })
+                        return
+                      }
+                      showToast({
+                        title: 'Documents submitted',
+                        description:
+                          'Case moved to Tracking & Logistics and remains visible on the Operations Desk.',
+                        variant: 'success',
+                      })
+                      onUpdated()
+                      onSubmitted?.()
+                    }}
+                  />
+                  <Button
+                    label="Move to next day"
+                    variant="outlined"
+                    size="sm"
+                    onClick={() => {
+                      operationalCaseHandlingService.moveToNextDay(record.id)
+                      onUpdated()
+                      showToast({ title: 'Moved to next day', variant: 'info' })
+                    }}
+                  />
+                </Stack>
+              ) : null}
             </Stack>
 
             <Divider />
 
             <Stack spacing={1.25}>
-              <SectionHeading>VFS support</SectionHeading>
-              <FormField label="VFS status">
-                <Input
-                  size="sm"
-                  value={vfsStatus}
-                  onChange={setVfsStatus}
-                  placeholder="e.g. Appointment confirmed · 14 Jun · VFS Mumbai"
+              {isViewOnly ? (
+                <ReadField
+                  label="Visa Status Tracking URL"
+                  value={trackingUrl ? 'Configured in Country Master' : 'Not configured in Country Master'}
                 />
-              </FormField>
-              <Box>
-                <Button
-                  label="Update VFS status"
-                  size="sm"
-                  onClick={() => {
-                    operationalCaseHandlingService.updateVfsStatus(record.id, vfsStatus)
-                    onUpdated()
-                  }}
+              ) : (
+                <FormField label="Visa Status Tracking URL">
+                  {trackingUrl ? (
+                    <ApplicationTrackingUrlLink
+                      countryName={record.country}
+                      label="Open tracking portal"
+                    />
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+                      Not configured in Country Master
+                    </Typography>
+                  )}
+                </FormField>
+              )}
+              {isViewOnly && trackingUrl ? (
+                <ApplicationTrackingUrlLink
+                  countryName={record.country}
+                  label="Open tracking portal"
                 />
-              </Box>
-            </Stack>
-
-            <Divider />
-
-            <Stack spacing={1.25}>
-              <SectionHeading>Passport collection</SectionHeading>
-              <FormField label="Collection status">
-                <Input
-                  size="sm"
-                  value={passportStatus}
-                  onChange={setPassportStatus}
-                  placeholder="e.g. Awaiting embassy return · Collected from VFS"
-                />
-              </FormField>
-              <Box>
-                <Button
-                  label="Update passport status"
-                  size="sm"
-                  onClick={() => {
-                    operationalCaseHandlingService.updatePassportCollection(record.id, passportStatus)
-                    onUpdated()
-                  }}
-                />
-              </Box>
-            </Stack>
-
-            <Divider />
-
-            <Stack spacing={1.25}>
-              <SectionHeading>Remarks</SectionHeading>
-              <FormField label="Operational remarks">
-                <Textarea
-                  rows={3}
-                  value={remarks}
-                  onChange={setRemarks}
-                  placeholder="Coordination notes, courier updates, client instructions, or follow-up actions"
-                />
-              </FormField>
-              <Box>
-                <Button
-                  label="Save remarks"
-                  variant="outlined"
-                  size="sm"
-                  onClick={() => {
-                    operationalCaseHandlingService.updateRemarks(record.id, remarks)
-                    onUpdated()
-                  }}
-                />
-              </Box>
+              ) : null}
             </Stack>
           </Stack>
         ) : null}
@@ -300,10 +421,9 @@ export function OperationalCaseDetailDrawer({
   record,
   onClose,
   onUpdated,
+  onSubmitted,
 }: OperationalCaseDetailDrawerProps) {
   if (!record) return null
-
-  const showCompleteFooter = record.status !== 'Completed'
 
   return (
     <Drawer
@@ -322,20 +442,12 @@ export function OperationalCaseDetailDrawer({
       }
       width={DETAIL_DRAWER_WIDTH}
       bodyVariant="paper"
-      footer={
-        showCompleteFooter ? (
-          <Button
-            label="Mark completed"
-            fullWidth
-            onClick={() => {
-              operationalCaseHandlingService.markCompleted(record.id)
-              onUpdated()
-            }}
-          />
-        ) : undefined
-      }
     >
-      <OperationalCaseDetailContent record={record} onUpdated={onUpdated} />
+      <OperationalCaseDetailContent
+        record={record}
+        onUpdated={onUpdated}
+        onSubmitted={onSubmitted}
+      />
     </Drawer>
   )
 }

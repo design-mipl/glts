@@ -12,6 +12,7 @@ import {
 import { SEGMENT_LABELS } from '../config/countrySegmentConfig'
 import { formatCountryDate } from '../utils/countryListingUtils'
 import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
+import { ApplicationTrackingUrlLink } from '@/shared/components/ApplicationTrackingUrlLink'
 
 interface CountryDetailSummaryProps {
   country: CountryMaster
@@ -107,6 +108,17 @@ export function CountryDetailSummary({
                 {country.region || '—'}
               </Typography>
             </Grid>
+            {country.applicationTrackingUrl?.trim() ? (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Application tracking
+                </Typography>
+                <ApplicationTrackingUrlLink
+                  countryId={country.id}
+                  label="Open tracking portal"
+                />
+              </Grid>
+            ) : null}
           </Grid>
         </Stack>
       </Box>

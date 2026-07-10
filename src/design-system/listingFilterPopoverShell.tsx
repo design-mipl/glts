@@ -134,14 +134,14 @@ export function ListingFilterPopoverShell<T>({
 
 export function ListingFilterField({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, width: '100%', minWidth: 0 }}>
       <Typography
         component="span"
         sx={{ fontSize: 12, fontWeight: 600, color: 'text.secondary', lineHeight: 1.3 }}
       >
         {label}
       </Typography>
-      {children}
+      <Box sx={{ width: '100%', minWidth: 0 }}>{children}</Box>
     </Box>
   )
 }

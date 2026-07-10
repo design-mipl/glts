@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Stack } from '@mui/material'
 import { FormField, Input, Modal, Select, Toggle, Button } from '@/design-system/UIComponents'
 import type { VendorServiceMapping } from '@/shared/types/vendor'
-import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { getVendorServiceMasterOptions } from '../utils/vendorServiceMasterOptions'
 
 export interface VendorServiceMappingDraft {
@@ -60,7 +59,8 @@ export function VendorServiceMappingModal({
     return all.filter((opt) => opt.value === mapping?.serviceMasterId || !usedServiceIds.includes(opt.value))
   }, [mapping?.serviceMasterId, usedServiceIds])
 
-  const margin = draft.clientBillingRate - draft.vendorRate
+  const clientBillingRate = mapping?.clientBillingRate ?? draft.clientBillingRate
+  const margin = clientBillingRate - draft.vendorRate
 
   const handleSave = () => {
     if (!draft.serviceMasterId) return
@@ -68,7 +68,7 @@ export function VendorServiceMappingModal({
       id: draft.id ?? `vsm-${Date.now()}`,
       serviceMasterId: draft.serviceMasterId,
       vendorRate: draft.vendorRate,
-      clientBillingRate: draft.clientBillingRate,
+      clientBillingRate,
       margin,
       gstApplicable: draft.gstApplicable,
       status: draft.status,
@@ -107,18 +107,6 @@ export function VendorServiceMappingModal({
           placeholder="Vendor rate"
           fullWidth
         />
-      </FormField>
-      <FormField label="Client billing rate" required>
-        <Input
-          type="number"
-          value={String(draft.clientBillingRate)}
-          onChange={(v) => setDraft((d) => ({ ...d, clientBillingRate: Number(v) || 0 }))}
-          placeholder="Client billing rate"
-          fullWidth
-        />
-      </FormField>
-      <FormField label="Margin (auto-calculated)">
-        <Input value={formatInr(margin)} disabled fullWidth />
       </FormField>
       <FormField label="GST applicable">
         <Toggle

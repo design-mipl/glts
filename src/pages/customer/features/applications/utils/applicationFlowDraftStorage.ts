@@ -14,6 +14,12 @@ export function parseApplicationFlowDraft(parsed: unknown): FlowDraftLikeState |
     visaTypeLabel: typeof draft.visaTypeLabel === 'string' ? draft.visaTypeLabel : '',
     purposeLabel: typeof draft.purposeLabel === 'string' ? draft.purposeLabel : '',
     travelDate: typeof draft.travelDate === 'string' ? draft.travelDate : '',
+    issuedPassportState:
+      typeof draft.issuedPassportState === 'string' ? draft.issuedPassportState : undefined,
+    placeOfResidence:
+      typeof draft.placeOfResidence === 'string' ? draft.placeOfResidence : undefined,
+    jurisdiction: typeof draft.jurisdiction === 'string' ? draft.jurisdiction : undefined,
+    jurisdictionId: typeof draft.jurisdictionId === 'string' ? draft.jurisdictionId : undefined,
     entityId: typeof draft.entityId === 'string' ? draft.entityId : undefined,
     entityName: typeof draft.entityName === 'string' ? draft.entityName : undefined,
     contactPerson: typeof draft.contactPerson === 'string' ? draft.contactPerson : undefined,

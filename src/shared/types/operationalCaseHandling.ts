@@ -1,16 +1,13 @@
+import type { LogisticsDispatchDetails, LogisticsFinalQc } from '@/shared/types/logisticsDispatch'
+
 export type OperationalCasePriority = 'Normal' | 'High' | 'Urgent' | 'Critical'
 
 export type OperationalCaseStatus =
   | 'Pending'
-  | 'Documents Verified'
-  | 'In Operations'
-  | 'Biometrics Pending'
-  | 'VFS Scheduled'
-  | 'VFS Pending'
-  | 'VFS Completed'
-  | 'Passport Collected'
-  | 'Courier Pending'
+  | 'Document Submitted'
   | 'Moved to Next Day'
+  | 'Collected'
+  | 'Dispatched'
   | 'Completed'
 
 export type CityTeam = 'Mumbai Team' | 'Delhi Team' | 'Chennai Team'
@@ -30,6 +27,17 @@ export interface OperationalTimelineEvent {
   displayDate: string
   label: string
   actor?: string
+}
+
+export type ApplicationFeePaidBy = 'glts' | 'passenger'
+
+export const APPLICATION_FEE_PAID_BY_OPTIONS: { value: ApplicationFeePaidBy; label: string }[] = [
+  { value: 'glts', label: 'GLTS' },
+  { value: 'passenger', label: 'Passenger' },
+]
+
+export function getApplicationFeePaidByLabel(value?: ApplicationFeePaidBy): string {
+  return APPLICATION_FEE_PAID_BY_OPTIONS.find(option => option.value === value)?.label ?? '—'
 }
 
 export interface GroundServiceLine {
@@ -89,7 +97,13 @@ export interface OperationalCase {
   estimatedExpense: number
   actualExpense: number
   groundServices: GroundServiceLine[]
+  applicationFees: GroundServiceLine[]
+  /** Who pays VFS & application fees for this case. */
+  applicationFeesPaidBy?: ApplicationFeePaidBy
   expenses: OperationalExpense[]
+  submissionDate?: string
+  collectionDate?: string
+  submissionReferenceNumber?: string
   biometricsScheduled?: string
   vfsStatus?: string
   passportCollectionStatus?: string
@@ -97,6 +111,8 @@ export interface OperationalCase {
   attachmentNames: string[]
   timeline: OperationalTimelineEvent[]
   assignmentSourceId?: string
+  finalQc?: LogisticsFinalQc
+  dispatchDetails?: LogisticsDispatchDetails
 }
 
 export interface TeamCapacity {
@@ -140,17 +156,31 @@ export const OPERATIONAL_CASE_PRIORITIES: OperationalCasePriority[] = [
 
 export const OPERATIONAL_CASE_STATUSES: OperationalCaseStatus[] = [
   'Pending',
-  'Documents Verified',
-  'In Operations',
-  'Biometrics Pending',
-  'VFS Scheduled',
-  'VFS Pending',
-  'VFS Completed',
-  'Passport Collected',
-  'Courier Pending',
+  'Document Submitted',
   'Moved to Next Day',
+  'Collected',
+  'Dispatched',
   'Completed',
 ]
+
+/** Statuses where Submit / Move to next day actions are enabled on the Operations Desk. */
+export const OPERATIONS_DESK_STATUSES: OperationalCaseStatus[] = ['Pending', 'Moved to Next Day']
+
+/** Cases handed off to Tracking & Logistics after document submission. */
+export const LOGISTICS_STATUSES: OperationalCaseStatus[] = [
+  'Document Submitted',
+  'Collected',
+  'Dispatched',
+  'Completed',
+]
+
+export function isOperationsDeskStatus(status: OperationalCaseStatus): boolean {
+  return OPERATIONS_DESK_STATUSES.includes(status)
+}
+
+export function isLogisticsStatus(status: OperationalCaseStatus): boolean {
+  return LOGISTICS_STATUSES.includes(status)
+}
 
 export const OPERATIONS_DESK_GROUP_BY_OPTIONS: { value: OperationsDeskGroupBy; label: string }[] = [
   { value: 'none', label: 'View All Records' },
@@ -168,6 +198,7 @@ export const DEFAULT_GROUND_SERVICE_NAMES = [
   'Local Travel',
   'Printing',
   'Airport Assistance',
+  'Cargo & Handling Charges',
   'Photo Making',
   'Other',
 ] as const
@@ -182,8 +213,44 @@ export const GROUND_SERVICE_DEFAULT_RATES: Record<DefaultGroundServiceName, numb
   'Local Travel': 1200,
   Printing: 350,
   'Airport Assistance': 800,
+  'Cargo & Handling Charges': 1500,
   'Photo Making': 250,
   Other: 0,
+}
+
+export const DEFAULT_APPLICATION_FEE_NAMES = [
+  'VFS fees',
+  'Visa fees',
+  'Courier Service',
+  'Courier Assurance',
+  'SMS',
+  'Premium Lounge',
+  'Document uploading',
+  'Priority',
+  'Super Priority',
+  'Courier',
+  'Biometrics',
+  'One way',
+  'Two Way',
+] as const
+
+export type DefaultApplicationFeeName = (typeof DEFAULT_APPLICATION_FEE_NAMES)[number]
+
+/** Default prefilled amounts (INR) for VFS and application fee add-ons. */
+export const APPLICATION_FEE_DEFAULT_RATES: Record<DefaultApplicationFeeName, number> = {
+  'VFS fees': 1200,
+  'Visa fees': 8500,
+  'Courier Service': 650,
+  'Courier Assurance': 350,
+  SMS: 150,
+  'Premium Lounge': 2200,
+  'Document uploading': 450,
+  Priority: 1800,
+  'Super Priority': 3200,
+  Courier: 650,
+  Biometrics: 2500,
+  'One way': 900,
+  'Two Way': 1400,
 }
 
 export function formatOperationalId(applicationId: string, passengerSequence: number): string {

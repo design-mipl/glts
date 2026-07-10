@@ -70,8 +70,8 @@ export function MarineApplicationKpiRow({ rows }: MarineApplicationKpiRowProps) 
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <KpiCard
-          label="Under verification"
-          value={metrics.underVerification}
+          label="Verification Pending"
+          value={metrics.verificationPending}
           icon={Clock}
           iconColor={theme.palette.info.main}
         />
@@ -86,8 +86,8 @@ export function MarineApplicationKpiRow({ rows }: MarineApplicationKpiRowProps) 
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <KpiCard
-          label="Completed"
-          value={metrics.completed}
+          label="Dispatched"
+          value={metrics.dispatched}
           icon={CheckCircle2}
           iconColor={theme.palette.success.main}
         />

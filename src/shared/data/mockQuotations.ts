@@ -16,23 +16,19 @@ function daysFromToday(days: number) {
 function makeVersion(
   id: string,
   versionNumber: number,
-  status: QuotationRecord['pricingVersions'][0]['status'],
   pricingMatrix: QuotationRecord['pricingVersions'][0]['pricingMatrix'],
   gstPercentage: number,
   createdBy: string,
   createdAt: string,
-  approvalHistory: QuotationRecord['pricingVersions'][0]['approvalHistory'] = [],
 ): QuotationRecord['pricingVersions'][0] {
   return {
     id,
     versionLabel: `V${versionNumber}`,
     versionNumber,
-    status,
     pricingMatrix,
     totals: computePricingTotals(pricingMatrix, gstPercentage),
     createdBy,
     createdAt,
-    approvalHistory,
   }
 }
 
@@ -63,13 +59,9 @@ const harborV1Matrix = [
   },
 ]
 
-const harborV2Matrix = [
-  { ...harborV1Matrix[0]!, id: 'qpr-1b' },
-]
+const harborV2Matrix = [{ ...harborV1Matrix[0]!, id: 'qpr-1b' }]
 
-const harborV3Matrix = [
-  { ...harborV1Matrix[0]!, id: 'qpr-1c', serviceFee: 4500 },
-]
+const harborV3Matrix = [{ ...harborV1Matrix[0]!, id: 'qpr-1c', serviceFee: 4500 }]
 
 export const SEED_QUOTATIONS: QuotationRecord[] = [
   {
@@ -87,6 +79,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
     quotationDate: daysAgo(12).slice(0, 10),
     validTill: daysFromToday(30),
     notes: 'Marine crew visa processing proposal.',
+    gstRateId: 'gst-18',
     gstPercentage: 18,
     attachments: [],
     activities: [
@@ -110,18 +103,9 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
     sharedBy: 'Rajan Mehta',
     currentVersionId: 'qver-1-3',
     pricingVersions: [
-      makeVersion('qver-1-1', 1, 'approved', harborV1Matrix, 18, 'Neha Arora', daysAgo(12), [
-        { status: 'submitted', actor: 'Neha Arora', timestamp: daysAgo(11) },
-        { status: 'approved', actor: 'Rajan Mehta', timestamp: daysAgo(10), remarks: 'Approved V1' },
-      ]),
-      makeVersion('qver-1-2', 2, 'approved', harborV2Matrix, 18, 'Neha Arora', daysAgo(8), [
-        { status: 'submitted', actor: 'Neha Arora', timestamp: daysAgo(7) },
-        { status: 'approved', actor: 'Rajan Mehta', timestamp: daysAgo(6) },
-      ]),
-      makeVersion('qver-1-3', 3, 'approved', harborV3Matrix, 18, 'Neha Arora', daysAgo(4), [
-        { status: 'submitted', actor: 'Neha Arora', timestamp: daysAgo(3) },
-        { status: 'approved', actor: 'Rajan Mehta', timestamp: daysAgo(2) },
-      ]),
+      makeVersion('qver-1-1', 1, harborV1Matrix, 18, 'Neha Arora', daysAgo(12)),
+      makeVersion('qver-1-2', 2, harborV2Matrix, 18, 'Neha Arora', daysAgo(8)),
+      makeVersion('qver-1-3', 3, harborV3Matrix, 18, 'Neha Arora', daysAgo(4)),
     ],
     createdAt: daysAgo(12),
     createdBy: 'Neha Arora',
@@ -142,6 +126,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
     quotationDate: daysAgo(8).slice(0, 10),
     validTill: daysFromToday(22),
     notes: 'Corporate business visa services.',
+    gstRateId: 'gst-18',
     gstPercentage: 18,
     attachments: [],
     activities: [
@@ -153,7 +138,6 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       makeVersion(
         'qver-2-1',
         1,
-        'submitted',
         [
           {
             id: 'qpr-3',
@@ -171,7 +155,6 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
         18,
         'Neha Arora',
         daysAgo(8),
-        [{ status: 'submitted', actor: 'Neha Arora', timestamp: daysAgo(7) }],
       ),
     ],
     createdAt: daysAgo(8),
@@ -193,11 +176,11 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
     quotationDate: daysAgo(5).slice(0, 10),
     validTill: daysFromToday(25),
     notes: 'B2B agent pricing for Schengen.',
+    gstRateId: 'gst-18',
     gstPercentage: 18,
     attachments: [],
     activities: [
       { id: 'qact-4', timestamp: daysAgo(5), actor: 'Neha Arora', action: 'Created', detail: 'Quotation created' },
-      { id: 'qact-5', timestamp: daysAgo(4), actor: 'Rajan Mehta', action: 'Approved', detail: 'V1 approved' },
     ],
     sharedStatus: 'not_shared',
     currentVersionId: 'qver-3-1',
@@ -205,7 +188,6 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       makeVersion(
         'qver-3-1',
         1,
-        'approved',
         [
           {
             id: 'qpr-4',
@@ -223,10 +205,6 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
         18,
         'Neha Arora',
         daysAgo(5),
-        [
-          { status: 'submitted', actor: 'Neha Arora', timestamp: daysAgo(4) },
-          { status: 'approved', actor: 'Rajan Mehta', timestamp: daysAgo(4) },
-        ],
       ),
     ],
     createdAt: daysAgo(5),
@@ -249,6 +227,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
     quotationDate: daysAgo(2).slice(0, 10),
     validTill: daysFromToday(14),
     notes: 'Generated from enquiry ENQ-24001.',
+    gstRateId: 'gst-18',
     gstPercentage: 18,
     attachments: [],
     activities: [
@@ -262,9 +241,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
     ],
     sharedStatus: 'not_shared',
     currentVersionId: 'qver-4-1',
-    pricingVersions: [
-      makeVersion('qver-4-1', 1, 'draft', [], 18, 'Neha Arora', daysAgo(2)),
-    ],
+    pricingVersions: [makeVersion('qver-4-1', 1, [], 18, 'Neha Arora', daysAgo(2))],
     createdAt: daysAgo(2),
     createdBy: 'Neha Arora',
     updatedAt: daysAgo(2),
@@ -284,6 +261,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
     quotationDate: daysAgo(1).slice(0, 10),
     validTill: daysFromToday(20),
     notes: '',
+    gstRateId: 'gst-18',
     gstPercentage: 18,
     attachments: [],
     activities: [
@@ -295,7 +273,6 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       makeVersion(
         'qver-5-1',
         1,
-        'draft',
         [
           {
             id: 'qpr-5',

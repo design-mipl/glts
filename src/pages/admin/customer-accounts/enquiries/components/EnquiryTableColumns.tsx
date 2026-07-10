@@ -80,7 +80,7 @@ export function buildEnquiryColumns({
     },
     {
       key: 'inquirySource',
-      label: 'Inquiry Source',
+      label: 'Enquiry Source',
       widthSize: adminListingColumnWidthSize('vendor'),
       filterable: true,
       render: (_, row) => (

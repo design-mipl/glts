@@ -61,12 +61,14 @@ interface VerifyDocumentsPhaseContentProps {
   onRejectedGltsUpload: (entry: VerifyRejectedDocumentEntry) => void
   countryId?: string
   visaOfferingId?: string
+  jurisdictionId?: string
   onOriginalCollectionChange?: (collection: OriginalDocumentCollectionState) => void
   onOriginalReceivedSubmit?: (collection: OriginalDocumentCollectionState) => void
   onBack: () => void
   onSaveDraft: () => void
   onSubmit: () => void
   onViewForm: () => void
+  readOnly?: boolean
 }
 
 export function VerifyDocumentsPhaseContent({
@@ -99,12 +101,14 @@ export function VerifyDocumentsPhaseContent({
   onRejectedGltsUpload,
   countryId,
   visaOfferingId,
+  jurisdictionId,
   onOriginalCollectionChange,
   onOriginalReceivedSubmit,
   onBack,
   onSaveDraft,
   onSubmit,
   onViewForm,
+  readOnly = false,
 }: VerifyDocumentsPhaseContentProps) {
   const isFinalPhase = phase === 'final'
   const saveLabel = isFinalPhase ? 'Complete final verification' : 'Submit application'
@@ -142,6 +146,7 @@ export function VerifyDocumentsPhaseContent({
       <VerifyRejectedDocumentsSection
         entries={rejectedDocuments}
         gridSx={splitGridSx}
+        previewOnly={readOnly}
         onPreview={onRejectedPreview}
         onVerify={onRejectedVerify}
         onReject={onRejectedReject}
@@ -156,6 +161,7 @@ export function VerifyDocumentsPhaseContent({
       travelerDocuments={selectedRow && detail ? digitalTravelerDocuments : []}
       globalDocuments={globalChecklistDocuments}
       gridSx={splitGridSx}
+      previewOnly={readOnly}
       onTravelerPreview={documentId => onPreview(documentId, 'traveler')}
       onTravelerVerify={onTravelerVerify}
       onTravelerReject={onTravelerReject}
@@ -173,6 +179,7 @@ export function VerifyDocumentsPhaseContent({
       selectedRow={selectedRow}
       countryId={countryId}
       visaOfferingId={visaOfferingId}
+      readOnly={readOnly}
       onCollectionChange={onOriginalCollectionChange}
       onReceivedSubmit={onOriginalReceivedSubmit}
     />
@@ -226,7 +233,12 @@ export function VerifyDocumentsPhaseContent({
             {documentsPane}
           </Grid>
           <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0, display: 'flex' }}>
-            <VerifyFinalVerificationChecklist />
+            <VerifyFinalVerificationChecklist
+              countryId={countryId}
+              visaOfferingId={visaOfferingId}
+              jurisdictionId={jurisdictionId}
+              readOnly={readOnly}
+            />
           </Grid>
         </Grid>
       ) : (
@@ -236,13 +248,13 @@ export function VerifyDocumentsPhaseContent({
       <AdminFullPageFormFooter
         onCancel={onBack}
         cancelLabel="Back to listing"
-        onDraft={onSaveDraft}
+        onDraft={readOnly ? undefined : onSaveDraft}
         draftLabel="Save draft"
-        onSave={onSubmit}
+        onSave={readOnly ? undefined : onSubmit}
         saveLabel={saveLabel}
         extraActions={
           <Button
-            label="View Form"
+            label={readOnly ? 'View form' : 'View Form'}
             variant="outlined"
             startIcon={<FileText size={14} />}
             onClick={onViewForm}

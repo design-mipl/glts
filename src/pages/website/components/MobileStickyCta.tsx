@@ -26,7 +26,7 @@ export function MobileStickyCta() {
     >
       <Button
         variant="contained"
-        href="/countries"
+        href="/apply/new"
         fullWidth
         endIcon={<ArrowRight size={18} />}
         sx={{

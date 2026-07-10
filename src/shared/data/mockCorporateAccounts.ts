@@ -1,4 +1,5 @@
 import type { CorporateAccount } from '@/shared/types/corporateAccount'
+import { GLTS_ENTITY_IDS, GLTS_VESSEL_IDS } from '@/pages/customer/data/portalIds'
 
 function daysAgo(days: number) {
   const d = new Date()
@@ -40,8 +41,9 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
         credentialsSentAt: daysAgo(28),
       },
     ],
-    entityIds: [],
-    vesselIds: [],
+    entityIds: [GLTS_ENTITY_IDS.mumbaiBranch],
+    vesselIds: [GLTS_VESSEL_IDS.oceanStar, GLTS_VESSEL_IDS.pacificGlory],
+    bookerIds: ['GLTS-BKR-003', 'GLTS-BKR-004', 'GLTS-BKR-005'],
     portalActivation: {
       portalStatus: 'active',
       loginAccess: true,
@@ -93,8 +95,9 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
         role: 'admin',
       },
     ],
-    entityIds: ['ent-3'],
-    vesselIds: ['vsl-oc-1', 'vsl-oc-2', 'vsl-oc-3'],
+    entityIds: [],
+    vesselIds: [],
+    bookerIds: ['GLTS-BKR-006'],
     portalActivation: {
       portalStatus: 'draft',
       loginAccess: true,
@@ -142,7 +145,7 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
         lastLoginAt: daysAgo(49),
       },
     ],
-    entityIds: ['ent-4'],
+    entityIds: [],
     vesselIds: [],
     portalActivation: {
       portalStatus: 'inactive',
@@ -202,8 +205,8 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
         role: 'admin',
       },
     ],
-    entityIds: ['ent-6', 'ent-7'],
-    vesselIds: ['vsl-bw-1'],
+    entityIds: [],
+    vesselIds: [],
     portalActivation: {
       portalStatus: 'draft',
       loginAccess: true,
@@ -260,8 +263,8 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
         lastLoginAt: daysAgo(3),
       },
     ],
-    entityIds: ['ent-8', 'ent-9', 'ent-10'],
-    vesselIds: ['vsl-st-1', 'vsl-st-2'],
+    entityIds: [GLTS_ENTITY_IDS.singaporeSubsidiary, GLTS_ENTITY_IDS.dubaiOffice, GLTS_ENTITY_IDS.londonBranch],
+    vesselIds: [GLTS_VESSEL_IDS.northernWind, GLTS_VESSEL_IDS.seaPhoenix],
     portalActivation: {
       portalStatus: 'active',
       loginAccess: true,
@@ -355,7 +358,7 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
         lastLoginAt: daysAgo(75),
       },
     ],
-    entityIds: ['ent-5'],
+    entityIds: [],
     vesselIds: [],
     portalActivation: {
       portalStatus: 'inactive',
@@ -413,7 +416,7 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
         credentialsSentAt: daysAgo(2),
       },
     ],
-    entityIds: ['ent-11'],
+    entityIds: [GLTS_ENTITY_IDS.chennaiBranch],
     vesselIds: [],
     portalActivation: {
       portalStatus: 'active',
@@ -472,8 +475,13 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
         lastLoginAt: daysAgo(7),
       },
     ],
-    entityIds: ['ent-12', 'ent-13'],
-    vesselIds: ['vsl-pf-1', 'vsl-pf-2', 'vsl-pf-3', 'vsl-pf-4'],
+    entityIds: [GLTS_ENTITY_IDS.mumbaiBranch, GLTS_ENTITY_IDS.chennaiBranch],
+    vesselIds: [
+      GLTS_VESSEL_IDS.oceanStar,
+      GLTS_VESSEL_IDS.pacificGlory,
+      GLTS_VESSEL_IDS.northernWind,
+      GLTS_VESSEL_IDS.seaPhoenix,
+    ],
     portalActivation: {
       portalStatus: 'active',
       loginAccess: true,
@@ -532,8 +540,8 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
         role: 'admin',
       },
     ],
-    entityIds: ['ent-14'],
-    vesselIds: ['vsl-ng-1'],
+    entityIds: [],
+    vesselIds: [],
     portalActivation: {
       portalStatus: 'draft',
       loginAccess: true,
@@ -581,7 +589,7 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
         lastLoginAt: daysAgo(4),
       },
     ],
-    entityIds: ['ent-15', 'ent-16'],
+    entityIds: [GLTS_ENTITY_IDS.singaporeSubsidiary, GLTS_ENTITY_IDS.dubaiOffice],
     vesselIds: [],
     portalActivation: {
       portalStatus: 'active',
@@ -639,8 +647,8 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
         credentialsSentAt: daysAgo(117),
       },
     ],
-    entityIds: ['ent-17'],
-    vesselIds: ['vsl-cc-1', 'vsl-cc-2'],
+    entityIds: [],
+    vesselIds: [],
     portalActivation: {
       portalStatus: 'inactive',
       loginAccess: false,
@@ -657,16 +665,25 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
 ]
 
 const STORAGE_KEY = 'glts:corporate-accounts'
+/** Bump when `SEED_CORPORATE_ACCOUNTS` changes so dev browsers reload mock data. */
+const SEED_VERSION = 2
 
 let memoryStore: CorporateAccount[] | null = null
 
 function loadStore(): CorporateAccount[] {
   if (memoryStore) return memoryStore
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      memoryStore = JSON.parse(raw) as CorporateAccount[]
-      return memoryStore
+    const versionKey = `${STORAGE_KEY}:version`
+    const cachedVersion = localStorage.getItem(versionKey)
+    if (cachedVersion !== String(SEED_VERSION)) {
+      localStorage.removeItem(STORAGE_KEY)
+      localStorage.setItem(versionKey, String(SEED_VERSION))
+    } else {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) {
+        memoryStore = JSON.parse(raw) as CorporateAccount[]
+        return memoryStore
+      }
     }
   } catch {
     /* ignore */

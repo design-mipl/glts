@@ -574,7 +574,7 @@ export function mergeVerificationIntoDetail(
 }
 
 function findListingRow(applicationId: string): SingleApplicationRow | BulkBatchRow | undefined {
-  const { singles, bulks } = marineApplicationAdminService.listSubmittedMarineApplications()
+  const { singles, bulks } = marineApplicationAdminService.listMarineApplications()
   return singles.find(r => r.id === applicationId) ?? bulks.find(r => r.id === applicationId)
 }
 

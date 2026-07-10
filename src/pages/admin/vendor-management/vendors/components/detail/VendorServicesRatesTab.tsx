@@ -59,12 +59,6 @@ export function VendorServicesRatesTab({ vendor, onUpdated }: VendorServicesRate
                 <TableCell sx={agreementEmbeddedTableHeadCellSx} align="right">
                   Vendor rate
                 </TableCell>
-                <TableCell sx={agreementEmbeddedTableHeadCellSx} align="right">
-                  Client billing rate
-                </TableCell>
-                <TableCell sx={agreementEmbeddedTableHeadCellSx} align="right">
-                  Margin
-                </TableCell>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>GST</TableCell>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx}>Status</TableCell>
                 <TableCell sx={agreementEmbeddedTableHeadCellSx} align="center">
@@ -79,8 +73,6 @@ export function VendorServicesRatesTab({ vendor, onUpdated }: VendorServicesRate
                   <TableRow key={mapping.id}>
                     <TableCell>{service?.serviceName ?? mapping.serviceMasterId}</TableCell>
                     <TableCell align="right">{formatInr(mapping.vendorRate)}</TableCell>
-                    <TableCell align="right">{formatInr(mapping.clientBillingRate)}</TableCell>
-                    <TableCell align="right">{formatInr(mapping.margin)}</TableCell>
                     <TableCell>
                       <Badge label={mapping.gstApplicable ? 'Yes' : 'No'} color={mapping.gstApplicable ? 'success' : 'neutral'} size="sm" />
                     </TableCell>

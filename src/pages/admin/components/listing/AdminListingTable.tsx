@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Box } from '@mui/material'
-import { ColumnFilter, DataTable } from '@/design-system/UIComponents'
+import { ColumnFilter, DataTable, Pagination } from '@/design-system/UIComponents'
 import type { Column, TableState } from '@/design-system/UIComponents'
 import type { BulkAction } from '@/design-system/UIComponents'
 
@@ -26,6 +26,8 @@ export interface AdminListingTableProps<T extends object> {
   enableColumnSort?: boolean
   /** When false, column header filter controls are hidden. Default true. */
   enableColumnFilters?: boolean
+  /** When true, renders listing pagination footer below the table. */
+  showPagination?: boolean
   /** Renders expandable row panel; adds accordion chevron column. */
   renderExpanded?: (row: T) => ReactNode
 }
@@ -49,6 +51,7 @@ export function AdminListingTable<T extends object>({
   stickyHeader = false,
   enableColumnSort = true,
   enableColumnFilters = true,
+  showPagination = false,
   renderExpanded,
 }: AdminListingTableProps<T>) {
   const [filterAnchor, setFilterAnchor] = useState<HTMLElement | null>(null)
@@ -72,7 +75,7 @@ export function AdminListingTable<T extends object>({
   }, [activeFilterColumn, filterSourceData, getCellValue])
 
   return (
-    <Box sx={{ overflowX: 'auto' }}>
+    <Box sx={{ width: '100%', overflowX: 'auto' }}>
       <DataTable
         columns={columns}
         enableColumnSort={enableColumnSort}
@@ -103,6 +106,17 @@ export function AdminListingTable<T extends object>({
           action: emptyAction,
         }}
       />
+      {showPagination ? (
+        <Box sx={{ px: 2, py: 1.5, borderTop: 1, borderColor: 'divider' }}>
+          <Pagination
+            page={state.page}
+            pageSize={state.pageSize}
+            total={filterSourceData.length}
+            onPage={page => onStateChange({ ...state, page })}
+            onPageSize={pageSize => onStateChange({ ...state, pageSize, page: 0 })}
+          />
+        </Box>
+      ) : null}
       <ColumnFilter
         open={Boolean(activeFilterColumn)}
         anchorEl={filterAnchor}

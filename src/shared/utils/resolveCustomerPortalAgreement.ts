@@ -29,10 +29,10 @@ export function resolvePortalAgreementId(session: AuthSession | null): string {
   return CUSTOMER_PORTAL_AGREEMENT_ID
 }
 
-/** Returns the active approved commercial agreement for the signed-in customer portal session. */
+/** Returns the active commercial agreement for the signed-in customer portal session. */
 export function resolveCustomerPortalAgreement(session: AuthSession | null): CommercialAgreement | undefined {
   const agreementId = resolvePortalAgreementId(session)
   const agreement = commercialAgreementService.getById(agreementId)
-  if (!agreement || agreement.status !== 'approved') return undefined
+  if (!agreement || agreement.status !== 'active') return undefined
   return agreement
 }

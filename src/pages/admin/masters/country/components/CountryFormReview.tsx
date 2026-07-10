@@ -52,6 +52,7 @@ export function CountryFormReview({ data }: CountryFormReviewProps) {
         <ReviewRow label="Country" value={`${data.name} (${data.code})`} />
         <ReviewRow label="Region" value={data.region} />
         <ReviewRow label="Processing" value={PROCESSING_TYPE_LABELS[data.processingType]} />
+        <ReviewRow label="Application tracking URL" value={data.applicationTrackingUrl} />
         <ReviewRow
           label="Passport locations"
           value={formatPassportIssueLocationsSummary(data.passportIssueLocations)}

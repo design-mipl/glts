@@ -349,6 +349,23 @@ export function pickersOutlinedFieldSx(theme: Theme, height: string) {
   }
 }
 
+/** Force MUI X pickers (incl. Autocomplete-backed fields) to span the parent width. */
+export function pickersFullWidthSx() {
+  return {
+    width: '100%',
+    maxWidth: '100%',
+    display: 'block',
+    '& .MuiFormControl-root': { width: '100%', maxWidth: '100%' },
+    '& .MuiAutocomplete-root': { width: '100%', maxWidth: '100%', display: 'block' },
+    '& .MuiTextField-root': { width: '100%', maxWidth: '100%' },
+    '& .MuiPickersTextField-root': { width: '100%', maxWidth: '100%' },
+    '& .MuiPickersInputBase-root': { width: '100%', maxWidth: '100%' },
+    '& .MuiOutlinedInput-root': { width: '100%', maxWidth: '100%' },
+    '& .MuiInputBase-root': { width: '100%', maxWidth: '100%' },
+    '& .MuiAutocomplete-inputRoot': { width: '100%', maxWidth: '100%' },
+  } as const
+}
+
 /** Shared outlined field styles for DS Input/Select/DatePicker wrappers */
 export function outlinedFieldSx(theme: Theme, height: string) {
   const borderDefault = formControlBorderDefault(theme)

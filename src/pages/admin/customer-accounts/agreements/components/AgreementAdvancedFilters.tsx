@@ -2,7 +2,7 @@ import { Input, Select } from '@/design-system/UIComponents'
 import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 import { companyMasterService } from '@/shared/services/companyMasterService'
 import type { AgreementAdvancedFilterState } from '../utils/agreementListingUtils'
-import { AGREEMENT_WORKFLOW_OPTIONS } from '../config/agreementStatusConfig'
+import { AGREEMENT_STATUS_FILTER_OPTIONS, AGREEMENT_WORKFLOW_OPTIONS } from '../config/agreementStatusConfig'
 
 export interface AgreementAdvancedFilterFieldsProps {
   draft: AgreementAdvancedFilterState
@@ -60,15 +60,7 @@ export function AgreementAdvancedFilterFields({ draft, patch }: AgreementAdvance
         <Select
           value={draft.status}
           onChange={(v) => patch({ status: String(v) })}
-          options={[
-            { value: 'all', label: 'All statuses' },
-            { value: 'draft', label: 'Draft' },
-            { value: 'submitted', label: 'Pending Approval' },
-            { value: 'approved', label: 'Approved' },
-            { value: 'rejected', label: 'Rejected' },
-            { value: 'expired', label: 'Expired' },
-            { value: 'inactive', label: 'Inactive' },
-          ]}
+          options={[{ value: 'all', label: 'All statuses' }, ...AGREEMENT_STATUS_FILTER_OPTIONS]}
           placeholder="Status"
           size="sm"
           fullWidth

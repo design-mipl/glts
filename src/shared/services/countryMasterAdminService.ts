@@ -29,6 +29,9 @@ import type {
   CountrySegmentConfig,
   CountryVisaJurisdiction,
   CountryVisaType,
+  CountryQcChecklistKind,
+  CountryQcChecklistTemplate,
+  CountryVfsServiceRate,
   JurisdictionDocumentGroup,
 } from '@/shared/types/countryMaster'
 
@@ -99,6 +102,7 @@ function masterToFormData(master: CountryMaster): CountryMasterFormData {
       master.visaApplicationWindow ?? { unit: 'days' as const, value: 30 },
     travelDateRiskThresholds:
       master.travelDateRiskThresholds ?? { ...DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS },
+    applicationTrackingUrl: master.applicationTrackingUrl ?? '',
     passportIssueLocations: master.passportIssueLocations ?? [],
     segments: master.segments,
   }
@@ -855,6 +859,7 @@ export const countryMasterAdminService = {
       validity: '30 days',
       visaApplicationWindow: { unit: 'days', value: 30 },
       travelDateRiskThresholds: { ...DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS },
+      applicationTrackingUrl: '',
       passportIssueLocations: [],
       segments: ensureAllSegments([
         emptySegment('retail', true),
@@ -867,5 +872,37 @@ export const countryMasterAdminService = {
 
   resetStore(): void {
     resetMockCountryMastersCache()
+  },
+
+  saveQcChecklistTemplate(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    kind: CountryQcChecklistKind,
+    template: CountryQcChecklistTemplate,
+    jurisdictionId?: string,
+  ): CountryMaster | undefined {
+    const field = kind === 'ops' ? 'opsQcChecklist' : 'docsQcChecklist'
+    if (jurisdictionId) {
+      return this.updateJurisdiction(countryId, segment, visaTypeId, jurisdictionId, {
+        [field]: template,
+      })
+    }
+    return this.updateVisaType(countryId, segment, visaTypeId, { [field]: template })
+  },
+
+  saveVfsServiceRates(
+    countryId: string,
+    segment: BusinessSegment,
+    visaTypeId: string,
+    rates: CountryVfsServiceRate[],
+    jurisdictionId?: string,
+  ): CountryMaster | undefined {
+    if (jurisdictionId) {
+      return this.updateJurisdiction(countryId, segment, visaTypeId, jurisdictionId, {
+        vfsServiceRates: rates,
+      })
+    }
+    return this.updateVisaType(countryId, segment, visaTypeId, { vfsServiceRates: rates })
   },
 }

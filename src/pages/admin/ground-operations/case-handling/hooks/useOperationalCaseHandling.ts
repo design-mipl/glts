@@ -5,12 +5,16 @@ import type { OperationalCase, OperationsDeskGroupBy } from '@/shared/types/oper
 import { INITIAL_TABLE_STATE } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import {
   applyOperationsDeskFilters,
+  buildOperationsDeskStatusTabs,
   EMPTY_OPERATIONS_DESK_FILTERS,
+  filterOperationsDeskRowsByStatusTab,
   groupOperationsDeskRows,
+  type OperationsDeskStatusTab,
 } from '../utils/operationalCaseHandlingUtils'
 
 export function useOperationalCaseHandling() {
   const [deskFilters, setDeskFilters] = useState(EMPTY_OPERATIONS_DESK_FILTERS)
+  const [statusTab, setStatusTab] = useState<OperationsDeskStatusTab>('Pending')
   const [groupBy, setGroupBy] = useState<OperationsDeskGroupBy>('none')
   const [tableState, setTableState] = useState<TableState>(INITIAL_TABLE_STATE)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -18,12 +22,19 @@ export function useOperationalCaseHandling() {
 
   const allRows = useMemo(() => {
     void refreshKey
-    return operationalCaseHandlingService.list()
+    return operationalCaseHandlingService.listForOperationsDesk()
   }, [refreshKey])
 
-  const processedRows = useMemo(
-    () => applyOperationsDeskFilters(allRows, deskFilters),
+  const baseFilteredRows = useMemo(
+    () => applyOperationsDeskFilters(allRows, { ...deskFilters, status: '' }),
     [allRows, deskFilters],
+  )
+
+  const statusTabs = useMemo(() => buildOperationsDeskStatusTabs(), [])
+
+  const processedRows = useMemo(
+    () => filterOperationsDeskRowsByStatusTab(baseFilteredRows, statusTab),
+    [baseFilteredRows, statusTab],
   )
 
   const groupedRows = useMemo(
@@ -74,9 +85,22 @@ export function useOperationalCaseHandling() {
     setSelectedCaseId(null)
   }, [])
 
+  const handleStatusTabChange = useCallback((tab: OperationsDeskStatusTab) => {
+    setStatusTab(tab)
+    setTableState(state => ({ ...state, page: 0 }))
+  }, [])
+
+  const handleDocumentsSubmitted = useCallback(() => {
+    setStatusTab('Document Submitted')
+    setRefreshKey(k => k + 1)
+  }, [])
+
   return {
     deskFilters,
     setDeskFilters,
+    statusTab,
+    setStatusTab: handleStatusTabChange,
+    statusTabs,
     groupBy,
     setGroupBy,
     tableState,
@@ -95,5 +119,6 @@ export function useOperationalCaseHandling() {
     selectCase,
     closeDetail,
     refresh,
+    handleDocumentsSubmitted,
   }
 }

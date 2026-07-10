@@ -1,9 +1,8 @@
 import { Grid, Stack, Typography, useTheme } from '@mui/material'
 import type { LucideIcon } from 'lucide-react'
-import { CheckCircle2, FileText, ListChecks, Send, Share2 } from 'lucide-react'
+import { ArrowRight, FileText, ListChecks, Share2 } from 'lucide-react'
 import { BaseCard } from '@/design-system/UIComponents'
 import type { QuotationRecord } from '@/shared/types/quotation'
-import { getCurrentVersion } from '@/shared/utils/quotationValidation'
 
 interface QuotationKpiRowProps {
   quotations: QuotationRecord[]
@@ -57,27 +56,23 @@ function KpiCard({
 export function QuotationKpiRow({ quotations }: QuotationKpiRowProps) {
   const theme = useTheme()
   const total = quotations.length
-  const draft = quotations.filter((q) => getCurrentVersion(q)?.status === 'draft').length
-  const submitted = quotations.filter((q) => getCurrentVersion(q)?.status === 'submitted').length
-  const approved = quotations.filter((q) => getCurrentVersion(q)?.status === 'approved').length
   const shared = quotations.filter((q) => q.sharedStatus === 'shared').length
+  const notConverted = quotations.filter((q) => !q.convertedAgreementId).length
+  const multiVersion = quotations.filter((q) => q.pricingVersions.length > 1).length
 
   return (
     <Grid container spacing={1.5} sx={{ mb: 0.5 }}>
-      <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <KpiCard label="Total quotations" value={total} icon={ListChecks} iconColor={theme.palette.primary.main} />
       </Grid>
-      <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
-        <KpiCard label="Draft" value={draft} icon={FileText} iconColor={theme.palette.text.secondary} />
+      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <KpiCard label="Not converted" value={notConverted} icon={ArrowRight} iconColor={theme.palette.info.main} />
       </Grid>
-      <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
-        <KpiCard label="Pending approval" value={submitted} icon={Send} iconColor={theme.palette.info.main} />
+      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <KpiCard label="Shared" value={shared} icon={Share2} iconColor={theme.palette.success.main} />
       </Grid>
-      <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
-        <KpiCard label="Approved" value={approved} icon={CheckCircle2} iconColor={theme.palette.success.main} />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
-        <KpiCard label="Shared" value={shared} icon={Share2} iconColor={theme.palette.warning.main} />
+      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <KpiCard label="Multi-version" value={multiVersion} icon={FileText} iconColor={theme.palette.warning.main} />
       </Grid>
     </Grid>
   )

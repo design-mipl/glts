@@ -10,6 +10,7 @@ import type {
   EnquiryRecord,
   EnquiryStatus,
 } from '../types/enquiry'
+import { getVisaRequirementItems, normalizeVisaRequirement } from '../utils/enquiryVisaRequirementUtils'
 
 function nowIso() {
   return new Date().toISOString()
@@ -476,6 +477,12 @@ export const enquiryService = {
     return Promise.resolve(applyListingFilters(enquiryStore, filters))
   },
 
+  listEligibleForQuotation(): EnquiryRecord[] {
+    return enquiryStore.filter(
+      (item) => item.status !== 'converted' && item.status !== 'rejected' && item.status !== 'closed',
+    )
+  },
+
   getById(enquiryId: string) {
     return Promise.resolve(enquiryStore.find((item) => item.id === enquiryId))
   },
@@ -487,7 +494,7 @@ export const enquiryService = {
       createdBy,
       status: payload.status ?? 'new',
       customer: payload.customer,
-      visaRequirement: payload.visaRequirement,
+      visaRequirement: normalizeVisaRequirement(payload.visaRequirement),
       operationalRequirements: payload.operationalRequirements,
       salesDetails: payload.salesDetails,
       notes: payload.notes,
@@ -514,7 +521,9 @@ export const enquiryService = {
     const target = enquiryStore.find((item) => item.id === enquiryId)
     if (!target) return Promise.resolve(undefined)
     if (patch.customer) target.customer = { ...target.customer, ...patch.customer }
-    if (patch.visaRequirement) target.visaRequirement = { ...target.visaRequirement, ...patch.visaRequirement }
+    if (patch.visaRequirement) {
+      target.visaRequirement = normalizeVisaRequirement({ ...target.visaRequirement, ...patch.visaRequirement })
+    }
     if (patch.operationalRequirements) {
       target.operationalRequirements = { ...target.operationalRequirements, ...patch.operationalRequirements }
     }
@@ -645,14 +654,59 @@ export const enquiryService = {
 
     const issues: string[] = []
     if (!target.customer.companyOrCustomerName) issues.push('Customer / Company name is mandatory')
-    if (!target.visaRequirement.countries.length) issues.push('At least one country requirement is mandatory')
-    if (!target.visaRequirement.visaType) issues.push('Visa type is mandatory')
+    const visaItems = getVisaRequirementItems(target.visaRequirement)
+    if (!visaItems.length) issues.push('At least one country requirement is mandatory')
+    if (visaItems.some((item) => !item.visaType.trim())) issues.push('Visa type is mandatory for each country requirement')
     if (!target.customer.contactNumber && !target.customer.emailAddress) issues.push('Contact information is mandatory')
     if (!target.followups.some((entry) => entry.followupStatus === 'completed')) issues.push('At least one follow-up must be completed')
     if (target.status !== 'internal_review' && target.status !== 'quotation_in_progress') {
       issues.push('Enquiry should be in internal review before conversion')
     }
     return Promise.resolve({ isValid: issues.length === 0, issues })
+  },
+
+  markQuotationLinked(
+    enquiryId: string,
+    quotationId: string,
+    actor: string,
+    phase: 'draft' | 'submitted',
+  ) {
+    const target = enquiryStore.find((item) => item.id === enquiryId)
+    if (!target || target.status === 'converted') return Promise.resolve(undefined)
+
+    if (phase === 'submitted') {
+      target.status = 'converted'
+      target.activities.unshift(
+        makeActivity(
+          'converted_to_quotation',
+          'Converted to quotation',
+          `Quotation ${quotationId} submitted for approval`,
+          actor,
+        ),
+      )
+    } else if (target.status !== 'quotation_in_progress') {
+      target.status = 'quotation_in_progress'
+      target.activities.unshift(
+        makeActivity(
+          'quotation_draft_started',
+          'Quotation draft started',
+          `Linked to quotation draft ${quotationId}`,
+          actor,
+        ),
+      )
+    } else {
+      target.activities.unshift(
+        makeActivity(
+          'quotation_draft_started',
+          'Quotation draft linked',
+          `Linked to quotation draft ${quotationId}`,
+          actor,
+        ),
+      )
+    }
+
+    target.lastActivity = nowIso()
+    return Promise.resolve(target)
   },
 
   async convertToQuotation(enquiryId: string, actor: string) {

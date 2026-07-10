@@ -19,6 +19,7 @@ import {
 import { passengerStatusBadgeColor, passengerStatusLabel } from '../config/assignmentStatusConfig'
 import { formatSlaTimer, isSlaAtRisk } from '../utils/assignmentQueueListingUtils'
 import type { AssignmentAdminAction } from './AssignmentActionMenu'
+import { ASSIGN_USER_VENDOR_ACTION_LABEL } from '../config/assignmentActionConfig'
 
 export interface AssignmentTableColumnsParams {
   onAction: (action: AssignmentAdminAction, row: OperationalPassengerRow) => void
@@ -41,7 +42,7 @@ function buildRowActions(
 
   return [
     {
-      label: 'Assign user',
+      label: ASSIGN_USER_VENDOR_ACTION_LABEL,
       icon: <UserPlus size={16} />,
       onClick: () => onAction('assign_user', row),
     },

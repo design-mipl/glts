@@ -28,6 +28,10 @@ export function generateDocumentRuleId(): string {
   return `doc-rule-${Date.now()}-${Math.floor(Math.random() * 1000)}`
 }
 
+export function generateVfsServiceRateId(): string {
+  return `vfs-rate-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+}
+
 export function checklistToJurisdictionDocuments(
   items: CountryDocumentChecklistItem[],
   group: JurisdictionDocumentGroup = 'common',

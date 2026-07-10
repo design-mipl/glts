@@ -1,19 +1,29 @@
-export type ApplicationChannel = 'retail' | 'corporate' | 'marine'
+export type ApplicationChannel = 'retail' | 'corporate' | 'marine' | 'b2b'
 export type SlaStatus = 'on_track' | 'at_risk' | 'breached'
 export type Priority = 'high' | 'medium' | 'low'
 export type PipelineProgress = 'on_track' | 'at_risk' | 'delayed'
 export type AlertPriority = 'critical' | 'high' | 'medium'
+export type TeamWorkloadStatus = 'balanced' | 'overloaded' | 'underutilized'
+export type OperationalTeam =
+  | 'Operations'
+  | 'Documentation'
+  | 'Ground Operations'
+  | 'Accounts'
 
 export interface DashboardFilters {
   dateRange: [Date | null, Date | null]
   country: string
+  branch: string
   applicationType: string
+  team: string
 }
 
 export const DEFAULT_DASHBOARD_FILTERS: DashboardFilters = {
   dateRange: [null, null],
   country: 'all',
+  branch: 'all',
   applicationType: 'all',
+  team: 'all',
 }
 
 export const COUNTRY_FILTER_OPTIONS = [
@@ -25,6 +35,14 @@ export const COUNTRY_FILTER_OPTIONS = [
   { label: 'Germany', value: 'Germany' },
 ]
 
+export const BRANCH_FILTER_OPTIONS = [
+  { label: 'All branches', value: 'all' },
+  { label: 'Mumbai', value: 'Mumbai' },
+  { label: 'Delhi', value: 'Delhi' },
+  { label: 'Chennai', value: 'Chennai' },
+  { label: 'Bengaluru', value: 'Bengaluru' },
+]
+
 export const APPLICATION_TYPE_OPTIONS = [
   { label: 'All types', value: 'all' },
   { label: 'Retail', value: 'retail' },
@@ -32,15 +50,25 @@ export const APPLICATION_TYPE_OPTIONS = [
   { label: 'Marine', value: 'marine' },
 ]
 
+export const TEAM_FILTER_OPTIONS = [
+  { label: 'All teams', value: 'all' },
+  { label: 'Operations', value: 'Operations' },
+  { label: 'Documentation', value: 'Documentation' },
+  { label: 'Ground Operations', value: 'Ground Operations' },
+  { label: 'Accounts', value: 'Accounts' },
+]
+
 export interface DashboardKpiMetric {
   id: string
   label: string
   value: number
+  formattedValue?: string
   subtitle: string
   delta: number
   deltaLabel: string
   accent: 'primary' | 'success' | 'warning' | 'error' | 'info'
   iconKey: string
+  href: string
 }
 
 export interface PipelineStage {
@@ -51,155 +79,552 @@ export interface PipelineStage {
   progress: PipelineProgress
 }
 
-export interface DashboardQueueRow {
+export interface TeamWorkloadRow {
+  id: string
+  team: OperationalTeam
+  openCases: number
+  completedToday: number
+  capacityPct: number
+  slaPct: number
+  status: TeamWorkloadStatus
+  branch: string
+}
+
+export interface ExecutiveCriticalAlert {
+  id: string
+  title: string
+  count: number
+  oldestWaiting: string
+  priority: AlertPriority
+}
+
+export interface VerificationQueueRow {
+  id: string
+  glNumber: string
+  passenger: string
+  company: string
+  country: string
+  visaType: string
+  consultant: string
+  createdDate: string
+  currentStage: string
+  slaTimer: string
+  slaStatus: SlaStatus
+  channel: ApplicationChannel
+  branch: string
+  team: OperationalTeam
+}
+
+export interface PassportTrackerSummary {
+  notOutForDelivery: number
+  inTransit: number
+  delivered: number
+}
+
+export interface PassportTransitRow {
+  id: string
+  applicant: string
+  courier: string
+  awbNumber: string
+  destination: string
+  eta: string
+  trackingStatus: string
+  branch: string
+}
+
+export interface SlaComplianceSegment {
+  segment: string
+  compliancePct: number
+}
+
+export interface TeamProductivityMetric {
+  label: string
+  value: string
+}
+
+export interface WeeklyCompletionPoint {
+  day: string
+  completed: number
+}
+
+export interface RevenueSnapshot {
+  revenueToday: string
+  mtdRevenue: string
+  ytdRevenue: string
+  revenueVsTarget: number
+}
+
+export interface DistributionSlice {
+  key: string
+  label: string
+  value: number
+}
+
+export interface EscalationRow {
+  id: string
+  raisedBy: string
+  escalationType: string
+  currentOwner: string
+  status: string
+  slaCountdown: string
+  branch: string
+  team: OperationalTeam
+}
+
+export interface NoMovementCaseRow {
   id: string
   applicationId: string
   applicant: string
-  country: string
-  visaType: string
-  assignedTeam: string
-  slaStatus: SlaStatus
-  priority: Priority
+  consultant: string
+  currentStage: string
+  lastActivity: string
+  daysIdle: number
+  branch: string
   channel: ApplicationChannel
+  team: OperationalTeam
 }
 
-export interface CriticalAlert {
-  id: string
-  title: string
-  description: string
-  priority: AlertPriority
-  timestamp: Date
-}
-
-export interface DashboardActivityItem {
-  id: string
-  user: { name: string; avatarSrc?: string }
-  action: string
-  target?: string
-  timestamp: Date
-}
-
-export interface FinanceKpi {
-  id: string
-  label: string
-  value: string
-  subtitle: string
-}
-
-export interface RecentInvoiceRow {
-  id: string
-  invoiceNumber: string
-  customer: string
-  amount: string
-  status: 'paid' | 'pending' | 'overdue'
-  dueDate: string
-  channel: ApplicationChannel
-}
-
-export const DASHBOARD_KPIS: DashboardKpiMetric[] = [
-  { id: 'total', label: 'Total Applications', value: 2847, subtitle: 'All active channels', delta: 8.4, deltaLabel: 'vs last 7 days', accent: 'primary', iconKey: 'files' },
-  { id: 'in_progress', label: 'In Progress', value: 612, subtitle: 'Processing & ops lanes', delta: 4.2, deltaLabel: 'vs last 7 days', accent: 'info', iconKey: 'activity' },
-  { id: 'pending_verification', label: 'Pending Verification', value: 148, subtitle: 'Document QC backlog', delta: -6.1, deltaLabel: 'vs last 7 days', accent: 'warning', iconKey: 'shield' },
-  { id: 'pending_submission', label: 'Pending Submission', value: 96, subtitle: 'Ready for embassy filing', delta: 2.8, deltaLabel: 'vs last 7 days', accent: 'warning', iconKey: 'send' },
-  { id: 'appointment_pending', label: 'Appointment Pending', value: 74, subtitle: 'Biometric & VAC slots', delta: -1.4, deltaLabel: 'vs last 7 days', accent: 'info', iconKey: 'calendar' },
-  { id: 'completed', label: 'Completed Applications', value: 1924, subtitle: 'Delivered this quarter', delta: 11.6, deltaLabel: 'vs last 7 days', accent: 'success', iconKey: 'check' },
-  { id: 'outstanding_payments', label: 'Outstanding Payments', value: 38, subtitle: 'Awaiting collection', delta: -3.5, deltaLabel: 'vs last 7 days', accent: 'error', iconKey: 'wallet' },
-  { id: 'critical_cases', label: 'Critical Cases', value: 17, subtitle: 'SLA breach or escalation', delta: 1.2, deltaLabel: 'vs last 7 days', accent: 'error', iconKey: 'alert' },
+export const EXECUTIVE_KPIS: DashboardKpiMetric[] = [
+  {
+    id: 'total_applications',
+    label: 'Total Applications',
+    value: 2847,
+    subtitle: 'All active channels',
+    delta: 8.4,
+    deltaLabel: 'vs previous period',
+    accent: 'primary',
+    iconKey: 'files',
+    href: '/admin/application-management/marine',
+  },
+  {
+    id: 'in_progress',
+    label: 'Applications In Progress',
+    value: 612,
+    subtitle: 'Processing & ops lanes',
+    delta: 4.2,
+    deltaLabel: 'vs previous period',
+    accent: 'info',
+    iconKey: 'activity',
+    href: '/admin/assignment-priority/marine',
+  },
+  {
+    id: 'completed_today',
+    label: 'Completed Today',
+    value: 48,
+    subtitle: 'Delivered or closed today',
+    delta: 12.1,
+    deltaLabel: 'vs previous period',
+    accent: 'success',
+    iconKey: 'check',
+    href: '/admin/ground-operations/case-handling',
+  },
+  {
+    id: 'critical_cases',
+    label: 'Critical Cases',
+    value: 17,
+    subtitle: 'SLA breach or escalation',
+    delta: 1.2,
+    deltaLabel: 'vs previous period',
+    accent: 'error',
+    iconKey: 'alert',
+    href: '/admin/ground-operations/case-handling',
+  },
+  {
+    id: 'sla_compliance',
+    label: 'SLA Compliance %',
+    value: 94,
+    formattedValue: '94%',
+    subtitle: 'Across all teams',
+    delta: 2.3,
+    deltaLabel: 'vs previous period',
+    accent: 'success',
+    iconKey: 'shield',
+    href: '/admin/assignment-priority/marine',
+  },
+  {
+    id: 'applications_delayed',
+    label: 'Applications Delayed',
+    value: 86,
+    subtitle: 'Past SLA threshold',
+    delta: -4.8,
+    deltaLabel: 'vs previous period',
+    accent: 'warning',
+    iconKey: 'clock',
+    href: '/admin/assignment-priority/marine',
+  },
+  {
+    id: 'team_utilization',
+    label: 'Team Utilization %',
+    value: 87,
+    formattedValue: '87%',
+    subtitle: 'Weighted capacity usage',
+    delta: 3.1,
+    deltaLabel: 'vs previous period',
+    accent: 'info',
+    iconKey: 'users',
+    href: '/admin/access/teams',
+  },
+  {
+    id: 'revenue_today',
+    label: 'Revenue Today',
+    value: 1840000,
+    formattedValue: '₹18.4L',
+    subtitle: 'Recognized billing today',
+    delta: 6.7,
+    deltaLabel: 'vs previous period',
+    accent: 'primary',
+    iconKey: 'wallet',
+    href: '/admin/finance/invoices',
+  },
 ]
 
 export const PIPELINE_STAGES: PipelineStage[] = [
   { id: 'draft', label: 'Draft', total: 124, delayed: 8, progress: 'on_track' },
-  { id: 'documents_pending', label: 'Documents Pending', total: 186, delayed: 22, progress: 'at_risk' },
+  { id: 'docs_pending', label: 'Docs Pending', total: 186, delayed: 22, progress: 'at_risk' },
   { id: 'verification_pending', label: 'Verification Pending', total: 148, delayed: 14, progress: 'at_risk' },
   { id: 'qc_pending', label: 'QC Pending', total: 92, delayed: 6, progress: 'on_track' },
   { id: 'appointment_pending', label: 'Appointment Pending', total: 74, delayed: 9, progress: 'delayed' },
   { id: 'submission_pending', label: 'Submission Pending', total: 96, delayed: 11, progress: 'at_risk' },
   { id: 'submitted', label: 'Submitted', total: 88, delayed: 7, progress: 'on_track' },
   { id: 'embassy_processing', label: 'Embassy Processing', total: 218, delayed: 18, progress: 'on_track' },
-  { id: 'collection_pending', label: 'Collection Pending', total: 78, delayed: 10, progress: 'at_risk' },
+  { id: 'collections_pending', label: 'Collections Pending', total: 78, delayed: 10, progress: 'at_risk' },
   { id: 'collected', label: 'Collected', total: 66, delayed: 4, progress: 'on_track' },
-  { id: 'passport_status', label: 'Passport Status', total: 64, delayed: 3, progress: 'on_track' },
   { id: 'delivered', label: 'Delivered', total: 412, delayed: 0, progress: 'on_track' },
   { id: 'completed', label: 'Completed', total: 376, delayed: 0, progress: 'on_track' },
 ]
 
-export const VERIFICATION_QUEUE: DashboardQueueRow[] = [
-  { id: 'v1', applicationId: 'GLTS-2026-01482', applicant: 'Arjun Mehta', country: 'United Kingdom', visaType: 'Standard Visitor', assignedTeam: 'Retail Ops — West', slaStatus: 'at_risk', priority: 'high', channel: 'retail' },
-  { id: 'v2', applicationId: 'GLTS-2026-01471', applicant: 'MV Ocean Star / Crew Batch', country: 'Singapore', visaType: 'Crew Transit', assignedTeam: 'Marine Ops', slaStatus: 'breached', priority: 'high', channel: 'marine' },
-  { id: 'v3', applicationId: 'GLTS-2026-01465', applicant: 'TechNova Solutions Ltd', country: 'Germany', visaType: 'Business Schengen', assignedTeam: 'Corporate Ops', slaStatus: 'on_track', priority: 'medium', channel: 'corporate' },
-  { id: 'v4', applicationId: 'GLTS-2026-01458', applicant: 'Priya Nair', country: 'United States', visaType: 'B1/B2', assignedTeam: 'Retail Ops — South', slaStatus: 'on_track', priority: 'low', channel: 'retail' },
-  { id: 'v5', applicationId: 'GLTS-2026-01451', applicant: 'Harborline Shipping', country: 'United Arab Emirates', visaType: 'Crew Offshore', assignedTeam: 'Marine Ops', slaStatus: 'at_risk', priority: 'high', channel: 'marine' },
-  { id: 'v6', applicationId: 'GLTS-2026-01444', applicant: 'James Okafor', country: 'United Kingdom', visaType: 'Student', assignedTeam: 'Retail Ops — West', slaStatus: 'on_track', priority: 'medium', channel: 'retail' },
+export const TEAM_WORKLOAD_ROWS: TeamWorkloadRow[] = [
+  { id: 'tw1', team: 'Operations', openCases: 186, completedToday: 24, capacityPct: 112, slaPct: 91, status: 'overloaded', branch: 'Mumbai' },
+  { id: 'tw2', team: 'Documentation', openCases: 148, completedToday: 18, capacityPct: 98, slaPct: 94, status: 'balanced', branch: 'Delhi' },
+  { id: 'tw3', team: 'Ground Operations', openCases: 92, completedToday: 14, capacityPct: 76, slaPct: 88, status: 'underutilized', branch: 'Chennai' },
+  { id: 'tw4', team: 'Accounts', openCases: 64, completedToday: 11, capacityPct: 84, slaPct: 96, status: 'balanced', branch: 'Bengaluru' },
 ]
 
-export const SUBMISSION_QUEUE: DashboardQueueRow[] = [
-  { id: 's1', applicationId: 'GLTS-2026-01439', applicant: 'Global Freight Partners', country: 'Germany', visaType: 'Business Schengen', assignedTeam: 'Corporate Ops', slaStatus: 'on_track', priority: 'medium', channel: 'corporate' },
-  { id: 's2', applicationId: 'GLTS-2026-01433', applicant: 'Ananya Desai', country: 'United States', visaType: 'F1 Student', assignedTeam: 'Retail Ops — West', slaStatus: 'at_risk', priority: 'high', channel: 'retail' },
-  { id: 's3', applicationId: 'GLTS-2026-01428', applicant: 'MV Pacific Dawn', country: 'Singapore', visaType: 'Crew Joining', assignedTeam: 'Marine Ops', slaStatus: 'on_track', priority: 'high', channel: 'marine' },
-  { id: 's4', applicationId: 'GLTS-2026-01421', applicant: 'Rohan Kapoor', country: 'United Arab Emirates', visaType: 'Employment', assignedTeam: 'Retail Ops — North', slaStatus: 'on_track', priority: 'low', channel: 'retail' },
-  { id: 's5', applicationId: 'GLTS-2026-01415', applicant: 'FinEdge Corp', country: 'United Kingdom', visaType: 'ICT Transfer', assignedTeam: 'Corporate Ops', slaStatus: 'breached', priority: 'high', channel: 'corporate' },
+export const EXECUTIVE_CRITICAL_ALERTS: ExecutiveCriticalAlert[] = [
+  { id: 'ca1', title: 'SLA Breached', count: 12, oldestWaiting: '6h 20m', priority: 'critical' },
+  { id: 'ca2', title: 'Awaiting Client Documents', count: 28, oldestWaiting: '3d 4h', priority: 'high' },
+  { id: 'ca3', title: 'Pending QC > 4 Hours', count: 9, oldestWaiting: '5h 10m', priority: 'high' },
+  { id: 'ca4', title: 'Passport Expiring Soon', count: 6, oldestWaiting: '2d 1h', priority: 'medium' },
+  { id: 'ca5', title: 'Marine Crew Joining Within 7 Days', count: 14, oldestWaiting: '4d 6h', priority: 'critical' },
+  { id: 'ca6', title: 'Corrected Documents Pending', count: 11, oldestWaiting: '1d 8h', priority: 'high' },
+  { id: 'ca7', title: 'No Movement Cases', count: 19, oldestWaiting: '5d 2h', priority: 'medium' },
+  { id: 'ca8', title: 'Escalations', count: 7, oldestWaiting: '8h 45m', priority: 'critical' },
 ]
 
-export const CORRECTION_QUEUE: DashboardQueueRow[] = [
-  { id: 'c1', applicationId: 'GLTS-2026-01408', applicant: 'Sneha Pillai', country: 'United Kingdom', visaType: 'Family Visit', assignedTeam: 'Retail Ops — South', slaStatus: 'at_risk', priority: 'medium', channel: 'retail' },
-  { id: 'c2', applicationId: 'GLTS-2026-01402', applicant: 'Blue Horizon Marine', country: 'United Arab Emirates', visaType: 'Crew Transit', assignedTeam: 'Marine Ops', slaStatus: 'on_track', priority: 'high', channel: 'marine' },
-  { id: 'c3', applicationId: 'GLTS-2026-01396', applicant: 'Apex Logistics Group', country: 'Germany', visaType: 'Business Schengen', assignedTeam: 'Corporate Ops', slaStatus: 'on_track', priority: 'low', channel: 'corporate' },
-  { id: 'c4', applicationId: 'GLTS-2026-01389', applicant: 'Michael Chen', country: 'Singapore', visaType: 'Employment Pass', assignedTeam: 'Retail Ops — East', slaStatus: 'breached', priority: 'high', channel: 'retail' },
-  { id: 'c5', applicationId: 'GLTS-2026-01382', applicant: 'MV Atlantic Spirit', country: 'United States', visaType: 'Crew C1/D', assignedTeam: 'Marine Ops', slaStatus: 'at_risk', priority: 'high', channel: 'marine' },
+export const VERIFICATION_QUEUE: VerificationQueueRow[] = [
+  {
+    id: 'v1',
+    glNumber: 'GL-2026-01482',
+    passenger: 'Arjun Mehta',
+    company: 'Individual',
+    country: 'United Kingdom',
+    visaType: 'Standard Visitor',
+    consultant: 'Riya Sharma',
+    createdDate: '28 Jun 2026',
+    currentStage: 'Verification Pending',
+    slaTimer: '4h 12m',
+    slaStatus: 'at_risk',
+    channel: 'retail',
+    branch: 'Mumbai',
+    team: 'Documentation',
+  },
+  {
+    id: 'v2',
+    glNumber: 'GL-2026-01471',
+    passenger: 'MV Ocean Star / Crew Batch',
+    company: 'Harborline Shipping',
+    country: 'Singapore',
+    visaType: 'Crew Transit',
+    consultant: 'Vikram Patel',
+    createdDate: '27 Jun 2026',
+    currentStage: 'QC Pending',
+    slaTimer: 'Breached',
+    slaStatus: 'breached',
+    channel: 'marine',
+    branch: 'Chennai',
+    team: 'Documentation',
+  },
+  {
+    id: 'v3',
+    glNumber: 'GL-2026-01465',
+    passenger: 'TechNova Solutions Ltd',
+    company: 'TechNova Solutions Ltd',
+    country: 'Germany',
+    visaType: 'Business Schengen',
+    consultant: 'Neha Kulkarni',
+    createdDate: '26 Jun 2026',
+    currentStage: 'Verification Pending',
+    slaTimer: '1d 2h',
+    slaStatus: 'on_track',
+    channel: 'corporate',
+    branch: 'Delhi',
+    team: 'Documentation',
+  },
+  {
+    id: 'v4',
+    glNumber: 'GL-2026-01458',
+    passenger: 'Priya Nair',
+    company: 'Individual',
+    country: 'United States',
+    visaType: 'B1/B2',
+    consultant: 'Arun Menon',
+    createdDate: '25 Jun 2026',
+    currentStage: 'Docs Pending',
+    slaTimer: '6h 30m',
+    slaStatus: 'on_track',
+    channel: 'retail',
+    branch: 'Bengaluru',
+    team: 'Operations',
+  },
+  {
+    id: 'v5',
+    glNumber: 'GL-2026-01451',
+    passenger: 'Harborline Shipping',
+    company: 'Harborline Shipping',
+    country: 'United Arab Emirates',
+    visaType: 'Crew Offshore',
+    consultant: 'Sana Iqbal',
+    createdDate: '24 Jun 2026',
+    currentStage: 'Verification Pending',
+    slaTimer: '3h 45m',
+    slaStatus: 'at_risk',
+    channel: 'marine',
+    branch: 'Mumbai',
+    team: 'Documentation',
+  },
+  {
+    id: 'v6',
+    glNumber: 'GL-2026-01444',
+    passenger: 'James Okafor',
+    company: 'Individual',
+    country: 'United Kingdom',
+    visaType: 'Student',
+    consultant: 'Dev Mehta',
+    createdDate: '23 Jun 2026',
+    currentStage: 'QC Pending',
+    slaTimer: '2h 10m',
+    slaStatus: 'on_track',
+    channel: 'retail',
+    branch: 'Delhi',
+    team: 'Documentation',
+  },
 ]
 
-export const CRITICAL_ALERTS: CriticalAlert[] = [
-  { id: 'a1', title: 'Ticket booking pending', description: 'GLTS-2026-01471 — VAC slot not confirmed for 3 crew members', priority: 'critical', timestamp: new Date(Date.now() - 12 * 60000) },
-  { id: 'a2', title: 'Insurance pending', description: 'GLTS-2026-01465 — Travel insurance certificate missing before submission', priority: 'high', timestamp: new Date(Date.now() - 45 * 60000) },
-  { id: 'a3', title: 'SLA breached', description: 'GLTS-2026-01415 — Embassy filing window exceeded by 6 hours', priority: 'critical', timestamp: new Date(Date.now() - 2 * 3600000) },
-  { id: 'a4', title: 'Missing documents', description: 'GLTS-2026-01408 — Bank statement and invitation letter required', priority: 'high', timestamp: new Date(Date.now() - 4 * 3600000) },
-  { id: 'a5', title: 'Passport expiring soon', description: 'GLTS-2026-01444 — Passport validity under 6 months for UK student visa', priority: 'medium', timestamp: new Date(Date.now() - 6 * 3600000) },
+export const PASSPORT_TRACKER_SUMMARY: PassportTrackerSummary = {
+  notOutForDelivery: 42,
+  inTransit: 18,
+  delivered: 156,
+}
+
+export const PASSPORT_TRANSIT_ROWS: PassportTransitRow[] = [
+  {
+    id: 'pt1',
+    applicant: 'Arjun Mehta',
+    courier: 'BlueDart',
+    awbNumber: 'BD7829345612',
+    destination: 'Mumbai — Corporate HQ',
+    eta: '01 Jul 2026',
+    trackingStatus: 'In transit',
+    branch: 'Mumbai',
+  },
+  {
+    id: 'pt2',
+    applicant: 'MV Pacific Dawn / Crew',
+    courier: 'DTDC Express',
+    awbNumber: 'DT9823410056',
+    destination: 'Chennai — Vessel Agent',
+    eta: '30 Jun 2026',
+    trackingStatus: 'Out for delivery',
+    branch: 'Chennai',
+  },
+  {
+    id: 'pt3',
+    applicant: 'Priya Nair',
+    courier: 'FedEx',
+    awbNumber: 'FX4412098871',
+    destination: 'Bengaluru — Client Office',
+    eta: '02 Jul 2026',
+    trackingStatus: 'In transit',
+    branch: 'Bengaluru',
+  },
+  {
+    id: 'pt4',
+    applicant: 'TechNova Solutions Ltd',
+    courier: 'BlueDart',
+    awbNumber: 'BD7829345890',
+    destination: 'Delhi — Branch',
+    eta: '01 Jul 2026',
+    trackingStatus: 'In transit',
+    branch: 'Delhi',
+  },
 ]
 
-export const RECENT_ACTIVITY: DashboardActivityItem[] = [
-  { id: 'act1', user: { name: 'Riya Sharma' }, action: 'submitted application', target: 'GLTS-2026-01482', timestamp: new Date(Date.now() - 8 * 60000) },
-  { id: 'act2', user: { name: 'Vikram Patel' }, action: 'generated invoice', target: 'INV-2026-0892', timestamp: new Date(Date.now() - 22 * 60000) },
-  { id: 'act3', user: { name: 'Neha Kulkarni' }, action: 'raised correction', target: 'GLTS-2026-01408', timestamp: new Date(Date.now() - 55 * 60000) },
-  { id: 'act4', user: { name: 'Arun Menon' }, action: 'collected passport', target: 'GLTS-2026-01370', timestamp: new Date(Date.now() - 2 * 3600000) },
-  { id: 'act5', user: { name: 'Sana Iqbal' }, action: 'scheduled appointment', target: 'GLTS-2026-01433', timestamp: new Date(Date.now() - 3 * 3600000) },
-  { id: 'act6', user: { name: 'Dev Mehta' }, action: 'assigned to team', target: 'GLTS-2026-01471', timestamp: new Date(Date.now() - 5 * 3600000) },
+export const SLA_COMPLIANCE_BY_SEGMENT: SlaComplianceSegment[] = [
+  { segment: 'Marine', compliancePct: 92 },
+  { segment: 'Corporate', compliancePct: 96 },
+  { segment: 'Retail', compliancePct: 93 },
+  { segment: 'B2B', compliancePct: 89 },
 ]
 
-export const DAILY_APPLICATION_TREND = [
-  { day: 'Mon', applications: 42 },
-  { day: 'Tue', applications: 58 },
-  { day: 'Wed', applications: 51 },
-  { day: 'Thu', applications: 64 },
-  { day: 'Fri', applications: 72 },
-  { day: 'Sat', applications: 38 },
-  { day: 'Sun', applications: 29 },
+export const TEAM_PRODUCTIVITY_METRICS: TeamProductivityMetric[] = [
+  { label: 'Open Cases', value: '490' },
+  { label: 'Completed Today', value: '67' },
+  { label: 'Capacity %', value: '92%' },
+  { label: 'Target Achievement', value: '104%' },
 ]
 
-export const COUNTRY_APPLICATION_BARS = [
-  { country: 'UK', applications: 420 },
-  { country: 'US', applications: 380 },
-  { country: 'UAE', applications: 310 },
-  { country: 'SG', applications: 245 },
-  { country: 'DE', applications: 198 },
+export const WEEKLY_COMPLETION_TREND: WeeklyCompletionPoint[] = [
+  { day: 'Mon', completed: 42 },
+  { day: 'Tue', completed: 58 },
+  { day: 'Wed', completed: 51 },
+  { day: 'Thu', completed: 64 },
+  { day: 'Fri', completed: 72 },
+  { day: 'Sat', completed: 38 },
+  { day: 'Sun', completed: 29 },
 ]
 
-export const CHANNEL_DISTRIBUTION = [
+export const REVENUE_SNAPSHOT: RevenueSnapshot = {
+  revenueToday: '₹18.4L',
+  mtdRevenue: '₹2.8Cr',
+  ytdRevenue: '₹18.6Cr',
+  revenueVsTarget: 104,
+}
+
+export const COUNTRY_DISTRIBUTION: DistributionSlice[] = [
+  { key: 'uk', label: 'UK', value: 420 },
+  { key: 'us', label: 'US', value: 380 },
+  { key: 'uae', label: 'UAE', value: 310 },
+  { key: 'sg', label: 'SG', value: 245 },
+  { key: 'de', label: 'DE', value: 198 },
+]
+
+export const VISA_TYPE_DISTRIBUTION: DistributionSlice[] = [
+  { key: 'visitor', label: 'Visitor', value: 520 },
+  { key: 'business', label: 'Business', value: 410 },
+  { key: 'crew', label: 'Crew', value: 380 },
+  { key: 'student', label: 'Student', value: 290 },
+  { key: 'employment', label: 'Employment', value: 245 },
+]
+
+export const BUSINESS_SEGMENT_DISTRIBUTION: DistributionSlice[] = [
   { key: 'retail', label: 'Retail', value: 1240 },
   { key: 'corporate', label: 'Corporate', value: 680 },
   { key: 'marine', label: 'Marine', value: 927 },
+  { key: 'b2b', label: 'B2B', value: 420 },
 ]
 
-export const FINANCE_KPIS: FinanceKpi[] = [
-  { id: 'recent_invoices', label: 'Recent Invoices', value: '24', subtitle: 'Issued last 7 days' },
-  { id: 'pending_collections', label: 'Pending Collections', value: '₹18.4L', subtitle: '12 accounts' },
-  { id: 'overdue_payments', label: 'Overdue Payments', value: '₹4.2L', subtitle: '5 accounts' },
-  { id: 'vendor_pending', label: 'Vendor Payments Pending', value: '₹9.1L', subtitle: '8 vendors' },
+export const ESCALATION_ROWS: EscalationRow[] = [
+  {
+    id: 'e1',
+    raisedBy: 'Riya Sharma',
+    escalationType: 'SLA Breach',
+    currentOwner: 'Ops Lead — West',
+    status: 'Open',
+    slaCountdown: '2h 15m',
+    branch: 'Mumbai',
+    team: 'Operations',
+  },
+  {
+    id: 'e2',
+    raisedBy: 'Vikram Patel',
+    escalationType: 'Client Escalation',
+    currentOwner: 'Marine Desk',
+    status: 'In progress',
+    slaCountdown: '5h 40m',
+    branch: 'Chennai',
+    team: 'Operations',
+  },
+  {
+    id: 'e3',
+    raisedBy: 'Neha Kulkarni',
+    escalationType: 'Document Dispute',
+    currentOwner: 'QC Supervisor',
+    status: 'Open',
+    slaCountdown: '1d 2h',
+    branch: 'Delhi',
+    team: 'Documentation',
+  },
+  {
+    id: 'e4',
+    raisedBy: 'Arun Menon',
+    escalationType: 'Billing Dispute',
+    currentOwner: 'Accounts Lead',
+    status: 'Pending review',
+    slaCountdown: '8h 20m',
+    branch: 'Bengaluru',
+    team: 'Accounts',
+  },
+  {
+    id: 'e5',
+    raisedBy: 'Sana Iqbal',
+    escalationType: 'Logistics Delay',
+    currentOwner: 'Ground Ops',
+    status: 'Open',
+    slaCountdown: '4h 05m',
+    branch: 'Mumbai',
+    team: 'Ground Operations',
+  },
 ]
 
-export const RECENT_INVOICES: RecentInvoiceRow[] = [
-  { id: 'inv1', invoiceNumber: 'INV-2026-0892', customer: 'TechNova Solutions Ltd', amount: '₹2,45,000', status: 'pending', dueDate: '12 Jun 2026', channel: 'corporate' },
-  { id: 'inv2', invoiceNumber: 'INV-2026-0887', customer: 'Harborline Shipping', amount: '₹1,12,400', status: 'paid', dueDate: '08 Jun 2026', channel: 'marine' },
-  { id: 'inv3', invoiceNumber: 'INV-2026-0881', customer: 'Arjun Mehta', amount: '₹18,500', status: 'overdue', dueDate: '01 Jun 2026', channel: 'retail' },
-  { id: 'inv4', invoiceNumber: 'INV-2026-0876', customer: 'Global Freight Partners', amount: '₹3,80,000', status: 'pending', dueDate: '15 Jun 2026', channel: 'corporate' },
-  { id: 'inv5', invoiceNumber: 'INV-2026-0870', customer: 'MV Pacific Dawn', amount: '₹86,200', status: 'paid', dueDate: '05 Jun 2026', channel: 'marine' },
+export const NO_MOVEMENT_CASES: NoMovementCaseRow[] = [
+  {
+    id: 'nm1',
+    applicationId: 'GLTS-2026-01370',
+    applicant: 'Global Freight Partners',
+    consultant: 'Riya Sharma',
+    currentStage: 'Embassy Processing',
+    lastActivity: '24 Jun 2026',
+    daysIdle: 6,
+    branch: 'Mumbai',
+    channel: 'corporate',
+    team: 'Operations',
+  },
+  {
+    id: 'nm2',
+    applicationId: 'GLTS-2026-01355',
+    applicant: 'MV Atlantic Spirit',
+    consultant: 'Vikram Patel',
+    currentStage: 'Submission Pending',
+    lastActivity: '22 Jun 2026',
+    daysIdle: 8,
+    branch: 'Chennai',
+    channel: 'marine',
+    team: 'Operations',
+  },
+  {
+    id: 'nm3',
+    applicationId: 'GLTS-2026-01342',
+    applicant: 'Michael Chen',
+    consultant: 'Neha Kulkarni',
+    currentStage: 'Docs Pending',
+    lastActivity: '20 Jun 2026',
+    daysIdle: 10,
+    branch: 'Delhi',
+    channel: 'retail',
+    team: 'Documentation',
+  },
+  {
+    id: 'nm4',
+    applicationId: 'GLTS-2026-01328',
+    applicant: 'FinEdge Corp',
+    consultant: 'Arun Menon',
+    currentStage: 'Collections Pending',
+    lastActivity: '18 Jun 2026',
+    daysIdle: 12,
+    branch: 'Bengaluru',
+    channel: 'corporate',
+    team: 'Accounts',
+  },
+  {
+    id: 'nm5',
+    applicationId: 'GLTS-2026-01315',
+    applicant: 'Sneha Pillai',
+    consultant: 'Dev Mehta',
+    currentStage: 'QC Pending',
+    lastActivity: '25 Jun 2026',
+    daysIdle: 5,
+    branch: 'Mumbai',
+    channel: 'retail',
+    team: 'Documentation',
+  },
 ]

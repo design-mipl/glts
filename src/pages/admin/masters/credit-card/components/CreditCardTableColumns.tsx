@@ -1,0 +1,95 @@
+import { Box, Typography } from '@mui/material'
+import { PencilLine, Trash2 } from 'lucide-react'
+import type { Column, RowAction } from '@/design-system/UIComponents'
+import { RowActions } from '@/design-system/UIComponents'
+import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
+import type { CreditCardMaster } from '@/shared/types/creditCardMaster'
+import { formatMasterDate } from '../../utils/masterListingUtils'
+
+interface ColumnHandlers {
+  onOpenEdit: (row: CreditCardMaster) => void
+  onDelete: (row: CreditCardMaster) => void
+}
+
+function AuditCell({ name, date }: { name: string; date: string }) {
+  return (
+    <Box>
+      <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+        {name}
+      </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+        {formatMasterDate(date)}
+      </Typography>
+    </Box>
+  )
+}
+
+export function buildCreditCardColumns({
+  onOpenEdit,
+  onDelete,
+}: ColumnHandlers): Column<CreditCardMaster>[] {
+  return [
+    {
+      key: 'cardName',
+      label: 'Card Name',
+      widthSize: adminListingColumnWidthSize('name'),
+      sortable: true,
+      filterable: true,
+      searchable: true,
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      widthSize: adminListingColumnWidthSize('description'),
+      sortable: false,
+      filterable: false,
+      searchable: true,
+      render: (_, row) => (
+        <Typography
+          variant="body2"
+          sx={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          title={row.description}
+        >
+          {row.description || '—'}
+        </Typography>
+      ),
+    },
+    {
+      key: 'createdAudit',
+      label: 'Created By / Date',
+      widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: true,
+      render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
+    },
+    {
+      key: 'updatedAudit',
+      label: 'Updated By / Date',
+      widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: true,
+      render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
+    },
+    {
+      key: 'actions',
+      label: '',
+      sortable: false,
+      filterable: false,
+      searchable: false,
+      hideable: false,
+      align: 'center',
+      render: (_, row) => {
+        const actions: RowAction[] = [
+          { label: 'Edit', icon: <PencilLine size={14} />, onClick: () => onOpenEdit(row) },
+          {
+            label: 'Delete',
+            icon: <Trash2 size={14} />,
+            onClick: () => onDelete(row),
+            variant: 'destructive',
+          },
+        ]
+        return <RowActions row={row} actions={actions} />
+      },
+    },
+  ]
+}

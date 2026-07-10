@@ -20,6 +20,8 @@ export interface ModalProps {
   onClose: () => void
   title?: string
   subtitle?: string
+  headerExtra?: ReactNode
+  headerExtraInline?: boolean
   children: ReactNode
   footer?: ReactNode
   size?: ModalSize
@@ -43,6 +45,8 @@ export default function Modal({
   onClose,
   title,
   subtitle,
+  headerExtra,
+  headerExtraInline = false,
   children,
   footer,
   size = 'md',
@@ -109,7 +113,7 @@ export default function Modal({
         },
       }}
     >
-      {(title || subtitle || !hideCloseButton) && (
+      {(title || subtitle || headerExtra || !hideCloseButton) && (
         <Box
           sx={{
             position: 'sticky',
@@ -117,7 +121,7 @@ export default function Modal({
             zIndex: tokens.zIndex.raised,
             display: 'flex',
             gap: tokens.spacing[3],
-            alignItems: subtitle ? 'flex-start' : 'center',
+            alignItems: subtitle || headerExtra ? 'flex-start' : 'center',
             justifyContent: 'space-between',
             px: tokens.spacing[3],
             py: tokens.spacing[2],
@@ -125,11 +129,21 @@ export default function Modal({
             backgroundColor: 'background.paper',
           }}
         >
-          <Box sx={{ minWidth: 0, pr: tokens.spacing[2] }}>
+          <Box sx={{ minWidth: 0, pr: tokens.spacing[2], flex: 1 }}>
             {title ? (
               <Typography component="h2" sx={overlayHeaderTitleSx}>
                 {title}
+                {headerExtra && headerExtraInline ? (
+                  <Box component="span" sx={{ ml: tokens.spacing[1], display: 'inline-flex', verticalAlign: 'middle' }}>
+                    {headerExtra}
+                  </Box>
+                ) : null}
               </Typography>
+            ) : null}
+            {headerExtra && !headerExtraInline ? (
+              <Box sx={{ mt: tokens.spacing[1], display: 'flex', flexWrap: 'wrap', gap: tokens.spacing[1] }}>
+                {headerExtra}
+              </Box>
             ) : null}
             {subtitle ? (
               <Typography sx={{ ...overlayHeaderSubtitleSx, mt: tokens.spacing[1] }}>
@@ -145,19 +159,40 @@ export default function Modal({
         </Box>
       )}
 
-      <LoadingOverlay loading={loading} sx={{ zIndex: tokens.zIndex.raised }}>
-        <DialogContent
-          sx={{
-            position: 'relative',
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
+        <LoadingOverlay
+          loading={loading}
+          wrapperSx={{
             flex: 1,
-            overflowY: 'auto',
-            px: tokens.spacing[3],
-            py: tokens.spacing[3],
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
           }}
+          sx={{ zIndex: tokens.zIndex.raised }}
         >
-          {children}
-        </DialogContent>
-      </LoadingOverlay>
+          <DialogContent
+            sx={{
+              position: 'relative',
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              px: tokens.spacing[3],
+              py: tokens.spacing[3],
+            }}
+          >
+            {children}
+          </DialogContent>
+        </LoadingOverlay>
+      </Box>
 
       {footer ? (
         <Box

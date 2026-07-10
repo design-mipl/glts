@@ -19,6 +19,8 @@ import {
   resolveApplicationCreatorRoleLabel,
 } from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
+import { isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
+import { isMarineReadOnlyWorkspace } from '../config/marineWorkspaceMode'
 
 type ToastFn = (toast: Omit<Toast, 'id'>) => void
 
@@ -40,18 +42,46 @@ function buildRowActions(
   row: MarineApplicationRow,
 ) {
   const detailPath = `/admin/application-management/marine/${row.id}`
+  const submitted = isCustomerSubmitted(row)
+  const readOnlyWorkspace = submitted && isMarineReadOnlyWorkspace(row)
 
   return [
     {
-      label: 'Verify Documents',
-      icon: <ClipboardCheck size={16} />,
-      onClick: () => navigate(detailPath),
+      label: readOnlyWorkspace ? 'View application' : 'Verify Documents',
+      icon: readOnlyWorkspace ? <FileText size={16} /> : <ClipboardCheck size={16} />,
+      disabled: !submitted,
+      onClick: () => {
+        if (!submitted) {
+          showToast({
+            title: 'Draft application',
+            description: 'Submit this application before opening document verification.',
+            variant: 'info',
+          })
+          return
+        }
+        navigate(readOnlyWorkspace ? `${detailPath}/view-form` : detailPath)
+      },
     },
-    {
-      label: 'View Form',
-      icon: <FileText size={16} />,
-      onClick: () => navigate(`${detailPath}/view-form`),
-    },
+    ...(readOnlyWorkspace
+      ? []
+      : [
+          {
+            label: 'View Form',
+            icon: <FileText size={16} />,
+            disabled: !submitted,
+            onClick: () => {
+              if (!submitted) {
+                showToast({
+                  title: 'Draft application',
+                  description: 'Submit this application before opening the form assist workspace.',
+                  variant: 'info',
+                })
+                return
+              }
+              navigate(`${detailPath}/view-form`)
+            },
+          },
+        ]),
     {
       label: 'Add Remarks',
       icon: <MessageSquarePlus size={16} />,

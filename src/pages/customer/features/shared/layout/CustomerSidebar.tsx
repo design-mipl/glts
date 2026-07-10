@@ -1,10 +1,9 @@
 import { Box, Drawer, IconButton } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { ChevronLeft, LogOut } from 'lucide-react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { ChevronLeft } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 import { GreenlightLogoExpanded } from '@/components/brand/GreenlightLogo'
-import { NavItem, renderNavConfig } from '@/design-system/UIComponents'
-import { clearSession } from '@/shared/auth/session'
+import { renderNavConfig } from '@/design-system/UIComponents'
 import { PORTAL_SIDEBAR_WIDTH, PORTAL_TOPBAR_HEIGHT } from '@/shared/theme/portalChromeLayout'
 import { useCustomerPortalBase } from '../hooks/useCustomerPortalBase'
 import { buildCustomerFooterNavConfig, buildCustomerNavConfig } from '../config/customerNav'
@@ -28,7 +27,6 @@ function SidebarPanel({
   fullWidth?: boolean
 }) {
   const theme = useTheme()
-  const navigate = useNavigate()
   const location = useLocation()
   const navigation = theme.foundation.navigation
   const {
@@ -48,12 +46,6 @@ function SidebarPanel({
   })
   const footerNavConfig = buildCustomerFooterNavConfig(base)
   const currentPath = location.pathname
-
-  const handleLogout = () => {
-    clearSession()
-    onClose?.()
-    navigate(isBusiness ? '/sign-in/business' : '/', { replace: true })
-  }
 
   const handleNavClick = () => {
     onNavigate?.()
@@ -130,14 +122,6 @@ function SidebarPanel({
 
       <Box sx={{ width: '100%', flexShrink: 0, borderTop: `1px solid ${navigation.border}`, py: '8px' }}>
         <Box onClick={handleNavClick}>{renderNavConfig(footerNavConfig, false, currentPath)}</Box>
-        <Box sx={{ px: '8px', pt: '4px' }}>
-          <NavItem
-            label="Log out"
-            icon={<LogOut size={16} strokeWidth={1.75} />}
-            onClick={handleLogout}
-            collapsed={false}
-          />
-        </Box>
       </Box>
     </Box>
   )
