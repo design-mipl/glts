@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { TableState } from '@/design-system/UIComponents'
 import { applyColumnFilters, INITIAL_TABLE_STATE, sortRows } from '@/pages/customer/features/shared/hooks/useCustomerListing'
+import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
 import { operationalPassengerAssignmentService } from '@/shared/services/operationalPassengerAssignmentService'
 import type {
   AssignmentListingTab,
@@ -15,8 +16,19 @@ import {
   getAssignmentCellValue,
 } from '../utils/assignmentQueueListingUtils'
 
+const ASSIGNMENT_QUEUE_TAB_VALUES: readonly AssignmentListingTab[] = [
+  'pending_assignment',
+  'assigned',
+  'in_progress',
+  'carry_forward',
+  'completed',
+]
+
 export function useAssignmentQueue(segmentConfig: AssignmentSegmentConfig) {
-  const [listingTab, setListingTab] = useState<AssignmentListingTab>('pending_assignment')
+  const [listingTab, setListingTab] = useListingTabParam(
+    ASSIGNMENT_QUEUE_TAB_VALUES,
+    'pending_assignment',
+  )
   const [queueFilters, setQueueFilters] = useState<AssignmentQueueFilters>(EMPTY_ASSIGNMENT_QUEUE_FILTERS)
   const [tableState, setTableState] = useState<TableState>(INITIAL_TABLE_STATE)
   const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({})
@@ -68,7 +80,7 @@ export function useAssignmentQueue(segmentConfig: AssignmentSegmentConfig) {
   const handleListingTabChange = useCallback((tab: AssignmentListingTab) => {
     setListingTab(tab)
     setTableState(state => ({ ...state, page: 0 }))
-  }, [])
+  }, [setListingTab])
 
   const handleSearch = useCallback((value: string) => {
     setSearchValue(value)

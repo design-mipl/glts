@@ -1,3 +1,5 @@
+import type { CommercialVisaPricingRule, QuotationServiceLine } from './quotation'
+
 export type AgreementType = 'agreemented' | 'non_agreemented'
 
 export type AgreementWorkflowType = 'marine' | 'corporate' | 'b2b_agent' | 'mixed' | 'retail'
@@ -135,8 +137,12 @@ export interface CommercialAgreement {
   startDate: string
   endDate: string
   entities: AgreementEntity[]
+  /** Flattened compat projection for invoices / legacy readers. */
   pricingMatrix: AgreementPricingRow[]
   miscellaneousCosts: AgreementMiscCostRow[]
+  /** Structured commercial visa pricing (source of truth in UI). */
+  commercialVisaPricing?: CommercialVisaPricingRule[]
+  miscellaneousServices?: QuotationServiceLine[]
   billingConfig: AgreementBillingConfig
   financeContacts: AgreementFinanceContacts
   financeContactPersons?: AgreementFinanceContactPerson[]
@@ -165,6 +171,8 @@ export interface CommercialAgreementFormData {
   entities: AgreementEntity[]
   pricingMatrix: AgreementPricingRow[]
   miscellaneousCosts: AgreementMiscCostRow[]
+  commercialVisaPricing: CommercialVisaPricingRule[]
+  miscellaneousServices: QuotationServiceLine[]
   billingConfig: AgreementBillingConfig
   financeContacts: AgreementFinanceContacts
   financeContactPersons: AgreementFinanceContactPerson[]

@@ -121,6 +121,10 @@ export interface OperationalCase {
   paymentMode?: OperationalPaymentMode
   /** Credit Card Master id when payment mode is card. */
   paymentCardId?: string
+  /** Amount paid for ground-ops expense settlement. */
+  amountPaid?: string
+  /** UTR / transaction reference for the payment. */
+  transactionReference?: string
   expenses: OperationalExpense[]
   submissionDate?: string
   collectionDate?: string

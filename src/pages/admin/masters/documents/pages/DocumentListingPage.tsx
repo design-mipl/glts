@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
 import { Plus } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Button,
   ConfirmDialog,
@@ -16,6 +16,8 @@ import {
   AdminListingToolbar,
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
+import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
+import { getCurrentListingHref, navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { clientDocumentMasterService } from '@/shared/services/clientDocumentMasterService'
 import { documentMasterService } from '@/shared/services/documentMasterService'
 import type { ClientDocumentMaster } from '@/shared/types/clientDocumentMaster'
@@ -46,15 +48,22 @@ import {
   matchesDocumentSearch,
 } from '../utils/documentListingUtils'
 
+const DOCUMENT_LISTING_PATH = '/admin/masters/documents'
+const DOCUMENT_TAB_VALUES = DOCUMENT_CONFIGURATION_TABS.map(
+  tab => tab.id,
+) as readonly DocumentConfigurationTab[]
+
 export function DocumentListingPage() {
   const theme = useTheme()
   const navigate = useNavigate()
+  const location = useLocation()
   const { showToast } = useToast()
-  const [activeTab, setActiveTab] = useState<DocumentConfigurationTab>('documents')
+  const [activeTab, setActiveTab] = useListingTabParam(DOCUMENT_TAB_VALUES, 'documents')
   const [rows, setRows] = useState<DocumentMaster[]>([])
   const [clientRows, setClientRows] = useState<ClientDocumentMaster[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
+  const listingReturnHref = getCurrentListingHref(location)
 
   const [documentFormOpen, setDocumentFormOpen] = useState(false)
   const [editDocument, setEditDocument] = useState<DocumentMaster | null>(null)
@@ -116,7 +125,8 @@ export function DocumentListingPage() {
   const columns = useMemo(
     () =>
       buildDocumentColumns({
-        onOpenDetail: (row) => navigate(`/admin/masters/documents/${row.id}`),
+        onOpenDetail: (row) =>
+          navigateFromListing(navigate, `${DOCUMENT_LISTING_PATH}/${row.id}`, listingReturnHref),
         onOpenEdit: (row) => {
           setEditDocument(row)
           setDocumentFormOpen(true)
@@ -124,7 +134,7 @@ export function DocumentListingPage() {
         onToggleStatus: openDocumentStatusToggle,
         onDelete: openDelete,
       }),
-    [navigate],
+    [listingReturnHref, navigate],
   )
 
   const clientColumns = useMemo(
@@ -319,7 +329,9 @@ export function DocumentListingPage() {
                 columnFilters={listing.columnFilters}
                 onColumnFiltersChange={listing.setColumnFilters}
                 getCellValue={getDocumentCellValue}
-                onRowClick={(row) => navigate(`/admin/masters/documents/${row.id}`)}
+                onRowClick={(row) =>
+                  navigateFromListing(navigate, `${DOCUMENT_LISTING_PATH}/${row.id}`, listingReturnHref)
+                }
                 stickyHeader
                 enableColumnSort={false}
                 enableColumnFilters={false}
@@ -331,7 +343,9 @@ export function DocumentListingPage() {
             ) : (
               <AdminListingGrid
                 items={gridItems}
-                onItemClick={(id) => navigate(`/admin/masters/documents/${id}`)}
+                onItemClick={(id) =>
+                  navigateFromListing(navigate, `${DOCUMENT_LISTING_PATH}/${id}`, listingReturnHref)
+                }
               />
             )
           ) : (

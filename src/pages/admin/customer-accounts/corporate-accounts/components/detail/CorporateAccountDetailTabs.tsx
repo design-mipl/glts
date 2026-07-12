@@ -72,6 +72,22 @@ export function OverviewTab({ account }: { account: CorporateAccount }) {
             : '—'}
         </Typography>
       </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <Typography variant="caption" color="text.secondary">Primary contact</Typography>
+        <Typography variant="body2">
+          {account.primaryContactUserId
+            ? adminPortalUserService.getById(account.primaryContactUserId)?.fullName ?? '—'
+            : '—'}
+        </Typography>
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <Typography variant="caption" color="text.secondary">Secondary contact</Typography>
+        <Typography variant="body2">
+          {account.secondaryContactUserId
+            ? adminPortalUserService.getById(account.secondaryContactUserId)?.fullName ?? '—'
+            : '—'}
+        </Typography>
+      </Grid>
       <Grid size={{ xs: 12 }}>
         <Divider />
       </Grid>
@@ -102,6 +118,26 @@ export function AssignedUsersTab({ account }: { account: CorporateAccount }) {
   const assignedUsers = resolveAssignedUsers(account)
   const teamLeaderTeamName = resolveTeamLeaderTeamName(account)
   const teamLeaders = resolveTeamLeaders(account)
+  const primaryId = account.primaryContactUserId || account.primaryContactUserIds?.[0] || ''
+  const secondaryId = account.secondaryContactUserId || account.secondaryContactUserIds?.[0] || ''
+
+  const renderUserRow = (user: NonNullable<ReturnType<typeof adminPortalUserService.getById>>) => (
+    <Stack
+      key={user.id}
+      sx={{ border: 1, borderColor: 'divider', borderRadius: 1.5, px: 1.25, py: 0.9 }}
+    >
+      <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+        <Typography variant="body2" fontWeight={600}>
+          {user.fullName}
+        </Typography>
+        {primaryId === user.id ? <Badge label="Primary" color="info" size="sm" /> : null}
+        {secondaryId === user.id ? <Badge label="Secondary" color="neutral" size="sm" /> : null}
+      </Stack>
+      <Typography variant="caption" color="text.secondary">
+        {user.email}
+      </Typography>
+    </Stack>
+  )
 
   return (
     <Stack spacing={2.5} divider={<Divider />}>
@@ -109,23 +145,19 @@ export function AssignedUsersTab({ account }: { account: CorporateAccount }) {
         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.75 }}>
           Team leader
         </Typography>
-        <Typography variant="caption" color="text.secondary">Team</Typography>
-        <Typography variant="body2" fontWeight={600}>{teamLeaderTeamName}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          Team
+        </Typography>
+        <Typography variant="body2" fontWeight={600}>
+          {teamLeaderTeamName}
+        </Typography>
         {teamLeaders.length === 0 ? (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             No team leaders assigned from User Management.
           </Typography>
         ) : (
           <Stack spacing={1} sx={{ mt: 1 }}>
-            {teamLeaders.map((user) => (
-              <Stack
-                key={user.id}
-                sx={{ border: 1, borderColor: 'divider', borderRadius: 1.5, px: 1.25, py: 0.9 }}
-              >
-                <Typography variant="body2" fontWeight={600}>{user.fullName}</Typography>
-                <Typography variant="caption" color="text.secondary">{user.email}</Typography>
-              </Stack>
-            ))}
+            {teamLeaders.map(renderUserRow)}
           </Stack>
         )}
       </Box>
@@ -133,23 +165,19 @@ export function AssignedUsersTab({ account }: { account: CorporateAccount }) {
         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.75 }}>
           Team
         </Typography>
-        <Typography variant="caption" color="text.secondary">Team</Typography>
-        <Typography variant="body2" fontWeight={600}>{assignedTeamName}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          Team
+        </Typography>
+        <Typography variant="body2" fontWeight={600}>
+          {assignedTeamName}
+        </Typography>
         {assignedUsers.length === 0 ? (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             No internal users assigned from User Management.
           </Typography>
         ) : (
           <Stack spacing={1} sx={{ mt: 1 }}>
-            {assignedUsers.map((user) => (
-              <Stack
-                key={user.id}
-                sx={{ border: 1, borderColor: 'divider', borderRadius: 1.5, px: 1.25, py: 0.9 }}
-              >
-                <Typography variant="body2" fontWeight={600}>{user.fullName}</Typography>
-                <Typography variant="caption" color="text.secondary">{user.email}</Typography>
-              </Stack>
-            ))}
+            {assignedUsers.map(renderUserRow)}
           </Stack>
         )}
       </Box>

@@ -68,7 +68,7 @@ export function VesselFormFields({
           fullWidth
         />
       </FormField>
-      <FormField label="IMO number" required error={!!errors.imoNumber} helperText={errors.imoNumber}>
+      <FormField label="IMO number" error={!!errors.imoNumber} helperText={errors.imoNumber}>
         <Input
           value={formData.imoNumber}
           onChange={v => onUpdate({ imoNumber: v.replace(/\D/g, '').slice(0, 7) })}
@@ -76,7 +76,7 @@ export function VesselFormFields({
           fullWidth
         />
       </FormField>
-      <FormField label="Vessel type" required error={!!errors.vesselType} helperText={errors.vesselType}>
+      <FormField label="Vessel type" error={!!errors.vesselType} helperText={errors.vesselType}>
         <Select
           value={formData.vesselType}
           onChange={v => onUpdate({ vesselType: v as typeof formData.vesselType })}
@@ -84,7 +84,7 @@ export function VesselFormFields({
           fullWidth
         />
       </FormField>
-      <FormField label="Flag / registered country" required error={!!errors.flagCountry} helperText={errors.flagCountry}>
+      <FormField label="Flag / registered country" error={!!errors.flagCountry} helperText={errors.flagCountry}>
         <Select
           value={formData.flagCountry}
           onChange={v => onUpdate({ flagCountry: String(v) })}
@@ -100,7 +100,7 @@ export function VesselFormFields({
           fullWidth
         />
       </FormField>
-      <FormField label="Status" required>
+      <FormField label="Status">
         <Select
           value={formData.status}
           onChange={v => onUpdate({ status: v as typeof formData.status })}
@@ -108,30 +108,6 @@ export function VesselFormFields({
             { value: 'active', label: 'Active' },
             { value: 'inactive', label: 'Inactive' },
           ]}
-          fullWidth
-        />
-      </FormField>
-      <FormField label="Contact person name">
-        <Input
-          value={formData.contactPersonName}
-          onChange={v => onUpdate({ contactPersonName: v })}
-          placeholder="Full name"
-          fullWidth
-        />
-      </FormField>
-      <FormField label="Contact person email" error={!!errors.contactPersonEmail} helperText={errors.contactPersonEmail}>
-        <Input
-          value={formData.contactPersonEmail}
-          onChange={v => onUpdate({ contactPersonEmail: v })}
-          placeholder="email@company.com"
-          fullWidth
-        />
-      </FormField>
-      <FormField label="Contact person mobile" error={!!errors.contactPersonMobile} helperText={errors.contactPersonMobile}>
-        <Input
-          value={formData.contactPersonMobile}
-          onChange={v => onUpdate({ contactPersonMobile: v })}
-          placeholder="+91 98765 43210"
           fullWidth
         />
       </FormField>

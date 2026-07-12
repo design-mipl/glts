@@ -1,4 +1,4 @@
-import { Tabs as MuiTabs, Tab, Box, Badge } from '@mui/material'
+import { Tabs as MuiTabs, Tab, Box } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
 import type { SxProps } from '@mui/material/styles'
@@ -8,7 +8,6 @@ export interface TabItem {
   label: string
   value: string
   icon?: ReactNode
-  badge?: number | string
   disabled?: boolean
 }
 
@@ -41,13 +40,6 @@ export default function Tabs({
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
       {item.icon && <span style={{ display: 'flex', fontSize: 18 }}>{item.icon}</span>}
       <span>{item.label}</span>
-      {item.badge !== undefined && (
-        <Badge
-          badgeContent={item.badge}
-          color="primary"
-          sx={{ ml: 0.5, '& .MuiBadge-badge': { position: 'static', transform: 'none', fontSize: 11, height: 18, minWidth: 18 } }}
-        />
-      )}
     </Box>
   )
 

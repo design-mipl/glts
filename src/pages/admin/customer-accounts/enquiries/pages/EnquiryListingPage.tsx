@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
 import { Plus } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   Button,
@@ -15,6 +15,8 @@ import {
   AdminListingToolbar,
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
+import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
+import { getCurrentListingHref, navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { enquiryService } from '@/shared/services/enquiryService'
 import type { EnquiryRecord, EnquiryStatus } from '@/shared/types/enquiry'
 import { AddFollowupModal, type FollowupModalValue } from '../components/AddFollowupModal'
@@ -32,6 +34,16 @@ import {
   matchesEnquirySearch,
   type EnquiryListingTab,
 } from '../utils/enquiryListingUtils'
+
+const ENQUIRY_LISTING_PATH = '/admin/customer-accounts/enquiries'
+const ENQUIRY_TAB_VALUES: readonly EnquiryListingTab[] = [
+  'all',
+  'new',
+  'active',
+  'converted',
+  'non_converted',
+  'closed',
+]
 
 const initialAssignment: AssignmentModalValue = {
   assignedTeam: '',
@@ -58,10 +70,17 @@ export function EnquiryListingPage() {
   const theme = useTheme()
   const { showToast } = useToast()
   const navigate = useNavigate()
+  const location = useLocation()
   const [rows, setRows] = useState<EnquiryRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<EnquiryListingTab>('all')
+  const [activeTab, setActiveTab] = useListingTabParam(ENQUIRY_TAB_VALUES, 'all')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
+  const listingReturnHref = getCurrentListingHref(location)
+
+  const goFromListing = useCallback(
+    (to: string) => navigateFromListing(navigate, to, listingReturnHref),
+    [listingReturnHref, navigate],
+  )
 
   const [statusModalOpen, setStatusModalOpen] = useState(false)
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false)
@@ -117,13 +136,13 @@ export function EnquiryListingPage() {
   const columns = useMemo(
     () =>
       buildEnquiryColumns({
-        onOpenDetail: (row) => navigate(`/admin/customer-accounts/enquiries/${row.id}`),
-        onOpenEdit: (row) => navigate(`/admin/customer-accounts/enquiries/${row.id}/edit`),
+        onOpenDetail: (row) => goFromListing(`${ENQUIRY_LISTING_PATH}/${row.id}`),
+        onOpenEdit: (row) => goFromListing(`${ENQUIRY_LISTING_PATH}/${row.id}/edit`),
         onOpenAssignment: openAssignment,
         onOpenStatus: openStatus,
         onOpenFollowup: openFollowup,
       }),
-    [navigate],
+    [goFromListing],
   )
 
   const tabFilteredRows = useMemo(
@@ -144,8 +163,8 @@ export function EnquiryListingPage() {
   )
 
   const handleCreate = useCallback(() => {
-    navigate('/admin/customer-accounts/enquiries/new')
-  }, [navigate])
+    goFromListing(`${ENQUIRY_LISTING_PATH}/new`)
+  }, [goFromListing])
 
   const emptyState = useMemo(
     () => getEnquiryEmptyState(activeTab, handleCreate),
@@ -172,7 +191,7 @@ export function EnquiryListingPage() {
       setViewMode('table')
       listing.setTableState((state) => ({ ...state, page: 0 }))
     },
-    [listing],
+    [listing, setActiveTab],
   )
 
   const gridItems = useMemo(() => mapEnquiryRowsToGridItems(listing.paginatedRows), [listing.paginatedRows])
@@ -211,7 +230,7 @@ export function EnquiryListingPage() {
           <AdminListingToolbar
             searchValue={listing.tableState.searchQuery}
             onSearch={listing.handleSearch}
-            searchPlaceholder="Search by enquiry ID, company, contact, country, or assignee…"
+            searchPlaceholder="Search by enquiry ID, company, contact, country, visa type, or purpose…"
             onExport={handleExport}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
@@ -234,7 +253,7 @@ export function EnquiryListingPage() {
               columnFilters={listing.columnFilters}
               onColumnFiltersChange={listing.setColumnFilters}
               getCellValue={getEnquiryCellValue}
-              onRowClick={(row) => navigate(`/admin/customer-accounts/enquiries/${row.id}`)}
+              onRowClick={(row) => goFromListing(`${ENQUIRY_LISTING_PATH}/${row.id}`)}
               loading={loading}
               stickyHeader
               emptyTitle={emptyState.emptyTitle}
@@ -244,7 +263,7 @@ export function EnquiryListingPage() {
           ) : (
             <AdminListingGrid
               items={gridItems}
-              onItemClick={(id) => navigate(`/admin/customer-accounts/enquiries/${id}`)}
+              onItemClick={(id) => goFromListing(`${ENQUIRY_LISTING_PATH}/${id}`)}
             />
           )
         }

@@ -78,6 +78,8 @@ Use one field spec everywhere to avoid style drift:
 - Field height: `34px` (`sm`, **default**), `40px` (`md` — opt-in only)
 - Border radius: `10px`
 - Field font: `13px`
+- Field padding: `8px` horizontal and vertical (`FORM_CONTROL.paddingX` / `paddingY`)
+- Textarea default `minRows`: `2` (`FORM_CONTROL.textareaMinRows`)
 - Label: `13px`, `fontWeight: 600`, `text.primary`
 - Helper/error text: `12px`
 

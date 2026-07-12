@@ -14,6 +14,7 @@ import {
 import { useGenerateInvoiceComposition } from '../hooks/useGenerateInvoiceComposition'
 import { splitBillableSelection } from '../utils/billableApplicationSelectionUtils'
 import { parseGenerateInvoiceStepParam } from '../utils/generateInvoiceFlowUtils'
+import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 
 const LISTING_PATH = '/admin/finance/invoices'
 
@@ -38,6 +39,7 @@ interface GenerateInvoiceLocationState {
 export function GenerateInvoiceStepperPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const listingHref = getListingReturnHref(location, LISTING_PATH)
   const [searchParams, setSearchParams] = useSearchParams()
   const draftId = searchParams.get('draftId') ?? undefined
   const routeState = (location.state ?? {}) as GenerateInvoiceLocationState
@@ -110,7 +112,7 @@ export function GenerateInvoiceStepperPage() {
     return true
   }
 
-  const handleCancel = () => navigate(LISTING_PATH)
+  const handleCancel = () => navigate(listingHref)
 
   const selectionStepContent = (
     <BillableApplicationSelectionTable
@@ -173,7 +175,7 @@ export function GenerateInvoiceStepperPage() {
   return (
     <AdminStepperFormShell
       breadcrumbs={[
-        { label: 'Billing & invoice', href: LISTING_PATH },
+        { label: 'Billing & invoice', href: listingHref },
         { label: 'Generate invoice' },
       ]}
       steps={steps}

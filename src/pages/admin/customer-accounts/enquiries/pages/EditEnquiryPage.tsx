@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Box, Typography } from '@mui/material'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { EmptyState, useToast } from '@/design-system/UIComponents'
 import {
   AdminFullPageFormFooter,
@@ -8,13 +8,18 @@ import {
 } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { AdminFullPageFormShell } from '@/pages/admin/components/AdminFullPageFormShell'
 import { enquiryService } from '@/shared/services/enquiryService'
+import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 import { buildEnquiryFormSections } from '../components/EnquiryFormSections'
 import { useEnquiryForm } from '../hooks/useEnquiryForm'
 import { getEnquiryActor } from '../utils/enquiryActor'
 import { enquiryRecordToFormData } from '../utils/enquiryFormUtils'
 
+const ENQUIRY_LISTING_PATH = '/admin/customer-accounts/enquiries'
+
 export function EditEnquiryPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const listingHref = getListingReturnHref(location, ENQUIRY_LISTING_PATH)
   const { showToast } = useToast()
   const { enquiryId } = useParams<{ enquiryId: string }>()
   const [loading, setLoading] = useState(false)
@@ -42,11 +47,11 @@ export function EditEnquiryPage() {
 
   const enquiryDetailHref = enquiryId
     ? `/admin/customer-accounts/enquiries/${enquiryId}`
-    : '/admin/customer-accounts/enquiries'
+    : listingHref
 
   const breadcrumbs = [
-    { label: 'Client Management', href: '/admin/customer-accounts/enquiries' },
-    { label: 'Lead Management', href: '/admin/customer-accounts/enquiries' },
+    { label: 'Client Management', href: listingHref },
+    { label: 'Lead Management', href: listingHref },
     { label: enquiryId ?? 'Edit', href: enquiryDetailHref },
     { label: 'Edit' },
   ]
@@ -66,7 +71,7 @@ export function EditEnquiryPage() {
       <EmptyState
         title="Enquiry not found"
         description="The enquiry you are trying to edit does not exist or was removed."
-        action={{ label: 'Back to enquiries', onClick: () => navigate('/admin/customer-accounts/enquiries') }}
+        action={{ label: 'Back to enquiries', onClick: () => navigate(listingHref) }}
       />
     )
   }
@@ -78,7 +83,7 @@ export function EditEnquiryPage() {
         description="This enquiry has been converted to a quotation and can no longer be edited."
         action={{
           label: 'View enquiry',
-          onClick: () => navigate(`/admin/customer-accounts/enquiries/${enquiryId}`),
+          onClick: () => navigate(enquiryDetailHref, { state: location.state }),
         }}
       />
     )
@@ -90,7 +95,7 @@ export function EditEnquiryPage() {
     await enquiryService.update(enquiryId, formData, getEnquiryActor())
     setLoading(false)
     showToast({ title: 'Enquiry updated', variant: 'success' })
-    navigate(`/admin/customer-accounts/enquiries/${enquiryId}`)
+    navigate(enquiryDetailHref, { state: location.state })
   }
 
   return (
@@ -103,7 +108,7 @@ export function EditEnquiryPage() {
       footer={
         <AdminFullPageFormFooter
           loading={loading}
-          onCancel={() => navigate(`/admin/customer-accounts/enquiries/${enquiryId}`)}
+          onCancel={() => navigate(enquiryDetailHref, { state: location.state })}
           onSave={() => void handleSave()}
         />
       }

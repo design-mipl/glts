@@ -1,8 +1,12 @@
-import type { AgreementPricingRow, AgreementWorkflowType } from './commercialAgreement'
+import type { AgreementPricingRow, AgreementMiscCostRow, AgreementWorkflowType } from './commercialAgreement'
 
 export type QuotationSourceType = 'enquiry' | 'direct'
 
 export type QuotationSharedStatus = 'not_shared' | 'shared'
+
+export type QuotationPricingMode = 'retail' | 'commercial'
+
+export type CommercialVisaPricingScope = 'country' | 'country_group' | 'rest_of_countries'
 
 export interface QuotationCustomerInfo {
   companyName: string
@@ -11,6 +15,46 @@ export interface QuotationCustomerInfo {
   alternateContactNumber?: string
   emailAddress: string
   companyAddress: string
+}
+
+export interface QuotationServiceLine {
+  id: string
+  serviceId: string
+  serviceName: string
+  amount: number
+  gstApplicable: boolean
+}
+
+export interface QuotationVfsServiceLine {
+  id: string
+  serviceName: string
+  amount: number
+  gstIncluded?: boolean
+}
+
+export interface RetailVisaPricingItem {
+  id: string
+  countryId: string
+  country: string
+  visaTypeId?: string
+  visaType: string
+  jurisdictionId?: string
+  jurisdictionName?: string
+  gltsServices: QuotationServiceLine[]
+  vfsServices: QuotationVfsServiceLine[]
+}
+
+export interface CommercialVisaPricingRule {
+  id: string
+  scope: CommercialVisaPricingScope
+  countryId?: string
+  country?: string
+  countryGroupId?: string
+  countryGroupName?: string
+  visaType: string
+  serviceFee: number
+  gstApplicable: boolean
+  remarks: string
 }
 
 export interface QuotationPricingTotals {
@@ -23,7 +67,11 @@ export interface QuotationPricingVersion {
   id: string
   versionLabel: string
   versionNumber: number
+  /** Compat flatten for agreement conversion / legacy readers */
   pricingMatrix: AgreementPricingRow[]
+  retailVisaPricing: RetailVisaPricingItem[]
+  commercialVisaPricing: CommercialVisaPricingRule[]
+  miscellaneousServices: QuotationServiceLine[]
   totals: QuotationPricingTotals
   createdBy: string
   createdAt: string
@@ -82,7 +130,11 @@ export interface QuotationFormData {
   notes: string
   gstRateId: string
   gstPercentage: number
+  /** Kept in sync via flatten helpers for legacy consumers */
   pricingMatrix: AgreementPricingRow[]
+  retailVisaPricing: RetailVisaPricingItem[]
+  commercialVisaPricing: CommercialVisaPricingRule[]
+  miscellaneousServices: QuotationServiceLine[]
 }
 
 export interface QuotationListingFilters {
@@ -98,3 +150,5 @@ export interface QuotationSharePayload {
   recipientEmail: string
   message?: string
 }
+
+export type { AgreementMiscCostRow }

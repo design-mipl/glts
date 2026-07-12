@@ -1,5 +1,6 @@
 import type { QuotationFormData } from '@/shared/types/quotation'
 import { getDefaultQuotationGstSelection } from '@/shared/utils/quotationGstUtils'
+import { emptyPricingPayload } from '@/shared/utils/quotationPricingUtils'
 
 export function createEmptyQuotationFormData(): QuotationFormData {
   const today = new Date().toISOString().slice(0, 10)
@@ -21,6 +22,6 @@ export function createEmptyQuotationFormData(): QuotationFormData {
     notes: '',
     gstRateId: defaultGst.gstRateId,
     gstPercentage: defaultGst.gstPercentage,
-    pricingMatrix: [],
+    ...emptyPricingPayload(),
   }
 }

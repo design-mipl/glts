@@ -14,6 +14,7 @@ import {
   AdminListingToolbar,
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
+import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
 import { taxMasterService } from '@/shared/services/taxMasterService'
 import type { GstRate, TaxMasterListFilters, TdsSection } from '@/shared/types/taxMaster'
 import { GstRateFormModal } from '../components/GstRateFormModal'
@@ -36,11 +37,12 @@ import {
 } from '../utils/tdsSectionListingUtils'
 
 const EMPTY_FILTERS: TaxMasterListFilters = { status: 'all', applicableOn: 'all' }
+const TAX_TAB_VALUES = TAX_CONFIGURATION_TABS.map(tab => tab.id) as readonly TaxConfigurationTab[]
 
 export function TaxConfigurationPage() {
   const theme = useTheme()
   const { showToast } = useToast()
-  const [activeTab, setActiveTab] = useState<TaxConfigurationTab>('gst')
+  const [activeTab, setActiveTab] = useListingTabParam(TAX_TAB_VALUES, 'gst')
   const [filters, setFilters] = useState<TaxMasterListFilters>(EMPTY_FILTERS)
   const [gstRows, setGstRows] = useState<GstRate[]>([])
   const [tdsRows, setTdsRows] = useState<TdsSection[]>([])

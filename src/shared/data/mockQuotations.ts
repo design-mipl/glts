@@ -1,5 +1,7 @@
 import type { QuotationRecord } from '@/shared/types/quotation'
 import { computePricingTotals } from '@/shared/utils/quotationCalculations'
+import { hydrateStructuredPricingFromMatrix } from '@/shared/utils/quotationPricingUtils'
+import type { AgreementWorkflowType } from '@/shared/types/commercialAgreement'
 
 function daysAgo(days: number) {
   const d = new Date()
@@ -20,12 +22,15 @@ function makeVersion(
   gstPercentage: number,
   createdBy: string,
   createdAt: string,
+  workflowType: AgreementWorkflowType = 'corporate',
 ): QuotationRecord['pricingVersions'][0] {
+  const structured = hydrateStructuredPricingFromMatrix(pricingMatrix, workflowType)
   return {
     id,
     versionLabel: `V${versionNumber}`,
     versionNumber,
     pricingMatrix,
+    ...structured,
     totals: computePricingTotals(pricingMatrix, gstPercentage),
     createdBy,
     createdAt,
@@ -103,9 +108,9 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
     sharedBy: 'Rajan Mehta',
     currentVersionId: 'qver-1-3',
     pricingVersions: [
-      makeVersion('qver-1-1', 1, harborV1Matrix, 18, 'Neha Arora', daysAgo(12)),
-      makeVersion('qver-1-2', 2, harborV2Matrix, 18, 'Neha Arora', daysAgo(8)),
-      makeVersion('qver-1-3', 3, harborV3Matrix, 18, 'Neha Arora', daysAgo(4)),
+      makeVersion('qver-1-1', 1, harborV1Matrix, 18, 'Neha Arora', daysAgo(12), 'marine'),
+      makeVersion('qver-1-2', 2, harborV2Matrix, 18, 'Neha Arora', daysAgo(8), 'marine'),
+      makeVersion('qver-1-3', 3, harborV3Matrix, 18, 'Neha Arora', daysAgo(4), 'marine'),
     ],
     createdAt: daysAgo(12),
     createdBy: 'Neha Arora',
@@ -155,6 +160,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
         18,
         'Neha Arora',
         daysAgo(8),
+        'corporate',
       ),
     ],
     createdAt: daysAgo(8),
@@ -205,6 +211,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
         18,
         'Neha Arora',
         daysAgo(5),
+        'b2b_agent',
       ),
     ],
     createdAt: daysAgo(5),
@@ -241,7 +248,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
     ],
     sharedStatus: 'not_shared',
     currentVersionId: 'qver-4-1',
-    pricingVersions: [makeVersion('qver-4-1', 1, [], 18, 'Neha Arora', daysAgo(2))],
+    pricingVersions: [makeVersion('qver-4-1', 1, [], 18, 'Neha Arora', daysAgo(2), 'marine')],
     createdAt: daysAgo(2),
     createdBy: 'Neha Arora',
     updatedAt: daysAgo(2),
@@ -290,6 +297,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
         18,
         'Neha Arora',
         daysAgo(1),
+        'corporate',
       ),
     ],
     createdAt: daysAgo(1),

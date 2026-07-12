@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, alpha, useTheme } from '@mui/material'
 import { Plus } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   AdminListingGrid,
@@ -11,6 +11,8 @@ import {
 } from '@/pages/admin/components/listing'
 import { Button, ConfirmDialog, Pagination, useToast } from '@/design-system/UIComponents'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
+import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
+import { getCurrentListingHref, navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { invoiceService } from '@/shared/services/invoiceService'
 import type { Invoice } from '@/shared/types/invoice'
 import { InvoiceKpiRow } from '../components/InvoiceKpiRow'
@@ -35,6 +37,7 @@ import { ShareInvoiceModal } from '../components/workspace/ShareInvoiceModal'
 
 const LISTING_PATH = '/admin/finance/invoices'
 const GENERATE_DRAFT_PATH = `${LISTING_PATH}/generate`
+const INVOICE_TAB_VALUES = INVOICE_LISTING_TABS.map(tab => tab.id) as readonly InvoiceListingTab[]
 
 function parsePaymentField(raw: string): number {
   const n = Number.parseFloat(raw.replace(/,/g, ''))
@@ -44,11 +47,20 @@ function parsePaymentField(raw: string): number {
 export function InvoiceListingPage() {
   const theme = useTheme()
   const navigate = useNavigate()
+  const location = useLocation()
   const { showToast } = useToast()
   const [rows, setRows] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<InvoiceListingTab>('all')
+  const [activeTab, setActiveTab] = useListingTabParam(INVOICE_TAB_VALUES, 'all')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
+  const listingReturnHref = getCurrentListingHref(location)
+
+  const goFromListing = useCallback(
+    (to: string, options?: Parameters<typeof navigateFromListing>[3]) => {
+      navigateFromListing(navigate, to, listingReturnHref, options)
+    },
+    [listingReturnHref, navigate],
+  )
   const [shareTarget, setShareTarget] = useState<Invoice>()
   const [shareOpen, setShareOpen] = useState(false)
   const [shareValue, setShareValue] = useState<ShareInvoiceModalValue>({
@@ -98,9 +110,9 @@ export function InvoiceListingPage() {
   const columns = useMemo(
     () =>
       buildInvoiceColumns({
-        onOpenDetail: row => navigate(`${LISTING_PATH}/${row.id}`),
+        onOpenDetail: row => goFromListing(`${LISTING_PATH}/${row.id}`),
         onEditDraft: row =>
-          navigate(`${GENERATE_DRAFT_PATH}?draftId=${row.id}&step=1`),
+          goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${row.id}&step=1`),
         onSubmitDraft: row => {
           setSubmitTarget(row)
           setSubmitOpen(true)
@@ -161,9 +173,9 @@ export function InvoiceListingPage() {
             variant: 'success',
           })
           loadRows()
-          navigate(`${GENERATE_DRAFT_PATH}?draftId=${secondary.id}&step=1`)
+          goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${secondary.id}&step=1`)
         },
-        onCreditNote: row => navigate(`${LISTING_PATH}/${row.id}/credit-note`),
+        onCreditNote: row => goFromListing(`${LISTING_PATH}/${row.id}/credit-note`),
         onDebitNote: row => {
           const debit = invoiceService.createDebitNote(row.id)
           if (!debit) {
@@ -172,14 +184,14 @@ export function InvoiceListingPage() {
           }
           showToast({ title: 'Debit note created', description: debit.invoiceId, variant: 'success' })
           loadRows()
-          navigate(`${LISTING_PATH}/${debit.id}`)
+          goFromListing(`${LISTING_PATH}/${debit.id}`)
         },
         onSendReminder: row => {
           setReminderTarget(row)
           setReminderOpen(true)
         },
       }),
-    [navigate, showToast, loadRows],
+    [goFromListing, showToast, loadRows],
   )
 
   const toolbarColumns = useMemo(
@@ -187,7 +199,7 @@ export function InvoiceListingPage() {
     [columns],
   )
 
-  const handleGenerate = useCallback(() => navigate(`${LISTING_PATH}/generate`), [navigate])
+  const handleGenerate = useCallback(() => goFromListing(`${LISTING_PATH}/generate`), [goFromListing])
 
   const emptyState = useMemo(() => {
     const base = getInvoiceEmptyState(activeTab, Boolean(listing.tableState.searchQuery))
@@ -210,7 +222,7 @@ export function InvoiceListingPage() {
       setViewMode('table')
       listing.setTableState(state => ({ ...state, page: 0 }))
     },
-    [listing],
+    [listing, setActiveTab],
   )
 
   const handleShareConfirm = () => {
@@ -356,7 +368,7 @@ export function InvoiceListingPage() {
               columnFilters={listing.columnFilters}
               onColumnFiltersChange={listing.setColumnFilters}
               getCellValue={getInvoiceCellValue}
-              onRowClick={row => navigate(`${LISTING_PATH}/${row.id}`)}
+              onRowClick={row => goFromListing(`${LISTING_PATH}/${row.id}`)}
               loading={loading}
               stickyHeader
               emptyTitle={emptyState.emptyTitle}
@@ -364,7 +376,7 @@ export function InvoiceListingPage() {
               emptyAction={emptyState.emptyAction}
             />
           ) : (
-            <AdminListingGrid items={gridItems} onItemClick={id => navigate(`${LISTING_PATH}/${id}`)} />
+            <AdminListingGrid items={gridItems} onItemClick={id => goFromListing(`${LISTING_PATH}/${id}`)} />
           )
         }
         footer={

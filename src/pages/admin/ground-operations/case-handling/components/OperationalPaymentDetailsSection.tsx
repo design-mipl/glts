@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import dayjs from 'dayjs'
-import { DatePicker, FormField, Select } from '@/design-system/UIComponents'
+import { DatePicker, FormField, Input, Select } from '@/design-system/UIComponents'
 import { creditCardMasterService } from '@/shared/services/creditCardMasterService'
 import { operationalCaseHandlingService } from '@/shared/services/operationalCaseHandlingService'
 import type {
+  GroundServiceLine,
   OperationalCase,
   OperationalPaymentMode,
 } from '@/shared/types/operationalCaseHandling'
@@ -28,6 +29,26 @@ function formatDisplayDate(value: string | undefined): string {
   if (!value?.trim()) return '—'
   const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY'], true)
   return parsed.isValid() ? parsed.format('DD MMM YYYY') : value
+}
+
+function formatDisplayAmount(value: string | undefined): string {
+  if (!value?.trim()) return '—'
+  const amount = Number.parseFloat(value.replace(/,/g, ''))
+  if (!Number.isFinite(amount)) return value
+  return `₹${amount.toLocaleString('en-IN')}`
+}
+
+/** Sum of selected on-site fee amounts shown above the payment section. */
+export function getSelectedApplicationFeesTotal(fees: GroundServiceLine[]): number {
+  return fees
+    .filter(fee => fee.selected)
+    .reduce((sum, fee) => sum + (fee.actualAmount || fee.prefilledAmount), 0)
+}
+
+function formatAmountField(amount: number): string {
+  if (!Number.isFinite(amount) || amount <= 0) return ''
+  const rounded = Math.round(amount * 100) / 100
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2)
 }
 
 function ReadField({ label, value }: { label: string; value: string }) {
@@ -54,11 +75,19 @@ export function OperationalPaymentDetailsSection({
   readOnly = false,
   onUpdated,
 }: OperationalPaymentDetailsSectionProps) {
+  const autoAmountPaid = useMemo(
+    () => formatAmountField(getSelectedApplicationFeesTotal(record.applicationFees)),
+    [record.applicationFees],
+  )
+
   const [paymentDate, setPaymentDate] = useState(record.paymentDate ?? '')
   const [paymentMode, setPaymentMode] = useState<OperationalPaymentMode | ''>(
     record.paymentMode ?? '',
   )
   const [paymentCardId, setPaymentCardId] = useState(record.paymentCardId ?? '')
+  const [transactionReference, setTransactionReference] = useState(
+    record.transactionReference ?? '',
+  )
 
   const cardOptions = useMemo(
     () =>
@@ -83,12 +112,20 @@ export function OperationalPaymentDetailsSection({
     setPaymentDate(record.paymentDate ?? '')
     setPaymentMode(record.paymentMode ?? '')
     setPaymentCardId(record.paymentCardId ?? '')
-  }, [record.id, record.paymentDate, record.paymentMode, record.paymentCardId])
+    setTransactionReference(record.transactionReference ?? '')
+  }, [
+    record.id,
+    record.paymentDate,
+    record.paymentMode,
+    record.paymentCardId,
+    record.transactionReference,
+  ])
 
   const persist = (patch: {
     paymentDate?: string
     paymentMode?: OperationalPaymentMode
     paymentCardId?: string
+    transactionReference?: string
   }) => {
     operationalCaseHandlingService.updatePaymentDetails(record.id, patch)
     onUpdated()
@@ -105,6 +142,8 @@ export function OperationalPaymentDetailsSection({
         {record.paymentMode === 'card' ? (
           <ReadField label="Card" value={selectedCardLabel} />
         ) : null}
+        <ReadField label="Amount Paid" value={formatDisplayAmount(autoAmountPaid)} />
+        <ReadField label="Transaction Reference" value={record.transactionReference?.trim() || '—'} />
       </Box>
     )
   }
@@ -158,6 +197,29 @@ export function OperationalPaymentDetailsSection({
           />
         </FormField>
       ) : null}
+      <FormField label="Amount Paid" helperText="Auto-filled from selected on-site fees">
+        <Input
+          type="number"
+          value={autoAmountPaid}
+          disabled
+          placeholder="0.00"
+          size="sm"
+          fullWidth
+        />
+      </FormField>
+      <FormField label="Transaction Reference">
+        <Input
+          value={transactionReference}
+          onChange={value => {
+            const next = String(value)
+            setTransactionReference(next)
+            persist({ transactionReference: next })
+          }}
+          placeholder="e.g. UTR / TXN reference"
+          size="sm"
+          fullWidth
+        />
+      </FormField>
     </Box>
   )
 }

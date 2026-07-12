@@ -25,7 +25,6 @@ export function CreateQuotationPage() {
   const { formData, setFormData, selectedEnquiry, errors, validate, hydrateFromEnquiry, clearEnquirySelection } =
     useQuotationForm()
   const [loading, setLoading] = useState(false)
-  const addPricingHandlerRef = useRef<(() => void) | null>(null)
   const enquiryHydratedRef = useRef<string | null>(null)
 
   const enquiryIdParam = searchParams.get('enquiryId')
@@ -63,7 +62,6 @@ export function CreateQuotationPage() {
         setFormData,
         errors,
         selectedEnquiry,
-        addPricingHandlerRef,
         onSelectEnquiry: (enquiryId) => void hydrateFromEnquiry(enquiryId),
         onClearEnquiry: clearEnquirySelection,
       })}

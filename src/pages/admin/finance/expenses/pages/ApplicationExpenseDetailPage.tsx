@@ -17,6 +17,7 @@ import { ExpenseDetailDrawer } from '../components/workspace/ExpenseDetailDrawer
 import { UploadProofModal } from '../components/workspace/UploadProofModal'
 import { EXPENSE_LISTING_BASE_PATH } from '../config/expenseListingTabs'
 import { useExpenseDetailTravelers } from '../hooks/useExpenseDetailTravelers'
+import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 
 interface ApplicationExpenseDetailContentProps {
   applicationId: string
@@ -57,6 +58,7 @@ export function ApplicationExpenseDetailPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
+  const listingHref = getListingReturnHref(location, EXPENSE_LISTING_BASE_PATH)
   const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
   const [detail, setDetail] = useState<ApplicationExpenseDetailView>()
@@ -99,7 +101,7 @@ export function ApplicationExpenseDetailPage() {
       <EmptyState
         variant="no-data"
         title="Application not found"
-        action={{ label: 'Back to expenses', onClick: () => navigate(EXPENSE_LISTING_BASE_PATH) }}
+        action={{ label: 'Back to expenses', onClick: () => navigate(listingHref) }}
       />
     )
   }
@@ -142,8 +144,8 @@ export function ApplicationExpenseDetailPage() {
     <>
       <AdminDetailShell
         breadcrumbs={[
-          { label: 'Finance', href: EXPENSE_LISTING_BASE_PATH },
-          { label: 'Expense management', href: EXPENSE_LISTING_BASE_PATH },
+          { label: 'Finance', href: listingHref },
+          { label: 'Expense management', href: listingHref },
           { label: applicationId },
         ]}
         summary={

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { TableState } from '@/design-system/UIComponents'
 import { applyColumnFilters, INITIAL_TABLE_STATE, sortRows } from '@/pages/customer/features/shared/hooks/useCustomerListing'
+import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
 import { fundAllocationService } from '@/shared/services/fundAllocationService'
 import type {
   FundAllocationListingTab,
@@ -14,8 +15,16 @@ import {
   getFundAllocationCellValue,
 } from '../utils/fundAllocationListingUtils'
 
+const FUND_ALLOCATION_TAB_VALUES: readonly FundAllocationListingTab[] = [
+  'pending_allocation',
+  'allocated',
+]
+
 export function useFundAllocationListing() {
-  const [listingTab, setListingTab] = useState<FundAllocationListingTab>('pending_allocation')
+  const [listingTab, setListingTab] = useListingTabParam(
+    FUND_ALLOCATION_TAB_VALUES,
+    'pending_allocation',
+  )
   const [queueFilters, setQueueFilters] = useState<FundAllocationQueueFilters>(EMPTY_FUND_ALLOCATION_FILTERS)
   const [tableState, setTableState] = useState<TableState>(INITIAL_TABLE_STATE)
   const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({})
@@ -67,7 +76,7 @@ export function useFundAllocationListing() {
   const handleListingTabChange = useCallback((tab: FundAllocationListingTab) => {
     setListingTab(tab)
     setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
-  }, [])
+  }, [setListingTab])
 
   const handleSearch = useCallback((value: string) => {
     setSearchValue(value)

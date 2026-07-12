@@ -5,6 +5,7 @@ import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { QuotationRecord } from '@/shared/types/quotation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { getCurrentVersion } from '@/shared/utils/quotationValidation'
+import { canConvertQuotationToAgreement } from '@/shared/utils/quotationPricingUtils'
 import {
   quotationSharedStatusColor,
   quotationSharedStatusLabel,
@@ -125,7 +126,10 @@ export function buildQuotationColumns({
       filterable: false,
       searchable: false,
       render: (_, row) => {
-        const hasPricing = row.pricingVersions.some((v) => v.pricingMatrix.length > 0)
+        const hasPricing = canConvertQuotationToAgreement({
+          ...row,
+          convertedAgreementId: undefined,
+        })
         const actions: RowAction[] = [
           { label: 'View', icon: <Eye size={14} />, onClick: () => onOpenDetail(row) },
           { label: 'Edit', icon: <PencilLine size={14} />, onClick: () => onOpenEdit(row) },

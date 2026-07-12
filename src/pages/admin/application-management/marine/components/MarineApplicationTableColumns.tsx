@@ -19,6 +19,7 @@ import {
 } from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import { isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
+import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { isMarineReadOnlyWorkspace } from '../config/marineWorkspaceMode'
 
 type ToastFn = (toast: Omit<Toast, 'id'>) => void
@@ -38,6 +39,7 @@ function buildRowActions(
   navigate: NavigateFunction,
   showToast: ToastFn,
   onAssignTeam: (row: MarineApplicationRow) => void,
+  fromListing: string,
   row: MarineApplicationRow,
 ) {
   const detailPath = `/admin/application-management/marine/${row.id}`
@@ -58,7 +60,11 @@ function buildRowActions(
           })
           return
         }
-        navigate(readOnlyWorkspace ? `${detailPath}/view-form` : detailPath)
+        navigateFromListing(
+          navigate,
+          readOnlyWorkspace ? `${detailPath}/view-form` : detailPath,
+          fromListing,
+        )
       },
     },
     ...(readOnlyWorkspace
@@ -77,7 +83,7 @@ function buildRowActions(
                 })
                 return
               }
-              navigate(`${detailPath}/view-form`)
+              navigateFromListing(navigate, `${detailPath}/view-form`, fromListing)
             },
           },
         ]),
@@ -103,12 +109,14 @@ export interface MarineApplicationTableColumnsParams {
   navigate: NavigateFunction
   showToast: ToastFn
   onAssignTeam: (row: MarineApplicationRow) => void
+  fromListing: string
 }
 
 export function buildMarineApplicationColumns({
   navigate,
   showToast,
   onAssignTeam,
+  fromListing,
 }: MarineApplicationTableColumnsParams): Column<MarineApplicationRow>[] {
   return [
     {
@@ -257,7 +265,7 @@ export function buildMarineApplicationColumns({
       searchable: false,
       hideable: false,
       render: (_: unknown, row: MarineApplicationRow) => (
-        <RowActions actions={buildRowActions(navigate, showToast, onAssignTeam, row)} row={row} />
+        <RowActions actions={buildRowActions(navigate, showToast, onAssignTeam, fromListing, row)} row={row} />
       ),
     },
   ]

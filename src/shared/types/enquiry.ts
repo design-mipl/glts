@@ -194,8 +194,3 @@ export interface EnquiryListingFilters {
   marineRequirement?: boolean
   inquirySource?: EnquirySource
 }
-
-export interface EnquiryConversionValidation {
-  isValid: boolean
-  issues: string[]
-}

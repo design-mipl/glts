@@ -17,6 +17,7 @@ import {
   normalizeLegacyAgreement,
   validateForActivation,
 } from '@/shared/utils/commercialAgreementValidation'
+import { syncAgreementCommercialPricing } from '@/shared/utils/quotationPricingUtils'
 import type { AgreementHoldTerminateStatus } from '@/shared/types/commercialAgreement'
 import {
   buildAgreementDocumentsFromMaster,
@@ -90,7 +91,7 @@ function formToAgreement(
   companyId: string,
   companyName: string,
 ): Omit<CommercialAgreement, 'id' | 'agreementId' | 'createdAt' | 'updatedAt' | 'activities'> {
-  const synced = syncFinanceContactsFromSources(data)
+  const synced = syncAgreementCommercialPricing(syncFinanceContactsFromSources(data))
   return {
     companyId,
     companyName,
@@ -106,6 +107,8 @@ function formToAgreement(
     entities: synced.entities,
     pricingMatrix: synced.pricingMatrix,
     miscellaneousCosts: synced.miscellaneousCosts,
+    commercialVisaPricing: synced.commercialVisaPricing,
+    miscellaneousServices: synced.miscellaneousServices,
     billingConfig: synced.billingConfig,
     financeContacts: synced.financeContacts,
     financeContactPersons: synced.financeContactPersons,
@@ -219,6 +222,8 @@ export const commercialAgreementService = {
       entities: [...normalized.entities],
       pricingMatrix: [...normalized.pricingMatrix],
       miscellaneousCosts: [...normalized.miscellaneousCosts],
+      commercialVisaPricing: [...(normalized.commercialVisaPricing ?? [])],
+      miscellaneousServices: [...(normalized.miscellaneousServices ?? [])],
       billingConfig: { ...normalized.billingConfig },
       financeContacts: { ...normalized.financeContacts },
       financeContactPersons: normalized.financeContactPersons
@@ -230,7 +235,7 @@ export const commercialAgreementService = {
         : [],
       documents: [...normalized.documents],
     }
-    return syncFinanceContactsFromSources(base)
+    return syncAgreementCommercialPricing(syncFinanceContactsFromSources(base))
   },
 
   hydrateFromQuotation(

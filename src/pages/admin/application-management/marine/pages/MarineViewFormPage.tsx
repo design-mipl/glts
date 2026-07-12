@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, CircularProgress, Divider, Stack, Typography } from '@mui/material'
 import Autocomplete from '@mui/material/Autocomplete'
 import TextField from '@mui/material/TextField'
-import { useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import {
   Badge,
@@ -21,6 +21,7 @@ import { AdminStepperFormFooter } from '@/pages/admin/components/AdminStepperFor
 import { applicationArrangedExpenseService } from '@/shared/services/applicationArrangedExpenseService'
 import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import { resolveHandlingMode } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 import { useViewFormWorkspace } from '../hooks/useViewFormWorkspace'
 import { useVerifyDocumentsWorkspace } from '../hooks/useVerifyDocumentsWorkspace'
 import { CopyAssistFieldSections } from '../components/view-form/CopyAssistField'
@@ -58,6 +59,8 @@ import {
 export function MarineViewFormPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
   const navigate = useAppNavigate()
+  const location = useLocation()
+  const listingPath = getListingReturnHref(location, '/admin/application-management/marine')
   const { showToast } = useToast()
   const theme = useTheme()
 
@@ -128,7 +131,6 @@ export function MarineViewFormPage() {
     reloadViewForm()
   }
 
-  const listingPath = '/admin/application-management/marine'
   const verifyPath = `/admin/application-management/marine/${applicationId}`
 
   const overview = useMemo(

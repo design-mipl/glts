@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Box, CircularProgress, Stack } from '@mui/material'
-import { useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import {
   BaseCard,
@@ -14,6 +14,7 @@ import {
 } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
 import { AdminRecordPageChrome } from '@/pages/admin/components/AdminRecordPageChrome'
+import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 import { useVerifyDocumentsWorkspace } from '../hooks/useVerifyDocumentsWorkspace'
 import { VerifyDocumentsOverview } from '../components/verify/VerifyDocumentsOverview'
 import { VerifyDocumentsPhaseContent } from '../components/verify/VerifyDocumentsPhaseContent'
@@ -36,6 +37,8 @@ import { toApplicationReviewOverview } from '@/pages/customer/features/applicati
 export function MarineVerifyDocumentsPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
   const navigate = useAppNavigate()
+  const location = useLocation()
+  const listingPath = getListingReturnHref(location, '/admin/application-management/marine')
   const { showToast } = useToast()
   const [reviewDialog, setReviewDialog] = useState<{
     scope: 'traveler' | 'global'
@@ -73,8 +76,6 @@ export function MarineVerifyDocumentsPage() {
     saveDraft,
     submitVerification,
   } = workspace
-
-  const listingPath = '/admin/application-management/marine'
 
   const reviewActionLabel = reviewDialog?.status === 'rejected' ? 'Reject' : 'Request re-upload'
   const reviewDialogTitle = useMemo(() => {

@@ -69,7 +69,14 @@ export function AgreementReviewPanel({ data, agreementId, statusLabel }: Agreeme
 
   const statCards = [
     { label: 'Entities', value: String(data.entities.length) },
-    { label: 'Pricing rows', value: String(data.pricingMatrix.length) },
+    {
+      label: 'Visa pricing',
+      value: String(data.commercialVisaPricing?.length || data.pricingMatrix.length),
+    },
+    {
+      label: 'Misc services',
+      value: String(data.miscellaneousServices?.length || data.miscellaneousCosts.length),
+    },
     { label: 'Documents', value: `${uploadedDocs}/${requiredDocs}` },
   ]
 

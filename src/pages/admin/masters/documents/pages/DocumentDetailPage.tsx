@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Box, Grid, Stack, Typography } from '@mui/material'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   BaseCard,
   ConfirmDialog,
@@ -11,10 +11,13 @@ import {
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { documentMasterService } from '@/shared/services/documentMasterService'
 import type { DocumentMasterStatus } from '@/shared/types/documentMaster'
+import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 import { DocumentDeleteDialog } from '../components/DocumentDeleteDialog'
 import { DocumentDetailSummary } from '../components/DocumentDetailSummary'
 import { DocumentFormModal } from '../components/DocumentFormModal'
 import { documentStatusLabel } from '../config/documentStatusConfig'
+
+const DOCUMENT_LISTING_PATH = '/admin/masters/documents'
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
@@ -32,6 +35,8 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 export function DocumentDetailPage() {
   const { showToast } = useToast()
   const navigate = useNavigate()
+  const location = useLocation()
+  const listingHref = getListingReturnHref(location, DOCUMENT_LISTING_PATH)
   const [searchParams] = useSearchParams()
   const { documentId } = useParams<{ documentId: string }>()
   const [editOpen, setEditOpen] = useState(false)
@@ -60,7 +65,7 @@ export function DocumentDetailPage() {
         title="Document not found"
         action={{
           label: 'Back to Document Master',
-          onClick: () => navigate('/admin/masters/documents'),
+          onClick: () => navigate(listingHref),
         }}
       />
     )
@@ -74,7 +79,7 @@ export function DocumentDetailPage() {
         description="This document may have been removed."
         action={{
           label: 'Back to Document Master',
-          onClick: () => navigate('/admin/masters/documents'),
+          onClick: () => navigate(listingHref),
         }}
       />
     )
@@ -111,7 +116,7 @@ export function DocumentDetailPage() {
       return
     }
     showToast({ title: 'Document deleted', variant: 'success' })
-    navigate('/admin/masters/documents')
+    navigate(listingHref)
   }
 
   const pendingStatusLabel = document.status === 'active' ? 'deactivate' : 'activate'
@@ -120,8 +125,8 @@ export function DocumentDetailPage() {
     <>
       <AdminDetailShell
         breadcrumbs={[
-          { label: 'Masters', href: '/admin/masters/documents' },
-          { label: 'Document Master', href: '/admin/masters/documents' },
+          { label: 'Masters', href: listingHref },
+          { label: 'Document Master', href: listingHref },
           { label: document.documentType },
         ]}
         summary={

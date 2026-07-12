@@ -53,6 +53,26 @@ export function validateLogisticsDispatchDetails(
       break
   }
 
+  const hasPayableCharge =
+    details.deliveryMethod === 'Courier' ||
+    details.deliveryMethod === 'Airport Assistance' ||
+    details.deliveryMethod === 'Cargo'
+
+  if (hasPayableCharge) {
+    if (!details.paymentDate?.trim()) {
+      return { valid: false, message: 'Payment date is required.' }
+    }
+    if (!details.paymentMode) {
+      return { valid: false, message: 'Payment mode is required.' }
+    }
+    if (details.paymentMode === 'card' && !details.paymentCardId?.trim()) {
+      return { valid: false, message: 'Card is required when payment mode is card.' }
+    }
+    if (!details.transactionReference?.trim()) {
+      return { valid: false, message: 'Transaction reference is required.' }
+    }
+  }
+
   return { valid: true }
 }
 

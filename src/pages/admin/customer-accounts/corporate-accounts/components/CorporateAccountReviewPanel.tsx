@@ -46,6 +46,18 @@ export function CorporateAccountReviewPanel({ data }: CorporateAccountReviewPane
     teamLeaderNames.length > 0
       ? `${teamLeaderNames.length} · ${teamLeaderNames.map((u) => `${u.fullName} (${u.email})`).join(', ')}`
       : '—'
+  const primaryContact = data.primaryContactUserId
+    ? adminPortalUserService.getById(data.primaryContactUserId)
+    : undefined
+  const secondaryContact = data.secondaryContactUserId
+    ? adminPortalUserService.getById(data.secondaryContactUserId)
+    : undefined
+  const primaryContactsValue = primaryContact
+    ? `${primaryContact.fullName} (${primaryContact.email})`
+    : '—'
+  const secondaryContactsValue = secondaryContact
+    ? `${secondaryContact.fullName} (${secondaryContact.email})`
+    : '—'
   const counts = {
     totalAdmins: data.admins.length + (data.superAdmin.fullName ? 1 : 0),
     totalEntities: data.entityIds.filter((id) => entityMasterService.getById(id)).length,
@@ -142,6 +154,8 @@ export function CorporateAccountReviewPanel({ data }: CorporateAccountReviewPane
           <Stack spacing={0.9}>
             <ReviewRow label="Team" value={assignedTeamName} />
             <ReviewRow label="Users" value={assignedUsersValue} />
+            <ReviewRow label="Primary contact" value={primaryContactsValue} />
+            <ReviewRow label="Secondary contact" value={secondaryContactsValue} />
           </Stack>
         </Box>
       </Stack>

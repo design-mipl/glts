@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
 import { Plus } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Button,
   Pagination,
@@ -15,6 +15,8 @@ import {
   AdminListingToolbar,
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
+import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
+import { getCurrentListingHref, navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { marineApplicationAdminService, isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
 import { isMarineReadOnlyWorkspace } from '../config/marineWorkspaceMode'
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
@@ -36,7 +38,10 @@ import {
 } from '../components/MarineApplicationAdvancedFilters'
 import { MarineApplicationAssignTeamModal } from '../components/MarineApplicationAssignTeamModal'
 import { buildMarineApplicationColumns } from '../components/MarineApplicationTableColumns'
-import { MARINE_APPLICATION_LISTING_TABS } from '../config/marineApplicationListingTabs'
+import {
+  MARINE_APPLICATION_LISTING_TABS,
+  type MarineApplicationListingTab,
+} from '../config/marineApplicationListingTabs'
 import {
   downloadMarineApplicationCsv,
   filterMarineRowsByTab,
@@ -45,18 +50,24 @@ import {
   getMarineApplicationEmptyState,
   mapMarineApplicationRowsToGridItems,
   matchesMarineApplicationSearch,
-  type MarineApplicationListingTab,
 } from '../utils/marineApplicationListingUtils'
+
+const MARINE_LISTING_PATH = '/admin/application-management/marine'
+const MARINE_TAB_VALUES = MARINE_APPLICATION_LISTING_TABS.map(
+  tab => tab.value,
+) as readonly MarineApplicationListingTab[]
 
 export function MarineApplicationListingPage() {
   const theme = useTheme()
   const navigate = useNavigate()
+  const location = useLocation()
   const { showToast } = useToast()
-  const [activeTab, setActiveTab] = useState<MarineApplicationListingTab>('all')
+  const [activeTab, setActiveTab] = useListingTabParam(MARINE_TAB_VALUES, 'all')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [refreshKey, setRefreshKey] = useState(0)
   const [assignTarget, setAssignTarget] = useState<MarineApplicationRow | null>(null)
   const [filters, setFilters] = useState<ApplicationListingFilterState>(EMPTY_APPLICATION_LISTING_FILTERS)
+  const listingReturnHref = getCurrentListingHref(location)
 
   const { singles, bulks } = useMemo(
     () => marineApplicationAdminService.listMarineApplications(),
@@ -119,8 +130,14 @@ export function MarineApplicationListingPage() {
   )
 
   const columns = useMemo(
-    () => buildMarineApplicationColumns({ navigate, showToast, onAssignTeam: openAssignTeam }),
-    [navigate, showToast, openAssignTeam],
+    () =>
+      buildMarineApplicationColumns({
+        navigate,
+        showToast,
+        onAssignTeam: openAssignTeam,
+        fromListing: listingReturnHref,
+      }),
+    [navigate, showToast, openAssignTeam, listingReturnHref],
   )
 
   const toolbarColumns = useMemo(
@@ -129,8 +146,10 @@ export function MarineApplicationListingPage() {
   )
 
   const handleCreate = useCallback(() => {
-    navigate('/admin/application-management/marine/new', { state: { freshStart: true } })
-  }, [navigate])
+    navigateFromListing(navigate, `${MARINE_LISTING_PATH}/new`, listingReturnHref, {
+      state: { freshStart: true },
+    })
+  }, [listingReturnHref, navigate])
 
   const emptyState = useMemo(
     () => getMarineApplicationEmptyState(activeTab, handleCreate),
@@ -152,7 +171,7 @@ export function MarineApplicationListingPage() {
       setViewMode('table')
       listing.setTableState(state => ({ ...state, page: 0 }))
     },
-    [listing],
+    [listing, setActiveTab],
   )
 
   const handleRowClick = useCallback(
@@ -165,12 +184,14 @@ export function MarineApplicationListingPage() {
         })
         return
       }
-      const detailPath = `/admin/application-management/marine/${row.id}`
-      navigate(
+      const detailPath = `${MARINE_LISTING_PATH}/${row.id}`
+      navigateFromListing(
+        navigate,
         isMarineReadOnlyWorkspace(row) ? `${detailPath}/view-form` : detailPath,
+        listingReturnHref,
       )
     },
-    [navigate, showToast],
+    [listingReturnHref, navigate, showToast],
   )
 
   const gridItems = useMemo(

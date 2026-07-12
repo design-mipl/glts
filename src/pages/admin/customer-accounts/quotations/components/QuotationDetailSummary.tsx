@@ -4,6 +4,7 @@ import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
 import type { QuotationRecord } from '@/shared/types/quotation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { getCurrentVersion } from '@/shared/utils/quotationValidation'
+import { canConvertQuotationToAgreement } from '@/shared/utils/quotationPricingUtils'
 import {
   quotationSharedStatusColor,
   quotationSharedStatusLabel,
@@ -28,7 +29,7 @@ export function QuotationDetailSummary({
   onConvert,
 }: QuotationDetailSummaryProps) {
   const version = getCurrentVersion(quotation)
-  const canConvert = !quotation.convertedAgreementId && quotation.pricingVersions.some((v) => v.pricingMatrix.length > 0)
+  const canConvert = canConvertQuotationToAgreement(quotation)
 
   return (
     <BaseCard>

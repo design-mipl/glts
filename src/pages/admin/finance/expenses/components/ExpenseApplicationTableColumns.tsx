@@ -8,6 +8,7 @@ import {
   rollupApprovalStatusLabel,
   rollupPaymentStatusLabel,
 } from '@/shared/utils/applicationExpenseManagementUtils'
+import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import {
   expenseRollupApprovalColor,
   expenseRollupPaymentColor,
@@ -16,12 +17,14 @@ import { EXPENSE_LISTING_BASE_PATH } from '../config/expenseListingTabs'
 
 export interface ExpenseApplicationColumnHandlers {
   navigate: NavigateFunction
+  fromListing: string
 }
 
 export function buildExpenseApplicationColumns(
   handlers: ExpenseApplicationColumnHandlers,
 ): Column<ApplicationExpenseListingRow>[] {
   const base = EXPENSE_LISTING_BASE_PATH
+  const { navigate, fromListing } = handlers
 
   return [
     {
@@ -149,17 +152,21 @@ export function buildExpenseApplicationColumns(
           actions={[
             {
               label: 'View Details',
-              onClick: () => handlers.navigate(`${base}/${row.applicationId}`),
+              onClick: () => navigateFromListing(navigate, `${base}/${row.applicationId}`, fromListing),
             },
             {
               label: 'Add Expense',
               onClick: () =>
-                handlers.navigate(`${base}/${row.applicationId}`, { state: { openAddExpense: true } }),
+                navigateFromListing(navigate, `${base}/${row.applicationId}`, fromListing, {
+                  state: { openAddExpense: true },
+                }),
             },
             {
               label: 'View Approval Status',
               onClick: () =>
-                handlers.navigate(`${base}/${row.applicationId}`, { state: { highlightPending: true } }),
+                navigateFromListing(navigate, `${base}/${row.applicationId}`, fromListing, {
+                  state: { highlightPending: true },
+                }),
             },
           ]}
         />

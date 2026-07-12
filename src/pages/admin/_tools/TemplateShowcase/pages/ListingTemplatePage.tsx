@@ -16,6 +16,7 @@ import {
   type AdminListingFilterState,
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
+import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
 import { TEMPLATE_DEMO_ROWS, type TemplateListingTab } from '../config/demoEntity'
 import { TemplateDemoKpiRow } from '../components/TemplateDemoKpiRow'
 import { buildTemplateListingColumns } from '../components/templateDemoColumns'
@@ -29,10 +30,12 @@ import {
   matchesTemplateSearch,
 } from '../utils/templateListingUtils'
 
+const TEMPLATE_LISTING_TABS: readonly TemplateListingTab[] = ['single', 'bulk', 'draft', 'submitted']
+
 export function ListingTemplatePage() {
   const theme = useTheme()
   const { showToast } = useToast()
-  const [activeTab, setActiveTab] = useState<TemplateListingTab>('single')
+  const [activeTab, setActiveTab] = useListingTabParam(TEMPLATE_LISTING_TABS, 'single')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [advancedFilters, setAdvancedFilters] = useState<AdminListingFilterState>(EMPTY_ADMIN_LISTING_FILTERS)
 

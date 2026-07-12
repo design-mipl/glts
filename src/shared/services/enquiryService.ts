@@ -2,7 +2,6 @@ import { quotationService } from './quotationService'
 import type {
   EnquiryActivityLog,
   EnquiryAssignment,
-  EnquiryConversionValidation,
   EnquiryFollowup,
   EnquiryFormData,
   EnquiryListingFilters,
@@ -10,7 +9,7 @@ import type {
   EnquiryRecord,
   EnquiryStatus,
 } from '../types/enquiry'
-import { getVisaRequirementItems, normalizeVisaRequirement } from '../utils/enquiryVisaRequirementUtils'
+import { normalizeVisaRequirement } from '../utils/enquiryVisaRequirementUtils'
 
 function nowIso() {
   return new Date().toISOString()
@@ -648,23 +647,6 @@ export const enquiryService = {
     return Promise.resolve(attachment)
   },
 
-  validateConversion(enquiryId: string): Promise<EnquiryConversionValidation> {
-    const target = enquiryStore.find((item) => item.id === enquiryId)
-    if (!target) return Promise.resolve({ isValid: false, issues: ['Enquiry not found'] })
-
-    const issues: string[] = []
-    if (!target.customer.companyOrCustomerName) issues.push('Customer / Company name is mandatory')
-    const visaItems = getVisaRequirementItems(target.visaRequirement)
-    if (!visaItems.length) issues.push('At least one country requirement is mandatory')
-    if (visaItems.some((item) => !item.visaType.trim())) issues.push('Visa type is mandatory for each country requirement')
-    if (!target.customer.contactNumber && !target.customer.emailAddress) issues.push('Contact information is mandatory')
-    if (!target.followups.some((entry) => entry.followupStatus === 'completed')) issues.push('At least one follow-up must be completed')
-    if (target.status !== 'internal_review' && target.status !== 'quotation_in_progress') {
-      issues.push('Enquiry should be in internal review before conversion')
-    }
-    return Promise.resolve({ isValid: issues.length === 0, issues })
-  },
-
   markQuotationLinked(
     enquiryId: string,
     quotationId: string,
@@ -710,11 +692,8 @@ export const enquiryService = {
   },
 
   async convertToQuotation(enquiryId: string, actor: string) {
-    const validation = await this.validateConversion(enquiryId)
-    if (!validation.isValid) return { ok: false, validation, quotationId: undefined }
-
     const target = enquiryStore.find((item) => item.id === enquiryId)
-    if (!target) return { ok: false, validation: { isValid: false, issues: ['Enquiry not found'] } }
+    if (!target) return { ok: false as const, quotationId: undefined }
 
     target.status = 'converted'
     target.lastActivity = nowIso()
@@ -725,8 +704,7 @@ export const enquiryService = {
     const quotation = quotationService.createFromEnquiry(target, actor)
 
     return {
-      ok: true,
-      validation,
+      ok: true as const,
       quotationId: quotation.id,
     }
   },

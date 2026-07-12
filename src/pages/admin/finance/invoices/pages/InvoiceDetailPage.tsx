@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Box, CircularProgress } from '@mui/material'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { BaseCard, ConfirmDialog, EmptyState, Tabs, useToast } from '@/design-system/UIComponents'
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { invoiceService } from '@/shared/services/invoiceService'
 import type { Invoice } from '@/shared/types/invoice'
+import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 import { InvoiceDetailSummary } from '../components/detail/InvoiceDetailSummary'
 import { InvoiceDetailTabContent } from '../components/detail/InvoiceDetailTabs'
 import type { ShareInvoiceModalValue } from '../components/workspace/ShareInvoiceModal'
@@ -15,6 +16,8 @@ const LISTING_PATH = '/admin/finance/invoices'
 export function InvoiceDetailPage() {
   const { invoiceId } = useParams<{ invoiceId: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const listingHref = getListingReturnHref(location, LISTING_PATH)
   const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
   const [invoice, setInvoice] = useState<Invoice>()
@@ -51,7 +54,7 @@ export function InvoiceDetailPage() {
       <EmptyState
         variant="no-data"
         title="Invoice not found"
-        action={{ label: 'Back to invoices', onClick: () => navigate(LISTING_PATH) }}
+        action={{ label: 'Back to invoices', onClick: () => navigate(listingHref) }}
       />
     )
   }
@@ -77,8 +80,8 @@ export function InvoiceDetailPage() {
     <>
       <AdminDetailShell
         breadcrumbs={[
-          { label: 'Finance', href: LISTING_PATH },
-          { label: 'Billing & invoices', href: LISTING_PATH },
+          { label: 'Finance', href: listingHref },
+          { label: 'Billing & invoices', href: listingHref },
           { label: invoice.invoiceId },
         ]}
         summary={

@@ -89,6 +89,12 @@ function recomputeServiceTotals(record: OperationalCase) {
   const extraActual = record.expenses.reduce((sum, expense) => sum + expense.actualAmount, 0)
   record.actualExpense = serviceActual + extraActual
   record.expenseSummary = `₹${record.estimatedExpense.toLocaleString('en-IN')} Est.${record.actualExpense > 0 ? ` · ₹${record.actualExpense.toLocaleString('en-IN')} Actual` : ''}`
+  // Amount paid mirrors the selected on-site fees total above the payment section.
+  const feesPayable = selected.reduce(
+    (sum, service) => sum + (service.actualAmount || service.prefilledAmount),
+    0,
+  )
+  record.amountPaid = feesPayable > 0 ? String(feesPayable) : ''
 }
 
 function cloneOperationalCase(record: OperationalCase): OperationalCase {
@@ -308,6 +314,8 @@ export const operationalCaseHandlingService = {
       paymentDate?: string
       paymentMode?: OperationalCase['paymentMode']
       paymentCardId?: string
+      amountPaid?: string
+      transactionReference?: string
     },
   ): OperationalCase | undefined {
     return mutate(id, record => {
@@ -322,6 +330,12 @@ export const operationalCaseHandlingService = {
       }
       if (details.paymentCardId !== undefined) {
         record.paymentCardId = details.paymentCardId
+      }
+      if (details.amountPaid !== undefined) {
+        record.amountPaid = details.amountPaid
+      }
+      if (details.transactionReference !== undefined) {
+        record.transactionReference = details.transactionReference
       }
     })
   },
