@@ -34,7 +34,7 @@ export function buildCreditCardColumns({
       label: 'Card Name',
       widthSize: adminListingColumnWidthSize('name'),
       sortable: true,
-      filterable: true,
+      filterable: false,
       searchable: true,
     },
     {
@@ -59,7 +59,7 @@ export function buildCreditCardColumns({
       label: 'Created By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
       sortable: true,
-      filterable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
     },
     {
@@ -67,7 +67,7 @@ export function buildCreditCardColumns({
       label: 'Updated By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
       sortable: true,
-      filterable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
     },
     {

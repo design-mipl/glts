@@ -165,8 +165,8 @@ export function SacCodeListingPage() {
             onColumnFiltersChange={listing.setColumnFilters}
             getCellValue={getSacCodeCellValue}
             stickyHeader
-            enableColumnSort={false}
-            enableColumnFilters={false}
+            enableColumnSort
+            enableColumnFilters
             loading={loading}
             emptyTitle={emptyState.emptyTitle}
             emptyDescription={emptyState.emptyDescription}

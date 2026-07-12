@@ -253,8 +253,8 @@ export function TaxConfigurationPage() {
               onColumnFiltersChange={gstListing.setColumnFilters}
               getCellValue={getGstRateCellValue}
               stickyHeader
-              enableColumnSort={false}
-              enableColumnFilters={false}
+              enableColumnSort
+              enableColumnFilters
               loading={loading}
               emptyTitle={emptyState.emptyTitle}
               emptyDescription={emptyState.emptyDescription}
@@ -272,8 +272,8 @@ export function TaxConfigurationPage() {
               onColumnFiltersChange={tdsListing.setColumnFilters}
               getCellValue={getTdsSectionCellValue}
               stickyHeader
-              enableColumnSort={false}
-              enableColumnFilters={false}
+              enableColumnSort
+              enableColumnFilters
               loading={loading}
               emptyTitle={emptyState.emptyTitle}
               emptyDescription={emptyState.emptyDescription}

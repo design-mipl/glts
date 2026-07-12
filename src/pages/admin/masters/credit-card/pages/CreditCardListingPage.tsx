@@ -145,8 +145,8 @@ export function CreditCardListingPage() {
             onColumnFiltersChange={listing.setColumnFilters}
             getCellValue={getCreditCardCellValue}
             stickyHeader
-            enableColumnSort={false}
-            enableColumnFilters={false}
+            enableColumnSort
+            enableColumnFilters
             loading={loading}
             emptyTitle={emptyState.emptyTitle}
             emptyDescription={emptyState.emptyDescription}

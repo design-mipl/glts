@@ -2,8 +2,8 @@ import type { CreditCardMaster } from '@/shared/types/creditCardMaster'
 import { formatMasterDate } from '../../utils/masterListingUtils'
 
 export function getCreditCardCellValue(row: CreditCardMaster, key: string): string {
-  if (key === 'createdAudit') return `${row.createdBy} ${row.createdAt}`
-  if (key === 'updatedAudit') return `${row.updatedBy} ${row.updatedAt}`
+  if (key === 'createdAudit') return row.createdAt
+  if (key === 'updatedAudit') return row.updatedAt
   return String((row as unknown as Record<string, unknown>)[key] ?? '')
 }
 

@@ -36,6 +36,7 @@ import {
   DocumentListingPage,
 } from '../masters/documents'
 import { CreditCardListingPage } from '../masters/credit-card'
+import { CountryGroupListingPage } from '../masters/country-groups'
 import { JurisdictionListingPage } from '../masters/jurisdiction'
 import { SacCodeListingPage } from '../masters/sac-codes'
 import { ServiceListingPage } from '../masters/services'
@@ -90,6 +91,10 @@ import {
   VendorDetailPage,
   VendorListingPage,
 } from '../vendor-management/vendors'
+import {
+  SupportTicketDetailPage,
+  SupportTicketListingPage,
+} from '../support/tickets'
 import {
   B2bAssignmentQueuePage,
   CorporateAssignmentQueuePage,
@@ -162,21 +167,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     title: 'Ground expense & fund management',
     description: 'This module is under development.',
     eyebrow: 'Ground operations',
-    kind: 'coming-soon',
-  },
-
-  {
-    path: 'support/tickets',
-    title: 'Ticket management',
-    description: 'This module is under development.',
-    eyebrow: 'Support ticket management',
-    kind: 'coming-soon',
-  },
-  {
-    path: 'support/communications',
-    title: 'Communication & resolution tracking',
-    description: 'This module is under development.',
-    eyebrow: 'Support ticket management',
     kind: 'coming-soon',
   },
 
@@ -441,6 +431,14 @@ export function AdminRoutes() {
         }
       />
       <Route
+        path="masters/country-groups"
+        element={
+          <PermissionGuard>
+            <CountryGroupListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
         path="masters/jurisdiction"
         element={
           <PermissionGuard>
@@ -520,6 +518,23 @@ export function AdminRoutes() {
           </PermissionGuard>
         }
       />
+      <Route
+        path="support/tickets"
+        element={
+          <PermissionGuard>
+            <SupportTicketListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="support/tickets/:ticketId"
+        element={
+          <PermissionGuard>
+            <SupportTicketDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route path="support/communications" element={<Navigate to="/admin/support/tickets" replace />} />
       <Route
         path="vendor-management/vendors"
         element={

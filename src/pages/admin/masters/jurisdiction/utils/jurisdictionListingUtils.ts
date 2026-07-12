@@ -3,8 +3,8 @@ import { masterStatusLabel } from '../../config/masterStatusConfig'
 
 export function getJurisdictionCellValue(row: JurisdictionMaster, key: string): string {
   if (key === 'status') return masterStatusLabel[row.status]
-  if (key === 'createdAudit') return `${row.createdBy} ${row.createdAt}`
-  if (key === 'updatedAudit') return `${row.updatedBy} ${row.updatedAt}`
+  if (key === 'createdAudit') return row.createdAt
+  if (key === 'updatedAudit') return row.updatedAt
   return String((row as unknown as Record<string, unknown>)[key] ?? '')
 }
 

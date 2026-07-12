@@ -13,6 +13,8 @@ export const EMPTY_VENDOR_FORM: VendorFormData = {
   city: '',
   state: '',
   country: 'India',
+  serviceCountry: '',
+  visaType: '',
   panNumber: '',
   gstApplicable: true,
   gstNumber: '',

@@ -55,10 +55,7 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
   {
     id: 'support',
     label: 'Support tickets',
-    submodules: [
-      { id: 'tickets', label: 'Ticket management' },
-      { id: 'communications', label: 'Communication & resolution' },
-    ],
+    submodules: [{ id: 'tickets', label: 'Support tickets' }],
   },
   {
     id: 'masters',

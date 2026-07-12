@@ -95,13 +95,10 @@ export const adminNav: NavConfig[] = [
     ],
   },
   {
-    type: 'group',
+    type: 'item',
     label: 'Support tickets',
     icon: createElement(Headphones, iconProps),
-    children: [
-      { type: 'item', label: 'Ticket management', href: '/admin/support/tickets' },
-      { type: 'item', label: 'Communication & resolution', href: '/admin/support/communications' },
-    ],
+    href: '/admin/support/tickets',
   },
   {
     type: 'divider',
@@ -121,6 +118,7 @@ export const adminNav: NavConfig[] = [
     icon: createElement(SlidersHorizontal, iconProps),
     children: [
       { type: 'item', label: 'Country', href: '/admin/masters/country' },
+      { type: 'item', label: 'Country Group Master', href: '/admin/masters/country-groups' },
       { type: 'item', label: 'Jurisdiction Master', href: '/admin/masters/jurisdiction' },
       { type: 'item', label: 'Credit Card Master', href: '/admin/masters/credit-card' },
       { type: 'item', label: 'Document master', href: '/admin/masters/documents' },

@@ -333,8 +333,8 @@ export function DocumentListingPage() {
                   navigateFromListing(navigate, `${DOCUMENT_LISTING_PATH}/${row.id}`, listingReturnHref)
                 }
                 stickyHeader
-                enableColumnSort={false}
-                enableColumnFilters={false}
+                enableColumnSort
+                enableColumnFilters
                 loading={loading}
                 emptyTitle={emptyState.emptyTitle}
                 emptyDescription={emptyState.emptyDescription}
@@ -360,8 +360,8 @@ export function DocumentListingPage() {
               onColumnFiltersChange={clientListing.setColumnFilters}
               getCellValue={getClientDocumentCellValue}
               stickyHeader
-              enableColumnSort={false}
-              enableColumnFilters={false}
+              enableColumnSort
+              enableColumnFilters
               loading={loading}
               emptyTitle={emptyState.emptyTitle}
               emptyDescription={emptyState.emptyDescription}

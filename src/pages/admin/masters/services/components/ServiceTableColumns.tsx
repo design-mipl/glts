@@ -38,12 +38,16 @@ export function buildServiceColumns({
       key: 'serviceName',
       label: 'Service Name',
       widthSize: adminListingColumnWidthSize('service'),
+      sortable: true,
+      filterable: false,
       searchable: true,
     },
     {
       key: 'serviceType',
       label: 'Service Type',
       widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      filterable: true,
       render: (_, row) => (
         <Badge label={serviceTypeLabel[row.serviceType]} color="neutral" size="sm" />
       ),
@@ -52,12 +56,16 @@ export function buildServiceColumns({
       key: 'defaultPrice',
       label: 'Default Price',
       widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => formatServicePrice(row),
     },
     {
       key: 'applicableFor',
       label: 'Applicable For',
       widthSize: adminListingColumnWidthSize('description'),
+      sortable: false,
+      filterable: true,
       render: (_, row) => (
         <MasterAudienceTags items={toApplicabilityTagItems(row.applicableFor)} />
       ),
@@ -66,6 +74,8 @@ export function buildServiceColumns({
       key: 'mappedSacCode',
       label: 'Mapped SAC Code',
       widthSize: adminListingColumnWidthSize('code'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => (
         <span
           style={{
@@ -85,6 +95,8 @@ export function buildServiceColumns({
       key: 'status',
       label: 'Status',
       widthSize: adminListingColumnWidthSize('status'),
+      sortable: false,
+      filterable: true,
       render: (_, row) => (
         <Badge
           label={masterStatusLabel[row.status]}
@@ -97,12 +109,16 @@ export function buildServiceColumns({
       key: 'createdAudit',
       label: 'Created By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
     },
     {
       key: 'updatedAudit',
       label: 'Updated By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
     },
     {

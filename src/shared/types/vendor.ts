@@ -128,6 +128,10 @@ export interface Vendor {
   city: string
   state: string
   country: string
+  /** Destination country the vendor covers (from Country Master). */
+  serviceCountry: string
+  /** Visa type covered for the selected destination country. */
+  visaType: string
   panNumber: string
   gstApplicable: boolean
   gstNumber: string
@@ -158,6 +162,8 @@ export interface VendorFormData {
   city: string
   state: string
   country: string
+  serviceCountry: string
+  visaType: string
   panNumber: string
   gstApplicable: boolean
   gstNumber: string

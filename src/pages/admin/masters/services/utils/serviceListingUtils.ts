@@ -18,8 +18,12 @@ export function getServiceSacLabel(row: ServiceMaster): string {
 
 export function getServiceCellValue(row: ServiceMaster, key: string): string {
   if (key === 'status') return masterStatusLabel[row.status]
+  if (key === 'createdAudit') return row.createdAt
+  if (key === 'updatedAudit') return row.updatedAt
   if (key === 'serviceType') return serviceTypeLabel[row.serviceType]
-  if (key === 'defaultPrice') return formatServicePrice(row)
+  if (key === 'defaultPrice') {
+    return row.defaultPrice == null ? '' : String(row.defaultPrice).padStart(12, '0')
+  }
   if (key === 'mappedSacCode') return getServiceSacLabel(row)
   if (key === 'gstRate') return taxMasterService.getGstLabel(row.gstRateId)
   if (key === 'tdsSection') return taxMasterService.getTdsLabel(row.tdsSectionId)

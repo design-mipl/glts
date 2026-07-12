@@ -146,8 +146,8 @@ export function JurisdictionListingPage() {
             onColumnFiltersChange={listing.setColumnFilters}
             getCellValue={getJurisdictionCellValue}
             stickyHeader
-            enableColumnSort={false}
-            enableColumnFilters={false}
+            enableColumnSort
+            enableColumnFilters
             loading={loading}
             emptyTitle={emptyState.emptyTitle}
             emptyDescription={emptyState.emptyDescription}

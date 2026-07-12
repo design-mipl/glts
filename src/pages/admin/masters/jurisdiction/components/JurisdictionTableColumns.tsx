@@ -35,7 +35,7 @@ export function buildJurisdictionColumns({
       label: 'Jurisdiction Name',
       widthSize: adminListingColumnWidthSize('name'),
       sortable: true,
-      filterable: true,
+      filterable: false,
       searchable: true,
     },
     {
@@ -74,7 +74,7 @@ export function buildJurisdictionColumns({
       label: 'Created By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
       sortable: true,
-      filterable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
     },
     {
@@ -82,7 +82,7 @@ export function buildJurisdictionColumns({
       label: 'Updated By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
       sortable: true,
-      filterable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
     },
     {
