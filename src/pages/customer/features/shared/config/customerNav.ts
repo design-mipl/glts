@@ -41,7 +41,7 @@ export function buildCustomerNavConfig({
     { type: 'divider' },
     {
       type: 'item',
-      label: 'Profile details',
+      label: 'Client Profile Details',
       href: `${base}/profile`,
       icon: createElement(Building2, iconProps),
     },

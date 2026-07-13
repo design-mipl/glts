@@ -22,7 +22,9 @@ interface ApplicationFlowStepperProps {
 
 const arrowButtonSx = (colors: ReturnType<typeof usePublicBrandColors>) => ({
   flexShrink: 0,
-  p: 0.25,
+  width: 24,
+  height: 24,
+  p: 0,
   color: colors.textMuted,
   '&:hover': { bgcolor: 'transparent', color: colors.navy },
   '&.Mui-disabled': { color: colors.textMuted, opacity: 0.35 },
@@ -42,58 +44,36 @@ export function ApplicationFlowStepper({
   const showNav = Boolean(onPrevious || onNext)
 
   return (
-    <Box sx={{ width: '100%', py: { xs: 1, md: 1.25 } }}>
+    <Box sx={{ width: '100%', pt: 0.25, pb: 0 }}>
+      <Typography
+        noWrap
+        sx={{
+          mb: 0.5,
+          textAlign: 'center',
+          fontSize: 13,
+          fontWeight: 500,
+          color: colors.textSecondary,
+          lineHeight: 1.2,
+        }}
+      >
+        <Box component="span" sx={{ color: colors.navy, fontWeight: 600 }}>
+          {current?.label}
+        </Box>
+        <Box component="span" sx={{ color: colors.textMuted, mx: 0.75 }}>
+          {activeIndex + 1} of {steps.length}
+        </Box>
+      </Typography>
+
       <Stack
         direction="row"
-        spacing={`${SEGMENT_GAP}px`}
+        alignItems="center"
+        spacing={0.5}
         sx={{ width: '100%' }}
         role="progressbar"
         aria-valuenow={activeIndex + 1}
         aria-valuemin={1}
         aria-valuemax={steps.length}
         aria-label={`Step ${activeIndex + 1} of ${steps.length}: ${current?.label ?? ''}`}
-      >
-        {steps.map((step, i) => {
-          const filled = i <= activeIndex
-          const clickable = Boolean(onStepClick && i <= activeIndex)
-
-          return (
-            <Box
-              key={step.id}
-              role={clickable ? 'button' : undefined}
-              tabIndex={clickable ? 0 : undefined}
-              aria-current={i === activeIndex ? 'step' : undefined}
-              aria-label={step.label}
-              onClick={clickable ? () => onStepClick?.(i) : undefined}
-              onKeyDown={
-                clickable
-                  ? e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        onStepClick?.(i)
-                      }
-                    }
-                  : undefined
-              }
-              sx={{
-                flex: 1,
-                minWidth: 0,
-                height: BAR_HEIGHT,
-                borderRadius: 999,
-                bgcolor: filled ? colors.navy : colors.surfaceAlt,
-                cursor: clickable ? 'pointer' : 'default',
-                transition: 'background-color 180ms ease',
-              }}
-            />
-          )
-        })}
-      </Stack>
-
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent={showNav ? 'space-between' : 'center'}
-        sx={{ mt: 1, minHeight: 24 }}
       >
         {onPrevious ? (
           <IconButton
@@ -103,32 +83,48 @@ export function ApplicationFlowStepper({
             aria-label="Previous step"
             sx={arrowButtonSx(colors)}
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
           </IconButton>
         ) : showNav ? (
-          <Box sx={{ width: 28 }} />
+          <Box sx={{ width: 24, flexShrink: 0 }} />
         ) : null}
 
-        <Typography
-          noWrap
-          sx={{
-            flex: showNav ? 1 : undefined,
-            textAlign: 'center',
-            fontSize: 13,
-            fontWeight: 500,
-            color: colors.textSecondary,
-            lineHeight: 1.3,
-            px: showNav ? 1 : 0,
-          }}
-        >
-          <Box component="span" sx={{ color: colors.navy, fontWeight: 600 }}>
-            {current?.label}
-          </Box>
-          <Box component="span" sx={{ color: colors.textMuted, mx: 0.75 }}>
-            ·
-          </Box>
-          {activeIndex + 1} of {steps.length}
-        </Typography>
+        <Stack direction="row" spacing={`${SEGMENT_GAP}px`} sx={{ flex: 1, minWidth: 0 }}>
+          {steps.map((step, i) => {
+            const filled = i <= activeIndex
+            const clickable = Boolean(onStepClick && i <= activeIndex)
+
+            return (
+              <Box
+                key={step.id}
+                role={clickable ? 'button' : undefined}
+                tabIndex={clickable ? 0 : undefined}
+                aria-current={i === activeIndex ? 'step' : undefined}
+                aria-label={step.label}
+                onClick={clickable ? () => onStepClick?.(i) : undefined}
+                onKeyDown={
+                  clickable
+                    ? e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          onStepClick?.(i)
+                        }
+                      }
+                    : undefined
+                }
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  height: BAR_HEIGHT,
+                  borderRadius: 999,
+                  bgcolor: filled ? colors.navy : colors.surfaceAlt,
+                  cursor: clickable ? 'pointer' : 'default',
+                  transition: 'background-color 180ms ease',
+                }}
+              />
+            )
+          })}
+        </Stack>
 
         {onNext ? (
           <IconButton
@@ -138,10 +134,10 @@ export function ApplicationFlowStepper({
             aria-label="Next step"
             sx={arrowButtonSx(colors)}
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={16} />
           </IconButton>
         ) : showNav ? (
-          <Box sx={{ width: 28 }} />
+          <Box sx={{ width: 24, flexShrink: 0 }} />
         ) : null}
       </Stack>
     </Box>

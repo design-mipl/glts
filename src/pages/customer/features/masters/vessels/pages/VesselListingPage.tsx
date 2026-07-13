@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Typography } from '@mui/material'
-import { Plus } from 'lucide-react'
+import { Download, Plus, Upload } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button, ConfirmDialog, useToast } from '@/design-system/UIComponents'
+import { entityMasterService } from '@/shared/services/entityMasterService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
 import type { VesselMaster } from '@/shared/types/vesselMaster'
+import {
+  downloadVesselMasterUploadTemplate,
+  importVesselMastersFromCsv,
+} from '@/shared/utils/vesselMasterBulkUpload'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { CustomerListingShell } from '@/pages/customer/features/shared/components/listing/CustomerListingShell'
@@ -25,6 +30,7 @@ export function VesselListingPage() {
   const navigate = useNavigate()
   const { base, canAccessMasters } = useCustomerPortalBase()
   const { showToast } = useToast()
+  const uploadInputRef = useRef<HTMLInputElement>(null)
 
   const [rows, setRows] = useState<VesselMaster[]>([])
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
@@ -58,6 +64,38 @@ export function VesselListingPage() {
   const openEdit = (record: VesselMaster) => {
     setEditVessel(record)
     setDrawerOpen(true)
+  }
+
+  const handleDownloadTemplate = () => {
+    downloadVesselMasterUploadTemplate()
+    showToast({ title: 'Export format downloaded', variant: 'success' })
+  }
+
+  const handleUploadFile = async (file: File) => {
+    const text = await file.text()
+    const result = importVesselMastersFromCsv(text, {
+      entityIds: entityMasterService.list().map((entity) => entity.id),
+      existingVesselIds: rows.map((row) => row.id),
+    })
+
+    if (result.imported.length === 0) {
+      showToast({
+        title: 'No vessels imported',
+        description: result.skipped[0]?.reason ?? 'Check the file format and try again.',
+        variant: 'error',
+      })
+      return
+    }
+
+    loadRows()
+    showToast({
+      title: `${result.imported.length} vessel${result.imported.length === 1 ? '' : 's'} uploaded`,
+      description:
+        result.skipped.length > 0
+          ? `${result.skipped.length} row${result.skipped.length === 1 ? '' : 's'} skipped.`
+          : undefined,
+      variant: result.skipped.length > 0 ? 'warning' : 'success',
+    })
   }
 
   const columns = useMemo(
@@ -105,20 +143,45 @@ export function VesselListingPage() {
           />
         }
         toolbar={
-          <CustomerListingToolbar
-            searchValue={listing.tableState.searchQuery}
-            onSearch={listing.handleSearch}
-            searchPlaceholder="Search vessels…"
-            onExport={() => {
-              downloadVesselCsv(listing.filteredRows)
-              showToast({ title: 'Export complete', variant: 'success' })
-            }}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            columns={columns.filter(c => c.key !== 'actions').map(c => ({ key: c.key, label: c.label }))}
-            hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
-            onHiddenColumnKeysChange={keys => listing.setTableState(s => ({ ...s, hiddenColumnKeys: keys }))}
-          />
+          <>
+            <CustomerListingToolbar
+              searchValue={listing.tableState.searchQuery}
+              onSearch={listing.handleSearch}
+              searchPlaceholder="Search vessels…"
+              onExport={() => {
+                downloadVesselCsv(listing.filteredRows)
+                showToast({ title: 'Export complete', variant: 'success' })
+              }}
+              exportMenuItems={[
+                {
+                  label: 'Download export format',
+                  icon: <Download size={16} />,
+                  onClick: handleDownloadTemplate,
+                },
+                {
+                  label: 'Upload vessels',
+                  icon: <Upload size={16} />,
+                  onClick: () => uploadInputRef.current?.click(),
+                },
+              ]}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              columns={columns.filter(c => c.key !== 'actions').map(c => ({ key: c.key, label: c.label }))}
+              hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
+              onHiddenColumnKeysChange={keys => listing.setTableState(s => ({ ...s, hiddenColumnKeys: keys }))}
+            />
+            <input
+              ref={uploadInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              hidden
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                event.target.value = ''
+                if (file) void handleUploadFile(file)
+              }}
+            />
+          </>
         }
         table={
           viewMode === 'table' ? (

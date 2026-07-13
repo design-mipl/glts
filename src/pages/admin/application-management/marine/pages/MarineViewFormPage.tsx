@@ -340,7 +340,7 @@ export function MarineViewFormPage() {
     }
     showToast({
       title: 'Marked as submitted',
-      description: 'Status updated to Submitted · Embassy submission.',
+      description: 'Status updated to Submitted.',
       variant: 'success',
     })
     navigate(listingPath)

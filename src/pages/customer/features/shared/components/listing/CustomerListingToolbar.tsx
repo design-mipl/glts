@@ -4,8 +4,9 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material'
-import { Download, Grid3x3, List, Columns, Filter } from 'lucide-react'
-import { Button, ColumnPickerPopover, SearchInput } from '@/design-system/UIComponents'
+import { ChevronDown, Download, Grid3x3, List, Columns, Filter } from 'lucide-react'
+import { Button, ColumnPickerPopover, Menu, SearchInput } from '@/design-system/UIComponents'
+import type { MenuItem_T } from '@/design-system/UIComponents'
 import {
   ListingFilterPopoverShell,
   type ListingFilterPopoverWidth,
@@ -41,6 +42,8 @@ export interface CustomerListingToolbarProps {
   onSearch: (value: string) => void
   searchPlaceholder?: string
   onExport?: () => void
+  /** Extra Export-menu actions (template download, bulk upload, etc.). Turns Export into a dropdown. */
+  exportMenuItems?: MenuItem_T[]
   viewMode?: 'table' | 'grid'
   onViewModeChange?: (mode: 'table' | 'grid') => void
   columns?: CustomerListingToolbarColumn[]
@@ -55,6 +58,7 @@ export function CustomerListingToolbar({
   onSearch,
   searchPlaceholder = 'Search…',
   onExport,
+  exportMenuItems,
   viewMode = 'table',
   onViewModeChange,
   columns = [],
@@ -68,6 +72,22 @@ export function CustomerListingToolbar({
   const hideableColumns = columns.filter(c => c.hideable !== false && c.key !== 'actions')
   const columnPickerEnabled = hideableColumns.length >= 2 && Boolean(onHiddenColumnKeysChange)
   const filterActive = filterPopover?.active ?? false
+  const hasExportMenu = Boolean(exportMenuItems && exportMenuItems.length > 0)
+  const showExport = Boolean(onExport) || hasExportMenu
+
+  const exportTrigger = (
+    <Button
+      variant="neutral"
+      size="sm"
+      startIcon={<Download size={14} strokeWidth={1.75} />}
+      endIcon={hasExportMenu ? <ChevronDown size={14} strokeWidth={1.75} /> : undefined}
+      onClick={hasExportMenu ? undefined : onExport}
+    >
+      <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+        Export
+      </Box>
+    </Button>
+  )
 
   return (
     <Box sx={listingToolbarRootSx()}>
@@ -113,18 +133,26 @@ export function CustomerListingToolbar({
           </>
         )}
 
-        {onExport && (
-          <Button
-            variant="neutral"
-            size="sm"
-            startIcon={<Download size={14} strokeWidth={1.75} />}
-            onClick={onExport}
-          >
-            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-              Export
-            </Box>
-          </Button>
+        {showExport && hasExportMenu && (
+          <Menu
+            trigger={exportTrigger}
+            placement="bottom-end"
+            items={[
+              ...(onExport
+                ? [
+                    {
+                      label: 'Export list',
+                      icon: <Download size={16} />,
+                      onClick: onExport,
+                    } satisfies MenuItem_T,
+                  ]
+                : []),
+              ...(exportMenuItems ?? []),
+            ]}
+          />
         )}
+
+        {showExport && !hasExportMenu && onExport && exportTrigger}
 
         {columnPickerEnabled && onHiddenColumnKeysChange && (
           <>

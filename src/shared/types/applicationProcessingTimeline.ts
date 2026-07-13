@@ -32,7 +32,7 @@ export const APPLICATION_PROCESSING_STAGE_ORDER: ApplicationProcessingStageId[] 
 ]
 
 export const APPLICATION_PROCESSING_STAGE_LABELS: Record<ApplicationProcessingStageId, string> = {
-  ready: 'Ready of submission',
+  ready: 'Ready for submission',
   submitted: 'Submitted',
   appointment: 'Appointment booked',
   embassy: 'Embassy processing',

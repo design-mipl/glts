@@ -5,11 +5,12 @@ import {
   LifeBuoy,
 } from 'lucide-react'
 import type { NavigateFunction } from 'react-router-dom'
-import { RowActions, type Column } from '@/design-system/UIComponents'
+import { RowActions, Tooltip, type Column } from '@/design-system/UIComponents'
 import type { Toast } from '@/design-system/UIComponents'
 import { CustomerStatusChip } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 import {
   formatBulkApplicantListingLabel,
+  resolveBulkApplicantNames,
   type BulkBatchRow,
   type SingleApplicationRow,
 } from '../../data/applicationFlowData'
@@ -19,7 +20,6 @@ import {
   getApplicationTypeTone,
 } from './applicationStatus'
 import {
-  resolveApplicationCompanyName,
   resolveApplicationVesselName,
 } from '../../utils/applicationCompanyUtils'
 import {
@@ -143,7 +143,7 @@ export function buildUnifiedApplicationColumns({
   const columns: Column<SingleApplicationRow | BulkBatchRow>[] = [
     {
       key: 'id',
-      label: 'GLTS reference',
+      label: 'GLTS ref no',
       sortable: true,
       filterable: false,
       width: 160,
@@ -178,26 +178,35 @@ export function buildUnifiedApplicationColumns({
     },
     {
       key: 'applicantName',
-      label: 'Applicant',
+      label: 'Pax name',
       sortable: false,
       filterable: false,
-      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
-        <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-          {row.recordType === 'bulk' ? formatBulkApplicantListingLabel(row) : row.applicantName}
-        </Typography>
-      ),
-    },
-    {
-      key: 'companyName',
-      label: 'Company name',
-      sortable: true,
-      filterable: true,
-      width: 180,
-      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
-        <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-          {resolveApplicationCompanyName(row)}
-        </Typography>
-      ),
+      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => {
+        if (row.recordType !== 'bulk') {
+          return (
+            <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+              {row.applicantName}
+            </Typography>
+          )
+        }
+
+        const passengerNames = resolveBulkApplicantNames(row)
+        return (
+          <Tooltip
+            placement="top-start"
+            maxWidth={320}
+            content={passengerNames.join(', ')}
+          >
+            <Typography
+              variant="body2"
+              fontWeight={600}
+              sx={{ fontSize: 13, cursor: 'default', display: 'inline-block', maxWidth: '100%' }}
+            >
+              {formatBulkApplicantListingLabel(row)}
+            </Typography>
+          </Tooltip>
+        )
+      },
     },
     {
       key: 'vesselName',
@@ -223,7 +232,32 @@ export function buildUnifiedApplicationColumns({
       ),
     },
     { key: 'visaType', label: 'Visa type', sortable: false, filterable: true, width: 130 },
-    { key: 'travelDate', label: 'Travel date', sortable: true, filterable: true, width: 110 },
+    { key: 'travelDate', label: 'Date of Travel', sortable: true, filterable: true, width: 120 },
+    {
+      key: 'processingStage',
+      label: 'Processing stage',
+      sortable: false,
+      filterable: true,
+      width: 160,
+      render: (value: string) => (
+        <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+          {value}
+        </Typography>
+      ),
+    },
+    { key: 'submissionDate', label: 'Submission Date', sortable: true, filterable: false, width: 130 },
+    {
+      key: 'tentativeCollectionDate',
+      label: 'Tentative Collection Date',
+      sortable: true,
+      filterable: false,
+      width: 170,
+      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {row.tentativeCollectionDate?.trim() || '—'}
+        </Typography>
+      ),
+    },
   ]
 
   if (showCreatedBy) {
@@ -248,25 +282,25 @@ export function buildUnifiedApplicationColumns({
 
   columns.push(
     {
+      key: 'poReference',
+      label: 'PO / CID',
+      sortable: true,
+      filterable: true,
+      width: 140,
+      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {row.poReference?.trim() || '—'}
+        </Typography>
+      ),
+    },
+    {
       key: 'operationalStatus',
-      label: 'Status',
+      label: 'Visa status',
       sortable: true,
       filterable: true,
       width: 150,
       render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
         <CustomerStatusChip label={row.operationalStatus} tone={getApplicationOperationalTone(row.operationalStatus)} />
-      ),
-    },
-    {
-      key: 'processingStage',
-      label: 'Processing stage',
-      sortable: false,
-      filterable: true,
-      width: 150,
-      render: (value: string) => (
-        <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-          {value}
-        </Typography>
       ),
     },
     { key: 'lastUpdated', label: 'Last updated', sortable: true, filterable: false, width: 110 },

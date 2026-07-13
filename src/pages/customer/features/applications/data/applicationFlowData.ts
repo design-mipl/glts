@@ -32,6 +32,7 @@ export interface SingleApplicationRow {
   jurisdiction?: string
   travelDate: string
   submissionDate: string
+  tentativeCollectionDate?: string
   createdAt: string
   lastUpdated: string
   processingStage: string
@@ -67,6 +68,7 @@ export interface BulkBatchRow {
   errors: number
   travelDate: string
   submissionDate: string
+  tentativeCollectionDate?: string
   createdAt: string
   lastUpdated: string
   processingStage: string
@@ -213,6 +215,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     jurisdiction: 'Mumbai',
     travelDate: '2026-05-01',
     submissionDate: '2026-02-10',
+    tentativeCollectionDate: '2026-04-20',
     createdAt: '2026-02-01',
     lastUpdated: '2026-02-18',
     processingStage: 'Embassy processing',
@@ -241,7 +244,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     submissionDate: '',
     createdAt: '2026-02-21',
     lastUpdated: '2026-02-21',
-    processingStage: 'Intake',
+    processingStage: 'Ready for submission',
     operationalStatus: 'Draft',
     createdByEmail: 'priya@glts.com',
     createdByRole: 'booker',
@@ -261,7 +264,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     submissionDate: '2026-02-18',
     createdAt: '2026-02-12',
     lastUpdated: '2026-02-20',
-    processingStage: 'Document verification',
+    processingStage: 'Ready for submission',
     operationalStatus: 'Verification Pending',
     createdByEmail: 'ops@harborlinecrew.com',
     createdByRole: 'admin',
@@ -278,7 +281,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     submissionDate: '2026-02-05',
     createdAt: '2026-01-28',
     lastUpdated: '2026-02-17',
-    processingStage: 'Document verification',
+    processingStage: 'Ready for submission',
     operationalStatus: 'Correction Required',
     createdByEmail: 'james@glts.com',
     createdByRole: 'booker',
@@ -299,7 +302,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     submissionDate: '2026-01-15',
     createdAt: '2026-01-10',
     lastUpdated: '2026-02-12',
-    processingStage: 'Closed',
+    processingStage: 'Delivered',
     operationalStatus: 'Completed',
     createdByEmail: 'james@glts.com',
     createdByRole: 'booker',
@@ -325,7 +328,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     submissionDate: '',
     createdAt: '2026-02-20',
     lastUpdated: '2026-02-20',
-    processingStage: 'Intake',
+    processingStage: 'Ready for submission',
     operationalStatus: 'Draft',
     createdByEmail: 'sneha.patel@glts.com',
     createdByRole: 'admin',
@@ -343,7 +346,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     submissionDate: '',
     createdAt: '2026-02-19',
     lastUpdated: '2026-02-19',
-    processingStage: 'Intake',
+    processingStage: 'Ready for submission',
     operationalStatus: 'Draft',
     createdByEmail: 'admin@glts.com',
     createdByRole: 'super_admin',
@@ -360,7 +363,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     submissionDate: '2026-02-14',
     createdAt: '2026-02-08',
     lastUpdated: '2026-02-16',
-    processingStage: 'Document verification',
+    processingStage: 'Ready for submission',
     operationalStatus: 'Pending Documents',
     createdByEmail: 'arun.krishnan@glts.com',
     createdByRole: 'admin',
@@ -378,9 +381,10 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     jurisdiction: 'Delhi',
     travelDate: '2026-04-02',
     submissionDate: '2026-02-01',
+    tentativeCollectionDate: '2026-03-25',
     createdAt: '2026-01-25',
     lastUpdated: '2026-02-15',
-    processingStage: 'Appointment Booked',
+    processingStage: 'Appointment booked',
     operationalStatus: 'Appointment Booked',
     appointmentDate: '2026-03-12',
     poReference: 'PO-AMX-2026-014',
@@ -402,7 +406,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     submissionDate: '2026-01-20',
     createdAt: '2026-01-18',
     lastUpdated: '2026-02-10',
-    processingStage: 'Appointment Booked',
+    processingStage: 'Appointment booked',
     operationalStatus: 'Appointment Booked',
     appointmentDate: '2026-03-08',
     createdByEmail: 'admin@glts.com',
@@ -461,9 +465,10 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     jurisdiction: 'Chennai',
     travelDate: '2026-05-28',
     submissionDate: '2026-02-09',
+    tentativeCollectionDate: '2026-05-10',
     createdAt: '2026-01-29',
     lastUpdated: '2026-02-18',
-    processingStage: 'Passport dispatch',
+    processingStage: 'Dispatch',
     operationalStatus: 'Passport Ready',
     createdByEmail: 'admin@glts.com',
     createdByRole: 'super_admin',
@@ -483,7 +488,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     submissionDate: '2026-01-30',
     createdAt: '2026-01-16',
     lastUpdated: '2026-02-14',
-    processingStage: 'Closed',
+    processingStage: 'Delivered',
     operationalStatus: 'Completed',
     createdByEmail: 'priya@glts.com',
     createdByRole: 'booker',
@@ -500,7 +505,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     submissionDate: '2026-02-12',
     createdAt: '2026-02-01',
     lastUpdated: '2026-02-14',
-    processingStage: 'Document verification',
+    processingStage: 'Ready for submission',
     operationalStatus: 'Verification Pending',
     createdByEmail: 'sneha.patel@glts.com',
     createdByRole: 'admin',
@@ -517,7 +522,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     submissionDate: '2026-01-05',
     createdAt: '2025-12-28',
     lastUpdated: '2026-01-22',
-    processingStage: 'Closed',
+    processingStage: 'Delivered',
     operationalStatus: 'Rejected',
     createdByEmail: 'james@glts.com',
     createdByRole: 'booker',
@@ -542,9 +547,10 @@ export const mockBulkBatches: BulkBatchRow[] = [
     errors: 0,
     travelDate: '2026-05-01',
     submissionDate: '2026-02-08',
+    tentativeCollectionDate: '2026-04-22',
     createdAt: '2026-01-30',
     lastUpdated: '2026-02-18',
-    processingStage: 'Appointment Booked',
+    processingStage: 'Appointment booked',
     operationalStatus: 'Appointment Booked',
     appointmentDate: '2026-03-15',
     createdByEmail: 'admin@glts.com',
@@ -567,7 +573,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     submissionDate: '2026-02-15',
     createdAt: '2026-02-01',
     lastUpdated: '2026-02-17',
-    processingStage: 'Embassy submission',
+    processingStage: 'Submitted',
     operationalStatus: 'Submitted',
     createdByEmail: 'james@glts.com',
     createdByRole: 'booker',
@@ -589,7 +595,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     submissionDate: '2026-01-28',
     createdAt: '2026-01-15',
     lastUpdated: '2026-02-12',
-    processingStage: 'Passport dispatch',
+    processingStage: 'Dispatch',
     operationalStatus: 'Passport Ready',
     createdByEmail: 'sneha.patel@glts.com',
     createdByRole: 'admin',
@@ -611,7 +617,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     submissionDate: '',
     createdAt: '2026-02-18',
     lastUpdated: '2026-02-18',
-    processingStage: 'Intake',
+    processingStage: 'Ready for submission',
     operationalStatus: 'Draft',
     createdByEmail: 'priya@glts.com',
     createdByRole: 'booker',
@@ -635,7 +641,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     submissionDate: '2026-02-01',
     createdAt: '2026-01-20',
     lastUpdated: '2026-02-16',
-    processingStage: 'Appointment Booked',
+    processingStage: 'Appointment booked',
     operationalStatus: 'Appointment Booked',
     appointmentDate: '2026-03-20',
     createdByEmail: 'arun.krishnan@glts.com',
@@ -660,7 +666,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     submissionDate: '2026-02-13',
     createdAt: '2026-02-04',
     lastUpdated: '2026-02-18',
-    processingStage: 'Embassy submission',
+    processingStage: 'Submitted',
     operationalStatus: 'Under Review',
     createdByEmail: 'ops@harborlinecrew.com',
     createdByRole: 'admin',
@@ -682,9 +688,10 @@ export const mockBulkBatches: BulkBatchRow[] = [
     errors: 0,
     travelDate: '2026-05-18',
     submissionDate: '2026-02-06',
+    tentativeCollectionDate: '2026-05-05',
     createdAt: '2026-01-26',
     lastUpdated: '2026-02-17',
-    processingStage: 'Passport dispatch',
+    processingStage: 'Dispatch',
     operationalStatus: 'Passport Ready',
     createdByEmail: 'dispatch@northseamanning.com',
     createdByRole: 'booker',
@@ -732,7 +739,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     submissionDate: '2026-01-10',
     createdAt: '2025-12-20',
     lastUpdated: '2026-02-05',
-    processingStage: 'Closed',
+    processingStage: 'Delivered',
     operationalStatus: 'Completed',
     createdByEmail: 'admin@glts.com',
     createdByRole: 'super_admin',
@@ -941,13 +948,34 @@ export function resolveBulkPrimaryApplicantName(batch: BulkBatchRow): string {
   if (batch.primaryApplicantName?.trim()) {
     return batch.primaryApplicantName.trim()
   }
-  if (batch.id === GLTS_BATCH_IDS.schengenCrew) {
-    const firstTraveler = mockUploadQueue[0]?.travelerName
-    if (firstTraveler && firstTraveler !== '—') {
-      return toApplicantDisplayName(firstTraveler)
-    }
-  }
+  const names = resolveBulkApplicantNames(batch)
+  if (names.length > 0) return names[0]
   return 'Traveler 1'
+}
+
+/** All passenger display names for a bulk batch (queue when available, otherwise generated). */
+export function resolveBulkApplicantNames(batch: BulkBatchRow): string[] {
+  const fromQueue = mockUploadQueue
+    .filter(row => row.gltsApplicationId === batch.id)
+    .sort((a, b) => a.sequenceNo - b.sequenceNo)
+    .map(row => toApplicantDisplayName(row.travelerName))
+    .filter(name => Boolean(name) && name !== '—')
+
+  if (fromQueue.length > 0) {
+    if (fromQueue.length >= batch.totalApplicants) {
+      return fromQueue.slice(0, batch.totalApplicants)
+    }
+    const names = [...fromQueue]
+    while (names.length < batch.totalApplicants) {
+      names.push(`Traveler ${names.length + 1}`)
+    }
+    return names
+  }
+
+  const primary = batch.primaryApplicantName?.trim() || 'Traveler 1'
+  return Array.from({ length: Math.max(batch.totalApplicants, 1) }, (_, index) =>
+    index === 0 ? primary : `Traveler ${index + 1}`,
+  )
 }
 
 export function formatBulkApplicantListingLabel(batch: BulkBatchRow): string {

@@ -8,7 +8,6 @@ interface VesselFormFieldsProps {
   formData: VesselMasterFormData
   errors: Record<string, string>
   flagOptions: string[]
-  entityOptions?: { value: string; label: string }[]
   onUpdate: (patch: Partial<VesselMasterFormData>) => void
 }
 
@@ -29,7 +28,6 @@ export function VesselFormFields({
   formData,
   errors,
   flagOptions,
-  entityOptions,
   onUpdate,
 }: VesselFormFieldsProps) {
   if (variant === 'secondary') {
@@ -50,16 +48,6 @@ export function VesselFormFields({
 
   return (
     <>
-      {entityOptions && entityOptions.length > 0 ? (
-        <FormField label="Linked entity">
-          <Select
-            value={formData.linkedEntityId}
-            onChange={v => onUpdate({ linkedEntityId: String(v) })}
-            options={[{ value: '', label: 'Select entity' }, ...entityOptions]}
-            fullWidth
-          />
-        </FormField>
-      ) : null}
       <FormField label="Vessel name" required error={!!errors.vesselName} helperText={errors.vesselName}>
         <Input
           value={formData.vesselName}

@@ -118,7 +118,7 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
       </Typography>
       <Typography sx={{ fontSize: 13, color: colors.textSecondary, mb: 2 }}>
         {isMarine
-          ? 'Select a vessel from your master list to auto-fill marine application details.'
+          ? 'Select a vessel and billing entity from your master lists, and optionally add a PO number/CID number.'
           : isCorporate
             ? 'Select an entity from your master list to auto-fill corporate billing details.'
             : 'Select billing entity and vessel from your master lists, or leave optional fields blank.'}
@@ -163,6 +163,40 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
 
           {isMarine && (
             <>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="PO number/CID number" optional>
+                  <Input
+                    fullWidth
+                    size="sm"
+                    placeholder="e.g. PO-2026-0142 or CID-12345"
+                    value={state.referencePo}
+                    onChange={value => onUpdate({ referencePo: value })}
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Billing entity" optional>
+                  <Select
+                    fullWidth
+                    placeholder="Select billing entity from master"
+                    value={state.entityId}
+                    onChange={v => handleEntitySelect(String(v))}
+                    options={[
+                      { value: '', label: 'Select billing entity' },
+                      ...activeEntities.map(e => ({ value: e.id, label: e.entityName })),
+                    ]}
+                  />
+                </FormField>
+              </Grid>
+              {state.entityId && (
+                <Grid size={{ xs: 12 }}>
+                  <Stack direction="row" flexWrap="wrap" gap={0.75}>
+                    <Chip label={state.entityName} size="small" />
+                    <Chip label={state.contactPerson} size="small" variant="outlined" />
+                    <Chip label={state.billingAddress} size="small" variant="outlined" />
+                  </Stack>
+                </Grid>
+              )}
               <Grid size={{ xs: 12 }}>
                 <FormField label="Vessel">
                   <Select

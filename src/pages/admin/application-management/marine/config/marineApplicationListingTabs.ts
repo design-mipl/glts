@@ -42,11 +42,11 @@ export function resolveMarineApplicationQueueTab(
     return 'draft'
   }
 
-  if (row.operationalStatus === 'Completed' || row.processingStage === 'Closed') {
+  if (row.operationalStatus === 'Completed' || row.processingStage === 'Delivered') {
     return 'dispatched'
   }
 
-  if (row.processingStage === 'Passport dispatch' || row.operationalStatus === 'Passport Ready') {
+  if (row.processingStage === 'Dispatch' || row.operationalStatus === 'Passport Ready') {
     return 'collected'
   }
 
@@ -58,13 +58,12 @@ export function resolveMarineApplicationQueueTab(
     return 'vfs_submission_pending'
   }
 
-  if (row.processingStage === 'Embassy submission') {
+  if (row.processingStage === 'Submitted') {
     return 'online_submission_pending'
   }
 
   if (
-    row.processingStage === 'Document verification' ||
-    row.processingStage === 'Intake' ||
+    row.processingStage === 'Ready for submission' ||
     VERIFICATION_PENDING_STATUSES.has(row.operationalStatus)
   ) {
     return 'verification_pending'

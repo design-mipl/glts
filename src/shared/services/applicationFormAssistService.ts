@@ -166,7 +166,7 @@ function saveRecord(record: FormAssistRecord) {
 function syncListingAfterExternalSubmit(applicationId: string) {
   const patch = {
     operationalStatus: 'Submitted' as ApplicationOperationalStatus,
-    processingStage: 'Embassy submission',
+    processingStage: 'Submitted',
     status: 'Submitted',
     lastUpdated: new Date().toISOString().slice(0, 10),
   }
