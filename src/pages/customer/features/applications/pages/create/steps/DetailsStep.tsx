@@ -4,6 +4,7 @@ import { FormField, Input, Select } from '@/design-system/UIComponents'
 import { loadSession } from '@/shared/auth/session'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { getVisaOfferingById } from '@/shared/services/countryMasterService'
+import { corporateAccountService } from '@/shared/services/corporateAccountService'
 import { entityMasterService } from '@/shared/services/entityMasterService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
 import { vesselTypeLabel } from '@/pages/customer/features/masters/vessels/config/vesselTypeConfig'
@@ -11,6 +12,10 @@ import { customerPortalService } from '@/pages/customer/features/shared/services
 import { CustomerCard } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 import { CustomerDetailSection } from '@/pages/customer/features/shared/components/detail'
 import { ApplicationBillingTermsSummaryCard } from '../../../components/ApplicationBillingTermsSummaryCard'
+import {
+  isAdminFlowPolicy,
+  useApplicationFlowPolicy,
+} from '../../../context/ApplicationFlowPolicyContext'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
 import { FlowStepActions } from '../../../components/create/FlowStepActions'
 
@@ -22,6 +27,8 @@ interface DetailsStepProps {
 
 export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
   const colors = usePublicBrandColors()
+  const { policy } = useApplicationFlowPolicy()
+  const isAdmin = isAdminFlowPolicy(policy)
 
   const offering = useMemo(
     () => getVisaOfferingById(state.countryId, state.visaOfferingId),
@@ -53,14 +60,74 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
     [showBillingTerms],
   )
 
-  const activeEntities = useMemo(
-    () => entityMasterService.list({ status: 'active' }),
-    [],
+  const activeCompanies = useMemo(
+    () => (isAdmin ? corporateAccountService.list({ status: 'active' }) : []),
+    [isAdmin],
   )
-  const activeVessels = useMemo(
-    () => vesselMasterService.list({ status: 'active' }),
-    [],
+
+  const selectedAccount = useMemo(
+    () =>
+      isAdmin && state.corporateAccountId
+        ? corporateAccountService.getById(state.corporateAccountId)
+        : undefined,
+    [isAdmin, state.corporateAccountId],
   )
+
+  const activeEntities = useMemo(() => {
+    const rows = entityMasterService.list({ status: 'active' })
+    if (!isAdmin) return rows
+    if (!selectedAccount) return []
+    const linked = new Set(selectedAccount.entityIds)
+    return rows.filter(row => linked.has(row.id))
+  }, [isAdmin, selectedAccount])
+
+  const activeVessels = useMemo(() => {
+    const rows = vesselMasterService.list({ status: 'active' })
+    if (!isAdmin) return rows
+    if (!selectedAccount) return []
+    const linked = new Set(selectedAccount.vesselIds)
+    return rows.filter(row => linked.has(row.id))
+  }, [isAdmin, selectedAccount])
+
+  const handleCompanySelect = (accountId: string) => {
+    if (!accountId) {
+      onUpdate({
+        corporateAccountId: '',
+        companyName: '',
+        entityId: '',
+        entityName: '',
+        contactPerson: '',
+        location: '',
+        billingAddress: '',
+        vesselId: '',
+        vesselName: '',
+        imoNumber: '',
+        vesselType: '',
+        flagCountry: '',
+        portOfRegistry: '',
+        joiningPort: '',
+      })
+      return
+    }
+    const account = corporateAccountService.getById(accountId)
+    if (!account) return
+    onUpdate({
+      corporateAccountId: account.id,
+      companyName: account.companyName,
+      entityId: '',
+      entityName: '',
+      contactPerson: '',
+      location: '',
+      billingAddress: '',
+      vesselId: '',
+      vesselName: '',
+      imoNumber: '',
+      vesselType: '',
+      flagCountry: '',
+      portOfRegistry: '',
+      joiningPort: '',
+    })
+  }
 
   const handleEntitySelect = (entityId: string) => {
     if (!entityId) {
@@ -111,17 +178,24 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
     })
   }
 
+  const entityVesselDisabled = isAdmin && !state.corporateAccountId
+  const continueDisabled = isAdmin && !state.corporateAccountId
+
+  const detailsDescription = isAdmin
+    ? 'Select the company / customer first, then choose billing entity and vessel from that account’s masters.'
+    : isMarine
+      ? 'Select a vessel and billing entity from your master lists, and optionally add a PO number/CID number.'
+      : isCorporate
+        ? 'Select an entity from your master list to auto-fill corporate billing details.'
+        : 'Select billing entity and vessel from your master lists, or leave optional fields blank.'
+
   return (
     <Box sx={{ maxWidth: '100%', mx: 'auto', width: '100%' }}>
       <Typography sx={{ fontWeight: 800, fontSize: { xs: 20, md: 22 }, color: colors.navy, mb: 0.5 }}>
         Additional details
       </Typography>
       <Typography sx={{ fontSize: 13, color: colors.textSecondary, mb: 2 }}>
-        {isMarine
-          ? 'Select a vessel and billing entity from your master lists, and optionally add a PO number/CID number.'
-          : isCorporate
-            ? 'Select an entity from your master list to auto-fill corporate billing details.'
-            : 'Select billing entity and vessel from your master lists, or leave optional fields blank.'}
+        {detailsDescription}
       </Typography>
 
       <Card
@@ -133,15 +207,40 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
         }}
       >
         <Grid container spacing={1.25}>
+          {isAdmin && (
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FormField label="Company / Customer">
+                <Select
+                  fullWidth
+                  placeholder="Select company or customer"
+                  value={state.corporateAccountId}
+                  onChange={v => handleCompanySelect(String(v))}
+                  options={[
+                    { value: '', label: 'Select company / customer' },
+                    ...activeCompanies.map(a => ({
+                      value: a.id,
+                      label: a.companyName,
+                    })),
+                  ]}
+                />
+              </FormField>
+            </Grid>
+          )}
+
           {isCorporate && (
             <>
-              <Grid size={{ xs: 12 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <FormField label="Entity">
                   <Select
                     fullWidth
-                    placeholder="Select entity from master"
+                    placeholder={
+                      entityVesselDisabled
+                        ? 'Select a company first'
+                        : 'Select entity from master'
+                    }
                     value={state.entityId}
                     onChange={v => handleEntitySelect(String(v))}
+                    disabled={entityVesselDisabled}
                     options={[
                       { value: '', label: 'Select entity' },
                       ...activeEntities.map(e => ({ value: e.id, label: e.entityName })),
@@ -178,12 +277,37 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
                 <FormField label="Billing entity" optional>
                   <Select
                     fullWidth
-                    placeholder="Select billing entity from master"
+                    placeholder={
+                      entityVesselDisabled
+                        ? 'Select a company first'
+                        : 'Select billing entity from master'
+                    }
                     value={state.entityId}
                     onChange={v => handleEntitySelect(String(v))}
+                    disabled={entityVesselDisabled}
                     options={[
                       { value: '', label: 'Select billing entity' },
                       ...activeEntities.map(e => ({ value: e.id, label: e.entityName })),
+                    ]}
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Vessel">
+                  <Select
+                    fullWidth
+                    placeholder={
+                      entityVesselDisabled ? 'Select a company first' : 'Select vessel from master'
+                    }
+                    value={state.vesselId}
+                    onChange={v => handleVesselSelect(String(v))}
+                    disabled={entityVesselDisabled}
+                    options={[
+                      { value: '', label: 'Select vessel' },
+                      ...activeVessels.map(v => ({
+                        value: v.id,
+                        label: `${v.vesselName} (IMO ${v.imoNumber})`,
+                      })),
                     ]}
                   />
                 </FormField>
@@ -197,23 +321,6 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
                   </Stack>
                 </Grid>
               )}
-              <Grid size={{ xs: 12 }}>
-                <FormField label="Vessel">
-                  <Select
-                    fullWidth
-                    placeholder="Select vessel from master"
-                    value={state.vesselId}
-                    onChange={v => handleVesselSelect(String(v))}
-                    options={[
-                      { value: '', label: 'Select vessel' },
-                      ...activeVessels.map(v => ({
-                        value: v.id,
-                        label: `${v.vesselName} (IMO ${v.imoNumber})`,
-                      })),
-                    ]}
-                  />
-                </FormField>
-              </Grid>
               {state.vesselId && (
                 <Grid size={{ xs: 12 }}>
                   <Stack direction="row" flexWrap="wrap" gap={0.75}>
@@ -253,9 +360,14 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
                 <FormField label="Billing address" optional>
                   <Select
                     fullWidth
-                    placeholder="Select billing entity from master"
+                    placeholder={
+                      entityVesselDisabled
+                        ? 'Select a company first'
+                        : 'Select billing entity from master'
+                    }
                     value={state.entityId}
                     onChange={v => handleEntitySelect(String(v))}
+                    disabled={entityVesselDisabled}
                     options={[
                       { value: '', label: 'Select billing entity' },
                       ...activeEntities.map(e => ({ value: e.id, label: e.entityName })),
@@ -275,9 +387,12 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
                 <FormField label="Vessel name" optional>
                   <Select
                     fullWidth
-                    placeholder="Select vessel from master"
+                    placeholder={
+                      entityVesselDisabled ? 'Select a company first' : 'Select vessel from master'
+                    }
                     value={state.vesselId}
                     onChange={v => handleVesselSelect(String(v))}
+                    disabled={entityVesselDisabled}
                     options={[
                       { value: '', label: 'Select vessel' },
                       ...activeVessels.map(v => ({
@@ -317,7 +432,11 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
         </Box>
       )}
 
-      <FlowStepActions onContinue={onContinue} continueLabel="Continue to submit" />
+      <FlowStepActions
+        onContinue={onContinue}
+        continueLabel="Continue to submit"
+        continueDisabled={continueDisabled}
+      />
     </Box>
   )
 }

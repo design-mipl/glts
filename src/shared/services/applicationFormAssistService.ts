@@ -3,6 +3,7 @@ import {
   mockSingleApplications,
 } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationOperationalStatus } from '@/pages/customer/features/applications/types/applicationListing.types'
+import { creditCardMasterService } from '@/shared/services/creditCardMasterService'
 
 const FORM_ASSIST_STORAGE_KEY = 'glts:application-form-assist'
 
@@ -25,11 +26,11 @@ export interface FormAssistSubmissionDraft {
   submittedBy: string
   vfsSubmissionDate: string
   tentativeCollectionDate: string
-  confirmationPdfFileName: string
-  invoicePdfFileName: string
+  paymentReceiptFileName: string
   paymentDate: string
   paymentMode: FormAssistPaymentMode
-  cardName: string
+  /** Credit card master id when payment mode is card. */
+  paymentCardId: string
   paymentReferenceNumber: string
   amountPaid: string
   receiptStatus: FormAssistReceiptStatus
@@ -54,11 +55,10 @@ export const EMPTY_FORM_ASSIST_SUBMISSION: FormAssistSubmissionDraft = {
   submittedBy: '',
   vfsSubmissionDate: '',
   tentativeCollectionDate: '',
-  confirmationPdfFileName: '',
-  invoicePdfFileName: '',
+  paymentReceiptFileName: '',
   paymentDate: '',
   paymentMode: 'card',
-  cardName: '',
+  paymentCardId: '',
   paymentReferenceNumber: '',
   amountPaid: '',
   receiptStatus: 'awaited',
@@ -112,6 +112,37 @@ function normalizeVfsServiceCharges(
   }))
 }
 
+function resolvePaymentCardId(
+  submission: Partial<FormAssistSubmissionDraft> & Record<string, string | undefined>,
+): string {
+  const explicit = submission.paymentCardId?.trim()
+  if (explicit) {
+    if (creditCardMasterService.getById(explicit)) return explicit
+  }
+
+  const legacyCardName = submission.cardName?.trim()
+  if (!legacyCardName) return ''
+
+  const byId = creditCardMasterService.getById(legacyCardName)
+  if (byId) return byId.id
+
+  return creditCardMasterService.getByCardName(legacyCardName)?.id ?? ''
+}
+
+function resolvePaymentReceiptFileName(
+  submission: Partial<FormAssistSubmissionDraft> & Record<string, string | undefined>,
+): string {
+  const explicit = submission.paymentReceiptFileName?.trim()
+  if (explicit) return explicit
+
+  const legacy = submission as Record<string, string | undefined>
+  return (
+    legacy.confirmationPdfFileName?.trim() ||
+    legacy.invoicePdfFileName?.trim() ||
+    ''
+  )
+}
+
 function normalizeSubmission(
   submission: Partial<FormAssistSubmissionDraft> & Record<string, string | undefined>,
 ): FormAssistSubmissionDraft {
@@ -124,11 +155,10 @@ function normalizeSubmission(
     submittedBy: submission.submittedBy ?? '',
     vfsSubmissionDate: submission.vfsSubmissionDate ?? '',
     tentativeCollectionDate: submission.tentativeCollectionDate ?? '',
-    confirmationPdfFileName: submission.confirmationPdfFileName ?? legacy.confirmationPdfFileName ?? '',
-    invoicePdfFileName: submission.invoicePdfFileName ?? legacy.invoicePdfFileName ?? '',
+    paymentReceiptFileName: resolvePaymentReceiptFileName(submission),
     paymentDate: submission.paymentDate ?? '',
     paymentMode: isPaymentMode(submission.paymentMode) ? submission.paymentMode : 'card',
-    cardName: submission.cardName ?? '',
+    paymentCardId: resolvePaymentCardId(submission),
     paymentReferenceNumber:
       submission.paymentReferenceNumber ?? legacy.externalPortalReference ?? '',
     amountPaid: submission.amountPaid ?? '',
@@ -260,15 +290,14 @@ export const applicationFormAssistService = {
     if (!submission.tentativeCollectionDate.trim()) {
       errors.push('Tentative collection date is required')
     }
-    if (!submission.confirmationPdfFileName.trim()) errors.push('Confirmation PDF is required')
-    if (!submission.invoicePdfFileName.trim()) errors.push('Invoice PDF is required')
+    if (!submission.paymentReceiptFileName.trim()) errors.push('Payment receipt is required')
     if (!submission.paymentDate.trim()) errors.push('Payment date is required')
     if (!submission.paymentReferenceNumber.trim()) {
       errors.push('Payment Reference / CC Avenue Ref. No. is required')
     }
     if (!submission.amountPaid.trim()) errors.push('Amount paid is required')
-    if (submission.paymentMode === 'card' && !submission.cardName.trim()) {
-      errors.push('Card name is required for card payments')
+    if (submission.paymentMode === 'card' && !submission.paymentCardId.trim()) {
+      errors.push('Card type is required for card payments')
     }
     return errors
   },

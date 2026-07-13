@@ -60,8 +60,12 @@ function buildSubmittedSingleRow(
     recordType: 'single',
     applicantName,
     passportNumber,
-    ...(state.entityName?.trim()
-      ? { companyName: flowPlaceholder(state.entityName, '—') }
+    companyName: flowPlaceholder(
+      state.companyName,
+      flowPlaceholder(state.entityName, 'Pending'),
+    ),
+    ...(state.vesselName?.trim()
+      ? { vesselName: flowPlaceholder(state.vesselName, '—') }
       : {}),
     country: flowPlaceholder(state.countryName, 'Pending'),
     countryFlag: state.countryFlag || undefined,
@@ -96,7 +100,13 @@ function buildSubmittedBulkRow(
   return {
     id: batchId,
     recordType: 'bulk',
-    companyName: flowPlaceholder(state.entityName, 'Pending'),
+    companyName: flowPlaceholder(
+      state.companyName,
+      flowPlaceholder(state.entityName, 'Pending'),
+    ),
+    ...(state.vesselName?.trim()
+      ? { vesselName: flowPlaceholder(state.vesselName, '—') }
+      : {}),
     country: flowPlaceholder(state.countryName, 'Pending'),
     countryFlag: state.countryFlag || undefined,
     visaType: flowPlaceholder(state.visaTypeLabel, 'Pending'),

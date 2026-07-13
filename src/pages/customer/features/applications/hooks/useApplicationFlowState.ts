@@ -42,6 +42,10 @@ export interface ApplicationFlowState {
   vesselName: string
   rank: string
   joiningPort: string
+  /** Admin create flow: selected corporate account (company / customer). */
+  corporateAccountId: string
+  /** Admin create flow: company name from corporate account. */
+  companyName: string
   entityId: string
   entityName: string
   contactPerson: string
@@ -93,6 +97,8 @@ const defaultState: ApplicationFlowState = {
   vesselName: '',
   rank: '',
   joiningPort: '',
+  corporateAccountId: '',
+  companyName: '',
   entityId: '',
   entityName: '',
   contactPerson: '',

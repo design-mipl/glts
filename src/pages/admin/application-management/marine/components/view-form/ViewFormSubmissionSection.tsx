@@ -1,15 +1,18 @@
 import { Box, Stack, Typography } from '@mui/material'
 import dayjs from 'dayjs'
 import { Upload } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Button, DatePicker, FormField, Input, Select, Textarea } from '@/design-system/UIComponents'
 import { AdminOverlayFormSection } from '@/pages/admin/components/AdminOverlayFormSection'
 import { ApplicationTrackingUrlLink } from '@/shared/components/ApplicationTrackingUrlLink'
 import { resolveApplicationTrackingUrl, resolveOfferingVfsServiceRates } from '@/shared/services/countryMasterService'
 import type { FormAssistSubmissionDraft } from '@/shared/services/applicationFormAssistService'
+import {
+  listCreditCardSelectOptions,
+  resolveCreditCardLabel,
+} from '@/shared/utils/creditCardMasterOptions'
 import { mapCountryVfsRatesToChargeLines } from '@/shared/utils/countryVfsServiceRateUtils'
 import {
-  CARD_NAME_OPTIONS,
   PAYMENT_MODE_OPTIONS,
   RECEIPT_STATUS_OPTIONS,
 } from '../../config/submissionPaymentConfig'
@@ -138,8 +141,12 @@ export function ViewFormSubmissionSection({
   onChange,
   onPickFile,
 }: ViewFormSubmissionSectionProps) {
-  const showCardName = submission.paymentMode === 'card'
+  const showCardType = submission.paymentMode === 'card'
   const applicationTrackingUrl = resolveApplicationTrackingUrl({ countryName: country })
+  const cardTypeOptions = useMemo(
+    () => [{ value: '', label: 'Select card type' }, ...listCreditCardSelectOptions()],
+    [],
+  )
 
   useEffect(() => {
     if (readOnly) return
@@ -216,10 +223,10 @@ export function ViewFormSubmissionSection({
             label="Payment mode"
             value={labelForOption(PAYMENT_MODE_OPTIONS, submission.paymentMode)}
           />
-          {showCardName ? (
+          {showCardType ? (
             <ReadOnlyValueRow
-              label="Card name"
-              value={labelForOption(CARD_NAME_OPTIONS, submission.cardName)}
+              label="Card type"
+              value={resolveCreditCardLabel(submission.paymentCardId)}
             />
           ) : null}
           <ReadOnlyValueRow
@@ -236,12 +243,11 @@ export function ViewFormSubmissionSection({
           </Box>
         </AdminOverlayFormSection>
 
-        <AdminOverlayFormSection title="Document uploads" columns={2} importance="secondary">
+        <AdminOverlayFormSection title="Document uploads" columns={1} importance="secondary">
           <ReadOnlyValueRow
-            label="Confirmation PDF"
-            value={submission.confirmationPdfFileName}
+            label="Payment Receipt"
+            value={submission.paymentReceiptFileName}
           />
-          <ReadOnlyValueRow label="Invoice PDF" value={submission.invoicePdfFileName} />
         </AdminOverlayFormSection>
       </Stack>
     )
@@ -357,7 +363,7 @@ export function ViewFormSubmissionSection({
               const paymentMode = String(v) as FormAssistSubmissionDraft['paymentMode']
               onChange({
                 paymentMode,
-                ...(paymentMode !== 'card' ? { cardName: '' } : {}),
+                ...(paymentMode !== 'card' ? { paymentCardId: '' } : {}),
               })
             }}
             options={PAYMENT_MODE_OPTIONS}
@@ -366,13 +372,13 @@ export function ViewFormSubmissionSection({
             fullWidth
           />
         </FormField>
-        {showCardName ? (
-          <FormField label="Card name" required>
+        {showCardType ? (
+          <FormField label="Card type" required>
             <Select
-              value={submission.cardName}
-              onChange={v => onChange({ cardName: String(v) })}
-              options={CARD_NAME_OPTIONS}
-              placeholder="Select card"
+              value={submission.paymentCardId}
+              onChange={v => onChange({ paymentCardId: String(v) })}
+              options={cardTypeOptions}
+              placeholder="Select card type"
               size="sm"
               fullWidth
               clearable
@@ -425,21 +431,17 @@ export function ViewFormSubmissionSection({
 
       <AdminOverlayFormSection
         title="Document uploads"
-        columns={2}
+        columns={1}
         importance="secondary"
       >
-        <FileUploadRow
-          label="Confirmation PDF"
-          fileName={submission.confirmationPdfFileName}
-          required
-          onPick={file => onPickFile('confirmationPdfFileName', file)}
-        />
-        <FileUploadRow
-          label="Invoice PDF"
-          fileName={submission.invoicePdfFileName}
-          required
-          onPick={file => onPickFile('invoicePdfFileName', file)}
-        />
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <FileUploadRow
+            label="Payment Receipt"
+            fileName={submission.paymentReceiptFileName}
+            required
+            onPick={file => onPickFile('paymentReceiptFileName', file)}
+          />
+        </Box>
       </AdminOverlayFormSection>
     </Stack>
   )

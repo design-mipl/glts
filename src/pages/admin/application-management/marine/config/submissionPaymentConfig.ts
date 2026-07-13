@@ -15,15 +15,3 @@ export const RECEIPT_STATUS_OPTIONS: Array<{ value: FormAssistReceiptStatus; lab
   { value: 'received', label: 'Received' },
   { value: 'not_applicable', label: 'Not Applicable' },
 ]
-
-export const CARD_NAME_OPTIONS = [
-  { value: 'Visa', label: 'Visa' },
-  { value: 'Mastercard', label: 'Mastercard' },
-  { value: 'American Express', label: 'American Express' },
-  { value: 'RuPay', label: 'RuPay' },
-  { value: 'HDFC Bank', label: 'HDFC Bank' },
-  { value: 'ICICI Bank', label: 'ICICI Bank' },
-  { value: 'SBI Card', label: 'SBI Card' },
-  { value: 'Axis Bank', label: 'Axis Bank' },
-  { value: 'Other', label: 'Other' },
-]

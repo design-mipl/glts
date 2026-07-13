@@ -476,7 +476,7 @@ export function MarineViewFormPage() {
   }
 
   const headerActions = (
-    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+    <>
       {isBulk && rows.length > 1 ? (
         <Autocomplete
           options={rows}
@@ -489,13 +489,20 @@ export function MarineViewFormPage() {
           disableClearable
           slotProps={autocompleteSlotProps(theme)}
           sx={{
-            minWidth: 240,
+            width: { xs: '100%', sm: 300 },
+            minWidth: { xs: '100%', sm: 300 },
+            maxWidth: { xs: '100%', sm: 300 },
+            flexShrink: 0,
+            '& .MuiFormControl-root': { width: '100%' },
+            '& .MuiTextField-root': { width: '100%' },
+            '& .MuiOutlinedInput-root': { width: '100%' },
             ...outlinedFieldSx(theme, formControlHeight('sm')),
           }}
           renderInput={params => (
             <TextField
               {...params}
               size="small"
+              fullWidth
               placeholder="Search traveler"
               inputProps={{
                 ...params.inputProps,
@@ -514,7 +521,7 @@ export function MarineViewFormPage() {
       ) : (
         <Badge label={currentStep.label} color="info" size="sm" />
       )}
-    </Stack>
+    </>
   )
 
   return (

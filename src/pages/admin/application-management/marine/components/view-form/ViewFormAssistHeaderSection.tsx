@@ -42,7 +42,7 @@ export function ViewFormAssistHeaderSection({
             justifyContent="space-between"
             spacing={1.5}
           >
-            <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ minWidth: 0, flexShrink: { sm: 1 } }}>
               <Typography
                 variant={ADMIN_RECORD_PAGE_TITLE_VARIANT}
                 component="h1"
@@ -59,7 +59,18 @@ export function ViewFormAssistHeaderSection({
               ) : null}
             </Box>
             {headerActions ? (
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                flexWrap="wrap"
+                useFlexGap
+                sx={{
+                  width: { xs: '100%', sm: 'auto' },
+                  flexShrink: 0,
+                  justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                }}
+              >
                 {headerActions}
               </Stack>
             ) : null}
