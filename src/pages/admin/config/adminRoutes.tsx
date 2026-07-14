@@ -41,6 +41,7 @@ import { JurisdictionListingPage } from '../masters/jurisdiction'
 import { SacCodeListingPage } from '../masters/sac-codes'
 import { ServiceListingPage } from '../masters/services'
 import { TaxConfigurationPage } from '../masters/tax'
+import { WorkflowListingPage } from '../masters/workflows'
 import { OperationsDashboardPage } from '../operations/dashboard/pages/OperationsDashboardPage'
 import { OperationsConsultantDashboardPage } from '../dashboard/operations'
 import { DocumentationDashboardPage } from '../dashboard/documentation'
@@ -467,6 +468,14 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <ServiceListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/workflows"
+        element={
+          <PermissionGuard>
+            <WorkflowListingPage />
           </PermissionGuard>
         }
       />

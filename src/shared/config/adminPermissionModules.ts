@@ -67,6 +67,7 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
       { id: 'services', label: 'Service Master' },
       { id: 'sac_codes', label: 'SAC Code Master' },
       { id: 'tax', label: 'GST & TDS Master' },
+      { id: 'workflows', label: 'Workflow Master' },
     ],
   },
   {

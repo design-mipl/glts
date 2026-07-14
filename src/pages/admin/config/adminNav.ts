@@ -125,6 +125,7 @@ export const adminNav: NavConfig[] = [
       { type: 'item', label: 'Service Master', href: '/admin/masters/services' },
       { type: 'item', label: 'SAC Code Master', href: '/admin/masters/sac-codes' },
       { type: 'item', label: 'GST & TDS Master', href: '/admin/masters/tax' },
+      { type: 'item', label: 'Workflow Master', href: '/admin/masters/workflows' },
     ],
   },
   {
