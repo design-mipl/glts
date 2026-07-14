@@ -13,6 +13,8 @@ export interface OperationalCaseFormAssistSeed {
     | 'receiptStatus'
     | 'submissionDate'
     | 'submissionReferenceNumber'
+    | 'submittedBy'
+    | 'vfsSubmissionDate'
   >
 }
 
@@ -29,6 +31,8 @@ export const OPERATIONAL_CASE_FORM_ASSIST_SEEDS: OperationalCaseFormAssistSeed[]
       ],
       submissionDate: '2026-06-10',
       submissionReferenceNumber: 'VFS-ONL-2026-0142',
+      submittedBy: 'Ananya Mehta',
+      vfsSubmissionDate: '2026-06-11',
       paymentDate: '2026-06-10',
       paymentMode: 'card',
       paymentReferenceNumber: 'CCAV-2026-0142',
@@ -46,6 +50,8 @@ export const OPERATIONAL_CASE_FORM_ASSIST_SEEDS: OperationalCaseFormAssistSeed[]
       ],
       submissionDate: '2026-06-08',
       submissionReferenceNumber: 'VFS-ONL-2026-0155',
+      submittedBy: 'Riya Sharma',
+      vfsSubmissionDate: '2026-06-09',
       paymentDate: '2026-06-08',
       paymentMode: 'upi',
       paymentReferenceNumber: 'UPI-88442211',
@@ -64,6 +70,8 @@ export const OPERATIONAL_CASE_FORM_ASSIST_SEEDS: OperationalCaseFormAssistSeed[]
       ],
       submissionDate: '2026-06-07',
       submissionReferenceNumber: 'VFS-ONL-2026-0162',
+      submittedBy: 'Vikram Patel',
+      vfsSubmissionDate: '2026-06-08',
       paymentDate: '2026-06-07',
       paymentMode: 'bank_transfer',
       paymentReferenceNumber: 'NEFT-20260607-162',
@@ -81,6 +89,8 @@ export const OPERATIONAL_CASE_FORM_ASSIST_SEEDS: OperationalCaseFormAssistSeed[]
       ],
       submissionDate: '2026-06-06',
       submissionReferenceNumber: 'VFS-ONL-2026-0172',
+      submittedBy: 'Sana Iqbal',
+      vfsSubmissionDate: '2026-06-07',
       paymentDate: '2026-06-06',
       paymentMode: 'card',
       paymentReferenceNumber: 'CCAV-2026-0172',
@@ -99,6 +109,8 @@ export const OPERATIONAL_CASE_FORM_ASSIST_SEEDS: OperationalCaseFormAssistSeed[]
       ],
       submissionDate: '2026-06-05',
       submissionReferenceNumber: 'VFS-ONL-2026-0180',
+      submittedBy: 'Documentation Team',
+      vfsSubmissionDate: '2026-06-06',
       paymentDate: '2026-06-05',
       paymentMode: 'cash',
       paymentReferenceNumber: 'CASH-VFS-DEL-180',

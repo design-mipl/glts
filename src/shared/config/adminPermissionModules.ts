@@ -64,7 +64,7 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
       { id: 'country', label: 'Country' },
       { id: 'jurisdiction', label: 'Jurisdiction Master' },
       { id: 'documents', label: 'Document master' },
-      { id: 'services', label: 'Service Master' },
+      { id: 'services', label: 'GLTS Fee Master' },
       { id: 'sac_codes', label: 'SAC Code Master' },
       { id: 'tax', label: 'GST & TDS Master' },
       { id: 'workflows', label: 'Workflow Master' },

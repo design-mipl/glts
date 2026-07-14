@@ -1,4 +1,4 @@
-import { Eye, FileText, PencilLine, Share2, ArrowRight } from 'lucide-react'
+import { Eye, FileText, PencilLine, Share2, ArrowRight, RefreshCw } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
@@ -7,6 +7,8 @@ import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { getCurrentVersion } from '@/shared/utils/quotationValidation'
 import { canConvertQuotationToAgreement } from '@/shared/utils/quotationPricingUtils'
 import {
+  quotationPipelineStatusColor,
+  quotationPipelineStatusLabel,
   quotationSharedStatusColor,
   quotationSharedStatusLabel,
   quotationSourceTypeColor,
@@ -21,6 +23,7 @@ interface ColumnHandlers {
   onShare: (row: QuotationRecord) => void
   onGeneratePdf: (row: QuotationRecord) => void
   onConvert: (row: QuotationRecord) => void
+  onUpdateStatus: (row: QuotationRecord) => void
 }
 
 export function buildQuotationColumns({
@@ -29,6 +32,7 @@ export function buildQuotationColumns({
   onShare,
   onGeneratePdf,
   onConvert,
+  onUpdateStatus,
 }: ColumnHandlers): Column<QuotationRecord>[] {
   return [
     {
@@ -67,6 +71,20 @@ export function buildQuotationColumns({
       filterable: true,
       render: (_, row) => (
         <Badge label={workflowTypeLabel[row.workflowType]} color={workflowTypeColor[row.workflowType]} size="sm" />
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      widthSize: adminListingColumnWidthSize('status'),
+      filterable: true,
+      sortable: true,
+      render: (_, row) => (
+        <Badge
+          label={quotationPipelineStatusLabel[row.status]}
+          color={quotationPipelineStatusColor[row.status]}
+          size="sm"
+        />
       ),
     },
     {
@@ -133,6 +151,7 @@ export function buildQuotationColumns({
         const actions: RowAction[] = [
           { label: 'View', icon: <Eye size={14} />, onClick: () => onOpenDetail(row) },
           { label: 'Edit', icon: <PencilLine size={14} />, onClick: () => onOpenEdit(row) },
+          { label: 'Update Status', icon: <RefreshCw size={14} />, onClick: () => onUpdateStatus(row) },
         ]
         if (row.sharedStatus === 'not_shared') {
           actions.push({ label: 'Share', icon: <Share2 size={14} />, onClick: () => onShare(row) })

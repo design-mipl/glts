@@ -1,4 +1,4 @@
-import { FormField, Input, Textarea } from '@/design-system/UIComponents'
+import { FormField, Input } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import type { CreditCardMasterFormData } from '@/shared/types/creditCardMaster'
 
@@ -16,7 +16,7 @@ export function CreditCardFormFields({
   const update = (patch: Partial<CreditCardMasterFormData>) => onChange({ ...formData, ...patch })
 
   return (
-    <>
+    <AdminFullPageFormFieldSpan>
       <FormField
         label="Card Name"
         required
@@ -31,17 +31,6 @@ export function CreditCardFormFields({
           fullWidth
         />
       </FormField>
-      <AdminFullPageFormFieldSpan>
-        <FormField label="Description" optional>
-          <Textarea
-            value={formData.description}
-            onChange={(v) => update({ description: v })}
-            placeholder="Brief description of this credit card type"
-            rows={3}
-            fullWidth
-          />
-        </FormField>
-      </AdminFullPageFormFieldSpan>
-    </>
+    </AdminFullPageFormFieldSpan>
   )
 }

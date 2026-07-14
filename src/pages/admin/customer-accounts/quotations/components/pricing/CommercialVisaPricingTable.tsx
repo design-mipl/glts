@@ -19,13 +19,15 @@ interface CommercialVisaPricingTableProps {
 function scopeLabel(rule: CommercialVisaPricingRule): string {
   if (rule.scope === 'country') return 'Country'
   if (rule.scope === 'country_group') return 'Country Group'
-  return 'Rest of Countries'
+  if (rule.scope === 'rest_of_countries_online') return 'Rest of the countries online'
+  return 'Rest of the countries offline'
 }
 
 function scopeValue(rule: CommercialVisaPricingRule): string {
   if (rule.scope === 'country') return rule.country || '—'
   if (rule.scope === 'country_group') return rule.countryGroupName || '—'
-  return 'All other destinations'
+  if (rule.scope === 'rest_of_countries_online') return 'All other destinations (online)'
+  return 'All other destinations (offline)'
 }
 
 export function CommercialVisaPricingTable({

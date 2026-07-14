@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { BaseCard } from '@/design-system/UIComponents'
 import type { QuotationRecord } from '@/shared/types/quotation'
-import { quotationSourceTypeLabel, workflowTypeLabel } from '../../config/quotationStatusConfig'
+import { quotationPipelineStatusLabel, quotationSourceTypeLabel, workflowTypeLabel } from '../../config/quotationStatusConfig'
 
 interface InfoGridItem {
   label: string
@@ -50,6 +50,7 @@ export function OverviewTab({ quotation }: { quotation: QuotationRecord }) {
   const quotationItems: InfoGridItem[] = [
     { label: 'Quotation No.', value: quotation.quotationNo },
     { label: 'Type', value: quotationSourceTypeLabel[quotation.sourceType] },
+    { label: 'Pipeline Status', value: quotationPipelineStatusLabel[quotation.status] },
     { label: 'Customer Type', value: workflowTypeLabel[quotation.workflowType] },
     { label: 'Quotation date', value: quotation.quotationDate },
     { label: 'Valid till', value: quotation.validTill },

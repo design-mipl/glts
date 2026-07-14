@@ -5,7 +5,6 @@ import { taxMasterService } from '@/shared/services/taxMasterService'
 import { MASTER_APPLICABILITY_OPTIONS } from '@/shared/types/masterCommon'
 import type { ServiceMasterFormData } from '@/shared/types/serviceMaster'
 import { masterStatusLabel } from '../../config/masterStatusConfig'
-import { SERVICE_TYPE_OPTIONS } from '../config/serviceTypeConfig'
 
 type ServiceFormSection = 'basic' | 'pricingTax' | 'applicability' | 'status'
 
@@ -21,46 +20,32 @@ export function ServiceFormFields({ formData, onChange, errors, section }: Servi
 
   const sacOptions = [{ value: '', label: 'None' }, ...sacCodeMasterService.listActiveOptions()]
   const gstOptions = [{ value: '', label: 'None' }, ...taxMasterService.listActiveGstOptions()]
-  const tdsOptions = [{ value: '', label: 'None' }, ...taxMasterService.listActiveTdsOptions()]
 
   if (section === 'basic') {
     return (
       <>
-        <FormField
-          label="Service name"
-          required
-          error={Boolean(errors.serviceName)}
-          helperText={errors.serviceName}
-        >
-          <Input
-            value={formData.serviceName}
-            onChange={(value) => patch({ serviceName: value })}
-            placeholder="Enter service name"
-            size="sm"
-            fullWidth
-          />
-        </FormField>
-        <FormField
-          label="Service type"
-          required
-          error={Boolean(errors.serviceType)}
-          helperText={errors.serviceType}
-        >
-          <Select
-            value={formData.serviceType}
-            onChange={(value) => patch({ serviceType: value as ServiceMasterFormData['serviceType'] })}
-            placeholder="Select service type"
-            options={SERVICE_TYPE_OPTIONS}
-            size="sm"
-            fullWidth
-          />
-        </FormField>
+        <AdminFullPageFormFieldSpan>
+          <FormField
+            label="Fee name"
+            required
+            error={Boolean(errors.serviceName)}
+            helperText={errors.serviceName}
+          >
+            <Input
+              value={formData.serviceName}
+              onChange={(value) => patch({ serviceName: value })}
+              placeholder="Enter fee name"
+              size="sm"
+              fullWidth
+            />
+          </FormField>
+        </AdminFullPageFormFieldSpan>
         <AdminFullPageFormFieldSpan>
           <FormField label="Description">
             <Textarea
               value={formData.description}
               onChange={(value) => patch({ description: value })}
-              placeholder="Enter service description"
+              placeholder="Enter fee description"
               rows={3}
               fullWidth
             />
@@ -103,17 +88,6 @@ export function ServiceFormFields({ formData, onChange, errors, section }: Servi
             onChange={(value) => patch({ gstRateId: String(value) })}
             placeholder="Select GST rate"
             options={gstOptions}
-            clearable
-            size="sm"
-            fullWidth
-          />
-        </FormField>
-        <FormField label="TDS section">
-          <Select
-            value={formData.tdsSectionId}
-            onChange={(value) => patch({ tdsSectionId: String(value) })}
-            placeholder="Select TDS section"
-            options={tdsOptions}
             clearable
             size="sm"
             fullWidth

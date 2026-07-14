@@ -29,11 +29,19 @@ export const SEED_QUOTATION_PRICING_TEMPLATES: QuotationPricingTemplate[] = [
       },
       {
         id: 'cvr-seed-1c',
-        scope: 'rest_of_countries',
+        scope: 'rest_of_countries_online',
         visaType: '',
         serviceFee: 6500,
         gstApplicable: true,
-        remarks: 'Fallback GLTS fee',
+        remarks: 'Fallback GLTS fee (online)',
+      },
+      {
+        id: 'cvr-seed-1d',
+        scope: 'rest_of_countries_offline',
+        visaType: '',
+        serviceFee: 7200,
+        gstApplicable: true,
+        remarks: 'Fallback GLTS fee (offline)',
       },
     ],
     miscellaneousServices: [
@@ -47,7 +55,7 @@ export const SEED_QUOTATION_PRICING_TEMPLATES: QuotationPricingTemplate[] = [
       {
         id: 'qsl-seed-1b',
         serviceId: 'svc-travel-insurance',
-        serviceName: 'Travel insurance facilitation',
+        serviceName: 'Travel insurance',
         amount: 1800,
         gstApplicable: true,
       },
@@ -82,11 +90,19 @@ export const SEED_QUOTATION_PRICING_TEMPLATES: QuotationPricingTemplate[] = [
       },
       {
         id: 'cvr-seed-2c',
-        scope: 'rest_of_countries',
+        scope: 'rest_of_countries_online',
         visaType: 'Crew',
         serviceFee: 5500,
         gstApplicable: true,
-        remarks: 'Other crew destinations',
+        remarks: 'Other crew destinations (online)',
+      },
+      {
+        id: 'cvr-seed-2d',
+        scope: 'rest_of_countries_offline',
+        visaType: 'Crew',
+        serviceFee: 6000,
+        gstApplicable: true,
+        remarks: 'Other crew destinations (offline)',
       },
     ],
     miscellaneousServices: [

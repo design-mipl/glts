@@ -43,7 +43,6 @@ export const creditCardMasterService = {
     const record: CreditCardMaster = {
       id: generateCreditCardId(),
       cardName: data.cardName.trim(),
-      description: data.description.trim(),
       createdBy: actor,
       updatedBy: actor,
       createdAt: timestamp,
@@ -67,7 +66,6 @@ export const creditCardMasterService = {
     const updated: CreditCardMaster = {
       ...creditCardStore[index],
       cardName: data.cardName.trim(),
-      description: data.description.trim(),
       updatedBy: actor,
       updatedAt: timestamp,
     }

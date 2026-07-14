@@ -10,7 +10,7 @@ export function getCreditCardCellValue(row: CreditCardMaster, key: string): stri
 export function matchesCreditCardSearch(row: CreditCardMaster, query: string): boolean {
   const normalized = query.trim().toLowerCase()
   if (!normalized) return true
-  return [row.cardName, row.description].some((part) => part.toLowerCase().includes(normalized))
+  return row.cardName.toLowerCase().includes(normalized)
 }
 
 export function getCreditCardEmptyState(onCreate: () => void) {
@@ -24,7 +24,6 @@ export function getCreditCardEmptyState(onCreate: () => void) {
 export function downloadCreditCardCsv(rows: CreditCardMaster[]) {
   const headers = [
     'Card Name',
-    'Description',
     'Created By',
     'Created Date',
     'Updated By',
@@ -33,7 +32,6 @@ export function downloadCreditCardCsv(rows: CreditCardMaster[]) {
   const lines = rows.map((row) =>
     [
       row.cardName,
-      row.description,
       row.createdBy,
       formatMasterDate(row.createdAt),
       row.updatedBy,

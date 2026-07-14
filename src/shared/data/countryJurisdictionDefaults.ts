@@ -104,10 +104,7 @@ export function defaultJurisdictionsForVisa(
         originalDocumentsRequired: true,
         appointmentMandatory: true,
       },
-      documents: checklistToJurisdictionDocuments(
-        applicationDocuments.filter((d) => d.documentId !== 'insurance'),
-        'jurisdiction',
-      ),
+      documents: checklistToJurisdictionDocuments(applicationDocuments, 'jurisdiction'),
     }),
   ]
 }

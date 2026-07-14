@@ -57,8 +57,10 @@ export function QuotationKpiRow({ quotations }: QuotationKpiRowProps) {
   const theme = useTheme()
   const total = quotations.length
   const shared = quotations.filter((q) => q.sharedStatus === 'shared').length
-  const notConverted = quotations.filter((q) => !q.convertedAgreementId).length
-  const multiVersion = quotations.filter((q) => q.pricingVersions.length > 1).length
+  const inNegotiation = quotations.filter(
+    (q) => q.status === 'negotiation' || q.status === 'awaiting_confirmation',
+  ).length
+  const converted = quotations.filter((q) => q.status === 'converted' || Boolean(q.convertedAgreementId)).length
 
   return (
     <Grid container spacing={1.5} sx={{ mb: 0.5 }}>
@@ -66,13 +68,13 @@ export function QuotationKpiRow({ quotations }: QuotationKpiRowProps) {
         <KpiCard label="Total quotations" value={total} icon={ListChecks} iconColor={theme.palette.primary.main} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <KpiCard label="Not converted" value={notConverted} icon={ArrowRight} iconColor={theme.palette.info.main} />
+        <KpiCard label="In negotiation" value={inNegotiation} icon={ArrowRight} iconColor={theme.palette.info.main} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <KpiCard label="Shared" value={shared} icon={Share2} iconColor={theme.palette.success.main} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <KpiCard label="Multi-version" value={multiVersion} icon={FileText} iconColor={theme.palette.warning.main} />
+        <KpiCard label="Converted" value={converted} icon={FileText} iconColor={theme.palette.warning.main} />
       </Grid>
     </Grid>
   )

@@ -3,13 +3,11 @@ import type { CreditCardMaster, CreditCardMasterFormData } from '@/shared/types/
 
 export const INITIAL_CREDIT_CARD_FORM: CreditCardMasterFormData = {
   cardName: '',
-  description: '',
 }
 
 export function creditCardToFormData(row: CreditCardMaster): CreditCardMasterFormData {
   return {
     cardName: row.cardName,
-    description: row.description,
   }
 }
 

@@ -1,4 +1,5 @@
 import type { EnquiryCustomerInfo, EnquiryRecord, EnquiryStatus } from '@/shared/types/enquiry'
+import { PIPELINE_ACTIVE_STATUSES } from '@/shared/config/clientManagementPipelineConfig'
 import { getVisaRequirementItems } from '@/shared/utils/enquiryVisaRequirementUtils'
 import { formatMasterDate } from '@/pages/admin/masters/utils/masterListingUtils'
 import {
@@ -47,16 +48,9 @@ export function formatEnquiryDate(iso: string | undefined): string {
   return formatMasterDate(iso)
 }
 
-export type EnquiryListingTab = 'all' | 'new' | 'active' | 'converted' | 'non_converted' | 'closed'
+export type EnquiryListingTab = 'all' | 'new' | 'active' | 'converted' | 'lost' | 'on_hold'
 
-const ACTIVE_STATUSES: EnquiryStatus[] = [
-  'under_discussion',
-  'requirement_gathering',
-  'pending_customer_response',
-  'internal_review',
-  'quotation_in_progress',
-  'on_hold',
-]
+const ACTIVE_STATUSES: EnquiryStatus[] = [...PIPELINE_ACTIVE_STATUSES]
 
 export interface EnquiryListingFilterState {
   country: string
@@ -94,10 +88,10 @@ export function filterEnquiryRowsByTab(rows: EnquiryRecord[], tab: EnquiryListin
       return rows.filter((row) => ACTIVE_STATUSES.includes(row.status))
     case 'converted':
       return rows.filter((row) => row.status === 'converted')
-    case 'non_converted':
-      return rows.filter((row) => row.status === 'rejected')
-    case 'closed':
-      return rows.filter((row) => row.status === 'closed')
+    case 'lost':
+      return rows.filter((row) => row.status === 'lost')
+    case 'on_hold':
+      return rows.filter((row) => row.status === 'on_hold')
     default:
       return rows
   }
@@ -265,8 +259,8 @@ export function getEnquiryFilterOptions(records: EnquiryRecord[]) {
 
 function getGridStatusColor(status: EnquiryRecord['status']): 'success' | 'warning' | 'info' | 'default' {
   if (status === 'converted') return 'success'
-  if (status === 'on_hold' || status === 'pending_customer_response') return 'warning'
-  if (status === 'closed' || status === 'rejected') return 'default'
+  if (status === 'on_hold' || status === 'awaiting_confirmation' || status === 'negotiation') return 'warning'
+  if (status === 'lost') return 'default'
   return 'info'
 }
 
@@ -310,17 +304,17 @@ export function getEnquiryEmptyState(
     case 'converted':
       return {
         emptyTitle: 'No converted enquiries',
-        emptyDescription: 'Converted enquiries have progressed to quotation generation.',
+        emptyDescription: 'Converted enquiries have progressed to an agreement.',
       }
-    case 'closed':
+    case 'lost':
       return {
-        emptyTitle: 'No closed enquiries',
-        emptyDescription: 'Closed enquiries appear in this view.',
+        emptyTitle: 'No lost enquiries',
+        emptyDescription: 'Leads marked as lost appear in this view.',
       }
-    case 'non_converted':
+    case 'on_hold':
       return {
-        emptyTitle: 'No non converted enquiries',
-        emptyDescription: 'Enquiries that were not converted appear in this view.',
+        emptyTitle: 'No on-hold enquiries',
+        emptyDescription: 'Leads paused with On Hold appear in this view.',
       }
     default:
       return {

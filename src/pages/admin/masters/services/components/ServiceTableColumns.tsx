@@ -3,12 +3,12 @@ import { PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
+import { taxMasterService } from '@/shared/services/taxMasterService'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
 import { MasterAudienceTags } from '../../components/MasterAudienceTags'
 import { toApplicabilityTagItems } from '../../config/masterAudienceTagConfig'
 import { masterStatusColor, masterStatusLabel } from '../../config/masterStatusConfig'
 import { formatMasterDate } from '../../utils/masterListingUtils'
-import { serviceTypeLabel } from '../config/serviceTypeConfig'
 import { formatServicePrice, getServiceSacLabel } from '../utils/serviceListingUtils'
 
 interface ColumnHandlers {
@@ -36,21 +36,11 @@ export function buildServiceColumns({
   return [
     {
       key: 'serviceName',
-      label: 'Service Name',
+      label: 'Fee Name',
       widthSize: adminListingColumnWidthSize('service'),
       sortable: true,
       filterable: false,
       searchable: true,
-    },
-    {
-      key: 'serviceType',
-      label: 'Service Type',
-      widthSize: adminListingColumnWidthSize('count'),
-      sortable: true,
-      filterable: true,
-      render: (_, row) => (
-        <Badge label={serviceTypeLabel[row.serviceType]} color="neutral" size="sm" />
-      ),
     },
     {
       key: 'defaultPrice',
@@ -90,6 +80,14 @@ export function buildServiceColumns({
           {getServiceSacLabel(row)}
         </span>
       ),
+    },
+    {
+      key: 'gstRate',
+      label: 'GST Rate',
+      widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      filterable: true,
+      render: (_, row) => taxMasterService.getGstLabel(row.gstRateId) || '—',
     },
     {
       key: 'status',

@@ -12,12 +12,13 @@ import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import { Button, Pagination, useToast } from '@/design-system/UIComponents'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { quotationService } from '@/shared/services/quotationService'
-import type { QuotationRecord } from '@/shared/types/quotation'
+import type { QuotationPipelineStatus, QuotationRecord } from '@/shared/types/quotation'
 import { QuotationKpiRow } from '../components/QuotationKpiRow'
 import { QuotationAdvancedFilterFields } from '../components/QuotationAdvancedFilters'
 import { buildQuotationColumns } from '../components/QuotationTableColumns'
 import { QuotationShareModal } from '../components/QuotationShareModal'
 import { QuotationConvertDialog } from '../components/QuotationConvertDialog'
+import { StatusUpdateModal } from '../../enquiries/components/StatusUpdateModal'
 import {
   downloadQuotationCsv,
   getQuotationCellValue,
@@ -43,6 +44,10 @@ export function QuotationListingPage() {
   const [shareTarget, setShareTarget] = useState<QuotationRecord>()
   const [convertTarget, setConvertTarget] = useState<QuotationRecord>()
   const [convertVersionId, setConvertVersionId] = useState<string>()
+  const [statusModalOpen, setStatusModalOpen] = useState(false)
+  const [activeQuotation, setActiveQuotation] = useState<QuotationRecord>()
+  const [statusValue, setStatusValue] = useState<QuotationPipelineStatus>('new')
+  const [statusReason, setStatusReason] = useState('')
 
   const loadRows = useCallback(async () => {
     setLoading(true)
@@ -66,6 +71,13 @@ export function QuotationListingPage() {
     initialPageSize: 10,
   })
 
+  const openStatus = useCallback((record: QuotationRecord) => {
+    setActiveQuotation(record)
+    setStatusValue(record.status)
+    setStatusReason('')
+    setStatusModalOpen(true)
+  }, [])
+
   const columns = useMemo(
     () =>
       buildQuotationColumns({
@@ -77,8 +89,15 @@ export function QuotationListingPage() {
           setConvertTarget(row)
           setConvertVersionId(undefined)
         },
+        onUpdateStatus: openStatus,
       }),
-    [navigate],
+    [navigate, openStatus],
+  )
+
+  const allowedStatuses = useMemo(
+    () =>
+      activeQuotation ? quotationService.getAllowedStatusTransitions(activeQuotation.status) : [],
+    [activeQuotation],
   )
 
   const toolbarColumns = useMemo(
@@ -189,6 +208,37 @@ export function QuotationListingPage() {
             />
           </Box>
         }
+      />
+
+      <StatusUpdateModal
+        open={statusModalOpen}
+        title="Update Quotation Status"
+        value={statusValue}
+        reason={statusReason}
+        allowedStatuses={allowedStatuses}
+        onClose={() => setStatusModalOpen(false)}
+        onStatusChange={(next) => setStatusValue(next as QuotationPipelineStatus)}
+        onReasonChange={setStatusReason}
+        onSubmit={() => {
+          if (!activeQuotation) return
+          const result = quotationService.updateStatus(
+            activeQuotation.id,
+            statusValue,
+            QUOTATION_ACTOR,
+            statusReason,
+          )
+          if (!result.ok) {
+            showToast({
+              title: 'Status update failed',
+              description: result.message ?? 'Invalid status transition',
+              variant: 'error',
+            })
+            return
+          }
+          setStatusModalOpen(false)
+          showToast({ title: 'Status updated', variant: 'success' })
+          void loadRows()
+        }}
       />
 
       <QuotationShareModal

@@ -124,7 +124,7 @@ export function CreditCardListingPage() {
           <AdminListingToolbar
             searchValue={listing.tableState.searchQuery}
             onSearch={listing.handleSearch}
-            searchPlaceholder="Search card name or description…"
+            searchPlaceholder="Search card name…"
             onExport={handleExport}
             columns={toolbarColumns}
             hiddenColumnKeys={listing.tableState.hiddenColumnKeys}

@@ -94,7 +94,7 @@ export function VendorServiceMappingModal({
           value={draft.serviceMasterId}
           onChange={(v) => setDraft((d) => ({ ...d, serviceMasterId: String(v) }))}
           options={serviceOptions}
-          placeholder="Select service from Service Master"
+          placeholder="Select service from GLTS Fee Master"
           fullWidth
           disabled={Boolean(mapping)}
         />

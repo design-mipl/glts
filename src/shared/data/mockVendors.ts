@@ -214,7 +214,7 @@ export const SEED_VENDORS: Vendor[] = [
     outstandingAmount: 17000,
     activities: activities([
       { timestamp: daysAgo(120), actor: 'Rajan Mehta', action: 'Vendor Created', detail: 'Insurance partner registered.' },
-      { timestamp: daysAgo(45), actor: 'Admin User', action: 'Service Added', detail: 'Travel insurance facilitation mapped.' },
+      { timestamp: daysAgo(45), actor: 'Admin User', action: 'Service Added', detail: 'Travel insurance mapped.' },
     ]),
     createdAt: daysAgo(120),
     updatedAt: daysAgo(20),

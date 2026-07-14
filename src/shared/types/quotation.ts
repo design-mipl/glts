@@ -1,12 +1,20 @@
 import type { AgreementPricingRow, AgreementMiscCostRow, AgreementWorkflowType } from './commercialAgreement'
+import type { ClientManagementPipelineStatus } from './clientManagementPipeline'
 
 export type QuotationSourceType = 'enquiry' | 'direct'
 
 export type QuotationSharedStatus = 'not_shared' | 'shared'
 
+/** Shared Client Management pipeline status (synced with linked lead). */
+export type QuotationPipelineStatus = ClientManagementPipelineStatus
+
 export type QuotationPricingMode = 'retail' | 'commercial'
 
-export type CommercialVisaPricingScope = 'country' | 'country_group' | 'rest_of_countries'
+export type CommercialVisaPricingScope =
+  | 'country'
+  | 'country_group'
+  | 'rest_of_countries_online'
+  | 'rest_of_countries_offline'
 
 export interface QuotationCustomerInfo {
   companyName: string
@@ -108,6 +116,8 @@ export interface QuotationRecord {
   gstPercentage: number
   attachments: QuotationAttachment[]
   activities: QuotationActivity[]
+  /** Client Management pipeline stage (mirrored to linked lead). */
+  status: QuotationPipelineStatus
   sharedStatus: QuotationSharedStatus
   sharedAt?: string
   sharedBy?: string
@@ -141,6 +151,7 @@ export interface QuotationListingFilters {
   query?: string
   sourceType?: QuotationSourceType | 'all'
   workflowType?: AgreementWorkflowType | 'all'
+  status?: QuotationPipelineStatus | 'all'
   sharedStatus?: QuotationSharedStatus | 'all'
   dateFrom?: string
   dateTo?: string

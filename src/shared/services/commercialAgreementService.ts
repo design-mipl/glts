@@ -392,6 +392,12 @@ export const commercialAgreementService = {
     const next = [...store]
     next[idx] = updated
     persist(next)
+    quotationService.syncPipelineFromAgreement(
+      record.referenceQuotationId,
+      status === 'on_hold' ? 'on_hold' : 'lost',
+      ADMIN_ACTOR,
+      trimmed,
+    )
     return updated
   },
 

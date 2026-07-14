@@ -1,15 +1,18 @@
 import { Stack } from '@mui/material'
 import { Button, FormField, Modal, Select, Textarea } from '@/design-system/UIComponents'
-import type { EnquiryStatus } from '@/shared/types/enquiry'
-import { enquiryStatusLabel } from '../config/enquiryStatusConfig'
-
-const REASON_REQUIRED_STATUSES: EnquiryStatus[] = ['closed', 'rejected', 'on_hold']
+import type { ClientManagementPipelineStatus } from '@/shared/types/clientManagementPipeline'
+import {
+  clientManagementPipelineLabel,
+  PIPELINE_REASON_REQUIRED_STATUSES,
+} from '@/shared/config/clientManagementPipelineConfig'
 
 interface StatusUpdateModalProps {
   open: boolean
+  title?: string
+  subtitle?: string
   value: string
   reason: string
-  allowedStatuses: EnquiryStatus[]
+  allowedStatuses: ClientManagementPipelineStatus[]
   onClose: () => void
   onReasonChange: (next: string) => void
   onStatusChange: (next: string) => void
@@ -18,6 +21,8 @@ interface StatusUpdateModalProps {
 
 export function StatusUpdateModal({
   open,
+  title = 'Update Status',
+  subtitle = 'Status changes are audit logged and sync across linked Client Management records.',
   value,
   reason,
   allowedStatuses,
@@ -27,19 +32,21 @@ export function StatusUpdateModal({
   onSubmit,
 }: StatusUpdateModalProps) {
   const statusOptions = allowedStatuses.map((status) => ({
-    label: enquiryStatusLabel[status],
+    label: clientManagementPipelineLabel[status],
     value: status,
   }))
 
-  const reasonRequired = REASON_REQUIRED_STATUSES.includes(value as EnquiryStatus)
+  const reasonRequired = PIPELINE_REASON_REQUIRED_STATUSES.includes(
+    value as ClientManagementPipelineStatus,
+  )
   const canSubmit = !reasonRequired || reason.trim().length > 0
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="Update Enquiry Status"
-      subtitle="Status changes are audit logged and should include context."
+      title={title}
+      subtitle={subtitle}
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end">
           <Button label="Cancel" variant="neutral" onClick={onClose} />

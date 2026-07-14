@@ -4,7 +4,6 @@ export function listCreditCardSelectOptions() {
   return creditCardMasterService.list().map(card => ({
     value: card.id,
     label: card.cardName,
-    description: card.description,
   }))
 }
 

@@ -1,6 +1,7 @@
 import { Input, Select } from '@/design-system/UIComponents'
 import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 import { AGREEMENT_WORKFLOW_OPTIONS } from '../../agreements/config/agreementStatusConfig'
+import { quotationPipelineStatusOptions } from '../config/quotationStatusConfig'
 import type { QuotationAdvancedFilterState } from '../utils/quotationListingUtils'
 
 export interface QuotationAdvancedFilterFieldsProps {
@@ -35,6 +36,19 @@ export function QuotationAdvancedFilterFields({ draft, patch }: QuotationAdvance
           onChange={(v) => patch({ workflowType: String(v) })}
           options={[{ value: 'all', label: 'All workflow types' }, ...AGREEMENT_WORKFLOW_OPTIONS]}
           placeholder="Workflow type"
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Pipeline Status">
+        <Select
+          value={draft.status}
+          onChange={(v) => patch({ status: String(v) || 'all' })}
+          options={[
+            { value: 'all', label: 'All statuses' },
+            ...quotationPipelineStatusOptions.filter((o) => o.value),
+          ]}
+          placeholder="Pipeline status"
           size="sm"
           fullWidth
         />

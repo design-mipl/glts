@@ -170,7 +170,7 @@ export function QuotationPricingSection({
         ) : formData.commercialVisaPricing.length === 0 ? (
           <PricingEmptyPlaceholder
             icon={<Tags size={28} />}
-            message="No visa pricing added yet. Add country, country group, or rest-of-countries GLTS fees."
+            message="No visa pricing added yet. Add country, country group, or rest-of-countries (online / offline) GLTS fees."
           />
         ) : (
           <CommercialVisaPricingTable

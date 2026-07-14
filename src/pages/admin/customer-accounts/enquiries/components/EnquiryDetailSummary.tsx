@@ -2,6 +2,7 @@ import { Box, Stack, Typography } from '@mui/material'
 import { ArrowRight, PencilLine } from 'lucide-react'
 import { BaseCard, Badge, Button } from '@/design-system/UIComponents'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
+import { canConvertLeadToQuotation } from '@/shared/config/clientManagementPipelineConfig'
 import { enquiryStatusColor, enquiryStatusLabel } from '../config/enquiryStatusConfig'
 
 interface EnquiryDetailSummaryProps {
@@ -14,10 +15,7 @@ export function EnquiryDetailSummary({ enquiry, onEdit, onConvert }: EnquiryDeta
   const enquiryDate = enquiry.enquiryDate
     ? new Date(enquiry.enquiryDate).toLocaleDateString()
     : '--'
-  const canConvert =
-    enquiry.status !== 'converted' &&
-    enquiry.status !== 'closed' &&
-    enquiry.status !== 'rejected'
+  const canConvert = canConvertLeadToQuotation(enquiry.status)
 
   return (
     <BaseCard>

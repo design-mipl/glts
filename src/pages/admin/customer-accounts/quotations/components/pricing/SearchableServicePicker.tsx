@@ -73,7 +73,7 @@ export function SearchableServicePicker({
           {filtered.length === 0 ? (
             <Typography variant="body2" color="text.secondary" sx={{ p: 2, fontSize: 13, textAlign: 'center' }}>
               {options.length === 0
-                ? 'No services found in Service Master for this customer type.'
+                ? 'No services found in GLTS Fee Master for this customer type.'
                 : 'No matching services'}
             </Typography>
           ) : (

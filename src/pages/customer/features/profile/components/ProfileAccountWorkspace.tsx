@@ -132,7 +132,13 @@ export function ProfileAccountWorkspace() {
       tabValue={tab}
       onTabChange={setTab}
     >
-      {tab === 'company' && <CompanyProfileTab data={company} />}
+      {tab === 'company' && (
+        <CompanyProfileTab
+          data={company}
+          commercialVisaPricing={billing.commercialVisaPricing}
+          miscellaneousServices={billing.miscellaneousServices}
+        />
+      )}
       {tab === 'billing' && <BillingAgreementTab data={billing} />}
       {tab === 'personal' && (
         <PersonalProfileTab

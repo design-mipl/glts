@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
 import dayjs from 'dayjs'
 import {
@@ -21,6 +21,7 @@ import { GroundServicesChecklist } from './GroundServicesChecklist'
 import { ApplicationFeePaidByField } from './ApplicationFeePaidByField'
 import { SubmissionVfsChargesSummary } from './SubmissionVfsChargesSummary'
 import { resolveOperationalCaseSubmissionSnapshot } from '@/shared/utils/operationalCaseSubmissionUtils'
+import type { OperationalCaseSubmissionSnapshot } from '@/shared/utils/operationalCaseSubmissionUtils'
 import { OperationalPaymentDetailsSection } from './OperationalPaymentDetailsSection'
 import { OperationalTimeline } from './OperationalTimeline'
 import { OperationalDocumentVault } from './OperationalDocumentVault'
@@ -62,6 +63,114 @@ function SectionHeading({ children }: { children: string }) {
     <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12, color: 'text.primary' }}>
       {children}
     </Typography>
+  )
+}
+
+function ContextMetaItem({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <Stack spacing={0.25} minWidth={0}>
+      <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ fontSize: 11 }}>
+        {label}
+      </Typography>
+      <Typography
+        variant="body2"
+        color="text.primary"
+        sx={{
+          fontSize: 13,
+          fontWeight: 500,
+          lineHeight: 1.35,
+          wordBreak: 'break-word',
+          fontVariantNumeric: mono ? 'tabular-nums' : undefined,
+        }}
+      >
+        {value?.trim() ? value : '—'}
+      </Typography>
+    </Stack>
+  )
+}
+
+function ContextGroup({
+  title,
+  children,
+}: {
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <Stack spacing={1.25}>
+      <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12, color: 'text.primary' }}>
+        {title}
+      </Typography>
+      {children}
+    </Stack>
+  )
+}
+
+function PassengerBatchContextCard({
+  record,
+  submissionSnapshot,
+}: {
+  record: OperationalCase
+  submissionSnapshot: OperationalCaseSubmissionSnapshot | null
+}) {
+  return (
+    <Box
+      sx={{
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1.5,
+        overflow: 'hidden',
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Stack spacing={0} divider={<Divider />}>
+        <Box sx={{ px: 1.75, py: 1.5 }}>
+          <ContextGroup title="Passenger details">
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 2, rowGap: 1.5 }}>
+              <ContextMetaItem label="Passport" value={record.passportNumber} mono />
+              <ContextMetaItem label="CDC" value={record.cdcNumber} mono />
+              <ContextMetaItem label="Company" value={record.companyName} />
+              <ContextMetaItem label="Vessel" value={record.vesselName} />
+              <ContextMetaItem label="Visa" value={`${record.country} · ${record.visaType}`} />
+              <ContextMetaItem label="Jurisdiction" value={record.jurisdiction} />
+              <ContextMetaItem label="Joining date" value={formatJoiningDate(record.joiningDate)} />
+              <ContextMetaItem label="Crew count" value={String(record.applicantCount)} />
+            </Box>
+          </ContextGroup>
+        </Box>
+
+        <Box sx={{ px: 1.75, py: 1.5 }}>
+          <ContextGroup title="Operations">
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 2, rowGap: 1.5 }}>
+              <Box sx={{ gridColumn: '1 / -1' }}>
+                <ContextMetaItem label="Next action" value={record.nextAction} />
+              </Box>
+              <ContextMetaItem label="Assigned team" value={record.assignedTeam} />
+              <ContextMetaItem label="Executive" value={record.assignedExecutive} />
+            </Box>
+          </ContextGroup>
+        </Box>
+
+        <Box sx={{ px: 1.75, py: 1.5, bgcolor: 'action.hover' }}>
+          <ContextGroup title="Submission details">
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 2, rowGap: 1.5 }}>
+              <ContextMetaItem
+                label="Online Submission Date"
+                value={formatDisplayDate(submissionSnapshot?.submissionDate)}
+              />
+              <ContextMetaItem
+                label="Online Submitted By"
+                value={submissionSnapshot?.submittedBy ?? ''}
+              />
+              <ContextMetaItem
+                label="VFS Submission Date"
+                value={formatDisplayDate(submissionSnapshot?.vfsSubmissionDate)}
+              />
+            </Box>
+          </ContextGroup>
+        </Box>
+      </Stack>
+    </Box>
   )
 }
 
@@ -141,23 +250,10 @@ function OperationalCaseDetailContent({
           <Stack spacing={2}>
             <Stack spacing={1.25}>
               <SectionHeading>Passenger & batch context</SectionHeading>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
-                <ReadField label="Operational ID" value={record.operationalId} />
-                <ReadField label="Passenger name" value={record.passengerName} />
-                <ReadField label="Rank" value={record.passengerRank} />
-                <ReadField label="Passport" value={record.passportNumber} />
-                <ReadField label="CDC" value={record.cdcNumber} />
-                <ReadField label="Batch ID" value={record.applicationId} />
-                <ReadField label="Company" value={record.companyName} />
-                <ReadField label="Vessel" value={record.vesselName} />
-                <ReadField label="Visa" value={`${record.country} · ${record.visaType}`} />
-                <ReadField label="Jurisdiction" value={record.jurisdiction} />
-                <ReadField label="Joining date" value={formatJoiningDate(record.joiningDate)} />
-                <ReadField label="Next action" value={record.nextAction} />
-                <ReadField label="Crew count" value={String(record.applicantCount)} />
-                <ReadField label="Assigned team" value={record.assignedTeam} />
-                <ReadField label="Executive" value={record.assignedExecutive} />
-              </Box>
+              <PassengerBatchContextCard
+                record={record}
+                submissionSnapshot={submissionSnapshot}
+              />
             </Stack>
 
             <Divider />
@@ -188,7 +284,7 @@ function OperationalCaseDetailContent({
               <SubmissionVfsChargesSummary snapshot={submissionSnapshot} />
               <Stack spacing={0.75}>
                 <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12, color: 'text.primary' }}>
-                  On-site fees & supplements
+                  On-site fees
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
                   Record additional VFS charges handled by the ground operations team.

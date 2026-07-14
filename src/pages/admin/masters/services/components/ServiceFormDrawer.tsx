@@ -46,7 +46,7 @@ export function ServiceFormDrawer({ open, record, onClose, onSaved }: ServiceFor
     setLoading(false)
     if (!result) return
     showToast({
-      title: isEdit ? 'Service updated' : 'Service added',
+      title: isEdit ? 'Fee updated' : 'Fee added',
       variant: 'success',
     })
     onSaved()
@@ -59,8 +59,8 @@ export function ServiceFormDrawer({ open, record, onClose, onSaved }: ServiceFor
     <AdminDrawerFormShell
       open={open}
       onClose={handleClose}
-      title={isEdit ? 'Edit service' : 'Add service'}
-      subtitle="Services offered for quotations, invoices, and billing"
+      title={isEdit ? 'Edit fee' : 'Add fee'}
+      subtitle="GLTS fees used in quotations, invoices, and billing"
       footer={
         <AdminFullPageFormFooter
           loading={loading}

@@ -1063,6 +1063,8 @@ const priyaSharmaSeed: SingleApplicationDemoSeed = {
     nationality: 'IND',
     dateOfBirth: '22 Jul 1990',
     cdcNumber: 'IN-CDC-884921',
+    phoneNumber: '+91 98765 43210',
+    email: 'priya.sharma@oceanicmarine.com',
   },
   additionalDetails: {
     paxContactNo: '+91 98765 43210',
@@ -1126,6 +1128,8 @@ const oliverGrantSeed: SingleApplicationDemoSeed = {
     nationality: 'GBR',
     dateOfBirth: '14 Mar 1988',
     cdcNumber: 'GB-CDC-772104',
+    phoneNumber: '+44 7700 900482',
+    email: 'oliver.grant@seafarer-solutions.com',
   },
   additionalDetails: {
     paxContactNo: '+44 7700 900482',
@@ -1189,6 +1193,8 @@ const mateoAlvarezSeed: SingleApplicationDemoSeed = {
     nationality: 'ESP',
     dateOfBirth: '19 Feb 1992',
     cdcNumber: 'ES-CDC-440912',
+    phoneNumber: '+34 61234 9988',
+    email: 'mateo.alvarez@bluewavemarine.com',
   },
   additionalDetails: {
     paxContactNo: '+34 61234 9988',
@@ -1252,6 +1258,8 @@ const ashaNairSeed: SingleApplicationDemoSeed = {
     nationality: 'IND',
     dateOfBirth: '08 Dec 1994',
     cdcNumber: 'IN-CDC-992107',
+    phoneNumber: '+91 99887 65432',
+    email: 'asha.nair@neptunecs.com',
   },
   additionalDetails: {
     paxContactNo: '+91 99887 65432',

@@ -18,6 +18,8 @@ export interface OperationalCaseSubmissionSnapshot {
   totalServiceCharges: number
   submissionDate?: string
   submissionReferenceNumber?: string
+  submittedBy?: string
+  vfsSubmissionDate?: string
   paymentDate?: string
   paymentMode?: FormAssistPaymentMode
   paymentReferenceNumber?: string
@@ -113,6 +115,8 @@ function findSeedSnapshot(record: OperationalCase): OperationalCaseSubmissionSna
     totalServiceCharges: vfsServiceCharges.reduce((sum, line) => sum + line.amount, 0),
     submissionDate: seed.submission.submissionDate,
     submissionReferenceNumber: seed.submission.submissionReferenceNumber,
+    submittedBy: seed.submission.submittedBy,
+    vfsSubmissionDate: seed.submission.vfsSubmissionDate,
     paymentDate: seed.submission.paymentDate,
     paymentMode: seed.submission.paymentMode,
     paymentReferenceNumber: seed.submission.paymentReferenceNumber,
@@ -136,6 +140,8 @@ function buildSnapshotFromSubmission(
     totalServiceCharges: vfsServiceCharges.reduce((sum, line) => sum + line.amount, 0),
     submissionDate: submission.submissionDate,
     submissionReferenceNumber: submission.submissionReferenceNumber,
+    submittedBy: submission.submittedBy,
+    vfsSubmissionDate: submission.vfsSubmissionDate,
     paymentDate: submission.paymentDate,
     paymentMode: submission.paymentMode,
     paymentReferenceNumber: submission.paymentReferenceNumber,

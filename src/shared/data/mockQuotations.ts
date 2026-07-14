@@ -104,6 +104,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       },
     ],
     sharedStatus: 'shared',
+    status: 'quotation_sent',
     sharedAt: daysAgo(3),
     sharedBy: 'Rajan Mehta',
     currentVersionId: 'qver-1-3',
@@ -138,6 +139,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       { id: 'qact-3', timestamp: daysAgo(8), actor: 'Neha Arora', action: 'Created', detail: 'Quotation created' },
     ],
     sharedStatus: 'not_shared',
+    status: 'new',
     currentVersionId: 'qver-2-1',
     pricingVersions: [
       makeVersion(
@@ -189,6 +191,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       { id: 'qact-4', timestamp: daysAgo(5), actor: 'Neha Arora', action: 'Created', detail: 'Quotation created' },
     ],
     sharedStatus: 'not_shared',
+    status: 'negotiation',
     currentVersionId: 'qver-3-1',
     pricingVersions: [
       makeVersion(
@@ -247,6 +250,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       },
     ],
     sharedStatus: 'not_shared',
+    status: 'qualified',
     currentVersionId: 'qver-4-1',
     pricingVersions: [makeVersion('qver-4-1', 1, [], 18, 'Neha Arora', daysAgo(2), 'marine')],
     createdAt: daysAgo(2),
@@ -275,6 +279,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       { id: 'qact-7', timestamp: daysAgo(1), actor: 'Neha Arora', action: 'Created', detail: 'Draft quotation' },
     ],
     sharedStatus: 'not_shared',
+    status: 'awaiting_confirmation',
     currentVersionId: 'qver-5-1',
     pricingVersions: [
       makeVersion(

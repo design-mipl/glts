@@ -47,7 +47,8 @@ function emptyRule(id?: string): CommercialVisaPricingRule {
 const SCOPE_OPTIONS = [
   { value: 'country', label: 'Country' },
   { value: 'country_group', label: 'Country Group' },
-  { value: 'rest_of_countries', label: 'Rest of Countries' },
+  { value: 'rest_of_countries_online', label: 'Rest of the countries online' },
+  { value: 'rest_of_countries_offline', label: 'Rest of the countries offline' },
 ]
 
 export function CommercialAddVisaPricingModal({
@@ -93,7 +94,7 @@ export function CommercialAddVisaPricingModal({
       open={open}
       onClose={onClose}
       title={initial ? 'Edit Visa Pricing' : 'Add Visa Pricing'}
-      subtitle="Set the GLTS service fee for a country, country group, or rest of countries."
+      subtitle="Set the GLTS service fee for a country, country group, or rest of countries (online / offline)."
       size="md"
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end">
@@ -128,7 +129,7 @@ export function CommercialAddVisaPricingModal({
               }}
               options={SCOPE_OPTIONS}
               orientation="horizontal"
-              sx={{ pl: 1.5 }}
+              sx={{ pl: 1.5, '& .MuiFormGroup-root': { flexWrap: 'wrap', gap: 0.5 } }}
             />
           </FormField>
         </AdminFullPageFormFieldSpan>

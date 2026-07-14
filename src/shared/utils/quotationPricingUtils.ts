@@ -112,7 +112,9 @@ export function flattenCommercialVisaPricing(
         ? rule.country ?? ''
         : rule.scope === 'country_group'
           ? rule.countryGroupName ?? 'Country Group'
-          : 'Rest of Countries'
+          : rule.scope === 'rest_of_countries_online'
+            ? 'Rest of the countries online'
+            : 'Rest of the countries offline'
     return {
       id: newId('pr'),
       country: countryLabel,
@@ -325,16 +327,56 @@ export function hydrateStructuredPricingFromMatrix(
   }
   const commercialVisaPricing: CommercialVisaPricingRule[] = matrix
     .filter((row) => row.visaType !== 'Miscellaneous' && row.remarks !== 'Miscellaneous service')
-    .map((row) => ({
-      id: row.id,
-      scope: 'country' as const,
-      countryId: row.countryId,
-      country: row.country,
-      visaType: row.visaType,
-      serviceFee: row.serviceFee,
-      gstApplicable: row.gstApplicable,
-      remarks: row.remarks,
-    }))
+    .map((row) => {
+      const country = row.country?.trim() ?? ''
+      const normalized = country.toLowerCase()
+      if (
+        normalized === 'rest of the countries online' ||
+        normalized === 'rest of countries online'
+      ) {
+        return {
+          id: row.id,
+          scope: 'rest_of_countries_online' as const,
+          visaType: row.visaType,
+          serviceFee: row.serviceFee,
+          gstApplicable: row.gstApplicable,
+          remarks: row.remarks,
+        }
+      }
+      if (
+        normalized === 'rest of the countries offline' ||
+        normalized === 'rest of countries offline'
+      ) {
+        return {
+          id: row.id,
+          scope: 'rest_of_countries_offline' as const,
+          visaType: row.visaType,
+          serviceFee: row.serviceFee,
+          gstApplicable: row.gstApplicable,
+          remarks: row.remarks,
+        }
+      }
+      if (normalized === 'rest of countries' || normalized === 'rest of the countries') {
+        return {
+          id: row.id,
+          scope: 'rest_of_countries_online' as const,
+          visaType: row.visaType,
+          serviceFee: row.serviceFee,
+          gstApplicable: row.gstApplicable,
+          remarks: row.remarks,
+        }
+      }
+      return {
+        id: row.id,
+        scope: 'country' as const,
+        countryId: row.countryId,
+        country: row.country,
+        visaType: row.visaType,
+        serviceFee: row.serviceFee,
+        gstApplicable: row.gstApplicable,
+        remarks: row.remarks,
+      }
+    })
   const miscellaneousServices: QuotationServiceLine[] = matrix
     .filter((row) => row.visaType === 'Miscellaneous' || row.remarks === 'Miscellaneous service')
     .map((row) => ({

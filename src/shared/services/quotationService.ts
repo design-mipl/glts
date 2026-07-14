@@ -4,6 +4,7 @@ import type {
   QuotationAttachment,
   QuotationFormData,
   QuotationListingFilters,
+  QuotationPipelineStatus,
   QuotationRecord,
   QuotationSharePayload,
 } from '@/shared/types/quotation'
@@ -26,6 +27,12 @@ import {
   validateForConvert,
   validateForShare,
 } from '@/shared/utils/quotationValidation'
+import {
+  clientManagementPipelineFlow,
+  clientManagementPipelineLabel,
+  getAllowedPipelineTransitions,
+  initialQuotationPipelineStatus,
+} from '@/shared/config/clientManagementPipelineConfig'
 
 function nowIso() {
   return new Date().toISOString()
@@ -132,6 +139,7 @@ function formToRecord(
     gstPercentage: data.gstPercentage,
     attachments: existing?.attachments ?? [],
     activities: existing?.activities ?? [makeActivity('Created', 'Quotation created', actor)],
+    status: existing?.status ?? initialQuotationPipelineStatus(data.sourceType),
     sharedStatus: existing?.sharedStatus ?? 'not_shared',
     sharedAt: existing?.sharedAt,
     sharedBy: existing?.sharedBy,
@@ -184,6 +192,7 @@ export const quotationService = {
     const {
       sourceType = 'all',
       workflowType = 'all',
+      status = 'all',
       sharedStatus = 'all',
       dateFrom,
       dateTo,
@@ -194,6 +203,7 @@ export const quotationService = {
 
     if (sourceType !== 'all') rows = rows.filter((r) => r.sourceType === sourceType)
     if (workflowType !== 'all') rows = rows.filter((r) => r.workflowType === workflowType)
+    if (status !== 'all') rows = rows.filter((r) => r.status === status)
     if (sharedStatus !== 'all') rows = rows.filter((r) => r.sharedStatus === sharedStatus)
     if (dateFrom) rows = rows.filter((r) => r.createdAt.slice(0, 10) >= dateFrom)
     if (dateTo) rows = rows.filter((r) => r.createdAt.slice(0, 10) <= dateTo)
@@ -210,6 +220,103 @@ export const quotationService = {
 
   getById(quotationId: string): QuotationRecord | undefined {
     return getStore().find((r) => r.id === quotationId)
+  },
+
+  getAllowedStatusTransitions(current: QuotationPipelineStatus): QuotationPipelineStatus[] {
+    return getAllowedPipelineTransitions(current)
+  },
+
+  mirrorPipelineStatusToLinkedQuotations(
+    enquiryId: string,
+    nextStatus: QuotationPipelineStatus,
+    actor: string,
+    reason?: string,
+  ) {
+    const store = getStore()
+    let changed = false
+    for (const record of store) {
+      if (record.enquiryId !== enquiryId || record.status === nextStatus) continue
+      const previousStatus = record.status
+      record.status = nextStatus
+      record.updatedAt = nowIso()
+      record.activities.unshift(
+        makeActivity(
+          'Status synced',
+          `Status synced from ${clientManagementPipelineLabel[previousStatus]} to ${clientManagementPipelineLabel[nextStatus]}${reason ? `: ${reason}` : ''}`,
+          actor,
+        ),
+      )
+      changed = true
+    }
+    if (changed) persist(store)
+  },
+
+  applyMirroredPipelineStatus(
+    quotationId: string,
+    nextStatus: QuotationPipelineStatus,
+    actor: string,
+    reason?: string,
+  ) {
+    const store = getStore()
+    const record = store.find((r) => r.id === quotationId)
+    if (!record || record.status === nextStatus) return record
+    const previousStatus = record.status
+    record.status = nextStatus
+    record.updatedAt = nowIso()
+    record.activities.unshift(
+      makeActivity(
+        'Status synced',
+        `Status synced from ${clientManagementPipelineLabel[previousStatus]} to ${clientManagementPipelineLabel[nextStatus]}${reason ? `: ${reason}` : ''}`,
+        actor,
+      ),
+    )
+    persist(store)
+    return record
+  },
+
+  updateStatus(
+    quotationId: string,
+    nextStatus: QuotationPipelineStatus,
+    actor: string,
+    reason?: string,
+  ): { ok: boolean; record?: QuotationRecord; message?: string } {
+    const store = getStore()
+    const record = store.find((r) => r.id === quotationId)
+    if (!record) return { ok: false, message: 'Quotation not found' }
+    if (
+      !clientManagementPipelineFlow[record.status].includes(nextStatus) &&
+      record.status !== nextStatus
+    ) {
+      return { ok: false, message: 'Invalid status transition' }
+    }
+    const previousStatus = record.status
+    record.status = nextStatus
+    record.updatedAt = nowIso()
+    record.activities.unshift(
+      makeActivity(
+        'Status updated',
+        `Status changed from ${clientManagementPipelineLabel[previousStatus]} to ${clientManagementPipelineLabel[nextStatus]}${reason ? `: ${reason}` : ''}`,
+        actor,
+      ),
+    )
+    persist(store)
+    if (record.enquiryId) {
+      enquiryService.applyMirroredPipelineStatus(record.enquiryId, nextStatus, actor, reason)
+    }
+    return { ok: true, record }
+  },
+
+  syncPipelineFromAgreement(
+    referenceQuotationId: string | undefined,
+    pipelineStatus: QuotationPipelineStatus,
+    actor: string,
+    reason: string,
+  ) {
+    if (!referenceQuotationId) return
+    const record = this.applyMirroredPipelineStatus(referenceQuotationId, pipelineStatus, actor, reason)
+    if (record?.enquiryId) {
+      enquiryService.applyMirroredPipelineStatus(record.enquiryId, pipelineStatus, actor, reason)
+    }
   },
 
   createDirect(data: QuotationFormData, actor: string): QuotationRecord {
@@ -383,6 +490,28 @@ export const quotationService = {
     target.sharedBy = actor
     target.updatedAt = nowIso()
     target.activities.unshift(makeActivity('Shared', 'Quotation shared with customer', actor))
+
+    const beforeShare: QuotationPipelineStatus[] = ['new', 'qualified', 'contacted']
+    if (beforeShare.includes(target.status)) {
+      const previousStatus = target.status
+      target.status = 'quotation_sent'
+      target.activities.unshift(
+        makeActivity(
+          'Status updated',
+          `Status changed from ${clientManagementPipelineLabel[previousStatus]} to Quotation Sent (shared)`,
+          actor,
+        ),
+      )
+      if (target.enquiryId) {
+        enquiryService.applyMirroredPipelineStatus(
+          target.enquiryId,
+          'quotation_sent',
+          actor,
+          'Quotation shared with customer',
+        )
+      }
+    }
+
     persist(store)
     return { ok: true, record: target }
   },
@@ -426,11 +555,20 @@ export const quotationService = {
     const version = getVersionById(record, versionId)
     record.convertedAgreementId = agreementId ?? 'pending'
     record.convertedFromVersionId = version?.id
+    record.status = 'converted'
     record.updatedAt = nowIso()
     record.activities.unshift(
       makeActivity('Converted', `Converted ${version?.versionLabel ?? 'pricing version'} to agreement`, 'System'),
     )
     persist(store)
+    if (record.enquiryId) {
+      enquiryService.applyMirroredPipelineStatus(
+        record.enquiryId,
+        'converted',
+        'System',
+        'Converted to agreement',
+      )
+    }
     return { ok: true, record }
   },
 

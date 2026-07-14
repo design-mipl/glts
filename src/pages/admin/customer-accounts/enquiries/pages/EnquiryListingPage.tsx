@@ -41,8 +41,8 @@ const ENQUIRY_TAB_VALUES: readonly EnquiryListingTab[] = [
   'new',
   'active',
   'converted',
-  'non_converted',
-  'closed',
+  'lost',
+  'on_hold',
 ]
 
 const initialAssignment: AssignmentModalValue = {
@@ -87,7 +87,7 @@ export function EnquiryListingPage() {
   const [followupModalOpen, setFollowupModalOpen] = useState(false)
   const [activeEnquiryId, setActiveEnquiryId] = useState<string>()
   const [activeEnquiryStatus, setActiveEnquiryStatus] = useState<EnquiryStatus>('new')
-  const [statusValue, setStatusValue] = useState('under_discussion')
+  const [statusValue, setStatusValue] = useState('contacted')
   const [statusReason, setStatusReason] = useState('')
   const [assignmentValue, setAssignmentValue] = useState<AssignmentModalValue>(initialAssignment)
   const [followupValue, setFollowupValue] = useState<FollowupModalValue>(initialFollowup)
@@ -221,8 +221,8 @@ export function EnquiryListingPage() {
           { value: 'new', label: 'New' },
           { value: 'active', label: 'Active' },
           { value: 'converted', label: 'Converted' },
-          { value: 'non_converted', label: 'Non Converted' },
-          { value: 'closed', label: 'Closed' },
+          { value: 'lost', label: 'Lost' },
+          { value: 'on_hold', label: 'On Hold' },
         ]}
         tabValue={activeTab}
         onTabChange={(value) => handleTabChange(value as EnquiryListingTab)}
@@ -282,6 +282,7 @@ export function EnquiryListingPage() {
 
       <StatusUpdateModal
         open={statusModalOpen}
+        title="Update Lead Status"
         value={statusValue}
         reason={statusReason}
         allowedStatuses={allowedStatuses}

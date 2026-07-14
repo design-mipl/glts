@@ -38,23 +38,6 @@ export function buildCreditCardColumns({
       searchable: true,
     },
     {
-      key: 'description',
-      label: 'Description',
-      widthSize: adminListingColumnWidthSize('description'),
-      sortable: false,
-      filterable: false,
-      searchable: true,
-      render: (_, row) => (
-        <Typography
-          variant="body2"
-          sx={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-          title={row.description}
-        >
-          {row.description || '—'}
-        </Typography>
-      ),
-    },
-    {
       key: 'createdAudit',
       label: 'Created By / Date',
       widthSize: adminListingColumnWidthSize('audit'),

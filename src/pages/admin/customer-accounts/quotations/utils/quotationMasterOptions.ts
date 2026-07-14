@@ -7,7 +7,7 @@ import { shouldShowJurisdictionNodes } from '@/shared/utils/jurisdictionRequirem
 import { workflowToSegment } from '@/pages/admin/customer-accounts/agreements/utils/agreementMasterOptions'
 import type { ServicePickerOption } from '../components/pricing/SearchableServicePicker'
 
-/** Active Service Master rows for quotation pickers, filtered by customer-type applicability. */
+/** Active GLTS Fee Master rows for quotation pickers, filtered by customer-type applicability. */
 export function getServiceMasterPickerOptions(
   workflow: AgreementWorkflowType,
   options?: { excludeServiceTypes?: ServiceType[] },
@@ -27,7 +27,7 @@ export function getServiceMasterPickerOptions(
     .sort((a, b) => a.label.localeCompare(b.label))
 }
 
-/** @deprecated Use getServiceMasterPickerOptions — Retail GLTS / misc pickers share Service Master. */
+/** @deprecated Use getServiceMasterPickerOptions — Retail GLTS / misc pickers share GLTS Fee Master. */
 export function getGltsServicePickerOptions(workflow: AgreementWorkflowType): ServicePickerOption[] {
   return getServiceMasterPickerOptions(workflow, { excludeServiceTypes: ['vfs'] })
 }

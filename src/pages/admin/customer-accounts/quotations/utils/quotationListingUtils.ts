@@ -2,6 +2,7 @@ import type { QuotationRecord } from '@/shared/types/quotation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { getCurrentVersion } from '@/shared/utils/quotationValidation'
 import {
+  quotationPipelineStatusLabel,
   quotationSharedStatusLabel,
   quotationSourceTypeLabel,
   workflowTypeLabel,
@@ -11,6 +12,7 @@ export interface QuotationAdvancedFilterState {
   quotationNo: string
   companyName: string
   workflowType: string
+  status: string
   sharedStatus: string
   dateFrom: string
   dateTo: string
@@ -20,6 +22,7 @@ export const INITIAL_QUOTATION_ADVANCED_FILTERS: QuotationAdvancedFilterState = 
   quotationNo: '',
   companyName: '',
   workflowType: 'all',
+  status: 'all',
   sharedStatus: 'all',
   dateFrom: '',
   dateTo: '',
@@ -36,6 +39,7 @@ export function matchesQuotationSearch(record: QuotationRecord, query: string): 
     record.customer.contactPersonName.toLowerCase().includes(q) ||
     quotationSourceTypeLabel[record.sourceType].toLowerCase().includes(q) ||
     workflowTypeLabel[record.workflowType].toLowerCase().includes(q) ||
+    quotationPipelineStatusLabel[record.status].toLowerCase().includes(q) ||
     (version?.versionLabel.toLowerCase().includes(q) ?? false)
   )
 }
@@ -53,6 +57,7 @@ export function matchesQuotationAdvancedFilters(
     if (!record.customer.companyName.toLowerCase().includes(q)) return false
   }
   if (filters.workflowType !== 'all' && record.workflowType !== filters.workflowType) return false
+  if (filters.status !== 'all' && record.status !== filters.status) return false
   if (filters.sharedStatus !== 'all' && record.sharedStatus !== filters.sharedStatus) return false
   if (filters.dateFrom && record.createdAt.slice(0, 10) < filters.dateFrom) return false
   if (filters.dateTo && record.createdAt.slice(0, 10) > filters.dateTo) return false
@@ -70,6 +75,8 @@ export function getQuotationCellValue(record: QuotationRecord, columnKey: string
       return quotationSourceTypeLabel[record.sourceType]
     case 'workflowType':
       return workflowTypeLabel[record.workflowType]
+    case 'status':
+      return quotationPipelineStatusLabel[record.status]
     case 'totalAmount':
       return version ? formatInr(version.totals.grandTotal) : '—'
     case 'currentVersion':
@@ -92,6 +99,7 @@ export function hasActiveQuotationFilters(filters: QuotationAdvancedFilterState)
     Boolean(filters.quotationNo.trim()) ||
     Boolean(filters.companyName.trim()) ||
     filters.workflowType !== 'all' ||
+    filters.status !== 'all' ||
     filters.sharedStatus !== 'all' ||
     Boolean(filters.dateFrom) ||
     Boolean(filters.dateTo)
@@ -120,10 +128,12 @@ export function mapQuotationRowsToGridItems(rows: QuotationRecord[]) {
       title: row.quotationNo,
       subtitle: row.customer.companyName,
       meta: [
+        quotationPipelineStatusLabel[row.status],
         quotationSourceTypeLabel[row.sourceType],
         `${row.pricingVersions.length} version(s)`,
       ].join(' · '),
       badge: version ? formatInr(version.totals.grandTotal) : '—',
+      status: quotationPipelineStatusLabel[row.status],
     }
   })
 }
@@ -134,6 +144,7 @@ export function downloadQuotationCsv(rows: QuotationRecord[]) {
     'Company',
     'Type',
     'Workflow',
+    'Status',
     'Total',
     'Current Version',
     'Versions',
@@ -148,6 +159,7 @@ export function downloadQuotationCsv(rows: QuotationRecord[]) {
       r.customer.companyName,
       quotationSourceTypeLabel[r.sourceType],
       workflowTypeLabel[r.workflowType],
+      quotationPipelineStatusLabel[r.status],
       version ? String(version.totals.grandTotal) : '',
       version?.versionLabel ?? '',
       String(r.pricingVersions.length),
