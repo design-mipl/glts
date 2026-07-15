@@ -146,8 +146,14 @@ export function getFundAllocationCellValue(row: FundAllocationPassengerRow, key:
       return row.travelDate
     case 'submissionDate':
       return row.submissionDate
-    case 'appointmentDate':
-      return row.appointmentDate
+    case 'onlineSubmissionDate':
+      return row.onlineSubmissionDate
+    case 'vfsSubmissionDate':
+      return row.vfsSubmissionDate
+    case 'tentativeCollectionDate':
+      return row.tentativeCollectionDate
+    case 'collectionDate':
+      return row.collectionDate
     case 'submissionStatus':
       return row.submissionStatus
     case 'allocationStatus':
@@ -160,8 +166,10 @@ export function getFundAllocationCellValue(row: FundAllocationPassengerRow, key:
       return row.totalAmount > 0 ? formatInr(row.totalAmount) : '—'
     case 'allocatedBy':
       return row.allocatedBy || '—'
-    case 'creditCardName':
-      return row.creditCardName || '—'
+    case 'allocatedTo':
+      return row.allocatedTo || '—'
+    case 'cardName':
+      return row.cardName || '—'
     case 'lastUpdated':
       return row.lastUpdated
     default:
@@ -226,8 +234,10 @@ export function downloadFundAllocationCsv(rows: FundAllocationPassengerRow[]) {
     'Visa Type',
     'Jurisdiction',
     'Travel Date',
+    'Online Submission Date',
     'VFS Submission Date',
-    'Appointment Date',
+    'Tentative Collection Date',
+    'Collection Date',
     'Submission Status',
     'Allocation Status',
     'Catalog Total',
@@ -235,6 +245,7 @@ export function downloadFundAllocationCsv(rows: FundAllocationPassengerRow[]) {
     'Allocated Amount',
     'Payment Card',
     'Allocated By',
+    'Allocated To',
     'Last Updated',
   ]
 
@@ -249,15 +260,18 @@ export function downloadFundAllocationCsv(rows: FundAllocationPassengerRow[]) {
       row.visaType,
       row.jurisdiction,
       row.travelDate,
-      row.submissionDate,
-      row.appointmentDate,
+      row.onlineSubmissionDate,
+      row.vfsSubmissionDate,
+      row.tentativeCollectionDate,
+      row.collectionDate,
       row.submissionStatus,
       row.allocationStatus,
       row.suggestedAllocationAmount,
       row.totalAmount,
       row.allocatedAmount,
-      row.creditCardName,
+      row.cardName,
       row.allocatedBy,
+      row.allocatedTo,
       row.lastUpdated,
     ]
       .map(value => `"${String(value).replace(/"/g, '""')}"`)

@@ -52,6 +52,28 @@ export const SEED_COMPANIES: CompanyMaster[] = [
     activities: [],
   },
   {
+    id: 'CMP-OM-847',
+    companyName: 'Oceanic Marine Ltd',
+    companyType: 'private_limited',
+    industryType: 'Marine & Shipping',
+    contactPersonName: 'Priya Sharma',
+    contactNumber: '+91 98765 43210',
+    emailAddress: 'finance@oceanicmarine.com',
+    companyAddress: 'Nariman Point, Mumbai, Maharashtra',
+    countryId: 'India',
+    country: 'India',
+    state: 'Maharashtra',
+    city: 'Mumbai',
+    pincode: '400021',
+    billingEntityName: 'Oceanic Marine Ltd',
+    billingAddress: 'Nariman Point, Mumbai 400021',
+    gstNumber: '27AABCO8470A1Z5',
+    panNumber: 'AABCO8470A',
+    createdAt: daysAgo(60),
+    updatedAt: daysAgo(3),
+    activities: [],
+  },
+  {
     id: 'CMP-1003',
     companyName: 'Global Corporate Travel Ltd',
     companyType: 'public_limited',
@@ -143,7 +165,7 @@ export const SEED_COMPANIES: CompanyMaster[] = [
 
 const STORAGE_KEY = 'glts:companies'
 /** Bump when `SEED_COMPANIES` changes so dev browsers reload mock data. */
-const SEED_VERSION = 2
+const SEED_VERSION = 3
 
 let memoryStore: CompanyMaster[] | null = null
 

@@ -3,12 +3,12 @@ import { PencilLine, Trash2 } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { RowActions } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
-import type { CreditCardMaster } from '@/shared/types/creditCardMaster'
+import type { CardMaster } from '@/shared/types/cardMaster'
 import { formatMasterDate } from '../../utils/masterListingUtils'
 
 interface ColumnHandlers {
-  onOpenEdit: (row: CreditCardMaster) => void
-  onDelete: (row: CreditCardMaster) => void
+  onOpenEdit: (row: CardMaster) => void
+  onDelete: (row: CardMaster) => void
 }
 
 function AuditCell({ name, date }: { name: string; date: string }) {
@@ -24,10 +24,10 @@ function AuditCell({ name, date }: { name: string; date: string }) {
   )
 }
 
-export function buildCreditCardColumns({
+export function buildCardMasterColumns({
   onOpenEdit,
   onDelete,
-}: ColumnHandlers): Column<CreditCardMaster>[] {
+}: ColumnHandlers): Column<CardMaster>[] {
   return [
     {
       key: 'cardName',

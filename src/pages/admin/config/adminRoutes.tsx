@@ -35,7 +35,7 @@ import {
   DocumentDetailPage,
   DocumentListingPage,
 } from '../masters/documents'
-import { CreditCardListingPage } from '../masters/credit-card'
+import { CardMasterListingPage } from '../masters/card-master'
 import { CountryGroupListingPage } from '../masters/country-groups'
 import { JurisdictionListingPage } from '../masters/jurisdiction'
 import { SacCodeListingPage } from '../masters/sac-codes'
@@ -65,7 +65,6 @@ import {
 import { ExpenseFinanceRoutes } from '../finance/expenses/ExpenseFinanceRoutes'
 import {
   ApplicationExpenseDetailPage,
-  ExpenseApprovalQueuePage,
   ExpenseListingPage,
 } from '../finance/expenses'
 import { VendorBillingRoutes } from '../finance/vendor-billing/VendorBillingRoutes'
@@ -448,10 +447,10 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="masters/credit-card"
+        path="masters/card-master"
         element={
           <PermissionGuard>
-            <CreditCardListingPage />
+            <CardMasterListingPage />
           </PermissionGuard>
         }
       />
@@ -621,7 +620,6 @@ export function AdminRoutes() {
       </Route>
       <Route path="finance/expenses" element={<ExpenseFinanceRoutes />}>
         <Route index element={<ExpenseListingPage />} />
-        <Route path="approval-queue" element={<ExpenseApprovalQueuePage />} />
         <Route path=":applicationId" element={<ApplicationExpenseDetailPage />} />
       </Route>
       <Route path="finance/vendor-billing" element={<VendorBillingRoutes />}>

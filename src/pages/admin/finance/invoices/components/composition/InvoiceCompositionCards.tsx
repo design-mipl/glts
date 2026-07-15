@@ -11,13 +11,9 @@ import type {
   ApplicantFeeBundle,
   BulkApplicationFeeCard,
   InvoiceFeeCompositionState,
+  SingleApplicationFeeCard,
 } from '../../types/invoiceFeeComposition.types'
-import type { SingleApplicationFeeCard } from '../../types/invoiceFeeComposition.types'
-import { INVOICE_COMPOSITION_FEE_LABELS } from '../../config/invoiceFeeCategoryLabels'
-import { RepeatableFeeTable } from './RepeatableFeeTable'
-import { SimpleFeeFields } from './SimpleFeeFields'
-
-const FEE = INVOICE_COMPOSITION_FEE_LABELS
+import { InvoiceBillableServicesTable } from './InvoiceBillableServicesTable'
 
 function MetaGrid({ items }: { items: [string, string][] }) {
   return (
@@ -39,9 +35,10 @@ function MetaGrid({ items }: { items: [string, string][] }) {
 interface ApplicantFeeEditorProps {
   applicant: ApplicantFeeBundle
   onChange: (next: ApplicantFeeBundle) => void
+  nested?: boolean
 }
 
-function ApplicantFeeEditor({ applicant, onChange, nested = false }: ApplicantFeeEditorProps & { nested?: boolean }) {
+function ApplicantFeeEditor({ applicant, onChange, nested = false }: ApplicantFeeEditorProps) {
   return (
     <Box sx={nested ? undefined : { border: '1px solid', borderColor: 'divider', borderRadius: 1.5, p: 2, bgcolor: 'background.paper' }}>
       {!nested ? (
@@ -56,32 +53,10 @@ function ApplicantFeeEditor({ applicant, onChange, nested = false }: ApplicantFe
         />
       ) : null}
       {!nested ? <Divider sx={{ my: 2 }} /> : null}
-      <Stack spacing={2}>
-        <SimpleFeeFields
-          title={FEE.processingCharges.section}
-          value={applicant.gltsFees}
-          onChange={gltsFees => onChange({ ...applicant, gltsFees })}
-        />
-        <SimpleFeeFields
-          title={FEE.visaFees.section}
-          value={applicant.visaFees}
-          onChange={visaFees => onChange({ ...applicant, visaFees })}
-        />
-        <RepeatableFeeTable
-          title={FEE.courierFees.section}
-          addLabel={FEE.courierFees.addRow}
-          variant="handling"
-          rows={applicant.handlingFees}
-          onChange={handlingFees => onChange({ ...applicant, handlingFees })}
-        />
-        <RepeatableFeeTable
-          title={FEE.miscellaneousFees.section}
-          addLabel={FEE.miscellaneousFees.addRow}
-          variant="miscellaneous"
-          rows={applicant.miscellaneousFees}
-          onChange={miscellaneousFees => onChange({ ...applicant, miscellaneousFees })}
-        />
-      </Stack>
+      <InvoiceBillableServicesTable
+        lines={applicant.serviceLines}
+        onChange={serviceLines => onChange({ ...applicant, serviceLines })}
+      />
     </Box>
   )
 }
@@ -91,43 +66,6 @@ interface SingleApplicationFeeCardViewProps {
   onChange: (next: SingleApplicationFeeCard) => void
   /** Inside Generate Invoice accordion — hides duplicate chrome. */
   embedded?: boolean
-}
-
-function SingleFeeSections({
-  card,
-  onChange,
-}: {
-  card: SingleApplicationFeeCard
-  onChange: (next: SingleApplicationFeeCard) => void
-}) {
-  return (
-    <Stack spacing={2}>
-      <SimpleFeeFields
-        title={FEE.processingCharges.section}
-        value={card.gltsFees}
-        onChange={gltsFees => onChange({ ...card, gltsFees })}
-      />
-      <SimpleFeeFields
-        title={FEE.visaFees.section}
-        value={card.visaFees}
-        onChange={visaFees => onChange({ ...card, visaFees })}
-      />
-      <RepeatableFeeTable
-        title={FEE.courierFees.section}
-        addLabel={FEE.courierFees.addRow}
-        variant="handling"
-        rows={card.handlingFees}
-        onChange={handlingFees => onChange({ ...card, handlingFees })}
-      />
-      <RepeatableFeeTable
-        title={FEE.miscellaneousFees.section}
-        addLabel={FEE.miscellaneousFees.addRow}
-        variant="miscellaneous"
-        rows={card.miscellaneousFees}
-        onChange={miscellaneousFees => onChange({ ...card, miscellaneousFees })}
-      />
-    </Stack>
-  )
 }
 
 export function SingleApplicationFeeCardView({ card, onChange, embedded = false }: SingleApplicationFeeCardViewProps) {
@@ -156,7 +94,10 @@ export function SingleApplicationFeeCardView({ card, onChange, embedded = false 
           <Divider sx={{ my: 2 }} />
         </>
       ) : null}
-      <SingleFeeSections card={card} onChange={onChange} />
+      <InvoiceBillableServicesTable
+        lines={card.serviceLines}
+        onChange={serviceLines => onChange({ ...card, serviceLines })}
+      />
     </Box>
   )
 }

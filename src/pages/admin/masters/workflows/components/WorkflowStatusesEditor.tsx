@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Box,
   IconButton,
@@ -10,7 +11,7 @@ import {
   Typography,
 } from '@mui/material'
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
-import { Button } from '@/design-system/UIComponents'
+import { Button, FormField, Input, Textarea } from '@/design-system/UIComponents'
 import { statusMasterService } from '@/shared/services/statusMasterService'
 import type { WorkflowStatusStepFormData } from '@/shared/types/workflowMaster'
 
@@ -18,7 +19,27 @@ interface WorkflowStatusesEditorProps {
   steps: WorkflowStatusStepFormData[]
   error?: string
   onChange: (steps: WorkflowStatusStepFormData[]) => void
-  onAddClick: () => void
+}
+
+function resolveStatusId(input: string): string {
+  const normalized = input.trim().toLowerCase()
+  const match = statusMasterService
+    .list()
+    .find((row) => row.name.trim().toLowerCase() === normalized)
+  return match?.id ?? input.trim()
+}
+
+function isStatusAlreadyInWorkflow(resolvedId: string, existingStatusIds: string[]): boolean {
+  if (existingStatusIds.includes(resolvedId)) return true
+  const resolvedName = (
+    statusMasterService.getById(resolvedId)?.name ?? resolvedId
+  )
+    .trim()
+    .toLowerCase()
+  return existingStatusIds.some((id) => {
+    const name = (statusMasterService.getById(id)?.name ?? id).trim().toLowerCase()
+    return name === resolvedName
+  })
 }
 
 function reorderSteps(
@@ -37,16 +58,32 @@ export function WorkflowStatusesEditor({
   steps,
   error,
   onChange,
-  onAddClick,
 }: WorkflowStatusesEditorProps) {
+  const [statusName, setStatusName] = useState('')
+  const [remarks, setRemarks] = useState('')
+  const [addError, setAddError] = useState('')
+
+  const handleAdd = () => {
+    if (!statusName.trim()) {
+      setAddError('Status is required')
+      return
+    }
+    const statusId = resolveStatusId(statusName)
+    if (isStatusAlreadyInWorkflow(statusId, steps.map((step) => step.statusId))) {
+      setAddError('This status is already in the workflow')
+      return
+    }
+    onChange([...steps, { statusId, remarks: remarks.trim() }])
+    setStatusName('')
+    setRemarks('')
+    setAddError('')
+  }
+
   return (
     <Stack spacing={1.5} sx={{ width: '100%' }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
-        <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12 }}>
-          Configure the sequence of processing statuses for this workflow.
-        </Typography>
-        <Button label="Add Status" startIcon={<Plus size={14} />} onClick={onAddClick} size="sm" />
-      </Stack>
+      <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12 }}>
+        Configure the sequence of processing statuses for this workflow.
+      </Typography>
 
       {error ? (
         <Typography variant="caption" color="error" sx={{ fontSize: 12 }}>
@@ -61,12 +98,12 @@ export function WorkflowStatusesEditor({
             borderColor: 'divider',
             borderRadius: 1.25,
             px: 2,
-            py: 3,
+            py: 2.5,
             textAlign: 'center',
           }}
         >
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-            No statuses added yet. Click Add Status to build the sequence.
+            No statuses added yet. Enter a status below to build the sequence.
           </Typography>
         </Box>
       ) : (
@@ -82,13 +119,13 @@ export function WorkflowStatusesEditor({
           </TableHead>
           <TableBody>
             {steps.map((step, index) => {
-              const statusName = statusMasterService.getById(step.statusId)?.name ?? step.statusId
+              const name = statusMasterService.getById(step.statusId)?.name ?? step.statusId
               return (
                 <TableRow key={`${step.statusId}-${index}`}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-                      {statusName}
+                      {name}
                     </Typography>
                     {step.remarks ? (
                       <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
@@ -130,6 +167,38 @@ export function WorkflowStatusesEditor({
           </TableBody>
         </Table>
       )}
+
+      <Stack spacing={1.25}>
+        <FormField label="Status" required error={Boolean(addError)} helperText={addError}>
+          <Input
+            value={statusName}
+            onChange={(v) => {
+              setStatusName(v)
+              setAddError('')
+            }}
+            placeholder="e.g. Under Review"
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        <FormField label="Remarks" optional>
+          <Textarea
+            value={remarks}
+            onChange={setRemarks}
+            placeholder="Optional notes for this status step"
+            rows={2}
+            fullWidth
+          />
+        </FormField>
+        <Box>
+          <Button
+            label="Add Status"
+            startIcon={<Plus size={14} />}
+            onClick={handleAdd}
+            size="sm"
+          />
+        </Box>
+      </Stack>
     </Stack>
   )
 }

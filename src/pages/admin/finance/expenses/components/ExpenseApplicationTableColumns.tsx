@@ -4,15 +4,9 @@ import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { ApplicationExpenseListingRow } from '@/shared/types/applicationExpenseManagement'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
-import {
-  rollupApprovalStatusLabel,
-  rollupPaymentStatusLabel,
-} from '@/shared/utils/applicationExpenseManagementUtils'
 import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
-import {
-  expenseRollupApprovalColor,
-  expenseRollupPaymentColor,
-} from '../config/expenseStatusConfig'
+import { rollupPaymentStatusLabel } from '@/shared/utils/applicationExpenseManagementUtils'
+import { expenseRollupPaymentColor } from '../config/expenseStatusConfig'
 import { EXPENSE_LISTING_BASE_PATH } from '../config/expenseListingTabs'
 
 export interface ExpenseApplicationColumnHandlers {
@@ -105,25 +99,11 @@ export function buildExpenseApplicationColumns(
     },
     {
       key: 'pendingExpense',
-      label: 'Pending Expense',
+      label: 'Pending Payment',
       widthSize: 'md',
       sortable: true,
       align: 'right',
       render: (_: unknown, row) => formatInr(row.pendingExpense),
-    },
-    {
-      key: 'approvalStatus',
-      label: 'Approval Status',
-      widthSize: adminListingColumnWidthSize('statusGroup'),
-      sortable: true,
-      filterable: true,
-      render: (_: unknown, row) => (
-        <Badge
-          label={rollupApprovalStatusLabel(row.approvalStatus)}
-          color={expenseRollupApprovalColor[row.approvalStatus]}
-          size="sm"
-        />
-      ),
     },
     {
       key: 'paymentStatus',
@@ -159,13 +139,6 @@ export function buildExpenseApplicationColumns(
               onClick: () =>
                 navigateFromListing(navigate, `${base}/${row.applicationId}`, fromListing, {
                   state: { openAddExpense: true },
-                }),
-            },
-            {
-              label: 'View Approval Status',
-              onClick: () =>
-                navigateFromListing(navigate, `${base}/${row.applicationId}`, fromListing, {
-                  state: { highlightPending: true },
                 }),
             },
           ]}

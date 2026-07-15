@@ -3,7 +3,7 @@ import {
   mockSingleApplications,
 } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationOperationalStatus } from '@/pages/customer/features/applications/types/applicationListing.types'
-import { creditCardMasterService } from '@/shared/services/creditCardMasterService'
+import { cardMasterService } from '@/shared/services/cardMasterService'
 
 const FORM_ASSIST_STORAGE_KEY = 'glts:application-form-assist'
 
@@ -29,7 +29,7 @@ export interface FormAssistSubmissionDraft {
   paymentReceiptFileName: string
   paymentDate: string
   paymentMode: FormAssistPaymentMode
-  /** Credit card master id when payment mode is card. */
+  /** Card master id when payment mode is card. */
   paymentCardId: string
   paymentReferenceNumber: string
   amountPaid: string
@@ -117,16 +117,16 @@ function resolvePaymentCardId(
 ): string {
   const explicit = submission.paymentCardId?.trim()
   if (explicit) {
-    if (creditCardMasterService.getById(explicit)) return explicit
+    if (cardMasterService.getById(explicit)) return explicit
   }
 
   const legacyCardName = submission.cardName?.trim()
   if (!legacyCardName) return ''
 
-  const byId = creditCardMasterService.getById(legacyCardName)
+  const byId = cardMasterService.getById(legacyCardName)
   if (byId) return byId.id
 
-  return creditCardMasterService.getByCardName(legacyCardName)?.id ?? ''
+  return cardMasterService.getByCardName(legacyCardName)?.id ?? ''
 }
 
 function resolvePaymentReceiptFileName(

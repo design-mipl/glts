@@ -35,6 +35,8 @@ function overlay(
 export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPassengerOverlay> = {
   [buildPassengerId(GLTS_APPLICATION_IDS.schengen, `${GLTS_APPLICATION_IDS.schengen}-APL-001`)]: overlay({
     priority: 'High',
+    assigneeType: 'vendor',
+    assignedVendor: 'VFS Global Partner Desk',
     assignedTeam: 'Mumbai Team',
     assignedUser: 'Sneha Patel',
     operationalDate: daysFromNow(0),
@@ -50,7 +52,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
         assignedTeam: 'Mumbai Team',
         assignedUser: 'Sneha Patel',
         assignedBy: 'Rajan Mehta',
-        notes: 'Initial assignment after submission.',
+        notes: 'Vendor allocation for VFS submission support.',
       },
     ],
     timeline: [
@@ -65,7 +67,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
         id: 'tl-2',
         occurredAt: '2026-02-11T08:00:00.000Z',
         displayDate: '11 Feb',
-        label: 'Assigned to Sneha Patel',
+        label: 'Assigned to VFS Global Partner Desk',
         actor: 'Rajan Mehta',
       },
     ],

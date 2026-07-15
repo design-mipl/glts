@@ -118,8 +118,14 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
         selectedRow,
         Boolean(listingRow?.submissionDate?.trim()),
         externallySubmitted,
+        {
+          countryName: detail?.application?.country ?? listingRow?.country,
+          visaTypeLabel: detail?.application?.visaType ?? listingRow?.visaType,
+          operationalStatus: listingRow?.operationalStatus ?? detail?.operationalStatus,
+          processingStage: listingRow?.processingStage,
+        },
       ),
-    [selectedRow, listingRow, externallySubmitted],
+    [selectedRow, listingRow, externallySubmitted, detail],
   )
 
   const refreshAssistRecord = useCallback(() => {

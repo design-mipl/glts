@@ -1,4 +1,3 @@
-import { deriveOperationalPassengerRows } from '@/pages/admin/assignment-priority/utils/deriveOperationalPassengerRows'
 import {
   mockBulkBatches,
   mockSingleApplications,
@@ -6,7 +5,11 @@ import {
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { APPLICATION_CUSTOMER_SEGMENTS } from '@/shared/config/applicationCustomerSegmentConfig'
 import { SEED_FUND_ALLOCATION_OVERLAYS } from '@/shared/data/mockFundAllocation'
-import { resolveCreditCardLabel } from '@/shared/utils/creditCardMasterOptions'
+import { applicationFormAssistService } from '@/shared/services/applicationFormAssistService'
+import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
+import { operationalCaseHandlingService } from '@/shared/services/operationalCaseHandlingService'
+import { operationalPassengerAssignmentService } from '@/shared/services/operationalPassengerAssignmentService'
+import { resolveCardLabel } from '@/shared/utils/cardMasterOptions'
 import { resolveFundAllocationOfferingContext } from '@/shared/utils/fundAllocationOfferingUtils'
 import type {
   FundAllocationActionInput,
@@ -19,7 +22,6 @@ import {
   isApplicationSubmitted,
   isApplicationVfsSubmissionPending,
 } from '@/shared/utils/applicationProcessingQueueUtils'
-import { getMasterActor } from '@/shared/utils/masterActor'
 import {
   resolveVfsPickerServices,
   sumVfsPickerServiceAmounts,
@@ -46,12 +48,27 @@ function defaultOverlay(): FundAllocationOverlay {
     totalAmount: 0,
     allocatedAmount: 0,
     selectedServices: [],
-    creditCardId: '',
+    cardId: '',
     allocatedAt: '',
-    allocatedBy: '',
     allocationNotes: '',
     lastUpdated: nowIso(),
   }
+}
+
+/** Latest assigner from Assignment & Priority assignment history. */
+function resolveAllocatedBy(row: OperationalPassengerRow): string {
+  return row.assignmentHistory[0]?.assignedBy?.trim() || ''
+}
+
+/** Current assignee from Assignment & Priority Management. */
+function resolveAllocatedTo(row: OperationalPassengerRow): string {
+  if (row.assigneeType === 'vendor') {
+    return [row.assignedVendor, row.assignedUser].filter(Boolean).join(' · ')
+  }
+  if (row.assigneeType === 'passenger') {
+    return row.assignedUser ? `Passenger · ${row.assignedUser}` : ''
+  }
+  return [row.assignedUser, row.assignedTeam].filter(Boolean).join(' · ')
 }
 
 function suggestAllocationAmount(
@@ -68,20 +85,70 @@ function suggestAllocationAmount(
   return sumVfsPickerServiceAmounts(services)
 }
 
-function parseAppointmentDate(row: OperationalPassengerRow): string {
-  const application = findApplicationById(row.gltsApplicationId)
-  if (!application) return ''
-  if ('appointmentDate' in application && application.appointmentDate) {
-    return application.appointmentDate
-  }
-  return application.submissionDate ?? ''
-}
-
 function findApplicationById(applicationId: string): ApplicationListingRow | undefined {
   return (
     mockSingleApplications.find(app => app.id === applicationId) ??
     mockBulkBatches.find(app => app.id === applicationId)
   )
+}
+
+function resolveTravelerRowId(row: OperationalPassengerRow): string {
+  const detail = marineApplicationAdminService.getDetail(row.gltsApplicationId)
+  const queueRows = detail.uploadQueueRows.filter(r => r.status !== 'processing')
+  const byApplicant = queueRows.find(r => r.gltsApplicantId === row.gltsApplicantId)
+  if (byApplicant) return byApplicant.id
+  const bySequence = queueRows.find(r => r.sequenceNo === row.sequenceNo)
+  if (bySequence) return bySequence.id
+  return `q${row.sequenceNo}`
+}
+
+function resolveMatchingOperationalCase(row: OperationalPassengerRow) {
+  const passport = row.passportNo.replace(/\s/g, '').toUpperCase()
+  return operationalCaseHandlingService.listByApplicationId(row.gltsApplicationId).find(caseRow => {
+    if (caseRow.gltsApplicantId && caseRow.gltsApplicantId === row.gltsApplicantId) return true
+    return caseRow.passportNumber.replace(/\s/g, '').toUpperCase() === passport
+  })
+}
+
+/**
+ * Portal date sources:
+ * - Application Management: Online Submission, VFS Submission, Tentative Collection
+ * - Ground Operations: Submission Date (= VFS Submission Date), Collection Date (actual)
+ */
+function resolvePortalDates(row: OperationalPassengerRow) {
+  const application = findApplicationById(row.gltsApplicationId)
+  const assist = applicationFormAssistService.getRecord(
+    row.gltsApplicationId,
+    resolveTravelerRowId(row),
+  ).submission
+  const opsCase = resolveMatchingOperationalCase(row)
+
+  const onlineSubmissionDate =
+    assist.submissionDate.trim() ||
+    application?.submissionDate?.trim() ||
+    row.submissionDate.trim() ||
+    ''
+
+  const vfsSubmissionDate =
+    assist.vfsSubmissionDate.trim() ||
+    opsCase?.submissionDate?.trim() ||
+    ''
+
+  const tentativeCollectionDate =
+    assist.tentativeCollectionDate.trim() ||
+    application?.tentativeCollectionDate?.trim() ||
+    ''
+
+  const collectionDate = opsCase?.collectionDate?.trim() || ''
+
+  return {
+    onlineSubmissionDate,
+    vfsSubmissionDate,
+    tentativeCollectionDate,
+    collectionDate,
+    /** Listing / date-filter value prefers VFS date when present. */
+    submissionDate: vfsSubmissionDate || onlineSubmissionDate,
+  }
 }
 
 function vfsSubmissionPendingApplicationIds(): Set<string> {
@@ -98,6 +165,7 @@ function toFundAllocationRow(row: OperationalPassengerRow): FundAllocationPassen
   const offeringContext = resolveFundAllocationOfferingContext(row.country, row.visaType, row.jurisdiction)
   const suggestedAmount = suggestAllocationAmount(row.country, row.visaType, row.jurisdiction)
   const overlay = overlayStore.get(row.id) ?? defaultOverlay()
+  const dates = resolvePortalDates(row)
 
   return {
     id: row.id,
@@ -115,18 +183,22 @@ function toFundAllocationRow(row: OperationalPassengerRow): FundAllocationPassen
     visaOfferingId: offeringContext.visaOfferingId,
     jurisdictionId: offeringContext.jurisdictionId,
     travelDate: row.travelDate,
-    submissionDate: row.submissionDate,
+    onlineSubmissionDate: dates.onlineSubmissionDate,
+    vfsSubmissionDate: dates.vfsSubmissionDate,
+    tentativeCollectionDate: dates.tentativeCollectionDate,
+    collectionDate: dates.collectionDate,
+    submissionDate: dates.submissionDate,
     submissionStatus: row.submissionStatus,
     customerSegment: row.customerSegment,
-    appointmentDate: parseAppointmentDate(row),
     allocationStatus: overlay.allocationStatus,
     totalAmount: overlay.totalAmount,
     allocatedAmount: overlay.allocatedAmount,
     selectedServices: overlay.selectedServices.map(line => ({ ...line })),
-    creditCardId: overlay.creditCardId,
-    creditCardName: resolveCreditCardLabel(overlay.creditCardId),
+    cardId: overlay.cardId,
+    cardName: resolveCardLabel(overlay.cardId),
     allocatedAt: overlay.allocatedAt,
-    allocatedBy: overlay.allocatedBy,
+    allocatedBy: resolveAllocatedBy(row),
+    allocatedTo: resolveAllocatedTo(row),
     allocationNotes: overlay.allocationNotes,
     suggestedAllocationAmount: suggestedAmount,
     lastUpdated: overlay.lastUpdated,
@@ -137,7 +209,7 @@ function listVfsPendingOperationalRows(): OperationalPassengerRow[] {
   const pendingAppIds = vfsSubmissionPendingApplicationIds()
 
   return APPLICATION_CUSTOMER_SEGMENTS.flatMap(segment =>
-    deriveOperationalPassengerRows(segment, new Map()),
+    operationalPassengerAssignmentService.list(segment),
   ).filter(row => pendingAppIds.has(row.gltsApplicationId))
 }
 
@@ -174,6 +246,15 @@ export const fundAllocationService = {
       })
   },
 
+  /** All fund-allocation rows for an application (used by Expense Management sync). */
+  listByApplicationId(applicationId: string): FundAllocationPassengerRow[] {
+    return APPLICATION_CUSTOMER_SEGMENTS.flatMap(segment =>
+      operationalPassengerAssignmentService.list(segment),
+    )
+      .filter(row => row.gltsApplicationId === applicationId)
+      .map(toFundAllocationRow)
+  },
+
   getById(id: string): FundAllocationPassengerRow | undefined {
     return this.list().find(row => row.id === id)
   },
@@ -204,9 +285,8 @@ export const fundAllocationService = {
       overlay.selectedServices = input.selectedServices.map(line => ({ ...line }))
       overlay.totalAmount = input.totalAmount
       overlay.allocatedAmount = input.allocatedAmount
-      overlay.creditCardId = input.creditCardId
+      overlay.cardId = input.cardId
       overlay.allocatedAt = nowIso()
-      overlay.allocatedBy = getMasterActor()
       overlay.allocationNotes = input.notes?.trim() ?? ''
     })
   },

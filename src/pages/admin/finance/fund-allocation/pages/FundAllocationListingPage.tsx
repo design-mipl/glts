@@ -199,7 +199,7 @@ export function FundAllocationListingPage() {
       mutateAndRefresh(() => {
         fundAllocationService.allocateFundsBulk(records.map(record => record.id), record =>
           computePassengerBulkAllocationInput(record, payload.selectedServiceKeys, {
-            creditCardId: payload.creditCardId,
+            cardId: payload.cardId,
             notes: payload.notes,
           }),
         )

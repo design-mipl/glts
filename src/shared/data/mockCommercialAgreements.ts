@@ -91,7 +91,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       },
       {
         id: 'pr-2',
-        country: 'Schengen',
+        country: 'France',
         countryId: 'CNT-104',
         visaType: 'Marine Visa',
         workflowType: 'Marine',
@@ -265,7 +265,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     pricingMatrix: [
       {
         id: 'pr-5',
-        country: 'Schengen',
+        country: 'France',
         countryId: 'CNT-104',
         visaType: 'Agent Tourist Visa',
         workflowType: 'B2B Agent',
@@ -1264,11 +1264,113 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     readyForActivationAt: daysAgo(1),
     activities: [],
   },
+  {
+    id: 'AGR-OM-847',
+    agreementId: 'AGR-2026-847',
+    companyId: 'CMP-OM-847',
+    companyName: 'Oceanic Marine Ltd',
+    customerSourceMode: 'existing',
+    parentCompanyId: '',
+    agreementType: 'agreemented',
+    workflowType: 'marine',
+    billingType: 'credit',
+    status: 'active',
+    startDate: daysAgoDate(60),
+    endDate: daysFromNow(305),
+    entities: [
+      {
+        id: 'ent-om-1',
+        entityName: 'Oceanic Marine Ltd',
+        billingAddress: 'Nariman Point, Mumbai 400021',
+        gstNumber: '27AABCO8470A1Z5',
+        contactPerson: 'Priya Sharma',
+        email: 'finance@oceanicmarine.com',
+        phone: '+91 98765 43210',
+        status: 'active',
+      },
+    ],
+    pricingMatrix: [
+      {
+        id: 'pr-om-fr-1',
+        country: 'France',
+        countryId: 'CNT-104',
+        visaType: 'Sticker · Type C',
+        workflowType: 'Marine',
+        servicePresetId: 'svc-marine-visa',
+        servicePresetName: 'Marine crew visa processing',
+        serviceFee: 4500,
+        gstApplicable: true,
+        remarks: 'France sticker Type C',
+      },
+      {
+        id: 'pr-om-fr-2',
+        country: 'France',
+        countryId: 'CNT-104',
+        visaType: 'Sticker · Type C',
+        workflowType: 'Marine',
+        servicePresetId: 'svc-vfs-booking',
+        servicePresetName: 'VFS Booking Service',
+        serviceFee: 2200,
+        gstApplicable: true,
+        remarks: '',
+      },
+      {
+        id: 'pr-om-fr-3',
+        country: 'France',
+        countryId: 'CNT-104',
+        visaType: 'Sticker · Type C',
+        workflowType: 'Marine',
+        servicePresetId: 'svc-courier',
+        servicePresetName: 'Courier',
+        serviceFee: 850,
+        gstApplicable: true,
+        remarks: '',
+      },
+    ],
+    miscellaneousCosts: [
+      {
+        id: 'mc-om-1',
+        serviceName: 'Documentation support',
+        pricingType: 'fixed',
+        amount: 1500,
+        gstApplicable: true,
+        remarks: '',
+      },
+    ],
+    miscellaneousServices: [
+      {
+        id: 'ms-om-1',
+        serviceId: 'svc-travel-insurance',
+        serviceName: 'Travel insurance',
+        amount: 1450,
+        gstApplicable: true,
+      },
+    ],
+    billingConfig: {
+      ...createDefaultBillingConfig(),
+      creditBillingEnabled: true,
+      billingCycle: 'monthly',
+      creditPeriodDays: 30,
+      creditLimit: 500000,
+    },
+    financeContacts: {
+      accountsSpocName: 'Priya Sharma',
+      accountsTeamEmail: 'accounts@oceanicmarine.com',
+      accountsContactNumber: '+91 98765 43210',
+      invoiceSubmissionEmail: 'billing@oceanicmarine.com',
+      paymentFollowUpContact: 'finance@oceanicmarine.com',
+    },
+    documents: seededDocs('agreemented', 'marine', { fileSuffix: 'oceanic-marine', uploadedDaysAgo: 5 }),
+    createdAt: daysAgo(60),
+    updatedAt: daysAgo(3),
+    activatedAt: daysAgo(55),
+    activities: [],
+  },
 ]
 
 const STORAGE_KEY = 'glts:commercial-agreements'
 /** Bump when `SEED_COMMERCIAL_AGREEMENTS` changes so dev browsers reload mock data. */
-const SEED_VERSION = 3
+const SEED_VERSION = 5
 
 let memoryStore: CommercialAgreement[] | null = null
 

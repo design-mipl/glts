@@ -59,7 +59,7 @@ export interface LogisticsDispatchDetails {
   /** Payment date for dispatch charge settlement (YYYY-MM-DD). */
   paymentDate?: string
   paymentMode?: LogisticsPaymentMode
-  /** Credit Card Master id when payment mode is card. */
+  /** Card master id when payment mode is card. */
   paymentCardId?: string
   /** UTR / transaction reference for the payment. */
   transactionReference?: string

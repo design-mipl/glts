@@ -1,10 +1,10 @@
 import type { MasterAuditFields } from './masterCommon'
 
-export interface CreditCardMaster extends MasterAuditFields {
+export interface CardMaster extends MasterAuditFields {
   id: string
   cardName: string
 }
 
-export interface CreditCardMasterFormData {
+export interface CardMasterFormData {
   cardName: string
 }

@@ -101,7 +101,7 @@ export function ExpenseListingPage() {
           <ExpenseApplicationKpiRow
             submittedApplications={kpis.submittedApplications}
             totalExpense={kpis.totalExpense}
-            pendingApproval={kpis.pendingApproval}
+            pendingPayment={kpis.pendingPayment}
             paidApplications={kpis.paidApplications}
           />
         ) : undefined

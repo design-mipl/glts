@@ -10,7 +10,7 @@ import {
   Textarea,
   useToast,
 } from '@/design-system/UIComponents'
-import { creditCardMasterService } from '@/shared/services/creditCardMasterService'
+import { cardMasterService } from '@/shared/services/cardMasterService'
 import type { OperationalCase } from '@/shared/types/operationalCaseHandling'
 import type {
   AirportAssistanceType,
@@ -86,7 +86,7 @@ function DispatchPaymentFieldsReadOnly({ details }: { details: LogisticsDispatch
   const amountPaid = resolveDispatchAmountPaid(details)
   const showCard = details.paymentMode === 'card'
   const cardLabel = details.paymentCardId
-    ? creditCardMasterService.getById(details.paymentCardId)?.cardName ?? details.paymentCardId
+    ? cardMasterService.getById(details.paymentCardId)?.cardName ?? details.paymentCardId
     : '—'
 
   return (
@@ -133,7 +133,7 @@ export function LogisticsDispatchTab({ record, onUpdated, onDispatched }: Logist
 
   const cardOptions = useMemo(
     () =>
-      creditCardMasterService.list().map(card => ({
+      cardMasterService.list().map(card => ({
         value: card.id,
         label: card.cardName,
       })),

@@ -1,3 +1,4 @@
+import { statusMasterService } from '@/shared/services/statusMasterService'
 import {
   APPLICATION_PROCESSING_STAGE_LABELS,
   APPLICATION_PROCESSING_STAGE_ORDER,
@@ -6,6 +7,8 @@ import {
   type ApplicationProcessingTimelineStatus,
   type ApplicationProcessingTimelineStep,
 } from '@/shared/types/applicationProcessingTimeline'
+import type { WorkflowMaster, WorkflowStatusStep } from '@/shared/types/workflowMaster'
+import { resolveApplicationWorkflow } from '@/shared/utils/countryWorkflowUtils'
 
 export interface BuildApplicationProcessingTimelineInput {
   stageDates?: ApplicationProcessingStageDates
@@ -14,6 +17,14 @@ export interface BuildApplicationProcessingTimelineInput {
   externalPortalSubmitted?: boolean
   allVerified?: boolean
   hasRejection?: boolean
+  /** Prefer explicit workflow; otherwise resolve from country / visa labels. */
+  workflowId?: string
+  countryId?: string
+  countryName?: string
+  visaTypeLabel?: string
+  visaOfferingId?: string
+  operationalStatus?: string
+  processingStage?: string
 }
 
 export interface ProcessingStageDateSource {
@@ -89,7 +100,7 @@ export function deriveProcessingStageDates(
 }
 
 function stageDateForStep(
-  id: ApplicationProcessingStageId,
+  id: string,
   status: ApplicationProcessingTimelineStatus,
   stageDates?: ApplicationProcessingStageDates,
 ): string | undefined {
@@ -97,7 +108,7 @@ function stageDateForStep(
   return formatProcessingStageDate(stageDates?.[id])
 }
 
-export function buildApplicationProcessingTimeline(
+function buildLegacyApplicationProcessingTimeline(
   input: BuildApplicationProcessingTimelineInput,
 ): ApplicationProcessingTimelineStep[] {
   const {
@@ -139,6 +150,173 @@ export function buildApplicationProcessingTimeline(
   })
 }
 
+function statusStepMatchesToken(statusId: string, statusName: string, token: string): boolean {
+  const id = statusId.toLowerCase()
+  const name = statusName.toLowerCase()
+  const t = token.toLowerCase()
+  return id.includes(t) || name.includes(t.replace(/-/g, ' '))
+}
+
+function progressTokensForWorkflow(input: BuildApplicationProcessingTimelineInput): string[] {
+  const {
+    docsDone,
+    isSubmitted,
+    externalPortalSubmitted = false,
+    allVerified = false,
+    hasRejection = false,
+    operationalStatus = '',
+    processingStage = '',
+  } = input
+
+  const stage = processingStage.toLowerCase()
+  const operational = operationalStatus.toLowerCase()
+  const submitted = externalPortalSubmitted || isSubmitted
+  const appointmentBooked =
+    externalPortalSubmitted ||
+    (allVerified && isSubmitted && !hasRejection) ||
+    operational === 'appointment booked' ||
+    stage.includes('appointment')
+  const embassyActive =
+    submitted &&
+    (externalPortalSubmitted ||
+      appointmentBooked ||
+      operational === 'under review' ||
+      operational === 'submitted' ||
+      stage.includes('embassy'))
+  const visaDecided =
+    operational === 'completed' ||
+    operational === 'passport ready' ||
+    stage.includes('passport') ||
+    stage.includes('visa')
+  const passportCollected =
+    operational === 'passport ready' ||
+    operational === 'completed' ||
+    stage.includes('passport')
+  const dispatchDone = stage.includes('dispatch') || operational === 'completed'
+  const delivered =
+    operational === 'completed' || stage.includes('delivered') || stage.includes('closed')
+
+  const tokens: string[] = []
+  if (docsDone) {
+    tokens.push('all-documents-received')
+    if (allVerified || submitted || operational.includes('review') || operational.includes('verification')) {
+      tokens.push('documents-under-review')
+    }
+  }
+  if (submitted) {
+    tokens.push(
+      'ready-for-online-submission',
+      'online-submission-done',
+      'ready-for-offline-submission',
+      'offline-submission-done',
+    )
+  }
+  if (appointmentBooked) tokens.push('appointment-scheduled')
+  if (embassyActive) {
+    tokens.push('awaiting-online-approval', 'under-embassy', 'embassy')
+  }
+  if (visaDecided) tokens.push('visa-status')
+  if (passportCollected) tokens.push('passport-collected', 'passport-ready')
+  if (dispatchDone) tokens.push('dispatch')
+  if (delivered) tokens.push('delivered')
+  if (hasRejection || operational.includes('refus') || operational.includes('correction')) {
+    tokens.push('visa-status-refused', 'refused')
+  }
+  return tokens
+}
+
+function isStepCompletedByProgress(
+  step: WorkflowStatusStep,
+  tokens: string[],
+): boolean {
+  const statusName = statusMasterService.getById(step.statusId)?.name ?? step.statusId
+  return tokens.some((token) => statusStepMatchesToken(step.statusId, statusName, token))
+}
+
+function workflowStepDate(
+  statusId: string,
+  status: ApplicationProcessingTimelineStatus,
+  stageDates?: ApplicationProcessingStageDates,
+): string | undefined {
+  if (status === 'pending' || !stageDates) return undefined
+
+  const direct = stageDates[statusId]
+  if (direct) return formatProcessingStageDate(direct)
+
+  const aliases: Array<[string, ApplicationProcessingStageId | string]> = [
+    ['all-documents-received', 'ready'],
+    ['documents-under-review', 'ready'],
+    ['ready-for-online', 'submitted'],
+    ['online-submission-done', 'submitted'],
+    ['ready-for-offline', 'submitted'],
+    ['offline-submission-done', 'submitted'],
+    ['appointment', 'appointment'],
+    ['embassy', 'embassy'],
+    ['visa-status', 'embassy'],
+    ['passport', 'passport-ready'],
+    ['dispatch', 'dispatch'],
+    ['delivered', 'delivered'],
+  ]
+
+  for (const [needle, key] of aliases) {
+    if (statusId.includes(needle) && stageDates[key]) {
+      return formatProcessingStageDate(stageDates[key])
+    }
+  }
+  return undefined
+}
+
+function buildWorkflowDrivenTimeline(
+  workflow: WorkflowMaster,
+  input: BuildApplicationProcessingTimelineInput,
+): ApplicationProcessingTimelineStep[] {
+  const steps = [...workflow.steps].sort((a, b) => a.sequence - b.sequence)
+  if (steps.length === 0) return buildLegacyApplicationProcessingTimeline(input)
+
+  const tokens = progressTokensForWorkflow(input)
+  let firstPendingIndex = steps.findIndex((step) => !isStepCompletedByProgress(step, tokens))
+  if (firstPendingIndex < 0) firstPendingIndex = steps.length
+
+  const allDone = firstPendingIndex >= steps.length
+
+  return steps.map((step, index) => {
+    const label = statusMasterService.getById(step.statusId)?.name ?? step.statusId
+    let status: ApplicationProcessingTimelineStatus
+    if (allDone || index < firstPendingIndex) {
+      status = 'completed'
+    } else if (index === firstPendingIndex) {
+      status = 'active'
+    } else {
+      status = 'pending'
+    }
+
+    return {
+      id: step.statusId,
+      label,
+      status,
+      date: workflowStepDate(step.statusId, status, input.stageDates),
+    }
+  })
+}
+
+export function buildApplicationProcessingTimeline(
+  input: BuildApplicationProcessingTimelineInput,
+): ApplicationProcessingTimelineStep[] {
+  const workflow = resolveApplicationWorkflow({
+    workflowId: input.workflowId,
+    countryId: input.countryId,
+    countryName: input.countryName,
+    visaTypeLabel: input.visaTypeLabel,
+    visaOfferingId: input.visaOfferingId,
+  })
+
+  if (workflow?.steps.length) {
+    return buildWorkflowDrivenTimeline(workflow, input)
+  }
+
+  return buildLegacyApplicationProcessingTimeline(input)
+}
+
 export function buildProcessingTimelineFromQueueRow(
   row: {
     documents: Array<{ required: boolean; status: string }>
@@ -150,6 +328,13 @@ export function buildProcessingTimelineFromQueueRow(
     docsDone?: boolean
     allVerified?: boolean
     hasRejection?: boolean
+    workflowId?: string
+    countryId?: string
+    countryName?: string
+    visaTypeLabel?: string
+    visaOfferingId?: string
+    operationalStatus?: string
+    processingStage?: string
   } = {},
 ): ApplicationProcessingTimelineStep[] {
   const required = row?.documents.filter((doc) => doc.required) ?? []
@@ -171,6 +356,13 @@ export function buildProcessingTimelineFromQueueRow(
     externalPortalSubmitted: options.externalPortalSubmitted ?? false,
     allVerified,
     hasRejection,
+    workflowId: options.workflowId,
+    countryId: options.countryId,
+    countryName: options.countryName,
+    visaTypeLabel: options.visaTypeLabel,
+    visaOfferingId: options.visaOfferingId,
+    operationalStatus: options.operationalStatus,
+    processingStage: options.processingStage,
   })
 }
 

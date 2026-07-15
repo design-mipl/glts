@@ -14,31 +14,31 @@ import {
   AdminListingToolbar,
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
-import { creditCardMasterService } from '@/shared/services/creditCardMasterService'
-import type { CreditCardMaster } from '@/shared/types/creditCardMaster'
-import { CreditCardFormModal } from '../components/CreditCardFormModal'
-import { buildCreditCardColumns } from '../components/CreditCardTableColumns'
+import { cardMasterService } from '@/shared/services/cardMasterService'
+import type { CardMaster } from '@/shared/types/cardMaster'
+import { CardMasterFormModal } from '../components/CardMasterFormModal'
+import { buildCardMasterColumns } from '../components/CardMasterTableColumns'
 import {
-  downloadCreditCardCsv,
-  getCreditCardCellValue,
-  getCreditCardEmptyState,
-  matchesCreditCardSearch,
-} from '../utils/creditCardListingUtils'
+  downloadCardMasterCsv,
+  getCardMasterCellValue,
+  getCardMasterEmptyState,
+  matchesCardMasterSearch,
+} from '../utils/cardMasterListingUtils'
 
-export function CreditCardListingPage() {
+export function CardMasterListingPage() {
   const theme = useTheme()
   const { showToast } = useToast()
-  const [rows, setRows] = useState<CreditCardMaster[]>([])
+  const [rows, setRows] = useState<CardMaster[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
-  const [editRecord, setEditRecord] = useState<CreditCardMaster | null>(null)
+  const [editRecord, setEditRecord] = useState<CardMaster | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<CreditCardMaster | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<CardMaster | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
 
   const loadRows = useCallback(() => {
     setLoading(true)
-    setRows(creditCardMasterService.list())
+    setRows(cardMasterService.list())
     setLoading(false)
   }, [])
 
@@ -48,12 +48,12 @@ export function CreditCardListingPage() {
 
   const listing = useCustomerListing({
     rows,
-    getCellValue: getCreditCardCellValue,
-    searchMatch: matchesCreditCardSearch,
+    getCellValue: getCardMasterCellValue,
+    searchMatch: matchesCardMasterSearch,
     initialPageSize: 10,
   })
 
-  const openEdit = (row: CreditCardMaster) => {
+  const openEdit = (row: CardMaster) => {
     setEditRecord(row)
     setFormOpen(true)
   }
@@ -63,14 +63,14 @@ export function CreditCardListingPage() {
     setFormOpen(true)
   }
 
-  const openDelete = (row: CreditCardMaster) => {
+  const openDelete = (row: CardMaster) => {
     setDeleteTarget(row)
     setDeleteOpen(true)
   }
 
   const columns = useMemo(
     () =>
-      buildCreditCardColumns({
+      buildCardMasterColumns({
         onOpenEdit: openEdit,
         onDelete: openDelete,
       }),
@@ -82,20 +82,20 @@ export function CreditCardListingPage() {
     [columns],
   )
 
-  const emptyState = useMemo(() => getCreditCardEmptyState(openCreate), [])
+  const emptyState = useMemo(() => getCardMasterEmptyState(openCreate), [])
 
   const handleExport = useCallback(() => {
-    downloadCreditCardCsv(listing.filteredRows)
+    downloadCardMasterCsv(listing.filteredRows)
     showToast({ title: 'Export started', variant: 'success' })
   }, [listing.filteredRows, showToast])
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return
     setActionLoading(true)
-    creditCardMasterService.delete(deleteTarget.id)
+    cardMasterService.delete(deleteTarget.id)
     setActionLoading(false)
     showToast({
-      title: 'Credit card deleted',
+      title: 'Card deleted',
       variant: 'success',
     })
     setDeleteOpen(false)
@@ -113,10 +113,10 @@ export function CreditCardListingPage() {
       <AdminListingShell
         stickyPageHeader={
           <AdminListingStickyHeader
-            title="Credit Card Master"
-            description="Manage accepted credit card types for payments."
+            title="Card Master"
+            description="Manage payment cards used across operations and fund allocation."
             actions={
-              <Button label="Add credit card" startIcon={<Plus size={14} />} onClick={openCreate} />
+              <Button label="Add card" startIcon={<Plus size={14} />} onClick={openCreate} />
             }
           />
         }
@@ -143,7 +143,7 @@ export function CreditCardListingPage() {
             onStateChange={listing.setTableState}
             columnFilters={listing.columnFilters}
             onColumnFiltersChange={listing.setColumnFilters}
-            getCellValue={getCreditCardCellValue}
+            getCellValue={getCardMasterCellValue}
             stickyHeader
             enableColumnSort
             enableColumnFilters
@@ -168,7 +168,7 @@ export function CreditCardListingPage() {
         }
       />
 
-      <CreditCardFormModal
+      <CardMasterFormModal
         open={formOpen}
         record={editRecord}
         onClose={() => {
@@ -186,10 +186,10 @@ export function CreditCardListingPage() {
         }}
         onConfirm={handleConfirmDelete}
         loading={actionLoading}
-        title="Delete credit card?"
+        title="Delete card?"
         description={
           deleteTarget
-            ? `Remove "${deleteTarget.cardName}" from the credit card master? This action cannot be undone.`
+            ? `Remove "${deleteTarget.cardName}" from the card master? This action cannot be undone.`
             : undefined
         }
         confirmLabel="Delete"

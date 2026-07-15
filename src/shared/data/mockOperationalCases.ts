@@ -174,6 +174,7 @@ function buildPassengerCase(
     expenseSummary: formatOperationalExpenseSummary(estimated, actual),
     groundServices,
     applicationFees,
+    gltsOpsFees: [],
     applicationFeesPaidBy: 'passenger',
     expenses,
     submissionDate: passenger.submissionDate,

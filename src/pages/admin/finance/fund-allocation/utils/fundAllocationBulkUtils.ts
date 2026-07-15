@@ -40,7 +40,7 @@ export function resolvePassengerSelectedServices(
 export function computePassengerBulkAllocationInput(
   record: FundAllocationPassengerRow,
   selectedKeys: string[],
-  shared: Pick<FundAllocationActionInput, 'creditCardId' | 'notes'>,
+  shared: Pick<FundAllocationActionInput, 'cardId' | 'notes'>,
 ): FundAllocationActionInput | null {
   const services = resolvePassengerSelectedServices(record, selectedKeys)
   if (services.length === 0) return null
@@ -50,7 +50,7 @@ export function computePassengerBulkAllocationInput(
     selectedServices: mapVfsPickerServicesToChargeLines(services),
     totalAmount,
     allocatedAmount: totalAmount,
-    creditCardId: shared.creditCardId,
+    cardId: shared.cardId,
     notes: shared.notes,
   }
 }

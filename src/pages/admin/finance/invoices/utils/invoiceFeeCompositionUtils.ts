@@ -11,8 +11,9 @@ import type { Invoice } from '@/shared/types/invoice'
 import type { InvoiceLineItem, InvoiceTaxConfig, InvoiceWorkspaceState } from '@/shared/types/invoice'
 import { EMPTY_INVOICE_BILLING_SELECTION } from '@/shared/types/invoice'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
+import type { ApplicationExpenseRecord } from '@/shared/types/applicationExpenseManagement'
 import { companyMasterService } from '@/shared/services/companyMasterService'
-import { serviceMasterService } from '@/shared/services/serviceMasterService'
+import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import {
   findAgreementForCompany,
   resolveApplicationBillingEntity,
@@ -25,105 +26,70 @@ import {
   defaultLineItemFields,
   roundMoney,
 } from '@/shared/utils/invoiceCalculations'
-import { applicationArrangedExpenseService } from '@/shared/services/applicationArrangedExpenseService'
-import { arrangedExpenseToMiscFeeRow } from '@/shared/utils/applicationArrangedExpenseUtils'
 import type {
   ApplicantFeeBundle,
   BulkApplicationFeeCard,
-  InvoiceFeeCategoryTotals,
+  InvoiceBillableServiceLine,
   InvoiceFeeCompositionState,
   InvoiceFeeCompositionSummary,
-  RepeatableFeeRow,
-  SimpleFeeField,
   SingleApplicationFeeCard,
 } from '../types/invoiceFeeComposition.types'
 import { INVOICE_COMPOSITION_FEE_LABELS } from '../config/invoiceFeeCategoryLabels'
 
-const FEE = INVOICE_COMPOSITION_FEE_LABELS
-
-export const CUSTOM_FEE_TYPE_VALUE = '__custom__'
+const LABELS = INVOICE_COMPOSITION_FEE_LABELS.billableServices
 
 function newId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`
 }
 
-export function emptySimpleFee(): SimpleFeeField {
-  return { amount: 0, notes: '' }
+function isClientBillable(expense: ApplicationExpenseRecord): boolean {
+  // Explicit non-client bill targets are excluded; unset billTo is treated as client (legacy seeds).
+  return !expense.billTo || expense.billTo === 'client'
 }
 
-export function emptyRepeatableRow(): RepeatableFeeRow {
+function mapExpenseToServiceLine(expense: ApplicationExpenseRecord): InvoiceBillableServiceLine {
   return {
-    id: newId('fee'),
-    feeType: '',
-    feeTypeLabel: '',
-    isCustom: false,
-    amount: 0,
-    notes: '',
+    id: `svc-${expense.id}`,
+    expenseRecordId: expense.id,
+    serviceLabel: expense.expenseTypeLabel || expense.expenseName,
+    amount: expense.netPayableAmount,
+    remark: expense.remarks ?? '',
   }
 }
 
-function defaultGltsAmount(agreement?: CommercialAgreement): number {
-  const row = agreement?.pricingMatrix[0]
-  return row?.serviceFee ? roundMoney(row.serviceFee * 0.15) : 1500
-}
-
-function defaultVisaAmount(agreement?: CommercialAgreement, country?: string): number {
-  const row =
-    agreement?.pricingMatrix.find(p => p.country.toLowerCase() === (country ?? '').toLowerCase()) ??
-    agreement?.pricingMatrix[0]
-  return row?.serviceFee ?? 3500
-}
-
-export function getHandlingFeeTypeOptions() {
-  const fromMaster = serviceMasterService
-    .list()
-    .filter(
-      s =>
-        s.status === 'active' &&
-        (s.category === 'Documentation' ||
-          s.category === 'Consultation' ||
-          s.category === 'Travel Support' ||
-          s.serviceName.toLowerCase().includes('handling') ||
-          s.serviceName.toLowerCase().includes('submission') ||
-          s.serviceName.toLowerCase().includes('processing')),
-    )
-    .map(s => ({ value: s.id, label: s.serviceName, defaultPrice: s.defaultPrice ?? 0 }))
-
-  return [...fromMaster, { value: CUSTOM_FEE_TYPE_VALUE, label: FEE.courierFees.customOption, defaultPrice: 0 }]
-}
-
-export function getMiscellaneousFeeTypeOptions() {
-  const fromMaster = serviceMasterService
-    .list()
-    .filter(
-      s =>
-        s.status === 'active' &&
-        (s.category === 'Travel Support' ||
-          s.category === 'Documentation' ||
-          s.serviceName.toLowerCase().includes('courier') ||
-          s.serviceName.toLowerCase().includes('logistics') ||
-          s.serviceName.toLowerCase().includes('apostille')),
-    )
-    .map(s => ({ value: s.id, label: s.serviceName, defaultPrice: s.defaultPrice ?? 0 }))
-
-  return [...fromMaster, { value: CUSTOM_FEE_TYPE_VALUE, label: FEE.miscellaneousFees.customOption, defaultPrice: 0 }]
-}
-
-function attachArrangedMiscFees(
-  applicationId: string,
-  applicantId: string,
-  target: { miscellaneousFees: RepeatableFeeRow[] },
-) {
-  const expenses = applicationArrangedExpenseService.listForApplicant(applicationId, applicantId)
-  for (const expense of expenses) {
-    const row = arrangedExpenseToMiscFeeRow(expense)
-    const index = target.miscellaneousFees.findIndex(item => item.id === row.id)
-    if (index >= 0) {
-      target.miscellaneousFees[index] = row
-    } else {
-      target.miscellaneousFees.push(row)
-    }
+function expenseAppliesToPassenger(expense: ApplicationExpenseRecord, passengerId: string): boolean {
+  const mapping = expense.passengerMapping
+  if (mapping.scope === 'passenger' || mapping.scope === 'multiple_passengers') {
+    return mapping.passengerIds?.includes(passengerId) ?? false
   }
+  return false
+}
+
+function isSharedApplicationExpense(expense: ApplicationExpenseRecord): boolean {
+  const scope = expense.passengerMapping.scope
+  return scope === 'application' || scope === 'entire_crew'
+}
+
+/** Client-billable services for one passenger. Shared app/crew lines only when includeShared. */
+function buildServiceLinesForPassenger(
+  expenses: ApplicationExpenseRecord[],
+  passengerId: string,
+  includeShared: boolean,
+): InvoiceBillableServiceLine[] {
+  return expenses
+    .filter(isClientBillable)
+    .filter(expense => {
+      if (expenseAppliesToPassenger(expense, passengerId)) return true
+      if (includeShared && isSharedApplicationExpense(expense)) return true
+      return false
+    })
+    .map(mapExpenseToServiceLine)
+}
+
+function listClientBillableExpenses(applicationId: string): ApplicationExpenseRecord[] {
+  applicationExpenseManagementService.syncApplication(applicationId)
+  const detail = applicationExpenseManagementService.getApplicationDetail(applicationId)
+  return (detail?.expenses ?? []).filter(isClientBillable)
 }
 
 /** Actual billable travelers in the batch (matches fee editor and expanded panels). */
@@ -163,27 +129,32 @@ export function listBulkBatchApplicants(batch: BulkBatchRow): ApplicantFeeBundle
     })
   }
 
-  const agreement = findAgreementForCompany(batch.companyName)
-  return queueRows.map(row => {
-    const bundle: ApplicantFeeBundle = {
+  const expenses = listClientBillableExpenses(batch.id)
+
+  return queueRows.map((row, index) => {
+    const includeShared = index === 0
+    return {
       applicantId: row.gltsApplicantId,
       applicantName: row.travelerName,
       passportNumber: row.passportNo,
       country: batch.country,
       visaType: batch.visaType,
-      gltsFees: { amount: defaultGltsAmount(agreement), notes: '' },
-      visaFees: { amount: defaultVisaAmount(agreement, batch.country), notes: '' },
-      handlingFees: [],
-      miscellaneousFees: [],
+      serviceLines: buildServiceLinesForPassenger(expenses, row.gltsApplicantId, includeShared),
     }
-    attachArrangedMiscFees(batch.id, row.gltsApplicantId, bundle)
-    return bundle
   })
 }
 
 function buildSingleCard(row: SingleApplicationRow): SingleApplicationFeeCard {
-  const agreement = findAgreementForCompany(row.companyName ?? '')
-  const card: SingleApplicationFeeCard = {
+  const expenses = listClientBillableExpenses(row.id)
+  const passengerId = `${row.id}-APL-001`
+  const passengerScoped = buildServiceLinesForPassenger(expenses, passengerId, true)
+  // Single applications: include all client-billable lines (even if mapped only by name / application).
+  const lines =
+    passengerScoped.length > 0
+      ? passengerScoped
+      : expenses.map(mapExpenseToServiceLine)
+
+  return {
     applicationId: row.id,
     applicationName: resolveApplicationDisplayName(row),
     companyName: row.companyName ?? '—',
@@ -192,13 +163,8 @@ function buildSingleCard(row: SingleApplicationRow): SingleApplicationFeeCard {
     billingEntity: resolveApplicationBillingEntity(row),
     vessel: resolveApplicationVessel(row),
     applicantName: row.applicantName,
-    gltsFees: { amount: defaultGltsAmount(agreement), notes: '' },
-    visaFees: { amount: defaultVisaAmount(agreement, row.country), notes: '' },
-    handlingFees: [],
-    miscellaneousFees: [],
+    serviceLines: lines,
   }
-  attachArrangedMiscFees(row.id, `${row.id}-APL-001`, card)
-  return card
 }
 
 function buildBulkCard(row: BulkBatchRow): BulkApplicationFeeCard {
@@ -221,8 +187,6 @@ export function buildInitialFeeComposition(
   batchIds: string[],
   draft?: Invoice,
 ): InvoiceFeeCompositionState {
-  applicationArrangedExpenseService.syncFromApplications(applicationIds, batchIds)
-
   const singles = applicationIds
     .map(id => mockSingleApplications.find(r => r.id === id))
     .filter((r): r is SingleApplicationRow => Boolean(r))
@@ -296,42 +260,23 @@ export function listCompositionBillingEntityOptions(
     .map(name => ({ value: name, label: name }))
 }
 
-function sumRepeatable(rows: RepeatableFeeRow[]) {
-  return roundMoney(rows.reduce((s, r) => s + (r.amount || 0), 0))
-}
-
-function applicantCategoryTotals(applicant: ApplicantFeeBundle): InvoiceFeeCategoryTotals {
-  return {
-    gltsFees: applicant.gltsFees.amount,
-    visaFees: applicant.visaFees.amount,
-    handlingFees: sumRepeatable(applicant.handlingFees),
-    miscellaneousFees: sumRepeatable(applicant.miscellaneousFees),
-  }
+function sumServiceLines(lines: InvoiceBillableServiceLine[]) {
+  return roundMoney(lines.reduce((sum, line) => sum + (line.amount || 0), 0))
 }
 
 export function computeCompositionSummary(state: InvoiceFeeCompositionState): InvoiceFeeCompositionSummary {
-  let gltsFees = 0
-  let visaFees = 0
-  let handlingFees = 0
-  let miscellaneousFees = 0
+  let servicesTotal = 0
   let totalApplicants = 0
 
   for (const single of state.singles) {
     totalApplicants += 1
-    gltsFees += single.gltsFees.amount
-    visaFees += single.visaFees.amount
-    handlingFees += sumRepeatable(single.handlingFees)
-    miscellaneousFees += sumRepeatable(single.miscellaneousFees)
+    servicesTotal += sumServiceLines(single.serviceLines)
   }
 
   for (const bulk of state.bulks) {
     totalApplicants += bulk.applicants.length
     for (const applicant of bulk.applicants) {
-      const t = applicantCategoryTotals(applicant)
-      gltsFees += t.gltsFees
-      visaFees += t.visaFees
-      handlingFees += t.handlingFees
-      miscellaneousFees += t.miscellaneousFees
+      servicesTotal += sumServiceLines(applicant.serviceLines)
     }
   }
 
@@ -340,35 +285,59 @@ export function computeCompositionSummary(state: InvoiceFeeCompositionState): In
     totalApplicants,
     singleCount: state.singles.length,
     bulkCount: state.bulks.length,
-    gltsFees: roundMoney(gltsFees),
-    visaFees: roundMoney(visaFees),
-    handlingFees: roundMoney(handlingFees),
-    miscellaneousFees: roundMoney(miscellaneousFees),
+    servicesTotal: roundMoney(servicesTotal),
   }
 }
 
-function lineItemFromFee(
+function lineItemFromService(
   partial: Partial<InvoiceLineItem> & Pick<InvoiceLineItem, 'serviceType' | 'description' | 'unitPrice'>,
   taxConfig: InvoiceTaxConfig,
 ): InvoiceLineItem {
-  const gstApplicable =
-    taxConfig.gstApplicable && partial.serviceType === FEE.processingCharges.serviceType
+  // Amounts are already client-billable totals (GST included when applicable) — do not re-apply GST.
   const base: InvoiceLineItem = {
     ...defaultLineItemFields(),
     id: newId('li'),
     quantity: 1,
-    gstApplicable,
+    gstApplicable: false,
     gstAmount: 0,
     amount: 0,
     ...partial,
+    gstApplicable: false,
   }
   const { gstAmount, amount } = calculateLineItemAmount(
     base.quantity,
     base.unitPrice,
-    base.gstApplicable,
+    false,
     taxConfig.gstPercentage,
   )
   return { ...base, gstAmount, amount }
+}
+
+function pushServiceLines(
+  lineItems: InvoiceLineItem[],
+  lines: InvoiceBillableServiceLine[],
+  taxConfig: InvoiceTaxConfig,
+  meta: { applicationId?: string; batchId?: string; applicantName?: string },
+) {
+  for (const line of lines) {
+    if (line.amount <= 0) continue
+    lineItems.push(
+      lineItemFromService(
+        {
+          applicationId: meta.applicationId,
+          batchId: meta.batchId,
+          applicantName: meta.applicantName,
+          serviceType: line.serviceLabel || LABELS.section,
+          description: line.serviceLabel || LABELS.section,
+          unitPrice: line.amount,
+          remarks: line.remark,
+          servicePresetId: line.expenseRecordId,
+          isAdditionalExpense: false,
+        },
+        taxConfig,
+      ),
+    )
+  }
 }
 
 export function compositionToWorkspaceState(state: InvoiceFeeCompositionState): InvoiceWorkspaceState {
@@ -382,140 +351,18 @@ export function compositionToWorkspaceState(state: InvoiceFeeCompositionState): 
   const lineItems: InvoiceLineItem[] = []
 
   for (const single of state.singles) {
-    if (single.gltsFees.amount > 0) {
-      lineItems.push(
-        lineItemFromFee(
-          {
-            applicationId: single.applicationId,
-            applicantName: single.applicantName,
-            serviceType: FEE.processingCharges.serviceType,
-            description: single.gltsFees.notes || `Processing charges · ${single.applicationId}`,
-            unitPrice: single.gltsFees.amount,
-            remarks: single.gltsFees.notes,
-          },
-          taxConfig,
-        ),
-      )
-    }
-    if (single.visaFees.amount > 0) {
-      lineItems.push(
-        lineItemFromFee(
-          {
-            applicationId: single.applicationId,
-            applicantName: single.applicantName,
-            serviceType: FEE.visaFees.serviceType,
-            description: single.visaFees.notes || `Visa fees · ${single.country}`,
-            unitPrice: single.visaFees.amount,
-            remarks: single.visaFees.notes,
-          },
-          taxConfig,
-        ),
-      )
-    }
-    for (const row of single.handlingFees) {
-      if (row.amount <= 0) continue
-      lineItems.push(
-        lineItemFromFee(
-          {
-            applicationId: single.applicationId,
-            applicantName: single.applicantName,
-            serviceType: FEE.courierFees.serviceType,
-            description: row.feeTypeLabel || row.feeType,
-            unitPrice: row.amount,
-            remarks: row.notes,
-            servicePresetId: row.isCustom ? undefined : row.feeType,
-          },
-          taxConfig,
-        ),
-      )
-    }
-    for (const row of single.miscellaneousFees) {
-      if (row.amount <= 0) continue
-      lineItems.push(
-        lineItemFromFee(
-          {
-            applicationId: single.applicationId,
-            applicantName: single.applicantName,
-            serviceType: FEE.miscellaneousFees.serviceType,
-            description: row.feeTypeLabel || row.feeType,
-            unitPrice: row.amount,
-            remarks: row.notes,
-            isAdditionalExpense: true,
-            servicePresetId: row.isCustom ? undefined : row.feeType,
-          },
-          taxConfig,
-        ),
-      )
-    }
+    pushServiceLines(lineItems, single.serviceLines, taxConfig, {
+      applicationId: single.applicationId,
+      applicantName: single.applicantName,
+    })
   }
 
   for (const bulk of state.bulks) {
     for (const applicant of bulk.applicants) {
-      if (applicant.gltsFees.amount > 0) {
-        lineItems.push(
-          lineItemFromFee(
-            {
-              batchId: bulk.batchId,
-              applicantName: applicant.applicantName,
-              serviceType: FEE.processingCharges.serviceType,
-              description: applicant.gltsFees.notes || `Processing charges · ${applicant.applicantName}`,
-              unitPrice: applicant.gltsFees.amount,
-              remarks: applicant.gltsFees.notes,
-            },
-            taxConfig,
-          ),
-        )
-      }
-      if (applicant.visaFees.amount > 0) {
-        lineItems.push(
-          lineItemFromFee(
-            {
-              batchId: bulk.batchId,
-              applicantName: applicant.applicantName,
-              serviceType: FEE.visaFees.serviceType,
-              description: applicant.visaFees.notes || `Visa fees · ${applicant.country}`,
-              unitPrice: applicant.visaFees.amount,
-              remarks: applicant.visaFees.notes,
-            },
-            taxConfig,
-          ),
-        )
-      }
-      for (const row of applicant.handlingFees) {
-        if (row.amount <= 0) continue
-        lineItems.push(
-          lineItemFromFee(
-            {
-              batchId: bulk.batchId,
-              applicantName: applicant.applicantName,
-              serviceType: FEE.courierFees.serviceType,
-              description: row.feeTypeLabel || row.feeType,
-              unitPrice: row.amount,
-              remarks: row.notes,
-              servicePresetId: row.isCustom ? undefined : row.feeType,
-            },
-            taxConfig,
-          ),
-        )
-      }
-      for (const row of applicant.miscellaneousFees) {
-        if (row.amount <= 0) continue
-        lineItems.push(
-          lineItemFromFee(
-            {
-              batchId: bulk.batchId,
-              applicantName: applicant.applicantName,
-              serviceType: FEE.miscellaneousFees.serviceType,
-              description: row.feeTypeLabel || row.feeType,
-              unitPrice: row.amount,
-              remarks: row.notes,
-              isAdditionalExpense: true,
-              servicePresetId: row.isCustom ? undefined : row.feeType,
-            },
-            taxConfig,
-          ),
-        )
-      }
+      pushServiceLines(lineItems, applicant.serviceLines, taxConfig, {
+        batchId: bulk.batchId,
+        applicantName: applicant.applicantName,
+      })
     }
   }
 
@@ -558,38 +405,49 @@ function defaultDueDate() {
   return d.toISOString().slice(0, 10)
 }
 
+function hydrateServiceLinesFromItems(
+  seeded: InvoiceBillableServiceLine[],
+  items: InvoiceLineItem[],
+): InvoiceBillableServiceLine[] {
+  if (items.length === 0) return seeded
+
+  const byExpenseId = new Map(
+    items
+      .filter(li => li.servicePresetId)
+      .map(li => [li.servicePresetId as string, li]),
+  )
+
+  if (byExpenseId.size > 0) {
+    return seeded.map(line => {
+      const match = byExpenseId.get(line.expenseRecordId)
+      if (!match) return line
+      return {
+        ...line,
+        amount: match.unitPrice,
+        remark: match.remarks ?? '',
+      }
+    })
+  }
+
+  // Legacy drafts without expenseRecordId: rebuild from line items as free-form services.
+  return items.map(li => ({
+    id: newId('svc'),
+    expenseRecordId: li.servicePresetId ?? li.id,
+    serviceLabel: li.description || li.serviceType,
+    amount: li.unitPrice,
+    remark: li.remarks ?? '',
+  }))
+}
+
 function hydrateCompositionFromDraft(
   state: InvoiceFeeCompositionState,
   draft: Invoice,
 ): InvoiceFeeCompositionState {
   const next = { ...state, draftInvoiceId: draft.id }
 
-  const applySimple = (target: SimpleFeeField, serviceType: string, items: InvoiceLineItem[]) => {
-    const match = items.find(li => li.serviceType.toLowerCase().includes(serviceType.toLowerCase()))
-    if (match) {
-      target.amount = match.unitPrice
-      target.notes = match.remarks ?? ''
-    }
-  }
-
-  const applyRepeatable = (serviceType: string, items: InvoiceLineItem[]) => {
-    const matches = items.filter(li => li.serviceType.toLowerCase().includes(serviceType.toLowerCase()))
-    return matches.map(li => ({
-      id: newId('fee'),
-      feeType: li.servicePresetId ?? CUSTOM_FEE_TYPE_VALUE,
-      feeTypeLabel: li.description,
-      isCustom: !li.servicePresetId,
-      amount: li.unitPrice,
-      notes: li.remarks ?? '',
-    }))
-  }
-
   for (const single of next.singles) {
     const items = draft.lineItems.filter(li => li.applicationId === single.applicationId)
-    applySimple(single.gltsFees, 'glts', items)
-    applySimple(single.visaFees, 'visa', items)
-    single.handlingFees = applyRepeatable('handling', items)
-    single.miscellaneousFees = applyRepeatable('miscellaneous', items)
+    single.serviceLines = hydrateServiceLinesFromItems(single.serviceLines, items)
   }
 
   for (const bulk of next.bulks) {
@@ -597,10 +455,7 @@ function hydrateCompositionFromDraft(
       const items = draft.lineItems.filter(
         li => li.batchId === bulk.batchId && li.applicantName === applicant.applicantName,
       )
-      applySimple(applicant.gltsFees, 'glts', items)
-      applySimple(applicant.visaFees, 'visa', items)
-      applicant.handlingFees = applyRepeatable('handling', items)
-      applicant.miscellaneousFees = applyRepeatable('miscellaneous', items)
+      applicant.serviceLines = hydrateServiceLinesFromItems(applicant.serviceLines, items)
     }
   }
 

@@ -1,19 +1,19 @@
 import { useMemo, useState } from 'react'
-import type { CreditCardMaster, CreditCardMasterFormData } from '@/shared/types/creditCardMaster'
+import type { CardMaster, CardMasterFormData } from '@/shared/types/cardMaster'
 
-export const INITIAL_CREDIT_CARD_FORM: CreditCardMasterFormData = {
+export const INITIAL_CARD_MASTER_FORM: CardMasterFormData = {
   cardName: '',
 }
 
-export function creditCardToFormData(row: CreditCardMaster): CreditCardMasterFormData {
+export function cardMasterToFormData(row: CardMaster): CardMasterFormData {
   return {
     cardName: row.cardName,
   }
 }
 
-export function useCreditCardForm(initialData?: CreditCardMasterFormData) {
-  const [formData, setFormData] = useState<CreditCardMasterFormData>(
-    initialData ?? INITIAL_CREDIT_CARD_FORM,
+export function useCardMasterForm(initialData?: CardMasterFormData) {
+  const [formData, setFormData] = useState<CardMasterFormData>(
+    initialData ?? INITIAL_CARD_MASTER_FORM,
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -26,8 +26,8 @@ export function useCreditCardForm(initialData?: CreditCardMasterFormData) {
     return Object.keys(next).length === 0
   }
 
-  const reset = (data?: CreditCardMasterFormData) => {
-    setFormData(data ?? INITIAL_CREDIT_CARD_FORM)
+  const reset = (data?: CardMasterFormData) => {
+    setFormData(data ?? INITIAL_CARD_MASTER_FORM)
     setErrors({})
   }
 

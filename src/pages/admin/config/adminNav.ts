@@ -120,7 +120,7 @@ export const adminNav: NavConfig[] = [
       { type: 'item', label: 'Country', href: '/admin/masters/country' },
       { type: 'item', label: 'Country Group Master', href: '/admin/masters/country-groups' },
       { type: 'item', label: 'Jurisdiction Master', href: '/admin/masters/jurisdiction' },
-      { type: 'item', label: 'Credit Card Master', href: '/admin/masters/credit-card' },
+      { type: 'item', label: 'Card Master', href: '/admin/masters/card-master' },
       { type: 'item', label: 'Document master', href: '/admin/masters/documents' },
       { type: 'item', label: 'GLTS Fee Master', href: '/admin/masters/services' },
       { type: 'item', label: 'SAC Code Master', href: '/admin/masters/sac-codes' },

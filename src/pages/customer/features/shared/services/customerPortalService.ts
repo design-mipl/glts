@@ -515,6 +515,10 @@ function buildDetailTimeline(
     isSubmitted: isApplicationSubmitted(row),
     allVerified,
     hasRejection,
+    countryName: row.country,
+    visaTypeLabel: row.visaType,
+    operationalStatus: row.operationalStatus,
+    processingStage: row.processingStage,
   })
 
   return mapProcessingTimelineToCustomerTracking(steps)

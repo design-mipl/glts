@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Button, Checkbox, FormField, Input, Modal, Select, Textarea } from '@/design-system/UIComponents'
 import { fundAllocationService } from '@/shared/services/fundAllocationService'
 import type { FundAllocationActionInput, FundAllocationPassengerRow } from '@/shared/types/fundAllocation'
-import { listCreditCardSelectOptions } from '@/shared/utils/creditCardMasterOptions'
+import { listCardSelectOptions } from '@/shared/utils/cardMasterOptions'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
   mapVfsPickerServicesToChargeLines,
@@ -54,10 +54,10 @@ export function FundAllocationActionModal({
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
   const [allocatedAmount, setAllocatedAmount] = useState('')
   const [allocatedAmountTouched, setAllocatedAmountTouched] = useState(false)
-  const [creditCardId, setCreditCardId] = useState('')
+  const [cardId, setCardId] = useState('')
   const [notes, setNotes] = useState('')
 
-  const creditCardOptions = useMemo(() => listCreditCardSelectOptions(), [])
+  const cardOptions = useMemo(() => listCardSelectOptions(), [])
 
   const catalogServices = useMemo(() => {
     if (!record) return []
@@ -86,7 +86,7 @@ export function FundAllocationActionModal({
     setSelectedServiceIds([])
     setAllocatedAmount('')
     setAllocatedAmountTouched(false)
-    setCreditCardId('')
+    setCardId('')
     setNotes('')
   }, [open, record])
 
@@ -100,7 +100,7 @@ export function FundAllocationActionModal({
   const parsedAllocatedAmount = Number(allocatedAmount)
   const canSubmit =
     selectedServices.length > 0 &&
-    creditCardId.trim().length > 0 &&
+    cardId.trim().length > 0 &&
     Number.isFinite(parsedAllocatedAmount) &&
     parsedAllocatedAmount > 0
 
@@ -109,7 +109,7 @@ export function FundAllocationActionModal({
     setSelectedServiceIds([])
     setAllocatedAmount('')
     setAllocatedAmountTouched(false)
-    setCreditCardId('')
+    setCardId('')
     setNotes('')
     onClose()
   }
@@ -127,7 +127,7 @@ export function FundAllocationActionModal({
       selectedServices: chargeLines,
       totalAmount,
       allocatedAmount: parsedAllocatedAmount,
-      creditCardId,
+      cardId,
       notes,
     })
     handleClose()
@@ -252,9 +252,9 @@ export function FundAllocationActionModal({
           </FormField>
           <FormField label="Payment card" required>
             <Select
-              value={creditCardId}
-              onChange={value => setCreditCardId(String(value))}
-              options={[{ value: '', label: 'Select card' }, ...creditCardOptions]}
+              value={cardId}
+              onChange={value => setCardId(String(value))}
+              options={[{ value: '', label: 'Select card' }, ...cardOptions]}
               placeholder="Select card from card master"
               size="sm"
               fullWidth

@@ -10,7 +10,6 @@ import {
   useWorkflowForm,
   workflowToFormData,
 } from '../hooks/useWorkflowForm'
-import { AddWorkflowStatusModal } from './AddWorkflowStatusModal'
 import { WorkflowFormFields } from './WorkflowFormFields'
 import { WorkflowStatusesEditor } from './WorkflowStatusesEditor'
 
@@ -27,13 +26,11 @@ export function WorkflowFormDrawer({ open, record, onClose, onSaved }: WorkflowF
   const { showToast } = useToast()
   const { formData, setFormData, errors, setErrors, validate, reset } = useWorkflowForm()
   const [loading, setLoading] = useState(false)
-  const [addStatusOpen, setAddStatusOpen] = useState(false)
   const isEdit = Boolean(record)
 
   useEffect(() => {
     if (open) {
       reset(record ? workflowToFormData(record) : INITIAL_WORKFLOW_FORM)
-      setAddStatusOpen(false)
     }
   }, [open, record?.id, reset])
 
@@ -51,10 +48,6 @@ export function WorkflowFormDrawer({ open, record, onClose, onSaved }: WorkflowF
         return next
       })
     }
-  }
-
-  const handleAddStatus = (step: WorkflowStatusStepFormData) => {
-    handleStepsChange([...formData.steps, step])
   }
 
   const handleSubmit = () => {
@@ -101,52 +94,42 @@ export function WorkflowFormDrawer({ open, record, onClose, onSaved }: WorkflowF
   }
 
   return (
-    <>
-      <AdminDrawerFormShell
-        open={open}
-        onClose={handleClose}
-        title={isEdit ? 'Edit Workflow' : 'Create Workflow'}
-        subtitle="Reusable visa processing status sequence"
-        width={DRAWER_WIDTH}
-        footer={
-          <AdminFullPageFormFooter
-            loading={loading}
-            onCancel={handleClose}
-            onSave={handleSubmit}
-            saveLabel="Save Workflow"
-          />
-        }
-        sections={[
-          {
-            id: 'basic',
-            title: 'Basic information',
-            columns: ADMIN_DRAWER_FORM_LAYOUT.primarySectionColumns,
-            children: (
-              <WorkflowFormFields formData={formData} onChange={setFormData} errors={errors} />
-            ),
-          },
-          {
-            id: 'statuses',
-            title: 'Workflow statuses',
-            columns: 1,
-            children: (
-              <WorkflowStatusesEditor
-                steps={formData.steps}
-                error={errors.steps}
-                onChange={handleStepsChange}
-                onAddClick={() => setAddStatusOpen(true)}
-              />
-            ),
-          },
-        ]}
-      />
-
-      <AddWorkflowStatusModal
-        open={addStatusOpen}
-        existingStatusIds={formData.steps.map((step) => step.statusId)}
-        onClose={() => setAddStatusOpen(false)}
-        onAdd={handleAddStatus}
-      />
-    </>
+    <AdminDrawerFormShell
+      open={open}
+      onClose={handleClose}
+      title={isEdit ? 'Edit Workflow' : 'Create Workflow'}
+      subtitle="Reusable visa processing status sequence"
+      width={DRAWER_WIDTH}
+      footer={
+        <AdminFullPageFormFooter
+          loading={loading}
+          onCancel={handleClose}
+          onSave={handleSubmit}
+          saveLabel="Save Workflow"
+        />
+      }
+      sections={[
+        {
+          id: 'basic',
+          title: 'Basic information',
+          columns: ADMIN_DRAWER_FORM_LAYOUT.primarySectionColumns,
+          children: (
+            <WorkflowFormFields formData={formData} onChange={setFormData} errors={errors} />
+          ),
+        },
+        {
+          id: 'statuses',
+          title: 'Workflow statuses',
+          columns: 1,
+          children: (
+            <WorkflowStatusesEditor
+              steps={formData.steps}
+              error={errors.steps}
+              onChange={handleStepsChange}
+            />
+          ),
+        },
+      ]}
+    />
   )
 }

@@ -37,10 +37,9 @@ function ApplicationExpenseDetailContent({
   return (
     <ExpensePassengerWorkspace
       applicationId={applicationId}
-      applicationDetail={travelerWorkspace.applicationDetail}
+      expenseDetail={detail}
       rows={travelerWorkspace.selectableRows}
       overview={travelerWorkspace.overview}
-      summaryOverview={travelerWorkspace.summaryOverview}
       singleListing={travelerWorkspace.singleListing}
       selectedTravelerId={travelerWorkspace.selectedTravelerId}
       onSelectTraveler={travelerWorkspace.setSelectedTravelerId}
@@ -168,6 +167,9 @@ export function ApplicationExpenseDetailPage() {
         }}
         passengers={detail.passengers}
         recordType={detail.recordType}
+        companyName={detail.companyName}
+        visaCountry={detail.visaCountry}
+        visaType={detail.visaType}
         record={editTarget}
         onSubmit={handleAddSubmit}
       />

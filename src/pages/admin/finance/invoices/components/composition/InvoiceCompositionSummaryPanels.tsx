@@ -80,18 +80,12 @@ export function InvoiceCompositionTotalsPanel({
 
       <InvoiceSummaryDivider />
 
-      <InvoiceSummaryLine label={FEE.processingCharges.summaryTotal} value={formatInr(categoryTotals.gltsFees)} />
-      <InvoiceSummaryLine label={FEE.visaFees.summaryTotal} value={formatInr(categoryTotals.visaFees)} />
-      <InvoiceSummaryLine label={FEE.courierFees.summaryTotal} value={formatInr(categoryTotals.handlingFees)} />
-      <InvoiceSummaryLine label={FEE.miscellaneousFees.summaryTotal} value={formatInr(categoryTotals.miscellaneousFees)} />
+      <InvoiceSummaryLine label={FEE.billableServices.summaryTotal} value={formatInr(categoryTotals.servicesTotal)} />
 
       <InvoiceSummaryDivider />
 
       <InvoiceSummaryLine label="Subtotal" value={formatInr(subtotal)} />
-      <InvoiceSummaryLine
-        label={`GST (${FEE.processingCharges.section} only)`}
-        value={formatInr(gstTotal)}
-      />
+      <InvoiceSummaryLine label="GST" value={formatInr(gstTotal)} />
 
       <InvoiceSummaryDivider />
 

@@ -114,12 +114,17 @@ export interface OperationalCase {
   actualExpense: number
   groundServices: GroundServiceLine[]
   applicationFees: GroundServiceLine[]
+  /**
+   * Selectable GLTS Fee Master charges for ground ops
+   * (e.g. Photo Charges, Print Out Charges, Urgent Charges).
+   */
+  gltsOpsFees?: GroundServiceLine[]
   /** Who pays VFS & application fees for this case. */
   applicationFeesPaidBy?: ApplicationFeePaidBy
   /** Payment date for ground-ops expense settlement (YYYY-MM-DD). */
   paymentDate?: string
   paymentMode?: OperationalPaymentMode
-  /** Credit Card Master id when payment mode is card. */
+  /** Card master id when payment mode is card. */
   paymentCardId?: string
   /** Amount paid for ground-ops expense settlement. */
   amountPaid?: string

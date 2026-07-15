@@ -118,7 +118,7 @@ export function computeFinanceKpis(expenses: ApplicationExpenseRecord[]): Applic
   }
 }
 
-/** Expenses directly mapped to a passenger (passenger tab — no shared application/crew rows). */
+/** Expenses shown on a passenger tab — direct mappings plus shared application/crew costs. */
 export function filterExpensesForPassenger(
   expenses: ApplicationExpenseRecord[],
   passengerId: string,
@@ -128,6 +128,10 @@ export function filterExpensesForPassenger(
     if (mapping.scope === 'passenger' || mapping.scope === 'multiple_passengers') {
       return mapping.passengerIds?.includes(passengerId) ?? false
     }
+    // Shared application / entire-crew costs also appear on each passenger view.
+    if (mapping.scope === 'application' || mapping.scope === 'entire_crew') {
+      return true
+    }
     return false
   })
 }
@@ -136,9 +140,9 @@ export function computePendingExpenseAmount(expenses: ApplicationExpenseRecord[]
   return expenses
     .filter(
       e =>
-        e.approvalStatus === 'pending_approval' ||
-        e.approvalStatus === 'draft' ||
-        e.approvalStatus === 'clarification_required',
+        e.paymentStatus === 'not_paid' ||
+        e.paymentStatus === 'partially_paid' ||
+        e.paymentStatus === 'pending_reimbursement',
     )
     .reduce((sum, e) => sum + e.netPayableAmount, 0)
 }
@@ -244,6 +248,7 @@ export function arrangedExpenseToManagementRecord(
     approvalStatus: 'approved',
     proofStatus: expense.documentFileName ? 'verified' : 'uploaded',
     proofFileName: expense.documentFileName,
+    billTo: 'client',
     createdFrom: isInsurance ? 'insurance_upload' : 'ticket_upload',
     createdBy: 'GLTS Document Upload',
     createdDate: expense.createdAt,
@@ -342,10 +347,11 @@ function buildGroundOpsExpenseRecord(
     tdsAmount: 0,
     netPayableAmount: amount,
     paymentStatus: 'pending_reimbursement',
-    approvalStatus: 'pending_approval',
+    approvalStatus: 'approved',
     proofStatus: proofFileName ? 'uploaded' : 'missing',
     proofFileName,
     paidBy: 'ground_team',
+    billTo: 'client',
     createdFrom: 'ground_operations',
     createdBy: operationalCase.assignedExecutive || teamLabel,
     createdDate: now,
@@ -396,6 +402,38 @@ function extraOperationalExpenseToRecord(
   )
 }
 
+function groundFeeLineToExpenseRecord(
+  operationalCase: OperationalCase,
+  passenger: GroundOpsPassengerRef,
+  fee: GroundServiceLine,
+  linePrefix: string,
+  expenseIdSuffix: string,
+  paidBy: ApplicationExpenseRecord['paidBy'],
+  index: number,
+): ApplicationExpenseRecord | undefined {
+  if (!fee.selected) return undefined
+  const amount = fee.actualAmount > 0 ? fee.actualAmount : fee.prefilledAmount
+  if (amount <= 0) return undefined
+
+  const record = buildGroundOpsExpenseRecord(
+    operationalCase,
+    passenger,
+    `${linePrefix}-${operationalCase.id}-${fee.id}`,
+    `EXP-GO-${expenseIdSuffix}-${String(index + 1).padStart(2, '0')}`,
+    fee.serviceName,
+    amount,
+    fee.receiptFileName,
+    fee.remarks,
+  )
+  return {
+    ...record,
+    paidBy,
+    paymentStatus: paidBy === 'customer' ? 'paid' : record.paymentStatus,
+    approvalStatus: paidBy === 'customer' ? 'approved' : record.approvalStatus,
+    proofStatus: fee.receiptFileName ? 'uploaded' : paidBy === 'customer' ? 'not_required' : 'missing',
+  }
+}
+
 /** Converts ground-operations case lines into finance expense records (passenger-mapped). */
 export function syncOperationalCasesToExpenseRecords(
   operationalCases: OperationalCase[],
@@ -407,8 +445,38 @@ export function syncOperationalCasesToExpenseRecords(
     const passenger = resolveGroundOpsPassenger(operationalCase, passengers)
     if (!passenger) continue
 
+    const caseKey = operationalCase.id.replace(/[^A-Z0-9]/gi, '').slice(-8)
+
     operationalCase.groundServices.forEach((service, index) => {
       const record = groundServiceToExpenseRecord(operationalCase, passenger, service, index)
+      if (record) records.push(record)
+    })
+
+    const feePaidBy =
+      operationalCase.applicationFeesPaidBy === 'passenger' ? 'customer' : 'glts_team'
+    operationalCase.applicationFees.forEach((fee, index) => {
+      const record = groundFeeLineToExpenseRecord(
+        operationalCase,
+        passenger,
+        fee,
+        'aem-go-fee',
+        `F${caseKey}`,
+        feePaidBy,
+        index,
+      )
+      if (record) records.push(record)
+    })
+
+    ;(operationalCase.gltsOpsFees ?? []).forEach((fee, index) => {
+      const record = groundFeeLineToExpenseRecord(
+        operationalCase,
+        passenger,
+        fee,
+        'aem-go-ops',
+        `O${caseKey}`,
+        'ground_team',
+        index,
+      )
       if (record) records.push(record)
     })
 
@@ -419,6 +487,177 @@ export function syncOperationalCasesToExpenseRecords(
   }
 
   return records
+}
+
+export interface AssignmentVendorExpenseInput {
+  applicationId: string
+  gltsApplicantId: string
+  passengerName: string
+  assignedVendor: string
+  assignedUser?: string
+  operationalDate?: string
+  lastUpdated?: string
+  /** Catalog / fund-allocation estimate when ground ops has not yet entered actuals. */
+  estimatedAmount?: number
+}
+
+/** Assignment & Priority vendor allocation — expense line updated later by ground ops. */
+export function assignmentVendorToExpenseRecord(
+  input: AssignmentVendorExpenseInput,
+): ApplicationExpenseRecord {
+  const now = input.lastUpdated || new Date().toISOString()
+  const amount = input.estimatedAmount && input.estimatedAmount > 0 ? input.estimatedAmount : 0
+  const vendorLabel = [input.assignedVendor, input.assignedUser].filter(Boolean).join(' · ')
+
+  return {
+    id: `aem-asgn-vendor-${input.applicationId}-${input.gltsApplicantId}`,
+    expenseId: `EXP-ASGN-${input.gltsApplicantId.replace(/[^A-Z0-9]/gi, '').slice(-8)}`,
+    applicationId: input.applicationId,
+    expenseName: 'Vendor Processing Service',
+    expenseType: 'vendor_service',
+    expenseTypeLabel: 'Vendor Processing Service',
+    expenseSource: 'vendor_service',
+    serviceSource: 'vendor_service',
+    serviceSourceLabel: getServiceSourceLabel('vendor_service'),
+    linkedService: 'Assignment & Priority vendor allocation',
+    passengerMapping: {
+      scope: 'passenger',
+      passengerIds: [input.gltsApplicantId],
+      displayLabel: input.passengerName,
+    },
+    vendorStaffPartner: vendorLabel,
+    amount,
+    gstIncluded: false,
+    gstAmount: 0,
+    tdsApplicable: false,
+    tdsAmount: 0,
+    netPayableAmount: amount,
+    paymentStatus: amount > 0 ? 'not_paid' : 'not_paid',
+    approvalStatus: 'approved',
+    proofStatus: 'missing',
+    paidBy: 'vendor',
+    billTo: 'client',
+    createdFrom: 'vendor_service',
+    createdBy: 'Assignment & Priority',
+    createdDate: now,
+    expenseDate: input.operationalDate || now.slice(0, 10),
+    remarks: amount > 0 ? undefined : 'Awaiting ground operations amount update',
+    isAutoGenerated: true,
+    updatedAt: now,
+  }
+}
+
+export interface FundAllocationExpenseInput {
+  applicationId: string
+  gltsApplicantId: string
+  passengerName: string
+  serviceId: string
+  serviceName: string
+  amount: number
+  gstIncluded?: boolean
+  allocatedAt?: string
+  cardName?: string
+  allocatedTo?: string
+}
+
+/** Fund Allocation selected VFS / embassy services mapped per passenger. */
+export function fundAllocationServiceToExpenseRecord(
+  input: FundAllocationExpenseInput,
+): ApplicationExpenseRecord {
+  const now = input.allocatedAt || new Date().toISOString()
+  const gstAmount = input.gstIncluded ? Math.round(input.amount * 0.18 * 100) / 100 : 0
+
+  return {
+    id: `aem-fund-${input.applicationId}-${input.gltsApplicantId}-${input.serviceId}`,
+    expenseId: `EXP-FUND-${input.serviceId.replace(/[^A-Z0-9]/gi, '').slice(-8) || 'SVC'}`,
+    applicationId: input.applicationId,
+    expenseName: input.serviceName,
+    expenseType: 'vfs_booking_service',
+    expenseTypeLabel: input.serviceName,
+    expenseSource: 'application_service',
+    serviceSource: 'vfs_service',
+    serviceSourceLabel: getServiceSourceLabel('vfs_service'),
+    linkedService: 'Fund Allocation',
+    passengerMapping: {
+      scope: 'passenger',
+      passengerIds: [input.gltsApplicantId],
+      displayLabel: input.passengerName,
+    },
+    vendorStaffPartner: input.allocatedTo || input.cardName || 'Fund Allocation',
+    amount: input.amount,
+    gstIncluded: Boolean(input.gstIncluded),
+    gstAmount,
+    tdsApplicable: false,
+    tdsAmount: 0,
+    netPayableAmount: input.amount,
+    paymentStatus: 'paid',
+    approvalStatus: 'approved',
+    proofStatus: 'not_required',
+    paidBy: 'glts_team',
+    billTo: 'client',
+    createdFrom: 'application_service',
+    createdBy: 'Fund Allocation',
+    createdDate: now,
+    expenseDate: now.slice(0, 10),
+    readyForReconciliation: true,
+    isAutoGenerated: true,
+    updatedAt: now,
+  }
+}
+
+/**
+ * Assignment passenger-self payment row — when processing is allocated to the passenger.
+ */
+export function assignmentPassengerPaymentToExpenseRecord(input: {
+  applicationId: string
+  gltsApplicantId: string
+  passengerName: string
+  assignedUser?: string
+  operationalDate?: string
+  lastUpdated?: string
+  amount?: number
+}): ApplicationExpenseRecord {
+  const now = input.lastUpdated || new Date().toISOString()
+  const amount = input.amount && input.amount > 0 ? input.amount : 0
+
+  return {
+    id: `aem-asgn-paxpay-${input.applicationId}-${input.gltsApplicantId}`,
+    expenseId: `EXP-PAX-${input.gltsApplicantId.replace(/[^A-Z0-9]/gi, '').slice(-8)}`,
+    applicationId: input.applicationId,
+    expenseName: 'Passenger Self Payment',
+    expenseType: 'visa_processing_fee',
+    expenseTypeLabel: 'Passenger Self Payment',
+    expenseSource: 'application_service',
+    serviceSource: 'embassy_consulate',
+    serviceSourceLabel: getServiceSourceLabel('embassy_consulate'),
+    linkedService: 'Passenger-paid visa / VFS charges',
+    passengerMapping: {
+      scope: 'passenger',
+      passengerIds: [input.gltsApplicantId],
+      displayLabel: input.passengerName,
+    },
+    vendorStaffPartner: input.assignedUser
+      ? `Passenger · ${input.assignedUser}`
+      : `Passenger · ${input.passengerName}`,
+    amount,
+    gstIncluded: false,
+    gstAmount: 0,
+    tdsApplicable: false,
+    tdsAmount: 0,
+    netPayableAmount: amount,
+    paymentStatus: amount > 0 ? 'paid' : 'not_paid',
+    approvalStatus: 'approved',
+    proofStatus: amount > 0 ? 'not_required' : 'missing',
+    paidBy: 'customer',
+    billTo: 'client',
+    createdFrom: 'application_service',
+    createdBy: 'Assignment & Priority',
+    createdDate: now,
+    expenseDate: input.operationalDate || now.slice(0, 10),
+    remarks: amount > 0 ? undefined : 'Passenger payment pending confirmation',
+    isAutoGenerated: true,
+    updatedAt: now,
+  }
 }
 
 export function matchesListingSearch(

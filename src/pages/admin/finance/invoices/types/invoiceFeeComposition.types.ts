@@ -1,15 +1,10 @@
-export interface SimpleFeeField {
-  amount: number
-  notes: string
-}
-
-export interface RepeatableFeeRow {
+/** Client-billable service line seeded from Expense Management; amount/remark editable on invoice. */
+export interface InvoiceBillableServiceLine {
   id: string
-  feeType: string
-  feeTypeLabel: string
-  isCustom: boolean
+  expenseRecordId: string
+  serviceLabel: string
   amount: number
-  notes: string
+  remark: string
 }
 
 export interface ApplicantFeeBundle {
@@ -18,10 +13,7 @@ export interface ApplicantFeeBundle {
   passportNumber: string
   country: string
   visaType: string
-  gltsFees: SimpleFeeField
-  visaFees: SimpleFeeField
-  handlingFees: RepeatableFeeRow[]
-  miscellaneousFees: RepeatableFeeRow[]
+  serviceLines: InvoiceBillableServiceLine[]
 }
 
 export interface SingleApplicationFeeCard {
@@ -33,10 +25,7 @@ export interface SingleApplicationFeeCard {
   billingEntity: string
   vessel: string
   applicantName: string
-  gltsFees: SimpleFeeField
-  visaFees: SimpleFeeField
-  handlingFees: RepeatableFeeRow[]
-  miscellaneousFees: RepeatableFeeRow[]
+  serviceLines: InvoiceBillableServiceLine[]
 }
 
 export interface BulkApplicationFeeCard {
@@ -65,16 +54,11 @@ export interface InvoiceFeeCompositionState {
   draftInvoiceId?: string
 }
 
-export interface InvoiceFeeCategoryTotals {
-  gltsFees: number
-  visaFees: number
-  handlingFees: number
-  miscellaneousFees: number
-}
-
-export interface InvoiceFeeCompositionSummary extends InvoiceFeeCategoryTotals {
+export interface InvoiceFeeCompositionSummary {
   totalApplications: number
   totalApplicants: number
   singleCount: number
   bulkCount: number
+  /** Sum of all client-billable service line amounts. */
+  servicesTotal: number
 }

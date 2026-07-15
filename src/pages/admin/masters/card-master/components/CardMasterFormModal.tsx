@@ -2,36 +2,36 @@ import { useEffect, useState } from 'react'
 import { FormSection, Modal, useToast } from '@/design-system/UIComponents'
 import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { ADMIN_MODAL_FORM_LAYOUT } from '@/pages/admin/components/adminOverlayFormLayout'
-import { creditCardMasterService } from '@/shared/services/creditCardMasterService'
-import type { CreditCardMaster } from '@/shared/types/creditCardMaster'
+import { cardMasterService } from '@/shared/services/cardMasterService'
+import type { CardMaster } from '@/shared/types/cardMaster'
 import {
-  creditCardToFormData,
-  INITIAL_CREDIT_CARD_FORM,
-  useCreditCardForm,
-} from '../hooks/useCreditCardForm'
-import { CreditCardFormFields } from './CreditCardFormFields'
+  cardMasterToFormData,
+  INITIAL_CARD_MASTER_FORM,
+  useCardMasterForm,
+} from '../hooks/useCardMasterForm'
+import { CardMasterFormFields } from './CardMasterFormFields'
 
-interface CreditCardFormModalProps {
+interface CardMasterFormModalProps {
   open: boolean
-  record?: CreditCardMaster | null
+  record?: CardMaster | null
   onClose: () => void
   onSaved: () => void
 }
 
-export function CreditCardFormModal({
+export function CardMasterFormModal({
   open,
   record,
   onClose,
   onSaved,
-}: CreditCardFormModalProps) {
+}: CardMasterFormModalProps) {
   const { showToast } = useToast()
-  const { formData, setFormData, errors, validate, reset } = useCreditCardForm()
+  const { formData, setFormData, errors, validate, reset } = useCardMasterForm()
   const [loading, setLoading] = useState(false)
   const isEdit = Boolean(record)
 
   useEffect(() => {
     if (open) {
-      reset(record ? creditCardToFormData(record) : INITIAL_CREDIT_CARD_FORM)
+      reset(record ? cardMasterToFormData(record) : INITIAL_CARD_MASTER_FORM)
     }
   }, [open, record, reset])
 
@@ -45,19 +45,19 @@ export function CreditCardFormModal({
     setLoading(true)
     const result =
       isEdit && record
-        ? creditCardMasterService.update(record.id, formData)
-        : creditCardMasterService.create(formData)
+        ? cardMasterService.update(record.id, formData)
+        : cardMasterService.create(formData)
     setLoading(false)
     if (result && 'error' in result && result.error === 'duplicate_name') {
       showToast({
         title: 'Duplicate card name',
-        description: 'A credit card with this name already exists.',
+        description: 'A card with this name already exists.',
         variant: 'error',
       })
       return
     }
     showToast({
-      title: isEdit ? 'Credit card updated' : 'Credit card added',
+      title: isEdit ? 'Card updated' : 'Card added',
       variant: 'success',
     })
     onSaved()
@@ -68,8 +68,8 @@ export function CreditCardFormModal({
     <Modal
       open={open}
       onClose={handleClose}
-      title={isEdit ? 'Edit credit card' : 'Add credit card'}
-      subtitle="Manage accepted credit card types for payments"
+      title={isEdit ? 'Edit card' : 'Add card'}
+      subtitle="Manage payment cards used across operations and fund allocation"
       size={ADMIN_MODAL_FORM_LAYOUT.recommendedSize}
       footer={
         <AdminFullPageFormFooter
@@ -80,7 +80,7 @@ export function CreditCardFormModal({
       }
     >
       <FormSection columns={ADMIN_MODAL_FORM_LAYOUT.fieldColumns}>
-        <CreditCardFormFields formData={formData} onChange={setFormData} errors={errors} />
+        <CardMasterFormFields formData={formData} onChange={setFormData} errors={errors} />
       </FormSection>
     </Modal>
   )

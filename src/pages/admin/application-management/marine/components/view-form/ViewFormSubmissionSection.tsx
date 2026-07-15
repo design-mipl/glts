@@ -8,9 +8,9 @@ import { ApplicationTrackingUrlLink } from '@/shared/components/ApplicationTrack
 import { resolveApplicationTrackingUrl, resolveOfferingVfsServiceRates } from '@/shared/services/countryMasterService'
 import type { FormAssistSubmissionDraft } from '@/shared/services/applicationFormAssistService'
 import {
-  listCreditCardSelectOptions,
-  resolveCreditCardLabel,
-} from '@/shared/utils/creditCardMasterOptions'
+  listCardSelectOptions,
+  resolveCardLabel,
+} from '@/shared/utils/cardMasterOptions'
 import { mapCountryVfsRatesToChargeLines } from '@/shared/utils/countryVfsServiceRateUtils'
 import {
   PAYMENT_MODE_OPTIONS,
@@ -144,7 +144,7 @@ export function ViewFormSubmissionSection({
   const showCardType = submission.paymentMode === 'card'
   const applicationTrackingUrl = resolveApplicationTrackingUrl({ countryName: country })
   const cardTypeOptions = useMemo(
-    () => [{ value: '', label: 'Select card type' }, ...listCreditCardSelectOptions()],
+    () => [{ value: '', label: 'Select card' }, ...listCardSelectOptions()],
     [],
   )
 
@@ -225,8 +225,8 @@ export function ViewFormSubmissionSection({
           />
           {showCardType ? (
             <ReadOnlyValueRow
-              label="Card type"
-              value={resolveCreditCardLabel(submission.paymentCardId)}
+              label="Payment card"
+              value={resolveCardLabel(submission.paymentCardId)}
             />
           ) : null}
           <ReadOnlyValueRow
@@ -373,12 +373,12 @@ export function ViewFormSubmissionSection({
           />
         </FormField>
         {showCardType ? (
-          <FormField label="Card type" required>
+          <FormField label="Payment card" required>
             <Select
               value={submission.paymentCardId}
               onChange={v => onChange({ paymentCardId: String(v) })}
               options={cardTypeOptions}
-              placeholder="Select card type"
+              placeholder="Select card from card master"
               size="sm"
               fullWidth
               clearable

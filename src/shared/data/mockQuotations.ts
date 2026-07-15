@@ -200,7 +200,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
         [
           {
             id: 'qpr-4',
-            country: 'Schengen',
+            country: 'France',
             countryId: 'CNT-104',
             visaType: 'Agent Tourist Visa',
             workflowType: 'B2B Agent',

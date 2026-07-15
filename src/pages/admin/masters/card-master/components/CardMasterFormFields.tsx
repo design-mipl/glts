@@ -1,19 +1,19 @@
 import { FormField, Input } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
-import type { CreditCardMasterFormData } from '@/shared/types/creditCardMaster'
+import type { CardMasterFormData } from '@/shared/types/cardMaster'
 
-interface CreditCardFormFieldsProps {
-  formData: CreditCardMasterFormData
-  onChange: (next: CreditCardMasterFormData) => void
+interface CardMasterFormFieldsProps {
+  formData: CardMasterFormData
+  onChange: (next: CardMasterFormData) => void
   errors: Record<string, string>
 }
 
-export function CreditCardFormFields({
+export function CardMasterFormFields({
   formData,
   onChange,
   errors,
-}: CreditCardFormFieldsProps) {
-  const update = (patch: Partial<CreditCardMasterFormData>) => onChange({ ...formData, ...patch })
+}: CardMasterFormFieldsProps) {
+  const update = (patch: Partial<CardMasterFormData>) => onChange({ ...formData, ...patch })
 
   return (
     <AdminFullPageFormFieldSpan>
@@ -26,7 +26,7 @@ export function CreditCardFormFields({
         <Input
           value={formData.cardName}
           onChange={(v) => update({ cardName: v })}
-          placeholder="e.g. Visa"
+          placeholder="e.g. Anna ICICI personal 0022 card – Master"
           size="sm"
           fullWidth
         />

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import dayjs from 'dayjs'
 import { DatePicker, FormField, Input, Select } from '@/design-system/UIComponents'
-import { creditCardMasterService } from '@/shared/services/creditCardMasterService'
+import { cardMasterService } from '@/shared/services/cardMasterService'
 import { operationalCaseHandlingService } from '@/shared/services/operationalCaseHandlingService'
 import type {
   GroundServiceLine,
@@ -13,6 +13,11 @@ import {
   getOperationalPaymentModeLabel,
   OPERATIONAL_PAYMENT_MODE_OPTIONS,
 } from '@/shared/types/operationalCaseHandling'
+import {
+  findSubmissionPaidCharge,
+  resolveOperationalCaseSubmissionSnapshot,
+  type OperationalCaseSubmissionSnapshot,
+} from '@/shared/utils/operationalCaseSubmissionUtils'
 
 function parseDateString(value: string | undefined): Date | null {
   if (!value?.trim()) return null
@@ -38,11 +43,19 @@ function formatDisplayAmount(value: string | undefined): string {
   return `₹${amount.toLocaleString('en-IN')}`
 }
 
-/** Sum of selected on-site fee amounts shown above the payment section. */
-export function getSelectedApplicationFeesTotal(fees: GroundServiceLine[]): number {
-  return fees
+/** Sum of selected on-site + GLTS ops fees that are not already paid at submission. */
+export function getSelectedApplicationFeesTotal(
+  fees: GroundServiceLine[],
+  snapshot: OperationalCaseSubmissionSnapshot | null = null,
+  gltsOpsFees: GroundServiceLine[] = [],
+): number {
+  const onSite = fees
+    .filter(fee => fee.selected && !findSubmissionPaidCharge(fee.serviceName, snapshot))
+    .reduce((sum, fee) => sum + (fee.actualAmount || fee.prefilledAmount), 0)
+  const glts = gltsOpsFees
     .filter(fee => fee.selected)
     .reduce((sum, fee) => sum + (fee.actualAmount || fee.prefilledAmount), 0)
+  return onSite + glts
 }
 
 function formatAmountField(amount: number): string {
@@ -75,9 +88,21 @@ export function OperationalPaymentDetailsSection({
   readOnly = false,
   onUpdated,
 }: OperationalPaymentDetailsSectionProps) {
+  const submissionSnapshot = useMemo(
+    () => resolveOperationalCaseSubmissionSnapshot(record),
+    [record],
+  )
+
   const autoAmountPaid = useMemo(
-    () => formatAmountField(getSelectedApplicationFeesTotal(record.applicationFees)),
-    [record.applicationFees],
+    () =>
+      formatAmountField(
+        getSelectedApplicationFeesTotal(
+          record.applicationFees,
+          submissionSnapshot,
+          record.gltsOpsFees ?? [],
+        ),
+      ),
+    [record.applicationFees, record.gltsOpsFees, submissionSnapshot],
   )
 
   const [paymentDate, setPaymentDate] = useState(record.paymentDate ?? '')
@@ -91,7 +116,7 @@ export function OperationalPaymentDetailsSection({
 
   const cardOptions = useMemo(
     () =>
-      creditCardMasterService.list().map(card => ({
+      cardMasterService.list().map(card => ({
         value: card.id,
         label: card.cardName,
       })),
@@ -101,7 +126,7 @@ export function OperationalPaymentDetailsSection({
   const selectedCardLabel = useMemo(() => {
     if (!record.paymentCardId) return '—'
     return (
-      creditCardMasterService.getById(record.paymentCardId)?.cardName ??
+      cardMasterService.getById(record.paymentCardId)?.cardName ??
       record.paymentCardId
     )
   }, [record.paymentCardId])

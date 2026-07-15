@@ -1,26 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { BaseCard, Tabs } from '@/design-system/UIComponents'
-import { ViewFormDocumentVault } from '@/pages/admin/application-management/marine/components/view-form/ViewFormDocumentVault'
-import { ApplicationSummaryContent } from '@/pages/customer/features/applications/components/ApplicationSummaryContent'
 import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
-import type { ApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
-import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
-import type { ApplicationExpenseRecord } from '@/shared/types/applicationExpenseManagement'
+import type { ApplicationExpenseDetailView, ApplicationExpenseRecord } from '@/shared/types/applicationExpenseManagement'
 import {
   computeFinanceKpis,
   filterExpensesForPassenger,
 } from '@/shared/utils/applicationExpenseManagementUtils'
 import { ExpenseItemsTable, type ExpenseItemAction } from './ExpenseItemsTable'
+import { ExpensePassengerOverview } from './ExpensePassengerOverview'
 
 type PassengerDetailTab = 'overview' | 'expenses'
 
 interface ExpenseTravelerDetailPanelProps {
   applicationId: string
-  applicationDetail: ApplicationDetailViewModel
   selectedRow: UploadQueueRow | null
-  summaryOverview: ApplicationReviewOverview
-  singleListing: boolean
+  expenseDetail: ApplicationExpenseDetailView
   allExpenses: ApplicationExpenseRecord[]
   onAddExpense: () => void
   onExpenseAction: (action: ExpenseItemAction, expense: ApplicationExpenseRecord) => void
@@ -28,10 +23,8 @@ interface ExpenseTravelerDetailPanelProps {
 
 export function ExpenseTravelerDetailPanel({
   applicationId,
-  applicationDetail,
   selectedRow,
-  summaryOverview,
-  singleListing,
+  expenseDetail,
   allExpenses,
   onAddExpense,
   onExpenseAction,
@@ -54,7 +47,7 @@ export function ExpenseTravelerDetailPanel({
 
   const passengerTabs = useMemo(
     () => [
-      { value: 'overview' as const, label: 'Overview + Documents' },
+      { value: 'overview' as const, label: 'Overview and Documents' },
       {
         value: 'expenses' as const,
         label: 'Expenses',
@@ -110,26 +103,11 @@ export function ExpenseTravelerDetailPanel({
         }}
       >
         {activeTab === 'overview' ? (
-          <Stack spacing={2}>
-            <Box>
-              <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 1.5 }}>
-                Passenger overview
-              </Typography>
-              <ApplicationSummaryContent
-                overview={summaryOverview}
-                row={selectedRow}
-                singleListing={singleListing}
-                verifyContext={{ detail: applicationDetail, applicationId }}
-              />
-            </Box>
-
-            <ViewFormDocumentVault
-              applicationId={applicationId}
-              selectedRow={selectedRow}
-              detail={applicationDetail}
-              defaultExpanded
-            />
-          </Stack>
+          <ExpensePassengerOverview
+            applicationId={applicationId}
+            selectedRow={selectedRow}
+            expenseDetail={expenseDetail}
+          />
         ) : (
           <ExpenseItemsTable
             title="Expenses"
@@ -139,7 +117,7 @@ export function ExpenseTravelerDetailPanel({
             onAction={onExpenseAction}
             hideMappingColumn
             embedded
-            emptyDescription="No expenses mapped to this passenger yet."
+            emptyDescription="Expenses sync from Application Management (tickets, insurance, GLTS fees), Assignment vendors, Fund Allocation, Ground Operations, and passenger payments."
           />
         )}
       </Box>

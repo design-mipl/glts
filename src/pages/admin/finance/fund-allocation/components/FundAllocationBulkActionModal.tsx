@@ -3,7 +3,7 @@ import { Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Checkbox, FormField, Input, Modal, Select, Textarea } from '@/design-system/UIComponents'
 import type { FundAllocationPassengerRow } from '@/shared/types/fundAllocation'
-import { listCreditCardSelectOptions } from '@/shared/utils/creditCardMasterOptions'
+import { listCardSelectOptions } from '@/shared/utils/cardMasterOptions'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import type { VfsPickerService } from '@/shared/utils/vfsServicePickerUtils'
 import {
@@ -20,7 +20,7 @@ import {
 
 export interface FundAllocationBulkConfirmPayload {
   selectedServiceKeys: string[]
-  creditCardId: string
+  cardId: string
   notes?: string
 }
 
@@ -39,10 +39,10 @@ export function FundAllocationBulkActionModal({
 }: FundAllocationBulkActionModalProps) {
   const [search, setSearch] = useState('')
   const [selectedServiceKeys, setSelectedServiceKeys] = useState<string[]>([])
-  const [creditCardId, setCreditCardId] = useState('')
+  const [cardId, setCardId] = useState('')
   const [notes, setNotes] = useState('')
 
-  const creditCardOptions = useMemo(() => listCreditCardSelectOptions(), [])
+  const cardOptions = useMemo(() => listCardSelectOptions(), [])
   const primaryRecord = records[0] ?? null
 
   const catalogServices = useMemo(() => buildBulkVfsServiceCatalog(records), [records])
@@ -62,7 +62,7 @@ export function FundAllocationBulkActionModal({
     if (!open) return
     setSearch('')
     setSelectedServiceKeys([])
-    setCreditCardId('')
+    setCardId('')
     setNotes('')
   }, [open, records])
 
@@ -70,13 +70,13 @@ export function FundAllocationBulkActionModal({
 
   const canSubmit =
     selectedServiceKeys.length > 0 &&
-    creditCardId.trim().length > 0 &&
+    cardId.trim().length > 0 &&
     allocationSummary.perPassenger.every(entry => entry.totalAmount > 0)
 
   const handleClose = () => {
     setSearch('')
     setSelectedServiceKeys([])
-    setCreditCardId('')
+    setCardId('')
     setNotes('')
     onClose()
   }
@@ -91,7 +91,7 @@ export function FundAllocationBulkActionModal({
     if (!canSubmit) return
     onConfirm(records, {
       selectedServiceKeys,
-      creditCardId,
+      cardId,
       notes,
     })
     handleClose()
@@ -234,9 +234,9 @@ export function FundAllocationBulkActionModal({
         <Stack spacing={1.5}>
           <FormField label="Payment card" required>
             <Select
-              value={creditCardId}
-              onChange={value => setCreditCardId(String(value))}
-              options={[{ value: '', label: 'Select card' }, ...creditCardOptions]}
+              value={cardId}
+              onChange={value => setCardId(String(value))}
+              options={[{ value: '', label: 'Select card' }, ...cardOptions]}
               placeholder="Select card from card master"
               size="sm"
               fullWidth

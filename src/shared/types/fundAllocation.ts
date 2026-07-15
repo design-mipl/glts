@@ -10,9 +10,8 @@ export interface FundAllocationOverlay {
   totalAmount: number
   allocatedAmount: number
   selectedServices: VfsServiceChargeLine[]
-  creditCardId: string
+  cardId: string
   allocatedAt: string
-  allocatedBy: string
   allocationNotes: string
   lastUpdated: string
 }
@@ -33,18 +32,35 @@ export interface FundAllocationPassengerRow {
   visaOfferingId?: string
   jurisdictionId?: string
   travelDate: string
+  /** Online submission date from Application Management. */
+  onlineSubmissionDate: string
+  /**
+   * VFS submission date from Application Management / Ground Operations
+   * (Ground Ops submission date is the same value).
+   */
+  vfsSubmissionDate: string
+  /** Tentative collection date from Application Management. */
+  tentativeCollectionDate: string
+  /** Actual collection date from Ground Operations. */
+  collectionDate: string
+  /**
+   * Listing / filter date — prefers VFS submission date, else online submission date.
+   * @deprecated Prefer onlineSubmissionDate / vfsSubmissionDate for display.
+   */
   submissionDate: string
   submissionStatus: ApplicationOperationalStatus
   customerSegment: ApplicationCustomerSegment
-  appointmentDate: string
   allocationStatus: FundAllocationStatus
   totalAmount: number
   allocatedAmount: number
   selectedServices: VfsServiceChargeLine[]
-  creditCardId: string
-  creditCardName: string
+  cardId: string
+  cardName: string
   allocatedAt: string
+  /** Latest assigner from Assignment & Priority Management. */
   allocatedBy: string
+  /** Current assignee from Assignment & Priority Management. */
+  allocatedTo: string
   allocationNotes: string
   suggestedAllocationAmount: number
   lastUpdated: string
@@ -65,6 +81,6 @@ export interface FundAllocationActionInput {
   selectedServices: VfsServiceChargeLine[]
   totalAmount: number
   allocatedAmount: number
-  creditCardId: string
+  cardId: string
   notes?: string
 }

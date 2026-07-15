@@ -3,6 +3,11 @@ import {
   SEED_TEAM_CAPACITY,
 } from '@/shared/data/mockOperationalCases'
 import { ensureApplicationFeeCatalog, ensureGroundServiceCatalog } from '@/pages/admin/ground-operations/case-handling/utils/operationalCaseHandlingUtils'
+import { ensureGltsOpsFeeCatalog } from '@/shared/utils/gltsOpsFeeUtils'
+import {
+  findSubmissionPaidCharge,
+  resolveOperationalCaseSubmissionSnapshot,
+} from '@/shared/utils/operationalCaseSubmissionUtils'
 import type {
   CityTeam,
   GroundServiceLine,
@@ -72,29 +77,38 @@ function normalizeApplicationFees(services: GroundServiceLine[]): GroundServiceL
   return ensureApplicationFeeCatalog(services.map(service => ({ ...service })))
 }
 
+function normalizeGltsOpsFees(services: GroundServiceLine[] | undefined): GroundServiceLine[] {
+  return ensureGltsOpsFeeCatalog(services?.map(service => ({ ...service })) ?? [])
+}
+
 function normalizeServiceLines(record: OperationalCase) {
   record.groundServices = normalizeGroundServices(record.groundServices)
   record.applicationFees = normalizeApplicationFees(record.applicationFees ?? [])
+  record.gltsOpsFees = normalizeGltsOpsFees(record.gltsOpsFees)
 }
 
-function selectedServiceLines(record: OperationalCase): GroundServiceLine[] {
-  return record.applicationFees.filter(service => service.selected)
+function payableServiceLines(record: OperationalCase): GroundServiceLine[] {
+  const snapshot = resolveOperationalCaseSubmissionSnapshot(record)
+  const onSite = record.applicationFees.filter(
+    service => service.selected && !findSubmissionPaidCharge(service.serviceName, snapshot),
+  )
+  const glts = (record.gltsOpsFees ?? []).filter(service => service.selected)
+  return [...onSite, ...glts]
 }
 
 function recomputeServiceTotals(record: OperationalCase) {
-  const selected = selectedServiceLines(record)
+  const selected = payableServiceLines(record)
   record.servicesSummary = selected.map(service => service.serviceName).join(', ') || '—'
   record.estimatedExpense = selected.reduce((sum, service) => sum + service.prefilledAmount, 0)
-  const serviceActual = selected.reduce((sum, service) => sum + service.actualAmount, 0)
-  const extraActual = record.expenses.reduce((sum, expense) => sum + expense.actualAmount, 0)
-  record.actualExpense = serviceActual + extraActual
-  record.expenseSummary = `₹${record.estimatedExpense.toLocaleString('en-IN')} Est.${record.actualExpense > 0 ? ` · ₹${record.actualExpense.toLocaleString('en-IN')} Actual` : ''}`
-  // Amount paid mirrors the selected on-site fees total above the payment section.
-  const feesPayable = selected.reduce(
+  const serviceActual = selected.reduce(
     (sum, service) => sum + (service.actualAmount || service.prefilledAmount),
     0,
   )
-  record.amountPaid = feesPayable > 0 ? String(feesPayable) : ''
+  const extraActual = record.expenses.reduce((sum, expense) => sum + expense.actualAmount, 0)
+  record.actualExpense = serviceActual + extraActual
+  record.expenseSummary = `₹${record.estimatedExpense.toLocaleString('en-IN')} Est.${record.actualExpense > 0 ? ` · ₹${record.actualExpense.toLocaleString('en-IN')} Actual` : ''}`
+  // Amount paid mirrors payable on-site + GLTS fees above the payment section.
+  record.amountPaid = serviceActual > 0 ? String(serviceActual) : ''
 }
 
 function cloneOperationalCase(record: OperationalCase): OperationalCase {
@@ -102,6 +116,7 @@ function cloneOperationalCase(record: OperationalCase): OperationalCase {
     ...record,
     groundServices: normalizeGroundServices(record.groundServices),
     applicationFees: normalizeApplicationFees(record.applicationFees ?? []),
+    gltsOpsFees: normalizeGltsOpsFees(record.gltsOpsFees),
     expenses: [...record.expenses],
     timeline: [...record.timeline],
     finalQc: record.finalQc
@@ -132,6 +147,7 @@ let caseStore: OperationalCase[] = SEED_OPERATIONAL_CASES.map(row => ({
   ...row,
   groundServices: normalizeGroundServices(row.groundServices),
   applicationFees: normalizeApplicationFees(row.applicationFees ?? []),
+  gltsOpsFees: normalizeGltsOpsFees(row.gltsOpsFees),
   expenses: row.expenses.map(e => ({ ...e })),
   timeline: row.timeline.map(t => ({ ...t })),
 }))
@@ -167,6 +183,7 @@ function mapStoreRows(): OperationalCase[] {
       ...row,
       groundServices: normalizeGroundServices(row.groundServices),
       applicationFees: normalizeApplicationFees(row.applicationFees ?? []),
+      gltsOpsFees: normalizeGltsOpsFees(row.gltsOpsFees),
       expenses: row.expenses.map(e => ({ ...e })),
       timeline: row.timeline.map(t => ({ ...t })),
     }))
@@ -299,12 +316,46 @@ export const operationalCaseHandlingService = {
     })
   },
 
+  updateGltsOpsFee(id: string, feeId: string, patch: Partial<GroundServiceLine>): OperationalCase | undefined {
+    return mutate(id, record => {
+      record.gltsOpsFees = normalizeGltsOpsFees(record.gltsOpsFees)
+      const fee = record.gltsOpsFees.find(item => item.id === feeId)
+      if (!fee) return
+      Object.assign(fee, patch)
+      recomputeServiceTotals(record)
+    })
+  },
+
   updateApplicationFeesPaidBy(
     id: string,
     paidBy: NonNullable<OperationalCase['applicationFeesPaidBy']>,
   ): OperationalCase | undefined {
     return mutate(id, record => {
       record.applicationFeesPaidBy = paidBy
+    })
+  },
+
+  setAttachmentNames(id: string, attachmentNames: string[]): OperationalCase | undefined {
+    return mutate(id, record => {
+      record.attachmentNames = [...attachmentNames]
+    })
+  },
+
+  addAttachments(id: string, fileNames: string[]): OperationalCase | undefined {
+    return mutate(id, record => {
+      const existing = new Set(record.attachmentNames)
+      for (const name of fileNames) {
+        if (!existing.has(name)) {
+          record.attachmentNames.push(name)
+          existing.add(name)
+        }
+      }
+    })
+  },
+
+  removeAttachment(id: string, fileName: string): OperationalCase | undefined {
+    return mutate(id, record => {
+      record.attachmentNames = record.attachmentNames.filter(name => name !== fileName)
     })
   },
 
@@ -489,6 +540,7 @@ export const operationalCaseHandlingService = {
       ...row,
       groundServices: normalizeGroundServices(row.groundServices),
       applicationFees: normalizeApplicationFees(row.applicationFees ?? []),
+      gltsOpsFees: normalizeGltsOpsFees(row.gltsOpsFees),
       expenses: row.expenses.map(e => ({ ...e })),
       timeline: row.timeline.map(t => ({ ...t })),
     }))

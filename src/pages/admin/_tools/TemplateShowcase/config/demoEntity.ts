@@ -33,7 +33,7 @@ export const TEMPLATE_DEMO_ROWS: TemplateDemoRecord[] = [
   {
     id: '2',
     reference: 'REF-2402',
-    name: 'Horizon Corp — Schengen tourist',
+    name: 'Horizon Corp — France tourist',
     status: 'Pending',
     priority: 'medium',
     assignee: 'Arjun Mehta',

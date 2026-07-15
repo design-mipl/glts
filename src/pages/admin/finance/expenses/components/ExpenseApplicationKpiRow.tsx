@@ -5,7 +5,7 @@ import { formatInr } from '@/shared/utils/invoiceCalculations'
 interface ExpenseApplicationKpiRowProps {
   submittedApplications: number
   totalExpense: number
-  pendingApproval: number
+  pendingPayment: number
   paidApplications: number
 }
 
@@ -25,7 +25,7 @@ function KpiCard({ label, value }: { label: string; value: string }) {
 export function ExpenseApplicationKpiRow({
   submittedApplications,
   totalExpense,
-  pendingApproval,
+  pendingPayment,
   paidApplications,
 }: ExpenseApplicationKpiRowProps) {
   return (
@@ -37,7 +37,7 @@ export function ExpenseApplicationKpiRow({
         <KpiCard label="Total expense" value={formatInr(totalExpense)} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <KpiCard label="Pending approval" value={formatInr(pendingApproval)} />
+        <KpiCard label="Pending payment" value={formatInr(pendingPayment)} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <KpiCard label="Fully paid applications" value={String(paidApplications)} />

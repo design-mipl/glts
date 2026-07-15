@@ -127,14 +127,14 @@ export const SEED_INVOICES: Invoice[] = [
     gltsReferences: ['GLTS-BAT-2026-041'],
     batchIds: ['GLTS-BAT-2026-041'],
     totalApplications: 1,
-    country: 'Schengen',
+    country: 'France',
     visaType: 'Crew · Type C',
     lineItems: [
       lineItem({
         id: 'li-seed-3',
         batchId: 'GLTS-BAT-2026-041',
         serviceType: 'Visa Fee',
-        description: 'Schengen · Crew · Type C service fee',
+        description: 'France · Crew · Type C service fee',
         quantity: 24,
         unitPrice: 1500,
         gstApplicable: true,

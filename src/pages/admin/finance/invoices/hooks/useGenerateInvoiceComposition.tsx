@@ -271,9 +271,9 @@ export function useGenerateInvoiceComposition({
       },
       {
         id: 'application-fees',
-        title: 'Application fees',
+        title: 'Billable services',
         description:
-          'Expand each application to configure fees. Bulk batches include one accordion per applicant.',
+          'Client-billable services from Expense Management, per passenger. Amount and remark are editable.',
         span: 2,
         columns: 1,
         importance: 'secondary',
