@@ -76,6 +76,24 @@ export interface OperationalExpense {
   isExtra?: boolean
 }
 
+/** Snapshot of Fund Allocation for display on Ground Operations cases. */
+export interface OperationalCaseFundAllocation {
+  status: 'pending_allocation' | 'allocated'
+  fundRequested: boolean
+  totalAmount: number
+  allocatedAmount: number
+  /** @deprecated Prefer fundTransferLabel. Kept for legacy card-based allocations. */
+  cardId: string
+  /** Display label for fund transfer type (or legacy card name). */
+  fundTransferLabel?: string
+  serviceNames: string[]
+  requestedAt: string
+  allocatedAt: string
+  notes: string
+  /** Assignment assignee shown as fund holder (user / vendor / passenger). */
+  allocatedTo: string
+}
+
 export interface OperationalCase {
   id: string
   /** Display operational reference: `<Application ID>-<Passenger Sequence>` */
@@ -130,6 +148,11 @@ export interface OperationalCase {
   amountPaid?: string
   /** UTR / transaction reference for the payment. */
   transactionReference?: string
+  /**
+   * Fund Allocation snapshot pushed from Assignment request / Finance allocate.
+   * Shown read-only in Ground Operations so the desk knows float holder + card + amount.
+   */
+  fundAllocation?: OperationalCaseFundAllocation
   expenses: OperationalExpense[]
   submissionDate?: string
   collectionDate?: string

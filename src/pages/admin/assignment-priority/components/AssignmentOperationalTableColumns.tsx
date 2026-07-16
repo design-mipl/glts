@@ -24,6 +24,7 @@ import {
 } from '../utils/assignmentQueueListingUtils'
 import type { AssignmentTableColumnsParams } from './AssignmentTableColumns'
 import { ASSIGN_USER_VENDOR_ACTION_LABEL } from '../config/assignmentActionConfig'
+import { AssignmentFundStatusCell } from './AssignmentFundStatusCell'
 
 function operationalStatusBadgeColor(status: string): 'success' | 'warning' | 'info' | 'error' | 'neutral' {
   const tone = getApplicationOperationalTone(status)
@@ -220,6 +221,13 @@ export function buildOperationalAssignmentTableColumns(
       widthSize: 'md',
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => <StatusCell row={row} />,
+    },
+    {
+      key: 'fundStatus',
+      label: 'Fund Status',
+      widthSize: 'md',
+      sortable: true,
+      render: (_value, row: OperationalPassengerRow) => <AssignmentFundStatusCell passengerId={row.id} />,
     },
     {
       key: 'sla',

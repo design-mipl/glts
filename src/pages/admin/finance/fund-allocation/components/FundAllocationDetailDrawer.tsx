@@ -3,7 +3,11 @@ import { Box, Divider, Stack, Typography } from '@mui/material'
 import dayjs from 'dayjs'
 import { Drawer, Badge } from '@/design-system/UIComponents'
 import { PassengerApplicationDocumentVault } from '@/shared/components/PassengerApplicationDocumentVault'
-import type { FundAllocationPassengerRow } from '@/shared/types/fundAllocation'
+import {
+  getFundTransferTypeLabel,
+  type FundAllocationPassengerRow,
+} from '@/shared/types/fundAllocation'
+import { resolveCardLabel } from '@/shared/utils/cardMasterOptions'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
   customerSegmentDisplayLabel,
@@ -110,6 +114,8 @@ function PassengerContextCard({ record }: { record: FundAllocationPassengerRow }
             <ContextMetaItem label="Company" value={record.companyName} />
             <ContextMetaItem label="Country / visa" value={`${record.country} · ${record.visaType}`} />
             <ContextMetaItem label="Jurisdiction" value={record.jurisdiction} />
+            <ContextMetaItem label="Team" value={record.assignedTeam || '—'} />
+            <ContextMetaItem label="User" value={record.assignedUser || '—'} />
             <ContextMetaItem label="Travel date" value={formatDisplayDate(record.travelDate)} />
           </MetaGrid>
         </ContextGroup>
@@ -135,15 +141,23 @@ function PassengerContextCard({ record }: { record: FundAllocationPassengerRow }
               value={formatDisplayDate(record.collectionDate)}
             />
             <ContextMetaItem label="Submission status" value={record.submissionStatus} />
-            <ContextMetaItem
-              label="Catalog total"
-              value={
-                record.suggestedAllocationAmount > 0
-                  ? formatInr(record.suggestedAllocationAmount)
-                  : '—'
-              }
-              mono
-            />
+            {record.fundRequested ? (
+              <ContextMetaItem
+                label="Requested total"
+                value={record.totalAmount > 0 ? formatInr(record.totalAmount) : '—'}
+                mono
+              />
+            ) : (
+              <ContextMetaItem
+                label="Catalog total"
+                value={
+                  record.suggestedAllocationAmount > 0
+                    ? formatInr(record.suggestedAllocationAmount)
+                    : '—'
+                }
+                mono
+              />
+            )}
           </MetaGrid>
         </ContextGroup>
       </ContextCardSection>
@@ -155,7 +169,7 @@ function AllocatedServicesCard({ record }: { record: FundAllocationPassengerRow 
   return (
     <ContextCard>
       <ContextCardSection>
-        <ContextGroup title="Allocated services">
+        <ContextGroup title={record.allocationStatus === 'allocated' ? 'Allocated services' : 'Requested services'}>
           {record.selectedServices.length > 0 ? (
             <Stack spacing={1}>
               {record.selectedServices.map(service => (
@@ -196,7 +210,7 @@ function AllocatedServicesCard({ record }: { record: FundAllocationPassengerRow 
         <ContextGroup title="Allocation summary">
           <MetaGrid>
             <ContextMetaItem
-              label="Total value"
+              label={record.allocationStatus === 'allocated' ? 'Total value' : 'Requested total'}
               value={record.totalAmount > 0 ? formatInr(record.totalAmount) : '—'}
               mono
             />
@@ -205,11 +219,25 @@ function AllocatedServicesCard({ record }: { record: FundAllocationPassengerRow 
               value={record.allocatedAmount > 0 ? formatInr(record.allocatedAmount) : '—'}
               mono
             />
-            <ContextMetaItem label="Payment card" value={record.cardName} />
+            <ContextMetaItem
+              label="Fund transfer"
+              value={
+                record.fundTransfer?.transferType
+                  ? record.fundTransfer.transferType === 'card' && record.fundTransfer.assignedCardId
+                    ? `${getFundTransferTypeLabel(record.fundTransfer.transferType)} · ${resolveCardLabel(record.fundTransfer.assignedCardId)}`
+                    : getFundTransferTypeLabel(record.fundTransfer.transferType)
+                  : record.cardName && record.cardName !== '—'
+                    ? record.cardName
+                    : '—'
+              }
+            />
             <ContextMetaItem label="Allocated by" value={record.allocatedBy} />
             <ContextMetaItem label="Allocated to" value={record.allocatedTo} />
             <Box sx={{ gridColumn: '1 / -1' }}>
-              <ContextMetaItem label="Allocation notes" value={record.allocationNotes} />
+              <ContextMetaItem
+                label="Allocation notes"
+                value={record.fundTransfer?.paymentRemark || record.allocationNotes}
+              />
             </Box>
           </MetaGrid>
         </ContextGroup>

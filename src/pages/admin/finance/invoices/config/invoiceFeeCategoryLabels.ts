@@ -7,5 +7,9 @@ export const INVOICE_COMPOSITION_FEE_LABELS = {
     serviceColumn: 'Service',
     amountColumn: 'Amount',
     remarkColumn: 'Remark',
+    actionsColumn: 'Actions',
+    addService: 'Add service',
+    noAgreementServices: 'No more agreement services available to add.',
+    deleteService: 'Remove service',
   },
 } as const

@@ -467,3 +467,60 @@ export function billingTypeLabel(type: CommercialAgreement['billingType'] | unde
   if (type === 'mixed') return 'Mixed'
   return 'Credit'
 }
+
+export interface AgreementBillableServiceOption {
+  value: string
+  label: string
+  defaultAmount: number
+}
+
+/** Unique client-billable services defined on the commercial agreement. */
+export function listAgreementBillableServiceOptions(
+  agreement: CommercialAgreement | undefined | null,
+): AgreementBillableServiceOption[] {
+  if (!agreement) return []
+
+  const byKey = new Map<string, AgreementBillableServiceOption>()
+  const add = (value: string, label: string, defaultAmount: number) => {
+    const key = label.trim().toLowerCase()
+    if (!key || byKey.has(key)) return
+    byKey.set(key, { value, label: label.trim(), defaultAmount })
+  }
+
+  for (const row of agreement.pricingMatrix) {
+    add(row.servicePresetId || row.id, row.servicePresetName, row.serviceFee)
+  }
+  for (const row of agreement.miscellaneousCosts) {
+    add(row.id, row.serviceName, row.amount)
+  }
+  for (const row of agreement.miscellaneousServices ?? []) {
+    add(row.serviceId || row.id, row.serviceName, row.amount)
+  }
+
+  return [...byKey.values()].sort((a, b) => a.label.localeCompare(b.label))
+}
+
+/** Agreement services not already present on the passenger fee lines (by label). */
+export function listAvailableAgreementServicesToAdd(
+  agreement: CommercialAgreement | undefined | null,
+  existingLines: InvoiceBillableServiceLine[],
+): AgreementBillableServiceOption[] {
+  const usedLabels = new Set(
+    existingLines.map(line => line.serviceLabel.trim().toLowerCase()).filter(Boolean),
+  )
+  return listAgreementBillableServiceOptions(agreement).filter(
+    option => !usedLabels.has(option.label.trim().toLowerCase()),
+  )
+}
+
+export function createBillableServiceLineFromAgreement(
+  option: AgreementBillableServiceOption,
+): InvoiceBillableServiceLine {
+  return {
+    id: newId('svc'),
+    expenseRecordId: option.value,
+    serviceLabel: option.label,
+    amount: option.defaultAmount,
+    remark: '',
+  }
+}

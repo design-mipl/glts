@@ -115,6 +115,8 @@ export interface OperationalPassengerRow {
 
 export type AssignmentSlaFilter = '' | 'at_risk' | 'due_today' | 'on_track'
 
+export type AssignmentFundFilter = '' | 'requested' | 'allocated' | 'none'
+
 export interface AssignmentQueueFilters {
   datePreset: OperationalDateFilterPreset
   customDateFrom?: string
@@ -127,6 +129,8 @@ export interface AssignmentQueueFilters {
   visaType: string
   status: string
   sla: string
+  /** Filter by fund allocation state — only rows with an active fund workflow when set. */
+  fundStatus: AssignmentFundFilter
   search: string
 }
 

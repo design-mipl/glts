@@ -28,6 +28,7 @@ import {
   type OperationalCaseSubmissionSnapshot,
 } from '@/shared/utils/operationalCaseSubmissionUtils'
 import { OperationalPaymentDetailsSection } from './OperationalPaymentDetailsSection'
+import { OperationalFundAllocationSection } from './OperationalFundAllocationSection'
 import { OperationalTimeline } from './OperationalTimeline'
 import { OperationalDocumentVault } from './OperationalDocumentVault'
 import { PassengerApplicationDocumentVault } from '@/shared/components/PassengerApplicationDocumentVault'
@@ -388,6 +389,8 @@ function OperationalCaseDetailContent({
                 }
               />
             </Stack>
+
+            <OperationalFundAllocationSection record={record} />
 
             <Divider />
 

@@ -391,6 +391,31 @@ export const operationalCaseHandlingService = {
     })
   },
 
+  /**
+   * Sync Fund Allocation request/allocate onto the ground-ops case for desk visibility.
+   * When status is allocated and a card is set, also prefills payment mode/card for settlement.
+   */
+  syncFundAllocation(
+    id: string,
+    snapshot: NonNullable<OperationalCase['fundAllocation']>,
+  ): OperationalCase | undefined {
+    return mutate(id, record => {
+      record.fundAllocation = { ...snapshot, serviceNames: [...snapshot.serviceNames] }
+      if (snapshot.status === 'allocated' && snapshot.cardId.trim()) {
+        record.paymentMode = 'card'
+        record.paymentCardId = snapshot.cardId
+        if (snapshot.allocatedAmount > 0) {
+          record.amountPaid = String(snapshot.allocatedAmount)
+        }
+      }
+      const label =
+        snapshot.status === 'allocated'
+          ? `Fund allocated · ₹${snapshot.allocatedAmount.toLocaleString('en-IN')}`
+          : `Fund allocation requested · ₹${snapshot.totalAmount.toLocaleString('en-IN')}`
+      appendTimeline(record, label)
+    })
+  },
+
   addExpense(id: string, expense: Omit<OperationalExpense, 'id'>): OperationalCase | undefined {
     return mutate(id, record => {
       const item: OperationalExpense = {

@@ -37,11 +37,12 @@ import {
   downloadFundAllocationCsv,
   getFundAllocationCellValue,
   getFundAllocationCountryKey,
+  getFundAllocationAssigneeKey,
   getFundAllocationFilterOptions,
   getFundAllocationTabEmptyState,
   sanitizeFundAllocationSelection,
 } from '../utils/fundAllocationListingUtils'
-import { computePassengerBulkAllocationInput } from '../utils/fundAllocationBulkUtils'
+import { computePassengerRequestedBulkAllocationInput, computeRequestedBulkSummary } from '../utils/fundAllocationBulkUtils'
 import { customerSegmentDisplayLabel } from '../config/fundAllocationStatusConfig'
 
 export function FundAllocationListingPage() {
@@ -88,6 +89,8 @@ export function FundAllocationListingPage() {
       queueFilters.country ||
       queueFilters.visaType ||
       queueFilters.jurisdiction ||
+      queueFilters.assignedTeam ||
+      queueFilters.assignedUser ||
       queueFilters.dateFrom ||
       queueFilters.dateTo ||
       searchValue ||
@@ -97,17 +100,25 @@ export function FundAllocationListingPage() {
 
   const handleTableStateChange = useCallback(
     (next: TableState) => {
-      const { ids, rejected } = sanitizeFundAllocationSelection(
+      const { ids, rejected, reason } = sanitizeFundAllocationSelection(
         filterSourceRows,
         next.selectedRows,
         tableState.selectedRows,
       )
       if (rejected) {
-        showToast({
-          title: 'Different country',
-          description: 'Bulk allocation is only allowed for passengers in the same country.',
-          variant: 'warning',
-        })
+        if (reason === 'assignee') {
+          showToast({
+            title: 'Different user',
+            description: 'Bulk allocation is only allowed for passengers assigned to the same user.',
+            variant: 'warning',
+          })
+        } else {
+          showToast({
+            title: 'Different country',
+            description: 'Bulk allocation is only allowed for passengers in the same country.',
+            variant: 'warning',
+          })
+        }
       }
       setTableState({ ...next, selectedRows: ids })
     },
@@ -124,7 +135,23 @@ export function FundAllocationListingPage() {
         })
         return
       }
-      const countries = new Set(rows.map(getFundAllocationCountryKey))
+      const eligible = rows.filter(row => row.fundRequested && row.totalAmount > 0)
+      if (eligible.length === 0) {
+        showToast({
+          title: 'No fund requests',
+          description: 'Selected passengers do not have fund requests from Assignment & Priority.',
+          variant: 'warning',
+        })
+        return
+      }
+      if (eligible.length !== rows.length) {
+        showToast({
+          title: 'Some passengers skipped',
+          description: 'Only passengers with fund requests will be included in bulk allocation.',
+          variant: 'warning',
+        })
+      }
+      const countries = new Set(eligible.map(getFundAllocationCountryKey))
       if (countries.size > 1) {
         showToast({
           title: 'Different country',
@@ -133,7 +160,16 @@ export function FundAllocationListingPage() {
         })
         return
       }
-      setBulkModalRecords(rows)
+      const assignees = new Set(eligible.map(getFundAllocationAssigneeKey))
+      if (assignees.size > 1) {
+        showToast({
+          title: 'Different user',
+          description: 'Bulk allocation is only allowed for passengers assigned to the same user. Filter by team/user first.',
+          variant: 'warning',
+        })
+        return
+      }
+      setBulkModalRecords(eligible)
     },
     [showToast],
   )
@@ -144,9 +180,17 @@ export function FundAllocationListingPage() {
         selectPassenger(row)
         return
       }
+      if (!row.fundRequested || row.totalAmount <= 0) {
+        showToast({
+          title: 'No fund request',
+          description: 'Request funds from Assignment & Priority before allocating.',
+          variant: 'warning',
+        })
+        return
+      }
       setActionModalRecord(row)
     },
-    [selectPassenger],
+    [selectPassenger, showToast],
   )
 
   const columns = useMemo(
@@ -189,18 +233,25 @@ export function FundAllocationListingPage() {
       })
 
       setActionModalRecord(null)
-      showToast({ title: 'Funds allocated', variant: 'success' })
+      showToast({
+        title: 'Funds allocated',
+        description: 'Amount and fund transfer synced to Ground Operations.',
+        variant: 'success',
+      })
     },
     [actionModalRecord, mutateAndRefresh, showToast],
   )
 
   const handleBulkAllocate = useCallback(
     (records: FundAllocationPassengerRow[], payload: FundAllocationBulkConfirmPayload) => {
+      const summary = computeRequestedBulkSummary(records)
       mutateAndRefresh(() => {
         fundAllocationService.allocateFundsBulk(records.map(record => record.id), record =>
-          computePassengerBulkAllocationInput(record, payload.selectedServiceKeys, {
-            cardId: payload.cardId,
+          computePassengerRequestedBulkAllocationInput(record, {
+            fundTransfer: payload.fundTransfer,
             notes: payload.notes,
+            allocatedAmount: payload.allocatedAmount,
+            grandTotal: summary.grandTotal,
           }),
         )
       })
@@ -209,7 +260,7 @@ export function FundAllocationListingPage() {
       setTableState(state => ({ ...state, selectedRows: [] }))
       showToast({
         title: 'Funds allocated',
-        description: `${records.length} passenger${records.length === 1 ? '' : 's'} updated.`,
+        description: `${records.length} passenger${records.length === 1 ? '' : 's'} updated. Amount and fund transfer synced to Ground Operations.`,
         variant: 'success',
       })
     },
@@ -307,7 +358,7 @@ export function FundAllocationListingPage() {
           <AdminListingToolbar
             searchValue={searchValue}
             onSearch={handleSearch}
-            searchPlaceholder="Search passenger, application ID, company, jurisdiction…"
+            searchPlaceholder="Search passenger, application ID, company, jurisdiction, team, user…"
             onExport={handleExport}
             viewMode={viewMode}
             onViewModeChange={setViewMode}

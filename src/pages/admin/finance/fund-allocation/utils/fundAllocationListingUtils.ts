@@ -5,6 +5,7 @@ import type {
   FundAllocationPassengerRow,
   FundAllocationQueueFilters,
 } from '@/shared/types/fundAllocation'
+import { getFundTransferTypeLabel } from '@/shared/types/fundAllocation'
 import { customerSegmentDisplayLabel } from '../config/fundAllocationStatusConfig'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 
@@ -13,6 +14,8 @@ export const EMPTY_FUND_ALLOCATION_FILTERS: FundAllocationQueueFilters = {
   country: '',
   visaType: '',
   jurisdiction: '',
+  assignedTeam: '',
+  assignedUser: '',
   dateFrom: '',
   dateTo: '',
   search: '',
@@ -58,31 +61,54 @@ export function getFundAllocationCountryKey(row: FundAllocationPassengerRow): st
   return row.countryId ?? row.country
 }
 
+export function getFundAllocationAssigneeKey(row: FundAllocationPassengerRow): string {
+  return row.assignedUser.trim().toLowerCase() || '__unassigned__'
+}
+
+export type FundAllocationSelectionRejectReason = 'country' | 'assignee' | null
+
 export function sanitizeFundAllocationSelection(
   allRows: FundAllocationPassengerRow[],
   selectedIds: string[],
   previousIds: string[],
-): { ids: string[]; rejected: boolean } {
-  if (selectedIds.length === 0) return { ids: [], rejected: false }
+): { ids: string[]; rejected: boolean; reason: FundAllocationSelectionRejectReason } {
+  if (selectedIds.length === 0) return { ids: [], rejected: false, reason: null }
 
   const rowById = new Map(allRows.map(row => [row.id, row]))
   const anchorId = previousIds[0] ?? selectedIds[0]
   const anchor = rowById.get(anchorId)
-  if (!anchor) return { ids: selectedIds, rejected: false }
+  if (!anchor) return { ids: selectedIds, rejected: false, reason: null }
 
-  const anchorKey = getFundAllocationCountryKey(anchor)
-  const sanitized = selectedIds.filter(id => {
+  const anchorCountry = getFundAllocationCountryKey(anchor)
+  const sameCountry = selectedIds.filter(id => {
     const row = rowById.get(id)
-    return row ? getFundAllocationCountryKey(row) === anchorKey : false
+    return row ? getFundAllocationCountryKey(row) === anchorCountry : false
   })
+  if (sameCountry.length !== selectedIds.length) {
+    return { ids: sameCountry, rejected: true, reason: 'country' }
+  }
 
-  return { ids: sanitized, rejected: sanitized.length !== selectedIds.length }
+  const anchorAssignee = getFundAllocationAssigneeKey(anchor)
+  const sameAssignee = sameCountry.filter(id => {
+    const row = rowById.get(id)
+    return row ? getFundAllocationAssigneeKey(row) === anchorAssignee : false
+  })
+  if (sameAssignee.length !== sameCountry.length) {
+    return { ids: sameAssignee, rejected: true, reason: 'assignee' }
+  }
+
+  return { ids: sameAssignee, rejected: false, reason: null }
 }
 
 export function filterRowsByListingTab(
   rows: FundAllocationPassengerRow[],
   tab: FundAllocationListingTab,
 ): FundAllocationPassengerRow[] {
+  if (tab === 'pending_allocation') {
+    return rows.filter(
+      row => row.allocationStatus === 'pending_allocation' && row.fundRequested && row.totalAmount > 0,
+    )
+  }
   return rows.filter(row => row.allocationStatus === tab)
 }
 
@@ -95,6 +121,8 @@ export function applyFundAllocationFilters(
     if (filters.country && row.country !== filters.country) return false
     if (filters.visaType && row.visaType !== filters.visaType) return false
     if (filters.jurisdiction && row.jurisdiction !== filters.jurisdiction) return false
+    if (filters.assignedTeam && row.assignedTeam !== filters.assignedTeam) return false
+    if (filters.assignedUser && row.assignedUser !== filters.assignedUser) return false
     if (!isSubmissionDateInRange(row, filters.dateFrom, filters.dateTo)) return false
     if (filters.search && !matchesFundAllocationSearch(row, filters.search)) return false
     return true
@@ -113,6 +141,9 @@ export function matchesFundAllocationSearch(row: FundAllocationPassengerRow, que
     row.country,
     row.visaType,
     row.jurisdiction,
+    row.assignedTeam,
+    row.assignedUser,
+    row.allocatedTo,
     row.passportNo,
     customerSegmentDisplayLabel(row.customerSegment),
     getApplicationCustomerSegmentLabel(row.customerSegment),
@@ -142,6 +173,10 @@ export function getFundAllocationCellValue(row: FundAllocationPassengerRow, key:
       return row.country
     case 'jurisdiction':
       return row.jurisdiction
+    case 'assignedTeam':
+      return row.assignedTeam || '—'
+    case 'assignedUser':
+      return row.assignedUser || '—'
     case 'travelDate':
       return row.travelDate
     case 'submissionDate':
@@ -181,26 +216,41 @@ export function getFundAllocationFilterOptions(rows: FundAllocationPassengerRow[
   const countries = new Set<string>()
   const visaTypes = new Set<string>()
   const jurisdictions = new Set<string>()
+  const teams = new Set<string>()
+  const usersByKey = new Map<string, { value: string; label: string; team: string }>()
 
   for (const row of rows) {
     if (row.country) countries.add(row.country)
     if (row.visaType) visaTypes.add(row.visaType)
     if (row.jurisdiction && row.jurisdiction !== '—') jurisdictions.add(row.jurisdiction)
+    if (row.assignedTeam) teams.add(row.assignedTeam)
+    if (row.assignedUser) {
+      const key = `${row.assignedTeam}::${row.assignedUser}`
+      if (!usersByKey.has(key)) {
+        usersByKey.set(key, {
+          value: row.assignedUser,
+          label: row.assignedUser,
+          team: row.assignedTeam,
+        })
+      }
+    }
   }
 
   return {
     countries: Array.from(countries).sort(),
     visaTypes: Array.from(visaTypes).sort(),
     jurisdictions: Array.from(jurisdictions).sort(),
+    teams: Array.from(teams).sort(),
+    users: Array.from(usersByKey.values()).sort((a, b) => a.label.localeCompare(b.label)),
   }
 }
 
 export function getFundAllocationTabEmptyState(tab: FundAllocationListingTab): EmptyStateProps {
   const map: Record<FundAllocationListingTab, EmptyStateProps> = {
     pending_allocation: {
-      title: 'No passengers pending fund allocation',
+      title: 'No fund requests pending allocation',
       description:
-        'Passengers from Embassy/VFS Submission Pending applications appear here for finance fund release.',
+        'Passengers appear here after Assignment & Priority requests funds with selected services.',
     },
     allocated: {
       title: 'No allocated passengers',
@@ -211,14 +261,16 @@ export function getFundAllocationTabEmptyState(tab: FundAllocationListingTab): E
 }
 
 export function computeFundAllocationKpis(rows: FundAllocationPassengerRow[]) {
-  const pending = rows.filter(row => row.allocationStatus === 'pending_allocation')
+  const pending = rows.filter(
+    row => row.allocationStatus === 'pending_allocation' && row.fundRequested && row.totalAmount > 0,
+  )
   const allocated = rows.filter(row => row.allocationStatus === 'allocated')
 
   return {
     totalPassengers: rows.length,
     pendingAllocation: pending.length,
     allocatedPassengers: allocated.length,
-    pendingAmount: pending.reduce((sum, row) => sum + row.suggestedAllocationAmount, 0),
+    pendingAmount: pending.reduce((sum, row) => sum + row.totalAmount, 0),
     allocatedAmount: allocated.reduce((sum, row) => sum + row.allocatedAmount, 0),
   }
 }
@@ -233,6 +285,8 @@ export function downloadFundAllocationCsv(rows: FundAllocationPassengerRow[]) {
     'Visa Country',
     'Visa Type',
     'Jurisdiction',
+    'Assigned Team',
+    'Assigned User',
     'Travel Date',
     'Online Submission Date',
     'VFS Submission Date',
@@ -243,7 +297,7 @@ export function downloadFundAllocationCsv(rows: FundAllocationPassengerRow[]) {
     'Catalog Total',
     'Total Value',
     'Allocated Amount',
-    'Payment Card',
+    'Fund Transfer',
     'Allocated By',
     'Allocated To',
     'Last Updated',
@@ -259,6 +313,8 @@ export function downloadFundAllocationCsv(rows: FundAllocationPassengerRow[]) {
       row.country,
       row.visaType,
       row.jurisdiction,
+      row.assignedTeam,
+      row.assignedUser,
       row.travelDate,
       row.onlineSubmissionDate,
       row.vfsSubmissionDate,
@@ -269,7 +325,9 @@ export function downloadFundAllocationCsv(rows: FundAllocationPassengerRow[]) {
       row.suggestedAllocationAmount,
       row.totalAmount,
       row.allocatedAmount,
-      row.cardName,
+      row.fundTransfer?.transferType
+        ? getFundTransferTypeLabel(row.fundTransfer.transferType)
+        : row.cardName,
       row.allocatedBy,
       row.allocatedTo,
       row.lastUpdated,

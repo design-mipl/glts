@@ -28,6 +28,8 @@ import { AssignmentTimeline } from './AssignmentTimeline'
 import { operationalPassengerAssignmentService } from '@/shared/services/operationalPassengerAssignmentService'
 import type { AssignmentSegmentConfig } from '../config/assignmentSegmentConfig'
 import { AssignmentOperationalAttachments } from './AssignmentOperationalAttachments'
+import { AssignmentFundAllocationSection } from './AssignmentFundAllocationSection'
+import { AssignmentFundStatusBadge } from './AssignmentFundStatusBadge'
 
 const DETAIL_DRAWER_WIDTH = 560
 
@@ -325,6 +327,8 @@ function AssignmentDetailContent({
               <AssignmentOperationalAttachments attachmentNames={record.attachmentNames} />
             </Stack>
 
+            <AssignmentFundAllocationSection record={record} />
+
             <Divider />
 
             <Stack spacing={1.25}>
@@ -489,6 +493,7 @@ export function AssignmentPassengerDetailDrawer({
           />
           {record.carryForward ? <Badge label="Carry forward" color="warning" size="sm" /> : null}
           {record.escalated ? <Badge label="Escalated" color="error" size="sm" /> : null}
+          <AssignmentFundStatusBadge passengerId={record.id} />
           <Badge
             label={formatSlaTimer(record)}
             color={isSlaAtRisk(record) ? 'error' : 'neutral'}

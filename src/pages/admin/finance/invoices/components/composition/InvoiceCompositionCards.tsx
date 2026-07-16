@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Box, Collapse, Divider, Grid, IconButton, Stack, Typography } from '@mui/material'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { Badge } from '@/design-system/UIComponents'
+import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { ApplicantFeeAccordion } from './ApplicantFeeAccordion'
 import {
   InvoiceCompositionContextStrip,
@@ -36,9 +37,15 @@ interface ApplicantFeeEditorProps {
   applicant: ApplicantFeeBundle
   onChange: (next: ApplicantFeeBundle) => void
   nested?: boolean
+  agreement?: CommercialAgreement | null
 }
 
-function ApplicantFeeEditor({ applicant, onChange, nested = false }: ApplicantFeeEditorProps) {
+function ApplicantFeeEditor({
+  applicant,
+  onChange,
+  nested = false,
+  agreement,
+}: ApplicantFeeEditorProps) {
   return (
     <Box sx={nested ? undefined : { border: '1px solid', borderColor: 'divider', borderRadius: 1.5, p: 2, bgcolor: 'background.paper' }}>
       {!nested ? (
@@ -56,6 +63,7 @@ function ApplicantFeeEditor({ applicant, onChange, nested = false }: ApplicantFe
       <InvoiceBillableServicesTable
         lines={applicant.serviceLines}
         onChange={serviceLines => onChange({ ...applicant, serviceLines })}
+        agreement={agreement}
       />
     </Box>
   )
@@ -66,9 +74,15 @@ interface SingleApplicationFeeCardViewProps {
   onChange: (next: SingleApplicationFeeCard) => void
   /** Inside Generate Invoice accordion — hides duplicate chrome. */
   embedded?: boolean
+  agreement?: CommercialAgreement | null
 }
 
-export function SingleApplicationFeeCardView({ card, onChange, embedded = false }: SingleApplicationFeeCardViewProps) {
+export function SingleApplicationFeeCardView({
+  card,
+  onChange,
+  embedded = false,
+  agreement,
+}: SingleApplicationFeeCardViewProps) {
   return (
     <Box sx={embedded ? { py: 1.5, px: { xs: 0, sm: 0.5 } } : { border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
       {!embedded ? (
@@ -97,6 +111,7 @@ export function SingleApplicationFeeCardView({ card, onChange, embedded = false 
       <InvoiceBillableServicesTable
         lines={card.serviceLines}
         onChange={serviceLines => onChange({ ...card, serviceLines })}
+        agreement={agreement}
       />
     </Box>
   )
@@ -106,12 +121,14 @@ interface BulkApplicationFeeCardViewProps {
   card: BulkApplicationFeeCard
   onChange: (next: BulkApplicationFeeCard) => void
   embedded?: boolean
+  agreement?: CommercialAgreement | null
 }
 
 export function BulkApplicationFeeCardView({
   card,
   onChange,
   embedded = false,
+  agreement,
 }: BulkApplicationFeeCardViewProps) {
   const toggleExpanded = () => onChange({ ...card, expanded: !card.expanded })
   const showFeeEditors = embedded || card.expanded
@@ -173,6 +190,7 @@ export function BulkApplicationFeeCardView({
                 <ApplicantFeeEditor
                   nested
                   applicant={applicant}
+                  agreement={agreement}
                   onChange={next => updateApplicant(applicant.applicantId, next)}
                 />
               </ApplicantFeeAccordion>

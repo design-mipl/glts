@@ -1,29 +1,99 @@
-import { Box, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material'
-import { Input } from '@/design-system/UIComponents'
+import { useMemo, useState } from 'react'
+import { Box, IconButton, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material'
+import { Plus, Trash2 } from 'lucide-react'
+import { Button, Input, Select } from '@/design-system/UIComponents'
 import {
   agreementEmbeddedTableHeadCellSx,
   agreementEmbeddedTableSx,
 } from '@/pages/admin/customer-accounts/agreements/components/agreementFormLayout'
+import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { INVOICE_COMPOSITION_FEE_LABELS } from '../../config/invoiceFeeCategoryLabels'
 import type { InvoiceBillableServiceLine } from '../../types/invoiceFeeComposition.types'
+import {
+  createBillableServiceLineFromAgreement,
+  listAvailableAgreementServicesToAdd,
+} from '../../utils/invoiceFeeCompositionUtils'
 
 const LABELS = INVOICE_COMPOSITION_FEE_LABELS.billableServices
 
 interface InvoiceBillableServicesTableProps {
   lines: InvoiceBillableServiceLine[]
   onChange: (lines: InvoiceBillableServiceLine[]) => void
+  agreement?: CommercialAgreement | null
 }
 
-export function InvoiceBillableServicesTable({ lines, onChange }: InvoiceBillableServicesTableProps) {
+export function InvoiceBillableServicesTable({
+  lines,
+  onChange,
+  agreement,
+}: InvoiceBillableServicesTableProps) {
+  const [pendingServiceId, setPendingServiceId] = useState('')
+
+  const availableOptions = useMemo(
+    () => listAvailableAgreementServicesToAdd(agreement, lines),
+    [agreement, lines],
+  )
+
+  const selectOptions = useMemo(
+    () => availableOptions.map(option => ({ value: option.value, label: option.label })),
+    [availableOptions],
+  )
+
   const updateLine = (id: string, patch: Partial<Pick<InvoiceBillableServiceLine, 'amount' | 'remark'>>) => {
     onChange(lines.map(line => (line.id === id ? { ...line, ...patch } : line)))
   }
 
+  const removeLine = (id: string) => {
+    onChange(lines.filter(line => line.id !== id))
+  }
+
+  const addService = () => {
+    const option = availableOptions.find(item => item.value === pendingServiceId)
+    if (!option) return
+    onChange([...lines, createBillableServiceLineFromAgreement(option)])
+    setPendingServiceId('')
+  }
+
   return (
     <Box>
-      <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13, mb: 1 }}>
-        {LABELS.section}
-      </Typography>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        spacing={1}
+        sx={{ mb: 1 }}
+      >
+        <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+          {LABELS.section}
+        </Typography>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
+          alignItems={{ xs: 'stretch', sm: 'center' }}
+          sx={{ minWidth: 0, flex: { sm: 1 }, justifyContent: 'flex-end' }}
+        >
+          <Box sx={{ minWidth: { sm: 220 }, maxWidth: { sm: 280 }, flex: { sm: '0 1 280px' } }}>
+            <Select
+              value={pendingServiceId}
+              onChange={v => setPendingServiceId(String(v))}
+              options={selectOptions}
+              placeholder={
+                availableOptions.length === 0 ? LABELS.noAgreementServices : 'Select agreement service'
+              }
+              size="sm"
+              fullWidth
+              disabled={availableOptions.length === 0}
+            />
+          </Box>
+          <Button
+            label={LABELS.addService}
+            size="sm"
+            startIcon={<Plus size={14} />}
+            onClick={addService}
+            disabled={!pendingServiceId || availableOptions.length === 0}
+          />
+        </Stack>
+      </Stack>
       <Box sx={agreementEmbeddedTableSx}>
         {lines.length === 0 ? (
           <Box sx={{ py: 2, px: 2 }}>
@@ -41,6 +111,9 @@ export function InvoiceBillableServicesTable({ lines, onChange }: InvoiceBillabl
                     {LABELS.amountColumn}
                   </TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>{LABELS.remarkColumn}</TableCell>
+                  <TableCell sx={{ ...agreementEmbeddedTableHeadCellSx, width: 56 }} align="center">
+                    {LABELS.actionsColumn}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -69,6 +142,15 @@ export function InvoiceBillableServicesTable({ lines, onChange }: InvoiceBillabl
                         fullWidth
                         aria-label={`${line.serviceLabel} remark`}
                       />
+                    </TableCell>
+                    <TableCell align="center" sx={{ verticalAlign: 'top' }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => removeLine(line.id)}
+                        aria-label={`${LABELS.deleteService}: ${line.serviceLabel}`}
+                      >
+                        <Trash2 size={14} />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}

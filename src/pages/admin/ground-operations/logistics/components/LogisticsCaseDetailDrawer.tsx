@@ -26,6 +26,7 @@ import {
 } from '../../case-handling/utils/operationalCaseHandlingUtils'
 import { OperationalTimeline } from '../../case-handling/components/OperationalTimeline'
 import { OperationalDocumentVault } from '../../case-handling/components/OperationalDocumentVault'
+import { OperationalFundAllocationSection } from '../../case-handling/components/OperationalFundAllocationSection'
 import { LogisticsDispatchTab } from './LogisticsDispatchTab'
 import { PassengerApplicationDocumentVault } from '@/shared/components/PassengerApplicationDocumentVault'
 
@@ -228,6 +229,8 @@ function LogisticsCaseDetailContent({
               />
               <OperationalDocumentVault record={record} />
             </Stack>
+
+            <OperationalFundAllocationSection record={record} />
 
             <Divider />
 

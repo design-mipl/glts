@@ -39,7 +39,7 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
     submodules: [
       { id: 'case_handling', label: 'Operational case handling' },
       { id: 'logistics', label: 'Tracking & logistics' },
-      { id: 'funds', label: 'Expense & fund management' },
+      { id: 'funds', label: 'Fund utilization' },
     ],
   },
   {

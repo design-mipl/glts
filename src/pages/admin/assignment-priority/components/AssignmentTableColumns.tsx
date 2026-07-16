@@ -19,6 +19,7 @@ import { passengerStatusBadgeColor, passengerStatusLabel } from '../config/assig
 import { formatSlaTimer, isSlaAtRisk } from '../utils/assignmentQueueListingUtils'
 import type { AssignmentAdminAction } from './AssignmentActionMenu'
 import { ASSIGN_USER_VENDOR_ACTION_LABEL } from '../config/assignmentActionConfig'
+import { AssignmentFundStatusCell } from './AssignmentFundStatusCell'
 
 export interface AssignmentTableColumnsParams {
   onAction: (action: AssignmentAdminAction, row: OperationalPassengerRow) => void
@@ -187,6 +188,13 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
           color={operationalStatusBadgeColor(row.submissionStatus)}
         />
       ),
+    },
+    {
+      key: 'fundStatus',
+      label: 'Fund Status',
+      widthSize: 'md',
+      sortable: true,
+      render: (_value, row: OperationalPassengerRow) => <AssignmentFundStatusCell passengerId={row.id} />,
     },
     {
       key: 'slaTimer',

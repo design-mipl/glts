@@ -1,7 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Stack } from '@mui/material'
-import { Button, FormField, Input, Modal, Select, Textarea } from '@/design-system/UIComponents'
+import { Box, Divider, Stack, Typography } from '@mui/material'
+import { Search } from 'lucide-react'
+import { Button, Checkbox, FormField, Input, Modal, Select, Textarea } from '@/design-system/UIComponents'
 import { vendorService } from '@/shared/services/vendorService'
+import { fundAllocationService } from '@/shared/services/fundAllocationService'
+import { resolveFundAllocationOfferingContext } from '@/shared/utils/fundAllocationOfferingUtils'
+import { formatInr } from '@/shared/utils/invoiceCalculations'
+import {
+  mapVfsPickerServicesToChargeLines,
+  resolveVfsPickerServices,
+  sumVfsPickerServiceAmounts,
+  type VfsPickerService,
+  type VfsServiceChargeLine,
+} from '@/shared/utils/vfsServicePickerUtils'
+import {
+  vfsServicePickerEmptyStateSx,
+  vfsServicePickerLayout,
+  vfsServicePickerListSx,
+  vfsServicePickerServiceRowSx,
+} from '@/shared/utils/vfsServicePickerLayout'
 import type {
   AssignmentAssigneeType,
   OperationalPassengerRow,
@@ -24,6 +41,9 @@ export type AssignmentActionPayload =
       priority: string
       passengerPhone?: string
       passengerEmail?: string
+      requestFundAllocation?: boolean
+      selectedServices?: VfsServiceChargeLine[]
+      fundTotalAmount?: number
     }
   | { action: 'change_priority'; priority: string }
   | { action: 'update_status'; status: PassengerOperationalStatus }
@@ -36,6 +56,9 @@ export type AssignmentActionPayload =
       priority: string
       passengerPhone?: string
       passengerEmail?: string
+      requestFundAllocation?: boolean
+      selectedServices?: VfsServiceChargeLine[]
+      fundTotalAmount?: number
     }
   | { action: 'add_notes'; notes: string }
   | { action: 'move_next_date' }
@@ -98,6 +121,9 @@ export function AssignmentActionModal({
   const [status, setStatus] = useState<PassengerOperationalStatus>('In Progress')
   const [notes, setNotes] = useState('')
   const [fileName, setFileName] = useState('')
+  const [requestFundAllocation, setRequestFundAllocation] = useState(false)
+  const [serviceSearch, setServiceSearch] = useState('')
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
 
   const vendorOptions = useMemo(
     () =>
@@ -108,8 +134,38 @@ export function AssignmentActionModal({
     [],
   )
 
+  const catalogServices = useMemo(() => {
+    if (!record) return [] as VfsPickerService[]
+    const offeringContext = resolveFundAllocationOfferingContext(
+      record.country,
+      record.visaType,
+      record.jurisdiction,
+    )
+    return resolveVfsPickerServices({
+      country: record.country,
+      visaType: record.visaType,
+      ...offeringContext,
+    })
+  }, [record])
+
+  const filteredServices = useMemo(() => {
+    const query = serviceSearch.trim().toLowerCase()
+    if (!query) return catalogServices
+    return catalogServices.filter(service => service.serviceName.toLowerCase().includes(query))
+  }, [catalogServices, serviceSearch])
+
+  const selectedServices = useMemo(
+    () => catalogServices.filter(service => selectedServiceIds.includes(service.id)),
+    [catalogServices, selectedServiceIds],
+  )
+
+  const fundTotalAmount = useMemo(
+    () => sumVfsPickerServiceAmounts(selectedServices),
+    [selectedServices],
+  )
+
   useEffect(() => {
-    if (!record) return
+    if (!record || !open) return
     const nextAssigneeType = inferAssigneeType(record)
     setAssigneeType(nextAssigneeType)
     setPriority(record.priority)
@@ -121,7 +177,42 @@ export function AssignmentActionModal({
     setStatus(record.passengerStatus)
     setNotes('')
     setFileName('')
-  }, [record, action])
+    setRequestFundAllocation(false)
+    setServiceSearch('')
+    setSelectedServiceIds([])
+
+    const offeringContext = resolveFundAllocationOfferingContext(
+      record.country,
+      record.visaType,
+      record.jurisdiction,
+    )
+    const catalog = resolveVfsPickerServices({
+      country: record.country,
+      visaType: record.visaType,
+      ...offeringContext,
+    })
+
+    const existing =
+      fundAllocationService.getById(record.id) ??
+      fundAllocationService
+        .listByApplicationId(record.gltsApplicationId)
+        .find(row => row.id === record.id)
+
+    if (existing?.fundRequested && existing.selectedServices.length > 0) {
+      setRequestFundAllocation(true)
+      const ids = catalog
+        .filter(service =>
+          existing.selectedServices.some(
+            line =>
+              line.embassyFeeServiceId === service.id ||
+              line.embassyFeeServiceId === service.embassyFeeServiceId ||
+              line.serviceName.trim().toLowerCase() === service.serviceName.trim().toLowerCase(),
+          ),
+        )
+        .map(service => service.id)
+      setSelectedServiceIds(ids)
+    }
+  }, [record, action, open])
 
   if (!action || !record) return null
 
@@ -134,6 +225,11 @@ export function AssignmentActionModal({
       : assigneeType === 'passenger'
         ? Boolean(user.trim() && passengerPhone.trim() && passengerEmail.trim())
         : Boolean(user.trim())
+  const canConfirmFundRequest =
+    !requestFundAllocation || (selectedServices.length > 0 && fundTotalAmount > 0)
+  const canConfirm = isAssigneeAction
+    ? canConfirmAssignee && canConfirmFundRequest
+    : true
 
   const handleConfirm = () => {
     const passengerContact =
@@ -141,9 +237,20 @@ export function AssignmentActionModal({
         ? { passengerPhone: passengerPhone.trim(), passengerEmail: passengerEmail.trim() }
         : {}
 
+    const fundRequestFields =
+      isAssigneeAction && requestFundAllocation
+        ? {
+            requestFundAllocation: true as const,
+            selectedServices: mapVfsPickerServicesToChargeLines(selectedServices),
+            fundTotalAmount,
+          }
+        : isAssigneeAction
+          ? { requestFundAllocation: false as const }
+          : {}
+
     switch (action) {
       case 'assign_user':
-        onConfirm({ action, assigneeType, team, user, vendor, priority, ...passengerContact })
+        onConfirm({ action, assigneeType, team, user, vendor, priority, ...passengerContact, ...fundRequestFields })
         break
       case 'change_priority':
         onConfirm({ action, priority })
@@ -152,7 +259,16 @@ export function AssignmentActionModal({
         onConfirm({ action, status })
         break
       case 'reassign':
-        onConfirm({ action: 'reassign', assigneeType, team, user, vendor, priority, ...passengerContact })
+        onConfirm({
+          action: 'reassign',
+          assigneeType,
+          team,
+          user,
+          vendor,
+          priority,
+          ...passengerContact,
+          ...fundRequestFields,
+        })
         break
       case 'add_notes':
         onConfirm({ action, notes })
@@ -183,21 +299,43 @@ export function AssignmentActionModal({
   const showTeamUserFields =
     assigneeType === 'user' || assigneeType === 'vendor' || assigneeType === 'passenger'
 
+  const toggleService = (serviceId: string, checked: boolean) => {
+    setSelectedServiceIds(current =>
+      checked ? [...new Set([...current, serviceId])] : current.filter(id => id !== serviceId),
+    )
+  }
+
   return (
     <Modal
       open={open}
       onClose={onClose}
       title={title}
       subtitle={subtitle}
-      size="sm"
+      size={isAssigneeAction ? 'md' : 'sm'}
       footer={
-        <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button label="Cancel" variant="neutral" onClick={onClose} />
-          <Button
-            label="Confirm"
-            onClick={handleConfirm}
-            disabled={isAssigneeAction ? !canConfirmAssignee : false}
-          />
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          alignItems={{ xs: 'stretch', sm: 'center' }}
+          justifyContent="space-between"
+          spacing={1.5}
+          sx={{ width: '100%' }}
+        >
+          {isAssigneeAction && requestFundAllocation ? (
+            <Stack spacing={0.25}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: vfsServicePickerLayout.bodyFontSize }}>
+                Selected services: {selectedServices.length}
+              </Typography>
+              <Typography variant="body2" fontWeight={600} sx={{ fontSize: vfsServicePickerLayout.bodyFontSize }}>
+                Total value: {fundTotalAmount > 0 ? formatInr(fundTotalAmount) : '—'}
+              </Typography>
+            </Stack>
+          ) : (
+            <Box />
+          )}
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Button label="Cancel" variant="neutral" onClick={onClose} />
+            <Button label="Confirm" onClick={handleConfirm} disabled={!canConfirm} />
+          </Stack>
         </Stack>
       }
     >
@@ -267,6 +405,90 @@ export function AssignmentActionModal({
                 fullWidth
               />
             </FormField>
+
+            <Divider />
+
+            <Stack spacing={1}>
+              <Checkbox
+                checked={requestFundAllocation}
+                onChange={checked => setRequestFundAllocation(checked)}
+                label="Request fund allocation"
+                size="sm"
+              />
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12 }}>
+                Select VFS services and send a fund request to Finance. Allocated card and amount will appear in Ground
+                Operations.
+              </Typography>
+            </Stack>
+
+            {requestFundAllocation ? (
+              <>
+                <Stack spacing={1}>
+                  <Typography variant="body2" fontWeight={600} sx={{ fontSize: vfsServicePickerLayout.bodyFontSize }}>
+                    VFS services
+                  </Typography>
+                  <Input
+                    value={serviceSearch}
+                    onChange={setServiceSearch}
+                    placeholder="Search by service name..."
+                    size="sm"
+                    fullWidth
+                    startAdornment={<Search size={16} />}
+                  />
+                </Stack>
+
+                <Box sx={vfsServicePickerListSx}>
+                  {filteredServices.length === 0 ? (
+                    <Box sx={vfsServicePickerEmptyStateSx}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ fontSize: vfsServicePickerLayout.bodyFontSize }}
+                      >
+                        {catalogServices.length === 0
+                          ? 'No VFS services are configured for this country and visa type in country master.'
+                          : 'No services match your search.'}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Stack divider={<Divider />}>
+                      {filteredServices.map((service: VfsPickerService) => (
+                        <Stack
+                          key={service.id}
+                          direction="row"
+                          alignItems="center"
+                          spacing={1}
+                          sx={vfsServicePickerServiceRowSx}
+                        >
+                          <Checkbox
+                            checked={selectedServiceIds.includes(service.id)}
+                            onChange={checked => toggleService(service.id, checked)}
+                            size="sm"
+                          />
+                          <Typography variant="body2" sx={{ flex: 1, fontSize: vfsServicePickerLayout.bodyFontSize }}>
+                            {service.serviceName}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontSize: vfsServicePickerLayout.bodyFontSize,
+                              fontVariantNumeric: 'tabular-nums',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {formatInr(service.amount)}
+                          </Typography>
+                        </Stack>
+                      ))}
+                    </Stack>
+                  )}
+                </Box>
+
+                <FormField label="Total value">
+                  <Input value={fundTotalAmount > 0 ? formatInr(fundTotalAmount) : '—'} disabled size="sm" />
+                </FormField>
+              </>
+            ) : null}
           </>
         ) : null}
         {action === 'change_priority' ? (

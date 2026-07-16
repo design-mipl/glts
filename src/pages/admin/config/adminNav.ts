@@ -74,7 +74,7 @@ export const adminNav: NavConfig[] = [
     children: [
       { type: 'item', label: 'Operations Desk', href: '/admin/ground-operations/case-handling' },
       { type: 'item', label: 'Tracking & logistics', href: '/admin/ground-operations/logistics' },
-      { type: 'item', label: 'Expense & fund management', href: '/admin/ground-operations/funds' },
+      { type: 'item', label: 'Fund utilization', href: '/admin/ground-operations/funds' },
     ],
   },
   {

@@ -14,6 +14,8 @@ export interface FundAllocationAdvancedFilterFieldsProps {
     countries: string[]
     visaTypes: string[]
     jurisdictions: string[]
+    teams: string[]
+    users: Array<{ value: string; label: string; team: string }>
   }
 }
 
@@ -23,6 +25,8 @@ export function hasFundAllocationFiltersActive(filters: FundAllocationQueueFilte
       filters.country ||
       filters.visaType ||
       filters.jurisdiction ||
+      filters.assignedTeam ||
+      filters.assignedUser ||
       filters.dateFrom ||
       filters.dateTo,
   )
@@ -80,6 +84,34 @@ export function FundAllocationAdvancedFilterFields({
             ...options.jurisdictions.map(jurisdiction => ({ value: jurisdiction, label: jurisdiction })),
           ]}
           placeholder="Jurisdiction"
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Team">
+        <Select
+          value={draft.assignedTeam}
+          onChange={value => patch({ assignedTeam: String(value), assignedUser: '' })}
+          options={[
+            { value: '', label: 'All teams' },
+            ...options.teams.map(team => ({ value: team, label: team })),
+          ]}
+          placeholder="Team"
+          size="sm"
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="User">
+        <Select
+          value={draft.assignedUser}
+          onChange={value => patch({ assignedUser: String(value) })}
+          options={[
+            { value: '', label: 'All users' },
+            ...options.users
+              .filter(user => !draft.assignedTeam || user.team === draft.assignedTeam)
+              .map(user => ({ value: user.value, label: user.label })),
+          ]}
+          placeholder="User"
           size="sm"
           fullWidth
         />

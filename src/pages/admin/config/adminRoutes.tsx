@@ -84,6 +84,7 @@ import {
 import ComponentLibrary from '../_tools/ComponentLibrary'
 import TemplateShowcaseRoutes from '../_tools/TemplateShowcase'
 import { OperationalCaseHandlingPage } from '../ground-operations/case-handling'
+import { FundUtilizationListingPage } from '../ground-operations/fund-utilization'
 import { LogisticsListingPage } from '../ground-operations/logistics'
 import {
   CreateVendorPage,
@@ -162,14 +163,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     eyebrow: 'Application management',
     kind: 'coming-soon',
   },
-  {
-    path: 'ground-operations/funds',
-    title: 'Ground expense & fund management',
-    description: 'This module is under development.',
-    eyebrow: 'Ground operations',
-    kind: 'coming-soon',
-  },
-
   {
     path: 'operations/*',
     title: 'Operations visibility',
@@ -523,6 +516,14 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <LogisticsListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="ground-operations/funds"
+        element={
+          <PermissionGuard>
+            <FundUtilizationListingPage />
           </PermissionGuard>
         }
       />

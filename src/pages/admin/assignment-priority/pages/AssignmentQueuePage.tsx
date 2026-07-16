@@ -9,6 +9,7 @@ import {
   AdminListingTable,
   AdminListingToolbar,
 } from '@/pages/admin/components/listing'
+import { fundAllocationService } from '@/shared/services/fundAllocationService'
 import { operationalPassengerAssignmentService } from '@/shared/services/operationalPassengerAssignmentService'
 import type {
   AssignmentListingTab,
@@ -82,6 +83,7 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
       queueFilters.visaType ||
       queueFilters.status ||
       queueFilters.sla ||
+      queueFilters.fundStatus ||
       queueFilters.datePreset !== 'today' ||
       searchValue ||
       Object.values(columnFilters).some(values => values.length > 0) ||
@@ -130,38 +132,54 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
       const id = actionModal?.record.id
       if (!id) return
 
+      let fundRequested = false
+
       mutateAndRefresh(() => {
+        let result: OperationalPassengerRow | undefined
         switch (payload.action) {
           case 'assign_user':
             if (payload.assigneeType === 'vendor') {
-              return operationalPassengerAssignmentService.assignVendor(
+              result = operationalPassengerAssignmentService.assignVendor(
                 id,
                 payload.vendor,
                 payload.team as CityTeam,
                 payload.user,
                 payload.priority as AssignmentPriority,
               )
-            }
-            if (payload.assigneeType === 'passenger') {
-              return operationalPassengerAssignmentService.assignPassenger(
+            } else if (payload.assigneeType === 'passenger') {
+              result = operationalPassengerAssignmentService.assignPassenger(
+                id,
+                payload.team as CityTeam,
+                payload.user,
+                payload.priority as AssignmentPriority,
+              )
+            } else {
+              result = operationalPassengerAssignmentService.assignUser(
                 id,
                 payload.team as CityTeam,
                 payload.user,
                 payload.priority as AssignmentPriority,
               )
             }
-            return operationalPassengerAssignmentService.assignUser(
-              id,
-              payload.team as CityTeam,
-              payload.user,
-              payload.priority as AssignmentPriority,
-            )
+            if (
+              payload.requestFundAllocation &&
+              payload.selectedServices &&
+              payload.selectedServices.length > 0 &&
+              (payload.fundTotalAmount ?? 0) > 0
+            ) {
+              fundAllocationService.requestAllocation(id, {
+                selectedServices: payload.selectedServices,
+                totalAmount: payload.fundTotalAmount ?? 0,
+              })
+              fundRequested = true
+            }
+            return result
           case 'change_priority':
             return operationalPassengerAssignmentService.setPriority(id, payload.priority as AssignmentPriority)
           case 'update_status':
             return operationalPassengerAssignmentService.updateStatus(id, payload.status)
           case 'reassign':
-            return operationalPassengerAssignmentService.reassign(
+            result = operationalPassengerAssignmentService.reassign(
               id,
               payload.team as CityTeam,
               payload.user,
@@ -169,6 +187,19 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
               payload.assigneeType,
               payload.vendor,
             )
+            if (
+              payload.requestFundAllocation &&
+              payload.selectedServices &&
+              payload.selectedServices.length > 0 &&
+              (payload.fundTotalAmount ?? 0) > 0
+            ) {
+              fundAllocationService.requestAllocation(id, {
+                selectedServices: payload.selectedServices,
+                totalAmount: payload.fundTotalAmount ?? 0,
+              })
+              fundRequested = true
+            }
+            return result
           case 'add_notes':
             return operationalPassengerAssignmentService.appendRemark(id, payload.notes)
           case 'move_next_date':
@@ -185,7 +216,13 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
       })
 
       setActionModal(null)
-      showToast({ title: 'Passenger updated', variant: 'success' })
+      showToast({
+        title: fundRequested ? 'Assigned and fund requested' : 'Passenger updated',
+        description: fundRequested
+          ? 'Finance can allocate funds on the Fund Allocation queue.'
+          : undefined,
+        variant: 'success',
+      })
     },
     [actionModal, mutateAndRefresh, showToast],
   )

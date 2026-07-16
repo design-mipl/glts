@@ -70,10 +70,9 @@ export function filterBillableApplicationsByCompany(
   return rows.filter(row => applicationMatchesCompany(row, company.companyName))
 }
 
-function parseAppointmentDate(row: ApplicationListingRow): string | undefined {
-  if ('appointmentDate' in row && row.appointmentDate) return row.appointmentDate
-  if ('submissionDate' in row && row.submissionDate) return row.submissionDate
-  return undefined
+function parseOnlineSubmissionDate(row: ApplicationListingRow): string | undefined {
+  const date = row.submissionDate?.trim()
+  return date || undefined
 }
 
 export function filterBillableApplicationsByAppointmentDate(
@@ -83,7 +82,7 @@ export function filterBillableApplicationsByAppointmentDate(
 ): ApplicationListingRow[] {
   if (!dateFrom && !dateTo) return rows
   return rows.filter(row => {
-    const date = parseAppointmentDate(row)
+    const date = parseOnlineSubmissionDate(row)
     if (!date || date === '—') return false
     if (dateFrom && date < dateFrom) return false
     if (dateTo && date > dateTo) return false

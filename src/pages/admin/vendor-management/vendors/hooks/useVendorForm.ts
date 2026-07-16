@@ -44,9 +44,6 @@ export const EMPTY_VENDOR_FORM: VendorFormData = {
 export function validateVendorForm(data: VendorFormData): string[] {
   const issues: string[] = []
   if (!data.vendorName.trim()) issues.push('Vendor name is required')
-  if (!data.contactPerson.trim()) issues.push('Contact person is required')
-  if (!data.mobileNumber.trim()) issues.push('Mobile number is required')
-  if (!data.emailAddress.trim()) issues.push('Email address is required')
   if (data.gstApplicable && !data.gstNumber.trim()) issues.push('GST number is required when GST is applicable')
   if (data.commercial.creditAllowed && !data.commercial.creditLimit) issues.push('Credit limit is required when credit is allowed')
   if (data.commercial.advanceRequired && !data.commercial.advanceAmount && !data.commercial.advancePercentage) {

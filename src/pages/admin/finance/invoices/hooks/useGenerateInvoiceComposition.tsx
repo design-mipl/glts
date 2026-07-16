@@ -223,6 +223,7 @@ export function useGenerateInvoiceComposition({
             <SingleApplicationFeeCardView
               embedded
               card={single}
+              agreement={agreement}
               onChange={next => updateSingle(single.applicationId, next)}
             />
           </InvoiceApplicationFeeAccordion>
@@ -246,6 +247,7 @@ export function useGenerateInvoiceComposition({
             <BulkApplicationFeeCardView
               embedded
               card={bulk}
+              agreement={agreement}
               onChange={next => updateBulk(bulk.batchId, next)}
             />
           </InvoiceApplicationFeeAccordion>
@@ -273,7 +275,7 @@ export function useGenerateInvoiceComposition({
         id: 'application-fees',
         title: 'Billable services',
         description:
-          'Client-billable services from Expense Management, per passenger. Amount and remark are editable.',
+          'Client-billable services from Expense Management, per passenger. Add agreement services, edit amount/remark, or remove lines.',
         span: 2,
         columns: 1,
         importance: 'secondary',
