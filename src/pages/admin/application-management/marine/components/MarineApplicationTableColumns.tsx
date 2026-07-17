@@ -25,7 +25,7 @@ import {
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import { isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
 import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
-import { isMarineReadOnlyWorkspace } from '../config/marineWorkspaceMode'
+import { isMarineReadOnlyWorkspace, isMarinePendingPaymentWorkspace, opensMarineViewFormDirectly } from '../config/marineWorkspaceMode'
 
 type ToastFn = (toast: Omit<Toast, 'id'>) => void
 
@@ -50,11 +50,17 @@ function buildRowActions(
   const detailPath = `/admin/application-management/marine/${row.id}`
   const submitted = isCustomerSubmitted(row)
   const readOnlyWorkspace = submitted && isMarineReadOnlyWorkspace(row)
+  const pendingPaymentWorkspace = submitted && isMarinePendingPaymentWorkspace(row)
+  const openViewFormDirectly = submitted && opensMarineViewFormDirectly(row)
 
   return [
     {
-      label: readOnlyWorkspace ? 'View application' : 'Verify Documents',
-      icon: readOnlyWorkspace ? <FileText size={16} /> : <ClipboardCheck size={16} />,
+      label: readOnlyWorkspace
+        ? 'View application'
+        : pendingPaymentWorkspace
+          ? 'Record payment'
+          : 'Verify Documents',
+      icon: readOnlyWorkspace || pendingPaymentWorkspace ? <FileText size={16} /> : <ClipboardCheck size={16} />,
       disabled: !submitted,
       onClick: () => {
         if (!submitted) {
@@ -67,12 +73,12 @@ function buildRowActions(
         }
         navigateFromListing(
           navigate,
-          readOnlyWorkspace ? `${detailPath}/view-form` : detailPath,
+          openViewFormDirectly ? `${detailPath}/view-form` : detailPath,
           fromListing,
         )
       },
     },
-    ...(readOnlyWorkspace
+    ...(readOnlyWorkspace || pendingPaymentWorkspace
       ? []
       : [
           {

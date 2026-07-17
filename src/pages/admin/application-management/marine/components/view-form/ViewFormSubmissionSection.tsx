@@ -36,6 +36,8 @@ interface ViewFormSubmissionSectionProps {
   countryId?: string
   visaOfferingId?: string
   readOnly?: boolean
+  /** Pending Payment workspace: hide online submission date / reference fields. */
+  hideOnlineSubmissionFields?: boolean
   onChange: (patch: Partial<FormAssistSubmissionDraft>) => void
   onPickFile: (field: keyof FormAssistSubmissionDraft, file: File) => void
 }
@@ -138,6 +140,7 @@ export function ViewFormSubmissionSection({
   countryId,
   visaOfferingId,
   readOnly = false,
+  hideOnlineSubmissionFields = false,
   onChange,
   onPickFile,
 }: ViewFormSubmissionSectionProps) {
@@ -188,14 +191,18 @@ export function ViewFormSubmissionSection({
               </Stack>
             </Box>
           ) : null}
-          <ReadOnlyValueRow
-            label="Online Submission Date"
-            value={formatDisplayDate(submission.submissionDate)}
-          />
-          <ReadOnlyValueRow
-            label="Online Submission Reference No."
-            value={submission.submissionReferenceNumber}
-          />
+          {!hideOnlineSubmissionFields ? (
+            <>
+              <ReadOnlyValueRow
+                label="Online Submission Date"
+                value={formatDisplayDate(submission.submissionDate)}
+              />
+              <ReadOnlyValueRow
+                label="Online Submission Reference No."
+                value={submission.submissionReferenceNumber}
+              />
+            </>
+          ) : null}
           <ReadOnlyValueRow label="Online Submitted By" value={submission.submittedBy} />
           <ReadOnlyValueRow
             label="VFS Submission Date"
@@ -286,24 +293,28 @@ export function ViewFormSubmissionSection({
             </Stack>
           </Box>
         ) : null}
-        <FormField label="Online Submission Date" required>
-          <DatePicker
-            value={parseDateString(submission.submissionDate)}
-            onChange={date => onChange({ submissionDate: formatDateForStorage(date) })}
-            placeholder="Select online submission date"
-            size="sm"
-            fullWidth
-          />
-        </FormField>
-        <FormField label="Online Submission Reference No." required>
-          <Input
-            value={submission.submissionReferenceNumber}
-            onChange={v => onChange({ submissionReferenceNumber: String(v) })}
-            placeholder="e.g. VFS-ONL-2026-0142"
-            size="sm"
-            fullWidth
-          />
-        </FormField>
+        {!hideOnlineSubmissionFields ? (
+          <>
+            <FormField label="Online Submission Date" required>
+              <DatePicker
+                value={parseDateString(submission.submissionDate)}
+                onChange={date => onChange({ submissionDate: formatDateForStorage(date) })}
+                placeholder="Select online submission date"
+                size="sm"
+                fullWidth
+              />
+            </FormField>
+            <FormField label="Online Submission Reference No." required>
+              <Input
+                value={submission.submissionReferenceNumber}
+                onChange={v => onChange({ submissionReferenceNumber: String(v) })}
+                placeholder="e.g. VFS-ONL-2026-0142"
+                size="sm"
+                fullWidth
+              />
+            </FormField>
+          </>
+        ) : null}
         <FormField label="Online Submitted By" required>
           <Input
             value={submission.submittedBy}

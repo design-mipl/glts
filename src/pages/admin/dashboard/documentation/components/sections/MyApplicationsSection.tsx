@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
+import { DashboardSectionTable } from '@/pages/admin/dashboard/components'
 import { buildDocumentationApplicationsColumns } from '../columns/documentationApplicationsColumns'
 import { DOCUMENTATION_LISTING_TABLE_SX } from '../documentationTableTokens'
 import type { DocumentationApplicationRow } from '../../data/documentationDashboardMock'

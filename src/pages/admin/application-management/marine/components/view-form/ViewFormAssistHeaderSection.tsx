@@ -13,12 +13,14 @@ import type { VerifyOverviewData } from '../../utils/verifyDocumentsUtils'
 
 interface ViewFormAssistHeaderSectionProps {
   overview: VerifyOverviewData
+  title?: string
   description?: string
   headerActions?: ReactNode
 }
 
 export function ViewFormAssistHeaderSection({
   overview,
+  title = 'External portal form assist',
   description,
   headerActions,
 }: ViewFormAssistHeaderSectionProps) {
@@ -50,7 +52,7 @@ export function ViewFormAssistHeaderSection({
                 color="text.primary"
                 sx={ADMIN_RECORD_PAGE_TITLE_SX}
               >
-                External portal form assist
+                {title}
               </Typography>
               {description ? (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75, maxWidth: 720 }}>

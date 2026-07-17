@@ -18,7 +18,7 @@ import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCu
 import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
 import { getCurrentListingHref, navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { marineApplicationAdminService, isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
-import { isMarineReadOnlyWorkspace } from '../config/marineWorkspaceMode'
+import { opensMarineViewFormDirectly } from '../config/marineWorkspaceMode'
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
 import { teamService } from '@/shared/services/teamService'
@@ -187,7 +187,7 @@ export function MarineApplicationListingPage() {
       const detailPath = `${MARINE_LISTING_PATH}/${row.id}`
       navigateFromListing(
         navigate,
-        isMarineReadOnlyWorkspace(row) ? `${detailPath}/view-form` : detailPath,
+        opensMarineViewFormDirectly(row) ? `${detailPath}/view-form` : detailPath,
         listingReturnHref,
       )
     },

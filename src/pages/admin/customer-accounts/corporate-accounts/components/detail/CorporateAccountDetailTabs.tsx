@@ -1,5 +1,5 @@
 import { Box, Divider, Grid, Stack, Typography } from '@mui/material'
-import { KeyRound, Mail, UserCheck, UserX } from 'lucide-react'
+import { Mail, UserCheck, UserX } from 'lucide-react'
 import { Badge, RowActions, type RowAction } from '@/design-system/UIComponents'
 import { AgreementOnboardingDocumentCards } from '@/pages/admin/customer-accounts/agreements/components/AgreementOnboardingDocumentCards'
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
@@ -188,12 +188,10 @@ export function AssignedUsersTab({ account }: { account: CorporateAccount }) {
 export function AdminsTab({
   account,
   onSendLogin,
-  onChangePassword,
   onSetAccessStatus,
 }: {
   account: CorporateAccount
   onSendLogin: (adminId: string) => void
-  onChangePassword: (admin: CorporateAdminUser) => void
   onSetAccessStatus: (adminId: string, accessStatus: 'active' | 'inactive') => void
 }) {
   const admins = [account.superAdmin, ...account.admins].filter(Boolean) as CorporateAdminUser[]
@@ -206,11 +204,6 @@ export function AdminsTab({
         icon: <Mail size={14} />,
         onClick: () => onSendLogin(admin.id),
         disabled: !isActive,
-      },
-      {
-        label: 'Change password',
-        icon: <KeyRound size={14} />,
-        onClick: () => onChangePassword(admin),
       },
     ]
 
@@ -309,12 +302,10 @@ export function VesselsTab({ account }: { account: CorporateAccount }) {
 export function BookersTab({
   account,
   onSendLogin,
-  onChangePassword,
   onSetStatus,
 }: {
   account: CorporateAccount
   onSendLogin: (bookerId: string) => void
-  onChangePassword: (booker: BookerUser) => void
   onSetStatus: (bookerId: string, status: 'active' | 'inactive') => void
 }) {
   const bookers = (account.bookerIds ?? [])
@@ -329,11 +320,6 @@ export function BookersTab({
         icon: <Mail size={14} />,
         onClick: () => onSendLogin(booker.id),
         disabled: !isActive,
-      },
-      {
-        label: 'Change password',
-        icon: <KeyRound size={14} />,
-        onClick: () => onChangePassword(booker),
       },
     ]
 

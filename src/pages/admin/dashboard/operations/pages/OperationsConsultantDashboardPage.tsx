@@ -1,6 +1,4 @@
-import { Box, Stack } from '@mui/material'
-import { BaseCard, Button, LoadingOverlay } from '@/design-system/UIComponents'
-import { ExecutiveCompactHeader } from '@/pages/admin/dashboard/components'
+import { RoleDashboardShell } from '@/pages/admin/dashboard/components'
 import { OperationsDashboardFiltersBar } from '../components/OperationsDashboardFiltersBar'
 import { TodayKpiSection } from '../components/sections/TodayKpiSection'
 import { MyApplicationsSection } from '../components/sections/MyApplicationsSection'
@@ -15,72 +13,97 @@ export function OperationsConsultantDashboardPage() {
   const dashboard = useOperationsConsultantDashboard()
   const isLoading = dashboard.status === 'loading'
 
-  if (dashboard.status === 'error') {
-    return (
-      <Box>
-        <ExecutiveCompactHeader
-          eyebrow="Dashboard"
-          title="Operations dashboard"
-          subtitle="Work management dashboard for operations consultants."
-        />
-        <BaseCard sx={{ p: 3, textAlign: 'center' }}>
-          <Button label="Retry loading dashboard" onClick={dashboard.retry} />
-        </BaseCard>
-      </Box>
-    )
-  }
+  const workBadge =
+    dashboard.todayTasks.length +
+    dashboard.correctionRequests.length +
+    dashboard.awaitingDocuments.length
+  const queuesBadge =
+    dashboard.reviewQcQueue.length + dashboard.appointmentSubmissionQueue.length
+  const marineBadge = dashboard.marinePriorityCases.length
+  const activityBadge = dashboard.criticalAlerts.length
 
   return (
-    <Box>
-      <ExecutiveCompactHeader
-        eyebrow="Dashboard"
-        title="Operations dashboard"
-        subtitle={`Work queue for ${dashboard.consultantName} — applications assigned to you.`}
-        filters={
-          <OperationsDashboardFiltersBar
-            filters={dashboard.filters}
-            onChange={dashboard.setFilters}
-          />
-        }
-      />
-
-      <LoadingOverlay loading={isLoading} label="Loading dashboard...">
-        <Stack spacing={2} sx={{ opacity: isLoading ? 0.6 : 1, transition: 'opacity 200ms ease' }}>
-          <TodayKpiSection metrics={dashboard.kpis} />
-          <MyApplicationsSection
-            applications={dashboard.myApplications}
-            getCellValue={dashboard.getMyApplicationCellValue}
-            loading={isLoading}
-          />
-          <TodaysWorkSection
-            todayTasks={dashboard.todayTasks}
-            correctionRequests={dashboard.correctionRequests}
-            awaitingDocuments={dashboard.awaitingDocuments}
-            getCorrectionCellValue={dashboard.getCorrectionCellValue}
-            getAwaitingDocumentCellValue={dashboard.getAwaitingDocumentCellValue}
-            loading={isLoading}
-          />
-          <OperationalQueuesSection
-            reviewQcQueue={dashboard.reviewQcQueue}
-            appointmentSubmissionQueue={dashboard.appointmentSubmissionQueue}
-            getReviewQcCellValue={dashboard.getReviewQcCellValue}
-            getAppointmentSubmissionCellValue={dashboard.getAppointmentSubmissionCellValue}
-            loading={isLoading}
-          />
-          <MarinePrioritySection
-            marinePriorityCases={dashboard.marinePriorityCases}
-            getCellValue={dashboard.getMarinePriorityCellValue}
-            loading={isLoading}
-          />
-          <CriticalAlertsActivitySection
-            criticalAlerts={dashboard.criticalAlerts}
-            myActivity={dashboard.myActivity}
-            getMyActivityCellValue={dashboard.getMyActivityCellValue}
-            loading={isLoading}
-          />
-          <MyPerformanceSection metrics={dashboard.myPerformance} />
-        </Stack>
-      </LoadingOverlay>
-    </Box>
+    <RoleDashboardShell
+      title="Operations dashboard"
+      subtitle={`Work queue for ${dashboard.consultantName} — applications assigned to you.`}
+      filters={
+        <OperationsDashboardFiltersBar
+          filters={dashboard.filters}
+          onChange={dashboard.setFilters}
+        />
+      }
+      kpis={<TodayKpiSection metrics={dashboard.kpis} />}
+      loading={isLoading}
+      error={dashboard.status === 'error'}
+      onRetry={dashboard.retry}
+      defaultTab="work"
+      tabs={[
+        {
+          id: 'work',
+          label: 'My work',
+          badge: workBadge,
+          content: (
+            <>
+              <MyApplicationsSection
+                applications={dashboard.myApplications}
+                getCellValue={dashboard.getMyApplicationCellValue}
+                loading={isLoading}
+              />
+              <TodaysWorkSection
+                todayTasks={dashboard.todayTasks}
+                correctionRequests={dashboard.correctionRequests}
+                awaitingDocuments={dashboard.awaitingDocuments}
+                getCorrectionCellValue={dashboard.getCorrectionCellValue}
+                getAwaitingDocumentCellValue={dashboard.getAwaitingDocumentCellValue}
+                loading={isLoading}
+              />
+            </>
+          ),
+        },
+        {
+          id: 'queues',
+          label: 'Queues',
+          badge: queuesBadge,
+          content: (
+            <OperationalQueuesSection
+              reviewQcQueue={dashboard.reviewQcQueue}
+              appointmentSubmissionQueue={dashboard.appointmentSubmissionQueue}
+              getReviewQcCellValue={dashboard.getReviewQcCellValue}
+              getAppointmentSubmissionCellValue={dashboard.getAppointmentSubmissionCellValue}
+              loading={isLoading}
+            />
+          ),
+        },
+        {
+          id: 'marine',
+          label: 'Marine',
+          badge: marineBadge,
+          hidden: marineBadge === 0 && !isLoading,
+          content: (
+            <MarinePrioritySection
+              marinePriorityCases={dashboard.marinePriorityCases}
+              getCellValue={dashboard.getMarinePriorityCellValue}
+              loading={isLoading}
+            />
+          ),
+        },
+        {
+          id: 'activity',
+          label: 'Activity',
+          badge: activityBadge,
+          content: (
+            <>
+              <CriticalAlertsActivitySection
+                criticalAlerts={dashboard.criticalAlerts}
+                myActivity={dashboard.myActivity}
+                getMyActivityCellValue={dashboard.getMyActivityCellValue}
+                loading={isLoading}
+              />
+              <MyPerformanceSection metrics={dashboard.myPerformance} />
+            </>
+          ),
+        },
+      ]}
+    />
   )
 }

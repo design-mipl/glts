@@ -104,6 +104,12 @@ export function getMarineApplicationEmptyState(
         emptyDescription:
           'Form submission and QC completed; application is ready for Embassy/VFS submission.',
       }
+    case 'pending_payment':
+      return {
+        emptyTitle: 'No applications pending payment',
+        emptyDescription:
+          'Applications awaiting embassy, VFS, or portal payment before submission continues appear here.',
+      }
     case 'vfs_submission_pending':
       return {
         emptyTitle: 'No applications pending Embassy/VFS submission',

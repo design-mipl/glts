@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
+import { DashboardSectionTable } from '@/pages/admin/dashboard/components'
 import { buildMarinePriorityColumns } from '../columns/marinePriorityColumns'
 import type { MarinePriorityRow } from '../../data/operationsConsultantDashboardMock'
 

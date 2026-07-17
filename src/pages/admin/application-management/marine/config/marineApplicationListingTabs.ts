@@ -6,6 +6,7 @@ export type MarineApplicationListingTab =
   | 'draft'
   | 'verification_pending'
   | 'online_submission_pending'
+  | 'pending_payment'
   | 'vfs_submission_pending'
   | 'collection_pending'
   | 'collected'
@@ -21,6 +22,7 @@ export const MARINE_APPLICATION_LISTING_TABS: ReadonlyArray<{
   { value: 'draft', label: 'Draft' },
   { value: 'verification_pending', label: 'Verification Pending' },
   { value: 'online_submission_pending', label: 'Submission Pending' },
+  { value: 'pending_payment', label: 'Pending Payment' },
   { value: 'vfs_submission_pending', label: 'Embassy/VFS Submission Pending' },
   { value: 'collection_pending', label: 'Collection Pending' },
   { value: 'collected', label: 'Collected' },
@@ -56,6 +58,10 @@ export function resolveMarineApplicationQueueTab(
 
   if (isApplicationVfsSubmissionPending(row)) {
     return 'vfs_submission_pending'
+  }
+
+  if (row.processingStage === 'Payment pending') {
+    return 'pending_payment'
   }
 
   if (row.processingStage === 'Submitted') {

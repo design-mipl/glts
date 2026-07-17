@@ -4,7 +4,7 @@ import type { VendorFormData } from '@/shared/types/vendor'
 
 export const EMPTY_VENDOR_FORM: VendorFormData = {
   vendorName: '',
-  vendorCategory: 'other',
+  vendorCategory: 'others',
   vendorType: 'company',
   contactPerson: '',
   mobileNumber: '',

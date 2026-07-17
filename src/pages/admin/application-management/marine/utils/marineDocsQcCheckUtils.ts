@@ -34,7 +34,7 @@ export function resolveFormViewTabEnabled(
   if (!listingRow || !record) return false
 
   const mode = resolveMarineWorkspaceMode(listingRow)
-  if (mode === 'readonly') return true
+  if (mode === 'readonly' || mode === 'pending_payment') return true
   if (mode !== 'online_submission') return false
 
   return applicationMarineQcCheckService.isSubmitted(record)

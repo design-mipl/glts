@@ -2,9 +2,11 @@ import { useMemo } from 'react'
 import { Box, Grid, Stack, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/design-system/UIComponents'
-import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components'
+import {
+  DashboardSectionTable,
+  executiveCardLevel2Sx,
+} from '@/pages/admin/dashboard/components'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { DashboardSectionTable } from '../DashboardSectionTable'
 import { buildPassportTransitColumns } from '../columns/passportTransitColumns'
 import { buildVerificationQueueColumns } from '../columns/verificationQueueColumns'
 import type {

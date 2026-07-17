@@ -30,6 +30,7 @@ import { ViewFormSubmissionSection } from '../components/view-form/ViewFormSubmi
 import { ViewFormDocumentVault } from '../components/view-form/ViewFormDocumentVault'
 import { ViewFormWorkspaceTabs } from '../components/view-form/ViewFormWorkspaceTabs'
 import { ViewFormQcCheckSection } from '../components/view-form/ViewFormQcCheckSection'
+import { PendingPaymentWorkspaceContent } from '../components/view-form/PendingPaymentWorkspaceContent'
 import { VerifyDocumentsTimeline } from '../components/verify/VerifyDocumentsTimeline'
 import {
   GltsDocumentUploadDrawer,
@@ -154,6 +155,12 @@ export function MarineViewFormPage() {
     () => Boolean(listingRow && isMarineReadOnlyWorkspace(listingRow)),
     [listingRow],
   )
+
+  const workspaceMode = useMemo(
+    () => (listingRow ? resolveMarineWorkspaceMode(listingRow) : 'verification'),
+    [listingRow],
+  )
+  const isPendingPayment = workspaceMode === 'pending_payment'
 
   const formLocked = readOnly || externallySubmitted
 
@@ -302,7 +309,7 @@ export function MarineViewFormPage() {
     )
   }
 
-  if (!selectedRow || !formContext || !currentStep) {
+  if (!selectedRow || !formContext || (!isPendingPayment && !currentStep)) {
     return (
       <EmptyState
         title="No traveler data yet"
@@ -452,6 +459,7 @@ export function MarineViewFormPage() {
   }
 
   const renderStepContent = () => {
+    if (!currentStep) return null
     if (currentStep.id === 'submission') {
       return (
         <ViewFormSubmissionSection
@@ -519,10 +527,54 @@ export function MarineViewFormPage() {
           size="sm"
         />
       ) : (
-        <Badge label={currentStep.label} color="info" size="sm" />
+        <Badge
+          label={isPendingPayment ? 'Pending Payment' : (currentStep?.label ?? 'Form')}
+          color="info"
+          size="sm"
+        />
       )}
     </>
   )
+
+  if (isPendingPayment) {
+    return (
+      <AdminRecordPageChrome
+        breadcrumbs={[
+          { label: 'Application Management', href: listingPath },
+          { label: 'Pending payment' },
+        ]}
+      >
+        <PendingPaymentWorkspaceContent
+          applicationId={applicationId}
+          selectedRow={selectedRow}
+          detail={detail}
+          submission={submission}
+          country={listingRow?.country ?? detail.countryName ?? ''}
+          visaType={listingRow?.visaType ?? detail.visaTypeLabel ?? ''}
+          countryId={checklistContext.countryId}
+          visaOfferingId={checklistContext.visaOfferingId}
+          timelineSteps={timelineSteps}
+          multiTraveler={rows.length > 1}
+          readOnly={readOnly}
+          onChange={updateSubmission}
+          onSaveDraft={handleSaveDraft}
+          onBack={() => navigate(listingPath)}
+          headerSlot={
+            overview ? (
+              <ViewFormAssistHeaderSection
+                overview={overview}
+                title="Pending payment"
+                description={`${selectedRow.travelerName} · ${selectedRow.passportNo}${
+                  detail.application?.jurisdiction ? ` · ${detail.application.jurisdiction}` : ''
+                }`}
+                headerActions={headerActions}
+              />
+            ) : null
+          }
+        />
+      </AdminRecordPageChrome>
+    )
+  }
 
   return (
     <AdminRecordPageChrome
@@ -621,13 +673,13 @@ export function MarineViewFormPage() {
                 showTitleCard={false}
                 navTitle="Steps"
                 sections={sectionNav}
-                activeSectionId={currentStep.id}
+                activeSectionId={currentStep!.id}
                 onSectionClick={goToStep}
                 centerPanel={
                   <Stack spacing={3}>
                     <Box sx={{ px: 0.5 }}>
                       <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: 15 }}>
-                        {currentStep.label}
+                        {currentStep!.label}
                       </Typography>
                     </Box>
                     <Divider />

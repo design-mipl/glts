@@ -1,13 +1,12 @@
 export type VendorCategory =
-  | 'ticketing_partner'
-  | 'insurance_partner'
-  | 'courier_partner'
-  | 'vfs_partner'
-  | 'embassy_agent'
-  | 'translation_agency'
-  | 'ground_ops_vendor'
-  | 'documentation_vendor'
-  | 'other'
+  | 'visa_processing'
+  | 'ticketing'
+  | 'insurance'
+  | 'courier'
+  | 'delivery'
+  | 'travel_agents'
+  | 'documentation'
+  | 'others'
 
 export type VendorType = 'company' | 'individual'
 

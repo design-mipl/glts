@@ -20,6 +20,25 @@ export interface FormAssistVfsServiceChargeLine {
   embassyFeeServiceId?: string
 }
 
+/** One payment recorded against one or more VFS services (Pending Payment workspace). */
+export interface FormAssistPaymentEntry {
+  id: string
+  paidByUserId: string
+  paidByUserName: string
+  /** FormAssistVfsServiceChargeLine.id values — unique across all entries. */
+  serviceIds: string[]
+  paymentDate: string
+  paymentMode: FormAssistPaymentMode
+  paymentCardId: string
+  paymentReferenceNumber: string
+  amountPaid: string
+  receiptStatus: FormAssistReceiptStatus
+  paymentRemarks: string
+  paymentReceiptFileName: string
+  createdAt: string
+  createdByUserId: string
+}
+
 export interface FormAssistSubmissionDraft {
   submissionDate: string
   submissionReferenceNumber: string
@@ -36,6 +55,8 @@ export interface FormAssistSubmissionDraft {
   receiptStatus: FormAssistReceiptStatus
   paymentRemarks: string
   vfsServiceCharges: FormAssistVfsServiceChargeLine[]
+  /** Multi-entry payments for Pending Payment workspace. */
+  paymentEntries: FormAssistPaymentEntry[]
 }
 
 export interface FormAssistRecord {
@@ -64,6 +85,7 @@ export const EMPTY_FORM_ASSIST_SUBMISSION: FormAssistSubmissionDraft = {
   receiptStatus: 'awaited',
   paymentRemarks: '',
   vfsServiceCharges: [],
+  paymentEntries: [],
 }
 
 type FormAssistStore = Record<string, FormAssistRecord>
@@ -112,6 +134,59 @@ function normalizeVfsServiceCharges(
   }))
 }
 
+function normalizePaymentEntries(
+  entries: FormAssistPaymentEntry[] | undefined,
+  legacy: FormAssistSubmissionDraft,
+): FormAssistPaymentEntry[] {
+  if (Array.isArray(entries) && entries.length > 0) {
+    return entries.map((entry, index) => ({
+      id: entry.id?.trim() || `payment-entry-${index}`,
+      paidByUserId: entry.paidByUserId?.trim() ?? '',
+      paidByUserName: entry.paidByUserName?.trim() ?? '',
+      serviceIds: Array.isArray(entry.serviceIds)
+        ? entry.serviceIds.map(id => String(id).trim()).filter(Boolean)
+        : [],
+      paymentDate: entry.paymentDate?.trim() ?? '',
+      paymentMode: isPaymentMode(entry.paymentMode) ? entry.paymentMode : 'card',
+      paymentCardId: entry.paymentCardId?.trim() ?? '',
+      paymentReferenceNumber: entry.paymentReferenceNumber?.trim() ?? '',
+      amountPaid: entry.amountPaid?.trim() ?? '',
+      receiptStatus: isReceiptStatus(entry.receiptStatus) ? entry.receiptStatus : 'awaited',
+      paymentRemarks: entry.paymentRemarks?.trim() ?? '',
+      paymentReceiptFileName: entry.paymentReceiptFileName?.trim() ?? '',
+      createdAt: entry.createdAt?.trim() || new Date().toISOString(),
+      createdByUserId: entry.createdByUserId?.trim() ?? '',
+    }))
+  }
+
+  // Migrate legacy single-payment fields into one entry when present.
+  const hasLegacyPayment =
+    Boolean(legacy.paymentDate?.trim()) ||
+    Boolean(legacy.paymentReferenceNumber?.trim()) ||
+    Boolean(legacy.amountPaid?.trim()) ||
+    Boolean(legacy.paymentReceiptFileName?.trim())
+  if (!hasLegacyPayment) return []
+
+  return [
+    {
+      id: 'payment-entry-legacy',
+      paidByUserId: '',
+      paidByUserName: legacy.submittedBy?.trim() || 'Unknown',
+      serviceIds: (legacy.vfsServiceCharges ?? []).map(line => line.id),
+      paymentDate: legacy.paymentDate ?? '',
+      paymentMode: isPaymentMode(legacy.paymentMode) ? legacy.paymentMode : 'card',
+      paymentCardId: legacy.paymentCardId ?? '',
+      paymentReferenceNumber: legacy.paymentReferenceNumber ?? '',
+      amountPaid: legacy.amountPaid ?? '',
+      receiptStatus: isReceiptStatus(legacy.receiptStatus) ? legacy.receiptStatus : 'awaited',
+      paymentRemarks: legacy.paymentRemarks ?? '',
+      paymentReceiptFileName: legacy.paymentReceiptFileName ?? '',
+      createdAt: new Date().toISOString(),
+      createdByUserId: '',
+    },
+  ]
+}
+
 function resolvePaymentCardId(
   submission: Partial<FormAssistSubmissionDraft> & Record<string, string | undefined>,
 ): string {
@@ -147,7 +222,10 @@ function normalizeSubmission(
   submission: Partial<FormAssistSubmissionDraft> & Record<string, string | undefined>,
 ): FormAssistSubmissionDraft {
   const legacy = submission as Record<string, string | undefined>
-  return {
+  const vfsServiceCharges = normalizeVfsServiceCharges(
+    (submission as FormAssistSubmissionDraft).vfsServiceCharges,
+  )
+  const base: FormAssistSubmissionDraft = {
     ...EMPTY_FORM_ASSIST_SUBMISSION,
     submissionDate: submission.submissionDate ?? legacy.appointmentDate ?? '',
     submissionReferenceNumber:
@@ -164,8 +242,14 @@ function normalizeSubmission(
     amountPaid: submission.amountPaid ?? '',
     receiptStatus: isReceiptStatus(submission.receiptStatus) ? submission.receiptStatus : 'awaited',
     paymentRemarks: submission.paymentRemarks ?? legacy.remarks ?? '',
-    vfsServiceCharges: normalizeVfsServiceCharges(submission.vfsServiceCharges),
+    vfsServiceCharges,
+    paymentEntries: [],
   }
+  base.paymentEntries = normalizePaymentEntries(
+    (submission as FormAssistSubmissionDraft).paymentEntries,
+    base,
+  )
+  return base
 }
 
 function getRecord(applicationId: string, travelerRowId: string): FormAssistRecord {
