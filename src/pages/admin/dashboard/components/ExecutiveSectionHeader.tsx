@@ -27,7 +27,7 @@ export function ExecutiveSectionHeader({
       alignItems={{ xs: 'flex-start', sm: 'center' }}
       justifyContent="space-between"
       spacing={1}
-      sx={{ mb: 2 }}
+      sx={{ mb: 0 }}
     >
       <Box sx={{ minWidth: 0 }}>
         <Typography sx={{ fontWeight: 800, fontSize: 16, color: colors.navy, lineHeight: 1.2 }}>

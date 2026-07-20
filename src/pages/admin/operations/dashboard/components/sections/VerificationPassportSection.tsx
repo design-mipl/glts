@@ -103,12 +103,14 @@ export function VerificationPassportSection({
       <Grid size={{ xs: 12, lg: 4 }}>
         <Stack spacing={2.5}>
           <Box sx={{ ...executiveCardLevel2Sx(colors), p: 2 }}>
-            <Typography sx={{ fontWeight: 800, fontSize: 15, color: colors.navy }}>
-              Passport tracker
-            </Typography>
-            <Typography sx={{ fontSize: 12, color: colors.textMuted, mt: 0.25, mb: 1.5 }}>
-              Delivery status summary
-            </Typography>
+            <Box sx={{ mb: 1.5 }}>
+              <Typography sx={{ fontWeight: 800, fontSize: 15, color: colors.navy }}>
+                Passport tracker
+              </Typography>
+              <Typography sx={{ fontSize: 12, color: colors.textMuted, mt: 0.25 }}>
+                Delivery status summary
+              </Typography>
+            </Box>
             <Stack direction="row" spacing={1}>
               <PassportStatCard
                 label="Not out for delivery"

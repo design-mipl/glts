@@ -57,7 +57,6 @@ export function createEmptyFundTransferDetails(
     paymentReference: '',
     paymentRemark: '',
     ...partial,
-    fundSource: FUND_TRANSFER_DEFAULT_SOURCE,
   }
 }
 
@@ -77,6 +76,8 @@ export function isFundTransferValid(details: FundTransferDetails): boolean {
 
 export interface FundAllocationOverlay {
   allocationStatus: FundAllocationStatus
+  /** Groups passengers allocated together (bulk) into one listing record. */
+  allocationBatchId?: string
   /** True when Assignment & Priority requested funds for selected services. */
   fundRequested: boolean
   requestedAt: string
@@ -126,6 +127,8 @@ export interface FundAllocationPassengerRow {
   submissionStatus: ApplicationOperationalStatus
   customerSegment: ApplicationCustomerSegment
   allocationStatus: FundAllocationStatus
+  /** Groups passengers allocated together (bulk) into one listing record. */
+  allocationBatchId: string
   fundRequested: boolean
   requestedAt: string
   totalAmount: number
@@ -175,4 +178,28 @@ export interface FundAllocationRequestInput {
   selectedServices: VfsServiceChargeLine[]
   totalAmount: number
   notes?: string
+}
+
+/** Allocation-wise listing row — one record per fund release (single or bulk). */
+export interface FundAllocationBatchRow {
+  id: string
+  allocationBatchId: string
+  passengers: FundAllocationPassengerRow[]
+  passengerCount: number
+  passengerLabel: string
+  requestedTotal: number
+  allocatedAmount: number
+  allocatedAt: string
+  allocatedBy: string
+  allocatedTo: string
+  assignedTeam: string
+  assignedUser: string
+  country: string
+  visaType: string
+  jurisdiction: string
+  companyName: string
+  gltsApplicationId: string
+  customerSegment: ApplicationCustomerSegment
+  fundTransfer?: FundTransferDetails
+  allocationNotes: string
 }

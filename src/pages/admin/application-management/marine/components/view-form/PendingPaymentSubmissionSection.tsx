@@ -138,7 +138,6 @@ export interface PendingPaymentSubmissionSectionProps {
 export function PendingPaymentSubmissionSection({
   submission,
   country,
-  visaType,
   countryId,
   visaOfferingId,
   readOnly = false,
@@ -653,7 +652,7 @@ function PaymentEntryEditor({
   )
 }
 
-function PaymentEntryCard({
+export function PaymentEntryCard({
   index,
   entry,
   services,

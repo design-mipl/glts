@@ -13,7 +13,6 @@ export type OperationalTeam =
 export interface DashboardFilters {
   dateRange: [Date | null, Date | null]
   country: string
-  branch: string
   applicationType: string
   team: string
 }
@@ -21,7 +20,6 @@ export interface DashboardFilters {
 export const DEFAULT_DASHBOARD_FILTERS: DashboardFilters = {
   dateRange: [null, null],
   country: 'all',
-  branch: 'all',
   applicationType: 'all',
   team: 'all',
 }
@@ -33,14 +31,6 @@ export const COUNTRY_FILTER_OPTIONS = [
   { label: 'Singapore', value: 'Singapore' },
   { label: 'United Arab Emirates', value: 'United Arab Emirates' },
   { label: 'Germany', value: 'Germany' },
-]
-
-export const BRANCH_FILTER_OPTIONS = [
-  { label: 'All branches', value: 'all' },
-  { label: 'Mumbai', value: 'Mumbai' },
-  { label: 'Delhi', value: 'Delhi' },
-  { label: 'Chennai', value: 'Chennai' },
-  { label: 'Bengaluru', value: 'Bengaluru' },
 ]
 
 export const APPLICATION_TYPE_OPTIONS = [

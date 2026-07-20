@@ -1,21 +1,19 @@
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Divider, Stack, Typography } from '@mui/material'
 import dayjs from 'dayjs'
-import { Upload } from 'lucide-react'
-import { useEffect, useMemo, useRef } from 'react'
-import { Button, DatePicker, FormField, Input, Select, Textarea } from '@/design-system/UIComponents'
+import { useEffect } from 'react'
+import { DatePicker, FormField, Input } from '@/design-system/UIComponents'
 import { AdminOverlayFormSection } from '@/pages/admin/components/AdminOverlayFormSection'
 import { ApplicationTrackingUrlLink } from '@/shared/components/ApplicationTrackingUrlLink'
 import { resolveApplicationTrackingUrl, resolveOfferingVfsServiceRates } from '@/shared/services/countryMasterService'
 import type { FormAssistSubmissionDraft } from '@/shared/services/applicationFormAssistService'
-import {
-  listCardSelectOptions,
-  resolveCardLabel,
-} from '@/shared/utils/cardMasterOptions'
+import { resolveCardLabel } from '@/shared/utils/cardMasterOptions'
 import { mapCountryVfsRatesToChargeLines } from '@/shared/utils/countryVfsServiceRateUtils'
 import {
   PAYMENT_MODE_OPTIONS,
   RECEIPT_STATUS_OPTIONS,
 } from '../../config/submissionPaymentConfig'
+import { resolvePaymentEntryServices } from '../../utils/pendingPaymentUtils'
+import { PaymentEntryCard } from './PendingPaymentSubmissionSection'
 import { ViewFormVfsChargesServicesSection } from './ViewFormVfsChargesServicesSection'
 
 function parseDateString(value: string | undefined): Date | null {
@@ -40,62 +38,6 @@ interface ViewFormSubmissionSectionProps {
   hideOnlineSubmissionFields?: boolean
   onChange: (patch: Partial<FormAssistSubmissionDraft>) => void
   onPickFile: (field: keyof FormAssistSubmissionDraft, file: File) => void
-}
-
-function FileUploadRow({
-  label,
-  fileName,
-  required = false,
-  onPick,
-}: {
-  label: string
-  fileName: string
-  required?: boolean
-  onPick: (file: File) => void
-}) {
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  return (
-    <Stack
-      direction={{ xs: 'column', sm: 'row' }}
-      alignItems={{ xs: 'flex-start', sm: 'center' }}
-      justifyContent="space-between"
-      spacing={1}
-      sx={{ p: 1.5, borderRadius: 1.5, border: '1px solid', borderColor: 'divider' }}
-    >
-      <Stack spacing={0.25}>
-        <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-          {label}
-          {required ? (
-            <Typography component="span" color="error.main" sx={{ ml: 0.25 }}>
-              *
-            </Typography>
-          ) : null}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {fileName || 'No file selected'}
-        </Typography>
-      </Stack>
-      <Button
-        label="Upload"
-        variant="outlined"
-        size="sm"
-        startIcon={<Upload size={14} />}
-        onClick={() => inputRef.current?.click()}
-      />
-      <input
-        ref={inputRef}
-        type="file"
-        hidden
-        accept=".pdf,.png,.jpg,.jpeg,.webp"
-        onChange={e => {
-          const file = e.target.files?.[0]
-          if (file) onPick(file)
-          e.target.value = ''
-        }}
-      />
-    </Stack>
-  )
 }
 
 function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {
@@ -133,6 +75,36 @@ function formatDisplayDate(value: string | undefined): string {
   return parsed.isValid() ? parsed.format('DD MMM YYYY') : value
 }
 
+function PhysicalSubmissionDatesPanel({
+  vfsSubmissionDate,
+  tentativeCollectionDate,
+}: {
+  vfsSubmissionDate: string
+  tentativeCollectionDate: string
+}) {
+  return (
+    <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
+      <Divider sx={{ mb: 2 }} />
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+          gap: 3,
+        }}
+      >
+        <ReadOnlyValueRow
+          label="Physical Submission Date"
+          value={formatDisplayDate(vfsSubmissionDate)}
+        />
+        <ReadOnlyValueRow
+          label="Tentative Collection Date"
+          value={formatDisplayDate(tentativeCollectionDate)}
+        />
+      </Box>
+    </Box>
+  )
+}
+
 export function ViewFormSubmissionSection({
   submission,
   country,
@@ -142,14 +114,9 @@ export function ViewFormSubmissionSection({
   readOnly = false,
   hideOnlineSubmissionFields = false,
   onChange,
-  onPickFile,
 }: ViewFormSubmissionSectionProps) {
   const showCardType = submission.paymentMode === 'card'
   const applicationTrackingUrl = resolveApplicationTrackingUrl({ countryName: country })
-  const cardTypeOptions = useMemo(
-    () => [{ value: '', label: 'Select card' }, ...listCardSelectOptions()],
-    [],
-  )
 
   useEffect(() => {
     if (readOnly) return
@@ -204,13 +171,9 @@ export function ViewFormSubmissionSection({
             </>
           ) : null}
           <ReadOnlyValueRow label="Online Submitted By" value={submission.submittedBy} />
-          <ReadOnlyValueRow
-            label="VFS Submission Date"
-            value={formatDisplayDate(submission.vfsSubmissionDate)}
-          />
-          <ReadOnlyValueRow
-            label="Tentative Collection Date"
-            value={formatDisplayDate(submission.tentativeCollectionDate)}
+          <PhysicalSubmissionDatesPanel
+            vfsSubmissionDate={submission.vfsSubmissionDate}
+            tentativeCollectionDate={submission.tentativeCollectionDate}
           />
         </AdminOverlayFormSection>
 
@@ -260,12 +223,11 @@ export function ViewFormSubmissionSection({
     )
   }
 
+  const paymentEntries = submission.paymentEntries ?? []
+
   return (
     <Stack spacing={2}>
-      <AdminOverlayFormSection
-        title="Submission details"
-        columns={2}
-      >
+      <AdminOverlayFormSection title="Submission details" columns={2}>
         {applicationTrackingUrl ? (
           <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
             <Stack
@@ -324,24 +286,10 @@ export function ViewFormSubmissionSection({
             fullWidth
           />
         </FormField>
-        <FormField label="VFS Submission Date">
-          <DatePicker
-            value={parseDateString(submission.vfsSubmissionDate)}
-            onChange={date => onChange({ vfsSubmissionDate: formatDateForStorage(date) })}
-            placeholder="Select VFS submission date"
-            size="sm"
-            fullWidth
-          />
-        </FormField>
-        <FormField label="Tentative Collection Date" required>
-          <DatePicker
-            value={parseDateString(submission.tentativeCollectionDate)}
-            onChange={date => onChange({ tentativeCollectionDate: formatDateForStorage(date) })}
-            placeholder="Select tentative collection date"
-            size="sm"
-            fullWidth
-          />
-        </FormField>
+        <PhysicalSubmissionDatesPanel
+          vfsSubmissionDate={submission.vfsSubmissionDate}
+          tentativeCollectionDate={submission.tentativeCollectionDate}
+        />
       </AdminOverlayFormSection>
 
       <ViewFormVfsChargesServicesSection
@@ -350,109 +298,53 @@ export function ViewFormSubmissionSection({
         countryId={countryId}
         visaOfferingId={visaOfferingId}
         serviceCharges={submission.vfsServiceCharges ?? []}
-        onChange={vfsServiceCharges => onChange({ vfsServiceCharges })}
+        onChange={() => {}}
+        readOnly
       />
 
-      <AdminOverlayFormSection
-        title="Payment details"
-        columns={2}
-        importance="secondary"
-      >
-        <FormField label="Payment date" required>
-          <DatePicker
-            value={parseDateString(submission.paymentDate)}
-            onChange={date => onChange({ paymentDate: formatDateForStorage(date) })}
-            placeholder="Select payment date"
-            size="sm"
-            fullWidth
+      {paymentEntries.length > 0 ? (
+        <AdminOverlayFormSection title="Payment entries" columns={1} importance="secondary">
+          <Stack spacing={1.5} sx={{ width: '100%' }}>
+            {paymentEntries.map((entry, index) => (
+              <PaymentEntryCard
+                key={entry.id}
+                index={index + 1}
+                entry={entry}
+                services={resolvePaymentEntryServices(submission.vfsServiceCharges ?? [], entry)}
+              />
+            ))}
+          </Stack>
+        </AdminOverlayFormSection>
+      ) : (
+        <AdminOverlayFormSection title="Payment details" columns={2} importance="secondary">
+          <ReadOnlyValueRow label="Payment date" value={formatDisplayDate(submission.paymentDate)} />
+          <ReadOnlyValueRow
+            label="Payment mode"
+            value={labelForOption(PAYMENT_MODE_OPTIONS, submission.paymentMode)}
           />
-        </FormField>
-        <FormField label="Payment mode" required>
-          <Select
-            value={submission.paymentMode}
-            onChange={v => {
-              const paymentMode = String(v) as FormAssistSubmissionDraft['paymentMode']
-              onChange({
-                paymentMode,
-                ...(paymentMode !== 'card' ? { paymentCardId: '' } : {}),
-              })
-            }}
-            options={PAYMENT_MODE_OPTIONS}
-            placeholder="Select payment mode"
-            size="sm"
-            fullWidth
-          />
-        </FormField>
-        {showCardType ? (
-          <FormField label="Payment card" required>
-            <Select
-              value={submission.paymentCardId}
-              onChange={v => onChange({ paymentCardId: String(v) })}
-              options={cardTypeOptions}
-              placeholder="Select card from card master"
-              size="sm"
-              fullWidth
-              clearable
+          {showCardType ? (
+            <ReadOnlyValueRow
+              label="Payment card"
+              value={resolveCardLabel(submission.paymentCardId)}
             />
-          </FormField>
-        ) : null}
-        <FormField label="Payment Reference / CC Avenue Ref. No." required>
-          <Input
+          ) : null}
+          <ReadOnlyValueRow
+            label="Payment Reference / CC Avenue Ref. No."
             value={submission.paymentReferenceNumber}
-            onChange={v => onChange({ paymentReferenceNumber: String(v) })}
-            placeholder="e.g. TXN-2026-88421"
-            size="sm"
-            fullWidth
           />
-        </FormField>
-        <FormField label="Amount paid" required>
-          <Input
-            type="number"
-            value={submission.amountPaid}
-            onChange={v => onChange({ amountPaid: String(v) })}
-            size="sm"
-            fullWidth
-            placeholder="0.00"
+          <ReadOnlyValueRow label="Amount paid" value={submission.amountPaid} />
+          <ReadOnlyValueRow
+            label="Receipt status"
+            value={labelForOption(RECEIPT_STATUS_OPTIONS, submission.receiptStatus)}
           />
-        </FormField>
-        <FormField label="Receipt status" required>
-          <Select
-            value={submission.receiptStatus}
-            onChange={v =>
-              onChange({ receiptStatus: String(v) as FormAssistSubmissionDraft['receiptStatus'] })
-            }
-            options={RECEIPT_STATUS_OPTIONS}
-            placeholder="Select receipt status"
-            size="sm"
-            fullWidth
-          />
-        </FormField>
-        <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
-          <FormField label="Payment remarks">
-            <Textarea
-              value={submission.paymentRemarks}
-              onChange={v => onChange({ paymentRemarks: String(v) })}
-              rows={3}
-              fullWidth
-              placeholder="Optional notes about payment or receipt"
-            />
-          </FormField>
-        </Box>
-      </AdminOverlayFormSection>
+          <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
+            <ReadOnlyValueRow label="Payment remarks" value={submission.paymentRemarks} />
+          </Box>
+        </AdminOverlayFormSection>
+      )}
 
-      <AdminOverlayFormSection
-        title="Document uploads"
-        columns={1}
-        importance="secondary"
-      >
-        <Box sx={{ gridColumn: '1 / -1' }}>
-          <FileUploadRow
-            label="Payment Receipt"
-            fileName={submission.paymentReceiptFileName}
-            required
-            onPick={file => onPickFile('paymentReceiptFileName', file)}
-          />
-        </Box>
+      <AdminOverlayFormSection title="Document uploads" columns={1} importance="secondary">
+        <ReadOnlyValueRow label="Payment Receipt" value={submission.paymentReceiptFileName} />
       </AdminOverlayFormSection>
     </Stack>
   )

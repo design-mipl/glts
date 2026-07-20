@@ -12,15 +12,7 @@ import { useOperationsConsultantDashboard } from '../hooks/useOperationsConsulta
 export function OperationsConsultantDashboardPage() {
   const dashboard = useOperationsConsultantDashboard()
   const isLoading = dashboard.status === 'loading'
-
-  const workBadge =
-    dashboard.todayTasks.length +
-    dashboard.correctionRequests.length +
-    dashboard.awaitingDocuments.length
-  const queuesBadge =
-    dashboard.reviewQcQueue.length + dashboard.appointmentSubmissionQueue.length
-  const marineBadge = dashboard.marinePriorityCases.length
-  const activityBadge = dashboard.criticalAlerts.length
+  const marineCaseCount = dashboard.marinePriorityCases.length
 
   return (
     <RoleDashboardShell
@@ -41,7 +33,6 @@ export function OperationsConsultantDashboardPage() {
         {
           id: 'work',
           label: 'My work',
-          badge: workBadge,
           content: (
             <>
               <MyApplicationsSection
@@ -63,7 +54,6 @@ export function OperationsConsultantDashboardPage() {
         {
           id: 'queues',
           label: 'Queues',
-          badge: queuesBadge,
           content: (
             <OperationalQueuesSection
               reviewQcQueue={dashboard.reviewQcQueue}
@@ -77,8 +67,7 @@ export function OperationsConsultantDashboardPage() {
         {
           id: 'marine',
           label: 'Marine',
-          badge: marineBadge,
-          hidden: marineBadge === 0 && !isLoading,
+          hidden: marineCaseCount === 0 && !isLoading,
           content: (
             <MarinePrioritySection
               marinePriorityCases={dashboard.marinePriorityCases}
@@ -90,7 +79,6 @@ export function OperationsConsultantDashboardPage() {
         {
           id: 'activity',
           label: 'Activity',
-          badge: activityBadge,
           content: (
             <>
               <CriticalAlertsActivitySection

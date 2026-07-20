@@ -14,14 +14,6 @@ export function AccountsDashboardPage() {
   const dashboard = useAccountsDashboard()
   const isLoading = dashboard.status === 'loading'
 
-  const collectionsBadge =
-    dashboard.pendingCollections.length + dashboard.outstandingCollections.length
-  const dailyOpsBadge =
-    dashboard.invoicePostingQueue.length +
-    dashboard.vendorPayments.length +
-    dashboard.reconciliationQueue.length
-  const alertsBadge = dashboard.financialAlerts.length
-
   return (
     <RoleDashboardShell
       title="Accounts dashboard"
@@ -41,7 +33,6 @@ export function AccountsDashboardPage() {
         {
           id: 'collections',
           label: 'Collections',
-          badge: collectionsBadge,
           content: (
             <>
               <PendingCollectionsSection
@@ -61,7 +52,6 @@ export function AccountsDashboardPage() {
         {
           id: 'daily-ops',
           label: 'Daily ops',
-          badge: dailyOpsBadge,
           content: (
             <DailyFinancialOperationsSection
               invoicePostingQueue={dashboard.invoicePostingQueue}
@@ -105,7 +95,6 @@ export function AccountsDashboardPage() {
         {
           id: 'alerts',
           label: 'Alerts',
-          badge: alertsBadge,
           content: (
             <AlertsActivitySection
               financialAlerts={dashboard.financialAlerts}

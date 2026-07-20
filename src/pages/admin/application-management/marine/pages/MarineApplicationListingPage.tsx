@@ -17,8 +17,7 @@ import {
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
 import { getCurrentListingHref, navigateFromListing } from '@/shared/utils/listingNavigationUtils'
-import { marineApplicationAdminService, isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
-import { opensMarineViewFormDirectly } from '../config/marineWorkspaceMode'
+import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
 import { teamService } from '@/shared/services/teamService'
@@ -174,26 +173,6 @@ export function MarineApplicationListingPage() {
     [listing, setActiveTab],
   )
 
-  const handleRowClick = useCallback(
-    (row: MarineApplicationRow) => {
-      if (!isCustomerSubmitted(row)) {
-        showToast({
-          title: 'Draft application',
-          description: 'Submit this application before opening document verification.',
-          variant: 'info',
-        })
-        return
-      }
-      const detailPath = `${MARINE_LISTING_PATH}/${row.id}`
-      navigateFromListing(
-        navigate,
-        opensMarineViewFormDirectly(row) ? `${detailPath}/view-form` : detailPath,
-        listingReturnHref,
-      )
-    },
-    [listingReturnHref, navigate, showToast],
-  )
-
   const gridItems = useMemo(
     () => mapMarineApplicationRowsToGridItems(listing.paginatedRows),
     [listing.paginatedRows],
@@ -275,17 +254,13 @@ export function MarineApplicationListingPage() {
             columnFilters={listing.columnFilters}
             onColumnFiltersChange={listing.setColumnFilters}
             getCellValue={getMarineApplicationCellValue}
-            onRowClick={handleRowClick}
             stickyHeader
             emptyTitle={emptyState.emptyTitle}
             emptyDescription={emptyState.emptyDescription}
             emptyAction={emptyState.emptyAction}
           />
         ) : (
-          <AdminListingGrid
-            items={gridItems}
-            onItemClick={id => navigate(`/admin/application-management/marine/${id}`)}
-          />
+          <AdminListingGrid items={gridItems} />
         )
       }
       footer={

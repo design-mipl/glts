@@ -37,7 +37,7 @@ export function FundAllocationKpiRow({
         <KpiCard label="Pending allocation" value={String(pendingAllocation)} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <KpiCard label="Allocated" value={String(allocatedPassengers)} />
+        <KpiCard label="Allocated releases" value={String(allocatedPassengers)} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <KpiCard

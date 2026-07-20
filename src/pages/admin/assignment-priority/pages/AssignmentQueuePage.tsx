@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Box, alpha, useTheme } from '@mui/material'
-import { RefreshCw } from 'lucide-react'
-import { Button, Pagination, useToast } from '@/design-system/UIComponents'
+import { Pagination, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   AdminListingGrid,
@@ -65,7 +64,6 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
     clearFilters,
     selectPassenger,
     closeDetail,
-    refresh,
     mutateAndRefresh,
   } = useAssignmentQueue(segmentConfig)
 
@@ -279,18 +277,6 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
           <AdminListingStickyHeader
             title={segmentConfig.queueTitle}
             description={segmentConfig.queueSubtitle}
-            actions={
-              <Button
-                label="Refresh queue"
-                variant="neutral"
-                size="sm"
-                startIcon={<RefreshCw size={14} />}
-                onClick={() => {
-                  refresh()
-                  showToast({ title: 'Queue refreshed', variant: 'info' })
-                }}
-              />
-            }
           />
         }
         tabs={[

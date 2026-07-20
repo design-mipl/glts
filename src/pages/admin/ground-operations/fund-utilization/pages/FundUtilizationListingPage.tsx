@@ -1,28 +1,49 @@
+import { useMemo, useState } from 'react'
 import { Box, alpha, useTheme } from '@mui/material'
-import { RefreshCw } from 'lucide-react'
 import { Button, Pagination, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import { AdminListingStickyHeader, AdminListingToolbar } from '@/pages/admin/components/listing'
-import { FundAllocationDetailDrawer } from '@/pages/admin/finance/fund-allocation/components/FundAllocationDetailDrawer'
+import {
+  FundAllocationAdvancedFilterFields,
+  hasFundAllocationFiltersActive,
+} from '@/pages/admin/finance/fund-allocation/components/FundAllocationAdvancedFilters'
+import { FundAllocationBatchDetailDrawer } from '@/pages/admin/finance/fund-allocation/components/FundAllocationBatchDetailDrawer'
+import { FundSettlementDrawer } from '../components/FundSettlementDrawer'
 import { FundUtilizationCardList } from '../components/FundUtilizationCardList'
 import { useFundUtilizationListing } from '../hooks/useFundUtilizationListing'
+import { buildFundSettlementUserOptions } from '../utils/fundUtilizationSettlementUtils'
 
 export function FundUtilizationListingPage() {
   const theme = useTheme()
   const { showToast } = useToast()
+  const [settlementOpen, setSettlementOpen] = useState(false)
 
   const {
     searchValue,
     handleSearch,
+    queueFilters,
+    setQueueFilters,
+    clearFilters,
+    filterOptions,
     tableState,
     setTableState,
-    paginatedRows,
+    paginatedBatches,
     total,
     selectedRecord,
     selectRecord,
     closeDetail,
     refresh,
+    refreshKey,
   } = useFundUtilizationListing()
+
+  const settlementUserOptions = useMemo(
+    () => buildFundSettlementUserOptions(filterOptions.users),
+    [filterOptions.users],
+  )
+
+  const hasActiveFilters = Boolean(
+    hasFundAllocationFiltersActive(queueFilters) || searchValue.trim(),
+  )
 
   const footerBg =
     theme.palette.mode === 'dark'
@@ -35,16 +56,12 @@ export function FundUtilizationListingPage() {
         stickyPageHeader={
           <AdminListingStickyHeader
             title="Fund utilization"
-            description="Allocated funds available for ground operations utilization"
+            description="Allocated fund releases available for ground operations utilization"
             actions={
               <Button
-                label="Refresh"
-                variant="outlined"
-                startIcon={<RefreshCw size={14} />}
-                onClick={() => {
-                  refresh()
-                  showToast({ title: 'Fund utilization refreshed', variant: 'info' })
-                }}
+                label="Fund settlement"
+                variant="contained"
+                onClick={() => setSettlementOpen(true)}
               />
             }
           />
@@ -53,7 +70,7 @@ export function FundUtilizationListingPage() {
           <AdminListingToolbar
             searchValue={searchValue}
             onSearch={handleSearch}
-            searchPlaceholder="Search passenger, application, passport, company, services…"
+            searchPlaceholder="Search allocation, passenger, application, company, services…"
             onExport={() =>
               showToast({
                 title: 'Export started',
@@ -61,11 +78,27 @@ export function FundUtilizationListingPage() {
                 variant: 'success',
               })
             }
+            filterPopover={{
+              active: hasActiveFilters,
+              value: queueFilters,
+              onApply: setQueueFilters,
+              onClear: clearFilters,
+              hasActive: hasFundAllocationFiltersActive,
+              width: 'wide',
+              scrollable: true,
+              children: (draft, patch) => (
+                <FundAllocationAdvancedFilterFields
+                  draft={draft}
+                  patch={patch}
+                  options={filterOptions}
+                />
+              ),
+            }}
           />
         }
         listingContent={
           <FundUtilizationCardList
-            rows={paginatedRows}
+            batches={paginatedBatches}
             selectedId={selectedRecord?.id}
             onSelect={selectRecord}
           />
@@ -83,10 +116,18 @@ export function FundUtilizationListingPage() {
         }
       />
 
-      <FundAllocationDetailDrawer
+      <FundAllocationBatchDetailDrawer
         open={Boolean(selectedRecord)}
         record={selectedRecord}
         onClose={closeDetail}
+      />
+
+      <FundSettlementDrawer
+        open={settlementOpen}
+        userOptions={settlementUserOptions}
+        refreshKey={refreshKey}
+        onClose={() => setSettlementOpen(false)}
+        onWithdrawn={refresh}
       />
     </>
   )

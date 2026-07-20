@@ -19,8 +19,6 @@ export function OperationsDashboardPage() {
   const { showToast } = useToast()
   const isLoading = dashboard.status === 'loading'
 
-  const riskBadge = dashboard.escalations.length + dashboard.noMovementCases.length
-
   return (
     <RoleDashboardShell
       title="Admin dashboard"
@@ -99,7 +97,6 @@ export function OperationsDashboardPage() {
         {
           id: 'risk',
           label: 'Risk',
-          badge: riskBadge,
           content: (
             <OperationalMonitoringSection
               escalations={dashboard.escalations}

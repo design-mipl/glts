@@ -141,7 +141,6 @@ export function buildMarineApplicationColumns({
           <Typography
             variant="body2"
             fontWeight={600}
-            color="primary.main"
             sx={{ fontSize: 13, fontFamily: 'monospace' }}
           >
             {value}

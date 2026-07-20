@@ -1,10 +1,8 @@
-import { Badge, Tabs } from '@/design-system/UIComponents'
+import { Tabs } from '@/design-system/UIComponents'
 
 export interface DashboardTabItem {
   id: string
   label: string
-  /** Shown when > 0 */
-  badge?: number
   hidden?: boolean
 }
 
@@ -30,10 +28,6 @@ export function DashboardTabBar({ tabs, value, onChange }: DashboardTabBarProps)
       items={visible.map((tab) => ({
         value: tab.id,
         label: tab.label,
-        icon:
-          tab.badge != null && tab.badge > 0 ? (
-            <Badge label={String(tab.badge)} color="error" size="sm" />
-          ) : undefined,
       }))}
       sx={{
         minHeight: 40,

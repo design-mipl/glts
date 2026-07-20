@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
-import { RefreshCw } from 'lucide-react'
-import { Button, Pagination, Tabs, useToast } from '@/design-system/UIComponents'
+import { Pagination, Tabs, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import { AdminListingStickyHeader, AdminListingToolbar } from '@/pages/admin/components/listing'
 import {
@@ -59,17 +58,6 @@ export function OperationalCaseHandlingPage() {
           <AdminListingStickyHeader
             title="Operations Desk"
             description="Passenger-level ground execution workspace for assigned operational records"
-            actions={
-              <Button
-                label="Refresh desk"
-                variant="outlined"
-                startIcon={<RefreshCw size={14} />}
-                onClick={() => {
-                  refresh()
-                  showToast({ title: 'Desk refreshed', variant: 'info' })
-                }}
-              />
-            }
           />
         }
         toolbar={

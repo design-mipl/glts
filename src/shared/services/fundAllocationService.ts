@@ -25,6 +25,10 @@ import {
   isApplicationVfsSubmissionPending,
 } from '@/shared/utils/applicationProcessingQueueUtils'
 import {
+  generateAllocationBatchId,
+  groupPassengersIntoAllocationBatches,
+} from '@/shared/utils/fundAllocationBatchUtils'
+import {
   resolveVfsPickerServices,
   sumVfsPickerServiceAmounts,
 } from '@/shared/utils/vfsServicePickerUtils'
@@ -48,6 +52,7 @@ let overlayStore = new Map<string, FundAllocationOverlay>(
 function defaultOverlay(): FundAllocationOverlay {
   return {
     allocationStatus: 'pending_allocation',
+    allocationBatchId: '',
     fundRequested: false,
     requestedAt: '',
     totalAmount: 0,
@@ -196,6 +201,7 @@ function toFundAllocationRow(row: OperationalPassengerRow): FundAllocationPassen
     submissionStatus: row.submissionStatus,
     customerSegment: row.customerSegment,
     allocationStatus: overlay.allocationStatus,
+    allocationBatchId: overlay.allocationBatchId?.trim() || '',
     fundRequested: overlay.fundRequested,
     requestedAt: overlay.requestedAt,
     totalAmount: overlay.totalAmount,
@@ -356,6 +362,7 @@ export const fundAllocationService = {
       overlay.selectedServices = input.selectedServices.map(line => ({ ...line }))
       overlay.totalAmount = input.totalAmount
       overlay.allocatedAmount = 0
+      overlay.allocationBatchId = ''
       overlay.cardId = ''
       overlay.fundTransfer = undefined
       overlay.allocatedAt = ''
@@ -370,12 +377,20 @@ export const fundAllocationService = {
     return updated
   },
 
-  allocateFunds(id: string, input: FundAllocationActionInput): FundAllocationPassengerRow | undefined {
+  allocateFunds(
+    id: string,
+    input: FundAllocationActionInput,
+    options?: { allocationBatchId?: string; allocatedAt?: string },
+  ): FundAllocationPassengerRow | undefined {
     const existing = this.getById(id)
     if (!existing) return undefined
 
+    const allocationBatchId = options?.allocationBatchId?.trim() || generateAllocationBatchId()
+    const allocatedAt = options?.allocatedAt?.trim() || nowIso()
+
     const updated = mutate(id, overlay => {
       overlay.allocationStatus = 'allocated'
+      overlay.allocationBatchId = allocationBatchId
       overlay.fundRequested = true
       if (!overlay.requestedAt) overlay.requestedAt = nowIso()
       overlay.selectedServices = input.selectedServices.map(line => ({ ...line }))
@@ -384,7 +399,7 @@ export const fundAllocationService = {
       overlay.cardId =
         input.fundTransfer.transferType === 'card' ? input.fundTransfer.assignedCardId.trim() : ''
       overlay.fundTransfer = { ...input.fundTransfer }
-      overlay.allocatedAt = nowIso()
+      overlay.allocatedAt = allocatedAt
       overlay.allocationNotes =
         input.notes?.trim() || input.fundTransfer.paymentRemark?.trim() || ''
     })
@@ -398,16 +413,24 @@ export const fundAllocationService = {
     ids: string[],
     buildInput: (record: FundAllocationPassengerRow) => FundAllocationActionInput | null,
   ): FundAllocationPassengerRow[] {
+    const allocationBatchId = generateAllocationBatchId()
+    const allocatedAt = nowIso()
     const results: FundAllocationPassengerRow[] = []
     for (const id of ids) {
       const record = this.getById(id)
       if (!record || record.allocationStatus !== 'pending_allocation') continue
       const input = buildInput(record)
       if (!input) continue
-      const updated = this.allocateFunds(id, input)
+      const updated = this.allocateFunds(id, input, { allocationBatchId, allocatedAt })
       if (updated) results.push(updated)
     }
     return results
+  },
+
+  listAllocatedBatches() {
+    return groupPassengersIntoAllocationBatches(
+      this.list().filter(row => row.allocationStatus === 'allocated'),
+    )
   },
 
   resetStoreForDemo() {

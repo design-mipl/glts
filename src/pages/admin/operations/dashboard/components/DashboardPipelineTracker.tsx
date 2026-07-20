@@ -102,35 +102,35 @@ export function DashboardPipelineTracker({
   const colors = usePublicBrandColors()
 
   return (
-    <Box>
-      <ExecutiveSectionHeader
-        title={title}
-        description={subtitle}
-        actionLabel="View pipeline"
-        onAction={onViewPipeline}
-      />
-      <Box sx={{ ...executiveCardLevel2Sx(colors), px: 2, py: 2 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.25,
-            overflowX: 'auto',
-            pb: 0.5,
-            '&::-webkit-scrollbar': { height: 6 },
-            '&::-webkit-scrollbar-thumb': {
-              bgcolor: colors.border,
-              borderRadius: 99,
-            },
-          }}
-        >
-          {stages.map((stage, index) => (
-            <Box key={stage.id} sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-              <StageNode stage={stage} />
-              {index < stages.length - 1 ? <StageConnector /> : null}
-            </Box>
-          ))}
-        </Box>
+    <Box sx={{ ...executiveCardLevel2Sx(colors), p: 2 }}>
+      <Box sx={{ mb: 2 }}>
+        <ExecutiveSectionHeader
+          title={title}
+          description={subtitle}
+          actionLabel="View pipeline"
+          onAction={onViewPipeline}
+        />
+      </Box>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.25,
+          overflowX: 'auto',
+          pb: 0.5,
+          '&::-webkit-scrollbar': { height: 6 },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: colors.border,
+            borderRadius: 99,
+          },
+        }}
+      >
+        {stages.map((stage, index) => (
+          <Box key={stage.id} sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            <StageNode stage={stage} />
+            {index < stages.length - 1 ? <StageConnector /> : null}
+          </Box>
+        ))}
       </Box>
     </Box>
   )

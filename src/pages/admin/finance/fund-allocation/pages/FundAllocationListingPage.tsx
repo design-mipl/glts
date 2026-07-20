@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
-import { RefreshCw, Wallet } from 'lucide-react'
+import { Wallet } from 'lucide-react'
 import { BulkActions, Button, Pagination, type TableState, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
@@ -25,11 +25,16 @@ import {
   hasFundAllocationFiltersActive,
 } from '../components/FundAllocationAdvancedFilters'
 import { FundAllocationDetailDrawer } from '../components/FundAllocationDetailDrawer'
+import { FundAllocationBatchDetailDrawer } from '../components/FundAllocationBatchDetailDrawer'
 import { FundAllocationKpiRow } from '../components/FundAllocationKpiRow'
 import {
   buildFundAllocationTableColumns,
   type FundAllocationAdminAction,
 } from '../components/FundAllocationTableColumns'
+import {
+  buildFundAllocationBatchTableColumns,
+  type FundAllocationBatchAction,
+} from '../components/FundAllocationBatchTableColumns'
 import { FUND_ALLOCATION_LISTING_TABS } from '../config/fundAllocationListingTabs'
 import { useFundAllocationListing } from '../hooks/useFundAllocationListing'
 import {
@@ -44,6 +49,8 @@ import {
 } from '../utils/fundAllocationListingUtils'
 import { computePassengerRequestedBulkAllocationInput, computeRequestedBulkSummary } from '../utils/fundAllocationBulkUtils'
 import { customerSegmentDisplayLabel } from '../config/fundAllocationStatusConfig'
+import { getFundAllocationBatchCellValue } from '@/shared/utils/fundAllocationBatchUtils'
+import type { FundAllocationBatchRow } from '@/shared/types/fundAllocation'
 
 export function FundAllocationListingPage() {
   const theme = useTheme()
@@ -65,13 +72,17 @@ export function FundAllocationListingPage() {
     paginatedRows,
     total,
     selectedPassenger,
+    filterSourceBatches,
+    paginatedBatches,
+    totalBatches,
+    selectedBatch,
     searchValue,
     handleListingTabChange,
     handleSearch,
     clearFilters,
     selectPassenger,
+    selectBatch,
     closeDetail,
-    refresh,
     mutateAndRefresh,
   } = useFundAllocationListing()
 
@@ -193,15 +204,28 @@ export function FundAllocationListingPage() {
     [selectPassenger, showToast],
   )
 
-  const columns = useMemo(
+  const isAllocatedTab = listingTab === 'allocated'
+
+  const handleBatchAction = useCallback(
+    (action: FundAllocationBatchAction, row: FundAllocationBatchRow) => {
+      if (action === 'view_details') {
+        selectBatch(row)
+      }
+    },
+    [selectBatch],
+  )
+
+  const passengerColumns = useMemo(
     () => buildFundAllocationTableColumns({ listingTab, onAction: handleAction }),
     [handleAction, listingTab],
   )
 
-  const toolbarColumns = useMemo(
-    () => columns.filter(col => col.key !== 'actions').map(col => ({ key: col.key, label: col.label })),
-    [columns],
+  const batchColumns = useMemo(
+    () => buildFundAllocationBatchTableColumns({ onAction: handleBatchAction }),
+    [handleBatchAction],
   )
+
+  const columns = isAllocatedTab ? batchColumns : passengerColumns
 
   const bulkActions = useMemo(() => {
     if (listingTab !== 'pending_allocation') return undefined
@@ -214,14 +238,80 @@ export function FundAllocationListingPage() {
     ]
   }, [listingTab, openBulkAllocate])
 
+  const allocatedTable = (
+    <AdminListingTable
+      columns={batchColumns}
+      data={paginatedBatches}
+      filterSourceData={filterSourceBatches}
+      rowKey="id"
+      state={tableState}
+      onStateChange={handleTableStateChange}
+      columnFilters={columnFilters}
+      onColumnFiltersChange={setColumnFilters}
+      getCellValue={getFundAllocationBatchCellValue}
+      onRowClick={selectBatch}
+      stickyHeader
+      emptyTitle={emptyState.title}
+      emptyDescription={emptyState.description}
+    />
+  )
+
+  const pendingTable = (
+    <AdminListingTable
+      columns={passengerColumns}
+      data={paginatedRows}
+      filterSourceData={filterSourceRows}
+      rowKey="id"
+      state={tableState}
+      onStateChange={handleTableStateChange}
+      columnFilters={columnFilters}
+      onColumnFiltersChange={setColumnFilters}
+      getCellValue={getFundAllocationCellValue}
+      onRowClick={selectPassenger}
+      bulkActions={bulkActions}
+      stickyHeader
+      emptyTitle={emptyState.title}
+      emptyDescription={emptyState.description}
+    />
+  )
+
+  const toolbarColumns = useMemo(
+    () => columns.filter(col => col.key !== 'actions').map(col => ({ key: col.key, label: col.label })),
+    [columns],
+  )
+
   const handleExport = useCallback(() => {
-    downloadFundAllocationCsv(filterSourceRows)
+    if (isAllocatedTab) {
+      downloadFundAllocationCsv(filterSourceBatches.flatMap(batch => batch.passengers))
+    } else {
+      downloadFundAllocationCsv(filterSourceRows)
+    }
     showToast({
       title: 'Export started',
       description: 'Your fund allocation export will download shortly.',
       variant: 'success',
     })
-  }, [filterSourceRows, showToast])
+  }, [filterSourceBatches, filterSourceRows, isAllocatedTab, showToast])
+
+  const gridItems = useMemo(() => {
+    if (isAllocatedTab) {
+      return paginatedBatches.map(batch => ({
+        id: batch.id,
+        title: batch.passengerLabel,
+        subtitle: `${batch.country} • ${batch.visaType}`,
+        meta: `${batch.passengerCount} passenger${batch.passengerCount === 1 ? '' : 's'} · ${batch.gltsApplicationId}`,
+        status: 'allocated',
+      }))
+    }
+
+    return paginatedRows.map(row => ({
+      id: row.id,
+      title: row.passengerName,
+      subtitle: `${row.country} • ${row.visaType}`,
+      meta: `${customerSegmentDisplayLabel(row.customerSegment)} · ${row.gltsApplicationId}`,
+      status: row.allocationStatus,
+    }))
+  }, [isAllocatedTab, paginatedBatches, paginatedRows])
 
   const handleAllocate = useCallback(
     (payload: FundAllocationActionPayload) => {
@@ -267,18 +357,6 @@ export function FundAllocationListingPage() {
     [mutateAndRefresh, setTableState, showToast],
   )
 
-  const gridItems = useMemo(
-    () =>
-      paginatedRows.map(row => ({
-        id: row.id,
-        title: row.passengerName,
-        subtitle: `${row.country} • ${row.visaType}`,
-        meta: `${customerSegmentDisplayLabel(row.customerSegment)} · ${row.gltsApplicationId}`,
-        status: row.allocationStatus,
-      })),
-    [paginatedRows],
-  )
-
   const footerBg =
     theme.palette.mode === 'dark'
       ? alpha(theme.palette.common.white, 0.04)
@@ -295,27 +373,17 @@ export function FundAllocationListingPage() {
             onDeselectAll={() => setTableState(state => ({ ...state, selectedRows: [] }))}
           />
         ) : null}
-        <AdminListingTable
-          columns={columns}
-          data={paginatedRows}
-          filterSourceData={filterSourceRows}
-          rowKey="id"
-          state={tableState}
-          onStateChange={handleTableStateChange}
-          columnFilters={columnFilters}
-          onColumnFiltersChange={setColumnFilters}
-          getCellValue={getFundAllocationCellValue}
-          onRowClick={selectPassenger}
-          bulkActions={bulkActions}
-          stickyHeader
-          emptyTitle={emptyState.title}
-          emptyDescription={emptyState.description}
-        />
+        {isAllocatedTab ? allocatedTable : pendingTable}
       </Stack>
     ) : (
       <AdminListingGrid
         items={gridItems}
         onItemClick={id => {
+          if (isAllocatedTab) {
+            const batch = paginatedBatches.find(entry => entry.id === id)
+            if (batch) selectBatch(batch)
+            return
+          }
           const row = paginatedRows.find(entry => entry.id === id)
           if (row) selectPassenger(row)
         }}
@@ -329,18 +397,6 @@ export function FundAllocationListingPage() {
           <AdminListingStickyHeader
             title="Fund allocation"
             description="Passenger-level VFS submission fund allocation across retail, corporate, marine, and B2B agent applications."
-            actions={
-              <Button
-                label="Refresh queue"
-                variant="neutral"
-                size="sm"
-                startIcon={<RefreshCw size={14} />}
-                onClick={() => {
-                  refresh()
-                  showToast({ title: 'Queue refreshed', variant: 'info' })
-                }}
-              />
-            }
           />
         }
         kpis={
@@ -358,7 +414,11 @@ export function FundAllocationListingPage() {
           <AdminListingToolbar
             searchValue={searchValue}
             onSearch={handleSearch}
-            searchPlaceholder="Search passenger, application ID, company, jurisdiction, team, user…"
+            searchPlaceholder={
+              isAllocatedTab
+                ? 'Search allocation, passenger, application ID, company, team, user…'
+                : 'Search passenger, application ID, company, jurisdiction, team, user…'
+            }
             onExport={handleExport}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
@@ -391,7 +451,7 @@ export function FundAllocationListingPage() {
             <Pagination
               page={tableState.page}
               pageSize={tableState.pageSize}
-              total={total}
+              total={isAllocatedTab ? totalBatches : total}
               onPage={page => setTableState(state => ({ ...state, page }))}
               onPageSize={pageSize => setTableState(state => ({ ...state, pageSize, page: 0 }))}
             />
@@ -400,8 +460,14 @@ export function FundAllocationListingPage() {
       />
 
       <FundAllocationDetailDrawer
-        open={Boolean(selectedPassenger)}
+        open={Boolean(selectedPassenger) && !isAllocatedTab}
         record={selectedPassenger ?? null}
+        onClose={closeDetail}
+      />
+
+      <FundAllocationBatchDetailDrawer
+        open={Boolean(selectedBatch) && isAllocatedTab}
+        record={selectedBatch ?? null}
         onClose={closeDetail}
       />
 

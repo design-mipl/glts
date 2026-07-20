@@ -2,6 +2,7 @@ import { Box, Stack, Typography } from '@mui/material'
 import { useMemo } from 'react'
 import dayjs from 'dayjs'
 import { DatePicker, FormField, Input, Select, Textarea } from '@/design-system/UIComponents'
+import { DESTINATION_BANK_ACCOUNT_OPTIONS } from '@/shared/constants/fundSettlementBankAccounts'
 import {
   FUND_TRANSFER_DEFAULT_SOURCE,
   FUND_TRANSFER_TYPE_OPTIONS,
@@ -11,11 +12,7 @@ import {
 import { listCardSelectOptions } from '@/shared/utils/cardMasterOptions'
 import { vfsServicePickerLayout } from '@/shared/utils/vfsServicePickerLayout'
 
-const DESTINATION_BANK_ACCOUNT_OPTIONS = [
-  { value: 'hdfc-ops-4421', label: 'HDFC · Ops Float · ****4421' },
-  { value: 'icici-delhi-1005', label: 'ICICI · Delhi Team · ****1005' },
-  { value: 'sbi-vfs-7788', label: 'SBI · VFS Settlement · ****7788' },
-]
+const DESTINATION_BANK_ACCOUNT_OPTIONS_LIST = [...DESTINATION_BANK_ACCOUNT_OPTIONS]
 
 function parseDateString(value: string | undefined): Date | null {
   if (!value?.trim()) return null
@@ -119,7 +116,7 @@ export function FundAllocationFundTransferSection({
           <Select
             value={value.destinationBankAccount}
             onChange={next => patch({ destinationBankAccount: String(next) })}
-            options={DESTINATION_BANK_ACCOUNT_OPTIONS}
+            options={DESTINATION_BANK_ACCOUNT_OPTIONS_LIST}
             placeholder="Select bank account"
             size="sm"
             fullWidth

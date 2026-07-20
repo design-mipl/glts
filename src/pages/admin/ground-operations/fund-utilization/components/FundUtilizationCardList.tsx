@@ -3,20 +3,16 @@ import dayjs from 'dayjs'
 import { Badge, EmptyState } from '@/design-system/UIComponents'
 import {
   getFundTransferTypeLabel,
-  type FundAllocationPassengerRow,
+  type FundAllocationBatchRow,
 } from '@/shared/types/fundAllocation'
 import { resolveCardLabel } from '@/shared/utils/cardMasterOptions'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
-import {
-  customerSegmentDisplayLabel,
-  fundAllocationStatusBadgeColor,
-  fundAllocationStatusLabel,
-} from '@/pages/admin/finance/fund-allocation/config/fundAllocationStatusConfig'
+import { customerSegmentDisplayLabel } from '@/pages/admin/finance/fund-allocation/config/fundAllocationStatusConfig'
 
 interface FundUtilizationCardListProps {
-  rows: FundAllocationPassengerRow[]
+  batches: FundAllocationBatchRow[]
   selectedId?: string | null
-  onSelect: (row: FundAllocationPassengerRow) => void
+  onSelect: (batch: FundAllocationBatchRow) => void
 }
 
 function formatDisplayDateTime(value: string | undefined): string {
@@ -30,14 +26,14 @@ function formatAmount(value: number | undefined): string {
   return formatInr(value)
 }
 
-function resolveTransferLabel(row: FundAllocationPassengerRow): string {
-  if (row.fundTransfer?.transferType) {
-    return getFundTransferTypeLabel(row.fundTransfer.transferType)
+function resolveTransferLabel(batch: FundAllocationBatchRow): string {
+  if (batch.fundTransfer?.transferType) {
+    if (batch.fundTransfer.transferType === 'card' && batch.fundTransfer.assignedCardId) {
+      return `${getFundTransferTypeLabel(batch.fundTransfer.transferType)} · ${resolveCardLabel(batch.fundTransfer.assignedCardId)}`
+    }
+    return getFundTransferTypeLabel(batch.fundTransfer.transferType)
   }
-  if (row.cardId) {
-    return resolveCardLabel(row.cardId) || row.cardName || row.cardId
-  }
-  return row.cardName || '—'
+  return '—'
 }
 
 function ActionMeta({
@@ -71,22 +67,23 @@ function ActionMeta({
 }
 
 function FundUtilizationCard({
-  row,
+  batch,
   isSelected,
   onSelect,
 }: {
-  row: FundAllocationPassengerRow
+  batch: FundAllocationBatchRow
   isSelected: boolean
-  onSelect: (row: FundAllocationPassengerRow) => void
+  onSelect: (batch: FundAllocationBatchRow) => void
 }) {
-  const services =
-    row.selectedServices.length > 0
-      ? row.selectedServices.map(s => s.serviceName).join(', ')
-      : '—'
+  const services = [
+    ...new Set(
+      batch.passengers.flatMap(passenger => passenger.selectedServices.map(service => service.serviceName)),
+    ),
+  ].join(', ')
 
   return (
     <Box
-      onClick={() => onSelect(row)}
+      onClick={() => onSelect(batch)}
       sx={{
         px: 1.5,
         py: 1.25,
@@ -106,10 +103,10 @@ function FundUtilizationCard({
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
           <Stack spacing={0.25} minWidth={0} flex={1}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 15, lineHeight: 1.3 }}>
-              {row.passengerName}
+              {batch.passengerLabel}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11, lineHeight: 1.4 }}>
-              {row.gltsApplicantId} · {row.passportNo || '—'}
+              {batch.passengerCount} passenger{batch.passengerCount === 1 ? '' : 's'} · {batch.gltsApplicationId}
             </Typography>
           </Stack>
           <Stack
@@ -120,12 +117,12 @@ function FundUtilizationCard({
             justifyContent="flex-end"
             sx={{ flexShrink: 0 }}
           >
+            <Badge label="Allocated" color="success" size="sm" />
             <Badge
-              label={fundAllocationStatusLabel(row.allocationStatus)}
-              color={fundAllocationStatusBadgeColor(row.allocationStatus)}
+              label={customerSegmentDisplayLabel(batch.customerSegment)}
+              color="info"
               size="sm"
             />
-            <Badge label={customerSegmentDisplayLabel(row.customerSegment)} color="info" size="sm" />
           </Stack>
         </Stack>
 
@@ -134,7 +131,7 @@ function FundUtilizationCard({
           noWrap
           sx={{ fontSize: 13, fontWeight: 600, color: 'text.primary', lineHeight: 1.45 }}
         >
-          {[row.country, row.visaType, row.jurisdiction, row.assignedTeam].filter(Boolean).join(' · ')}
+          {[batch.country, batch.visaType, batch.jurisdiction, batch.assignedTeam].filter(Boolean).join(' · ')}
         </Typography>
 
         <Box
@@ -150,14 +147,15 @@ function FundUtilizationCard({
             gap: 1,
           }}
         >
-          <ActionMeta label="Allocated amount" value={formatAmount(row.allocatedAmount)} emphasize />
-          <ActionMeta label="Fund transfer" value={resolveTransferLabel(row)} />
-          <ActionMeta label="Fund holder" value={row.allocatedTo || row.assignedUser || '—'} />
-          <ActionMeta label="Allocated at" value={formatDisplayDateTime(row.allocatedAt)} />
+          <ActionMeta label="Requested total" value={formatAmount(batch.requestedTotal)} />
+          <ActionMeta label="Allocated amount" value={formatAmount(batch.allocatedAmount)} emphasize />
+          <ActionMeta label="Fund transfer" value={resolveTransferLabel(batch)} />
+          <ActionMeta label="Fund holder" value={batch.allocatedTo || batch.assignedUser || '—'} />
+          <ActionMeta label="Allocated at" value={formatDisplayDateTime(batch.allocatedAt)} />
         </Box>
 
         <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11, lineHeight: 1.45 }} noWrap>
-          Batch {row.gltsApplicationId} · {row.companyName} · {services}
+          {batch.companyName} · {services || '—'}
         </Typography>
       </Stack>
     </Box>
@@ -165,16 +163,16 @@ function FundUtilizationCard({
 }
 
 export function FundUtilizationCardList({
-  rows,
+  batches,
   selectedId,
   onSelect,
 }: FundUtilizationCardListProps) {
-  if (rows.length === 0) {
+  if (batches.length === 0) {
     return (
       <Box sx={{ p: 2 }}>
         <EmptyState
           title="No allocated funds"
-          description="Allocated fund records from Finance Fund Allocation will appear here."
+          description="Allocated fund releases from Finance Fund Allocation will appear here."
         />
       </Box>
     )
@@ -182,11 +180,11 @@ export function FundUtilizationCardList({
 
   return (
     <Stack spacing={1.25} sx={{ p: 2 }}>
-      {rows.map(row => (
+      {batches.map(batch => (
         <FundUtilizationCard
-          key={row.id}
-          row={row}
-          isSelected={selectedId === row.id}
+          key={batch.id}
+          batch={batch}
+          isSelected={selectedId === batch.id}
           onSelect={onSelect}
         />
       ))}

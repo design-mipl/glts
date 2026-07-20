@@ -6,6 +6,7 @@ import type {
   FundAllocationQueueFilters,
 } from '@/shared/types/fundAllocation'
 import { getFundTransferTypeLabel } from '@/shared/types/fundAllocation'
+import { groupPassengersIntoAllocationBatches } from '@/shared/utils/fundAllocationBatchUtils'
 import { customerSegmentDisplayLabel } from '../config/fundAllocationStatusConfig'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 
@@ -41,7 +42,7 @@ function parseRowSubmissionDate(value: string): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
-function isSubmissionDateInRange(row: FundAllocationPassengerRow, dateFrom: string, dateTo: string): boolean {
+export function isSubmissionDateInRange(row: FundAllocationPassengerRow, dateFrom: string, dateTo: string): boolean {
   if (!dateFrom && !dateTo) return true
   const rowDate = parseRowSubmissionDate(row.submissionDate)
   if (!rowDate) return false
@@ -253,8 +254,8 @@ export function getFundAllocationTabEmptyState(tab: FundAllocationListingTab): E
         'Passengers appear here after Assignment & Priority requests funds with selected services.',
     },
     allocated: {
-      title: 'No allocated passengers',
-      description: 'Passengers with released VFS submission funds will appear in this tab.',
+      title: 'No allocated fund releases',
+      description: 'Completed fund allocations appear here as one listing per release (single or bulk).',
     },
   }
   return map[tab]
@@ -265,11 +266,12 @@ export function computeFundAllocationKpis(rows: FundAllocationPassengerRow[]) {
     row => row.allocationStatus === 'pending_allocation' && row.fundRequested && row.totalAmount > 0,
   )
   const allocated = rows.filter(row => row.allocationStatus === 'allocated')
+  const allocatedBatches = groupPassengersIntoAllocationBatches(allocated)
 
   return {
     totalPassengers: rows.length,
     pendingAllocation: pending.length,
-    allocatedPassengers: allocated.length,
+    allocatedPassengers: allocatedBatches.length,
     pendingAmount: pending.reduce((sum, row) => sum + row.totalAmount, 0),
     allocatedAmount: allocated.reduce((sum, row) => sum + row.allocatedAmount, 0),
   }

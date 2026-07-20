@@ -39,7 +39,7 @@ function resolveDefaultTab(tabs: RoleDashboardTab[], defaultTab?: string): strin
  * tab bar, and one tab panel at a time (reduces scroll clutter).
  */
 export function RoleDashboardShell({
-  eyebrow = 'Dashboard',
+  eyebrow,
   title,
   subtitle,
   filters,

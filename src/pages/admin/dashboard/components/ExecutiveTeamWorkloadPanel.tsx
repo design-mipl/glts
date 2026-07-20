@@ -2,6 +2,7 @@ import { Box, LinearProgress, Stack, Typography } from '@mui/material'
 import { ArrowRight } from 'lucide-react'
 import { Badge, Button } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { ExecutiveSectionHeader } from './ExecutiveSectionHeader'
 import { executiveCardLevel2Sx } from './executiveDashboardTokens'
 
 export type WorkloadDisplayStatus = 'balanced' | 'approaching' | 'overloaded'
@@ -107,14 +108,35 @@ function TeamWorkloadRow({
 
 export interface ExecutiveTeamWorkloadPanelProps {
   items: ExecutiveTeamWorkloadItem[]
+  title?: string
+  description?: string
+  actionLabel?: string
+  onAction?: () => void
   onViewTeam?: (item: ExecutiveTeamWorkloadItem) => void
 }
 
-export function ExecutiveTeamWorkloadPanel({ items, onViewTeam }: ExecutiveTeamWorkloadPanelProps) {
+export function ExecutiveTeamWorkloadPanel({
+  items,
+  title,
+  description,
+  actionLabel,
+  onAction,
+  onViewTeam,
+}: ExecutiveTeamWorkloadPanelProps) {
   const colors = usePublicBrandColors()
 
   return (
     <Box sx={{ ...executiveCardLevel2Sx(colors), p: 2 }}>
+      {title ? (
+        <Box sx={{ mb: 2 }}>
+          <ExecutiveSectionHeader
+            title={title}
+            description={description}
+            actionLabel={actionLabel}
+            onAction={onAction}
+          />
+        </Box>
+      ) : null}
       <Stack spacing={1.25}>
         {items.length === 0 ? (
           <Typography sx={{ fontSize: 13, color: colors.textMuted, py: 2, textAlign: 'center' }}>

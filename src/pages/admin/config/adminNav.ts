@@ -65,25 +65,6 @@ export const adminNav: NavConfig[] = [
     ],
   },
   {
-    type: 'divider',
-  },
-  {
-    type: 'group',
-    label: 'Ground operations',
-    icon: createElement(Activity, iconProps),
-    children: [
-      { type: 'item', label: 'Operations Desk', href: '/admin/ground-operations/case-handling' },
-      { type: 'item', label: 'Tracking & logistics', href: '/admin/ground-operations/logistics' },
-      { type: 'item', label: 'Fund utilization', href: '/admin/ground-operations/funds' },
-    ],
-  },
-  {
-    type: 'item',
-    label: 'Vendor Management',
-    icon: createElement(Truck, iconProps),
-    href: '/admin/vendor-management/vendors',
-  },
-  {
     type: 'group',
     label: 'Finance Operations',
     icon: createElement(HandCoins, iconProps),
@@ -96,9 +77,25 @@ export const adminNav: NavConfig[] = [
   },
   {
     type: 'item',
+    label: 'Vendor Management',
+    icon: createElement(Truck, iconProps),
+    href: '/admin/vendor-management/vendors',
+  },
+  {
+    type: 'item',
     label: 'Support tickets',
     icon: createElement(Headphones, iconProps),
     href: '/admin/support/tickets',
+  },
+  {
+    type: 'group',
+    label: 'Ground operations',
+    icon: createElement(Activity, iconProps),
+    children: [
+      { type: 'item', label: 'Operations Desk', href: '/admin/ground-operations/case-handling' },
+      { type: 'item', label: 'Tracking & logistics', href: '/admin/ground-operations/logistics' },
+      { type: 'item', label: 'Fund utilization', href: '/admin/ground-operations/funds' },
+    ],
   },
   {
     type: 'divider',

@@ -13,15 +13,6 @@ export function DocumentationDashboardPage() {
   const dashboard = useDocumentationDashboard()
   const isLoading = dashboard.status === 'loading'
 
-  const processingBadge =
-    dashboard.formsToFill.length +
-    dashboard.feesToPay.length +
-    dashboard.appointmentsToBook.length
-  const qcBadge = dashboard.reviewQcQueue.length + dashboard.correctionRequests.length
-  const submissionBadge =
-    dashboard.readyForSubmission.length + dashboard.submissionPending.length
-  const activityBadge = dashboard.criticalAlerts.length
-
   return (
     <RoleDashboardShell
       title="Documentation dashboard"
@@ -41,7 +32,6 @@ export function DocumentationDashboardPage() {
         {
           id: 'processing',
           label: 'Processing',
-          badge: processingBadge,
           content: (
             <>
               <MyApplicationsSection
@@ -64,7 +54,6 @@ export function DocumentationDashboardPage() {
         {
           id: 'qc',
           label: 'QC',
-          badge: qcBadge,
           content: (
             <QcCorrectionSection
               reviewQcQueue={dashboard.reviewQcQueue}
@@ -78,7 +67,6 @@ export function DocumentationDashboardPage() {
         {
           id: 'submission',
           label: 'Submission',
-          badge: submissionBadge,
           content: (
             <SubmissionManagementSection
               readyForSubmission={dashboard.readyForSubmission}
@@ -92,7 +80,6 @@ export function DocumentationDashboardPage() {
         {
           id: 'activity',
           label: 'Activity',
-          badge: activityBadge,
           content: (
             <>
               <CriticalAlertsActivitySection

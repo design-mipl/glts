@@ -80,14 +80,16 @@ export function DashboardSectionTable<T extends object>({
   }
 
   return (
-    <Box>
-      <ExecutiveSectionHeader
-        title={title}
-        description={subtitle}
-        actionLabel={actionLabel}
-        onAction={onViewAll}
-      />
-      <Box sx={{ ...executiveCardLevel2Sx(colors), overflow: 'hidden' }}>{table}</Box>
+    <Box sx={{ ...executiveCardLevel2Sx(colors), overflow: 'hidden' }}>
+      <Box sx={{ px: 2, pt: 2, pb: 1.5 }}>
+        <ExecutiveSectionHeader
+          title={title}
+          description={subtitle}
+          actionLabel={actionLabel}
+          onAction={onViewAll}
+        />
+      </Box>
+      {table}
     </Box>
   )
 }
