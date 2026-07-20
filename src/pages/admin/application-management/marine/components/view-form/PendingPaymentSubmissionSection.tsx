@@ -1,6 +1,6 @@
 import { Box, Divider, Stack, Typography } from '@mui/material'
 import dayjs from 'dayjs'
-import { Plus, Upload } from 'lucide-react'
+import { Plus, Upload, Pencil } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Badge,
@@ -8,7 +8,6 @@ import {
   DatePicker,
   FormField,
   Input,
-  MultiSelect,
   Select,
   Textarea,
   useToast,
@@ -39,13 +38,15 @@ import {
 import {
   createEmptyPaymentEntryDraft,
   formatPaymentAmountInr,
+  getAvailableServicesForPaymentDraft,
   getRemainingVfsServices,
+  paymentEntryToDraft,
   resolvePaymentEntryServices,
   sumServiceAmounts,
   syncLegacyPaymentFieldsFromEntries,
   validatePaymentEntryDraft,
 } from '../../utils/pendingPaymentUtils'
-import { ViewFormVfsChargesServicesSection } from './ViewFormVfsChargesServicesSection'
+import { PaymentEntryServicesSection } from './PaymentEntryServicesSection'
 
 function parseDateString(value: string | undefined): Date | null {
   if (!value?.trim()) return null
@@ -145,6 +146,7 @@ export function PendingPaymentSubmissionSection({
 }: PendingPaymentSubmissionSectionProps) {
   const { showToast } = useToast()
   const [addingPayment, setAddingPayment] = useState(false)
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null)
   const [draft, setDraft] = useState(() => createEmptyPaymentEntryDraft())
 
   const applicationTrackingUrl = resolveApplicationTrackingUrl({ countryName: country })
@@ -166,18 +168,19 @@ export function PendingPaymentSubmissionSection({
     [submission.vfsServiceCharges, submission.paymentEntries],
   )
 
-  const remainingServiceIds = useMemo(
-    () => new Set(remainingServices.map(line => line.id)),
-    [remainingServices],
+  const draftAvailableServices = useMemo(
+    () =>
+      getAvailableServicesForPaymentDraft(
+        submission.vfsServiceCharges ?? [],
+        submission.paymentEntries ?? [],
+        editingPaymentId ?? undefined,
+      ),
+    [editingPaymentId, submission.paymentEntries, submission.vfsServiceCharges],
   )
 
-  const serviceOptions = useMemo(
-    () =>
-      remainingServices.map(line => ({
-        value: line.id,
-        label: `${line.serviceName} · ${formatPaymentAmountInr(line.amount)}`,
-      })),
-    [remainingServices],
+  const allowedServiceIds = useMemo(
+    () => new Set(draftAvailableServices.map(line => line.id)),
+    [draftAvailableServices],
   )
 
   useEffect(() => {
@@ -204,6 +207,19 @@ export function PendingPaymentSubmissionSection({
   const resetDraft = () => {
     setDraft(createEmptyPaymentEntryDraft())
     setAddingPayment(false)
+    setEditingPaymentId(null)
+  }
+
+  const startAddPayment = () => {
+    setDraft(createEmptyPaymentEntryDraft())
+    setEditingPaymentId(null)
+    setAddingPayment(true)
+  }
+
+  const startEditPayment = (entry: FormAssistPaymentEntry) => {
+    setDraft(paymentEntryToDraft(entry))
+    setAddingPayment(false)
+    setEditingPaymentId(entry.id)
   }
 
   const commitPaymentEntries = (paymentEntries: FormAssistPaymentEntry[]) => {
@@ -223,11 +239,11 @@ export function PendingPaymentSubmissionSection({
       paymentReferenceNumber: draft.paymentReferenceNumber,
       amountPaid: draft.amountPaid,
       paymentReceiptFileName: draft.paymentReceiptFileName,
-      remainingServiceIds,
+      allowedServiceIds,
     })
     if (errors.length > 0) {
       showToast({
-        title: 'Cannot save payment',
+        title: editingPaymentId ? 'Cannot update payment' : 'Cannot save payment',
         description: errors.join(' · '),
         variant: 'error',
       })
@@ -235,6 +251,40 @@ export function PendingPaymentSubmissionSection({
     }
 
     const user = adminPortalUserService.getById(draft.paidByUserId)
+    const paymentEntries = submission.paymentEntries ?? []
+
+    if (editingPaymentId) {
+      const existing = paymentEntries.find(entry => entry.id === editingPaymentId)
+      if (!existing) {
+        resetDraft()
+        return
+      }
+
+      const updated: FormAssistPaymentEntry = {
+        ...existing,
+        paidByUserId: draft.paidByUserId,
+        paidByUserName: user?.fullName ?? draft.paidByUserName,
+        serviceIds: [...draft.serviceIds],
+        paymentDate: draft.paymentDate,
+        paymentMode: draft.paymentMode,
+        paymentCardId: draft.paymentMode === 'card' ? draft.paymentCardId : '',
+        paymentReferenceNumber: draft.paymentReferenceNumber,
+        amountPaid: draft.amountPaid,
+        receiptStatus: draft.receiptStatus,
+        paymentRemarks: draft.paymentRemarks,
+        paymentReceiptFileName: draft.paymentReceiptFileName,
+      }
+
+      commitPaymentEntries(paymentEntries.map(entry => (entry.id === editingPaymentId ? updated : entry)))
+      showToast({
+        title: 'Payment updated',
+        description: `${updated.paidByUserName} · ${formatPaymentAmountInr(updated.amountPaid)}`,
+        variant: 'success',
+      })
+      resetDraft()
+      return
+    }
+
     const entry: FormAssistPaymentEntry = {
       id: `payment-entry-${Date.now()}`,
       paidByUserId: draft.paidByUserId,
@@ -262,6 +312,7 @@ export function PendingPaymentSubmissionSection({
   }
 
   const showCardType = draft.paymentMode === 'card'
+  const isPaymentFormOpen = addingPayment || editingPaymentId !== null
 
   return (
     <Stack spacing={2}>
@@ -295,9 +346,8 @@ export function PendingPaymentSubmissionSection({
         ) : null}
         {readOnly ? (
           <>
-            <ReadOnlyValueRow label="Online Submitted By" value={submission.submittedBy} />
             <ReadOnlyValueRow
-              label="VFS Submission Date"
+              label="Physical Submission Date"
               value={formatDisplayDate(submission.vfsSubmissionDate)}
             />
             <ReadOnlyValueRow
@@ -307,20 +357,11 @@ export function PendingPaymentSubmissionSection({
           </>
         ) : (
           <>
-            <FormField label="Online Submitted By" required>
-              <Input
-                value={submission.submittedBy}
-                onChange={v => onChange({ submittedBy: String(v) })}
-                placeholder="Enter officer or team name"
-                size="sm"
-                fullWidth
-              />
-            </FormField>
-            <FormField label="VFS Submission Date">
+            <FormField label="Physical Submission Date">
               <DatePicker
                 value={parseDateString(submission.vfsSubmissionDate)}
                 onChange={date => onChange({ vfsSubmissionDate: formatDateForStorage(date) })}
-                placeholder="Select VFS submission date"
+                placeholder="Select physical submission date"
                 size="sm"
                 fullWidth
               />
@@ -340,203 +381,77 @@ export function PendingPaymentSubmissionSection({
         )}
       </AdminOverlayFormSection>
 
-      <ViewFormVfsChargesServicesSection
-        country={country}
-        visaType={visaType}
-        countryId={countryId}
-        visaOfferingId={visaOfferingId}
-        serviceCharges={submission.vfsServiceCharges ?? []}
-        onChange={vfsServiceCharges => onChange({ vfsServiceCharges })}
-        readOnly={readOnly}
-      />
-
       <AdminOverlayFormSection
         title="Payment entries"
         columns={1}
         importance="secondary"
         headerAction={
-          readOnly || addingPayment || remainingServices.length === 0 ? undefined : (
+          readOnly || isPaymentFormOpen || remainingServices.length === 0 ? undefined : (
             <Button
               label="Record payment"
               size="sm"
               startIcon={<Plus size={14} />}
-              onClick={() => setAddingPayment(true)}
+              onClick={startAddPayment}
             />
           )
         }
       >
         <Stack spacing={1.5} sx={{ width: '100%' }}>
-          {(submission.paymentEntries ?? []).length === 0 && !addingPayment ? (
+          {(submission.paymentEntries ?? []).length === 0 && !isPaymentFormOpen ? (
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13, py: 1 }}>
               No payments recorded yet. Record a payment and select unpaid VFS services.
             </Typography>
           ) : null}
 
-          {(submission.paymentEntries ?? []).map((entry, index) => (
-            <PaymentEntryCard
-              key={entry.id}
-              index={index + 1}
-              entry={entry}
-              services={resolvePaymentEntryServices(submission.vfsServiceCharges ?? [], entry)}
-            />
-          ))}
+          {(submission.paymentEntries ?? []).map((entry, index) =>
+            editingPaymentId === entry.id && !readOnly ? (
+              <PaymentEntryEditor
+                key={entry.id}
+                title={`Edit payment ${index + 1}`}
+                draft={draft}
+                catalog={submission.vfsServiceCharges ?? []}
+                availableServices={draftAvailableServices}
+                allowedServiceIds={allowedServiceIds}
+                userOptions={userOptions}
+                cardTypeOptions={cardTypeOptions}
+                showCardType={showCardType}
+                onPatch={patchDraft}
+                onCancel={resetDraft}
+                onSave={handleSavePayment}
+                saveLabel="Update payment"
+              />
+            ) : (
+              <PaymentEntryCard
+                key={entry.id}
+                index={index + 1}
+                entry={entry}
+                services={resolvePaymentEntryServices(submission.vfsServiceCharges ?? [], entry)}
+                onEdit={readOnly || isPaymentFormOpen ? undefined : () => startEditPayment(entry)}
+              />
+            ),
+          )}
 
-          {!readOnly && remainingServices.length === 0 && (submission.vfsServiceCharges ?? []).length > 0 ? (
+          {!readOnly && remainingServices.length === 0 && (submission.vfsServiceCharges ?? []).length > 0 && !isPaymentFormOpen ? (
             <Typography variant="caption" color="success.main" sx={{ fontSize: 12 }}>
-              All catalog services have been paid.
+              All VFS services have been paid.
             </Typography>
           ) : null}
 
           {addingPayment && !readOnly ? (
-            <Stack
-              spacing={2}
-              sx={{
-                p: 1.5,
-                borderRadius: 1.5,
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-              }}
-            >
-              <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: 13 }}>
-                New payment
-              </Typography>
-              <Divider />
-
-              <FormField label="VFS Charges & Services" required>
-                <MultiSelect
-                  value={draft.serviceIds}
-                  onChange={values =>
-                    patchDraft({
-                      serviceIds: values.map(String).filter(id => remainingServiceIds.has(id)),
-                    })
-                  }
-                  options={serviceOptions}
-                  placeholder="Select unpaid services"
-                  size="sm"
-                  fullWidth
-                  clearable
-                />
-              </FormField>
-
-              <AdminOverlayFormSection title="Payment details" columns={2} importance="secondary">
-                <FormField label="Payment done by" required>
-                  <Select
-                    value={draft.paidByUserId}
-                    onChange={v => {
-                      const paidByUserId = String(v)
-                      const user = adminPortalUserService.getById(paidByUserId)
-                      patchDraft({
-                        paidByUserId,
-                        paidByUserName: user?.fullName ?? '',
-                      })
-                    }}
-                    options={userOptions}
-                    placeholder="Select user"
-                    size="sm"
-                    fullWidth
-                  />
-                </FormField>
-                <FormField label="Payment date" required>
-                  <DatePicker
-                    value={parseDateString(draft.paymentDate)}
-                    onChange={date => patchDraft({ paymentDate: formatDateForStorage(date) })}
-                    placeholder="Select payment date"
-                    size="sm"
-                    fullWidth
-                  />
-                </FormField>
-                <FormField label="Payment mode" required>
-                  <Select
-                    value={draft.paymentMode}
-                    onChange={v => {
-                      const paymentMode = String(v) as FormAssistPaymentMode
-                      patchDraft({
-                        paymentMode,
-                        ...(paymentMode !== 'card' ? { paymentCardId: '' } : {}),
-                      })
-                    }}
-                    options={PAYMENT_MODE_OPTIONS}
-                    placeholder="Select payment mode"
-                    size="sm"
-                    fullWidth
-                  />
-                </FormField>
-                {showCardType ? (
-                  <FormField label="Payment card" required>
-                    <Select
-                      value={draft.paymentCardId}
-                      onChange={v => patchDraft({ paymentCardId: String(v) })}
-                      options={cardTypeOptions}
-                      placeholder="Select card from card master"
-                      size="sm"
-                      fullWidth
-                      clearable
-                    />
-                  </FormField>
-                ) : null}
-                <FormField label="Payment Reference / CC Avenue Ref. No." required>
-                  <Input
-                    value={draft.paymentReferenceNumber}
-                    onChange={v => patchDraft({ paymentReferenceNumber: String(v) })}
-                    placeholder="e.g. TXN-2026-88421"
-                    size="sm"
-                    fullWidth
-                  />
-                </FormField>
-                <FormField label="Amount paid" required>
-                  <Input
-                    type="number"
-                    value={draft.amountPaid}
-                    onChange={v => patchDraft({ amountPaid: String(v) })}
-                    size="sm"
-                    fullWidth
-                    placeholder="0.00"
-                  />
-                </FormField>
-                <FormField label="Receipt status" required>
-                  <Select
-                    value={draft.receiptStatus}
-                    onChange={v =>
-                      patchDraft({ receiptStatus: String(v) as FormAssistReceiptStatus })
-                    }
-                    options={RECEIPT_STATUS_OPTIONS}
-                    placeholder="Select receipt status"
-                    size="sm"
-                    fullWidth
-                  />
-                </FormField>
-                <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
-                  <FormField label="Payment remarks">
-                    <Textarea
-                      value={draft.paymentRemarks}
-                      onChange={v => patchDraft({ paymentRemarks: String(v) })}
-                      rows={2}
-                      fullWidth
-                      placeholder="Optional notes about payment or receipt"
-                    />
-                  </FormField>
-                </Box>
-              </AdminOverlayFormSection>
-
-              <AdminOverlayFormSection title="Document uploads" columns={1} importance="secondary">
-                <FileUploadRow
-                  label="Payment Receipt"
-                  fileName={draft.paymentReceiptFileName}
-                  required
-                  onPick={file => patchDraft({ paymentReceiptFileName: file.name })}
-                />
-              </AdminOverlayFormSection>
-
-              <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
-                <Button variant="outlined" onClick={resetDraft}>
-                  Cancel
-                </Button>
-                <Button variant="contained" onClick={handleSavePayment}>
-                  Save payment
-                </Button>
-              </Stack>
-            </Stack>
+            <PaymentEntryEditor
+              title="New payment"
+              draft={draft}
+              catalog={submission.vfsServiceCharges ?? []}
+              availableServices={draftAvailableServices}
+              allowedServiceIds={allowedServiceIds}
+              userOptions={userOptions}
+              cardTypeOptions={cardTypeOptions}
+              showCardType={showCardType}
+              onPatch={patchDraft}
+              onCancel={resetDraft}
+              onSave={handleSavePayment}
+              saveLabel="Save payment"
+            />
           ) : null}
         </Stack>
       </AdminOverlayFormSection>
@@ -566,14 +481,188 @@ function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {
   )
 }
 
+function PaymentEntryEditor({
+  title,
+  draft,
+  catalog,
+  availableServices,
+  allowedServiceIds,
+  userOptions,
+  cardTypeOptions,
+  showCardType,
+  onPatch,
+  onCancel,
+  onSave,
+  saveLabel,
+}: {
+  title: string
+  draft: ReturnType<typeof createEmptyPaymentEntryDraft>
+  catalog: FormAssistVfsServiceChargeLine[]
+  availableServices: FormAssistVfsServiceChargeLine[]
+  allowedServiceIds: Set<string>
+  userOptions: Array<{ value: string; label: string }>
+  cardTypeOptions: Array<{ value: string; label: string }>
+  showCardType: boolean
+  onPatch: (patch: Partial<ReturnType<typeof createEmptyPaymentEntryDraft>>) => void
+  onCancel: () => void
+  onSave: () => void
+  saveLabel: string
+}) {
+  return (
+    <Stack
+      spacing={2}
+      sx={{
+        p: 1.5,
+        borderRadius: 1.5,
+        border: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: 13 }}>
+        {title}
+      </Typography>
+      <Divider />
+
+      <PaymentEntryServicesSection
+        catalog={catalog}
+        selectedServiceIds={draft.serviceIds}
+        availableServices={availableServices}
+        onChange={serviceIds =>
+          onPatch({
+            serviceIds: serviceIds.filter(id => allowedServiceIds.has(id)),
+          })
+        }
+      />
+
+      <AdminOverlayFormSection title="Payment details" columns={2} importance="secondary">
+        <FormField label="Payment done by" required>
+          <Select
+            value={draft.paidByUserId}
+            onChange={v => {
+              const paidByUserId = String(v)
+              const user = adminPortalUserService.getById(paidByUserId)
+              onPatch({
+                paidByUserId,
+                paidByUserName: user?.fullName ?? '',
+              })
+            }}
+            options={userOptions}
+            placeholder="Select user"
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        <FormField label="Payment date" required>
+          <DatePicker
+            value={parseDateString(draft.paymentDate)}
+            onChange={date => onPatch({ paymentDate: formatDateForStorage(date) })}
+            placeholder="Select payment date"
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        <FormField label="Payment mode" required>
+          <Select
+            value={draft.paymentMode}
+            onChange={v => {
+              const paymentMode = String(v) as FormAssistPaymentMode
+              onPatch({
+                paymentMode,
+                ...(paymentMode !== 'card' ? { paymentCardId: '' } : {}),
+              })
+            }}
+            options={PAYMENT_MODE_OPTIONS}
+            placeholder="Select payment mode"
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        {showCardType ? (
+          <FormField label="Payment card" required>
+            <Select
+              value={draft.paymentCardId}
+              onChange={v => onPatch({ paymentCardId: String(v) })}
+              options={cardTypeOptions}
+              placeholder="Select card from card master"
+              size="sm"
+              fullWidth
+              clearable
+            />
+          </FormField>
+        ) : null}
+        <FormField label="Payment Reference / CC Avenue Ref. No." required>
+          <Input
+            value={draft.paymentReferenceNumber}
+            onChange={v => onPatch({ paymentReferenceNumber: String(v) })}
+            placeholder="e.g. TXN-2026-88421"
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        <FormField label="Amount paid" required>
+          <Input
+            type="number"
+            value={draft.amountPaid}
+            onChange={v => onPatch({ amountPaid: String(v) })}
+            size="sm"
+            fullWidth
+            placeholder="0.00"
+          />
+        </FormField>
+        <FormField label="Receipt status" required>
+          <Select
+            value={draft.receiptStatus}
+            onChange={v => onPatch({ receiptStatus: String(v) as FormAssistReceiptStatus })}
+            options={RECEIPT_STATUS_OPTIONS}
+            placeholder="Select receipt status"
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
+          <FormField label="Payment remarks">
+            <Textarea
+              value={draft.paymentRemarks}
+              onChange={v => onPatch({ paymentRemarks: String(v) })}
+              rows={2}
+              fullWidth
+              placeholder="Optional notes about payment or receipt"
+            />
+          </FormField>
+        </Box>
+      </AdminOverlayFormSection>
+
+      <AdminOverlayFormSection title="Document uploads" columns={1} importance="secondary">
+        <FileUploadRow
+          label="Payment Receipt"
+          fileName={draft.paymentReceiptFileName}
+          onPick={file => onPatch({ paymentReceiptFileName: file.name })}
+        />
+      </AdminOverlayFormSection>
+
+      <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
+        <Button variant="outlined" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button variant="contained" onClick={onSave}>
+          {saveLabel}
+        </Button>
+      </Stack>
+    </Stack>
+  )
+}
+
 function PaymentEntryCard({
   index,
   entry,
   services,
+  onEdit,
 }: {
   index: number
   entry: FormAssistPaymentEntry
   services: FormAssistVfsServiceChargeLine[]
+  onEdit?: () => void
 }) {
   const showCard = entry.paymentMode === 'card'
   return (
@@ -603,11 +692,22 @@ function PaymentEntryCard({
             {formatPaymentAmountInr(entry.amountPaid)}
           </Typography>
         </Stack>
-        <Badge
-          label={labelForOption(RECEIPT_STATUS_OPTIONS, entry.receiptStatus)}
-          color={entry.receiptStatus === 'received' ? 'success' : 'neutral'}
-          size="sm"
-        />
+        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+          <Badge
+            label={labelForOption(RECEIPT_STATUS_OPTIONS, entry.receiptStatus)}
+            color={entry.receiptStatus === 'received' ? 'success' : 'neutral'}
+            size="sm"
+          />
+          {onEdit ? (
+            <Button
+              label="Edit"
+              size="sm"
+              variant="outlined"
+              startIcon={<Pencil size={14} />}
+              onClick={onEdit}
+            />
+          ) : null}
+        </Stack>
       </Stack>
 
       <Stack spacing={0.5}>

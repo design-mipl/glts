@@ -22,6 +22,22 @@ export function getRemainingVfsServices(
   return catalog.filter(line => !paid.has(line.id))
 }
 
+/** Unpaid catalog lines plus services already on the entry being edited. */
+export function getAvailableServicesForPaymentDraft(
+  catalog: FormAssistVfsServiceChargeLine[],
+  entries: FormAssistPaymentEntry[],
+  editingEntryId?: string,
+): FormAssistVfsServiceChargeLine[] {
+  const paid = getPaidServiceIds(entries)
+  if (editingEntryId) {
+    const editingEntry = entries.find(entry => entry.id === editingEntryId)
+    for (const id of editingEntry?.serviceIds ?? []) {
+      paid.delete(id)
+    }
+  }
+  return catalog.filter(line => !paid.has(line.id))
+}
+
 export function sumServiceAmounts(
   catalog: FormAssistVfsServiceChargeLine[],
   serviceIds: string[],
@@ -49,13 +65,13 @@ export function validatePaymentEntryDraft(input: {
   paymentReferenceNumber: string
   amountPaid: string
   paymentReceiptFileName: string
-  remainingServiceIds: Set<string>
+  allowedServiceIds: Set<string>
 }): string[] {
   const errors: string[] = []
   if (!input.paidByUserId.trim()) errors.push('Payment done by is required')
   if (input.serviceIds.length === 0) errors.push('Select at least one service')
   for (const id of input.serviceIds) {
-    if (!input.remainingServiceIds.has(id)) {
+    if (!input.allowedServiceIds.has(id)) {
       errors.push('One or more selected services are already paid')
       break
     }
@@ -68,7 +84,6 @@ export function validatePaymentEntryDraft(input: {
   if (input.paymentMode === 'card' && !input.paymentCardId.trim()) {
     errors.push('Payment card is required for card payments')
   }
-  if (!input.paymentReceiptFileName.trim()) errors.push('Payment receipt is required')
   return errors
 }
 
@@ -88,6 +103,24 @@ export function createEmptyPaymentEntryDraft(): Omit<
     receiptStatus: 'awaited',
     paymentRemarks: '',
     paymentReceiptFileName: '',
+  }
+}
+
+export function paymentEntryToDraft(
+  entry: FormAssistPaymentEntry,
+): Omit<FormAssistPaymentEntry, 'id' | 'createdAt' | 'createdByUserId'> {
+  return {
+    paidByUserId: entry.paidByUserId,
+    paidByUserName: entry.paidByUserName,
+    serviceIds: [...entry.serviceIds],
+    paymentDate: entry.paymentDate,
+    paymentMode: entry.paymentMode,
+    paymentCardId: entry.paymentCardId,
+    paymentReferenceNumber: entry.paymentReferenceNumber,
+    amountPaid: entry.amountPaid,
+    receiptStatus: entry.receiptStatus,
+    paymentRemarks: entry.paymentRemarks,
+    paymentReceiptFileName: entry.paymentReceiptFileName,
   }
 }
 

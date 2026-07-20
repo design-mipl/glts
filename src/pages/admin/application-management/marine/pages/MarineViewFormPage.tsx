@@ -557,7 +557,6 @@ export function MarineViewFormPage() {
           multiTraveler={rows.length > 1}
           readOnly={readOnly}
           onChange={updateSubmission}
-          onSaveDraft={handleSaveDraft}
           onBack={() => navigate(listingPath)}
           headerSlot={
             overview ? (

@@ -23,7 +23,6 @@ export interface PendingPaymentWorkspaceContentProps {
   readOnly?: boolean
   headerSlot?: ReactNode
   onChange: (patch: Partial<FormAssistSubmissionDraft>) => void
-  onSaveDraft: () => void
   onBack: () => void
 }
 
@@ -41,7 +40,6 @@ export function PendingPaymentWorkspaceContent({
   readOnly = false,
   headerSlot,
   onChange,
-  onSaveDraft,
   onBack,
 }: PendingPaymentWorkspaceContentProps) {
   return (
@@ -81,11 +79,6 @@ export function PendingPaymentWorkspaceContent({
             <Button variant="outlined" onClick={onBack}>
               Back to listing
             </Button>
-            {!readOnly ? (
-              <Button variant="contained" onClick={onSaveDraft}>
-                Save draft
-              </Button>
-            ) : null}
           </Stack>
         </Stack>
       </BaseCard>
