@@ -9,7 +9,6 @@ export type InvoiceType =
   | 'additional_expense'
   | 'final_settlement'
   | 'credit_note'
-  | 'debit_note'
 
 export type InvoiceStatus =
   | 'draft'
@@ -136,6 +135,8 @@ export interface Invoice {
   lastUpdated: string
   createdAt: string
   sourceInvoiceId?: string
+  /** ISO date (YYYY-MM-DD) when GST was filed — drives correction actions. */
+  gstFiledAt?: string
   sharedAt?: string
   sharedToEmail?: string
   activities: InvoiceActivity[]
@@ -206,9 +207,14 @@ export interface RecordPaymentPayload {
   tdsAmount?: number
 }
 
+export type CreditNoteMode = 'full' | 'partial' | 'line'
+
 export interface CreditNoteAdjustment {
-  mode: 'partial' | 'full'
+  mode: CreditNoteMode
+  /** Required for `line` mode; optional for `partial` (amount-based). */
   lineItemIds?: string[]
+  /** Optional absolute credit amount for `partial` mode (pre-GST line total basis). */
+  partialAmount?: number
   reason: string
 }
 

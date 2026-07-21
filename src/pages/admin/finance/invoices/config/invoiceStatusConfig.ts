@@ -9,7 +9,6 @@ export const invoiceTypeLabel: Record<InvoiceType, string> = {
   additional_expense: 'Additional Expense Invoice',
   final_settlement: 'Final Settlement Invoice',
   credit_note: 'Credit Note',
-  debit_note: 'Debit Note',
 }
 
 export const invoiceTypeColor: Record<InvoiceType, BadgeColor> = {
@@ -19,7 +18,6 @@ export const invoiceTypeColor: Record<InvoiceType, BadgeColor> = {
   additional_expense: 'error',
   final_settlement: 'primary',
   credit_note: 'secondary',
-  debit_note: 'warning',
 }
 
 export const invoiceStatusLabel: Record<InvoiceStatus, string> = {
@@ -77,7 +75,7 @@ export function paymentStatusBadgeColor(status: PaymentStatus): BadgeColor {
 }
 
 export const INVOICE_TYPE_OPTIONS = Object.entries(invoiceTypeLabel)
-  .filter(([value]) => value !== 'credit_note' && value !== 'debit_note')
+  .filter(([value]) => value !== 'credit_note')
   .map(([value, label]) => ({ value, label }))
 
 export const INVOICE_STATUS_OPTIONS = Object.entries(invoiceStatusLabel).map(([value, label]) => ({

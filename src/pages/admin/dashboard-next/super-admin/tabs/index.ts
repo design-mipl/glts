@@ -1,0 +1,6 @@
+export { ExecutiveTab } from './ExecutiveTab'
+export { OperationsTab } from './OperationsTab'
+export { FinanceTab } from './FinanceTab'
+export { ClientsTab } from './ClientsTab'
+export { AnalyticsTab } from './AnalyticsTab'
+export { ReportsTab } from './ReportsTab'

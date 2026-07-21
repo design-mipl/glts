@@ -7,11 +7,10 @@ const TYPE_LABELS: Record<InvoiceType, string> = {
   additional_expense: 'Additional / Revised Invoice',
   final_settlement: 'Final Settlement Invoice',
   credit_note: 'Credit Note',
-  debit_note: 'Debit Note',
 }
 
 export function getCustomerInvoiceTypeLabel(invoice: Invoice): string {
-  if (invoice.vesselName && invoice.invoiceType !== 'credit_note' && invoice.invoiceType !== 'debit_note') {
+  if (invoice.vesselName && invoice.invoiceType !== 'credit_note') {
     return `${TYPE_LABELS[invoice.invoiceType]} · Marine`
   }
   return TYPE_LABELS[invoice.invoiceType] ?? invoice.invoiceType

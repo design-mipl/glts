@@ -51,7 +51,7 @@ export function InvoiceListingPage() {
   const { showToast } = useToast()
   const [rows, setRows] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useListingTabParam(INVOICE_TAB_VALUES, 'all')
+  const [activeTab, setActiveTab] = useListingTabParam(INVOICE_TAB_VALUES, 'submitted')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const listingReturnHref = getCurrentListingHref(location)
 
@@ -75,6 +75,10 @@ export function InvoiceListingPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [reminderTarget, setReminderTarget] = useState<Invoice>()
   const [reminderOpen, setReminderOpen] = useState(false)
+  const [cancelTarget, setCancelTarget] = useState<Invoice>()
+  const [cancelOpen, setCancelOpen] = useState(false)
+  const [revisedPromptOpen, setRevisedPromptOpen] = useState(false)
+  const [revisedSource, setRevisedSource] = useState<Invoice>()
   const [paymentTarget, setPaymentTarget] = useState<Invoice>()
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [paymentValue, setPaymentValue] = useState<RecordPaymentModalValue>({
@@ -95,6 +99,39 @@ export function InvoiceListingPage() {
   useEffect(() => {
     loadRows()
   }, [loadRows])
+
+  const openRevisedInvoiceFlow = useCallback(
+    (row: Invoice) => {
+      const originId = row.invoiceType === 'credit_note' ? row.sourceInvoiceId ?? row.id : row.id
+      const existing = invoiceService.findReplacementInvoice(originId)
+      if (existing) {
+        showToast({
+          title: 'Revised invoice already exists',
+          description: existing.invoiceId,
+          variant: 'info',
+        })
+        goFromListing(
+          existing.invoiceStatus === 'draft'
+            ? `${GENERATE_DRAFT_PATH}?draftId=${existing.id}&step=1`
+            : `${LISTING_PATH}/${existing.id}`,
+        )
+        return
+      }
+      const draft = invoiceService.createRevisedInvoiceDraft(row.id)
+      if (!draft) {
+        showToast({ title: 'Unable to create revised invoice', variant: 'error' })
+        return
+      }
+      showToast({
+        title: 'Revised invoice draft created',
+        description: draft.invoiceId,
+        variant: 'success',
+      })
+      loadRows()
+      goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${draft.id}&step=1`)
+    },
+    [goFromListing, showToast, loadRows],
+  )
 
   const tabFilteredRows = useMemo(() => filterInvoicesByTab(rows, activeTab), [rows, activeTab])
 
@@ -176,22 +213,19 @@ export function InvoiceListingPage() {
           goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${secondary.id}&step=1`)
         },
         onCreditNote: row => goFromListing(`${LISTING_PATH}/${row.id}/credit-note`),
-        onDebitNote: row => {
-          const debit = invoiceService.createDebitNote(row.id)
-          if (!debit) {
-            showToast({ title: 'Unable to create debit note', variant: 'error' })
-            return
-          }
-          showToast({ title: 'Debit note created', description: debit.invoiceId, variant: 'success' })
-          loadRows()
-          goFromListing(`${LISTING_PATH}/${debit.id}`)
+        onModify: row =>
+          goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${row.id}&step=1`),
+        onCancel: row => {
+          setCancelTarget(row)
+          setCancelOpen(true)
         },
+        onCreateRevisedInvoice: row => openRevisedInvoiceFlow(row),
         onSendReminder: row => {
           setReminderTarget(row)
           setReminderOpen(true)
         },
       }),
-    [goFromListing, showToast, loadRows],
+    [goFromListing, showToast, loadRows, openRevisedInvoiceFlow],
   )
 
   const toolbarColumns = useMemo(
@@ -427,6 +461,55 @@ export function InvoiceListingPage() {
         description={`Send a payment reminder for overdue invoice ${reminderTarget?.invoiceId}?`}
         confirmLabel="Send reminder"
         onConfirm={handleReminderConfirm}
+      />
+
+      <ConfirmDialog
+        open={cancelOpen}
+        onClose={() => {
+          setCancelOpen(false)
+          setCancelTarget(undefined)
+        }}
+        title="Cancel invoice"
+        description={`Cancel invoice ${cancelTarget?.invoiceId}? Applications remain billable.`}
+        confirmLabel="Cancel invoice"
+        variant="destructive"
+        onConfirm={() => {
+          if (!cancelTarget) return
+          const updated = invoiceService.cancel(cancelTarget.id)
+          if (!updated) {
+            showToast({ title: 'Unable to cancel invoice', variant: 'error' })
+            return
+          }
+          showToast({ title: 'Invoice cancelled', description: updated.invoiceId, variant: 'info' })
+          setCancelOpen(false)
+          setRevisedSource(updated)
+          setCancelTarget(undefined)
+          loadRows()
+          setRevisedPromptOpen(true)
+        }}
+      />
+
+      <ConfirmDialog
+        open={revisedPromptOpen}
+        onClose={() => {
+          setRevisedPromptOpen(false)
+          setRevisedSource(undefined)
+        }}
+        title="Create revised invoice?"
+        description={
+          revisedSource
+            ? `Create a revised invoice for ${revisedSource.invoiceId}? You can also do this later from the cancelled invoice or credit note.`
+            : 'Create a revised invoice?'
+        }
+        confirmLabel="Create revised invoice"
+        cancelLabel="Not now"
+        onConfirm={() => {
+          if (!revisedSource) return
+          const source = revisedSource
+          setRevisedPromptOpen(false)
+          setRevisedSource(undefined)
+          openRevisedInvoiceFlow(source)
+        }}
       />
 
       <RecordPaymentModal

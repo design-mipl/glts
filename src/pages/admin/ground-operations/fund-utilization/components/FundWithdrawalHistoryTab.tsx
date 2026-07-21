@@ -81,16 +81,18 @@ export function FundWithdrawalHistoryTab({ entries }: FundWithdrawalHistoryTabPr
 
   if (entries.length === 0) {
     return (
-      <EmptyState
-        title="No withdrawals yet"
-        description="Bank withdrawals recorded against the team float will appear here."
-      />
+      <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+        <EmptyState
+          title="No withdrawals yet"
+          description="Bank withdrawals recorded against the team float will appear here."
+        />
+      </Box>
     )
   }
 
   return (
-    <Stack spacing={0}>
-      <Stack spacing={1} sx={{ pb: 1.5 }}>
+    <Stack spacing={0} sx={{ flex: 1, minHeight: 0, height: '100%' }}>
+      <Stack spacing={1} sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pb: 1.5 }}>
         {paginatedEntries.map(entry => (
           <HistoryRow key={entry.id} entry={entry} />
         ))}
@@ -98,7 +100,9 @@ export function FundWithdrawalHistoryTab({ entries }: FundWithdrawalHistoryTabPr
 
       <Box
         sx={{
-          mx: -2,
+          flexShrink: 0,
+          mx: '-10px',
+          mb: '-10px',
           borderTop: 1,
           borderColor: 'divider',
           bgcolor: 'background.paper',

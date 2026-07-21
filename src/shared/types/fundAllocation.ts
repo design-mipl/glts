@@ -1,7 +1,7 @@
 import type { ApplicationCustomerSegment, ApplicationOperationalStatus } from '@/pages/customer/features/applications/types/applicationListing.types'
 import type { VfsServiceChargeLine } from '@/shared/utils/vfsServicePickerUtils'
 
-export type FundAllocationListingTab = 'pending_allocation' | 'allocated'
+export type FundAllocationListingTab = 'pending_allocation' | 'allocated' | 'claim_sheets'
 
 export type FundAllocationStatus = 'pending_allocation' | 'allocated'
 

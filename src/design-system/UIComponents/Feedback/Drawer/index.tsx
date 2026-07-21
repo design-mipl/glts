@@ -25,6 +25,7 @@ export interface DrawerProps {
   disableBackdropClick?: boolean
   /** `default` = grey form canvas (section cards read like full-page form); `paper` = flat white body */
   bodyVariant?: 'default' | 'paper'
+  bodySx?: SxProps<Theme>
   sx?: SxProps<Theme>
 }
 
@@ -41,6 +42,7 @@ export default function Drawer({
   hideCloseButton = false,
   disableBackdropClick = false,
   bodyVariant = 'paper',
+  bodySx,
   sx,
 }: DrawerProps) {
   const theme = useTheme()
@@ -116,13 +118,16 @@ export default function Drawer({
       )}
 
       <Box
-        sx={{
-          flex: 1,
-          overflowY: 'auto',
-          px: tokens.spacing[3],
-          py: tokens.spacing[3],
-          bgcolor: bodyVariant === 'default' ? 'background.default' : 'background.paper',
-        }}
+        sx={[
+          {
+            flex: 1,
+            overflowY: 'auto',
+            px: tokens.spacing[3],
+            py: tokens.spacing[3],
+            bgcolor: bodyVariant === 'default' ? 'background.default' : 'background.paper',
+          },
+          ...(Array.isArray(bodySx) ? bodySx : bodySx ? [bodySx] : []),
+        ]}
       >
         {children}
       </Box>

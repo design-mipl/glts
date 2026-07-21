@@ -126,6 +126,8 @@ export function getInvoiceCellValue(record: Invoice, columnKey: string): string 
       return formatInr(record.totals.balancePayable)
     case 'invoiceStatus':
       return invoiceStatusLabel[record.invoiceStatus]
+    case 'gstFiled':
+      return record.gstFiledAt ? `Filed ${record.gstFiledAt}` : 'Not filed'
     case 'paymentStatus':
       return paymentStatusLabel[record.paymentStatus]
     case 'invoiceDate':
@@ -201,14 +203,13 @@ export function mapInvoiceRowsToGridItems(records: Invoice[]) {
 
 export function getInvoiceEmptyState(tab: InvoiceListingTab, hasSearch: boolean) {
   const tabLabels: Record<InvoiceListingTab, string> = {
-    all: 'invoices',
     draft: 'draft invoices',
     submitted: 'submitted invoices',
     shared: 'shared invoices',
     paid: 'paid invoices',
     overdue: 'overdue invoices',
+    cancelled: 'cancelled invoices',
     credit_notes: 'credit notes',
-    debit_notes: 'debit notes',
   }
   const tabLabel = tabLabels[tab]
 

@@ -182,6 +182,71 @@ function buildBulkCard(row: BulkBatchRow): BulkApplicationFeeCard {
   }
 }
 
+export function buildCompositionFromSourceInvoice(invoice: Invoice): InvoiceFeeCompositionState {
+  const applicationIds = invoice.gltsReferences.filter(id => !invoice.batchIds.includes(id))
+  const state = buildInitialFeeComposition(applicationIds, invoice.batchIds, invoice)
+
+  const hasServices =
+    state.singles.some(s => s.serviceLines.length > 0) ||
+    state.bulks.some(b => b.applicants.some(a => a.serviceLines.length > 0))
+
+  if (hasServices) {
+    return {
+      ...state,
+      companyId: invoice.companyId,
+      companyName: invoice.companyName,
+      billingEntity: invoice.billingEntity,
+      vesselId: invoice.vesselId,
+      vesselName: invoice.vesselName,
+      agreementId: invoice.agreementId ?? state.agreementId,
+      draftInvoiceId: undefined,
+    }
+  }
+
+  // Fallback: rebuild fee cards directly from invoice line items.
+  const byApp = new Map<string, InvoiceLineItem[]>()
+  for (const li of invoice.lineItems) {
+    const key = li.applicationId || li.batchId || invoice.id
+    const list = byApp.get(key) ?? []
+    list.push(li)
+    byApp.set(key, list)
+  }
+
+  const singles: SingleApplicationFeeCard[] = []
+  for (const [key, items] of byApp) {
+    singles.push({
+      applicationId: key,
+      applicationName: key,
+      companyName: invoice.companyName,
+      country: invoice.country ?? '—',
+      visaType: invoice.visaType ?? '—',
+      billingEntity: invoice.billingEntity,
+      vessel: invoice.vesselName ?? '—',
+      applicantName: items[0]?.applicantName ?? '—',
+      serviceLines: items.map(li => ({
+        id: `svc-${li.id}`,
+        expenseRecordId: li.servicePresetId ?? li.id,
+        serviceLabel: li.description || li.serviceType,
+        amount: Math.abs(li.unitPrice),
+        remark: li.remarks ?? '',
+      })),
+    })
+  }
+
+  return {
+    invoiceType: 'cumulative',
+    companyId: invoice.companyId,
+    companyName: invoice.companyName,
+    billingEntity: invoice.billingEntity,
+    vesselId: invoice.vesselId,
+    vesselName: invoice.vesselName,
+    agreementId: invoice.agreementId,
+    singles,
+    bulks: [],
+    draftInvoiceId: undefined,
+  }
+}
+
 export function buildInitialFeeComposition(
   applicationIds: string[],
   batchIds: string[],

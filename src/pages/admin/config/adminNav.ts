@@ -13,11 +13,22 @@ import {
   Wrench,
 } from 'lucide-react'
 import type { NavConfig } from '@/design-system/UIComponents'
-import { ADMIN_DASHBOARDS } from './adminDashboards'
+import { ADMIN_DASHBOARDS, ADMIN_DASHBOARD_NEXT } from './adminDashboards'
 
 const iconProps = { size: 16, strokeWidth: 1.75 }
 
 export const adminNav: NavConfig[] = [
+  {
+    type: 'group',
+    label: 'Dashboard Next',
+    icon: createElement(LayoutDashboard, iconProps),
+    children: ADMIN_DASHBOARD_NEXT.map((dashboard) => ({
+      type: 'item' as const,
+      label: dashboard.label,
+      href: dashboard.href,
+      badge: 'Next',
+    })),
+  },
   {
     type: 'group',
     label: 'Dashboard',
@@ -26,6 +37,7 @@ export const adminNav: NavConfig[] = [
       type: 'item' as const,
       label: dashboard.label,
       href: dashboard.href,
+      badge: 'Live',
     })),
   },
   {

@@ -217,6 +217,7 @@ export const SEED_INVOICES: Invoice[] = [
     invoiceStatus: 'paid',
     paymentStatus: 'paid',
     invoiceDate: daysAgoDate(20),
+    gstFiledAt: daysAgoDate(10),
     dueDate: daysAgoDate(5),
     lastUpdated: daysAgo(6),
     createdAt: daysAgo(20),
@@ -354,43 +355,6 @@ export const SEED_INVOICES: Invoice[] = [
     payments: [],
   }),
   withAdjustment({
-    id: 'INV-009',
-    invoiceId: 'GLTS-INV-8829',
-    invoiceType: 'debit_note',
-    billingMode: 'application_wise',
-    companyId: 'CMP-1001',
-    companyName: 'Apex Marine Logistics',
-    billingEntity: 'Apex Marine Logistics Pvt Ltd',
-    gltsReferences: ['GLTS-APP-2026-790'],
-    batchIds: [],
-    totalApplications: 1,
-    sourceInvoiceId: 'INV-001',
-    lineItems: [
-      lineItem({
-        id: 'li-seed-10',
-        applicationId: 'GLTS-APP-2026-790',
-        serviceType: 'Additional Service',
-        description: 'Debit — missed airport assistance charge',
-        quantity: 1,
-        unitPrice: 800,
-        gstApplicable: true,
-        gstAmount: 144,
-        amount: 944,
-      }),
-    ],
-    taxConfig: { gstApplicable: true, gstPercentage: 18, tdsApplicable: false, tdsPercentage: 0 },
-    totals: { subtotal: 800, gstTotal: 144, tdsAmount: 0, additionalCharges: 0, finalAmount: 944, advanceAvailable: 0, advanceAdjusted: 0, creditApplied: 0, balancePayable: 944 },
-    invoiceStatus: 'submitted',
-    paymentStatus: 'pending',
-    invoiceDate: daysAgoDate(4),
-    dueDate: daysFromNowDate(26),
-    lastUpdated: daysAgo(4),
-    createdAt: daysAgo(4),
-    activities: [{ id: 'act-7', timestamp: daysAgo(4), actor: 'Finance Admin', action: 'Debit note created', detail: 'Additional charge against GLTS-INV-8821' }],
-    attachments: [],
-    payments: [],
-  }),
-  withAdjustment({
     id: 'INV-010',
     invoiceId: 'GLTS-INV-8830',
     invoiceType: 'final_settlement',
@@ -431,7 +395,7 @@ export const SEED_INVOICES: Invoice[] = [
   }),
 ]
 
-const STORAGE_KEY = 'glts:invoices'
+const STORAGE_KEY = 'glts:invoices:v2'
 
 let memoryStore: Invoice[] | null = null
 
@@ -450,7 +414,6 @@ function mapLegacyInvoiceType(value: string): InvoiceType {
     additional_expense: 'additional_expense',
     final_settlement: 'final_settlement',
     credit_note: 'credit_note',
-    debit_note: 'debit_note',
     bulk_invoice: 'bulk_invoice',
     bulk: 'bulk_invoice',
   }

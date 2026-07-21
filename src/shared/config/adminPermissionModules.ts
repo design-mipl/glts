@@ -3,6 +3,27 @@ import type { AdminPermissionModule } from '@/shared/types/adminPermission'
 /** Static permission tree aligned with admin navigation modules. */
 export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
   {
+    id: 'dashboard',
+    label: 'Dashboard',
+    submodules: [
+      { id: 'admin', label: 'Admin' },
+      { id: 'operations', label: 'Operations' },
+      { id: 'documentation', label: 'Documentation' },
+      { id: 'accounts', label: 'Accounts' },
+    ],
+  },
+  {
+    id: 'dashboard_next',
+    label: 'Dashboard Next',
+    submodules: [
+      { id: 'admin', label: 'Admin' },
+      { id: 'operations', label: 'Operations' },
+      { id: 'accounts', label: 'Accounts' },
+      { id: 'super_admin', label: 'Super Admin' },
+      { id: 'ground_operations', label: 'Ground Ops' },
+    ],
+  },
+  {
     id: 'customer_accounts',
     label: 'Customer & accounts',
     submodules: [

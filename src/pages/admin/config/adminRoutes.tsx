@@ -43,9 +43,18 @@ import { ServiceListingPage } from '../masters/services'
 import { TaxConfigurationPage } from '../masters/tax'
 import { WorkflowListingPage } from '../masters/workflows'
 import { OperationsDashboardPage } from '../operations/dashboard/pages/OperationsDashboardPage'
-import { OperationsConsultantDashboardPage } from '../dashboard/operations'
-import { DocumentationDashboardPage } from '../dashboard/documentation'
-import { AccountsDashboardPage } from '../dashboard/accounts'
+import {
+  AccountsDashboardPage,
+  DocumentationDashboardPage,
+  OperationsConsultantDashboardPage,
+} from '../dashboard'
+import {
+  AdminDashboardPage as AdminDashboardNextPage,
+  AccountsDashboardNextPage,
+  GroundOperationsDashboardNextPage,
+  OperationsDashboardNextPage,
+  SuperAdminDashboardNextPage,
+} from '../dashboard-next'
 import { AdminProfilePage } from '../profile/AdminProfilePage'
 import {
   MarineApplicationListingPage,
@@ -56,6 +65,7 @@ import {
 import { InvoiceFinanceRoutes } from '../finance/invoices/InvoiceFinanceRoutes'
 import {
   BillingReportsPage,
+  CreditNoteCompositionPage,
   GenerateInvoiceCompositionPage,
   GenerateInvoiceStepperPage,
   GenerateInvoiceWorkspacePage,
@@ -102,7 +112,7 @@ import {
   MarineAssignmentQueuePage,
   RetailAssignmentQueuePage,
 } from '../assignment-priority'
-import { ADMIN_DASHBOARDS } from './adminDashboards'
+import { ADMIN_ALL_DASHBOARDS, ADMIN_DASHBOARDS } from './adminDashboards'
 
 type AdminRouteKind = 'coming-soon' | 'dashboard' | 'operations' | 'profile' | 'tools'
 
@@ -115,13 +125,14 @@ interface AdminRouteDefinition {
   kind: AdminRouteKind
 }
 
-const adminDashboardRoutes: AdminRouteDefinition[] = ADMIN_DASHBOARDS.filter(
-  (dashboard) => dashboard.status === 'coming-soon',
+const adminDashboardRoutes: AdminRouteDefinition[] = ADMIN_ALL_DASHBOARDS.filter(
+  (dashboard) =>
+    dashboard.status === 'coming-soon' && !dashboard.href.startsWith('/admin/dashboard-next'),
 ).map((dashboard) => ({
   path: dashboard.href.replace('/admin/', ''),
   title: dashboard.title,
   description: dashboard.description,
-  eyebrow: 'Dashboard',
+  eyebrow: dashboard.href.startsWith('/admin/dashboard-next') ? 'Dashboard Next' : 'Dashboard',
   kind: 'coming-soon' as const,
 }))
 
@@ -615,7 +626,7 @@ export function AdminRoutes() {
         <Route path="generate/composition" element={<GenerateInvoiceCompositionPage />} />
         <Route
           path=":invoiceId/credit-note"
-          element={<GenerateInvoiceWorkspacePage creditNoteMode />}
+          element={<CreditNoteCompositionPage />}
         />
         <Route path=":invoiceId" element={<InvoiceDetailPage />} />
       </Route>
@@ -721,6 +732,46 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <AccountsDashboardPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard-next"
+        element={
+          <PermissionGuard>
+            <AdminDashboardNextPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard-next/operations"
+        element={
+          <PermissionGuard>
+            <OperationsDashboardNextPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard-next/accounts"
+        element={
+          <PermissionGuard>
+            <AccountsDashboardNextPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard-next/super-admin"
+        element={
+          <PermissionGuard>
+            <SuperAdminDashboardNextPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard-next/ground-operations"
+        element={
+          <PermissionGuard>
+            <GroundOperationsDashboardNextPage />
           </PermissionGuard>
         }
       />

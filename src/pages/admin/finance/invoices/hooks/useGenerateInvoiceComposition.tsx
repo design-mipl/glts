@@ -26,6 +26,7 @@ import {
 import type { InvoiceFeeCompositionState } from '../types/invoiceFeeComposition.types'
 import {
   billingTypeLabel,
+  buildCompositionFromSourceInvoice,
   buildInitialFeeComposition,
   compositionToWorkspaceState,
   computeCompositionSummary,
@@ -40,6 +41,8 @@ export interface UseGenerateInvoiceCompositionParams {
   batchIds: string[]
   draftId?: string
   enabled: boolean
+  /** When set, composition is a credit note seeded from this invoice. */
+  creditNoteSourceId?: string
 }
 
 export function useGenerateInvoiceComposition({
@@ -47,27 +50,38 @@ export function useGenerateInvoiceComposition({
   batchIds,
   draftId,
   enabled,
+  creditNoteSourceId,
 }: UseGenerateInvoiceCompositionParams) {
   const navigate = useNavigate()
   const { showToast } = useToast()
+  const isCreditNote = Boolean(creditNoteSourceId)
 
   const draft = useMemo(
     () => (draftId ? invoiceService.getById(draftId) : undefined),
     [draftId],
   )
 
+  const creditSource = useMemo(
+    () => (creditNoteSourceId ? invoiceService.getById(creditNoteSourceId) : undefined),
+    [creditNoteSourceId],
+  )
+
   /** Avoid `?? []` — a new array each render re-triggers composition init and wipes fee edits. */
   const resolvedApplicationIds = useMemo(() => {
     if (applicationIds.length > 0) return applicationIds
+    if (creditSource?.gltsReferences && creditSource.gltsReferences.length > 0) {
+      return creditSource.gltsReferences.filter(id => !creditSource.batchIds.includes(id))
+    }
     if (draft?.gltsReferences && draft.gltsReferences.length > 0) return draft.gltsReferences
     return applicationIds
-  }, [applicationIds, draft?.gltsReferences])
+  }, [applicationIds, draft?.gltsReferences, creditSource])
 
   const resolvedBatchIds = useMemo(() => {
     if (batchIds.length > 0) return batchIds
+    if (creditSource?.batchIds && creditSource.batchIds.length > 0) return creditSource.batchIds
     if (draft?.batchIds && draft.batchIds.length > 0) return draft.batchIds
     return batchIds
-  }, [batchIds, draft?.batchIds])
+  }, [batchIds, draft?.batchIds, creditSource])
 
   const [composition, setComposition] = useState<InvoiceFeeCompositionState | null>(null)
   const [expandedFeeApps, setExpandedFeeApps] = useState<string[]>([])
@@ -75,6 +89,13 @@ export function useGenerateInvoiceComposition({
 
   useEffect(() => {
     if (!enabled) return
+    if (creditSource) {
+      const next = buildCompositionFromSourceInvoice(creditSource)
+      setComposition(next)
+      const ids = listCompositionApplicationIds(next)
+      setExpandedFeeApps(ids.length > 0 ? [ids[0]] : [])
+      return
+    }
     if (resolvedApplicationIds.length === 0 && resolvedBatchIds.length === 0 && !draftId) {
       return
     }
@@ -82,7 +103,7 @@ export function useGenerateInvoiceComposition({
     setComposition(next)
     const ids = listCompositionApplicationIds(next)
     setExpandedFeeApps(ids.length > 0 ? [ids[0]] : [])
-  }, [resolvedApplicationIds, resolvedBatchIds, draft, draftId, enabled])
+  }, [resolvedApplicationIds, resolvedBatchIds, draft, draftId, enabled, creditSource])
 
   const agreement = useMemo(
     () => findAgreementForCompany(composition?.companyName ?? ''),
@@ -162,9 +183,25 @@ export function useGenerateInvoiceComposition({
     showToast({ title: 'Draft saved', description: saved.invoiceId, variant: 'success' })
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = (): ReturnType<typeof invoiceService.createCreditNoteFromComposition> | void => {
     if (!composition || !workspacePreview) return
     setSaving(true)
+
+    if (isCreditNote && creditNoteSourceId) {
+      const creditNote = invoiceService.createCreditNoteFromComposition(
+        creditNoteSourceId,
+        workspacePreview,
+        'Credit note from composition',
+      )
+      setSaving(false)
+      if (!creditNote) {
+        showToast({ title: 'Unable to create credit note', variant: 'error' })
+        return undefined
+      }
+      showToast({ title: 'Credit note submitted', description: creditNote.invoiceId, variant: 'success' })
+      return creditNote
+    }
+
     const merged = {
       ...workspacePreview,
       draftInvoiceId: composition.draftInvoiceId ?? workspacePreview.draftInvoiceId,
@@ -224,6 +261,7 @@ export function useGenerateInvoiceComposition({
               embedded
               card={single}
               agreement={agreement}
+              allowAddServices={!isCreditNote}
               onChange={next => updateSingle(single.applicationId, next)}
             />
           </InvoiceApplicationFeeAccordion>
@@ -248,6 +286,7 @@ export function useGenerateInvoiceComposition({
               embedded
               card={bulk}
               agreement={agreement}
+              allowAddServices={!isCreditNote}
               onChange={next => updateBulk(bulk.batchId, next)}
             />
           </InvoiceApplicationFeeAccordion>
@@ -273,9 +312,10 @@ export function useGenerateInvoiceComposition({
       },
       {
         id: 'application-fees',
-        title: 'Billable services',
-        description:
-          'Client-billable services from Expense Management, per passenger. Add agreement services, edit amount/remark, or remove lines.',
+        title: isCreditNote ? 'Services to credit' : 'Billable services',
+        description: isCreditNote
+          ? 'Keep or remove services from the source invoice. Remaining lines become the credit note.'
+          : 'Client-billable services from Expense Management, per passenger. Add agreement services, edit amount/remark, or remove lines.',
         span: 2,
         columns: 1,
         importance: 'secondary',
@@ -298,7 +338,7 @@ export function useGenerateInvoiceComposition({
       },
       {
         id: 'invoice-summary',
-        title: 'Invoice Summary',
+        title: isCreditNote ? 'Credit note summary' : 'Invoice Summary',
         span: 1,
         columns: 1,
         importance: 'primary',
@@ -309,6 +349,7 @@ export function useGenerateInvoiceComposition({
             gstTotal={mergedTotals.gstTotal}
             advanceAdjusted={mergedTotals.advanceAdjusted}
             balancePayable={mergedTotals.balancePayable}
+            variant={isCreditNote ? 'credit_note' : 'invoice'}
           />
         ),
       },
@@ -329,16 +370,22 @@ export function useGenerateInvoiceComposition({
     collapseAllFeeApps,
     billingEntityOptions,
     updateBillingEntity,
+    isCreditNote,
   ])
 
   const hasSelection =
-    resolvedApplicationIds.length > 0 || resolvedBatchIds.length > 0 || Boolean(draftId)
+    resolvedApplicationIds.length > 0 ||
+    resolvedBatchIds.length > 0 ||
+    Boolean(draftId) ||
+    Boolean(creditNoteSourceId)
 
   return {
     ready,
     hasSelection,
     sections,
     saving,
+    isCreditNote,
+    sourceInvoiceId: creditSource?.invoiceId,
     handleSaveDraft,
     handleSubmit,
     handleDownloadPreview,

@@ -58,6 +58,8 @@ interface InvoiceCompositionTotalsPanelProps {
   gstTotal: number
   advanceAdjusted: number
   balancePayable: number
+  /** Credit note summary uses credit wording. */
+  variant?: 'invoice' | 'credit_note'
 }
 
 export function InvoiceCompositionTotalsPanel({
@@ -66,7 +68,9 @@ export function InvoiceCompositionTotalsPanel({
   gstTotal,
   advanceAdjusted,
   balancePayable,
+  variant = 'invoice',
 }: InvoiceCompositionTotalsPanelProps) {
+  const isCredit = variant === 'credit_note'
   return (
     <Stack spacing={0} sx={{ width: '100%' }}>
       <InvoiceSummaryLine
@@ -80,7 +84,10 @@ export function InvoiceCompositionTotalsPanel({
 
       <InvoiceSummaryDivider />
 
-      <InvoiceSummaryLine label={FEE.billableServices.summaryTotal} value={formatInr(categoryTotals.servicesTotal)} />
+      <InvoiceSummaryLine
+        label={isCredit ? 'Services to credit' : FEE.billableServices.summaryTotal}
+        value={formatInr(categoryTotals.servicesTotal)}
+      />
 
       <InvoiceSummaryDivider />
 
@@ -89,8 +96,13 @@ export function InvoiceCompositionTotalsPanel({
 
       <InvoiceSummaryDivider />
 
-      <InvoiceSummaryLine label="Advance Adjusted" value={formatInr(advanceAdjusted)} />
-      <InvoiceSummaryLine label="Balance Payable" value={formatInr(balancePayable)} />
+      {!isCredit ? (
+        <InvoiceSummaryLine label="Advance Adjusted" value={formatInr(advanceAdjusted)} />
+      ) : null}
+      <InvoiceSummaryLine
+        label={isCredit ? 'Credit note amount' : 'Balance Payable'}
+        value={formatInr(balancePayable)}
+      />
     </Stack>
   )
 }

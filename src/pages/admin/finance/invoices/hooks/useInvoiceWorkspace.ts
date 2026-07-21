@@ -33,7 +33,7 @@ function workspaceFromInvoice(invoice: Invoice): InvoiceWorkspaceState {
           : invoice.gltsReferences.length > 1
             ? 'multiple'
             : 'single',
-      invoiceType: invoice.invoiceType === 'credit_note' ? 'credit_note' : invoice.invoiceType,
+      invoiceType: invoice.invoiceType,
       companyId: invoice.companyId,
       companyName: invoice.companyName,
       billingEntity: invoice.billingEntity,
@@ -91,6 +91,7 @@ export function useInvoiceWorkspace(invoiceId?: string, creditNoteSourceId?: str
     if (creditNoteSourceId) {
       const source = invoiceService.getById(creditNoteSourceId)
       if (source) {
+        const base = workspaceFromInvoice(source)
         const negatedItems = source.lineItems.map(li => ({
           ...li,
           id: `cn-${li.id}`,
@@ -101,9 +102,9 @@ export function useInvoiceWorkspace(invoiceId?: string, creditNoteSourceId?: str
           billingStatus: 'unbilled' as const,
         }))
         setWorkspace({
-          ...workspaceFromInvoice(source),
+          ...base,
           selection: {
-            ...workspaceFromInvoice(source).selection,
+            ...base.selection,
             invoiceType: 'credit_note',
           },
           lineItems: negatedItems,

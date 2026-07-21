@@ -20,12 +20,15 @@ interface InvoiceBillableServicesTableProps {
   lines: InvoiceBillableServiceLine[]
   onChange: (lines: InvoiceBillableServiceLine[]) => void
   agreement?: CommercialAgreement | null
+  /** When false, hide add-service controls (credit note keep/remove only). */
+  allowAddServices?: boolean
 }
 
 export function InvoiceBillableServicesTable({
   lines,
   onChange,
   agreement,
+  allowAddServices = true,
 }: InvoiceBillableServicesTableProps) {
   const [pendingServiceId, setPendingServiceId] = useState('')
 
@@ -66,6 +69,7 @@ export function InvoiceBillableServicesTable({
         <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
           {LABELS.section}
         </Typography>
+        {allowAddServices ? (
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={1}
@@ -93,6 +97,7 @@ export function InvoiceBillableServicesTable({
             disabled={!pendingServiceId || availableOptions.length === 0}
           />
         </Stack>
+        ) : null}
       </Stack>
       <Box sx={agreementEmbeddedTableSx}>
         {lines.length === 0 ? (

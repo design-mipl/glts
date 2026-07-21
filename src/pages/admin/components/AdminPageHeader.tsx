@@ -1,4 +1,4 @@
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Chip, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 import { Breadcrumb } from '@/design-system/UIComponents'
 import type { BreadcrumbItem } from '@/design-system/UIComponents'
@@ -9,6 +9,8 @@ export interface AdminPageHeaderProps {
   titleSx?: Record<string, unknown>
   description?: string
   eyebrow?: string
+  /** Compact pill rendered beside the title (e.g. "Next"). */
+  badge?: string
   breadcrumbs?: BreadcrumbItem[]
   actions?: ReactNode
   meta?: ReactNode
@@ -20,12 +22,13 @@ export function AdminPageHeader({
   titleSx,
   description,
   eyebrow,
+  badge,
   breadcrumbs,
   actions,
   meta,
 }: AdminPageHeaderProps) {
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box sx={{ mb: badge ? 2 : 3 }}>
       {breadcrumbs && breadcrumbs.length > 0 ? (
         <Breadcrumb items={breadcrumbs} sx={{ mb: 1.5 }} />
       ) : null}
@@ -46,15 +49,25 @@ export function AdminPageHeader({
               {eyebrow}
             </Typography>
           ) : null}
-          <Typography
-            variant={titleVariant}
-            component="h1"
-            fontWeight={700}
-            color="text.primary"
-            sx={titleSx}
-          >
-            {title}
-          </Typography>
+          <Stack direction="row" alignItems="center" spacing={1.25} useFlexGap flexWrap="wrap">
+            <Typography
+              variant={titleVariant}
+              component="h1"
+              fontWeight={700}
+              color="text.primary"
+              sx={titleSx}
+            >
+              {title}
+            </Typography>
+            {badge ? (
+              <Chip
+                label={badge}
+                size="small"
+                color="primary"
+                sx={{ height: 22, fontWeight: 700, fontSize: 11, letterSpacing: 0.2 }}
+              />
+            ) : null}
+          </Stack>
           {description ? (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75, maxWidth: 720 }}>
               {description}

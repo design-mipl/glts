@@ -1,5 +1,5 @@
 import { Box, Divider, Grid, Stack, Typography } from '@mui/material'
-import { Ban, Download, FileMinus2, Share2 } from 'lucide-react'
+import { Ban, Download, FileMinus2, FilePlus2, PencilLine, Share2 } from 'lucide-react'
 import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
 import type { Invoice } from '@/shared/types/invoice'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
@@ -12,6 +12,13 @@ import {
   paymentStatusBadgeColor,
   paymentStatusLabel,
 } from '../../config/invoiceStatusConfig'
+import {
+  canCancelInvoice,
+  canCreateCreditNote,
+  canCreateRevisedInvoice,
+  canModifyInvoice,
+  isGstFiled,
+} from '../../utils/invoiceCorrectionPolicy'
 
 interface InvoiceDetailSummaryProps {
   invoice: Invoice
@@ -19,6 +26,9 @@ interface InvoiceDetailSummaryProps {
   onDownload: () => void
   onCreditNote: () => void
   onCancel: () => void
+  onModify: () => void
+  onCreateRevisedInvoice: () => void
+  onMarkGstFiled?: () => void
 }
 
 export function InvoiceDetailSummary({
@@ -27,7 +37,13 @@ export function InvoiceDetailSummary({
   onDownload,
   onCreditNote,
   onCancel,
+  onModify,
+  onCreateRevisedInvoice,
+  onMarkGstFiled,
 }: InvoiceDetailSummaryProps) {
+  const showShareDownload =
+    invoice.invoiceStatus !== 'cancelled' && invoice.invoiceStatus !== 'draft'
+
   return (
     <BaseCard>
       <Box sx={{ p: 2.5 }}>
@@ -52,7 +68,7 @@ export function InvoiceDetailSummary({
               useFlexGap
               sx={{ flexWrap: 'wrap', alignItems: 'center', alignSelf: { xs: 'stretch', md: 'flex-start' } }}
             >
-              {invoice.invoiceStatus !== 'cancelled' && invoice.invoiceStatus !== 'draft' ? (
+              {showShareDownload ? (
                 <>
                   <Button
                     label="Share"
@@ -70,16 +86,16 @@ export function InvoiceDetailSummary({
                   />
                 </>
               ) : null}
-              {invoice.invoiceType !== 'credit_note' && invoice.invoiceStatus !== 'cancelled' ? (
+              {canModifyInvoice(invoice) ? (
                 <Button
-                  label="Credit note"
+                  label="Modify"
                   size="sm"
                   variant="neutral"
-                  startIcon={<FileMinus2 size={14} />}
-                  onClick={onCreditNote}
+                  startIcon={<PencilLine size={14} />}
+                  onClick={onModify}
                 />
               ) : null}
-              {invoice.invoiceStatus !== 'cancelled' && invoice.invoiceStatus !== 'paid' ? (
+              {canCancelInvoice(invoice) ? (
                 <Button
                   label="Cancel"
                   size="sm"
@@ -88,6 +104,31 @@ export function InvoiceDetailSummary({
                   startIcon={<Ban size={14} />}
                   onClick={onCancel}
                 />
+              ) : null}
+              {canCreateCreditNote(invoice) ? (
+                <Button
+                  label="Credit note"
+                  size="sm"
+                  variant="neutral"
+                  startIcon={<FileMinus2 size={14} />}
+                  onClick={onCreditNote}
+                />
+              ) : null}
+              {canCreateRevisedInvoice(invoice) ? (
+                <Button
+                  label="Create revised invoice"
+                  size="sm"
+                  variant="neutral"
+                  startIcon={<FilePlus2 size={14} />}
+                  onClick={onCreateRevisedInvoice}
+                />
+              ) : null}
+              {onMarkGstFiled &&
+              !isGstFiled(invoice) &&
+              invoice.invoiceType !== 'credit_note' &&
+              invoice.invoiceStatus !== 'draft' &&
+              invoice.invoiceStatus !== 'cancelled' ? (
+                <Button label="Mark GST filed" size="sm" variant="soft" onClick={onMarkGstFiled} />
               ) : null}
             </Stack>
           </Stack>
@@ -108,6 +149,11 @@ export function InvoiceDetailSummary({
               color={paymentStatusBadgeColor(invoice.paymentStatus)}
               size="sm"
             />
+            {isGstFiled(invoice) ? (
+              <Badge label={`GST filed ${invoice.gstFiledAt}`} color="success" size="sm" />
+            ) : invoice.invoiceType !== 'credit_note' && invoice.invoiceStatus !== 'draft' ? (
+              <Badge label="GST not filed" color="neutral" size="sm" />
+            ) : null}
           </Stack>
 
           <Divider />

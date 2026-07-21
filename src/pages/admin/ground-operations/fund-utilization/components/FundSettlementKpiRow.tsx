@@ -7,7 +7,37 @@ interface FundSettlementKpiRowProps {
   summary: FundBankSettlementSummary
 }
 
-function KpiCard({ label, value, emphasize }: { label: string; value: string; emphasize?: boolean }) {
+function formatSettlementAmount(amount: number): string {
+  if (amount > 0) return `+${formatInr(amount)}`
+  return formatInr(amount)
+}
+
+function settlementAmountHint(amount: number): string {
+  if (amount > 0) return 'Finance reimburses Ground Ops'
+  if (amount < 0) return 'Ground Ops returns excess to Finance'
+  return 'Settlement completed'
+}
+
+function KpiCard({
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  label: string
+  value: string
+  hint?: string
+  tone?: 'default' | 'surplus' | 'deficit' | 'settled'
+}) {
+  const valueColor =
+    tone === 'surplus'
+      ? 'warning.main'
+      : tone === 'deficit'
+        ? 'success.main'
+        : tone === 'settled'
+          ? 'text.primary'
+          : 'text.primary'
+
   return (
     <BaseCard sx={{ px: 1.75, py: 1.25, height: '100%' }}>
       <Typography
@@ -19,29 +49,52 @@ function KpiCard({ label, value, emphasize }: { label: string; value: string; em
       </Typography>
       <Typography
         variant="h6"
-        fontWeight={emphasize ? 800 : 700}
-        sx={{ mt: 0.5, fontSize: emphasize ? 18 : 16 }}
+        color={valueColor}
+        sx={{ mt: 0.5, fontSize: 16, fontWeight: 700, lineHeight: 1.3 }}
       >
         {value}
       </Typography>
+      {hint ? (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ mt: 0.35, fontSize: 10, fontWeight: 600, display: 'block', lineHeight: 1.3 }}
+        >
+          {hint}
+        </Typography>
+      ) : null}
     </BaseCard>
   )
 }
 
 export function FundSettlementKpiRow({ summary }: FundSettlementKpiRowProps) {
+  const settlement = summary.settlementAmount
+  const settlementTone: 'surplus' | 'deficit' | 'settled' =
+    settlement > 0 ? 'surplus' : settlement < 0 ? 'deficit' : 'settled'
+
   return (
     <Grid container spacing={1.25}>
-      <Grid size={{ xs: 12, sm: 4 }}>
+      <Grid size={{ xs: 6, sm: 4 }}>
         <KpiCard label="Allocated amount" value={formatInr(summary.allocatedAmount)} />
       </Grid>
-      <Grid size={{ xs: 12, sm: 4 }}>
+      <Grid size={{ xs: 6, sm: 4 }}>
         <KpiCard label="Total withdrawn" value={formatInr(summary.totalWithdrawn)} />
+      </Grid>
+      <Grid size={{ xs: 6, sm: 4 }}>
+        <KpiCard label="Available in bank" value={formatInr(summary.availableInBank)} />
+      </Grid>
+      <Grid size={{ xs: 6, sm: 4 }}>
+        <KpiCard label="In hand cash" value={formatInr(summary.inHandCash)} />
+      </Grid>
+      <Grid size={{ xs: 6, sm: 4 }}>
+        <KpiCard label="Expenses incurred" value={formatInr(summary.expensesIncurred)} />
       </Grid>
       <Grid size={{ xs: 12, sm: 4 }}>
         <KpiCard
-          label="Available in bank"
-          value={formatInr(summary.availableInBank)}
-          emphasize
+          label="Settlement amount"
+          value={formatSettlementAmount(settlement)}
+          tone={settlementTone}
+          hint={settlementAmountHint(settlement)}
         />
       </Grid>
     </Grid>

@@ -38,6 +38,7 @@ interface ApplicantFeeEditorProps {
   onChange: (next: ApplicantFeeBundle) => void
   nested?: boolean
   agreement?: CommercialAgreement | null
+  allowAddServices?: boolean
 }
 
 function ApplicantFeeEditor({
@@ -45,6 +46,7 @@ function ApplicantFeeEditor({
   onChange,
   nested = false,
   agreement,
+  allowAddServices = true,
 }: ApplicantFeeEditorProps) {
   return (
     <Box sx={nested ? undefined : { border: '1px solid', borderColor: 'divider', borderRadius: 1.5, p: 2, bgcolor: 'background.paper' }}>
@@ -64,6 +66,7 @@ function ApplicantFeeEditor({
         lines={applicant.serviceLines}
         onChange={serviceLines => onChange({ ...applicant, serviceLines })}
         agreement={agreement}
+        allowAddServices={allowAddServices}
       />
     </Box>
   )
@@ -75,6 +78,7 @@ interface SingleApplicationFeeCardViewProps {
   /** Inside Generate Invoice accordion — hides duplicate chrome. */
   embedded?: boolean
   agreement?: CommercialAgreement | null
+  allowAddServices?: boolean
 }
 
 export function SingleApplicationFeeCardView({
@@ -82,6 +86,7 @@ export function SingleApplicationFeeCardView({
   onChange,
   embedded = false,
   agreement,
+  allowAddServices = true,
 }: SingleApplicationFeeCardViewProps) {
   return (
     <Box sx={embedded ? { py: 1.5, px: { xs: 0, sm: 0.5 } } : { border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
@@ -112,6 +117,7 @@ export function SingleApplicationFeeCardView({
         lines={card.serviceLines}
         onChange={serviceLines => onChange({ ...card, serviceLines })}
         agreement={agreement}
+        allowAddServices={allowAddServices}
       />
     </Box>
   )
@@ -122,6 +128,7 @@ interface BulkApplicationFeeCardViewProps {
   onChange: (next: BulkApplicationFeeCard) => void
   embedded?: boolean
   agreement?: CommercialAgreement | null
+  allowAddServices?: boolean
 }
 
 export function BulkApplicationFeeCardView({
@@ -129,6 +136,7 @@ export function BulkApplicationFeeCardView({
   onChange,
   embedded = false,
   agreement,
+  allowAddServices = true,
 }: BulkApplicationFeeCardViewProps) {
   const toggleExpanded = () => onChange({ ...card, expanded: !card.expanded })
   const showFeeEditors = embedded || card.expanded
@@ -191,6 +199,7 @@ export function BulkApplicationFeeCardView({
                   nested
                   applicant={applicant}
                   agreement={agreement}
+                  allowAddServices={allowAddServices}
                   onChange={next => updateApplicant(applicant.applicantId, next)}
                 />
               </ApplicantFeeAccordion>

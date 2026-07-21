@@ -12,6 +12,7 @@ import type { ShareInvoiceModalValue } from '../components/workspace/ShareInvoic
 import { ShareInvoiceModal } from '../components/workspace/ShareInvoiceModal'
 
 const LISTING_PATH = '/admin/finance/invoices'
+const GENERATE_DRAFT_PATH = `${LISTING_PATH}/generate`
 
 export function InvoiceDetailPage() {
   const { invoiceId } = useParams<{ invoiceId: string }>()
@@ -24,6 +25,7 @@ export function InvoiceDetailPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [shareOpen, setShareOpen] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
+  const [revisedPromptOpen, setRevisedPromptOpen] = useState(false)
   const [shareValue, setShareValue] = useState<ShareInvoiceModalValue>({
     email: '',
     paymentTerms: 'Net 30',
@@ -40,6 +42,38 @@ export function InvoiceDetailPage() {
   useEffect(() => {
     reload()
   }, [reload])
+
+  const openRevisedInvoiceFlow = useCallback(
+    (row: Invoice) => {
+      const originId = row.invoiceType === 'credit_note' ? row.sourceInvoiceId ?? row.id : row.id
+      const existing = invoiceService.findReplacementInvoice(originId)
+      if (existing) {
+        showToast({
+          title: 'Revised invoice already exists',
+          description: existing.invoiceId,
+          variant: 'info',
+        })
+        navigate(
+          existing.invoiceStatus === 'draft'
+            ? `${GENERATE_DRAFT_PATH}?draftId=${existing.id}&step=1`
+            : `${LISTING_PATH}/${existing.id}`,
+        )
+        return
+      }
+      const draft = invoiceService.createRevisedInvoiceDraft(row.id)
+      if (!draft) {
+        showToast({ title: 'Unable to create revised invoice', variant: 'error' })
+        return
+      }
+      showToast({
+        title: 'Revised invoice draft created',
+        description: draft.invoiceId,
+        variant: 'success',
+      })
+      navigate(`${GENERATE_DRAFT_PATH}?draftId=${draft.id}&step=1`)
+    },
+    [navigate, showToast],
+  )
 
   if (loading) {
     return (
@@ -91,6 +125,17 @@ export function InvoiceDetailPage() {
             onDownload={() => showToast({ title: 'Download started', variant: 'success' })}
             onCreditNote={() => navigate(`${LISTING_PATH}/${invoice.id}/credit-note`)}
             onCancel={() => setCancelOpen(true)}
+            onModify={() => navigate(`${GENERATE_DRAFT_PATH}?draftId=${invoice.id}&step=1`)}
+            onCreateRevisedInvoice={() => openRevisedInvoiceFlow(invoice)}
+            onMarkGstFiled={() => {
+              const updated = invoiceService.markGstFiled(invoice.id)
+              if (!updated) {
+                showToast({ title: 'Unable to mark GST filed', variant: 'error' })
+                return
+              }
+              showToast({ title: 'GST filing date recorded', description: updated.gstFiledAt, variant: 'success' })
+              reload()
+            }}
           />
         }
       >
@@ -131,14 +176,33 @@ export function InvoiceDetailPage() {
         open={cancelOpen}
         onClose={() => setCancelOpen(false)}
         title="Cancel invoice"
-        description={`Cancel invoice ${invoice.invoiceId}?`}
+        description={`Cancel invoice ${invoice.invoiceId}? Applications remain billable.`}
         confirmLabel="Cancel invoice"
         variant="destructive"
         onConfirm={() => {
-          invoiceService.cancel(invoice.id)
+          const updated = invoiceService.cancel(invoice.id)
+          if (!updated) {
+            showToast({ title: 'Unable to cancel invoice', variant: 'error' })
+            return
+          }
           showToast({ title: 'Invoice cancelled', variant: 'info' })
           setCancelOpen(false)
           reload()
+          setRevisedPromptOpen(true)
+        }}
+      />
+
+      <ConfirmDialog
+        open={revisedPromptOpen}
+        onClose={() => setRevisedPromptOpen(false)}
+        title="Create revised invoice?"
+        description="Create a revised invoice now? You can also do this later from the cancelled invoice."
+        confirmLabel="Create revised invoice"
+        cancelLabel="Not now"
+        onConfirm={() => {
+          setRevisedPromptOpen(false)
+          const current = invoiceService.getById(invoice.id)
+          if (current) openRevisedInvoiceFlow(current)
         }}
       />
     </>

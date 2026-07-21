@@ -163,8 +163,13 @@ export function FundSettlementDrawer({
       width={SETTLEMENT_DRAWER_WIDTH}
       footer={footer}
       bodyVariant="default"
+      bodySx={{
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
     >
-      <Stack spacing={2}>
+      <Stack spacing={2} sx={{ height: '100%', minHeight: 0 }}>
         <Tabs
           value={activeTab}
           onChange={value => setActiveTab(value as SettlementTab)}
@@ -181,7 +186,7 @@ export function FundSettlementDrawer({
         ) : null}
 
         {activeTab === 'bank_settlement' ? (
-          <Stack spacing={2}>
+          <Stack spacing={2} sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
             <FundSettlementKpiRow summary={summary} />
 
             <AdminOverlayFormSection title="Withdraw funds" importance="primary">
@@ -255,7 +260,9 @@ export function FundSettlementDrawer({
             </AdminOverlayFormSection>
           </Stack>
         ) : (
-          <FundWithdrawalHistoryTab entries={history} />
+          <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+            <FundWithdrawalHistoryTab entries={history} />
+          </Box>
         )}
       </Stack>
     </Drawer>

@@ -18,6 +18,18 @@ export interface FundBankSettlementSummary {
   allocatedAmount: number
   totalWithdrawn: number
   availableInBank: number
+  /**
+   * Cash still held by Ground Ops: total withdrawn − cash expenses paid
+   * (cash / cash+UPI only; card payments excluded).
+   */
+  inHandCash: number
+  /** Ground-ops spend from selected services, additional expenses, and dispatch charges. */
+  expensesIncurred: number
+  /**
+   * Net settlement vs Finance: expenses incurred − allocated amount.
+   * Positive = Finance reimburses Ground Ops; negative = Ground Ops returns excess; zero = settled.
+   */
+  settlementAmount: number
   bankAllocationCount: number
 }
 
