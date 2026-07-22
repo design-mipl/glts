@@ -1,4 +1,7 @@
+import type { FundTransferType } from '@/shared/types/fundAllocation'
+import { getFundTransferTypeLabel } from '@/shared/types/fundAllocation'
 import type { FundBankSettlementSummary } from '@/shared/types/fundUtilization'
+import { isBankTransferAllocation } from '@/shared/constants/fundSettlementBankAccounts'
 
 export type GroundOpsClaimSheetStatus =
   | 'submitted'
@@ -50,6 +53,11 @@ export interface GroundOpsClaimSheet {
   generatedBy: string
   generatedAt: string
   team: string
+  /**
+   * Frozen fund transfer type from selected cases at claim generation.
+   * Drives which settlement KPI cards Finance / Ground Ops see.
+   */
+  fundTransferType: FundTransferType | ''
   /** Frozen settlement KPIs at claim generation time. */
   kpis: FundBankSettlementSummary
   cases: ClaimSheetCaseSnapshot[]
@@ -59,6 +67,9 @@ export interface GroundOpsClaimSheet {
   grandTotal: number
   proofDocuments: ClaimSheetProofDocument[]
   notes: string
+  reviewedAt?: string
+  reviewedBy?: string
+  rejectionReason?: string
 }
 
 export interface CreateGroundOpsClaimSheetInput {
@@ -75,4 +86,22 @@ export const CLAIM_SHEET_STATUS_LABEL: Record<GroundOpsClaimSheetStatus, string>
   approved: 'Approved',
   rejected: 'Rejected',
   settled: 'Settled',
+}
+
+/** Statuses Finance can still approve or reject. */
+export function canFinanceReviewClaimSheet(status: GroundOpsClaimSheetStatus): boolean {
+  return status === 'submitted' || status === 'under_review'
+}
+
+/** Bank transfer claims show the full bank-float KPI set. */
+export function isClaimSheetBankTransferKpis(
+  fundTransferType: FundTransferType | '' | undefined,
+): boolean {
+  return isBankTransferAllocation(fundTransferType)
+}
+
+export function getClaimSheetFundTransferLabel(
+  fundTransferType: FundTransferType | '' | undefined,
+): string {
+  return getFundTransferTypeLabel(fundTransferType)
 }

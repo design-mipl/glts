@@ -121,7 +121,7 @@ export function QuotationPricingTemplateControls({
         title="Replace current pricing?"
         description={
           pendingTemplate
-            ? `Applying "${pendingTemplate.name}" will replace all visa pricing and miscellaneous services on this quotation.`
+            ? `Applying "${pendingTemplate.name}" will replace all processing visa fees and miscellaneous services on this quotation.`
             : undefined
         }
         confirmLabel="Replace pricing"

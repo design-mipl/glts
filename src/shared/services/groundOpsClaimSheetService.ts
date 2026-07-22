@@ -3,6 +3,9 @@ import { operationalCaseHandlingService } from '@/shared/services/operationalCas
 import { computeOverallFundBankSettlementSummary } from '@/shared/services/fundUtilizationService'
 import { SEED_GROUND_OPS_CLAIM_SHEETS } from '@/shared/data/mockGroundOpsClaimSheets'
 import { resolveDispatchAmountPaid } from '@/shared/utils/logisticsDispatchChargeUtils'
+import { isBankTransferAllocation } from '@/shared/constants/fundSettlementBankAccounts'
+import type { FundTransferType } from '@/shared/types/fundAllocation'
+import type { FundBankSettlementSummary } from '@/shared/types/fundUtilization'
 import type { OperationalCase } from '@/shared/types/operationalCaseHandling'
 import type {
   ClaimSheetCaseSnapshot,
@@ -11,7 +14,9 @@ import type {
   ClaimSheetServiceLine,
   CreateGroundOpsClaimSheetInput,
   GroundOpsClaimSheet,
+  GroundOpsClaimSheetStatus,
 } from '@/shared/types/groundOpsClaimSheet'
+import { canFinanceReviewClaimSheet, CLAIM_SHEET_STATUS_LABEL } from '@/shared/types/groundOpsClaimSheet'
 
 function nowIso() {
   return new Date().toISOString()
@@ -40,6 +45,49 @@ function generateClaimNumber(existingCount: number): string {
   const year = new Date().getFullYear()
   const seq = String(existingCount + 1).padStart(4, '0')
   return `CS-${year}-${seq}`
+}
+
+/** Prefer first allocated case transfer type; default bank for legacy/demo continuity. */
+function resolveClaimFundTransferType(records: OperationalCase[]): FundTransferType | '' {
+  for (const record of records) {
+    const type = record.fundAllocation?.fundTransferType
+    if (type) return type
+  }
+  return 'bank_transfer'
+}
+
+function computeNonBankClaimSettlementKpis(
+  records: OperationalCase[],
+  caseExpensesTotal: number,
+  otherExpensesTotal: number,
+): FundBankSettlementSummary {
+  const allocatedAmount = Math.round(
+    records.reduce((sum, record) => sum + Math.max(0, record.fundAllocation?.allocatedAmount ?? 0), 0) *
+      100,
+  ) / 100
+  const expensesIncurred = Math.round((caseExpensesTotal + otherExpensesTotal) * 100) / 100
+
+  return {
+    allocatedAmount,
+    totalWithdrawn: 0,
+    availableInBank: 0,
+    inHandCash: 0,
+    expensesIncurred,
+    settlementAmount: Math.round((expensesIncurred - allocatedAmount) * 100) / 100,
+    bankAllocationCount: 0,
+  }
+}
+
+function computeClaimSheetKpis(
+  records: OperationalCase[],
+  fundTransferType: FundTransferType | '',
+  caseExpensesTotal: number,
+  otherExpensesTotal: number,
+): FundBankSettlementSummary {
+  if (isBankTransferAllocation(fundTransferType)) {
+    return computeOverallFundBankSettlementSummary()
+  }
+  return computeNonBankClaimSettlementKpis(records, caseExpensesTotal, otherExpensesTotal)
 }
 
 function selectedServiceLines(record: OperationalCase): ClaimSheetServiceLine[] {
@@ -171,6 +219,7 @@ export const groundOpsClaimSheetService = {
       throw new Error('Select at least one completed case.')
     }
 
+    const records: OperationalCase[] = []
     const cases: ClaimSheetCaseSnapshot[] = []
     for (const caseId of caseIds) {
       const record = operationalCaseHandlingService.getById(caseId)
@@ -180,6 +229,7 @@ export const groundOpsClaimSheetService = {
       if (record.status !== 'Completed' && record.status !== 'Dispatched') {
         throw new Error(`${record.operationalId} is not eligible for claim (must be Completed or Dispatched).`)
       }
+      records.push(record)
       cases.push(buildCaseSnapshot(record))
     }
 
@@ -194,6 +244,7 @@ export const groundOpsClaimSheetService = {
 
     const caseExpensesTotal = Math.round(cases.reduce((sum, c) => sum + c.caseExpenseTotal, 0) * 100) / 100
     const otherExpensesTotal = Math.round(otherExpenses.reduce((sum, e) => sum + e.amount, 0) * 100) / 100
+    const fundTransferType = resolveClaimFundTransferType(records)
 
     const proofDocuments: ClaimSheetProofDocument[] = [
       ...cases.flatMap(c => c.proofDocuments),
@@ -215,7 +266,8 @@ export const groundOpsClaimSheetService = {
       generatedBy: input.generatedBy.trim() || currentUser?.name?.trim() || 'Ground Ops',
       generatedAt: nowIso(),
       team: input.team?.trim() || cases[0]?.companyName || 'Ground Operations',
-      kpis: computeOverallFundBankSettlementSummary(),
+      fundTransferType,
+      kpis: computeClaimSheetKpis(records, fundTransferType, caseExpensesTotal, otherExpensesTotal),
       cases,
       otherExpenses,
       caseExpensesTotal,
@@ -236,6 +288,49 @@ export const groundOpsClaimSheetService = {
 
   getProofsDownloadLabel(sheet: GroundOpsClaimSheet): string {
     return `${sheet.claimNumber}-proofs.zip`
+  },
+
+  approve(
+    id: string,
+  ): { ok: boolean; sheet?: GroundOpsClaimSheet; error?: string } {
+    return this.updateReviewStatus(id, 'approved')
+  },
+
+  reject(
+    id: string,
+    reason?: string,
+  ): { ok: boolean; sheet?: GroundOpsClaimSheet; error?: string } {
+    return this.updateReviewStatus(id, 'rejected', reason)
+  },
+
+  updateReviewStatus(
+    id: string,
+    status: Extract<GroundOpsClaimSheetStatus, 'approved' | 'rejected'>,
+    reason?: string,
+  ): { ok: boolean; sheet?: GroundOpsClaimSheet; error?: string } {
+    const index = claimStore.findIndex(sheet => sheet.id === id)
+    if (index < 0) return { ok: false, error: 'Claim sheet not found.' }
+
+    const existing = claimStore[index]
+    if (!canFinanceReviewClaimSheet(existing.status)) {
+      return {
+        ok: false,
+        error: `Cannot ${status === 'approved' ? 'approve' : 'reject'} a claim that is already ${CLAIM_SHEET_STATUS_LABEL[existing.status].toLowerCase()}.`,
+      }
+    }
+
+    const currentUser = getCurrentUser()
+    const updated: GroundOpsClaimSheet = {
+      ...existing,
+      status,
+      reviewedAt: nowIso(),
+      reviewedBy: currentUser?.name?.trim() || 'Finance',
+      rejectionReason:
+        status === 'rejected' ? reason?.trim() || undefined : undefined,
+    }
+
+    claimStore = [...claimStore.slice(0, index), updated, ...claimStore.slice(index + 1)]
+    return { ok: true, sheet: cloneSheet(updated) }
   },
 
   resetToSeed() {

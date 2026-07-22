@@ -1,13 +1,23 @@
 import { Typography } from '@mui/material'
 import dayjs from 'dayjs'
-import { Eye } from 'lucide-react'
+import { Check, Eye, X } from 'lucide-react'
 import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { GroundOpsClaimSheet, GroundOpsClaimSheetStatus } from '@/shared/types/groundOpsClaimSheet'
-import { CLAIM_SHEET_STATUS_LABEL } from '@/shared/types/groundOpsClaimSheet'
+import {
+  canFinanceReviewClaimSheet,
+  CLAIM_SHEET_STATUS_LABEL,
+  getClaimSheetFundTransferLabel,
+  isClaimSheetBankTransferKpis,
+} from '@/shared/types/groundOpsClaimSheet'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import {
+  formatSettlementAmountLabel,
+  getSettlementAmountColor,
+  getSettlementAmountTone,
+} from '@/shared/utils/fundSettlementDisplay'
 
-export type FundAllocationClaimSheetAction = 'view_details'
+export type FundAllocationClaimSheetAction = 'view_details' | 'approve' | 'reject'
 
 export interface FundAllocationClaimSheetTableColumnsParams {
   onAction: (action: FundAllocationClaimSheetAction, row: GroundOpsClaimSheet) => void
@@ -19,14 +29,22 @@ function formatGeneratedAt(value: string): string {
   return parsed.isValid() ? parsed.format('DD MMM YYYY, HH:mm') : value
 }
 
-function formatSettlementAmount(amount: number): string {
-  if (amount > 0) return `+${formatInr(amount)}`
-  return formatInr(amount)
-}
-
-function AmountCell({ value, emphasize = false }: { value: string; emphasize?: boolean }) {
+function AmountCell({
+  value,
+  emphasize = false,
+  color,
+}: {
+  value: string
+  emphasize?: boolean
+  color?: string
+}) {
   return (
-    <Typography variant="body2" sx={{ fontSize: 13, fontWeight: emphasize ? 600 : 500 }} noWrap>
+    <Typography
+      variant="body2"
+      color={color}
+      sx={{ fontSize: 13, fontWeight: emphasize ? 600 : 500 }}
+      noWrap
+    >
       {value}
     </Typography>
   )
@@ -51,6 +69,11 @@ function claimSheetStatusBadgeColor(
   }
 }
 
+function bankOrDash(row: GroundOpsClaimSheet, value: number): string {
+  if (!isClaimSheetBankTransferKpis(row.fundTransferType)) return '—'
+  return formatInr(value)
+}
+
 export function buildFundAllocationClaimSheetTableColumns(
   params: FundAllocationClaimSheetTableColumnsParams,
 ): Column<GroundOpsClaimSheet>[] {
@@ -64,6 +87,18 @@ export function buildFundAllocationClaimSheetTableColumns(
       render: (_value, row) => (
         <Typography variant="body2" fontWeight={600} noWrap sx={{ fontSize: 13 }}>
           {row.claimNumber}
+        </Typography>
+      ),
+    },
+    {
+      key: 'fundTransferType',
+      label: 'Transfer type',
+      widthSize: adminListingColumnWidthSize('status'),
+      sortable: true,
+      searchable: true,
+      render: (_value, row) => (
+        <Typography variant="body2" noWrap sx={{ fontSize: 13 }}>
+          {getClaimSheetFundTransferLabel(row.fundTransferType)}
         </Typography>
       ),
     },
@@ -126,21 +161,21 @@ export function buildFundAllocationClaimSheetTableColumns(
       label: 'Total withdrawn',
       widthSize: adminListingColumnWidthSize('count'),
       sortable: true,
-      render: (_value, row) => <AmountCell value={formatInr(row.kpis.totalWithdrawn)} />,
+      render: (_value, row) => <AmountCell value={bankOrDash(row, row.kpis.totalWithdrawn)} />,
     },
     {
       key: 'availableInBank',
       label: 'Available in bank',
       widthSize: adminListingColumnWidthSize('count'),
       sortable: true,
-      render: (_value, row) => <AmountCell value={formatInr(row.kpis.availableInBank)} />,
+      render: (_value, row) => <AmountCell value={bankOrDash(row, row.kpis.availableInBank)} />,
     },
     {
       key: 'inHandCash',
       label: 'In hand cash',
       widthSize: adminListingColumnWidthSize('count'),
       sortable: true,
-      render: (_value, row) => <AmountCell value={formatInr(row.kpis.inHandCash)} />,
+      render: (_value, row) => <AmountCell value={bankOrDash(row, row.kpis.inHandCash)} />,
     },
     {
       key: 'expensesIncurred',
@@ -155,7 +190,11 @@ export function buildFundAllocationClaimSheetTableColumns(
       widthSize: adminListingColumnWidthSize('count'),
       sortable: true,
       render: (_value, row) => (
-        <AmountCell value={formatSettlementAmount(row.kpis.settlementAmount)} emphasize />
+        <AmountCell
+          value={formatSettlementAmountLabel(row.kpis.settlementAmount)}
+          color={getSettlementAmountColor(getSettlementAmountTone(row.kpis.settlementAmount))}
+          emphasize
+        />
       ),
     },
     {
@@ -176,18 +215,33 @@ export function buildFundAllocationClaimSheetTableColumns(
       sortable: false,
       filterable: false,
       searchable: false,
-      render: (_value, row) => (
-        <RowActions
-          row={row}
-          actions={[
+      render: (_value, row) => {
+        const actions = [
+          {
+            label: 'View details',
+            icon: <Eye size={16} />,
+            onClick: () => params.onAction('view_details', row),
+          },
+        ]
+
+        if (canFinanceReviewClaimSheet(row.status)) {
+          actions.push(
             {
-              label: 'View details',
-              icon: <Eye size={16} />,
-              onClick: () => params.onAction('view_details', row),
+              label: 'Approve',
+              icon: <Check size={16} />,
+              onClick: () => params.onAction('approve', row),
             },
-          ]}
-        />
-      ),
+            {
+              label: 'Reject',
+              icon: <X size={16} />,
+              onClick: () => params.onAction('reject', row),
+              variant: 'destructive' as const,
+            },
+          )
+        }
+
+        return <RowActions row={row} actions={actions} />
+      },
     },
   ]
 }

@@ -30,8 +30,8 @@ export const AGREEMENT_FIELD_MESSAGES = {
   entityContactPerson: 'Contact person is required',
   entityEmail: 'Email address is required',
   entityPhone: 'Phone number is required',
-  pricingRequired: 'Add at least one visa pricing entry',
-  pricingIncomplete: 'Complete all visa pricing before continuing',
+  pricingRequired: 'Add at least one processing visa fees entry',
+  pricingIncomplete: 'Complete all processing visa fees before continuing',
   pricingCountry: 'Country is required',
   pricingVisaType: 'Visa type is required',
   pricingServicePreset: 'Service is required',
@@ -394,7 +394,7 @@ export function validateForActivation(
     (agreement.commercialVisaPricing?.length ?? 0) === 0 &&
     agreement.pricingMatrix.length === 0
   ) {
-    issues.push('Add at least one visa pricing entry')
+    issues.push('Add at least one processing visa fees entry')
   }
 
   return { ok: issues.length === 0, issues: [...new Set(issues)] }

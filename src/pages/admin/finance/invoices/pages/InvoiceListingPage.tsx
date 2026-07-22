@@ -34,6 +34,7 @@ import type { RecordPaymentModalValue } from '../components/workspace/RecordPaym
 import { RecordPaymentModal } from '../components/workspace/RecordPaymentModal'
 import type { ShareInvoiceModalValue } from '../components/workspace/ShareInvoiceModal'
 import { ShareInvoiceModal } from '../components/workspace/ShareInvoiceModal'
+import { buildRevisedWorkspaceFromCreditNote } from '../utils/invoiceFeeCompositionUtils'
 
 const LISTING_PATH = '/admin/finance/invoices'
 const GENERATE_DRAFT_PATH = `${LISTING_PATH}/generate`
@@ -117,7 +118,11 @@ export function InvoiceListingPage() {
         )
         return
       }
-      const draft = invoiceService.createRevisedInvoiceDraft(row.id)
+      const workspace =
+        row.invoiceType === 'credit_note'
+          ? buildRevisedWorkspaceFromCreditNote(row, invoiceService.getById(originId) ?? row)
+          : undefined
+      const draft = invoiceService.createRevisedInvoiceDraft(row.id, workspace)
       if (!draft) {
         showToast({ title: 'Unable to create revised invoice', variant: 'error' })
         return
@@ -170,9 +175,6 @@ export function InvoiceListingPage() {
         },
         onDownload: row => {
           showToast({ title: 'Download started', description: `${row.invoiceId}.pdf`, variant: 'success' })
-        },
-        onDownloadReceipt: row => {
-          showToast({ title: 'Receipt download started', description: row.invoiceId, variant: 'success' })
         },
         onRecordPayment: row => {
           const collected = row.payments.reduce((sum, p) => sum + p.amount, 0)

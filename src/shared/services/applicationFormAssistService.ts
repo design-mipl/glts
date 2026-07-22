@@ -18,6 +18,9 @@ export interface FormAssistVfsServiceChargeLine {
   gstIncluded?: boolean
   /** Links to Embassy / VFS Fee Master service row when sourced from rate card. */
   embassyFeeServiceId?: string
+  /** Visa-processing vendor mapped on Country Master Consulate Rates. */
+  vendorId?: string
+  vendorName?: string
 }
 
 /** One payment recorded against one or more VFS services (Pending Payment workspace). */

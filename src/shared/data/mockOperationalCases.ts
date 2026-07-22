@@ -5,7 +5,7 @@ import type {
   OperationalCaseStatus,
   TeamCapacity,
 } from '@/shared/types/operationalCaseHandling'
-import type { LogisticsDispatchDetails, LogisticsFinalQc } from '@/shared/types/logisticsDispatch'
+import type { LogisticsDispatchDetails, LogisticsFinalQc, LogisticsRefundDetails } from '@/shared/types/logisticsDispatch'
 import {
   APPLICATION_FEE_DEFAULT_RATES,
   DEFAULT_APPLICATION_FEE_NAMES,
@@ -110,6 +110,7 @@ interface PassengerSeed {
   timelineEvents?: Array<{ displayDate: string; label: string; actor?: string }>
   finalQc?: LogisticsFinalQc
   dispatchDetails?: LogisticsDispatchDetails
+  refundDetails?: LogisticsRefundDetails
 }
 
 interface BatchSeed {
@@ -193,6 +194,7 @@ function buildPassengerCase(
     assignmentSourceId: batch.assignmentSourceId,
     finalQc: passenger.finalQc,
     dispatchDetails: passenger.dispatchDetails,
+    refundDetails: passenger.refundDetails,
   }
 }
 
@@ -1264,6 +1266,38 @@ const BATCH_SEEDS: BatchSeed[] = [
         groundServices: { Printing: 350 },
         remarks: 'Awaiting updated LOI from client.',
         progressPercent: 12,
+      },
+    ],
+  },
+  {
+    applicationId: 'GLTS-APP-2026-790',
+    companyName: 'Apex Marine Logistics',
+    vesselName: 'MV Pacific Horizon',
+    country: 'Japan',
+    visaType: 'eVisa · Tourist',
+    jurisdiction: 'Delhi',
+    assignedTeam: 'Delhi Team',
+    assignedExecutive: 'Anita Verma',
+    priority: 'Normal',
+    passengers: [
+      {
+        name: 'Oliver Grant',
+        rank: 'Passenger',
+        passport: 'XK9283746',
+        cdc: 'DEL-CDC-7901',
+        status: 'Dispatched',
+        nextAction: '—',
+        joiningDate: '2026-04-02',
+        markedForOperations: true,
+        progressPercent: 100,
+        refundDetails: {
+          vendorId: 'VND-CNS-JP-01',
+          vendorName: 'Japan Consulate · Delhi',
+          amount: 2400,
+          remarks: 'Embassy fee reversal after visa reissue',
+          recordedAt: '2026-06-20T14:10:00.000Z',
+          recordedBy: 'Tracking & Logistics',
+        },
       },
     ],
   },

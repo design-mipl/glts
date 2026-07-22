@@ -1,21 +1,15 @@
 import { Grid, Typography } from '@mui/material'
 import { BaseCard } from '@/design-system/UIComponents'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import {
+  formatSettlementAmountLabel,
+  getSettlementAmountHint,
+  getSettlementAmountTone,
+} from '@/shared/utils/fundSettlementDisplay'
 import type { FundBankSettlementSummary } from '@/shared/types/fundUtilization'
 
 interface FundSettlementKpiRowProps {
   summary: FundBankSettlementSummary
-}
-
-function formatSettlementAmount(amount: number): string {
-  if (amount > 0) return `+${formatInr(amount)}`
-  return formatInr(amount)
-}
-
-function settlementAmountHint(amount: number): string {
-  if (amount > 0) return 'Finance reimburses Ground Ops'
-  if (amount < 0) return 'Ground Ops returns excess to Finance'
-  return 'Settlement completed'
 }
 
 function KpiCard({
@@ -27,16 +21,14 @@ function KpiCard({
   label: string
   value: string
   hint?: string
-  tone?: 'default' | 'surplus' | 'deficit' | 'settled'
+  tone?: 'default' | 'reimburse' | 'return' | 'settled'
 }) {
   const valueColor =
-    tone === 'surplus'
+    tone === 'reimburse'
       ? 'warning.main'
-      : tone === 'deficit'
+      : tone === 'return'
         ? 'success.main'
-        : tone === 'settled'
-          ? 'text.primary'
-          : 'text.primary'
+        : 'text.primary'
 
   return (
     <BaseCard sx={{ px: 1.75, py: 1.25, height: '100%' }}>
@@ -69,8 +61,7 @@ function KpiCard({
 
 export function FundSettlementKpiRow({ summary }: FundSettlementKpiRowProps) {
   const settlement = summary.settlementAmount
-  const settlementTone: 'surplus' | 'deficit' | 'settled' =
-    settlement > 0 ? 'surplus' : settlement < 0 ? 'deficit' : 'settled'
+  const settlementTone = getSettlementAmountTone(settlement)
 
   return (
     <Grid container spacing={1.25}>
@@ -92,9 +83,9 @@ export function FundSettlementKpiRow({ summary }: FundSettlementKpiRowProps) {
       <Grid size={{ xs: 12, sm: 4 }}>
         <KpiCard
           label="Settlement amount"
-          value={formatSettlementAmount(settlement)}
+          value={formatSettlementAmountLabel(settlement)}
           tone={settlementTone}
-          hint={settlementAmountHint(settlement)}
+          hint={getSettlementAmountHint(settlement)}
         />
       </Grid>
     </Grid>

@@ -21,6 +21,7 @@ import type {
 import type {
   LogisticsDispatchDetails,
   LogisticsFinalQcChecks,
+  LogisticsRefundDetails,
 } from '@/shared/types/logisticsDispatch'
 import {
   isLogisticsStatus,
@@ -123,6 +124,7 @@ function cloneOperationalCase(record: OperationalCase): OperationalCase {
       ? { ...record.finalQc, checks: { ...record.finalQc.checks } }
       : undefined,
     dispatchDetails: record.dispatchDetails ? { ...record.dispatchDetails } : undefined,
+    refundDetails: record.refundDetails ? { ...record.refundDetails } : undefined,
   }
 }
 
@@ -549,6 +551,34 @@ export const operationalCaseHandlingService = {
       record.status = 'Completed'
       record.progressPercent = 100
       appendTimeline(record, 'Case completed', 'System')
+    })
+  },
+
+  saveRefundDetails(
+    id: string,
+    details: Pick<LogisticsRefundDetails, 'vendorId' | 'vendorName' | 'amount' | 'remarks'>,
+  ): OperationalCase | undefined {
+    const vendorId = details.vendorId.trim()
+    const vendorName = details.vendorName.trim()
+    const amount = details.amount
+    if (!vendorId || !vendorName) return undefined
+    if (!Number.isFinite(amount) || amount <= 0) return undefined
+
+    return mutate(id, record => {
+      const snapshot: LogisticsRefundDetails = {
+        vendorId,
+        vendorName,
+        amount,
+        remarks: details.remarks?.trim() || '',
+        recordedAt: nowIso(),
+        recordedBy: getMasterActor(),
+      }
+      record.refundDetails = snapshot
+      appendTimeline(
+        record,
+        `Consulate refund recorded · ${vendorName} · ₹${amount.toLocaleString('en-IN')}`,
+        'Tracking & Logistics',
+      )
     })
   },
 

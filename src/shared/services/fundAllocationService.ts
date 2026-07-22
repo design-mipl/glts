@@ -248,6 +248,7 @@ function syncOverlayToGroundOps(passengerId: string, overlay: FundAllocationOver
     totalAmount: overlay.totalAmount,
     allocatedAmount: overlay.allocatedAmount,
     cardId: overlay.cardId,
+    fundTransferType: overlay.fundTransfer?.transferType || '',
     fundTransferLabel: fundTransferLabel !== '—' ? fundTransferLabel : undefined,
     serviceNames: overlay.selectedServices.map(line => line.serviceName),
     requestedAt: overlay.requestedAt,

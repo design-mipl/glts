@@ -32,6 +32,8 @@ function toLine(service: VfsPickerService): QuotationVfsServiceLine {
     serviceName: service.serviceName,
     amount: service.amount,
     gstIncluded: service.gstIncluded,
+    vendorId: service.vendorId,
+    vendorName: service.vendorName,
   }
 }
 

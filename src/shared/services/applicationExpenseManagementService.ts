@@ -59,7 +59,12 @@ function readStore(): ExpenseStore {
     const parsed = JSON.parse(raw) as ExpenseStore
     if (!parsed || typeof parsed !== 'object') return seedStore()
     if (storedVersion < SEED_APPLICATION_EXPENSE_VERSION) {
+      // Refresh known seed rows so label / category updates apply in existing browsers.
+      for (const expense of SEED_APPLICATION_EXPENSES) {
+        parsed[expense.id] = expense
+      }
       localStorage.setItem(SEED_VERSION_KEY, String(SEED_APPLICATION_EXPENSE_VERSION))
+      writeStore(parsed)
       return mergeSeedExpenses(parsed)
     }
     return mergeSeedExpenses(parsed)
@@ -243,9 +248,9 @@ function syncAutoServiceExpenses(applicationId: string, existing: ExpenseStore):
   const autoDefs = [
     {
       id: 'aem-glts-mar-1025-001',
-      expenseName: 'GLTS Service Fee',
+      expenseName: 'GLTS processing fees',
       expenseType: 'glts_service_fee' as const,
-      expenseTypeLabel: 'GLTS Service Fee',
+      expenseTypeLabel: 'GLTS processing fees',
       serviceSource: 'glts_service' as const,
       linkedService: 'Marine crew visa processing',
       amount: 5000,

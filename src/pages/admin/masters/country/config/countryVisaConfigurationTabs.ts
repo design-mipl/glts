@@ -2,7 +2,7 @@ export type CountryVisaConfigurationTab = 'documents' | 'vfs-rates' | 'qc-checkl
 
 export const COUNTRY_VISA_CONFIGURATION_TABS = [
   { value: 'documents' as const, label: 'Documents' },
-  { value: 'vfs-rates' as const, label: 'VFS Rates' },
+  { value: 'vfs-rates' as const, label: 'Consulate Rates' },
   { value: 'qc-checklists' as const, label: 'QC Checklists' },
 ] as const
 

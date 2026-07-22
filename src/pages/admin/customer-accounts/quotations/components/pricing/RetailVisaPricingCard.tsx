@@ -60,7 +60,7 @@ export function RetailVisaPricingCard({ item, onEdit, onDelete, readOnly }: Reta
     >
       <Stack spacing={1.75}>
         <ServiceRows
-          title="GLTS Services"
+          title="GLTS processing fees"
           rows={item.gltsServices.map((s) => ({ name: s.serviceName, amount: s.amount }))}
         />
         <ServiceRows

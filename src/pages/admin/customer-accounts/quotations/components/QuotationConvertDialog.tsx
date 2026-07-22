@@ -99,7 +99,7 @@ export function QuotationConvertDialog({
                     ? `${
                         selectedVersion.commercialVisaPricing?.length ||
                         selectedVersion.pricingMatrix.length
-                      } visa pricing · Grand total ${formatInr(selectedVersion.totals.grandTotal)}`
+                      } processing visa fees · Grand total ${formatInr(selectedVersion.totals.grandTotal)}`
                     : 'Select which pricing version to carry into the agreement.'
                 }
               >

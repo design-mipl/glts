@@ -103,11 +103,11 @@ export function ProfilePricingSection({
   return (
     <Stack spacing={3}>
       <Box>
-        <SectionTitle>Visa Pricing</SectionTitle>
+        <SectionTitle>Processing visa fees</SectionTitle>
         {commercialVisaPricing.length === 0 ? (
           <EmptyPlaceholder
             icon={<Tags size={28} />}
-            message="No visa pricing configured on your agreement yet."
+            message="No processing visa fees configured on your agreement yet."
           />
         ) : (
           <TableShell minWidth={720}>
@@ -117,7 +117,7 @@ export function ProfilePricingSection({
                 <TableCell sx={head}>Applies to</TableCell>
                 <TableCell sx={head}>Visa type</TableCell>
                 <TableCell sx={head} align="right">
-                  GLTS fee
+                  GLTS processing fees
                 </TableCell>
                 <TableCell sx={head}>GST</TableCell>
                 <TableCell sx={head}>Remarks</TableCell>

@@ -6,7 +6,6 @@ import {
   FilePlus2,
   FileStack,
   PencilLine,
-  Receipt,
   Send,
   Trash2,
   Ban,
@@ -14,7 +13,6 @@ import {
 import type { RowAction } from '@/design-system/UIComponents'
 import type { Invoice } from '@/shared/types/invoice'
 import {
-  canCancelInvoice,
   canCreateCreditNote,
   canCreateRevisedInvoice,
   canCreateSecondaryInvoice,
@@ -28,7 +26,6 @@ export interface InvoiceRowActionHandlers {
   onDeleteDraft: (row: Invoice) => void
   onShare: (row: Invoice) => void
   onDownload: (row: Invoice) => void
-  onDownloadReceipt: (row: Invoice) => void
   onRecordPayment: (row: Invoice) => void
   onSecondaryInvoice: (row: Invoice) => void
   onCreditNote: (row: Invoice) => void
@@ -95,14 +92,6 @@ export function buildInvoiceRowActions(row: Invoice, handlers: InvoiceRowActionH
       label: 'Send reminder',
       icon: <Send size={14} />,
       onClick: () => handlers.onSendReminder(row),
-    })
-  }
-
-  if (row.invoiceStatus === 'paid' || row.invoiceStatus === 'partially_paid') {
-    actions.push({
-      label: 'Download receipt',
-      icon: <Receipt size={14} />,
-      onClick: () => handlers.onDownloadReceipt(row),
     })
   }
 

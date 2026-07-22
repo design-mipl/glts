@@ -11,10 +11,17 @@ import {
 import type {
   ApplicantFeeBundle,
   BulkApplicationFeeCard,
+  InvoiceCompositionMode,
   InvoiceFeeCompositionState,
   SingleApplicationFeeCard,
 } from '../../types/invoiceFeeComposition.types'
+import { effectiveServiceLineAmount } from '../../utils/invoiceFeeCompositionUtils'
 import { InvoiceBillableServicesTable } from './InvoiceBillableServicesTable'
+import { InvoiceConsulateRefundsSection } from './InvoiceConsulateRefundsSection'
+
+function applicantServicesTotal(applicant: ApplicantFeeBundle, mode: InvoiceCompositionMode = 'generate'): number {
+  return applicant.serviceLines.reduce((sum, line) => sum + effectiveServiceLineAmount(line, mode), 0)
+}
 
 function MetaGrid({ items }: { items: [string, string][] }) {
   return (
@@ -39,6 +46,7 @@ interface ApplicantFeeEditorProps {
   nested?: boolean
   agreement?: CommercialAgreement | null
   allowAddServices?: boolean
+  mode?: InvoiceCompositionMode
 }
 
 function ApplicantFeeEditor({
@@ -47,6 +55,7 @@ function ApplicantFeeEditor({
   nested = false,
   agreement,
   allowAddServices = true,
+  mode = 'generate',
 }: ApplicantFeeEditorProps) {
   return (
     <Box sx={nested ? undefined : { border: '1px solid', borderColor: 'divider', borderRadius: 1.5, p: 2, bgcolor: 'background.paper' }}>
@@ -66,7 +75,14 @@ function ApplicantFeeEditor({
         lines={applicant.serviceLines}
         onChange={serviceLines => onChange({ ...applicant, serviceLines })}
         agreement={agreement}
+        country={applicant.country}
+        visaType={applicant.visaType}
         allowAddServices={allowAddServices}
+        mode={mode}
+      />
+      <InvoiceConsulateRefundsSection
+        refunds={applicant.consulateRefunds ?? []}
+        onChange={consulateRefunds => onChange({ ...applicant, consulateRefunds })}
       />
     </Box>
   )
@@ -79,6 +95,7 @@ interface SingleApplicationFeeCardViewProps {
   embedded?: boolean
   agreement?: CommercialAgreement | null
   allowAddServices?: boolean
+  mode?: InvoiceCompositionMode
 }
 
 export function SingleApplicationFeeCardView({
@@ -87,9 +104,10 @@ export function SingleApplicationFeeCardView({
   embedded = false,
   agreement,
   allowAddServices = true,
+  mode = 'generate',
 }: SingleApplicationFeeCardViewProps) {
   return (
-    <Box sx={embedded ? { py: 1.5, px: { xs: 0, sm: 0.5 } } : { border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
+    <Box sx={embedded ? { py: 0.5, px: 0 } : { border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
       {!embedded ? (
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
           <Typography variant="body2" fontWeight={700} sx={{ fontSize: 14 }}>
@@ -117,7 +135,14 @@ export function SingleApplicationFeeCardView({
         lines={card.serviceLines}
         onChange={serviceLines => onChange({ ...card, serviceLines })}
         agreement={agreement}
+        country={card.country}
+        visaType={card.visaType}
         allowAddServices={allowAddServices}
+        mode={mode}
+      />
+      <InvoiceConsulateRefundsSection
+        refunds={card.consulateRefunds ?? []}
+        onChange={consulateRefunds => onChange({ ...card, consulateRefunds })}
       />
     </Box>
   )
@@ -129,6 +154,7 @@ interface BulkApplicationFeeCardViewProps {
   embedded?: boolean
   agreement?: CommercialAgreement | null
   allowAddServices?: boolean
+  mode?: InvoiceCompositionMode
 }
 
 export function BulkApplicationFeeCardView({
@@ -137,10 +163,14 @@ export function BulkApplicationFeeCardView({
   embedded = false,
   agreement,
   allowAddServices = true,
+  mode = 'generate',
 }: BulkApplicationFeeCardViewProps) {
   const toggleExpanded = () => onChange({ ...card, expanded: !card.expanded })
   const showFeeEditors = embedded || card.expanded
-  const [expandedApplicants, setExpandedApplicants] = useState<string[]>([])
+  const [expandedApplicants, setExpandedApplicants] = useState<string[]>(() => {
+    const firstWithServices = card.applicants.find(a => a.serviceLines.length > 0)
+    return firstWithServices ? [firstWithServices.applicantId] : card.applicants[0] ? [card.applicants[0].applicantId] : []
+  })
 
   const toggleApplicantExpanded = (applicantId: string, open: boolean) => {
     setExpandedApplicants(prev =>
@@ -156,7 +186,7 @@ export function BulkApplicationFeeCardView({
   }
 
   return (
-    <Box sx={embedded ? { p: 2 } : { border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
+    <Box sx={embedded ? { py: 0.5, px: 0 } : { border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
       {!embedded ? (
         <Stack direction="row" alignItems="flex-start" spacing={1}>
           <IconButton size="small" onClick={toggleExpanded} sx={{ mt: 0.25 }}>
@@ -184,14 +214,18 @@ export function BulkApplicationFeeCardView({
       ) : null}
 
       <Collapse in={showFeeEditors}>
-        <Stack spacing={1.5} sx={{ mt: embedded ? 0 : 2, pl: embedded ? 0 : { xs: 0, sm: 4 } }}>
-          <Stack spacing={1}>
+        <Stack spacing={1.25} sx={{ mt: embedded ? 0 : 2, pl: embedded ? 0 : { xs: 0, sm: 4 } }}>
+          <Stack spacing={0.75}>
             {card.applicants.map(applicant => (
               <ApplicantFeeAccordion
                 key={applicant.applicantId}
                 applicantId={applicant.applicantId}
                 applicantName={applicant.applicantName}
                 passportNumber={applicant.passportNumber}
+                country={applicant.country}
+                visaType={applicant.visaType}
+                serviceCount={applicant.serviceLines.length}
+                servicesTotal={applicantServicesTotal(applicant, mode)}
                 expanded={expandedApplicants.includes(applicant.applicantId)}
                 onExpandedChange={open => toggleApplicantExpanded(applicant.applicantId, open)}
               >
@@ -200,6 +234,7 @@ export function BulkApplicationFeeCardView({
                   applicant={applicant}
                   agreement={agreement}
                   allowAddServices={allowAddServices}
+                  mode={mode}
                   onChange={next => updateApplicant(applicant.applicantId, next)}
                 />
               </ApplicantFeeAccordion>
@@ -215,14 +250,18 @@ interface InvoiceCompositionSelectionSummaryProps {
   state: InvoiceFeeCompositionState
   billingEntityOptions: Array<{ value: string; label: string }>
   onBillingEntityChange: (value: string) => void
+  onDocumentDateChange: (value: string) => void
   billingTypeLabel: string
+  documentDateLabel?: string
 }
 
 export function InvoiceCompositionSelectionSummary({
   state,
   billingEntityOptions,
   onBillingEntityChange,
+  onDocumentDateChange,
   billingTypeLabel,
+  documentDateLabel,
 }: InvoiceCompositionSelectionSummaryProps) {
   const totalApplications = state.singles.length + state.bulks.length
   const totalApplicants =
@@ -242,6 +281,9 @@ export function InvoiceCompositionSelectionSummary({
         billingEntityOptions={billingEntityOptions}
         onBillingEntityChange={onBillingEntityChange}
         billingTypeLabel={billingTypeLabel}
+        documentDate={state.documentDate}
+        onDocumentDateChange={onDocumentDateChange}
+        documentDateLabel={documentDateLabel}
       />
     </Box>
   )

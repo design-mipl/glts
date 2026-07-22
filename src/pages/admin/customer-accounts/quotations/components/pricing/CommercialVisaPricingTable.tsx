@@ -46,7 +46,7 @@ export function CommercialVisaPricingTable({
               <TableCell sx={agreementEmbeddedTableHeadCellSx}>Applies to</TableCell>
               <TableCell sx={agreementEmbeddedTableHeadCellSx}>Visa type</TableCell>
               <TableCell sx={agreementEmbeddedTableHeadCellSx} align="right">
-                GLTS fee
+                GLTS processing fees
               </TableCell>
               <TableCell sx={agreementEmbeddedTableHeadCellSx}>GST</TableCell>
               <TableCell sx={agreementEmbeddedTableHeadCellSx}>Remarks</TableCell>

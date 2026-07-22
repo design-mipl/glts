@@ -93,8 +93,8 @@ export function CommercialAddVisaPricingModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={initial ? 'Edit Visa Pricing' : 'Add Visa Pricing'}
-      subtitle="Set the GLTS service fee for a country, country group, or rest of countries (online / offline)."
+      title={initial ? 'Edit processing visa fees' : 'Add processing visa fees'}
+      subtitle="Set the GLTS processing fees for a country, country group, or rest of countries (online / offline)."
       size="md"
       footer={
         <Stack direction="row" spacing={1} justifyContent="flex-end">
@@ -111,7 +111,7 @@ export function CommercialAddVisaPricingModal({
         </Stack>
       }
     >
-      <FormSection title="Visa pricing" columns={2}>
+      <FormSection title="Processing visa fees" columns={2}>
         <AdminFullPageFormFieldSpan>
           <FormField label="Applies to" required>
             <RadioGroup
@@ -176,7 +176,7 @@ export function CommercialAddVisaPricingModal({
           />
         </FormField>
 
-        <FormField label="GLTS Service Fee" required>
+        <FormField label="GLTS processing fees" required>
           <Input
             type="number"
             value={String(draft.serviceFee || '')}

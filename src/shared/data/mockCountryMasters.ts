@@ -26,6 +26,7 @@ import type {
   CountrySegmentConfig,
   CountryVisaJurisdiction,
   CountryVisaType,
+  CountryVfsServiceRate,
   ProcessingType,
 } from '@/shared/types/countryMaster'
 import { cloneDefaultVfsServiceRates } from '@/shared/data/countryVfsServiceRateDefaults'
@@ -768,21 +769,39 @@ function normalizeVisaTypeGltsScope(visaType: CountryVisaType): CountryVisaType 
   }
 }
 
+function withDefaultConsulateVendor(rate: CountryVfsServiceRate): CountryVfsServiceRate {
+  if (rate.vendorId) return rate
+  return {
+    ...rate,
+    vendorId: 'vnd-001',
+    vendorName: 'VFS Global India Pvt Ltd',
+  }
+}
+
 function seedVfsServiceRatesIfMissing(visaType: CountryVisaType): CountryVisaType {
   const defaults = cloneDefaultVfsServiceRates()
 
   if (shouldShowJurisdictionNodes(visaType)) {
     return {
       ...visaType,
-      jurisdictions: visaType.jurisdictions.map((jurisdiction) =>
-        jurisdiction.vfsServiceRates?.length
-          ? jurisdiction
-          : { ...jurisdiction, vfsServiceRates: cloneDefaultVfsServiceRates() },
-      ),
+      jurisdictions: visaType.jurisdictions.map((jurisdiction) => {
+        if (!jurisdiction.vfsServiceRates?.length) {
+          return { ...jurisdiction, vfsServiceRates: cloneDefaultVfsServiceRates() }
+        }
+        return {
+          ...jurisdiction,
+          vfsServiceRates: jurisdiction.vfsServiceRates.map(withDefaultConsulateVendor),
+        }
+      }),
     }
   }
 
-  if (visaType.vfsServiceRates?.length) return visaType
+  if (visaType.vfsServiceRates?.length) {
+    return {
+      ...visaType,
+      vfsServiceRates: visaType.vfsServiceRates.map(withDefaultConsulateVendor),
+    }
+  }
 
   return {
     ...visaType,

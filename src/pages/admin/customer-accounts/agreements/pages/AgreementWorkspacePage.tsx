@@ -27,7 +27,7 @@ const WORKSPACE_SECTIONS: { id: AgreementSectionId; navId: string; label: string
   { id: 'customerSource', navId: 'section-customer-source', label: 'Customer source', description: 'Quotation, existing customer, or new customer' },
   { id: 'companyInfo', navId: 'section-company-info', label: 'Company information', description: 'Company profile' },
   { id: 'entities', navId: 'section-entities', label: 'Entities', description: 'Operational billing entities' },
-  { id: 'pricing', navId: 'section-pricing', label: 'Pricing', description: 'Visa pricing and miscellaneous services' },
+  { id: 'pricing', navId: 'section-pricing', label: 'Pricing', description: 'Processing visa fees and miscellaneous services' },
   { id: 'billing', navId: 'section-billing', label: 'Billing configuration', description: 'Advance, credit, or mixed billing rules' },
   { id: 'tax', navId: 'section-tax', label: 'Tax configuration', description: 'GST and TDS settings' },
   { id: 'documents', navId: 'section-documents', label: 'Onboarding documents', description: 'Finance contacts and document uploads' },

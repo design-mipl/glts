@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
 import { Wallet } from 'lucide-react'
-import { BulkActions, Pagination, type TableState, useToast } from '@/design-system/UIComponents'
+import { BulkActions, ConfirmDialog, Pagination, type TableState, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   AdminListingGrid,
@@ -10,6 +10,7 @@ import {
   AdminListingToolbar,
 } from '@/pages/admin/components/listing'
 import { fundAllocationService } from '@/shared/services/fundAllocationService'
+import { groundOpsClaimSheetService } from '@/shared/services/groundOpsClaimSheetService'
 import type { FundAllocationListingTab } from '@/shared/types/fundAllocation'
 import type { FundAllocationPassengerRow } from '@/shared/types/fundAllocation'
 import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
@@ -66,6 +67,10 @@ export function FundAllocationListingPage() {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [actionModalRecord, setActionModalRecord] = useState<FundAllocationPassengerRow | null>(null)
   const [bulkModalRecords, setBulkModalRecords] = useState<FundAllocationPassengerRow[]>([])
+  const [claimReviewConfirm, setClaimReviewConfirm] = useState<{
+    action: 'approve' | 'reject'
+    sheet: GroundOpsClaimSheet
+  } | null>(null)
 
   const {
     listingTab,
@@ -96,6 +101,7 @@ export function FundAllocationListingPage() {
     selectBatch,
     selectClaimSheet,
     closeDetail,
+    refresh,
     mutateAndRefresh,
   } = useFundAllocationListing()
 
@@ -244,10 +250,44 @@ export function FundAllocationListingPage() {
     (action: FundAllocationClaimSheetAction, row: GroundOpsClaimSheet) => {
       if (action === 'view_details') {
         selectClaimSheet(row)
+        return
       }
+      setClaimReviewConfirm({ action, sheet: row })
     },
     [selectClaimSheet],
   )
+
+  const handleConfirmClaimReview = useCallback(() => {
+    if (!claimReviewConfirm) return
+
+    const { action, sheet } = claimReviewConfirm
+    const result =
+      action === 'approve'
+        ? groundOpsClaimSheetService.approve(sheet.id)
+        : groundOpsClaimSheetService.reject(sheet.id)
+
+    if (!result.ok || !result.sheet) {
+      showToast({
+        title: action === 'approve' ? 'Could not approve' : 'Could not reject',
+        description: result.error,
+        variant: 'error',
+      })
+      setClaimReviewConfirm(null)
+      return
+    }
+
+    showToast({
+      title: action === 'approve' ? 'Claim sheet approved' : 'Claim sheet rejected',
+      description:
+        action === 'approve'
+          ? `${result.sheet.claimNumber} is approved for settlement.`
+          : `${result.sheet.claimNumber} was rejected.`,
+      variant: action === 'approve' ? 'success' : 'warning',
+    })
+    setClaimReviewConfirm(null)
+    closeDetail()
+    refresh()
+  }, [claimReviewConfirm, closeDetail, refresh, showToast])
 
   const passengerColumns = useMemo(
     () =>
@@ -591,6 +631,34 @@ export function FundAllocationListingPage() {
         open={Boolean(selectedClaimSheet) && isClaimSheetsTab}
         sheet={selectedClaimSheet ?? null}
         onClose={closeDetail}
+        onReviewed={refresh}
+      />
+
+      <ConfirmDialog
+        open={claimReviewConfirm?.action === 'approve'}
+        onClose={() => setClaimReviewConfirm(null)}
+        title="Approve claim sheet"
+        description={
+          claimReviewConfirm
+            ? `Approve ${claimReviewConfirm.sheet.claimNumber}? Finance will mark this claim as approved.`
+            : undefined
+        }
+        confirmLabel="Approve"
+        onConfirm={handleConfirmClaimReview}
+      />
+
+      <ConfirmDialog
+        open={claimReviewConfirm?.action === 'reject'}
+        onClose={() => setClaimReviewConfirm(null)}
+        title="Reject claim sheet"
+        description={
+          claimReviewConfirm
+            ? `Reject ${claimReviewConfirm.sheet.claimNumber}? Ground Operations will need to revise and resubmit.`
+            : undefined
+        }
+        confirmLabel="Reject"
+        variant="destructive"
+        onConfirm={handleConfirmClaimReview}
       />
 
       <FundAllocationActionModal

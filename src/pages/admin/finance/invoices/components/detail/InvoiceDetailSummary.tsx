@@ -88,7 +88,7 @@ export function InvoiceDetailSummary({
               ) : null}
               {canModifyInvoice(invoice) ? (
                 <Button
-                  label="Modify"
+                  label="Modify invoice"
                   size="sm"
                   variant="neutral"
                   startIcon={<PencilLine size={14} />}
@@ -107,7 +107,7 @@ export function InvoiceDetailSummary({
               ) : null}
               {canCreateCreditNote(invoice) ? (
                 <Button
-                  label="Credit note"
+                  label="Create credit note"
                   size="sm"
                   variant="neutral"
                   startIcon={<FileMinus2 size={14} />}

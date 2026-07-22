@@ -6,6 +6,7 @@ import type {
   Invoice,
   InvoiceActivity,
   InvoiceListFilters,
+  InvoiceRefundAppliedVia,
   InvoiceStatus,
   InvoiceWorkspaceState,
   RecordPaymentPayload,
@@ -23,6 +24,7 @@ import {
   getInvoiceApplicationCount,
   recalculateLineItems,
 } from '@/shared/utils/invoiceCalculations'
+import { extractAppliedRefundsFromLineItems } from '@/shared/utils/invoiceConsulateRefundUtils'
 
 const ADMIN_ACTOR = 'Finance Admin'
 
@@ -101,6 +103,15 @@ function buildTotalsWithAdjustment(workspace: InvoiceWorkspaceState, agreementId
   }
 }
 
+function resolveRefundAppliedVia(
+  workspace: InvoiceWorkspaceState,
+  existing?: Invoice,
+): InvoiceRefundAppliedVia {
+  if (workspace.selection.invoiceType === 'credit_note') return 'credit_note'
+  if (existing && existing.invoiceStatus !== 'draft') return 'modify'
+  return 'generate'
+}
+
 function workspaceToInvoice(
   workspace: InvoiceWorkspaceState,
   status: InvoiceStatus,
@@ -124,9 +135,21 @@ function workspaceToInvoice(
     ]),
   ]
 
+  const id = existing?.id ?? generateInternalId()
+  const invoiceId = existing?.invoiceId ?? generateInvoiceId()
+  const appliedVia = resolveRefundAppliedVia(workspace, existing)
+  const extractedRefunds =
+    status === 'draft'
+      ? []
+      : extractAppliedRefundsFromLineItems(lineItems, id, invoiceId, appliedVia)
+  const appliedRefunds =
+    extractedRefunds.length > 0
+      ? [...(existing?.appliedRefunds ?? []).filter(r => !extractedRefunds.some(e => e.caseId === r.caseId)), ...extractedRefunds]
+      : existing?.appliedRefunds
+
   const base: Invoice = {
-    id: existing?.id ?? generateInternalId(),
-    invoiceId: existing?.invoiceId ?? generateInvoiceId(),
+    id,
+    invoiceId,
     invoiceType: workspace.selection.invoiceType,
     billingMode: workspace.selection.billingMode,
     companyId: workspace.selection.companyId,
@@ -148,7 +171,7 @@ function workspaceToInvoice(
     billingAdjustment,
     invoiceStatus: status,
     paymentStatus: existing?.paymentStatus ?? 'pending',
-    invoiceDate: existing?.invoiceDate ?? todayDate(),
+    invoiceDate: workspace.invoiceDate || existing?.invoiceDate || todayDate(),
     dueDate: workspace.dueDate || existing?.dueDate || dueDateFromTerms(30),
     paymentTerms: workspace.paymentTerms || existing?.paymentTerms,
     lastUpdated: nowIso(),
@@ -160,6 +183,7 @@ function workspaceToInvoice(
     activities: existing?.activities ?? [],
     attachments: existing?.attachments ?? [],
     payments: existing?.payments ?? [],
+    appliedRefunds,
   }
 
   return base
@@ -442,7 +466,10 @@ export const invoiceService = {
    * Draft revised invoice linked to a cancelled invoice or to the original behind a credit note.
    * Number reuse is deferred to backend integration.
    */
-  createRevisedInvoiceDraft(sourceInvoiceId: string): Invoice | undefined {
+  createRevisedInvoiceDraft(
+    sourceInvoiceId: string,
+    workspaceOverride?: InvoiceWorkspaceState,
+  ): Invoice | undefined {
     const source = this.getById(sourceInvoiceId)
     if (!source) return undefined
 
@@ -457,7 +484,7 @@ export const invoiceService = {
       return undefined
     }
 
-    const workspace: InvoiceWorkspaceState = {
+    const workspace: InvoiceWorkspaceState = workspaceOverride ?? {
       selection: {
         billingMode: origin.billingMode,
         applicationSelectionMode: 'single',
@@ -490,6 +517,10 @@ export const invoiceService = {
       dueDate: dueDateFromTerms(30),
       sourceInvoiceId: originId,
       agreementId: origin.agreementId,
+    }
+
+    if (!workspace.sourceInvoiceId) {
+      workspace.sourceInvoiceId = originId
     }
 
     const invoice = workspaceToInvoice(workspace, 'draft')

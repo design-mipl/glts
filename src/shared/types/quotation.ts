@@ -38,6 +38,9 @@ export interface QuotationVfsServiceLine {
   serviceName: string
   amount: number
   gstIncluded?: boolean
+  /** Visa-processing vendor mapped on Country Master Consulate Rates. */
+  vendorId?: string
+  vendorName?: string
 }
 
 export interface RetailVisaPricingItem {

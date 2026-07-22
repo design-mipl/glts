@@ -140,3 +140,22 @@ export function createEmptyLogisticsDispatchDetails(): LogisticsDispatchDetails 
     transactionReference: '',
   }
 }
+
+/** Consulate refund captured on logistics desk — seeded into invoice composition. */
+export interface LogisticsRefundDetails {
+  vendorId: string
+  vendorName: string
+  amount: number
+  remarks?: string
+  recordedAt?: string
+  recordedBy?: string
+}
+
+export function createEmptyLogisticsRefundDetails(): LogisticsRefundDetails {
+  return {
+    vendorId: '',
+    vendorName: '',
+    amount: 0,
+    remarks: '',
+  }
+}

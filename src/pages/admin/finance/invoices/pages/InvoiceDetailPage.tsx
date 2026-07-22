@@ -10,6 +10,8 @@ import { InvoiceDetailSummary } from '../components/detail/InvoiceDetailSummary'
 import { InvoiceDetailTabContent } from '../components/detail/InvoiceDetailTabs'
 import type { ShareInvoiceModalValue } from '../components/workspace/ShareInvoiceModal'
 import { ShareInvoiceModal } from '../components/workspace/ShareInvoiceModal'
+import { buildRevisedWorkspaceFromCreditNote } from '../utils/invoiceFeeCompositionUtils'
+import { canCreateSecondaryInvoice } from '../utils/invoiceCorrectionPolicy'
 
 const LISTING_PATH = '/admin/finance/invoices'
 const GENERATE_DRAFT_PATH = `${LISTING_PATH}/generate`
@@ -22,7 +24,7 @@ export function InvoiceDetailPage() {
   const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
   const [invoice, setInvoice] = useState<Invoice>()
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('invoice')
   const [shareOpen, setShareOpen] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
   const [revisedPromptOpen, setRevisedPromptOpen] = useState(false)
@@ -60,7 +62,11 @@ export function InvoiceDetailPage() {
         )
         return
       }
-      const draft = invoiceService.createRevisedInvoiceDraft(row.id)
+      const workspace =
+        row.invoiceType === 'credit_note'
+          ? buildRevisedWorkspaceFromCreditNote(row, invoiceService.getById(originId) ?? row)
+          : undefined
+      const draft = invoiceService.createRevisedInvoiceDraft(row.id, workspace)
       if (!draft) {
         showToast({ title: 'Unable to create revised invoice', variant: 'error' })
         return
@@ -143,13 +149,13 @@ export function InvoiceDetailPage() {
           <Box sx={{ px: 2.5, pt: 1.5, borderBottom: 1, borderColor: 'divider' }}>
             <Tabs
               items={[
-                { label: 'Overview', value: 'overview' },
-                { label: 'Line items', value: 'line_items' },
-                { label: 'Tax breakdown', value: 'tax' },
+                { label: 'Invoice', value: 'invoice' },
+                { label: 'Refund', value: 'refund' },
+                { label: 'Unbilled expenses', value: 'unbilled' },
                 { label: 'Advance / credit', value: 'adjustment' },
                 { label: 'Attachments', value: 'attachments' },
                 { label: 'Payment history', value: 'payments' },
-                { label: 'Activity logs', value: 'activity' },
+                { label: 'Activity', value: 'activity' },
               ]}
               value={activeTab}
               onChange={setActiveTab}
@@ -158,7 +164,29 @@ export function InvoiceDetailPage() {
             />
           </Box>
           <Box sx={{ p: 2.5 }}>
-            <InvoiceDetailTabContent invoice={invoice} activeTab={activeTab} />
+            <InvoiceDetailTabContent
+              invoice={invoice}
+              activeTab={activeTab}
+              onModifyInvoice={() => navigate(`${GENERATE_DRAFT_PATH}?draftId=${invoice.id}&step=1`)}
+              onCreateCreditNote={() => navigate(`${LISTING_PATH}/${invoice.id}/credit-note`)}
+              onCreateSecondaryInvoice={() => {
+                if (!canCreateSecondaryInvoice(invoice)) {
+                  showToast({ title: 'Secondary invoice not available', variant: 'error' })
+                  return
+                }
+                const secondary = invoiceService.createSecondaryInvoice(invoice.id)
+                if (!secondary) {
+                  showToast({ title: 'Unable to create secondary invoice', variant: 'error' })
+                  return
+                }
+                showToast({
+                  title: 'Secondary invoice draft created',
+                  description: secondary.invoiceId,
+                  variant: 'success',
+                })
+                navigate(`${GENERATE_DRAFT_PATH}?draftId=${secondary.id}&step=1`)
+              }}
+            />
           </Box>
         </BaseCard>
       </AdminDetailShell>

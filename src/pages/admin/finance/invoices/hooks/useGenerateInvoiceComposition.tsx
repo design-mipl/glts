@@ -23,7 +23,7 @@ import {
   InvoiceCompositionBillingPanel,
   InvoiceCompositionTotalsPanel,
 } from '../components/composition/InvoiceCompositionSummaryPanels'
-import type { InvoiceFeeCompositionState } from '../types/invoiceFeeComposition.types'
+import type { InvoiceFeeCompositionState, InvoiceCompositionMode } from '../types/invoiceFeeComposition.types'
 import {
   billingTypeLabel,
   buildCompositionFromSourceInvoice,
@@ -61,6 +61,16 @@ export function useGenerateInvoiceComposition({
     [draftId],
   )
 
+  const isRevised = Boolean(
+    draft?.sourceInvoiceId && draft.invoiceStatus === 'draft' && draft.invoiceType !== 'credit_note',
+  )
+
+  const compositionMode: InvoiceCompositionMode = isCreditNote
+    ? 'credit_note'
+    : isRevised
+      ? 'revised'
+      : 'generate'
+
   const creditSource = useMemo(
     () => (creditNoteSourceId ? invoiceService.getById(creditNoteSourceId) : undefined),
     [creditNoteSourceId],
@@ -87,6 +97,13 @@ export function useGenerateInvoiceComposition({
   const [expandedFeeApps, setExpandedFeeApps] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
+  const selectionKey = [
+    resolvedApplicationIds.join(','),
+    resolvedBatchIds.join(','),
+    draftId ?? '',
+    creditNoteSourceId ?? '',
+  ].join('|')
+
   useEffect(() => {
     if (!enabled) return
     if (creditSource) {
@@ -103,7 +120,9 @@ export function useGenerateInvoiceComposition({
     setComposition(next)
     const ids = listCompositionApplicationIds(next)
     setExpandedFeeApps(ids.length > 0 ? [ids[0]] : [])
-  }, [resolvedApplicationIds, resolvedBatchIds, draft, draftId, enabled, creditSource])
+    // selectionKey captures app/batch/draft identity — avoid resetting expand on referential churn.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only re-seed when selection identity changes
+  }, [selectionKey, enabled, creditSource, draft])
 
   const agreement = useMemo(
     () => findAgreementForCompany(composition?.companyName ?? ''),
@@ -111,13 +130,13 @@ export function useGenerateInvoiceComposition({
   )
 
   const categoryTotals = useMemo(
-    () => (composition ? computeCompositionSummary(composition) : null),
-    [composition],
+    () => (composition ? computeCompositionSummary(composition, compositionMode) : null),
+    [composition, compositionMode],
   )
 
   const workspacePreview = useMemo(
-    () => (composition ? compositionToWorkspaceState(composition) : null),
-    [composition],
+    () => (composition ? compositionToWorkspaceState(composition, compositionMode) : null),
+    [composition, compositionMode],
   )
 
   const baseTotals = useMemo(() => {
@@ -167,6 +186,10 @@ export function useGenerateInvoiceComposition({
 
   const updateBillingEntity = useCallback((billingEntity: string) => {
     setComposition(prev => (prev ? { ...prev, billingEntity } : prev))
+  }, [])
+
+  const updateDocumentDate = useCallback((documentDate: string) => {
+    setComposition(prev => (prev ? { ...prev, documentDate } : prev))
   }, [])
 
   const billingEntityOptions = useMemo(
@@ -240,14 +263,13 @@ export function useGenerateInvoiceComposition({
     )
 
     const applicationFeeAccordions = (
-      <InvoiceApplicationFeeAccordionList headerAction={feeAccordionToolbar}>
+      <InvoiceApplicationFeeAccordionList>
         {composition.singles.map(single => (
           <InvoiceApplicationFeeAccordion
             key={single.applicationId}
             id={single.applicationId}
             applicationName={single.applicationName}
             typeLabel="Single"
-            subtitle={single.companyName}
             meta={[
               { label: 'Country', value: single.country },
               { label: 'Visa', value: single.visaType },
@@ -262,6 +284,7 @@ export function useGenerateInvoiceComposition({
               card={single}
               agreement={agreement}
               allowAddServices={!isCreditNote}
+              mode={compositionMode}
               onChange={next => updateSingle(single.applicationId, next)}
             />
           </InvoiceApplicationFeeAccordion>
@@ -272,8 +295,8 @@ export function useGenerateInvoiceComposition({
             id={bulk.batchId}
             applicationName={bulk.applicationName}
             typeLabel="Bulk"
-            subtitle={`${bulk.totalApplicants} applicants`}
             meta={[
+              { label: 'Applicants', value: String(bulk.totalApplicants) },
               { label: 'Country', value: bulk.country },
               { label: 'Visa', value: bulk.visaType },
               { label: 'Billing entity', value: bulk.billingEntity },
@@ -287,6 +310,7 @@ export function useGenerateInvoiceComposition({
               card={bulk}
               agreement={agreement}
               allowAddServices={!isCreditNote}
+              mode={compositionMode}
               onChange={next => updateBulk(bulk.batchId, next)}
             />
           </InvoiceApplicationFeeAccordion>
@@ -306,16 +330,23 @@ export function useGenerateInvoiceComposition({
             state={composition}
             billingEntityOptions={billingEntityOptions}
             onBillingEntityChange={updateBillingEntity}
+            onDocumentDateChange={updateDocumentDate}
             billingTypeLabel={billingTypeLabel(agreement?.billingType)}
+            documentDateLabel={
+              isCreditNote ? 'Credit note date' : isRevised ? 'Revised invoice date' : 'Invoice date'
+            }
           />
         ),
       },
       {
         id: 'application-fees',
-        title: isCreditNote ? 'Services to credit' : 'Billable services',
+        title: isCreditNote ? 'Services to credit' : isRevised ? 'Revised billable services' : 'Billable services',
         description: isCreditNote
-          ? 'Keep or remove services from the source invoice. Remaining lines become the credit note.'
-          : 'Client-billable services from Expense Management, per passenger. Add agreement services, edit amount/remark, or remove lines.',
+          ? 'Select services to credit and set the credit amount (full or partial). Consulate refunds from Ground Ops can be included below each application.'
+          : isRevised
+            ? 'Credit amount is from the credit note (reference). Updated amount is the final billable amount from application services.'
+            : 'GLTS fees from agreement. Add misc (agreement) or VFS (country master) as needed. Consulate refunds from Ground Ops appear per passenger when recorded.',
+        headerAction: feeAccordionToolbar,
         span: 2,
         columns: 1,
         importance: 'secondary',
@@ -338,7 +369,7 @@ export function useGenerateInvoiceComposition({
       },
       {
         id: 'invoice-summary',
-        title: isCreditNote ? 'Credit note summary' : 'Invoice Summary',
+        title: isCreditNote ? 'Credit note summary' : isRevised ? 'Revised invoice summary' : 'Invoice Summary',
         span: 1,
         columns: 1,
         importance: 'primary',
@@ -370,7 +401,10 @@ export function useGenerateInvoiceComposition({
     collapseAllFeeApps,
     billingEntityOptions,
     updateBillingEntity,
+    updateDocumentDate,
     isCreditNote,
+    isRevised,
+    compositionMode,
   ])
 
   const hasSelection =
@@ -385,6 +419,7 @@ export function useGenerateInvoiceComposition({
     sections,
     saving,
     isCreditNote,
+    isRevised,
     sourceInvoiceId: creditSource?.invoiceId,
     handleSaveDraft,
     handleSubmit,

@@ -128,7 +128,7 @@ export function QuotationPricingSection({
 
       <Box>
         <SectionHeader
-          title="Visa Pricing"
+          title="Processing visa fees"
           action={
             !readOnly ? (
               <Button
@@ -145,7 +145,7 @@ export function QuotationPricingSection({
           formData.retailVisaPricing.length === 0 ? (
             <PricingEmptyPlaceholder
               icon={<Tags size={28} />}
-              message="No visa pricing added yet. Add a country visa quotation with GLTS and VFS services."
+              message="No processing visa fees added yet. Add a country visa quotation with GLTS processing fees and VFS services."
             />
           ) : (
             <Stack spacing={1.5}>
@@ -170,7 +170,7 @@ export function QuotationPricingSection({
         ) : formData.commercialVisaPricing.length === 0 ? (
           <PricingEmptyPlaceholder
             icon={<Tags size={28} />}
-            message="No visa pricing added yet. Add country, country group, or rest-of-countries (online / offline) GLTS fees."
+            message="No processing visa fees added yet. Add country, country group, or rest-of-countries (online / offline) GLTS processing fees."
           />
         ) : (
           <CommercialVisaPricingTable
@@ -216,7 +216,7 @@ export function QuotationPricingSection({
           <PricingEmptyPlaceholder
             disabled
             icon={<Info size={28} />}
-            message="Retail quotations include miscellaneous services within each Visa Pricing item."
+            message="Retail quotations include miscellaneous services within each Processing visa fees item."
           />
         ) : formData.miscellaneousServices.length === 0 ? (
           <PricingEmptyPlaceholder

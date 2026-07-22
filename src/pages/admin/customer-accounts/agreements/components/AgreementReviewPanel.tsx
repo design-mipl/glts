@@ -70,7 +70,7 @@ export function AgreementReviewPanel({ data, agreementId, statusLabel }: Agreeme
   const statCards = [
     { label: 'Entities', value: String(data.entities.length) },
     {
-      label: 'Visa pricing',
+      label: 'Processing visa fees',
       value: String(data.commercialVisaPricing?.length || data.pricingMatrix.length),
     },
     {

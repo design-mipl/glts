@@ -1,4 +1,9 @@
-import type { LogisticsDispatchDetails, LogisticsFinalQc } from '@/shared/types/logisticsDispatch'
+import type {
+  LogisticsDispatchDetails,
+  LogisticsFinalQc,
+  LogisticsRefundDetails,
+} from '@/shared/types/logisticsDispatch'
+import type { FundTransferType } from '@/shared/types/fundAllocation'
 
 export type OperationalCasePriority = 'Normal' | 'High' | 'Urgent' | 'Critical'
 
@@ -84,6 +89,8 @@ export interface OperationalCaseFundAllocation {
   allocatedAmount: number
   /** @deprecated Prefer fundTransferLabel. Kept for legacy card-based allocations. */
   cardId: string
+  /** Raw transfer type from Finance fund allocation (preferred for claim KPIs). */
+  fundTransferType?: FundTransferType | ''
   /** Display label for fund transfer type (or legacy card name). */
   fundTransferLabel?: string
   serviceNames: string[]
@@ -166,6 +173,8 @@ export interface OperationalCase {
   assignmentSourceId?: string
   finalQc?: LogisticsFinalQc
   dispatchDetails?: LogisticsDispatchDetails
+  /** Consulate refund recorded on logistics desk (feeds invoice composition). */
+  refundDetails?: LogisticsRefundDetails
 }
 
 export interface TeamCapacity {

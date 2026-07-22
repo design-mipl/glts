@@ -7,9 +7,11 @@ import { AdminFullPageFormShell } from '@/pages/admin/components/AdminFullPageFo
 import { invoiceService } from '@/shared/services/invoiceService'
 import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 import { useGenerateInvoiceComposition } from '../hooks/useGenerateInvoiceComposition'
+import { buildRevisedWorkspaceFromCreditNote } from '../utils/invoiceFeeCompositionUtils'
 
 const LISTING_PATH = '/admin/finance/invoices'
 const GENERATE_DRAFT_PATH = `${LISTING_PATH}/generate`
+const EMPTY_IDS: string[] = []
 
 export function CreditNoteCompositionPage() {
   const { invoiceId: sourceInvoiceId } = useParams<{ invoiceId: string }>()
@@ -23,8 +25,8 @@ export function CreditNoteCompositionPage() {
   const source = sourceInvoiceId ? invoiceService.getById(sourceInvoiceId) : undefined
 
   const composition = useGenerateInvoiceComposition({
-    applicationIds: [],
-    batchIds: [],
+    applicationIds: EMPTY_IDS,
+    batchIds: EMPTY_IDS,
     creditNoteSourceId: sourceInvoiceId,
     enabled: Boolean(source),
   })
@@ -47,14 +49,16 @@ export function CreditNoteCompositionPage() {
       )
       return
     }
-    const draft = invoiceService.createRevisedInvoiceDraft(cn.id)
+    const origin = invoiceService.getById(originId) ?? cn
+    const workspace = buildRevisedWorkspaceFromCreditNote(cn, origin)
+    const draft = invoiceService.createRevisedInvoiceDraft(cn.id, workspace)
     if (!draft) {
       showToast({ title: 'Unable to create revised invoice', variant: 'error' })
       return
     }
     showToast({
       title: 'Revised invoice draft created',
-      description: 'Edit services, add lines, or change billing entity, then submit.',
+      description: 'Review updated amounts, date, and billing entity, then submit.',
       variant: 'success',
     })
     navigate(`${GENERATE_DRAFT_PATH}?draftId=${draft.id}&step=1`)
@@ -87,7 +91,7 @@ export function CreditNoteCompositionPage() {
           { label: 'Create credit note' },
         ]}
         title="Create credit note"
-        description={`Credit note against ${source.invoiceId}. Keep or remove services, then submit. After this you can create a revised invoice.`}
+        description={`Credit note against ${source.invoiceId}. Select services and set the credit amount (full or partial), then submit. After this you can create a revised invoice.`}
         sections={composition.sections}
         footer={
           <AdminFullPageFormFooter
@@ -114,7 +118,7 @@ export function CreditNoteCompositionPage() {
           if (createdCreditNoteId) navigate(`${LISTING_PATH}/${createdCreditNoteId}`)
         }}
         title="Create revised invoice?"
-        description="Open invoice composition to keep or add services and change billing entity if needed."
+        description="Open revised invoice composition with application services and credit amounts from this note."
         confirmLabel="Create revised invoice"
         cancelLabel="Not now"
         onConfirm={() => {

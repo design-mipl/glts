@@ -122,7 +122,7 @@ export function flattenCommercialVisaPricing(
       visaType: rule.visaType,
       workflowType: label,
       servicePresetId: 'glts-service-fee',
-      servicePresetName: 'GLTS Service Fee',
+      servicePresetName: 'GLTS processing fees',
       serviceFee: rule.serviceFee,
       gstApplicable: rule.gstApplicable,
       remarks: rule.remarks,

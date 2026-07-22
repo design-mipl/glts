@@ -2,7 +2,10 @@ import { Box, Divider, Stack, Typography } from '@mui/material'
 import { Button } from '@/design-system/UIComponents'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
-import { CLAIM_SHEET_STATUS_LABEL } from '@/shared/types/groundOpsClaimSheet'
+import {
+  CLAIM_SHEET_STATUS_LABEL,
+  getClaimSheetFundTransferLabel,
+} from '@/shared/types/groundOpsClaimSheet'
 import { ClaimSheetKpiSnapshot } from './ClaimSheetKpiSnapshot'
 
 interface ClaimSheetDetailBodyProps {
@@ -72,15 +75,25 @@ export function ClaimSheetDetailBody({
           })}
         />
         <Meta label="Team" value={sheet.team} />
+        <Meta label="Transfer type" value={getClaimSheetFundTransferLabel(sheet.fundTransferType)} />
         <Meta label="Grand total" value={formatInr(sheet.grandTotal)} />
+        {sheet.reviewedBy ? <Meta label="Reviewed by" value={sheet.reviewedBy} /> : null}
+        {sheet.reviewedAt ? (
+          <Meta
+            label="Reviewed at"
+            value={new Date(sheet.reviewedAt).toLocaleString('en-GB', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          />
+        ) : null}
+        {sheet.rejectionReason ? <Meta label="Rejection reason" value={sheet.rejectionReason} /> : null}
       </Box>
 
-      <Stack spacing={1}>
-        <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12 }}>
-          Settlement KPIs
-        </Typography>
-        <ClaimSheetKpiSnapshot kpis={sheet.kpis} />
-      </Stack>
+      <ClaimSheetKpiSnapshot kpis={sheet.kpis} fundTransferType={sheet.fundTransferType} />
 
       <Divider />
 

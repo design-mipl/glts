@@ -97,8 +97,8 @@ export function RetailAddPricingModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={initial ? 'Edit Visa Pricing' : 'Add Visa Pricing'}
-      subtitle="Configure GLTS and VFS services for one country visa quotation."
+      title={initial ? 'Edit processing visa fees' : 'Add processing visa fees'}
+      subtitle="Configure GLTS processing fees and VFS services for one country visa quotation."
       size="md"
       footer={
         <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{ width: 1 }}>
@@ -191,7 +191,7 @@ export function RetailAddPricingModal({
 
         <Box>
           <Typography variant="subtitle2" sx={{ mb: 1.25, fontWeight: 700 }}>
-            GLTS Services
+            GLTS processing fees
           </Typography>
           <Stack spacing={1.5}>
             <SearchableServicePicker

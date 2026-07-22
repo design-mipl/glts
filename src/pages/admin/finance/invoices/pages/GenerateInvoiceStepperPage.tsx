@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Box, CircularProgress } from '@mui/material'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/design-system/UIComponents'
 import type { TableState } from '@/design-system/UIComponents'
 import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
+import { AdminFullPageFormShell } from '@/pages/admin/components/AdminFullPageFormShell'
 import { AdminStepperFormFooter } from '@/pages/admin/components/AdminStepperFormFooter'
 import { AdminStepperFormShell } from '@/pages/admin/components/AdminStepperFormShell'
 import type { AdminStepperFormStep } from '@/pages/admin/components/AdminStepperFormShell'
@@ -71,18 +73,21 @@ export function GenerateInvoiceStepperPage() {
     applicationIds,
     batchIds,
     draftId,
-    enabled: activeStep === 1,
+    enabled: activeStep === 1 || Boolean(draftId),
   })
 
+  const isRevised = composition.isRevised
+
   useEffect(() => {
+    if (isRevised) return
     if (activeStep !== 1 || composition.hasSelection) return
     setActiveStep(0)
-  }, [activeStep, composition.hasSelection])
+  }, [activeStep, composition.hasSelection, isRevised])
 
   const syncStepToUrl = useCallback(
     (step: number) => {
       const next = new URLSearchParams(searchParams)
-      if (step === 1) {
+      if (step === 1 || isRevised) {
         next.set('step', '1')
       } else {
         next.delete('step')
@@ -96,12 +101,16 @@ export function GenerateInvoiceStepperPage() {
         setSearchParams(next, { replace: true })
       }
     },
-    [draftId, searchParams, setSearchParams],
+    [draftId, searchParams, setSearchParams, isRevised],
   )
 
   useEffect(() => {
+    if (isRevised) {
+      syncStepToUrl(1)
+      return
+    }
     syncStepToUrl(activeStep)
-  }, [activeStep, syncStepToUrl])
+  }, [activeStep, syncStepToUrl, isRevised])
 
   const handleProceedFromSelection = (): boolean => {
     if (!canProceed) return false
@@ -141,6 +150,50 @@ export function GenerateInvoiceStepperPage() {
     [composition.sections, selectionStepContent],
   )
 
+  const compositionFooter = (
+    <AdminFullPageFormFooter
+      onCancel={isRevised ? handleCancel : () => setActiveStep(0)}
+      cancelLabel={isRevised ? 'Back to listing' : 'Back'}
+      onDraft={composition.handleSaveDraft}
+      draftLabel="Save as Draft"
+      onSave={composition.handleSubmit}
+      saveLabel="Submit Invoice"
+      loading={composition.saving}
+      disabled={!composition.ready}
+      extraActions={
+        <Button
+          label="Download Preview"
+          variant="outlined"
+          onClick={composition.handleDownloadPreview}
+          disabled={composition.saving || !composition.ready}
+        />
+      }
+    />
+  )
+
+  if (isRevised) {
+    if (!composition.ready) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress size={32} />
+        </Box>
+      )
+    }
+
+    return (
+      <AdminFullPageFormShell
+        breadcrumbs={[
+          { label: 'Billing & invoice', href: listingHref },
+          { label: 'Revised invoice' },
+        ]}
+        title="Revised invoice"
+        description="Credit amount is from the credit note (reference). Updated amount is the final billable amount. Adjust date and billing entity as needed, then submit."
+        sections={composition.sections}
+        footer={compositionFooter}
+      />
+    )
+  }
+
   const footer =
     activeStep === 0 ? (
       <AdminStepperFormFooter
@@ -152,31 +205,16 @@ export function GenerateInvoiceStepperPage() {
         disabled={!canProceed}
       />
     ) : (
-      <AdminFullPageFormFooter
-        onCancel={() => setActiveStep(0)}
-        cancelLabel="Back"
-        onDraft={composition.handleSaveDraft}
-        draftLabel="Save as Draft"
-        onSave={composition.handleSubmit}
-        saveLabel="Submit Invoice"
-        loading={composition.saving}
-        disabled={!composition.ready}
-        extraActions={
-          <Button
-            label="Download Preview"
-            variant="outlined"
-            onClick={composition.handleDownloadPreview}
-            disabled={composition.saving || !composition.ready}
-          />
-        }
-      />
+      compositionFooter
     )
+
+  const pageTitle = draftId ? 'Edit invoice draft' : 'Generate invoice'
 
   return (
     <AdminStepperFormShell
       breadcrumbs={[
         { label: 'Billing & invoice', href: listingHref },
-        { label: 'Generate invoice' },
+        { label: pageTitle },
       ]}
       steps={steps}
       activeStep={activeStep}

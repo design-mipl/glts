@@ -20,11 +20,6 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function formatUnitCount(count: number, unit: string): string {
-  const label = count === 1 ? unit : `${unit}s`
-  return `${count} ${label}`
-}
-
 function InvoiceSummaryLine({ label, value }: { label: string; value: string }) {
   return (
     <Stack
@@ -74,20 +69,16 @@ export function InvoiceCompositionTotalsPanel({
   return (
     <Stack spacing={0} sx={{ width: '100%' }}>
       <InvoiceSummaryLine
-        label="Total Applications"
-        value={formatUnitCount(categoryTotals.totalApplications, 'Application')}
-      />
-      <InvoiceSummaryLine
-        label="Total Applicants"
-        value={formatUnitCount(categoryTotals.totalApplicants, 'Applicant')}
-      />
-
-      <InvoiceSummaryDivider />
-
-      <InvoiceSummaryLine
         label={isCredit ? 'Services to credit' : FEE.billableServices.summaryTotal}
         value={formatInr(categoryTotals.servicesTotal)}
       />
+
+      {categoryTotals.refundsIncludedTotal > 0 ? (
+        <InvoiceSummaryLine
+          label={isCredit ? 'Consulate refunds to credit' : 'Consulate refunds to apply'}
+          value={formatInr(categoryTotals.refundsIncludedTotal)}
+        />
+      ) : null}
 
       <InvoiceSummaryDivider />
 

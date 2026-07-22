@@ -58,7 +58,7 @@ export function AgreementSummaryPanel({ formData, agreementId, statusLabel = 'Dr
         <SummaryRow label="Agreement expiry date" value={formatAgreementDate(formData.endDate)} />
         <SummaryRow label="Entities" value={String(formData.entities.length)} />
         <SummaryRow
-          label="Visa pricing"
+          label="Processing visa fees"
           value={String(formData.commercialVisaPricing?.length || formData.pricingMatrix.length)}
         />
         <SummaryRow

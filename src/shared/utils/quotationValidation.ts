@@ -14,7 +14,7 @@ export function validateQuotationForm(data: QuotationFormData): Record<string, s
 
   if (isRetailPricingMode(data.workflowType)) {
     if (data.retailVisaPricing.length === 0) {
-      errors.pricingMatrix = 'Add at least one visa pricing item'
+      errors.pricingMatrix = 'Add at least one processing visa fees item'
     } else {
       const incomplete = data.retailVisaPricing.some(
         (item) =>
@@ -23,11 +23,12 @@ export function validateQuotationForm(data: QuotationFormData): Record<string, s
           (item.gltsServices.length === 0 && item.vfsServices.length === 0),
       )
       if (incomplete) {
-        errors.pricingMatrix = 'Each visa pricing card needs country, visa type, and at least one service'
+        errors.pricingMatrix =
+          'Each processing visa fees card needs country, visa type, and at least one service'
       }
     }
   } else if (data.commercialVisaPricing.length === 0) {
-    errors.pricingMatrix = 'Add at least one visa pricing entry'
+    errors.pricingMatrix = 'Add at least one processing visa fees entry'
   } else {
     const incomplete = data.commercialVisaPricing.some((entry) => {
       if (entry.serviceFee <= 0) return true
@@ -36,7 +37,7 @@ export function validateQuotationForm(data: QuotationFormData): Record<string, s
       return false
     })
     if (incomplete) {
-      errors.pricingMatrix = 'Complete all visa pricing before saving'
+      errors.pricingMatrix = 'Complete all processing visa fees before saving'
     }
   }
 

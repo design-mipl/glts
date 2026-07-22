@@ -148,6 +148,10 @@ export interface CountryVfsServiceRate {
   /** When true, the configured rate is GST-inclusive. */
   gstIncluded: boolean
   sortOrder: number
+  /** Visa-processing vendor this consulate rate maps to when selected downstream. */
+  vendorId?: string
+  /** Denormalized vendor display name. */
+  vendorName?: string
   /** @deprecated Legacy link to Embassy / VFS Fee Master imports. */
   embassyFeeServiceId?: string
 }
