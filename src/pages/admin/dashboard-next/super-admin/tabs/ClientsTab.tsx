@@ -10,15 +10,14 @@ import {
   Users,
 } from 'lucide-react'
 import {
-  BusinessSegmentBreakdown,
-  CountryDistribution,
   DashboardTable,
   QuickActions,
   RecentActivity,
   StatusBadge,
   DASHBOARD_SPACING,
 } from '../../shared'
-import type { SuperAdminClientRow, SuperAdminDashboardTabProps } from '../types'
+import { ComparisonLayout, RankingList } from '../../shared/dashboard-ui-kit'
+import type { SuperAdminClientRow, SuperAdminDashboardTabProps, SuperAdminRankItem } from '../types'
 
 const ACTION_ICONS: Record<string, ReactNode> = {
   'qa-admin-next': <LayoutDashboard size={18} />,
@@ -27,6 +26,17 @@ const ACTION_ICONS: Record<string, ReactNode> = {
   'qa-clients': <Users size={18} />,
   'qa-finance': <HandCoins size={18} />,
   'qa-legacy-admin': <Building2 size={18} />,
+}
+
+function toRankingItems(items: SuperAdminRankItem[]) {
+  return items.map((item, index) => ({
+    id: item.id,
+    primary: item.primary,
+    secondary: item.secondary,
+    rank: index + 1,
+    value: item.value,
+    progress: item.progress,
+  }))
 }
 
 export function ClientsTab({
@@ -66,26 +76,65 @@ export function ClientsTab({
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
       <Grid size={{ xs: 12, md: 6 }}>
-        <CountryDistribution
-          title="Country demand"
-          slices={data.countryDistribution}
+        <RankingList
+          title="Client health"
+          items={toRankingItems(data.clientHealth)}
           loading={loading}
-          onRetry={onRetry}
         />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
-        <BusinessSegmentBreakdown
-          title="Client segments"
-          slices={data.businessSegments}
+        <RankingList
+          title="High-risk clients"
+          items={toRankingItems(data.highRiskClients)}
           loading={loading}
-          onRetry={onRetry}
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 4 }}>
+        <RankingList
+          title="High margin clients"
+          items={toRankingItems(data.highMarginClients)}
+          loading={loading}
+        />
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <RankingList
+          title="Low margin clients"
+          items={toRankingItems(data.lowMarginClients)}
+          loading={loading}
+        />
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <RankingList
+          title="Dormant clients"
+          items={toRankingItems(data.dormantClients)}
+          loading={loading}
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12 }}>
+        <ComparisonLayout
+          left={
+            <RankingList
+              title="Top 20 by revenue"
+              items={toRankingItems(data.topRevenueClients)}
+              loading={loading}
+            />
+          }
+          right={
+            <RankingList
+              title="Top growth opportunities"
+              items={toRankingItems(data.fastestGrowingClients)}
+              loading={loading}
+            />
+          }
         />
       </Grid>
 
       <Grid size={{ xs: 12 }}>
         <DashboardTable
-          title="Top clients"
-          subtitle="Corporate · marine · retail contributors"
+          title="Key accounts"
+          subtitle="Outstanding · collections · status"
           columns={columns}
           data={data.clientRows}
           rowKey="id"

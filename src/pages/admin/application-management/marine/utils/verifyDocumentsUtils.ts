@@ -144,6 +144,104 @@ export function collectRejectedVerifyDocuments(
   return entries
 }
 
+export type VerifyTravelerListFilter = 'all' | 'pending' | 'completed' | 'correction'
+
+export type VerifyTravelerTone = 'completed' | 'pending' | 'correction'
+
+export interface VerifyTravelerDocProgress {
+  verified: number
+  total: number
+  tone: VerifyTravelerTone
+  label: string
+}
+
+export function getTravelerDocProgress(row: UploadQueueRow): VerifyTravelerDocProgress {
+  const required = row.documents.filter(doc => doc.required && !isOriginalVerifyDocument(doc))
+  const total = required.length > 0 ? required.length : row.documentsTotal
+  const verified =
+    required.length > 0
+      ? required.filter(doc => doc.status === 'verified').length
+      : row.documentsComplete
+  const hasCorrection = row.documents.some(
+    doc => doc.status === 'rejected' || doc.status === 'needs_review',
+  )
+  const missingCount =
+    required.length > 0
+      ? required.filter(doc => doc.status === 'missing').length
+      : Math.max(0, total - verified)
+
+  if (hasCorrection) {
+    return {
+      verified,
+      total,
+      tone: 'correction',
+      label: missingCount > 0 && verified === 0 ? 'Missing' : `${verified}/${total}`,
+    }
+  }
+
+  if (total > 0 && verified >= total) {
+    return { verified, total, tone: 'completed', label: 'Completed' }
+  }
+
+  if (missingCount === total && total > 0) {
+    return { verified, total, tone: 'correction', label: 'Missing' }
+  }
+
+  return {
+    verified,
+    total,
+    tone: 'pending',
+    label: total > 0 ? `${verified}/${total}` : '—',
+  }
+}
+
+export function getTravelerVerifyBucket(
+  row: UploadQueueRow,
+): Exclude<VerifyTravelerListFilter, 'all'> {
+  const progress = getTravelerDocProgress(row)
+  if (progress.tone === 'completed') return 'completed'
+  if (progress.tone === 'correction') return 'correction'
+  return 'pending'
+}
+
+export function filterVerifyTravelers(
+  rows: UploadQueueRow[],
+  search: string,
+  filter: VerifyTravelerListFilter,
+): UploadQueueRow[] {
+  const q = search.trim().toLowerCase()
+  return rows.filter(row => {
+    if (filter !== 'all' && getTravelerVerifyBucket(row) !== filter) return false
+    if (!q) return true
+    const haystack = [
+      row.travelerName,
+      row.passportNo,
+      row.gltsApplicantId,
+      row.nationality,
+      row.basicDetails?.passportNumber,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+    return haystack.includes(q)
+  })
+}
+
+export function countVerifyTravelerBuckets(
+  rows: UploadQueueRow[],
+): Record<VerifyTravelerListFilter, number> {
+  const counts: Record<VerifyTravelerListFilter, number> = {
+    all: rows.length,
+    pending: 0,
+    completed: 0,
+    correction: 0,
+  }
+  for (const row of rows) {
+    counts[getTravelerVerifyBucket(row)] += 1
+  }
+  return counts
+}
+
 export function buildOverviewFromDetail(
   applicationId: string,
   isBulk: boolean,

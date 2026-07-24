@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
-import { Box, Divider, Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import type { SxProps, Theme } from '@mui/material/styles'
 import { Eye, RotateCcw, ShieldCheck, Upload, XCircle } from 'lucide-react'
-import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
+import { Badge, BaseCard, Button, IconButton } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
 import {
   formatWorkflowSummary,
@@ -19,34 +19,23 @@ import {
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 
 const VERIFY_DOCUMENT_CARD_SX = {
-  p: 2,
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
+  p: 1.5,
   borderWidth: 1,
   borderColor: 'divider',
 } as const
 
-export const VERIFY_DOCUMENT_GRID_SX = {
-  display: 'grid',
-  gridTemplateColumns: {
-    xs: '1fr',
-    sm: 'repeat(2, minmax(0, 1fr))',
-    md: 'repeat(3, minmax(0, 1fr))',
-    lg: 'repeat(4, minmax(0, 1fr))',
-  },
-  gap: 1.5,
+/** Stacked single-column list of document cards. */
+export const VERIFY_DOCUMENT_STACK_SX = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 1.25,
 } as const
 
-/** Two-column grid for document cards inside the 50/50 final verification layout. */
-export const VERIFY_DOCUMENT_SPLIT_GRID_SX = {
-  display: 'grid',
-  gridTemplateColumns: {
-    xs: '1fr',
-    sm: 'repeat(2, minmax(0, 1fr))',
-  },
-  gap: 1.5,
-} as const
+/** @deprecated Prefer VERIFY_DOCUMENT_STACK_SX — kept for callers that still pass gridSx. */
+export const VERIFY_DOCUMENT_GRID_SX = VERIFY_DOCUMENT_STACK_SX
+
+/** @deprecated Prefer VERIFY_DOCUMENT_STACK_SX — multi-column grids removed from verify UI. */
+export const VERIFY_DOCUMENT_SPLIT_GRID_SX = VERIFY_DOCUMENT_STACK_SX
 
 export type VerifyDocumentGridSx = SxProps<Theme>
 
@@ -115,82 +104,57 @@ export function VerifyDocumentCard({
   const showPreview = previewOnly || isVerified || (hasFile && !pendingGltsArrangement)
   const reqType = requirementTypeLabel(document)
   const displayStatus = verifyDocumentBadgeLabel(document)
+  const gltsNote = document.reviewComment?.trim() || ''
 
   return (
     <BaseCard sx={VERIFY_DOCUMENT_CARD_SX}>
-      <Stack spacing={1.5} sx={{ flex: 1 }}>
+      <Stack spacing={1}>
         <Stack
-          direction="row"
-          alignItems="flex-start"
+          direction={{ xs: 'column', sm: 'row' }}
+          alignItems={{ xs: 'stretch', sm: 'flex-start' }}
           justifyContent="space-between"
           spacing={1}
         >
-          <Typography variant="subtitle2" fontWeight={700} sx={{ minWidth: 0, flex: 1, fontSize: 13 }}>
-            {document.name}
-            {document.required ? (
-              <Typography component="span" color="error.main" sx={{ ml: 0.25 }}>
-                *
-              </Typography>
-            ) : null}
-          </Typography>
-          {displayStatus ? (
-            <Badge
-              label={displayStatus}
-              color={documentBadgeColor(status, document)}
-              size="sm"
-            />
-          ) : null}
-        </Stack>
-
-        <Stack spacing={0.75} sx={{ flex: 1 }}>
-          {reqType ? (
-            <Stack direction="row" alignItems="center" spacing={0.75} flexWrap="wrap" useFlexGap>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-                Requirement type:
-              </Typography>
-              <Typography variant="caption" fontWeight={600} sx={{ fontSize: 12 }}>
-                {reqType}
-              </Typography>
-            </Stack>
-          ) : null}
-          {workflowSummary ? (
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.45 }}>
-              {workflowSummary}
-            </Typography>
-          ) : null}
-          {document.reviewComment?.trim() && !isVerified ? (
-            <Box
-              sx={{
-                px: 1.25,
-                py: 0.75,
-                borderRadius: 1,
-                bgcolor: 'action.hover',
-                border: '1px solid',
-                borderColor: 'divider',
-              }}
-            >
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.5, display: 'block' }}>
-                <Typography component="span" fontWeight={700} sx={{ fontSize: 12, color: 'text.primary' }}>
-                  GLTS note:{' '}
+          <Stack direction="row" alignItems="flex-start" spacing={1} sx={{ minWidth: 0, flex: 1 }}>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Stack direction="row" alignItems="center" spacing={0.75} useFlexGap sx={{ flexWrap: 'wrap' }}>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13, lineHeight: 1.35 }}>
+                  {document.name}
+                  {document.required ? (
+                    <Typography component="span" color="error.main" sx={{ ml: 0.25 }}>
+                      *
+                    </Typography>
+                  ) : null}
                 </Typography>
-                {document.reviewComment.trim()}
-              </Typography>
+                {displayStatus ? (
+                  <Badge
+                    label={displayStatus}
+                    color={documentBadgeColor(status, document)}
+                    size="sm"
+                  />
+                ) : null}
+              </Stack>
+              {reqType || workflowSummary ? (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontSize: 11, lineHeight: 1.4, display: 'block', mt: 0.35 }}
+                >
+                  {[reqType, workflowSummary].filter(Boolean).join(' · ')}
+                </Typography>
+              ) : null}
             </Box>
-          ) : null}
-        </Stack>
+          </Stack>
 
-        <Divider />
-
-        <Stack
-          direction="row"
-          flexWrap="wrap"
-          gap={1}
-          useFlexGap
-          alignItems="center"
-          justifyContent="space-between"
-          sx={{ width: '100%' }}
-        >
-          <Stack direction="row" flexWrap="wrap" gap={1} useFlexGap>
+          <Stack
+            direction="row"
+            flexWrap="wrap"
+            gap={0.5}
+            useFlexGap
+            alignItems="center"
+            justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}
+            sx={{ flexShrink: 0 }}
+          >
             {showGltsUpload && !previewOnly ? (
               <Button
                 label={simpleDocumentUploadActionLabel(document.documentId as SimpleDocumentRequirementId)}
@@ -202,44 +166,71 @@ export function VerifyDocumentCard({
             ) : null}
             {showVerifyRejectActions ? (
               <>
-                <Button
-                  label="Verify"
-                  variant="outlined"
+                <IconButton
+                  tooltip="Verify"
+                  icon={<ShieldCheck size={14} />}
+                  variant="soft"
+                  color="success"
                   size="sm"
-                  startIcon={<ShieldCheck size={14} />}
                   onClick={onVerify}
                 />
-                <Button
-                  label="Reject"
-                  variant="outlined"
+                <IconButton
+                  tooltip="Reject"
+                  icon={<XCircle size={14} />}
+                  variant="soft"
                   color="error"
                   size="sm"
-                  startIcon={<XCircle size={14} />}
                   onClick={onReject}
                 />
               </>
             ) : null}
             {showReuploadRequest && showVerifyRejectActions ? (
-              <Button
-                label="Request Re-upload"
-                variant="text"
+              <IconButton
+                tooltip="Request re-upload"
+                icon={<RotateCcw size={14} />}
+                variant="soft"
+                color="warning"
                 size="sm"
-                startIcon={<RotateCcw size={14} />}
                 onClick={onRequestReupload}
               />
             ) : null}
+            {showPreview ? (
+              <IconButton
+                tooltip="Preview"
+                icon={<Eye size={14} />}
+                variant="soft"
+                color="primary"
+                size="sm"
+                onClick={onPreview}
+                disabled={previewDisabled}
+              />
+            ) : null}
           </Stack>
-          {showPreview ? (
-            <Button
-              label="Preview"
-              variant="outlined"
-              size="sm"
-              startIcon={<Eye size={14} />}
-              onClick={onPreview}
-              disabled={previewDisabled}
-            />
-          ) : null}
         </Stack>
+
+        {gltsNote && !isVerified ? (
+          <Box
+            sx={{
+              px: 1.25,
+              py: 0.75,
+              borderRadius: 1,
+              bgcolor: 'action.hover',
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ fontSize: 12, lineHeight: 1.5, display: 'block' }}
+            >
+              <Typography component="span" fontWeight={700} sx={{ fontSize: 12, color: 'text.primary' }}>
+                GLTS Note:{' '}
+              </Typography>
+              {gltsNote}
+            </Typography>
+          </Box>
+        ) : null}
       </Stack>
     </BaseCard>
   )
@@ -263,7 +254,7 @@ export function VerifyDocumentChecklistSection({
   countryTitle,
   sectionTitle,
   documents,
-  gridSx = VERIFY_DOCUMENT_GRID_SX,
+  gridSx = VERIFY_DOCUMENT_STACK_SX,
   previewOnly = false,
   onPreview,
   onVerify,

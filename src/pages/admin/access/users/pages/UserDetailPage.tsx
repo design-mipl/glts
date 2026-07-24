@@ -105,6 +105,8 @@ export function UserDetailPage() {
             <Tabs
               value={activeTab}
               onChange={(v) => setActiveTab(v as UserDetailTab)}
+              variant="underline"
+              size="sm"
               items={DETAIL_TABS.map((t) => ({
                 ...t,
                 badge: t.value === 'activity' ? user.activityLogs.length : undefined,

@@ -49,11 +49,12 @@ import {
   OperationsConsultantDashboardPage,
 } from '../dashboard'
 import {
+  SuperAdminDashboardNextPage,
   AdminDashboardPage as AdminDashboardNextPage,
   AccountsDashboardNextPage,
   GroundOperationsDashboardNextPage,
   OperationsDashboardNextPage,
-  SuperAdminDashboardNextPage,
+  DocumentationDashboardNextPage,
 } from '../dashboard-next'
 import { AdminProfilePage } from '../profile/AdminProfilePage'
 import {
@@ -736,6 +737,14 @@ export function AdminRoutes() {
         }
       />
       <Route
+        path="dashboard-next/super-admin"
+        element={
+          <PermissionGuard>
+            <SuperAdminDashboardNextPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
         path="dashboard-next"
         element={
           <PermissionGuard>
@@ -760,18 +769,18 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="dashboard-next/super-admin"
-        element={
-          <PermissionGuard>
-            <SuperAdminDashboardNextPage />
-          </PermissionGuard>
-        }
-      />
-      <Route
         path="dashboard-next/ground-operations"
         element={
           <PermissionGuard>
             <GroundOperationsDashboardNextPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard-next/documentation"
+        element={
+          <PermissionGuard>
+            <DocumentationDashboardNextPage />
           </PermissionGuard>
         }
       />

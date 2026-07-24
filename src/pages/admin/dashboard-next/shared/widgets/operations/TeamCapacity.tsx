@@ -1,7 +1,7 @@
 import type { Column } from '@/design-system/UIComponents'
 import { ProgressBar } from '@/design-system/UIComponents'
 import { Box } from '@mui/material'
-import { DashboardTable } from '../DashboardTable'
+import { ExecutiveTable } from '../../dashboard-ui-kit'
 import { StatusBadge } from '../StatusBadge'
 import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
 import {
@@ -113,15 +113,17 @@ export function TeamCapacity({
       onRetry={onRetry}
       emptyTitle="No capacity data"
     >
-      <DashboardTable
+      <ExecutiveTable
         title={title}
         subtitle={subtitle}
         columns={columns}
         data={rows}
         rowKey="id"
         onRowClick={onRowClick}
-        onViewAll={onViewAll}
-        card
+        actionLabel={onViewAll ? 'View all' : undefined}
+        onAction={onViewAll}
+        fullWidth
+        loading={loading}
       />
     </BusinessWidgetFrame>
   )

@@ -70,6 +70,64 @@ export interface AccountsQuickActionDefinition {
   href: string
 }
 
+/** Carry-forward from Original Accounts — invoice posting queue. */
+export interface AccountsInvoicePostingRow {
+  id: string
+  invoiceNo: string
+  company: string
+  billingType: string
+  invoiceAmount: string
+  status: string
+  branch: string
+}
+
+/** Carry-forward — vendor payments due / scheduled. */
+export interface AccountsVendorPaymentRow {
+  id: string
+  vendor: string
+  service: string
+  amount: string
+  dueDate: string
+  paymentStatus: string
+  branch: string
+}
+
+/** Carry-forward — invoice submission calendar rows. */
+export interface AccountsInvoiceSubmissionRow {
+  id: string
+  company: string
+  submissionDate: string
+  /** YYYYMMDD number used for calendar day placement. */
+  submissionDateSort: number
+  billingCycle: string
+  status: string
+  branch: string
+}
+
+export interface AccountsTopRevenueRow {
+  id: string
+  rank: number
+  name: string
+  revenue: string
+  sharePercent: number
+}
+
+export interface AccountsPurchaseVsRevenue {
+  purchaseCost: string
+  vendorCost: string
+  revenue: string
+  profitMargin: string
+  profitMarginPercent: number
+  trend: { label: string; revenue: number; purchase: number }[]
+}
+
+export interface AccountsDailyReportCard {
+  id: string
+  name: string
+  lastGenerated: string
+  reportKey: string
+}
+
 export interface AccountsDashboardData {
   quickStats: DashboardKpiItem[]
   notifications: NotificationItem[]
@@ -83,6 +141,9 @@ export interface AccountsDashboardData {
   invoiceRows: AccountsInvoiceRow[]
   invoiceActivity: RecentActivityItem[]
   invoiceNotifications: NotificationItem[]
+  invoicePostingQueue: AccountsInvoicePostingRow[]
+  vendorPayments: AccountsVendorPaymentRow[]
+  invoiceSubmissions: AccountsInvoiceSubmissionRow[]
   reconciliationSummary: CollectionSummaryData
   reconciliationRows: AccountsReconciliationRow[]
   reconciliationActivity: RecentActivityItem[]
@@ -93,6 +154,11 @@ export interface AccountsDashboardData {
   metricComparison: MetricComparisonItem[]
   riskAlerts: DashboardAlertItem[]
   slaOverview: DashboardProgressItem[]
+  topClients: AccountsTopRevenueRow[]
+  topCountries: AccountsTopRevenueRow[]
+  revenueBySegment: AccountsTopRevenueRow[]
+  purchaseVsRevenue: AccountsPurchaseVsRevenue
+  dailyReports: AccountsDailyReportCard[]
   recentReports: RecentReportItem[]
   reportNotifications: NotificationItem[]
 }

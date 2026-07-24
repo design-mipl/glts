@@ -1,10 +1,17 @@
 import { PieChart, DonutChart, BarChart, AreaChart } from '@/design-system/UIComponents'
-import { ChartPanel } from '../ChartPanel'
+import {
+  AnalyticsChart,
+  ComparisonLayout,
+  ProgressMetric,
+  RankingList,
+  TrendContainer,
+  UI_KIT_SPACING,
+} from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
 import { AlertCenter } from '../AlertCenter'
-import { ProgressSummary } from '../ProgressSummary'
 import { DASHBOARD_CHART_HEIGHT_SPACING } from '../../constants'
 import type { DashboardAlertItem, DashboardProgressItem } from '../../types'
+import { Stack } from '@mui/material'
 
 export interface DistributionSlice {
   id: string
@@ -52,6 +59,7 @@ function DistributionDonut({
     label: slice.label,
     value: slice.value,
   }))
+  const total = slices.reduce((sum, slice) => sum + slice.value, 0)
 
   return (
     <BusinessWidgetFrame
@@ -63,9 +71,25 @@ function DistributionDonut({
       permission={permission}
       onRetry={onRetry}
     >
-      <ChartPanel title={title ?? 'Distribution'} subtitle={subtitle} empty={data.length === 0}>
-        <DonutChart data={data} height={chartHeight} centerLabel={centerLabel} />
-      </ChartPanel>
+      <ComparisonLayout
+        left={
+          <AnalyticsChart title={title ?? 'Distribution'} subtitle={subtitle} minHeight={chartHeight}>
+            <DonutChart data={data} height={chartHeight} centerLabel={centerLabel} />
+          </AnalyticsChart>
+        }
+        right={
+          <RankingList
+            title="Ranking"
+            items={slices.map((slice, index) => ({
+              id: slice.id,
+              primary: slice.label,
+              rank: index + 1,
+              value: slice.value,
+              progress: total > 0 ? (slice.value / total) * 100 : 0,
+            }))}
+          />
+        }
+      />
     </BusinessWidgetFrame>
   )
 }
@@ -103,13 +127,13 @@ export function VisaDistribution(props: VisaDistributionProps) {
       permission={props.permission}
       onRetry={props.onRetry}
     >
-      <ChartPanel
+      <AnalyticsChart
         title={props.title ?? 'Visa distribution'}
         subtitle={props.subtitle ?? 'Mix by visa type'}
-        empty={data.length === 0}
+        minHeight={chartHeight}
       >
         <PieChart data={data} height={chartHeight} />
-      </ChartPanel>
+      </AnalyticsChart>
     </BusinessWidgetFrame>
   )
 }
@@ -164,7 +188,7 @@ export function BranchPerformance({
       permission={permission}
       onRetry={onRetry}
     >
-      <ChartPanel title={title} subtitle={subtitle} empty={data.length === 0}>
+      <AnalyticsChart title={title} subtitle={subtitle} minHeight={chartHeight}>
         <BarChart
           data={data}
           xKey="branch"
@@ -172,7 +196,7 @@ export function BranchPerformance({
           height={chartHeight}
           showLegend={false}
         />
-      </ChartPanel>
+      </AnalyticsChart>
     </BusinessWidgetFrame>
   )
 }
@@ -216,6 +240,7 @@ export function RiskOverview({
         subtitle={subtitle}
         alerts={alerts}
         onShowMore={onShowMore}
+        loading={loading}
       />
     </BusinessWidgetFrame>
   )
@@ -251,8 +276,18 @@ export function SLAOverview({
       empty={empty ?? items.length === 0}
       permission={permission}
       onRetry={onRetry}
+      card={false}
     >
-      <ProgressSummary items={items} />
+      <Stack spacing={UI_KIT_SPACING.field}>
+        {items.map((item) => (
+          <ProgressMetric
+            key={item.id}
+            label={item.label}
+            value={item.value}
+            helperText={item.helperText}
+          />
+        ))}
+      </Stack>
     </BusinessWidgetFrame>
   )
 }
@@ -298,7 +333,7 @@ export function ProcessingTrend({
       permission={permission}
       onRetry={onRetry}
     >
-      <ChartPanel title={title} subtitle={subtitle} empty={data.length === 0}>
+      <TrendContainer title={title} subtitle={subtitle} minHeight={chartHeight}>
         <AreaChart
           data={data}
           xKey="label"
@@ -312,7 +347,7 @@ export function ProcessingTrend({
           }
           height={chartHeight}
         />
-      </ChartPanel>
+      </TrendContainer>
     </BusinessWidgetFrame>
   )
 }

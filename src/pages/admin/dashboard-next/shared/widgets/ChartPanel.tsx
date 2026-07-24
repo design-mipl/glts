@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react'
-import { Box } from '@mui/material'
-import { Button, ChartCard, EmptyState, Skeleton } from '@/design-system/UIComponents'
-import { tokens } from '@/design-system/tokens'
-import { DASHBOARD_CHART_HEIGHT_SPACING, DASHBOARD_SPACING } from '../constants'
+import { ChartContainer } from '../dashboard-ui-kit'
+import { DASHBOARD_CHART_HEIGHT_SPACING } from '../constants'
 import { isDashboardPermissionGranted } from '../utils/permission'
 
 export interface ChartPanelProps {
@@ -43,38 +41,25 @@ export function ChartPanel({
     return null
   }
 
-  // MUI theme spacing unit is 8 — heightSpacing is a tokenized multiplier.
   const height = heightSpacing * 8
 
   return (
-    <ChartCard title={title} subtitle={subtitle} loading={loading} action={action} height={height}>
-      {error ? (
-        <Box sx={{ py: DASHBOARD_SPACING.card, textAlign: 'center' }}>
-          <EmptyState
-            variant="no-data"
-            title={errorTitle}
-            description={errorDescription}
-            action={onRetry ? { label: 'Retry', onClick: onRetry } : undefined}
-          />
-          {onRetry ? (
-            <Box sx={{ mt: DASHBOARD_SPACING.field }}>
-              <Button label="Retry" variant="outlined" size="sm" onClick={onRetry} />
-            </Box>
-          ) : null}
-        </Box>
-      ) : loading ? (
-        <Skeleton
-          variant="rect"
-          height={height}
-          sx={{ borderRadius: tokens.borderRadius.md }}
-        />
-      ) : empty ? (
-        <Box sx={{ py: DASHBOARD_SPACING.card }}>
-          <EmptyState variant="no-data" title={emptyTitle} description={emptyDescription} />
-        </Box>
-      ) : (
-        <Box sx={{ width: '100%', minHeight: height }}>{children}</Box>
-      )}
-    </ChartCard>
+    <ChartContainer
+      title={title}
+      subtitle={subtitle}
+      toolbar={action}
+      loading={loading}
+      empty={empty}
+      error={error}
+      onRetry={onRetry}
+      emptyTitle={emptyTitle}
+      emptyDescription={emptyDescription}
+      errorTitle={errorTitle}
+      errorDescription={errorDescription}
+      minHeight={height}
+      width="full"
+    >
+      {children}
+    </ChartContainer>
   )
 }

@@ -1,6 +1,6 @@
-import { ListCard, type ListCardItem } from '@/design-system/UIComponents'
+import { ActivityFeed } from '../../dashboard-ui-kit'
+import type { UiKitListItem } from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from './BusinessWidgetFrame'
-import { Box } from '@mui/material'
 
 export interface RecentActivityItem {
   id: string
@@ -24,6 +24,25 @@ export interface RecentActivityProps {
   onRetry?: () => void
 }
 
+function toTone(
+  color?: RecentActivityItem['badgeColor'],
+): UiKitListItem['badgeTone'] {
+  switch (color) {
+    case 'success':
+      return 'positive'
+    case 'error':
+      return 'negative'
+    case 'warning':
+      return 'warning'
+    case 'info':
+      return 'info'
+    case 'primary':
+      return 'primary'
+    default:
+      return 'neutral'
+  }
+}
+
 export function RecentActivity({
   title = 'Recent activity',
   subtitle,
@@ -36,16 +55,6 @@ export function RecentActivity({
   permission,
   onRetry,
 }: RecentActivityProps) {
-  const listItems: ListCardItem[] = items.map((item) => ({
-    id: item.id,
-    primary: item.primary,
-    secondary: item.secondary,
-    badge: item.badgeLabel
-      ? { label: item.badgeLabel, color: item.badgeColor ?? 'default' }
-      : undefined,
-    onClick: item.onClick,
-  }))
-
   return (
     <BusinessWidgetFrame
       title={undefined}
@@ -57,17 +66,21 @@ export function RecentActivity({
       onRetry={onRetry}
       emptyTitle="No recent activity"
     >
-      <Box>
-        <ListCard
-          title={title}
-          subtitle={subtitle}
-          items={listItems}
-          maxItems={maxItems}
-          onShowMore={onShowMore}
-          showMoreLabel="View all"
-          emptyText="No recent activity"
-        />
-      </Box>
+      <ActivityFeed
+        title={title}
+        subtitle={subtitle}
+        maxItems={maxItems}
+        onShowMore={onShowMore}
+        loading={loading}
+        items={items.map((item) => ({
+          id: item.id,
+          primary: item.primary,
+          secondary: item.secondary,
+          badgeLabel: item.badgeLabel,
+          badgeTone: toTone(item.badgeColor),
+          onClick: item.onClick,
+        }))}
+      />
     </BusinessWidgetFrame>
   )
 }

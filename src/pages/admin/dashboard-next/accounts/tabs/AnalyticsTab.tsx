@@ -1,8 +1,14 @@
-import { Grid } from '@mui/material'
+import { useMemo, useState } from 'react'
+import type { Column } from '@/design-system/UIComponents'
+import { Tabs } from '@/design-system/UIComponents'
+import { Box, Grid, Stack, Typography } from '@mui/material'
+import { BarChart } from '@/design-system/UIComponents'
 import {
   BranchPerformance,
   BusinessSegmentBreakdown,
+  ChartPanel,
   CountryDistribution,
+  DashboardTable,
   MetricComparison,
   ProcessingTrend,
   RevenueSnapshot,
@@ -10,7 +16,9 @@ import {
   SLAOverview,
   DASHBOARD_SPACING,
 } from '../../shared'
-import type { AccountsDashboardTabProps } from '../types'
+import type { AccountsDashboardTabProps, AccountsTopRevenueRow } from '../types'
+
+type TopRevenueTab = 'clients' | 'countries' | 'segments'
 
 export function AnalyticsTab({
   data,
@@ -18,6 +26,45 @@ export function AnalyticsTab({
   onRetry,
   onNavigate,
 }: AccountsDashboardTabProps) {
+  const [topTab, setTopTab] = useState<TopRevenueTab>('clients')
+  const pvr = data.purchaseVsRevenue
+
+  const topColumns: Column<AccountsTopRevenueRow>[] = useMemo(
+    () => [
+      { key: 'rank', label: '#', widthSize: 'sm', sortable: false },
+      { key: 'name', label: 'Name', widthSize: 'lg', sortable: false },
+      { key: 'revenue', label: 'Revenue', widthSize: 'md', sortable: false },
+      {
+        key: 'sharePercent',
+        label: 'Share %',
+        widthSize: 'sm',
+        sortable: false,
+        render: (_value, row) => `${row.sharePercent}%`,
+      },
+    ],
+    [],
+  )
+
+  const topData =
+    topTab === 'clients'
+      ? data.topClients
+      : topTab === 'countries'
+        ? data.topCountries
+        : data.revenueBySegment
+
+  const topTitle =
+    topTab === 'clients'
+      ? 'Top 10 clients'
+      : topTab === 'countries'
+        ? 'Top 10 countries'
+        : 'Revenue by business segment'
+
+  const trendData = pvr.trend.map((point) => ({
+    label: point.label,
+    revenue: point.revenue,
+    purchase: point.purchase,
+  }))
+
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
       <Grid size={{ xs: 12, md: 6 }}>
@@ -72,6 +119,57 @@ export function AnalyticsTab({
           loading={loading}
           onRetry={onRetry}
         />
+      </Grid>
+
+      <Grid size={{ xs: 12, lg: 6 }}>
+        <Box>
+          <Box sx={{ mb: 1 }}>
+            <Tabs
+              size="sm"
+              items={[
+                { label: 'Top 10 clients', value: 'clients' },
+                { label: 'Top 10 countries', value: 'countries' },
+                { label: 'By segment', value: 'segments' },
+              ]}
+              value={topTab}
+              onChange={(value) => setTopTab(value as TopRevenueTab)}
+            />
+          </Box>
+          <DashboardTable
+            title="Top revenue"
+            subtitle={topTitle}
+            columns={topColumns}
+            data={topData}
+            rowKey="id"
+            loading={loading}
+            pageSize={5}
+          />
+        </Box>
+      </Grid>
+
+      <Grid size={{ xs: 12, lg: 6 }}>
+        <ChartPanel
+          title="Purchase vs revenue"
+          subtitle={`Margin ${pvr.profitMargin} (${pvr.profitMarginPercent}%)`}
+          loading={loading}
+          onRetry={onRetry}
+          heightSpacing={28}
+        >
+          <Stack spacing={1} sx={{ mb: 1.5 }}>
+            <Typography variant="caption" color="text.secondary">
+              Purchase {pvr.purchaseCost} · Vendor {pvr.vendorCost} · Revenue {pvr.revenue}
+            </Typography>
+          </Stack>
+          <BarChart
+            data={trendData}
+            xKey="label"
+            bars={[
+              { key: 'revenue', label: 'Revenue' },
+              { key: 'purchase', label: 'Purchase' },
+            ]}
+            height={220}
+          />
+        </ChartPanel>
       </Grid>
 
       <Grid size={{ xs: 12, md: 6 }}>

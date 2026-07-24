@@ -1,16 +1,11 @@
-import { Box, Stack, Typography } from '@mui/material'
+import { Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { BaseCard } from '@/design-system/UIComponents'
 import type { VerifyRejectedDocumentEntry } from '../../utils/verifyDocumentsUtils'
-import {
-  VERIFY_DOCUMENT_GRID_SX,
-  VerifyDocumentCard,
-  type VerifyDocumentGridSx,
-} from './VerifyDocumentChecklistSection'
+import { VERIFY_DOCUMENT_STACK_SX, VerifyDocumentCard } from './VerifyDocumentChecklistSection'
 
 interface VerifyRejectedDocumentsSectionProps {
   entries: VerifyRejectedDocumentEntry[]
-  gridSx?: VerifyDocumentGridSx
   previewOnly?: boolean
   onPreview: (entry: VerifyRejectedDocumentEntry) => void
   onVerify: (entry: VerifyRejectedDocumentEntry) => void
@@ -51,7 +46,6 @@ function RejectedDocumentCard({
 
 export function VerifyRejectedDocumentsSection({
   entries,
-  gridSx = VERIFY_DOCUMENT_GRID_SX,
   previewOnly = false,
   onPreview,
   onVerify,
@@ -83,7 +77,7 @@ export function VerifyRejectedDocumentsSection({
           </Typography>
         </Stack>
 
-        <Box sx={gridSx}>
+        <Stack sx={VERIFY_DOCUMENT_STACK_SX}>
           {entries.map(entry => (
             <RejectedDocumentCard
               key={`${entry.scope}-${entry.travelerId ?? 'global'}-${entry.document.documentId}`}
@@ -96,7 +90,7 @@ export function VerifyRejectedDocumentsSection({
               onGltsUpload={onGltsUpload ? () => onGltsUpload(entry) : undefined}
             />
           ))}
-        </Box>
+        </Stack>
       </Stack>
     </BaseCard>
   )

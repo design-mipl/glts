@@ -18,7 +18,11 @@ import {
   StatusBadge,
   DASHBOARD_SPACING,
 } from '../../shared'
-import type { AccountsDashboardTabProps, AccountsReconciliationRow } from '../types'
+import type {
+  AccountsDashboardTabProps,
+  AccountsReconciliationRow,
+  AccountsVendorPaymentRow,
+} from '../types'
 
 const ACTION_ICONS: Record<string, ReactNode> = {
   'qa-invoices': <FileText size={18} />,
@@ -59,13 +63,30 @@ export function ReconciliationTab({
       searchable: false,
       render: (_value, row) => (
         <Button
-          label="Open"
+          label="Resolve"
           variant="text"
           size="sm"
           onClick={() => onOpenReconciliation?.(row.id)}
         />
       ),
     },
+  ]
+
+  const vendorColumns: Column<AccountsVendorPaymentRow>[] = [
+    { key: 'vendor', label: 'Vendor', widthSize: 'lg', sortable: false },
+    { key: 'service', label: 'Service', widthSize: 'lg', sortable: false },
+    { key: 'amount', label: 'Amount', widthSize: 'md', sortable: false },
+    { key: 'dueDate', label: 'Due date', widthSize: 'md', sortable: false },
+    {
+      key: 'paymentStatus',
+      label: 'Status',
+      widthSize: 'sm',
+      sortable: false,
+      render: (_value, row) => (
+        <StatusBadge label={row.paymentStatus} status={row.paymentStatus} />
+      ),
+    },
+    { key: 'branch', label: 'Branch', widthSize: 'md', sortable: false },
   ]
 
   return (
@@ -89,7 +110,21 @@ export function ReconciliationTab({
         />
       </Grid>
 
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{ xs: 12, lg: 6 }}>
+        <DashboardTable
+          title="Vendor payments"
+          subtitle="Payments due and scheduled"
+          columns={vendorColumns}
+          data={data.vendorPayments}
+          rowKey="id"
+          loading={loading}
+          pageSize={6}
+          onViewAll={() => onNavigate('/admin/finance/vendor-billing')}
+          actionLabel="Open vendor billing"
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12, lg: 6 }}>
         <DashboardTable
           title="Reconciliation queue"
           subtitle="Actionable payables and spend matches"
@@ -97,7 +132,7 @@ export function ReconciliationTab({
           data={data.reconciliationRows}
           rowKey="id"
           loading={loading}
-          pageSize={8}
+          pageSize={6}
           onRowClick={(row) => onOpenReconciliation?.(row.id)}
           onViewAll={() => onNavigate('/admin/finance/vendor-billing')}
           actionLabel="Open vendor billing"

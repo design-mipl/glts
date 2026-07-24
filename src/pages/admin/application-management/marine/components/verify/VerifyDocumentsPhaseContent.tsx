@@ -1,28 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FileText } from 'lucide-react'
+import { ChevronLeft, ChevronRight, FileText } from 'lucide-react'
 import { Grid, Stack } from '@mui/material'
-import { Button, Tabs } from '@/design-system/UIComponents'
+import { BaseCard, Button, Tabs } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem } from '@/pages/customer/features/applications/data/applicationFlowData'
-import type { ApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
 import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
 import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
-import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
-import { VerifyDocumentsTravelerSection } from './VerifyDocumentsTravelerSection'
-import { VerifyDocumentsTimeline } from './VerifyDocumentsTimeline'
 import {
-  VERIFY_DOCUMENT_SPLIT_GRID_SX,
   VerifyDocumentChecklistsPanel,
   VerifyDocumentsTabPanel,
 } from './VerifyDocumentChecklistSection'
 import { VerifyRejectedDocumentsSection } from './VerifyRejectedDocumentsSection'
 import { VerifyFinalVerificationChecklist } from './VerifyFinalVerificationChecklist'
 import { VerifyOriginalDocumentsSection } from './VerifyOriginalDocumentsSection'
+import { VerifyPassengerWorkspace } from './VerifyPassengerWorkspace'
 import {
+  filterVerifyTravelers,
   isOriginalVerifyDocument,
   type VerifyOverviewData,
   type VerifyRejectedDocumentEntry,
+  type VerifyTravelerListFilter,
 } from '../../utils/verifyDocumentsUtils'
 import { resolveOriginalRequiredDocuments } from '@/shared/utils/originalDocumentCollectionUtils'
 import { PHYSICAL_DOCUMENT_LABEL } from '@/shared/constants/documentRequirementLabels'
@@ -36,7 +34,6 @@ interface VerifyDocumentsPhaseContentProps {
   rows: UploadQueueRow[]
   isBulk: boolean
   overview: VerifyOverviewData
-  summaryOverview: ApplicationReviewOverview
   detail: ApplicationDetailViewModel
   applicationId: string
   selectedTravelerId: string | null
@@ -76,7 +73,6 @@ export function VerifyDocumentsPhaseContent({
   rows,
   isBulk,
   overview,
-  summaryOverview,
   detail,
   applicationId,
   selectedTravelerId,
@@ -112,8 +108,54 @@ export function VerifyDocumentsPhaseContent({
 }: VerifyDocumentsPhaseContentProps) {
   const isFinalPhase = phase === 'final'
   const saveLabel = isFinalPhase ? 'Complete final verification' : 'Submit application'
-  const splitGridSx = isFinalPhase ? VERIFY_DOCUMENT_SPLIT_GRID_SX : undefined
   const [activeTab, setActiveTab] = useState<VerifyDocumentsTab>('checklist')
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<VerifyTravelerListFilter>('all')
+
+  const selectableRows = useMemo(() => {
+    const ready = rows.filter(r => r.status !== 'processing')
+    return ready.length > 0 ? ready : rows
+  }, [rows])
+
+  const singleListing = !isBulk && selectableRows.length <= 1
+  const multiTraveler = selectableRows.length > 1
+
+  const filteredRows = useMemo(
+    () => filterVerifyTravelers(selectableRows, search, filter),
+    [selectableRows, search, filter],
+  )
+
+  useEffect(() => {
+    if (filteredRows.length === 0) return
+    if (selectedTravelerId && filteredRows.some(row => row.id === selectedTravelerId)) return
+    onSelectTraveler(filteredRows[0].id)
+  }, [filteredRows, selectedTravelerId, onSelectTraveler])
+
+  useEffect(() => {
+    setActiveTab('checklist')
+  }, [selectedTravelerId])
+
+  const selectedIndex = useMemo(
+    () => filteredRows.findIndex(row => row.id === selectedTravelerId),
+    [filteredRows, selectedTravelerId],
+  )
+
+  const goPrevious = () => {
+    if (selectedIndex <= 0) return
+    onSelectTraveler(filteredRows[selectedIndex - 1].id)
+  }
+
+  const goNext = () => {
+    if (selectedIndex < 0 || selectedIndex >= filteredRows.length - 1) return
+    onSelectTraveler(filteredRows[selectedIndex + 1].id)
+  }
+
+  const handleSaveAndNext = () => {
+    onSaveDraft()
+    if (selectedIndex >= 0 && selectedIndex < filteredRows.length - 1) {
+      onSelectTraveler(filteredRows[selectedIndex + 1].id)
+    }
+  }
 
   const digitalTravelerDocuments = useMemo(
     () => travelerChecklistDocuments.filter(doc => !isOriginalVerifyDocument(doc)),
@@ -145,7 +187,6 @@ export function VerifyDocumentsPhaseContent({
     rejectedDocuments.length > 0 ? (
       <VerifyRejectedDocumentsSection
         entries={rejectedDocuments}
-        gridSx={splitGridSx}
         previewOnly={readOnly}
         onPreview={onRejectedPreview}
         onVerify={onRejectedVerify}
@@ -160,7 +201,6 @@ export function VerifyDocumentsPhaseContent({
       countryTitle={overview.countryName}
       travelerDocuments={selectedRow && detail ? digitalTravelerDocuments : []}
       globalDocuments={globalChecklistDocuments}
-      gridSx={splitGridSx}
       previewOnly={readOnly}
       onTravelerPreview={documentId => onPreview(documentId, 'traveler')}
       onTravelerVerify={onTravelerVerify}
@@ -208,60 +248,128 @@ export function VerifyDocumentsPhaseContent({
     </VerifyDocumentsTabPanel>
   )
 
+  const detailContent = isFinalPhase ? (
+    <Grid container spacing={2} alignItems="stretch">
+      <Grid size={{ xs: 12, lg: 7 }} sx={{ minWidth: 0 }}>
+        {documentsPane}
+      </Grid>
+      <Grid size={{ xs: 12, lg: 5 }} sx={{ minWidth: 0, display: 'flex' }}>
+        <VerifyFinalVerificationChecklist
+          countryId={countryId}
+          visaOfferingId={visaOfferingId}
+          jurisdictionId={jurisdictionId}
+          readOnly={readOnly}
+        />
+      </Grid>
+    </Grid>
+  ) : (
+    documentsPane
+  )
+
   return (
-    <>
-      <VerifyDocumentsTravelerSection
-        rows={rows}
-        isBulk={isBulk}
-        gltsApplicationId={overview.gltsApplicationId}
-        gltsBatchId={overview.gltsBatchId}
-        summaryOverview={summaryOverview}
-        detail={detail}
-        summaryApplicationId={applicationId}
+    <Stack spacing={2}>
+      <VerifyPassengerWorkspace
+        rows={selectableRows}
+        filteredRows={filteredRows}
+        overview={overview}
+        singleListing={singleListing}
         selectedTravelerId={selectedTravelerId}
         onSelectTraveler={onSelectTraveler}
+        selectedRow={selectedRow}
+        search={search}
+        onSearchChange={setSearch}
+        filter={filter}
+        onFilterChange={setFilter}
+        timelineSteps={timelineSteps}
+        multiTraveler={multiTraveler}
+        detail={detail}
+        applicationId={applicationId}
+        detailContent={detailContent}
       />
 
-      <VerifyDocumentsTimeline
-        steps={timelineSteps}
-        multiTraveler={rows.filter(r => r.status !== 'processing').length > 1}
-      />
-
-      {isFinalPhase ? (
-        <Grid container spacing={2} alignItems="stretch">
-          <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
-            {documentsPane}
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0, display: 'flex' }}>
-            <VerifyFinalVerificationChecklist
-              countryId={countryId}
-              visaOfferingId={visaOfferingId}
-              jurisdictionId={jurisdictionId}
-              readOnly={readOnly}
+      <BaseCard sx={{ p: 2 }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
+          useFlexGap
+          sx={{
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            alignItems: { xs: 'stretch', sm: 'center' },
+          }}
+        >
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1}
+            useFlexGap
+            sx={{ flexWrap: 'wrap' }}
+          >
+            <Button
+              label="Previous passenger"
+              variant="neutral"
+              startIcon={<ChevronLeft size={14} />}
+              onClick={goPrevious}
+              disabled={selectedIndex <= 0}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             />
-          </Grid>
-        </Grid>
-      ) : (
-        documentsPane
-      )}
+            <Button
+              label={readOnly ? 'View form' : 'View Form'}
+              variant="outlined"
+              startIcon={<FileText size={14} />}
+              onClick={onViewForm}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            />
+            <Button
+              label="Back to listing"
+              variant="neutral"
+              onClick={onBack}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            />
+          </Stack>
 
-      <AdminFullPageFormFooter
-        onCancel={onBack}
-        cancelLabel="Back to listing"
-        onDraft={readOnly ? undefined : onSaveDraft}
-        draftLabel="Save draft"
-        onSave={readOnly ? undefined : onSubmit}
-        saveLabel={saveLabel}
-        extraActions={
-          <Button
-            label={readOnly ? 'View form' : 'View Form'}
-            variant="outlined"
-            startIcon={<FileText size={14} />}
-            onClick={onViewForm}
-            sx={{ width: { xs: '100%', sm: 'auto' } }}
-          />
-        }
-      />
-    </>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1}
+            useFlexGap
+            sx={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}
+          >
+            {!readOnly ? (
+              <>
+                <Button
+                  label="Save draft"
+                  variant="soft"
+                  color="primary"
+                  onClick={onSaveDraft}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                />
+                <Button
+                  label="Save"
+                  variant="outlined"
+                  color="primary"
+                  onClick={onSaveDraft}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                />
+                <Button
+                  label="Save & Next"
+                  variant="contained"
+                  color="primary"
+                  endIcon={<ChevronRight size={14} />}
+                  onClick={handleSaveAndNext}
+                  disabled={selectedIndex < 0 || selectedIndex >= filteredRows.length - 1}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                />
+                <Button
+                  label={saveLabel}
+                  variant="soft"
+                  color="primary"
+                  onClick={onSubmit}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                />
+              </>
+            ) : null}
+          </Stack>
+        </Stack>
+      </BaseCard>
+    </Stack>
   )
 }

@@ -1,4 +1,4 @@
-import { ListCard, type ListCardItem } from '@/design-system/UIComponents'
+import { AlertPanel } from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from './BusinessWidgetFrame'
 
 export interface NotificationItem {
@@ -35,14 +35,6 @@ export function NotificationPanel({
   permission,
   onRetry,
 }: NotificationPanelProps) {
-  const listItems: ListCardItem[] = items.map((item) => ({
-    id: item.id,
-    primary: item.title,
-    secondary: [item.body, item.createdAt].filter(Boolean).join(' · '),
-    badge: item.unread ? { label: 'New', color: 'primary' } : undefined,
-    onClick: item.onClick,
-  }))
-
   return (
     <BusinessWidgetFrame
       title={undefined}
@@ -54,14 +46,20 @@ export function NotificationPanel({
       onRetry={onRetry}
       emptyTitle="No notifications"
     >
-      <ListCard
+      <AlertPanel
         title={title}
         subtitle={subtitle}
-        items={listItems}
         maxItems={maxItems}
         onShowMore={onShowMore}
-        showMoreLabel="View all"
-        emptyText="No notifications"
+        loading={loading}
+        items={items.map((item) => ({
+          id: item.id,
+          primary: item.title,
+          secondary: [item.body, item.createdAt].filter(Boolean).join(' · '),
+          badgeLabel: item.unread ? 'New' : undefined,
+          badgeTone: item.unread ? 'primary' : 'neutral',
+          onClick: item.onClick,
+        }))}
       />
     </BusinessWidgetFrame>
   )

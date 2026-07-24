@@ -26,7 +26,6 @@ export const adminNav: NavConfig[] = [
       type: 'item' as const,
       label: dashboard.label,
       href: dashboard.href,
-      badge: 'Next',
     })),
   },
   {

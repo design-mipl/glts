@@ -84,6 +84,22 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
       deltaLabel: 'vs prior month',
       sparklineData: [28, 30, 32, 35, 38, 40, 43],
     },
+    {
+      id: 'verification-backlog',
+      label: 'Verification backlog',
+      value: 27,
+      delta: 3.1,
+      deltaLabel: 'vs yesterday',
+      sparklineData: [22, 24, 23, 25, 26, 26, 27],
+    },
+    {
+      id: 'avg-cycle',
+      label: 'Avg cycle (hrs)',
+      value: 36,
+      delta: -4.1,
+      deltaLabel: 'vs last week',
+      sparklineData: [42, 40, 39, 38, 37, 36, 36],
+    },
   ],
   metricComparison: [
     { label: 'Throughput', value: '124', delta: 8.2 },

@@ -1,14 +1,19 @@
-import { Box, Grid, Stack, Typography } from '@mui/material'
-import { Tooltip } from '@/design-system/UIComponents'
-import { FunnelChart } from '@/design-system/UIComponents'
+import { Box, Stack, Typography } from '@mui/material'
+import { FunnelChart, Tooltip } from '@/design-system/UIComponents'
+import {
+  ComparisonLayout,
+  ExecutiveGrid,
+  FunnelContainer,
+  InsightCard,
+  UI_KIT_SPACING,
+} from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
 import { StatusBadge } from '../StatusBadge'
 import {
   APPLICATION_PIPELINE_STAGE_LABELS,
   type ApplicationPipelineStageId,
 } from '../../config/applicationPipeline'
-import { DASHBOARD_CHART_HEIGHT_SPACING, DASHBOARD_SPACING } from '../../constants'
-import { ChartPanel } from '../ChartPanel'
+import { DASHBOARD_CHART_HEIGHT_SPACING } from '../../constants'
 
 export interface ApplicationPipelineStageData {
   id: ApplicationPipelineStageId
@@ -60,52 +65,38 @@ export function ApplicationPipeline({
       card={false}
       skeletonHeightSpacing={28}
     >
-      <Grid container spacing={DASHBOARD_SPACING.field}>
-        <Grid size={{ xs: 12, lg: 5 }}>
-          <ChartPanel title="Funnel" loading={false} empty={funnelData.length === 0}>
+      <ComparisonLayout
+        left={
+          <FunnelContainer title="Funnel" minHeight={chartHeight} width="auto">
             <FunnelChart data={funnelData} height={chartHeight} />
-          </ChartPanel>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 7 }}>
-          <Grid container spacing={DASHBOARD_SPACING.field}>
+          </FunnelContainer>
+        }
+        right={
+          <ExecutiveGrid columns={2}>
             {stages.map((stage) => {
               const label = APPLICATION_PIPELINE_STAGE_LABELS[stage.id]
               const hover = `${label}: ${stage.count} cases · avg age ${stage.averageAgeHours}h · ${stage.delayedCount} delayed · SLA ${stage.slaPercent}%`
 
               return (
-                <Grid key={stage.id} size={{ xs: 12, sm: 6 }}>
-                  <Tooltip content={hover}>
-                    <Box
-                      role={onStageClick ? 'button' : undefined}
-                      tabIndex={onStageClick ? 0 : undefined}
-                      onClick={() => onStageClick?.(stage.id)}
-                      onKeyDown={(event) => {
-                        if (!onStageClick) return
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault()
-                          onStageClick(stage.id)
-                        }
-                      }}
-                      sx={{
-                        p: DASHBOARD_SPACING.dense,
-                        border: 1,
-                        borderColor: 'divider',
-                        borderRadius: (theme) => theme.shape.borderRadius,
-                        bgcolor: 'background.paper',
-                        cursor: onStageClick ? 'pointer' : 'default',
-                        transition: (theme) =>
-                          theme.transitions.create(['border-color', 'box-shadow'], {
-                            duration: theme.transitions.duration.shorter,
-                          }),
-                        '&:hover': onStageClick
-                          ? {
-                              borderColor: 'primary.main',
-                              boxShadow: 1,
-                            }
-                          : undefined,
-                      }}
+                <Tooltip key={stage.id} content={hover}>
+                  <Box
+                    role={onStageClick ? 'button' : undefined}
+                    tabIndex={onStageClick ? 0 : undefined}
+                    onClick={() => onStageClick?.(stage.id)}
+                    onKeyDown={(event) => {
+                      if (!onStageClick) return
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        onStageClick(stage.id)
+                      }
+                    }}
+                    sx={{ height: '100%', cursor: onStageClick ? 'pointer' : 'default' }}
+                  >
+                    <InsightCard
+                      accent={stage.delayedCount > 0 ? 'warning' : 'success'}
+                      density="compact"
                     >
-                      <Stack spacing={DASHBOARD_SPACING.field}>
+                      <Stack spacing={UI_KIT_SPACING.field}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
                           <Typography variant="body2" fontWeight={600}>
                             {label}
@@ -120,14 +111,14 @@ export function ApplicationPipeline({
                           {stage.slaPercent}%
                         </Typography>
                       </Stack>
-                    </Box>
-                  </Tooltip>
-                </Grid>
+                    </InsightCard>
+                  </Box>
+                </Tooltip>
               )
             })}
-          </Grid>
-        </Grid>
-      </Grid>
+          </ExecutiveGrid>
+        }
+      />
     </BusinessWidgetFrame>
   )
 }

@@ -3,7 +3,6 @@ import { Box, CircularProgress, Stack } from '@mui/material'
 import { useLocation, useParams } from 'react-router-dom'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import {
-  BaseCard,
   Button,
   ConfirmDialog,
   EmptyState,
@@ -13,10 +12,10 @@ import {
   useToast,
 } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
-import { AdminRecordPageChrome } from '@/pages/admin/components/AdminRecordPageChrome'
+import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 import { useVerifyDocumentsWorkspace } from '../hooks/useVerifyDocumentsWorkspace'
-import { VerifyDocumentsOverview } from '../components/verify/VerifyDocumentsOverview'
+import { VerifyApplicationSummary } from '../components/verify/VerifyApplicationSummary'
 import { VerifyDocumentsPhaseContent } from '../components/verify/VerifyDocumentsPhaseContent'
 import {
   GltsDocumentUploadDrawer,
@@ -32,7 +31,6 @@ import {
   isRejectedVerifyDocument,
   type VerifyRejectedDocumentEntry,
 } from '../utils/verifyDocumentsUtils'
-import { toApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
 
 export function MarineVerifyDocumentsPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
@@ -87,8 +85,6 @@ export function MarineVerifyDocumentsPage() {
     () => collectRejectedVerifyDocuments(rows, globalDocuments),
     [rows, globalDocuments],
   )
-
-  const summaryOverview = useMemo(() => toApplicationReviewOverview(overview), [overview])
 
   const checklistContext = useMemo(
     () =>
@@ -268,76 +264,70 @@ export function MarineVerifyDocumentsPage() {
   }
 
   return (
-    <AdminRecordPageChrome
-      breadcrumbs={[
-        { label: 'Application Management', href: listingPath },
-        { label: readOnly ? 'View application' : 'Verify Documents' },
-      ]}
-    >
-      <Stack spacing={2}>
-        <VerifyDocumentsOverview overview={overview} />
-
-        <BaseCard sx={{ overflow: 'hidden' }}>
-          <Stack spacing={2} sx={{ p: 2 }}>
-            <VerifyDocumentsPhaseContent
-              phase="final"
-              rows={rows}
-              isBulk={isBulk}
-              overview={overview}
-              summaryOverview={summaryOverview}
-              detail={detail}
-              applicationId={applicationId}
-              selectedTravelerId={selectedTravelerId}
-              onSelectTraveler={setSelectedTravelerId}
-              selectedRow={selectedRow}
-              timelineSteps={timelineSteps}
-              rejectedDocuments={rejectedDocuments}
-              travelerChecklistDocuments={travelerChecklistDocuments}
-              globalChecklistDocuments={globalChecklistDocuments}
-              onPreview={handlePreview}
-              onTravelerVerify={document => openVerifyDialog('traveler', document, selectedRow?.id)}
-              onTravelerReject={document =>
-                openReviewDialog('traveler', document, 'rejected', selectedRow?.id)
-              }
-              onTravelerRequestReupload={document =>
-                openReviewDialog('traveler', document, 'needs_review', selectedRow?.id)
-              }
-              onGltsUpload={document => setGltsUploadDocument(document)}
-              onGlobalVerify={document => openVerifyDialog('global', document)}
-              onGlobalReject={document => openReviewDialog('global', document, 'rejected')}
-              onGlobalRequestReupload={document =>
-                openReviewDialog('global', document, 'needs_review')
-              }
-              onRejectedPreview={handleRejectedPreview}
-              onRejectedVerify={handleRejectedVerify}
-              onRejectedReject={handleRejectedReject}
-              onRejectedReupload={handleRejectedReupload}
-              onRejectedGltsUpload={handleRejectedGltsUpload}
-              countryId={checklistContext.countryId}
-              visaOfferingId={checklistContext.visaOfferingId}
-              jurisdictionId={checklistContext.jurisdictionId}
-              onOriginalCollectionChange={collection => {
-                if (!selectedRow) return
-                updateTravelerOriginalCollection(selectedRow.id, collection)
-              }}
-              onOriginalReceivedSubmit={() => {
-                showToast({
-                  title: 'Physical documents updated',
-                  description: 'Received status and remarks saved.',
-                  variant: 'success',
-                })
-              }}
-              onBack={() => navigate(listingPath)}
-              onSaveDraft={handleSaveDraft}
-              onSubmit={handleSubmit}
-              onViewForm={() =>
-                navigate(`/admin/application-management/marine/${applicationId}/view-form`)
-              }
-              readOnly={readOnly}
-            />
-          </Stack>
-        </BaseCard>
-      </Stack>
+    <>
+      <AdminDetailShell
+        breadcrumbs={[
+          { label: 'Application Management', href: listingPath },
+          { label: readOnly ? 'View application' : 'Verify Documents' },
+        ]}
+        summary={<VerifyApplicationSummary overview={overview} isBulk={isBulk} />}
+      >
+        <VerifyDocumentsPhaseContent
+          phase="final"
+          rows={rows}
+          isBulk={isBulk}
+          overview={overview}
+          detail={detail}
+          applicationId={applicationId}
+          selectedTravelerId={selectedTravelerId}
+          onSelectTraveler={setSelectedTravelerId}
+          selectedRow={selectedRow}
+          timelineSteps={timelineSteps}
+          rejectedDocuments={rejectedDocuments}
+          travelerChecklistDocuments={travelerChecklistDocuments}
+          globalChecklistDocuments={globalChecklistDocuments}
+          onPreview={handlePreview}
+          onTravelerVerify={document => openVerifyDialog('traveler', document, selectedRow?.id)}
+          onTravelerReject={document =>
+            openReviewDialog('traveler', document, 'rejected', selectedRow?.id)
+          }
+          onTravelerRequestReupload={document =>
+            openReviewDialog('traveler', document, 'needs_review', selectedRow?.id)
+          }
+          onGltsUpload={document => setGltsUploadDocument(document)}
+          onGlobalVerify={document => openVerifyDialog('global', document)}
+          onGlobalReject={document => openReviewDialog('global', document, 'rejected')}
+          onGlobalRequestReupload={document =>
+            openReviewDialog('global', document, 'needs_review')
+          }
+          onRejectedPreview={handleRejectedPreview}
+          onRejectedVerify={handleRejectedVerify}
+          onRejectedReject={handleRejectedReject}
+          onRejectedReupload={handleRejectedReupload}
+          onRejectedGltsUpload={handleRejectedGltsUpload}
+          countryId={checklistContext.countryId}
+          visaOfferingId={checklistContext.visaOfferingId}
+          jurisdictionId={checklistContext.jurisdictionId}
+          onOriginalCollectionChange={collection => {
+            if (!selectedRow) return
+            updateTravelerOriginalCollection(selectedRow.id, collection)
+          }}
+          onOriginalReceivedSubmit={() => {
+            showToast({
+              title: 'Physical documents updated',
+              description: 'Received status and remarks saved.',
+              variant: 'success',
+            })
+          }}
+          onBack={() => navigate(listingPath)}
+          onSaveDraft={handleSaveDraft}
+          onSubmit={handleSubmit}
+          onViewForm={() =>
+            navigate(`/admin/application-management/marine/${applicationId}/view-form`)
+          }
+          readOnly={readOnly}
+        />
+      </AdminDetailShell>
 
       <GltsDocumentUploadDrawer
         open={Boolean(gltsUploadDocument)}
@@ -418,6 +408,6 @@ export function MarineVerifyDocumentsPage() {
           />
         </FormField>
       </Modal>
-    </AdminRecordPageChrome>
+    </>
   )
 }

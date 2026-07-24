@@ -10,17 +10,15 @@ import {
 } from 'lucide-react'
 import {
   AgeingAnalysis,
-  CollectionSummary,
+  MetricComparison,
   NotificationPanel,
-  QuickActions,
-  QuickStats,
   RecentActivity,
   RevenueSnapshot,
   DASHBOARD_SPACING,
 } from '../../shared'
 import type { AccountsDashboardTabProps } from '../types'
 
-const ACTION_ICONS: Record<string, ReactNode> = {
+export const ACCOUNTS_ACTION_ICONS: Record<string, ReactNode> = {
   'qa-invoices': <FileText size={18} />,
   'qa-collections': <HandCoins size={18} />,
   'qa-vendor': <Wallet size={18} />,
@@ -29,61 +27,33 @@ const ACTION_ICONS: Record<string, ReactNode> = {
   'qa-accounts-legacy': <LayoutDashboard size={18} />,
 }
 
-export function OverviewTab({
-  data,
-  loading,
-  onRetry,
-  onNavigate,
-}: AccountsDashboardTabProps) {
+/** Overview story — executive row (alerts · collections · actions) plus cash context. */
+export function OverviewTab({ data, loading, onRetry }: AccountsDashboardTabProps) {
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
-      <Grid size={{ xs: 12 }}>
-        <QuickStats
-          items={data.quickStats}
-          loading={loading}
-          onRetry={onRetry}
-          columns={4}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 4 }}>
-        <NotificationPanel
-          title="Financial alerts"
-          items={data.notifications}
-          loading={loading}
-          onRetry={onRetry}
-          maxItems={4}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 8 }}>
-        <QuickActions
-          title="Quick actions"
-          variant="tiles"
-          columns={3}
-          loading={loading}
-          items={data.quickActions.map((action) => ({
-            id: action.id,
-            title: action.title,
-            icon: ACTION_ICONS[action.id],
-            onClick: () => onNavigate(action.href),
-          }))}
-        />
-      </Grid>
-
       <Grid size={{ xs: 12, md: 6 }}>
         <RevenueSnapshot data={data.revenueSnapshot} loading={loading} onRetry={onRetry} />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
-        <CollectionSummary
-          data={data.collectionSummary}
+        <MetricComparison
+          title="Working capital signals"
+          metrics={data.metricComparison}
           loading={loading}
           onRetry={onRetry}
         />
       </Grid>
-
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{ xs: 12, md: 7 }}>
         <AgeingAnalysis buckets={data.ageingBuckets} loading={loading} onRetry={onRetry} />
       </Grid>
-
+      <Grid size={{ xs: 12, md: 5 }}>
+        <NotificationPanel
+          title="Finance notices"
+          items={data.notifications}
+          loading={loading}
+          onRetry={onRetry}
+          maxItems={5}
+        />
+      </Grid>
       <Grid size={{ xs: 12 }}>
         <RecentActivity
           items={data.recentActivity}

@@ -62,6 +62,7 @@ export function NavigationShowcase() {
             items={tabItems}
             value={activeTab}
             onChange={setActiveTab}
+            size="sm"
           />
           <Box sx={{ p: 2, mt: 1, bgcolor: 'action.hover', borderRadius: 1 }}>
             <Typography variant="body2" color="text.secondary">

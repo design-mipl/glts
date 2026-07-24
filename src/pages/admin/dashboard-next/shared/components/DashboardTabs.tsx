@@ -4,6 +4,7 @@ import { Tabs } from '@/design-system/UIComponents'
 import type { DashboardTabDefinition } from '../types'
 import { DASHBOARD_SPACING, DASHBOARD_SURFACE } from '../constants'
 import { isDashboardPermissionGranted } from '../utils/permission'
+import { tokens } from '@/design-system/tokens'
 
 export interface DashboardTabsProps {
   tabs: DashboardTabDefinition[]
@@ -56,7 +57,7 @@ export function DashboardTabs({
       sx={{
         ...DASHBOARD_SURFACE.sectionCardSx,
         p: 0,
-        overflow: 'hidden',
+        overflow: 'visible',
         mb: DASHBOARD_SPACING.section,
       }}
     >
@@ -66,10 +67,15 @@ export function DashboardTabs({
         justifyContent="space-between"
         spacing={1}
         sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: tokens.zIndex.sticky - 1,
           px: DASHBOARD_SPACING.dense,
           borderBottom: 1,
           borderColor: 'divider',
           bgcolor: 'background.paper',
+          borderTopLeftRadius: DASHBOARD_SURFACE.radius,
+          borderTopRightRadius: DASHBOARD_SURFACE.radius,
         }}
       >
         <Box sx={{ minWidth: 0, flex: 1 }}>
@@ -79,7 +85,10 @@ export function DashboardTabs({
             value={safeTab}
             onChange={handleChange}
             items={visibleTabs.map((tab) => ({
-              label: tab.label,
+              label:
+                tab.badge != null && tab.badge !== ''
+                  ? `${tab.label} (${tab.badge})`
+                  : tab.label,
               value: tab.id,
               icon: tab.icon,
               disabled: tab.disabled,

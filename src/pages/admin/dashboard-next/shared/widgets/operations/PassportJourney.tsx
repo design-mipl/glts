@@ -1,4 +1,5 @@
 import { Stack, Typography } from '@mui/material'
+import { InsightCard, UI_KIT_SPACING } from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
 import { JourneyFlow, type JourneyFlowStageStatus } from '../common/JourneyFlow'
 import { StatusBadge } from '../StatusBadge'
@@ -6,7 +7,6 @@ import {
   PASSPORT_JOURNEY_STAGE_LABELS,
   type PassportJourneyStageId,
 } from '../../config/passportJourney'
-import { DASHBOARD_SPACING } from '../../constants'
 import type { DashboardStatusTone } from '../../types'
 
 export interface PassportJourneyStageData {
@@ -76,13 +76,15 @@ export function PassportJourney({
       onRetry={onRetry}
       skeletonHeightSpacing={14}
     >
-      <Stack spacing={DASHBOARD_SPACING.dense}>
-        <Stack direction="row" spacing={DASHBOARD_SPACING.field} alignItems="center">
-          <Typography variant="body2" color="text.secondary">
-            Status
-          </Typography>
-          <StatusBadge label={journeyStatus} tone={journeyTone(journeyStatus)} />
-        </Stack>
+      <Stack spacing={UI_KIT_SPACING.cluster}>
+        <InsightCard accent="info" density="compact">
+          <Stack direction="row" spacing={UI_KIT_SPACING.field} alignItems="center">
+            <Typography variant="body2" color="text.secondary">
+              Status
+            </Typography>
+            <StatusBadge label={journeyStatus} tone={journeyTone(journeyStatus)} />
+          </Stack>
+        </InsightCard>
         <JourneyFlow stages={flowStages} meta={metaParts.join(' · ')} />
       </Stack>
     </BusinessWidgetFrame>

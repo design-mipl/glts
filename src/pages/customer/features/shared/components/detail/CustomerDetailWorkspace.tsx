@@ -68,7 +68,7 @@ export function CustomerDetailWorkspace({
               variant="underline"
               size="sm"
               items={tabs}
-              sx={{ mb: 0, px: 2, minHeight: 44 }}
+              sx={{ mb: 0, px: 2, minHeight: 36 }}
             />
           </Box>
         )}

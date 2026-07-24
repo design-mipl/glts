@@ -1,71 +1,90 @@
-import type { ReactNode } from 'react'
-import { Grid } from '@mui/material'
-import {
-  CreditCard,
-  FileText,
-  HandCoins,
-  Landmark,
-  LayoutDashboard,
-  Wallet,
-} from 'lucide-react'
-import {
-  NotificationPanel,
-  QuickActions,
-  RecentReports,
-  DASHBOARD_SPACING,
-} from '../../shared'
-import type { AccountsDashboardTabProps } from '../types'
+import { useMemo } from 'react'
+import type { Column } from '@/design-system/UIComponents'
+import { Button, useToast } from '@/design-system/UIComponents'
+import { Grid, Stack } from '@mui/material'
+import { DashboardTable, ReportCenter, DASHBOARD_SPACING } from '../../shared'
+import type { AccountsDailyReportCard, AccountsDashboardTabProps } from '../types'
 
-const ACTION_ICONS: Record<string, ReactNode> = {
-  'qa-invoices': <FileText size={18} />,
-  'qa-collections': <HandCoins size={18} />,
-  'qa-vendor': <Wallet size={18} />,
-  'qa-expenses': <CreditCard size={18} />,
-  'qa-funds': <Landmark size={18} />,
-  'qa-accounts-legacy': <LayoutDashboard size={18} />,
-}
+/** Accounts reports — daily pack + Report Center (carry-forward from Original). */
+export function ReportsTab({ data, loading, onRetry }: AccountsDashboardTabProps) {
+  const { showToast } = useToast()
 
-export function ReportsTab({
-  data,
-  loading,
-  onRetry,
-  onNavigate,
-}: AccountsDashboardTabProps) {
+  const dailyColumns: Column<AccountsDailyReportCard>[] = useMemo(
+    () => [
+      { key: 'name', label: 'Report', widthSize: 'lg', sortable: false },
+      { key: 'lastGenerated', label: 'Last generated', widthSize: 'md', sortable: false },
+      {
+        key: 'actions',
+        label: '',
+        hideable: false,
+        sortable: false,
+        filterable: false,
+        searchable: false,
+        render: (_value, row) => (
+          <Stack direction="row" spacing={0.5}>
+            <Button
+              label="View"
+              variant="text"
+              size="sm"
+              onClick={() =>
+                showToast({
+                  title: 'Report opened',
+                  description: `Viewing ${row.name}.`,
+                  variant: 'info',
+                })
+              }
+            />
+            <Button
+              label="Download"
+              variant="text"
+              size="sm"
+              onClick={() =>
+                showToast({
+                  title: 'Download started',
+                  description: `Downloading ${row.name}.`,
+                  variant: 'success',
+                })
+              }
+            />
+          </Stack>
+        ),
+      },
+    ],
+    [showToast],
+  )
+
+  const recentFromDaily = data.dailyReports.map((report) => ({
+    id: report.id,
+    name: report.name,
+    category: 'Daily',
+    generatedAt: report.lastGenerated,
+  }))
+
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
-      <Grid size={{ xs: 12, md: 7 }}>
-        <RecentReports
-          title="Finance reports"
-          subtitle="Exports · GST · outstanding · vendor · reconciliation"
-          items={data.recentReports}
+      <Grid size={{ xs: 12 }}>
+        <DashboardTable
+          title="Daily financial reports"
+          subtitle="Invoice · courier · collection · vendor · revenue packs"
+          columns={dailyColumns}
+          data={data.dailyReports}
+          rowKey="id"
           loading={loading}
-          onRetry={onRetry}
-          maxItems={8}
-          onShowMore={() => onNavigate('/admin/dashboard/accounts')}
+          pageSize={10}
         />
       </Grid>
-      <Grid size={{ xs: 12, md: 5 }}>
-        <NotificationPanel
-          title="Report notices"
-          items={data.reportNotifications}
+      <Grid size={{ xs: 12 }}>
+        <ReportCenter
+          recentReports={[...data.recentReports, ...recentFromDaily]}
+          downloadHistory={data.reportNotifications}
           loading={loading}
           onRetry={onRetry}
-          maxItems={5}
-        />
-      </Grid>
-
-      <Grid size={{ xs: 12, md: 5 }}>
-        <QuickActions
-          columns={1}
-          loading={loading}
-          items={data.quickActions.map((action) => ({
-            id: action.id,
-            title: action.title,
-            description: action.description,
-            badge: action.badge,
-            icon: ACTION_ICONS[action.id],
-            onClick: () => onNavigate(action.href),
-          }))}
+          exportTitle="Accounts dashboard export"
+          exportPayload={{
+            quickStats: data.quickStats,
+            dailyReports: data.dailyReports,
+            purchaseVsRevenue: data.purchaseVsRevenue,
+          }}
         />
       </Grid>
     </Grid>

@@ -1,5 +1,5 @@
 import type { Column } from '@/design-system/UIComponents'
-import { DashboardTable } from '../DashboardTable'
+import { ExecutiveTable } from '../../dashboard-ui-kit'
 import { StatusBadge } from '../StatusBadge'
 import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
 import { RAG_STATUS_LABELS, type RagStatusId } from '../../config/ragStatus'
@@ -82,15 +82,17 @@ export function MarineTimeline({
       onRetry={onRetry}
       emptyTitle="No marine records"
     >
-      <DashboardTable
+      <ExecutiveTable
         title={title}
         subtitle={subtitle}
         columns={columns}
         data={rows}
         rowKey="id"
         onRowClick={onRowClick}
-        onViewAll={onViewAll}
-        card
+        actionLabel={onViewAll ? 'View all' : undefined}
+        onAction={onViewAll}
+        fullWidth
+        loading={loading}
       />
     </BusinessWidgetFrame>
   )

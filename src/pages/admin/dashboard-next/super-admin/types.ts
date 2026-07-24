@@ -20,6 +20,12 @@ import type {
   NamedMetricPoint,
   TrendPoint,
 } from '../shared/widgets/analytics/AnalyticsWidgets'
+import type {
+  ExecutiveInsight,
+  ExecutiveRecommendation,
+  ManagementAlertRecord,
+  PredictivePanelModel,
+} from '../shared/dashboard-intelligence'
 
 export interface SuperAdminDashboardFilters {
   date: string
@@ -59,21 +65,127 @@ export interface SuperAdminQuickActionDefinition {
   href: string
 }
 
+/** Ranked insight row for executive lists (page composition). */
+export interface SuperAdminRankItem {
+  id: string
+  primary: string
+  secondary?: string
+  value?: string | number
+  progress?: number
+  tone?: 'neutral' | 'positive' | 'negative' | 'warning' | 'info'
+}
+
+export interface SuperAdminSegmentCard {
+  id: 'marine' | 'corporate' | 'retail' | 'b2b'
+  label: string
+  status: 'live' | 'placeholder'
+  revenue: string
+  cost: string
+  grossMarginPercent: string
+  applications: string
+  approvalPercent: string
+  avgTat: string
+  outstanding: string
+  activeClients: string
+  pipelineValue: string
+  growthLabel: string
+  insight: string
+  /** Retail-only extras (optional). */
+  repeatBusinessPercent?: string
+  winRate?: string
+}
+
+export interface SuperAdminSalesPlaceholder {
+  pipelineValue: string
+  winRate: string
+  avgDeal: string
+  conversion: string
+  notes: string[]
+}
+
+export interface SuperAdminRevenuePeriod {
+  label: string
+  value: string | number
+  delta?: number
+  deltaLabel?: string
+  /** Optional target comparison (e.g. "92% of target"). */
+  targetLabel?: string
+}
+
+export interface SuperAdminRevenueHero {
+  today: SuperAdminRevenuePeriod
+  mtd: SuperAdminRevenuePeriod
+  ytd: SuperAdminRevenuePeriod
+}
+
+export interface SuperAdminBlockedCash {
+  amount: string
+  applicationCount: number
+  expectedReleaseLabel: string
+  note: string
+}
+
+export interface SuperAdminOperationsToday {
+  receivedToday: number
+  submittedToday: number
+  collectedToday: number
+  rejectedToday: number
+  pendingEmbassy: number
+  pendingClientDocuments: number
+  slaBreaches: number
+}
+
+export interface SuperAdminCashPosition {
+  bankBalance: string
+  blockedInVisaFees: string
+  expectedCollections: string
+  availableFunds: string
+}
+
+export interface SuperAdminVerticalPreview {
+  kpis: MetricComparisonItem[]
+  byEntity: SuperAdminRankItem[]
+  byCountry: SuperAdminRankItem[]
+  pending: SuperAdminRankItem[]
+  topClients: SuperAdminRankItem[]
+  notes: string[]
+}
+
 export interface SuperAdminDashboardData {
+  /** Combined Today / MTD / YTD revenue card. */
+  revenueHero: SuperAdminRevenueHero
+  /** Remaining hero KPIs (health, GP, outstanding, collections, apps, approval, at-risk). */
+  heroKpis: DashboardKpiItem[]
+  blockedCash: SuperAdminBlockedCash
+  approvalRateTrend30d: TrendPoint[]
+  operationsToday: SuperAdminOperationsToday
+  processingTimeByCountry: NamedMetricPoint[]
+  cashPosition: SuperAdminCashPosition
+  marginByVertical: SuperAdminRankItem[]
   quickStats: DashboardKpiItem[]
   metricComparison: MetricComparisonItem[]
   revenueSnapshot: RevenueSnapshotData
+  revenueTrend: TrendPoint[]
   operationsHealth: OperationsHealthMetrics
   branchPerformance: NamedMetricPoint[]
   businessSegments: DistributionSlice[]
+  segmentCards: SuperAdminSegmentCard[]
   notifications: NotificationItem[]
   quickActions: SuperAdminQuickActionDefinition[]
   pipelineStages: ApplicationPipelineStageData[]
   teamCapacity: TeamCapacityRow[]
   marineTimeline: MarineTimelineRow[]
   passportJourney: SuperAdminPassportJourneyData
+  marineByCompany: SuperAdminRankItem[]
+  marineByCountry: SuperAdminRankItem[]
+  pendingCrewVisas: SuperAdminRankItem[]
+  topMarineClients: SuperAdminRankItem[]
+  corporatePreview: SuperAdminVerticalPreview
+  retailPreview: SuperAdminVerticalPreview
+  b2bPreview: SuperAdminVerticalPreview
   recentActivity: RecentActivityItem[]
   riskAlerts: DashboardAlertItem[]
+  managementAlerts: DashboardAlertItem[]
   collectionSummary: CollectionSummaryData
   ageingBuckets: AgeingBucketValue[]
   financeMetricComparison: MetricComparisonItem[]
@@ -81,18 +193,37 @@ export interface SuperAdminDashboardData {
   financeNotifications: NotificationItem[]
   countryDistribution: DistributionSlice[]
   clientRows: SuperAdminClientRow[]
+  topRevenueClients: SuperAdminRankItem[]
+  fastestGrowingClients: SuperAdminRankItem[]
+  clientHealth: SuperAdminRankItem[]
+  dormantClients: SuperAdminRankItem[]
+  highMarginClients: SuperAdminRankItem[]
+  lowMarginClients: SuperAdminRankItem[]
+  highRiskClients: SuperAdminRankItem[]
   clientActivity: RecentActivityItem[]
   visaDistribution: DistributionSlice[]
   slaOverview: DashboardProgressItem[]
+  staffLeaderboard: SuperAdminRankItem[]
+  staffProductivity: DashboardProgressItem[]
+  salesPlaceholder: SuperAdminSalesPlaceholder
+  marineMetrics: MetricComparisonItem[]
   recentReports: RecentReportItem[]
   reportNotifications: NotificationItem[]
 }
 
-export interface SuperAdminDashboardTabProps {
+export interface SuperAdminExecutiveStoryProps {
   data: SuperAdminDashboardData
   loading?: boolean
   onRetry?: () => void
   onNavigate: (href: string) => void
   onOpenClient?: (clientId: string) => void
   onPipelineStageClick?: (stageId: string) => void
+  /** Optional intelligence overlays — does not change section order. */
+  insights?: ExecutiveInsight[]
+  recommendations?: ExecutiveRecommendation[]
+  managementAlerts?: ManagementAlertRecord[]
+  forecasts?: PredictivePanelModel[]
 }
+
+/** Tab props shared by Super Admin workspace tabs (and legacy ExecutiveStory). */
+export type SuperAdminDashboardTabProps = SuperAdminExecutiveStoryProps

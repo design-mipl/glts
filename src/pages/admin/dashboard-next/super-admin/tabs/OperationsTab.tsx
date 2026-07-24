@@ -1,32 +1,31 @@
-import type { ReactNode } from 'react'
-import { Grid } from '@mui/material'
-import {
-  Building2,
-  ClipboardList,
-  HandCoins,
-  LayoutDashboard,
-  Users,
-} from 'lucide-react'
+import { Grid, Stack, Typography } from '@mui/material'
 import {
   ApplicationPipeline,
-  MarineTimeline,
+  MetricComparison,
   OperationsHealth,
-  PassportJourney,
-  QuickActions,
+  ProcessingTrend,
   RecentActivity,
-  RiskOverview,
   TeamCapacity,
   DASHBOARD_SPACING,
 } from '../../shared'
-import type { SuperAdminDashboardTabProps } from '../types'
+import {
+  ComparisonLayout,
+  ExecutiveGrid,
+  ExecutiveMetric,
+  ProgressMetric,
+  RankingList,
+} from '../../shared/dashboard-ui-kit'
+import type { SuperAdminDashboardTabProps, SuperAdminRankItem } from '../types'
 
-const ACTION_ICONS: Record<string, ReactNode> = {
-  'qa-admin-next': <LayoutDashboard size={18} />,
-  'qa-ops-next': <ClipboardList size={18} />,
-  'qa-accounts-next': <HandCoins size={18} />,
-  'qa-clients': <Users size={18} />,
-  'qa-finance': <HandCoins size={18} />,
-  'qa-legacy-admin': <Building2 size={18} />,
+function toRankingItems(items: SuperAdminRankItem[]) {
+  return items.map((item, index) => ({
+    id: item.id,
+    primary: item.primary,
+    secondary: item.secondary,
+    rank: index + 1,
+    value: item.value,
+    progress: item.progress,
+  }))
 }
 
 export function OperationsTab({
@@ -36,16 +35,48 @@ export function OperationsTab({
   onNavigate,
   onPipelineStageClick,
 }: SuperAdminDashboardTabProps) {
+  const today = data.operationsToday
+
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
-      <Grid size={{ xs: 12, md: 5 }}>
+      <Grid size={{ xs: 12 }}>
+        <Stack spacing={1}>
+          <Typography variant="subtitle2" fontWeight={700}>
+            Today’s operations
+          </Typography>
+          <ExecutiveGrid columns={4} spacing={DASHBOARD_SPACING.field}>
+            <ExecutiveMetric label="Received today" value={today.receivedToday} tone="info" />
+            <ExecutiveMetric label="Submitted today" value={today.submittedToday} tone="positive" />
+            <ExecutiveMetric label="Collected today" value={today.collectedToday} tone="positive" />
+            <ExecutiveMetric label="Rejected today" value={today.rejectedToday} tone="negative" />
+          </ExecutiveGrid>
+        </Stack>
+      </Grid>
+
+      <Grid size={{ xs: 12 }}>
+        <ExecutiveGrid columns={3} spacing={DASHBOARD_SPACING.field}>
+          <ExecutiveMetric
+            label="Pending with embassy"
+            value={today.pendingEmbassy}
+            tone="warning"
+          />
+          <ExecutiveMetric
+            label="Pending client documents"
+            value={today.pendingClientDocuments}
+            tone="warning"
+          />
+          <ExecutiveMetric label="SLA breaches" value={today.slaBreaches} tone="negative" />
+        </ExecutiveGrid>
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 6 }}>
         <OperationsHealth
           metrics={data.operationsHealth}
           loading={loading}
           onRetry={onRetry}
         />
       </Grid>
-      <Grid size={{ xs: 12, md: 7 }}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <ApplicationPipeline
           stages={data.pipelineStages}
           loading={loading}
@@ -54,35 +85,67 @@ export function OperationsTab({
         />
       </Grid>
 
-      <Grid size={{ xs: 12, lg: 6 }}>
-        <TeamCapacity
-          rows={data.teamCapacity}
+      <Grid size={{ xs: 12, md: 6 }}>
+        <BranchLikeCountryTat
+          title="Avg processing time by country"
+          subtitle="Days · sample network"
+          points={data.processingTimeByCountry}
           loading={loading}
-          onRetry={onRetry}
-          onViewAll={() => onNavigate('/admin/access/teams')}
         />
       </Grid>
-      <Grid size={{ xs: 12, lg: 6 }}>
-        <MarineTimeline
-          rows={data.marineTimeline}
+      <Grid size={{ xs: 12, md: 6 }}>
+        <ProcessingTrend
+          title="Processing trend"
+          points={data.processingTrend}
           loading={loading}
           onRetry={onRetry}
-          onViewAll={() => onNavigate('/admin/application-management/marine')}
+          secondaryLabel="Completed"
         />
       </Grid>
 
-      <Grid size={{ xs: 12, lg: 5 }}>
-        <PassportJourney
-          stages={data.passportJourney.stages}
-          journeyStatus={data.passportJourney.journeyStatus}
-          eta={data.passportJourney.eta}
-          trackingNumber={data.passportJourney.trackingNumber}
-          courier={data.passportJourney.courier}
+      <Grid size={{ xs: 12 }}>
+        <ExecutiveGrid columns={4} spacing={DASHBOARD_SPACING.field}>
+          {data.staffProductivity.map((item) => (
+            <ProgressMetric
+              key={item.id}
+              label={item.label}
+              value={item.value}
+              helperText={item.helperText}
+              loading={loading}
+            />
+          ))}
+        </ExecutiveGrid>
+      </Grid>
+
+      <Grid size={{ xs: 12 }}>
+        <ComparisonLayout
+          left={
+            <RankingList
+              title="Department leaderboard"
+              items={toRankingItems(data.staffLeaderboard)}
+              loading={loading}
+            />
+          }
+          right={
+            <TeamCapacity
+              rows={data.teamCapacity}
+              loading={loading}
+              onRetry={onRetry}
+              onViewAll={() => onNavigate('/admin/access/teams')}
+            />
+          }
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 6 }}>
+        <MetricComparison
+          title="Working signals"
+          metrics={data.metricComparison}
           loading={loading}
           onRetry={onRetry}
         />
       </Grid>
-      <Grid size={{ xs: 12, lg: 7 }}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <RecentActivity
           items={data.recentActivity}
           loading={loading}
@@ -90,33 +153,33 @@ export function OperationsTab({
           maxItems={6}
         />
       </Grid>
-
-      <Grid size={{ xs: 12, md: 7 }}>
-        <RiskOverview
-          alerts={data.riskAlerts}
-          loading={loading}
-          onRetry={onRetry}
-          onShowMore={() => onNavigate('/admin/dashboard-next/operations')}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 5 }}>
-        <QuickActions
-          columns={1}
-          loading={loading}
-          items={data.quickActions
-            .filter((action) =>
-              ['qa-ops-next', 'qa-admin-next', 'qa-legacy-admin'].includes(action.id),
-            )
-            .map((action) => ({
-              id: action.id,
-              title: action.title,
-              description: action.description,
-              badge: action.badge,
-              icon: ACTION_ICONS[action.id],
-              onClick: () => onNavigate(action.href),
-            }))}
-        />
-      </Grid>
     </Grid>
+  )
+}
+
+function BranchLikeCountryTat({
+  title,
+  subtitle,
+  points,
+  loading,
+}: {
+  title: string
+  subtitle: string
+  points: SuperAdminDashboardTabProps['data']['processingTimeByCountry']
+  loading?: boolean
+}) {
+  return (
+    <RankingList
+      title={title}
+      subtitle={subtitle}
+      loading={loading}
+      items={points.map((point, index) => ({
+        id: point.id,
+        primary: point.label,
+        rank: index + 1,
+        value: `${point.value}d`,
+        progress: Math.min(100, Math.round((point.value / 12) * 100)),
+      }))}
+    />
   )
 }

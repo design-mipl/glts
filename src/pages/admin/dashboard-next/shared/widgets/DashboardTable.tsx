@@ -1,17 +1,7 @@
-import { useMemo, useState } from 'react'
-import { Box } from '@mui/material'
-import {
-  DataTable,
-  type Column,
-  type TableState,
-} from '@/design-system/UIComponents'
-import { DashboardSection } from '../components/DashboardSection'
-import {
-  DASHBOARD_SPACING,
-  DASHBOARD_TABLE_DEFAULT_PAGE_SIZE,
-  INITIAL_DASHBOARD_TABLE_STATE,
-} from '../constants'
+import type { Column } from '@/design-system/UIComponents'
+import { ExecutiveTable } from '../dashboard-ui-kit'
 import { isDashboardPermissionGranted } from '../utils/permission'
+import { DASHBOARD_TABLE_DEFAULT_PAGE_SIZE } from '../constants'
 
 export interface DashboardTableProps<T extends object> {
   title: string
@@ -45,43 +35,28 @@ export function DashboardTable<T extends object>({
   emptyTitle = 'No records found',
   emptyDescription = 'Adjust filters or check back later.',
   permission,
-  card = true,
 }: DashboardTableProps<T>) {
-  const [state, setState] = useState<TableState>({
-    ...INITIAL_DASHBOARD_TABLE_STATE,
-    pageSize,
-  })
-
-  const displayData = useMemo(() => data.slice(0, pageSize), [data, pageSize])
-
   if (!isDashboardPermissionGranted(permission)) {
     return null
   }
 
   return (
-    <DashboardSection
+    <ExecutiveTable
       title={title}
       subtitle={subtitle}
+      columns={columns}
+      data={data}
+      rowKey={rowKey}
+      pageSize={pageSize}
+      loading={loading}
+      empty={data.length === 0}
+      emptyTitle={emptyTitle}
+      emptyDescription={emptyDescription}
+      onRowClick={onRowClick}
       actionLabel={onViewAll ? actionLabel : undefined}
       onAction={onViewAll}
-      card={card}
-    >
-      <Box sx={{ mx: card ? -DASHBOARD_SPACING.field : 0 }}>
-        <DataTable
-          columns={columns}
-          data={displayData}
-          rowKey={rowKey}
-          state={state}
-          onStateChange={setState}
-          onRowClick={onRowClick}
-          loading={loading}
-          stickyHeader
-          emptyState={{
-            title: emptyTitle,
-            description: emptyDescription,
-          }}
-        />
-      </Box>
-    </DashboardSection>
+      fullWidth
+      stickyHeader
+    />
   )
 }

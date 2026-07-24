@@ -86,8 +86,9 @@ export function AdminListingShell({
                 value={tabValue}
                 onChange={onTabChange}
                 variant="underline"
+                size="sm"
                 items={tabItems}
-                sx={{ mb: 0, minHeight: 44 }}
+                sx={{ mb: 0, minHeight: 36 }}
               />
             </Box>
           ) : null}

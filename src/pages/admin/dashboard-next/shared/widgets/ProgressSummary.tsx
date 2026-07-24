@@ -1,7 +1,7 @@
-import { Box, Stack, Typography } from '@mui/material'
-import { ProgressBar, ProgressRing } from '@/design-system/UIComponents'
+import { Stack } from '@mui/material'
+import { ProgressRing } from '@/design-system/UIComponents'
+import { ExecutiveGrid, ProgressMetric, UI_KIT_SPACING } from '../dashboard-ui-kit'
 import type { DashboardProgressItem } from '../types'
-import { DASHBOARD_SPACING } from '../constants'
 import { isDashboardPermissionGranted } from '../utils/permission'
 
 export interface ProgressSummaryProps {
@@ -23,51 +23,31 @@ export function ProgressSummary({
 
   if (variant === 'ring') {
     return (
-      <Stack
-        direction="row"
-        spacing={DASHBOARD_SPACING.card}
-        useFlexGap
-        flexWrap="wrap"
-        sx={{ mb: DASHBOARD_SPACING.section }}
-      >
+      <ExecutiveGrid columns={items.length >= 4 ? 4 : items.length === 3 ? 3 : 2}>
         {items.map((item) => (
-          <Box key={item.id} sx={{ textAlign: 'center' }}>
+          <Stack key={item.id} alignItems="center" spacing={UI_KIT_SPACING.dense}>
             <ProgressRing
               value={loading ? 0 : item.value}
               showValue
               label={item.label}
               size={96}
             />
-            {item.helperText ? (
-              <Typography variant="caption" color="text.secondary">
-                {item.helperText}
-              </Typography>
-            ) : null}
-          </Box>
+          </Stack>
         ))}
-      </Stack>
+      </ExecutiveGrid>
     )
   }
 
   return (
-    <Stack spacing={DASHBOARD_SPACING.dense} sx={{ mb: DASHBOARD_SPACING.section }}>
+    <Stack spacing={UI_KIT_SPACING.field}>
       {items.map((item) => (
-        <Box key={item.id}>
-          <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
-            <Typography variant="body2" color="text.primary" fontWeight={600}>
-              {item.label}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {loading ? '—' : `${Math.round(item.value)}%`}
-            </Typography>
-          </Stack>
-          <ProgressBar value={loading ? 0 : item.value} />
-          {item.helperText ? (
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-              {item.helperText}
-            </Typography>
-          ) : null}
-        </Box>
+        <ProgressMetric
+          key={item.id}
+          label={item.label}
+          value={loading ? 0 : item.value}
+          helperText={item.helperText}
+          loading={loading}
+        />
       ))}
     </Stack>
   )

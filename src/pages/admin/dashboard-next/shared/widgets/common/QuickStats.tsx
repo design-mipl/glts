@@ -1,4 +1,8 @@
-import { KPIGrid } from '../KPIGrid'
+import {
+  ExecutiveGrid,
+  HeroMetric,
+  InsightStack,
+} from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from './BusinessWidgetFrame'
 import type { DashboardKpiItem } from '../../types'
 
@@ -14,7 +18,7 @@ export interface QuickStatsProps {
   onRetry?: () => void
 }
 
-/** Compact KPI strip — wraps KPIGrid / StatCard. */
+/** Compact KPI strip — Dashboard UI Kit dense metric strip. */
 export function QuickStats({
   title,
   subtitle,
@@ -26,6 +30,15 @@ export function QuickStats({
   permission,
   onRetry,
 }: QuickStatsProps) {
+  const displayItems =
+    loading && items.length === 0
+      ? Array.from({ length: columns }, (_, i) => ({
+          id: `kpi-skeleton-${i}`,
+          label: '—',
+          value: '—' as string | number,
+        }))
+      : items
+
   return (
     <BusinessWidgetFrame
       title={title}
@@ -35,10 +48,28 @@ export function QuickStats({
       empty={!loading && (empty ?? items.length === 0)}
       permission={permission}
       onRetry={onRetry}
-      card={Boolean(title)}
-      skeletonHeightSpacing={12}
+      card={false}
+      skeletonHeightSpacing={8}
     >
-      <KPIGrid items={items} columns={columns} loading={loading} />
+      <InsightStack>
+        <ExecutiveGrid
+          columns={columns === 6 ? 6 : columns === 3 ? 3 : columns === 2 ? 2 : 4}
+          spacing={1}
+        >
+          {displayItems.map((item) => (
+            <HeroMetric
+              key={item.id}
+              label={item.label}
+              value={item.value}
+              delta={item.delta}
+              deltaLabel={item.deltaLabel}
+              icon={item.icon}
+              loading={loading}
+              animate
+            />
+          ))}
+        </ExecutiveGrid>
+      </InsightStack>
     </BusinessWidgetFrame>
   )
 }

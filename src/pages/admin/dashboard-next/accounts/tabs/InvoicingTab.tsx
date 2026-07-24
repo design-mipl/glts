@@ -9,7 +9,11 @@ import {
   StatusBadge,
   DASHBOARD_SPACING,
 } from '../../shared'
-import type { AccountsDashboardTabProps, AccountsInvoiceRow } from '../types'
+import type {
+  AccountsDashboardTabProps,
+  AccountsInvoicePostingRow,
+  AccountsInvoiceRow,
+} from '../types'
 
 export function InvoicingTab({
   data,
@@ -51,6 +55,21 @@ export function InvoicingTab({
     },
   ]
 
+  const postingColumns: Column<AccountsInvoicePostingRow>[] = [
+    { key: 'invoiceNo', label: 'Draft / Invoice', widthSize: 'md', sortable: false },
+    { key: 'company', label: 'Company', widthSize: 'lg', sortable: false },
+    { key: 'billingType', label: 'Billing type', widthSize: 'md', sortable: false },
+    { key: 'invoiceAmount', label: 'Amount', widthSize: 'md', sortable: false },
+    {
+      key: 'status',
+      label: 'Status',
+      widthSize: 'sm',
+      sortable: false,
+      render: (_value, row) => <StatusBadge label={row.status} status={row.status} />,
+    },
+    { key: 'branch', label: 'Branch', widthSize: 'md', sortable: false },
+  ]
+
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
       <Grid size={{ xs: 12 }}>
@@ -60,6 +79,20 @@ export function InvoicingTab({
           loading={loading}
           onRetry={onRetry}
           columns={4}
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12 }}>
+        <DashboardTable
+          title="Invoice posting queue"
+          subtitle="Drafts awaiting approval, validation, or posting"
+          columns={postingColumns}
+          data={data.invoicePostingQueue}
+          rowKey="id"
+          loading={loading}
+          pageSize={6}
+          onViewAll={() => onNavigate('/admin/finance/invoices')}
+          actionLabel="Open invoices"
         />
       </Grid>
 

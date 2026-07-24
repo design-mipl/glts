@@ -10,6 +10,7 @@ export type DashboardNextId =
   | 'accounts'
   | 'super-admin'
   | 'ground-operations'
+  | 'documentation'
 
 export interface AdminDashboardDefinition {
   id: string
@@ -67,6 +68,14 @@ export const ADMIN_DASHBOARDS: LegacyDashboardDefinition[] = [
 /** Dashboard Next module submodules. */
 export const ADMIN_DASHBOARD_NEXT: DashboardNextDefinition[] = [
   {
+    id: 'super-admin',
+    label: 'Super Admin',
+    href: '/admin/dashboard-next/super-admin',
+    title: 'Super Admin dashboard (next)',
+    description: 'Next-generation platform administration workspace.',
+    status: 'live',
+  },
+  {
     id: 'admin',
     label: 'Admin',
     href: '/admin/dashboard-next',
@@ -91,19 +100,19 @@ export const ADMIN_DASHBOARD_NEXT: DashboardNextDefinition[] = [
     status: 'live',
   },
   {
-    id: 'super-admin',
-    label: 'Super Admin',
-    href: '/admin/dashboard-next/super-admin',
-    title: 'Super Admin dashboard (next)',
-    description: 'Next-generation platform administration workspace.',
-    status: 'live',
-  },
-  {
     id: 'ground-operations',
     label: 'Ground Ops',
     href: '/admin/dashboard-next/ground-operations',
     title: 'Ground Operations dashboard (next)',
     description: 'Next-generation ground operations workspace.',
+    status: 'live',
+  },
+  {
+    id: 'documentation',
+    label: 'Documentation',
+    href: '/admin/dashboard-next/documentation',
+    title: 'Documentation dashboard (next)',
+    description: 'Next-generation document processing and QC workspace.',
     status: 'live',
   },
 ]

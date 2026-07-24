@@ -108,6 +108,22 @@ export const ACCOUNTS_DASHBOARD_MOCK: AccountsDashboardData = {
       deltaLabel: 'vs yesterday',
       sparklineData: [24, 22, 21, 20, 19, 18, 18],
     },
+    {
+      id: 'overdue-ar',
+      label: 'Overdue AR',
+      value: '₹24.1L',
+      delta: 2.4,
+      deltaLabel: 'vs last week',
+      sparklineData: [21, 22, 22.5, 23, 23.5, 24, 24.1],
+    },
+    {
+      id: 'collected-mtd',
+      label: 'Collected MTD',
+      value: '₹62.3L',
+      delta: 7.8,
+      deltaLabel: 'vs prior month',
+      sparklineData: [48, 52, 55, 57, 59, 61, 62.3],
+    },
   ],
   notifications: [
     {
@@ -340,6 +356,111 @@ export const ACCOUNTS_DASHBOARD_MOCK: AccountsDashboardData = {
       createdAt: '30 min ago',
     },
   ],
+  invoicePostingQueue: [
+    {
+      id: 'ip-1',
+      invoiceNo: 'DRF-2026-0891',
+      company: 'Tata Consultancy Services',
+      billingType: 'Corporate monthly',
+      invoiceAmount: '₹3,42,000',
+      status: 'Awaiting approval',
+      branch: 'Mumbai',
+    },
+    {
+      id: 'ip-2',
+      invoiceNo: 'DRF-2026-0894',
+      company: 'MSC Crew Services',
+      billingType: 'Per application',
+      invoiceAmount: '₹68,500',
+      status: 'Ready to post',
+      branch: 'Chennai',
+    },
+    {
+      id: 'ip-3',
+      invoiceNo: 'DRF-2026-0901',
+      company: 'Reliance Industries',
+      billingType: 'Corporate monthly',
+      invoiceAmount: '₹5,10,200',
+      status: 'Validation pending',
+      branch: 'Delhi',
+    },
+  ],
+  vendorPayments: [
+    {
+      id: 'vp-1',
+      vendor: 'VFS Global',
+      service: 'Visa facilitation',
+      amount: '₹1,24,000',
+      dueDate: '02 Jul 2026',
+      paymentStatus: 'Due today',
+      branch: 'Mumbai',
+    },
+    {
+      id: 'vp-2',
+      vendor: 'Blue Dart Express',
+      service: 'Courier logistics',
+      amount: '₹18,600',
+      dueDate: '05 Jul 2026',
+      paymentStatus: 'Scheduled',
+      branch: 'Mumbai',
+    },
+    {
+      id: 'vp-3',
+      vendor: 'UK Visa Application Centre',
+      service: 'Embassy fees',
+      amount: '₹2,45,800',
+      dueDate: '01 Jul 2026',
+      paymentStatus: 'Overdue',
+      branch: 'Delhi',
+    },
+  ],
+  invoiceSubmissions: [
+    {
+      id: 'is-1',
+      company: 'Tata Consultancy Services',
+      submissionDate: '01 Jul 2026',
+      submissionDateSort: 20260701,
+      billingCycle: 'Monthly',
+      status: 'Due today',
+      branch: 'Mumbai',
+    },
+    {
+      id: 'is-2',
+      company: 'Infosys Limited',
+      submissionDate: '03 Jul 2026',
+      submissionDateSort: 20260703,
+      billingCycle: 'Monthly',
+      status: 'Scheduled',
+      branch: 'Bengaluru',
+    },
+    {
+      id: 'is-3',
+      company: 'Maersk Line India',
+      submissionDate: '05 Jul 2026',
+      submissionDateSort: 20260705,
+      billingCycle: 'Fortnightly',
+      status: 'Draft ready',
+      branch: 'Mumbai',
+    },
+    {
+      id: 'is-4',
+      company: 'MSC Crew Services',
+      submissionDate: '08 Jul 2026',
+      submissionDateSort: 20260708,
+      billingCycle: 'Per voyage',
+      status: 'Pending data',
+      branch: 'Chennai',
+    },
+    {
+      id: 'is-5',
+      company: 'Reliance Industries',
+      submissionDate: '10 Jul 2026',
+      submissionDateSort: 20260710,
+      billingCycle: 'Monthly',
+      status: 'Scheduled',
+      branch: 'Delhi',
+    },
+  ],
   reconciliationSummary: {
     outstanding: '₹12.6L',
     collected: '₹8.4L',
@@ -468,6 +589,53 @@ export const ACCOUNTS_DASHBOARD_MOCK: AccountsDashboardData = {
     { id: 'inv-sla', label: 'Invoice posting SLA', value: 93, helperText: 'Target 95%' },
     { id: 'recon-sla', label: 'Reconciliation SLA', value: 76, helperText: 'Target 90%' },
   ],
+  topClients: [
+    { id: 'tc-1', rank: 1, name: 'Tata Consultancy Services', revenue: '₹42.8L', sharePercent: 18 },
+    { id: 'tc-2', rank: 2, name: 'Maersk Line India', revenue: '₹38.4L', sharePercent: 16 },
+    { id: 'tc-3', rank: 3, name: 'Reliance Industries', revenue: '₹31.2L', sharePercent: 13 },
+    { id: 'tc-4', rank: 4, name: 'Infosys Limited', revenue: '₹24.6L', sharePercent: 10 },
+    { id: 'tc-5', rank: 5, name: 'MSC Crew Services', revenue: '₹18.9L', sharePercent: 8 },
+  ],
+  topCountries: [
+    { id: 'tco-1', rank: 1, name: 'United Kingdom', revenue: '₹28.4L', sharePercent: 22 },
+    { id: 'tco-2', rank: 2, name: 'United States', revenue: '₹24.1L', sharePercent: 19 },
+    { id: 'tco-3', rank: 3, name: 'Singapore', revenue: '₹16.8L', sharePercent: 13 },
+    { id: 'tco-4', rank: 4, name: 'United Arab Emirates', revenue: '₹12.2L', sharePercent: 10 },
+    { id: 'tco-5', rank: 5, name: 'Germany', revenue: '₹9.6L', sharePercent: 7 },
+  ],
+  revenueBySegment: [
+    { id: 'rs-1', rank: 1, name: 'Marine', revenue: '₹52.4L', sharePercent: 35 },
+    { id: 'rs-2', rank: 2, name: 'Corporate', revenue: '₹48.6L', sharePercent: 32 },
+    { id: 'rs-3', rank: 3, name: 'B2B', revenue: '₹32.8L', sharePercent: 22 },
+    { id: 'rs-4', rank: 4, name: 'Retail', revenue: '₹16.2L', sharePercent: 11 },
+  ],
+  purchaseVsRevenue: {
+    purchaseCost: '₹68.4L',
+    vendorCost: '₹42.6L',
+    revenue: '₹1.42Cr',
+    profitMargin: '₹30.8L',
+    profitMarginPercent: 22,
+    trend: [
+      { label: 'Jan', revenue: 118, purchase: 92 },
+      { label: 'Feb', revenue: 124, purchase: 96 },
+      { label: 'Mar', revenue: 132, purchase: 98 },
+      { label: 'Apr', revenue: 128, purchase: 100 },
+      { label: 'May', revenue: 138, purchase: 104 },
+      { label: 'Jun', revenue: 142, purchase: 108 },
+    ],
+  },
+  dailyReports: [
+    { id: 'dr-1', name: 'Daily invoice posted', lastGenerated: '01 Jul 2026, 08:30', reportKey: 'daily-invoice-posted' },
+    { id: 'dr-2', name: 'Daily un-invoiced cases', lastGenerated: '01 Jul 2026, 08:45', reportKey: 'daily-uninvoiced' },
+    { id: 'dr-3', name: 'Courier report', lastGenerated: '01 Jul 2026, 09:00', reportKey: 'courier' },
+    { id: 'dr-4', name: 'Visa submission report', lastGenerated: '01 Jul 2026, 09:15', reportKey: 'visa-submission' },
+    { id: 'dr-5', name: 'Collection report', lastGenerated: '01 Jul 2026, 09:30', reportKey: 'collection' },
+    { id: 'dr-6', name: 'Outstanding report', lastGenerated: '01 Jul 2026, 09:45', reportKey: 'outstanding' },
+    { id: 'dr-7', name: 'Vendor payment report', lastGenerated: '01 Jul 2026, 10:00', reportKey: 'vendor-payment' },
+    { id: 'dr-8', name: 'Revenue report', lastGenerated: '01 Jul 2026, 10:15', reportKey: 'revenue' },
+    { id: 'dr-9', name: 'Visa count report', lastGenerated: '01 Jul 2026, 10:30', reportKey: 'visa-count' },
+    { id: 'dr-10', name: 'Log report', lastGenerated: '01 Jul 2026, 10:45', reportKey: 'log' },
+  ],
   recentReports: [
     {
       id: 'rep-1',
@@ -492,6 +660,18 @@ export const ACCOUNTS_DASHBOARD_MOCK: AccountsDashboardData = {
       name: 'Reconciliation exceptions',
       category: 'Reconciliation',
       generatedAt: '2 days ago',
+    },
+    {
+      id: 'rep-5',
+      name: 'Daily invoice posted',
+      category: 'Daily',
+      generatedAt: '01 Jul 2026, 08:30',
+    },
+    {
+      id: 'rep-6',
+      name: 'Collection report',
+      category: 'Daily',
+      generatedAt: '01 Jul 2026, 09:30',
     },
   ],
   reportNotifications: [
@@ -540,6 +720,21 @@ export function applyAccountsDashboardFilters(
       (row) =>
         matchInvoiceStatus(row.status) &&
         matchSearch(row.invoiceNumber, row.client, row.application),
+    ),
+    invoicePostingQueue: data.invoicePostingQueue.filter(
+      (row) =>
+        matchBranch(row.branch) &&
+        matchInvoiceStatus(row.status) &&
+        matchSearch(row.invoiceNo, row.company, row.billingType),
+    ),
+    vendorPayments: data.vendorPayments.filter(
+      (row) =>
+        matchBranch(row.branch) &&
+        matchVendor(row.vendor) &&
+        matchSearch(row.vendor, row.service, row.paymentStatus),
+    ),
+    invoiceSubmissions: data.invoiceSubmissions.filter(
+      (row) => matchBranch(row.branch) && matchSearch(row.company, row.status, row.billingCycle),
     ),
     reconciliationRows: data.reconciliationRows.filter(
       (row) =>

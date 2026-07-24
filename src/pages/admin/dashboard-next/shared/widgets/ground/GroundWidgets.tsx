@@ -1,14 +1,19 @@
 import type { Column } from '@/design-system/UIComponents'
-import { Timeline } from '@/design-system/UIComponents'
+import { BarChart } from '@/design-system/UIComponents'
+import { Stack, Typography } from '@mui/material'
+import {
+  AnalyticsChart,
+  ExecutiveGrid,
+  FinancialMetric,
+  InsightCard,
+  Timeline as KitTimeline,
+  UI_KIT_SPACING,
+} from '../../dashboard-ui-kit'
 import { DashboardTable } from '../DashboardTable'
 import { StatusBadge } from '../StatusBadge'
-import { MetricCard } from '@/design-system/UIComponents'
-import { ChartPanel } from '../ChartPanel'
-import { BarChart } from '@/design-system/UIComponents'
 import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
 import { JourneyFlow, type JourneyFlowStageStatus } from '../common/JourneyFlow'
-import { DASHBOARD_CHART_HEIGHT_SPACING, DASHBOARD_SPACING } from '../../constants'
-import { Stack, Typography } from '@mui/material'
+import { DASHBOARD_CHART_HEIGHT_SPACING } from '../../constants'
 
 export interface TodaysJobRow {
   id: string
@@ -115,8 +120,8 @@ export function RouteTimeline({
 }: RouteTimelineProps) {
   return (
     <BusinessWidgetFrame
-      title={title}
-      subtitle={subtitle}
+      title={undefined}
+      card={false}
       loading={loading}
       error={error}
       empty={empty ?? events.length === 0}
@@ -124,15 +129,17 @@ export function RouteTimeline({
       onRetry={onRetry}
       skeletonHeightSpacing={18}
     >
-      <Timeline
-        items={events.map((event) => ({
+      <KitTimeline
+        title={title}
+        subtitle={subtitle}
+        loading={loading}
+        events={events.map((event) => ({
           id: event.id,
           title: event.title,
           description: event.description,
           date: event.date,
           status: event.status,
         }))}
-        orientation="vertical"
       />
     </BusinessWidgetFrame>
   )
@@ -168,24 +175,21 @@ export function ExpenseSummary({
 }: ExpenseSummaryProps) {
   return (
     <BusinessWidgetFrame
-      title={undefined}
-      card={false}
+      title={title}
+      subtitle={subtitle}
       loading={loading}
       error={error}
       empty={empty}
       permission={permission}
       onRetry={onRetry}
+      card={false}
     >
-      <MetricCard
-        title={title}
-        subtitle={subtitle}
-        metrics={[
-          { label: 'Submitted', value: data.submitted },
-          { label: 'Approved', value: data.approved },
-          { label: 'Pending', value: data.pending },
-          { label: 'Rejected', value: data.rejected },
-        ]}
-      />
+      <ExecutiveGrid columns={4}>
+        <FinancialMetric label="Submitted" value={data.submitted} />
+        <FinancialMetric label="Approved" value={data.approved} tone="positive" />
+        <FinancialMetric label="Pending" value={data.pending} tone="warning" />
+        <FinancialMetric label="Rejected" value={data.rejected} tone="negative" />
+      </ExecutiveGrid>
     </BusinessWidgetFrame>
   )
 }
@@ -305,20 +309,23 @@ export function CourierTracking({
       empty={empty}
       permission={permission}
       onRetry={onRetry}
+      card={false}
       skeletonHeightSpacing={14}
     >
-      <Stack spacing={DASHBOARD_SPACING.dense}>
-        <Stack direction="row" spacing={DASHBOARD_SPACING.field} alignItems="center" flexWrap="wrap">
-          <Typography variant="body2" color="text.secondary">
-            {data.courier} · {data.trackingNumber}
-          </Typography>
-          <StatusBadge label={data.status} status={data.status} />
-          {data.eta ? (
-            <Typography variant="caption" color="text.secondary">
-              ETA {data.eta}
+      <Stack spacing={UI_KIT_SPACING.cluster}>
+        <InsightCard accent="info" density="compact">
+          <Stack direction="row" spacing={UI_KIT_SPACING.field} alignItems="center" flexWrap="wrap">
+            <Typography variant="body2" color="text.secondary">
+              {data.courier} · {data.trackingNumber}
             </Typography>
-          ) : null}
-        </Stack>
+            <StatusBadge label={data.status} status={data.status} />
+            {data.eta ? (
+              <Typography variant="caption" color="text.secondary">
+                ETA {data.eta}
+              </Typography>
+            ) : null}
+          </Stack>
+        </InsightCard>
         <JourneyFlow stages={data.stages} />
       </Stack>
     </BusinessWidgetFrame>
@@ -364,7 +371,7 @@ export function DocumentMovement({
       permission={permission}
       onRetry={onRetry}
     >
-      <ChartPanel title={title} subtitle={subtitle} empty={points.length === 0}>
+      <AnalyticsChart title={title} subtitle={subtitle} minHeight={chartHeight}>
         <BarChart
           data={points}
           xKey="label"
@@ -374,7 +381,7 @@ export function DocumentMovement({
           ]}
           height={chartHeight}
         />
-      </ChartPanel>
+      </AnalyticsChart>
     </BusinessWidgetFrame>
   )
 }

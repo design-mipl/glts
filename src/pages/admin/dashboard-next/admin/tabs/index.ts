@@ -1,5 +1,7 @@
 export { OverviewTab } from './OverviewTab'
+export { ACTION_ICONS, KPI_ICONS } from './overviewIcons'
+export { ApplicationsTab } from './ApplicationsTab'
 export { OperationsTab } from './OperationsTab'
-export { ProductivityTab } from './ProductivityTab'
+export { RiskComplianceTab } from './RiskComplianceTab'
 export { AnalyticsTab } from './AnalyticsTab'
 export { ReportsTab } from './ReportsTab'
