@@ -1,6 +1,7 @@
 import type { EnquiryRecord } from '@/shared/types/enquiry'
 import type { QuotationFormData } from '@/shared/types/quotation'
 import { getDefaultQuotationGstSelection } from '@/shared/utils/quotationGstUtils'
+import { emptyPricingPayload } from '@/shared/utils/quotationPricingUtils'
 
 function mapEnquiryCustomerTypeToWorkflow(
   customerType: EnquiryRecord['customer']['customerType'],
@@ -36,6 +37,10 @@ export function buildQuotationFormDataFromEnquiry(
     notes: enquiry.notes.initialDiscussionNotes ?? enquiry.notes.internalNotes ?? base?.notes ?? '',
     gstRateId: base?.gstRateId ?? defaultGst.gstRateId,
     gstPercentage: base?.gstPercentage ?? defaultGst.gstPercentage,
-    pricingMatrix: base?.pricingMatrix ?? [],
+    ...emptyPricingPayload(),
+    ...(base?.retailVisaPricing ? { retailVisaPricing: base.retailVisaPricing } : {}),
+    ...(base?.commercialVisaPricing ? { commercialVisaPricing: base.commercialVisaPricing } : {}),
+    ...(base?.miscellaneousServices ? { miscellaneousServices: base.miscellaneousServices } : {}),
+    ...(base?.pricingMatrix ? { pricingMatrix: base.pricingMatrix } : {}),
   }
 }

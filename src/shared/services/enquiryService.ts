@@ -2,7 +2,6 @@ import { quotationService } from './quotationService'
 import type {
   EnquiryActivityLog,
   EnquiryAssignment,
-  EnquiryConversionValidation,
   EnquiryFollowup,
   EnquiryFormData,
   EnquiryListingFilters,
@@ -10,7 +9,13 @@ import type {
   EnquiryRecord,
   EnquiryStatus,
 } from '../types/enquiry'
-import { getVisaRequirementItems, normalizeVisaRequirement } from '../utils/enquiryVisaRequirementUtils'
+import { normalizeVisaRequirement } from '../utils/enquiryVisaRequirementUtils'
+import {
+  canConvertLeadToQuotation,
+  clientManagementPipelineFlow,
+  getAllowedPipelineTransitions,
+  isLeadEligibleForQuotationPicker,
+} from '../config/clientManagementPipelineConfig'
 
 function nowIso() {
   return new Date().toISOString()
@@ -26,18 +31,7 @@ function daysFromToday(days: number) {
   return value.toISOString()
 }
 
-export const enquiryStatusFlow: Record<EnquiryStatus, EnquiryStatus[]> = {
-  new: ['under_discussion', 'on_hold', 'rejected'],
-  under_discussion: ['requirement_gathering', 'pending_customer_response', 'on_hold'],
-  requirement_gathering: ['internal_review', 'pending_customer_response', 'on_hold'],
-  pending_customer_response: ['under_discussion', 'internal_review', 'closed'],
-  internal_review: ['quotation_in_progress', 'on_hold', 'rejected'],
-  quotation_in_progress: ['converted', 'on_hold'],
-  converted: [],
-  on_hold: ['under_discussion', 'closed'],
-  closed: [],
-  rejected: [],
-}
+export const enquiryStatusFlow = clientManagementPipelineFlow
 
 function makeActivity(
   type: EnquiryActivityLog['type'],
@@ -60,7 +54,7 @@ let enquiryStore: EnquiryRecord[] = [
     id: 'ENQ-24001',
     enquiryDate: daysFromToday(-5),
     createdBy: 'Neha Arora',
-    status: 'under_discussion',
+    status: 'qualified',
     customer: {
       companyOrCustomerName: 'Apex Marine Logistics',
       customerType: 'marine',
@@ -183,7 +177,7 @@ let enquiryStore: EnquiryRecord[] = [
     id: 'ENQ-24003',
     enquiryDate: daysFromToday(-12),
     createdBy: 'Pooja Sharma',
-    status: 'internal_review',
+    status: 'qualified',
     customer: {
       companyOrCustomerName: 'Global Tech Corp',
       customerType: 'corporate',
@@ -308,7 +302,7 @@ let enquiryStore: EnquiryRecord[] = [
     id: 'ENQ-24005',
     enquiryDate: daysFromToday(-15),
     createdBy: 'Neha Arora',
-    status: 'closed',
+    status: 'lost',
     customer: {
       companyOrCustomerName: 'Quick Travel Agency',
       customerType: 'retail',
@@ -343,7 +337,7 @@ let enquiryStore: EnquiryRecord[] = [
     followups: [],
     activities: [
       makeActivity('created', 'Enquiry created', 'Inbound call enquiry', 'Neha Arora'),
-      makeActivity('status_updated', 'Status updated', 'Status changed to closed: Customer withdrew', 'Neha Arora'),
+      makeActivity('status_updated', 'Status updated', 'Status changed to lost: Customer withdrew', 'Neha Arora'),
     ],
     assignment: { priority: 'low', ownershipHistory: [] },
     lastActivity: daysFromToday(-10),
@@ -352,7 +346,7 @@ let enquiryStore: EnquiryRecord[] = [
     id: 'ENQ-24006',
     enquiryDate: daysFromToday(-7),
     createdBy: 'Ravi Kumar',
-    status: 'rejected',
+    status: 'lost',
     customer: {
       companyOrCustomerName: 'Unknown Applicant',
       customerType: 'retail',
@@ -383,7 +377,7 @@ let enquiryStore: EnquiryRecord[] = [
     followups: [],
     activities: [
       makeActivity('created', 'Enquiry created', 'Incomplete documentation', 'Ravi Kumar'),
-      makeActivity('status_updated', 'Status updated', 'Status changed to rejected: Incomplete docs', 'Ravi Kumar'),
+      makeActivity('status_updated', 'Status updated', 'Status changed to lost: Incomplete docs', 'Ravi Kumar'),
     ],
     assignment: { priority: 'medium', ownershipHistory: [] },
     lastActivity: daysFromToday(-6),
@@ -392,7 +386,7 @@ let enquiryStore: EnquiryRecord[] = [
     id: 'ENQ-24007',
     enquiryDate: daysFromToday(-3),
     createdBy: 'Pooja Sharma',
-    status: 'quotation_in_progress',
+    status: 'quotation_sent',
     customer: {
       companyOrCustomerName: 'Nordic Foods AB',
       customerType: 'corporate',
@@ -478,9 +472,7 @@ export const enquiryService = {
   },
 
   listEligibleForQuotation(): EnquiryRecord[] {
-    return enquiryStore.filter(
-      (item) => item.status !== 'converted' && item.status !== 'rejected' && item.status !== 'closed',
-    )
+    return enquiryStore.filter((item) => isLeadEligibleForQuotationPicker(item.status))
   },
 
   getById(enquiryId: string) {
@@ -537,14 +529,35 @@ export const enquiryService = {
   },
 
   getAllowedStatusTransitions(current: EnquiryStatus): EnquiryStatus[] {
-    const allowed = enquiryStatusFlow[current] ?? []
-    return Array.from(new Set([current, ...allowed]))
+    return getAllowedPipelineTransitions(current)
+  },
+
+  /**
+   * Mirror pipeline status from quotation/agreement without re-validating transitions
+   * or re-syncing back to quotations (avoids loops).
+   */
+  applyMirroredPipelineStatus(enquiryId: string, nextStatus: EnquiryStatus, actor: string, reason?: string) {
+    const target = enquiryStore.find((item) => item.id === enquiryId)
+    if (!target) return undefined
+    if (target.status === nextStatus) return target
+    const previousStatus = target.status
+    target.status = nextStatus
+    target.lastActivity = nowIso()
+    target.activities.unshift(
+      makeActivity(
+        'status_updated',
+        'Status synced',
+        `Status synced from ${previousStatus} to ${nextStatus}${reason ? `: ${reason}` : ''}`,
+        actor,
+      ),
+    )
+    return target
   },
 
   updateStatus(enquiryId: string, nextStatus: EnquiryStatus, actor: string, reason?: string) {
     const target = enquiryStore.find((item) => item.id === enquiryId)
     if (!target) return Promise.resolve({ ok: false, message: 'Enquiry not found' })
-    if (!enquiryStatusFlow[target.status].includes(nextStatus) && target.status !== nextStatus) {
+    if (!clientManagementPipelineFlow[target.status].includes(nextStatus) && target.status !== nextStatus) {
       return Promise.resolve({ ok: false, message: 'Invalid status transition' })
     }
     const previousStatus = target.status
@@ -558,6 +571,7 @@ export const enquiryService = {
         actor,
       ),
     )
+    quotationService.mirrorPipelineStatusToLinkedQuotations(enquiryId, nextStatus, actor, reason)
     return Promise.resolve({ ok: true, enquiry: target })
   },
 
@@ -648,23 +662,6 @@ export const enquiryService = {
     return Promise.resolve(attachment)
   },
 
-  validateConversion(enquiryId: string): Promise<EnquiryConversionValidation> {
-    const target = enquiryStore.find((item) => item.id === enquiryId)
-    if (!target) return Promise.resolve({ isValid: false, issues: ['Enquiry not found'] })
-
-    const issues: string[] = []
-    if (!target.customer.companyOrCustomerName) issues.push('Customer / Company name is mandatory')
-    const visaItems = getVisaRequirementItems(target.visaRequirement)
-    if (!visaItems.length) issues.push('At least one country requirement is mandatory')
-    if (visaItems.some((item) => !item.visaType.trim())) issues.push('Visa type is mandatory for each country requirement')
-    if (!target.customer.contactNumber && !target.customer.emailAddress) issues.push('Contact information is mandatory')
-    if (!target.followups.some((entry) => entry.followupStatus === 'completed')) issues.push('At least one follow-up must be completed')
-    if (target.status !== 'internal_review' && target.status !== 'quotation_in_progress') {
-      issues.push('Enquiry should be in internal review before conversion')
-    }
-    return Promise.resolve({ isValid: issues.length === 0, issues })
-  },
-
   markQuotationLinked(
     enquiryId: string,
     quotationId: string,
@@ -672,20 +669,25 @@ export const enquiryService = {
     phase: 'draft' | 'submitted',
   ) {
     const target = enquiryStore.find((item) => item.id === enquiryId)
-    if (!target || target.status === 'converted') return Promise.resolve(undefined)
+    if (!target || target.status === 'converted' || target.status === 'lost') {
+      return Promise.resolve(undefined)
+    }
 
     if (phase === 'submitted') {
-      target.status = 'converted'
+      const previousStatus = target.status
+      if (target.status !== 'quotation_sent' && target.status !== 'negotiation' && target.status !== 'awaiting_confirmation') {
+        target.status = 'quotation_sent'
+      }
       target.activities.unshift(
         makeActivity(
           'converted_to_quotation',
-          'Converted to quotation',
-          `Quotation ${quotationId} submitted for approval`,
+          'Quotation submitted',
+          `Quotation ${quotationId} submitted${previousStatus !== target.status ? ` (status → ${target.status})` : ''}`,
           actor,
         ),
       )
-    } else if (target.status !== 'quotation_in_progress') {
-      target.status = 'quotation_in_progress'
+    } else if (canConvertLeadToQuotation(target.status) || target.status === 'on_hold') {
+      target.status = 'qualified'
       target.activities.unshift(
         makeActivity(
           'quotation_draft_started',
@@ -710,29 +712,28 @@ export const enquiryService = {
   },
 
   async convertToQuotation(enquiryId: string, actor: string) {
-    const validation = await this.validateConversion(enquiryId)
-    if (!validation.isValid) return { ok: false, validation, quotationId: undefined }
-
     const target = enquiryStore.find((item) => item.id === enquiryId)
-    if (!target) return { ok: false, validation: { isValid: false, issues: ['Enquiry not found'] } }
+    if (!target) return { ok: false as const, quotationId: undefined }
+    if (!canConvertLeadToQuotation(target.status) && target.status !== 'on_hold') {
+      return { ok: false as const, quotationId: undefined }
+    }
 
-    target.status = 'converted'
+    target.status = 'qualified'
     target.lastActivity = nowIso()
     target.activities.unshift(
-      makeActivity('converted_to_quotation', 'Converted to quotation', 'Quotation record generated', actor),
+      makeActivity('converted_to_quotation', 'Converted to quotation', 'Quotation record generated (Qualified)', actor),
     )
 
     const quotation = quotationService.createFromEnquiry(target, actor)
 
     return {
-      ok: true,
-      validation,
+      ok: true as const,
       quotationId: quotation.id,
     }
   },
 
   getStatusOptions() {
-    return Promise.resolve(Object.keys(enquiryStatusFlow) as EnquiryStatus[])
+    return Promise.resolve(Object.keys(clientManagementPipelineFlow) as EnquiryStatus[])
   },
 
   getPriorityOptions(): Promise<EnquiryPriority[]> {

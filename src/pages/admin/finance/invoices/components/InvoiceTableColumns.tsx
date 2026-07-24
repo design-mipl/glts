@@ -115,6 +115,22 @@ export function buildInvoiceColumns(handlers: InvoiceRowActionHandlers): Column<
       ),
     },
     {
+      key: 'gstFiled',
+      label: 'GST',
+      widthSize: adminListingColumnWidthSize('status'),
+      filterable: true,
+      render: (_, row) =>
+        row.invoiceType === 'credit_note' || row.invoiceStatus === 'draft' ? (
+          '—'
+        ) : (
+          <Badge
+            label={row.gstFiledAt ? `Filed ${row.gstFiledAt}` : 'Not filed'}
+            color={row.gstFiledAt ? 'success' : 'neutral'}
+            size="sm"
+          />
+        ),
+    },
+    {
       key: 'paymentStatus',
       label: 'Payment Status',
       widthSize: adminListingColumnWidthSize('status'),

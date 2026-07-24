@@ -3,12 +3,12 @@ import { PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
+import { taxMasterService } from '@/shared/services/taxMasterService'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
 import { MasterAudienceTags } from '../../components/MasterAudienceTags'
 import { toApplicabilityTagItems } from '../../config/masterAudienceTagConfig'
 import { masterStatusColor, masterStatusLabel } from '../../config/masterStatusConfig'
 import { formatMasterDate } from '../../utils/masterListingUtils'
-import { serviceTypeLabel } from '../config/serviceTypeConfig'
 import { formatServicePrice, getServiceSacLabel } from '../utils/serviceListingUtils'
 
 interface ColumnHandlers {
@@ -36,28 +36,26 @@ export function buildServiceColumns({
   return [
     {
       key: 'serviceName',
-      label: 'Service Name',
+      label: 'Fee Name',
       widthSize: adminListingColumnWidthSize('service'),
+      sortable: true,
+      filterable: false,
       searchable: true,
-    },
-    {
-      key: 'serviceType',
-      label: 'Service Type',
-      widthSize: adminListingColumnWidthSize('count'),
-      render: (_, row) => (
-        <Badge label={serviceTypeLabel[row.serviceType]} color="neutral" size="sm" />
-      ),
     },
     {
       key: 'defaultPrice',
       label: 'Default Price',
       widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => formatServicePrice(row),
     },
     {
       key: 'applicableFor',
       label: 'Applicable For',
       widthSize: adminListingColumnWidthSize('description'),
+      sortable: false,
+      filterable: true,
       render: (_, row) => (
         <MasterAudienceTags items={toApplicabilityTagItems(row.applicableFor)} />
       ),
@@ -66,6 +64,8 @@ export function buildServiceColumns({
       key: 'mappedSacCode',
       label: 'Mapped SAC Code',
       widthSize: adminListingColumnWidthSize('code'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => (
         <span
           style={{
@@ -82,9 +82,19 @@ export function buildServiceColumns({
       ),
     },
     {
+      key: 'gstRate',
+      label: 'GST Rate',
+      widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      filterable: true,
+      render: (_, row) => taxMasterService.getGstLabel(row.gstRateId) || '—',
+    },
+    {
       key: 'status',
       label: 'Status',
       widthSize: adminListingColumnWidthSize('status'),
+      sortable: false,
+      filterable: true,
       render: (_, row) => (
         <Badge
           label={masterStatusLabel[row.status]}
@@ -97,12 +107,16 @@ export function buildServiceColumns({
       key: 'createdAudit',
       label: 'Created By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
     },
     {
       key: 'updatedAudit',
       label: 'Updated By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
     },
     {

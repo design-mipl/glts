@@ -103,6 +103,8 @@ export function getListingCellValue(row: ApplicationListingRow, key: string): st
   if (key === 'processingStage') return row.processingStage
   if (key === 'createdBy') return resolveApplicationCreatorLabel(row.createdByEmail)
   if (key === 'createdByEmail') return row.createdByEmail
+  if (key === 'poReference') return row.poReference?.trim() || '—'
+  if (key === 'tentativeCollectionDate') return row.tentativeCollectionDate?.trim() || '—'
   if (key === 'travelerCount') {
     return isBulkRow(row) ? String(row.totalApplicants) : '1'
   }

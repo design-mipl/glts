@@ -101,8 +101,14 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
         selectedRow,
         isSubmitted,
         applicationId ? isFormAssistExternallySubmitted(applicationId, selectedRow?.id) : false,
+        {
+          countryName: detail?.application?.country ?? listingRow?.country,
+          visaTypeLabel: detail?.application?.visaType ?? listingRow?.visaType,
+          operationalStatus: listingRow?.operationalStatus ?? detail?.operationalStatus,
+          processingStage: listingRow?.processingStage,
+        },
       ),
-    [selectedRow, isSubmitted, applicationId],
+    [selectedRow, isSubmitted, applicationId, detail, listingRow],
   )
 
   const globalDocuments = useMemo(

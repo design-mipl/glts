@@ -8,6 +8,22 @@ export type AirportAssistanceType = 'Office Hours' | 'Outside Office Hours'
 
 export type HandDeliveryLocation = 'Office' | 'Residence' | 'Hotel'
 
+/** Payment modes for logistics dispatch settlement (aligned with ground-ops). */
+export type LogisticsPaymentMode = 'cash' | 'card' | 'cash_upi'
+
+export const LOGISTICS_PAYMENT_MODE_OPTIONS: {
+  value: LogisticsPaymentMode
+  label: string
+}[] = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'card', label: 'Card' },
+  { value: 'cash_upi', label: 'Cash + UPI' },
+]
+
+export function getLogisticsPaymentModeLabel(value?: LogisticsPaymentMode): string {
+  return LOGISTICS_PAYMENT_MODE_OPTIONS.find(option => option.value === value)?.label ?? '—'
+}
+
 export interface LogisticsFinalQcChecks {
   nameCheck: boolean
   cdcNumberValidity: boolean
@@ -40,6 +56,13 @@ export interface LogisticsDispatchDetails {
   airportAssistanceCharges?: number
   cargoHandlingCharges?: number
   deliveryLocation?: HandDeliveryLocation
+  /** Payment date for dispatch charge settlement (YYYY-MM-DD). */
+  paymentDate?: string
+  paymentMode?: LogisticsPaymentMode
+  /** Card master id when payment mode is card. */
+  paymentCardId?: string
+  /** UTR / transaction reference for the payment. */
+  transactionReference?: string
   dispatchedAt?: string
 }
 
@@ -111,5 +134,28 @@ export function createEmptyLogisticsDispatchDetails(): LogisticsDispatchDetails 
     airportAssistanceCharges: undefined,
     cargoHandlingCharges: undefined,
     deliveryLocation: undefined,
+    paymentDate: '',
+    paymentMode: undefined,
+    paymentCardId: '',
+    transactionReference: '',
+  }
+}
+
+/** Consulate refund captured on logistics desk — seeded into invoice composition. */
+export interface LogisticsRefundDetails {
+  vendorId: string
+  vendorName: string
+  amount: number
+  remarks?: string
+  recordedAt?: string
+  recordedBy?: string
+}
+
+export function createEmptyLogisticsRefundDetails(): LogisticsRefundDetails {
+  return {
+    vendorId: '',
+    vendorName: '',
+    amount: 0,
+    remarks: '',
   }
 }

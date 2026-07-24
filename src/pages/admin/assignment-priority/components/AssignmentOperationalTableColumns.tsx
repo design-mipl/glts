@@ -24,6 +24,7 @@ import {
 } from '../utils/assignmentQueueListingUtils'
 import type { AssignmentTableColumnsParams } from './AssignmentTableColumns'
 import { ASSIGN_USER_VENDOR_ACTION_LABEL } from '../config/assignmentActionConfig'
+import { AssignmentFundStatusCell } from './AssignmentFundStatusCell'
 
 function operationalStatusBadgeColor(status: string): 'success' | 'warning' | 'info' | 'error' | 'neutral' {
   const tone = getApplicationOperationalTone(status)
@@ -112,13 +113,20 @@ function ApplicationCell({ row }: { row: OperationalPassengerRow }) {
 }
 
 function AssignmentCell({ row }: { row: OperationalPassengerRow }) {
+  const secondary =
+    row.assigneeType === 'vendor' && row.assignedVendor
+      ? `${row.assignedVendor} · ${row.assignedUser || '—'}`
+      : row.assigneeType === 'passenger'
+        ? `Passenger · ${row.assignedUser || '—'}`
+        : row.assignedUser || '—'
+
   return (
     <Box sx={{ minWidth: 0 }}>
       <Typography variant="body2" noWrap sx={{ ...stackedLinePrimarySx, fontWeight: 500 }}>
         {row.assignedTeam || 'Unassigned'}
       </Typography>
       <Typography variant="body2" noWrap sx={stackedLineSecondarySx}>
-        {row.assignedUser || '—'}
+        {secondary}
       </Typography>
     </Box>
   )
@@ -213,6 +221,13 @@ export function buildOperationalAssignmentTableColumns(
       widthSize: 'md',
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => <StatusCell row={row} />,
+    },
+    {
+      key: 'fundStatus',
+      label: 'Fund Status',
+      widthSize: 'md',
+      sortable: true,
+      render: (_value, row: OperationalPassengerRow) => <AssignmentFundStatusCell passengerId={row.id} />,
     },
     {
       key: 'sla',

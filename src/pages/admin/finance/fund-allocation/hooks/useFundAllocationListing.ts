@@ -1,31 +1,58 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { TableState } from '@/design-system/UIComponents'
 import { applyColumnFilters, INITIAL_TABLE_STATE, sortRows } from '@/pages/customer/features/shared/hooks/useCustomerListing'
+import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
 import { fundAllocationService } from '@/shared/services/fundAllocationService'
+import { groundOpsClaimSheetService } from '@/shared/services/groundOpsClaimSheetService'
 import type {
+  FundAllocationBatchRow,
   FundAllocationListingTab,
   FundAllocationPassengerRow,
   FundAllocationQueueFilters,
 } from '@/shared/types/fundAllocation'
+import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
 import {
+  applyFundAllocationBatchFilters,
+  getFundAllocationBatchCellValue,
+  groupPassengersIntoAllocationBatches,
+} from '@/shared/utils/fundAllocationBatchUtils'
+import {
+  applyFundAllocationClaimSheetSearch,
   applyFundAllocationFilters,
   EMPTY_FUND_ALLOCATION_FILTERS,
   filterRowsByListingTab,
   getFundAllocationCellValue,
+  getFundAllocationClaimSheetCellValue,
 } from '../utils/fundAllocationListingUtils'
 
+const FUND_ALLOCATION_TAB_VALUES: readonly FundAllocationListingTab[] = [
+  'pending_allocation',
+  'allocated',
+  'claim_sheets',
+]
+
 export function useFundAllocationListing() {
-  const [listingTab, setListingTab] = useState<FundAllocationListingTab>('pending_allocation')
+  const [listingTab, setListingTab] = useListingTabParam(
+    FUND_ALLOCATION_TAB_VALUES,
+    'pending_allocation',
+  )
   const [queueFilters, setQueueFilters] = useState<FundAllocationQueueFilters>(EMPTY_FUND_ALLOCATION_FILTERS)
   const [tableState, setTableState] = useState<TableState>(INITIAL_TABLE_STATE)
   const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({})
   const [refreshKey, setRefreshKey] = useState(0)
   const [selectedPassengerId, setSelectedPassengerId] = useState<string | null>(null)
+  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null)
+  const [selectedClaimSheetId, setSelectedClaimSheetId] = useState<string | null>(null)
   const [searchValue, setSearchValue] = useState('')
 
   const allRows = useMemo(() => {
     void refreshKey
     return fundAllocationService.list()
+  }, [refreshKey])
+
+  const allClaimSheets = useMemo(() => {
+    void refreshKey
+    return groundOpsClaimSheetService.list()
   }, [refreshKey])
 
   const tabFilteredRows = useMemo(
@@ -50,9 +77,81 @@ export function useFundAllocationListing() {
     return processedRows.slice(start, start + tableState.pageSize)
   }, [processedRows, tableState.page, tableState.pageSize])
 
+  const allBatches = useMemo(() => {
+    void refreshKey
+    return groupPassengersIntoAllocationBatches(
+      allRows.filter(row => row.allocationStatus === 'allocated'),
+    )
+  }, [allRows, refreshKey])
+
+  const filteredBatches = useMemo(() => {
+    return applyFundAllocationBatchFilters(allBatches, { ...queueFilters, search: searchValue })
+  }, [allBatches, queueFilters, searchValue])
+
+  const filterSourceBatches = filteredBatches
+
+  const processedBatches = useMemo(() => {
+    const columnFiltered = applyColumnFilters(
+      filteredBatches,
+      columnFilters,
+      getFundAllocationBatchCellValue,
+    )
+    return sortRows(
+      columnFiltered,
+      tableState.sortKey,
+      tableState.sortDirection,
+      getFundAllocationBatchCellValue,
+    )
+  }, [filteredBatches, columnFilters, tableState.sortKey, tableState.sortDirection])
+
+  const totalBatches = processedBatches.length
+  const paginatedBatches = useMemo(() => {
+    const start = tableState.page * tableState.pageSize
+    return processedBatches.slice(start, start + tableState.pageSize)
+  }, [processedBatches, tableState.page, tableState.pageSize])
+
+  const filteredClaimSheets = useMemo(() => {
+    return applyFundAllocationClaimSheetSearch(allClaimSheets, searchValue)
+  }, [allClaimSheets, searchValue])
+
+  const filterSourceClaimSheets = filteredClaimSheets
+
+  const processedClaimSheets = useMemo(() => {
+    const columnFiltered = applyColumnFilters(
+      filteredClaimSheets,
+      columnFilters,
+      getFundAllocationClaimSheetCellValue,
+    )
+    return sortRows(
+      columnFiltered,
+      tableState.sortKey,
+      tableState.sortDirection,
+      getFundAllocationClaimSheetCellValue,
+    )
+  }, [filteredClaimSheets, columnFilters, tableState.sortKey, tableState.sortDirection])
+
+  const totalClaimSheets = processedClaimSheets.length
+  const paginatedClaimSheets = useMemo(() => {
+    const start = tableState.page * tableState.pageSize
+    return processedClaimSheets.slice(start, start + tableState.pageSize)
+  }, [processedClaimSheets, tableState.page, tableState.pageSize])
+
   const selectedPassenger = useMemo(
     () => (selectedPassengerId ? allRows.find(row => row.id === selectedPassengerId) : undefined),
     [selectedPassengerId, allRows],
+  )
+
+  const selectedBatch = useMemo(
+    () => (selectedBatchId ? allBatches.find(batch => batch.id === selectedBatchId) : undefined),
+    [selectedBatchId, allBatches],
+  )
+
+  const selectedClaimSheet = useMemo(
+    () =>
+      selectedClaimSheetId
+        ? allClaimSheets.find(sheet => sheet.id === selectedClaimSheetId)
+        : undefined,
+    [selectedClaimSheetId, allClaimSheets],
   )
 
   const refresh = useCallback(() => {
@@ -66,8 +165,11 @@ export function useFundAllocationListing() {
 
   const handleListingTabChange = useCallback((tab: FundAllocationListingTab) => {
     setListingTab(tab)
+    setSelectedPassengerId(null)
+    setSelectedBatchId(null)
+    setSelectedClaimSheetId(null)
     setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
-  }, [])
+  }, [setListingTab])
 
   const handleSearch = useCallback((value: string) => {
     setSearchValue(value)
@@ -94,10 +196,26 @@ export function useFundAllocationListing() {
 
   const selectPassenger = useCallback((row: FundAllocationPassengerRow) => {
     setSelectedPassengerId(row.id)
+    setSelectedBatchId(null)
+    setSelectedClaimSheetId(null)
+  }, [])
+
+  const selectBatch = useCallback((row: FundAllocationBatchRow) => {
+    setSelectedBatchId(row.id)
+    setSelectedPassengerId(null)
+    setSelectedClaimSheetId(null)
+  }, [])
+
+  const selectClaimSheet = useCallback((row: GroundOpsClaimSheet) => {
+    setSelectedClaimSheetId(row.id)
+    setSelectedPassengerId(null)
+    setSelectedBatchId(null)
   }, [])
 
   const closeDetail = useCallback(() => {
     setSelectedPassengerId(null)
+    setSelectedBatchId(null)
+    setSelectedClaimSheetId(null)
   }, [])
 
   return {
@@ -113,11 +231,21 @@ export function useFundAllocationListing() {
     paginatedRows,
     total,
     selectedPassenger,
+    filterSourceBatches,
+    paginatedBatches,
+    totalBatches,
+    selectedBatch,
+    filterSourceClaimSheets,
+    paginatedClaimSheets,
+    totalClaimSheets,
+    selectedClaimSheet,
     searchValue,
     handleListingTabChange,
     handleSearch,
     clearFilters,
     selectPassenger,
+    selectBatch,
+    selectClaimSheet,
     closeDetail,
     refresh,
     mutateAndRefresh,

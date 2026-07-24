@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, CircularProgress, Divider, Stack, Typography } from '@mui/material'
 import Autocomplete from '@mui/material/Autocomplete'
 import TextField from '@mui/material/TextField'
-import { useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import {
   Badge,
@@ -21,6 +21,7 @@ import { AdminStepperFormFooter } from '@/pages/admin/components/AdminStepperFor
 import { applicationArrangedExpenseService } from '@/shared/services/applicationArrangedExpenseService'
 import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import { resolveHandlingMode } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 import { useViewFormWorkspace } from '../hooks/useViewFormWorkspace'
 import { useVerifyDocumentsWorkspace } from '../hooks/useVerifyDocumentsWorkspace'
 import { CopyAssistFieldSections } from '../components/view-form/CopyAssistField'
@@ -29,6 +30,7 @@ import { ViewFormSubmissionSection } from '../components/view-form/ViewFormSubmi
 import { ViewFormDocumentVault } from '../components/view-form/ViewFormDocumentVault'
 import { ViewFormWorkspaceTabs } from '../components/view-form/ViewFormWorkspaceTabs'
 import { ViewFormQcCheckSection } from '../components/view-form/ViewFormQcCheckSection'
+import { PendingPaymentWorkspaceContent } from '../components/view-form/PendingPaymentWorkspaceContent'
 import { VerifyDocumentsTimeline } from '../components/verify/VerifyDocumentsTimeline'
 import {
   GltsDocumentUploadDrawer,
@@ -58,6 +60,8 @@ import {
 export function MarineViewFormPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
   const navigate = useAppNavigate()
+  const location = useLocation()
+  const listingPath = getListingReturnHref(location, '/admin/application-management/marine')
   const { showToast } = useToast()
   const theme = useTheme()
 
@@ -128,7 +132,6 @@ export function MarineViewFormPage() {
     reloadViewForm()
   }
 
-  const listingPath = '/admin/application-management/marine'
   const verifyPath = `/admin/application-management/marine/${applicationId}`
 
   const overview = useMemo(
@@ -152,6 +155,12 @@ export function MarineViewFormPage() {
     () => Boolean(listingRow && isMarineReadOnlyWorkspace(listingRow)),
     [listingRow],
   )
+
+  const workspaceMode = useMemo(
+    () => (listingRow ? resolveMarineWorkspaceMode(listingRow) : 'verification'),
+    [listingRow],
+  )
+  const isPendingPayment = workspaceMode === 'pending_payment'
 
   const formLocked = readOnly || externallySubmitted
 
@@ -300,7 +309,7 @@ export function MarineViewFormPage() {
     )
   }
 
-  if (!selectedRow || !formContext || !currentStep) {
+  if (!selectedRow || !formContext || (!isPendingPayment && !currentStep)) {
     return (
       <EmptyState
         title="No traveler data yet"
@@ -338,7 +347,7 @@ export function MarineViewFormPage() {
     }
     showToast({
       title: 'Marked as submitted',
-      description: 'Status updated to Submitted · Embassy submission.',
+      description: 'Status updated to Submitted.',
       variant: 'success',
     })
     navigate(listingPath)
@@ -450,6 +459,7 @@ export function MarineViewFormPage() {
   }
 
   const renderStepContent = () => {
+    if (!currentStep) return null
     if (currentStep.id === 'submission') {
       return (
         <ViewFormSubmissionSection
@@ -474,7 +484,7 @@ export function MarineViewFormPage() {
   }
 
   const headerActions = (
-    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+    <>
       {isBulk && rows.length > 1 ? (
         <Autocomplete
           options={rows}
@@ -487,13 +497,20 @@ export function MarineViewFormPage() {
           disableClearable
           slotProps={autocompleteSlotProps(theme)}
           sx={{
-            minWidth: 240,
+            width: { xs: '100%', sm: 300 },
+            minWidth: { xs: '100%', sm: 300 },
+            maxWidth: { xs: '100%', sm: 300 },
+            flexShrink: 0,
+            '& .MuiFormControl-root': { width: '100%' },
+            '& .MuiTextField-root': { width: '100%' },
+            '& .MuiOutlinedInput-root': { width: '100%' },
             ...outlinedFieldSx(theme, formControlHeight('sm')),
           }}
           renderInput={params => (
             <TextField
               {...params}
               size="small"
+              fullWidth
               placeholder="Search traveler"
               inputProps={{
                 ...params.inputProps,
@@ -510,10 +527,53 @@ export function MarineViewFormPage() {
           size="sm"
         />
       ) : (
-        <Badge label={currentStep.label} color="info" size="sm" />
+        <Badge
+          label={isPendingPayment ? 'Pending Payment' : (currentStep?.label ?? 'Form')}
+          color="info"
+          size="sm"
+        />
       )}
-    </Stack>
+    </>
   )
+
+  if (isPendingPayment) {
+    return (
+      <AdminRecordPageChrome
+        breadcrumbs={[
+          { label: 'Application Management', href: listingPath },
+          { label: 'Pending payment' },
+        ]}
+      >
+        <PendingPaymentWorkspaceContent
+          applicationId={applicationId}
+          selectedRow={selectedRow}
+          detail={detail}
+          submission={submission}
+          country={listingRow?.country ?? detail.countryName ?? ''}
+          visaType={listingRow?.visaType ?? detail.visaTypeLabel ?? ''}
+          countryId={checklistContext.countryId}
+          visaOfferingId={checklistContext.visaOfferingId}
+          timelineSteps={timelineSteps}
+          multiTraveler={rows.length > 1}
+          readOnly={readOnly}
+          onChange={updateSubmission}
+          onBack={() => navigate(listingPath)}
+          headerSlot={
+            overview ? (
+              <ViewFormAssistHeaderSection
+                overview={overview}
+                title="Pending payment"
+                description={`${selectedRow.travelerName} · ${selectedRow.passportNo}${
+                  detail.application?.jurisdiction ? ` · ${detail.application.jurisdiction}` : ''
+                }`}
+                headerActions={headerActions}
+              />
+            ) : null
+          }
+        />
+      </AdminRecordPageChrome>
+    )
+  }
 
   return (
     <AdminRecordPageChrome
@@ -612,13 +672,13 @@ export function MarineViewFormPage() {
                 showTitleCard={false}
                 navTitle="Steps"
                 sections={sectionNav}
-                activeSectionId={currentStep.id}
+                activeSectionId={currentStep!.id}
                 onSectionClick={goToStep}
                 centerPanel={
                   <Stack spacing={3}>
                     <Box sx={{ px: 0.5 }}>
                       <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: 15 }}>
-                        {currentStep.label}
+                        {currentStep!.label}
                       </Typography>
                     </Box>
                     <Divider />

@@ -30,7 +30,8 @@ export const AGREEMENT_FIELD_MESSAGES = {
   entityContactPerson: 'Contact person is required',
   entityEmail: 'Email address is required',
   entityPhone: 'Phone number is required',
-  pricingRequired: 'Add at least one pricing row',
+  pricingRequired: 'Add at least one processing visa fees entry',
+  pricingIncomplete: 'Complete all processing visa fees before continuing',
   pricingCountry: 'Country is required',
   pricingVisaType: 'Visa type is required',
   pricingServicePreset: 'Service is required',
@@ -110,6 +111,8 @@ export function createEmptyAgreementFormData(): CommercialAgreementFormData {
     entities: [],
     pricingMatrix: [],
     miscellaneousCosts: [],
+    commercialVisaPricing: [],
+    miscellaneousServices: [],
     billingConfig: createDefaultBillingConfig(),
     financeContacts: {
       accountsSpocName: '',
@@ -192,8 +195,21 @@ export function validateEntities(data: CommercialAgreementFormData): Record<stri
 
 export function validatePricing(data: CommercialAgreementFormData): Record<string, string> {
   const errors: Record<string, string> = {}
-  if (data.pricingMatrix.length === 0) {
+  const commercial = data.commercialVisaPricing ?? []
+  if (commercial.length === 0 && data.pricingMatrix.length === 0) {
     errors.pricingMatrix = AGREEMENT_FIELD_MESSAGES.pricingRequired
+    return errors
+  }
+  if (commercial.length > 0) {
+    const incomplete = commercial.some((entry) => {
+      if (entry.serviceFee <= 0) return true
+      if (entry.scope === 'country' && !entry.countryId) return true
+      if (entry.scope === 'country_group' && !entry.countryGroupId) return true
+      return false
+    })
+    if (incomplete) {
+      errors.pricingMatrix = AGREEMENT_FIELD_MESSAGES.pricingIncomplete
+    }
     return errors
   }
   data.pricingMatrix.forEach((row, index) => {
@@ -350,6 +366,8 @@ export function validateForActivation(
           entities: agreement.entities ?? [],
           pricingMatrix: agreement.pricingMatrix ?? [],
           miscellaneousCosts: agreement.miscellaneousCosts ?? [],
+          commercialVisaPricing: agreement.commercialVisaPricing ?? [],
+          miscellaneousServices: agreement.miscellaneousServices ?? [],
           billingConfig: { ...createDefaultBillingConfig(), ...agreement.billingConfig },
           financeContacts: agreement.financeContacts,
           financeContactPersons: agreement.financeContactPersons ?? [],
@@ -372,8 +390,11 @@ export function validateForActivation(
     }
   }
 
-  if (agreement.pricingMatrix.length === 0) {
-    issues.push('Pricing matrix must have at least one row')
+  if (
+    (agreement.commercialVisaPricing?.length ?? 0) === 0 &&
+    agreement.pricingMatrix.length === 0
+  ) {
+    issues.push('Add at least one processing visa fees entry')
   }
 
   return { ok: issues.length === 0, issues: [...new Set(issues)] }
@@ -455,6 +476,9 @@ export function normalizeLegacyAgreement(record: CommercialAgreement): Commercia
       servicePresetId: row.servicePresetId ?? '',
       servicePresetName: row.servicePresetName ?? '',
     })),
+    miscellaneousCosts: record.miscellaneousCosts ?? [],
+    commercialVisaPricing: record.commercialVisaPricing ?? [],
+    miscellaneousServices: record.miscellaneousServices ?? [],
     billingConfig: {
       ...createDefaultBillingConfig(),
       ...record.billingConfig,

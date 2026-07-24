@@ -17,6 +17,9 @@ import {
   OPERATIONAL_CASE_PRIORITIES,
   OPERATIONAL_CASE_STATUSES,
 } from '@/shared/types/operationalCaseHandling'
+import { APPLICATION_CUSTOMER_SEGMENTS } from '@/shared/config/applicationCustomerSegmentConfig'
+import { buildPassengerId } from '@/pages/admin/assignment-priority/utils/deriveOperationalPassengerRows'
+import { operationalPassengerAssignmentService } from '@/shared/services/operationalPassengerAssignmentService'
 
 export type OperationsDeskStatusTab = OperationalCaseStatus
 
@@ -25,8 +28,8 @@ export const OPERATIONS_DESK_STATUS_TAB_ITEMS: {
   label: string
 }[] = [
   { value: 'Pending', label: 'Pending' },
-  { value: 'Moved to Next Day', label: 'Moved to Next Day' },
-  { value: 'Document Submitted', label: 'Document Submitted' },
+  { value: 'Document Submitted', label: 'Documents submitted' },
+  { value: 'Moved to Next Day', label: 'Moved to Next day' },
   { value: 'Collected', label: 'Collected' },
   { value: 'Dispatched', label: 'Dispatched' },
   { value: 'Completed', label: 'Completed' },
@@ -497,4 +500,31 @@ export function isCatalogGroundServiceName(name: string): boolean {
 
 export function isCatalogApplicationFeeName(name: string): boolean {
   return DEFAULT_APPLICATION_FEE_NAME_SET.has(name)
+}
+
+/** Assignment & Priority Management assigner / assignee for a ground-ops case. */
+export function resolveOperationalCaseAssignmentFields(record: OperationalCase): {
+  allocatedBy: string
+  allocatedTo: string
+} {
+  const passengerId = buildPassengerId(record.applicationId, record.gltsApplicantId)
+  for (const segment of APPLICATION_CUSTOMER_SEGMENTS) {
+    const row = operationalPassengerAssignmentService.getById(passengerId, segment)
+    if (!row) continue
+    const allocatedBy = row.assignmentHistory[0]?.assignedBy?.trim() || ''
+    let allocatedTo = ''
+    if (row.assigneeType === 'vendor') {
+      allocatedTo = [row.assignedVendor, row.assignedUser].filter(Boolean).join(' · ')
+    } else if (row.assigneeType === 'passenger') {
+      allocatedTo = row.assignedUser ? `Passenger · ${row.assignedUser}` : ''
+    } else {
+      allocatedTo = [row.assignedUser, row.assignedTeam].filter(Boolean).join(' · ')
+    }
+    return { allocatedBy, allocatedTo }
+  }
+
+  return {
+    allocatedBy: '',
+    allocatedTo: [record.assignedExecutive, record.assignedTeam].filter(Boolean).join(' · '),
+  }
 }

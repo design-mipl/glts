@@ -45,13 +45,6 @@ export function buildInvoiceListingColumns({
       ),
     },
     {
-      key: 'linkedApplicationsCount',
-      label: 'Linked Apps',
-      sortable: true,
-      width: 100,
-      render: (_: unknown, row: InvoiceListingRow) => row.linkedApplicationsCount,
-    },
-    {
       key: 'bookers',
       label: 'Booker(s)',
       sortable: true,

@@ -1,4 +1,4 @@
-import { Stack, Typography } from '@mui/material'
+import { Divider, Stack, Typography } from '@mui/material'
 import { Eye, Download } from 'lucide-react'
 import { FileUpload, FormField, Button, useToast } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem } from '../../data/applicationFlowData'
@@ -14,6 +14,7 @@ import {
   resolveHandlingMode,
   type DocumentHandlingMode,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import { resolveGltsArrangeFee } from '@/shared/utils/gltsArrangeFeeUtils'
 import { HandlingModeSegmentedToggle } from './HandlingModeSegmentedToggle'
 import { SimpleDocumentRequirementCard } from './SimpleDocumentRequirementCard'
 
@@ -40,6 +41,15 @@ export function SimpleDocumentRequirementPanel({
   const mode = resolveHandlingMode(document)
   const summary = formatWorkflowSummary(document)
   const statusLabel = documentStatusLabel(document)
+  const arrangeFee = resolveGltsArrangeFee(document.documentId)
+  const storedAmount =
+    document.documentId === 'travel-ticket'
+      ? document.travelTicket?.arrangementAmount?.trim()
+      : document.insurance?.arrangementAmount?.trim()
+  const feeAmountLabel =
+    storedAmount && !Number.isNaN(Number(storedAmount))
+      ? `₹${Number(storedAmount).toLocaleString('en-IN')}`
+      : arrangeFee?.amountLabel
   const hasFile =
     document.documentId === 'travel-ticket'
       ? Boolean(document.travelTicket?.fileName?.trim())
@@ -83,6 +93,15 @@ export function SimpleDocumentRequirementPanel({
             </Typography>
             {summary ? (
               <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>{summary}</Typography>
+            ) : null}
+            {mode === 'arrange_by_glts' && feeAmountLabel ? (
+              <>
+                <Divider />
+                <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>
+                  GLTS fee: {feeAmountLabel}
+                  {arrangeFee ? ` · ${arrangeFee.serviceName}` : ''}
+                </Typography>
+              </>
             ) : null}
             {hasFile ? (
               <Stack direction="row" flexWrap="wrap" gap={1}>
@@ -166,9 +185,20 @@ export function SimpleDocumentRequirementPanel({
                 />
               </FormField>
             ) : (
-              <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.5 }}>
-                {config.arrangeHelperText}
-              </Typography>
+              <Stack spacing={1}>
+                <Typography sx={{ fontSize: 13, color: 'text.secondary', lineHeight: 1.5 }}>
+                  {config.arrangeHelperText}
+                </Typography>
+                {feeAmountLabel ? (
+                  <>
+                    <Divider />
+                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: 'text.primary', lineHeight: 1.5 }}>
+                      GLTS fee: {feeAmountLabel}
+                      {arrangeFee ? ` · ${arrangeFee.serviceName}` : ''}
+                    </Typography>
+                  </>
+                ) : null}
+              </Stack>
             )}
           </>
         )}

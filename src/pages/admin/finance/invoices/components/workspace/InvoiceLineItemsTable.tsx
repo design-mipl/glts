@@ -78,7 +78,7 @@ export function InvoiceLineItemsTable({ lineItems, onChange, gstPercentage }: In
                   <TableCell sx={{ ...agreementEmbeddedTableHeadCellSx, width: 40 }}>Include</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Application ID</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Batch ID</TableCell>
-                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Applicant / Crew</TableCell>
+                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Pax name</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Service Name</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Description</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Qty</TableCell>

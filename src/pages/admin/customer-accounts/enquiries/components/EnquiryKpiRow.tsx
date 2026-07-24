@@ -63,12 +63,11 @@ export function EnquiryKpiRow({ enquiries }: EnquiryKpiRowProps) {
   const converted = enquiries.filter((item) => item.status === 'converted').length
   const activeCount = enquiries.filter((item) =>
     [
-      'under_discussion',
-      'requirement_gathering',
-      'pending_customer_response',
-      'internal_review',
-      'quotation_in_progress',
-      'on_hold',
+      'contacted',
+      'qualified',
+      'quotation_sent',
+      'negotiation',
+      'awaiting_confirmation',
     ].includes(item.status),
   ).length
 

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/design-system/UIComponents'
-import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
+import { DashboardSectionTable } from '@/pages/admin/dashboard/components'
 import { buildPendingCollectionsColumns } from '../columns/pendingCollectionsColumns'
 import type { PendingCollectionRow } from '../../data/accountsDashboardMock'
 

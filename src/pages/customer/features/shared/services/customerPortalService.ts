@@ -366,7 +366,7 @@ export const customerPortalService = {
       submissionDate: '',
       createdAt: now,
       lastUpdated: now,
-      processingStage: 'Intake',
+      processingStage: 'Ready for submission',
       operationalStatus: 'Draft',
       status: 'Draft',
       statusTone: 'draft',
@@ -455,7 +455,7 @@ function demoMarineOriginalCollection(documents: ApplicantDocumentItem[]) {
     details: {
       ...state.details,
       couriered_by_applicant: {
-        receivingOfficeId: 'ent-1',
+        receivingOfficeId: 'office-mumbai',
         courierPartner: 'BlueDart',
         trackingNumber: 'BD7843920184',
         dispatchDate: '2026-06-10',
@@ -515,6 +515,10 @@ function buildDetailTimeline(
     isSubmitted: isApplicationSubmitted(row),
     allVerified,
     hasRejection,
+    countryName: row.country,
+    visaTypeLabel: row.visaType,
+    operationalStatus: row.operationalStatus,
+    processingStage: row.processingStage,
   })
 
   return mapProcessingTimelineToCustomerTracking(steps)

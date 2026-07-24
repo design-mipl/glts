@@ -7,6 +7,7 @@ import type {
 import { ASSIGNMENT_PRIORITY_OPTIONS } from '../config/assignmentPriorityConfig'
 import { PASSENGER_STATUS_OPTIONS } from '../config/assignmentStatusConfig'
 import {
+  ASSIGNMENT_FUND_FILTER_OPTIONS,
   ASSIGNMENT_SLA_FILTER_OPTIONS,
   DATE_FILTER_OPTIONS,
 } from '../utils/assignmentQueueListingUtils'
@@ -163,6 +164,16 @@ export function AssignmentAdvancedFilterFields({
               fullWidth
             />
           </ListingFilterField>
+          <ListingFilterField label="Fund status">
+            <Select
+              value={draft.fundStatus}
+              onChange={(value) => patch({ fundStatus: String(value) as AssignmentQueueFilters['fundStatus'] })}
+              options={[{ value: '', label: 'All fund states' }, ...ASSIGNMENT_FUND_FILTER_OPTIONS]}
+              placeholder="Fund status"
+              size="sm"
+              fullWidth
+            />
+          </ListingFilterField>
         </>
       ) : null}
     </>
@@ -187,6 +198,7 @@ export function hasAssignmentQueueFiltersActive(
     base ||
     Boolean(filters.visaType) ||
     Boolean(filters.status) ||
-    Boolean(filters.sla)
+    Boolean(filters.sla) ||
+    Boolean(filters.fundStatus)
   )
 }

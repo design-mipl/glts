@@ -26,6 +26,7 @@ import type {
   CountrySegmentConfig,
   CountryVisaJurisdiction,
   CountryVisaType,
+  CountryVfsServiceRate,
   ProcessingType,
 } from '@/shared/types/countryMaster'
 import { cloneDefaultVfsServiceRates } from '@/shared/data/countryVfsServiceRateDefaults'
@@ -144,6 +145,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     segment({
       segment: 'retail',
       enabled: true,
+      workflowId: 'workflow-online-to-offline',
       visaTypes: [
         visaType({
           id: 'default-tourist',
@@ -203,6 +205,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     segment({
       segment: 'marine',
       enabled: true,
+      workflowId: 'workflow-online-to-offline',
       visaTypes: [
         visaType({
           id: 'jp-crew-visa',
@@ -221,10 +224,11 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     }),
     segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
   ],
-  '1': [
+  '14': [
     segment({
       segment: 'retail',
       enabled: true,
+      workflowId: 'workflow-online-appointment-offline',
       visaTypes: [
         visaType({
           id: 'schengen-tourist',
@@ -238,8 +242,8 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           purposeId: 'tourism',
           purposeLabel: 'Tourism',
           jurisdictions: [
-            singleJurisdictionForVisa('delhi', 'Delhi', 'Schengen', stdApplicationDocuments),
-            singleJurisdictionForVisa('mumbai', 'Mumbai', 'Schengen', stdApplicationDocuments),
+            singleJurisdictionForVisa('delhi', 'Delhi', 'France', stdApplicationDocuments),
+            singleJurisdictionForVisa('mumbai', 'Mumbai', 'France', stdApplicationDocuments),
           ],
         }),
         visaType({
@@ -254,7 +258,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           purposeId: 'business_meeting',
           purposeLabel: 'Business meeting',
           jurisdictions: [
-            singleJurisdictionForVisa('delhi', 'Delhi', 'Schengen', stdApplicationDocuments),
+            singleJurisdictionForVisa('delhi', 'Delhi', 'France', stdApplicationDocuments),
           ],
         }),
       ],
@@ -262,6 +266,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     segment({
       segment: 'marine',
       enabled: true,
+      workflowId: 'workflow-online-appointment-offline',
       visaTypes: [
         visaType({
           id: 'schengen-crew',
@@ -275,7 +280,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           purposeId: 'crew_joining',
           purposeLabel: 'Crew joining',
           jurisdictions: [
-            singleJurisdictionForVisa('mumbai', 'Mumbai', 'Schengen', crewApplicationDocuments),
+            singleJurisdictionForVisa('mumbai', 'Mumbai', 'France', crewApplicationDocuments),
           ],
         }),
       ],
@@ -287,6 +292,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     segment({
       segment: 'retail',
       enabled: true,
+      workflowId: 'workflow-online-to-offline',
       visaTypes: [
         visaType({
           id: 'cn-tourist',
@@ -321,6 +327,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     segment({
       segment: 'corporate',
       enabled: true,
+      workflowId: 'workflow-online-to-offline',
       visaTypes: [
         visaType({
           id: 'cn-business-corp',
@@ -355,6 +362,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     segment({
       segment: 'marine',
       enabled: true,
+      workflowId: 'workflow-offline-only',
       visaTypes: [
         visaType({
           id: 'cn-m-type',
@@ -390,6 +398,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     segment({
       segment: 'b2bAgents',
       enabled: true,
+      workflowId: 'workflow-online-to-offline',
       visaTypes: [
         visaType({
           id: 'cn-agent-tourist',
@@ -426,6 +435,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     segment({
       segment: 'retail',
       enabled: true,
+      workflowId: 'workflow-online-only',
       visaTypes: [
         eVisaType({
           id: 'sg-evisa-tourist',
@@ -463,6 +473,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     segment({
       segment: 'retail',
       enabled: true,
+      workflowId: 'workflow-online-only',
       visaTypes: [
         eVisaType({
           id: 'ke-eta-tourist',
@@ -506,6 +517,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     segment({
       segment: 'retail',
       enabled: true,
+      workflowId: 'workflow-online-only',
       visaTypes: [
         eVisaType({
           id: 'au-evisa-visitor',
@@ -549,6 +561,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     segment({
       segment: 'retail',
       enabled: true,
+      workflowId: 'workflow-online-only',
       visaTypes: [
         eVisaType({
           id: 'tw-evisa-tourist',
@@ -588,6 +601,7 @@ const DEFAULT_SEGMENTS: CountrySegmentConfig[] = [
   segment({
     segment: 'retail',
     enabled: true,
+    workflowId: 'workflow-online-to-offline',
     visaTypes: [
       visaType({
         id: 'default-tourist',
@@ -755,21 +769,39 @@ function normalizeVisaTypeGltsScope(visaType: CountryVisaType): CountryVisaType 
   }
 }
 
+function withDefaultConsulateVendor(rate: CountryVfsServiceRate): CountryVfsServiceRate {
+  if (rate.vendorId) return rate
+  return {
+    ...rate,
+    vendorId: 'vnd-001',
+    vendorName: 'VFS Global India Pvt Ltd',
+  }
+}
+
 function seedVfsServiceRatesIfMissing(visaType: CountryVisaType): CountryVisaType {
   const defaults = cloneDefaultVfsServiceRates()
 
   if (shouldShowJurisdictionNodes(visaType)) {
     return {
       ...visaType,
-      jurisdictions: visaType.jurisdictions.map((jurisdiction) =>
-        jurisdiction.vfsServiceRates?.length
-          ? jurisdiction
-          : { ...jurisdiction, vfsServiceRates: cloneDefaultVfsServiceRates() },
-      ),
+      jurisdictions: visaType.jurisdictions.map((jurisdiction) => {
+        if (!jurisdiction.vfsServiceRates?.length) {
+          return { ...jurisdiction, vfsServiceRates: cloneDefaultVfsServiceRates() }
+        }
+        return {
+          ...jurisdiction,
+          vfsServiceRates: jurisdiction.vfsServiceRates.map(withDefaultConsulateVendor),
+        }
+      }),
     }
   }
 
-  if (visaType.vfsServiceRates?.length) return visaType
+  if (visaType.vfsServiceRates?.length) {
+    return {
+      ...visaType,
+      vfsServiceRates: visaType.vfsServiceRates.map(withDefaultConsulateVendor),
+    }
+  }
 
   return {
     ...visaType,

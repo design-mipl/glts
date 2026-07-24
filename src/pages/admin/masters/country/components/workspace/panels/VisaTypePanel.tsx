@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Stack } from '@mui/material'
 import { Plus } from 'lucide-react'
 import {
@@ -16,6 +17,10 @@ import type {
   VisaMode,
   VisaTypeStatus,
 } from '@/shared/types/countryMaster'
+import {
+  getActiveWorkflowSelectOptions,
+  getWorkflowDisplayName,
+} from '@/shared/utils/countryWorkflowUtils'
 import {
   DEFAULT_VISA_MODE,
   VISA_CATEGORY_SELECT_OPTIONS,
@@ -52,7 +57,15 @@ export function VisaTypePanel({
   const { readOnly } = useCountryWorkspaceMode()
   const segConfig = formData.segments.find((s) => s.segment === segment)
   const visaType = segConfig?.visaTypes.find((v) => v.id === visaTypeId)
-  if (!visaType) return null
+  const segmentWorkflowLabel = getWorkflowDisplayName(segConfig?.workflowId)
+  const workflowOptions = useMemo(() => {
+    const inheritLabel = segConfig?.workflowId
+      ? `Use segment default (${segmentWorkflowLabel})`
+      : 'Use segment default (not mapped)'
+    return [{ value: '', label: inheritLabel }, ...getActiveWorkflowSelectOptions()]
+  }, [segConfig?.workflowId, segmentWorkflowLabel])
+
+  if (!visaType || !segConfig) return null
 
   const patchVisa = (partial: Partial<typeof visaType>) => {
     onChange({
@@ -167,6 +180,22 @@ export function VisaTypePanel({
               checked={Boolean(visaType.jurisdictionEnabled)}
               onChange={(enabled) => patchVisa({ jurisdictionEnabled: enabled })}
               label={visaType.jurisdictionEnabled ? 'Enabled' : 'Disabled'}
+              disabled={readOnly}
+            />
+          </FormField>
+          <FormField
+            label="Workflow"
+            helperText="Leave as segment default, or override for this visa type. Change anytime."
+          >
+            <Select
+              value={visaType.workflowId ?? ''}
+              onChange={(v) => {
+                const next = String(v)
+                patchVisa({ workflowId: next ? next : null })
+              }}
+              options={workflowOptions}
+              placeholder="Select workflow"
+              size="sm"
               disabled={readOnly}
             />
           </FormField>

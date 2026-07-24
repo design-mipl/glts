@@ -2,9 +2,11 @@ import { useMemo } from 'react'
 import { Box, Grid, Stack, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/design-system/UIComponents'
-import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components'
+import {
+  DashboardSectionTable,
+  executiveCardLevel2Sx,
+} from '@/pages/admin/dashboard/components'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { DashboardSectionTable } from '../DashboardSectionTable'
 import { buildPassportTransitColumns } from '../columns/passportTransitColumns'
 import { buildVerificationQueueColumns } from '../columns/verificationQueueColumns'
 import type {
@@ -101,12 +103,14 @@ export function VerificationPassportSection({
       <Grid size={{ xs: 12, lg: 4 }}>
         <Stack spacing={2.5}>
           <Box sx={{ ...executiveCardLevel2Sx(colors), p: 2 }}>
-            <Typography sx={{ fontWeight: 800, fontSize: 15, color: colors.navy }}>
-              Passport tracker
-            </Typography>
-            <Typography sx={{ fontSize: 12, color: colors.textMuted, mt: 0.25, mb: 1.5 }}>
-              Delivery status summary
-            </Typography>
+            <Box sx={{ mb: 1.5 }}>
+              <Typography sx={{ fontWeight: 800, fontSize: 15, color: colors.navy }}>
+                Passport tracker
+              </Typography>
+              <Typography sx={{ fontSize: 12, color: colors.textMuted, mt: 0.25 }}>
+                Delivery status summary
+              </Typography>
+            </Box>
             <Stack direction="row" spacing={1}>
               <PassportStatCard
                 label="Not out for delivery"

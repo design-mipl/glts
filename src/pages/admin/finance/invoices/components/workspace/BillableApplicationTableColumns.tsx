@@ -1,21 +1,47 @@
 import { Box, Typography } from '@mui/material'
 import type { Column } from '@/design-system/UIComponents'
-import { Badge } from '@/design-system/UIComponents'
+import { Badge, Tooltip } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
-import type { BulkBatchRow, SingleApplicationRow } from '@/pages/customer/features/applications/data/applicationFlowData'
+import {
+  formatBulkApplicantListingLabel,
+  resolveBulkApplicantNames,
+  type BulkBatchRow,
+  type SingleApplicationRow,
+} from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import {
   getApplicationTypeLabel,
-  getAppointmentDate,
   getOperationalStatusLabel,
   resolveApplicationBillingEntity,
   resolveApplicationVessel,
 } from '@/shared/utils/invoiceBillingEngine'
 import {
-  getBillableApplicantCrewLabel,
   getBillableCustomerSegmentLabel,
-  getBillablePassportOrBatchLabel,
 } from '../../utils/billableApplicationSelectionUtils'
+
+function PaxNameCell({ row }: { row: ApplicationListingRow }) {
+  if (row.recordType !== 'bulk') {
+    return (
+      <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+        {(row as SingleApplicationRow).applicantName}
+      </Typography>
+    )
+  }
+
+  const bulk = row as BulkBatchRow
+  const passengerNames = resolveBulkApplicantNames(bulk)
+  return (
+    <Tooltip placement="top-start" maxWidth={320} content={passengerNames.join(', ')}>
+      <Typography
+        variant="body2"
+        fontWeight={600}
+        sx={{ fontSize: 13, cursor: 'default', display: 'inline-block', maxWidth: '100%' }}
+      >
+        {formatBulkApplicantListingLabel(bulk)}
+      </Typography>
+    </Tooltip>
+  )
+}
 
 function buildColumns(): Column<ApplicationListingRow>[] {
   return [
@@ -55,23 +81,16 @@ function buildColumns(): Column<ApplicationListingRow>[] {
       sortable: true,
     },
     {
-      key: 'applicantCount',
-      label: 'Applicant / Crew',
+      key: 'applicantName',
+      label: 'Pax name',
       widthSize: adminListingColumnWidthSize('assignee'),
       sortable: true,
-      render: (_, row) => getBillableApplicantCrewLabel(row),
-    },
-    {
-      key: 'passportOrBatch',
-      label: 'Passport / Batch',
-      widthSize: adminListingColumnWidthSize('assignee'),
-      sortable: true,
-      render: (_, row) => getBillablePassportOrBatchLabel(row),
+      render: (_, row) => <PaxNameCell row={row} />,
     },
     {
       key: 'countryVisa',
       label: 'Country / Visa',
-      widthSize: adminListingColumnWidthSize('applicationSummary'),
+      widthSize: adminListingColumnWidthSize('country'),
       sortable: true,
       render: (_, row) => (
         <Box sx={{ minWidth: 0 }}>
@@ -85,18 +104,11 @@ function buildColumns(): Column<ApplicationListingRow>[] {
       ),
     },
     {
-      key: 'appointmentDate',
-      label: 'Appointment',
+      key: 'submissionDate',
+      label: 'Online Submission Date',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      render: (_, row) => getAppointmentDate(row as SingleApplicationRow | BulkBatchRow),
-    },
-    {
-      key: 'processingStage',
-      label: 'Processing Stage',
-      widthSize: adminListingColumnWidthSize('description'),
-      sortable: true,
-      render: (_, row) => row.processingStage,
+      render: (_, row) => row.submissionDate?.trim() || '—',
     },
     {
       key: 'billingEntity',

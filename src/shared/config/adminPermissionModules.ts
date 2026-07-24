@@ -3,6 +3,27 @@ import type { AdminPermissionModule } from '@/shared/types/adminPermission'
 /** Static permission tree aligned with admin navigation modules. */
 export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
   {
+    id: 'dashboard',
+    label: 'Dashboard',
+    submodules: [
+      { id: 'admin', label: 'Admin' },
+      { id: 'operations', label: 'Operations' },
+      { id: 'documentation', label: 'Documentation' },
+      { id: 'accounts', label: 'Accounts' },
+    ],
+  },
+  {
+    id: 'dashboard_next',
+    label: 'Dashboard Next',
+    submodules: [
+      { id: 'admin', label: 'Admin' },
+      { id: 'operations', label: 'Operations' },
+      { id: 'accounts', label: 'Accounts' },
+      { id: 'super_admin', label: 'Super Admin' },
+      { id: 'ground_operations', label: 'Ground Ops' },
+    ],
+  },
+  {
     id: 'customer_accounts',
     label: 'Customer & accounts',
     submodules: [
@@ -39,12 +60,12 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
     submodules: [
       { id: 'case_handling', label: 'Operational case handling' },
       { id: 'logistics', label: 'Tracking & logistics' },
-      { id: 'funds', label: 'Expense & fund management' },
+      { id: 'funds', label: 'Fund utilization' },
     ],
   },
   {
     id: 'finance',
-    label: 'Finance, billing & collections',
+    label: 'Finance Operations',
     submodules: [
       { id: 'expenses', label: 'Expense management' },
       { id: 'invoices', label: 'Billing & invoices' },
@@ -55,10 +76,7 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
   {
     id: 'support',
     label: 'Support tickets',
-    submodules: [
-      { id: 'tickets', label: 'Ticket management' },
-      { id: 'communications', label: 'Communication & resolution' },
-    ],
+    submodules: [{ id: 'tickets', label: 'Support tickets' }],
   },
   {
     id: 'masters',
@@ -67,9 +85,10 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
       { id: 'country', label: 'Country' },
       { id: 'jurisdiction', label: 'Jurisdiction Master' },
       { id: 'documents', label: 'Document master' },
-      { id: 'services', label: 'Service Master' },
+      { id: 'services', label: 'GLTS Fee Master' },
       { id: 'sac_codes', label: 'SAC Code Master' },
       { id: 'tax', label: 'GST & TDS Master' },
+      { id: 'workflows', label: 'Workflow Master' },
     ],
   },
   {

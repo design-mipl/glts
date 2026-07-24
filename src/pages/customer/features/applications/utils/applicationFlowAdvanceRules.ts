@@ -28,6 +28,7 @@ export function canAdvanceFromStep(
   policy: ApplicationFlowPolicy,
 ): boolean {
   if (policy === 'admin') {
+    if (step === 'details') return Boolean(state.corporateAccountId)
     return step !== 'submit'
   }
 

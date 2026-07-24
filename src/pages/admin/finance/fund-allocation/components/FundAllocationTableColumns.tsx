@@ -1,9 +1,7 @@
 import { Box, Typography } from '@mui/material'
-import type { ReactNode } from 'react'
 import { Eye, Wallet } from 'lucide-react'
 import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
-import { getApplicationOperationalTone } from '@/pages/customer/features/applications/components/listing/applicationStatus'
 import { formatTravelDateLabel } from '@/pages/admin/assignment-priority/utils/assignmentQueueListingUtils'
 import type { FundAllocationPassengerRow } from '@/shared/types/fundAllocation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
@@ -39,15 +37,6 @@ const stackedLineTertiarySx = {
   color: 'text.secondary',
 } as const
 
-function operationalStatusBadgeColor(status: string): 'success' | 'warning' | 'info' | 'error' | 'neutral' {
-  const tone = getApplicationOperationalTone(status)
-  if (tone === 'success') return 'success'
-  if (tone === 'warning') return 'warning'
-  if (tone === 'critical') return 'error'
-  if (tone === 'info') return 'info'
-  return 'neutral'
-}
-
 function ApplicationCell({ row }: { row: FundAllocationPassengerRow }) {
   return (
     <Box sx={{ minWidth: 0, py: 0.25 }}>
@@ -64,23 +53,12 @@ function ApplicationCell({ row }: { row: FundAllocationPassengerRow }) {
   )
 }
 
-function StackedStatus({ children }: { children: ReactNode }) {
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.5, py: 0.25 }}>
-      {children}
-    </Box>
-  )
-}
-
 function StatusCell({ row }: { row: FundAllocationPassengerRow }) {
   return (
-    <StackedStatus>
-      <Badge
-        label={fundAllocationStatusLabel(row.allocationStatus)}
-        color={fundAllocationStatusBadgeColor(row.allocationStatus)}
-      />
-      <Badge label={row.submissionStatus} color={operationalStatusBadgeColor(row.submissionStatus)} />
-    </StackedStatus>
+    <Badge
+      label={fundAllocationStatusLabel(row.allocationStatus)}
+      color={fundAllocationStatusBadgeColor(row.allocationStatus)}
+    />
   )
 }
 
@@ -124,13 +102,13 @@ export function buildFundAllocationTableColumns(
           ),
         }
       : {
-          key: 'suggestedAmount',
-          label: 'Catalog total',
+          key: 'totalAmount',
+          label: 'Requested total',
           widthSize: adminListingColumnWidthSize('count'),
           sortable: true,
           render: (_value: unknown, row: FundAllocationPassengerRow) => (
-            <Typography variant="body2" sx={{ fontSize: 13 }}>
-              {row.suggestedAllocationAmount > 0 ? formatInr(row.suggestedAllocationAmount) : '—'}
+            <Typography variant="body2" sx={{ fontSize: 13, fontWeight: 600 }}>
+              {row.totalAmount > 0 ? formatInr(row.totalAmount) : '—'}
             </Typography>
           ),
         }
@@ -176,6 +154,30 @@ export function buildFundAllocationTableColumns(
       render: (_value, row) => <Badge label={row.jurisdiction || '—'} color="info" />,
     },
     {
+      key: 'assignedTeam',
+      label: 'Team',
+      widthSize: adminListingColumnWidthSize('status'),
+      sortable: true,
+      searchable: true,
+      render: (_value, row) => (
+        <Typography variant="body2" noWrap sx={{ fontSize: 13 }}>
+          {row.assignedTeam || '—'}
+        </Typography>
+      ),
+    },
+    {
+      key: 'assignedUser',
+      label: 'User',
+      widthSize: adminListingColumnWidthSize('name'),
+      sortable: true,
+      searchable: true,
+      render: (_value, row) => (
+        <Typography variant="body2" noWrap sx={{ fontSize: 13 }}>
+          {row.assignedUser || '—'}
+        </Typography>
+      ),
+    },
+    {
       key: 'travelDate',
       label: 'Travel date',
       widthSize: adminListingColumnWidthSize('date'),
@@ -201,7 +203,7 @@ export function buildFundAllocationTableColumns(
     {
       key: 'status',
       label: 'Status',
-      widthSize: adminListingColumnWidthSize('statusGroup'),
+      widthSize: adminListingColumnWidthSize('status'),
       sortable: true,
       render: (_value, row) => <StatusCell row={row} />,
     },

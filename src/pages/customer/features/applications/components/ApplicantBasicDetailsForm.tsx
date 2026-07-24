@@ -92,6 +92,30 @@ export function ApplicantBasicDetailsForm({
             />
           </FormField>
         </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <FormField label="Phone number">
+            <Input
+              fullWidth
+              size="sm"
+              type="tel"
+              value={details.phoneNumber}
+              onChange={value => onChange({ phoneNumber: value })}
+              placeholder="+91 98765 43210"
+            />
+          </FormField>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <FormField label="Email">
+            <Input
+              fullWidth
+              size="sm"
+              type="email"
+              value={details.email}
+              onChange={value => onChange({ email: value })}
+              placeholder="name@example.com"
+            />
+          </FormField>
+        </Grid>
       </Grid>
     </Box>
   )

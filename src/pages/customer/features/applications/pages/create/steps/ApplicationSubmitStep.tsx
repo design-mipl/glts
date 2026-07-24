@@ -94,7 +94,9 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
     })
   }
 
-  const submitDisabled = strict && (!declared || readyRows.length === 0)
+  const submitDisabled =
+    (strict && (!declared || readyRows.length === 0)) ||
+    (isAdmin && !state.corporateAccountId)
 
   return (
     <Box sx={{ width: '100%', maxWidth: '100%' }}>
@@ -122,6 +124,7 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
             state.issuedPassportState || state.issuedPassportLocationId || undefined,
           placeOfResidenceLabel: state.placeOfResidence || undefined,
           jurisdiction: state.jurisdiction,
+          companyName: state.companyName || undefined,
           gltsApplicationId: state.gltsApplicationId || undefined,
           gltsBatchId: state.gltsBatchId || undefined,
         }}

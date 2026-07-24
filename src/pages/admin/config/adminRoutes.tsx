@@ -35,15 +35,26 @@ import {
   DocumentDetailPage,
   DocumentListingPage,
 } from '../masters/documents'
-import { CreditCardListingPage } from '../masters/credit-card'
+import { CardMasterListingPage } from '../masters/card-master'
+import { CountryGroupListingPage } from '../masters/country-groups'
 import { JurisdictionListingPage } from '../masters/jurisdiction'
 import { SacCodeListingPage } from '../masters/sac-codes'
 import { ServiceListingPage } from '../masters/services'
 import { TaxConfigurationPage } from '../masters/tax'
+import { WorkflowListingPage } from '../masters/workflows'
 import { OperationsDashboardPage } from '../operations/dashboard/pages/OperationsDashboardPage'
-import { OperationsConsultantDashboardPage } from '../dashboard/operations'
-import { DocumentationDashboardPage } from '../dashboard/documentation'
-import { AccountsDashboardPage } from '../dashboard/accounts'
+import {
+  AccountsDashboardPage,
+  DocumentationDashboardPage,
+  OperationsConsultantDashboardPage,
+} from '../dashboard'
+import {
+  AdminDashboardPage as AdminDashboardNextPage,
+  AccountsDashboardNextPage,
+  GroundOperationsDashboardNextPage,
+  OperationsDashboardNextPage,
+  SuperAdminDashboardNextPage,
+} from '../dashboard-next'
 import { AdminProfilePage } from '../profile/AdminProfilePage'
 import {
   MarineApplicationListingPage,
@@ -54,6 +65,7 @@ import {
 import { InvoiceFinanceRoutes } from '../finance/invoices/InvoiceFinanceRoutes'
 import {
   BillingReportsPage,
+  CreditNoteCompositionPage,
   GenerateInvoiceCompositionPage,
   GenerateInvoiceStepperPage,
   GenerateInvoiceWorkspacePage,
@@ -63,7 +75,6 @@ import {
 import { ExpenseFinanceRoutes } from '../finance/expenses/ExpenseFinanceRoutes'
 import {
   ApplicationExpenseDetailPage,
-  ExpenseApprovalQueuePage,
   ExpenseListingPage,
 } from '../finance/expenses'
 import { VendorBillingRoutes } from '../finance/vendor-billing/VendorBillingRoutes'
@@ -83,6 +94,7 @@ import {
 import ComponentLibrary from '../_tools/ComponentLibrary'
 import TemplateShowcaseRoutes from '../_tools/TemplateShowcase'
 import { OperationalCaseHandlingPage } from '../ground-operations/case-handling'
+import { FundUtilizationListingPage } from '../ground-operations/fund-utilization'
 import { LogisticsListingPage } from '../ground-operations/logistics'
 import {
   CreateVendorPage,
@@ -91,12 +103,16 @@ import {
   VendorListingPage,
 } from '../vendor-management/vendors'
 import {
+  SupportTicketDetailPage,
+  SupportTicketListingPage,
+} from '../support/tickets'
+import {
   B2bAssignmentQueuePage,
   CorporateAssignmentQueuePage,
   MarineAssignmentQueuePage,
   RetailAssignmentQueuePage,
 } from '../assignment-priority'
-import { ADMIN_DASHBOARDS } from './adminDashboards'
+import { ADMIN_ALL_DASHBOARDS, ADMIN_DASHBOARDS } from './adminDashboards'
 
 type AdminRouteKind = 'coming-soon' | 'dashboard' | 'operations' | 'profile' | 'tools'
 
@@ -109,13 +125,14 @@ interface AdminRouteDefinition {
   kind: AdminRouteKind
 }
 
-const adminDashboardRoutes: AdminRouteDefinition[] = ADMIN_DASHBOARDS.filter(
-  (dashboard) => dashboard.status === 'coming-soon',
+const adminDashboardRoutes: AdminRouteDefinition[] = ADMIN_ALL_DASHBOARDS.filter(
+  (dashboard) =>
+    dashboard.status === 'coming-soon' && !dashboard.href.startsWith('/admin/dashboard-next'),
 ).map((dashboard) => ({
   path: dashboard.href.replace('/admin/', ''),
   title: dashboard.title,
   description: dashboard.description,
-  eyebrow: 'Dashboard',
+  eyebrow: dashboard.href.startsWith('/admin/dashboard-next') ? 'Dashboard Next' : 'Dashboard',
   kind: 'coming-soon' as const,
 }))
 
@@ -157,29 +174,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     eyebrow: 'Application management',
     kind: 'coming-soon',
   },
-  {
-    path: 'ground-operations/funds',
-    title: 'Ground expense & fund management',
-    description: 'This module is under development.',
-    eyebrow: 'Ground operations',
-    kind: 'coming-soon',
-  },
-
-  {
-    path: 'support/tickets',
-    title: 'Ticket management',
-    description: 'This module is under development.',
-    eyebrow: 'Support ticket management',
-    kind: 'coming-soon',
-  },
-  {
-    path: 'support/communications',
-    title: 'Communication & resolution tracking',
-    description: 'This module is under development.',
-    eyebrow: 'Support ticket management',
-    kind: 'coming-soon',
-  },
-
   {
     path: 'operations/*',
     title: 'Operations visibility',
@@ -441,6 +435,14 @@ export function AdminRoutes() {
         }
       />
       <Route
+        path="masters/country-groups"
+        element={
+          <PermissionGuard>
+            <CountryGroupListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
         path="masters/jurisdiction"
         element={
           <PermissionGuard>
@@ -449,10 +451,10 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="masters/credit-card"
+        path="masters/card-master"
         element={
           <PermissionGuard>
-            <CreditCardListingPage />
+            <CardMasterListingPage />
           </PermissionGuard>
         }
       />
@@ -469,6 +471,14 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <ServiceListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/workflows"
+        element={
+          <PermissionGuard>
+            <WorkflowListingPage />
           </PermissionGuard>
         }
       />
@@ -520,6 +530,31 @@ export function AdminRoutes() {
           </PermissionGuard>
         }
       />
+      <Route
+        path="ground-operations/funds"
+        element={
+          <PermissionGuard>
+            <FundUtilizationListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="support/tickets"
+        element={
+          <PermissionGuard>
+            <SupportTicketListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="support/tickets/:ticketId"
+        element={
+          <PermissionGuard>
+            <SupportTicketDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route path="support/communications" element={<Navigate to="/admin/support/tickets" replace />} />
       <Route
         path="vendor-management/vendors"
         element={
@@ -591,13 +626,12 @@ export function AdminRoutes() {
         <Route path="generate/composition" element={<GenerateInvoiceCompositionPage />} />
         <Route
           path=":invoiceId/credit-note"
-          element={<GenerateInvoiceWorkspacePage creditNoteMode />}
+          element={<CreditNoteCompositionPage />}
         />
         <Route path=":invoiceId" element={<InvoiceDetailPage />} />
       </Route>
       <Route path="finance/expenses" element={<ExpenseFinanceRoutes />}>
         <Route index element={<ExpenseListingPage />} />
-        <Route path="approval-queue" element={<ExpenseApprovalQueuePage />} />
         <Route path=":applicationId" element={<ApplicationExpenseDetailPage />} />
       </Route>
       <Route path="finance/vendor-billing" element={<VendorBillingRoutes />}>
@@ -698,6 +732,46 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <AccountsDashboardPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard-next"
+        element={
+          <PermissionGuard>
+            <AdminDashboardNextPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard-next/operations"
+        element={
+          <PermissionGuard>
+            <OperationsDashboardNextPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard-next/accounts"
+        element={
+          <PermissionGuard>
+            <AccountsDashboardNextPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard-next/super-admin"
+        element={
+          <PermissionGuard>
+            <SuperAdminDashboardNextPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="dashboard-next/ground-operations"
+        element={
+          <PermissionGuard>
+            <GroundOperationsDashboardNextPage />
           </PermissionGuard>
         }
       />

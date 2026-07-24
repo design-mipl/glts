@@ -1,4 +1,8 @@
 import type { CustomerTone } from '@/pages/customer/features/shared/components/CustomerPrimitives'
+import {
+  APPLICATION_PROCESSING_STAGE_LABELS,
+  APPLICATION_PROCESSING_STAGE_ORDER,
+} from '@/shared/types/applicationProcessingTimeline'
 import type { ApplicationOperationalStatus } from '../../types/applicationListing.types'
 
 export const APPLICATION_OPERATIONAL_STATUSES: ApplicationOperationalStatus[] = [
@@ -16,13 +20,10 @@ export const APPLICATION_OPERATIONAL_STATUSES: ApplicationOperationalStatus[] = 
 
 export const PROCESSING_STAGE_OPTIONS = [
   { value: '', label: 'All stages' },
-  { value: 'Intake', label: 'Intake' },
-  { value: 'Document verification', label: 'Document verification' },
-  { value: 'Embassy submission', label: 'Embassy submission' },
-  { value: 'Appointment Booked', label: 'Appointment Booked' },
-  { value: 'Embassy processing', label: 'Embassy processing' },
-  { value: 'Passport dispatch', label: 'Passport dispatch' },
-  { value: 'Closed', label: 'Closed' },
+  ...APPLICATION_PROCESSING_STAGE_ORDER.map(id => ({
+    value: APPLICATION_PROCESSING_STAGE_LABELS[id],
+    label: APPLICATION_PROCESSING_STAGE_LABELS[id],
+  })),
 ]
 
 export function getApplicationOperationalTone(status: ApplicationOperationalStatus | string): CustomerTone {

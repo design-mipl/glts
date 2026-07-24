@@ -6,6 +6,7 @@ import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPa
 import type { QuotationRecord } from '@/shared/types/quotation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { getVersionById } from '@/shared/utils/quotationValidation'
+import { isRetailPricingMode } from '@/shared/utils/quotationPricingUtils'
 
 interface QuotationConvertDialogProps {
   open: boolean
@@ -15,10 +16,22 @@ interface QuotationConvertDialogProps {
   onConfirm: (versionId: string) => void
 }
 
+function versionHasConvertiblePricing(
+  version: QuotationRecord['pricingVersions'][number],
+): boolean {
+  return (
+    (version.commercialVisaPricing?.length ?? 0) > 0 ||
+    (version.pricingMatrix?.length ?? 0) > 0
+  )
+}
+
 function formatVersionOptionLabel(
   version: QuotationRecord['pricingVersions'][number],
 ): string {
-  return `${version.versionLabel} · ${formatInr(version.totals.grandTotal)} · ${version.pricingMatrix.length} row(s)`
+  const count =
+    version.commercialVisaPricing?.length ||
+    version.pricingMatrix.length
+  return `${version.versionLabel} · ${formatInr(version.totals.grandTotal)} · ${count} pricing`
 }
 
 export function QuotationConvertDialog({
@@ -29,9 +42,9 @@ export function QuotationConvertDialog({
   onConfirm,
 }: QuotationConvertDialogProps) {
   const versions = useMemo(() => {
-    if (!quotation) return []
+    if (!quotation || isRetailPricingMode(quotation.workflowType)) return []
     return [...quotation.pricingVersions]
-      .filter((version) => version.pricingMatrix.length > 0)
+      .filter((version) => versionHasConvertiblePricing(version))
       .sort((a, b) => b.versionNumber - a.versionNumber)
   }, [quotation])
 
@@ -51,7 +64,7 @@ export function QuotationConvertDialog({
   }, [open, defaultVersionId])
 
   const selectedVersion = quotation ? getVersionById(quotation, selectedVersionId) : undefined
-  const canConvert = Boolean(selectedVersion && selectedVersion.pricingMatrix.length > 0)
+  const canConvert = Boolean(selectedVersion && versionHasConvertiblePricing(selectedVersion))
 
   return (
     <Modal
@@ -83,7 +96,10 @@ export function QuotationConvertDialog({
                 required
                 helperText={
                   selectedVersion
-                    ? `${selectedVersion.pricingMatrix.length} pricing row(s) · Grand total ${formatInr(selectedVersion.totals.grandTotal)}`
+                    ? `${
+                        selectedVersion.commercialVisaPricing?.length ||
+                        selectedVersion.pricingMatrix.length
+                      } processing visa fees · Grand total ${formatInr(selectedVersion.totals.grandTotal)}`
                     : 'Select which pricing version to carry into the agreement.'
                 }
               >

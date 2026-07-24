@@ -20,11 +20,6 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function formatUnitCount(count: number, unit: string): string {
-  const label = count === 1 ? unit : `${unit}s`
-  return `${count} ${label}`
-}
-
 function InvoiceSummaryLine({ label, value }: { label: string; value: string }) {
   return (
     <Stack
@@ -58,6 +53,8 @@ interface InvoiceCompositionTotalsPanelProps {
   gstTotal: number
   advanceAdjusted: number
   balancePayable: number
+  /** Credit note summary uses credit wording. */
+  variant?: 'invoice' | 'credit_note'
 }
 
 export function InvoiceCompositionTotalsPanel({
@@ -66,37 +63,37 @@ export function InvoiceCompositionTotalsPanel({
   gstTotal,
   advanceAdjusted,
   balancePayable,
+  variant = 'invoice',
 }: InvoiceCompositionTotalsPanelProps) {
+  const isCredit = variant === 'credit_note'
   return (
     <Stack spacing={0} sx={{ width: '100%' }}>
       <InvoiceSummaryLine
-        label="Total Applications"
-        value={formatUnitCount(categoryTotals.totalApplications, 'Application')}
-      />
-      <InvoiceSummaryLine
-        label="Total Applicants"
-        value={formatUnitCount(categoryTotals.totalApplicants, 'Applicant')}
+        label={isCredit ? 'Services to credit' : FEE.billableServices.summaryTotal}
+        value={formatInr(categoryTotals.servicesTotal)}
       />
 
-      <InvoiceSummaryDivider />
-
-      <InvoiceSummaryLine label={FEE.processingCharges.summaryTotal} value={formatInr(categoryTotals.gltsFees)} />
-      <InvoiceSummaryLine label={FEE.visaFees.summaryTotal} value={formatInr(categoryTotals.visaFees)} />
-      <InvoiceSummaryLine label={FEE.courierFees.summaryTotal} value={formatInr(categoryTotals.handlingFees)} />
-      <InvoiceSummaryLine label={FEE.miscellaneousFees.summaryTotal} value={formatInr(categoryTotals.miscellaneousFees)} />
+      {categoryTotals.refundsIncludedTotal > 0 ? (
+        <InvoiceSummaryLine
+          label={isCredit ? 'Consulate refunds to credit' : 'Consulate refunds to apply'}
+          value={formatInr(categoryTotals.refundsIncludedTotal)}
+        />
+      ) : null}
 
       <InvoiceSummaryDivider />
 
       <InvoiceSummaryLine label="Subtotal" value={formatInr(subtotal)} />
-      <InvoiceSummaryLine
-        label={`GST (${FEE.processingCharges.section} only)`}
-        value={formatInr(gstTotal)}
-      />
+      <InvoiceSummaryLine label="GST" value={formatInr(gstTotal)} />
 
       <InvoiceSummaryDivider />
 
-      <InvoiceSummaryLine label="Advance Adjusted" value={formatInr(advanceAdjusted)} />
-      <InvoiceSummaryLine label="Balance Payable" value={formatInr(balancePayable)} />
+      {!isCredit ? (
+        <InvoiceSummaryLine label="Advance Adjusted" value={formatInr(advanceAdjusted)} />
+      ) : null}
+      <InvoiceSummaryLine
+        label={isCredit ? 'Credit note amount' : 'Balance Payable'}
+        value={formatInr(balancePayable)}
+      />
     </Stack>
   )
 }

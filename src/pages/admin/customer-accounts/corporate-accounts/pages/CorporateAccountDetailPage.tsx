@@ -3,13 +3,10 @@ import { Box, CircularProgress } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { BaseCard, ConfirmDialog, EmptyState, Tabs, useToast } from '@/design-system/UIComponents'
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
-import { BookerPasswordDialog } from '@/pages/customer/features/user-management/bookers/components/BookerPasswordDialog'
 import { bookerManagementService } from '@/shared/services/bookerManagementService'
 import { corporateAccountService } from '@/shared/services/corporateAccountService'
-import type { CorporateAccount, CorporateAdminUser } from '@/shared/types/corporateAccount'
-import type { BookerUser } from '@/shared/types/bookerUser'
+import type { CorporateAccount } from '@/shared/types/corporateAccount'
 import { PORTAL_LOGIN_URL } from '@/shared/utils/corporateAccountValidation'
-import { CorporateAccountAdminPasswordDialog } from '../components/CorporateAccountAdminPasswordDialog'
 import { CorporateAccountDetailSummary } from '../components/CorporateAccountDetailSummary'
 import {
   ActivityTab,
@@ -30,13 +27,7 @@ export function CorporateAccountDetailPage() {
   const [loading, setLoading] = useState(true)
   const [account, setAccount] = useState<CorporateAccount>()
   const [activeTab, setActiveTab] = useState('overview')
-  const [passwordAdmin, setPasswordAdmin] = useState<CorporateAdminUser>()
-  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
-  const [passwordUpdating, setPasswordUpdating] = useState(false)
   const [accessTarget, setAccessTarget] = useState<{ adminId: string; accessStatus: 'active' | 'inactive' }>()
-  const [passwordBooker, setPasswordBooker] = useState<BookerUser>()
-  const [bookerPasswordDialogOpen, setBookerPasswordDialogOpen] = useState(false)
-  const [bookerPasswordUpdating, setBookerPasswordUpdating] = useState(false)
   const [bookerAccessTarget, setBookerAccessTarget] = useState<{ bookerId: string; status: 'active' | 'inactive' }>()
 
   const reload = useCallback(() => {
@@ -92,25 +83,6 @@ export function CorporateAccountDetailPage() {
     reload()
   }
 
-  const handleChangePassword = (password: string) => {
-    if (!passwordAdmin) return
-    setPasswordUpdating(true)
-    const payload = corporateAccountService.changeAdminPassword(account.id, passwordAdmin.id, password)
-    setPasswordUpdating(false)
-    if (!payload) {
-      showToast({ title: 'Could not update password', variant: 'error' })
-      return
-    }
-    setPasswordDialogOpen(false)
-    setPasswordAdmin(undefined)
-    showToast({
-      title: 'Password updated',
-      description: `${payload.username} · ${payload.temporaryPassword}`,
-      variant: 'success',
-    })
-    reload()
-  }
-
   const handleConfirmAccessChange = () => {
     if (!accessTarget) return
     const { adminId, accessStatus } = accessTarget
@@ -140,25 +112,6 @@ export function CorporateAccountDetailPage() {
     showToast({
       title: 'Login credentials sent',
       description: `${payload.portalUrl} · ${payload.username} · ${payload.temporaryPassword}`,
-      variant: 'success',
-    })
-    reload()
-  }
-
-  const handleChangeBookerPassword = (password: string) => {
-    if (!passwordBooker) return
-    setBookerPasswordUpdating(true)
-    const payload = bookerManagementService.changePassword(passwordBooker.id, password)
-    setBookerPasswordUpdating(false)
-    if (!payload) {
-      showToast({ title: 'Could not update password', variant: 'error' })
-      return
-    }
-    setBookerPasswordDialogOpen(false)
-    setPasswordBooker(undefined)
-    showToast({
-      title: 'Password updated',
-      description: `${payload.username} · ${payload.temporaryPassword}`,
       variant: 'success',
     })
     reload()
@@ -250,10 +203,6 @@ export function CorporateAccountDetailPage() {
             <AdminsTab
               account={account}
               onSendLogin={handleSendLogin}
-              onChangePassword={(admin) => {
-                setPasswordAdmin(admin)
-                setPasswordDialogOpen(true)
-              }}
               onSetAccessStatus={(adminId, accessStatus) => setAccessTarget({ adminId, accessStatus })}
             />
           ) : null}
@@ -264,10 +213,6 @@ export function CorporateAccountDetailPage() {
             <BookersTab
               account={account}
               onSendLogin={handleSendBookerLogin}
-              onChangePassword={(booker) => {
-                setPasswordBooker(booker)
-                setBookerPasswordDialogOpen(true)
-              }}
               onSetStatus={(bookerId, status) => setBookerAccessTarget({ bookerId, status })}
             />
           ) : null}
@@ -276,28 +221,6 @@ export function CorporateAccountDetailPage() {
           {activeTab === 'activity' ? <ActivityTab account={account} /> : null}
         </Box>
       </BaseCard>
-
-      <CorporateAccountAdminPasswordDialog
-        open={passwordDialogOpen}
-        admin={passwordAdmin}
-        onClose={() => {
-          setPasswordDialogOpen(false)
-          setPasswordAdmin(undefined)
-        }}
-        onConfirm={handleChangePassword}
-        loading={passwordUpdating}
-      />
-
-      <BookerPasswordDialog
-        open={bookerPasswordDialogOpen}
-        booker={passwordBooker}
-        onClose={() => {
-          setBookerPasswordDialogOpen(false)
-          setPasswordBooker(undefined)
-        }}
-        onConfirm={handleChangeBookerPassword}
-        loading={bookerPasswordUpdating}
-      />
 
       <ConfirmDialog
         open={Boolean(bookerAccessTarget)}

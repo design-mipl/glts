@@ -51,25 +51,30 @@ function normalizePathname(path: string): string {
 /**
  * Navigates to an absolute app path. Falls back to a hard navigation when React Router
  * does not leave a child route (observed under `/admin/*` and `/retail/*` splat parents).
+ * Query strings and hashes on `href` are preserved.
  */
 export function navigateToAppPath(
   navigate: NavigateFunction,
   href: string,
   options?: { replace?: boolean; state?: unknown },
 ): void {
-  const target = normalizePathname(href.trim())
-  if (!target.startsWith('/')) {
+  const raw = href.trim()
+  if (!raw.startsWith('/')) {
     navigate(href, options)
     return
   }
 
-  navigate(target, options)
+  const url = new URL(raw, typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
+  const targetPath = normalizePathname(url.pathname)
+  const to = `${targetPath}${url.search}${url.hash}`
+
+  navigate(to, options)
 
   requestAnimationFrame(() => {
     const current = normalizePathname(window.location.pathname)
-    if (current === target) return
-    if (current.startsWith(`${target}/`)) {
-      window.location.assign(target)
+    if (current === targetPath) return
+    if (current.startsWith(`${targetPath}/`)) {
+      window.location.assign(to)
     }
   })
 }

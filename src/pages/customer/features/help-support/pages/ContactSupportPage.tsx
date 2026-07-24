@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, useToast } from '@/design-system/UIComponents'
@@ -32,6 +32,12 @@ export function ContactSupportPage() {
     if (subsection === 'history') return 'history'
     return 'raise-request'
   }, [contactSplat])
+
+  useEffect(() => {
+    if (activeSectionId === 'history') {
+      ticketsApi.refresh()
+    }
+  }, [activeSectionId, ticketsApi.refresh])
 
   const handleSectionClick = useCallback(
     (sectionId: string) => {

@@ -37,20 +37,85 @@ export function resolvePassengerSelectedServices(
   return catalog.filter(service => selectedKeySet.has(getBulkServiceSelectionKey(service)))
 }
 
+export function computeRequestedBulkSummary(records: FundAllocationPassengerRow[]): {
+  perPassenger: Array<{
+    record: FundAllocationPassengerRow
+    selectedServices: FundAllocationPassengerRow['selectedServices']
+    totalAmount: number
+  }>
+  grandTotal: number
+} {
+  const perPassenger = records.map(record => ({
+    record,
+    selectedServices: record.selectedServices.map(line => ({ ...line })),
+    totalAmount: record.totalAmount,
+  }))
+
+  return {
+    perPassenger,
+    grandTotal: perPassenger.reduce((sum, entry) => sum + entry.totalAmount, 0),
+  }
+}
+
+export function computePassengerRequestedBulkAllocationInput(
+  record: FundAllocationPassengerRow,
+  shared: Pick<FundAllocationActionInput, 'fundTransfer' | 'notes'> & {
+    allocatedAmount?: number
+    grandTotal?: number
+  },
+): FundAllocationActionInput | null {
+  if (record.selectedServices.length === 0 || record.totalAmount <= 0) return null
+
+  const totalAmount = record.totalAmount
+  const grandTotal = shared.grandTotal ?? totalAmount
+  let allocatedAmount = totalAmount
+  if (
+    shared.allocatedAmount != null &&
+    Number.isFinite(shared.allocatedAmount) &&
+    shared.allocatedAmount > 0 &&
+    grandTotal > 0
+  ) {
+    allocatedAmount = Math.round((shared.allocatedAmount * (totalAmount / grandTotal)) * 100) / 100
+  }
+
+  return {
+    selectedServices: record.selectedServices.map(line => ({ ...line })),
+    totalAmount,
+    allocatedAmount,
+    fundTransfer: { ...shared.fundTransfer },
+    notes: shared.notes,
+  }
+}
+
 export function computePassengerBulkAllocationInput(
   record: FundAllocationPassengerRow,
   selectedKeys: string[],
-  shared: Pick<FundAllocationActionInput, 'creditCardId' | 'notes'>,
+  shared: Pick<FundAllocationActionInput, 'fundTransfer' | 'notes'> & {
+    /** Cumulative allocated amount across the bulk selection; pro-rated by passenger totals. */
+    allocatedAmount?: number
+    grandTotal?: number
+  },
 ): FundAllocationActionInput | null {
   const services = resolvePassengerSelectedServices(record, selectedKeys)
   if (services.length === 0) return null
 
   const totalAmount = sumVfsPickerServiceAmounts(services)
+  const grandTotal = shared.grandTotal ?? totalAmount
+  let allocatedAmount = totalAmount
+  if (
+    shared.allocatedAmount != null &&
+    Number.isFinite(shared.allocatedAmount) &&
+    shared.allocatedAmount > 0 &&
+    grandTotal > 0
+  ) {
+    allocatedAmount = Math.round((shared.allocatedAmount * (totalAmount / grandTotal)) * 100) / 100
+  }
+
   return {
     selectedServices: mapVfsPickerServicesToChargeLines(services),
     totalAmount,
-    allocatedAmount: totalAmount,
-    creditCardId: shared.creditCardId,
+    allocatedAmount,
+    fundTransfer: { ...shared.fundTransfer },
     notes: shared.notes,
   }
 }

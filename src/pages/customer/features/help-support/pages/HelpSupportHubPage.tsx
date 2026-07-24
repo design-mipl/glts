@@ -70,7 +70,6 @@ export function HelpSupportHubPage() {
   return (
     <Box>
       <CustomerPageHeader
-        eyebrow="Help & Support"
         title="Help Center"
         subtitle="Find answers, read articles, download guides, and browse support topics for the customer portal."
       />

@@ -2,6 +2,7 @@ import { Box, Grid, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import { Button, EmptyState } from '@/design-system/UIComponents'
 import type { BusinessSegment, CountryMaster, CountryProcessingRules } from '@/shared/types/countryMaster'
+import { getWorkflowDisplayName } from '@/shared/utils/countryWorkflowUtils'
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
@@ -101,7 +102,10 @@ export function ProcessingRulesTab({ country, segment }: ProcessingRulesTabProps
     )
   }
 
-  const overrides = segConfig.visaTypes.filter((vt) => vt.processingRulesOverride)
+  const overrides = segConfig.visaTypes.filter(
+    (vt) => vt.processingRulesOverride || Boolean(vt.workflowId?.trim()),
+  )
+  const workflowOverrides = segConfig.visaTypes.filter((vt) => Boolean(vt.workflowId?.trim()))
 
   return (
     <Box>
@@ -109,31 +113,57 @@ export function ProcessingRulesTab({ country, segment }: ProcessingRulesTabProps
         Segment defaults
       </Typography>
       <Box sx={{ mt: 1.5 }}>
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <ReadOnlyField
+              label="Mapped workflow"
+              value={getWorkflowDisplayName(segConfig.workflowId)}
+            />
+          </Grid>
+        </Grid>
         <RulesGrid rules={segConfig.processingRules} />
       </Box>
 
-      {overrides.length > 0 ? (
+      {workflowOverrides.length > 0 ? (
         <Box sx={{ mt: 3 }}>
           <Typography variant="overline" color="text.secondary">
-            Visa-type overrides
+            Visa-type workflow overrides
           </Typography>
-          {overrides.map((vt) => (
+          {workflowOverrides.map((vt) => (
             <Box key={vt.id} sx={{ mt: 1.5, p: 2, border: 1, borderColor: 'divider', borderRadius: 2 }}>
               <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
                 {vt.name}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Custom rules applied — edit in country form.
-              </Typography>
+              <ReadOnlyField label="Workflow" value={getWorkflowDisplayName(vt.workflowId)} />
             </Box>
           ))}
         </Box>
       ) : null}
 
+      {overrides.length > 0 ? (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="overline" color="text.secondary">
+            Visa-type rule overrides
+          </Typography>
+          {overrides
+            .filter((vt) => vt.processingRulesOverride)
+            .map((vt) => (
+              <Box key={vt.id} sx={{ mt: 1.5, p: 2, border: 1, borderColor: 'divider', borderRadius: 2 }}>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+                  {vt.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Custom rules applied — edit in country form.
+                </Typography>
+              </Box>
+            ))}
+        </Box>
+      ) : null}
+
       <Button
-        label="Edit processing rules"
+        label="Edit country configuration"
         variant="neutral"
-        onClick={() => navigate(`/admin/masters/country/${country.id}/edit?step=0`)}
+        onClick={() => navigate(`/admin/masters/country/${country.id}/edit`)}
         sx={{ mt: 2 }}
       />
     </Box>

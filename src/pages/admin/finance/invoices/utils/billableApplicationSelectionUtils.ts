@@ -1,14 +1,15 @@
-import type { BulkBatchRow, SingleApplicationRow } from '@/pages/customer/features/applications/data/applicationFlowData'
+import {
+  formatBulkApplicantListingLabel,
+  type BulkBatchRow,
+  type SingleApplicationRow,
+} from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import {
-  getApplicantName,
   getApplicationTypeLabel,
-  getAppointmentDate,
   getOperationalStatusLabel,
   resolveApplicationBillingEntity,
   resolveApplicationVessel,
 } from '@/shared/utils/invoiceBillingEngine'
-import { getBulkBatchApplicantCount } from './invoiceFeeCompositionUtils'
 
 export function parseBillableFilterDate(value: string): Date | null {
   if (!value.trim()) return null
@@ -36,21 +37,12 @@ export function getBillableCustomerSegmentLabel(row: ApplicationListingRow): str
   return SEGMENT_LABELS[row.customerSegment] ?? row.customerSegment
 }
 
-export function getBillableApplicantCrewLabel(row: ApplicationListingRow): string {
-  const appRow = row as SingleApplicationRow | BulkBatchRow
+/** Display label for Pax name column (single name, or primary × count for bulk). */
+export function getBillablePaxNameLabel(row: ApplicationListingRow): string {
   if (row.recordType === 'bulk') {
-    return `${getBulkBatchApplicantCount(row as BulkBatchRow)} applicants`
+    return formatBulkApplicantListingLabel(row as BulkBatchRow)
   }
-  return getApplicantName(appRow)
-}
-
-export function getBillablePassportOrBatchLabel(row: ApplicationListingRow): string {
-  if (row.recordType === 'bulk') {
-    const bulk = row as BulkBatchRow
-    const total = getBulkBatchApplicantCount(bulk)
-    return `${bulk.verifiedApplicants}/${total} verified`
-  }
-  return (row as SingleApplicationRow).passportNumber
+  return (row as SingleApplicationRow).applicantName
 }
 
 export function getBillableCountryVisaLabel(row: ApplicationListingRow): string {
@@ -58,7 +50,6 @@ export function getBillableCountryVisaLabel(row: ApplicationListingRow): string 
 }
 
 export function getBillableApplicationCellValue(row: ApplicationListingRow, columnKey: string): string {
-  const appRow = row as SingleApplicationRow | BulkBatchRow
   switch (columnKey) {
     case 'gltsReference':
       return row.recordType === 'bulk' ? row.id : row.id
@@ -66,18 +57,16 @@ export function getBillableApplicationCellValue(row: ApplicationListingRow, colu
       return getApplicationTypeLabel(row)
     case 'companyName':
       return row.companyName ?? '—'
+    case 'applicantName':
     case 'applicantCount':
-      return getBillableApplicantCrewLabel(row)
-    case 'passportOrBatch':
-      return getBillablePassportOrBatchLabel(row)
+      return getBillablePaxNameLabel(row)
     case 'customerSegment':
       return getBillableCustomerSegmentLabel(row)
     case 'countryVisa':
       return getBillableCountryVisaLabel(row)
-    case 'processingStage':
-      return row.processingStage ?? ''
+    case 'submissionDate':
     case 'appointmentDate':
-      return getAppointmentDate(appRow)
+      return row.submissionDate?.trim() || '—'
     case 'billingEntity':
       return resolveApplicationBillingEntity(row)
     case 'vessel':

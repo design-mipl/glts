@@ -13,7 +13,10 @@ import { AgreementCompanyInformationSection } from '../components/workspace/Agre
 import { AgreementCustomerSourceSection } from '../components/workspace/AgreementCustomerSourceSection'
 import { AgreementEntitiesTable } from '../components/workspace/AgreementEntitiesTable'
 import { AgreementOnboardingDocumentsSection } from '../components/workspace/AgreementOnboardingDocumentsSection'
-import { AgreementPricingMatrixTable } from '../components/workspace/AgreementPricingMatrixTable'
+import {
+  AgreementCommercialPricingSection,
+  AgreementPricingHeaderActions,
+} from '../components/workspace/AgreementCommercialPricingSection'
 import { AgreementReviewSection } from '../components/workspace/AgreementReviewSection'
 import { AgreementTaxConfigSection } from '../components/workspace/AgreementTaxConfigSection'
 import { AgreementWorkspaceShell } from '../components/workspace/AgreementWorkspaceShell'
@@ -24,7 +27,7 @@ const WORKSPACE_SECTIONS: { id: AgreementSectionId; navId: string; label: string
   { id: 'customerSource', navId: 'section-customer-source', label: 'Customer source', description: 'Quotation, existing customer, or new customer' },
   { id: 'companyInfo', navId: 'section-company-info', label: 'Company information', description: 'Company profile' },
   { id: 'entities', navId: 'section-entities', label: 'Entities', description: 'Operational billing entities' },
-  { id: 'pricing', navId: 'section-pricing', label: 'Pricing matrix', description: 'Country, visa, and service pricing' },
+  { id: 'pricing', navId: 'section-pricing', label: 'Pricing', description: 'Processing visa fees and miscellaneous services' },
   { id: 'billing', navId: 'section-billing', label: 'Billing configuration', description: 'Advance, credit, or mixed billing rules' },
   { id: 'tax', navId: 'section-tax', label: 'Tax configuration', description: 'GST and TDS settings' },
   { id: 'documents', navId: 'section-documents', label: 'Onboarding documents', description: 'Finance contacts and document uploads' },
@@ -55,7 +58,6 @@ export function AgreementWorkspacePage({
   const [recordStatus, setRecordStatus] = useState<AgreementStatus>('draft')
   const [agreementDisplayId, setAgreementDisplayId] = useState<string>()
   const addEntityHandlerRef = useRef<(() => void) | null>(null)
-  const addPricingHandlerRef = useRef<(() => void) | null>(null)
 
   const {
     formData,
@@ -245,13 +247,10 @@ export function AgreementWorkspacePage({
         )
       case 'pricing':
         return (
-          <AgreementPricingMatrixTable
+          <AgreementCommercialPricingSection
             data={formData}
             errors={errors}
             onChange={setFormData}
-            setAddPricingHandler={(handler) => {
-              addPricingHandlerRef.current = handler
-            }}
           />
         )
       case 'billing':
@@ -320,12 +319,7 @@ export function AgreementWorkspacePage({
                 </Box>
               ) : activeSection.id === 'pricing' ? (
                 <Box sx={{ flexShrink: 0 }}>
-                  <Button
-                    label="Add pricing"
-                    size="sm"
-                    startIcon={<Plus size={14} />}
-                    onClick={() => addPricingHandlerRef.current?.()}
-                  />
+                  <AgreementPricingHeaderActions data={formData} onChange={setFormData} />
                 </Box>
               ) : null}
             </Stack>

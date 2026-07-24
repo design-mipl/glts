@@ -21,13 +21,18 @@ import type {
 import { GLTS_MAR_1025_APPLICATION_ID } from '@/shared/types/applicationExpenseManagement'
 import {
   arrangedExpenseToManagementRecord,
+  assignmentPassengerPaymentToExpenseRecord,
+  assignmentVendorToExpenseRecord,
   buildApprovalQueueRows,
   buildListingRowFromApplication,
   buildPassengerSummaries,
   computeFinanceKpis,
+  fundAllocationServiceToExpenseRecord,
   getServiceSourceLabel,
   syncOperationalCasesToExpenseRecords,
 } from '@/shared/utils/applicationExpenseManagementUtils'
+import { fundAllocationService } from '@/shared/services/fundAllocationService'
+import { operationalPassengerAssignmentService } from '@/shared/services/operationalPassengerAssignmentService'
 
 const STORAGE_KEY = 'glts:application-expense-management'
 const SEED_VERSION_KEY = 'glts:application-expense-management-seed-version'
@@ -54,7 +59,12 @@ function readStore(): ExpenseStore {
     const parsed = JSON.parse(raw) as ExpenseStore
     if (!parsed || typeof parsed !== 'object') return seedStore()
     if (storedVersion < SEED_APPLICATION_EXPENSE_VERSION) {
+      // Refresh known seed rows so label / category updates apply in existing browsers.
+      for (const expense of SEED_APPLICATION_EXPENSES) {
+        parsed[expense.id] = expense
+      }
       localStorage.setItem(SEED_VERSION_KEY, String(SEED_APPLICATION_EXPENSE_VERSION))
+      writeStore(parsed)
       return mergeSeedExpenses(parsed)
     }
     return mergeSeedExpenses(parsed)
@@ -154,15 +164,93 @@ function syncGroundOperationsExpenses(applicationId: string): ApplicationExpense
   return syncOperationalCasesToExpenseRecords(operationalCases, passengers)
 }
 
+function syncAssignmentAndFundAllocationExpenses(
+  applicationId: string,
+  customerSegment: ApplicationCustomerSegment,
+): ApplicationExpenseRecord[] {
+  const records: ApplicationExpenseRecord[] = []
+
+  const assignmentRows = operationalPassengerAssignmentService
+    .list(customerSegment)
+    .filter(row => row.gltsApplicationId === applicationId)
+
+  const fundRows = fundAllocationService.listByApplicationId(applicationId)
+  const fundByApplicant = new Map(fundRows.map(row => [row.gltsApplicantId, row]))
+
+  for (const row of assignmentRows) {
+    const fund = fundByApplicant.get(row.gltsApplicantId)
+    const hasFundServices =
+      fund?.allocationStatus === 'allocated' && (fund.selectedServices?.length ?? 0) > 0
+    const estimate =
+      !hasFundServices && fund && fund.allocationStatus === 'allocated' && fund.allocatedAmount > 0
+        ? fund.allocatedAmount
+        : !hasFundServices
+          ? fund?.suggestedAllocationAmount
+          : undefined
+
+    if (row.assigneeType === 'vendor' && row.assignedVendor.trim()) {
+      records.push(
+        assignmentVendorToExpenseRecord({
+          applicationId,
+          gltsApplicantId: row.gltsApplicantId,
+          passengerName: row.passengerName,
+          assignedVendor: row.assignedVendor,
+          assignedUser: row.assignedUser,
+          operationalDate: row.operationalDate,
+          lastUpdated: row.lastUpdated,
+          estimatedAmount: estimate,
+        }),
+      )
+    }
+
+    if (row.assigneeType === 'passenger') {
+      records.push(
+        assignmentPassengerPaymentToExpenseRecord({
+          applicationId,
+          gltsApplicantId: row.gltsApplicantId,
+          passengerName: row.passengerName,
+          assignedUser: row.assignedUser,
+          operationalDate: row.operationalDate,
+          lastUpdated: row.lastUpdated,
+          amount: estimate,
+        }),
+      )
+    }
+  }
+
+  for (const fund of fundRows) {
+    if (fund.allocationStatus !== 'allocated') continue
+    for (const service of fund.selectedServices) {
+      if (service.amount <= 0) continue
+      records.push(
+        fundAllocationServiceToExpenseRecord({
+          applicationId,
+          gltsApplicantId: fund.gltsApplicantId,
+          passengerName: fund.passengerName,
+          serviceId: service.id,
+          serviceName: service.serviceName,
+          amount: service.amount,
+          gstIncluded: service.gstIncluded,
+          allocatedAt: fund.allocatedAt,
+          cardName: fund.cardName,
+          allocatedTo: fund.allocatedTo,
+        }),
+      )
+    }
+  }
+
+  return records
+}
+
 function syncAutoServiceExpenses(applicationId: string, existing: ExpenseStore): ApplicationExpenseRecord[] {
   if (applicationId !== GLTS_MAR_1025_APPLICATION_ID) return []
 
   const autoDefs = [
     {
       id: 'aem-glts-mar-1025-001',
-      expenseName: 'GLTS Service Fee',
+      expenseName: 'GLTS processing fees',
       expenseType: 'glts_service_fee' as const,
-      expenseTypeLabel: 'GLTS Service Fee',
+      expenseTypeLabel: 'GLTS processing fees',
       serviceSource: 'glts_service' as const,
       linkedService: 'Marine crew visa processing',
       amount: 5000,
@@ -195,6 +283,7 @@ function syncAutoServiceExpenses(applicationId: string, existing: ExpenseStore):
       paymentStatus: def.paymentStatus,
       approvalStatus: def.approvalStatus,
       proofStatus: def.proofStatus,
+      billTo: 'client' as const,
       createdFrom: 'application_service' as const,
       createdBy: 'System Auto',
       createdDate: new Date().toISOString(),
@@ -278,16 +367,21 @@ export const applicationExpenseManagementService = {
 
   syncApplication(applicationId: string): ApplicationExpenseRecord[] {
     const store = readStore()
+    const single = mockSingleApplications.find(r => r.id === applicationId)
+    const bulk = mockBulkBatches.find(r => r.id === applicationId)
+    const customerSegment = (single ?? bulk)?.customerSegment ?? 'marine'
+
     const merged = [
       ...syncArrangedExpenses(applicationId),
       ...syncAutoServiceExpenses(applicationId, store),
       ...syncGroundOperationsExpenses(applicationId),
+      ...syncAssignmentAndFundAllocationExpenses(applicationId, customerSegment),
     ]
 
     for (const expense of merged) {
-      const isGroundOpsSync =
-        expense.isAutoGenerated && expense.createdFrom === 'ground_operations'
-      if (isGroundOpsSync || !store[expense.id]) {
+      const existing = store[expense.id]
+      // Auto-synced lines always refresh from upstream modules (assignment, ground ops, tickets, funds).
+      if (!existing || expense.isAutoGenerated) {
         store[expense.id] = expense
       }
     }
@@ -331,7 +425,7 @@ export const applicationExpenseManagementService = {
       proofFileName: input.proofFileName,
       proofDocumentType: input.proofDocumentType,
       paidBy: input.paidBy,
-      billTo: input.billTo,
+      billTo: input.billTo ?? 'client',
       createdFrom: 'manual_finance_entry',
       createdBy: 'Finance User',
       createdDate: now,
@@ -375,7 +469,7 @@ export const applicationExpenseManagementService = {
       proofFileName: input.proofFileName ?? existing.proofFileName,
       proofDocumentType: input.proofDocumentType ?? existing.proofDocumentType,
       paidBy: input.paidBy ?? existing.paidBy,
-      billTo: input.billTo ?? existing.billTo,
+      billTo: input.billTo ?? existing.billTo ?? 'client',
       internalRemarks: input.internalRemarks ?? existing.internalRemarks,
       expenseDate: input.expenseDate ?? existing.expenseDate,
       updatedAt: new Date().toISOString(),

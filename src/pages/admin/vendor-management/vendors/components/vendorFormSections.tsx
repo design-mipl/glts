@@ -71,7 +71,7 @@ export function buildVendorFormSections({
       id: 'services',
       title: 'Service & rate mapping',
       columns: 2,
-      importance: 'primary',
+      importance: 'secondary',
       span: 2,
       headerAction: serviceMappingHeaderAction,
       children: <AdminFullPageFormFieldSpan>{serviceMappingContent}</AdminFullPageFormFieldSpan>,

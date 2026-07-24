@@ -121,7 +121,7 @@ export function AgreementDetailPage() {
               items={[
                 { label: 'Overview', value: 'overview' },
                 { label: 'Entities', value: 'entities', badge: agreement.entities.length || undefined },
-                { label: 'Pricing Matrix', value: 'pricing', badge: agreement.pricingMatrix.length || undefined },
+                { label: 'Pricing', value: 'pricing', badge: agreement.pricingMatrix.length || agreement.commercialVisaPricing?.length || undefined },
                 { label: 'Billing Configuration', value: 'billing' },
                 { label: 'Tax Configuration', value: 'tax' },
                 { label: 'Documents', value: 'documents', badge: agreement.documents.length },

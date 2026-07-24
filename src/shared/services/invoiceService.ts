@@ -6,6 +6,7 @@ import type {
   Invoice,
   InvoiceActivity,
   InvoiceListFilters,
+  InvoiceRefundAppliedVia,
   InvoiceStatus,
   InvoiceWorkspaceState,
   RecordPaymentPayload,
@@ -23,6 +24,7 @@ import {
   getInvoiceApplicationCount,
   recalculateLineItems,
 } from '@/shared/utils/invoiceCalculations'
+import { extractAppliedRefundsFromLineItems } from '@/shared/utils/invoiceConsulateRefundUtils'
 
 const ADMIN_ACTOR = 'Finance Admin'
 
@@ -101,6 +103,15 @@ function buildTotalsWithAdjustment(workspace: InvoiceWorkspaceState, agreementId
   }
 }
 
+function resolveRefundAppliedVia(
+  workspace: InvoiceWorkspaceState,
+  existing?: Invoice,
+): InvoiceRefundAppliedVia {
+  if (workspace.selection.invoiceType === 'credit_note') return 'credit_note'
+  if (existing && existing.invoiceStatus !== 'draft') return 'modify'
+  return 'generate'
+}
+
 function workspaceToInvoice(
   workspace: InvoiceWorkspaceState,
   status: InvoiceStatus,
@@ -124,9 +135,21 @@ function workspaceToInvoice(
     ]),
   ]
 
+  const id = existing?.id ?? generateInternalId()
+  const invoiceId = existing?.invoiceId ?? generateInvoiceId()
+  const appliedVia = resolveRefundAppliedVia(workspace, existing)
+  const extractedRefunds =
+    status === 'draft'
+      ? []
+      : extractAppliedRefundsFromLineItems(lineItems, id, invoiceId, appliedVia)
+  const appliedRefunds =
+    extractedRefunds.length > 0
+      ? [...(existing?.appliedRefunds ?? []).filter(r => !extractedRefunds.some(e => e.caseId === r.caseId)), ...extractedRefunds]
+      : existing?.appliedRefunds
+
   const base: Invoice = {
-    id: existing?.id ?? generateInternalId(),
-    invoiceId: existing?.invoiceId ?? generateInvoiceId(),
+    id,
+    invoiceId,
     invoiceType: workspace.selection.invoiceType,
     billingMode: workspace.selection.billingMode,
     companyId: workspace.selection.companyId,
@@ -148,17 +171,19 @@ function workspaceToInvoice(
     billingAdjustment,
     invoiceStatus: status,
     paymentStatus: existing?.paymentStatus ?? 'pending',
-    invoiceDate: existing?.invoiceDate ?? todayDate(),
+    invoiceDate: workspace.invoiceDate || existing?.invoiceDate || todayDate(),
     dueDate: workspace.dueDate || existing?.dueDate || dueDateFromTerms(30),
     paymentTerms: workspace.paymentTerms || existing?.paymentTerms,
     lastUpdated: nowIso(),
     createdAt: existing?.createdAt ?? nowIso(),
     sourceInvoiceId: workspace.sourceInvoiceId ?? existing?.sourceInvoiceId,
+    gstFiledAt: existing?.gstFiledAt,
     sharedAt: existing?.sharedAt,
     sharedToEmail: existing?.sharedToEmail,
     activities: existing?.activities ?? [],
     attachments: existing?.attachments ?? [],
     payments: existing?.payments ?? [],
+    appliedRefunds,
   }
 
   return base
@@ -343,58 +368,6 @@ export const invoiceService = {
     return updated
   },
 
-  createDebitNote(sourceInvoiceId: string, reason = 'Debit note adjustment'): Invoice | undefined {
-    const source = this.getById(sourceInvoiceId)
-    if (!source || source.invoiceType === 'credit_note' || source.invoiceType === 'debit_note') return undefined
-
-    const lineItems = [
-      {
-        id: `dn-${Date.now()}`,
-        applicationId: source.gltsReferences[0],
-        batchId: source.batchIds[0],
-        serviceType: 'Additional Charge',
-        description: `Debit: ${reason}`,
-        quantity: 1,
-        unitPrice: 500,
-        gstApplicable: true,
-        gstAmount: 90,
-        amount: 590,
-        included: true,
-        billingStatus: 'unbilled' as const,
-        isAdditionalExpense: true,
-      },
-    ]
-
-    const workspace: InvoiceWorkspaceState = {
-      selection: {
-        billingMode: 'application_wise',
-        applicationSelectionMode: 'single',
-        invoiceType: 'debit_note',
-        companyId: source.companyId,
-        companyName: source.companyName,
-        billingEntity: source.billingEntity,
-        vesselId: source.vesselId,
-        vesselName: source.vesselName,
-        applicationIds: source.gltsReferences,
-        batchIds: source.batchIds,
-        servicePresetIds: [],
-      },
-      lineItems,
-      taxConfig: source.taxConfig,
-      additionalCharges: 0,
-      paymentTerms: source.paymentTerms ?? 'Net 30',
-      dueDate: dueDateFromTerms(30),
-      sourceInvoiceId: source.id,
-      agreementId: source.agreementId,
-    }
-
-    const invoice = workspaceToInvoice(workspace, 'submitted')
-    invoice.invoiceType = 'debit_note'
-    invoice.activities = [makeActivity('Debit note created', reason)]
-    persist([...getStore(), invoice])
-    return invoice
-  },
-
   share(id: string, payload: ShareInvoicePayload): Invoice | undefined {
     const store = getStore()
     const idx = store.findIndex(i => i.id === id || i.invoiceId === id)
@@ -433,16 +406,134 @@ export const invoiceService = {
     const store = getStore()
     const idx = store.findIndex(i => i.id === id || i.invoiceId === id)
     if (idx < 0) return undefined
+    const current = store[idx]
+    if (current.invoiceStatus === 'cancelled' || current.invoiceType === 'credit_note') return undefined
+    if (current.gstFiledAt) return undefined
+    if (
+      current.paymentStatus === 'partial' ||
+      current.paymentStatus === 'paid' ||
+      current.invoiceStatus === 'partially_paid' ||
+      current.invoiceStatus === 'paid' ||
+      current.payments.some(p => p.amount > 0)
+    ) {
+      return undefined
+    }
     const updated: Invoice = {
-      ...store[idx],
+      ...current,
       invoiceStatus: 'cancelled',
       lastUpdated: nowIso(),
-      activities: [...store[idx].activities, makeActivity('Invoice cancelled', 'Invoice marked as cancelled')],
+      activities: [...current.activities, makeActivity('Invoice cancelled', 'Invoice marked as cancelled')],
     }
     const next = [...store]
     next[idx] = updated
     persist(next)
     return updated
+  },
+
+  /** Mark GST filing date (drives post-GST correction rules). */
+  markGstFiled(id: string, filedAt = todayDate()): Invoice | undefined {
+    const store = getStore()
+    const idx = store.findIndex(i => i.id === id || i.invoiceId === id)
+    if (idx < 0) return undefined
+    const current = store[idx]
+    if (current.invoiceStatus === 'draft' || current.invoiceStatus === 'cancelled') return undefined
+    const updated: Invoice = {
+      ...current,
+      gstFiledAt: filedAt,
+      lastUpdated: nowIso(),
+      activities: [...current.activities, makeActivity('GST filed', `Filing date ${filedAt}`)],
+    }
+    const next = [...store]
+    next[idx] = updated
+    persist(next)
+    return updated
+  },
+
+  /**
+   * Active replacement invoice for a cancelled/credited source.
+   * Blocks creating a duplicate revised invoice.
+   */
+  findReplacementInvoice(sourceInvoiceId: string): Invoice | undefined {
+    return getStore().find(
+      i =>
+        i.sourceInvoiceId === sourceInvoiceId &&
+        i.invoiceType !== 'credit_note' &&
+        i.invoiceStatus !== 'cancelled',
+    )
+  },
+
+  /**
+   * Draft revised invoice linked to a cancelled invoice or to the original behind a credit note.
+   * Number reuse is deferred to backend integration.
+   */
+  createRevisedInvoiceDraft(
+    sourceInvoiceId: string,
+    workspaceOverride?: InvoiceWorkspaceState,
+  ): Invoice | undefined {
+    const source = this.getById(sourceInvoiceId)
+    if (!source) return undefined
+
+    const originId =
+      source.invoiceType === 'credit_note' ? source.sourceInvoiceId ?? source.id : source.id
+    const origin = this.getById(originId) ?? source
+
+    const existing = this.findReplacementInvoice(originId)
+    if (existing) return existing
+
+    if (source.invoiceType !== 'credit_note' && source.invoiceStatus !== 'cancelled') {
+      return undefined
+    }
+
+    const workspace: InvoiceWorkspaceState = workspaceOverride ?? {
+      selection: {
+        billingMode: origin.billingMode,
+        applicationSelectionMode: 'single',
+        invoiceType:
+          origin.invoiceType === 'credit_note' || origin.invoiceType === 'additional_expense'
+            ? 'single_invoice'
+            : origin.invoiceType,
+        companyId: origin.companyId,
+        companyName: origin.companyName,
+        billingEntity: origin.billingEntity,
+        vesselId: origin.vesselId,
+        vesselName: origin.vesselName,
+        applicationIds: [...origin.gltsReferences],
+        batchIds: [...origin.batchIds],
+        servicePresetIds: [],
+        poReference: origin.poReference,
+      },
+      lineItems: origin.lineItems.map(li => ({
+        ...li,
+        id: `rev-${li.id}`,
+        billingStatus: 'unbilled' as const,
+        unitPrice: Math.abs(li.unitPrice),
+        gstAmount: Math.abs(li.gstAmount),
+        amount: Math.abs(li.amount),
+        description: li.description.replace(/^Credit:\s*/i, ''),
+      })),
+      taxConfig: { ...origin.taxConfig },
+      additionalCharges: 0,
+      paymentTerms: origin.paymentTerms ?? 'Net 30',
+      dueDate: dueDateFromTerms(30),
+      sourceInvoiceId: originId,
+      agreementId: origin.agreementId,
+    }
+
+    if (!workspace.sourceInvoiceId) {
+      workspace.sourceInvoiceId = originId
+    }
+
+    const invoice = workspaceToInvoice(workspace, 'draft')
+    const revisedType =
+      origin.invoiceType === 'credit_note' || origin.invoiceType === 'additional_expense'
+        ? ('single_invoice' as const)
+        : origin.invoiceType
+    invoice.invoiceType = revisedType
+    invoice.activities = [
+      makeActivity('Revised invoice draft created', `Linked to ${origin.invoiceId}`),
+    ]
+    persist([...getStore(), invoice])
+    return invoice
   },
 
   recordPayment(id: string, payload: RecordPaymentPayload): Invoice | undefined {
@@ -453,8 +544,7 @@ export const invoiceService = {
     if (
       current.invoiceStatus === 'draft' ||
       current.invoiceStatus === 'cancelled' ||
-      current.invoiceType === 'credit_note' ||
-      current.invoiceType === 'debit_note'
+      current.invoiceType === 'credit_note'
     ) {
       return undefined
     }
@@ -531,8 +621,7 @@ export const invoiceService = {
     if (
       source.invoiceStatus === 'draft' ||
       source.invoiceStatus === 'cancelled' ||
-      source.invoiceType === 'credit_note' ||
-      source.invoiceType === 'debit_note'
+      source.invoiceType === 'credit_note'
     ) {
       return undefined
     }
@@ -570,13 +659,100 @@ export const invoiceService = {
     return invoice
   },
 
+  /**
+   * Credit note from fee composition: remaining (kept) service lines become credit lines.
+   */
+  createCreditNoteFromComposition(
+    sourceInvoiceId: string,
+    workspace: InvoiceWorkspaceState,
+    reason: string,
+  ): Invoice | undefined {
+    const source = this.getById(sourceInvoiceId)
+    if (!source) return undefined
+    if (source.invoiceType === 'credit_note' || source.invoiceStatus === 'draft' || source.invoiceStatus === 'cancelled') {
+      return undefined
+    }
+
+    const composed = workspace.lineItems.filter(li => li.included !== false && Math.abs(li.unitPrice) > 0)
+    if (composed.length === 0) return undefined
+
+    const lineItems = composed.map(li => ({
+      ...li,
+      id: `cn-${li.id}`,
+      unitPrice: -Math.abs(li.unitPrice),
+      gstAmount: -Math.abs(li.gstAmount),
+      amount: -Math.abs(li.amount),
+      description: li.description.startsWith('Credit:') ? li.description : `Credit: ${li.description}`,
+      billingStatus: 'unbilled' as const,
+    }))
+
+    const cnWorkspace: InvoiceWorkspaceState = {
+      selection: {
+        ...workspace.selection,
+        invoiceType: 'credit_note',
+        companyId: source.companyId,
+        companyName: source.companyName,
+        billingEntity: workspace.selection.billingEntity || source.billingEntity,
+        vesselId: source.vesselId,
+        vesselName: source.vesselName,
+        applicationIds: source.gltsReferences,
+        batchIds: source.batchIds,
+      },
+      lineItems,
+      taxConfig: source.taxConfig,
+      additionalCharges: 0,
+      paymentTerms: source.paymentTerms ?? 'Net 30',
+      dueDate: dueDateFromTerms(30),
+      sourceInvoiceId: source.id,
+      agreementId: source.agreementId,
+    }
+
+    const invoice = workspaceToInvoice(cnWorkspace, 'submitted')
+    invoice.invoiceType = 'credit_note'
+    invoice.activities = [makeActivity('Credit note created', reason)]
+    persist([...getStore(), invoice])
+    return invoice
+  },
+
   createCreditNote(sourceInvoiceId: string, adjustment: CreditNoteAdjustment): Invoice | undefined {
     const source = this.getById(sourceInvoiceId)
     if (!source) return undefined
+    if (source.invoiceType === 'credit_note' || source.invoiceStatus === 'draft' || source.invoiceStatus === 'cancelled') {
+      return undefined
+    }
 
-    const lineItems =
-      adjustment.mode === 'full'
-        ? source.lineItems.map(li => ({
+    let lineItems = source.lineItems
+    if (adjustment.mode === 'line' || (adjustment.mode === 'partial' && adjustment.lineItemIds?.length)) {
+      const ids = new Set(adjustment.lineItemIds ?? [])
+      lineItems = source.lineItems.filter(li => ids.has(li.id))
+      if (lineItems.length === 0) return undefined
+    } else if (adjustment.mode === 'partial' && adjustment.partialAmount && adjustment.partialAmount > 0) {
+      const creditBase = Math.min(adjustment.partialAmount, source.totals.subtotal || source.totals.finalAmount)
+      const gstPct = source.taxConfig.gstApplicable ? source.taxConfig.gstPercentage : 0
+      const gstAmount = source.taxConfig.gstApplicable ? Math.round((creditBase * gstPct) / 100) : 0
+      lineItems = [
+        {
+          id: `cn-partial-${Date.now()}`,
+          applicationId: source.gltsReferences[0],
+          batchId: source.batchIds[0],
+          serviceType: 'Credit adjustment',
+          description: `Partial credit: ${adjustment.reason}`,
+          quantity: 1,
+          unitPrice: -Math.abs(creditBase),
+          gstApplicable: source.taxConfig.gstApplicable,
+          gstAmount: -Math.abs(gstAmount),
+          amount: -(Math.abs(creditBase) + Math.abs(gstAmount)),
+          included: true,
+          billingStatus: 'unbilled',
+          isAdditionalExpense: false,
+        },
+      ]
+    }
+
+    const negated =
+      adjustment.mode === 'partial' && adjustment.partialAmount && !adjustment.lineItemIds?.length
+        ? lineItems
+        : lineItems.map(li => ({
             ...li,
             id: `cn-${li.id}`,
             unitPrice: -Math.abs(li.unitPrice),
@@ -585,17 +761,6 @@ export const invoiceService = {
             description: `Credit: ${li.description}`,
             billingStatus: 'unbilled' as const,
           }))
-        : source.lineItems
-            .filter(li => adjustment.lineItemIds?.includes(li.id))
-            .map(li => ({
-              ...li,
-              id: `cn-${li.id}`,
-              unitPrice: -Math.abs(li.unitPrice),
-              gstAmount: -Math.abs(li.gstAmount),
-              amount: -Math.abs(li.amount),
-              description: `Credit: ${li.description}`,
-              billingStatus: 'unbilled' as const,
-            }))
 
     const workspace: InvoiceWorkspaceState = {
       selection: {
@@ -611,7 +776,7 @@ export const invoiceService = {
         batchIds: source.batchIds,
         servicePresetIds: [],
       },
-      lineItems,
+      lineItems: negated,
       taxConfig: source.taxConfig,
       additionalCharges: 0,
       paymentTerms: source.paymentTerms ?? 'Net 30',

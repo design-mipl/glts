@@ -3,7 +3,7 @@ export { mockCompanyProfileData as mockCompanyProfile } from './companyProfile.m
 export { mockBillingAgreementData as mockAgreement } from './billingAgreement.mock'
 
 export const mockVisaRules = {
-  countries: ['Kenya', 'UAE', 'Schengen', 'Japan', 'Singapore', 'UK'],
+  countries: ['Kenya', 'UAE', 'France', 'Japan', 'Singapore', 'UK'],
   visaTypes: ['Tourist', 'Business', 'Crew / Marine', 'Transit'],
   marineRules: 'CDC + seaman book mandatory for crew manifests',
   nonMarineRules: 'Standard passport + itinerary for corporate travelers',

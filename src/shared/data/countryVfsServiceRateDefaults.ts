@@ -14,6 +14,12 @@ const DEFAULT_VFS_SERVICE_RATE_ROWS = [
   { id: 'vfs-seed-super-priority', serviceName: 'Super Priority', amount: 115000 },
 ] as const
 
+/** Default visa-processing vendor for seeded consulate rates (VFS Global). */
+const DEFAULT_CONSULATE_VENDOR = {
+  vendorId: 'vnd-001',
+  vendorName: 'VFS Global India Pvt Ltd',
+} as const
+
 export function getDefaultVfsServiceRates(): CountryVfsServiceRate[] {
   return DEFAULT_VFS_SERVICE_RATE_ROWS.map((row, index) => ({
     id: row.id,
@@ -21,6 +27,8 @@ export function getDefaultVfsServiceRates(): CountryVfsServiceRate[] {
     amount: row.amount,
     gstIncluded: false,
     sortOrder: index,
+    vendorId: DEFAULT_CONSULATE_VENDOR.vendorId,
+    vendorName: DEFAULT_CONSULATE_VENDOR.vendorName,
   }))
 }
 

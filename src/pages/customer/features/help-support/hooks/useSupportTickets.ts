@@ -1,23 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
-import { INITIAL_SUPPORT_TICKETS } from '../data/mockSupportTickets'
+import { DEFAULT_PORTAL_CUSTOMER_CONTEXT } from '@/shared/data/supportTicketOptions'
+import { supportTicketService } from '@/shared/services/supportTicketService'
 import type {
   SupportCommunicationChannel,
   SupportTicket,
   SupportTicketDraft,
   SupportTicketPriority,
-  SupportTicketStatus,
-} from '../types/supportTicket'
-
-let ticketCounter = INITIAL_SUPPORT_TICKETS.length + 1
-
-function createTicketNumber() {
-  const num = String(ticketCounter++).padStart(4, '0')
-  return `GLTS-TKT-2026-${num}`
-}
-
-function createId() {
-  return `tkt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-}
+} from '@/shared/types/supportTicket'
 
 const EMPTY_DRAFT: SupportTicketDraft = {
   category: '',
@@ -32,11 +21,17 @@ const EMPTY_DRAFT: SupportTicketDraft = {
 }
 
 export function useSupportTickets() {
-  const [tickets, setTickets] = useState<SupportTicket[]>(INITIAL_SUPPORT_TICKETS)
+  const [tickets, setTickets] = useState<SupportTicket[]>(() =>
+    supportTicketService.listForCustomer(DEFAULT_PORTAL_CUSTOMER_CONTEXT.customerId),
+  )
   const [draft, setDraft] = useState<SupportTicketDraft>(EMPTY_DRAFT)
 
+  const refresh = useCallback(() => {
+    setTickets(supportTicketService.listForCustomer(DEFAULT_PORTAL_CUSTOMER_CONTEXT.customerId))
+  }, [])
+
   const updateDraft = useCallback((patch: Partial<SupportTicketDraft>) => {
-    setDraft(prev => ({ ...prev, ...patch }))
+    setDraft((prev) => ({ ...prev, ...patch }))
   }, [])
 
   const resetDraft = useCallback(() => {
@@ -47,119 +42,49 @@ export function useSupportTickets() {
     return draft
   }, [draft])
 
-  const submitTicket = useCallback((form: SupportTicketDraft): SupportTicket => {
-    const now = new Date().toISOString()
-    const ticket: SupportTicket = {
-      ...form,
-      id: createId(),
-      ticketNumber: createTicketNumber(),
-      status: 'open',
-      createdAt: now,
-      updatedAt: now,
-      conversation: [
-        { type: 'system', id: createId(), event: 'Ticket Created', timestamp: now },
-        {
-          type: 'message',
-          id: createId(),
-          sender: 'customer',
-          authorName: 'You',
-          body: form.description.replace(/<[^>]+>/g, ' ').trim() || form.subject,
-          timestamp: now,
-          attachments: form.attachmentNames.map((name, i) => ({
-            id: `att-${i}`,
-            name,
-            size: '—',
-          })),
-        },
-      ],
-    }
-    setTickets(prev => [ticket, ...prev])
-    setDraft(EMPTY_DRAFT)
-    return ticket
-  }, [])
+  const submitTicket = useCallback(
+    (form: SupportTicketDraft): SupportTicket => {
+      const ticket = supportTicketService.create(form, DEFAULT_PORTAL_CUSTOMER_CONTEXT)
+      setDraft(EMPTY_DRAFT)
+      refresh()
+      return ticket
+    },
+    [refresh],
+  )
 
   const getTicket = useCallback(
-    (id: string) => tickets.find(t => t.id === id),
+    (id: string) => tickets.find((t) => t.id === id) ?? supportTicketService.getById(id),
     [tickets],
   )
 
-  const addReply = useCallback((ticketId: string, message: string, attachmentNames: string[] = []) => {
-    const now = new Date().toISOString()
-    setTickets(prev =>
-      prev.map(ticket => {
-        if (ticket.id !== ticketId) return ticket
-        const nextStatus: SupportTicketStatus =
-          ticket.status === 'waiting_for_customer' ? 'in_progress' : ticket.status
-        return {
-          ...ticket,
-          status: nextStatus,
-          updatedAt: now,
-          awaitingCustomerConfirmation: false,
-          conversation: [
-            ...ticket.conversation,
-            {
-              type: 'message' as const,
-              id: createId(),
-              sender: 'customer' as const,
-              authorName: 'You',
-              body: message,
-              timestamp: now,
-              attachments: attachmentNames.map((name, i) => ({
-                id: `att-reply-${i}`,
-                name,
-                size: '—',
-              })),
-            },
-          ],
-        }
-      }),
-    )
-  }, [])
+  const addReply = useCallback(
+    (ticketId: string, message: string, attachmentNames: string[] = []) => {
+      supportTicketService.addReply(ticketId, {
+        message,
+        attachmentNames,
+        sender: 'customer',
+        authorName: DEFAULT_PORTAL_CUSTOMER_CONTEXT.customerName,
+      })
+      refresh()
+    },
+    [refresh],
+  )
 
   const closeTicketWithFeedback = useCallback(
     (ticketId: string, rating: number, feedback: string) => {
-      const now = new Date().toISOString()
-      setTickets(prev =>
-        prev.map(ticket =>
-          ticket.id === ticketId
-            ? {
-                ...ticket,
-                status: 'closed',
-                awaitingCustomerConfirmation: false,
-                rating,
-                feedback,
-                updatedAt: now,
-                conversation: [
-                  ...ticket.conversation,
-                  { type: 'system', id: createId(), event: 'Ticket Closed', timestamp: now },
-                ],
-              }
-            : ticket,
-        ),
-      )
+      supportTicketService.closeWithFeedback(ticketId, rating, feedback)
+      refresh()
     },
-    [],
+    [refresh],
   )
 
-  const reopenTicket = useCallback((ticketId: string) => {
-    const now = new Date().toISOString()
-    setTickets(prev =>
-      prev.map(ticket =>
-        ticket.id === ticketId
-          ? {
-              ...ticket,
-              status: 'reopened',
-              awaitingCustomerConfirmation: false,
-              updatedAt: now,
-              conversation: [
-                ...ticket.conversation,
-                { type: 'system', id: createId(), event: 'Ticket Reopened', timestamp: now },
-              ],
-            }
-          : ticket,
-      ),
-    )
-  }, [])
+  const reopenTicket = useCallback(
+    (ticketId: string) => {
+      supportTicketService.reopen(ticketId)
+      refresh()
+    },
+    [refresh],
+  )
 
   const ticketsSorted = useMemo(
     () => [...tickets].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
@@ -177,6 +102,7 @@ export function useSupportTickets() {
     addReply,
     closeTicketWithFeedback,
     reopenTicket,
+    refresh,
   }
 }
 

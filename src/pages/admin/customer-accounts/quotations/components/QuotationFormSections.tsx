@@ -1,20 +1,18 @@
-import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
-import { Stack } from '@mui/material'
-import { Plus } from 'lucide-react'
-import { Button, FormField, Input, Select, Textarea } from '@/design-system/UIComponents'
+import type { Dispatch, SetStateAction } from 'react'
+import { FormField, Input, Select, Textarea } from '@/design-system/UIComponents'
 import {
   AdminFullPageFormFieldSpan,
   type AdminFullPageFormSection,
 } from '@/pages/admin/components/AdminFullPageFormShell'
 import { taxMasterService } from '@/shared/services/taxMasterService'
 import type { QuotationFormData } from '@/shared/types/quotation'
-import { computePricingTotals } from '@/shared/utils/quotationCalculations'
 import { syncQuotationGstFromRateId } from '@/shared/utils/quotationGstUtils'
-import { AGREEMENT_WORKFLOW_OPTIONS } from '../../agreements/config/agreementStatusConfig'
-import { QuotationPricingMatrixTable } from './QuotationPricingMatrixTable'
-import { QuotationPricingSummary } from './QuotationPricingSummary'
+import { clearIncompatiblePricing } from '@/shared/utils/quotationPricingUtils'
+import { quotationCustomerTypeOptions } from '../config/quotationCustomerTypeOptions'
 import { QuotationEnquirySelectField } from './QuotationEnquirySelectField'
 import { QuotationEnquiryVisaDetailsReadOnly } from './QuotationEnquiryVisaDetailsReadOnly'
+import { QuotationPricingSection } from './pricing/QuotationPricingSection'
+import { QuotationPricingTemplateControls } from './pricing/QuotationPricingTemplateControls'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
 
 export interface QuotationFormSectionsProps {
@@ -22,7 +20,6 @@ export interface QuotationFormSectionsProps {
   setFormData: Dispatch<SetStateAction<QuotationFormData>>
   errors: Record<string, string>
   readOnlyPricing?: boolean
-  addPricingHandlerRef?: MutableRefObject<(() => void) | null>
   selectedEnquiry?: EnquiryRecord | null
   onSelectEnquiry?: (enquiryId: string) => void
   onClearEnquiry?: () => void
@@ -34,7 +31,6 @@ export function buildQuotationFormSections({
   setFormData,
   errors,
   readOnlyPricing = false,
-  addPricingHandlerRef,
   selectedEnquiry = null,
   onSelectEnquiry,
   onClearEnquiry,
@@ -44,7 +40,6 @@ export function buildQuotationFormSections({
     setFormData((prev) => ({ ...prev, ...partial }))
   }
 
-  const totals = computePricingTotals(formData.pricingMatrix, formData.gstPercentage)
   const gstOptions = taxMasterService.listActiveGstOptions()
   const fromEnquiry = Boolean(selectedEnquiry)
 
@@ -64,27 +59,41 @@ export function buildQuotationFormSections({
             />
           </AdminFullPageFormFieldSpan>
         ) : null}
-        <FormField label="Workflow type" required>
-          <Select
-            value={formData.workflowType}
-            onChange={(v) => patch({ workflowType: v as QuotationFormData['workflowType'] })}
-            options={AGREEMENT_WORKFLOW_OPTIONS}
-            fullWidth
-          />
-        </FormField>
-        <FormField label="Company name" required error={Boolean(errors.companyName)} helperText={errors.companyName}>
+        <FormField
+          label="Customer / Company Name"
+          required
+          error={Boolean(errors.companyName)}
+          helperText={errors.companyName}
+        >
           <Input
             value={formData.customer.companyName}
             onChange={(v) => patch({ customer: { ...formData.customer, companyName: v } })}
-            placeholder="Enter company name"
+            placeholder="Enter company or customer name"
             fullWidth
           />
         </FormField>
-        <FormField label="Contact person" required error={Boolean(errors.contactPersonName)} helperText={errors.contactPersonName}>
+        <FormField label="Customer Type" required>
+          <Select
+            value={formData.workflowType}
+            onChange={(v) => {
+              const workflowType = v as QuotationFormData['workflowType']
+              setFormData((prev) => clearIncompatiblePricing(workflowType, prev))
+            }}
+            options={quotationCustomerTypeOptions}
+            placeholder="Select customer type"
+            fullWidth
+          />
+        </FormField>
+        <FormField
+          label="Contact Person Name"
+          required
+          error={Boolean(errors.contactPersonName)}
+          helperText={errors.contactPersonName}
+        >
           <Input
             value={formData.customer.contactPersonName}
             onChange={(v) => patch({ customer: { ...formData.customer, contactPersonName: v } })}
-            placeholder="Enter contact person"
+            placeholder="Enter contact person name"
             fullWidth
           />
         </FormField>
@@ -106,22 +115,25 @@ export function buildQuotationFormSections({
             fullWidth
           />
         </FormField>
-        <FormField label="Email address">
+        <FormField label="Email Address">
           <Input
             value={formData.customer.emailAddress}
             onChange={(v) => patch({ customer: { ...formData.customer, emailAddress: v } })}
-            placeholder="Enter email address"
+            placeholder="name@company.com"
             fullWidth
           />
         </FormField>
-        <FormField label="Company address">
-          <Input
-            value={formData.customer.companyAddress}
-            onChange={(v) => patch({ customer: { ...formData.customer, companyAddress: v } })}
-            placeholder="Enter company address"
-            fullWidth
-          />
-        </FormField>
+        <AdminFullPageFormFieldSpan>
+          <FormField label="Company Address">
+            <Textarea
+              value={formData.customer.companyAddress}
+              onChange={(v) => patch({ customer: { ...formData.customer, companyAddress: v } })}
+              placeholder="Street, city, state, postal code"
+              minRows={2}
+              fullWidth
+            />
+          </FormField>
+        </AdminFullPageFormFieldSpan>
       </>
     ),
   }
@@ -170,28 +182,20 @@ export function buildQuotationFormSections({
     span: 2,
     columns: 1,
     importance: 'primary',
-    headerAction: !readOnlyPricing ? (
-      <Button
-        label="Add pricing"
-        size="sm"
-        startIcon={<Plus size={14} />}
-        onClick={() => addPricingHandlerRef?.current?.()}
+    headerAction: (
+      <QuotationPricingTemplateControls
+        formData={formData}
+        onChange={patch}
+        readOnly={readOnlyPricing}
       />
-    ) : undefined,
+    ),
     children: (
-      <Stack spacing={2}>
-        <QuotationPricingMatrixTable
-          workflowType={formData.workflowType}
-          pricingMatrix={formData.pricingMatrix}
-          onChange={(pricingMatrix) => patch({ pricingMatrix })}
-          error={errors.pricingMatrix}
-          readOnly={readOnlyPricing}
-          setAddPricingHandler={(handler) => {
-            if (addPricingHandlerRef) addPricingHandlerRef.current = handler
-          }}
-        />
-        <QuotationPricingSummary totals={totals} gstPercentage={formData.gstPercentage} />
-      </Stack>
+      <QuotationPricingSection
+        formData={formData}
+        onChange={patch}
+        error={errors.pricingMatrix}
+        readOnly={readOnlyPricing}
+      />
     ),
   }
 

@@ -11,7 +11,7 @@ export function VendorContactFields({ data, onChange }: VendorContactFieldsProps
 
   return (
     <>
-      <FormField label="Contact person" required>
+      <FormField label="Contact person">
         <Input
           size="sm"
           value={data.contactPerson}
@@ -20,7 +20,7 @@ export function VendorContactFields({ data, onChange }: VendorContactFieldsProps
           fullWidth
         />
       </FormField>
-      <FormField label="Mobile number" required>
+      <FormField label="Mobile number">
         <Input
           size="sm"
           value={data.mobileNumber}
@@ -29,7 +29,7 @@ export function VendorContactFields({ data, onChange }: VendorContactFieldsProps
           fullWidth
         />
       </FormField>
-      <FormField label="Email address" required>
+      <FormField label="Email address">
         <Input
           size="sm"
           value={data.emailAddress}

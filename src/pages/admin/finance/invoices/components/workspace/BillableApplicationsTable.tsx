@@ -9,12 +9,14 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
-import { Badge, FormField, Select } from '@/design-system/UIComponents'
-import type { BulkBatchRow, SingleApplicationRow } from '@/pages/customer/features/applications/data/applicationFlowData'
+import { Badge, FormField, Select, Tooltip } from '@/design-system/UIComponents'
+import {
+  formatBulkApplicantListingLabel,
+  resolveBulkApplicantNames,
+  type BulkBatchRow,
+} from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import {
-  getApplicantName,
-  getAppointmentDate,
   getApplicationBillingStatusLabel,
   getBillableApplicationRows,
   getBillableCompanyFilterOptions,
@@ -22,6 +24,7 @@ import {
   resolveApplicationVessel,
 } from '@/shared/utils/invoiceBillingEngine'
 import { agreementEmbeddedTableHeadCellSx, agreementEmbeddedTableSx } from '@/pages/admin/customer-accounts/agreements/components/agreementFormLayout'
+import { getBillablePaxNameLabel } from '../../utils/billableApplicationSelectionUtils'
 
 interface BillableApplicationsTableProps {
   companyFilterId: string
@@ -37,6 +40,25 @@ function rowId(row: ApplicationListingRow): string {
 
 function isBatchRow(row: ApplicationListingRow): boolean {
   return row.recordType === 'bulk'
+}
+
+function PaxNameCell({ row }: { row: ApplicationListingRow }) {
+  if (!isBatchRow(row)) {
+    return <>{getBillablePaxNameLabel(row)}</>
+  }
+
+  const bulk = row as BulkBatchRow
+  const passengerNames = resolveBulkApplicantNames(bulk)
+  return (
+    <Tooltip placement="top-start" maxWidth={320} content={passengerNames.join(', ')}>
+      <Typography
+        component="span"
+        sx={{ fontSize: 13, cursor: 'default', display: 'inline-block', maxWidth: '100%' }}
+      >
+        {formatBulkApplicantListingLabel(bulk)}
+      </Typography>
+    </Tooltip>
+  )
 }
 
 function pruneSelection(
@@ -117,10 +139,10 @@ export function BillableApplicationsTable({
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>GLTS Reference</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Batch ID</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Company</TableCell>
-                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Applicant / Crew</TableCell>
+                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Pax name</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Country</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Visa Type</TableCell>
-                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Appointment Date</TableCell>
+                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Online Submission Date</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Billing Entity</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Vessel</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Billing Status</TableCell>
@@ -131,7 +153,6 @@ export function BillableApplicationsTable({
                   const batchId = isBatchRow(row) ? row.id : '—'
                   const companyName = row.companyName ?? '—'
                   const billingStatus = getApplicationBillingStatusLabel(row)
-                  const appRow = row as SingleApplicationRow | BulkBatchRow
                   return (
                     <TableRow
                       key={row.id}
@@ -146,10 +167,10 @@ export function BillableApplicationsTable({
                       <TableCell sx={{ fontSize: 13 }}>{isBatchRow(row) ? '—' : row.id}</TableCell>
                       <TableCell sx={{ fontSize: 13 }}>{batchId}</TableCell>
                       <TableCell sx={{ fontSize: 13 }}>{companyName}</TableCell>
-                      <TableCell sx={{ fontSize: 13 }}>{getApplicantName(appRow)}</TableCell>
+                      <TableCell sx={{ fontSize: 13 }}><PaxNameCell row={row} /></TableCell>
                       <TableCell sx={{ fontSize: 13 }}>{row.country}</TableCell>
                       <TableCell sx={{ fontSize: 13 }}>{row.visaType}</TableCell>
-                      <TableCell sx={{ fontSize: 13 }}>{getAppointmentDate(appRow)}</TableCell>
+                      <TableCell sx={{ fontSize: 13 }}>{row.submissionDate?.trim() || '—'}</TableCell>
                       <TableCell sx={{ fontSize: 13 }}>{resolveApplicationBillingEntity(row)}</TableCell>
                       <TableCell sx={{ fontSize: 13 }}>{resolveApplicationVessel(row)}</TableCell>
                       <TableCell sx={{ fontSize: 13 }}>

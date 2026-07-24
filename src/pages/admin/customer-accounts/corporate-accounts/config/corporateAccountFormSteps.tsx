@@ -59,7 +59,7 @@ export const CORPORATE_ACCOUNT_WORKSPACE_SECTIONS: {
     id: 'activation',
     navId: 'section-activation',
     label: 'Assign user',
-    description: 'Select a team and assign users from User Management to this client.',
+    description: 'Select teams and users from User Management, then mark primary and secondary contacts.',
   },
   {
     id: 'review',
@@ -215,7 +215,7 @@ export function buildCorporateAccountFormSteps(
     {
       id: 'activation',
       label: 'Assign user',
-      description: 'Team leader and team assignment',
+      description: 'Team leaders, team users, and contact roles',
       children: <CorporateAccountPortalActivationFields data={formData} onChange={onChange} />,
     },
     {

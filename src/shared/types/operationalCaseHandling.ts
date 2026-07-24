@@ -1,4 +1,9 @@
-import type { LogisticsDispatchDetails, LogisticsFinalQc } from '@/shared/types/logisticsDispatch'
+import type {
+  LogisticsDispatchDetails,
+  LogisticsFinalQc,
+  LogisticsRefundDetails,
+} from '@/shared/types/logisticsDispatch'
+import type { FundTransferType } from '@/shared/types/fundAllocation'
 
 export type OperationalCasePriority = 'Normal' | 'High' | 'Urgent' | 'Critical'
 
@@ -40,6 +45,22 @@ export function getApplicationFeePaidByLabel(value?: ApplicationFeePaidBy): stri
   return APPLICATION_FEE_PAID_BY_OPTIONS.find(option => option.value === value)?.label ?? '—'
 }
 
+/** Ground-ops payment modes for on-site / case expense settlement. */
+export type OperationalPaymentMode = 'cash' | 'card' | 'cash_upi'
+
+export const OPERATIONAL_PAYMENT_MODE_OPTIONS: {
+  value: OperationalPaymentMode
+  label: string
+}[] = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'card', label: 'Card' },
+  { value: 'cash_upi', label: 'Cash + UPI' },
+]
+
+export function getOperationalPaymentModeLabel(value?: OperationalPaymentMode): string {
+  return OPERATIONAL_PAYMENT_MODE_OPTIONS.find(option => option.value === value)?.label ?? '—'
+}
+
 export interface GroundServiceLine {
   id: string
   serviceName: string
@@ -58,6 +79,26 @@ export interface OperationalExpense {
   receiptFileName?: string
   remarks?: string
   isExtra?: boolean
+}
+
+/** Snapshot of Fund Allocation for display on Ground Operations cases. */
+export interface OperationalCaseFundAllocation {
+  status: 'pending_allocation' | 'allocated'
+  fundRequested: boolean
+  totalAmount: number
+  allocatedAmount: number
+  /** @deprecated Prefer fundTransferLabel. Kept for legacy card-based allocations. */
+  cardId: string
+  /** Raw transfer type from Finance fund allocation (preferred for claim KPIs). */
+  fundTransferType?: FundTransferType | ''
+  /** Display label for fund transfer type (or legacy card name). */
+  fundTransferLabel?: string
+  serviceNames: string[]
+  requestedAt: string
+  allocatedAt: string
+  notes: string
+  /** Assignment assignee shown as fund holder (user / vendor / passenger). */
+  allocatedTo: string
 }
 
 export interface OperationalCase {
@@ -98,8 +139,27 @@ export interface OperationalCase {
   actualExpense: number
   groundServices: GroundServiceLine[]
   applicationFees: GroundServiceLine[]
+  /**
+   * Selectable GLTS Fee Master charges for ground ops
+   * (e.g. Photo Charges, Print Out Charges, Urgent Charges).
+   */
+  gltsOpsFees?: GroundServiceLine[]
   /** Who pays VFS & application fees for this case. */
   applicationFeesPaidBy?: ApplicationFeePaidBy
+  /** Payment date for ground-ops expense settlement (YYYY-MM-DD). */
+  paymentDate?: string
+  paymentMode?: OperationalPaymentMode
+  /** Card master id when payment mode is card. */
+  paymentCardId?: string
+  /** Amount paid for ground-ops expense settlement. */
+  amountPaid?: string
+  /** UTR / transaction reference for the payment. */
+  transactionReference?: string
+  /**
+   * Fund Allocation snapshot pushed from Assignment request / Finance allocate.
+   * Shown read-only in Ground Operations so the desk knows float holder + card + amount.
+   */
+  fundAllocation?: OperationalCaseFundAllocation
   expenses: OperationalExpense[]
   submissionDate?: string
   collectionDate?: string
@@ -113,6 +173,8 @@ export interface OperationalCase {
   assignmentSourceId?: string
   finalQc?: LogisticsFinalQc
   dispatchDetails?: LogisticsDispatchDetails
+  /** Consulate refund recorded on logistics desk (feeds invoice composition). */
+  refundDetails?: LogisticsRefundDetails
 }
 
 export interface TeamCapacity {

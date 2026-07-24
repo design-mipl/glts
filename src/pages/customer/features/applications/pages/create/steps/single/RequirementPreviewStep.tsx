@@ -276,14 +276,14 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Box>
                       <Typography sx={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, mb: 0.75 }}>
-                        Place of residence
+                        Place of residence (more than 6 months)
                       </Typography>
                       <SearchableStateSelect
                         value={state.placeOfResidence}
                         options={applicableStates}
                         onChange={handlePlaceOfResidenceChange}
                         placeholder="Select place of residence"
-                        aria-label="Place of residence"
+                        aria-label="Place of residence (more than 6 months)"
                         clearable
                       />
                     </Box>

@@ -22,6 +22,14 @@ export function buildVerifyTimeline(
   row: UploadQueueRow | null,
   isSubmitted: boolean,
   externalPortalSubmitted = false,
+  context?: {
+    countryId?: string
+    countryName?: string
+    visaTypeLabel?: string
+    visaOfferingId?: string
+    operationalStatus?: string
+    processingStage?: string
+  },
 ): ApplicationProcessingTimelineStep[] {
   const required = row?.documents.filter((doc) => doc.required) ?? []
   const docsDone =
@@ -37,6 +45,12 @@ export function buildVerifyTimeline(
     docsDone,
     allVerified,
     hasRejection,
+    countryId: context?.countryId,
+    countryName: context?.countryName,
+    visaTypeLabel: context?.visaTypeLabel,
+    visaOfferingId: context?.visaOfferingId,
+    operationalStatus: context?.operationalStatus,
+    processingStage: context?.processingStage,
   })
 }
 

@@ -1,4 +1,5 @@
 import type { AgreementOnboardingDocument } from '@/shared/types/commercialAgreement'
+import type { CommercialVisaPricingRule, QuotationServiceLine } from '@/shared/types/quotation'
 
 export type DocumentStatus = 'verified' | 'pending' | 'expired' | 'missing'
 export type AgreementStatus = 'active' | 'expiring' | 'expired' | 'pending'
@@ -158,6 +159,9 @@ export interface BillingAgreementData {
     | { billingType: 'advance'; advance: AdvanceBillingConfig }
     | { billingType: 'mixed'; mixed: MixedBillingConfig }
   pricingGroups: PricingGroup[]
+  /** Structured commercial pricing from agreement / quotation (source of truth for portal display). */
+  commercialVisaPricing: CommercialVisaPricingRule[]
+  miscellaneousServices: QuotationServiceLine[]
   supportedOperations: SupportedOperations
   documents: AgreementDocument[]
   onboardingDocuments: AgreementDocument[]

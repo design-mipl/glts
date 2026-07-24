@@ -1,10 +1,7 @@
-import { Box, Stack } from '@mui/material'
-import { BaseCard, Button, LoadingOverlay } from '@/design-system/UIComponents'
 import {
-  ExecutiveCompactHeader,
   NeedsImmediateAttentionSection,
+  RoleDashboardShell,
 } from '@/pages/admin/dashboard/components'
-import { EXECUTIVE_DASHBOARD_SPACING } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import { useToast } from '@/design-system/UIComponents'
 import { DashboardFiltersBar } from '../components/DashboardFiltersBar'
 import { ExecutiveKpiSection } from '../components/sections/ExecutiveKpiSection'
@@ -22,38 +19,16 @@ export function OperationsDashboardPage() {
   const { showToast } = useToast()
   const isLoading = dashboard.status === 'loading'
 
-  if (dashboard.status === 'error') {
-    return (
-      <Box>
-        <ExecutiveCompactHeader
-          eyebrow="Dashboard"
-          title="Admin dashboard"
-          subtitle="Executive command center for management visibility."
-        />
-        <BaseCard sx={{ p: 3, textAlign: 'center' }}>
-          <Button label="Retry loading dashboard" onClick={dashboard.retry} />
-        </BaseCard>
-      </Box>
-    )
-  }
-
   return (
-    <Box>
-      <ExecutiveCompactHeader
-        eyebrow="Dashboard"
-        title="Admin dashboard"
-        subtitle="Executive command center for management visibility across operations, documentation, and finance."
-        filters={
-          <DashboardFiltersBar filters={dashboard.filters} onChange={dashboard.setFilters} />
-        }
-      />
-
-      <LoadingOverlay loading={isLoading} label="Loading dashboard...">
-        <Stack
-          spacing={EXECUTIVE_DASHBOARD_SPACING.section}
-          sx={{ opacity: isLoading ? 0.6 : 1, transition: 'opacity 200ms ease', pb: 2 }}
-        >
-          <ExecutiveKpiSection metrics={dashboard.kpis} />
+    <RoleDashboardShell
+      title="Admin dashboard"
+      subtitle="Executive command center for management visibility across operations, documentation, and finance."
+      filters={
+        <DashboardFiltersBar filters={dashboard.filters} onChange={dashboard.setFilters} />
+      }
+      kpis={<ExecutiveKpiSection metrics={dashboard.kpis} />}
+      alerts={
+        dashboard.criticalAlerts.length > 0 || isLoading ? (
           <NeedsImmediateAttentionSection
             alerts={dashboard.criticalAlerts}
             resolveIcon={resolveExecutiveAlertIcon}
@@ -65,36 +40,74 @@ export function OperationsDashboardPage() {
               })
             }
           />
-          <ExecutivePipelineSection stages={dashboard.pipelineStages} />
-          <TeamWorkloadSection teamWorkload={dashboard.teamWorkload} />
-          <VerificationPassportSection
-            verificationQueue={dashboard.verificationQueue}
-            passportSummary={dashboard.passportSummary}
-            passportTransit={dashboard.passportTransit}
-            getVerificationCellValue={dashboard.getVerificationQueueCellValue}
-            getPassportTransitCellValue={dashboard.getPassportTransitCellValue}
-            loading={isLoading}
-          />
-          <PerformanceAnalyticsSection
-            slaCompliance={dashboard.slaCompliance}
-            teamProductivity={dashboard.teamProductivity}
-            weeklyCompletion={dashboard.weeklyCompletion}
-          />
-          <BusinessPerformanceSection
-            revenueSnapshot={dashboard.revenueSnapshot}
-            countryDistribution={dashboard.countryDistribution}
-            visaTypeDistribution={dashboard.visaTypeDistribution}
-            segmentDistribution={dashboard.segmentDistribution}
-          />
-          <OperationalMonitoringSection
-            escalations={dashboard.escalations}
-            noMovementCases={dashboard.noMovementCases}
-            getEscalationCellValue={dashboard.getEscalationCellValue}
-            getNoMovementCellValue={dashboard.getNoMovementCellValue}
-            loading={isLoading}
-          />
-        </Stack>
-      </LoadingOverlay>
-    </Box>
+        ) : null
+      }
+      loading={isLoading}
+      error={dashboard.status === 'error'}
+      onRetry={dashboard.retry}
+      defaultTab="overview"
+      tabs={[
+        {
+          id: 'overview',
+          label: 'Overview',
+          content: (
+            <>
+              <ExecutivePipelineSection stages={dashboard.pipelineStages} />
+              <TeamWorkloadSection teamWorkload={dashboard.teamWorkload} />
+            </>
+          ),
+        },
+        {
+          id: 'verification',
+          label: 'Verification',
+          content: (
+            <VerificationPassportSection
+              verificationQueue={dashboard.verificationQueue}
+              passportSummary={dashboard.passportSummary}
+              passportTransit={dashboard.passportTransit}
+              getVerificationCellValue={dashboard.getVerificationQueueCellValue}
+              getPassportTransitCellValue={dashboard.getPassportTransitCellValue}
+              loading={isLoading}
+            />
+          ),
+        },
+        {
+          id: 'performance',
+          label: 'Performance',
+          content: (
+            <PerformanceAnalyticsSection
+              slaCompliance={dashboard.slaCompliance}
+              teamProductivity={dashboard.teamProductivity}
+              weeklyCompletion={dashboard.weeklyCompletion}
+            />
+          ),
+        },
+        {
+          id: 'business',
+          label: 'Business',
+          content: (
+            <BusinessPerformanceSection
+              revenueSnapshot={dashboard.revenueSnapshot}
+              countryDistribution={dashboard.countryDistribution}
+              visaTypeDistribution={dashboard.visaTypeDistribution}
+              segmentDistribution={dashboard.segmentDistribution}
+            />
+          ),
+        },
+        {
+          id: 'risk',
+          label: 'Risk',
+          content: (
+            <OperationalMonitoringSection
+              escalations={dashboard.escalations}
+              noMovementCases={dashboard.noMovementCases}
+              getEscalationCellValue={dashboard.getEscalationCellValue}
+              getNoMovementCellValue={dashboard.getNoMovementCellValue}
+              loading={isLoading}
+            />
+          ),
+        },
+      ]}
+    />
   )
 }

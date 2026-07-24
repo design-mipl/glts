@@ -36,6 +36,8 @@ export function buildClientDocumentColumns({
       key: 'documentType',
       label: 'Document Type',
       widthSize: adminListingColumnWidthSize('service'),
+      sortable: true,
+      filterable: false,
       searchable: true,
       hideable: false,
     },
@@ -43,6 +45,9 @@ export function buildClientDocumentColumns({
       key: 'description',
       label: 'Description',
       widthSize: adminListingColumnWidthSize('description'),
+      sortable: false,
+      filterable: false,
+      searchable: true,
       render: (_, row) => (
         <span
           style={{
@@ -62,6 +67,8 @@ export function buildClientDocumentColumns({
       key: 'applicableFor',
       label: 'Applicable For',
       widthSize: adminListingColumnWidthSize('description'),
+      sortable: false,
+      filterable: true,
       render: (_, row) => (
         <MasterAudienceTags items={toApplicabilityTagItems(row.applicableFor)} />
       ),
@@ -70,6 +77,8 @@ export function buildClientDocumentColumns({
       key: 'isMandatory',
       label: 'Mandatory',
       widthSize: adminListingColumnWidthSize('status'),
+      sortable: false,
+      filterable: true,
       render: (_, row) => (
         <Badge label={row.isMandatory ? 'Yes' : 'No'} color={row.isMandatory ? 'warning' : 'neutral'} size="sm" />
       ),
@@ -78,6 +87,8 @@ export function buildClientDocumentColumns({
       key: 'status',
       label: 'Status',
       widthSize: adminListingColumnWidthSize('status'),
+      sortable: false,
+      filterable: true,
       render: (_, row) => (
         <Badge
           label={masterStatusLabel[row.status]}
@@ -90,12 +101,16 @@ export function buildClientDocumentColumns({
       key: 'createdAudit',
       label: 'Created By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
     },
     {
       key: 'updatedAudit',
       label: 'Updated By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
     },
     {

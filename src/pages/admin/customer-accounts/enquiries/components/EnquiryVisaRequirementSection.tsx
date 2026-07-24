@@ -112,7 +112,6 @@ export function EnquiryVisaRequirementSection({
           </FormField>
           <FormField
             label="Visa Type"
-            required
             error={Boolean(draftError && draft.countryId && !draft.visaType.trim())}
             helperText={
               draftError === 'Visa type is required'
@@ -146,7 +145,12 @@ export function EnquiryVisaRequirementSection({
             fullWidth
           />
         </FormField>
-        <Button label="Add country requirement" startIcon={<Plus size={14} />} onClick={handleAdd} />
+        <Button
+          label="Add country requirement"
+          variant="neutral"
+          startIcon={<Plus size={14} />}
+          onClick={handleAdd}
+        />
       </Stack>
 
       {listError ? (

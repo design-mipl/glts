@@ -53,7 +53,7 @@ export interface AgreementServiceOption {
   defaultPrice: number
 }
 
-/** Active services from Service Master, filtered by agreement workflow applicability. */
+/** Active services from GLTS Fee Master, filtered by agreement workflow applicability. */
 export function getServiceOptions(workflow: AgreementWorkflowType): AgreementServiceOption[] {
   const allowed = applicabilityForWorkflow(workflow)
   return serviceMasterService

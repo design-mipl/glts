@@ -37,23 +37,31 @@ export function buildSacCodeColumns({
       key: 'sacCode',
       label: 'SAC Code',
       widthSize: adminListingColumnWidthSize('code'),
+      sortable: true,
+      filterable: false,
       searchable: true,
     },
     {
       key: 'sacTitle',
       label: 'SAC Title',
       widthSize: adminListingColumnWidthSize('name'),
+      sortable: true,
+      filterable: false,
       searchable: true,
     },
     {
       key: 'category',
       label: 'Category',
       widthSize: adminListingColumnWidthSize('service'),
+      sortable: true,
+      filterable: true,
     },
     {
       key: 'defaultGst',
       label: 'Default GST %',
       widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => {
         const pct = taxMasterService.getGstPercent(row.defaultGstRateId)
         return pct != null ? `${pct}%` : '—'
@@ -63,6 +71,8 @@ export function buildSacCodeColumns({
       key: 'defaultTds',
       label: 'Applicable TDS %',
       widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => {
         const pct = taxMasterService.getTdsPercent(row.defaultTdsSectionId)
         return pct != null ? `${pct}%` : '—'
@@ -72,6 +82,8 @@ export function buildSacCodeColumns({
       key: 'applicableFor',
       label: 'Applicable For',
       widthSize: adminListingColumnWidthSize('description'),
+      sortable: false,
+      filterable: true,
       render: (_, row) => (
         <MasterAudienceTags items={toApplicabilityTagItems(row.applicableFor)} />
       ),
@@ -80,6 +92,8 @@ export function buildSacCodeColumns({
       key: 'status',
       label: 'Status',
       widthSize: adminListingColumnWidthSize('status'),
+      sortable: false,
+      filterable: true,
       render: (_, row) => (
         <Badge
           label={masterStatusLabel[row.status]}
@@ -92,12 +106,16 @@ export function buildSacCodeColumns({
       key: 'createdAudit',
       label: 'Created By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
     },
     {
       key: 'updatedAudit',
       label: 'Updated By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
     },
     {

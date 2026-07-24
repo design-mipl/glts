@@ -123,7 +123,8 @@ export function getPaidByLabel(value?: ApplicationExpensePaidBy): string {
 }
 
 export function getBillToLabel(value?: ApplicationExpenseBillTo): string {
-  return EXPENSE_BILL_TO_OPTIONS.find(option => option.value === value)?.label ?? '—'
+  if (!value || value === 'client') return 'Client'
+  return EXPENSE_BILL_TO_OPTIONS.find(option => option.value === value)?.label ?? 'Client'
 }
 
 export function getProofDocumentTypeLabel(value?: ApplicationExpenseProofDocumentType): string {
@@ -146,7 +147,20 @@ export function getSimpleExpenseStatusLabel(status: ApplicationExpenseApprovalSt
   }
 }
 
-export function computeExpenseTotalAmount(amount: number, gstApplicable: boolean, gstValue: number): number {
-  const gst = gstApplicable ? gstValue : 0
+export function computeExpenseGstAmount(
+  amount: number,
+  gstApplicable: boolean,
+  gstPercent: number,
+): number {
+  if (!gstApplicable || gstPercent <= 0 || amount <= 0) return 0
+  return Math.max(0, Math.round(amount * gstPercent) / 100)
+}
+
+export function computeExpenseTotalAmount(
+  amount: number,
+  gstApplicable: boolean,
+  gstPercent: number,
+): number {
+  const gst = computeExpenseGstAmount(amount, gstApplicable, gstPercent)
   return Math.max(0, Math.round((amount + gst) * 100) / 100)
 }

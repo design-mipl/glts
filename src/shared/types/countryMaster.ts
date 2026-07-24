@@ -148,6 +148,10 @@ export interface CountryVfsServiceRate {
   /** When true, the configured rate is GST-inclusive. */
   gstIncluded: boolean
   sortOrder: number
+  /** Visa-processing vendor this consulate rate maps to when selected downstream. */
+  vendorId?: string
+  /** Denormalized vendor display name. */
+  vendorName?: string
   /** @deprecated Legacy link to Embassy / VFS Fee Master imports. */
   embassyFeeServiceId?: string
 }
@@ -201,6 +205,11 @@ export interface CountryVisaType {
   /** Visa-type / application-specific documents (in addition to segment common documents). */
   applicationDocuments: CountryDocumentChecklistItem[]
   processingRulesOverride?: Partial<CountryProcessingRules>
+  /**
+   * Optional Workflow Master override for this visa type.
+   * `undefined` / `null` / empty → inherit segment `workflowId`.
+   */
+  workflowId?: string | null
   /** Legacy sync fields */
   purposeId?: string
   purposeLabel?: string
@@ -229,6 +238,8 @@ export interface CountrySegmentConfig {
   commonDocuments: CountryDocumentChecklistItem[]
   visaTypes: CountryVisaType[]
   processingRules: CountryProcessingRules
+  /** Default Workflow Master for visa types in this segment (overridable per visa type). */
+  workflowId?: string
 }
 
 export interface CountryActivityEntry {

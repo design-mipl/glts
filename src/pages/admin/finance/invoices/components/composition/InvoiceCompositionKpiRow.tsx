@@ -1,5 +1,5 @@
 import { Box, Stack, Typography } from '@mui/material'
-import { FormField, Select } from '@/design-system/UIComponents'
+import { FormField, Input, Select } from '@/design-system/UIComponents'
 
 function SubtleStat({ label, value }: { label: string; value: string | number }) {
   return (
@@ -50,6 +50,10 @@ interface InvoiceCompositionContextStripProps {
   billingEntityOptions: Array<{ value: string; label: string }>
   onBillingEntityChange: (value: string) => void
   billingTypeLabel: string
+  documentDate: string
+  onDocumentDateChange: (value: string) => void
+  /** Label for the document date field. */
+  documentDateLabel?: string
 }
 
 export function InvoiceCompositionContextStrip({
@@ -58,6 +62,9 @@ export function InvoiceCompositionContextStrip({
   billingEntityOptions,
   onBillingEntityChange,
   billingTypeLabel,
+  documentDate,
+  onDocumentDateChange,
+  documentDateLabel = 'Invoice date',
 }: InvoiceCompositionContextStripProps) {
   return (
     <Stack
@@ -82,26 +89,42 @@ export function InvoiceCompositionContextStrip({
         <SubtleStat label="Company" value={companyName || '—'} />
         <SubtleStat label="Billing type" value={billingTypeLabel} />
       </Stack>
-      <Box
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1.5}
         sx={{
           minWidth: 0,
-          width: { xs: '100%', sm: 280 },
+          width: { xs: '100%', sm: 'auto' },
           flexShrink: 0,
           ml: { sm: 'auto' },
         }}
       >
-        <FormField label="Billing entity" required>
-          <Select
-            value={billingEntity}
-            onChange={v => onBillingEntityChange(String(v))}
-            options={billingEntityOptions}
-            placeholder="Select billing entity"
-            size="sm"
-            fullWidth
-            disabled={billingEntityOptions.length === 0}
-          />
-        </FormField>
-      </Box>
+        <Box sx={{ minWidth: 0, width: { xs: '100%', sm: 160 } }}>
+          <FormField label={documentDateLabel} required htmlFor="composition-document-date">
+            <Input
+              id="composition-document-date"
+              type="date"
+              value={documentDate}
+              onChange={v => onDocumentDateChange(String(v))}
+              size="sm"
+              fullWidth
+            />
+          </FormField>
+        </Box>
+        <Box sx={{ minWidth: 0, width: { xs: '100%', sm: 280 } }}>
+          <FormField label="Billing entity" required>
+            <Select
+              value={billingEntity}
+              onChange={v => onBillingEntityChange(String(v))}
+              options={billingEntityOptions}
+              placeholder="Select billing entity"
+              size="sm"
+              fullWidth
+              disabled={billingEntityOptions.length === 0}
+            />
+          </FormField>
+        </Box>
+      </Stack>
     </Stack>
   )
 }

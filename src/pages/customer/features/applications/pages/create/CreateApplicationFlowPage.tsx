@@ -185,7 +185,8 @@ export function CreateApplicationFlowPage({
         <Box
           sx={{
             px: { xs: 2, md: 3 },
-            py: 1.5,
+            pt: 1,
+            pb: 0.5,
             borderBottom: `${BORDER_WIDTH.thin} solid`,
             borderColor: 'divider',
           }}

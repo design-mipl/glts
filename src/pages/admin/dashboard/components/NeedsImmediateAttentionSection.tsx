@@ -3,7 +3,7 @@ import { ArrowRight, type LucideIcon } from 'lucide-react'
 import { Badge, Button } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { ExecutiveSectionHeader } from './ExecutiveSectionHeader'
-import { executiveCardLevel3Sx } from './executiveDashboardTokens'
+import { executiveCardLevel2Sx, executiveCardLevel3Sx } from './executiveDashboardTokens'
 
 export type ExecutiveAlertPriority = 'critical' | 'high' | 'medium'
 
@@ -98,15 +98,17 @@ export function NeedsImmediateAttentionSection({
   const colors = usePublicBrandColors()
 
   return (
-    <Box>
-      <ExecutiveSectionHeader
-        title="Needs immediate attention"
-        description="Priority operational alerts requiring management action."
-        actionLabel="Open alert center"
-        onAction={onViewAlert ? () => onViewAlert(alerts[0]) : undefined}
-      />
+    <Box sx={{ ...executiveCardLevel2Sx(colors), p: 2 }}>
+      <Box sx={{ mb: 2 }}>
+        <ExecutiveSectionHeader
+          title="Needs immediate attention"
+          description="Priority operational alerts requiring management action."
+          actionLabel="Open alert center"
+          onAction={onViewAlert ? () => onViewAlert(alerts[0]) : undefined}
+        />
+      </Box>
       {alerts.length === 0 ? (
-        <Box sx={{ ...executiveCardLevel3Sx(colors, colors.border), p: 3, textAlign: 'center' }}>
+        <Box sx={{ p: 2, textAlign: 'center' }}>
           <Typography sx={{ fontSize: 13, color: colors.textMuted }}>
             No priority alerts for the selected filters.
           </Typography>

@@ -27,21 +27,21 @@ function DeltaBadge({ delta, deltaLabel }: { delta: number; deltaLabel?: string 
   const isNegative = delta < 0
   const color = isPositive ? 'success.main' : isNegative ? 'error.main' : 'text.secondary'
   const Icon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus
-  const formatted = isPositive ? `+${delta.toFixed(1)}%` : isNegative ? `${delta.toFixed(1)}%` : '0%'
+  const formatted = isPositive ? `↑ ${delta.toFixed(1)}%` : isNegative ? `↓ ${Math.abs(delta).toFixed(1)}%` : '0%'
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, color }}>
-        <Icon size={16} />
-        <Typography variant="caption" fontWeight={600} color={color}>
-          {formatted}
-        </Typography>
-      </Box>
-      {deltaLabel && (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mt: 0.5 }}>
+      {deltaLabel ? (
         <Typography variant="caption" color="text.secondary">
           {deltaLabel}
         </Typography>
-      )}
+      ) : null}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, color }}>
+        <Icon size={14} />
+        <Typography variant="caption" fontWeight={700} color={color}>
+          {formatted}
+        </Typography>
+      </Box>
     </Box>
   )
 }
@@ -61,20 +61,19 @@ export default function StatCard({
   sx,
 }: StatCardProps) {
   const theme = useTheme()
-  const iconBg = iconColor ?? alpha(theme.palette.primary.main, 0.1)
-  const iconFg = iconColor ? '#fff' : theme.palette.primary.main
+  const iconBg = iconColor ?? alpha(theme.palette.primary.main, 0.12)
+  const iconFg = iconColor ? theme.palette.getContrastText(iconColor) : theme.palette.primary.main
 
   if (loading) {
     return (
       <BaseCard headerColor={headerColor} sx={sx}>
-        <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Skeleton variant="rounded" width={40} height={40} />
-            <Skeleton variant="text" width="50%" height={20} />
+        <Box sx={{ p: 2, display: 'flex', gap: 1.5 }}>
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="45%" height={18} />
+            <Skeleton variant="text" width="55%" height={36} />
+            <Skeleton variant="text" width="40%" height={16} />
           </Box>
-          <Skeleton variant="text" width="40%" height={40} />
-          <Skeleton variant="text" width="55%" height={18} />
-          <Skeleton variant="rounded" width="100%" height={40} />
+          <Skeleton variant="rounded" width={40} height={40} />
         </Box>
       </BaseCard>
     )
@@ -87,15 +86,37 @@ export default function StatCard({
       onClick={onClick}
       sx={sx}
     >
-      <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {/* Icon + Label row */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          {icon && (
+      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 0.75, height: '100%' }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1.5 }}>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontWeight={600}
+              sx={{ letterSpacing: 0.2, textTransform: 'none' }}
+            >
+              {label}
+            </Typography>
+            <Typography
+              variant="h4"
+              fontWeight={800}
+              sx={{
+                mt: 0.75,
+                fontSize: { xs: '1.35rem', md: '1.65rem' },
+                lineHeight: 1.15,
+                letterSpacing: -0.4,
+              }}
+            >
+              {value}
+            </Typography>
+            {delta !== undefined ? <DeltaBadge delta={delta} deltaLabel={deltaLabel} /> : null}
+          </Box>
+          {icon ? (
             <Box
               sx={{
                 width: 40,
                 height: 40,
-                borderRadius: '10px',
+                borderRadius: '12px',
                 bgcolor: iconBg,
                 display: 'flex',
                 alignItems: 'center',
@@ -106,36 +127,18 @@ export default function StatCard({
             >
               {icon}
             </Box>
-          )}
-          <Typography variant="body2" color="text.secondary" fontWeight={500}>
-            {label}
-          </Typography>
+          ) : null}
         </Box>
 
-        {/* Value */}
-        <Typography
-          variant="h4"
-          fontWeight={700}
-          sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, lineHeight: 1.2 }}
-        >
-          {value}
-        </Typography>
-
-        {/* Delta */}
-        {delta !== undefined && (
-          <DeltaBadge delta={delta} deltaLabel={deltaLabel} />
-        )}
-
-        {/* Sparkline */}
-        {sparklineData && sparklineData.length > 0 && (
-          <Box sx={{ mt: 0.5, display: { xs: 'none', sm: 'block' } }}>
+        {sparklineData && sparklineData.length > 0 ? (
+          <Box sx={{ mt: 'auto', pt: 0.5, display: { xs: 'none', sm: 'block' } }}>
             <SparkLine
               data={sparklineData}
-              height={40}
+              height={32}
               positive={delta !== undefined ? delta >= 0 : undefined}
             />
           </Box>
-        )}
+        ) : null}
       </Box>
     </BaseCard>
   )

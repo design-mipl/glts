@@ -10,8 +10,6 @@ import { AdminOverlayFormSection } from '@/pages/admin/components/AdminOverlayFo
 
 import { corporateAccountService } from '@/shared/services/corporateAccountService'
 
-import { entityMasterService } from '@/shared/services/entityMasterService'
-
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
 
 import type { CorporateAccountFormData } from '@/shared/types/corporateAccount'
@@ -316,8 +314,6 @@ export function CorporateAccountVesselsSection({
 
                     <TableCell>Vessel type</TableCell>
 
-                    <TableCell>Linked entity</TableCell>
-
                     <TableCell>Status</TableCell>
 
                     <TableCell align="right">Actions</TableCell>
@@ -335,16 +331,6 @@ export function CorporateAccountVesselsSection({
                       <TableCell>{vessel.vesselName}</TableCell>
 
                       <TableCell>{vessel.vesselType}</TableCell>
-
-                      <TableCell>
-
-                        {vessel.linkedEntityId
-
-                          ? entityMasterService.getById(vessel.linkedEntityId)?.entityName ?? vessel.linkedEntityId
-
-                          : '—'}
-
-                      </TableCell>
 
                       <TableCell>{vessel.status}</TableCell>
 

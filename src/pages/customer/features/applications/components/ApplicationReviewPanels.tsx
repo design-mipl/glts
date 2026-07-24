@@ -66,12 +66,17 @@ function queueReadyRows(rows: UploadQueueRow[]) {
   return rows.filter(r => r.status !== 'processing')
 }
 
-export function buildSubmitTimeline(row: UploadQueueRow | null): ApplicationProcessingTimelineStep[] {
+export function buildSubmitTimeline(
+  row: UploadQueueRow | null,
+  overview?: Pick<ApplicationReviewOverview, 'countryName' | 'visaTypeLabel'>,
+): ApplicationProcessingTimelineStep[] {
   const docsDone = row ? row.documentsTotal === 0 || row.documentsComplete >= row.documentsTotal : false
   return buildApplicationProcessingTimeline({
     stageDates: row?.processingStageDates,
     docsDone,
     isSubmitted: false,
+    countryName: overview?.countryName,
+    visaTypeLabel: overview?.visaTypeLabel,
   })
 }
 
@@ -119,8 +124,8 @@ export function ApplicationReviewPanels({
     return enrichGlobalChecklistWithCorrections(base, corrections)
   }, [applicationId, globalDocumentUploads, corrections])
   const resolvedTimeline = useMemo(
-    () => timelineSteps ?? buildSubmitTimeline(selectedRow),
-    [timelineSteps, selectedRow],
+    () => timelineSteps ?? buildSubmitTimeline(selectedRow, overview),
+    [timelineSteps, selectedRow, overview],
   )
   const travelerCount = readyRows.length > 0 ? readyRows.length : rows.length
   const hasDocumentSections = useMemo(() => {

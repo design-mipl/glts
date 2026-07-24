@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, alpha, useTheme } from '@mui/material'
 import { Plus } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   AdminListingGrid,
@@ -11,6 +11,8 @@ import {
 } from '@/pages/admin/components/listing'
 import { Button, ConfirmDialog, Pagination, useToast } from '@/design-system/UIComponents'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
+import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
+import { getCurrentListingHref, navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { invoiceService } from '@/shared/services/invoiceService'
 import type { Invoice } from '@/shared/types/invoice'
 import { InvoiceKpiRow } from '../components/InvoiceKpiRow'
@@ -32,9 +34,11 @@ import type { RecordPaymentModalValue } from '../components/workspace/RecordPaym
 import { RecordPaymentModal } from '../components/workspace/RecordPaymentModal'
 import type { ShareInvoiceModalValue } from '../components/workspace/ShareInvoiceModal'
 import { ShareInvoiceModal } from '../components/workspace/ShareInvoiceModal'
+import { buildRevisedWorkspaceFromCreditNote } from '../utils/invoiceFeeCompositionUtils'
 
 const LISTING_PATH = '/admin/finance/invoices'
 const GENERATE_DRAFT_PATH = `${LISTING_PATH}/generate`
+const INVOICE_TAB_VALUES = INVOICE_LISTING_TABS.map(tab => tab.id) as readonly InvoiceListingTab[]
 
 function parsePaymentField(raw: string): number {
   const n = Number.parseFloat(raw.replace(/,/g, ''))
@@ -44,11 +48,20 @@ function parsePaymentField(raw: string): number {
 export function InvoiceListingPage() {
   const theme = useTheme()
   const navigate = useNavigate()
+  const location = useLocation()
   const { showToast } = useToast()
   const [rows, setRows] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<InvoiceListingTab>('all')
+  const [activeTab, setActiveTab] = useListingTabParam(INVOICE_TAB_VALUES, 'submitted')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
+  const listingReturnHref = getCurrentListingHref(location)
+
+  const goFromListing = useCallback(
+    (to: string, options?: Parameters<typeof navigateFromListing>[3]) => {
+      navigateFromListing(navigate, to, listingReturnHref, options)
+    },
+    [listingReturnHref, navigate],
+  )
   const [shareTarget, setShareTarget] = useState<Invoice>()
   const [shareOpen, setShareOpen] = useState(false)
   const [shareValue, setShareValue] = useState<ShareInvoiceModalValue>({
@@ -63,6 +76,10 @@ export function InvoiceListingPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [reminderTarget, setReminderTarget] = useState<Invoice>()
   const [reminderOpen, setReminderOpen] = useState(false)
+  const [cancelTarget, setCancelTarget] = useState<Invoice>()
+  const [cancelOpen, setCancelOpen] = useState(false)
+  const [revisedPromptOpen, setRevisedPromptOpen] = useState(false)
+  const [revisedSource, setRevisedSource] = useState<Invoice>()
   const [paymentTarget, setPaymentTarget] = useState<Invoice>()
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [paymentValue, setPaymentValue] = useState<RecordPaymentModalValue>({
@@ -84,6 +101,43 @@ export function InvoiceListingPage() {
     loadRows()
   }, [loadRows])
 
+  const openRevisedInvoiceFlow = useCallback(
+    (row: Invoice) => {
+      const originId = row.invoiceType === 'credit_note' ? row.sourceInvoiceId ?? row.id : row.id
+      const existing = invoiceService.findReplacementInvoice(originId)
+      if (existing) {
+        showToast({
+          title: 'Revised invoice already exists',
+          description: existing.invoiceId,
+          variant: 'info',
+        })
+        goFromListing(
+          existing.invoiceStatus === 'draft'
+            ? `${GENERATE_DRAFT_PATH}?draftId=${existing.id}&step=1`
+            : `${LISTING_PATH}/${existing.id}`,
+        )
+        return
+      }
+      const workspace =
+        row.invoiceType === 'credit_note'
+          ? buildRevisedWorkspaceFromCreditNote(row, invoiceService.getById(originId) ?? row)
+          : undefined
+      const draft = invoiceService.createRevisedInvoiceDraft(row.id, workspace)
+      if (!draft) {
+        showToast({ title: 'Unable to create revised invoice', variant: 'error' })
+        return
+      }
+      showToast({
+        title: 'Revised invoice draft created',
+        description: draft.invoiceId,
+        variant: 'success',
+      })
+      loadRows()
+      goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${draft.id}&step=1`)
+    },
+    [goFromListing, showToast, loadRows],
+  )
+
   const tabFilteredRows = useMemo(() => filterInvoicesByTab(rows, activeTab), [rows, activeTab])
 
   const listing = useCustomerListing({
@@ -98,9 +152,9 @@ export function InvoiceListingPage() {
   const columns = useMemo(
     () =>
       buildInvoiceColumns({
-        onOpenDetail: row => navigate(`${LISTING_PATH}/${row.id}`),
+        onOpenDetail: row => goFromListing(`${LISTING_PATH}/${row.id}`),
         onEditDraft: row =>
-          navigate(`${GENERATE_DRAFT_PATH}?draftId=${row.id}&step=1`),
+          goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${row.id}&step=1`),
         onSubmitDraft: row => {
           setSubmitTarget(row)
           setSubmitOpen(true)
@@ -121,9 +175,6 @@ export function InvoiceListingPage() {
         },
         onDownload: row => {
           showToast({ title: 'Download started', description: `${row.invoiceId}.pdf`, variant: 'success' })
-        },
-        onDownloadReceipt: row => {
-          showToast({ title: 'Receipt download started', description: row.invoiceId, variant: 'success' })
         },
         onRecordPayment: row => {
           const collected = row.payments.reduce((sum, p) => sum + p.amount, 0)
@@ -161,25 +212,22 @@ export function InvoiceListingPage() {
             variant: 'success',
           })
           loadRows()
-          navigate(`${GENERATE_DRAFT_PATH}?draftId=${secondary.id}&step=1`)
+          goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${secondary.id}&step=1`)
         },
-        onCreditNote: row => navigate(`${LISTING_PATH}/${row.id}/credit-note`),
-        onDebitNote: row => {
-          const debit = invoiceService.createDebitNote(row.id)
-          if (!debit) {
-            showToast({ title: 'Unable to create debit note', variant: 'error' })
-            return
-          }
-          showToast({ title: 'Debit note created', description: debit.invoiceId, variant: 'success' })
-          loadRows()
-          navigate(`${LISTING_PATH}/${debit.id}`)
+        onCreditNote: row => goFromListing(`${LISTING_PATH}/${row.id}/credit-note`),
+        onModify: row =>
+          goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${row.id}&step=1`),
+        onCancel: row => {
+          setCancelTarget(row)
+          setCancelOpen(true)
         },
+        onCreateRevisedInvoice: row => openRevisedInvoiceFlow(row),
         onSendReminder: row => {
           setReminderTarget(row)
           setReminderOpen(true)
         },
       }),
-    [navigate, showToast, loadRows],
+    [goFromListing, showToast, loadRows, openRevisedInvoiceFlow],
   )
 
   const toolbarColumns = useMemo(
@@ -187,7 +235,7 @@ export function InvoiceListingPage() {
     [columns],
   )
 
-  const handleGenerate = useCallback(() => navigate(`${LISTING_PATH}/generate`), [navigate])
+  const handleGenerate = useCallback(() => goFromListing(`${LISTING_PATH}/generate`), [goFromListing])
 
   const emptyState = useMemo(() => {
     const base = getInvoiceEmptyState(activeTab, Boolean(listing.tableState.searchQuery))
@@ -210,7 +258,7 @@ export function InvoiceListingPage() {
       setViewMode('table')
       listing.setTableState(state => ({ ...state, page: 0 }))
     },
-    [listing],
+    [listing, setActiveTab],
   )
 
   const handleShareConfirm = () => {
@@ -307,7 +355,7 @@ export function InvoiceListingPage() {
       <AdminListingShell
         stickyPageHeader={
           <AdminListingStickyHeader
-            title="Billing & invoice management"
+            title="Billing & invoice"
             description="Operational invoice generation and finance tracking."
             actions={
               <Button
@@ -356,7 +404,7 @@ export function InvoiceListingPage() {
               columnFilters={listing.columnFilters}
               onColumnFiltersChange={listing.setColumnFilters}
               getCellValue={getInvoiceCellValue}
-              onRowClick={row => navigate(`${LISTING_PATH}/${row.id}`)}
+              onRowClick={row => goFromListing(`${LISTING_PATH}/${row.id}`)}
               loading={loading}
               stickyHeader
               emptyTitle={emptyState.emptyTitle}
@@ -364,7 +412,7 @@ export function InvoiceListingPage() {
               emptyAction={emptyState.emptyAction}
             />
           ) : (
-            <AdminListingGrid items={gridItems} onItemClick={id => navigate(`${LISTING_PATH}/${id}`)} />
+            <AdminListingGrid items={gridItems} onItemClick={id => goFromListing(`${LISTING_PATH}/${id}`)} />
           )
         }
         footer={
@@ -415,6 +463,55 @@ export function InvoiceListingPage() {
         description={`Send a payment reminder for overdue invoice ${reminderTarget?.invoiceId}?`}
         confirmLabel="Send reminder"
         onConfirm={handleReminderConfirm}
+      />
+
+      <ConfirmDialog
+        open={cancelOpen}
+        onClose={() => {
+          setCancelOpen(false)
+          setCancelTarget(undefined)
+        }}
+        title="Cancel invoice"
+        description={`Cancel invoice ${cancelTarget?.invoiceId}? Applications remain billable.`}
+        confirmLabel="Cancel invoice"
+        variant="destructive"
+        onConfirm={() => {
+          if (!cancelTarget) return
+          const updated = invoiceService.cancel(cancelTarget.id)
+          if (!updated) {
+            showToast({ title: 'Unable to cancel invoice', variant: 'error' })
+            return
+          }
+          showToast({ title: 'Invoice cancelled', description: updated.invoiceId, variant: 'info' })
+          setCancelOpen(false)
+          setRevisedSource(updated)
+          setCancelTarget(undefined)
+          loadRows()
+          setRevisedPromptOpen(true)
+        }}
+      />
+
+      <ConfirmDialog
+        open={revisedPromptOpen}
+        onClose={() => {
+          setRevisedPromptOpen(false)
+          setRevisedSource(undefined)
+        }}
+        title="Create revised invoice?"
+        description={
+          revisedSource
+            ? `Create a revised invoice for ${revisedSource.invoiceId}? You can also do this later from the cancelled invoice or credit note.`
+            : 'Create a revised invoice?'
+        }
+        confirmLabel="Create revised invoice"
+        cancelLabel="Not now"
+        onConfirm={() => {
+          if (!revisedSource) return
+          const source = revisedSource
+          setRevisedPromptOpen(false)
+          setRevisedSource(undefined)
+          openRevisedInvoiceFlow(source)
+        }}
       />
 
       <RecordPaymentModal

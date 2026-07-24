@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Grid } from '@mui/material'
 import { useToast } from '@/design-system/UIComponents'
-import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
+import { DashboardSectionTable } from '@/pages/admin/dashboard/components'
 import { buildAppointmentSubmissionColumns } from '../columns/appointmentSubmissionColumns'
 import { buildReviewQcColumns } from '../columns/reviewQcColumns'
 import type { AppointmentSubmissionRow, ReviewQcRow } from '../../data/operationsConsultantDashboardMock'

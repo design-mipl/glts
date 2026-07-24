@@ -6,6 +6,9 @@ export const PORTAL_TOPBAR_HEIGHT = 52
 /** Matches design-system AppShell expanded sidebar width. */
 export const PORTAL_SIDEBAR_WIDTH = 240
 
+/** Matches design-system AppShell collapsed sidebar width. */
+export const PORTAL_SIDEBAR_COLLAPSED_WIDTH = 64
+
 /** Breakpoint key for mobile nav drawer — aligns with Admin AppShell (`desktop` / 1024px). */
 export const PORTAL_MOBILE_NAV_BREAKPOINT = 'desktop' as const
 

@@ -6,6 +6,7 @@ export type MarineApplicationListingTab =
   | 'draft'
   | 'verification_pending'
   | 'online_submission_pending'
+  | 'pending_payment'
   | 'vfs_submission_pending'
   | 'collection_pending'
   | 'collected'
@@ -21,6 +22,7 @@ export const MARINE_APPLICATION_LISTING_TABS: ReadonlyArray<{
   { value: 'draft', label: 'Draft' },
   { value: 'verification_pending', label: 'Verification Pending' },
   { value: 'online_submission_pending', label: 'Submission Pending' },
+  { value: 'pending_payment', label: 'Pending Payment' },
   { value: 'vfs_submission_pending', label: 'Embassy/VFS Submission Pending' },
   { value: 'collection_pending', label: 'Collection Pending' },
   { value: 'collected', label: 'Collected' },
@@ -42,11 +44,11 @@ export function resolveMarineApplicationQueueTab(
     return 'draft'
   }
 
-  if (row.operationalStatus === 'Completed' || row.processingStage === 'Closed') {
+  if (row.operationalStatus === 'Completed' || row.processingStage === 'Delivered') {
     return 'dispatched'
   }
 
-  if (row.processingStage === 'Passport dispatch' || row.operationalStatus === 'Passport Ready') {
+  if (row.processingStage === 'Dispatch' || row.operationalStatus === 'Passport Ready') {
     return 'collected'
   }
 
@@ -58,13 +60,16 @@ export function resolveMarineApplicationQueueTab(
     return 'vfs_submission_pending'
   }
 
-  if (row.processingStage === 'Embassy submission') {
+  if (row.processingStage === 'Payment pending') {
+    return 'pending_payment'
+  }
+
+  if (row.processingStage === 'Submitted') {
     return 'online_submission_pending'
   }
 
   if (
-    row.processingStage === 'Document verification' ||
-    row.processingStage === 'Intake' ||
+    row.processingStage === 'Ready for submission' ||
     VERIFICATION_PENDING_STATUSES.has(row.operationalStatus)
   ) {
     return 'verification_pending'
