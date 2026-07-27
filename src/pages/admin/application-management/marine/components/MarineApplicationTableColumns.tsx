@@ -25,7 +25,7 @@ import {
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import { isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
 import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
-import { isMarineReadOnlyWorkspace, isMarinePendingPaymentWorkspace, opensMarineViewFormDirectly } from '../config/marineWorkspaceMode'
+import { isMarineReadOnlyWorkspace, isMarinePendingPaymentWorkspace, opensMarineViewFormDirectly, resolveMarineWorkspaceMode } from '../config/marineWorkspaceMode'
 
 type ToastFn = (toast: Omit<Toast, 'id'>) => void
 
@@ -52,6 +52,8 @@ function buildRowActions(
   const readOnlyWorkspace = submitted && isMarineReadOnlyWorkspace(row)
   const pendingPaymentWorkspace = submitted && isMarinePendingPaymentWorkspace(row)
   const openViewFormDirectly = submitted && opensMarineViewFormDirectly(row)
+  const workspaceMode = submitted ? resolveMarineWorkspaceMode(row) : null
+  const isSubmissionPending = workspaceMode === 'online_submission'
 
   return [
     {
@@ -59,8 +61,15 @@ function buildRowActions(
         ? 'View application'
         : pendingPaymentWorkspace
           ? 'Record payment'
-          : 'Verify Documents',
-      icon: readOnlyWorkspace || pendingPaymentWorkspace ? <FileText size={16} /> : <ClipboardCheck size={16} />,
+          : isSubmissionPending
+            ? 'View Form'
+            : 'Verify Documents',
+      icon:
+        readOnlyWorkspace || pendingPaymentWorkspace || isSubmissionPending ? (
+          <FileText size={16} />
+        ) : (
+          <ClipboardCheck size={16} />
+        ),
       disabled: !submitted,
       onClick: () => {
         if (!submitted) {
@@ -73,31 +82,11 @@ function buildRowActions(
         }
         navigateFromListing(
           navigate,
-          openViewFormDirectly ? `${detailPath}/view-form` : detailPath,
+          openViewFormDirectly || isSubmissionPending ? `${detailPath}/view-form` : detailPath,
           fromListing,
         )
       },
     },
-    ...(readOnlyWorkspace || pendingPaymentWorkspace
-      ? []
-      : [
-          {
-            label: 'View Form',
-            icon: <FileText size={16} />,
-            disabled: !submitted,
-            onClick: () => {
-              if (!submitted) {
-                showToast({
-                  title: 'Draft application',
-                  description: 'Submit this application before opening the form assist workspace.',
-                  variant: 'info',
-                })
-                return
-              }
-              navigateFromListing(navigate, `${detailPath}/view-form`, fromListing)
-            },
-          },
-        ]),
     {
       label: 'Add Remarks',
       icon: <MessageSquarePlus size={16} />,
@@ -252,7 +241,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'operationalStatus',
       label: 'Status',
-      widthSize: 'sm',
+      widthSize: 'lg',
       sortable: true,
       filterable: true,
       render: (_: unknown, row: MarineApplicationRow) => (

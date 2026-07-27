@@ -1,20 +1,17 @@
 import { Box } from '@mui/material'
 import type { ReactNode } from 'react'
-import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
-import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
-import type { VerifyOverviewData } from '../../utils/verifyDocumentsUtils'
-import { VerifyTravelerList } from './VerifyTravelerList'
-import {
-  VerifyTravelerDetailPanel,
-  type VerifyDetailWorkTab,
-} from './VerifyTravelerDetailPanel'
-import type { VerifyTravelerListFilter } from '../../utils/verifyDocumentsUtils'
+import type { UploadQueueRow } from '../../data/applicationFlowData'
+import type { ApplicationReviewOverview } from '../../utils/applicationReviewOverview'
+import type { ApplicationDetailViewModel } from '../../types/applicationDetail.types'
 import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
+import type { VerifyTravelerListFilter } from '@/pages/admin/application-management/marine/utils/verifyDocumentsUtils'
+import { ApplicationReviewPassengerList } from './ApplicationReviewPassengerList'
+import { ApplicationReviewDetailPanel } from './ApplicationReviewDetailPanel'
 
-interface VerifyPassengerWorkspaceProps {
+interface ApplicationReviewPassengerWorkspaceProps {
   rows: UploadQueueRow[]
   filteredRows: UploadQueueRow[]
-  overview: VerifyOverviewData
+  overview: ApplicationReviewOverview
   singleListing: boolean
   selectedTravelerId: string | null
   onSelectTraveler: (id: string) => void
@@ -26,24 +23,10 @@ interface VerifyPassengerWorkspaceProps {
   timelineSteps: ApplicationProcessingTimelineStep[]
   detail?: ApplicationDetailViewModel
   applicationId?: string
-  workTabs: VerifyDetailWorkTab[]
-  workTabHint?: ReactNode
-  headerActions?: ReactNode
-  emptyMessage?: string
-  processingStatus?: {
-    currentStatusId: string
-    countryId?: string
-    countryName?: string
-    visaTypeLabel?: string
-    visaOfferingId?: string
-    modalOpen: boolean
-    onOpenModal: () => void
-    onCloseModal: () => void
-    onUpdated: () => void
-  }
+  documentsContent: ReactNode
 }
 
-export function VerifyPassengerWorkspace({
+export function ApplicationReviewPassengerWorkspace({
   rows,
   filteredRows,
   overview,
@@ -58,36 +41,32 @@ export function VerifyPassengerWorkspace({
   timelineSteps,
   detail,
   applicationId,
-  workTabs,
-  workTabHint,
-  headerActions,
-  emptyMessage,
-  processingStatus,
-}: VerifyPassengerWorkspaceProps) {
+  documentsContent,
+}: ApplicationReviewPassengerWorkspaceProps) {
   return (
     <Box
       sx={{
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
         gap: 2,
-        height: { xs: 'auto', md: 'calc(100vh - 280px)' },
-        minHeight: { xs: 480, md: 560 },
-        maxHeight: { md: 'calc(100vh - 280px)' },
+        height: { xs: 'auto', md: 'calc(100vh - 260px)' },
+        minHeight: { xs: 480, md: 520 },
+        maxHeight: { md: 'calc(100vh - 260px)' },
         overflow: 'hidden',
       }}
     >
       <Box
         sx={{
-          width: { xs: '100%', md: '24%' },
+          width: { xs: '100%', md: '30%' },
           flexShrink: 0,
-          minHeight: { xs: 320, md: 0 },
-          maxHeight: { xs: 400, md: 'none' },
+          minHeight: { xs: 300, md: 0 },
+          maxHeight: { xs: 380, md: 'none' },
           display: 'flex',
           flexDirection: 'column',
           minWidth: 0,
         }}
       >
-        <VerifyTravelerList
+        <ApplicationReviewPassengerList
           rows={rows}
           filteredRows={filteredRows}
           overview={overview}
@@ -105,24 +84,20 @@ export function VerifyPassengerWorkspace({
         sx={{
           flex: 1,
           minWidth: 0,
-          minHeight: { xs: 480, md: 0 },
+          minHeight: { xs: 420, md: 0 },
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
         }}
       >
-        <VerifyTravelerDetailPanel
+        <ApplicationReviewDetailPanel
           selectedRow={selectedRow}
-          timelineSteps={timelineSteps}
           overview={overview}
+          timelineSteps={timelineSteps}
+          singleListing={singleListing}
           detail={detail}
           applicationId={applicationId}
-          singleListing={singleListing}
-          workTabs={workTabs}
-          workTabHint={workTabHint}
-          headerActions={headerActions}
-          emptyMessage={emptyMessage}
-          processingStatus={processingStatus}
+          documentsContent={documentsContent}
         />
       </Box>
     </Box>

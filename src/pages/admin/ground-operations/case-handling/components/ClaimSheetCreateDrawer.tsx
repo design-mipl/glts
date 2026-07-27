@@ -144,7 +144,7 @@ export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetC
       title="Claim sheet"
       subtitle={
         step === 'select'
-          ? 'Select completed / dispatched cases'
+          ? 'Select cases from document submission onward'
           : step === 'expenses'
             ? 'Add other expenses, then generate'
             : preview
@@ -159,7 +159,7 @@ export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetC
         <Stack spacing={1.25}>
           {eligibleCases.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
-              No completed or dispatched cases are available for claim.
+              No document-submitted or later cases are available for claim.
             </Typography>
           ) : (
             eligibleCases.map(record => (

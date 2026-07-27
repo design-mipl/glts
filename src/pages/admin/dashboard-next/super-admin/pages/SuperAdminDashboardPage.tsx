@@ -53,7 +53,12 @@ function mapIntelligenceToHookFilters(
   filters: DashboardIntelligenceFilters,
 ): SuperAdminDashboardFilters {
   return {
-    date: filters.datePreset === 'custom' ? 'month' : filters.datePreset,
+    date:
+      filters.datePreset === 'custom' ||
+      filters.datePreset === 'date' ||
+      filters.datePreset === 'range'
+        ? 'month'
+        : filters.datePreset,
     branch: filters.branch,
     country: filters.country,
     segment: filters.segment,

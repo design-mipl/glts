@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { applicationVerificationService } from '@/shared/services/applicationVerificationService'
+import { applicationProcessingStatusService } from '@/shared/services/applicationProcessingStatusService'
 import {
   applicationFormAssistService,
   EMPTY_FORM_ASSIST_SUBMISSION,
   isFormAssistExternallySubmitted,
   type FormAssistRecord,
 } from '@/shared/services/applicationFormAssistService'
+import { isApplicantDocumentSatisfied } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import {
   GENERIC_FORM_ASSIST_STEPS,
   buildFormAssistFieldsForStep,
@@ -24,6 +26,8 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
   )
   const [selectedTravelerId, setSelectedTravelerId] = useState<string | null>(null)
   const [assistRecord, setAssistRecord] = useState<FormAssistRecord | null>(null)
+  const [processingStatusTick, setProcessingStatusTick] = useState(0)
+  const [statusModalOpen, setStatusModalOpen] = useState(false)
   const reload = useCallback(() => {
     if (!applicationId) return
     setWorkspace(applicationVerificationService.getWorkspace(applicationId))
@@ -112,6 +116,22 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
       isFormAssistExternallySubmitted(applicationId, selectedRow.id),
   )
 
+  const processingStatusContext = useMemo(() => {
+    if (!applicationId || !selectedRow) return undefined
+    const required = selectedRow.documents.filter((doc) => doc.required)
+    const docsDone =
+      required.length === 0 || required.every((doc) => isApplicantDocumentSatisfied(doc))
+    const allVerified = required.length > 0 && required.every((doc) => doc.status === 'verified')
+    return applicationProcessingStatusService.ensureState({
+      applicationId,
+      travelerRowId: selectedRow.id,
+      docsDone,
+      allVerified,
+      countryName: detail?.application?.country ?? listingRow?.country,
+      visaTypeLabel: detail?.application?.visaType ?? listingRow?.visaType,
+    })
+  }, [applicationId, selectedRow, detail, listingRow, processingStatusTick])
+
   const timelineSteps = useMemo(
     () =>
       buildVerifyTimeline(
@@ -123,10 +143,28 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
           visaTypeLabel: detail?.application?.visaType ?? listingRow?.visaType,
           operationalStatus: listingRow?.operationalStatus ?? detail?.operationalStatus,
           processingStage: listingRow?.processingStage,
+          workflowId: processingStatusContext?.workflowId,
+          currentStatusId: processingStatusContext?.currentStatusId,
+          heldFromStatusId: processingStatusContext?.heldFromStatusId,
         },
       ),
-    [selectedRow, listingRow, externallySubmitted, detail],
+    [
+      selectedRow,
+      listingRow,
+      externallySubmitted,
+      detail,
+      processingStatusContext,
+      processingStatusTick,
+    ],
   )
+
+  const refreshProcessingStatus = useCallback(() => {
+    setProcessingStatusTick((n) => n + 1)
+    reload()
+  }, [reload])
+
+  const openStatusModal = useCallback(() => setStatusModalOpen(true), [])
+  const closeStatusModal = useCallback(() => setStatusModalOpen(false), [])
 
   const refreshAssistRecord = useCallback(() => {
     if (!applicationId || !selectedRow) return
@@ -207,6 +245,11 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
     markAsSubmitted,
     externallySubmitted,
     timelineSteps,
+    processingStatusContext,
+    statusModalOpen,
+    openStatusModal,
+    closeStatusModal,
+    refreshProcessingStatus,
     completedStepIds: assistRecord?.completedStepIds ?? [],
     reload,
   }

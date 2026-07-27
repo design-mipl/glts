@@ -66,7 +66,11 @@ export function computeMarineListingKpis(rows: MarineApplicationRow[]) {
   const verificationPending = rows.filter(row =>
     isMarineApplicationInQueueTab(row, 'verification_pending'),
   ).length
-  const pendingCorrections = rows.filter(row => row.operationalStatus === 'Correction Required').length
+  const pendingCorrections = rows.filter(
+    row =>
+      row.operationalStatus === 'Correction Required' ||
+      row.operationalStatus === 'Document Rejected',
+  ).length
   const dispatched = rows.filter(row => isMarineApplicationInQueueTab(row, 'dispatched')).length
 
   return {

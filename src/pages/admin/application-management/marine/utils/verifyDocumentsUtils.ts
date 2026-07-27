@@ -29,6 +29,9 @@ export function buildVerifyTimeline(
     visaOfferingId?: string
     operationalStatus?: string
     processingStage?: string
+    workflowId?: string
+    currentStatusId?: string
+    heldFromStatusId?: string
   },
 ): ApplicationProcessingTimelineStep[] {
   const required = row?.documents.filter((doc) => doc.required) ?? []
@@ -51,6 +54,9 @@ export function buildVerifyTimeline(
     visaOfferingId: context?.visaOfferingId,
     operationalStatus: context?.operationalStatus,
     processingStage: context?.processingStage,
+    workflowId: context?.workflowId,
+    currentStatusId: context?.currentStatusId,
+    heldFromStatusId: context?.heldFromStatusId,
   })
 }
 
@@ -109,6 +115,11 @@ export interface VerifyRejectedDocumentEntry {
   scope: 'traveler' | 'global'
   travelerId?: string
   travelerName?: string
+  /**
+   * false = flagged during QC / Submission Pending (internal).
+   * true / undefined = confirmed rejection shared (or shareable) with customer.
+   */
+  customerVisible?: boolean
 }
 
 export function isRejectedVerifyDocument(doc: ApplicantDocumentItem): boolean {
@@ -118,30 +129,53 @@ export function isRejectedVerifyDocument(doc: ApplicantDocumentItem): boolean {
 export function collectRejectedVerifyDocuments(
   rows: UploadQueueRow[],
   globalDocuments: ApplicantDocumentItem[],
+  visibilityByKey?: Record<string, boolean>,
 ): VerifyRejectedDocumentEntry[] {
   const entries: VerifyRejectedDocumentEntry[] = []
 
   for (const row of rows.filter(r => r.status !== 'processing')) {
     for (const document of row.documents) {
       if (!isRejectedVerifyDocument(document)) continue
+      const key = `traveler:${row.id}:${document.documentId}`
       entries.push({
         document,
         scope: 'traveler',
         travelerId: row.id,
         travelerName: row.travelerName,
+        customerVisible: visibilityByKey?.[key],
       })
     }
   }
 
   for (const document of globalDocuments) {
     if (!isRejectedVerifyDocument(document)) continue
+    const key = `global:${document.documentId}`
     entries.push({
       document,
       scope: 'global',
+      customerVisible: visibilityByKey?.[key],
     })
   }
 
   return entries
+}
+
+export function splitRejectedVerifyDocuments(entries: VerifyRejectedDocumentEntry[]): {
+  flaggedDuringQc: VerifyRejectedDocumentEntry[]
+  rejectedDocuments: VerifyRejectedDocumentEntry[]
+} {
+  const flaggedDuringQc: VerifyRejectedDocumentEntry[] = []
+  const rejectedDocuments: VerifyRejectedDocumentEntry[] = []
+
+  for (const entry of entries) {
+    if (entry.customerVisible === false) {
+      flaggedDuringQc.push(entry)
+    } else {
+      rejectedDocuments.push(entry)
+    }
+  }
+
+  return { flaggedDuringQc, rejectedDocuments }
 }
 
 export type VerifyTravelerListFilter = 'all' | 'pending' | 'completed' | 'correction'

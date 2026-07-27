@@ -80,7 +80,9 @@ export function DocumentationDashboardPage() {
       setFilters((prev) => ({
         ...prev,
         date:
-          filters.datePreset === 'custom'
+          filters.datePreset === 'custom' ||
+          filters.datePreset === 'date' ||
+          filters.datePreset === 'range'
             ? prev.date
             : filters.datePreset,
         country: filters.country || prev.country,

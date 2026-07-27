@@ -44,7 +44,7 @@ export function getInvoiceTabCounts(rows: Invoice[]): Record<InvoiceListingTab, 
 
 export const INVOICE_LISTING_TABS: { id: InvoiceListingTab; label: string }[] = [
   { id: 'draft', label: 'Draft' },
-  { id: 'submitted', label: 'Submitted' },
+  { id: 'submitted', label: 'Invoiced' },
   { id: 'shared', label: 'Shared' },
   { id: 'paid', label: 'Paid' },
   { id: 'overdue', label: 'Overdue' },

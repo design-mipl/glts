@@ -121,12 +121,29 @@ export const customerPortalService = {
 
   getSingleApplications(): SingleApplicationRow[] {
     const session = loadSession()
-    return filterApplicationsBySession([...getSavedDraftRows(), ...mockSingleApplications], session)
+    return filterApplicationsBySession([...getSavedDraftRows(), ...mockSingleApplications], session).map(
+      row =>
+        row.operationalStatus === 'Document Rejected'
+          ? {
+              ...row,
+              operationalStatus: 'Under Review',
+              status: 'Under Review',
+            }
+          : row,
+    )
   },
 
   getBulkBatches(): BulkBatchRow[] {
     const session = loadSession()
-    return filterApplicationsBySession(mockBulkBatches, session)
+    return filterApplicationsBySession(mockBulkBatches, session).map(row =>
+      row.operationalStatus === 'Document Rejected'
+        ? {
+            ...row,
+            operationalStatus: 'Under Review',
+            status: 'Under Review',
+          }
+        : row,
+    )
   },
 
   getApplicationListingRows() {
@@ -157,12 +174,12 @@ export const customerPortalService = {
 
     if (single) {
       const detail = buildSingleDetail(single, resolvedId, flowState)
-      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId) : detail
+      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId, { forCustomer: !ignoreAccessControl }) : detail
     }
 
     if (bulk) {
       const detail = buildBulkDetail(bulk, resolvedId, flowState)
-      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId) : detail
+      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId, { forCustomer: !ignoreAccessControl }) : detail
     }
 
     const allSingles = [...getSavedDraftRows(), ...mockSingleApplications]
@@ -174,7 +191,7 @@ export const customerPortalService = {
       const detail = restricted.recordType === 'bulk'
         ? buildBulkDetail(restricted as BulkBatchRow, resolvedId, flowState)
         : buildSingleDetail(restricted as SingleApplicationRow, resolvedId, flowState)
-      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId) : detail
+      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId, { forCustomer: false }) : detail
     }
 
     if (restricted && !canViewApplication(restricted, session)) {

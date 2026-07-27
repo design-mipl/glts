@@ -399,22 +399,15 @@ export function getFundAllocationClaimSheetCellValue(row: GroundOpsClaimSheet, k
       return String(row.cases.length)
     case 'allocatedAmount':
       return formatInr(row.kpis.allocatedAmount)
-    case 'totalWithdrawn':
-      return isClaimSheetBankTransferKpis(row.fundTransferType)
-        ? formatInr(row.kpis.totalWithdrawn)
-        : '—'
-    case 'availableInBank':
-      return isClaimSheetBankTransferKpis(row.fundTransferType)
-        ? formatInr(row.kpis.availableInBank)
-        : '—'
-    case 'inHandCash':
-      return isClaimSheetBankTransferKpis(row.fundTransferType)
-        ? formatInr(row.kpis.inHandCash)
-        : '—'
     case 'expensesIncurred':
       return formatInr(row.kpis.expensesIncurred)
     case 'settlementAmount':
-      return formatSettlementAmountLabel(row.kpis.settlementAmount)
+      return formatSettlementAmountLabel(
+        row.kpis.settlementAmount,
+        isClaimSheetBankTransferKpis(row.fundTransferType)
+          ? 'closing_cash'
+          : 'expense_vs_allocated',
+      )
     case 'generatedAt':
       return row.generatedAt
     default:
@@ -431,16 +424,12 @@ export function downloadFundAllocationClaimSheetsCsv(sheets: GroundOpsClaimSheet
     'Status',
     'Cases',
     'Allocated Amount',
-    'Total Withdrawn',
-    'Available In Bank',
-    'In Hand Cash',
     'Expenses Incurred',
     'Settlement Amount',
     'Generated At',
   ]
 
   const lines = sheets.map(sheet => {
-    const isBank = isClaimSheetBankTransferKpis(sheet.fundTransferType)
     return [
       sheet.claimNumber,
       getClaimSheetFundTransferLabel(sheet.fundTransferType),
@@ -449,9 +438,6 @@ export function downloadFundAllocationClaimSheetsCsv(sheets: GroundOpsClaimSheet
       CLAIM_SHEET_STATUS_LABEL[sheet.status],
       sheet.cases.length,
       sheet.kpis.allocatedAmount,
-      isBank ? sheet.kpis.totalWithdrawn : '',
-      isBank ? sheet.kpis.availableInBank : '',
-      isBank ? sheet.kpis.inHandCash : '',
       sheet.kpis.expensesIncurred,
       sheet.kpis.settlementAmount,
       sheet.generatedAt,

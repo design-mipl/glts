@@ -5,6 +5,7 @@ import { Card, Separator } from '../shadcn'
 import { UI_KIT_SPACING, UI_KIT_Z, uiKitPad } from '../tokens'
 import { uiKitFadeInSx } from '../motion'
 import type { UiKitDensity } from '../types'
+import { useStickyStuck } from '../../hooks/useStickyStuck'
 
 export interface DashboardSpacingProps {
   size?: keyof typeof UI_KIT_SPACING
@@ -209,26 +210,45 @@ export interface StickySectionHeaderProps {
 }
 
 export function StickySectionHeader({ children, sx }: StickySectionHeaderProps) {
+  const { sentinelRef, stuck } = useStickyStuck()
+
   return (
-    <Box
-      sx={{
-        position: 'sticky',
-        top: 0,
-        zIndex: UI_KIT_Z.sticky,
-        bgcolor: (theme) =>
-          theme.palette.mode === 'dark'
-            ? 'rgba(15, 23, 42, 0.82)'
-            : 'rgba(248, 250, 252, 0.86)',
-        py: UI_KIT_SPACING.field,
-        mb: UI_KIT_SPACING.cluster,
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        backdropFilter: 'blur(10px)',
-        ...((sx as object) ?? {}),
-      }}
-    >
-      {children}
-    </Box>
+    <>
+      <Box
+        ref={sentinelRef}
+        aria-hidden
+        sx={{ height: 1, mt: -0.125, pointerEvents: 'none' }}
+      />
+      <Box
+        sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: UI_KIT_Z.sticky,
+          bgcolor: 'transparent',
+          backgroundImage: 'none',
+          py: UI_KIT_SPACING.field,
+          mb: UI_KIT_SPACING.cluster,
+          borderBottom: '1px solid',
+          borderColor: 'transparent',
+          backdropFilter: 'none',
+          transition:
+            'background-color 160ms ease, border-color 160ms ease, backdrop-filter 160ms ease',
+          ...(stuck
+            ? {
+                bgcolor: (theme: Theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(15, 23, 42, 0.82)'
+                    : 'rgba(248, 250, 252, 0.86)',
+                borderColor: 'divider',
+                backdropFilter: 'blur(10px)',
+              }
+            : null),
+          ...((sx as object) ?? {}),
+        }}
+      >
+        {children}
+      </Box>
+    </>
   )
 }
 

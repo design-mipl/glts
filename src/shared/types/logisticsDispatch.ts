@@ -9,15 +9,17 @@ export type AirportAssistanceType = 'Office Hours' | 'Outside Office Hours'
 export type HandDeliveryLocation = 'Office' | 'Residence' | 'Hotel'
 
 /** Payment modes for logistics dispatch settlement (aligned with ground-ops). */
-export type LogisticsPaymentMode = 'cash' | 'card' | 'cash_upi'
+export type LogisticsPaymentMode = 'card_cash' | 'upi' | 'dd' | 'card' | 'cash'
 
 export const LOGISTICS_PAYMENT_MODE_OPTIONS: {
   value: LogisticsPaymentMode
   label: string
 }[] = [
-  { value: 'cash', label: 'Cash' },
+  { value: 'card_cash', label: 'Card + cash' },
+  { value: 'upi', label: 'UPI' },
+  { value: 'dd', label: 'DD' },
   { value: 'card', label: 'Card' },
-  { value: 'cash_upi', label: 'Cash + UPI' },
+  { value: 'cash', label: 'Cash' },
 ]
 
 export function getLogisticsPaymentModeLabel(value?: LogisticsPaymentMode): string {

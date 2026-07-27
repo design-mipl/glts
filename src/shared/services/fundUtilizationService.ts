@@ -25,19 +25,54 @@ function generateWithdrawalId(): string {
 
 let withdrawalStore: FundBankWithdrawalEntry[] = SEED_FUND_BANK_WITHDRAWALS.map(cloneEntry)
 
-function listBankTransferAllocatedAmount(): { total: number; count: number } {
-  const bankBatches = fundAllocationService
-    .listAllocatedBatches()
-    .filter(batch => isBankTransferAllocation(batch.fundTransfer?.transferType))
-
-  return {
-    total: bankBatches.reduce((sum, batch) => sum + batch.allocatedAmount, 0),
-    count: bankBatches.length,
+/** Calendar day key YYYY-MM-DD (from ISO timestamp or already-dated string). */
+export function toSettlementDateKey(value: string | Date): string {
+  if (value instanceof Date) {
+    const y = value.getFullYear()
+    const m = String(value.getMonth() + 1).padStart(2, '0')
+    const d = String(value.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
   }
+  const trimmed = value.trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed
+  if (trimmed.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10)
+  const parsed = new Date(trimmed)
+  if (!Number.isNaN(parsed.getTime())) return toSettlementDateKey(parsed)
+  return trimmed
 }
 
-function totalWithdrawnAmount(): number {
-  return withdrawalStore.reduce((sum, entry) => sum + entry.amount, 0)
+export function shiftSettlementDateKey(dateKey: string, deltaDays: number): string {
+  const [y, m, d] = dateKey.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  date.setDate(date.getDate() + deltaDays)
+  return toSettlementDateKey(date)
+}
+
+export function todaySettlementDateKey(): string {
+  return toSettlementDateKey(new Date())
+}
+
+function listBankTransferBatches() {
+  return fundAllocationService
+    .listAllocatedBatches()
+    .filter(batch => isBankTransferAllocation(batch.fundTransfer?.transferType))
+}
+
+function batchTransferDateKey(batch: { allocatedAt: string; fundTransfer?: { transferDate?: string } }): string {
+  const transferDate = batch.fundTransfer?.transferDate?.trim()
+  if (transferDate) return toSettlementDateKey(transferDate)
+  return toSettlementDateKey(batch.allocatedAt)
+}
+
+function isCashLikePaymentMode(mode: string | undefined): boolean {
+  return mode === 'cash' || mode === 'card_cash'
+}
+
+function caseExpenseDateKey(record: OperationalCase): string {
+  if (record.paymentDate?.trim()) return toSettlementDateKey(record.paymentDate)
+  if (record.operationalDate?.trim()) return toSettlementDateKey(record.operationalDate)
+  if (record.lastUpdated?.trim()) return toSettlementDateKey(record.lastUpdated)
+  return ''
 }
 
 /**
@@ -46,66 +81,134 @@ function totalWithdrawnAmount(): number {
  * Dispatch method charges are included only when case spend is otherwise zero
  * (avoids double-counting courier / airport / cargo lines mirrored into dispatch).
  */
-function computeExpensesIncurredAmount(cases: OperationalCase[]): number {
-  return cases.reduce((sum, record) => {
-    const caseSpend = Math.max(0, record.actualExpense || 0)
-    const dispatchPaid =
-      record.dispatchDetails?.dispatchedAt != null
-        ? resolveDispatchAmountPaid(record.dispatchDetails)
-        : null
+function caseExpensesIncurredAmount(record: OperationalCase): number {
+  const caseSpend = Math.max(0, record.actualExpense || 0)
+  const dispatchPaid =
+    record.dispatchDetails?.dispatchedAt != null
+      ? resolveDispatchAmountPaid(record.dispatchDetails)
+      : null
 
-    const dispatchOnly =
-      dispatchPaid != null && dispatchPaid > 0 && caseSpend === 0 ? dispatchPaid : 0
+  const dispatchOnly =
+    dispatchPaid != null && dispatchPaid > 0 && caseSpend === 0 ? dispatchPaid : 0
 
-    return sum + caseSpend + dispatchOnly
-  }, 0)
-}
-
-function isCashLikePaymentMode(mode: string | undefined): boolean {
-  return mode === 'cash' || mode === 'cash_upi'
+  return caseSpend + dispatchOnly
 }
 
 /**
- * Cash left the float only when payment mode is cash or cash+UPI.
- * Card payments do not reduce in-hand cash.
+ * Cash left the float only when payment mode is cash or card+cash.
+ * Card / UPI / DD payments do not reduce in-hand cash.
  */
-function computeCashExpensesPaidAmount(cases: OperationalCase[]): number {
-  return cases.reduce((sum, record) => {
-    const caseIsCash = isCashLikePaymentMode(record.paymentMode)
-    const caseSpend = Math.max(0, record.actualExpense || 0)
-    const dispatchPaid =
-      record.dispatchDetails?.dispatchedAt != null
-        ? resolveDispatchAmountPaid(record.dispatchDetails)
-        : null
-    const dispatchIsCash = isCashLikePaymentMode(record.dispatchDetails?.paymentMode)
+function caseCashExpensesPaidAmount(record: OperationalCase): number {
+  const caseIsCash = isCashLikePaymentMode(record.paymentMode)
+  const caseSpend = Math.max(0, record.actualExpense || 0)
+  const dispatchPaid =
+    record.dispatchDetails?.dispatchedAt != null
+      ? resolveDispatchAmountPaid(record.dispatchDetails)
+      : null
+  const dispatchIsCash = isCashLikePaymentMode(record.dispatchDetails?.paymentMode)
 
-    let cashPaid = 0
-    if (caseIsCash) cashPaid += caseSpend
-    if (dispatchIsCash && dispatchPaid != null && dispatchPaid > 0) {
-      if (!caseIsCash || caseSpend === 0) cashPaid += dispatchPaid
-    }
+  let cashPaid = 0
+  if (caseIsCash) cashPaid += caseSpend
+  if (dispatchIsCash && dispatchPaid != null && dispatchPaid > 0) {
+    if (!caseIsCash || caseSpend === 0) cashPaid += dispatchPaid
+  }
 
-    return sum + cashPaid
-  }, 0)
+  return cashPaid
 }
 
-export function computeOverallFundBankSettlementSummary(): FundBankSettlementSummary {
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100
+}
+
+function sumWhere(amount: number, include: boolean): number {
+  return include ? amount : 0
+}
+
+/**
+ * Day reconciliation with ledger carry-forward:
+ * prior closing bank / opening cash are derived from all movements before the selected day.
+ */
+export function computeOverallFundBankSettlementSummary(
+  settlementDate?: string,
+): FundBankSettlementSummary {
+  const dateKey = toSettlementDateKey(settlementDate?.trim() || todaySettlementDateKey())
+  const priorDateKey = shiftSettlementDateKey(dateKey, -1)
+
+  const bankBatches = listBankTransferBatches()
   const cases = operationalCaseHandlingService.list()
-  const { total: allocatedAmount, count: bankAllocationCount } = listBankTransferAllocatedAmount()
-  const totalWithdrawn = totalWithdrawnAmount()
-  const safeAllocated = Number.isFinite(allocatedAmount) ? Math.max(0, allocatedAmount) : 0
-  const expensesIncurred = Math.round(computeExpensesIncurredAmount(cases) * 100) / 100
-  const cashExpensesPaid = Math.round(computeCashExpensesPaidAmount(cases) * 100) / 100
-  const safeWithdrawn = Number.isFinite(totalWithdrawn) ? Math.max(0, totalWithdrawn) : 0
+
+  let fundsTransferred = 0
+  let allocatedThroughDay = 0
+  let transfersBeforeDay = 0
+
+  for (const batch of bankBatches) {
+    const amount = Math.max(0, batch.allocatedAmount || 0)
+    const key = batchTransferDateKey(batch)
+    if (!key) continue
+    if (key < dateKey) transfersBeforeDay += amount
+    if (key === dateKey) fundsTransferred += amount
+    if (key <= dateKey) allocatedThroughDay += amount
+  }
+
+  let cashWithdrawn = 0
+  let withdrawnBeforeDay = 0
+
+  for (const entry of withdrawalStore) {
+    const amount = Math.max(0, entry.amount || 0)
+    const key = toSettlementDateKey(entry.recordedAt)
+    if (key < dateKey) withdrawnBeforeDay += amount
+    if (key === dateKey) cashWithdrawn += amount
+  }
+
+  let expensesOnDay = 0
+  let cashExpensesBeforeDay = 0
+  let cashExpensesOnDay = 0
+
+  for (const record of cases) {
+    const key = caseExpenseDateKey(record)
+    if (!key) continue
+    const incurred = caseExpensesIncurredAmount(record)
+    const cashPaid = caseCashExpensesPaidAmount(record)
+    expensesOnDay += sumWhere(incurred, key === dateKey)
+    cashExpensesBeforeDay += sumWhere(cashPaid, key < dateKey)
+    cashExpensesOnDay += sumWhere(cashPaid, key === dateKey)
+  }
+
+  // Prefer cash expenses for the cash statement; fall back to all-mode incurred on the day
+  // when no cash-tagged payments exist (keeps the reconciliation line meaningful in demos).
+  const expensesIncurred = roundMoney(
+    cashExpensesOnDay > 0 ? cashExpensesOnDay : expensesOnDay,
+  )
+
+  const closingBankBalancePrior = roundMoney(Math.max(0, transfersBeforeDay - withdrawnBeforeDay))
+  const availableBankBalance = roundMoney(closingBankBalancePrior + fundsTransferred)
+  const closingBankBalance = roundMoney(Math.max(0, availableBankBalance - cashWithdrawn))
+
+  const openingCashBalance = roundMoney(Math.max(0, withdrawnBeforeDay - cashExpensesBeforeDay))
+  const totalCashAvailable = roundMoney(openingCashBalance + cashWithdrawn)
+  const closingCashBalance = roundMoney(totalCashAvailable - expensesIncurred)
+
+  const allocatedAmount = roundMoney(allocatedThroughDay)
+  const safeWithdrawn = roundMoney(cashWithdrawn)
 
   return {
-    allocatedAmount: safeAllocated,
-    totalWithdrawn: safeWithdrawn,
-    availableInBank: Math.max(0, safeAllocated - safeWithdrawn),
-    inHandCash: Math.max(0, safeWithdrawn - cashExpensesPaid),
+    settlementDate: dateKey,
+    priorBankDate: priorDateKey,
+    closingBankBalancePrior,
+    fundsTransferred: roundMoney(fundsTransferred),
+    availableBankBalance,
+    cashWithdrawn: safeWithdrawn,
+    closingBankBalance,
+    openingCashBalance,
+    totalCashAvailable,
     expensesIncurred,
-    settlementAmount: Math.round((expensesIncurred - safeAllocated) * 100) / 100,
-    bankAllocationCount,
+    closingCashBalance,
+    allocatedAmount,
+    totalWithdrawn: safeWithdrawn,
+    availableInBank: closingBankBalance,
+    inHandCash: Math.max(0, closingCashBalance),
+    settlementAmount: closingCashBalance,
+    bankAllocationCount: bankBatches.length,
   }
 }
 
@@ -117,7 +220,7 @@ export const fundUtilizationService = {
   },
 
   recordBankWithdrawal(input: RecordFundBankWithdrawalInput): FundBankWithdrawalEntry {
-    const summary = computeOverallFundBankSettlementSummary()
+    const summary = computeOverallFundBankSettlementSummary(todaySettlementDateKey())
     const amount = Math.round(input.amount * 100) / 100
 
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -128,7 +231,7 @@ export const fundUtilizationService = {
       throw new Error('No bank transfer allocations are available for settlement.')
     }
 
-    if (amount > summary.availableInBank) {
+    if (amount > summary.availableBankBalance) {
       throw new Error('Withdrawal amount exceeds available team bank balance.')
     }
 

@@ -28,6 +28,8 @@ export const DEFAULT_INTELLIGENCE_FILTER_FIELDS: IntelligenceFilterFieldConfig[]
       { label: 'This month', value: 'month' },
       { label: 'This quarter', value: 'quarter' },
       { label: 'This year', value: 'year' },
+      { label: 'Custom date', value: 'date' },
+      { label: 'Custom range', value: 'range' },
     ],
   },
   {
@@ -69,7 +71,7 @@ export const DEFAULT_INTELLIGENCE_FILTER_FIELDS: IntelligenceFilterFieldConfig[]
   },
   {
     id: 'operationsTeam',
-    label: 'Operations team',
+    label: 'Team',
     options: [ALL, { label: 'Ops Pod A', value: 'ops-a' }, { label: 'Ops Pod B', value: 'ops-b' }],
   },
   {

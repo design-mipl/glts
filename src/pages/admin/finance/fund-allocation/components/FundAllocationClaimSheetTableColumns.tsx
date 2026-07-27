@@ -69,11 +69,6 @@ function claimSheetStatusBadgeColor(
   }
 }
 
-function bankOrDash(row: GroundOpsClaimSheet, value: number): string {
-  if (!isClaimSheetBankTransferKpis(row.fundTransferType)) return '—'
-  return formatInr(value)
-}
-
 export function buildFundAllocationClaimSheetTableColumns(
   params: FundAllocationClaimSheetTableColumnsParams,
 ): Column<GroundOpsClaimSheet>[] {
@@ -129,7 +124,7 @@ export function buildFundAllocationClaimSheetTableColumns(
     {
       key: 'status',
       label: 'Status',
-      widthSize: adminListingColumnWidthSize('status'),
+      widthSize: 'md',
       sortable: true,
       render: (_value, row) => (
         <Badge
@@ -157,27 +152,6 @@ export function buildFundAllocationClaimSheetTableColumns(
       render: (_value, row) => <AmountCell value={formatInr(row.kpis.allocatedAmount)} />,
     },
     {
-      key: 'totalWithdrawn',
-      label: 'Total withdrawn',
-      widthSize: adminListingColumnWidthSize('count'),
-      sortable: true,
-      render: (_value, row) => <AmountCell value={bankOrDash(row, row.kpis.totalWithdrawn)} />,
-    },
-    {
-      key: 'availableInBank',
-      label: 'Available in bank',
-      widthSize: adminListingColumnWidthSize('count'),
-      sortable: true,
-      render: (_value, row) => <AmountCell value={bankOrDash(row, row.kpis.availableInBank)} />,
-    },
-    {
-      key: 'inHandCash',
-      label: 'In hand cash',
-      widthSize: adminListingColumnWidthSize('count'),
-      sortable: true,
-      render: (_value, row) => <AmountCell value={bankOrDash(row, row.kpis.inHandCash)} />,
-    },
-    {
       key: 'expensesIncurred',
       label: 'Expenses incurred',
       widthSize: adminListingColumnWidthSize('count'),
@@ -189,13 +163,20 @@ export function buildFundAllocationClaimSheetTableColumns(
       label: 'Settlement amount',
       widthSize: adminListingColumnWidthSize('count'),
       sortable: true,
-      render: (_value, row) => (
-        <AmountCell
-          value={formatSettlementAmountLabel(row.kpis.settlementAmount)}
-          color={getSettlementAmountColor(getSettlementAmountTone(row.kpis.settlementAmount))}
-          emphasize
-        />
-      ),
+      render: (_value, row) => {
+        const convention = isClaimSheetBankTransferKpis(row.fundTransferType)
+          ? 'closing_cash'
+          : 'expense_vs_allocated'
+        return (
+          <AmountCell
+            value={formatSettlementAmountLabel(row.kpis.settlementAmount, convention)}
+            color={getSettlementAmountColor(
+              getSettlementAmountTone(row.kpis.settlementAmount, convention),
+            )}
+            emphasize
+          />
+        )
+      },
     },
     {
       key: 'generatedAt',

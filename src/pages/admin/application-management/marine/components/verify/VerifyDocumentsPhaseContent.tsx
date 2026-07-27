@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, FileText } from 'lucide-react'
-import { Grid, Stack } from '@mui/material'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Box, Grid, Stack } from '@mui/material'
 import { BaseCard, Button, Tabs } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
@@ -18,6 +18,7 @@ import { VerifyPassengerWorkspace } from './VerifyPassengerWorkspace'
 import {
   filterVerifyTravelers,
   isOriginalVerifyDocument,
+  splitRejectedVerifyDocuments,
   type VerifyOverviewData,
   type VerifyRejectedDocumentEntry,
   type VerifyTravelerListFilter,
@@ -61,11 +62,20 @@ interface VerifyDocumentsPhaseContentProps {
   jurisdictionId?: string
   onOriginalCollectionChange?: (collection: OriginalDocumentCollectionState) => void
   onOriginalReceivedSubmit?: (collection: OriginalDocumentCollectionState) => void
-  onBack: () => void
   onSaveDraft: () => void
   onSubmit: () => void
-  onViewForm: () => void
   readOnly?: boolean
+  processingStatus?: {
+    currentStatusId: string
+    countryId?: string
+    countryName?: string
+    visaTypeLabel?: string
+    visaOfferingId?: string
+    modalOpen: boolean
+    onOpenModal: () => void
+    onCloseModal: () => void
+    onUpdated: () => void
+  }
 }
 
 export function VerifyDocumentsPhaseContent({
@@ -100,14 +110,13 @@ export function VerifyDocumentsPhaseContent({
   jurisdictionId,
   onOriginalCollectionChange,
   onOriginalReceivedSubmit,
-  onBack,
   onSaveDraft,
   onSubmit,
-  onViewForm,
   readOnly = false,
+  processingStatus,
 }: VerifyDocumentsPhaseContentProps) {
   const isFinalPhase = phase === 'final'
-  const saveLabel = isFinalPhase ? 'Complete final verification' : 'Submit application'
+  const saveLabel = isFinalPhase ? 'Submit' : 'Submit application'
   const [activeTab, setActiveTab] = useState<VerifyDocumentsTab>('checklist')
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<VerifyTravelerListFilter>('all')
@@ -118,7 +127,6 @@ export function VerifyDocumentsPhaseContent({
   }, [rows])
 
   const singleListing = !isBulk && selectableRows.length <= 1
-  const multiTraveler = selectableRows.length > 1
 
   const filteredRows = useMemo(
     () => filterVerifyTravelers(selectableRows, search, filter),
@@ -143,11 +151,6 @@ export function VerifyDocumentsPhaseContent({
   const goPrevious = () => {
     if (selectedIndex <= 0) return
     onSelectTraveler(filteredRows[selectedIndex - 1].id)
-  }
-
-  const goNext = () => {
-    if (selectedIndex < 0 || selectedIndex >= filteredRows.length - 1) return
-    onSelectTraveler(filteredRows[selectedIndex + 1].id)
   }
 
   const handleSaveAndNext = () => {
@@ -183,17 +186,39 @@ export function VerifyDocumentsPhaseContent({
     [showOriginalTab],
   )
 
+  const { flaggedDuringQc, rejectedDocuments: customerRejectedDocuments } = useMemo(
+    () => splitRejectedVerifyDocuments(rejectedDocuments),
+    [rejectedDocuments],
+  )
+
   const rejectedDocumentsSection =
-    rejectedDocuments.length > 0 ? (
-      <VerifyRejectedDocumentsSection
-        entries={rejectedDocuments}
-        previewOnly={readOnly}
-        onPreview={onRejectedPreview}
-        onVerify={onRejectedVerify}
-        onReject={onRejectedReject}
-        onRequestReupload={onRejectedReupload}
-        onGltsUpload={onRejectedGltsUpload}
-      />
+    flaggedDuringQc.length > 0 || customerRejectedDocuments.length > 0 ? (
+      <Stack spacing={1.5}>
+        {flaggedDuringQc.length > 0 ? (
+          <VerifyRejectedDocumentsSection
+            entries={flaggedDuringQc}
+            variant="qc_flagged"
+            previewOnly={readOnly}
+            onPreview={onRejectedPreview}
+            onVerify={onRejectedVerify}
+            onReject={onRejectedReject}
+            onRequestReupload={onRejectedReupload}
+            onGltsUpload={onRejectedGltsUpload}
+          />
+        ) : null}
+        {customerRejectedDocuments.length > 0 ? (
+          <VerifyRejectedDocumentsSection
+            entries={customerRejectedDocuments}
+            variant="customer_rejected"
+            previewOnly={readOnly}
+            onPreview={onRejectedPreview}
+            onVerify={onRejectedVerify}
+            onReject={onRejectedReject}
+            onRequestReupload={onRejectedReupload}
+            onGltsUpload={onRejectedGltsUpload}
+          />
+        ) : null}
+      </Stack>
     ) : null
 
   const documentChecklistsSection = (
@@ -227,33 +252,49 @@ export function VerifyDocumentsPhaseContent({
 
   const documentsPane = (
     <VerifyDocumentsTabPanel>
-      <Stack spacing={2}>
+      <Stack spacing={2} sx={{ height: '100%', minHeight: 0, overflow: 'hidden' }}>
         {tabItems.length > 1 ? (
-          <Tabs
-            value={activeTab}
-            onChange={value => setActiveTab(value as VerifyDocumentsTab)}
-            variant="underline"
-            size="sm"
-            items={tabItems}
-          />
+          <Box sx={{ flexShrink: 0 }}>
+            <Tabs
+              value={activeTab}
+              onChange={value => setActiveTab(value as VerifyDocumentsTab)}
+              variant="underline"
+              size="sm"
+              items={tabItems}
+            />
+          </Box>
         ) : null}
-        {activeTab === 'checklist' ? (
-          <>
-            {rejectedDocumentsSection}
-            {documentChecklistsSection}
-          </>
-        ) : null}
-        {activeTab === 'original' ? originalDocumentsSection : null}
+        <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+          <Stack spacing={2}>
+            {activeTab === 'checklist' ? (
+              <>
+                {rejectedDocumentsSection}
+                {documentChecklistsSection}
+              </>
+            ) : null}
+            {activeTab === 'original' ? originalDocumentsSection : null}
+          </Stack>
+        </Box>
       </Stack>
     </VerifyDocumentsTabPanel>
   )
 
   const detailContent = isFinalPhase ? (
-    <Grid container spacing={2} alignItems="stretch">
-      <Grid size={{ xs: 12, lg: 7 }} sx={{ minWidth: 0 }}>
-        {documentsPane}
+    <Grid
+      container
+      spacing={2}
+      alignItems="stretch"
+      sx={{ height: '100%', minHeight: 0, flex: 1 }}
+    >
+      <Grid size={{ xs: 12, lg: 7 }} sx={{ minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {documentsPane}
+        </Box>
       </Grid>
-      <Grid size={{ xs: 12, lg: 5 }} sx={{ minWidth: 0, display: 'flex' }}>
+      <Grid
+        size={{ xs: 12, lg: 5 }}
+        sx={{ minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+      >
         <VerifyFinalVerificationChecklist
           countryId={countryId}
           visaOfferingId={visaOfferingId}
@@ -281,10 +322,17 @@ export function VerifyDocumentsPhaseContent({
         filter={filter}
         onFilterChange={setFilter}
         timelineSteps={timelineSteps}
-        multiTraveler={multiTraveler}
         detail={detail}
         applicationId={applicationId}
-        detailContent={detailContent}
+        workTabs={[
+          {
+            value: 'documents',
+            label: 'Documents',
+            content: detailContent,
+          },
+        ]}
+        emptyMessage="Select a passenger to review documents and complete verification."
+        processingStatus={processingStatus}
       />
 
       <BaseCard sx={{ p: 2 }}>
@@ -310,19 +358,6 @@ export function VerifyDocumentsPhaseContent({
               startIcon={<ChevronLeft size={14} />}
               onClick={goPrevious}
               disabled={selectedIndex <= 0}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            />
-            <Button
-              label={readOnly ? 'View form' : 'View Form'}
-              variant="outlined"
-              startIcon={<FileText size={14} />}
-              onClick={onViewForm}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            />
-            <Button
-              label="Back to listing"
-              variant="neutral"
-              onClick={onBack}
               sx={{ width: { xs: '100%', sm: 'auto' } }}
             />
           </Stack>

@@ -1,19 +1,27 @@
 import type { ReactNode } from 'react'
 import {
+  Activity,
+  AlertTriangle,
   CheckCircle2,
   ClipboardList,
+  Clock,
   FileText,
   HandCoins,
-  IndianRupee,
-  ShieldAlert,
+  Shield,
   Truck,
+  Users,
+  Wallet,
 } from 'lucide-react'
 
 export const KPI_ICONS: Record<string, ReactNode> = {
-  'open-cases': <FileText size={18} />,
-  'sla-at-risk': <ShieldAlert size={18} />,
+  'total-applications': <FileText size={18} />,
+  'applications-in-progress': <Activity size={18} />,
   'completed-today': <CheckCircle2 size={18} />,
-  'revenue-mtd': <IndianRupee size={18} />,
+  'critical-cases': <AlertTriangle size={18} />,
+  'sla-compliance': <Shield size={18} />,
+  'applications-delayed': <Clock size={18} />,
+  'team-utilization': <Users size={18} />,
+  'revenue-today': <Wallet size={18} />,
 }
 
 export const ACTION_ICONS: Record<string, ReactNode> = {

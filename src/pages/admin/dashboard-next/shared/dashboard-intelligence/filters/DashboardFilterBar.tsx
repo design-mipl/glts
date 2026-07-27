@@ -1,11 +1,41 @@
 import { useMemo, useState } from 'react'
 import { Box, Collapse, Stack, Typography } from '@mui/material'
 import { ChevronDown, ChevronUp, Filter } from 'lucide-react'
-import { Input, Select, Button } from '@/design-system/UIComponents'
+import { DatePicker, DateRangePicker, Input, Select, Button } from '@/design-system/UIComponents'
 import { Badge } from '../../dashboard-ui-kit/shadcn'
 import { DASHBOARD_SPACING } from '../../constants'
 import { useDashboardFilters } from './DashboardFilterContext'
-import type { DashboardIntelligenceFilters } from '../types'
+import { DEFAULT_INTELLIGENCE_FILTERS } from './filterDefaults'
+import type { DashboardIntelligenceFilters, IntelligenceDatePreset } from '../types'
+
+/** Empty select value so DS Select can render `placeholder` for unset / default filters. */
+function selectValueForDisplay(
+  fieldId: keyof DashboardIntelligenceFilters,
+  value: DashboardIntelligenceFilters[keyof DashboardIntelligenceFilters],
+): string {
+  const raw = String(value ?? '')
+  if (!raw || raw === 'all') return ''
+  if (raw === String(DEFAULT_INTELLIGENCE_FILTERS[fieldId])) return ''
+  return raw
+}
+
+function parseFilterDate(value?: string): Date | null {
+  if (!value) return null
+  const parsed = new Date(`${value}T00:00:00`)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+function formatFilterDate(date: Date | null): string | undefined {
+  if (!date) return undefined
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function isCustomDatePreset(preset: IntelligenceDatePreset): boolean {
+  return preset === 'date' || preset === 'range' || preset === 'custom'
+}
 
 export interface DashboardFilterBarProps {
   /** Compact = primary filters only; full shows all fields. */
@@ -28,7 +58,7 @@ const COMPACT_KEYS: Array<keyof DashboardIntelligenceFilters> = [
   'segment',
   'country',
   'client',
-  'status',
+  'operationsTeam',
 ]
 
 /**
@@ -44,7 +74,7 @@ export function DashboardFilterBar({
   collapsible = true,
   defaultExpanded = false,
 }: DashboardFilterBarProps) {
-  const { filters, fields, activeCount, setFilter, setSearch, resetFilters } =
+  const { filters, fields, activeCount, setFilter, setFilters, setSearch, resetFilters } =
     useDashboardFilters()
   const [expanded, setExpanded] = useState(defaultExpanded)
 
@@ -56,6 +86,9 @@ export function DashboardFilterBar({
     [density, fields],
   )
 
+  const dateMode: IntelligenceDatePreset =
+    filters.datePreset === 'custom' ? 'range' : filters.datePreset
+
   const filterControls = (
     <Stack
       direction="row"
@@ -65,31 +98,119 @@ export function DashboardFilterBar({
       flexWrap="wrap"
       sx={{ width: '100%', minWidth: 0 }}
     >
-      {visibleFields.map((field) => (
-        <Box
-          key={field.id}
-          sx={{
-            flex: { xs: '1 1 140px', md: '1 1 0' },
-            minWidth: { xs: 120, md: 0 },
-            maxWidth: { md: 180 },
-          }}
-        >
-          <Select
-            fullWidth
-            size="sm"
-            placeholder={field.label}
-            aria-label={field.label}
-            value={String(filters[field.id] ?? 'all')}
-            options={field.options}
-            onChange={(value) =>
-              setFilter(
-                field.id,
-                String(value) as DashboardIntelligenceFilters[typeof field.id],
-              )
-            }
-          />
-        </Box>
-      ))}
+      {visibleFields.map((field) => {
+        if (field.id === 'datePreset') {
+          return (
+            <Stack
+              key={field.id}
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              useFlexGap
+              flexWrap="wrap"
+              sx={{ flex: { xs: '1 1 100%', md: '1 1 auto' }, minWidth: 0 }}
+            >
+              <Box
+                sx={{
+                  flex: { xs: '1 1 140px', md: '0 1 180px' },
+                  minWidth: { xs: 120, md: 140 },
+                  maxWidth: { md: 200 },
+                }}
+              >
+                <Select
+                  fullWidth
+                  size="sm"
+                  placeholder={field.label}
+                  aria-label={field.label}
+                  value={selectValueForDisplay(field.id, filters.datePreset)}
+                  options={field.options}
+                  onChange={(value) => {
+                    const next =
+                      value === '' || value == null
+                        ? DEFAULT_INTELLIGENCE_FILTERS.datePreset
+                        : (String(value) as IntelligenceDatePreset)
+                    if (isCustomDatePreset(next)) {
+                      setFilters({
+                        datePreset: next === 'custom' ? 'range' : next,
+                        dateFrom: filters.dateFrom,
+                        dateTo: next === 'date' ? filters.dateFrom : filters.dateTo,
+                      })
+                      return
+                    }
+                    setFilters({
+                      datePreset: next,
+                      dateFrom: undefined,
+                      dateTo: undefined,
+                    })
+                  }}
+                />
+              </Box>
+              {dateMode === 'date' ? (
+                <Box sx={{ flex: '1 1 160px', minWidth: 150, maxWidth: 200 }}>
+                  <DatePicker
+                    size="sm"
+                    fullWidth
+                    placeholder="Select date"
+                    value={parseFilterDate(filters.dateFrom)}
+                    onChange={(date) => {
+                      const iso = formatFilterDate(date)
+                      setFilters({ dateFrom: iso, dateTo: iso })
+                    }}
+                  />
+                </Box>
+              ) : null}
+              {dateMode === 'range' ? (
+                <Box sx={{ flex: '1 1 280px', minWidth: 240, maxWidth: 420 }}>
+                  <DateRangePicker
+                    size="sm"
+                    fullWidth
+                    layout="inline"
+                    startPlaceholder="From"
+                    endPlaceholder="To"
+                    value={[parseFilterDate(filters.dateFrom), parseFilterDate(filters.dateTo)]}
+                    onChange={([from, to]) => {
+                      setFilters({
+                        dateFrom: formatFilterDate(from),
+                        dateTo: formatFilterDate(to),
+                      })
+                    }}
+                  />
+                </Box>
+              ) : null}
+            </Stack>
+          )
+        }
+
+        return (
+          <Box
+            key={field.id}
+            sx={{
+              flex: { xs: '1 1 140px', md: '1 1 0' },
+              minWidth: { xs: 120, md: 0 },
+              maxWidth: { md: 180 },
+            }}
+          >
+            <Select
+              fullWidth
+              size="sm"
+              placeholder={field.label}
+              aria-label={field.label}
+              value={selectValueForDisplay(field.id, filters[field.id])}
+              options={field.options}
+              onChange={(value) => {
+                const next =
+                  value === '' || value == null
+                    ? 'all'
+                    : String(value)
+                setFilter(
+                  field.id,
+                  next as DashboardIntelligenceFilters[typeof field.id],
+                )
+              }}
+            />
+          </Box>
+        )
+      })}
       {showSearch ? (
         <Box sx={{ flex: '1 1 160px', minWidth: 140, maxWidth: 240 }}>
           <Input
@@ -183,7 +304,7 @@ export function DashboardFilterBar({
               <Badge variant="secondary">{activeCount} active</Badge>
             ) : (
               <Typography variant="caption" color="text.secondary">
-                Date · segment · country · client · status
+                Date · segment · country · client · team
               </Typography>
             )}
             {showReset && activeCount > 0 && !expanded ? (

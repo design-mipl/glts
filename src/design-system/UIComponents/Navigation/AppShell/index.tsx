@@ -1,20 +1,24 @@
 import { Box, useMediaQuery, Drawer as MuiDrawer } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { alpha } from '@mui/material/styles'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import Topbar, { TOPBAR_HEIGHT } from '../Topbar'
+import MobileNavStrip from '../Topbar/MobileNavStrip'
 import Sidebar from '../Sidebar'
 import type { NavConfig } from '../Sidebar'
 import type { UserMenuUser } from '../Topbar/UserMenu'
 import CommandPalette from '../CommandPalette'
 import type { SearchResults } from '../CommandPalette'
 import { tokens } from '../../../tokens'
+import { AppShellChromeProvider } from './AppShellChromeContext'
 
 const STORAGE_KEY = 'foundation:sidebar-collapsed'
 const SIDEBAR_EXPANDED = 240
 const SIDEBAR_COLLAPSED = 64
+
+export type AppShellTopbarMode = 'full' | 'mobile-only'
 
 export interface AppShellProps {
   children: ReactNode
@@ -35,6 +39,11 @@ export interface AppShellProps {
   hideTopbarUserDetails?: boolean
   /** Hides the notification bell in the topbar. */
   hideTopbarNotificationBell?: boolean
+  /**
+   * `full` — always show the classic topbar (default).
+   * `mobile-only` — hide topbar on desktop; compact menu/search/profile strip below desktop breakpoint.
+   */
+  topbarMode?: AppShellTopbarMode
 }
 
 function defaultSearch(): Promise<SearchResults> {
@@ -57,6 +66,7 @@ export default function AppShell({
   showSidebarUserProfile = false,
   hideTopbarUserDetails = false,
   hideTopbarNotificationBell = false,
+  topbarMode = 'full',
 }: AppShellProps) {
   const theme = useTheme()
   const location = useLocation()
@@ -101,159 +111,186 @@ export default function AppShell({
 
   const sidebarWidth = collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED
 
+  const showFullTopbar = topbarMode === 'full'
+  const showMobileStrip = topbarMode === 'mobile-only' && !isDesktop
+  const showChromeBar = showFullTopbar || showMobileStrip
+
+  const chromeContextValue = useMemo(
+    () => ({
+      openCommandPalette: () => setPaletteOpen(true),
+    }),
+    [],
+  )
+
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        height: '100vh',
-        overflow: 'hidden',
-        backgroundColor: theme.palette.background.default,
-      }}
-    >
-      {/* ── DESKTOP SIDEBAR (desktop / 1024+) ── */}
-      {isDesktop && (
-        <Box
-          sx={{
-            width: sidebarWidth,
-            flexShrink: 0,
-            height: '100vh',
-            transition: `width ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeInOut}`,
-            zIndex: 1000,
-            overflow: 'hidden',
-          }}
-        >
-          <Sidebar
-            navConfig={navConfig}
-            collapsed={collapsed}
-            onCollapse={handleDesktopCollapse}
-            logo={logo}
-            logoCollapsed={logoCollapsed}
-            currentPath={location.pathname}
-            mobileOpen={false}
-            onMobileClose={() => {}}
-            logoMark={logoMark}
-            appName={appName}
-            footerUser={showSidebarUserProfile ? user : undefined}
-            onSignOut={onSignOut}
-            onProfileClick={onProfileClick}
-          />
-        </Box>
-      )}
-
-      {/* ── MOBILE/TABLET DRAWER (below desktop) ── */}
-      {!isDesktop && (
-        <MuiDrawer
-          variant="temporary"
-          anchor="left"
-          open={mobileDrawerOpen}
-          onClose={() => setMobileDrawerOpen(false)}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            '& .MuiDrawer-paper': {
-              width: '100%',
-              maxWidth: '100%',
-              height: '100vh',
-              border: 'none',
-              boxShadow: tokens.shadow.md,
-              bgcolor: theme.foundation.navigation.background,
-              [theme.breakpoints.up('lg')]: {
-                width: 280,
-                maxWidth: 280,
-              },
-              [theme.breakpoints.up('desktop')]: {
-                width: SIDEBAR_EXPANDED,
-                maxWidth: SIDEBAR_EXPANDED,
-              },
-            },
-            '& .MuiBackdrop-root': {
-              backgroundColor: 'rgba(0,0,0,0.3)',
-            },
-          }}
-        >
-          <Sidebar
-            navConfig={navConfig}
-            collapsed={false}
-            onCollapse={() => setMobileDrawerOpen(false)}
-            logo={logo}
-            logoCollapsed={logoCollapsed}
-            currentPath={location.pathname}
-            mobileOpen={mobileDrawerOpen}
-            onMobileClose={() => setMobileDrawerOpen(false)}
-            logoMark={logoMark}
-            appName={appName}
-            footerUser={showSidebarUserProfile ? user : undefined}
-            onSignOut={onSignOut}
-            onProfileClick={onProfileClick}
-          />
-        </MuiDrawer>
-      )}
-
-      {/* ── CONTENT COLUMN ── */}
+    <AppShellChromeProvider value={chromeContextValue}>
       <Box
         sx={{
-          flex: 1,
           display: 'flex',
-          flexDirection: 'column',
           height: '100vh',
           overflow: 'hidden',
-          minWidth: 0,
+          backgroundColor: theme.palette.background.default,
         }}
       >
-        {/* Topbar */}
+        {/* ── DESKTOP SIDEBAR (desktop / 1024+) ── */}
+        {isDesktop && (
+          <Box
+            sx={{
+              width: sidebarWidth,
+              flexShrink: 0,
+              height: '100vh',
+              transition: `width ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeInOut}`,
+              zIndex: 1000,
+              overflow: 'hidden',
+            }}
+          >
+            <Sidebar
+              navConfig={navConfig}
+              collapsed={collapsed}
+              onCollapse={handleDesktopCollapse}
+              logo={logo}
+              logoCollapsed={logoCollapsed}
+              currentPath={location.pathname}
+              mobileOpen={false}
+              onMobileClose={() => {}}
+              logoMark={logoMark}
+              appName={appName}
+              footerUser={showSidebarUserProfile ? user : undefined}
+              onSignOut={onSignOut}
+              onProfileClick={onProfileClick}
+            />
+          </Box>
+        )}
+
+        {/* ── MOBILE/TABLET DRAWER (below desktop) ── */}
+        {!isDesktop && (
+          <MuiDrawer
+            variant="temporary"
+            anchor="left"
+            open={mobileDrawerOpen}
+            onClose={() => setMobileDrawerOpen(false)}
+            ModalProps={{
+              keepMounted: true,
+            }}
+            sx={{
+              '& .MuiDrawer-paper': {
+                width: '100%',
+                maxWidth: '100%',
+                height: '100vh',
+                border: 'none',
+                boxShadow: tokens.shadow.md,
+                bgcolor: theme.foundation.navigation.background,
+                [theme.breakpoints.up('lg')]: {
+                  width: 280,
+                  maxWidth: 280,
+                },
+                [theme.breakpoints.up('desktop')]: {
+                  width: SIDEBAR_EXPANDED,
+                  maxWidth: SIDEBAR_EXPANDED,
+                },
+              },
+              '& .MuiBackdrop-root': {
+                backgroundColor: 'rgba(0,0,0,0.3)',
+              },
+            }}
+          >
+            <Sidebar
+              navConfig={navConfig}
+              collapsed={false}
+              onCollapse={() => setMobileDrawerOpen(false)}
+              logo={logo}
+              logoCollapsed={logoCollapsed}
+              currentPath={location.pathname}
+              mobileOpen={mobileDrawerOpen}
+              onMobileClose={() => setMobileDrawerOpen(false)}
+              logoMark={logoMark}
+              appName={appName}
+              footerUser={showSidebarUserProfile ? user : undefined}
+              onSignOut={onSignOut}
+              onProfileClick={onProfileClick}
+            />
+          </MuiDrawer>
+        )}
+
+        {/* ── CONTENT COLUMN ── */}
         <Box
           sx={{
-            flexShrink: 0,
-            height: `${TOPBAR_HEIGHT}px`,
-            zIndex: 100,
-            backgroundColor: theme.palette.background.paper,
-            borderBottom: `1px solid ${alpha(
-              theme.palette.mode === 'light' ? '#000000' : '#ffffff',
-              0.06
-            )}`,
+            flex: 1,
             display: 'flex',
-            alignItems: 'center',
+            flexDirection: 'column',
+            height: '100vh',
+            overflow: 'hidden',
+            minWidth: 0,
           }}
         >
-          <Topbar
-            onMenuToggle={() => setMobileDrawerOpen(true)}
-            user={user}
-            notificationCount={notificationCount}
-            onNotificationClick={onNotificationClick}
-            onSignOut={onSignOut}
-            onProfileClick={onProfileClick}
-            onSearchClick={() => setPaletteOpen(true)}
-            showMenuButton={!isDesktop}
-            showUserDetails={!hideTopbarUserDetails}
-            showNotificationBell={!hideTopbarNotificationBell}
-          />
+          {showChromeBar ? (
+            <Box
+              sx={{
+                flexShrink: 0,
+                height: `${TOPBAR_HEIGHT}px`,
+                zIndex: 100,
+                backgroundColor: theme.palette.background.paper,
+                borderBottom: `1px solid ${alpha(
+                  theme.palette.mode === 'light' ? '#000000' : '#ffffff',
+                  0.06,
+                )}`,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              {showFullTopbar ? (
+                <Topbar
+                  onMenuToggle={() => setMobileDrawerOpen(true)}
+                  user={user}
+                  notificationCount={notificationCount}
+                  onNotificationClick={onNotificationClick}
+                  onSignOut={onSignOut}
+                  onProfileClick={onProfileClick}
+                  onSearchClick={() => setPaletteOpen(true)}
+                  showMenuButton={!isDesktop}
+                  showUserDetails={!hideTopbarUserDetails}
+                  showNotificationBell={!hideTopbarNotificationBell}
+                />
+              ) : (
+                <MobileNavStrip
+                  onMenuToggle={() => setMobileDrawerOpen(true)}
+                  user={user}
+                  onSignOut={onSignOut}
+                  onProfileClick={onProfileClick}
+                  onSearchClick={() => setPaletteOpen(true)}
+                />
+              )}
+            </Box>
+          ) : null}
+
+          {/* Main Content */}
+          <Box
+            component="main"
+            sx={(t) => ({
+              flex: 1,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              p: t.spacing(4),
+              [t.breakpoints.up('lg')]: { p: t.spacing(3.5) },
+              [t.breakpoints.up('desktop')]: { p: t.spacing(3) },
+              backgroundColor: t.palette.background.default,
+              boxSizing: 'border-box',
+            })}
+          >
+            {children}
+          </Box>
         </Box>
 
-        {/* Main Content */}
-        <Box
-          component="main"
-          sx={(t) => ({
-            flex: 1,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            p: t.spacing(4),
-            [t.breakpoints.up('lg')]: { p: t.spacing(3.5) },
-            [t.breakpoints.up('desktop')]: { p: t.spacing(3) },
-            backgroundColor: t.palette.background.default,
-            boxSizing: 'border-box',
-          })}
-        >
-          {children}
-        </Box>
+        {/* Command Palette */}
+        <CommandPalette
+          open={paletteOpen}
+          onClose={() => setPaletteOpen(false)}
+          onSearch={onSearch}
+        />
       </Box>
-
-      {/* Command Palette */}
-      <CommandPalette
-        open={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
-        onSearch={onSearch}
-      />
-    </Box>
+    </AppShellChromeProvider>
   )
 }
+
+export { useAppShellChrome } from './AppShellChromeContext'
+export type { AppShellChromeContextValue } from './AppShellChromeContext'

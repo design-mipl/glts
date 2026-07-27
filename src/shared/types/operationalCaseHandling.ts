@@ -46,15 +46,17 @@ export function getApplicationFeePaidByLabel(value?: ApplicationFeePaidBy): stri
 }
 
 /** Ground-ops payment modes for on-site / case expense settlement. */
-export type OperationalPaymentMode = 'cash' | 'card' | 'cash_upi'
+export type OperationalPaymentMode = 'card_cash' | 'upi' | 'dd' | 'card' | 'cash'
 
 export const OPERATIONAL_PAYMENT_MODE_OPTIONS: {
   value: OperationalPaymentMode
   label: string
 }[] = [
-  { value: 'cash', label: 'Cash' },
+  { value: 'card_cash', label: 'Card + cash' },
+  { value: 'upi', label: 'UPI' },
+  { value: 'dd', label: 'DD' },
   { value: 'card', label: 'Card' },
-  { value: 'cash_upi', label: 'Cash + UPI' },
+  { value: 'cash', label: 'Cash' },
 ]
 
 export function getOperationalPaymentModeLabel(value?: OperationalPaymentMode): string {

@@ -83,7 +83,9 @@ export function AccountsDashboardPage() {
       setFilters((prev) => ({
         ...prev,
         date:
-          filters.datePreset === 'custom'
+          filters.datePreset === 'custom' ||
+          filters.datePreset === 'date' ||
+          filters.datePreset === 'range'
             ? prev.date
             : filters.datePreset,
         client: filters.client,

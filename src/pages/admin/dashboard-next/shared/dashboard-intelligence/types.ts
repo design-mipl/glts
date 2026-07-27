@@ -9,6 +9,11 @@ export type IntelligenceDatePreset =
   | 'month'
   | 'quarter'
   | 'year'
+  /** Single calendar day. */
+  | 'date'
+  /** Inclusive from/to calendar range. */
+  | 'range'
+  /** @deprecated Prefer `range`. */
   | 'custom'
 
 export type IntelligenceComparisonMode =

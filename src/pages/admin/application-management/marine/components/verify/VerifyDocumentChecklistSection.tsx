@@ -1,16 +1,14 @@
 import type { ReactNode } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import type { SxProps, Theme } from '@mui/material/styles'
-import { Eye, RotateCcw, ShieldCheck, Upload, XCircle } from 'lucide-react'
-import { Badge, BaseCard, Button, IconButton } from '@/design-system/UIComponents'
+import { Eye, ShieldCheck, Upload, XCircle } from 'lucide-react'
+import { Badge, BaseCard, IconButton } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
 import {
   formatWorkflowSummary,
   isSimpleDocumentRequirement,
   requirementTypeLabel,
   resolveHandlingMode,
-  simpleDocumentUploadActionLabel,
-  type SimpleDocumentRequirementId,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import {
   documentBadgeColor,
@@ -56,7 +54,17 @@ export function VerifyDocumentsTabPanel({ children }: { children: ReactNode }) {
   const colors = usePublicBrandColors()
 
   return (
-    <BaseCard sx={getVerifyDocumentPanelSx(colors, 'outer')}>
+    <BaseCard
+      sx={{
+        ...getVerifyDocumentPanelSx(colors, 'outer'),
+        flex: 1,
+        minHeight: 0,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       {children}
     </BaseCard>
   )
@@ -78,7 +86,7 @@ export function VerifyDocumentCard({
   onPreview,
   onVerify,
   onReject,
-  onRequestReupload,
+  onRequestReupload: _onRequestReupload,
   onGltsUpload,
 }: VerifyDocumentCardProps) {
   const status = document.status as ApplicantDocumentStatus
@@ -91,17 +99,19 @@ export function VerifyDocumentCard({
       ? Boolean(document.travelTicket?.fileName?.trim())
       : document.documentId === 'insurance'
         ? Boolean(document.insurance?.fileName?.trim())
-        : true
-  const previewDisabled = !hasFile
-  const showReuploadRequest = customerUpload
-  const showGltsUpload =
-    arrangeByGlts && !hasFile && onGltsUpload && isSimpleDocumentRequirement(document.documentId)
+        : Boolean(document.uploadedFileName?.trim()) || status !== 'missing'
+  const previewDisabled = isSimple ? !hasFile : status === 'missing' && !document.uploadedFileName
   const pendingGltsArrangement = arrangeByGlts && !hasFile
   const isVerified = status === 'verified'
-  const isRejected = status === 'rejected'
-  const showVerifyRejectActions =
-    !previewOnly && !pendingGltsArrangement && !isVerified && !isRejected
-  const showPreview = previewOnly || isVerified || (hasFile && !pendingGltsArrangement)
+  const isRejected = status === 'rejected' || status === 'needs_review'
+  const showUpload =
+    Boolean(onGltsUpload) &&
+    !previewOnly &&
+    !isVerified &&
+    (pendingGltsArrangement || isRejected || !isSimple || customerUpload || status === 'uploaded' || status === 'missing')
+  // Verify / Reject only when there is a file to review.
+  const showVerifyRejectActions = !previewOnly && !isVerified && hasFile && !pendingGltsArrangement
+  const showPreview = previewOnly || isVerified || (hasFile && !pendingGltsArrangement) || Boolean(document.uploadedFileName)
   const reqType = requirementTypeLabel(document)
   const displayStatus = verifyDocumentBadgeLabel(document)
   const gltsNote = document.reviewComment?.trim() || ''
@@ -155,12 +165,13 @@ export function VerifyDocumentCard({
             justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}
             sx={{ flexShrink: 0 }}
           >
-            {showGltsUpload && !previewOnly ? (
-              <Button
-                label={simpleDocumentUploadActionLabel(document.documentId as SimpleDocumentRequirementId)}
-                variant="contained"
+            {showUpload ? (
+              <IconButton
+                tooltip={isRejected || hasFile ? 'Upload replacement' : 'Upload'}
+                icon={<Upload size={14} />}
+                variant="soft"
+                color="info"
                 size="sm"
-                startIcon={<Upload size={14} />}
                 onClick={onGltsUpload}
               />
             ) : null}
@@ -175,7 +186,7 @@ export function VerifyDocumentCard({
                   onClick={onVerify}
                 />
                 <IconButton
-                  tooltip="Reject"
+                  tooltip={isRejected ? 'Update rejection remark' : 'Reject'}
                   icon={<XCircle size={14} />}
                   variant="soft"
                   color="error"
@@ -183,16 +194,6 @@ export function VerifyDocumentCard({
                   onClick={onReject}
                 />
               </>
-            ) : null}
-            {showReuploadRequest && showVerifyRejectActions ? (
-              <IconButton
-                tooltip="Request re-upload"
-                icon={<RotateCcw size={14} />}
-                variant="soft"
-                color="warning"
-                size="sm"
-                onClick={onRequestReupload}
-              />
             ) : null}
             {showPreview ? (
               <IconButton

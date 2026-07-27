@@ -1,6 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Stack } from '@mui/material'
-import { Button } from '@/design-system/UIComponents'
 import { DashboardShell } from '../components/DashboardShell'
 import type { DashboardShellProps } from '../components/DashboardShell'
 import type { DashboardTabDefinition } from '../types'
@@ -9,8 +8,6 @@ import {
   DashboardFilterBar,
   DashboardIntelligenceProvider,
   DrilldownHost,
-  ExecutiveSearch,
-  RefreshIndicator,
   type DashboardIntelligenceFilters,
   type ExecutiveSearchItem,
   type IntelligenceFilterFieldConfig,
@@ -40,6 +37,7 @@ export interface DashboardWorkspaceProps
   filterFields?: IntelligenceFilterFieldConfig[]
   onFiltersChange?: (filters: DashboardIntelligenceFilters) => void
   onRefresh?: () => void | Promise<void>
+  /** Retained for callers; header search control removed. */
   searchItems?: ExecutiveSearchItem[]
   extraActions?: ReactNode
   filterDensity?: 'compact' | 'full'
@@ -61,14 +59,13 @@ export function DashboardWorkspace({
   filterFields,
   onFiltersChange,
   onRefresh,
-  searchItems = [],
+  searchItems: _searchItems = [],
   extraActions,
   filterDensity = 'compact',
   legacyFilters,
   ...shellProps
 }: DashboardWorkspaceProps) {
   const { activeTab, setActiveTab } = useWorkspaceTabState(workspaceId, defaultTab)
-  const [searchOpen, setSearchOpen] = useState(false)
 
   return (
     <DashboardIntelligenceProvider
@@ -81,16 +78,11 @@ export function DashboardWorkspace({
         {...shellProps}
         denseChrome
         actions={
-          <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
-            <RefreshIndicator compact />
-            <Button
-              label="Search"
-              variant="outlined"
-              size="sm"
-              onClick={() => setSearchOpen(true)}
-            />
-            {extraActions}
-          </Stack>
+          extraActions ? (
+            <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+              {extraActions}
+            </Stack>
+          ) : undefined
         }
         filters={
           <Stack spacing={DASHBOARD_SPACING.field}>
@@ -113,7 +105,6 @@ export function DashboardWorkspace({
         onTabChange={setActiveTab}
       />
       <DrilldownHost />
-      <ExecutiveSearch items={searchItems} open={searchOpen} onOpenChange={setSearchOpen} />
     </DashboardIntelligenceProvider>
   )
 }

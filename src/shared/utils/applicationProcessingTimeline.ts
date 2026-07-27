@@ -25,6 +25,10 @@ export interface BuildApplicationProcessingTimelineInput {
   visaOfferingId?: string
   operationalStatus?: string
   processingStage?: string
+  /** Explicit Status Master cursor — when set, drives completed/active/pending. */
+  currentStatusId?: string
+  /** When on hold, timeline progress uses this status instead of On Hold. */
+  heldFromStatusId?: string
 }
 
 export interface ProcessingStageDateSource {
@@ -273,6 +277,48 @@ function buildWorkflowDrivenTimeline(
   const steps = [...workflow.steps].sort((a, b) => a.sequence - b.sequence)
   if (steps.length === 0) return buildLegacyApplicationProcessingTimeline(input)
 
+  const cursorStatusId = input.heldFromStatusId?.trim() || input.currentStatusId?.trim()
+  if (cursorStatusId) {
+    let activeIndex = steps.findIndex((step) => step.statusId === cursorStatusId)
+    if (activeIndex < 0) {
+      // Fallback: match by name fragment when legacy / renamed ids appear.
+      const tokens = progressTokensForWorkflow(input)
+      activeIndex = steps.findIndex((step) => !isStepCompletedByProgress(step, tokens))
+      if (activeIndex < 0) activeIndex = steps.length
+    } else if (
+      cursorStatusId === 'status-delivered' ||
+      input.currentStatusId === 'status-delivered'
+    ) {
+      activeIndex = steps.length
+    }
+
+    const allDone = activeIndex >= steps.length
+    const onHold =
+      Boolean(input.heldFromStatusId) || input.currentStatusId === 'status-on-hold'
+
+    return steps.map((step, index) => {
+      const label = statusMasterService.getById(step.statusId)?.name ?? step.statusId
+      let status: ApplicationProcessingTimelineStatus
+      if (allDone || index < activeIndex) {
+        status = 'completed'
+      } else if (index === activeIndex) {
+        status = 'active'
+      } else {
+        status = 'pending'
+      }
+
+      const displayLabel =
+        onHold && index === activeIndex && status === 'active' ? `${label} (On Hold)` : label
+
+      return {
+        id: step.statusId,
+        label: displayLabel,
+        status,
+        date: workflowStepDate(step.statusId, status, input.stageDates),
+      }
+    })
+  }
+
   const tokens = progressTokensForWorkflow(input)
   let firstPendingIndex = steps.findIndex((step) => !isStepCompletedByProgress(step, tokens))
   if (firstPendingIndex < 0) firstPendingIndex = steps.length
@@ -335,6 +381,8 @@ export function buildProcessingTimelineFromQueueRow(
     visaOfferingId?: string
     operationalStatus?: string
     processingStage?: string
+    currentStatusId?: string
+    heldFromStatusId?: string
   } = {},
 ): ApplicationProcessingTimelineStep[] {
   const required = row?.documents.filter((doc) => doc.required) ?? []
@@ -363,6 +411,8 @@ export function buildProcessingTimelineFromQueueRow(
     visaOfferingId: options.visaOfferingId,
     operationalStatus: options.operationalStatus,
     processingStage: options.processingStage,
+    currentStatusId: options.currentStatusId,
+    heldFromStatusId: options.heldFromStatusId,
   })
 }
 

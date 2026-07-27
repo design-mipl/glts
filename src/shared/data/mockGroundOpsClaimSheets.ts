@@ -1,4 +1,68 @@
 import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
+import type { FundBankSettlementSummary } from '@/shared/types/fundUtilization'
+
+function bankKpis(partial: {
+  allocatedAmount: number
+  totalWithdrawn: number
+  availableInBank: number
+  inHandCash: number
+  expensesIncurred: number
+  bankAllocationCount: number
+  settlementDate: string
+  priorBankDate: string
+}): FundBankSettlementSummary {
+  return {
+    settlementDate: partial.settlementDate,
+    priorBankDate: partial.priorBankDate,
+    closingBankBalancePrior: Math.max(
+      0,
+      partial.availableInBank + partial.totalWithdrawn - partial.allocatedAmount,
+    ),
+    fundsTransferred: partial.allocatedAmount,
+    availableBankBalance: partial.availableInBank + partial.totalWithdrawn,
+    cashWithdrawn: partial.totalWithdrawn,
+    closingBankBalance: partial.availableInBank,
+    openingCashBalance: Math.max(
+      0,
+      partial.inHandCash + partial.expensesIncurred - partial.totalWithdrawn,
+    ),
+    totalCashAvailable: Math.max(0, partial.inHandCash + partial.expensesIncurred),
+    expensesIncurred: partial.expensesIncurred,
+    closingCashBalance: partial.inHandCash,
+    allocatedAmount: partial.allocatedAmount,
+    totalWithdrawn: partial.totalWithdrawn,
+    availableInBank: partial.availableInBank,
+    inHandCash: partial.inHandCash,
+    settlementAmount: partial.inHandCash,
+    bankAllocationCount: partial.bankAllocationCount,
+  }
+}
+
+function nonBankKpis(partial: {
+  allocatedAmount: number
+  expensesIncurred: number
+  settlementAmount: number
+}): FundBankSettlementSummary {
+  return {
+    settlementDate: '',
+    priorBankDate: '',
+    closingBankBalancePrior: 0,
+    fundsTransferred: 0,
+    availableBankBalance: 0,
+    cashWithdrawn: 0,
+    closingBankBalance: 0,
+    openingCashBalance: 0,
+    totalCashAvailable: 0,
+    expensesIncurred: partial.expensesIncurred,
+    closingCashBalance: 0,
+    allocatedAmount: partial.allocatedAmount,
+    totalWithdrawn: 0,
+    availableInBank: 0,
+    inHandCash: 0,
+    settlementAmount: partial.settlementAmount,
+    bankAllocationCount: 0,
+  }
+}
 
 /**
  * Seed claim sheets for Ground Ops / Finance review demos.
@@ -13,15 +77,16 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
     generatedAt: '2026-06-10T08:30:00.000Z',
     team: 'Mumbai Team',
     fundTransferType: 'bank_transfer',
-    kpis: {
+    kpis: bankKpis({
       allocatedAmount: 43500,
       totalWithdrawn: 20500,
       availableInBank: 23000,
       inHandCash: 8500,
       expensesIncurred: 32000,
-      settlementAmount: -11500,
       bankAllocationCount: 3,
-    },
+      settlementDate: '2026-06-10',
+      priorBankDate: '2026-06-09',
+    }),
     cases: [
       {
         caseId: 'op-case-008-01',
@@ -162,15 +227,16 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
     generatedAt: '2026-06-18T16:10:00.000Z',
     team: 'Mumbai Team',
     fundTransferType: 'bank_transfer',
-    kpis: {
+    kpis: bankKpis({
       allocatedAmount: 43500,
       totalWithdrawn: 25000,
       availableInBank: 18500,
       inHandCash: 6200,
       expensesIncurred: 38800,
-      settlementAmount: -4700,
       bankAllocationCount: 4,
-    },
+      settlementDate: '2026-06-18',
+      priorBankDate: '2026-06-17',
+    }),
     cases: [
       {
         caseId: 'op-case-001-03',
@@ -249,15 +315,11 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
     generatedAt: '2026-06-09T14:00:00.000Z',
     team: 'Mumbai Team',
     fundTransferType: 'card',
-    kpis: {
+    kpis: nonBankKpis({
       allocatedAmount: 4500,
-      totalWithdrawn: 0,
-      availableInBank: 0,
-      inHandCash: 0,
       expensesIncurred: 4000,
       settlementAmount: -500,
-      bankAllocationCount: 0,
-    },
+    }),
     cases: [
       {
         caseId: 'op-case-014-07',
@@ -342,16 +404,12 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
     generatedBy: 'Lakshmi Iyer',
     generatedAt: '2026-06-05T11:20:00.000Z',
     team: 'Chennai Team',
-    fundTransferType: 'cash_upi',
-    kpis: {
+    fundTransferType: 'upi',
+    kpis: nonBankKpis({
       allocatedAmount: 3000,
-      totalWithdrawn: 0,
-      availableInBank: 0,
-      inHandCash: 0,
       expensesIncurred: 3420,
       settlementAmount: 420,
-      bankAllocationCount: 0,
-    },
+    }),
     cases: [
       {
         caseId: 'op-case-015-06',
@@ -419,7 +477,7 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
         caseId: 'op-case-015-06',
       },
     ],
-    notes: 'Cash/UPI claim rejected — missing GST invoice for express courier upgrade.',
+    notes: 'UPI claim rejected — missing GST invoice for express courier upgrade.',
   },
   {
     id: 'gcs-seed-5',
@@ -428,16 +486,12 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
     generatedBy: 'Rahul Nair',
     generatedAt: '2026-06-20T09:15:00.000Z',
     team: 'Delhi Team',
-    fundTransferType: 'cheque',
-    kpis: {
+    fundTransferType: 'card_cash',
+    kpis: nonBankKpis({
       allocatedAmount: 8500,
-      totalWithdrawn: 0,
-      availableInBank: 0,
-      inHandCash: 0,
       expensesIncurred: 8120,
       settlementAmount: -380,
-      bankAllocationCount: 0,
-    },
+    }),
     cases: [
       {
         caseId: 'op-case-020-01',
@@ -560,7 +614,7 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
         source: 'claim_other',
       },
     ],
-    notes: 'Cheque-funded UAE visit batch — Delhi desk weekly claim.',
+    notes: 'Card + cash UAE visit batch — Delhi desk weekly claim.',
   },
   {
     id: 'gcs-seed-6',
@@ -569,16 +623,12 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
     generatedBy: 'Sneha Kapoor',
     generatedAt: '2026-06-21T12:40:00.000Z',
     team: 'Mumbai Team',
-    fundTransferType: 'demand_draft',
-    kpis: {
+    fundTransferType: 'dd',
+    kpis: nonBankKpis({
       allocatedAmount: 12000,
-      totalWithdrawn: 0,
-      availableInBank: 0,
-      inHandCash: 0,
       expensesIncurred: 13450,
       settlementAmount: 1450,
-      bankAllocationCount: 0,
-    },
+    }),
     cases: [
       {
         caseId: 'op-case-021-01',
@@ -697,7 +747,7 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
         source: 'claim_other',
       },
     ],
-    notes: 'Demand draft float for Japan business visa — expenses exceed DD allocation.',
+    notes: 'DD float for Japan business visa — expenses exceed DD allocation.',
   },
   {
     id: 'gcs-seed-7',
@@ -706,16 +756,12 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
     generatedBy: 'Vikram Joshi',
     generatedAt: '2026-06-22T07:55:00.000Z',
     team: 'Chennai Team',
-    fundTransferType: 'other',
-    kpis: {
+    fundTransferType: 'cash',
+    kpis: nonBankKpis({
       allocatedAmount: 5500,
-      totalWithdrawn: 0,
-      availableInBank: 0,
-      inHandCash: 0,
       expensesIncurred: 5280,
       settlementAmount: -220,
-      bankAllocationCount: 0,
-    },
+    }),
     cases: [
       {
         caseId: 'op-case-022-03',
@@ -805,6 +851,6 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
         source: 'claim_other',
       },
     ],
-    notes: 'Other transfer mode (vendor wallet) — Chennai seafarer claim.',
+    notes: 'Cash transfer — Chennai seafarer claim.',
   },
 ]

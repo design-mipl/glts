@@ -42,8 +42,8 @@ export default function UserMenu({
         gap={1}
         onClick={e => setAnchor(e.currentTarget)}
         sx={{
-          px: '8px',
-          py: '4px',
+          px: showDetails ? '8px' : 0,
+          py: showDetails ? '4px' : 0,
           borderRadius: tokens.borderRadius.md,
           cursor: 'pointer',
           transition: 'background-color 150ms ease',

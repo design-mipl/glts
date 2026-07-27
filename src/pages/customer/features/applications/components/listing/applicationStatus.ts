@@ -10,12 +10,14 @@ export const APPLICATION_OPERATIONAL_STATUSES: ApplicationOperationalStatus[] = 
   'Pending Documents',
   'Under Review',
   'Verification Pending',
+  'Document Rejected',
   'Correction Required',
   'Submitted',
   'Appointment Booked',
   'Passport Ready',
   'Completed',
   'Rejected',
+  'On Hold',
 ]
 
 export const PROCESSING_STAGE_OPTIONS = [
@@ -34,10 +36,13 @@ export function getApplicationOperationalTone(status: ApplicationOperationalStat
     case 'Draft':
       return 'neutral'
     case 'Pending Documents':
+    case 'Document Rejected':
     case 'Correction Required':
       return 'warning'
     case 'Rejected':
       return 'critical'
+    case 'On Hold':
+      return 'warning'
     case 'Under Review':
     case 'Verification Pending':
     case 'Submitted':
@@ -61,7 +66,14 @@ export function statusToneFromOperational(
 ): 'review' | 'pending' | 'approved' | 'draft' | 'processing' {
   if (status === 'Draft') return 'draft'
   if (status === 'Completed' || status === 'Passport Ready') return 'approved'
-  if (status === 'Pending Documents' || status === 'Correction Required') return 'pending'
+  if (
+    status === 'Pending Documents' ||
+    status === 'Document Rejected' ||
+    status === 'Correction Required' ||
+    status === 'On Hold'
+  ) {
+    return 'pending'
+  }
   if (status === 'Under Review' || status === 'Verification Pending' || status === 'Submitted' || status === 'Appointment Booked') return 'review'
   return 'processing'
 }

@@ -21,7 +21,7 @@ import {
   GltsDocumentUploadDrawer,
   type GltsDocumentUploadPayload,
 } from '../components/verify/GltsDocumentUploadDrawer'
-import { resolveHandlingMode } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import { resolveHandlingMode, isSimpleDocumentRequirement } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import { applicationArrangedExpenseService } from '@/shared/services/applicationArrangedExpenseService'
 import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import { resolveMarineChecklistContext } from '../utils/marineChecklistContextUtils'
@@ -31,6 +31,7 @@ import {
   isRejectedVerifyDocument,
   type VerifyRejectedDocumentEntry,
 } from '../utils/verifyDocumentsUtils'
+import { applicationVerificationService } from '@/shared/services/applicationVerificationService'
 
 export function MarineVerifyDocumentsPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
@@ -66,25 +67,33 @@ export function MarineVerifyDocumentsPage() {
     setSelectedTravelerId,
     selectedRow,
     timelineSteps,
+    processingStatusContext,
+    statusModalOpen,
+    openStatusModal,
+    closeStatusModal,
+    refreshProcessingStatus,
     globalDocuments,
     updateTravelerDocForRow,
     updateTravelerDocumentWorkflow,
     updateGlobalDoc,
     updateTravelerOriginalCollection,
+    notifyCustomerOfDocumentRejection,
     saveDraft,
     submitVerification,
   } = workspace
 
-  const reviewActionLabel = reviewDialog?.status === 'rejected' ? 'Reject' : 'Request re-upload'
+  const reviewActionLabel = reviewDialog?.status === 'rejected' ? 'Reject & notify customer' : 'Request re-upload'
   const reviewDialogTitle = useMemo(() => {
     if (!reviewDialog) return ''
     return `${reviewActionLabel} document`
   }, [reviewActionLabel, reviewDialog])
 
-  const rejectedDocuments = useMemo(
-    () => collectRejectedVerifyDocuments(rows, globalDocuments),
-    [rows, globalDocuments],
-  )
+  const rejectedDocuments = useMemo(() => {
+    if (!applicationId) return []
+    const visibility = applicationVerificationService.getRejectionVisibilityMap(applicationId)
+    return collectRejectedVerifyDocuments(rows, globalDocuments, visibility)
+  }, [applicationId, rows, globalDocuments])
+
 
   const checklistContext = useMemo(
     () =>
@@ -157,8 +166,9 @@ export function MarineVerifyDocumentsPage() {
   const handleSubmit = () => {
     submitVerification()
     showToast({
-      title: 'Application submitted',
-      description: 'Verification outcomes are reflected in the customer portal.',
+      title: 'Verification submitted',
+      description:
+        'Rejected documents were published to the customer portal. Application status is Correction Required.',
       variant: 'success',
     })
     navigate(listingPath)
@@ -248,16 +258,19 @@ export function MarineVerifyDocumentsPage() {
   const submitReviewAction = () => {
     if (!reviewDialog || !isReviewCommentValid) return
     const comment = reviewComment.trim()
+    // Verification Pending rejections notify the customer portal.
+    const options = { customerVisible: true as const }
     if (reviewDialog.scope === 'traveler') {
       const rowId = reviewDialog.travelerId ?? selectedRow?.id
       if (!rowId) return
-      updateTravelerDocForRow(rowId, reviewDialog.documentId, reviewDialog.status, comment)
+      updateTravelerDocForRow(rowId, reviewDialog.documentId, reviewDialog.status, comment, options)
     } else {
-      updateGlobalDoc(reviewDialog.documentId, reviewDialog.status, comment)
+      updateGlobalDoc(reviewDialog.documentId, reviewDialog.status, comment, options)
     }
+    notifyCustomerOfDocumentRejection()
     showToast({
       title: `${reviewActionLabel} saved`,
-      description: `Comment added for ${reviewDialog.documentName}.`,
+      description: `Customer portal notified for ${reviewDialog.documentName}.`,
       variant: 'success',
     })
     closeReviewDialog()
@@ -319,13 +332,28 @@ export function MarineVerifyDocumentsPage() {
               variant: 'success',
             })
           }}
-          onBack={() => navigate(listingPath)}
           onSaveDraft={handleSaveDraft}
           onSubmit={handleSubmit}
-          onViewForm={() =>
-            navigate(`/admin/application-management/marine/${applicationId}/view-form`)
-          }
           readOnly={readOnly}
+          processingStatus={
+            processingStatusContext
+              ? {
+                  currentStatusId: processingStatusContext.currentStatusId,
+                  countryName: detail.application?.country ?? listingRow?.country,
+                  visaTypeLabel: detail.application?.visaType ?? listingRow?.visaType,
+                  modalOpen: statusModalOpen,
+                  onOpenModal: openStatusModal,
+                  onCloseModal: closeStatusModal,
+                  onUpdated: () => {
+                    refreshProcessingStatus()
+                    showToast({
+                      title: 'Processing status updated',
+                      variant: 'success',
+                    })
+                  },
+                }
+              : undefined
+          }
         />
       </AdminDetailShell>
 
@@ -335,15 +363,24 @@ export function MarineVerifyDocumentsPage() {
         onClose={() => setGltsUploadDocument(null)}
         onSave={(payload: GltsDocumentUploadPayload) => {
           if (!gltsUploadDocument) return
-          const mode = resolveHandlingMode(gltsUploadDocument) ?? 'arrange_by_glts'
+          const isSimple = isSimpleDocumentRequirement(gltsUploadDocument.documentId)
+          const mode = resolveHandlingMode(gltsUploadDocument) ?? (isSimple ? 'arrange_by_glts' : undefined)
           updateTravelerDocumentWorkflow(gltsUploadDocument.documentId, {
-            handlingMode: mode,
+            ...(mode ? { handlingMode: mode } : {}),
             status: 'uploaded',
+            uploadedFileName: payload.fileName,
             ...(gltsUploadDocument.documentId === 'travel-ticket'
               ? { travelTicket: payload.travelTicket }
-              : { insurance: payload.insurance }),
+              : gltsUploadDocument.documentId === 'insurance'
+                ? { insurance: payload.insurance }
+                : {}),
           })
-          if (selectedRow) {
+          if (
+            selectedRow &&
+            isSimple &&
+            mode === 'arrange_by_glts' &&
+            (payload.travelTicket || payload.insurance)
+          ) {
             applicationArrangedExpenseService.upsertFromGltsDocumentUpload({
               applicationId,
               isBulk,
@@ -357,7 +394,7 @@ export function MarineVerifyDocumentsPage() {
           }
           showToast({
             title: 'Document saved',
-            description: `${gltsUploadDocument.name} uploaded by GLTS and mapped to billing expenses.`,
+            description: `${gltsUploadDocument.name} uploaded by GLTS.`,
             variant: 'success',
           })
           setGltsUploadDocument(null)
@@ -397,7 +434,7 @@ export function MarineVerifyDocumentsPage() {
         <FormField
           label="Comment"
           required
-          helperText="Comment is required and will be visible in the customer portal."
+          helperText="Comment is required and will be published to the customer portal from Verification Pending."
         >
           <Textarea
             value={reviewComment}

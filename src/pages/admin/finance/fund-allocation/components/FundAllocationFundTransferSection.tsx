@@ -26,7 +26,7 @@ function formatDateForStorage(date: Date | null): string {
 }
 
 function showsReceivedBy(type: FundTransferType | ''): boolean {
-  return type === 'cash_upi'
+  return type === 'cash' || type === 'upi' || type === 'card_cash'
 }
 
 function showsDestinationAccount(type: FundTransferType | ''): boolean {
@@ -40,7 +40,7 @@ function showsAssignedCard(type: FundTransferType | ''): boolean {
 interface FundAllocationFundTransferSectionProps {
   value: FundTransferDetails
   onChange: (value: FundTransferDetails) => void
-  /** Auto-filled for Cash / UPI. */
+  /** Auto-filled for Cash / UPI / Card + cash. */
   fundHolderName: string
 }
 

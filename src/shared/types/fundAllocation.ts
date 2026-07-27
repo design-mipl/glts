@@ -6,12 +6,12 @@ export type FundAllocationListingTab = 'pending_allocation' | 'allocated' | 'cla
 export type FundAllocationStatus = 'pending_allocation' | 'allocated'
 
 export type FundTransferType =
-  | 'cash_upi'
   | 'bank_transfer'
-  | 'cheque'
-  | 'demand_draft'
+  | 'card_cash'
+  | 'upi'
+  | 'dd'
   | 'card'
-  | 'other'
+  | 'cash'
 
 export const FUND_TRANSFER_DEFAULT_SOURCE = 'GLTS main office'
 
@@ -19,24 +19,24 @@ export interface FundTransferDetails {
   fundSource: string
   transferType: FundTransferType | ''
   transferDate: string
-  /** Cash / UPI — auto-filled from assigned user */
+  /** Cash / UPI / Card + cash — auto-filled from assigned user */
   receivedBy: string
   /** Bank transfer */
   destinationBankAccount: string
   /** Card — selected from card master */
   assignedCardId: string
-  /** Shared reference for DD, Other, Bank, Cheque, Card, etc. */
+  /** Shared reference for DD, Bank, Card, Cash, UPI, etc. */
   paymentReference: string
   paymentRemark: string
 }
 
 export const FUND_TRANSFER_TYPE_OPTIONS: Array<{ value: FundTransferType; label: string }> = [
-  { value: 'cash_upi', label: 'Cash / UPI' },
   { value: 'bank_transfer', label: 'Bank Transfer' },
-  { value: 'cheque', label: 'Cheque' },
-  { value: 'demand_draft', label: 'Demand Draft (DD)' },
+  { value: 'card_cash', label: 'Card + cash' },
+  { value: 'upi', label: 'UPI' },
+  { value: 'dd', label: 'DD' },
   { value: 'card', label: 'Card' },
-  { value: 'other', label: 'Other' },
+  { value: 'cash', label: 'Cash' },
 ]
 
 export function getFundTransferTypeLabel(type: FundTransferType | '' | undefined): string {

@@ -86,20 +86,18 @@ export function InvoiceKpiRow({ invoices }: InvoiceKpiRowProps) {
   const overdue = invoices.filter(i => i.invoiceStatus === 'overdue').length
   const outstanding = computeOutstanding(invoices)
   const totalBilled = computeTotalBilled(invoices)
-  const advanceAdjusted = invoices.reduce((s, i) => s + i.totals.advanceAdjusted, 0)
   const creditNotes = invoices.filter(i => i.invoiceType === 'credit_note').length
 
   const primary = [
     { label: 'Total Invoices', value: total, icon: FileText, color: theme.palette.primary.main },
     { label: 'Draft Invoices', value: draft, icon: Receipt, color: theme.palette.info.main },
-    { label: 'Submitted Invoices', value: submitted, icon: Send, color: theme.palette.success.main },
+    { label: 'Invoiced', value: submitted, icon: Send, color: theme.palette.success.main },
     { label: 'Overdue Invoices', value: overdue, icon: AlertCircle, color: theme.palette.error.main },
     { label: 'Outstanding Amount', value: formatInr(outstanding), icon: IndianRupee, color: theme.palette.warning.main },
     { label: 'Total Billed Amount', value: formatInr(totalBilled), icon: IndianRupee, color: theme.palette.primary.dark },
   ]
 
   const optional = [
-    { label: 'Advance Adjusted', value: formatInr(advanceAdjusted), icon: ArrowDownCircle, color: theme.palette.info.dark },
     { label: 'Credit Notes', value: creditNotes, icon: ArrowDownCircle, color: theme.palette.secondary.main },
   ]
 

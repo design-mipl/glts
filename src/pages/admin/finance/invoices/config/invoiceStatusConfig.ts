@@ -22,7 +22,7 @@ export const invoiceTypeColor: Record<InvoiceType, BadgeColor> = {
 
 export const invoiceStatusLabel: Record<InvoiceStatus, string> = {
   draft: 'Draft',
-  submitted: 'Submitted',
+  submitted: 'Invoiced',
   shared: 'Shared',
   partially_paid: 'Partially paid',
   paid: 'Paid',

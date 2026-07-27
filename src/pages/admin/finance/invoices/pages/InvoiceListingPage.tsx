@@ -378,7 +378,7 @@ export function InvoiceListingPage() {
           <AdminListingToolbar
             searchValue={listing.tableState.searchQuery}
             onSearch={listing.handleSearch}
-            searchPlaceholder="Search invoice ID, GLTS ref, batch, company, billing entity, vessel, PO ref…"
+            searchPlaceholder="Search invoice ID, credit note, company, billing entity, vessel, PO ref…"
             onExport={() => {
               downloadInvoiceCsv(listing.filterSourceRows)
               showToast({ title: 'Export started', variant: 'success' })

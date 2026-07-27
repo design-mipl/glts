@@ -3,6 +3,7 @@ import { Box, Collapse, IconButton, Stack, Typography } from '@mui/material'
 import { ChevronDown, ChevronUp, List } from 'lucide-react'
 import { StoryNav } from '../../dashboard-ui-kit'
 import { DASHBOARD_SPACING } from '../../constants'
+import { useStickyStuck } from '../../hooks/useStickyStuck'
 import type { ExecutiveSectionNavItem } from '../types'
 import { useScrollSpy, useSegmentSectionFocus } from './useScrollSpy'
 import { useDashboardFiltersOptional } from '../filters'
@@ -24,6 +25,7 @@ export function ExecutiveSectionNav({
   const { activeId, scrollToSection } = useScrollSpy({ sections })
   const filters = useDashboardFiltersOptional()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { sentinelRef, stuck } = useStickyStuck()
 
   useSegmentSectionFocus(filters?.filters.segment ?? 'all', sections, scrollToSection)
 
@@ -33,6 +35,12 @@ export function ExecutiveSectionNav({
   )
 
   return (
+    <>
+    <Box
+      ref={sentinelRef}
+      aria-hidden
+      sx={{ height: 1, mt: -0.125, pointerEvents: 'none' }}
+    />
     <Box
       component="nav"
       aria-label="Executive sections"
@@ -41,15 +49,25 @@ export function ExecutiveSectionNav({
         top: sticky ? 56 : undefined,
         zIndex: (theme) => theme.zIndex.appBar - 2,
         mb: DASHBOARD_SPACING.section,
-        bgcolor: (theme) =>
-          theme.palette.mode === 'dark'
-            ? 'rgba(15, 23, 42, 0.88)'
-            : 'rgba(248, 250, 252, 0.92)',
-        backdropFilter: 'blur(10px)',
+        bgcolor: 'transparent',
+        backgroundImage: 'none',
+        backdropFilter: 'none',
         borderBottom: '1px solid',
-        borderColor: 'divider',
+        borderColor: 'transparent',
         px: { xs: 0.5, md: 0 },
         py: 0.5,
+        transition:
+          'background-color 160ms ease, border-color 160ms ease, backdrop-filter 160ms ease',
+        ...(stuck
+          ? {
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? 'rgba(15, 23, 42, 0.88)'
+                  : 'rgba(248, 250, 252, 0.92)',
+              borderColor: 'divider',
+              backdropFilter: 'blur(10px)',
+            }
+          : null),
       }}
     >
       {collapsibleOnMobile ? (
@@ -84,5 +102,6 @@ export function ExecutiveSectionNav({
         <StoryNav items={items} activeId={activeId} onSelect={scrollToSection} />
       </Box>
     </Box>
+    </>
   )
 }

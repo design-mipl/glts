@@ -33,6 +33,7 @@ const VERIFICATION_PENDING_STATUSES = new Set([
   'Submitted',
   'Under Review',
   'Verification Pending',
+  'Document Rejected',
   'Pending Documents',
   'Correction Required',
 ])

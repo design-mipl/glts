@@ -6,7 +6,10 @@ import { resolveDispatchAmountPaid } from '@/shared/utils/logisticsDispatchCharg
 import { isBankTransferAllocation } from '@/shared/constants/fundSettlementBankAccounts'
 import type { FundTransferType } from '@/shared/types/fundAllocation'
 import type { FundBankSettlementSummary } from '@/shared/types/fundUtilization'
-import type { OperationalCase } from '@/shared/types/operationalCaseHandling'
+import {
+  isLogisticsStatus,
+  type OperationalCase,
+} from '@/shared/types/operationalCaseHandling'
 import type {
   ClaimSheetCaseSnapshot,
   ClaimSheetOtherExpense,
@@ -67,13 +70,25 @@ function computeNonBankClaimSettlementKpis(
   ) / 100
   const expensesIncurred = Math.round((caseExpensesTotal + otherExpensesTotal) * 100) / 100
 
+  const settlementAmount = Math.round((expensesIncurred - allocatedAmount) * 100) / 100
+
   return {
+    settlementDate: '',
+    priorBankDate: '',
+    closingBankBalancePrior: 0,
+    fundsTransferred: 0,
+    availableBankBalance: 0,
+    cashWithdrawn: 0,
+    closingBankBalance: 0,
+    openingCashBalance: 0,
+    totalCashAvailable: 0,
+    expensesIncurred,
+    closingCashBalance: 0,
     allocatedAmount,
     totalWithdrawn: 0,
     availableInBank: 0,
     inHandCash: 0,
-    expensesIncurred,
-    settlementAmount: Math.round((expensesIncurred - allocatedAmount) * 100) / 100,
+    settlementAmount,
     bankAllocationCount: 0,
   }
 }
@@ -207,16 +222,15 @@ export const groundOpsClaimSheetService = {
     return found ? cloneSheet(found) : undefined
   },
 
+  /** Cases from document submission onward (logistics statuses) may be claimed. */
   listCompletedCasesEligible(): OperationalCase[] {
-    return operationalCaseHandlingService
-      .list()
-      .filter(row => row.status === 'Completed' || row.status === 'Dispatched')
+    return operationalCaseHandlingService.list().filter(row => isLogisticsStatus(row.status))
   },
 
   create(input: CreateGroundOpsClaimSheetInput): GroundOpsClaimSheet {
     const caseIds = [...new Set(input.caseIds.map(id => id.trim()).filter(Boolean))]
     if (caseIds.length === 0) {
-      throw new Error('Select at least one completed case.')
+      throw new Error('Select at least one eligible case.')
     }
 
     const records: OperationalCase[] = []
@@ -226,8 +240,10 @@ export const groundOpsClaimSheetService = {
       if (!record) {
         throw new Error(`Case not found: ${caseId}`)
       }
-      if (record.status !== 'Completed' && record.status !== 'Dispatched') {
-        throw new Error(`${record.operationalId} is not eligible for claim (must be Completed or Dispatched).`)
+      if (!isLogisticsStatus(record.status)) {
+        throw new Error(
+          `${record.operationalId} is not eligible for claim (must be Document Submitted or later).`,
+        )
       }
       records.push(record)
       cases.push(buildCaseSnapshot(record))

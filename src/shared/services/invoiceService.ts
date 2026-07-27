@@ -63,6 +63,11 @@ function generateInvoiceId(): string {
   return `GLTS-INV-${suffix}`
 }
 
+function generateCreditNoteId(): string {
+  const suffix = Math.floor(8800 + Math.random() * 200)
+  return `GLTS-CN-${suffix}`
+}
+
 function generateInternalId(): string {
   return `INV-${Math.floor(100 + Math.random() * 900)}`
 }
@@ -136,7 +141,9 @@ function workspaceToInvoice(
   ]
 
   const id = existing?.id ?? generateInternalId()
-  const invoiceId = existing?.invoiceId ?? generateInvoiceId()
+  const invoiceId =
+    existing?.invoiceId ??
+    (workspace.selection.invoiceType === 'credit_note' ? generateCreditNoteId() : generateInvoiceId())
   const appliedVia = resolveRefundAppliedVia(workspace, existing)
   const extractedRefunds =
     status === 'draft'

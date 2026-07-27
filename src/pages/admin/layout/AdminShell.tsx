@@ -40,6 +40,7 @@ export function AdminShell({ children }: AdminShellProps) {
         onProfileClick={goToProfile}
         hideTopbarUserDetails
         hideTopbarNotificationBell
+        topbarMode="mobile-only"
       >
         <AdminPageCanvasShell>{children}</AdminPageCanvasShell>
       </AppShell>

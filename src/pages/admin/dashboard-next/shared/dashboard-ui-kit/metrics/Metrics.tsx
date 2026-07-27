@@ -26,6 +26,11 @@ function toneColor(tone: Tone | undefined, theme: Theme): string {
   }
 }
 
+function iconToneColor(tone: Tone | undefined, theme: Theme): string {
+  if (!tone || tone === 'neutral') return theme.palette.primary.main
+  return toneColor(tone, theme)
+}
+
 function progressTone(tone: Tone): 'default' | 'success' | 'warning' | 'error' {
   if (tone === 'positive') return 'success'
   if (tone === 'negative') return 'error'
@@ -148,8 +153,8 @@ function MetricShell({
               borderRadius: '8px',
               display: 'grid',
               placeItems: 'center',
-              bgcolor: alpha(theme.palette.primary.main, 0.08),
-              color: 'primary.main',
+              bgcolor: alpha(iconToneColor(tone, theme), 0.12),
+              color: iconToneColor(tone, theme),
               flexShrink: 0,
               '& svg': { width: iconBox * 0.5, height: iconBox * 0.5 },
             }}

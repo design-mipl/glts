@@ -1,12 +1,14 @@
 import type { ReactNode } from 'react'
 import { Box } from '@mui/material'
 import {
+  Activity,
+  AlertTriangle,
   CheckCircle2,
-  ClipboardList,
+  Clock,
   FileText,
-  IndianRupee,
-  ShieldAlert,
-  Timer,
+  Shield,
+  Users,
+  Wallet,
 } from 'lucide-react'
 import { ExecutiveGrid, HeroMetric, InsightStack } from '../../shared/dashboard-ui-kit'
 import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
@@ -14,15 +16,23 @@ import type { DashboardKpiItem } from '../../shared/types'
 import { DASHBOARD_SPACING } from '../../shared/constants'
 
 const KPI_ICONS: Record<string, ReactNode> = {
-  'open-cases': <FileText size={16} />,
-  'sla-at-risk': <ShieldAlert size={16} />,
+  'total-applications': <FileText size={16} />,
+  'applications-in-progress': <Activity size={16} />,
   'completed-today': <CheckCircle2 size={16} />,
-  'revenue-mtd': <IndianRupee size={16} />,
-  'verification-backlog': <ClipboardList size={16} />,
-  'avg-cycle': <Timer size={16} />,
+  'critical-cases': <AlertTriangle size={16} />,
+  'sla-compliance': <Shield size={16} />,
+  'applications-delayed': <Clock size={16} />,
+  'team-utilization': <Users size={16} />,
+  'revenue-today': <Wallet size={16} />,
 }
 
-function kpiTone(delta?: number): 'positive' | 'negative' | 'warning' | 'neutral' {
+function kpiTone(id: string, delta?: number): 'positive' | 'negative' | 'warning' | 'info' | 'neutral' {
+  if (id === 'critical-cases') return 'negative'
+  if (id === 'applications-delayed') return 'warning'
+  if (id === 'applications-in-progress' || id === 'team-utilization') return 'info'
+  if (id === 'completed-today' || id === 'sla-compliance' || id === 'total-applications') {
+    return 'positive'
+  }
   if (delta == null) return 'neutral'
   if (delta > 0) return 'positive'
   if (delta < 0) return 'negative'
@@ -55,49 +65,43 @@ export function AdminHeroStrip({ items, loading }: AdminHeroStripProps) {
 
   return (
     <InsightStack spacing={DASHBOARD_SPACING.dense}>
-      <ExecutiveGrid columns={items.length >= 6 ? 6 : 4} spacing={1}>
-        {items.map((kpi) => {
-          const tone =
-            kpi.id === 'sla-at-risk' || kpi.id === 'verification-backlog'
-              ? 'warning'
-              : kpiTone(kpi.delta)
-          return (
-            <Box
-              key={kpi.id}
-              role={drilldown ? 'button' : undefined}
-              tabIndex={drilldown ? 0 : undefined}
-              aria-label={`${kpi.label}: ${kpi.value}`}
-              onClick={() => openKpi(kpi)}
-              onKeyDown={(event) => {
-                if (!drilldown) return
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  openKpi(kpi)
-                }
-              }}
-              sx={{
-                cursor: drilldown ? 'pointer' : 'default',
-                minWidth: 0,
-                outline: 'none',
-                '&:focus-visible': {
-                  borderRadius: 2,
-                  boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
-                },
-              }}
-            >
-              <HeroMetric
-                label={kpi.label}
-                value={kpi.value}
-                delta={kpi.delta}
-                deltaLabel={kpi.deltaLabel}
-                icon={KPI_ICONS[kpi.id] ?? kpi.icon}
-                tone={tone}
-                loading={loading}
-                animate
-              />
-            </Box>
-          )
-        })}
+      <ExecutiveGrid columns={4} spacing={1}>
+        {items.map((kpi) => (
+          <Box
+            key={kpi.id}
+            role={drilldown ? 'button' : undefined}
+            tabIndex={drilldown ? 0 : undefined}
+            aria-label={`${kpi.label}: ${kpi.value}`}
+            onClick={() => openKpi(kpi)}
+            onKeyDown={(event) => {
+              if (!drilldown) return
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                openKpi(kpi)
+              }
+            }}
+            sx={{
+              cursor: drilldown ? 'pointer' : 'default',
+              minWidth: 0,
+              outline: 'none',
+              '&:focus-visible': {
+                borderRadius: 2,
+                boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+              },
+            }}
+          >
+            <HeroMetric
+              label={kpi.label}
+              value={kpi.value}
+              delta={kpi.delta}
+              deltaLabel={kpi.deltaLabel}
+              icon={KPI_ICONS[kpi.id] ?? kpi.icon}
+              tone={kpiTone(kpi.id, kpi.delta)}
+              loading={loading}
+              animate
+            />
+          </Box>
+        ))}
       </ExecutiveGrid>
     </InsightStack>
   )
