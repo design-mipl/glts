@@ -215,7 +215,7 @@ export function OutstandingStatementsPage() {
             variant="underline"
             size="sm"
             items={TABS}
-            sx={{ mb: 0, px: 2, minHeight: 44 }}
+            sx={{ mb: 0, px: 2, minHeight: 36 }}
           />
         </Box>
         <Box sx={{ p: 2 }}>{tabContent[tab]}</Box>

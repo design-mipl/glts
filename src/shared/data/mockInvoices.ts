@@ -288,7 +288,7 @@ export const SEED_INVOICES: Invoice[] = [
   }),
   withAdjustment({
     id: 'INV-007',
-    invoiceId: 'GLTS-INV-8827',
+    invoiceId: 'GLTS-CN-8827',
     invoiceType: 'credit_note',
     billingMode: 'application_wise',
     companyId: 'CMP-1001',

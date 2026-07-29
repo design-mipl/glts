@@ -1,73 +1,231 @@
+import { useCallback, useMemo } from 'react'
+import { Stack } from '@mui/material'
 import {
-  Activity,
   BarChart3,
+  Bell,
   ClipboardList,
   FileText,
+  LayoutDashboard,
   LineChart,
+  ShieldAlert,
+  Users,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { DashboardFilters, DashboardShell } from '../../shared'
+import { Button } from '@/design-system/UIComponents'
+import {
+  DASHBOARD_SPACING,
+  DashboardWorkspace,
+} from '../../shared'
+import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intelligence'
+import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
 import { useAdminDashboardNext } from '../hooks/useAdminDashboardNext'
 import { ADMIN_DASHBOARD_NEXT_MOCK } from '../data/adminDashboardNextMock'
+import { buildAdminSearchItems } from '../data/adminSearchItems'
+import { AdminApplicationFunnelSection } from '../components/AdminApplicationFunnelSection'
+import { AdminExecutiveRow } from '../components/AdminExecutiveRow'
+import { AdminHeroStrip } from '../components/AdminHeroStrip'
+import { NeedsImmediateAttentionSection } from '@/pages/admin/dashboard/components'
 import {
   AnalyticsTab,
+  ApplicationsTab,
   OperationsTab,
   OverviewTab,
   ProductivityTab,
   ReportsTab,
+  RiskComplianceTab,
 } from '../tabs'
+import { resolveAdminAttentionIcon } from '../utils/resolveAdminAttentionIcon'
 import type { AdminDashboardTabProps } from '../types'
+
+function AdminNotificationsAction({
+  count,
+  onOpen,
+}: {
+  count: number
+  onOpen: () => void
+}) {
+  return (
+    <Button
+      label={count > 0 ? `Alerts (${count})` : 'Alerts'}
+      variant="outlined"
+      size="sm"
+      startIcon={<Bell size={16} />}
+      onClick={onOpen}
+      aria-label={`Open notifications, ${count} unread`}
+    />
+  )
+}
+
+function AdminWorkspaceActions({
+  unreadCount,
+  notifications,
+}: {
+  unreadCount: number
+  notifications: typeof ADMIN_DASHBOARD_NEXT_MOCK.notifications
+}) {
+  const drilldown = useDrilldownOptional()
+  return (
+    <AdminNotificationsAction
+      count={unreadCount}
+      onOpen={() =>
+        drilldown?.openDrilldown({
+          id: 'admin-notifications',
+          title: 'Admin notifications',
+          subtitle: `${unreadCount} unread`,
+          entityType: 'custom',
+          entityId: 'notifications',
+          meta: {
+            count: notifications.length,
+            preview: notifications[0]?.title,
+          },
+        })
+      }
+    />
+  )
+}
 
 export function AdminDashboardPage() {
   const navigate = useNavigate()
   const dashboard = useAdminDashboardNext()
   const data = dashboard.data ?? ADMIN_DASHBOARD_NEXT_MOCK
   const loading = dashboard.isLoading
+  const setFilters = dashboard.setFilters
+
+  const onFiltersChange = useCallback(
+    (filters: DashboardIntelligenceFilters) => {
+      setFilters((prev) => ({
+        ...prev,
+        period:
+          filters.datePreset === 'week' ||
+          filters.datePreset === 'quarter' ||
+          filters.datePreset === 'year' ||
+          filters.datePreset === 'month' ||
+          filters.datePreset === 'today'
+            ? filters.datePreset
+            : prev.period,
+        region: filters.branch === 'all' ? prev.region : filters.branch,
+        segment: filters.segment === 'all' ? 'all' : filters.segment,
+      }))
+    },
+    [setFilters],
+  )
+
+  const openTab = useCallback(
+    (tabId: string) => {
+      navigate({ search: `?tab=${tabId}` }, { replace: true })
+    },
+    [navigate],
+  )
+
+  const searchItems = useMemo(
+    () =>
+      buildAdminSearchItems({
+        onNavigate: (href) => navigate(href),
+        onOpenTab: openTab,
+      }),
+    [navigate, openTab],
+  )
+
+  const unreadCount = data.notifications.filter((n) => n.unread).length
 
   const tabProps: AdminDashboardTabProps = {
     data,
     loading,
     onRetry: dashboard.retry,
     onNavigate: (href) => navigate(href),
-    onPipelineStageClick: () => navigate('/admin/application-management/retail'),
+    onPipelineStageClick: (stageId) => {
+      navigate(`/admin/application-management/retail?stage=${stageId}`)
+    },
     onVerificationOpen: () => navigate('/admin/application-management/retail'),
-    onViewVerificationQueue: () => navigate('/admin/assignment-priority/retail'),
+    onViewVerificationQueue: () =>
+      navigate('/admin/application-management/marine?tab=verification_pending'),
   }
 
   return (
-    <DashboardShell
-      badge="Next"
+    <DashboardWorkspace
+      workspaceId="admin"
       title="Admin dashboard"
-      subtitle="Executive overview of business operations."
-      filters={<DashboardFilters filters={dashboard.filterConfigs} />}
+      subtitle="Executive overview of business operations — applications, delivery risk, and throughput."
       loading={loading}
       error={dashboard.isError}
       onRetry={dashboard.retry}
+      onRefresh={dashboard.retry}
+      onFiltersChange={onFiltersChange}
+      searchItems={searchItems}
+      extraActions={
+        <AdminWorkspaceActions unreadCount={unreadCount} notifications={data.notifications} />
+      }
       defaultTab="overview"
+      hero={<AdminHeroStrip items={data.quickStats} loading={loading} />}
       tabs={[
         {
           id: 'overview',
           label: 'Overview',
+          icon: <LayoutDashboard size={16} />,
+          content: (
+            <Stack spacing={DASHBOARD_SPACING.field}>
+              <AdminExecutiveRow
+                primaryVisualization={
+                  <AdminApplicationFunnelSection
+                    stages={data.pipelineStages}
+                    loading={loading}
+                    onRetry={dashboard.retry}
+                    onNavigate={(href) => navigate(href)}
+                  />
+                }
+                quickActions={
+                  <NeedsImmediateAttentionSection
+                    alerts={data.attentionAlerts}
+                    resolveIcon={resolveAdminAttentionIcon}
+                    density="compact"
+                    onOpenAlertCenter={() => openTab('risk-compliance')}
+                    onViewAlert={(alert) => {
+                      navigate(
+                        `/admin/ground-operations/case-handling?attention=${encodeURIComponent(alert.id)}`,
+                      )
+                    }}
+                  />
+                }
+              />
+              <OverviewTab
+                {...tabProps}
+                onShowMoreAlerts={() => openTab('risk-compliance')}
+              />
+            </Stack>
+          ),
+        },
+        {
+          id: 'applications',
+          label: 'Applications',
           icon: <FileText size={16} />,
-          content: <OverviewTab {...tabProps} />,
+          badge: data.pendingVerification.length,
+          content: <ApplicationsTab {...tabProps} />,
         },
         {
           id: 'operations',
           label: 'Operations',
           icon: <ClipboardList size={16} />,
+          badge: data.operationsHealth.delayedCases,
           content: <OperationsTab {...tabProps} />,
         },
         {
-          id: 'productivity',
-          label: 'Productivity',
-          icon: <Activity size={16} />,
+          id: 'teams-productivity',
+          label: 'Teams & Productivity',
+          icon: <Users size={16} />,
           content: <ProductivityTab {...tabProps} />,
         },
         {
           id: 'analytics',
-          label: 'Analytics',
+          label: 'Visa Analytics',
           icon: <BarChart3 size={16} />,
           content: <AnalyticsTab {...tabProps} />,
+        },
+        {
+          id: 'risk-compliance',
+          label: 'Risk & Compliance',
+          icon: <ShieldAlert size={16} />,
+          badge: data.riskAlerts.length,
+          content: <RiskComplianceTab {...tabProps} />,
         },
         {
           id: 'reports',

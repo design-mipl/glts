@@ -1,4 +1,7 @@
-import { MetricCard } from '@/design-system/UIComponents'
+import {
+  ComparisonMetric,
+  ExecutiveGrid,
+} from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from './BusinessWidgetFrame'
 
 export interface MetricComparisonItem {
@@ -18,7 +21,7 @@ export interface MetricComparisonProps {
   onRetry?: () => void
 }
 
-/** Side-by-side metric comparison using DS MetricCard. */
+/** Side-by-side metric comparison via Dashboard UI Kit. */
 export function MetricComparison({
   title = 'Comparison',
   subtitle,
@@ -31,7 +34,8 @@ export function MetricComparison({
 }: MetricComparisonProps) {
   return (
     <BusinessWidgetFrame
-      title={undefined}
+      title={title}
+      subtitle={subtitle}
       card={false}
       loading={loading}
       error={error}
@@ -40,7 +44,16 @@ export function MetricComparison({
       onRetry={onRetry}
       skeletonHeightSpacing={14}
     >
-      <MetricCard title={title} subtitle={subtitle} metrics={metrics} />
+      <ExecutiveGrid columns={metrics.length >= 3 ? 3 : 2}>
+        {metrics.map((metric) => (
+          <ComparisonMetric
+            key={metric.label}
+            label={metric.label}
+            value={metric.value}
+            delta={metric.delta}
+          />
+        ))}
+      </ExecutiveGrid>
     </BusinessWidgetFrame>
   )
 }

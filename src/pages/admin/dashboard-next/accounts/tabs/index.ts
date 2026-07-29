@@ -1,4 +1,4 @@
-export { OverviewTab } from './OverviewTab'
+export { OverviewTab, ACCOUNTS_ACTION_ICONS } from './OverviewTab'
 export { CollectionsTab } from './CollectionsTab'
 export { InvoicingTab } from './InvoicingTab'
 export { ReconciliationTab } from './ReconciliationTab'

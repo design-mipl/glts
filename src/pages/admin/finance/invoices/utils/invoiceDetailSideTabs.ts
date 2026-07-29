@@ -3,7 +3,10 @@ import type { ApplicationExpenseRecord } from '@/shared/types/applicationExpense
 import type { Invoice } from '@/shared/types/invoice'
 import { getBilledItemsRegistry, isServiceAlreadyBilled } from '@/shared/utils/invoiceBilledItemsRegistry'
 import { roundMoney } from '@/shared/utils/invoiceCalculations'
-import { isGoRefundExpenseId } from './invoiceConsulateRefundUtils'
+import {
+  isGoRefundExpenseId,
+  listInvoiceRefunds,
+} from './invoiceConsulateRefundUtils'
 
 export {
   listInvoiceRefunds,
@@ -80,4 +83,24 @@ export function listInvoiceUnbilledExpenses(invoice: Invoice): ApplicationExpens
 
 export function sumUnbilledExpenses(expenses: ApplicationExpenseRecord[]): number {
   return roundMoney(expenses.reduce((sum, expense) => sum + expense.netPayableAmount, 0))
+}
+
+export interface InvoiceOpenItemFlags {
+  hasUnbilledExpenses: boolean
+  hasPendingRefunds: boolean
+}
+
+/** Listing/detail flags for open unbilled expenses and pending consulate refunds. */
+export function getInvoiceOpenItemFlags(invoice: Invoice): InvoiceOpenItemFlags {
+  return {
+    hasUnbilledExpenses: listInvoiceUnbilledExpenses(invoice).length > 0,
+    hasPendingRefunds: listInvoiceRefunds(invoice).some(row => row.status === 'pending'),
+  }
+}
+
+export function formatInvoiceOpenItemsLabel(flags: InvoiceOpenItemFlags): string {
+  const parts: string[] = []
+  if (flags.hasUnbilledExpenses) parts.push('Unbilled expenses')
+  if (flags.hasPendingRefunds) parts.push('Refund')
+  return parts.length > 0 ? parts.join(', ') : '—'
 }

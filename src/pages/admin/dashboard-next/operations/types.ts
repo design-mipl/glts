@@ -59,6 +59,87 @@ export interface OperationsQuickActionDefinition {
   href: string
 }
 
+/** Carry-forward — consultant application listing. */
+export interface OperationsApplicationRow {
+  id: string
+  glNumber: string
+  applicant: string
+  company: string
+  country: string
+  visaType: string
+  currentStage: string
+  nextActionRequired: string
+  waitingOn: string
+  priority: string
+  slaStatus: string
+  slaTimer: string
+  dueDate: string
+  channel: string
+  applicationHref: string
+}
+
+export interface OperationsCorrectionRow {
+  id: string
+  applicationId: string
+  applicant: string
+  raisedBy: string
+  reason: string
+  waitingSince: string
+  assignedTo: string
+  isOverdue: boolean
+}
+
+export interface OperationsAwaitingDocumentRow {
+  id: string
+  applicant: string
+  outstandingDocuments: string
+  lastReminderSent: string
+  reminderCount: number
+  daysWaiting: number
+  country: string
+  channel: string
+}
+
+export interface OperationsReviewQcRow {
+  id: string
+  applicationId: string
+  applicant: string
+  country: string
+  submittedBy: string
+  currentStage: string
+  slaTimer: string
+  slaStatus: string
+}
+
+export interface OperationsAppointmentSubmissionRow {
+  id: string
+  applicant: string
+  appointmentDate: string
+  country: string
+  vfsLocation: string
+  submissionStatus: string
+  assignedExecutive: string
+}
+
+export interface OperationsMarinePriorityRow {
+  id: string
+  vesselName: string
+  crewName: string
+  joiningPort: string
+  joiningDate: string
+  daysRemaining: number
+  visaStatus: string
+  priority: string
+}
+
+export interface OperationsTodayTaskItem {
+  id: string
+  title: string
+  taskCount: number
+  dueTime: string
+  priority: string
+}
+
 /** Consultant-scoped payload for Operations Dashboard Next. */
 export interface OperationsDashboardData {
   consultantName: string
@@ -70,6 +151,13 @@ export interface OperationsDashboardData {
   myMarineTimeline: MarineTimelineRow[]
   myRecentActivity: RecentActivityItem[]
   quickActions: OperationsQuickActionDefinition[]
+  myApplications: OperationsApplicationRow[]
+  todayTasks: OperationsTodayTaskItem[]
+  correctionRequests: OperationsCorrectionRow[]
+  awaitingDocuments: OperationsAwaitingDocumentRow[]
+  reviewQcQueue: OperationsReviewQcRow[]
+  appointmentSubmissionQueue: OperationsAppointmentSubmissionRow[]
+  marinePriorityCases: OperationsMarinePriorityRow[]
   queueItems: OperationsQueueRow[]
   queuePendingVerification: PendingVerificationRow[]
   queuePipelineStages: ApplicationPipelineStageData[]
@@ -99,4 +187,5 @@ export interface OperationsDashboardTabProps {
   onViewVerificationQueue?: () => void
   onQueueRowClick?: (rowId: string) => void
   onJobClick?: (jobId: string) => void
+  onOpenApplication?: (href: string) => void
 }

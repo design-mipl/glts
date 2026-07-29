@@ -1,4 +1,5 @@
-import { ListCard, type ListCardItem } from '@/design-system/UIComponents'
+import { AlertPanel } from '../../dashboard-ui-kit'
+import type { UiKitListItem } from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from './BusinessWidgetFrame'
 
 export interface AnnouncementItem {
@@ -23,12 +24,10 @@ export interface AnnouncementsProps {
   onRetry?: () => void
 }
 
-type ListBadgeColor = NonNullable<ListCardItem['badge']>['color']
-
-function severityColor(severity?: AnnouncementItem['severity']): ListBadgeColor {
+function severityTone(severity?: AnnouncementItem['severity']): UiKitListItem['badgeTone'] {
   switch (severity) {
     case 'critical':
-      return 'error'
+      return 'negative'
     case 'warning':
       return 'warning'
     case 'info':
@@ -49,16 +48,6 @@ export function Announcements({
   permission,
   onRetry,
 }: AnnouncementsProps) {
-  const listItems: ListCardItem[] = items.map((item) => ({
-    id: item.id,
-    primary: item.title,
-    secondary: [item.summary, item.publishedAt].filter(Boolean).join(' · '),
-    badge: item.severity
-      ? { label: item.severity, color: severityColor(item.severity) }
-      : undefined,
-    onClick: item.onClick,
-  }))
-
   return (
     <BusinessWidgetFrame
       title={undefined}
@@ -70,14 +59,20 @@ export function Announcements({
       onRetry={onRetry}
       emptyTitle="No announcements"
     >
-      <ListCard
+      <AlertPanel
         title={title}
         subtitle={subtitle}
-        items={listItems}
         maxItems={maxItems}
         onShowMore={onShowMore}
-        showMoreLabel="View all"
-        emptyText="No announcements"
+        loading={loading}
+        items={items.map((item) => ({
+          id: item.id,
+          primary: item.title,
+          secondary: [item.summary, item.publishedAt].filter(Boolean).join(' · '),
+          badgeLabel: item.severity,
+          badgeTone: severityTone(item.severity),
+          onClick: item.onClick,
+        }))}
       />
     </BusinessWidgetFrame>
   )

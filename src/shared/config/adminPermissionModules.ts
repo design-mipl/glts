@@ -95,6 +95,7 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
     id: 'user_management',
     label: 'User management',
     submodules: [
+      { id: 'departments', label: 'Department' },
       { id: 'teams', label: 'Team' },
       { id: 'users', label: 'User & permission' },
     ],

@@ -14,12 +14,14 @@ import type { PendingVerificationRow } from '../shared/widgets/operations/Pendin
 import type { PassportJourneyStageData } from '../shared/widgets/operations/PassportJourney'
 import type { MarineTimelineRow } from '../shared/widgets/operations/MarineTimeline'
 import type { TeamCapacityRow } from '../shared/widgets/operations/TeamCapacity'
+import type { TeamProductivityByChannel } from '../shared/widgets/operations/TeamProductivityInfographic'
 import type { RevenueSnapshotData } from '../shared/widgets/finance/RevenueSnapshot'
 import type {
   DistributionSlice,
   NamedMetricPoint,
   TrendPoint,
 } from '../shared/widgets/analytics/AnalyticsWidgets'
+import type { ExecutiveAttentionAlert } from '@/pages/admin/dashboard/components'
 
 export interface AdminDashboardNextFilters {
   period: string
@@ -50,12 +52,14 @@ export interface AdminDashboardNextData {
   metricComparison: MetricComparisonItem[]
   operationsHealth: OperationsHealthMetrics
   notifications: NotificationItem[]
+  attentionAlerts: ExecutiveAttentionAlert[]
   pipelineStages: ApplicationPipelineStageData[]
   pendingVerification: PendingVerificationRow[]
   passportJourney: AdminPassportJourneyData
   recentActivity: RecentActivityItem[]
   quickActions: AdminQuickActionDefinition[]
   teamCapacity: TeamCapacityRow[]
+  teamProductivity: TeamProductivityByChannel
   marineTimeline: MarineTimelineRow[]
   processingTrend: TrendPoint[]
   announcements: AnnouncementItem[]

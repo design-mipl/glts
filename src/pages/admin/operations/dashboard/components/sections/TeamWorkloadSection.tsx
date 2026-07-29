@@ -16,7 +16,7 @@ export function TeamWorkloadSection({ teamWorkload }: TeamWorkloadSectionProps) 
       title="Team workload"
       description="Capacity, SLA health, and throughput across operational teams."
       actionLabel="View teams"
-      onAction={() => navigate('/admin/access/teams')}
+      onAction={() => navigate('/admin/user-management/teams')}
       items={teamWorkload.map((row) => ({
         id: row.id,
         team: row.team,

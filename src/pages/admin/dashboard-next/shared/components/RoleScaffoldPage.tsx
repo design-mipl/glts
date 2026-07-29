@@ -11,7 +11,6 @@ export interface RoleScaffoldPageProps {
 export function RoleScaffoldPage({ role }: RoleScaffoldPageProps) {
   return (
     <DashboardShell
-      badge="Next"
       title={role.title}
       subtitle={role.description}
       empty={false}

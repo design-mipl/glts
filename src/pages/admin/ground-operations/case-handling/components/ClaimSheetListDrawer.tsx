@@ -76,7 +76,7 @@ export function ClaimSheetListDrawer({ open, refreshKey = 0, onClose }: ClaimShe
       ) : sheets.length === 0 ? (
         <EmptyState
           title="No claim sheets yet"
-          description="Generate a claim sheet from completed cases to see it here."
+          description="Generate a claim sheet from document-submitted or later cases to see it here."
         />
       ) : (
         <Stack spacing={1}>

@@ -1,5 +1,5 @@
 import { BarChart } from '@/design-system/UIComponents'
-import { ChartPanel } from '../ChartPanel'
+import { AnalyticsChart } from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
 import {
   AGEING_BUCKET_LABELS,
@@ -51,7 +51,7 @@ export function AgeingAnalysis({
       permission={permission}
       onRetry={onRetry}
     >
-      <ChartPanel title={title} subtitle={subtitle} empty={chartData.length === 0}>
+      <AnalyticsChart title={title} subtitle={subtitle} minHeight={chartHeight}>
         <BarChart
           data={chartData}
           xKey="bucket"
@@ -59,7 +59,7 @@ export function AgeingAnalysis({
           height={chartHeight}
           showLegend={false}
         />
-      </ChartPanel>
+      </AnalyticsChart>
     </BusinessWidgetFrame>
   )
 }

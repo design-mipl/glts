@@ -16,7 +16,7 @@ export function resolveExecutiveAlertIcon(title: string): LucideIcon {
   if (lower.includes('qc')) return Timer
   if (lower.includes('passport')) return Clock
   if (lower.includes('marine') || lower.includes('crew')) return Plane
-  if (lower.includes('corrected')) return ShieldAlert
+  if (lower.includes('corrected') || lower.includes('correction')) return ShieldAlert
   if (lower.includes('movement')) return UserX
   return AlertTriangle
 }

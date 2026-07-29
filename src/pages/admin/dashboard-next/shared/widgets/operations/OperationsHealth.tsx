@@ -1,8 +1,13 @@
-import { Grid, Stack, Typography } from '@mui/material'
+import { Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { GaugeChart, StatCard } from '@/design-system/UIComponents'
+import { GaugeChart } from '@/design-system/UIComponents'
+import {
+  ComparisonLayout,
+  ExecutiveGrid,
+  ExecutiveMetric,
+  UI_KIT_SPACING,
+} from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
-import { DASHBOARD_SPACING } from '../../constants'
 
 export interface OperationsHealthMetrics {
   overallHealth: number
@@ -44,11 +49,12 @@ export function OperationsHealth({
       empty={empty}
       permission={permission}
       onRetry={onRetry}
+      card={false}
       skeletonHeightSpacing={20}
     >
-      <Grid container spacing={DASHBOARD_SPACING.field} alignItems="center">
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Stack alignItems="center" spacing={DASHBOARD_SPACING.field}>
+      <ComparisonLayout
+        left={
+          <Stack alignItems="center" spacing={UI_KIT_SPACING.field}>
             <GaugeChart
               value={metrics.overallHealth}
               label="Overall health"
@@ -60,24 +66,20 @@ export function OperationsHealth({
               SLA {Math.round(metrics.slaPercent)}%
             </Typography>
           </Stack>
-        </Grid>
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Grid container spacing={DASHBOARD_SPACING.field}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <StatCard label="Delayed cases" value={metrics.delayedCases} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <StatCard label="Completed today" value={metrics.completedToday} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <StatCard label="Critical cases" value={metrics.criticalCases} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <StatCard label="SLA %" value={`${Math.round(metrics.slaPercent)}%`} />
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+        }
+        right={
+          <ExecutiveGrid columns={2}>
+            <ExecutiveMetric label="Delayed cases" value={metrics.delayedCases} tone="warning" />
+            <ExecutiveMetric label="Completed today" value={metrics.completedToday} tone="positive" />
+            <ExecutiveMetric label="Critical cases" value={metrics.criticalCases} tone="negative" />
+            <ExecutiveMetric
+              label="SLA %"
+              value={`${Math.round(metrics.slaPercent)}%`}
+              tone="info"
+            />
+          </ExecutiveGrid>
+        }
+      />
     </BusinessWidgetFrame>
   )
 }

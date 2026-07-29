@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Stack, Typography } from '@mui/material'
 import { type CustomerChecklistItem } from '@/pages/customer/features/shared/components/CustomerPrimitives'
-import { checklistItemsFromRowDocuments, enrichChecklistWithCorrections, enrichGlobalChecklistWithCorrections, type ChecklistCorrectionRef } from '../utils/applicationSubmitKind'
+import {
+  checklistItemsFromRowDocuments,
+  enrichChecklistWithCorrections,
+  enrichGlobalChecklistWithCorrections,
+  type ChecklistCorrectionRef,
+} from '../utils/applicationSubmitKind'
 import { buildGlobalChecklistItems } from '../utils/globalDocumentChecklist'
 import { buildGlobalDocumentsForVerification } from '@/shared/services/applicationVerificationService'
 import { isSimpleDocumentRequirement } from '@/shared/utils/applicantDocumentWorkflowUtils'
@@ -13,10 +18,13 @@ import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
 import type { ApplicationDetailViewModel } from '../types/applicationDetail.types'
 import { ApplicationReviewOverviewCard } from './review/ApplicationReviewOverviewCard'
-import { ApplicationReviewTimelineCard } from './review/ApplicationReviewTimelineCard'
-import { ApplicationReviewTravelerSection } from './review/ApplicationReviewTravelerSection'
 import { ApplicationReviewDocumentsSection } from './review/ApplicationReviewDocumentsSection'
+import { ApplicationReviewPassengerWorkspace } from './review/ApplicationReviewPassengerWorkspace'
 import { CustomerDocumentPreviewModal } from './CustomerDocumentPreviewModal'
+import {
+  filterVerifyTravelers,
+  type VerifyTravelerListFilter,
+} from '@/pages/admin/application-management/marine/utils/verifyDocumentsUtils'
 
 export type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
 
@@ -93,19 +101,31 @@ export function ApplicationReviewPanels({
   onReuploadDocument,
 }: ApplicationReviewPanelsProps) {
   const colors = usePublicBrandColors()
-  const readyRows = useMemo(() => queueReadyRows(rows), [rows])
+  const readyRows = useMemo(() => {
+    const ready = queueReadyRows(rows)
+    return ready.length > 0 ? ready : rows
+  }, [rows])
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
   const [previewTarget, setPreviewTarget] = useState<DocumentPreviewTarget | null>(null)
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<VerifyTravelerListFilter>('all')
+
+  const singleListing = !isBulk && readyRows.length <= 1
+
+  const filteredRows = useMemo(
+    () => filterVerifyTravelers(readyRows, search, filter),
+    [readyRows, search, filter],
+  )
 
   useEffect(() => {
-    if (readyRows.length === 0) {
-      setSelectedRowId(null)
+    if (filteredRows.length === 0) {
+      if (readyRows.length === 0) setSelectedRowId(null)
       return
     }
-    if (!selectedRowId || !readyRows.some(r => r.id === selectedRowId)) {
-      setSelectedRowId(readyRows[0].id)
+    if (!selectedRowId || !filteredRows.some(r => r.id === selectedRowId)) {
+      setSelectedRowId(filteredRows[0].id)
     }
-  }, [readyRows, selectedRowId])
+  }, [filteredRows, selectedRowId, readyRows.length])
 
   const selectedRow = useMemo(
     () => readyRows.find(r => r.id === selectedRowId) ?? null,
@@ -157,6 +177,22 @@ export function ApplicationReviewPanels({
     setPreviewTarget({ item, scope })
   }
 
+  const documentsContent =
+    hasDocumentSections && selectedRow ? (
+      <ApplicationReviewDocumentsSection
+        countryName={overview.countryName}
+        selectedRow={selectedRow}
+        checklistItems={checklist}
+        globalChecklistItems={globalChecklist}
+        onReuploadDocument={onReuploadDocument}
+        onPreviewItem={handlePreviewItem}
+      />
+    ) : (
+      <Typography sx={{ fontSize: 13, color: colors.textSecondary }}>
+        No documents available for this passenger yet.
+      </Typography>
+    )
+
   return (
     <Stack spacing={2}>
       {helperText ? (
@@ -165,33 +201,23 @@ export function ApplicationReviewPanels({
 
       <ApplicationReviewOverviewCard overview={overview} travelerCount={travelerCount} />
 
-      <ApplicationReviewTravelerSection
-        rows={rows}
+      <ApplicationReviewPassengerWorkspace
+        rows={readyRows}
+        filteredRows={filteredRows}
+        overview={overview}
+        singleListing={singleListing}
         selectedTravelerId={selectedRowId}
         onSelectTraveler={setSelectedRowId}
-        isBulk={isBulk}
-        gltsApplicationId={overview.gltsApplicationId}
-        gltsBatchId={overview.gltsBatchId}
-        summaryOverview={overview}
+        selectedRow={selectedRow}
+        search={search}
+        onSearchChange={setSearch}
+        filter={filter}
+        onFilterChange={setFilter}
+        timelineSteps={resolvedTimeline}
         detail={detail}
-        summaryApplicationId={applicationId}
+        applicationId={applicationId}
+        documentsContent={documentsContent}
       />
-
-      <ApplicationReviewTimelineCard
-        steps={resolvedTimeline}
-        multiTraveler={readyRows.length > 1}
-      />
-
-      {hasDocumentSections && selectedRow ? (
-        <ApplicationReviewDocumentsSection
-          countryName={overview.countryName}
-          selectedRow={selectedRow}
-          checklistItems={checklist}
-          globalChecklistItems={globalChecklist}
-          onReuploadDocument={onReuploadDocument}
-          onPreviewItem={handlePreviewItem}
-        />
-      ) : null}
 
       <CustomerDocumentPreviewModal
         open={Boolean(previewTarget && previewDocument)}

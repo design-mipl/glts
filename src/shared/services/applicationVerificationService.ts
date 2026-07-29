@@ -37,6 +37,14 @@ export interface VerificationDocumentOverride {
   documentId: string
   status: ApplicantDocumentStatus
   comment?: string
+  /**
+   * When false, rejection is admin-only (e.g. QC during Submission Pending).
+   * Customer portal is notified only after Verification Pending confirms it.
+   * Defaults to true for backward compatibility.
+   */
+  customerVisible?: boolean
+  /** Admin-uploaded replacement file name for non-workflow documents. */
+  uploadedFileName?: string
   /** Physical original received by GLTS operations. */
   originalDocumentReceived?: boolean
   updatedAt: string
@@ -50,6 +58,7 @@ export interface VerificationDocumentWorkflowPatch {
   travelTicket?: Partial<TravelTicketWorkflow>
   insurance?: Partial<InsuranceWorkflow>
   status?: ApplicantDocumentStatus
+  uploadedFileName?: string
   updatedAt: string
 }
 
@@ -384,30 +393,43 @@ function applyWorkflowPatchToDocument(
   doc: ApplicantDocumentItem,
   patch: VerificationDocumentWorkflowPatch,
 ): ApplicantDocumentItem {
-  if (!isSimpleDocumentRequirement(doc.documentId) || doc.documentId !== patch.documentId) {
+  if (doc.documentId !== patch.documentId) {
     return doc
   }
 
   let next: ApplicantDocumentItem = { ...doc }
-  if (patch.handlingMode) {
-    next.handlingMode = patch.handlingMode
+  if (patch.uploadedFileName?.trim()) {
+    next.uploadedFileName = patch.uploadedFileName.trim()
   }
-  if (patch.travelTicket && doc.documentId === 'travel-ticket') {
-    next.travelTicket = {
-      ...(doc.travelTicket ?? emptyTravelTicketWorkflow()),
-      ...patch.travelTicket,
+  if (isSimpleDocumentRequirement(doc.documentId)) {
+    if (patch.handlingMode) {
+      next.handlingMode = patch.handlingMode
     }
-  }
-  if (patch.insurance && doc.documentId === 'insurance') {
-    next.insurance = {
-      ...(doc.insurance ?? emptyInsuranceWorkflow()),
-      ...patch.insurance,
+    if (patch.travelTicket && doc.documentId === 'travel-ticket') {
+      next.travelTicket = {
+        ...(doc.travelTicket ?? emptyTravelTicketWorkflow()),
+        ...patch.travelTicket,
+      }
     }
+    if (patch.insurance && doc.documentId === 'insurance') {
+      next.insurance = {
+        ...(doc.insurance ?? emptyInsuranceWorkflow()),
+        ...patch.insurance,
+      }
+    }
+    next = seedSimpleDocumentWorkflowFields(next)
   }
   if (patch.status) {
     next.status = patch.status
   }
-  return seedSimpleDocumentWorkflowFields(next)
+  return next
+}
+
+function isCustomerVisibleOverride(override: VerificationDocumentOverride): boolean {
+  if (override.status !== 'rejected' && override.status !== 'needs_review') {
+    return true
+  }
+  return override.customerVisible !== false
 }
 
 function saveRecord(record: ApplicationVerificationRecord) {
@@ -422,6 +444,7 @@ function applyOverridesToRow(
   workflowPatches: VerificationDocumentWorkflowPatch[],
   applicationId: string,
   originalCollection?: OriginalDocumentCollectionState,
+  forCustomer = false,
 ): UploadQueueRow {
   const rowOverrides = overrides.filter(
     o => o.scope === 'traveler' && overrideMatchesRow(row, o),
@@ -432,16 +455,23 @@ function applyOverridesToRow(
     let next = doc
     const override = rowOverrides.find(o => o.documentId === doc.documentId)
     if (override) {
-      next = {
-        ...next,
-        status: override.status,
-        reviewComment: resolveOverrideComment(applicationId, override),
-        ...(override.originalDocumentReceived !== undefined
-          ? { originalDocumentReceived: override.originalDocumentReceived }
-          : {}),
+      if (forCustomer && !isCustomerVisibleOverride(override)) {
+        // Internal QC rejection — keep pre-rejection document for customer portal.
+      } else {
+        next = {
+          ...next,
+          status: override.status,
+          reviewComment: resolveOverrideComment(applicationId, override),
+          ...(override.uploadedFileName?.trim()
+            ? { uploadedFileName: override.uploadedFileName.trim() }
+            : {}),
+          ...(override.originalDocumentReceived !== undefined
+            ? { originalDocumentReceived: override.originalDocumentReceived }
+            : {}),
+        }
       }
     } else if (next.status === 'rejected' || next.status === 'needs_review') {
-      if (!next.reviewComment?.trim()) {
+      if (!forCustomer && !next.reviewComment?.trim()) {
         next = {
           ...next,
           reviewComment:
@@ -487,20 +517,47 @@ function hasRejectedOrReview(rows: UploadQueueRow[]): boolean {
   )
 }
 
+function hasCustomerVisibleRejectedOrReview(overrides: VerificationDocumentOverride[]): boolean {
+  return overrides.some(
+    o =>
+      (o.status === 'rejected' || o.status === 'needs_review') && isCustomerVisibleOverride(o),
+  )
+}
+
+function hasInternalRejectedOrReview(overrides: VerificationDocumentOverride[]): boolean {
+  return overrides.some(
+    o =>
+      (o.status === 'rejected' || o.status === 'needs_review') && !isCustomerVisibleOverride(o),
+  )
+}
+
 export function deriveOperationalStatusFromRows(
   rows: UploadQueueRow[],
   current?: ApplicationOperationalStatus | string,
+  overrides: VerificationDocumentOverride[] = [],
 ): ApplicationOperationalStatus {
-  if (hasRejectedOrReview(rows)) return 'Correction Required'
+  if (hasCustomerVisibleRejectedOrReview(overrides) || (overrides.length === 0 && hasRejectedOrReview(rows))) {
+    return 'Correction Required'
+  }
+  if (hasInternalRejectedOrReview(overrides) || hasRejectedOrReview(rows)) {
+    return 'Document Rejected'
+  }
   if (allRequiredVerified(rows)) return 'Verification Pending'
   if (current === 'Submitted') return 'Under Review'
   return (current as ApplicationOperationalStatus) ?? 'Under Review'
 }
 
+export interface MergeVerificationOptions {
+  /** When true, hide internal (non-customerVisible) rejections from the merged detail. */
+  forCustomer?: boolean
+}
+
 export function mergeVerificationIntoDetail(
   detail: ApplicationDetailViewModel,
   applicationId: string,
+  options?: MergeVerificationOptions,
 ): ApplicationDetailViewModel {
+  const forCustomer = options?.forCustomer === true
   const record = getRecord(applicationId)
   const uploadQueueRows = detail.uploadQueueRows.map(row =>
     applyOverridesToRow(
@@ -509,16 +566,18 @@ export function mergeVerificationIntoDetail(
       record.documentWorkflowPatches ?? [],
       applicationId,
       record.originalDocumentCollections?.[row.id],
+      forCustomer,
     ),
   )
   const operationalStatus =
     record.operationalStatus ??
-    deriveOperationalStatusFromRows(uploadQueueRows, detail.operationalStatus)
+    deriveOperationalStatusFromRows(uploadQueueRows, detail.operationalStatus, record.documentOverrides)
 
   const commentCorrections = record.documentOverrides
     .filter(
       override =>
-        override.status === 'rejected' || override.status === 'needs_review',
+        (override.status === 'rejected' || override.status === 'needs_review') &&
+        (!forCustomer || isCustomerVisibleOverride(override)),
     )
     .map((override, index) => {
       if (override.scope === 'traveler') {
@@ -545,7 +604,7 @@ export function mergeVerificationIntoDetail(
   const corrections =
     commentCorrections.length > 0
       ? commentCorrections
-      : operationalStatus === 'Correction Required'
+      : !forCustomer && operationalStatus === 'Correction Required'
         ? uploadQueueRows.flatMap(row =>
             row.documents
               .filter(d => d.status === 'rejected' || d.status === 'needs_review')
@@ -560,15 +619,26 @@ export function mergeVerificationIntoDetail(
                 status: 'Open',
               })),
           )
-        : detail.corrections
+        : forCustomer && operationalStatus === 'Correction Required'
+          ? detail.corrections
+          : detail.corrections
+
+  // Customer portal should not surface Document Rejected (internal admin queue state).
+  const customerOperationalStatus =
+    forCustomer && operationalStatus === 'Document Rejected'
+      ? ((detail.operationalStatus as ApplicationOperationalStatus | undefined) ?? 'Under Review')
+      : operationalStatus
 
   return {
     ...detail,
     uploadQueueRows,
-    operationalStatus,
-    corrections,
+    operationalStatus: forCustomer ? customerOperationalStatus : operationalStatus,
+    corrections: forCustomer && operationalStatus === 'Document Rejected' ? [] : corrections,
     application: detail.application
-      ? { ...detail.application, statusLabel: operationalStatus }
+      ? {
+          ...detail.application,
+          statusLabel: forCustomer ? customerOperationalStatus : operationalStatus,
+        }
       : null,
   }
 }
@@ -609,12 +679,28 @@ export const applicationVerificationService = {
     })
   },
 
+  /** Visibility map for rejected docs: key `traveler:{rowId}:{docId}` or `global:{docId}`. */
+  getRejectionVisibilityMap(applicationId: string): Record<string, boolean> {
+    const record = getRecord(applicationId)
+    const map: Record<string, boolean> = {}
+    for (const override of record.documentOverrides) {
+      if (override.status !== 'rejected' && override.status !== 'needs_review') continue
+      const key =
+        override.scope === 'traveler'
+          ? `traveler:${override.travelerRowId ?? ''}:${override.documentId}`
+          : `global:${override.documentId}`
+      map[key] = override.customerVisible !== false
+    }
+    return map
+  },
+
   updateTravelerDocumentStatus(
     applicationId: string,
     travelerRowId: string,
     documentId: string,
     status: ApplicantDocumentStatus,
     comment?: string,
+    options?: { customerVisible?: boolean },
   ) {
     const record = getRecord(applicationId)
     const existing = findTravelerDocumentOverride(record, travelerRowId, documentId)
@@ -626,6 +712,10 @@ export const applicationVerificationService = {
           o.documentId === documentId
         ),
     )
+    const isRejection = status === 'rejected' || status === 'needs_review'
+    const customerVisible = isRejection
+      ? (options?.customerVisible ?? existing?.customerVisible ?? true)
+      : true
     const next: ApplicationVerificationRecord = {
       ...record,
       documentOverrides: [
@@ -636,6 +726,8 @@ export const applicationVerificationService = {
           documentId,
           status,
           comment: comment?.trim() ? comment.trim() : undefined,
+          customerVisible,
+          uploadedFileName: existing?.uploadedFileName,
           originalDocumentReceived: existing?.originalDocumentReceived,
           updatedAt: new Date().toISOString(),
         },
@@ -740,6 +832,7 @@ export const applicationVerificationService = {
       travelTicket?: Partial<TravelTicketWorkflow>
       insurance?: Partial<InsuranceWorkflow>
       status?: ApplicantDocumentStatus
+      uploadedFileName?: string
     },
   ) {
     const record = getRecord(applicationId)
@@ -759,13 +852,15 @@ export const applicationVerificationService = {
       travelTicket: patch.travelTicket,
       insurance: patch.insurance,
       status: patch.status,
+      uploadedFileName: patch.uploadedFileName,
       updatedAt: new Date().toISOString(),
     }
     const next: ApplicationVerificationRecord = {
       ...record,
       documentWorkflowPatches: [...without, workflowPatch],
     }
-    if (patch.status) {
+    if (patch.status || patch.uploadedFileName) {
+      const existing = findTravelerDocumentOverride(record, travelerRowId, documentId)
       const statusWithout = record.documentOverrides.filter(
         o =>
           !(
@@ -780,9 +875,10 @@ export const applicationVerificationService = {
           scope: 'traveler',
           travelerRowId,
           documentId,
-          status: patch.status,
-          originalDocumentReceived: findTravelerDocumentOverride(record, travelerRowId, documentId)
-            ?.originalDocumentReceived,
+          status: patch.status ?? existing?.status ?? 'uploaded',
+          uploadedFileName: patch.uploadedFileName?.trim() || existing?.uploadedFileName,
+          customerVisible: true,
+          originalDocumentReceived: existing?.originalDocumentReceived,
           updatedAt: workflowPatch.updatedAt,
         },
       ]
@@ -796,11 +892,19 @@ export const applicationVerificationService = {
     documentId: string,
     status: ApplicantDocumentStatus,
     comment?: string,
+    options?: { customerVisible?: boolean },
   ) {
     const record = getRecord(applicationId)
+    const existing = record.documentOverrides.find(
+      o => o.scope === 'global' && o.documentId === documentId,
+    )
     const without = record.documentOverrides.filter(
       o => !(o.scope === 'global' && o.documentId === documentId),
     )
+    const isRejection = status === 'rejected' || status === 'needs_review'
+    const customerVisible = isRejection
+      ? (options?.customerVisible ?? existing?.customerVisible ?? true)
+      : true
     saveRecord({
       ...record,
       documentOverrides: [
@@ -810,9 +914,62 @@ export const applicationVerificationService = {
           documentId,
           status,
           comment: comment?.trim() ? comment.trim() : undefined,
+          customerVisible,
+          uploadedFileName: existing?.uploadedFileName,
           updatedAt: new Date().toISOString(),
         },
       ],
+    })
+    return this.getWorkspace(applicationId)
+  },
+
+  /**
+   * QC / Submission Pending rejection: keep app in Verification Pending with
+   * Document Rejected status. Does not notify the customer portal.
+   */
+  returnToVerificationPending(applicationId: string) {
+    const workspace = this.getWorkspace(applicationId)
+    if (!workspace.ok || !workspace.detail) return workspace
+
+    const record = getRecord(applicationId)
+    const operationalStatus = deriveOperationalStatusFromRows(
+      workspace.detail.uploadQueueRows,
+      'Document Rejected',
+      record.documentOverrides,
+    )
+    const nextStatus =
+      operationalStatus === 'Correction Required' ? 'Document Rejected' : operationalStatus
+
+    saveRecord({
+      ...record,
+      operationalStatus: nextStatus === 'Verification Pending' ? 'Document Rejected' : nextStatus,
+    })
+    syncListingOperationalStatus(applicationId, 'Document Rejected', {
+      processingStage: 'Ready for submission',
+    })
+    return this.getWorkspace(applicationId)
+  },
+
+  /**
+   * Verification Pending confirmation: publish rejections to the customer portal
+   * and set Correction Required.
+   */
+  notifyCustomerOfDocumentRejection(applicationId: string) {
+    const record = getRecord(applicationId)
+    const documentOverrides = record.documentOverrides.map(override => {
+      if (override.status !== 'rejected' && override.status !== 'needs_review') {
+        return override
+      }
+      return { ...override, customerVisible: true }
+    })
+    saveRecord({
+      ...record,
+      documentOverrides,
+      operationalStatus: 'Correction Required',
+      submittedAt: new Date().toISOString(),
+    })
+    syncListingOperationalStatus(applicationId, 'Correction Required', {
+      processingStage: 'Ready for submission',
     })
     return this.getWorkspace(applicationId)
   },
@@ -821,11 +978,12 @@ export const applicationVerificationService = {
     const workspace = this.getWorkspace(applicationId)
     if (!workspace.ok || !workspace.detail) return workspace
 
+    const record = getRecord(applicationId)
     const operationalStatus = deriveOperationalStatusFromRows(
       workspace.detail.uploadQueueRows,
       workspace.detail.operationalStatus,
+      record.documentOverrides,
     )
-    const record = getRecord(applicationId)
     saveRecord({
       ...record,
       operationalStatus,
@@ -838,11 +996,21 @@ export const applicationVerificationService = {
     const workspace = this.getWorkspace(applicationId)
     if (!workspace.ok || !workspace.detail) return workspace
 
+    const record = getRecord(applicationId)
+    const hasRejection = record.documentOverrides.some(
+      o => o.status === 'rejected' || o.status === 'needs_review',
+    )
+
+    if (hasRejection) {
+      // Verification Pending submit with rejections → notify customer.
+      return this.notifyCustomerOfDocumentRejection(applicationId)
+    }
+
     const operationalStatus = deriveOperationalStatusFromRows(
       workspace.detail.uploadQueueRows,
       workspace.detail.operationalStatus,
+      record.documentOverrides,
     )
-    const record = getRecord(applicationId)
     saveRecord({
       ...record,
       operationalStatus,
@@ -856,18 +1024,25 @@ export const applicationVerificationService = {
 function syncListingOperationalStatus(
   applicationId: string,
   operationalStatus: ApplicationOperationalStatus,
+  extras?: { processingStage?: string },
 ) {
   const single = mockSingleApplications.find(r => r.id === applicationId)
   if (single) {
     single.operationalStatus = operationalStatus
     single.status = operationalStatus
+    if (extras?.processingStage) {
+      single.processingStage = extras.processingStage
+    }
     return
   }
   const bulk = mockBulkBatches.find(r => r.id === applicationId)
   if (bulk) {
     bulk.operationalStatus = operationalStatus
     bulk.status = operationalStatus
-    if (operationalStatus === 'Correction Required') {
+    if (extras?.processingStage) {
+      bulk.processingStage = extras.processingStage
+    }
+    if (operationalStatus === 'Correction Required' || operationalStatus === 'Document Rejected') {
       bulk.pendingCorrections = Math.max(bulk.pendingCorrections, 1)
     }
   }

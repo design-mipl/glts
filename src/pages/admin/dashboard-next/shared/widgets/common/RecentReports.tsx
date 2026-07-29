@@ -1,4 +1,4 @@
-import { ListCard, type ListCardItem } from '@/design-system/UIComponents'
+import { ActivityFeed } from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from './BusinessWidgetFrame'
 
 export interface RecentReportItem {
@@ -34,13 +34,6 @@ export function RecentReports({
   permission,
   onRetry,
 }: RecentReportsProps) {
-  const listItems: ListCardItem[] = items.map((item) => ({
-    id: item.id,
-    primary: item.name,
-    secondary: [item.category, item.generatedAt].filter(Boolean).join(' · '),
-    onClick: item.onClick,
-  }))
-
   return (
     <BusinessWidgetFrame
       title={undefined}
@@ -52,14 +45,18 @@ export function RecentReports({
       onRetry={onRetry}
       emptyTitle="No reports"
     >
-      <ListCard
+      <ActivityFeed
         title={title}
         subtitle={subtitle}
-        items={listItems}
         maxItems={maxItems}
         onShowMore={onShowMore}
-        showMoreLabel="View all reports"
-        emptyText="No reports"
+        loading={loading}
+        items={items.map((item) => ({
+          id: item.id,
+          primary: item.name,
+          secondary: [item.category, item.generatedAt].filter(Boolean).join(' · '),
+          onClick: item.onClick,
+        }))}
       />
     </BusinessWidgetFrame>
   )

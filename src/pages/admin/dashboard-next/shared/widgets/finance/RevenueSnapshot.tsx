@@ -1,7 +1,10 @@
-import { Grid } from '@mui/material'
-import { StatCard } from '@/design-system/UIComponents'
+import {
+  ExecutiveGrid,
+  FinancialMetric,
+  HeroMetric,
+  TrendMetric,
+} from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
-import { DASHBOARD_SPACING } from '../../constants'
 
 export interface RevenueSnapshotData {
   todayRevenue: string | number
@@ -40,28 +43,23 @@ export function RevenueSnapshot({
       empty={empty}
       permission={permission}
       onRetry={onRetry}
+      card={false}
       skeletonHeightSpacing={14}
     >
-      <Grid container spacing={DASHBOARD_SPACING.field}>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard label="Today's revenue" value={data.todayRevenue} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard
-            label="Monthly revenue"
-            value={data.monthlyRevenue}
-            delta={data.growthPercent}
-            deltaLabel="growth"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard
-            label="Trend"
-            value={`${data.growthPercent > 0 ? '+' : ''}${data.growthPercent.toFixed(1)}%`}
-            sparklineData={data.trend}
-          />
-        </Grid>
-      </Grid>
+      <ExecutiveGrid columns={3}>
+        <HeroMetric label="Today's revenue" value={data.todayRevenue} animate />
+        <FinancialMetric
+          label="Monthly revenue"
+          value={data.monthlyRevenue}
+          delta={data.growthPercent}
+          deltaLabel="growth"
+        />
+        <TrendMetric
+          label="Trend"
+          value={`${data.growthPercent > 0 ? '+' : ''}${data.growthPercent.toFixed(1)}%`}
+          delta={data.growthPercent}
+        />
+      </ExecutiveGrid>
     </BusinessWidgetFrame>
   )
 }

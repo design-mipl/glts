@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, CircularProgress, Divider, Stack, Typography } from '@mui/material'
-import Autocomplete from '@mui/material/Autocomplete'
-import TextField from '@mui/material/TextField'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useLocation, useParams } from 'react-router-dom'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import {
   Badge,
+  BaseCard,
   Button,
   ConfirmDialog,
   EmptyState,
@@ -15,27 +15,19 @@ import {
   useToast,
 } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
-import { AdminRecordPageChrome } from '@/pages/admin/components/AdminRecordPageChrome'
+import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { AdminWorkspaceShell } from '@/pages/admin/components/AdminWorkspaceShell'
 import { AdminStepperFormFooter } from '@/pages/admin/components/AdminStepperFormFooter'
-import { applicationArrangedExpenseService } from '@/shared/services/applicationArrangedExpenseService'
-import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
-import { resolveHandlingMode } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 import { useViewFormWorkspace } from '../hooks/useViewFormWorkspace'
 import { useVerifyDocumentsWorkspace } from '../hooks/useVerifyDocumentsWorkspace'
 import { CopyAssistFieldSections } from '../components/view-form/CopyAssistField'
-import { ViewFormAssistHeaderSection } from '../components/view-form/ViewFormAssistHeaderSection'
 import { ViewFormSubmissionSection } from '../components/view-form/ViewFormSubmissionSection'
 import { ViewFormDocumentVault } from '../components/view-form/ViewFormDocumentVault'
-import { ViewFormWorkspaceTabs } from '../components/view-form/ViewFormWorkspaceTabs'
 import { ViewFormQcCheckSection } from '../components/view-form/ViewFormQcCheckSection'
 import { PendingPaymentWorkspaceContent } from '../components/view-form/PendingPaymentWorkspaceContent'
-import { VerifyDocumentsTimeline } from '../components/verify/VerifyDocumentsTimeline'
-import {
-  GltsDocumentUploadDrawer,
-  type GltsDocumentUploadPayload,
-} from '../components/verify/GltsDocumentUploadDrawer'
+import { VerifyApplicationSummary } from '../components/verify/VerifyApplicationSummary'
+import { VerifyPassengerWorkspace } from '../components/verify/VerifyPassengerWorkspace'
 import { buildFormAssistFieldSectionsForStep } from '../utils/formAssistFieldBuilder'
 import { resolveMarineChecklistContext } from '../utils/marineChecklistContextUtils'
 import { isMarineReadOnlyWorkspace, resolveMarineWorkspaceMode } from '../config/marineWorkspaceMode'
@@ -43,18 +35,20 @@ import type { QcCheckOutcome } from '../config/qcCheckChecklistConfig'
 import {
   resolveDocsQcTemplate,
   resolveFormViewTabEnabled,
+  FORM_VIEW_QC_LOCKED_MESSAGE,
 } from '../utils/marineDocsQcCheckUtils'
 import {
   applicationMarineQcCheckService,
   type MarineDocsQcCheckRecord,
 } from '@/shared/services/applicationMarineQcCheckService'
-import { autocompleteSlotProps, formControlHeight, outlinedFieldSx } from '@/design-system/formControl'
-import { useTheme } from '@mui/material/styles'
+import { applicationVerificationService } from '@/shared/services/applicationVerificationService'
 import {
   buildOverviewFromDetail,
   collectRejectedVerifyDocuments,
+  filterVerifyTravelers,
   isRejectedVerifyDocument,
   type VerifyRejectedDocumentEntry,
+  type VerifyTravelerListFilter,
 } from '../utils/verifyDocumentsUtils'
 
 export function MarineViewFormPage() {
@@ -63,7 +57,6 @@ export function MarineViewFormPage() {
   const location = useLocation()
   const listingPath = getListingReturnHref(location, '/admin/application-management/marine')
   const { showToast } = useToast()
-  const theme = useTheme()
 
   const workspace = useViewFormWorkspace(applicationId)
   const verifyWorkspace = useVerifyDocumentsWorkspace(applicationId)
@@ -91,6 +84,11 @@ export function MarineViewFormPage() {
     markAsSubmitted,
     externallySubmitted,
     timelineSteps,
+    processingStatusContext,
+    statusModalOpen,
+    openStatusModal,
+    closeStatusModal,
+    refreshProcessingStatus,
     completedStepIds,
     reload: reloadViewForm,
   } = workspace
@@ -98,9 +96,9 @@ export function MarineViewFormPage() {
   const {
     globalDocuments,
     updateTravelerDocForRow,
-    updateTravelerDocumentWorkflow,
     updateGlobalDoc,
     updateTravelerOriginalCollection,
+    returnToVerificationPending,
     reload: reloadVerify,
     setSelectedTravelerId: setVerifyTravelerId,
   } = verifyWorkspace
@@ -113,7 +111,6 @@ export function MarineViewFormPage() {
     status: Extract<ApplicantDocumentStatus, 'rejected' | 'needs_review'>
   } | null>(null)
   const [reviewComment, setReviewComment] = useState('')
-  const [gltsUploadDocument, setGltsUploadDocument] = useState<ApplicantDocumentItem | null>(null)
   const [verifyDialog, setVerifyDialog] = useState<{
     scope: 'traveler' | 'global'
     travelerId?: string
@@ -134,6 +131,9 @@ export function MarineViewFormPage() {
 
   const verifyPath = `/admin/application-management/marine/${applicationId}`
 
+  const [travelerSearch, setTravelerSearch] = useState('')
+  const [travelerFilter, setTravelerFilter] = useState<VerifyTravelerListFilter>('all')
+
   const overview = useMemo(
     () =>
       applicationId && detail
@@ -141,6 +141,34 @@ export function MarineViewFormPage() {
         : null,
     [applicationId, detail, isBulk, rows],
   )
+
+  const singleListing = !isBulk && rows.length <= 1
+
+  const filteredRows = useMemo(
+    () => filterVerifyTravelers(rows, travelerSearch, travelerFilter),
+    [rows, travelerSearch, travelerFilter],
+  )
+
+  useEffect(() => {
+    if (filteredRows.length === 0) return
+    if (selectedTravelerId && filteredRows.some(row => row.id === selectedTravelerId)) return
+    setSelectedTravelerId(filteredRows[0].id)
+  }, [filteredRows, selectedTravelerId, setSelectedTravelerId])
+
+  const selectedIndex = useMemo(
+    () => filteredRows.findIndex(row => row.id === selectedTravelerId),
+    [filteredRows, selectedTravelerId],
+  )
+
+  const goPreviousPassenger = () => {
+    if (selectedIndex <= 0) return
+    setSelectedTravelerId(filteredRows[selectedIndex - 1].id)
+  }
+
+  const goNextPassenger = () => {
+    if (selectedIndex < 0 || selectedIndex >= filteredRows.length - 1) return
+    setSelectedTravelerId(filteredRows[selectedIndex + 1].id)
+  }
 
   const checklistContext = useMemo(
     () =>
@@ -252,10 +280,11 @@ export function MarineViewFormPage() {
     })
   }, [applicationId, selectedRow, readOnly, docsQcTemplate, showToast])
 
-  const rejectedDocuments = useMemo(
-    () => collectRejectedVerifyDocuments(rows, globalDocuments),
-    [rows, globalDocuments],
-  )
+  const rejectedDocuments = useMemo(() => {
+    if (!applicationId) return []
+    const visibility = applicationVerificationService.getRejectionVisibilityMap(applicationId)
+    return collectRejectedVerifyDocuments(rows, globalDocuments, visibility)
+  }, [applicationId, rows, globalDocuments])
 
   const travelerChecklistDocuments = useMemo(
     () => selectedRow?.documents.filter(doc => !isRejectedVerifyDocument(doc)) ?? [],
@@ -426,14 +455,6 @@ export function MarineViewFormPage() {
     openReviewDialog(entry.scope, entry.document, 'needs_review', entry.travelerId)
   }
 
-  const handleRejectedGltsUpload = (entry: VerifyRejectedDocumentEntry) => {
-    if (entry.scope !== 'traveler') return
-    setGltsUploadDocument(entry.document)
-    if (entry.travelerId) {
-      setSelectedTravelerId(entry.travelerId)
-    }
-  }
-
   const closeReviewDialog = () => {
     setReviewDialog(null)
     setReviewComment('')
@@ -442,13 +463,31 @@ export function MarineViewFormPage() {
   const submitReviewAction = () => {
     if (!reviewDialog || !isReviewCommentValid) return
     const comment = reviewComment.trim()
+    const isSubmissionPendingReject = workspaceMode === 'online_submission'
+    // Submission Pending rejects stay internal until Verification Pending confirms.
+    const options = { customerVisible: !isSubmissionPendingReject }
+
     if (reviewDialog.scope === 'traveler') {
       const rowId = reviewDialog.travelerId ?? selectedRow?.id
       if (!rowId) return
-      updateTravelerDocForRow(rowId, reviewDialog.documentId, reviewDialog.status, comment)
+      updateTravelerDocForRow(rowId, reviewDialog.documentId, reviewDialog.status, comment, options)
     } else {
-      updateGlobalDoc(reviewDialog.documentId, reviewDialog.status, comment)
+      updateGlobalDoc(reviewDialog.documentId, reviewDialog.status, comment, options)
     }
+
+    if (isSubmissionPendingReject) {
+      returnToVerificationPending()
+      syncWorkspaceAfterDocumentChange()
+      showToast({
+        title: `${reviewActionLabel} saved`,
+        description: `${reviewDialog.documentName} marked. Application moved to Verification Pending (Document Rejected). Customer is not notified yet.`,
+        variant: 'success',
+      })
+      closeReviewDialog()
+      navigate(listingPath)
+      return
+    }
+
     syncWorkspaceAfterDocumentChange()
     showToast({
       title: `${reviewActionLabel} saved`,
@@ -483,266 +522,282 @@ export function MarineViewFormPage() {
     )
   }
 
-  const headerActions = (
-    <>
-      {isBulk && rows.length > 1 ? (
-        <Autocomplete
-          options={rows}
-          value={rows.find(r => r.id === selectedTravelerId) ?? null}
-          onChange={(_, next) => setSelectedTravelerId(next?.id ?? '')}
-          getOptionLabel={option => `${option.travelerName} · ${option.passportNo}`}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          fullWidth={false}
-          openOnFocus
-          disableClearable
-          slotProps={autocompleteSlotProps(theme)}
-          sx={{
-            width: { xs: '100%', sm: 300 },
-            minWidth: { xs: '100%', sm: 300 },
-            maxWidth: { xs: '100%', sm: 300 },
-            flexShrink: 0,
-            '& .MuiFormControl-root': { width: '100%' },
-            '& .MuiTextField-root': { width: '100%' },
-            '& .MuiOutlinedInput-root': { width: '100%' },
-            ...outlinedFieldSx(theme, formControlHeight('sm')),
-          }}
-          renderInput={params => (
-            <TextField
-              {...params}
-              size="small"
-              fullWidth
-              placeholder="Search traveler"
-              inputProps={{
-                ...params.inputProps,
-                'aria-label': 'Search traveler',
-              }}
+  const statusBadge = (
+    <Badge
+      label={
+        externallySubmitted || readOnly
+          ? readOnly
+            ? 'Post-submission view'
+            : 'Externally submitted'
+          : isPendingPayment
+            ? 'Pending Payment'
+            : (currentStep?.label ?? 'Form')
+      }
+      color={externallySubmitted || readOnly ? 'success' : 'info'}
+      size="sm"
+    />
+  )
+
+  const passengerNavFooter = (
+    <BaseCard sx={{ p: 2 }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1}
+        useFlexGap
+        sx={{
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'stretch', sm: 'center' },
+        }}
+      >
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+          <Button
+            label="Previous passenger"
+            variant="neutral"
+            startIcon={<ChevronLeft size={14} />}
+            onClick={goPreviousPassenger}
+            disabled={selectedIndex <= 0}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          />
+          <Button
+            label="Back to listing"
+            variant="neutral"
+            onClick={() => navigate(listingPath)}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          />
+          {!isPendingPayment && !readOnly ? (
+            <Button
+              label="Back to verify"
+              variant="outlined"
+              onClick={() => navigate(verifyPath)}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             />
-          )}
+          ) : null}
+        </Stack>
+        <Button
+          label="Next passenger"
+          variant="contained"
+          color="primary"
+          endIcon={<ChevronRight size={14} />}
+          onClick={goNextPassenger}
+          disabled={selectedIndex < 0 || selectedIndex >= filteredRows.length - 1}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         />
-      ) : null}
-      {externallySubmitted || readOnly ? (
-        <Badge
-          label={readOnly ? 'Post-submission view' : 'Externally submitted'}
-          color="success"
-          size="sm"
-        />
-      ) : (
-        <Badge
-          label={isPendingPayment ? 'Pending Payment' : (currentStep?.label ?? 'Form')}
-          color="info"
-          size="sm"
-        />
-      )}
+      </Stack>
+    </BaseCard>
+  )
+
+  const pendingPaymentContent = (
+    <PendingPaymentWorkspaceContent
+      applicationId={applicationId}
+      selectedRow={selectedRow}
+      detail={detail}
+      submission={submission}
+      country={listingRow?.country ?? detail.countryName ?? ''}
+      visaType={listingRow?.visaType ?? detail.visaTypeLabel ?? ''}
+      countryId={checklistContext.countryId}
+      visaOfferingId={checklistContext.visaOfferingId}
+      readOnly={readOnly}
+      onChange={updateSubmission}
+      onBack={() => navigate(listingPath)}
+      hideFooter
+    />
+  )
+
+  const qcPanel = overview ? (
+    <ViewFormQcCheckSection
+      overview={overview}
+      detail={detail}
+      selectedRow={selectedRow}
+      rejectedDocuments={rejectedDocuments}
+      travelerChecklistDocuments={travelerChecklistDocuments}
+      globalChecklistDocuments={globalChecklistDocuments}
+      countryId={checklistContext.countryId}
+      visaOfferingId={checklistContext.visaOfferingId}
+      docsQcTemplate={docsQcTemplate}
+      docsQcChecked={docsQcRecord?.checked ?? {}}
+      docsQcOutcome={docsQcRecord?.outcome ?? ''}
+      onDocsQcCheckedChange={handleDocsQcCheckedChange}
+      onDocsQcOutcomeChange={handleDocsQcOutcomeChange}
+      docsQcSubmitLabel={docsQcSubmitted ? 'QC submitted' : 'Submit QC check'}
+      docsQcSubmitDisabled={docsQcSubmitted || !docsQcReadyForSubmit}
+      docsQcSubmitHint={
+        docsQcSubmitted
+          ? 'QC already submitted. You can proceed in Form view.'
+          : 'Submit QC after confirming every checklist item and selecting Verified & ready for submission.'
+      }
+      onDocsQcSubmit={handleSubmitDocsQc}
+      readOnly={readOnly}
+      onPreview={handlePreview}
+      onTravelerVerify={document => openVerifyDialog('traveler', document, selectedRow?.id)}
+      onTravelerReject={document =>
+        openReviewDialog('traveler', document, 'rejected', selectedRow?.id)
+      }
+      onTravelerRequestReupload={document =>
+        openReviewDialog('traveler', document, 'needs_review', selectedRow?.id)
+      }
+      onGlobalVerify={document => openVerifyDialog('global', document)}
+      onGlobalReject={document => openReviewDialog('global', document, 'rejected')}
+      onGlobalRequestReupload={document =>
+        openReviewDialog('global', document, 'needs_review')
+      }
+      onRejectedPreview={handleRejectedPreview}
+      onRejectedVerify={handleRejectedVerify}
+      onRejectedReject={handleRejectedReject}
+      onRejectedReupload={handleRejectedReupload}
+      onOriginalCollectionChange={collection => {
+        if (!selectedRow) return
+        updateTravelerOriginalCollection(selectedRow.id, collection)
+        syncWorkspaceAfterDocumentChange()
+      }}
+      onOriginalReceivedSubmit={() => {
+        showToast({
+          title: 'Physical documents updated',
+          description: 'Received status and remarks saved.',
+          variant: 'success',
+        })
+      }}
+    />
+  ) : null
+
+  const formPanel = (
+    <>
+      <ViewFormDocumentVault
+        applicationId={applicationId}
+        selectedRow={selectedRow}
+        detail={detail}
+        submission={submission}
+      />
+
+      <AdminWorkspaceShell
+        hidePageChrome
+        breadcrumbs={[]}
+        title=""
+        showTitleCard={false}
+        navTitle="Steps"
+        sections={sectionNav}
+        activeSectionId={currentStep!.id}
+        onSectionClick={goToStep}
+        centerPanel={
+          <Stack spacing={3}>
+            <Box sx={{ px: 0.5 }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: 15 }}>
+                {currentStep!.label}
+              </Typography>
+            </Box>
+            <Divider />
+            <Box sx={{ px: 0.5, pt: 0.5 }}>{renderStepContent()}</Box>
+          </Stack>
+        }
+        footer={
+          <AdminStepperFormFooter
+            activeStep={activeStepIndex}
+            isLastStep={isLastStep}
+            onCancel={() => navigate(readOnly ? listingPath : verifyPath)}
+            cancelLabel={readOnly ? 'Back to listing' : 'Back to verify'}
+            onDraft={formLocked || formInteractionDisabled ? undefined : handleSaveDraft}
+            draftLabel="Save draft"
+            onBack={() => setActiveStep(Math.max(0, activeStepIndex - 1))}
+            onNext={formInteractionDisabled ? undefined : requestStepContinue}
+            nextLabel="Continue"
+            onSubmit={formLocked || formInteractionDisabled ? undefined : handleMarkSubmitted}
+            submitLabel="Mark as submitted"
+            disabled={(externallySubmitted && !readOnly) || formInteractionDisabled}
+            submissionLocked={formLocked}
+          />
+        }
+      />
     </>
   )
 
-  if (isPendingPayment) {
-    return (
-      <AdminRecordPageChrome
-        breadcrumbs={[
-          { label: 'Application Management', href: listingPath },
-          { label: 'Pending payment' },
-        ]}
-      >
-        <PendingPaymentWorkspaceContent
-          applicationId={applicationId}
-          selectedRow={selectedRow}
-          detail={detail}
-          submission={submission}
-          country={listingRow?.country ?? detail.countryName ?? ''}
-          visaType={listingRow?.visaType ?? detail.visaTypeLabel ?? ''}
-          countryId={checklistContext.countryId}
-          visaOfferingId={checklistContext.visaOfferingId}
-          timelineSteps={timelineSteps}
-          multiTraveler={rows.length > 1}
-          readOnly={readOnly}
-          onChange={updateSubmission}
-          onBack={() => navigate(listingPath)}
-          headerSlot={
-            overview ? (
-              <ViewFormAssistHeaderSection
-                overview={overview}
-                title="Pending payment"
-                description={`${selectedRow.travelerName} · ${selectedRow.passportNo}${
-                  detail.application?.jurisdiction ? ` · ${detail.application.jurisdiction}` : ''
-                }`}
-                headerActions={headerActions}
-              />
-            ) : null
-          }
-        />
-      </AdminRecordPageChrome>
-    )
-  }
+  const workTabs = isPendingPayment
+    ? [
+        {
+          value: 'payment',
+          label: 'Payment',
+          content: pendingPaymentContent,
+        },
+      ]
+    : [
+        {
+          value: 'qc',
+          label: 'QC check',
+          content: qcPanel,
+        },
+        {
+          value: 'form',
+          label: 'Form',
+          disabled: !formViewUnlocked,
+          content: formPanel,
+        },
+      ]
+
+  const pageTitle = isPendingPayment
+    ? 'Pending payment'
+    : readOnly
+      ? 'View application'
+      : 'View Form'
 
   return (
-    <AdminRecordPageChrome
-      breadcrumbs={[
-        { label: 'Application Management', href: listingPath },
-        { label: readOnly ? 'View application' : 'View Form' },
-      ]}
-    >
-      <Stack spacing={2}>
-        {overview ? (
-          <ViewFormAssistHeaderSection
-            overview={overview}
-            description={`${selectedRow.travelerName} · ${selectedRow.passportNo}${
-              detail.application?.jurisdiction ? ` · ${detail.application.jurisdiction}` : ''
-            }`}
-            headerActions={headerActions}
+    <>
+      <AdminDetailShell
+        breadcrumbs={[
+          { label: 'Application Management', href: listingPath },
+          { label: pageTitle },
+        ]}
+        summary={
+          overview ? <VerifyApplicationSummary overview={overview} isBulk={isBulk} /> : null
+        }
+      >
+        <Stack spacing={2}>
+          <VerifyPassengerWorkspace
+            rows={rows}
+            filteredRows={filteredRows}
+            overview={overview!}
+            singleListing={singleListing}
+            selectedTravelerId={selectedTravelerId}
+            onSelectTraveler={setSelectedTravelerId}
+            selectedRow={selectedRow}
+            search={travelerSearch}
+            onSearchChange={setTravelerSearch}
+            filter={travelerFilter}
+            onFilterChange={setTravelerFilter}
+            timelineSteps={timelineSteps}
+            detail={detail}
+            applicationId={applicationId}
+            workTabs={workTabs}
+            headerActions={statusBadge}
+            workTabHint={
+              !isPendingPayment && !formViewUnlocked ? (
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.45 }}>
+                  {FORM_VIEW_QC_LOCKED_MESSAGE}
+                </Typography>
+              ) : null
+            }
+            emptyMessage="Select a passenger to continue."
+            processingStatus={
+              processingStatusContext
+                ? {
+                    currentStatusId: processingStatusContext.currentStatusId,
+                    countryName: detail?.application?.country ?? listingRow?.country,
+                    visaTypeLabel: detail?.application?.visaType ?? listingRow?.visaType,
+                    modalOpen: statusModalOpen,
+                    onOpenModal: openStatusModal,
+                    onCloseModal: closeStatusModal,
+                    onUpdated: () => {
+                      refreshProcessingStatus()
+                      showToast({
+                        title: 'Processing status updated',
+                        variant: 'success',
+                      })
+                    },
+                  }
+                : undefined
+            }
           />
-        ) : null}
-
-        <VerifyDocumentsTimeline steps={timelineSteps} multiTraveler={rows.length > 1} />
-
-        <ViewFormWorkspaceTabs
-          formViewEnabled={formViewUnlocked}
-          qcPanel={
-            overview ? (
-              <ViewFormQcCheckSection
-                overview={overview}
-                detail={detail}
-                selectedRow={selectedRow}
-                rejectedDocuments={rejectedDocuments}
-                travelerChecklistDocuments={travelerChecklistDocuments}
-                globalChecklistDocuments={globalChecklistDocuments}
-                countryId={checklistContext.countryId}
-                visaOfferingId={checklistContext.visaOfferingId}
-                docsQcTemplate={docsQcTemplate}
-                docsQcChecked={docsQcRecord?.checked ?? {}}
-                docsQcOutcome={docsQcRecord?.outcome ?? ''}
-                onDocsQcCheckedChange={handleDocsQcCheckedChange}
-                onDocsQcOutcomeChange={handleDocsQcOutcomeChange}
-                docsQcSubmitLabel={docsQcSubmitted ? 'QC submitted' : 'Submit QC check'}
-                docsQcSubmitDisabled={docsQcSubmitted || !docsQcReadyForSubmit}
-                docsQcSubmitHint={
-                  docsQcSubmitted
-                    ? 'QC already submitted. You can proceed in Form view.'
-                    : 'Submit QC after confirming every checklist item and selecting Verified & ready for submission.'
-                }
-                onDocsQcSubmit={handleSubmitDocsQc}
-                readOnly={readOnly}
-                onPreview={handlePreview}
-                onTravelerVerify={document => openVerifyDialog('traveler', document, selectedRow?.id)}
-                onTravelerReject={document =>
-                  openReviewDialog('traveler', document, 'rejected', selectedRow?.id)
-                }
-                onTravelerRequestReupload={document =>
-                  openReviewDialog('traveler', document, 'needs_review', selectedRow?.id)
-                }
-                onGltsUpload={document => setGltsUploadDocument(document)}
-                onGlobalVerify={document => openVerifyDialog('global', document)}
-                onGlobalReject={document => openReviewDialog('global', document, 'rejected')}
-                onGlobalRequestReupload={document =>
-                  openReviewDialog('global', document, 'needs_review')
-                }
-                onRejectedPreview={handleRejectedPreview}
-                onRejectedVerify={handleRejectedVerify}
-                onRejectedReject={handleRejectedReject}
-                onRejectedReupload={handleRejectedReupload}
-                onRejectedGltsUpload={handleRejectedGltsUpload}
-                onOriginalCollectionChange={collection => {
-                  if (!selectedRow) return
-                  updateTravelerOriginalCollection(selectedRow.id, collection)
-                  syncWorkspaceAfterDocumentChange()
-                }}
-                onOriginalReceivedSubmit={() => {
-                  showToast({
-                    title: 'Physical documents updated',
-                    description: 'Received status and remarks saved.',
-                    variant: 'success',
-                  })
-                }}
-              />
-            ) : null
-          }
-          formPanel={
-            <>
-              <ViewFormDocumentVault
-                applicationId={applicationId}
-                selectedRow={selectedRow}
-                detail={detail}
-                submission={submission}
-              />
-
-              <AdminWorkspaceShell
-                hidePageChrome
-                breadcrumbs={[]}
-                title=""
-                showTitleCard={false}
-                navTitle="Steps"
-                sections={sectionNav}
-                activeSectionId={currentStep!.id}
-                onSectionClick={goToStep}
-                centerPanel={
-                  <Stack spacing={3}>
-                    <Box sx={{ px: 0.5 }}>
-                      <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: 15 }}>
-                        {currentStep!.label}
-                      </Typography>
-                    </Box>
-                    <Divider />
-                    <Box sx={{ px: 0.5, pt: 0.5 }}>{renderStepContent()}</Box>
-                  </Stack>
-                }
-                footer={
-                  <AdminStepperFormFooter
-                    activeStep={activeStepIndex}
-                    isLastStep={isLastStep}
-                    onCancel={() => navigate(readOnly ? listingPath : verifyPath)}
-                    cancelLabel={readOnly ? 'Back to listing' : 'Back to verify'}
-                    onDraft={formLocked || formInteractionDisabled ? undefined : handleSaveDraft}
-                    draftLabel="Save draft"
-                    onBack={() => setActiveStep(Math.max(0, activeStepIndex - 1))}
-                    onNext={formInteractionDisabled ? undefined : requestStepContinue}
-                    nextLabel="Continue"
-                    onSubmit={formLocked || formInteractionDisabled ? undefined : handleMarkSubmitted}
-                    submitLabel="Mark as submitted"
-                    disabled={(externallySubmitted && !readOnly) || formInteractionDisabled}
-                    submissionLocked={formLocked}
-                  />
-                }
-              />
-            </>
-          }
-        />
-      </Stack>
-
-      <GltsDocumentUploadDrawer
-        open={Boolean(gltsUploadDocument)}
-        document={gltsUploadDocument}
-        onClose={() => setGltsUploadDocument(null)}
-        onSave={(payload: GltsDocumentUploadPayload) => {
-          if (!gltsUploadDocument) return
-          const mode = resolveHandlingMode(gltsUploadDocument) ?? 'arrange_by_glts'
-          updateTravelerDocumentWorkflow(gltsUploadDocument.documentId, {
-            handlingMode: mode,
-            status: 'uploaded',
-            ...(gltsUploadDocument.documentId === 'travel-ticket'
-              ? { travelTicket: payload.travelTicket }
-              : { insurance: payload.insurance }),
-          })
-          if (selectedRow) {
-            applicationArrangedExpenseService.upsertFromGltsDocumentUpload({
-              applicationId,
-              isBulk,
-              travelerRowId: selectedRow.id,
-              applicantId: selectedRow.gltsApplicantId,
-              applicantName: selectedRow.travelerName,
-              document: gltsUploadDocument,
-              payload,
-            })
-            applicationExpenseManagementService.syncApplication(applicationId)
-          }
-          syncWorkspaceAfterDocumentChange()
-          showToast({
-            title: 'Document saved',
-            description: `${gltsUploadDocument.name} uploaded by GLTS and mapped to billing expenses.`,
-            variant: 'success',
-          })
-          setGltsUploadDocument(null)
-        }}
-      />
+          {passengerNavFooter}
+        </Stack>
+      </AdminDetailShell>
 
       <ConfirmDialog
         open={Boolean(verifyDialog)}
@@ -782,7 +837,11 @@ export function MarineViewFormPage() {
         <FormField
           label="Comment"
           required
-          helperText="Comment is required and will be visible in the customer portal."
+          helperText={
+            workspaceMode === 'online_submission'
+              ? 'Internal remark for Verification Pending. Customer is notified only after verification confirms the rejection.'
+              : 'Comment is required and will be visible in the customer portal.'
+          }
         >
           <Textarea
             value={reviewComment}
@@ -793,6 +852,6 @@ export function MarineViewFormPage() {
           />
         </FormField>
       </Modal>
-    </AdminRecordPageChrome>
+    </>
   )
 }

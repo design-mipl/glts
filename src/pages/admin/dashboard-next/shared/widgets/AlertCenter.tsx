@@ -1,7 +1,8 @@
-import { ListCard, type ListCardItem } from '@/design-system/UIComponents'
+import { AlertPanel } from '../dashboard-ui-kit'
 import type { DashboardAlertItem, DashboardAlertSeverity } from '../types'
 import { isDashboardPermissionGranted } from '../utils/permission'
 import { BusinessWidgetFrame } from './common/BusinessWidgetFrame'
+import type { UiKitListItem } from '../dashboard-ui-kit'
 
 export interface AlertCenterProps {
   title?: string
@@ -13,8 +14,6 @@ export interface AlertCenterProps {
   onShowMore?: () => void
   permission?: boolean
 }
-
-type ListBadgeColor = NonNullable<ListCardItem['badge']>['color']
 
 function severityLabel(severity: DashboardAlertSeverity): string {
   switch (severity) {
@@ -30,14 +29,14 @@ function severityLabel(severity: DashboardAlertSeverity): string {
   }
 }
 
-function severityToListBadgeColor(severity: DashboardAlertSeverity): ListBadgeColor {
+function severityTone(severity: DashboardAlertSeverity): UiKitListItem['badgeTone'] {
   switch (severity) {
     case 'critical':
-      return 'error'
+      return 'negative'
     case 'warning':
       return 'warning'
     case 'success':
-      return 'success'
+      return 'positive'
     case 'info':
     default:
       return 'info'
@@ -58,17 +57,6 @@ export function AlertCenter({
     return null
   }
 
-  const items: ListCardItem[] = alerts.map((alert) => ({
-    id: alert.id,
-    primary: alert.count != null ? `${alert.title} (${alert.count})` : alert.title,
-    secondary: alert.description,
-    badge: {
-      label: severityLabel(alert.severity),
-      color: severityToListBadgeColor(alert.severity),
-    },
-    onClick: alert.onClick,
-  }))
-
   return (
     <BusinessWidgetFrame
       title={undefined}
@@ -78,15 +66,20 @@ export function AlertCenter({
       emptyTitle={emptyText}
       permission={permission}
     >
-      <ListCard
+      <AlertPanel
         title={title}
         subtitle={subtitle}
-        items={items}
         loading={loading}
-        emptyText={emptyText}
         maxItems={maxItems}
         onShowMore={onShowMore}
-        showMoreLabel="View all alerts"
+        items={alerts.map((alert) => ({
+          id: alert.id,
+          primary: alert.count != null ? `${alert.title} (${alert.count})` : alert.title,
+          secondary: alert.description,
+          badgeLabel: severityLabel(alert.severity),
+          badgeTone: severityTone(alert.severity),
+          onClick: alert.onClick,
+        }))}
       />
     </BusinessWidgetFrame>
   )

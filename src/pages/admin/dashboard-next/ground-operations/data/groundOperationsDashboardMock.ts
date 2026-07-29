@@ -116,6 +116,22 @@ export const GROUND_OPERATIONS_DASHBOARD_MOCK: GroundOperationsDashboardData = {
       deltaLabel: 'needs action',
       sparklineData: [1, 1, 1, 2, 2, 2, 2],
     },
+    {
+      id: 'appointments-today',
+      label: 'Appointments today',
+      value: 7,
+      delta: 0,
+      deltaLabel: 'scheduled',
+      sparklineData: [5, 6, 6, 7, 7, 7, 7],
+    },
+    {
+      id: 'funds-to-settle',
+      label: 'Funds to settle',
+      value: 3,
+      delta: -1.0,
+      deltaLabel: 'vs yesterday',
+      sparklineData: [5, 4, 4, 3, 3, 3, 3],
+    },
   ],
   notifications: [
     {

@@ -115,6 +115,8 @@ export interface ApplicantDocumentItem {
   status: ApplicantDocumentStatus
   /** Admin review note shown to the customer when a document is rejected or needs re-upload. */
   reviewComment?: string
+  /** Admin-uploaded replacement file name (any checklist document). */
+  uploadedFileName?: string
   fields?: ExtractedField[]
   /** Simple requirement workflow — Travel Ticket / Insurance. */
   handlingMode?: DocumentHandlingMode

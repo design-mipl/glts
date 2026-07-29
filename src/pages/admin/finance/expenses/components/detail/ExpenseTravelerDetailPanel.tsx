@@ -91,6 +91,8 @@ export function ExpenseTravelerDetailPanel({
         <Tabs
           value={activeTab}
           onChange={v => setActiveTab(v as PassengerDetailTab)}
+          variant="underline"
+          size="sm"
           items={passengerTabs}
         />
       </Box>

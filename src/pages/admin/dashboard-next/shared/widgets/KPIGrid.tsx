@@ -1,7 +1,5 @@
-import { Grid } from '@mui/material'
-import { StatCard } from '@/design-system/UIComponents'
+import { ExecutiveGrid, HeroMetric } from '../dashboard-ui-kit'
 import type { DashboardKpiItem } from '../types'
-import { DASHBOARD_SPACING } from '../constants'
 import { isDashboardPermissionGranted } from '../utils/permission'
 
 export interface KPIGridProps {
@@ -22,8 +20,6 @@ export function KPIGrid({
     return null
   }
 
-  const lgSpan = 12 / columns
-  const mdSpan = columns >= 6 ? 4 : columns >= 4 ? 6 : 6
   const displayItems: DashboardKpiItem[] =
     loading && items.length === 0
       ? Array.from({ length: columns }, (_, i) => ({
@@ -34,21 +30,22 @@ export function KPIGrid({
       : items
 
   return (
-    <Grid container spacing={DASHBOARD_SPACING.field}>
+    <ExecutiveGrid
+      columns={columns === 6 ? 6 : columns === 3 ? 3 : columns === 2 ? 2 : 4}
+      spacing={1}
+    >
       {displayItems.map((item) => (
-        <Grid key={item.id} size={{ xs: 12, sm: 6, md: mdSpan, lg: lgSpan }}>
-          <StatCard
-            label={item.label}
-            value={item.value}
-            delta={item.delta}
-            deltaLabel={item.deltaLabel}
-            icon={item.icon}
-            sparklineData={item.sparklineData}
-            loading={loading}
-            sx={{ height: '100%' }}
-          />
-        </Grid>
+        <HeroMetric
+          key={item.id}
+          label={item.label}
+          value={item.value}
+          delta={item.delta}
+          deltaLabel={item.deltaLabel}
+          icon={item.icon}
+          loading={loading}
+          animate
+        />
       ))}
-    </Grid>
+    </ExecutiveGrid>
   )
 }

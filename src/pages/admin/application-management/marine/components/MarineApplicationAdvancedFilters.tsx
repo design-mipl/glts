@@ -10,6 +10,7 @@ import { PROCESSING_STAGE_OPTIONS } from '@/pages/customer/features/applications
 const ADMIN_STATUS_OPTIONS = [
   'Pending Documents',
   'Verification Pending',
+  'Document Rejected',
   'Under Review',
   'Submitted',
   'Correction Required',

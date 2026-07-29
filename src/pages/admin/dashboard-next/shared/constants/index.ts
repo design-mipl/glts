@@ -22,12 +22,13 @@ export const DASHBOARD_SURFACE = {
   radius: tokens.borderRadius.xl,
   shadow: publicShadows.card,
   filterBarSx: {
-    p: { xs: 1.5, md: 2 },
-    borderRadius: tokens.borderRadius.xl,
+    p: { xs: 1, md: 1.25 },
+    borderRadius: tokens.borderRadius.lg,
     border: '1px solid',
     borderColor: 'divider',
     bgcolor: 'background.paper',
-    boxShadow: publicShadows.card,
+    backgroundImage: 'none',
+    boxShadow: 'none',
   },
   sectionCardSx: {
     p: { xs: 2, md: 2.5 },
@@ -38,17 +39,28 @@ export const DASHBOARD_SURFACE = {
     boxShadow: publicShadows.card,
     mb: 0,
   },
+  /** Resting sticky chrome — no fill so page content shows through. */
   stickyHeaderSx: {
     position: 'sticky' as const,
     top: 0,
     zIndex: tokens.zIndex.sticky,
-    bgcolor: 'background.default',
+    bgcolor: 'transparent',
+    backgroundImage: 'none',
     borderBottom: '1px solid',
+    borderColor: 'transparent',
+    pt: 0.25,
+    pb: 1,
+    mb: 1.5,
+    backdropFilter: 'none',
+    transition:
+      'background-color 160ms ease, border-color 160ms ease, backdrop-filter 160ms ease, box-shadow 160ms ease',
+  },
+  /** Applied while the sticky header is stuck (page scrolled). */
+  stickyHeaderStuckSx: {
+    bgcolor: 'background.default',
     borderColor: 'divider',
-    pt: 0.5,
-    pb: 2,
-    mb: 2.5,
     backdropFilter: 'blur(8px)',
+    boxShadow: publicShadows.card,
   },
 } as const
 

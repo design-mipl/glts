@@ -1,9 +1,9 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { tokens } from '@/design-system/tokens'
+import { UI_KIT_SPACING } from '../../dashboard-ui-kit'
 import { StatusBadge } from '../StatusBadge'
 import type { DashboardStatusTone } from '../../types'
-import { DASHBOARD_SPACING } from '../../constants'
 
 export type JourneyFlowStageStatus = 'completed' | 'active' | 'pending' | 'error'
 
@@ -35,8 +35,8 @@ function statusToTone(status: JourneyFlowStageStatus): DashboardStatusTone {
 }
 
 /**
- * Horizontal stage journey — presentational substitute where DS has no JourneyFlow.
- * Uses theme palette + tokens only.
+ * Horizontal stage journey — presentational.
+ * Uses Dashboard UI Kit spacing/status language on top of DS tokens.
  */
 export function JourneyFlow({ stages, meta }: JourneyFlowProps) {
   const theme = useTheme()
@@ -49,7 +49,7 @@ export function JourneyFlow({ stages, meta }: JourneyFlowProps) {
         spacing={0}
         sx={{
           overflowX: 'auto',
-          pb: DASHBOARD_SPACING.field,
+          pb: UI_KIT_SPACING.field,
           gap: 0,
         }}
       >
@@ -70,7 +70,7 @@ export function JourneyFlow({ stages, meta }: JourneyFlowProps) {
                 flex: isLast ? '0 0 auto' : 1,
               }}
             >
-              <Stack alignItems="center" spacing={DASHBOARD_SPACING.field} sx={{ width: '100%' }}>
+              <Stack alignItems="center" spacing={UI_KIT_SPACING.field} sx={{ width: '100%' }}>
                 <Box
                   sx={{
                     width: theme.spacing(1.5),
@@ -84,8 +84,7 @@ export function JourneyFlow({ stages, meta }: JourneyFlowProps) {
                           : stage.status === 'active'
                             ? theme.palette.primary.main
                             : theme.palette.success.main,
-                    boxShadow:
-                      stage.status === 'active' ? theme.shadows[2] : undefined,
+                    boxShadow: stage.status === 'active' ? theme.shadows[2] : undefined,
                   }}
                   aria-hidden
                 />
@@ -111,7 +110,7 @@ export function JourneyFlow({ stages, meta }: JourneyFlowProps) {
                     height: theme.spacing(0.25),
                     bgcolor: connectorColor,
                     mt: theme.spacing(0.75),
-                    mx: DASHBOARD_SPACING.field,
+                    mx: UI_KIT_SPACING.field,
                     minWidth: theme.spacing(2),
                     alignSelf: 'flex-start',
                   }}
@@ -123,7 +122,7 @@ export function JourneyFlow({ stages, meta }: JourneyFlowProps) {
         })}
       </Stack>
       {meta ? (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: DASHBOARD_SPACING.field }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: UI_KIT_SPACING.field }}>
           {meta}
         </Typography>
       ) : null}

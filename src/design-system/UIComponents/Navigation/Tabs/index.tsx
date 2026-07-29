@@ -18,6 +18,7 @@ export interface TabsProps {
   variant?: 'underline' | 'pill' | 'contained'
   scrollable?: boolean
   fullWidth?: boolean
+  /** Defaults to `sm` (13px / 36px). Use `md` for taller 14px tabs. */
   size?: 'sm' | 'md'
   sx?: SxProps
 }
@@ -29,7 +30,7 @@ export default function Tabs({
   variant = 'underline',
   scrollable = true,
   fullWidth = false,
-  size = 'md',
+  size = 'sm',
   sx,
 }: TabsProps) {
   const theme = useTheme()

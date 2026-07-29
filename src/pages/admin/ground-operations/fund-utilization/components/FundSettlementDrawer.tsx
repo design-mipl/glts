@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import {
   Button,
+  DatePicker,
   Drawer,
   FormField,
   Input,
@@ -15,10 +16,13 @@ import { fundAllocationService } from '@/shared/services/fundAllocationService'
 import {
   computeOverallFundBankSettlementSummary,
   fundUtilizationService,
+  todaySettlementDateKey,
+  toSettlementDateKey,
 } from '@/shared/services/fundUtilizationService'
 import { getCurrentUser } from '@/shared/services/authService'
 import type { FundBankWithdrawalEntry, FundSettlementUserOption } from '@/shared/types/fundUtilization'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatSettlementHeaderDate } from '@/shared/utils/fundSettlementDisplay'
 import { isFundUtilizationBankBatch, resolveOverallSettlementBankAccountLabel } from '../utils/fundUtilizationSettlementUtils'
 import { FundSettlementKpiRow } from './FundSettlementKpiRow'
 import { FundWithdrawalHistoryTab } from './FundWithdrawalHistoryTab'
@@ -48,6 +52,11 @@ function buildDefaultWithdrawnBy(userOptions: FundSettlementUserOption[]): strin
   return userOptions[0]?.value ?? ''
 }
 
+function parseDateKeyToLocalDate(dateKey: string): Date {
+  const [y, m, d] = dateKey.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
 export function FundSettlementDrawer({
   open,
   userOptions,
@@ -57,11 +66,15 @@ export function FundSettlementDrawer({
 }: FundSettlementDrawerProps) {
   const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<SettlementTab>('bank_settlement')
+  const [settlementDateKey, setSettlementDateKey] = useState(todaySettlementDateKey)
   const [withdrawalAmount, setWithdrawalAmount] = useState('')
   const [withdrawnBy, setWithdrawnBy] = useState('')
   const [remarks, setRemarks] = useState('')
   const [history, setHistory] = useState<FundBankWithdrawalEntry[]>([])
   const [submitting, setSubmitting] = useState(false)
+
+  const todayKey = todaySettlementDateKey()
+  const isToday = settlementDateKey === todayKey
 
   const bankBatches = useMemo(() => {
     void refreshKey
@@ -77,6 +90,7 @@ export function FundSettlementDrawer({
   useEffect(() => {
     if (!open) return
     setActiveTab('bank_settlement')
+    setSettlementDateKey(todaySettlementDateKey())
     setWithdrawalAmount('')
     setRemarks('')
     setWithdrawnBy(buildDefaultWithdrawnBy(userOptions))
@@ -86,8 +100,14 @@ export function FundSettlementDrawer({
   const summary = useMemo(() => {
     void refreshKey
     void history
-    return computeOverallFundBankSettlementSummary()
-  }, [refreshKey, history])
+    return computeOverallFundBankSettlementSummary(settlementDateKey)
+  }, [refreshKey, history, settlementDateKey])
+
+  const todaySummary = useMemo(() => {
+    void refreshKey
+    void history
+    return computeOverallFundBankSettlementSummary(todayKey)
+  }, [refreshKey, history, todayKey])
 
   const bankAccountLabel = useMemo(
     () => resolveOverallSettlementBankAccountLabel(bankBatches),
@@ -96,9 +116,10 @@ export function FundSettlementDrawer({
 
   const parsedAmount = Number.parseFloat(withdrawalAmount.replace(/,/g, ''))
   const amountValid = Number.isFinite(parsedAmount) && parsedAmount > 0
-  const amountWithinBalance = amountValid && parsedAmount <= summary.availableInBank
+  const amountWithinBalance = amountValid && parsedAmount <= todaySummary.availableBankBalance
   const canSubmit =
-    summary.bankAllocationCount > 0 &&
+    isToday &&
+    todaySummary.bankAllocationCount > 0 &&
     amountWithinBalance &&
     withdrawnBy.trim().length > 0 &&
     !submitting
@@ -159,7 +180,7 @@ export function FundSettlementDrawer({
       open={open}
       onClose={onClose}
       title="Fund settlement"
-      subtitle="Team bank float · all bank transfer allocations"
+      subtitle={`${formatSettlementHeaderDate(settlementDateKey)} · Team bank float`}
       width={SETTLEMENT_DRAWER_WIDTH}
       footer={footer}
       bodyVariant="default"
@@ -187,16 +208,41 @@ export function FundSettlementDrawer({
 
         {activeTab === 'bank_settlement' ? (
           <Stack spacing={2} sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            <FormField label="Settlement date">
+              <DatePicker
+                value={parseDateKeyToLocalDate(settlementDateKey)}
+                onChange={date => {
+                  if (!date) return
+                  setSettlementDateKey(toSettlementDateKey(date))
+                }}
+                maxDate={parseDateKeyToLocalDate(todayKey)}
+                size="sm"
+                fullWidth
+                format="DD MMM YYYY"
+              />
+            </FormField>
+
             <FundSettlementKpiRow summary={summary} />
 
             <AdminOverlayFormSection title="Withdraw funds" importance="primary">
               <Stack spacing={1.5}>
+                {!isToday ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12 }}>
+                    Withdrawals can only be recorded for today. Select today&apos;s date to withdraw.
+                  </Typography>
+                ) : null}
+
                 <FormField label="Bank account">
                   <Input value={bankAccountLabel} disabled size="sm" fullWidth />
                 </FormField>
 
-                <FormField label="Available in bank">
-                  <Input value={formatInr(summary.availableInBank)} disabled size="sm" fullWidth />
+                <FormField label="Available bank balance">
+                  <Input
+                    value={formatInr(todaySummary.availableBankBalance)}
+                    disabled
+                    size="sm"
+                    fullWidth
+                  />
                 </FormField>
 
                 <Box
@@ -212,7 +258,7 @@ export function FundSettlementDrawer({
                     error={Boolean(withdrawalAmount.trim() && !amountWithinBalance)}
                     helperText={
                       withdrawalAmount.trim() && !amountWithinBalance
-                        ? parsedAmount > summary.availableInBank
+                        ? parsedAmount > todaySummary.availableBankBalance
                           ? 'Exceeds available team bank balance'
                           : 'Enter a valid amount'
                         : undefined
@@ -224,7 +270,7 @@ export function FundSettlementDrawer({
                       placeholder="0"
                       size="sm"
                       fullWidth
-                      disabled={summary.bankAllocationCount === 0}
+                      disabled={!isToday || todaySummary.bankAllocationCount === 0}
                     />
                   </FormField>
 
@@ -242,7 +288,7 @@ export function FundSettlementDrawer({
                       placeholder="Select user"
                       size="sm"
                       fullWidth
-                      disabled={summary.bankAllocationCount === 0}
+                      disabled={!isToday || todaySummary.bankAllocationCount === 0}
                     />
                   </FormField>
                 </Box>
@@ -253,7 +299,7 @@ export function FundSettlementDrawer({
                     onChange={setRemarks}
                     placeholder="Optional note for this withdrawal"
                     rows={2}
-                    disabled={summary.bankAllocationCount === 0}
+                    disabled={!isToday || todaySummary.bankAllocationCount === 0}
                   />
                 </FormField>
               </Stack>

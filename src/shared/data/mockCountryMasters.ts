@@ -362,7 +362,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     segment({
       segment: 'marine',
       enabled: true,
-      workflowId: 'workflow-offline-only',
+      workflowId: 'workflow-online-approval-required',
       visaTypes: [
         visaType({
           id: 'cn-m-type',

@@ -2,20 +2,21 @@ import { useEffect, useMemo, useState } from 'react'
 import { Grid, Stack } from '@mui/material'
 import dayjs from 'dayjs'
 import {
+  Button,
   DatePicker,
-  Drawer,
   FileUpload,
   FormField,
   Input,
+  Modal,
   Select,
   Textarea,
 } from '@/design-system/UIComponents'
-import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
 import type { ApplicantDocumentItem } from '@/pages/customer/features/applications/data/applicationFlowData'
 import {
   emptyInsuranceWorkflow,
   emptyTravelTicketWorkflow,
   isSimpleDocumentRequirement,
+  resolveHandlingMode,
   simpleDocumentUploadActionLabel,
   type InsuranceWorkflow,
   type SimpleDocumentRequirementId,
@@ -42,6 +43,16 @@ function normalizeAmountInput(value: string): string {
   return value.replace(/[^\d.]/g, '')
 }
 
+function resolveExistingFileName(document: ApplicantDocumentItem): string {
+  if (document.documentId === 'travel-ticket') {
+    return document.travelTicket?.fileName?.trim() ?? ''
+  }
+  if (document.documentId === 'insurance') {
+    return document.insurance?.fileName?.trim() ?? ''
+  }
+  return document.uploadedFileName?.trim() ?? ''
+}
+
 export interface GltsDocumentUploadPayload {
   fileName: string
   travelTicket?: Partial<TravelTicketWorkflow>
@@ -65,36 +76,46 @@ export function GltsDocumentUploadDrawer({
   const [insurance, setInsurance] = useState(emptyInsuranceWorkflow())
   const [fileName, setFileName] = useState('')
 
+  const isSimple =
+    Boolean(document) && isSimpleDocumentRequirement(document!.documentId)
+  const docId = isSimple ? (document!.documentId as SimpleDocumentRequirementId) : null
+  const requiresGltsArrangement =
+    Boolean(document) &&
+    isSimple &&
+    resolveHandlingMode(document!) === 'arrange_by_glts'
+
   useEffect(() => {
-    if (!open || !document || !isSimpleDocumentRequirement(document.documentId)) return
+    if (!open || !document) return
+    setFileName(resolveExistingFileName(document))
+    if (!isSimpleDocumentRequirement(document.documentId)) return
     if (document.documentId === 'travel-ticket') {
       setTicket({ ...emptyTravelTicketWorkflow(), ...document.travelTicket })
-      setFileName(document.travelTicket?.fileName?.trim() ?? '')
     } else {
       setInsurance({ ...emptyInsuranceWorkflow(), ...document.insurance })
-      setFileName(document.insurance?.fileName?.trim() ?? '')
     }
   }, [open, document])
 
-  const docId =
-    document && isSimpleDocumentRequirement(document.documentId)
-      ? (document.documentId as SimpleDocumentRequirementId)
-      : null
-
   const vendorOptions = useMemo(
-    () => (docId ? listGltsDocumentUploadVendors(docId) : []),
-    [docId],
+    () => (docId && requiresGltsArrangement ? listGltsDocumentUploadVendors(docId) : []),
+    [docId, requiresGltsArrangement],
   )
 
-  if (!document || !docId) {
+  if (!document) {
     return null
   }
 
-  const title = simpleDocumentUploadActionLabel(docId)
+  const title = docId
+    ? document.status === 'rejected' || document.status === 'needs_review'
+      ? `Re-upload ${document.name}`
+      : simpleDocumentUploadActionLabel(docId)
+    : document.status === 'rejected' || document.status === 'needs_review'
+      ? `Re-upload ${document.name}`
+      : `Upload ${document.name}`
+
   const arrangementAmount = docId === 'travel-ticket' ? ticket.arrangementAmount : insurance.arrangementAmount
   const vendorId = docId === 'travel-ticket' ? ticket.vendorId : insurance.vendorId
-  const amountValid = isValidGltsArrangementAmount(arrangementAmount)
-  const vendorValid = Boolean(vendorId?.trim())
+  const amountValid = !requiresGltsArrangement || isValidGltsArrangementAmount(arrangementAmount)
+  const vendorValid = !requiresGltsArrangement || Boolean(vendorId?.trim())
   const canSave = Boolean(fileName.trim()) && amountValid && vendorValid
 
   const handleVendorChange = (nextVendorId: string | number) => {
@@ -124,39 +145,45 @@ export function GltsDocumentUploadDrawer({
         travelTicket: {
           ...ticket,
           fileName: fileName.trim(),
-          arrangementAmount: ticket.arrangementAmount?.trim(),
-          vendorId: ticket.vendorId?.trim(),
-          vendorName: ticket.vendorName?.trim() || resolveGltsDocumentVendorName(ticket.vendorId),
+          arrangementAmount: requiresGltsArrangement ? ticket.arrangementAmount?.trim() : ticket.arrangementAmount,
+          vendorId: requiresGltsArrangement ? ticket.vendorId?.trim() : ticket.vendorId,
+          vendorName: requiresGltsArrangement
+            ? ticket.vendorName?.trim() || resolveGltsDocumentVendorName(ticket.vendorId)
+            : ticket.vendorName,
         },
       })
-    } else {
+    } else if (docId === 'insurance') {
       onSave({
         fileName: fileName.trim(),
         insurance: {
           ...insurance,
           fileName: fileName.trim(),
-          arrangementAmount: insurance.arrangementAmount?.trim(),
-          vendorId: insurance.vendorId?.trim(),
-          vendorName: insurance.vendorName?.trim() || resolveGltsDocumentVendorName(insurance.vendorId),
+          arrangementAmount: requiresGltsArrangement
+            ? insurance.arrangementAmount?.trim()
+            : insurance.arrangementAmount,
+          vendorId: requiresGltsArrangement ? insurance.vendorId?.trim() : insurance.vendorId,
+          vendorName: requiresGltsArrangement
+            ? insurance.vendorName?.trim() || resolveGltsDocumentVendorName(insurance.vendorId)
+            : insurance.vendorName,
         },
       })
+    } else {
+      onSave({ fileName: fileName.trim() })
     }
     onClose()
   }
 
   return (
-    <Drawer
+    <Modal
       open={open}
       onClose={onClose}
       title={title}
-      width={480}
+      size={requiresGltsArrangement ? 'md' : 'sm'}
       footer={
-        <AdminFullPageFormFooter
-          onCancel={onClose}
-          onSave={handleSave}
-          saveLabel="Save document"
-          disabled={!canSave}
-        />
+        <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
+          <Button label="Cancel" variant="neutral" onClick={onClose} />
+          <Button label="Save document" variant="contained" onClick={handleSave} disabled={!canSave} />
+        </Stack>
       }
     >
       <Stack spacing={2}>
@@ -174,143 +201,151 @@ export function GltsDocumentUploadDrawer({
           />
         </FormField>
 
-        <Grid container spacing={1.5}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormField
-              label="Amount (INR)"
-              required
-              helperText={arrangementAmount && !amountValid ? 'Enter a valid amount greater than 0' : undefined}
-            >
-              <Input
-                fullWidth
-                size="sm"
-                value={arrangementAmount ?? ''}
-                onChange={handleAmountChange}
-                placeholder="0.00"
-              />
-            </FormField>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormField label="Vendor" required>
-              <Select
-                fullWidth
-                size="sm"
-                placeholder="Select vendor"
-                value={vendorId ?? ''}
-                options={vendorOptions}
-                onChange={handleVendorChange}
-              />
-            </FormField>
-          </Grid>
-        </Grid>
+        {requiresGltsArrangement && docId ? (
+          <>
+            <Grid container spacing={1.5}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField
+                  label="Amount (INR)"
+                  required
+                  helperText={
+                    arrangementAmount && !amountValid ? 'Enter a valid amount greater than 0' : undefined
+                  }
+                >
+                  <Input
+                    fullWidth
+                    size="sm"
+                    value={arrangementAmount ?? ''}
+                    onChange={handleAmountChange}
+                    placeholder="0.00"
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Vendor" required>
+                  <Select
+                    fullWidth
+                    size="sm"
+                    placeholder="Select vendor"
+                    value={vendorId ?? ''}
+                    options={vendorOptions}
+                    onChange={handleVendorChange}
+                  />
+                </FormField>
+              </Grid>
+            </Grid>
 
-        {docId === 'travel-ticket' ? (
-          <Grid container spacing={1.5}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormField label="Ticket Number" optional>
-                <Input
-                  fullWidth
-                  size="sm"
-                  value={ticket.ticketNumber ?? ''}
-                  onChange={value => setTicket(prev => ({ ...prev, ticketNumber: value }))}
-                />
-              </FormField>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormField label="Airline / Travel Mode" optional>
-                <Input
-                  fullWidth
-                  size="sm"
-                  value={ticket.airlineTravelMode ?? ''}
-                  onChange={value => setTicket(prev => ({ ...prev, airlineTravelMode: value }))}
-                />
-              </FormField>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormField label="Travel Date" optional>
-                <DatePicker
-                  fullWidth
-                  size="sm"
-                  value={parseDateString(ticket.travelDate)}
-                  onChange={date =>
-                    setTicket(prev => ({ ...prev, travelDate: formatDateForStorage(date) }))
-                  }
-                />
-              </FormField>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormField label="Remarks" optional>
-                <Textarea
-                  fullWidth
-                  rows={3}
-                  value={ticket.remarks ?? ticket.notes ?? ''}
-                  onChange={value => setTicket(prev => ({ ...prev, remarks: value }))}
-                />
-              </FormField>
-            </Grid>
-          </Grid>
-        ) : (
-          <Grid container spacing={1.5}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormField label="Policy Number" optional>
-                <Input
-                  fullWidth
-                  size="sm"
-                  value={insurance.policyNumber ?? ''}
-                  onChange={value => setInsurance(prev => ({ ...prev, policyNumber: value }))}
-                />
-              </FormField>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormField label="Insurance Provider" optional>
-                <Input
-                  fullWidth
-                  size="sm"
-                  value={insurance.insuranceProvider ?? ''}
-                  onChange={value =>
-                    setInsurance(prev => ({ ...prev, insuranceProvider: value }))
-                  }
-                />
-              </FormField>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormField label="Valid From" optional>
-                <DatePicker
-                  fullWidth
-                  size="sm"
-                  value={parseDateString(insurance.validFrom ?? insurance.travelStartDate)}
-                  onChange={date =>
-                    setInsurance(prev => ({ ...prev, validFrom: formatDateForStorage(date) }))
-                  }
-                />
-              </FormField>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormField label="Valid To" optional>
-                <DatePicker
-                  fullWidth
-                  size="sm"
-                  value={parseDateString(insurance.validTo ?? insurance.travelEndDate)}
-                  minDate={parseDateString(insurance.validFrom ?? insurance.travelStartDate) ?? undefined}
-                  onChange={date =>
-                    setInsurance(prev => ({ ...prev, validTo: formatDateForStorage(date) }))
-                  }
-                />
-              </FormField>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormField label="Remarks" optional>
-                <Textarea
-                  fullWidth
-                  rows={3}
-                  value={insurance.remarks ?? insurance.notes ?? ''}
-                  onChange={value => setInsurance(prev => ({ ...prev, remarks: value }))}
-                />
-              </FormField>
-            </Grid>
-          </Grid>
-        )}
+            {docId === 'travel-ticket' ? (
+              <Grid container spacing={1.5}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormField label="Ticket Number" optional>
+                    <Input
+                      fullWidth
+                      size="sm"
+                      value={ticket.ticketNumber ?? ''}
+                      onChange={value => setTicket(prev => ({ ...prev, ticketNumber: value }))}
+                    />
+                  </FormField>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormField label="Airline / Travel Mode" optional>
+                    <Input
+                      fullWidth
+                      size="sm"
+                      value={ticket.airlineTravelMode ?? ''}
+                      onChange={value => setTicket(prev => ({ ...prev, airlineTravelMode: value }))}
+                    />
+                  </FormField>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormField label="Travel Date" optional>
+                    <DatePicker
+                      fullWidth
+                      size="sm"
+                      value={parseDateString(ticket.travelDate)}
+                      onChange={date =>
+                        setTicket(prev => ({ ...prev, travelDate: formatDateForStorage(date) }))
+                      }
+                    />
+                  </FormField>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <FormField label="Remarks" optional>
+                    <Textarea
+                      fullWidth
+                      rows={3}
+                      value={ticket.remarks ?? ticket.notes ?? ''}
+                      onChange={value => setTicket(prev => ({ ...prev, remarks: value }))}
+                    />
+                  </FormField>
+                </Grid>
+              </Grid>
+            ) : (
+              <Grid container spacing={1.5}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormField label="Policy Number" optional>
+                    <Input
+                      fullWidth
+                      size="sm"
+                      value={insurance.policyNumber ?? ''}
+                      onChange={value => setInsurance(prev => ({ ...prev, policyNumber: value }))}
+                    />
+                  </FormField>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormField label="Insurance Provider" optional>
+                    <Input
+                      fullWidth
+                      size="sm"
+                      value={insurance.insuranceProvider ?? ''}
+                      onChange={value =>
+                        setInsurance(prev => ({ ...prev, insuranceProvider: value }))
+                      }
+                    />
+                  </FormField>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormField label="Valid From" optional>
+                    <DatePicker
+                      fullWidth
+                      size="sm"
+                      value={parseDateString(insurance.validFrom ?? insurance.travelStartDate)}
+                      onChange={date =>
+                        setInsurance(prev => ({ ...prev, validFrom: formatDateForStorage(date) }))
+                      }
+                    />
+                  </FormField>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormField label="Valid To" optional>
+                    <DatePicker
+                      fullWidth
+                      size="sm"
+                      value={parseDateString(insurance.validTo ?? insurance.travelEndDate)}
+                      minDate={
+                        parseDateString(insurance.validFrom ?? insurance.travelStartDate) ?? undefined
+                      }
+                      onChange={date =>
+                        setInsurance(prev => ({ ...prev, validTo: formatDateForStorage(date) }))
+                      }
+                    />
+                  </FormField>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <FormField label="Remarks" optional>
+                    <Textarea
+                      fullWidth
+                      rows={3}
+                      value={insurance.remarks ?? insurance.notes ?? ''}
+                      onChange={value => setInsurance(prev => ({ ...prev, remarks: value }))}
+                    />
+                  </FormField>
+                </Grid>
+              </Grid>
+            )}
+          </>
+        ) : null}
       </Stack>
-    </Drawer>
+    </Modal>
   )
 }

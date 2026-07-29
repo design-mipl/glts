@@ -1,14 +1,19 @@
-import { Box, Grid, Stack, Typography } from '@mui/material'
-import { Tooltip } from '@/design-system/UIComponents'
-import { FunnelChart } from '@/design-system/UIComponents'
+import { Box, Stack, Typography } from '@mui/material'
+import { FunnelChart, Tooltip } from '@/design-system/UIComponents'
+import {
+  ComparisonLayout,
+  ExecutiveGrid,
+  FunnelContainer,
+  InsightCard,
+  UI_KIT_SPACING,
+} from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
 import { StatusBadge } from '../StatusBadge'
 import {
   APPLICATION_PIPELINE_STAGE_LABELS,
   type ApplicationPipelineStageId,
 } from '../../config/applicationPipeline'
-import { DASHBOARD_CHART_HEIGHT_SPACING, DASHBOARD_SPACING } from '../../constants'
-import { ChartPanel } from '../ChartPanel'
+import { DASHBOARD_CHART_HEIGHT_SPACING } from '../../constants'
 
 export interface ApplicationPipelineStageData {
   id: ApplicationPipelineStageId
@@ -28,6 +33,10 @@ export interface ApplicationPipelineProps {
   empty?: boolean
   permission?: boolean
   onRetry?: () => void
+  /** Wrap in ExecutiveCard. Default false to match existing dashboard embeds. */
+  card?: boolean
+  /** Skip SectionHeader — parent owns the title/tabs chrome. */
+  hideHeader?: boolean
 }
 
 export function ApplicationPipeline({
@@ -40,6 +49,8 @@ export function ApplicationPipeline({
   empty,
   permission,
   onRetry,
+  card = false,
+  hideHeader = false,
 }: ApplicationPipelineProps) {
   const chartHeight = DASHBOARD_CHART_HEIGHT_SPACING * 8
   const funnelData = stages.map((stage) => ({
@@ -50,69 +61,62 @@ export function ApplicationPipeline({
 
   return (
     <BusinessWidgetFrame
-      title={title}
-      subtitle={subtitle}
+      title={hideHeader ? undefined : title}
+      subtitle={hideHeader ? undefined : subtitle}
       loading={loading}
       error={error}
       empty={empty ?? stages.length === 0}
       permission={permission}
       onRetry={onRetry}
-      card={false}
+      card={card}
       skeletonHeightSpacing={28}
     >
-      <Grid container spacing={DASHBOARD_SPACING.field}>
-        <Grid size={{ xs: 12, lg: 5 }}>
-          <ChartPanel title="Funnel" loading={false} empty={funnelData.length === 0}>
+      <ComparisonLayout
+        left={
+          <FunnelContainer title="Funnel" minHeight={chartHeight} width="auto">
             <FunnelChart data={funnelData} height={chartHeight} />
-          </ChartPanel>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 7 }}>
-          <Grid container spacing={DASHBOARD_SPACING.field}>
+          </FunnelContainer>
+        }
+        right={
+          <ExecutiveGrid columns={2}>
             {stages.map((stage) => {
               const label = APPLICATION_PIPELINE_STAGE_LABELS[stage.id]
               const hover = `${label}: ${stage.count} cases · avg age ${stage.averageAgeHours}h · ${stage.delayedCount} delayed · SLA ${stage.slaPercent}%`
 
               return (
-                <Grid key={stage.id} size={{ xs: 12, sm: 6 }}>
-                  <Tooltip content={hover}>
-                    <Box
-                      role={onStageClick ? 'button' : undefined}
-                      tabIndex={onStageClick ? 0 : undefined}
-                      onClick={() => onStageClick?.(stage.id)}
-                      onKeyDown={(event) => {
-                        if (!onStageClick) return
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault()
-                          onStageClick(stage.id)
-                        }
-                      }}
+                <Tooltip key={stage.id} content={hover}>
+                  <Box
+                    role={onStageClick ? 'button' : undefined}
+                    tabIndex={onStageClick ? 0 : undefined}
+                    onClick={() => onStageClick?.(stage.id)}
+                    onKeyDown={(event) => {
+                      if (!onStageClick) return
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        onStageClick(stage.id)
+                      }
+                    }}
+                    sx={{ height: '100%', cursor: onStageClick ? 'pointer' : 'default' }}
+                  >
+                    <InsightCard
+                      accent="neutral"
+                      density="compact"
+                      elevation="flat"
                       sx={{
-                        p: DASHBOARD_SPACING.dense,
-                        border: 1,
-                        borderColor: 'divider',
-                        borderRadius: (theme) => theme.shape.borderRadius,
+                        borderLeft: '1px solid',
+                        borderLeftColor: 'divider',
+                        boxShadow: 'none',
                         bgcolor: 'background.paper',
-                        cursor: onStageClick ? 'pointer' : 'default',
-                        transition: (theme) =>
-                          theme.transitions.create(['border-color', 'box-shadow'], {
-                            duration: theme.transitions.duration.shorter,
-                          }),
-                        '&:hover': onStageClick
-                          ? {
-                              borderColor: 'primary.main',
-                              boxShadow: 1,
-                            }
-                          : undefined,
                       }}
                     >
-                      <Stack spacing={DASHBOARD_SPACING.field}>
+                      <Stack spacing={UI_KIT_SPACING.field}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
-                          <Typography variant="body2" fontWeight={600}>
+                          <Typography variant="body2" fontWeight={600} color="text.primary">
                             {label}
                           </Typography>
                           <StatusBadge
                             label={`${stage.count}`}
-                            tone={stage.delayedCount > 0 ? 'warning' : 'success'}
+                            tone={stage.delayedCount > 0 ? 'warning' : 'neutral'}
                           />
                         </Stack>
                         <Typography variant="caption" color="text.secondary">
@@ -120,14 +124,14 @@ export function ApplicationPipeline({
                           {stage.slaPercent}%
                         </Typography>
                       </Stack>
-                    </Box>
-                  </Tooltip>
-                </Grid>
+                    </InsightCard>
+                  </Box>
+                </Tooltip>
               )
             })}
-          </Grid>
-        </Grid>
-      </Grid>
+          </ExecutiveGrid>
+        }
+      />
     </BusinessWidgetFrame>
   )
 }

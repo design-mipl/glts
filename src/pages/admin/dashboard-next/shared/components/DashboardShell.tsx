@@ -24,8 +24,13 @@ export interface DashboardShellProps {
   alerts?: ReactNode
   tabs?: DashboardTabDefinition[]
   defaultTab?: string
+  /** Controlled active tab id (deep-link / memory). */
+  tabValue?: string
+  onTabChange?: (tabId: string) => void
   tabMeta?: ReactNode
   children?: ReactNode
+  /** Dense sticky chrome — used by DashboardWorkspace. */
+  denseChrome?: boolean
   loading?: boolean
   loadingLabel?: string
   error?: boolean
@@ -41,7 +46,7 @@ export function DashboardShell({
   title,
   subtitle,
   eyebrow,
-  badge = 'Next',
+  badge,
   breadcrumbs,
   actions,
   filters,
@@ -49,8 +54,11 @@ export function DashboardShell({
   alerts,
   tabs,
   defaultTab,
+  tabValue,
+  onTabChange,
   tabMeta,
   children,
+  denseChrome = false,
   loading = false,
   loadingLabel = 'Loading dashboard...',
   error = false,
@@ -71,6 +79,7 @@ export function DashboardShell({
           badge={badge}
           breadcrumbs={breadcrumbs}
           actions={actions}
+          dense={denseChrome}
         />
         <BaseCard sx={DASHBOARD_SURFACE.sectionCardSx}>
           <EmptyState
@@ -94,11 +103,12 @@ export function DashboardShell({
         breadcrumbs={breadcrumbs}
         actions={actions}
         filters={filters}
+        dense={denseChrome}
       />
 
       <LoadingOverlay loading={loading} label={loadingLabel}>
         <Stack
-          spacing={DASHBOARD_SPACING.section}
+          spacing={denseChrome ? DASHBOARD_SPACING.dense : DASHBOARD_SPACING.section}
           sx={{
             opacity: loading ? 0.6 : 1,
             transition: `opacity ${tokens.transition.normal}`,
@@ -114,7 +124,13 @@ export function DashboardShell({
               {kpis}
               {alerts}
               {tabs && tabs.length > 0 ? (
-                <DashboardTabs tabs={tabs} defaultTab={defaultTab} toolbar={tabMeta} />
+                <DashboardTabs
+                  tabs={tabs}
+                  defaultTab={defaultTab}
+                  value={tabValue}
+                  onChange={onTabChange}
+                  toolbar={tabMeta}
+                />
               ) : null}
               {children}
             </>

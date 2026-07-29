@@ -1,6 +1,6 @@
 import type { Column } from '@/design-system/UIComponents'
 import { Button } from '@/design-system/UIComponents'
-import { DashboardTable } from '../DashboardTable'
+import { ExecutiveTable } from '../../dashboard-ui-kit'
 import { StatusBadge } from '../StatusBadge'
 import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
 import type { DashboardStatusTone } from '../../types'
@@ -98,16 +98,17 @@ export function PendingVerification({
       onRetry={onRetry}
       emptyTitle="No pending verifications"
     >
-      <DashboardTable
+      <ExecutiveTable
         title={title}
         subtitle={subtitle}
         columns={columns}
         data={rows}
         rowKey="id"
         onRowClick={onRowClick}
-        onViewAll={onViewAll}
-        actionLabel="View queue"
-        card
+        actionLabel={onViewAll ? 'View queue' : undefined}
+        onAction={onViewAll}
+        fullWidth
+        loading={loading}
       />
     </BusinessWidgetFrame>
   )

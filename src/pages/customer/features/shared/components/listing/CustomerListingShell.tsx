@@ -102,12 +102,13 @@ export function CustomerListingShell({
               value={tabValue}
               onChange={onTabChange}
               variant="underline"
+              size="sm"
               items={tabs.map(t => ({
                 value: t.value,
                 label: t.label,
                 badge: t.badge,
               }))}
-              sx={{ mb: 0, px: 2, minHeight: 44 }}
+              sx={{ mb: 0, px: 2, minHeight: 36 }}
             />
           </Box>
         )}

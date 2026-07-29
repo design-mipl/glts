@@ -66,7 +66,11 @@ export function computeMarineListingKpis(rows: MarineApplicationRow[]) {
   const verificationPending = rows.filter(row =>
     isMarineApplicationInQueueTab(row, 'verification_pending'),
   ).length
-  const pendingCorrections = rows.filter(row => row.operationalStatus === 'Correction Required').length
+  const pendingCorrections = rows.filter(
+    row =>
+      row.operationalStatus === 'Correction Required' ||
+      row.operationalStatus === 'Document Rejected',
+  ).length
   const dispatched = rows.filter(row => isMarineApplicationInQueueTab(row, 'dispatched')).length
 
   return {
@@ -148,6 +152,7 @@ export function mapMarineApplicationRowsToGridItems(rows: MarineApplicationRow[]
 
 export function exportMarineApplicationsToCsv(rows: MarineApplicationRow[]): string {
   const headers = [
+    'Creation date',
     'GLTS reference',
     'Type',
     'Pax name',
@@ -168,6 +173,7 @@ export function exportMarineApplicationsToCsv(rows: MarineApplicationRow[]): str
     const companyName = resolveApplicationCompanyName(row)
     const createdBy = getMarineApplicationCellValue(row, 'createdBy')
     return [
+      row.createdAt,
       row.id,
       type,
       applicant,

@@ -3,12 +3,14 @@ export type ApplicationOperationalStatus =
   | 'Pending Documents'
   | 'Under Review'
   | 'Verification Pending'
+  | 'Document Rejected'
   | 'Correction Required'
   | 'Submitted'
   | 'Appointment Booked'
   | 'Passport Ready'
   | 'Completed'
   | 'Rejected'
+  | 'On Hold'
 
 export type ApplicationRecordType = 'single' | 'bulk'
 
@@ -43,11 +45,13 @@ export const SUBMITTED_OPERATIONAL_STATUSES: ApplicationOperationalStatus[] = [
   'Submitted',
   'Under Review',
   'Verification Pending',
+  'Document Rejected',
   'Correction Required',
   'Appointment Booked',
   'Passport Ready',
   'Completed',
   'Rejected',
+  'On Hold',
 ]
 
 export type ApplicationListingRow = import('../data/applicationFlowData').SingleApplicationRow | import('../data/applicationFlowData').BulkBatchRow

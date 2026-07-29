@@ -60,6 +60,8 @@ export interface DashboardTabDefinition {
   hidden?: boolean
   disabled?: boolean
   icon?: ReactNode
+  /** Optional count badge shown in the tab label. */
+  badge?: string | number
 }
 
 export type DashboardStatusTone =

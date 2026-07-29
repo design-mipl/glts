@@ -1,8 +1,9 @@
-import { Grid } from '@mui/material'
-import { StatCard } from '@/design-system/UIComponents'
-import { ProgressSummary } from '../ProgressSummary'
+import {
+  ExecutiveGrid,
+  FinancialMetric,
+  ProgressMetric,
+} from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
-import { DASHBOARD_SPACING } from '../../constants'
 
 export interface CollectionSummaryData {
   outstanding: string | number
@@ -41,28 +42,18 @@ export function CollectionSummary({
       empty={empty}
       permission={permission}
       onRetry={onRetry}
+      card={false}
       skeletonHeightSpacing={16}
     >
-      <Grid container spacing={DASHBOARD_SPACING.field} sx={{ mb: DASHBOARD_SPACING.dense }}>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard label="Outstanding" value={data.outstanding} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard label="Collected" value={data.collected} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard label="Overdue" value={data.overdue} />
-        </Grid>
-      </Grid>
-      <ProgressSummary
-        items={[
-          {
-            id: 'collection-rate',
-            label: 'Collection rate',
-            value: data.collectionRate,
-            helperText: `${Math.round(data.collectionRate)}% of billed amount collected`,
-          },
-        ]}
+      <ExecutiveGrid columns={3}>
+        <FinancialMetric label="Outstanding" value={data.outstanding} />
+        <FinancialMetric label="Collected" value={data.collected} tone="positive" />
+        <FinancialMetric label="Overdue" value={data.overdue} tone="warning" />
+      </ExecutiveGrid>
+      <ProgressMetric
+        label="Collection rate"
+        value={data.collectionRate}
+        helperText={`${Math.round(data.collectionRate)}% of billed amount collected`}
       />
     </BusinessWidgetFrame>
   )

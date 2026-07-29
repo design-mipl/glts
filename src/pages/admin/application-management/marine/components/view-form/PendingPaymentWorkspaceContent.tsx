@@ -1,11 +1,9 @@
 import type { ReactNode } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
 import { BaseCard, Button } from '@/design-system/UIComponents'
-import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
 import type { FormAssistSubmissionDraft } from '@/shared/services/applicationFormAssistService'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
-import { VerifyDocumentsTimeline } from '../verify/VerifyDocumentsTimeline'
 import { ViewFormDocumentVault } from './ViewFormDocumentVault'
 import { PendingPaymentSubmissionSection } from './PendingPaymentSubmissionSection'
 
@@ -18,12 +16,12 @@ export interface PendingPaymentWorkspaceContentProps {
   visaType: string
   countryId?: string
   visaOfferingId?: string
-  timelineSteps: ApplicationProcessingTimelineStep[]
-  multiTraveler: boolean
   readOnly?: boolean
-  headerSlot?: ReactNode
   onChange: (patch: Partial<FormAssistSubmissionDraft>) => void
   onBack: () => void
+  /** When true, omit outer back button (parent footer handles navigation). */
+  hideFooter?: boolean
+  headerActions?: ReactNode
 }
 
 export function PendingPaymentWorkspaceContent({
@@ -35,18 +33,19 @@ export function PendingPaymentWorkspaceContent({
   visaType,
   countryId,
   visaOfferingId,
-  timelineSteps,
-  multiTraveler,
   readOnly = false,
-  headerSlot,
   onChange,
   onBack,
+  hideFooter = false,
+  headerActions,
 }: PendingPaymentWorkspaceContentProps) {
   return (
     <Stack spacing={2}>
-      {headerSlot}
-
-      <VerifyDocumentsTimeline steps={timelineSteps} multiTraveler={multiTraveler} />
+      {headerActions ? (
+        <Stack direction="row" justifyContent="flex-end" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+          {headerActions}
+        </Stack>
+      ) : null}
 
       <ViewFormDocumentVault
         applicationId={applicationId}
@@ -74,12 +73,16 @@ export function PendingPaymentWorkspaceContent({
               onChange={onChange}
             />
           </Box>
-          <Divider />
-          <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
-            <Button variant="outlined" onClick={onBack}>
-              Back to listing
-            </Button>
-          </Stack>
+          {!hideFooter ? (
+            <>
+              <Divider />
+              <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
+                <Button variant="outlined" onClick={onBack}>
+                  Back to listing
+                </Button>
+              </Stack>
+            </>
+          ) : null}
         </Stack>
       </BaseCard>
     </Stack>

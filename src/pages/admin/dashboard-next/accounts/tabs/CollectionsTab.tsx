@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Column } from '@/design-system/UIComponents'
-import { Button } from '@/design-system/UIComponents'
-import { Grid } from '@mui/material'
+import { Button, useToast } from '@/design-system/UIComponents'
+import { Grid, Stack } from '@mui/material'
 import {
   CreditCard,
   FileText,
@@ -18,6 +18,7 @@ import {
   StatusBadge,
   DASHBOARD_SPACING,
 } from '../../shared'
+import { InvoiceSubmissionCalendar } from '../components/InvoiceSubmissionCalendar'
 import type { AccountsCollectionRow, AccountsDashboardTabProps } from '../types'
 
 const ACTION_ICONS: Record<string, ReactNode> = {
@@ -36,6 +37,8 @@ export function CollectionsTab({
   onNavigate,
   onOpenCollection,
 }: AccountsDashboardTabProps) {
+  const { showToast } = useToast()
+
   const columns: Column<AccountsCollectionRow>[] = [
     { key: 'invoiceNumber', label: 'Invoice Number', widthSize: 'md', sortable: false },
     { key: 'client', label: 'Client', widthSize: 'lg', sortable: false },
@@ -59,12 +62,26 @@ export function CollectionsTab({
       filterable: false,
       searchable: false,
       render: (_value, row) => (
-        <Button
-          label="Open"
-          variant="text"
-          size="sm"
-          onClick={() => onOpenCollection?.(row.id)}
-        />
+        <Stack direction="row" spacing={0.5}>
+          <Button
+            label="Open"
+            variant="text"
+            size="sm"
+            onClick={() => onOpenCollection?.(row.id)}
+          />
+          <Button
+            label="Follow-up"
+            variant="text"
+            size="sm"
+            onClick={() =>
+              showToast({
+                title: 'Follow-up recorded',
+                description: `Collection follow-up logged for ${row.invoiceNumber}.`,
+                variant: 'info',
+              })
+            }
+          />
+        </Stack>
       ),
     },
   ]
@@ -94,6 +111,13 @@ export function CollectionsTab({
           onRowClick={(row) => onOpenCollection?.(row.id)}
           onViewAll={() => onNavigate('/admin/finance/invoices')}
           actionLabel="Open invoices"
+        />
+      </Grid>
+
+      <Grid size={{ xs: 12 }}>
+        <InvoiceSubmissionCalendar
+          submissions={data.invoiceSubmissions}
+          loading={loading}
         />
       </Grid>
 
