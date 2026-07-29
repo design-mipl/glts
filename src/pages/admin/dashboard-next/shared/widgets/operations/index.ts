@@ -23,6 +23,9 @@ export type { MarineTimelineProps, MarineTimelineRow } from './MarineTimeline'
 export { TeamCapacity } from './TeamCapacity'
 export type { TeamCapacityProps, TeamCapacityRow } from './TeamCapacity'
 
+export { DepartmentPerfCard } from './DepartmentPerfCard'
+export type { DepartmentPerfCardProps } from './DepartmentPerfCard'
+
 export { TeamProductivityInfographic } from './TeamProductivityInfographic'
 export type {
   TeamProductivityInfographicProps,

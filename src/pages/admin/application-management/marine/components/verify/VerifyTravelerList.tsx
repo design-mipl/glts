@@ -197,6 +197,7 @@ export function VerifyTravelerList({
           p: 1,
           overflowY: 'auto',
           flex: 1,
+          height: 0,
           minHeight: 0,
         }}
       >

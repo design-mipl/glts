@@ -99,6 +99,7 @@ export function MarineViewFormPage() {
     updateGlobalDoc,
     updateTravelerOriginalCollection,
     returnToVerificationPending,
+    notifyCustomerOfDocumentRejection,
     reload: reloadVerify,
     setSelectedTravelerId: setVerifyTravelerId,
   } = verifyWorkspace
@@ -109,6 +110,8 @@ export function MarineViewFormPage() {
     documentId: string
     documentName: string
     status: Extract<ApplicantDocumentStatus, 'rejected' | 'needs_review'>
+    /** When true, rejection becomes customer-visible (moves to Rejected by Ops team). */
+    promoteToOps?: boolean
   } | null>(null)
   const [reviewComment, setReviewComment] = useState('')
   const [verifyDialog, setVerifyDialog] = useState<{
@@ -307,7 +310,11 @@ export function MarineViewFormPage() {
   )
 
   const reviewActionLabel = reviewDialog?.status === 'rejected' ? 'Reject' : 'Request re-upload'
-  const reviewDialogTitle = reviewDialog ? `${reviewActionLabel} document` : ''
+  const reviewDialogTitle = reviewDialog
+    ? reviewDialog.promoteToOps
+      ? 'Reject again — move to Ops team'
+      : `${reviewActionLabel} document`
+    : ''
   const isReviewCommentValid = reviewComment.trim().length > 0
 
   if (!applicationId) {
@@ -393,6 +400,7 @@ export function MarineViewFormPage() {
     document: ApplicantDocumentItem,
     status: Extract<ApplicantDocumentStatus, 'rejected' | 'needs_review'>,
     travelerId?: string,
+    options?: { promoteToOps?: boolean },
   ) => {
     setReviewDialog({
       scope,
@@ -400,6 +408,7 @@ export function MarineViewFormPage() {
       documentId: document.documentId,
       documentName: document.name,
       status,
+      promoteToOps: options?.promoteToOps,
     })
     setReviewComment('')
   }
@@ -448,7 +457,9 @@ export function MarineViewFormPage() {
   }
 
   const handleRejectedReject = (entry: VerifyRejectedDocumentEntry) => {
-    openReviewDialog(entry.scope, entry.document, 'rejected', entry.travelerId)
+    // Document-team (internal) rejects → Reject again promotes to Ops / customer portal.
+    const promoteToOps = entry.customerVisible === false
+    openReviewDialog(entry.scope, entry.document, 'rejected', entry.travelerId, { promoteToOps })
   }
 
   const handleRejectedReupload = (entry: VerifyRejectedDocumentEntry) => {
@@ -463,9 +474,11 @@ export function MarineViewFormPage() {
   const submitReviewAction = () => {
     if (!reviewDialog || !isReviewCommentValid) return
     const comment = reviewComment.trim()
-    const isSubmissionPendingReject = workspaceMode === 'online_submission'
-    // Submission Pending rejects stay internal until Verification Pending confirms.
-    const options = { customerVisible: !isSubmissionPendingReject }
+    const isSubmissionPendingReject = workspaceMode === 'online_submission' && !reviewDialog.promoteToOps
+    // Submission Pending rejects stay internal; Reject again from Document team card promotes to Ops.
+    const options = {
+      customerVisible: reviewDialog.promoteToOps ? true : !isSubmissionPendingReject,
+    }
 
     if (reviewDialog.scope === 'traveler') {
       const rowId = reviewDialog.travelerId ?? selectedRow?.id
@@ -488,10 +501,15 @@ export function MarineViewFormPage() {
       return
     }
 
+    if (reviewDialog.promoteToOps) {
+      notifyCustomerOfDocumentRejection()
+    }
     syncWorkspaceAfterDocumentChange()
     showToast({
-      title: `${reviewActionLabel} saved`,
-      description: `Comment added for ${reviewDialog.documentName}.`,
+      title: reviewDialog.promoteToOps ? 'Moved to Rejected by Ops team' : `${reviewActionLabel} saved`,
+      description: reviewDialog.promoteToOps
+        ? `${reviewDialog.documentName} is now visible in the customer portal.`
+        : `Comment added for ${reviewDialog.documentName}.`,
       variant: 'success',
     })
     closeReviewDialog()
@@ -838,9 +856,11 @@ export function MarineViewFormPage() {
           label="Comment"
           required
           helperText={
-            workspaceMode === 'online_submission'
-              ? 'Internal remark for Verification Pending. Customer is notified only after verification confirms the rejection.'
-              : 'Comment is required and will be visible in the customer portal.'
+            reviewDialog?.promoteToOps
+              ? 'Comment is required. This moves the document to Rejected by Ops team and makes it visible in the customer portal.'
+              : workspaceMode === 'online_submission'
+                ? 'Internal remark for Verification Pending. Customer is notified only after Ops rejects again.'
+                : 'Comment is required and will be visible in the customer portal.'
           }
         >
           <Textarea

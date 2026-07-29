@@ -116,8 +116,8 @@ export interface VerifyRejectedDocumentEntry {
   travelerId?: string
   travelerName?: string
   /**
-   * false = flagged during QC / Submission Pending (internal).
-   * true / undefined = confirmed rejection shared (or shareable) with customer.
+   * false = rejected by Document team during Submission Pending (internal).
+   * true / undefined = rejected by Ops team during Verification Pending (customer-visible).
    */
   customerVisible?: boolean
 }
@@ -133,16 +133,32 @@ export function collectRejectedVerifyDocuments(
 ): VerifyRejectedDocumentEntry[] {
   const entries: VerifyRejectedDocumentEntry[] = []
 
+  const lookupTravelerVisibility = (row: UploadQueueRow, documentId: string): boolean | undefined => {
+    if (!visibilityByKey) return undefined
+    const keys = [
+      `traveler:${row.id}:${documentId}`,
+      row.gltsApplicantId ? `traveler:${row.gltsApplicantId}:${documentId}` : null,
+      row.gltsApplicationId
+        ? `traveler:${row.gltsApplicationId}-q${row.sequenceNo}:${documentId}`
+        : null,
+    ]
+    for (const key of keys) {
+      if (key && Object.prototype.hasOwnProperty.call(visibilityByKey, key)) {
+        return visibilityByKey[key]
+      }
+    }
+    return undefined
+  }
+
   for (const row of rows.filter(r => r.status !== 'processing')) {
     for (const document of row.documents) {
       if (!isRejectedVerifyDocument(document)) continue
-      const key = `traveler:${row.id}:${document.documentId}`
       entries.push({
         document,
         scope: 'traveler',
         travelerId: row.id,
         travelerName: row.travelerName,
-        customerVisible: visibilityByKey?.[key],
+        customerVisible: lookupTravelerVisibility(row, document.documentId),
       })
     }
   }

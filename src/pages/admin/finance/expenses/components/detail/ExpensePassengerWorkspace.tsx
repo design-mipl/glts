@@ -58,9 +58,11 @@ export function ExpensePassengerWorkspace({
           flexShrink: 0,
           minHeight: { xs: 360, md: 0 },
           maxHeight: { xs: 420, md: 'none' },
+          height: { md: '100%' },
           display: 'flex',
           flexDirection: 'column',
           minWidth: 0,
+          overflow: 'hidden',
         }}
       >
         <ExpenseTravelerCardList
@@ -79,6 +81,8 @@ export function ExpensePassengerWorkspace({
           flex: 1,
           minWidth: 0,
           minHeight: { xs: 480, md: 0 },
+          height: { md: '100%' },
+          alignSelf: 'stretch',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',

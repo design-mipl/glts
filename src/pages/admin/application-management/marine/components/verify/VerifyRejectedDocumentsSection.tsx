@@ -23,48 +23,18 @@ const SECTION_COPY: Record<
   RejectedDocumentsSectionVariant,
   { title: string; subtitle: (count: number) => string; tone: 'warning' | 'error' }
 > = {
-  qc_flagged: {
-    title: 'Rejected from Submission Pending',
-    subtitle: count =>
-      `${count} document${count === 1 ? '' : 's'} rejected during QC / Submission Pending. Internal only — confirm, update the remark, or upload a replacement before notifying the customer.`,
-    tone: 'warning',
-  },
   customer_rejected: {
-    title: 'Rejected in Verification Pending',
+    title: 'Rejected by Ops team',
     subtitle: count =>
-      `${count} document${count === 1 ? '' : 's'} rejected during Verification Pending. Update the remark, keep the rejection, or upload a replacement. Visible in the customer portal.`,
+      `${count} document${count === 1 ? '' : 's'} rejected in Verification Pending. Visible in the customer portal.`,
     tone: 'error',
   },
-}
-
-function RejectedDocumentCard({
-  entry,
-  previewOnly = false,
-  onPreview,
-  onVerify,
-  onReject,
-  onRequestReupload,
-  onGltsUpload,
-}: {
-  entry: VerifyRejectedDocumentEntry
-  previewOnly?: boolean
-  onPreview: () => void
-  onVerify: () => void
-  onReject: () => void
-  onRequestReupload: () => void
-  onGltsUpload?: () => void
-}) {
-  return (
-    <VerifyDocumentCard
-      document={entry.document}
-      previewOnly={previewOnly}
-      onPreview={onPreview}
-      onVerify={onVerify}
-      onReject={onReject}
-      onRequestReupload={onRequestReupload}
-      onGltsUpload={onGltsUpload}
-    />
-  )
+  qc_flagged: {
+    title: 'Rejected by Document team',
+    subtitle: count =>
+      `${count} document${count === 1 ? '' : 's'} rejected in Submission Pending. Upload a replacement, or reject again to move it to Rejected by Ops team.`,
+    tone: 'warning',
+  },
 }
 
 export function VerifyRejectedDocumentsSection({
@@ -101,16 +71,16 @@ export function VerifyRejectedDocumentsSection({
           <Typography variant="subtitle2" fontWeight={700} sx={{ color: toneColor }}>
             {title ?? copy.title}
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.45 }}>
             {subtitle ?? copy.subtitle(entries.length)}
           </Typography>
         </Stack>
 
         <Stack sx={VERIFY_DOCUMENT_STACK_SX}>
           {entries.map(entry => (
-            <RejectedDocumentCard
+            <VerifyDocumentCard
               key={`${entry.scope}-${entry.travelerId ?? 'global'}-${entry.document.documentId}`}
-              entry={entry}
+              document={entry.document}
               previewOnly={previewOnly}
               onPreview={() => onPreview(entry)}
               onVerify={() => onVerify(entry)}
