@@ -3,7 +3,7 @@ import { Box, Grid, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { Badge, BaseCard, Tabs } from '@/design-system/UIComponents'
 import { useToast } from '@/design-system/UIComponents'
-import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
+import { DashboardSectionTable } from '@/pages/admin/dashboard/components'
 import { buildOutstandingCollectionsColumns } from '../columns/outstandingCollectionsColumns'
 import type { InvoiceSubmissionRow, OutstandingCollectionRow } from '../../data/accountsDashboardMock'
 

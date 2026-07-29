@@ -4,6 +4,7 @@ import type {
   QuotationAttachment,
   QuotationFormData,
   QuotationListingFilters,
+  QuotationPipelineStatus,
   QuotationRecord,
   QuotationSharePayload,
 } from '@/shared/types/quotation'
@@ -11,8 +12,14 @@ import type { QuotationReference } from '@/shared/types/quotationReference'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
 import { enquiryService } from '@/shared/services/enquiryService'
 import { buildQuotationFormDataFromEnquiry } from '@/shared/utils/quotationFormMapping'
-import { computePricingTotals } from '@/shared/utils/quotationCalculations'
+import { computePricingTotals, computeQuotationFormTotals } from '@/shared/utils/quotationCalculations'
 import { resolveQuotationGstRateId } from '@/shared/utils/quotationGstUtils'
+import {
+  flattenQuotationPricing,
+  hydrateStructuredPricingFromMatrix,
+  mapMiscToAgreementCosts,
+  canConvertQuotationToAgreement,
+} from '@/shared/utils/quotationPricingUtils'
 import {
   getCurrentVersion,
   getLatestVersion,
@@ -20,6 +27,12 @@ import {
   validateForConvert,
   validateForShare,
 } from '@/shared/utils/quotationValidation'
+import {
+  clientManagementPipelineFlow,
+  clientManagementPipelineLabel,
+  getAllowedPipelineTransitions,
+  initialQuotationPipelineStatus,
+} from '@/shared/config/clientManagementPipelineConfig'
 
 function nowIso() {
   return new Date().toISOString()
@@ -65,23 +78,45 @@ function cloneMatrix(matrix: AgreementPricingRow[]): AgreementPricingRow[] {
   return matrix.map((row) => ({ ...row, id: `pr-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` }))
 }
 
+function normalizeVersionFields(
+  version: QuotationRecord['pricingVersions'][0],
+  workflowType: QuotationRecord['workflowType'],
+): QuotationRecord['pricingVersions'][0] {
+  const hasStructured =
+    (version.retailVisaPricing?.length ?? 0) > 0 ||
+    (version.commercialVisaPricing?.length ?? 0) > 0 ||
+    (version.miscellaneousServices?.length ?? 0) > 0
+  if (hasStructured) {
+    return {
+      ...version,
+      retailVisaPricing: version.retailVisaPricing ?? [],
+      commercialVisaPricing: version.commercialVisaPricing ?? [],
+      miscellaneousServices: version.miscellaneousServices ?? [],
+    }
+  }
+  const structured = hydrateStructuredPricingFromMatrix(version.pricingMatrix ?? [], workflowType)
+  return { ...version, ...structured }
+}
+
 function createPricingVersionSnapshot(
   versionNumber: number,
-  pricingMatrix: AgreementPricingRow[],
-  gstPercentage: number,
+  data: QuotationFormData,
   actor: string,
 ): QuotationRecord['pricingVersions'][0] {
+  const pricingMatrix = flattenQuotationPricing(data)
   return {
     id: id('qver'),
     versionLabel: `V${versionNumber}`,
     versionNumber,
     pricingMatrix: cloneMatrix(pricingMatrix),
-    totals: computePricingTotals(pricingMatrix, gstPercentage),
+    retailVisaPricing: structuredClone(data.retailVisaPricing),
+    commercialVisaPricing: structuredClone(data.commercialVisaPricing),
+    miscellaneousServices: structuredClone(data.miscellaneousServices),
+    totals: computeQuotationFormTotals(data),
     createdBy: actor,
     createdAt: nowIso(),
   }
 }
-
 
 function formToRecord(
   data: QuotationFormData,
@@ -89,7 +124,7 @@ function formToRecord(
   existing?: QuotationRecord,
 ): QuotationRecord {
   const timestamp = nowIso()
-  const version = createPricingVersionSnapshot(1, data.pricingMatrix, data.gstPercentage, actor)
+  const version = createPricingVersionSnapshot(1, data, actor)
   return {
     id: existing?.id ?? generateInternalId(),
     quotationNo: existing?.quotationNo ?? generateQuotationNo(),
@@ -104,6 +139,7 @@ function formToRecord(
     gstPercentage: data.gstPercentage,
     attachments: existing?.attachments ?? [],
     activities: existing?.activities ?? [makeActivity('Created', 'Quotation created', actor)],
+    status: existing?.status ?? initialQuotationPipelineStatus(data.sourceType),
     sharedStatus: existing?.sharedStatus ?? 'not_shared',
     sharedAt: existing?.sharedAt,
     sharedBy: existing?.sharedBy,
@@ -156,6 +192,7 @@ export const quotationService = {
     const {
       sourceType = 'all',
       workflowType = 'all',
+      status = 'all',
       sharedStatus = 'all',
       dateFrom,
       dateTo,
@@ -166,6 +203,7 @@ export const quotationService = {
 
     if (sourceType !== 'all') rows = rows.filter((r) => r.sourceType === sourceType)
     if (workflowType !== 'all') rows = rows.filter((r) => r.workflowType === workflowType)
+    if (status !== 'all') rows = rows.filter((r) => r.status === status)
     if (sharedStatus !== 'all') rows = rows.filter((r) => r.sharedStatus === sharedStatus)
     if (dateFrom) rows = rows.filter((r) => r.createdAt.slice(0, 10) >= dateFrom)
     if (dateTo) rows = rows.filter((r) => r.createdAt.slice(0, 10) <= dateTo)
@@ -180,8 +218,105 @@ export const quotationService = {
     return rows.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   },
 
-  getById(id: string): QuotationRecord | undefined {
-    return getStore().find((r) => r.id === id)
+  getById(quotationId: string): QuotationRecord | undefined {
+    return getStore().find((r) => r.id === quotationId)
+  },
+
+  getAllowedStatusTransitions(current: QuotationPipelineStatus): QuotationPipelineStatus[] {
+    return getAllowedPipelineTransitions(current)
+  },
+
+  mirrorPipelineStatusToLinkedQuotations(
+    enquiryId: string,
+    nextStatus: QuotationPipelineStatus,
+    actor: string,
+    reason?: string,
+  ) {
+    const store = getStore()
+    let changed = false
+    for (const record of store) {
+      if (record.enquiryId !== enquiryId || record.status === nextStatus) continue
+      const previousStatus = record.status
+      record.status = nextStatus
+      record.updatedAt = nowIso()
+      record.activities.unshift(
+        makeActivity(
+          'Status synced',
+          `Status synced from ${clientManagementPipelineLabel[previousStatus]} to ${clientManagementPipelineLabel[nextStatus]}${reason ? `: ${reason}` : ''}`,
+          actor,
+        ),
+      )
+      changed = true
+    }
+    if (changed) persist(store)
+  },
+
+  applyMirroredPipelineStatus(
+    quotationId: string,
+    nextStatus: QuotationPipelineStatus,
+    actor: string,
+    reason?: string,
+  ) {
+    const store = getStore()
+    const record = store.find((r) => r.id === quotationId)
+    if (!record || record.status === nextStatus) return record
+    const previousStatus = record.status
+    record.status = nextStatus
+    record.updatedAt = nowIso()
+    record.activities.unshift(
+      makeActivity(
+        'Status synced',
+        `Status synced from ${clientManagementPipelineLabel[previousStatus]} to ${clientManagementPipelineLabel[nextStatus]}${reason ? `: ${reason}` : ''}`,
+        actor,
+      ),
+    )
+    persist(store)
+    return record
+  },
+
+  updateStatus(
+    quotationId: string,
+    nextStatus: QuotationPipelineStatus,
+    actor: string,
+    reason?: string,
+  ): { ok: boolean; record?: QuotationRecord; message?: string } {
+    const store = getStore()
+    const record = store.find((r) => r.id === quotationId)
+    if (!record) return { ok: false, message: 'Quotation not found' }
+    if (
+      !clientManagementPipelineFlow[record.status].includes(nextStatus) &&
+      record.status !== nextStatus
+    ) {
+      return { ok: false, message: 'Invalid status transition' }
+    }
+    const previousStatus = record.status
+    record.status = nextStatus
+    record.updatedAt = nowIso()
+    record.activities.unshift(
+      makeActivity(
+        'Status updated',
+        `Status changed from ${clientManagementPipelineLabel[previousStatus]} to ${clientManagementPipelineLabel[nextStatus]}${reason ? `: ${reason}` : ''}`,
+        actor,
+      ),
+    )
+    persist(store)
+    if (record.enquiryId) {
+      enquiryService.applyMirroredPipelineStatus(record.enquiryId, nextStatus, actor, reason)
+    }
+    return { ok: true, record }
+  },
+
+  syncPipelineFromAgreement(
+    referenceQuotationId: string | undefined,
+    pipelineStatus: QuotationPipelineStatus,
+    actor: string,
+    reason: string,
+  ) {
+    if (!referenceQuotationId) return
+    const record = this.applyMirroredPipelineStatus(referenceQuotationId, pipelineStatus, actor, reason)
+    if (record?.enquiryId) {
+      enquiryService.applyMirroredPipelineStatus(record.enquiryId, pipelineStatus, actor, reason)
+    }
   },
 
   createDirect(data: QuotationFormData, actor: string): QuotationRecord {
@@ -209,7 +344,12 @@ export const quotationService = {
 
   updateQuotation(
     quotationId: string,
-    patch: Partial<Pick<QuotationRecord, 'customer' | 'quotationDate' | 'validTill' | 'notes' | 'gstRateId' | 'gstPercentage' | 'workflowType'>>,
+    patch: Partial<
+      Pick<
+        QuotationRecord,
+        'customer' | 'quotationDate' | 'validTill' | 'notes' | 'gstRateId' | 'gstPercentage' | 'workflowType'
+      >
+    >,
     actor: string,
   ): { ok: boolean; record?: QuotationRecord; issues?: string[] } {
     const store = getStore()
@@ -218,10 +358,19 @@ export const quotationService = {
     const record = store[index]!
     Object.assign(record, patch, { updatedAt: nowIso() })
     if (patch.gstPercentage !== undefined) {
-      record.pricingVersions = record.pricingVersions.map((v) => ({
-        ...v,
-        totals: computePricingTotals(v.pricingMatrix, record.gstPercentage),
-      }))
+      record.pricingVersions = record.pricingVersions.map((v) => {
+        const normalized = normalizeVersionFields(v, record.workflowType)
+        return {
+          ...normalized,
+          totals: computeQuotationFormTotals({
+            workflowType: record.workflowType,
+            retailVisaPricing: normalized.retailVisaPricing,
+            commercialVisaPricing: normalized.commercialVisaPricing,
+            miscellaneousServices: normalized.miscellaneousServices,
+            gstPercentage: record.gstPercentage,
+          }),
+        }
+      })
     }
     record.activities.unshift(makeActivity('Updated', 'Quotation details updated', actor))
     persist(store)
@@ -239,7 +388,11 @@ export const quotationService = {
     const record = store[index]!
     const version = getCurrentVersion(record)
     if (!version) return { ok: false, issues: ['Current version not found'] }
+    const structured = hydrateStructuredPricingFromMatrix(pricingMatrix, record.workflowType)
     version.pricingMatrix = pricingMatrix
+    version.retailVisaPricing = structured.retailVisaPricing
+    version.commercialVisaPricing = structured.commercialVisaPricing
+    version.miscellaneousServices = structured.miscellaneousServices
     version.totals = computePricingTotals(pricingMatrix, record.gstPercentage)
     record.updatedAt = nowIso()
     record.activities.unshift(makeActivity('Pricing updated', `${version.versionLabel} pricing matrix updated`, actor))
@@ -248,8 +401,11 @@ export const quotationService = {
   },
 
   saveForm(quotationId: string | undefined, data: QuotationFormData, actor: string): QuotationRecord {
+    const flattened = flattenQuotationPricing(data)
+    const formData = { ...data, pricingMatrix: flattened }
+
     if (!quotationId) {
-      const record = this.createDirect(data, actor)
+      const record = this.createDirect(formData, actor)
       if (data.sourceType === 'enquiry' && data.enquiryId) {
         void enquiryService.markQuotationLinked(data.enquiryId, record.id, actor, 'draft')
       }
@@ -257,7 +413,7 @@ export const quotationService = {
     }
     const store = getStore()
     const index = store.findIndex((r) => r.id === quotationId)
-    if (index < 0) return this.createDirect(data, actor)
+    if (index < 0) return this.createDirect(formData, actor)
     const record = store[index]!
     record.workflowType = data.workflowType
     record.customer = { ...data.customer }
@@ -269,8 +425,11 @@ export const quotationService = {
     record.updatedAt = nowIso()
     const version = getCurrentVersion(record)
     if (version) {
-      version.pricingMatrix = data.pricingMatrix
-      version.totals = computePricingTotals(data.pricingMatrix, data.gstPercentage)
+      version.pricingMatrix = flattened
+      version.retailVisaPricing = structuredClone(data.retailVisaPricing)
+      version.commercialVisaPricing = structuredClone(data.commercialVisaPricing)
+      version.miscellaneousServices = structuredClone(data.miscellaneousServices)
+      version.totals = computeQuotationFormTotals(formData)
     }
     record.activities.unshift(makeActivity('Saved', 'Quotation draft saved', actor))
     persist(store)
@@ -285,7 +444,19 @@ export const quotationService = {
     const source = record.pricingVersions.find((v) => v.id === versionId)
     if (!source) return { ok: false, issues: ['Version not found'] }
     const nextNumber = Math.max(...record.pricingVersions.map((v) => v.versionNumber)) + 1
-    const newVersion = createPricingVersionSnapshot(nextNumber, source.pricingMatrix, record.gstPercentage, actor)
+    const normalized = normalizeVersionFields(source, record.workflowType)
+    const newVersion: QuotationRecord['pricingVersions'][0] = {
+      id: id('qver'),
+      versionLabel: `V${nextNumber}`,
+      versionNumber: nextNumber,
+      pricingMatrix: cloneMatrix(normalized.pricingMatrix),
+      retailVisaPricing: structuredClone(normalized.retailVisaPricing),
+      commercialVisaPricing: structuredClone(normalized.commercialVisaPricing),
+      miscellaneousServices: structuredClone(normalized.miscellaneousServices),
+      totals: { ...normalized.totals },
+      createdBy: actor,
+      createdAt: nowIso(),
+    }
     record.pricingVersions.push(newVersion)
     record.currentVersionId = newVersion.id
     record.updatedAt = nowIso()
@@ -319,6 +490,28 @@ export const quotationService = {
     target.sharedBy = actor
     target.updatedAt = nowIso()
     target.activities.unshift(makeActivity('Shared', 'Quotation shared with customer', actor))
+
+    const beforeShare: QuotationPipelineStatus[] = ['new', 'qualified', 'contacted']
+    if (beforeShare.includes(target.status)) {
+      const previousStatus = target.status
+      target.status = 'quotation_sent'
+      target.activities.unshift(
+        makeActivity(
+          'Status updated',
+          `Status changed from ${clientManagementPipelineLabel[previousStatus]} to Quotation Sent (shared)`,
+          actor,
+        ),
+      )
+      if (target.enquiryId) {
+        enquiryService.applyMirroredPipelineStatus(
+          target.enquiryId,
+          'quotation_sent',
+          actor,
+          'Quotation shared with customer',
+        )
+      }
+    }
+
     persist(store)
     return { ok: true, record: target }
   },
@@ -362,20 +555,26 @@ export const quotationService = {
     const version = getVersionById(record, versionId)
     record.convertedAgreementId = agreementId ?? 'pending'
     record.convertedFromVersionId = version?.id
+    record.status = 'converted'
     record.updatedAt = nowIso()
     record.activities.unshift(
       makeActivity('Converted', `Converted ${version?.versionLabel ?? 'pricing version'} to agreement`, 'System'),
     )
     persist(store)
+    if (record.enquiryId) {
+      enquiryService.applyMirroredPipelineStatus(
+        record.enquiryId,
+        'converted',
+        'System',
+        'Converted to agreement',
+      )
+    }
     return { ok: true, record }
   },
 
   getConvertibleSelectOptions() {
     return this.list()
-      .filter((r) => {
-        const version = getLatestVersion(r)
-        return version && version.pricingMatrix.length > 0 && !r.convertedAgreementId
-      })
+      .filter((r) => canConvertQuotationToAgreement(r))
       .map((r) => ({
         value: r.id,
         label: r.customer.companyName,
@@ -384,8 +583,8 @@ export const quotationService = {
       }))
   },
 
-  toReference(id: string): QuotationReference | undefined {
-    const record = this.getById(id)
+  toReference(quotationId: string): QuotationReference | undefined {
+    const record = this.getById(quotationId)
     if (!record) return undefined
     return recordToReference(record)
   },
@@ -402,8 +601,32 @@ export const quotationService = {
   ): Partial<CommercialAgreementFormData> | undefined {
     const record = this.getById(quotationId)
     if (!record) return undefined
-    const version = versionId ? getVersionById(record, versionId) : getLatestVersion(record)
-    if (!version || version.pricingMatrix.length === 0) return undefined
+    if (record.workflowType === 'retail') return undefined
+    const raw = versionId ? getVersionById(record, versionId) : getLatestVersion(record)
+    if (!raw) return undefined
+    const version = normalizeVersionFields(raw, record.workflowType)
+    if (version.pricingMatrix.length === 0 && version.commercialVisaPricing.length === 0) return undefined
+
+    const hydratedFromMatrix = hydrateStructuredPricingFromMatrix(
+      version.pricingMatrix,
+      record.workflowType,
+    )
+    const commercialVisaPricing =
+      version.commercialVisaPricing.length > 0
+        ? structuredClone(version.commercialVisaPricing)
+        : hydratedFromMatrix.commercialVisaPricing
+    const miscellaneousServices =
+      version.miscellaneousServices.length > 0
+        ? structuredClone(version.miscellaneousServices)
+        : hydratedFromMatrix.miscellaneousServices
+
+    const pricingMatrix = flattenQuotationPricing({
+      workflowType: record.workflowType,
+      retailVisaPricing: [],
+      commercialVisaPricing,
+      miscellaneousServices: [],
+    })
+
     return {
       customerSourceMode: 'quotation',
       referenceQuotationId: quotationId,
@@ -427,7 +650,10 @@ export const quotationService = {
       },
       workflowType: record.workflowType,
       billingType: 'credit',
-      pricingMatrix: cloneMatrix(version.pricingMatrix),
+      commercialVisaPricing,
+      miscellaneousServices,
+      pricingMatrix,
+      miscellaneousCosts: mapMiscToAgreementCosts(miscellaneousServices),
       billingConfig: {
         creditBillingEnabled: true,
         billingCycle: 'monthly',
@@ -448,7 +674,8 @@ export const quotationService = {
   },
 
   recordToFormData(record: QuotationRecord): QuotationFormData {
-    const version = getCurrentVersion(record)
+    const raw = getCurrentVersion(record)
+    const version = raw ? normalizeVersionFields(raw, record.workflowType) : undefined
     return {
       sourceType: record.sourceType,
       enquiryId: record.enquiryId,
@@ -460,6 +687,9 @@ export const quotationService = {
       gstRateId: resolveQuotationGstRateId(record),
       gstPercentage: record.gstPercentage,
       pricingMatrix: version ? [...version.pricingMatrix] : [],
+      retailVisaPricing: version ? structuredClone(version.retailVisaPricing) : [],
+      commercialVisaPricing: version ? structuredClone(version.commercialVisaPricing) : [],
+      miscellaneousServices: version ? structuredClone(version.miscellaneousServices) : [],
     }
   },
 }

@@ -74,7 +74,7 @@ export function BillableApplicationSelectionTable({
             fullWidth
           />
         </FormField>
-        <FormField label="Appointment date range">
+        <FormField label="Online submission date range">
           <DateRangePicker
             value={[parseBillableFilterDate(filters.dateFrom), parseBillableFilterDate(filters.dateTo)]}
             onChange={([from, to]) =>

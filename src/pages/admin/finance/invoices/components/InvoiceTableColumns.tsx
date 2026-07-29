@@ -1,3 +1,4 @@
+import { Stack } from '@mui/material'
 import type { Column } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
@@ -11,6 +12,11 @@ import {
   paymentStatusBadgeColor,
   paymentStatusLabel,
 } from '../config/invoiceStatusConfig'
+import { getInvoiceOpenItemFlags } from '../utils/invoiceDetailSideTabs'
+import {
+  getListingCreditNoteNumber,
+  getListingInvoiceNumber,
+} from '../utils/invoiceListingUtils'
 import { buildInvoiceRowActions, type InvoiceRowActionHandlers } from '../utils/invoiceRowActions'
 
 export function buildInvoiceColumns(handlers: InvoiceRowActionHandlers): Column<Invoice>[] {
@@ -22,11 +28,20 @@ export function buildInvoiceColumns(handlers: InvoiceRowActionHandlers): Column<
       sortable: true,
       searchable: true,
       hideable: false,
+      render: (_, row) => getListingInvoiceNumber(row),
+    },
+    {
+      key: 'creditNoteNumber',
+      label: 'Credit Note Number',
+      widthSize: adminListingColumnWidthSize('code'),
+      sortable: true,
+      searchable: true,
+      render: (_, row) => getListingCreditNoteNumber(row),
     },
     {
       key: 'invoiceType',
       label: 'Invoice Type',
-      widthSize: adminListingColumnWidthSize('service'),
+      widthSize: adminListingColumnWidthSize('name'),
       filterable: true,
       render: (_, row) => (
         <Badge label={invoiceTypeLabel[row.invoiceType]} color={invoiceTypeColor[row.invoiceType]} size="sm" />
@@ -54,22 +69,6 @@ export function buildInvoiceColumns(handlers: InvoiceRowActionHandlers): Column<
       searchable: true,
     },
     {
-      key: 'gltsReference',
-      label: 'GLTS Reference',
-      widthSize: adminListingColumnWidthSize('code'),
-      sortable: true,
-      searchable: true,
-      render: (_, row) => row.gltsReferences.join(', ') || '—',
-    },
-    {
-      key: 'batchId',
-      label: 'Batch ID',
-      widthSize: adminListingColumnWidthSize('code'),
-      sortable: true,
-      searchable: true,
-      render: (_, row) => row.batchIds.join(', ') || '—',
-    },
-    {
       key: 'totalApplications',
       label: 'Total Applications',
       widthSize: adminListingColumnWidthSize('count'),
@@ -84,14 +83,6 @@ export function buildInvoiceColumns(handlers: InvoiceRowActionHandlers): Column<
       sortable: true,
       align: 'right',
       render: (_, row) => formatInr(row.totals.finalAmount),
-    },
-    {
-      key: 'advanceAdjusted',
-      label: 'Advance Adjusted',
-      widthSize: 'md',
-      sortable: true,
-      align: 'right',
-      render: (_, row) => formatInr(row.totals.advanceAdjusted),
     },
     {
       key: 'balancePayable',
@@ -113,6 +104,40 @@ export function buildInvoiceColumns(handlers: InvoiceRowActionHandlers): Column<
           size="sm"
         />
       ),
+    },
+    {
+      key: 'openItems',
+      label: 'Unbilled / Refund',
+      widthSize: adminListingColumnWidthSize('name'),
+      filterable: true,
+      render: (_, row) => {
+        const flags = getInvoiceOpenItemFlags(row)
+        if (!flags.hasUnbilledExpenses && !flags.hasPendingRefunds) return '—'
+        return (
+          <Stack direction="row" spacing={0.5} useFlexGap sx={{ flexWrap: 'wrap' }}>
+            {flags.hasUnbilledExpenses ? (
+              <Badge label="Unbilled expenses" color="warning" size="sm" />
+            ) : null}
+            {flags.hasPendingRefunds ? <Badge label="Refund" color="error" size="sm" /> : null}
+          </Stack>
+        )
+      },
+    },
+    {
+      key: 'gstFiled',
+      label: 'GST',
+      widthSize: adminListingColumnWidthSize('status'),
+      filterable: true,
+      render: (_, row) =>
+        row.invoiceType === 'credit_note' || row.invoiceStatus === 'draft' ? (
+          '—'
+        ) : (
+          <Badge
+            label={row.gstFiledAt ? `Filed ${row.gstFiledAt}` : 'Not filed'}
+            color={row.gstFiledAt ? 'success' : 'neutral'}
+            size="sm"
+          />
+        ),
     },
     {
       key: 'paymentStatus',

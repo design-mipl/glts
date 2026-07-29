@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Grid, Stack } from '@mui/material'
 import { Alert } from '@/design-system/UIComponents'
-import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
+import { DashboardSectionTable } from '@/pages/admin/dashboard/components'
 import { DocumentationCriticalAlertsPanel } from '../DocumentationCriticalAlertsPanel'
 import { buildDocumentationActivityColumns } from '../columns/documentationActivityColumns'
 import { DOCUMENTATION_LISTING_TABLE_SX } from '../documentationTableTokens'

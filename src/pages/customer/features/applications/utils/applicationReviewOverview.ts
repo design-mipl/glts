@@ -9,6 +9,7 @@ export interface ApplicationReviewOverview {
   issuedPassportLocationLabel?: string
   placeOfResidenceLabel?: string
   jurisdiction?: string
+  companyName?: string
   gltsApplicationId?: string
   gltsBatchId?: string
 }
@@ -23,6 +24,7 @@ export function toApplicationReviewOverview(source: {
   issuedPassportLocationLabel?: string
   placeOfResidenceLabel?: string
   jurisdiction?: string
+  companyName?: string
   gltsApplicationId?: string
   gltsBatchId?: string
 }): ApplicationReviewOverview {
@@ -35,6 +37,7 @@ export function toApplicationReviewOverview(source: {
     issuedPassportLocationLabel: source.issuedPassportLocationLabel,
     placeOfResidenceLabel: source.placeOfResidenceLabel,
     jurisdiction: source.jurisdiction,
+    companyName: source.companyName,
     gltsApplicationId: source.gltsApplicationId,
     gltsBatchId: source.gltsBatchId,
   }
@@ -54,6 +57,7 @@ export function buildApplicationReviewOverviewFromFlowState(
       state.issuedPassportState || state.issuedPassportLocationId || undefined,
     placeOfResidenceLabel: state.placeOfResidence || undefined,
     jurisdiction: state.jurisdiction,
+    companyName: state.companyName || undefined,
     gltsApplicationId: (overrides?.gltsApplicationId ?? state.gltsApplicationId) || undefined,
     gltsBatchId: (overrides?.gltsBatchId ?? state.gltsBatchId) || undefined,
   }

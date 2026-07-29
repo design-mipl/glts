@@ -88,7 +88,7 @@ export function computeExpenseListingKpis(rows: ApplicationExpenseListingRow[]) 
   return {
     submittedApplications: rows.length,
     totalExpense: rows.reduce((sum, r) => sum + r.totalExpense, 0),
-    pendingApproval: rows.reduce((sum, r) => sum + r.pendingExpense, 0),
+    pendingPayment: rows.reduce((sum, r) => sum + r.pendingExpense, 0),
     paidApplications: rows.filter(r => r.paymentStatus === 'paid').length,
   }
 }
@@ -104,8 +104,7 @@ export function downloadExpenseListingCsv(rows: ApplicationExpenseListingRow[]) 
     'Jurisdiction',
     'Submission Date',
     'Total Expense',
-    'Pending Expense',
-    'Approval Status',
+    'Pending Payment',
     'Payment Status',
   ]
   const lines = rows.map(row =>
@@ -120,7 +119,6 @@ export function downloadExpenseListingCsv(rows: ApplicationExpenseListingRow[]) 
       row.submissionDate,
       formatInr(row.totalExpense),
       formatInr(row.pendingExpense),
-      row.approvalStatus,
       row.paymentStatus,
     ]
       .map(v => `"${String(v).replace(/"/g, '""')}"`)
@@ -141,6 +139,6 @@ export function mapExpenseRowsToGridItems(rows: ApplicationExpenseListingRow[]) 
     title: row.applicationId,
     subtitle: row.companyName,
     description: `${row.vesselName} · ${row.visaCountry} · ${row.visaType}`,
-    meta: `${formatInr(row.totalExpense)} total · ${row.approvalStatus}`,
+    meta: `${formatInr(row.totalExpense)} total · ${row.paymentStatus}`,
   }))
 }

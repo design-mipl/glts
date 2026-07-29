@@ -10,7 +10,6 @@ import { ChevronDown } from 'lucide-react'
 import type { BulkBatchRow, SingleApplicationRow } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import {
-  getAppointmentDate,
   resolveApplicationBillingEntity,
   resolveApplicationVessel,
 } from '@/shared/utils/invoiceBillingEngine'
@@ -47,7 +46,7 @@ function SingleApplicationDetails({ row }: { row: SingleApplicationRow }) {
         { label: 'Passport Number', value: row.passportNumber },
         { label: 'Country', value: row.country },
         { label: 'Visa Type', value: row.visaType },
-        { label: 'Appointment Date', value: getAppointmentDate(row) },
+        { label: 'Online Submission Date', value: row.submissionDate?.trim() || '—' },
         { label: 'Travel Date', value: row.travelDate },
         { label: 'Billing Entity', value: resolveApplicationBillingEntity(row) },
         { label: 'Vessel', value: resolveApplicationVessel(row) },
@@ -68,7 +67,7 @@ function BulkApplicationDetails({ row }: { row: BulkBatchRow }) {
           { label: 'Total Applicants', value: String(getBulkBatchApplicantCount(row)) },
           { label: 'Country', value: row.country },
           { label: 'Visa Type', value: row.visaType },
-          { label: 'Appointment Date', value: getAppointmentDate(row) },
+          { label: 'Online Submission Date', value: row.submissionDate?.trim() || '—' },
           { label: 'Billing Entity', value: resolveApplicationBillingEntity(row) },
           { label: 'Vessel', value: resolveApplicationVessel(row) },
         ]}

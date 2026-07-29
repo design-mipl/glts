@@ -25,10 +25,10 @@ export function getCountryCellValue(
   if (key === 'code') return row.code
   if (key === 'status') return COUNTRY_STATUS_LABELS[row.status]
   if (key === 'processingType') return PROCESSING_TYPE_LABELS[row.processingType]
-  if (key === 'updatedAt') return new Date(row.updatedAt).toLocaleDateString()
+  if (key === 'updatedAt') return row.updatedAt
   if (key === 'visaTypeCount') {
     const agg = countryMasterAdminService.getAggregates(row, listingSegment)
-    return String(agg.visaTypeCount)
+    return String(agg.visaTypeCount).padStart(6, '0')
   }
   if (key === 'checklistCount') {
     const agg = countryMasterAdminService.getAggregates(row, listingSegment)

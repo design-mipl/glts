@@ -1,5 +1,14 @@
+import {
+  clientManagementPipelineColor,
+  clientManagementPipelineLabel,
+  pipelineStatusOptions,
+} from '@/shared/config/clientManagementPipelineConfig'
 import type { QuotationSharedStatus } from '@/shared/types/quotation'
 import type { AgreementWorkflowType } from '@/shared/types/commercialAgreement'
+
+export const quotationPipelineStatusLabel = clientManagementPipelineLabel
+export const quotationPipelineStatusColor = clientManagementPipelineColor
+export const quotationPipelineStatusOptions = pipelineStatusOptions(true)
 
 export const quotationSharedStatusLabel: Record<QuotationSharedStatus, string> = {
   not_shared: 'Not Shared',

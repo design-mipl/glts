@@ -1,5 +1,6 @@
-import { Box, Grid, Stack, Typography } from '@mui/material'
+import { Box, Divider, Grid, Stack, Typography } from '@mui/material'
 import { Badge, BaseCard } from '@/design-system/UIComponents'
+import type { ApplicationCustomerSegment } from '@/pages/customer/features/applications/types/applicationListing.types'
 import type { ApplicationExpenseDetailView } from '@/shared/types/applicationExpenseManagement'
 import {
   deriveRollupPaymentStatus,
@@ -11,78 +12,120 @@ interface ApplicationExpenseSummaryProps {
   detail: ApplicationExpenseDetailView
 }
 
-function ReadField({ label, value }: { label: string; value: string }) {
+const SEGMENT_LABEL: Record<ApplicationCustomerSegment, string> = {
+  marine: 'Marine',
+  b2bAgents: 'B2B',
+  corporate: 'Corporate',
+  retail: 'Retail',
+}
+
+function MetaItem({ label, value }: { label: string; value: string }) {
   return (
-    <Box>
-      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, fontSize: 12 }}>
+    <Stack spacing={0.25} minWidth={0}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        fontWeight={600}
+        sx={{ fontSize: 11, letterSpacing: 0.2 }}
+      >
         {label}
       </Typography>
-      <Typography variant="body2" sx={{ fontSize: 13, mt: 0.25 }}>
-        {value || '—'}
+      <Typography
+        variant="body2"
+        color="text.primary"
+        sx={{
+          fontSize: 13,
+          fontWeight: 600,
+          lineHeight: 1.35,
+          wordBreak: 'break-word',
+        }}
+      >
+        {value?.trim() ? value : '—'}
       </Typography>
-    </Box>
+    </Stack>
   )
 }
 
 export function ApplicationExpenseSummary({ detail }: ApplicationExpenseSummaryProps) {
   const rollupPayment = deriveRollupPaymentStatus(detail.expenses)
+  const countryVisa = [detail.visaCountry, detail.visaType].filter(Boolean).join(' · ')
+  const hasExpenses = detail.expenses.length > 0
 
   return (
     <BaseCard>
       <Box sx={{ p: 2.5 }}>
         <Stack spacing={2}>
-          <Box>
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            justifyContent="space-between"
+            alignItems={{ xs: 'flex-start', md: 'flex-start' }}
+            spacing={1.5}
+          >
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.25 }}>
                 {detail.applicationId}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {detail.companyName} · {detail.vesselName}
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: 13 }}>
+                {detail.companyName}
+                {detail.vesselName ? ` · ${detail.vesselName}` : ''}
               </Typography>
             </Box>
-          <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
-            <Badge label={detail.applicationStatus} color="info" size="sm" />
-            <Badge
-              label={rollupPaymentStatusLabel(rollupPayment)}
-              color={expenseRollupPaymentColor[rollupPayment]}
-              size="sm"
-            />
+
+            <Stack
+              direction="row"
+              spacing={0.75}
+              useFlexGap
+              sx={{ flexWrap: 'wrap', alignItems: 'center' }}
+            >
+              <Badge
+                label={SEGMENT_LABEL[detail.customerSegment] ?? detail.customerSegment}
+                color="neutral"
+                size="sm"
+              />
+              <Badge
+                label={detail.recordType === 'bulk' ? 'Bulk' : 'Single'}
+                color="neutral"
+                size="sm"
+              />
+              <Badge label={detail.applicationStatus} color="info" size="sm" />
+              {hasExpenses ? (
+                <Badge
+                  label={rollupPaymentStatusLabel(rollupPayment)}
+                  color={expenseRollupPaymentColor[rollupPayment]}
+                  size="sm"
+                />
+              ) : (
+                <Badge label="No Expenses" color="neutral" size="sm" />
+              )}
+            </Stack>
           </Stack>
+
+          <Divider />
+
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReadField label="Company Name" value={detail.companyName} />
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+              <MetaItem label="Company" value={detail.companyName} />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReadField label="Vessel Name" value={detail.vesselName} />
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+              <MetaItem label="Vessel" value={detail.vesselName} />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReadField label="Crew Count" value={String(detail.crewCount)} />
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+              <MetaItem label="Crew count" value={String(detail.crewCount)} />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReadField label="Visa Country" value={detail.visaCountry} />
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+              <MetaItem label="Country / visa" value={countryVisa} />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReadField label="Visa Type" value={detail.visaType} />
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+              <MetaItem label="Jurisdiction" value={detail.jurisdiction} />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReadField label="Jurisdiction" value={detail.jurisdiction} />
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+              <MetaItem label="Travel / joining" value={detail.travelDate} />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReadField label="Submission Date" value={detail.submissionDate} />
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+              <MetaItem label="Team" value={detail.assignedTeam ?? ''} />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReadField label="Travel / Joining Date" value={detail.travelDate} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReadField label="Application Status" value={detail.applicationStatus} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReadField label="Assigned Team" value={detail.assignedTeam ?? '—'} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReadField label="Assigned User" value={detail.assignedUser ?? '—'} />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReadField label="Priority" value={detail.priority ?? 'Standard'} />
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+              <MetaItem label="Assigned to" value={detail.assignedUser ?? ''} />
             </Grid>
           </Grid>
         </Stack>

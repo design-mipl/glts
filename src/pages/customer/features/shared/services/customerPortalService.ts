@@ -121,12 +121,29 @@ export const customerPortalService = {
 
   getSingleApplications(): SingleApplicationRow[] {
     const session = loadSession()
-    return filterApplicationsBySession([...getSavedDraftRows(), ...mockSingleApplications], session)
+    return filterApplicationsBySession([...getSavedDraftRows(), ...mockSingleApplications], session).map(
+      row =>
+        row.operationalStatus === 'Document Rejected'
+          ? {
+              ...row,
+              operationalStatus: 'Under Review',
+              status: 'Under Review',
+            }
+          : row,
+    )
   },
 
   getBulkBatches(): BulkBatchRow[] {
     const session = loadSession()
-    return filterApplicationsBySession(mockBulkBatches, session)
+    return filterApplicationsBySession(mockBulkBatches, session).map(row =>
+      row.operationalStatus === 'Document Rejected'
+        ? {
+            ...row,
+            operationalStatus: 'Under Review',
+            status: 'Under Review',
+          }
+        : row,
+    )
   },
 
   getApplicationListingRows() {
@@ -157,12 +174,12 @@ export const customerPortalService = {
 
     if (single) {
       const detail = buildSingleDetail(single, resolvedId, flowState)
-      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId) : detail
+      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId, { forCustomer: !ignoreAccessControl }) : detail
     }
 
     if (bulk) {
       const detail = buildBulkDetail(bulk, resolvedId, flowState)
-      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId) : detail
+      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId, { forCustomer: !ignoreAccessControl }) : detail
     }
 
     const allSingles = [...getSavedDraftRows(), ...mockSingleApplications]
@@ -174,7 +191,7 @@ export const customerPortalService = {
       const detail = restricted.recordType === 'bulk'
         ? buildBulkDetail(restricted as BulkBatchRow, resolvedId, flowState)
         : buildSingleDetail(restricted as SingleApplicationRow, resolvedId, flowState)
-      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId) : detail
+      return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId, { forCustomer: false }) : detail
     }
 
     if (restricted && !canViewApplication(restricted, session)) {
@@ -366,7 +383,7 @@ export const customerPortalService = {
       submissionDate: '',
       createdAt: now,
       lastUpdated: now,
-      processingStage: 'Intake',
+      processingStage: 'Ready for submission',
       operationalStatus: 'Draft',
       status: 'Draft',
       statusTone: 'draft',
@@ -455,7 +472,7 @@ function demoMarineOriginalCollection(documents: ApplicantDocumentItem[]) {
     details: {
       ...state.details,
       couriered_by_applicant: {
-        receivingOfficeId: 'ent-1',
+        receivingOfficeId: 'office-mumbai',
         courierPartner: 'BlueDart',
         trackingNumber: 'BD7843920184',
         dispatchDate: '2026-06-10',
@@ -515,6 +532,10 @@ function buildDetailTimeline(
     isSubmitted: isApplicationSubmitted(row),
     allVerified,
     hasRejection,
+    countryName: row.country,
+    visaTypeLabel: row.visaType,
+    operationalStatus: row.operationalStatus,
+    processingStage: row.processingStage,
   })
 
   return mapProcessingTimelineToCustomerTracking(steps)

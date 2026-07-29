@@ -1,5 +1,9 @@
 import { OPERATIONAL_CASE_FORM_ASSIST_SEEDS } from '@/shared/data/mockOperationalCaseFormAssistSeeds'
 import {
+  mockBulkBatches,
+  mockSingleApplications,
+} from '@/pages/customer/features/applications/data/applicationFlowData'
+import {
   applicationFormAssistService,
   type FormAssistPaymentMode,
   type FormAssistReceiptStatus,
@@ -7,7 +11,7 @@ import {
   type FormAssistVfsServiceChargeLine,
 } from '@/shared/services/applicationFormAssistService'
 import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
-import type { OperationalCase } from '@/shared/types/operationalCaseHandling'
+import type { OperationalCase, GroundServiceLine } from '@/shared/types/operationalCaseHandling'
 
 export type OperationalCaseSubmissionSource = 'form_assist' | 'seed'
 
@@ -18,6 +22,9 @@ export interface OperationalCaseSubmissionSnapshot {
   totalServiceCharges: number
   submissionDate?: string
   submissionReferenceNumber?: string
+  submittedBy?: string
+  vfsSubmissionDate?: string
+  tentativeCollectionDate?: string
   paymentDate?: string
   paymentMode?: FormAssistPaymentMode
   paymentReferenceNumber?: string
@@ -113,6 +120,9 @@ function findSeedSnapshot(record: OperationalCase): OperationalCaseSubmissionSna
     totalServiceCharges: vfsServiceCharges.reduce((sum, line) => sum + line.amount, 0),
     submissionDate: seed.submission.submissionDate,
     submissionReferenceNumber: seed.submission.submissionReferenceNumber,
+    submittedBy: seed.submission.submittedBy,
+    vfsSubmissionDate: seed.submission.vfsSubmissionDate,
+    tentativeCollectionDate: seed.submission.tentativeCollectionDate,
     paymentDate: seed.submission.paymentDate,
     paymentMode: seed.submission.paymentMode,
     paymentReferenceNumber: seed.submission.paymentReferenceNumber,
@@ -136,6 +146,9 @@ function buildSnapshotFromSubmission(
     totalServiceCharges: vfsServiceCharges.reduce((sum, line) => sum + line.amount, 0),
     submissionDate: submission.submissionDate,
     submissionReferenceNumber: submission.submissionReferenceNumber,
+    submittedBy: submission.submittedBy,
+    vfsSubmissionDate: submission.vfsSubmissionDate,
+    tentativeCollectionDate: submission.tentativeCollectionDate,
     paymentDate: submission.paymentDate,
     paymentMode: submission.paymentMode,
     paymentReferenceNumber: submission.paymentReferenceNumber,
@@ -157,4 +170,97 @@ export function resolveOperationalCaseSubmissionSnapshot(
   if (fromAssist) return fromAssist
 
   return findSeedSnapshot(record)
+}
+
+export interface OperationalCasePortalDates {
+  onlineSubmissionDate: string
+  vfsSubmissionDate: string
+  tentativeCollectionDate: string
+  /** Actual collection date from Ground Operations. */
+  collectionDate: string
+  submittedBy: string
+}
+
+/**
+ * Portal date sources for Ground Operations drawers:
+ * - Application Management: Online Submission, VFS Submission, Tentative Collection
+ * - Ground Operations: VFS Submission Date (= Submission Date), Collection Date (actual)
+ */
+export function resolveOperationalCasePortalDates(
+  record: OperationalCase,
+  snapshot: OperationalCaseSubmissionSnapshot | null = resolveOperationalCaseSubmissionSnapshot(record),
+): OperationalCasePortalDates {
+  const travelerRowId = resolveTravelerRowIdForOperationalCase(record)
+  const assist = applicationFormAssistService.getRecord(record.applicationId, travelerRowId).submission
+  const application =
+    mockSingleApplications.find(app => app.id === record.applicationId) ??
+    mockBulkBatches.find(app => app.id === record.applicationId)
+
+  const onlineSubmissionDate =
+    snapshot?.submissionDate?.trim() ||
+    assist.submissionDate.trim() ||
+    application?.submissionDate?.trim() ||
+    ''
+
+  const vfsSubmissionDate =
+    snapshot?.vfsSubmissionDate?.trim() ||
+    assist.vfsSubmissionDate.trim() ||
+    record.submissionDate?.trim() ||
+    ''
+
+  const tentativeCollectionDate =
+    snapshot?.tentativeCollectionDate?.trim() ||
+    assist.tentativeCollectionDate.trim() ||
+    application?.tentativeCollectionDate?.trim() ||
+    ''
+
+  return {
+    onlineSubmissionDate,
+    vfsSubmissionDate,
+    tentativeCollectionDate,
+    collectionDate: record.collectionDate?.trim() || '',
+    submittedBy: snapshot?.submittedBy?.trim() || assist.submittedBy.trim() || '',
+  }
+}
+
+/** Finds a submission charge matching an on-site / application fee catalog name. */
+export function findSubmissionPaidCharge(
+  serviceName: string,
+  snapshot: OperationalCaseSubmissionSnapshot | null,
+): FormAssistVfsServiceChargeLine | undefined {
+  if (!snapshot) return undefined
+  return snapshot.vfsServiceCharges.find(charge =>
+    vfsServiceNamesMatch(charge.serviceName, serviceName),
+  )
+}
+
+/** Fee catalog lines already paid during application form submission. */
+export function getSubmissionPaidApplicationFeeIds(
+  fees: Array<{ id: string; serviceName: string }>,
+  snapshot: OperationalCaseSubmissionSnapshot | null,
+): Set<string> {
+  if (!snapshot || snapshot.vfsServiceCharges.length === 0) return new Set()
+  return new Set(
+    fees
+      .filter(fee => Boolean(findSubmissionPaidCharge(fee.serviceName, snapshot)))
+      .map(fee => fee.id),
+  )
+}
+
+/** Merge submission-paid amounts onto fee lines for display (always selected). */
+export function withSubmissionPaidFeeState(
+  fees: GroundServiceLine[],
+  snapshot: OperationalCaseSubmissionSnapshot | null,
+): GroundServiceLine[] {
+  if (!snapshot) return fees
+  return fees.map(fee => {
+    const paid = findSubmissionPaidCharge(fee.serviceName, snapshot)
+    if (!paid) return fee
+    return {
+      ...fee,
+      selected: true,
+      actualAmount: paid.amount,
+      prefilledAmount: paid.amount,
+    }
+  })
 }

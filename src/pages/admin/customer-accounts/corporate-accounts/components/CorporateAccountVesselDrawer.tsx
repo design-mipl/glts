@@ -4,7 +4,6 @@ import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageF
 import { ADMIN_DRAWER_FORM_LAYOUT } from '@/pages/admin/components/adminOverlayFormLayout'
 import { VesselFormFields } from '@/pages/customer/features/masters/vessels/components/VesselFormFields'
 import { useVesselForm, vesselMasterToFormData } from '@/pages/customer/features/masters/vessels/hooks/useVesselForm'
-import { entityMasterService } from '@/shared/services/entityMasterService'
 import { vesselMasterService } from '@/shared/services/vesselMasterService'
 import type { VesselMaster } from '@/shared/types/vesselMaster'
 
@@ -12,7 +11,8 @@ export interface CorporateAccountVesselDrawerProps {
   open: boolean
   onClose: () => void
   corporateAccountId?: string
-  entityIds: string[]
+  /** @deprecated Linked entity is no longer collected on the vessel form. Kept for call-site compatibility. */
+  entityIds?: string[]
   initial?: VesselMaster
   onSaved?: (record: VesselMaster) => void
 }
@@ -21,21 +21,11 @@ export function CorporateAccountVesselDrawer({
   open,
   onClose,
   corporateAccountId,
-  entityIds,
   initial,
   onSaved,
 }: CorporateAccountVesselDrawerProps) {
   const { formData, errors, update, reset, validate } = useVesselForm(initial?.id)
   const flagOptions = useMemo(() => vesselMasterService.getFlagCountryOptions(), [])
-
-  const entityOptions = useMemo(
-    () =>
-      entityIds
-        .map((id) => entityMasterService.getById(id))
-        .filter(Boolean)
-        .map((e) => ({ value: e!.id, label: e!.entityName })),
-    [entityIds],
-  )
 
   useEffect(() => {
     if (open) reset(initial ? vesselMasterToFormData(initial) : undefined)
@@ -52,7 +42,7 @@ export function CorporateAccountVesselDrawer({
     }
   }
 
-  const fieldProps = { formData, errors, flagOptions, entityOptions, onUpdate: update }
+  const fieldProps = { formData, errors, flagOptions, onUpdate: update }
 
   return (
     <AdminDrawerFormShell

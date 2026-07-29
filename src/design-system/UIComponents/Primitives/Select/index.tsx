@@ -80,7 +80,18 @@ export default function Select({
     if (selected === '' || selected === undefined) {
       if (placeholder) {
         return (
-          <Box component="span" sx={{ color: 'text.disabled', fontSize: FORM_CONTROL.fontSize }}>
+          <Box
+            component="span"
+            sx={{
+              color: 'text.disabled',
+              fontSize: 11,
+              lineHeight: 1.25,
+              display: 'block',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {placeholder}
           </Box>
         )

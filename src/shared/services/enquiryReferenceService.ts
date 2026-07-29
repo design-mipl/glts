@@ -2,7 +2,7 @@ import { enquiryService } from '@/shared/services/enquiryService'
 import type { EnquiryRecord, EnquiryStatus } from '@/shared/types/enquiry'
 import { getVisaRequirementItems } from '@/shared/utils/enquiryVisaRequirementUtils'
 
-const INELIGIBLE_ENQUIRY_STATUSES: EnquiryStatus[] = ['converted', 'rejected', 'closed']
+const INELIGIBLE_ENQUIRY_STATUSES: EnquiryStatus[] = ['converted', 'lost']
 
 function formatEnquiryOptionLabel(enquiry: EnquiryRecord): string {
   const visaItems = getVisaRequirementItems(enquiry.visaRequirement)

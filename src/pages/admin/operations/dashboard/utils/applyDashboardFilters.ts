@@ -28,11 +28,6 @@ function matchesCountry(country: string, filterCountry: string): boolean {
   return country === filterCountry
 }
 
-function matchesBranch(branch: string, filterBranch: string): boolean {
-  if (filterBranch === 'all') return true
-  return branch === filterBranch
-}
-
 function matchesTeam(team: string, filterTeam: string): boolean {
   if (filterTeam === 'all') return true
   return team === filterTeam
@@ -41,7 +36,6 @@ function matchesTeam(team: string, filterTeam: string): boolean {
 export function getFilterScaleFactor(filters: DashboardFilters): number {
   let factor = 1
   if (filters.country !== 'all') factor *= 0.35
-  if (filters.branch !== 'all') factor *= 0.55
   if (filters.applicationType !== 'all') factor *= 0.42
   if (filters.team !== 'all') factor *= 0.48
   if (filters.dateRange[0] || filters.dateRange[1]) factor *= 0.88
@@ -84,9 +78,7 @@ export function scalePipelineStages(stages: PipelineStage[], filters: DashboardF
 }
 
 export function filterTeamWorkloadRows(rows: TeamWorkloadRow[], filters: DashboardFilters): TeamWorkloadRow[] {
-  return rows.filter(
-    (row) => matchesBranch(row.branch, filters.branch) && matchesTeam(row.team, filters.team),
-  )
+  return rows.filter((row) => matchesTeam(row.team, filters.team))
 }
 
 export function scaleExecutiveAlerts(
@@ -108,7 +100,6 @@ export function filterVerificationQueue(
   return rows.filter(
     (row) =>
       matchesCountry(row.country, filters.country) &&
-      matchesBranch(row.branch, filters.branch) &&
       matchesChannel(row.channel, filters.applicationType) &&
       matchesTeam(row.team, filters.team),
   )
@@ -127,9 +118,9 @@ export function scalePassportSummary(
 
 export function filterPassportTransitRows(
   rows: PassportTransitRow[],
-  filters: DashboardFilters,
+  _filters: DashboardFilters,
 ): PassportTransitRow[] {
-  return rows.filter((row) => matchesBranch(row.branch, filters.branch))
+  return rows
 }
 
 export function scaleSlaCompliance(
@@ -216,9 +207,7 @@ export function filterDistributionByApplicationType(
 }
 
 export function filterEscalationRows(rows: EscalationRow[], filters: DashboardFilters): EscalationRow[] {
-  return rows.filter(
-    (row) => matchesBranch(row.branch, filters.branch) && matchesTeam(row.team, filters.team),
-  )
+  return rows.filter((row) => matchesTeam(row.team, filters.team))
 }
 
 export function filterNoMovementCases(
@@ -227,7 +216,6 @@ export function filterNoMovementCases(
 ): NoMovementCaseRow[] {
   return rows.filter(
     (row) =>
-      matchesBranch(row.branch, filters.branch) &&
       matchesChannel(row.channel, filters.applicationType) &&
       matchesTeam(row.team, filters.team),
   )

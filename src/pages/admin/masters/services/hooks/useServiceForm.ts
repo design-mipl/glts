@@ -4,7 +4,7 @@ import type { ServiceMaster, ServiceMasterFormData } from '@/shared/types/servic
 export const INITIAL_SERVICE_FORM: ServiceMasterFormData = {
   serviceName: '',
   description: '',
-  serviceType: '',
+  serviceType: 'glts',
   defaultPrice: '',
   mappedSacCodeId: '',
   gstRateId: '',
@@ -37,8 +37,7 @@ export function useServiceForm(initialData?: ServiceMasterFormData) {
 
   const validate = () => {
     const next: Record<string, string> = {}
-    if (!formData.serviceName.trim()) next.serviceName = 'Service name is required'
-    if (!formData.serviceType) next.serviceType = 'Service type is required'
+    if (!formData.serviceName.trim()) next.serviceName = 'Fee name is required'
     if (formData.applicableFor.length === 0) {
       next.applicableFor = 'Select at least one applicability'
     }

@@ -1,22 +1,11 @@
 import type { CustomerTone } from '@/pages/customer/features/shared/components/CustomerPrimitives'
-import type { SupportTicketPriority, SupportTicketStatus } from '../types/supportTicket'
+import {
+  SUPPORT_TICKET_PRIORITY_LABELS,
+  SUPPORT_TICKET_STATUS_LABELS,
+} from '@/shared/config/supportTicketStatus'
+import type { SupportTicketPriority, SupportTicketStatus } from '@/shared/types/supportTicket'
 
-export const SUPPORT_TICKET_STATUS_LABELS: Record<SupportTicketStatus, string> = {
-  open: 'Open',
-  assigned: 'Assigned',
-  in_progress: 'In Progress',
-  waiting_for_customer: 'Waiting for Customer',
-  resolved: 'Resolved',
-  reopened: 'Reopened',
-  closed: 'Closed',
-}
-
-export const SUPPORT_TICKET_PRIORITY_LABELS: Record<SupportTicketPriority, string> = {
-  low: 'Low',
-  medium: 'Medium',
-  high: 'High',
-  critical: 'Critical',
-}
+export { SUPPORT_TICKET_STATUS_LABELS, SUPPORT_TICKET_PRIORITY_LABELS }
 
 export function getSupportTicketStatusTone(status: SupportTicketStatus): CustomerTone {
   switch (status) {

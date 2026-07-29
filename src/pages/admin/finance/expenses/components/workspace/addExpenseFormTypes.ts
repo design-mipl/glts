@@ -3,18 +3,19 @@ import type {
   ApplicationExpensePaidBy,
   ApplicationExpensePassengerMappingScope,
   ApplicationExpenseProofDocumentType,
-  ApplicationExpenseType,
 } from '@/shared/types/applicationExpenseManagement'
 
 export interface AddExpenseFormValue {
-  service: ApplicationExpenseType
+  /** Selected commercial-agreement service option id. */
+  agreementServiceId: string
   vendorProvider: string
   mappingScope: ApplicationExpensePassengerMappingScope
   passengerId: string
   passengerIds: string[]
   amount: string
   gstApplicable: boolean
-  gstValue: string
+  /** Tax master GST rate id (percentage comes from GST master). */
+  gstRateId: string
   paidBy: ApplicationExpensePaidBy
   billTo: ApplicationExpenseBillTo
   notes: string
@@ -27,14 +28,14 @@ export function createEmptyAddExpenseForm(
   defaultPassengerId = '',
 ): AddExpenseFormValue {
   return {
-    service: 'visa_processing_fee',
+    agreementServiceId: '',
     vendorProvider: 'GLTS Operations',
     mappingScope: isSinglePassenger ? 'passenger' : 'application',
     passengerId: defaultPassengerId,
     passengerIds: defaultPassengerId ? [defaultPassengerId] : [],
     amount: '',
     gstApplicable: false,
-    gstValue: '0',
+    gstRateId: '',
     paidBy: 'glts_team',
     billTo: 'client',
     notes: '',

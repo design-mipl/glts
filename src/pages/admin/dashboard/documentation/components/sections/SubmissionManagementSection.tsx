@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Grid } from '@mui/material'
 import { useToast } from '@/design-system/UIComponents'
-import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
+import { DashboardSectionTable } from '@/pages/admin/dashboard/components'
 import { buildReadyForSubmissionColumns } from '../columns/readyForSubmissionColumns'
 import { buildSubmissionPendingColumns } from '../columns/submissionPendingColumns'
 import { DOCUMENTATION_LISTING_TABLE_SX } from '../documentationTableTokens'

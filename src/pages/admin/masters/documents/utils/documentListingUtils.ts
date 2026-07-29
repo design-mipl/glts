@@ -4,7 +4,7 @@ import { documentStatusLabel } from '../config/documentStatusConfig'
 
 export function getDocumentCellValue(row: DocumentMaster, key: string): string {
   if (key === 'createdAt') {
-    return new Date(row.createdAt).toLocaleDateString()
+    return row.createdAt
   }
   if (key === 'status') {
     return documentStatusLabel[row.status]

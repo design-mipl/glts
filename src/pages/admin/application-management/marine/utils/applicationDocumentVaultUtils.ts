@@ -175,16 +175,19 @@ export function buildApplicationDocumentVaultItems(input: {
       items,
       seen,
       selectedRow.travelerName,
-      'Confirmation PDF',
-      submission.confirmationPdfFileName,
+      'Payment Receipt',
+      submission.paymentReceiptFileName,
     )
-    pushSubmissionArtifact(
-      items,
-      seen,
-      selectedRow.travelerName,
-      'Invoice PDF',
-      submission.invoicePdfFileName,
-    )
+    for (const entry of submission.paymentEntries ?? []) {
+      if (!entry.paymentReceiptFileName?.trim()) continue
+      pushSubmissionArtifact(
+        items,
+        seen,
+        selectedRow.travelerName,
+        `Payment Receipt · ${entry.paidByUserName || 'Payment'}`,
+        entry.paymentReceiptFileName,
+      )
+    }
   }
 
   return items

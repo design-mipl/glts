@@ -5,6 +5,7 @@ export type OriginalDocumentCollectionMethod =
   | 'delivered_to_office'
   | 'picked_up_at_airport'
   | 'picked_up_from_cargo'
+  | 'hand_carry_by_applicant'
 
 export interface OriginalDocumentReceivedItem {
   documentId: string
@@ -60,12 +61,22 @@ export interface PickedUpFromCargoDetails {
   remarks: string
 }
 
+export interface HandCarryByApplicantDetails {
+  receivingOfficeId: string
+  handCarryDate: string
+  handCarryTime: string
+  applicantName: string
+  applicantContactNumber: string
+  remarks: string
+}
+
 export interface OriginalDocumentCollectionDetailsByMethod {
   couriered_by_applicant: CourieredByApplicantDetails
   picked_up_from_company: PickedUpFromCompanyDetails
   delivered_to_office: DeliveredToOfficeDetails
   picked_up_at_airport: PickedUpAtAirportDetails
   picked_up_from_cargo: PickedUpFromCargoDetails
+  hand_carry_by_applicant: HandCarryByApplicantDetails
 }
 
 export interface OriginalDocumentCollectionState {

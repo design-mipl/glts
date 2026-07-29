@@ -5,7 +5,7 @@ import type { CollectionDetailFieldDef } from '@/shared/utils/originalDocumentCo
 interface CollectionDetailFieldsProps {
   fields: CollectionDetailFieldDef[]
   values: Record<string, string>
-  receivingOfficeOptions: { value: string; label: string }[]
+  receivingOfficeOptions: { value: string; label: string; description?: string }[]
   onChange: (key: string, value: string) => void
   readOnly?: boolean
 }
@@ -18,7 +18,7 @@ function inputTypeForField(type: CollectionDetailFieldDef['type']): string {
 }
 
 function placeholderForField(field: CollectionDetailFieldDef): string {
-  if (field.type === 'select') return 'Select office'
+  if (field.type === 'select') return 'Select office or partner'
   if (field.type === 'textarea') return `Enter ${field.label.toLowerCase()}`
   if (field.type === 'date') return ''
   if (field.type === 'time') return ''

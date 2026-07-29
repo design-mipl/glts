@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { BaseCard } from '@/design-system/UIComponents'
 import type { QuotationRecord } from '@/shared/types/quotation'
-import { quotationSourceTypeLabel, workflowTypeLabel } from '../../config/quotationStatusConfig'
+import { quotationPipelineStatusLabel, quotationSourceTypeLabel, workflowTypeLabel } from '../../config/quotationStatusConfig'
 
 interface InfoGridItem {
   label: string
@@ -39,17 +39,19 @@ function InfoGrid({ items }: { items: InfoGridItem[] }) {
 
 export function OverviewTab({ quotation }: { quotation: QuotationRecord }) {
   const customerItems: InfoGridItem[] = [
-    { label: 'Company', value: quotation.customer.companyName || '—' },
-    { label: 'Contact', value: quotation.customer.contactPersonName || '—' },
-    { label: 'Phone', value: quotation.customer.contactNumber || '—' },
-    { label: 'Email', value: quotation.customer.emailAddress || '—' },
-    { label: 'Address', value: quotation.customer.companyAddress || '—' },
+    { label: 'Customer / Company Name', value: quotation.customer.companyName || '—' },
+    { label: 'Contact Person Name', value: quotation.customer.contactPersonName || '—' },
+    { label: 'Mobile Number', value: quotation.customer.contactNumber || '—' },
+    { label: 'Landline Number', value: quotation.customer.alternateContactNumber || '—' },
+    { label: 'Email Address', value: quotation.customer.emailAddress || '—' },
+    { label: 'Company Address', value: quotation.customer.companyAddress || '—' },
   ]
 
   const quotationItems: InfoGridItem[] = [
     { label: 'Quotation No.', value: quotation.quotationNo },
     { label: 'Type', value: quotationSourceTypeLabel[quotation.sourceType] },
-    { label: 'Workflow', value: workflowTypeLabel[quotation.workflowType] },
+    { label: 'Pipeline Status', value: quotationPipelineStatusLabel[quotation.status] },
+    { label: 'Customer Type', value: workflowTypeLabel[quotation.workflowType] },
     { label: 'Quotation date', value: quotation.quotationDate },
     { label: 'Valid till', value: quotation.validTill },
     { label: 'GST', value: `${quotation.gstPercentage}%` },

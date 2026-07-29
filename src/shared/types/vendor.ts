@@ -1,13 +1,12 @@
 export type VendorCategory =
-  | 'ticketing_partner'
-  | 'insurance_partner'
-  | 'courier_partner'
-  | 'vfs_partner'
-  | 'embassy_agent'
-  | 'translation_agency'
-  | 'ground_ops_vendor'
-  | 'documentation_vendor'
-  | 'other'
+  | 'visa_processing'
+  | 'ticketing'
+  | 'insurance'
+  | 'courier'
+  | 'delivery'
+  | 'travel_agents'
+  | 'documentation'
+  | 'others'
 
 export type VendorType = 'company' | 'individual'
 
@@ -128,6 +127,10 @@ export interface Vendor {
   city: string
   state: string
   country: string
+  /** Destination country the vendor covers (from Country Master). */
+  serviceCountry: string
+  /** Visa type covered for the selected destination country. */
+  visaType: string
   panNumber: string
   gstApplicable: boolean
   gstNumber: string
@@ -158,6 +161,8 @@ export interface VendorFormData {
   city: string
   state: string
   country: string
+  serviceCountry: string
+  visaType: string
   panNumber: string
   gstApplicable: boolean
   gstNumber: string

@@ -51,12 +51,11 @@ export function AdminFullPageFormShell({
         <Box sx={{ px: shellPaddingX, pt: shellPaddingX, pb: 0 }}>
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
-            alignItems={{ xs: 'stretch', sm: 'center' }}
+            alignItems={{ xs: 'stretch', sm: 'flex-start' }}
             justifyContent="space-between"
             spacing={1.5}
-            sx={{ minHeight: { sm: 40 } }}
           >
-            <Box sx={{ minWidth: 0, display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
               <Typography
                 variant={ADMIN_RECORD_PAGE_TITLE_VARIANT}
                 component="h1"
@@ -67,7 +66,7 @@ export function AdminFullPageFormShell({
                 {title}
               </Typography>
               {description ? (
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75, maxWidth: 720 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 720 }}>
                   {description}
                 </Typography>
               ) : null}

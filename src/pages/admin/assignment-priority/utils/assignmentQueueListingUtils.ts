@@ -11,6 +11,11 @@ import { ASSIGNMENT_PRIORITIES } from '@/shared/types/operationalPassengerAssign
 import { ASSIGNMENT_CITY_TEAMS } from '@/shared/types/operationalPassengerAssignment'
 import { assignmentPriorityLabel } from '../config/assignmentPriorityConfig'
 import { passengerStatusLabel } from '../config/assignmentStatusConfig'
+import {
+  assignmentFundDisplayCellLabel,
+  getAssignmentFundDisplayStateForPassenger,
+  matchesAssignmentFundFilter,
+} from './assignmentFundDisplayUtils'
 
 export interface AssignmentQueueKpis {
   totalPending: number
@@ -32,6 +37,7 @@ export const EMPTY_ASSIGNMENT_QUEUE_FILTERS: AssignmentQueueFilters = {
   visaType: '',
   status: '',
   sla: '',
+  fundStatus: '',
   search: '',
 }
 
@@ -224,6 +230,7 @@ export function applyAssignmentQueueFilters(
     if (filters.visaType && row.visaType !== filters.visaType) return false
     if (filters.status && row.passengerStatus !== filters.status) return false
     if (!matchesSlaFilter(row, filters.sla)) return false
+    if (!matchesAssignmentFundFilter(row.id, filters.fundStatus)) return false
     if (filters.search && !matchesAssignmentSearch(row, filters.search)) return false
     return true
   })
@@ -242,6 +249,9 @@ export function matchesAssignmentSearch(row: OperationalPassengerRow, query: str
     row.jurisdiction,
     row.assignedTeam,
     row.assignedUser,
+    row.assignedVendor,
+    row.passengerPhone,
+    row.passengerEmail,
     row.passengerStatus,
     row.priority,
     row.operationalRemarks,
@@ -275,16 +285,24 @@ export function getAssignmentCellValue(row: OperationalPassengerRow, key: string
     case 'travelDate':
       return row.travelDate
     case 'assignment':
-      return `${row.assignedTeam || ''} ${row.assignedUser || ''}`.trim()
+      return `${row.assignedTeam || ''} ${row.assignedUser || ''} ${row.assignedVendor || ''}`.trim()
     case 'assignedTeam':
       return row.assignedTeam || '—'
     case 'assignedUser':
       return row.assignedUser || '—'
+    case 'assignedVendor':
+      return row.assignedVendor || '—'
+    case 'passengerPhone':
+      return row.passengerPhone
+    case 'passengerEmail':
+      return row.passengerEmail
     case 'operationalDate':
       return row.operationalDate
     case 'status':
     case 'passengerStatus':
       return `${passengerStatusLabel[row.passengerStatus]} ${row.submissionStatus}`.trim()
+    case 'fundStatus':
+      return assignmentFundDisplayCellLabel(getAssignmentFundDisplayStateForPassenger(row.id))
     case 'submissionStatus':
       return row.submissionStatus
     case 'sla':
@@ -350,6 +368,8 @@ export const ASSIGNMENT_SLA_FILTER_OPTIONS = [
   { value: 'on_track', label: 'On track' },
 ] as const
 
+export { ASSIGNMENT_FUND_FILTER_OPTIONS } from './assignmentFundDisplayUtils'
+
 export function getAssignmentTabEmptyState(tab: AssignmentListingTab): EmptyStateProps {
   const map: Record<AssignmentListingTab, EmptyStateProps> = {
     all: {
@@ -396,6 +416,7 @@ export function downloadAssignmentCsv(rows: OperationalPassengerRow[]) {
     'Operational Date',
     'Current Status',
     'Submission Status',
+    'Fund Status',
     'SLA / Time Remaining',
     'Last Updated',
     'Operational Remarks',
@@ -416,6 +437,7 @@ export function downloadAssignmentCsv(rows: OperationalPassengerRow[]) {
       row.operationalDate,
       row.passengerStatus,
       row.submissionStatus,
+      assignmentFundDisplayCellLabel(getAssignmentFundDisplayStateForPassenger(row.id)),
       formatSlaTimer(row),
       row.lastUpdated,
       row.operationalRemarks,

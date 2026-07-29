@@ -5,10 +5,15 @@ import { masterStatusLabel } from '../../config/masterStatusConfig'
 
 export function getSacCodeCellValue(row: SacCodeMaster, key: string): string {
   if (key === 'status') return masterStatusLabel[row.status]
-  if (key === 'defaultGst') return taxMasterService.getGstLabel(row.defaultGstRateId)
+  if (key === 'createdAudit') return row.createdAt
+  if (key === 'updatedAudit') return row.updatedAt
+  if (key === 'defaultGst') {
+    const pct = taxMasterService.getGstPercent(row.defaultGstRateId)
+    return pct != null ? String(pct).padStart(6, '0') : ''
+  }
   if (key === 'defaultTds') {
     const pct = taxMasterService.getTdsPercent(row.defaultTdsSectionId)
-    return pct != null ? `${pct}%` : '—'
+    return pct != null ? String(pct).padStart(6, '0') : ''
   }
   if (key === 'applicableFor') {
     return row.applicableFor

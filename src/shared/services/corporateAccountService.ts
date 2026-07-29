@@ -128,6 +128,8 @@ function formToAccount(data: CorporateAccountFormData): Omit<CorporateAccount, '
     assignedUserIds: [...data.assignedUserIds],
     teamLeaderTeamId: data.teamLeaderTeamId || undefined,
     teamLeaderUserIds: [...data.teamLeaderUserIds],
+    primaryContactUserId: data.primaryContactUserId || undefined,
+    secondaryContactUserId: data.secondaryContactUserId || undefined,
     entityIds: resolveEntityIds(data.entityIds),
     vesselIds: resolveVesselIds(data.vesselIds),
     bookerIds: resolveBookerIds(data.bookerIds),
@@ -180,6 +182,10 @@ export const corporateAccountService = {
       (teamLeaderUserIds.length > 0
         ? adminPortalUserService.getById(teamLeaderUserIds[0])?.teamId ?? ''
         : '')
+    const legacyPrimary =
+      account.primaryContactUserId || account.primaryContactUserIds?.[0] || ''
+    const legacySecondary =
+      account.secondaryContactUserId || account.secondaryContactUserIds?.[0] || ''
 
     return {
       agreementId: account.agreementId,
@@ -209,6 +215,8 @@ export const corporateAccountService = {
       assignedUserIds,
       teamLeaderTeamId,
       teamLeaderUserIds,
+      primaryContactUserId: legacyPrimary,
+      secondaryContactUserId: legacySecondary === legacyPrimary ? '' : legacySecondary,
       entityIds: [...account.entityIds],
       vesselIds: [...account.vesselIds],
       bookerIds: [...(account.bookerIds ?? [])],
@@ -242,6 +250,8 @@ export const corporateAccountService = {
       assignedUserIds: [],
       teamLeaderTeamId: '',
       teamLeaderUserIds: [],
+      primaryContactUserId: '',
+      secondaryContactUserId: '',
       entityIds: [],
       vesselIds: [],
       bookerIds: [],

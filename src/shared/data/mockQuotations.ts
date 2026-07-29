@@ -1,5 +1,7 @@
 import type { QuotationRecord } from '@/shared/types/quotation'
 import { computePricingTotals } from '@/shared/utils/quotationCalculations'
+import { hydrateStructuredPricingFromMatrix } from '@/shared/utils/quotationPricingUtils'
+import type { AgreementWorkflowType } from '@/shared/types/commercialAgreement'
 
 function daysAgo(days: number) {
   const d = new Date()
@@ -20,12 +22,15 @@ function makeVersion(
   gstPercentage: number,
   createdBy: string,
   createdAt: string,
+  workflowType: AgreementWorkflowType = 'corporate',
 ): QuotationRecord['pricingVersions'][0] {
+  const structured = hydrateStructuredPricingFromMatrix(pricingMatrix, workflowType)
   return {
     id,
     versionLabel: `V${versionNumber}`,
     versionNumber,
     pricingMatrix,
+    ...structured,
     totals: computePricingTotals(pricingMatrix, gstPercentage),
     createdBy,
     createdAt,
@@ -99,13 +104,14 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       },
     ],
     sharedStatus: 'shared',
+    status: 'quotation_sent',
     sharedAt: daysAgo(3),
     sharedBy: 'Rajan Mehta',
     currentVersionId: 'qver-1-3',
     pricingVersions: [
-      makeVersion('qver-1-1', 1, harborV1Matrix, 18, 'Neha Arora', daysAgo(12)),
-      makeVersion('qver-1-2', 2, harborV2Matrix, 18, 'Neha Arora', daysAgo(8)),
-      makeVersion('qver-1-3', 3, harborV3Matrix, 18, 'Neha Arora', daysAgo(4)),
+      makeVersion('qver-1-1', 1, harborV1Matrix, 18, 'Neha Arora', daysAgo(12), 'marine'),
+      makeVersion('qver-1-2', 2, harborV2Matrix, 18, 'Neha Arora', daysAgo(8), 'marine'),
+      makeVersion('qver-1-3', 3, harborV3Matrix, 18, 'Neha Arora', daysAgo(4), 'marine'),
     ],
     createdAt: daysAgo(12),
     createdBy: 'Neha Arora',
@@ -133,6 +139,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       { id: 'qact-3', timestamp: daysAgo(8), actor: 'Neha Arora', action: 'Created', detail: 'Quotation created' },
     ],
     sharedStatus: 'not_shared',
+    status: 'new',
     currentVersionId: 'qver-2-1',
     pricingVersions: [
       makeVersion(
@@ -155,6 +162,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
         18,
         'Neha Arora',
         daysAgo(8),
+        'corporate',
       ),
     ],
     createdAt: daysAgo(8),
@@ -183,6 +191,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       { id: 'qact-4', timestamp: daysAgo(5), actor: 'Neha Arora', action: 'Created', detail: 'Quotation created' },
     ],
     sharedStatus: 'not_shared',
+    status: 'negotiation',
     currentVersionId: 'qver-3-1',
     pricingVersions: [
       makeVersion(
@@ -191,7 +200,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
         [
           {
             id: 'qpr-4',
-            country: 'Schengen',
+            country: 'France',
             countryId: 'CNT-104',
             visaType: 'Agent Tourist Visa',
             workflowType: 'B2B Agent',
@@ -205,6 +214,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
         18,
         'Neha Arora',
         daysAgo(5),
+        'b2b_agent',
       ),
     ],
     createdAt: daysAgo(5),
@@ -240,8 +250,9 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       },
     ],
     sharedStatus: 'not_shared',
+    status: 'qualified',
     currentVersionId: 'qver-4-1',
-    pricingVersions: [makeVersion('qver-4-1', 1, [], 18, 'Neha Arora', daysAgo(2))],
+    pricingVersions: [makeVersion('qver-4-1', 1, [], 18, 'Neha Arora', daysAgo(2), 'marine')],
     createdAt: daysAgo(2),
     createdBy: 'Neha Arora',
     updatedAt: daysAgo(2),
@@ -268,6 +279,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
       { id: 'qact-7', timestamp: daysAgo(1), actor: 'Neha Arora', action: 'Created', detail: 'Draft quotation' },
     ],
     sharedStatus: 'not_shared',
+    status: 'awaiting_confirmation',
     currentVersionId: 'qver-5-1',
     pricingVersions: [
       makeVersion(
@@ -290,6 +302,7 @@ export const SEED_QUOTATIONS: QuotationRecord[] = [
         18,
         'Neha Arora',
         daysAgo(1),
+        'corporate',
       ),
     ],
     createdAt: daysAgo(1),

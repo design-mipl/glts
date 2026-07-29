@@ -4,9 +4,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { BaseCard, Tabs, useToast } from '@/design-system/UIComponents'
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { quotationService } from '@/shared/services/quotationService'
+import type { QuotationPipelineStatus } from '@/shared/types/quotation'
 import { QuotationDetailSummary } from '../components/QuotationDetailSummary'
 import { QuotationShareModal } from '../components/QuotationShareModal'
 import { QuotationConvertDialog } from '../components/QuotationConvertDialog'
+import { StatusUpdateModal } from '../../enquiries/components/StatusUpdateModal'
 import { OverviewTab } from '../components/detail/OverviewTab'
 import { CurrentPricingTab } from '../components/detail/CurrentPricingTab'
 import { PricingVersionsTab } from '../components/detail/PricingVersionsTab'
@@ -25,6 +27,9 @@ export function QuotationDetailPage() {
   const [shareOpen, setShareOpen] = useState(false)
   const [convertOpen, setConvertOpen] = useState(false)
   const [convertVersionId, setConvertVersionId] = useState<string>()
+  const [statusModalOpen, setStatusModalOpen] = useState(false)
+  const [statusValue, setStatusValue] = useState<QuotationPipelineStatus>('new')
+  const [statusReason, setStatusReason] = useState('')
 
   const tabs = useMemo(
     () => [
@@ -34,6 +39,11 @@ export function QuotationDetailPage() {
       { label: 'Documents', value: 'documents', badge: quotation?.attachments.length ?? 0 },
       { label: 'Timeline', value: 'timeline', badge: quotation?.activities.length ?? 0 },
     ],
+    [quotation],
+  )
+
+  const allowedStatuses = useMemo(
+    () => (quotation ? quotationService.getAllowedStatusTransitions(quotation.status) : []),
     [quotation],
   )
 
@@ -74,6 +84,11 @@ export function QuotationDetailPage() {
             onEdit={() => navigate(`/admin/customer-accounts/quotations/${quotation.id}/edit`)}
             onShare={() => setShareOpen(true)}
             onGeneratePdf={() => navigate(`/admin/customer-accounts/quotations/${quotation.id}/pdf`)}
+            onUpdateStatus={() => {
+              setStatusValue(quotation.status)
+              setStatusReason('')
+              setStatusModalOpen(true)
+            }}
             onConvert={() => {
               setConvertVersionId(undefined)
               setConvertOpen(true)
@@ -101,6 +116,31 @@ export function QuotationDetailPage() {
           </Box>
         </BaseCard>
       </AdminDetailShell>
+
+      <StatusUpdateModal
+        open={statusModalOpen}
+        title="Update Quotation Status"
+        value={statusValue}
+        reason={statusReason}
+        allowedStatuses={allowedStatuses}
+        onClose={() => setStatusModalOpen(false)}
+        onStatusChange={(next) => setStatusValue(next as QuotationPipelineStatus)}
+        onReasonChange={setStatusReason}
+        onSubmit={() => {
+          const result = quotationService.updateStatus(quotation.id, statusValue, ACTOR, statusReason)
+          if (!result.ok) {
+            showToast({
+              title: 'Status update failed',
+              description: result.message ?? 'Invalid status transition',
+              variant: 'error',
+            })
+            return
+          }
+          setStatusModalOpen(false)
+          showToast({ title: 'Status updated', variant: 'success' })
+          void reload()
+        }}
+      />
 
       <QuotationShareModal
         open={shareOpen}

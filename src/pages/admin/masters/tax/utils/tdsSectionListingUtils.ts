@@ -1,16 +1,17 @@
 import type { TdsSection } from '@/shared/types/taxMaster'
 import { getTdsApplicableOnLabel } from '@/shared/services/taxMasterService'
 import { masterStatusLabel } from '../../config/masterStatusConfig'
-import { formatMasterDate } from '../../utils/masterListingUtils'
 
 export function getTdsSectionCellValue(row: TdsSection, key: string): string {
   if (key === 'status') return masterStatusLabel[row.status]
   if (key === 'applicableOn') return getTdsApplicableOnLabel(row.applicableOn)
-  if (key === 'createdAt') return formatMasterDate(row.createdAt)
-  if (key === 'updatedAt') return formatMasterDate(row.updatedAt)
-  if (key === 'ratePercent') return `${row.ratePercent}%`
+  if (key === 'createdAudit') return row.createdAt
+  if (key === 'updatedAudit') return row.updatedAt
+  if (key === 'createdAt') return row.createdAt
+  if (key === 'updatedAt') return row.updatedAt
+  if (key === 'ratePercent') return String(row.ratePercent).padStart(6, '0')
   if (key === 'thresholdLimit') {
-    return row.thresholdLimit != null ? String(row.thresholdLimit) : '—'
+    return row.thresholdLimit != null ? String(row.thresholdLimit).padStart(12, '0') : ''
   }
   return String((row as unknown as Record<string, unknown>)[key] ?? '')
 }

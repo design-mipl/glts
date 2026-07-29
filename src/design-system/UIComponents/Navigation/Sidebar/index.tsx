@@ -47,7 +47,8 @@ function normalizeNavPath(path: string): string {
 /**
  * Whether a nav href matches the current route.
  * Section links (e.g. agreements listing) stay active on create/edit/detail child paths.
- * `/admin` dashboard href is exact-only so it does not highlight on every admin URL.
+ * Root module hrefs (`/admin`, `/admin/dashboard-next`) are exact-only so they
+ * do not stay active on sibling/child routes.
  */
 export function isNavActive(href: string | undefined, currentPath: string): boolean {
   if (!href) return false
@@ -57,7 +58,7 @@ export function isNavActive(href: string | undefined, currentPath: string): bool
 
   if (pathNorm === hrefNorm) return true
 
-  if (hrefNorm === '/admin') return false
+  if (hrefNorm === '/admin' || hrefNorm === '/admin/dashboard-next') return false
 
   return pathNorm.startsWith(`${hrefNorm}/`)
 }

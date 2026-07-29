@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, alpha, useTheme } from '@mui/material'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Pagination, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
@@ -10,6 +10,8 @@ import {
   AdminListingToolbar,
 } from '@/pages/admin/components/listing'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
+import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
+import { getCurrentListingHref, navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import { ExpenseApplicationKpiRow } from '../components/ExpenseApplicationKpiRow'
 import { buildExpenseApplicationColumns } from '../components/ExpenseApplicationTableColumns'
@@ -28,12 +30,16 @@ import {
   matchesExpenseListingSearch,
 } from '../utils/expenseListingUtils'
 
+const EXPENSE_TAB_VALUES = EXPENSE_LISTING_TABS.map(tab => tab.value) as readonly ExpenseListingTab[]
+
 export function ExpenseListingPage() {
   const theme = useTheme()
   const navigate = useNavigate()
+  const location = useLocation()
   const { showToast } = useToast()
-  const [activeTab, setActiveTab] = useState<ExpenseListingTab>('marine')
+  const [activeTab, setActiveTab] = useListingTabParam(EXPENSE_TAB_VALUES, 'marine')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
+  const listingReturnHref = getCurrentListingHref(location)
 
   useEffect(() => {
     applicationExpenseManagementService.syncAllSubmitted()
@@ -49,7 +55,10 @@ export function ExpenseListingPage() {
   })
 
   const kpis = useMemo(() => computeExpenseListingKpis(tabRows), [tabRows])
-  const columns = useMemo(() => buildExpenseApplicationColumns({ navigate }), [navigate])
+  const columns = useMemo(
+    () => buildExpenseApplicationColumns({ navigate, fromListing: listingReturnHref }),
+    [navigate, listingReturnHref],
+  )
   const toolbarColumns = useMemo(
     () => columns.filter(col => col.key !== 'actions').map(col => ({ key: col.key, label: col.label })),
     [columns],
@@ -71,7 +80,7 @@ export function ExpenseListingPage() {
       setViewMode('table')
       listing.setTableState(state => ({ ...state, page: 0 }))
     },
-    [listing],
+    [listing, setActiveTab],
   )
 
   const footerBg =
@@ -92,7 +101,7 @@ export function ExpenseListingPage() {
           <ExpenseApplicationKpiRow
             submittedApplications={kpis.submittedApplications}
             totalExpense={kpis.totalExpense}
-            pendingApproval={kpis.pendingApproval}
+            pendingPayment={kpis.pendingPayment}
             paidApplications={kpis.paidApplications}
           />
         ) : undefined
@@ -127,7 +136,13 @@ export function ExpenseListingPage() {
             columnFilters={listing.columnFilters}
             onColumnFiltersChange={listing.setColumnFilters}
             getCellValue={getExpenseListingCellValue}
-            onRowClick={row => navigate(`${EXPENSE_LISTING_BASE_PATH}/${row.applicationId}`)}
+            onRowClick={row =>
+              navigateFromListing(
+                navigate,
+                `${EXPENSE_LISTING_BASE_PATH}/${row.applicationId}`,
+                listingReturnHref,
+              )
+            }
             stickyHeader
             emptyTitle={emptyState.title}
             emptyDescription={emptyState.description}
@@ -135,7 +150,9 @@ export function ExpenseListingPage() {
         ) : (
           <AdminListingGrid
             items={gridItems}
-            onItemClick={id => navigate(`${EXPENSE_LISTING_BASE_PATH}/${id}`)}
+            onItemClick={id =>
+              navigateFromListing(navigate, `${EXPENSE_LISTING_BASE_PATH}/${id}`, listingReturnHref)
+            }
           />
         )
       }

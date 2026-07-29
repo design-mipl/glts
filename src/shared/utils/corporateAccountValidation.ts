@@ -37,6 +37,8 @@ export function createEmptyCorporateAccountFormData(): CorporateAccountFormData 
     assignedUserIds: [],
     teamLeaderTeamId: '',
     teamLeaderUserIds: [],
+    primaryContactUserId: '',
+    secondaryContactUserId: '',
     entityIds: [],
     vesselIds: [],
     bookerIds: [],
@@ -78,6 +80,10 @@ export function validateCorporateAccountStep(step: number, data: CorporateAccoun
     if (data.teamLeaderUserIds.length === 0) issues.push('Assign at least one team leader')
     if (!data.assignedTeamId) issues.push('Select a team')
     if (data.assignedUserIds.length === 0) issues.push('Assign at least one user')
+    const eligibleContacts = new Set([...data.teamLeaderUserIds, ...data.assignedUserIds])
+    if (!data.primaryContactUserId || !eligibleContacts.has(data.primaryContactUserId)) {
+      issues.push('Mark one assigned user as primary contact')
+    }
   }
   return issues
 }
@@ -112,6 +118,10 @@ export function validateForActivation(data: CorporateAccountFormData): { ok: boo
   if (data.teamLeaderUserIds.length === 0) issues.push('At least one team leader is required')
   if (!data.assignedTeamId) issues.push('Assigned team is required')
   if (data.assignedUserIds.length === 0) issues.push('At least one assigned user is required')
+  const eligibleContacts = new Set([...data.teamLeaderUserIds, ...data.assignedUserIds])
+  if (!data.primaryContactUserId || !eligibleContacts.has(data.primaryContactUserId)) {
+    issues.push('Mark one assigned user as primary contact')
+  }
   return { ok: issues.length === 0, issues }
 }
 

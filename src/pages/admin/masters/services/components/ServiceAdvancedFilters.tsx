@@ -1,7 +1,11 @@
 import { Select } from '@/design-system/UIComponents'
 import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 import type { ServiceMasterListFilters } from '@/shared/types/serviceMaster'
-import { SERVICE_TYPE_OPTIONS } from '../config/serviceTypeConfig'
+import { MASTER_STATUS_FILTER_OPTIONS } from '../../config/masterStatusConfig'
+
+export const EMPTY_SERVICE_LIST_FILTERS: ServiceMasterListFilters = {
+  status: 'all',
+}
 
 export interface ServiceAdvancedFilterFieldsProps {
   draft: ServiceMasterListFilters
@@ -10,14 +14,14 @@ export interface ServiceAdvancedFilterFieldsProps {
 
 export function ServiceAdvancedFilterFields({ draft, patch }: ServiceAdvancedFilterFieldsProps) {
   return (
-    <ListingFilterField label="Service type">
+    <ListingFilterField label="Status">
       <Select
-        placeholder="Select service type"
-        value={draft.serviceType ?? 'all'}
+        placeholder="Select status"
+        value={draft.status ?? 'all'}
         onChange={(value) =>
-          patch({ serviceType: value as ServiceMasterListFilters['serviceType'] })
+          patch({ status: value as ServiceMasterListFilters['status'] })
         }
-        options={[{ value: 'all', label: 'All types' }, ...SERVICE_TYPE_OPTIONS]}
+        options={[...MASTER_STATUS_FILTER_OPTIONS]}
         size="sm"
         fullWidth
       />
@@ -26,5 +30,5 @@ export function ServiceAdvancedFilterFields({ draft, patch }: ServiceAdvancedFil
 }
 
 export function hasServiceFiltersActive(filters: ServiceMasterListFilters): boolean {
-  return (filters.serviceType ?? 'all') !== 'all'
+  return (filters.status ?? 'all') !== 'all'
 }

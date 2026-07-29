@@ -1,4 +1,8 @@
 import type { BulkBatchRow, SingleApplicationRow } from '@/pages/customer/features/applications/data/applicationFlowData'
+import {
+  formatBulkApplicantListingLabel,
+  resolveBulkApplicantNames,
+} from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { isBulkRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { resolveApplicationCompanyName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
@@ -31,7 +35,14 @@ export function matchesMarineApplicationSearch(row: MarineApplicationRow, query:
   if (resolveApplicationCreatorLabel(row.createdByEmail).toLowerCase().includes(s)) return true
   if (row.jurisdiction?.toLowerCase().includes(s)) return true
   if (isBulkRow(row)) {
-    return row.country.toLowerCase().includes(s) || row.visaType.toLowerCase().includes(s)
+    const paxLabel = formatBulkApplicantListingLabel(row).toLowerCase()
+    const paxNames = resolveBulkApplicantNames(row).join(' ').toLowerCase()
+    return (
+      paxLabel.includes(s) ||
+      paxNames.includes(s) ||
+      row.country.toLowerCase().includes(s) ||
+      row.visaType.toLowerCase().includes(s)
+    )
   }
   return (
     row.applicantName.toLowerCase().includes(s) ||
@@ -55,7 +66,11 @@ export function computeMarineListingKpis(rows: MarineApplicationRow[]) {
   const verificationPending = rows.filter(row =>
     isMarineApplicationInQueueTab(row, 'verification_pending'),
   ).length
-  const pendingCorrections = rows.filter(row => row.operationalStatus === 'Correction Required').length
+  const pendingCorrections = rows.filter(
+    row =>
+      row.operationalStatus === 'Correction Required' ||
+      row.operationalStatus === 'Document Rejected',
+  ).length
   const dispatched = rows.filter(row => isMarineApplicationInQueueTab(row, 'dispatched')).length
 
   return {
@@ -92,6 +107,12 @@ export function getMarineApplicationEmptyState(
         emptyTitle: 'No applications pending submission',
         emptyDescription:
           'Form submission and QC completed; application is ready for Embassy/VFS submission.',
+      }
+    case 'pending_payment':
+      return {
+        emptyTitle: 'No applications pending payment',
+        emptyDescription:
+          'Applications awaiting embassy, VFS, or portal payment before submission continues appear here.',
       }
     case 'vfs_submission_pending':
       return {
@@ -131,9 +152,10 @@ export function mapMarineApplicationRowsToGridItems(rows: MarineApplicationRow[]
 
 export function exportMarineApplicationsToCsv(rows: MarineApplicationRow[]): string {
   const headers = [
+    'Creation date',
     'GLTS reference',
     'Type',
-    'Applicant',
+    'Pax name',
     'Company name',
     'Country',
     'Visa type',
@@ -147,10 +169,11 @@ export function exportMarineApplicationsToCsv(rows: MarineApplicationRow[]): str
 
   const lines = rows.map(row => {
     const type = isBulkRow(row) ? 'Bulk' : 'Single'
-    const applicant = isBulkRow(row) ? `${row.totalApplicants} travelers` : row.applicantName
+    const applicant = isBulkRow(row) ? formatBulkApplicantListingLabel(row) : row.applicantName
     const companyName = resolveApplicationCompanyName(row)
     const createdBy = getMarineApplicationCellValue(row, 'createdBy')
     return [
+      row.createdAt,
       row.id,
       type,
       applicant,

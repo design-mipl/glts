@@ -1,9 +1,12 @@
-export { default as AppShell } from './AppShell'
-export type { AppShellProps } from './AppShell'
+export { default as AppShell, useAppShellChrome } from './AppShell'
+export type { AppShellProps, AppShellTopbarMode, AppShellChromeContextValue } from './AppShell'
 
 export { default as Topbar, TOPBAR_HEIGHT } from './Topbar'
 export type { TopbarProps } from './Topbar'
-export type { UserMenuUser } from './Topbar/UserMenu'
+export { default as UserMenu } from './Topbar/UserMenu'
+export type { UserMenuUser, UserMenuProps } from './Topbar/UserMenu'
+export { default as MobileNavStrip } from './Topbar/MobileNavStrip'
+export type { MobileNavStripProps } from './Topbar/MobileNavStrip'
 
 export { default as Sidebar, isNavActive, renderNavConfig } from './Sidebar'
 export type { SidebarProps, NavConfig } from './Sidebar'

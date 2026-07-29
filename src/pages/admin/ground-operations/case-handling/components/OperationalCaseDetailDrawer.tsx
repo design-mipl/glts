@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
 import dayjs from 'dayjs'
 import {
@@ -16,13 +16,22 @@ import { isLogisticsStatus, isOperationsDeskStatus } from '@/shared/types/operat
 import { operationalCaseHandlingService } from '@/shared/services/operationalCaseHandlingService'
 import { ApplicationTrackingUrlLink } from '@/shared/components/ApplicationTrackingUrlLink'
 import { resolveApplicationTrackingUrl } from '@/shared/services/countryMasterService'
-import { priorityBadgeColor, statusBadgeColor, formatJoiningDate } from '../utils/operationalCaseHandlingUtils'
+import { priorityBadgeColor, statusBadgeColor, formatJoiningDate, resolveOperationalCaseAssignmentFields } from '../utils/operationalCaseHandlingUtils'
 import { GroundServicesChecklist } from './GroundServicesChecklist'
 import { ApplicationFeePaidByField } from './ApplicationFeePaidByField'
-import { SubmissionVfsChargesSummary } from './SubmissionVfsChargesSummary'
-import { resolveOperationalCaseSubmissionSnapshot } from '@/shared/utils/operationalCaseSubmissionUtils'
+import { OnSiteFeeDocumentsSection } from './OnSiteFeeDocumentsSection'
+import {
+  getSubmissionPaidApplicationFeeIds,
+  resolveOperationalCasePortalDates,
+  resolveOperationalCaseSubmissionSnapshot,
+  withSubmissionPaidFeeState,
+  type OperationalCaseSubmissionSnapshot,
+} from '@/shared/utils/operationalCaseSubmissionUtils'
+import { OperationalPaymentDetailsSection } from './OperationalPaymentDetailsSection'
+import { OperationalFundAllocationSection } from './OperationalFundAllocationSection'
 import { OperationalTimeline } from './OperationalTimeline'
 import { OperationalDocumentVault } from './OperationalDocumentVault'
+import { PassengerApplicationDocumentVault } from '@/shared/components/PassengerApplicationDocumentVault'
 
 const DETAIL_DRAWER_WIDTH = 560
 
@@ -61,6 +70,130 @@ function SectionHeading({ children }: { children: string }) {
     <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12, color: 'text.primary' }}>
       {children}
     </Typography>
+  )
+}
+
+function ContextMetaItem({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <Stack spacing={0.25} minWidth={0}>
+      <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ fontSize: 11 }}>
+        {label}
+      </Typography>
+      <Typography
+        variant="body2"
+        color="text.primary"
+        sx={{
+          fontSize: 13,
+          fontWeight: 500,
+          lineHeight: 1.35,
+          wordBreak: 'break-word',
+          fontVariantNumeric: mono ? 'tabular-nums' : undefined,
+        }}
+      >
+        {value?.trim() ? value : '—'}
+      </Typography>
+    </Stack>
+  )
+}
+
+function ContextGroup({
+  title,
+  children,
+}: {
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <Stack spacing={1.25}>
+      <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12, color: 'text.primary' }}>
+        {title}
+      </Typography>
+      {children}
+    </Stack>
+  )
+}
+
+function MetaGrid({ children }: { children: ReactNode }) {
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 2, rowGap: 1.5 }}>
+      {children}
+    </Box>
+  )
+}
+
+function PassengerBatchContextCard({
+  record,
+  submissionSnapshot,
+}: {
+  record: OperationalCase
+  submissionSnapshot: OperationalCaseSubmissionSnapshot | null
+}) {
+  const dates = resolveOperationalCasePortalDates(record, submissionSnapshot)
+  const assignment = resolveOperationalCaseAssignmentFields(record)
+
+  return (
+    <Box
+      sx={{
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1.5,
+        overflow: 'hidden',
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Stack spacing={0} divider={<Divider />}>
+        <Box sx={{ px: 1.75, py: 1.5 }}>
+          <ContextGroup title="Passenger details">
+            <MetaGrid>
+              <ContextMetaItem label="Passport" value={record.passportNumber} mono />
+              <ContextMetaItem label="CDC" value={record.cdcNumber} mono />
+              <ContextMetaItem label="Company" value={record.companyName} />
+              <ContextMetaItem label="Vessel" value={record.vesselName} />
+              <ContextMetaItem label="Visa" value={`${record.country} · ${record.visaType}`} />
+              <ContextMetaItem label="Jurisdiction" value={record.jurisdiction} />
+              <ContextMetaItem label="Joining date" value={formatJoiningDate(record.joiningDate)} />
+              <ContextMetaItem label="Crew count" value={String(record.applicantCount)} />
+            </MetaGrid>
+          </ContextGroup>
+        </Box>
+
+        <Box sx={{ px: 1.75, py: 1.5 }}>
+          <ContextGroup title="Operations">
+            <MetaGrid>
+              <Box sx={{ gridColumn: '1 / -1' }}>
+                <ContextMetaItem label="Next action" value={record.nextAction} />
+              </Box>
+              <ContextMetaItem label="Allocated by" value={assignment.allocatedBy} />
+              <ContextMetaItem label="Allocated to" value={assignment.allocatedTo} />
+            </MetaGrid>
+          </ContextGroup>
+        </Box>
+
+        <Box sx={{ px: 1.75, py: 1.5, bgcolor: 'action.hover' }}>
+          <ContextGroup title="Submission details">
+            <MetaGrid>
+              <ContextMetaItem
+                label="Online Submission Date"
+                value={formatDisplayDate(dates.onlineSubmissionDate)}
+              />
+              <ContextMetaItem label="Online Submitted By" value={dates.submittedBy} />
+              <ContextMetaItem
+                label="VFS Submission Date"
+                value={formatDisplayDate(dates.vfsSubmissionDate)}
+              />
+              <ContextMetaItem
+                label="Tentative Collection Date"
+                value={formatDisplayDate(dates.tentativeCollectionDate)}
+              />
+              <ContextMetaItem
+                label="Collection Date"
+                value={formatDisplayDate(dates.collectionDate)}
+              />
+            </MetaGrid>
+          </ContextGroup>
+        </Box>
+      </Stack>
+    </Box>
   )
 }
 
@@ -104,6 +237,19 @@ function OperationalCaseDetailContent({
     () => resolveOperationalCaseSubmissionSnapshot(record),
     [record],
   )
+  const portalDates = useMemo(
+    () => resolveOperationalCasePortalDates(record, submissionSnapshot),
+    [record, submissionSnapshot],
+  )
+  const lockedOnSiteFeeIds = useMemo(
+    () => getSubmissionPaidApplicationFeeIds(record.applicationFees, submissionSnapshot),
+    [record.applicationFees, submissionSnapshot],
+  )
+  const onSiteFees = useMemo(() => {
+    const withPaid = withSubmissionPaidFeeState(record.applicationFees, submissionSnapshot)
+    if (!isViewOnly) return withPaid
+    return withPaid.filter(service => service.selected || lockedOnSiteFeeIds.has(service.id))
+  }, [isViewOnly, lockedOnSiteFeeIds, record.applicationFees, submissionSnapshot])
 
   useEffect(() => {
     setActiveTab('overview')
@@ -140,29 +286,21 @@ function OperationalCaseDetailContent({
           <Stack spacing={2}>
             <Stack spacing={1.25}>
               <SectionHeading>Passenger & batch context</SectionHeading>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
-                <ReadField label="Operational ID" value={record.operationalId} />
-                <ReadField label="Passenger name" value={record.passengerName} />
-                <ReadField label="Rank" value={record.passengerRank} />
-                <ReadField label="Passport" value={record.passportNumber} />
-                <ReadField label="CDC" value={record.cdcNumber} />
-                <ReadField label="Batch ID" value={record.applicationId} />
-                <ReadField label="Company" value={record.companyName} />
-                <ReadField label="Vessel" value={record.vesselName} />
-                <ReadField label="Visa" value={`${record.country} · ${record.visaType}`} />
-                <ReadField label="Jurisdiction" value={record.jurisdiction} />
-                <ReadField label="Joining date" value={formatJoiningDate(record.joiningDate)} />
-                <ReadField label="Next action" value={record.nextAction} />
-                <ReadField label="Crew count" value={String(record.applicantCount)} />
-                <ReadField label="Assigned team" value={record.assignedTeam} />
-                <ReadField label="Executive" value={record.assignedExecutive} />
-              </Box>
+              <PassengerBatchContextCard
+                record={record}
+                submissionSnapshot={submissionSnapshot}
+              />
             </Stack>
 
             <Divider />
 
             <Stack spacing={1.25}>
               <SectionHeading>Document vault</SectionHeading>
+              <PassengerApplicationDocumentVault
+                applicationId={record.applicationId}
+                gltsApplicantId={record.gltsApplicantId}
+                sequenceNo={record.passengerSequence}
+              />
               <OperationalDocumentVault record={record} />
             </Stack>
           </Stack>
@@ -183,31 +321,60 @@ function OperationalCaseDetailContent({
             {isViewOnly && record.groundServices.some(service => service.selected) ? <Divider /> : null}
 
             <Stack spacing={1.25}>
-              <SectionHeading>VFS & application fees</SectionHeading>
-              <SubmissionVfsChargesSummary snapshot={submissionSnapshot} />
-              <Stack spacing={0.75}>
-                <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12, color: 'text.primary' }}>
-                  On-site fees & supplements
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
-                  Record additional VFS charges handled by the ground operations team.
-                </Typography>
-              </Stack>
+              <SectionHeading>On-site fees</SectionHeading>
               <GroundServicesChecklist
-                services={
-                  isViewOnly
-                    ? record.applicationFees.filter(service => service.selected)
-                    : record.applicationFees
-                }
+                services={onSiteFees}
+                lockedServiceIds={lockedOnSiteFeeIds}
                 readOnly={isViewOnly}
                 onServiceChange={
                   isViewOnly
                     ? undefined
                     : (feeId, patch) => {
+                        if (lockedOnSiteFeeIds.has(feeId)) return
                         operationalCaseHandlingService.updateApplicationFee(record.id, feeId, patch)
                         onUpdated()
                       }
                 }
+              />
+              <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12, color: 'text.primary' }}>
+                GLTS charges
+              </Typography>
+              {(isViewOnly ? (record.gltsOpsFees ?? []).some(service => service.selected) : true) ? (
+                <GroundServicesChecklist
+                  services={
+                    isViewOnly
+                      ? (record.gltsOpsFees ?? []).filter(service => service.selected)
+                      : (record.gltsOpsFees ?? [])
+                  }
+                  readOnly={isViewOnly}
+                  onServiceChange={
+                    isViewOnly
+                      ? undefined
+                      : (feeId, patch) => {
+                          operationalCaseHandlingService.updateGltsOpsFee(record.id, feeId, patch)
+                          onUpdated()
+                        }
+                  }
+                />
+              ) : (
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12 }}>
+                  No GLTS charges recorded for this passenger.
+                </Typography>
+              )}
+              <OnSiteFeeDocumentsSection
+                attachmentNames={record.attachmentNames}
+                readOnly={isViewOnly}
+                onAdd={fileNames => {
+                  operationalCaseHandlingService.addAttachments(record.id, fileNames)
+                  onUpdated()
+                }}
+                onRemove={fileName => {
+                  operationalCaseHandlingService.removeAttachment(record.id, fileName)
+                  onUpdated()
+                }}
+                onError={message => {
+                  showToast({ title: 'Upload failed', description: message, variant: 'error' })
+                }}
               />
               <ApplicationFeePaidByField
                 value={record.applicationFeesPaidBy ?? 'passenger'}
@@ -220,6 +387,18 @@ function OperationalCaseDetailContent({
                         onUpdated()
                       }
                 }
+              />
+            </Stack>
+
+            <OperationalFundAllocationSection record={record} />
+
+            <Divider />
+
+            <Stack spacing={1.25}>
+              <OperationalPaymentDetailsSection
+                record={record}
+                readOnly={isViewOnly}
+                onUpdated={onUpdated}
               />
             </Stack>
 
@@ -275,13 +454,21 @@ function OperationalCaseDetailContent({
             <Stack spacing={1.25}>
               <SectionHeading>Submission details</SectionHeading>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
+                <ReadField
+                  label="Online Submission Date"
+                  value={formatDisplayDate(portalDates.onlineSubmissionDate)}
+                />
+                <ReadField
+                  label="Tentative Collection Date"
+                  value={formatDisplayDate(portalDates.tentativeCollectionDate)}
+                />
                 {canEditCase ? (
                   <>
-                    <FormField label="Submission Date">
+                    <FormField label="VFS Submission Date">
                       <DatePicker
                         value={parseDateString(submissionDate)}
                         onChange={date => setSubmissionDate(formatDateForStorage(date))}
-                        placeholder="Select submission date"
+                        placeholder="Select VFS submission date"
                         size="sm"
                         fullWidth
                       />
@@ -299,7 +486,7 @@ function OperationalCaseDetailContent({
                 ) : (
                   <>
                     <ReadField
-                      label="Submission Date"
+                      label="VFS Submission Date"
                       value={formatDisplayDate(record.submissionDate)}
                     />
                     <ReadField
@@ -334,7 +521,8 @@ function OperationalCaseDetailContent({
                       if (!submissionDate.trim() || !submissionReferenceNumber.trim()) {
                         showToast({
                           title: 'Missing required fields',
-                          description: 'Submission date and reference number are required to submit.',
+                          description:
+                            'VFS submission date and reference number are required to submit.',
                           variant: 'error',
                         })
                         return

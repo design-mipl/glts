@@ -42,7 +42,12 @@ export function AdminOverlayFormSection({
 
   return (
     <Box sx={getAdminOverlayFormSectionSx(importance, theme)}>
-      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1}>
+      <Stack
+        direction="row"
+        alignItems={description ? 'flex-start' : 'center'}
+        justifyContent="space-between"
+        spacing={1}
+      >
         <Box sx={{ minWidth: 0 }}>
           <Typography
             variant="subtitle2"

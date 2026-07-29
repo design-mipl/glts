@@ -93,7 +93,7 @@ export function AgreementPricingMatrixTable({
         {data.pricingMatrix.length === 0 ? (
           <Box sx={{ py: 3, px: 2, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-              No pricing rows yet. Add at least one country, visa type, and service from Service Master.
+              No pricing rows yet. Add at least one country, visa type, and service from GLTS Fee Master.
             </Typography>
           </Box>
         ) : (

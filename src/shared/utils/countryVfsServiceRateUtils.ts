@@ -7,11 +7,13 @@ export function mapCountryVfsRatesToChargeLines(
   return [...rates]
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((rate) => ({
-      id: rate.id,
-      serviceName: rate.serviceName,
-      amount: rate.amount,
-      gstIncluded: rate.gstIncluded,
-      embassyFeeServiceId: rate.embassyFeeServiceId,
+    id: rate.id,
+    serviceName: rate.serviceName,
+    amount: rate.amount,
+    gstIncluded: rate.gstIncluded,
+    embassyFeeServiceId: rate.embassyFeeServiceId,
+    vendorId: rate.vendorId,
+    vendorName: rate.vendorName,
     }))
 }
 

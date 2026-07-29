@@ -10,7 +10,8 @@ export type ApplicationProcessingStageId =
 export type ApplicationProcessingTimelineStatus = 'completed' | 'active' | 'pending'
 
 export interface ApplicationProcessingTimelineStep {
-  id: ApplicationProcessingStageId
+  /** Fixed legacy stage id, or Workflow Master status id when country-driven. */
+  id: string
   label: string
   status: ApplicationProcessingTimelineStatus
   /** Formatted display date when the stage was reached or is in progress */
@@ -18,7 +19,7 @@ export interface ApplicationProcessingTimelineStep {
 }
 
 export type ApplicationProcessingStageDates = Partial<
-  Record<ApplicationProcessingStageId, string>
+  Record<ApplicationProcessingStageId | string, string>
 >
 
 export const APPLICATION_PROCESSING_STAGE_ORDER: ApplicationProcessingStageId[] = [
@@ -32,7 +33,7 @@ export const APPLICATION_PROCESSING_STAGE_ORDER: ApplicationProcessingStageId[] 
 ]
 
 export const APPLICATION_PROCESSING_STAGE_LABELS: Record<ApplicationProcessingStageId, string> = {
-  ready: 'Ready of submission',
+  ready: 'Ready for submission',
   submitted: 'Submitted',
   appointment: 'Appointment booked',
   embassy: 'Embassy processing',

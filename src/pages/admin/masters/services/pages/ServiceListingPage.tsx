@@ -16,7 +16,7 @@ import {
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { serviceMasterService } from '@/shared/services/serviceMasterService'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
-import { ServiceAdvancedFilterFields, hasServiceFiltersActive } from '../components/ServiceAdvancedFilters'
+import { ServiceAdvancedFilterFields, EMPTY_SERVICE_LIST_FILTERS, hasServiceFiltersActive } from '../components/ServiceAdvancedFilters'
 import { buildServiceColumns } from '../components/ServiceTableColumns'
 import { ServiceFormDrawer } from '../components/ServiceFormDrawer'
 import type { ServiceMasterListFilters } from '@/shared/types/serviceMaster'
@@ -37,7 +37,7 @@ export function ServiceListingPage() {
   const [statusOpen, setStatusOpen] = useState(false)
   const [statusTarget, setStatusTarget] = useState<ServiceMaster | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
-  const [filters, setFilters] = useState<ServiceMasterListFilters>({ serviceType: 'all' })
+  const [filters, setFilters] = useState<ServiceMasterListFilters>(EMPTY_SERVICE_LIST_FILTERS)
 
   const loadRows = useCallback(() => {
     setLoading(true)
@@ -99,7 +99,7 @@ export function ServiceListingPage() {
     serviceMasterService.setStatus(statusTarget.id, nextStatus)
     setActionLoading(false)
     showToast({
-      title: nextStatus === 'active' ? 'Service activated' : 'Service deactivated',
+      title: nextStatus === 'active' ? 'Fee activated' : 'Fee deactivated',
       variant: 'success',
     })
     setStatusOpen(false)
@@ -117,10 +117,10 @@ export function ServiceListingPage() {
       <AdminListingShell
         stickyPageHeader={
           <AdminListingStickyHeader
-            title="Service Master"
-            description="Maintain services used in quotations, invoices, pricing, and billing."
+            title="GLTS Fee Master"
+            description="Maintain GLTS fees used in quotations, invoices, pricing, and billing."
             actions={
-              <Button label="Add Service" startIcon={<Plus size={14} />} onClick={openCreate} />
+              <Button label="Add Fee" startIcon={<Plus size={14} />} onClick={openCreate} />
             }
           />
         }
@@ -128,7 +128,7 @@ export function ServiceListingPage() {
           <AdminListingToolbar
             searchValue={listing.tableState.searchQuery}
             onSearch={listing.handleSearch}
-            searchPlaceholder="Search service name, type, or SAC…"
+            searchPlaceholder="Search fee name, SAC, or GST…"
             onExport={handleExport}
             columns={toolbarColumns}
             hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
@@ -142,7 +142,7 @@ export function ServiceListingPage() {
                 setFilters(next)
                 listing.setTableState((state) => ({ ...state, page: 0 }))
               },
-              onClear: () => setFilters({ serviceType: 'all' }),
+              onClear: () => setFilters(EMPTY_SERVICE_LIST_FILTERS),
               hasActive: hasServiceFiltersActive,
               children: (draft, patch) => (
                 <ServiceAdvancedFilterFields draft={draft} patch={patch} />
@@ -162,8 +162,8 @@ export function ServiceListingPage() {
             onColumnFiltersChange={listing.setColumnFilters}
             getCellValue={getServiceCellValue}
             stickyHeader
-            enableColumnSort={false}
-            enableColumnFilters={false}
+            enableColumnSort
+            enableColumnFilters
             loading={loading}
             emptyTitle={emptyState.emptyTitle}
             emptyDescription={emptyState.emptyDescription}
@@ -203,7 +203,7 @@ export function ServiceListingPage() {
         }}
         onConfirm={handleConfirmStatus}
         loading={actionLoading}
-        title={statusTarget?.status === 'active' ? 'Deactivate service?' : 'Activate service?'}
+        title={statusTarget?.status === 'active' ? 'Deactivate fee?' : 'Activate fee?'}
         description={
           statusTarget
             ? `Set "${statusTarget.serviceName}" to ${statusTarget.status === 'active' ? 'inactive' : 'active'}?`

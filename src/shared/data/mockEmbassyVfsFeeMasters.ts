@@ -20,7 +20,7 @@ function service(
 const FRANCE_STICKER_TYPE_C: EmbassyVfsFeeRateCard = {
   id: 'evfs-fr-sticker-c',
   country: 'France',
-  visaType: 'Sticker - Type C',
+  visaType: 'Sticker · Type C',
   status: 'active',
   notes: 'VFS France short-stay sticker visa service catalogue.',
   ...AUDIT,
@@ -35,19 +35,6 @@ const FRANCE_STICKER_TYPE_C: EmbassyVfsFeeRateCard = {
     service('evfs-fr-08', 'One-Way Courier', 450),
     service('evfs-fr-09', 'Two-Way Courier', 800),
   ],
-}
-
-/** Schengen crew sticker — used by default marine demo applications. */
-const SCHENGEN_STICKER_TYPE_C: EmbassyVfsFeeRateCard = {
-  id: 'evfs-schengen-sticker-c',
-  country: 'Schengen',
-  visaType: 'Sticker · Type C',
-  status: 'active',
-  ...AUDIT,
-  services: FRANCE_STICKER_TYPE_C.services.map(row => ({
-    ...row,
-    id: row.id.replace('evfs-fr', 'evfs-schengen'),
-  })),
 }
 
 /** Generic fallback when no country/visa card is configured yet. */
@@ -76,6 +63,5 @@ export const DEFAULT_EMBASSY_VFS_FEE_RATE_CARD: EmbassyVfsFeeRateCard = {
 
 export const SEED_EMBASSY_VFS_FEE_RATE_CARDS: EmbassyVfsFeeRateCard[] = [
   FRANCE_STICKER_TYPE_C,
-  SCHENGEN_STICKER_TYPE_C,
   DEFAULT_EMBASSY_VFS_FEE_RATE_CARD,
 ]

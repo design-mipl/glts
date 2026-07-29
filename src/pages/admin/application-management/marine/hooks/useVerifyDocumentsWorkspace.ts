@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { isFormAssistExternallySubmitted } from '@/shared/services/applicationFormAssistService'
+import { applicationProcessingStatusService } from '@/shared/services/applicationProcessingStatusService'
 import type { ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
 import {
   applicationVerificationService,
@@ -12,6 +13,7 @@ import type {
   TravelTicketWorkflow,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
+import { isApplicantDocumentSatisfied } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import {
   buildOverviewFromDetail,
   buildVerifyTimeline,
@@ -22,6 +24,8 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
   const applicantParam = searchParams.get('applicant')
 
   const [selectedTravelerId, setSelectedTravelerId] = useState<string | null>(null)
+  const [processingStatusTick, setProcessingStatusTick] = useState(0)
+  const [statusModalOpen, setStatusModalOpen] = useState(false)
   const [workspace, setWorkspace] = useState(() =>
     applicationId ? applicationVerificationService.getWorkspace(applicationId) : { ok: false as const },
   )
@@ -95,15 +99,58 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
     }
   }, [selectedRow, selectedTravelerId])
 
+  const processingStatusContext = useMemo(() => {
+    if (!applicationId || !selectedRow) return undefined
+    const required = selectedRow.documents.filter((doc) => doc.required)
+    const docsDone =
+      required.length === 0 || required.every((doc) => isApplicantDocumentSatisfied(doc))
+    const allVerified = required.length > 0 && required.every((doc) => doc.status === 'verified')
+    const countryName = detail?.application?.country ?? listingRow?.country
+    const visaTypeLabel = detail?.application?.visaType ?? listingRow?.visaType
+    return applicationProcessingStatusService.ensureState({
+      applicationId,
+      travelerRowId: selectedRow.id,
+      docsDone,
+      allVerified,
+      countryName,
+      visaTypeLabel,
+    })
+  }, [applicationId, selectedRow, detail, listingRow, processingStatusTick])
+
   const timelineSteps = useMemo(
     () =>
       buildVerifyTimeline(
         selectedRow,
         isSubmitted,
         applicationId ? isFormAssistExternallySubmitted(applicationId, selectedRow?.id) : false,
+        {
+          countryName: detail?.application?.country ?? listingRow?.country,
+          visaTypeLabel: detail?.application?.visaType ?? listingRow?.visaType,
+          operationalStatus: listingRow?.operationalStatus ?? detail?.operationalStatus,
+          processingStage: listingRow?.processingStage,
+          workflowId: processingStatusContext?.workflowId,
+          currentStatusId: processingStatusContext?.currentStatusId,
+          heldFromStatusId: processingStatusContext?.heldFromStatusId,
+        },
       ),
-    [selectedRow, isSubmitted, applicationId],
+    [
+      selectedRow,
+      isSubmitted,
+      applicationId,
+      detail,
+      listingRow,
+      processingStatusContext,
+      processingStatusTick,
+    ],
   )
+
+  const refreshProcessingStatus = useCallback(() => {
+    setProcessingStatusTick((n) => n + 1)
+    reload()
+  }, [reload])
+
+  const openStatusModal = useCallback(() => setStatusModalOpen(true), [])
+  const closeStatusModal = useCallback(() => setStatusModalOpen(false), [])
 
   const globalDocuments = useMemo(
     () =>
@@ -114,7 +161,12 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
   )
 
   const updateTravelerDoc = useCallback(
-    (documentId: string, status: ApplicantDocumentStatus, comment?: string) => {
+    (
+      documentId: string,
+      status: ApplicantDocumentStatus,
+      comment?: string,
+      options?: { customerVisible?: boolean },
+    ) => {
       if (!applicationId || !selectedRow) return
       setWorkspace(
         applicationVerificationService.updateTravelerDocumentStatus(
@@ -123,6 +175,7 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
           documentId,
           status,
           comment,
+          options,
         ),
       )
     },
@@ -130,7 +183,13 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
   )
 
   const updateTravelerDocForRow = useCallback(
-    (rowId: string, documentId: string, status: ApplicantDocumentStatus, comment?: string) => {
+    (
+      rowId: string,
+      documentId: string,
+      status: ApplicantDocumentStatus,
+      comment?: string,
+      options?: { customerVisible?: boolean },
+    ) => {
       if (!applicationId) return
       setWorkspace(
         applicationVerificationService.updateTravelerDocumentStatus(
@@ -139,6 +198,7 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
           documentId,
           status,
           comment,
+          options,
         ),
       )
     },
@@ -175,7 +235,12 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
   )
 
   const updateGlobalDoc = useCallback(
-    (documentId: string, status: ApplicantDocumentStatus, comment?: string) => {
+    (
+      documentId: string,
+      status: ApplicantDocumentStatus,
+      comment?: string,
+      options?: { customerVisible?: boolean },
+    ) => {
       if (!applicationId) return
       setWorkspace(
         applicationVerificationService.updateGlobalDocumentStatus(
@@ -183,6 +248,7 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
           documentId,
           status,
           comment,
+          options,
         ),
       )
     },
@@ -197,6 +263,7 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
         travelTicket?: Partial<TravelTicketWorkflow>
         insurance?: Partial<InsuranceWorkflow>
         status?: ApplicantDocumentStatus
+        uploadedFileName?: string
       },
     ) => {
       if (!applicationId || !selectedRow) return
@@ -211,6 +278,16 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
     },
     [applicationId, selectedRow],
   )
+
+  const returnToVerificationPending = useCallback(() => {
+    if (!applicationId) return
+    setWorkspace(applicationVerificationService.returnToVerificationPending(applicationId))
+  }, [applicationId])
+
+  const notifyCustomerOfDocumentRejection = useCallback(() => {
+    if (!applicationId) return
+    setWorkspace(applicationVerificationService.notifyCustomerOfDocumentRejection(applicationId))
+  }, [applicationId])
 
   const saveDraft = useCallback(() => {
     if (!applicationId) return
@@ -235,6 +312,11 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
     setSelectedTravelerId,
     selectedRow,
     timelineSteps,
+    processingStatusContext,
+    statusModalOpen,
+    openStatusModal,
+    closeStatusModal,
+    refreshProcessingStatus,
     globalDocuments,
     updateTravelerDoc,
     updateTravelerDocForRow,
@@ -242,6 +324,8 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
     updateTravelerOriginalCollection,
     updateTravelerDocumentWorkflow,
     updateGlobalDoc,
+    returnToVerificationPending,
+    notifyCustomerOfDocumentRejection,
     saveDraft,
     submitVerification,
     reload,

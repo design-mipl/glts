@@ -14,6 +14,29 @@ import { shouldShowJurisdictionNodes } from '@/shared/utils/jurisdictionRequirem
 
 const COMMON_DOCUMENT_IDS = new Set(['passport', 'photo'])
 
+/** Always required on every application checklist (upload or GLTS arrange workflow). */
+const UNIVERSAL_APPLICATION_DOCUMENTS: CountryDocumentChecklistItem[] = [
+  { documentId: 'travel-ticket', mandatory: true, sortOrder: 900 },
+  { documentId: 'insurance', mandatory: true, sortOrder: 901 },
+]
+
+function ensureUniversalApplicationDocuments(
+  items: CountryDocumentChecklistItem[],
+): CountryDocumentChecklistItem[] {
+  const present = new Set(items.map((item) => item.documentId))
+  const missing = UNIVERSAL_APPLICATION_DOCUMENTS.filter((doc) => !present.has(doc.documentId))
+  if (missing.length === 0) return items
+
+  const maxOrder = items.reduce((max, item) => Math.max(max, item.sortOrder ?? 0), -1)
+  return [
+    ...items,
+    ...missing.map((doc, index) => ({
+      ...doc,
+      sortOrder: maxOrder + 1 + index,
+    })),
+  ]
+}
+
 type LegacyChecklistItem = CountryDocumentChecklistItem & {
   name?: string
   ocrEnabled?: boolean
@@ -244,39 +267,45 @@ function visaTypeDocumentRulesToChecklist(
 }
 
 export function resolveVisaApplicationDocuments(visaType: CountryVisaType): CountryDocumentChecklistItem[] {
+  let applicationDocs: CountryDocumentChecklistItem[]
+
   if (shouldShowJurisdictionNodes(visaType)) {
     const primaryJurisdiction = visaType.jurisdictions?.find((j) => j.status === 'active')
     if (primaryJurisdiction?.documents?.length) {
-      return jurisdictionRulesToChecklist(
+      applicationDocs = jurisdictionRulesToChecklist(
         primaryJurisdiction.documents.filter((d) => d.group !== 'optional'),
       )
+    } else {
+      applicationDocs = []
     }
-    return []
+  } else {
+    const visaTypeRules = visaType.documents ?? []
+    applicationDocs = visaTypeRules.length
+      ? visaTypeDocumentRulesToChecklist(visaTypeRules, false)
+      : (visaType.applicationDocuments ?? []).map((item, index) => ({
+          ...item,
+          sortOrder: item.sortOrder ?? index,
+          originalDocument: false,
+        }))
   }
 
-  const visaTypeRules = visaType.documents ?? []
-  if (visaTypeRules.length) {
-    return visaTypeDocumentRulesToChecklist(visaTypeRules, false)
-  }
-
-  return (visaType.applicationDocuments ?? []).map((item, index) => ({
-    ...item,
-    sortOrder: item.sortOrder ?? index,
-    originalDocument: false,
-  }))
+  return ensureUniversalApplicationDocuments(applicationDocs)
 }
 
 /**
  * Resolves the merged common + application checklist for a portal offering.
  * When jurisdiction is enabled, uses the selected jurisdiction's document rules.
  * When disabled (e-Visa), uses visa-type rules with physical originals forced off.
+ * Travel Ticket and Insurance are always appended when missing.
  */
 export function resolveOfferingDocumentChecklistItems(
   visaType: CountryVisaType | undefined,
   commonDocuments: CountryDocumentChecklistItem[],
   jurisdictionId?: string,
 ): CountryDocumentChecklistItem[] {
-  if (!visaType) return commonDocuments
+  if (!visaType) {
+    return ensureUniversalApplicationDocuments(commonDocuments)
+  }
 
   let applicationDocs: CountryDocumentChecklistItem[]
 
@@ -301,7 +330,9 @@ export function resolveOfferingDocumentChecklistItems(
         }))
   }
 
-  return mergeSegmentChecklist(commonDocuments, applicationDocs)
+  return ensureUniversalApplicationDocuments(
+    mergeSegmentChecklist(commonDocuments, applicationDocs),
+  )
 }
 
 export function mergeSegmentChecklist(

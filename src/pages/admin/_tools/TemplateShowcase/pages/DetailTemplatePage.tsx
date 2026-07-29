@@ -111,7 +111,7 @@ export function DetailTemplatePage() {
                   Supported operations
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 0.75 }}>
-                  Countries: Kenya, UAE, Schengen, Japan, Singapore
+                  Countries: Kenya, UAE, France, Japan, Singapore
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Visa types: Tourist, Business, Crew/Marine, Transit

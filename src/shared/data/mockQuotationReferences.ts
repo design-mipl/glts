@@ -134,7 +134,7 @@ export const SEED_QUOTATION_REFERENCES: QuotationReference[] = [
     pricingMatrix: [
       {
         id: 'qpr-4',
-        country: 'Schengen',
+        country: 'France',
         countryId: 'CNT-104',
         visaType: 'Agent Tourist Visa',
         workflowType: 'B2B Agent',

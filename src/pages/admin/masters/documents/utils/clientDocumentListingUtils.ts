@@ -5,13 +5,14 @@ import {
 import type { ClientDocumentMaster } from '@/shared/types/clientDocumentMaster'
 import type { MasterApplicability } from '@/shared/types/masterCommon'
 import { masterStatusLabel } from '../../config/masterStatusConfig'
-import { formatMasterDate } from '../../utils/masterListingUtils'
 
 export function getClientDocumentCellValue(row: ClientDocumentMaster, key: string): string {
   if (key === 'status') return masterStatusLabel[row.status]
   if (key === 'isMandatory') return row.isMandatory ? 'Yes' : 'No'
-  if (key === 'createdAt') return formatMasterDate(row.createdAt)
-  if (key === 'updatedAt') return formatMasterDate(row.updatedAt)
+  if (key === 'createdAudit') return row.createdAt
+  if (key === 'updatedAudit') return row.updatedAt
+  if (key === 'createdAt') return row.createdAt
+  if (key === 'updatedAt') return row.updatedAt
   if (key === 'applicableFor') return formatApplicabilityLabels(row.applicableFor)
   return String((row as unknown as Record<string, unknown>)[key] ?? '')
 }

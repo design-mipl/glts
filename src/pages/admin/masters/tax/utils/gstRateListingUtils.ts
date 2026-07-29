@@ -1,12 +1,13 @@
 import type { GstRate } from '@/shared/types/taxMaster'
 import { masterStatusLabel } from '../../config/masterStatusConfig'
-import { formatMasterDate } from '../../utils/masterListingUtils'
 
 export function getGstRateCellValue(row: GstRate, key: string): string {
   if (key === 'status') return masterStatusLabel[row.status]
-  if (key === 'createdAt') return formatMasterDate(row.createdAt)
-  if (key === 'updatedAt') return formatMasterDate(row.updatedAt)
-  if (key === 'ratePercent') return `${row.ratePercent}%`
+  if (key === 'createdAudit') return row.createdAt
+  if (key === 'updatedAudit') return row.updatedAt
+  if (key === 'createdAt') return row.createdAt
+  if (key === 'updatedAt') return row.updatedAt
+  if (key === 'ratePercent') return String(row.ratePercent).padStart(6, '0')
   return String((row as unknown as Record<string, unknown>)[key] ?? '')
 }
 

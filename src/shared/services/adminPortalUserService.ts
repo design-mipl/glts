@@ -47,13 +47,16 @@ function permissionsEqual(
 
 export const adminPortalUserService = {
   list(filters: AdminPortalUserListFilters = {}): AdminPortalUser[] {
-    const { status = 'all', teamId = 'all', designation = 'all' } = filters
+    const { status = 'all', teamId = 'all', departmentId = 'all', designation = 'all' } = filters
     let rows = [...userStore]
     if (status !== 'all') {
       rows = rows.filter((row) => row.status === status)
     }
     if (teamId !== 'all') {
       rows = rows.filter((row) => row.teamId === teamId)
+    }
+    if (departmentId !== 'all') {
+      rows = rows.filter((row) => row.departmentId === departmentId)
     }
     if (designation !== 'all') {
       rows = rows.filter((row) => row.designation === designation)
@@ -86,6 +89,12 @@ export const adminPortalUserService = {
       .sort((a, b) => a.fullName.localeCompare(b.fullName))
   },
 
+  listByDepartmentId(departmentId: string): AdminPortalUser[] {
+    return userStore
+      .filter((row) => row.departmentId === departmentId)
+      .sort((a, b) => a.fullName.localeCompare(b.fullName))
+  },
+
   listDesignations(): string[] {
     const set = new Set(userStore.map((row) => row.designation).filter(Boolean))
     return Array.from(set).sort((a, b) => a.localeCompare(b))
@@ -106,6 +115,7 @@ export const adminPortalUserService = {
       phone: data.phone.trim(),
       employeeId: data.employeeId.trim(),
       teamId: data.teamId,
+      departmentId: data.departmentId,
       designation: data.designation.trim(),
       roleTemplateId: data.roleTemplateId || null,
       profilePhotoUrl: data.profilePhotoUrl || null,
@@ -149,6 +159,7 @@ export const adminPortalUserService = {
       phone: data.phone.trim(),
       employeeId: data.employeeId.trim(),
       teamId: data.teamId,
+      departmentId: data.departmentId,
       designation: data.designation.trim(),
       roleTemplateId: data.roleTemplateId || null,
       profilePhotoUrl: data.profilePhotoUrl || null,
@@ -213,6 +224,7 @@ export const adminPortalUserService = {
       phone: data.phone.trim(),
       employeeId: data.employeeId.trim(),
       teamId: data.teamId,
+      departmentId: data.departmentId,
       designation: data.designation.trim(),
       roleTemplateId: data.roleTemplateId || null,
       profilePhotoUrl: data.profilePhotoUrl || null,
@@ -259,6 +271,7 @@ export const adminPortalUserService = {
       phone: data.phone.trim(),
       employeeId: data.employeeId.trim(),
       teamId: data.teamId,
+      departmentId: data.departmentId,
       designation: data.designation.trim(),
       roleTemplateId: data.roleTemplateId || null,
       profilePhotoUrl: data.profilePhotoUrl || null,

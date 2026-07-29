@@ -6,8 +6,13 @@ import {
   UserCog,
 } from 'lucide-react'
 import type { NavigateFunction } from 'react-router-dom'
-import { Badge, RowActions, type Column, type Toast } from '@/design-system/UIComponents'
-import type { BulkBatchRow, SingleApplicationRow } from '@/pages/customer/features/applications/data/applicationFlowData'
+import { Badge, RowActions, Tooltip, type Column, type Toast } from '@/design-system/UIComponents'
+import {
+  formatBulkApplicantListingLabel,
+  resolveBulkApplicantNames,
+  type BulkBatchRow,
+  type SingleApplicationRow,
+} from '@/pages/customer/features/applications/data/applicationFlowData'
 import {
   getApplicationOperationalTone,
   getApplicationTypeLabel,
@@ -19,7 +24,8 @@ import {
 } from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import { isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
-import { isMarineReadOnlyWorkspace } from '../config/marineWorkspaceMode'
+import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
+import { isMarineReadOnlyWorkspace, isMarinePendingPaymentWorkspace, opensMarineViewFormDirectly, resolveMarineWorkspaceMode } from '../config/marineWorkspaceMode'
 
 type ToastFn = (toast: Omit<Toast, 'id'>) => void
 
@@ -38,16 +44,32 @@ function buildRowActions(
   navigate: NavigateFunction,
   showToast: ToastFn,
   onAssignTeam: (row: MarineApplicationRow) => void,
+  fromListing: string,
   row: MarineApplicationRow,
 ) {
   const detailPath = `/admin/application-management/marine/${row.id}`
   const submitted = isCustomerSubmitted(row)
   const readOnlyWorkspace = submitted && isMarineReadOnlyWorkspace(row)
+  const pendingPaymentWorkspace = submitted && isMarinePendingPaymentWorkspace(row)
+  const openViewFormDirectly = submitted && opensMarineViewFormDirectly(row)
+  const workspaceMode = submitted ? resolveMarineWorkspaceMode(row) : null
+  const isSubmissionPending = workspaceMode === 'online_submission'
 
   return [
     {
-      label: readOnlyWorkspace ? 'View application' : 'Verify Documents',
-      icon: readOnlyWorkspace ? <FileText size={16} /> : <ClipboardCheck size={16} />,
+      label: readOnlyWorkspace
+        ? 'View application'
+        : pendingPaymentWorkspace
+          ? 'Record payment'
+          : isSubmissionPending
+            ? 'View Form'
+            : 'Verify Documents',
+      icon:
+        readOnlyWorkspace || pendingPaymentWorkspace || isSubmissionPending ? (
+          <FileText size={16} />
+        ) : (
+          <ClipboardCheck size={16} />
+        ),
       disabled: !submitted,
       onClick: () => {
         if (!submitted) {
@@ -58,29 +80,13 @@ function buildRowActions(
           })
           return
         }
-        navigate(readOnlyWorkspace ? `${detailPath}/view-form` : detailPath)
+        navigateFromListing(
+          navigate,
+          openViewFormDirectly || isSubmissionPending ? `${detailPath}/view-form` : detailPath,
+          fromListing,
+        )
       },
     },
-    ...(readOnlyWorkspace
-      ? []
-      : [
-          {
-            label: 'View Form',
-            icon: <FileText size={16} />,
-            disabled: !submitted,
-            onClick: () => {
-              if (!submitted) {
-                showToast({
-                  title: 'Draft application',
-                  description: 'Submit this application before opening the form assist workspace.',
-                  variant: 'info',
-                })
-                return
-              }
-              navigate(`${detailPath}/view-form`)
-            },
-          },
-        ]),
     {
       label: 'Add Remarks',
       icon: <MessageSquarePlus size={16} />,
@@ -103,14 +109,23 @@ export interface MarineApplicationTableColumnsParams {
   navigate: NavigateFunction
   showToast: ToastFn
   onAssignTeam: (row: MarineApplicationRow) => void
+  fromListing: string
 }
 
 export function buildMarineApplicationColumns({
   navigate,
   showToast,
   onAssignTeam,
+  fromListing,
 }: MarineApplicationTableColumnsParams): Column<MarineApplicationRow>[] {
   return [
+    {
+      key: 'createdAt',
+      label: 'Creation date',
+      widthSize: 'md',
+      sortable: true,
+      filterable: true,
+    },
     {
       key: 'id',
       label: 'GLTS reference',
@@ -122,7 +137,6 @@ export function buildMarineApplicationColumns({
           <Typography
             variant="body2"
             fontWeight={600}
-            color="primary.main"
             sx={{ fontSize: 13, fontFamily: 'monospace' }}
           >
             {value}
@@ -139,17 +153,32 @@ export function buildMarineApplicationColumns({
     },
     {
       key: 'applicantName',
-      label: 'Applicant',
+      label: 'Pax name',
       widthSize: 'md',
       sortable: false,
       filterable: false,
-      render: (_: unknown, row: MarineApplicationRow) => (
-        <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-          {row.recordType === 'bulk'
-            ? `${(row as BulkBatchRow).totalApplicants} travelers`
-            : (row as SingleApplicationRow).applicantName}
-        </Typography>
-      ),
+      render: (_: unknown, row: MarineApplicationRow) => {
+        if (row.recordType !== 'bulk') {
+          return (
+            <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+              {(row as SingleApplicationRow).applicantName}
+            </Typography>
+          )
+        }
+
+        const passengerNames = resolveBulkApplicantNames(row as BulkBatchRow)
+        return (
+          <Tooltip placement="top-start" maxWidth={320} content={passengerNames.join(', ')}>
+            <Typography
+              variant="body2"
+              fontWeight={600}
+              sx={{ fontSize: 13, cursor: 'default', display: 'inline-block', maxWidth: '100%' }}
+            >
+              {formatBulkApplicantListingLabel(row as BulkBatchRow)}
+            </Typography>
+          </Tooltip>
+        )
+      },
     },
     {
       key: 'companyName',
@@ -219,7 +248,7 @@ export function buildMarineApplicationColumns({
     {
       key: 'operationalStatus',
       label: 'Status',
-      widthSize: 'sm',
+      widthSize: 'lg',
       sortable: true,
       filterable: true,
       render: (_: unknown, row: MarineApplicationRow) => (
@@ -257,7 +286,7 @@ export function buildMarineApplicationColumns({
       searchable: false,
       hideable: false,
       render: (_: unknown, row: MarineApplicationRow) => (
-        <RowActions actions={buildRowActions(navigate, showToast, onAssignTeam, row)} row={row} />
+        <RowActions actions={buildRowActions(navigate, showToast, onAssignTeam, fromListing, row)} row={row} />
       ),
     },
   ]

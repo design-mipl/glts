@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { Building2, UserRound } from 'lucide-react'
+import { Building2, Contact, UserRound } from 'lucide-react'
 import { FORM_CONTROL } from '@/design-system/formControl'
 import {
   ASSIGNMENT_ASSIGNEE_TYPE_OPTIONS,
@@ -10,6 +10,7 @@ import {
 const ASSIGNEE_ICONS: Record<AssignmentAssigneeType, typeof UserRound> = {
   user: UserRound,
   vendor: Building2,
+  passenger: Contact,
 }
 
 interface AssignmentAssigneeTypeToggleProps {
@@ -47,7 +48,7 @@ export function AssignmentAssigneeTypeToggle({
 
       <Box
         role="group"
-        aria-label="Assign to user or vendor"
+        aria-label="Assign to user, vendor, or passenger"
         sx={{
           display: 'inline-flex',
           alignItems: 'center',

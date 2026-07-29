@@ -7,6 +7,8 @@ export interface VfsPickerService {
   amount: number
   gstIncluded?: boolean
   embassyFeeServiceId?: string
+  vendorId?: string
+  vendorName?: string
 }
 
 export interface VfsServiceChargeLine {
@@ -15,6 +17,8 @@ export interface VfsServiceChargeLine {
   serviceName: string
   amount: number
   gstIncluded?: boolean
+  vendorId?: string
+  vendorName?: string
 }
 
 export function resolveVfsPickerServices(input: {
@@ -35,6 +39,8 @@ export function resolveVfsPickerServices(input: {
         amount: rate.amount,
         gstIncluded: rate.gstIncluded,
         embassyFeeServiceId: rate.embassyFeeServiceId,
+        vendorId: rate.vendorId,
+        vendorName: rate.vendorName,
       }))
     }
   }
@@ -61,6 +67,8 @@ export function mapVfsPickerServicesToChargeLines(
     serviceName: service.serviceName,
     amount: service.amount,
     gstIncluded: service.gstIncluded,
+    vendorId: service.vendorId,
+    vendorName: service.vendorName,
   }))
 }
 

@@ -27,7 +27,7 @@ export interface CustomerApplication {
 export const mockApplications: CustomerApplication[] = [
   {
     id: GLTS_APPLICATION_IDS.schengen,
-    country: 'Schengen',
+    country: 'France',
     countryFlag: '🇫🇷',
     visaType: 'Sticker · Type C',
     jurisdiction: 'Mumbai',

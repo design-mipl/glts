@@ -83,7 +83,7 @@ function DistributionChart({
   const total = slices.reduce((sum, s) => sum + s.value, 0)
 
   return (
-    <ExecutiveChartPanel title={title} subtitle={subtitle}>
+    <ExecutiveChartPanel title={title} subtitle={subtitle} embedded>
       {slices.length <= 4 ? (
         <DonutChart data={donutData} height={EXECUTIVE_CHART_HEIGHT - 20} centerValue={String(total)} centerLabel="Total" />
       ) : (
@@ -117,14 +117,24 @@ export function BusinessPerformanceSection({
   const onTarget = revenueSnapshot.revenueVsTarget >= 100
 
   return (
-    <Box>
-      <ExecutiveSectionHeader
-        title="Revenue & application distribution"
-        description="Billing performance and active pipeline mix across channels."
-      />
+    <Box sx={{ ...executiveCardLevel2Sx(colors), p: 2 }}>
+      <Box sx={{ mb: 2 }}>
+        <ExecutiveSectionHeader
+          title="Revenue & application distribution"
+          description="Billing performance and active pipeline mix across channels."
+        />
+      </Box>
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 4 }}>
-          <Box sx={{ ...executiveCardLevel2Sx(colors), p: 2, height: '100%' }}>
+          <Box
+            sx={{
+              p: 2,
+              height: '100%',
+              borderRadius: '12px',
+              border: `1px solid ${colors.border}`,
+              bgcolor: colors.surface,
+            }}
+          >
             <Typography sx={{ fontWeight: 800, fontSize: 15, color: colors.navy, mb: 0.25 }}>
               Revenue snapshot
             </Typography>

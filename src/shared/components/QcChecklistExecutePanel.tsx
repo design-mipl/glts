@@ -76,7 +76,9 @@ export function QcChecklistExecutePanel({
         flexDirection: 'column',
         flex: 1,
         width: '100%',
-        minHeight: '100%',
+        height: '100%',
+        minHeight: 0,
+        overflow: 'hidden',
         borderWidth: 1,
         borderColor: 'divider',
       }}
@@ -151,7 +153,9 @@ export function QcChecklistExecutePanel({
           py: 1.5,
           borderTop: 1,
           borderColor: 'divider',
-          bgcolor: 'action.hover',
+          bgcolor: 'background.paper',
+          backgroundImage: (theme) =>
+            `linear-gradient(${theme.palette.action.hover}, ${theme.palette.action.hover})`,
         }}
       >
         <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13, mb: 1 }}>

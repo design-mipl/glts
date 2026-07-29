@@ -15,6 +15,7 @@ import { VerifyOriginalDocumentsSection } from '../verify/VerifyOriginalDocument
 import { QcCheckChecklist } from './QcCheckChecklist'
 import {
   isOriginalVerifyDocument,
+  splitRejectedVerifyDocuments,
   type VerifyOverviewData,
   type VerifyRejectedDocumentEntry,
 } from '../../utils/verifyDocumentsUtils'
@@ -48,7 +49,6 @@ interface ViewFormQcCheckSectionProps {
   onTravelerVerify: (document: ApplicantDocumentItem) => void
   onTravelerReject: (document: ApplicantDocumentItem) => void
   onTravelerRequestReupload: (document: ApplicantDocumentItem) => void
-  onGltsUpload: (document: ApplicantDocumentItem) => void
   onGlobalVerify: (document: ApplicantDocumentItem) => void
   onGlobalReject: (document: ApplicantDocumentItem) => void
   onGlobalRequestReupload: (document: ApplicantDocumentItem) => void
@@ -56,7 +56,6 @@ interface ViewFormQcCheckSectionProps {
   onRejectedVerify: (entry: VerifyRejectedDocumentEntry) => void
   onRejectedReject: (entry: VerifyRejectedDocumentEntry) => void
   onRejectedReupload: (entry: VerifyRejectedDocumentEntry) => void
-  onRejectedGltsUpload: (entry: VerifyRejectedDocumentEntry) => void
   onOriginalCollectionChange?: (collection: OriginalDocumentCollectionState) => void
   onOriginalReceivedSubmit?: (collection: OriginalDocumentCollectionState) => void
   readOnly?: boolean
@@ -75,7 +74,6 @@ export function ViewFormQcCheckSection({
   onTravelerVerify,
   onTravelerReject,
   onTravelerRequestReupload,
-  onGltsUpload,
   onGlobalVerify,
   onGlobalReject,
   onGlobalRequestReupload,
@@ -83,7 +81,6 @@ export function ViewFormQcCheckSection({
   onRejectedVerify,
   onRejectedReject,
   onRejectedReupload,
-  onRejectedGltsUpload,
   onOriginalCollectionChange,
   onOriginalReceivedSubmit,
   readOnly = false,
@@ -125,18 +122,37 @@ export function ViewFormQcCheckSection({
     [showOriginalTab],
   )
 
+  const { flaggedDuringQc, rejectedDocuments: customerRejectedDocuments } = useMemo(
+    () => splitRejectedVerifyDocuments(rejectedDocuments),
+    [rejectedDocuments],
+  )
+
   const rejectedDocumentsSection =
-    rejectedDocuments.length > 0 ? (
-      <VerifyRejectedDocumentsSection
-        entries={rejectedDocuments}
-        gridSx={VERIFY_DOCUMENT_SPLIT_GRID_SX}
-        previewOnly={readOnly}
-        onPreview={onRejectedPreview}
-        onVerify={onRejectedVerify}
-        onReject={onRejectedReject}
-        onRequestReupload={onRejectedReupload}
-        onGltsUpload={onRejectedGltsUpload}
-      />
+    flaggedDuringQc.length > 0 || customerRejectedDocuments.length > 0 ? (
+      <Stack spacing={1.5}>
+        {flaggedDuringQc.length > 0 ? (
+          <VerifyRejectedDocumentsSection
+            entries={flaggedDuringQc}
+            variant="qc_flagged"
+            previewOnly={readOnly}
+            onPreview={onRejectedPreview}
+            onVerify={onRejectedVerify}
+            onReject={onRejectedReject}
+            onRequestReupload={onRejectedReupload}
+          />
+        ) : null}
+        {customerRejectedDocuments.length > 0 ? (
+          <VerifyRejectedDocumentsSection
+            entries={customerRejectedDocuments}
+            variant="customer_rejected"
+            previewOnly={readOnly}
+            onPreview={onRejectedPreview}
+            onVerify={onRejectedVerify}
+            onReject={onRejectedReject}
+            onRequestReupload={onRejectedReupload}
+          />
+        ) : null}
+      </Stack>
     ) : null
 
   const documentChecklistsSection = (
@@ -150,7 +166,6 @@ export function ViewFormQcCheckSection({
       onTravelerVerify={onTravelerVerify}
       onTravelerReject={onTravelerReject}
       onTravelerRequestReupload={onTravelerRequestReupload}
-      onTravelerGltsUpload={onGltsUpload}
       onGlobalPreview={documentId => onPreview(documentId, 'global')}
       onGlobalVerify={onGlobalVerify}
       onGlobalReject={onGlobalReject}

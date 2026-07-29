@@ -3,7 +3,6 @@ import type { LucideIcon } from 'lucide-react'
 import {
   AlertCircle,
   ArrowDownCircle,
-  ArrowUpCircle,
   FileText,
   IndianRupee,
   Receipt,
@@ -82,31 +81,24 @@ export function InvoiceKpiRow({ invoices }: InvoiceKpiRowProps) {
   const total = invoices.length
   const draft = invoices.filter(i => i.invoiceStatus === 'draft').length
   const submitted = invoices.filter(
-    i =>
-      i.invoiceStatus === 'submitted' &&
-      i.invoiceType !== 'credit_note' &&
-      i.invoiceType !== 'debit_note',
+    i => i.invoiceStatus === 'submitted' && i.invoiceType !== 'credit_note',
   ).length
   const overdue = invoices.filter(i => i.invoiceStatus === 'overdue').length
   const outstanding = computeOutstanding(invoices)
   const totalBilled = computeTotalBilled(invoices)
-  const advanceAdjusted = invoices.reduce((s, i) => s + i.totals.advanceAdjusted, 0)
   const creditNotes = invoices.filter(i => i.invoiceType === 'credit_note').length
-  const debitNotes = invoices.filter(i => i.invoiceType === 'debit_note').length
 
   const primary = [
     { label: 'Total Invoices', value: total, icon: FileText, color: theme.palette.primary.main },
     { label: 'Draft Invoices', value: draft, icon: Receipt, color: theme.palette.info.main },
-    { label: 'Submitted Invoices', value: submitted, icon: Send, color: theme.palette.success.main },
+    { label: 'Invoiced', value: submitted, icon: Send, color: theme.palette.success.main },
     { label: 'Overdue Invoices', value: overdue, icon: AlertCircle, color: theme.palette.error.main },
     { label: 'Outstanding Amount', value: formatInr(outstanding), icon: IndianRupee, color: theme.palette.warning.main },
     { label: 'Total Billed Amount', value: formatInr(totalBilled), icon: IndianRupee, color: theme.palette.primary.dark },
   ]
 
   const optional = [
-    { label: 'Advance Adjusted', value: formatInr(advanceAdjusted), icon: ArrowDownCircle, color: theme.palette.info.dark },
     { label: 'Credit Notes', value: creditNotes, icon: ArrowDownCircle, color: theme.palette.secondary.main },
-    { label: 'Debit Notes', value: debitNotes, icon: ArrowUpCircle, color: theme.palette.warning.dark },
   ]
 
   return (
@@ -120,7 +112,7 @@ export function InvoiceKpiRow({ invoices }: InvoiceKpiRowProps) {
       </Grid>
       <Grid container spacing={1.5}>
         {optional.map(kpi => (
-          <Grid key={kpi.label} size={{ xs: 12, sm: 4 }}>
+          <Grid key={kpi.label} size={{ xs: 12, sm: 6 }}>
             <KpiCard label={kpi.label} value={kpi.value} icon={kpi.icon} iconColor={kpi.color} />
           </Grid>
         ))}

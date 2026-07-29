@@ -1,9 +1,11 @@
 import { Box, Grid, Stack, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { ArrowRight, type LucideIcon } from 'lucide-react'
 import { Badge, Button } from '@/design-system/UIComponents'
+import { BORDER_RADIUS, BORDER_WIDTH, SHADOWS } from '@/design-system/tokens'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { ExecutiveSectionHeader } from './ExecutiveSectionHeader'
-import { executiveCardLevel3Sx } from './executiveDashboardTokens'
+import { executiveCardLevel2Sx, executiveCardLevel3Sx } from './executiveDashboardTokens'
 
 export type ExecutiveAlertPriority = 'critical' | 'high' | 'medium'
 
@@ -31,13 +33,107 @@ function AttentionAlertCard({
   alert,
   icon: Icon,
   onView,
+  compact = false,
 }: {
   alert: ExecutiveAttentionAlert
   icon: LucideIcon
   onView?: (alert: ExecutiveAttentionAlert) => void
+  compact?: boolean
 }) {
   const colors = usePublicBrandColors()
   const accent = priorityAccent(alert.priority, colors)
+
+  if (compact) {
+    return (
+      <Box
+        role={onView ? 'button' : undefined}
+        tabIndex={onView ? 0 : undefined}
+        onClick={onView ? () => onView(alert) : undefined}
+        onKeyDown={
+          onView
+            ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  onView(alert)
+                }
+              }
+            : undefined
+        }
+        aria-label={onView ? `Review ${alert.title}` : undefined}
+        sx={{
+          border: `${BORDER_WIDTH.thin} solid ${colors.border}`,
+          borderRadius: BORDER_RADIUS.md,
+          bgcolor: colors.white,
+          boxShadow: 'none',
+          px: 1.25,
+          py: 1,
+          height: '100%',
+          cursor: onView ? 'pointer' : 'default',
+          transition: 'background-color 140ms ease, border-color 140ms ease',
+          outline: 'none',
+          '&:hover': onView
+            ? {
+                bgcolor: alpha(accent, 0.04),
+                borderColor: alpha(accent, 0.4),
+              }
+            : undefined,
+          '&:focus-visible': onView
+            ? {
+                boxShadow: `0 0 0 2px ${alpha(colors.greenDark, 0.35)}`,
+              }
+            : undefined,
+        }}
+      >
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Box
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: '8px',
+              bgcolor: alpha(accent, 0.1),
+              color: accent,
+              display: 'grid',
+              placeItems: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Icon size={14} />
+          </Box>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="baseline" spacing={0.75}>
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: colors.navy,
+                  lineHeight: 1.3,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {alert.title}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: accent,
+                  lineHeight: 1.2,
+                  flexShrink: 0,
+                }}
+              >
+                {alert.count}
+              </Typography>
+            </Stack>
+            <Typography sx={{ fontSize: 12, color: colors.textMuted, mt: 0.25, lineHeight: 1.3 }}>
+              Oldest: {alert.oldestWaiting}
+            </Typography>
+          </Box>
+        </Stack>
+      </Box>
+    )
+  }
 
   return (
     <Box sx={{ ...executiveCardLevel3Sx(colors, accent), p: 1.5, height: '100%' }}>
@@ -88,34 +184,73 @@ export interface NeedsImmediateAttentionSectionProps {
   alerts: ExecutiveAttentionAlert[]
   resolveIcon: (title: string) => LucideIcon
   onViewAlert?: (alert: ExecutiveAttentionAlert) => void
+  onOpenAlertCenter?: () => void
+  /** `compact` = narrower, quieter cards for side-by-side executive layouts. */
+  density?: 'comfortable' | 'compact'
 }
 
 export function NeedsImmediateAttentionSection({
   alerts,
   resolveIcon,
   onViewAlert,
+  onOpenAlertCenter,
+  density = 'comfortable',
 }: NeedsImmediateAttentionSectionProps) {
   const colors = usePublicBrandColors()
+  const compact = density === 'compact'
+  const cardSize = compact
+    ? ({ xs: 12 } as const)
+    : ({ xs: 12, sm: 6, md: 4, lg: 3 } as const)
 
   return (
-    <Box>
-      <ExecutiveSectionHeader
-        title="Needs immediate attention"
-        description="Priority operational alerts requiring management action."
-        actionLabel="Open alert center"
-        onAction={onViewAlert ? () => onViewAlert(alerts[0]) : undefined}
-      />
+    <Box
+      sx={{
+        ...(compact
+          ? {
+              border: `${BORDER_WIDTH.thin} solid ${colors.border}`,
+              borderRadius: BORDER_RADIUS.lg,
+              bgcolor: colors.white,
+              boxShadow: SHADOWS.xs,
+              overflow: 'hidden',
+            }
+          : executiveCardLevel2Sx(colors)),
+        p: compact ? 1.25 : 2,
+        height: '100%',
+      }}
+    >
+      <Box sx={{ mb: compact ? 1 : 2 }}>
+        <ExecutiveSectionHeader
+          title="Needs immediate attention"
+          description={
+            compact
+              ? 'Priority alerts needing action.'
+              : 'Priority operational alerts requiring management action.'
+          }
+          actionLabel={compact ? undefined : 'Open alert center'}
+          onAction={
+            compact
+              ? undefined
+              : onOpenAlertCenter ??
+                (onViewAlert && alerts[0] ? () => onViewAlert(alerts[0]) : undefined)
+          }
+        />
+      </Box>
       {alerts.length === 0 ? (
-        <Box sx={{ ...executiveCardLevel3Sx(colors, colors.border), p: 3, textAlign: 'center' }}>
+        <Box sx={{ p: 2, textAlign: 'center' }}>
           <Typography sx={{ fontSize: 13, color: colors.textMuted }}>
             No priority alerts for the selected filters.
           </Typography>
         </Box>
       ) : (
-        <Grid container spacing={2}>
+        <Grid container spacing={compact ? 0.75 : 2}>
           {alerts.map((alert) => (
-            <Grid key={alert.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-              <AttentionAlertCard alert={alert} icon={resolveIcon(alert.title)} onView={onViewAlert} />
+            <Grid key={alert.id} size={cardSize}>
+              <AttentionAlertCard
+                alert={alert}
+                icon={resolveIcon(alert.title)}
+                onView={onViewAlert}
+                compact={compact}
+              />
             </Grid>
           ))}
         </Grid>

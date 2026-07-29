@@ -8,7 +8,8 @@ import {
 import { mapAgreementDocumentsForPortal } from '@/shared/utils/mapAgreementDocumentsForPortal'
 import type { BillingAgreementData, FinanceContactPerson } from '../types/accountWorkspace'
 import { CUSTOMER_PORTAL_AGREEMENT_ID } from '@/shared/utils/resolveCustomerPortalAgreement'
-import { deriveCountryVisaCoverageFromPricing } from './deriveAgreementOperations'
+import { deriveCountryVisaCoverageFromCommercialRules } from './deriveAgreementOperations'
+import { mapAgreementPricingToPortalGroups } from './mapAgreementPricingToPortalGroups'
 
 export { CUSTOMER_PORTAL_AGREEMENT_ID }
 
@@ -79,6 +80,29 @@ export function enrichBillingAgreementFromCommercialAgreement(
     mappedDocuments.onboardingDocuments.length > 0 ? mappedDocuments.onboardingDocuments : fallbackOnboarding
   const agreementDocument = mappedDocuments.agreementDocument ?? billing.agreementDocument
 
+  const pricingSource = agreement ? commercialAgreementService.agreementToFormData(agreement) : null
+  const hasStructuredPricing =
+    pricingSource &&
+    (pricingSource.commercialVisaPricing.length > 0 ||
+      pricingSource.miscellaneousServices.length > 0 ||
+      pricingSource.pricingMatrix.length > 0)
+
+  const commercialVisaPricing = hasStructuredPricing
+    ? pricingSource.commercialVisaPricing
+    : billing.commercialVisaPricing
+  const miscellaneousServices = hasStructuredPricing
+    ? pricingSource.miscellaneousServices
+    : billing.miscellaneousServices
+
+  const pricingGroups =
+    hasStructuredPricing && pricingSource
+      ? mapAgreementPricingToPortalGroups(
+          pricingSource.pricingMatrix,
+          pricingSource.billingType,
+          pricingSource.miscellaneousCosts,
+        )
+      : billing.pricingGroups
+
   return {
     ...billing,
     financeContactPersons,
@@ -87,8 +111,11 @@ export function enrichBillingAgreementFromCommercialAgreement(
     documents: onboardingDocuments,
     onboardingDocuments,
     agreementDocument,
+    commercialVisaPricing,
+    miscellaneousServices,
+    pricingGroups,
     supportedOperations: {
-      countryCoverage: deriveCountryVisaCoverageFromPricing(billing.pricingGroups),
+      countryCoverage: deriveCountryVisaCoverageFromCommercialRules(commercialVisaPricing),
     },
   }
 }

@@ -1,18 +1,11 @@
+import type { ClientManagementPipelineStatus } from './clientManagementPipeline'
+
 export type EnquiryCustomerType = 'retail' | 'corporate' | 'marine'
 
 export type EnquiryPriority = 'low' | 'medium' | 'high' | 'critical'
 
-export type EnquiryStatus =
-  | 'new'
-  | 'under_discussion'
-  | 'requirement_gathering'
-  | 'pending_customer_response'
-  | 'internal_review'
-  | 'quotation_in_progress'
-  | 'converted'
-  | 'on_hold'
-  | 'closed'
-  | 'rejected'
+/** Lead status uses the shared Client Management pipeline (synced with quotation). */
+export type EnquiryStatus = ClientManagementPipelineStatus
 
 export type EnquiryFollowupType = 'call' | 'email' | 'meeting' | 'whatsapp' | 'internal'
 
@@ -35,6 +28,7 @@ export type EnquiryActivityType =
   | 'note_added'
   | 'attachment_uploaded'
   | 'converted_to_quotation'
+  | 'quotation_draft_started'
 
 export interface EnquiryCustomerInfo {
   companyOrCustomerName: string
@@ -193,9 +187,4 @@ export interface EnquiryListingFilters {
   enquiryStatus?: EnquiryStatus
   marineRequirement?: boolean
   inquirySource?: EnquirySource
-}
-
-export interface EnquiryConversionValidation {
-  isValid: boolean
-  issues: string[]
 }

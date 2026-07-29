@@ -33,6 +33,7 @@ export function buildCountryColumns({
       label: 'Country Name',
       widthSize: adminListingColumnWidthSize('name'),
       sortable: true,
+      filterable: false,
       searchable: true,
       hideable: false,
       render: (_, row) => <span style={{ fontWeight: 600 }}>{row.name}</span>,
@@ -42,6 +43,7 @@ export function buildCountryColumns({
       label: 'Country Code',
       widthSize: adminListingColumnWidthSize('code'),
       sortable: true,
+      filterable: false,
       searchable: true,
       render: (_, row) => <span>{row.code}</span>,
     },
@@ -50,6 +52,7 @@ export function buildCountryColumns({
       label: 'Region',
       widthSize: adminListingColumnWidthSize('country'),
       sortable: true,
+      filterable: true,
       searchable: true,
       render: (_, row) => <span>{row.region}</span>,
     },
@@ -58,6 +61,7 @@ export function buildCountryColumns({
       label: 'Enabled Segments',
       widthSize: adminListingColumnWidthSize('description'),
       sortable: false,
+      filterable: false,
       render: (_, row) => (
         <MasterAudienceTags
           items={toSegmentTagItems(countryMasterAdminService.getEnabledSegments(row))}
@@ -69,6 +73,7 @@ export function buildCountryColumns({
       label: 'Total Visa Types',
       widthSize: adminListingColumnWidthSize('count'),
       sortable: true,
+      filterable: false,
       render: (_, row) => {
         const count = countryMasterAdminService.getAggregates(row, seg).visaTypeCount
         return <span>{count}</span>
@@ -79,6 +84,7 @@ export function buildCountryColumns({
       label: 'Last Updated',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
+      filterable: false,
       render: (_, row) => <span title={row.updatedAt}>{formatCountryDate(row.updatedAt)}</span>,
     },
     {
@@ -86,6 +92,7 @@ export function buildCountryColumns({
       label: 'Status',
       widthSize: adminListingColumnWidthSize('status'),
       sortable: true,
+      filterable: true,
       render: (_, row) => (
         <Badge
           label={COUNTRY_STATUS_LABELS[row.status]}
@@ -119,7 +126,7 @@ export function buildCountryColumns({
             variant: 'destructive',
           },
         ]
-        return <RowActions actions={actions} row={row} />
+        return <RowActions row={row} actions={actions} />
       },
     },
   ]

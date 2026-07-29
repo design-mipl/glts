@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Box, CircularProgress } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useToast } from '@/design-system/UIComponents'
@@ -20,7 +20,6 @@ export function EditQuotationPage() {
   const { formData, setFormData, errors, validate, loadFormData } = useQuotationForm()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const addPricingHandlerRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     if (!quotationId) return
@@ -66,7 +65,6 @@ export function EditQuotationPage() {
         formData,
         setFormData,
         errors,
-        addPricingHandlerRef,
         showEnquirySelect: false,
       })}
       footer={

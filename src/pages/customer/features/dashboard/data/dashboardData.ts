@@ -32,7 +32,7 @@ export const pendingActions: PendingAction[] = [
   {
     id: GLTS_ACTION_IDS.bankStatements,
     title: 'Upload bank statements',
-    description: `Schengen · Type C · ${GLTS_APPLICATION_IDS.schengen}`,
+    description: `France · Type C · ${GLTS_APPLICATION_IDS.schengen}`,
     cta: 'Upload',
     urgent: true,
     applicationId: GLTS_APPLICATION_IDS.schengen,

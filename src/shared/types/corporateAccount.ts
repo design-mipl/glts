@@ -57,6 +57,17 @@ export interface CorporateAccount {
   assignedUserIds?: string[]
   teamLeaderTeamId?: string
   teamLeaderUserIds?: string[]
+  /** Marked from assigned team leaders / users (not a separate assignment list). */
+  primaryContactUserId?: string
+  secondaryContactUserId?: string
+  /** @deprecated Prefer primaryContactUserId */
+  primaryContactTeamId?: string
+  /** @deprecated Prefer primaryContactUserId */
+  primaryContactUserIds?: string[]
+  /** @deprecated Prefer secondaryContactUserId */
+  secondaryContactTeamId?: string
+  /** @deprecated Prefer secondaryContactUserId */
+  secondaryContactUserIds?: string[]
   entityIds: string[]
   vesselIds: string[]
   bookerIds?: string[]
@@ -81,6 +92,8 @@ export interface CorporateAccountFormData {
   assignedUserIds: string[]
   teamLeaderTeamId: string
   teamLeaderUserIds: string[]
+  primaryContactUserId: string
+  secondaryContactUserId: string
   entityIds: string[]
   vesselIds: string[]
   bookerIds: string[]

@@ -7,11 +7,16 @@ import type {
   ApplicationExpenseRecord,
   UpsertApplicationExpenseInput,
 } from '@/shared/types/applicationExpenseManagement'
+import { taxMasterService } from '@/shared/services/taxMasterService'
 import {
+  computeExpenseGstAmount,
   computeExpenseTotalAmount,
-  EXPENSE_SERVICE_OPTIONS,
   getExpenseServiceDefinition,
 } from '../../config/expenseDetailFormConfig'
+import {
+  defaultGstRateIdForAgreement,
+  resolveAgreementExpenseServices,
+} from '../../utils/agreementExpenseServiceUtils'
 import { AddExpenseFormFields } from './AddExpenseFormFields'
 import { createEmptyAddExpenseForm, type AddExpenseFormValue } from './addExpenseFormTypes'
 
@@ -20,6 +25,9 @@ interface AddExpenseDrawerProps {
   onClose: () => void
   passengers: ApplicationExpensePassengerSummaryRow[]
   recordType: 'single' | 'bulk'
+  companyName: string
+  visaCountry?: string
+  visaType?: string
   record?: ApplicationExpenseRecord | null
   onSubmit: (input: UpsertApplicationExpenseInput) => void
 }
@@ -29,22 +37,34 @@ function parseAmount(raw: string): number {
   return Number.isFinite(n) ? n : 0
 }
 
+function resolveGstRateIdFromRecord(amount: number, gstAmount: number): string {
+  if (amount <= 0 || gstAmount <= 0) return ''
+  const percent = Math.round((gstAmount / amount) * 10000) / 100
+  const match = taxMasterService
+    .listActiveGstOptions()
+    .map(option => taxMasterService.getGstById(String(option.value)))
+    .find(rate => rate && Math.abs(rate.ratePercent - percent) < 0.05)
+  if (match?.id) return match.id
+  return String(taxMasterService.listActiveGstOptions().find(o => o.value === 'gst-18')?.value ?? '')
+}
+
 function recordToForm(
   record: ApplicationExpenseRecord,
   isSinglePassenger: boolean,
   defaultPassengerId: string,
 ): AddExpenseFormValue {
   const serviceDefinition = getExpenseServiceDefinition(record.expenseType)
+  const gstApplicable = record.gstAmount > 0 || record.gstIncluded
 
   return {
-    service: record.expenseType,
+    agreementServiceId: '',
     vendorProvider: record.vendorStaffPartner ?? serviceDefinition?.defaultVendor ?? '',
     mappingScope: isSinglePassenger ? 'passenger' : record.passengerMapping.scope,
     passengerId: record.passengerMapping.passengerIds?.[0] ?? defaultPassengerId,
     passengerIds: record.passengerMapping.passengerIds ?? [],
     amount: String(record.amount),
-    gstApplicable: record.gstAmount > 0 || record.gstIncluded,
-    gstValue: String(record.gstAmount),
+    gstApplicable,
+    gstRateId: gstApplicable ? resolveGstRateIdFromRecord(record.amount, record.gstAmount) : '',
     paidBy: record.paidBy ?? 'glts_team',
     billTo: record.billTo ?? 'client',
     notes: record.internalRemarks ?? record.remarks ?? '',
@@ -58,6 +78,9 @@ export function AddExpenseDrawer({
   onClose,
   passengers,
   recordType,
+  companyName,
+  visaCountry,
+  visaType,
   record,
   onSubmit,
 }: AddExpenseDrawerProps) {
@@ -69,6 +92,16 @@ export function AddExpenseDrawer({
   )
   const isEdit = Boolean(record)
 
+  const agreementServices = useMemo(
+    () =>
+      resolveAgreementExpenseServices({
+        companyName,
+        visaCountry,
+        visaType,
+      }),
+    [companyName, visaCountry, visaType],
+  )
+
   useEffect(() => {
     if (!open) return
     if (record) {
@@ -79,26 +112,42 @@ export function AddExpenseDrawer({
   }, [open, record, isSinglePassenger, defaultPassengerId])
 
   const patch = useCallback((partial: Partial<AddExpenseFormValue>) => {
-    setForm(prev => {
-      const next = { ...prev, ...partial }
-      if (!record && partial.service) {
-        const definition = getExpenseServiceDefinition(partial.service)
-        if (definition) {
-          next.vendorProvider = definition.defaultVendor
-        }
+    setForm(prev => ({ ...prev, ...partial }))
+  }, [])
+
+  const handleSelectAgreementService = useCallback(
+    (serviceId: string) => {
+      const selected = agreementServices.options.find(option => option.id === serviceId)
+      if (!selected) {
+        setForm(prev => ({ ...prev, agreementServiceId: serviceId }))
+        return
       }
-      return next
-    })
-  }, [record])
+      const gstApplicable = selected.gstApplicable
+      setForm(prev => ({
+        ...prev,
+        agreementServiceId: serviceId,
+        amount: selected.amount > 0 ? String(selected.amount) : prev.amount,
+        gstApplicable,
+        gstRateId: gstApplicable ? defaultGstRateIdForAgreement(true) : '',
+        vendorProvider: prev.vendorProvider || 'GLTS Operations',
+      }))
+    },
+    [agreementServices.options],
+  )
+
+  const gstPercent = useMemo(
+    () => (form.gstApplicable ? taxMasterService.getGstPercent(form.gstRateId) ?? 0 : 0),
+    [form.gstApplicable, form.gstRateId],
+  )
 
   const totalAmount = useMemo(
-    () =>
-      computeExpenseTotalAmount(
-        parseAmount(form.amount),
-        form.gstApplicable,
-        parseAmount(form.gstValue),
-      ),
-    [form],
+    () => computeExpenseTotalAmount(parseAmount(form.amount), form.gstApplicable, gstPercent),
+    [form.amount, form.gstApplicable, gstPercent],
+  )
+
+  const selectedAgreementService = useMemo(
+    () => agreementServices.options.find(option => option.id === form.agreementServiceId),
+    [agreementServices.options, form.agreementServiceId],
   )
 
   const buildMapping = (): UpsertApplicationExpenseInput['passengerMapping'] => {
@@ -136,7 +185,7 @@ export function AddExpenseDrawer({
     const amount = parseAmount(form.amount)
     if (amount <= 0) return
 
-    const gstAmount = form.gstApplicable ? parseAmount(form.gstValue) : 0
+    const gstAmount = computeExpenseGstAmount(amount, form.gstApplicable, gstPercent)
 
     if (isEdit && record) {
       onSubmit({
@@ -148,7 +197,7 @@ export function AddExpenseDrawer({
         passengerMapping: buildMapping(),
         vendorStaffPartner: form.vendorProvider || undefined,
         amount,
-        gstIncluded: record.gstIncluded,
+        gstIncluded: form.gstApplicable,
         gstAmount,
         tdsApplicable: record.tdsApplicable,
         tdsAmount: record.tdsAmount,
@@ -158,28 +207,25 @@ export function AddExpenseDrawer({
         proofFileName: form.proofFileName.trim() || undefined,
         proofDocumentType: form.proofDocumentType || undefined,
         paidBy: form.paidBy,
-        billTo: form.billTo,
+        billTo: 'client',
         internalRemarks: form.notes.trim() || undefined,
       })
       onClose()
       return
     }
 
-    const serviceDefinition = getExpenseServiceDefinition(form.service)
-    const serviceLabel =
-      serviceDefinition?.label ??
-      EXPENSE_SERVICE_OPTIONS.find(option => option.value === form.service)?.label ??
-      'Expense'
+    if (!selectedAgreementService) return
 
     onSubmit({
-      expenseName: serviceLabel,
-      expenseType: form.service,
-      expenseSource: serviceDefinition?.expenseSource ?? 'manual_finance_entry',
-      serviceSource: serviceDefinition?.defaultSource ?? 'other',
+      expenseName: selectedAgreementService.label,
+      expenseType: selectedAgreementService.expenseType,
+      expenseSource: selectedAgreementService.expenseSource,
+      serviceSource: selectedAgreementService.serviceSource,
+      linkedService: selectedAgreementService.linkedService,
       passengerMapping: buildMapping(),
       vendorStaffPartner: form.vendorProvider || undefined,
       amount,
-      gstIncluded: false,
+      gstIncluded: form.gstApplicable,
       gstAmount,
       tdsApplicable: false,
       tdsAmount: 0,
@@ -189,11 +235,14 @@ export function AddExpenseDrawer({
       proofFileName: form.proofFileName.trim() || undefined,
       proofDocumentType: form.proofDocumentType || undefined,
       paidBy: form.paidBy,
-      billTo: form.billTo,
+      billTo: 'client',
       internalRemarks: form.notes.trim() || undefined,
     })
     onClose()
   }
+
+  const canSave =
+    parseAmount(form.amount) > 0 && (isEdit || Boolean(selectedAgreementService))
 
   const fieldProps = {
     form,
@@ -201,8 +250,11 @@ export function AddExpenseDrawer({
     isSinglePassenger,
     isEdit,
     serviceDisplayName: record ? record.expenseTypeLabel || record.expenseName : undefined,
+    agreementServiceOptions: agreementServices.options,
+    agreementLabel: agreementServices.agreement?.agreementId,
     totalAmount,
     onPatch: patch,
+    onSelectAgreementService: handleSelectAgreementService,
   }
 
   return (
@@ -213,27 +265,28 @@ export function AddExpenseDrawer({
       subtitle={
         isEdit
           ? 'Update vendor, mapping, amount, billing, and proof details for this expense'
-          : 'Add an application-linked expense with service, mapping, and proof details'
+          : 'Service list comes from the client agreement (including Add-on lines). Select one, then map passengers and proof.'
       }
       footer={
         <AdminFullPageFormFooter
           onCancel={onClose}
           onSave={handleSubmit}
           saveLabel={isEdit ? 'Save changes' : 'Add expense'}
+          disabled={!canSave}
         />
       }
       sections={[
         {
           id: 'service',
           title: 'Service & mapping',
-          description: 'Service classification, vendor, and passenger mapping',
+          description: 'Agreement service, vendor, and passenger mapping',
           columns: ADMIN_DRAWER_FORM_LAYOUT.primarySectionColumns,
           children: <AddExpenseFormFields {...fieldProps} section="service" />,
         },
         {
           id: 'amount',
           title: 'Amount & GST',
-          description: 'Base amount, GST, and auto-calculated total',
+          description: 'Prefills from the agreement; adjust GST % from GST master if needed',
           columns: ADMIN_DRAWER_FORM_LAYOUT.primarySectionColumns,
           children: <AddExpenseFormFields {...fieldProps} section="amount" />,
         },

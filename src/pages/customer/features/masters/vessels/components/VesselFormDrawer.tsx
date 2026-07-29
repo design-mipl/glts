@@ -54,7 +54,7 @@ export function VesselFormDrawer({ open, onClose, initial, onSaved }: VesselForm
         {
           id: 'primary',
           title: 'Basic vessel details',
-          description: 'Vessel identity, registration, and contact information',
+          description: 'Vessel identity and registration details',
           columns: ADMIN_DRAWER_FORM_LAYOUT.primarySectionColumns,
           children: <VesselFormFields variant="primary" {...fieldProps} />,
         },

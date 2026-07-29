@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Box, Grid, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { Badge, BaseCard, useToast } from '@/design-system/UIComponents'
-import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
+import { DashboardSectionTable } from '@/pages/admin/dashboard/components'
 import { buildAwaitingDocumentColumns } from '../columns/awaitingDocumentColumns'
 import { buildCorrectionRequestColumns } from '../columns/correctionRequestColumns'
 import type {

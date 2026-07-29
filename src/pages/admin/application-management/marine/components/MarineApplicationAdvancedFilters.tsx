@@ -10,6 +10,7 @@ import { PROCESSING_STAGE_OPTIONS } from '@/pages/customer/features/applications
 const ADMIN_STATUS_OPTIONS = [
   'Pending Documents',
   'Verification Pending',
+  'Document Rejected',
   'Under Review',
   'Submitted',
   'Correction Required',
@@ -19,7 +20,10 @@ const ADMIN_STATUS_OPTIONS = [
 ] as const
 
 const ADMIN_PROCESSING_STAGES = PROCESSING_STAGE_OPTIONS.filter(
-  (opt) => opt.value !== '' && opt.value !== 'Intake' && opt.value !== 'Closed',
+  (opt) =>
+    opt.value !== '' &&
+    opt.value !== 'Ready for submission' &&
+    opt.value !== 'Delivered',
 )
 
 export interface MarineApplicationFilterOptions {

@@ -1,4 +1,5 @@
 import type { GroundServiceLine, OperationalCase } from '@/shared/types/operationalCaseHandling'
+import type { LogisticsDispatchDetails } from '@/shared/types/logisticsDispatch'
 
 export const LOGISTICS_GROUND_SERVICE_NAMES = {
   courier: 'Courier',
@@ -37,4 +38,29 @@ export function resolveCargoHandlingCharge(record: OperationalCase): number | nu
 export function formatInrCharge(amount: number | null | undefined): string {
   if (amount == null) return '—'
   return `₹${amount.toLocaleString('en-IN')}`
+}
+
+/** Amount paid for dispatch settlement — mirrors the method-specific charge field. */
+export function resolveDispatchAmountPaid(
+  details: Pick<
+    LogisticsDispatchDetails,
+    'deliveryMethod' | 'courierCharges' | 'airportAssistanceCharges' | 'cargoHandlingCharges'
+  >,
+): number | null {
+  switch (details.deliveryMethod) {
+    case 'Courier':
+      return details.courierCharges ?? null
+    case 'Airport Assistance':
+      return details.airportAssistanceCharges ?? null
+    case 'Cargo':
+      return details.cargoHandlingCharges ?? null
+    default:
+      return null
+  }
+}
+
+export function formatDispatchAmountPaidField(amount: number | null | undefined): string {
+  if (amount == null || !Number.isFinite(amount) || amount < 0) return ''
+  const rounded = Math.round(amount * 100) / 100
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2)
 }

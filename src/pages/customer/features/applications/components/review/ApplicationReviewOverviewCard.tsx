@@ -65,6 +65,9 @@ export function ApplicationReviewOverviewCard({
       ) : null}
       <Grid container spacing={1.5} columns={{ xs: 2, md: 5 }}>
         {[
+          ...(overview.companyName?.trim()
+            ? ([['Company', overview.companyName.trim()]] as const)
+            : []),
           ['Country', `${overview.countryFlag} ${overview.countryName}`],
           ['Visa', visaLabel],
           ...(overview.issuedPassportLocationLabel

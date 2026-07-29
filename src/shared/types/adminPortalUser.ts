@@ -25,6 +25,7 @@ export interface AdminPortalUser extends MasterAuditFields {
   phone: string
   employeeId: string
   teamId: string
+  departmentId: string
   designation: string
   roleTemplateId: string | null
   profilePhotoUrl: string | null
@@ -42,6 +43,7 @@ export interface AdminPortalUserBasicFormData {
   phone: string
   employeeId: string
   teamId: string
+  departmentId: string
   designation: string
   roleTemplateId: string
   profilePhotoUrl: string
@@ -57,5 +59,6 @@ export interface AdminPortalUserFormData extends AdminPortalUserBasicFormData {
 export interface AdminPortalUserListFilters {
   status?: MasterRecordStatus | 'all'
   teamId?: string | 'all'
+  departmentId?: string | 'all'
   designation?: string | 'all'
 }

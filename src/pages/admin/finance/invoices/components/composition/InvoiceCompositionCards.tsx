@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Box, Collapse, Divider, Grid, IconButton, Stack, Typography } from '@mui/material'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { Badge } from '@/design-system/UIComponents'
+import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { ApplicantFeeAccordion } from './ApplicantFeeAccordion'
 import {
   InvoiceCompositionContextStrip,
@@ -10,14 +11,17 @@ import {
 import type {
   ApplicantFeeBundle,
   BulkApplicationFeeCard,
+  InvoiceCompositionMode,
   InvoiceFeeCompositionState,
+  SingleApplicationFeeCard,
 } from '../../types/invoiceFeeComposition.types'
-import type { SingleApplicationFeeCard } from '../../types/invoiceFeeComposition.types'
-import { INVOICE_COMPOSITION_FEE_LABELS } from '../../config/invoiceFeeCategoryLabels'
-import { RepeatableFeeTable } from './RepeatableFeeTable'
-import { SimpleFeeFields } from './SimpleFeeFields'
+import { effectiveServiceLineAmount } from '../../utils/invoiceFeeCompositionUtils'
+import { InvoiceBillableServicesTable } from './InvoiceBillableServicesTable'
+import { InvoiceConsulateRefundsSection } from './InvoiceConsulateRefundsSection'
 
-const FEE = INVOICE_COMPOSITION_FEE_LABELS
+function applicantServicesTotal(applicant: ApplicantFeeBundle, mode: InvoiceCompositionMode = 'generate'): number {
+  return applicant.serviceLines.reduce((sum, line) => sum + effectiveServiceLineAmount(line, mode), 0)
+}
 
 function MetaGrid({ items }: { items: [string, string][] }) {
   return (
@@ -39,9 +43,20 @@ function MetaGrid({ items }: { items: [string, string][] }) {
 interface ApplicantFeeEditorProps {
   applicant: ApplicantFeeBundle
   onChange: (next: ApplicantFeeBundle) => void
+  nested?: boolean
+  agreement?: CommercialAgreement | null
+  allowAddServices?: boolean
+  mode?: InvoiceCompositionMode
 }
 
-function ApplicantFeeEditor({ applicant, onChange, nested = false }: ApplicantFeeEditorProps & { nested?: boolean }) {
+function ApplicantFeeEditor({
+  applicant,
+  onChange,
+  nested = false,
+  agreement,
+  allowAddServices = true,
+  mode = 'generate',
+}: ApplicantFeeEditorProps) {
   return (
     <Box sx={nested ? undefined : { border: '1px solid', borderColor: 'divider', borderRadius: 1.5, p: 2, bgcolor: 'background.paper' }}>
       {!nested ? (
@@ -56,32 +71,19 @@ function ApplicantFeeEditor({ applicant, onChange, nested = false }: ApplicantFe
         />
       ) : null}
       {!nested ? <Divider sx={{ my: 2 }} /> : null}
-      <Stack spacing={2}>
-        <SimpleFeeFields
-          title={FEE.processingCharges.section}
-          value={applicant.gltsFees}
-          onChange={gltsFees => onChange({ ...applicant, gltsFees })}
-        />
-        <SimpleFeeFields
-          title={FEE.visaFees.section}
-          value={applicant.visaFees}
-          onChange={visaFees => onChange({ ...applicant, visaFees })}
-        />
-        <RepeatableFeeTable
-          title={FEE.courierFees.section}
-          addLabel={FEE.courierFees.addRow}
-          variant="handling"
-          rows={applicant.handlingFees}
-          onChange={handlingFees => onChange({ ...applicant, handlingFees })}
-        />
-        <RepeatableFeeTable
-          title={FEE.miscellaneousFees.section}
-          addLabel={FEE.miscellaneousFees.addRow}
-          variant="miscellaneous"
-          rows={applicant.miscellaneousFees}
-          onChange={miscellaneousFees => onChange({ ...applicant, miscellaneousFees })}
-        />
-      </Stack>
+      <InvoiceBillableServicesTable
+        lines={applicant.serviceLines}
+        onChange={serviceLines => onChange({ ...applicant, serviceLines })}
+        agreement={agreement}
+        country={applicant.country}
+        visaType={applicant.visaType}
+        allowAddServices={allowAddServices}
+        mode={mode}
+      />
+      <InvoiceConsulateRefundsSection
+        refunds={applicant.consulateRefunds ?? []}
+        onChange={consulateRefunds => onChange({ ...applicant, consulateRefunds })}
+      />
     </Box>
   )
 }
@@ -91,48 +93,21 @@ interface SingleApplicationFeeCardViewProps {
   onChange: (next: SingleApplicationFeeCard) => void
   /** Inside Generate Invoice accordion — hides duplicate chrome. */
   embedded?: boolean
+  agreement?: CommercialAgreement | null
+  allowAddServices?: boolean
+  mode?: InvoiceCompositionMode
 }
 
-function SingleFeeSections({
+export function SingleApplicationFeeCardView({
   card,
   onChange,
-}: {
-  card: SingleApplicationFeeCard
-  onChange: (next: SingleApplicationFeeCard) => void
-}) {
+  embedded = false,
+  agreement,
+  allowAddServices = true,
+  mode = 'generate',
+}: SingleApplicationFeeCardViewProps) {
   return (
-    <Stack spacing={2}>
-      <SimpleFeeFields
-        title={FEE.processingCharges.section}
-        value={card.gltsFees}
-        onChange={gltsFees => onChange({ ...card, gltsFees })}
-      />
-      <SimpleFeeFields
-        title={FEE.visaFees.section}
-        value={card.visaFees}
-        onChange={visaFees => onChange({ ...card, visaFees })}
-      />
-      <RepeatableFeeTable
-        title={FEE.courierFees.section}
-        addLabel={FEE.courierFees.addRow}
-        variant="handling"
-        rows={card.handlingFees}
-        onChange={handlingFees => onChange({ ...card, handlingFees })}
-      />
-      <RepeatableFeeTable
-        title={FEE.miscellaneousFees.section}
-        addLabel={FEE.miscellaneousFees.addRow}
-        variant="miscellaneous"
-        rows={card.miscellaneousFees}
-        onChange={miscellaneousFees => onChange({ ...card, miscellaneousFees })}
-      />
-    </Stack>
-  )
-}
-
-export function SingleApplicationFeeCardView({ card, onChange, embedded = false }: SingleApplicationFeeCardViewProps) {
-  return (
-    <Box sx={embedded ? { py: 1.5, px: { xs: 0, sm: 0.5 } } : { border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
+    <Box sx={embedded ? { py: 0.5, px: 0 } : { border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
       {!embedded ? (
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
           <Typography variant="body2" fontWeight={700} sx={{ fontSize: 14 }}>
@@ -156,7 +131,19 @@ export function SingleApplicationFeeCardView({ card, onChange, embedded = false 
           <Divider sx={{ my: 2 }} />
         </>
       ) : null}
-      <SingleFeeSections card={card} onChange={onChange} />
+      <InvoiceBillableServicesTable
+        lines={card.serviceLines}
+        onChange={serviceLines => onChange({ ...card, serviceLines })}
+        agreement={agreement}
+        country={card.country}
+        visaType={card.visaType}
+        allowAddServices={allowAddServices}
+        mode={mode}
+      />
+      <InvoiceConsulateRefundsSection
+        refunds={card.consulateRefunds ?? []}
+        onChange={consulateRefunds => onChange({ ...card, consulateRefunds })}
+      />
     </Box>
   )
 }
@@ -165,16 +152,25 @@ interface BulkApplicationFeeCardViewProps {
   card: BulkApplicationFeeCard
   onChange: (next: BulkApplicationFeeCard) => void
   embedded?: boolean
+  agreement?: CommercialAgreement | null
+  allowAddServices?: boolean
+  mode?: InvoiceCompositionMode
 }
 
 export function BulkApplicationFeeCardView({
   card,
   onChange,
   embedded = false,
+  agreement,
+  allowAddServices = true,
+  mode = 'generate',
 }: BulkApplicationFeeCardViewProps) {
   const toggleExpanded = () => onChange({ ...card, expanded: !card.expanded })
   const showFeeEditors = embedded || card.expanded
-  const [expandedApplicants, setExpandedApplicants] = useState<string[]>([])
+  const [expandedApplicants, setExpandedApplicants] = useState<string[]>(() => {
+    const firstWithServices = card.applicants.find(a => a.serviceLines.length > 0)
+    return firstWithServices ? [firstWithServices.applicantId] : card.applicants[0] ? [card.applicants[0].applicantId] : []
+  })
 
   const toggleApplicantExpanded = (applicantId: string, open: boolean) => {
     setExpandedApplicants(prev =>
@@ -190,7 +186,7 @@ export function BulkApplicationFeeCardView({
   }
 
   return (
-    <Box sx={embedded ? { p: 2 } : { border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
+    <Box sx={embedded ? { py: 0.5, px: 0 } : { border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
       {!embedded ? (
         <Stack direction="row" alignItems="flex-start" spacing={1}>
           <IconButton size="small" onClick={toggleExpanded} sx={{ mt: 0.25 }}>
@@ -218,20 +214,27 @@ export function BulkApplicationFeeCardView({
       ) : null}
 
       <Collapse in={showFeeEditors}>
-        <Stack spacing={1.5} sx={{ mt: embedded ? 0 : 2, pl: embedded ? 0 : { xs: 0, sm: 4 } }}>
-          <Stack spacing={1}>
+        <Stack spacing={1.25} sx={{ mt: embedded ? 0 : 2, pl: embedded ? 0 : { xs: 0, sm: 4 } }}>
+          <Stack spacing={0.75}>
             {card.applicants.map(applicant => (
               <ApplicantFeeAccordion
                 key={applicant.applicantId}
                 applicantId={applicant.applicantId}
                 applicantName={applicant.applicantName}
                 passportNumber={applicant.passportNumber}
+                country={applicant.country}
+                visaType={applicant.visaType}
+                serviceCount={applicant.serviceLines.length}
+                servicesTotal={applicantServicesTotal(applicant, mode)}
                 expanded={expandedApplicants.includes(applicant.applicantId)}
                 onExpandedChange={open => toggleApplicantExpanded(applicant.applicantId, open)}
               >
                 <ApplicantFeeEditor
                   nested
                   applicant={applicant}
+                  agreement={agreement}
+                  allowAddServices={allowAddServices}
+                  mode={mode}
                   onChange={next => updateApplicant(applicant.applicantId, next)}
                 />
               </ApplicantFeeAccordion>
@@ -247,14 +250,18 @@ interface InvoiceCompositionSelectionSummaryProps {
   state: InvoiceFeeCompositionState
   billingEntityOptions: Array<{ value: string; label: string }>
   onBillingEntityChange: (value: string) => void
+  onDocumentDateChange: (value: string) => void
   billingTypeLabel: string
+  documentDateLabel?: string
 }
 
 export function InvoiceCompositionSelectionSummary({
   state,
   billingEntityOptions,
   onBillingEntityChange,
+  onDocumentDateChange,
   billingTypeLabel,
+  documentDateLabel,
 }: InvoiceCompositionSelectionSummaryProps) {
   const totalApplications = state.singles.length + state.bulks.length
   const totalApplicants =
@@ -274,6 +281,9 @@ export function InvoiceCompositionSelectionSummary({
         billingEntityOptions={billingEntityOptions}
         onBillingEntityChange={onBillingEntityChange}
         billingTypeLabel={billingTypeLabel}
+        documentDate={state.documentDate}
+        onDocumentDateChange={onDocumentDateChange}
+        documentDateLabel={documentDateLabel}
       />
     </Box>
   )

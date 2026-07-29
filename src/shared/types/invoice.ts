@@ -9,7 +9,6 @@ export type InvoiceType =
   | 'additional_expense'
   | 'final_settlement'
   | 'credit_note'
-  | 'debit_note'
 
 export type InvoiceStatus =
   | 'draft'
@@ -41,6 +40,8 @@ export interface InvoiceLineItem {
   billingStatus: LineItemBillingStatus
   remarks?: string
   isAdditionalExpense: boolean
+  /** Reference credit from a linked credit note (revised invoice drafts). */
+  creditAmount?: number
 }
 
 export interface InvoiceTaxConfig {
@@ -87,6 +88,28 @@ export interface InvoiceAttachment {
   name: string
   type: 'invoice_pdf' | 'signed_copy' | 'other'
   uploadedAt: string
+}
+
+/** Consulate refund from Ground Ops — billing application status on an invoice. */
+export type InvoiceRefundBillingStatus = 'pending' | 'applied'
+
+export type InvoiceRefundAppliedVia = 'generate' | 'modify' | 'credit_note'
+
+/** Snapshot of a Ground Ops consulate refund applied to billing. */
+export interface InvoiceAppliedRefund {
+  caseId: string
+  operationalId: string
+  applicationId: string
+  passengerName: string
+  passportNumber?: string
+  vendorName: string
+  amount: number
+  remarks?: string
+  appliedAt: string
+  appliedVia: InvoiceRefundAppliedVia
+  /** Invoice or credit note that applied this refund. */
+  appliedDocumentId: string
+  appliedDocumentNumber?: string
 }
 
 export type PaymentVerificationStatus = 'pending' | 'verified' | 'rejected'
@@ -136,11 +159,15 @@ export interface Invoice {
   lastUpdated: string
   createdAt: string
   sourceInvoiceId?: string
+  /** ISO date (YYYY-MM-DD) when GST was filed — drives correction actions. */
+  gstFiledAt?: string
   sharedAt?: string
   sharedToEmail?: string
   activities: InvoiceActivity[]
   attachments: InvoiceAttachment[]
   payments: InvoicePaymentRecord[]
+  /** Consulate refunds from Ground Ops that have been applied on this document. */
+  appliedRefunds?: InvoiceAppliedRefund[]
 }
 
 export interface InvoiceBillingSelection {
@@ -168,6 +195,8 @@ export interface InvoiceWorkspaceState {
   additionalCharges: number
   paymentTerms: string
   dueDate: string
+  /** Document / invoice date (YYYY-MM-DD). */
+  invoiceDate?: string
   sourceInvoiceId?: string
   draftInvoiceId?: string
   agreementId?: string
@@ -206,9 +235,14 @@ export interface RecordPaymentPayload {
   tdsAmount?: number
 }
 
+export type CreditNoteMode = 'full' | 'partial' | 'line'
+
 export interface CreditNoteAdjustment {
-  mode: 'partial' | 'full'
+  mode: CreditNoteMode
+  /** Required for `line` mode; optional for `partial` (amount-based). */
   lineItemIds?: string[]
+  /** Optional absolute credit amount for `partial` mode (pre-GST line total basis). */
+  partialAmount?: number
   reason: string
 }
 

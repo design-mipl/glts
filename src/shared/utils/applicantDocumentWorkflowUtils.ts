@@ -2,6 +2,7 @@ import type {
   ApplicantDocumentItem,
   ApplicantDocumentStatus,
 } from '@/pages/customer/features/applications/data/applicationFlowData'
+import { gltsArrangeFeeAmountString } from '@/shared/utils/gltsArrangeFeeUtils'
 
 export type DocumentHandlingMode = 'upload_by_applicant' | 'arrange_by_glts'
 
@@ -359,10 +360,18 @@ export function patchAfterHandlingModeChange(
   mode: DocumentHandlingMode,
 ): Partial<ApplicantDocumentItem> {
   const previousMode = doc.handlingMode
+  const feeAmount =
+    mode === 'arrange_by_glts' && isSimpleDocumentRequirement(doc.documentId)
+      ? gltsArrangeFeeAmountString(doc.documentId)
+      : ''
 
   if (doc.documentId === 'travel-ticket') {
     const cleared = clearTravelTicketForMode(mode)
-    const travelTicket = { ...(doc.travelTicket ?? emptyTravelTicketWorkflow()), ...cleared }
+    const travelTicket = {
+      ...(doc.travelTicket ?? emptyTravelTicketWorkflow()),
+      ...cleared,
+      arrangementAmount: feeAmount,
+    }
     const nextDoc = { ...doc, handlingMode: mode, travelTicket }
     return {
       handlingMode: mode,
@@ -372,7 +381,11 @@ export function patchAfterHandlingModeChange(
   }
 
   const cleared = clearInsuranceForMode(mode)
-  const insurance = { ...(doc.insurance ?? emptyInsuranceWorkflow()), ...cleared }
+  const insurance = {
+    ...(doc.insurance ?? emptyInsuranceWorkflow()),
+    ...cleared,
+    arrangementAmount: feeAmount,
+  }
   const nextDoc = { ...doc, handlingMode: mode, insurance }
   return {
     handlingMode: mode,

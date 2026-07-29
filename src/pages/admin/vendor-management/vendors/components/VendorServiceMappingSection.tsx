@@ -56,7 +56,7 @@ export function useVendorServiceMappingSection({ data, onChange }: VendorService
       {data.serviceMappings.length === 0 ? (
         <Box sx={{ py: 3, textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-            No services mapped yet. Use Add service to define vendor rates.
+            No services mapped yet. Adding services is optional — you can do this later.
           </Typography>
         </Box>
       ) : (

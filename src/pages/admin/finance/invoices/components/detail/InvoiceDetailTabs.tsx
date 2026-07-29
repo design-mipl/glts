@@ -13,91 +13,153 @@ import {
 import { ActivityFeed, FileUpload } from '@/design-system/UIComponents'
 import type { Invoice } from '@/shared/types/invoice'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
-import { agreementEmbeddedTableHeadCellSx, agreementEmbeddedTableSx } from '@/pages/admin/customer-accounts/agreements/components/agreementFormLayout'
+import {
+  agreementEmbeddedTableHeadCellSx,
+  agreementEmbeddedTableSx,
+} from '@/pages/admin/customer-accounts/agreements/components/agreementFormLayout'
 import { paymentStatusLabel } from '../../config/invoiceStatusConfig'
+import { canCreateSecondaryInvoice } from '../../utils/invoiceCorrectionPolicy'
+import { InvoiceDetailLineGroups } from './InvoiceDetailLineGroups'
+import { InvoiceDetailRefundTab } from './InvoiceDetailRefundTab'
+import { InvoiceDetailUnbilledExpensesTab } from './InvoiceDetailUnbilledExpensesTab'
+import { invoiceService } from '@/shared/services/invoiceService'
 
 interface InvoiceDetailTabsProps {
   invoice: Invoice
   activeTab: string
+  onCreateSecondaryInvoice?: () => void
+  onModifyInvoice?: () => void
+  onCreateCreditNote?: () => void
 }
 
-function OverviewTab({ invoice }: { invoice: Invoice }) {
+function MetaItem({ label, value }: { label: string; value: string }) {
   return (
-    <Stack spacing={2}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Company
-          </Typography>
-          <Typography variant="body2" fontWeight={600}>
-            {invoice.companyName}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Billing entity
-          </Typography>
-          <Typography variant="body2">{invoice.billingEntity}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Vessel
-          </Typography>
-          <Typography variant="body2">{invoice.vesselName ?? '—'}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            GLTS references
-          </Typography>
-          <Typography variant="body2">{invoice.gltsReferences.join(', ') || '—'}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Batch IDs
-          </Typography>
-          <Typography variant="body2">{invoice.batchIds.join(', ') || '—'}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Typography variant="caption" color="text.secondary">
-            Payment terms
-          </Typography>
-          <Typography variant="body2">{invoice.paymentTerms ?? '—'}</Typography>
-        </Grid>
-      </Grid>
+    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+      <Typography variant="caption" color="text.secondary" display="block">
+        {label}
+      </Typography>
+      <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+        {value}
+      </Typography>
+    </Grid>
+  )
+}
+
+function TotalsRow({
+  label,
+  value,
+  emphasis,
+}: {
+  label: string
+  value: string
+  emphasis?: boolean
+}) {
+  return (
+    <Stack direction="row" justifyContent="space-between" alignItems="baseline" spacing={2}>
+      <Typography
+        variant="body2"
+        color={emphasis ? 'text.primary' : 'text.secondary'}
+        fontWeight={emphasis ? 700 : 400}
+        sx={{ fontSize: 13 }}
+      >
+        {label}
+      </Typography>
+      <Typography variant="body2" fontWeight={emphasis ? 700 : 600} sx={{ fontSize: 13 }}>
+        {value}
+      </Typography>
     </Stack>
   )
 }
 
-function LineItemsTab({ invoice }: { invoice: Invoice }) {
+/** Invoice document: slim context + application/passenger line groups + totals. */
+function InvoiceDocumentTab({ invoice }: { invoice: Invoice }) {
+  const { totals, taxConfig } = invoice
+  const isCreditNote = invoice.invoiceType === 'credit_note'
+  const sourceInvoice = invoice.sourceInvoiceId
+    ? invoiceService.getById(invoice.sourceInvoiceId)
+    : undefined
+
+  const slimMeta: Array<{ label: string; value: string }> = [
+    { label: 'Vessel', value: invoice.vesselName ?? '—' },
+    { label: 'Payment terms', value: invoice.paymentTerms ?? '—' },
+  ]
+  if (invoice.poReference?.trim()) {
+    slimMeta.push({ label: 'PO reference', value: invoice.poReference.trim() })
+  }
+  if (sourceInvoice) {
+    slimMeta.push({ label: 'Source invoice', value: sourceInvoice.invoiceId })
+  } else if (invoice.sourceInvoiceId) {
+    slimMeta.push({ label: 'Source invoice', value: invoice.sourceInvoiceId })
+  }
+
   return (
-    <Box sx={agreementEmbeddedTableSx}>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell sx={agreementEmbeddedTableHeadCellSx}>Application</TableCell>
-            <TableCell sx={agreementEmbeddedTableHeadCellSx}>Batch</TableCell>
-            <TableCell sx={agreementEmbeddedTableHeadCellSx}>Service</TableCell>
-            <TableCell sx={agreementEmbeddedTableHeadCellSx}>Description</TableCell>
-            <TableCell sx={agreementEmbeddedTableHeadCellSx}>Qty</TableCell>
-            <TableCell sx={agreementEmbeddedTableHeadCellSx}>Unit</TableCell>
-            <TableCell sx={agreementEmbeddedTableHeadCellSx}>Amount</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {invoice.lineItems.map(li => (
-            <TableRow key={li.id}>
-              <TableCell sx={{ fontSize: 13 }}>{li.applicationId ?? '—'}</TableCell>
-              <TableCell sx={{ fontSize: 13 }}>{li.batchId ?? '—'}</TableCell>
-              <TableCell sx={{ fontSize: 13 }}>{li.serviceType}</TableCell>
-              <TableCell sx={{ fontSize: 13 }}>{li.description}</TableCell>
-              <TableCell sx={{ fontSize: 13 }}>{li.quantity}</TableCell>
-              <TableCell sx={{ fontSize: 13 }}>{formatInr(li.unitPrice)}</TableCell>
-              <TableCell sx={{ fontSize: 13 }}>{formatInr(li.amount)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Box>
+    <Stack spacing={2.5}>
+      <Grid container spacing={1.5}>
+        {slimMeta.map(item => (
+          <MetaItem key={item.label} label={item.label} value={item.value} />
+        ))}
+      </Grid>
+
+      <Divider />
+
+      <Box>
+        <InvoiceDetailLineGroups
+          invoice={invoice}
+          title={isCreditNote ? 'Services credited' : 'Billable services'}
+        />
+      </Box>
+
+      <Box
+        sx={{
+          alignSelf: { xs: 'stretch', sm: 'flex-end' },
+          width: { xs: '100%', sm: 320 },
+          p: 2,
+          borderRadius: 1.5,
+          border: 1,
+          borderColor: 'divider',
+          bgcolor: 'action.hover',
+        }}
+      >
+        <Stack spacing={1}>
+          <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13, mb: 0.5 }}>
+            {isCreditNote ? 'Credit note totals' : 'Tax & totals'}
+          </Typography>
+          <TotalsRow label="Subtotal" value={formatInr(totals.subtotal)} />
+          <TotalsRow
+            label={`GST (${taxConfig.gstPercentage}%)`}
+            value={formatInr(totals.gstTotal)}
+          />
+          {taxConfig.tdsApplicable || totals.tdsAmount > 0 ? (
+            <TotalsRow
+              label={`TDS (${taxConfig.tdsPercentage}%)`}
+              value={formatInr(-Math.abs(totals.tdsAmount))}
+            />
+          ) : null}
+          {totals.additionalCharges !== 0 ? (
+            <TotalsRow label="Additional charges" value={formatInr(totals.additionalCharges)} />
+          ) : null}
+          {!isCreditNote && totals.advanceAdjusted > 0 ? (
+            <TotalsRow
+              label="Advance adjusted"
+              value={formatInr(-Math.abs(totals.advanceAdjusted))}
+            />
+          ) : null}
+          <Divider sx={{ my: 0.5 }} />
+          <TotalsRow
+            label={isCreditNote ? 'Credit note amount' : 'Final amount'}
+            value={formatInr(totals.finalAmount)}
+            emphasis
+          />
+          {!isCreditNote ? (
+            <TotalsRow
+              label="Balance payable"
+              value={formatInr(totals.balancePayable)}
+              emphasis
+            />
+          ) : null}
+        </Stack>
+      </Box>
+    </Stack>
   )
 }
 
@@ -112,86 +174,24 @@ function AdvanceCreditTab({ invoice }: { invoice: Invoice }) {
   }
 
   return (
-    <Stack spacing={1.5}>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="body2">Billing type</Typography>
-        <Typography variant="body2" fontWeight={600} sx={{ textTransform: 'capitalize' }}>
-          {billingAdjustment.billingType}
-        </Typography>
-      </Stack>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="body2">Invoice total</Typography>
-        <Typography variant="body2">{formatInr(totals.finalAmount)}</Typography>
-      </Stack>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="body2">Advance available</Typography>
-        <Typography variant="body2">{formatInr(totals.advanceAvailable)}</Typography>
-      </Stack>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="body2">Advance adjusted</Typography>
-        <Typography variant="body2">{formatInr(totals.advanceAdjusted)}</Typography>
-      </Stack>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="body2">Credit applied</Typography>
-        <Typography variant="body2">{formatInr(totals.creditApplied)}</Typography>
-      </Stack>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="body2" fontWeight={700}>
-          Balance payable
-        </Typography>
-        <Typography variant="body2" fontWeight={700}>
-          {formatInr(totals.balancePayable)}
-        </Typography>
-      </Stack>
+    <Stack spacing={1.5} sx={{ maxWidth: 480 }}>
+      <TotalsRow label="Billing type" value={billingAdjustment.billingType} />
+      <TotalsRow label="Invoice total" value={formatInr(totals.finalAmount)} />
+      <TotalsRow label="Advance available" value={formatInr(totals.advanceAvailable)} />
+      <TotalsRow label="Advance adjusted" value={formatInr(totals.advanceAdjusted)} />
+      <TotalsRow label="Credit applied" value={formatInr(totals.creditApplied)} />
+      <Divider />
+      <TotalsRow label="Balance payable" value={formatInr(totals.balancePayable)} emphasis />
       {billingAdjustment.billingType === 'credit' || billingAdjustment.billingType === 'mixed' ? (
         <>
-          <Stack direction="row" justifyContent="space-between">
-            <Typography variant="body2">Credit limit</Typography>
-            <Typography variant="body2">{formatInr(billingAdjustment.creditLimit ?? 0)}</Typography>
-          </Stack>
-          <Stack direction="row" justifyContent="space-between">
-            <Typography variant="body2">Credit used</Typography>
-            <Typography variant="body2">{formatInr(billingAdjustment.creditUsed ?? 0)}</Typography>
-          </Stack>
-          <Stack direction="row" justifyContent="space-between">
-            <Typography variant="body2">Available credit</Typography>
-            <Typography variant="body2">{formatInr(billingAdjustment.creditAvailable ?? 0)}</Typography>
-          </Stack>
+          <TotalsRow label="Credit limit" value={formatInr(billingAdjustment.creditLimit ?? 0)} />
+          <TotalsRow label="Credit used" value={formatInr(billingAdjustment.creditUsed ?? 0)} />
+          <TotalsRow
+            label="Available credit"
+            value={formatInr(billingAdjustment.creditAvailable ?? 0)}
+          />
         </>
       ) : null}
-    </Stack>
-  )
-}
-
-function TaxBreakdownTab({ invoice }: { invoice: Invoice }) {
-  const { totals, taxConfig } = invoice
-  return (
-    <Stack spacing={1.5}>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="body2">Subtotal</Typography>
-        <Typography variant="body2">{formatInr(totals.subtotal)}</Typography>
-      </Stack>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="body2">GST ({taxConfig.gstPercentage}%)</Typography>
-        <Typography variant="body2">{formatInr(totals.gstTotal)}</Typography>
-      </Stack>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="body2">TDS ({taxConfig.tdsPercentage}%)</Typography>
-        <Typography variant="body2">{formatInr(-totals.tdsAmount)}</Typography>
-      </Stack>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="body2">Additional charges</Typography>
-        <Typography variant="body2">{formatInr(totals.additionalCharges)}</Typography>
-      </Stack>
-      <Divider />
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="body2" fontWeight={700}>
-          Final amount
-        </Typography>
-        <Typography variant="body2" fontWeight={700}>
-          {formatInr(totals.finalAmount)}
-        </Typography>
-      </Stack>
     </Stack>
   )
 }
@@ -199,16 +199,46 @@ function TaxBreakdownTab({ invoice }: { invoice: Invoice }) {
 function AttachmentsTab({ invoice }: { invoice: Invoice }) {
   return (
     <Stack spacing={2}>
+      <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+        Invoice PDF and signed copies for this document.
+      </Typography>
       {invoice.attachments.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
-          No attachments yet.
+          No attachments yet. Submit or share the invoice to generate a PDF entry, or upload a
+          signed copy.
         </Typography>
       ) : (
-        invoice.attachments.map(att => (
-          <Typography key={att.id} variant="body2">
-            {att.name} · {new Date(att.uploadedAt).toLocaleDateString()}
-          </Typography>
-        ))
+        <Stack spacing={1}>
+          {invoice.attachments.map(att => (
+            <Stack
+              key={att.id}
+              direction="row"
+              justifyContent="space-between"
+              spacing={2}
+              sx={{
+                py: 1,
+                px: 1.5,
+                borderRadius: 1,
+                border: 1,
+                borderColor: 'divider',
+              }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body2" fontWeight={600} noWrap sx={{ fontSize: 13 }}>
+                  {att.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {att.type === 'invoice_pdf'
+                    ? 'Invoice PDF'
+                    : att.type === 'signed_copy'
+                      ? 'Signed copy'
+                      : 'Other'}{' '}
+                  · {new Date(att.uploadedAt).toLocaleDateString()}
+                </Typography>
+              </Box>
+            </Stack>
+          ))}
+        </Stack>
       )}
       <FileUpload label="Upload signed copy" accept=".pdf,.png,.jpg" onUpload={() => {}} />
     </Stack>
@@ -273,12 +303,30 @@ function ActivityTab({ invoice }: { invoice: Invoice }) {
   )
 }
 
-export function InvoiceDetailTabContent({ invoice, activeTab }: InvoiceDetailTabsProps) {
+export function InvoiceDetailTabContent({
+  invoice,
+  activeTab,
+  onCreateSecondaryInvoice,
+  onModifyInvoice,
+  onCreateCreditNote,
+}: InvoiceDetailTabsProps) {
   switch (activeTab) {
-    case 'line_items':
-      return <LineItemsTab invoice={invoice} />
-    case 'tax':
-      return <TaxBreakdownTab invoice={invoice} />
+    case 'refund':
+      return (
+        <InvoiceDetailRefundTab
+          invoice={invoice}
+          onModifyInvoice={onModifyInvoice}
+          onCreateCreditNote={onCreateCreditNote}
+        />
+      )
+    case 'unbilled':
+      return (
+        <InvoiceDetailUnbilledExpensesTab
+          invoice={invoice}
+          canCreateSecondaryInvoice={canCreateSecondaryInvoice(invoice)}
+          onCreateSecondaryInvoice={onCreateSecondaryInvoice}
+        />
+      )
     case 'adjustment':
       return <AdvanceCreditTab invoice={invoice} />
     case 'attachments':
@@ -287,7 +335,8 @@ export function InvoiceDetailTabContent({ invoice, activeTab }: InvoiceDetailTab
       return <PaymentHistoryTab invoice={invoice} />
     case 'activity':
       return <ActivityTab invoice={invoice} />
+    case 'invoice':
     default:
-      return <OverviewTab invoice={invoice} />
+      return <InvoiceDocumentTab invoice={invoice} />
   }
 }

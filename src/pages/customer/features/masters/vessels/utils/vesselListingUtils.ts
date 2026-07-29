@@ -5,16 +5,19 @@ export function getVesselCellValue(row: VesselMaster, key: string): string {
   if (key === 'lastUpdated') return formatVesselDate(row.updatedAt)
   if (key === 'status') return vesselStatusLabel[row.status]
   if (key === 'vesselType') return vesselTypeLabel[row.vesselType]
-  if (key === 'contactPerson') return row.contactPersonName
   return String((row as unknown as Record<string, unknown>)[key] ?? '')
 }
 
 export function matchesVesselSearch(row: VesselMaster, query: string): boolean {
   const normalized = query.trim().toLowerCase()
   if (!normalized) return true
-  return [row.vesselName, row.imoNumber, row.contactPersonName].some(part =>
-    part.toLowerCase().includes(normalized),
-  )
+  return [
+    row.vesselName,
+    row.imoNumber,
+    row.flagCountry,
+    row.portOfRegistry,
+    vesselTypeLabel[row.vesselType],
+  ].some(part => part.toLowerCase().includes(normalized))
 }
 
 export function formatVesselDate(iso: string): string {
@@ -31,14 +34,22 @@ export function mapVesselRowsToGridItems(rows: VesselMaster[]) {
     id: row.id,
     title: row.vesselName,
     subtitle: `IMO ${row.imoNumber}`,
-    meta: `${vesselTypeLabel[row.vesselType]} · ${formatVesselDate(row.updatedAt)}`,
+    meta: `${vesselTypeLabel[row.vesselType]} · ${row.flagCountry || '--'}`,
     status: vesselStatusLabel[row.status],
     statusColor: row.status === 'active' ? ('success' as const) : ('default' as const),
   }))
 }
 
 export function downloadVesselCsv(rows: VesselMaster[]) {
-  const headers = ['Vessel Name', 'IMO', 'Type', 'Flag Country', 'Port of Registry', 'Contact', 'Status', 'Last Updated']
+  const headers = [
+    'Vessel Name',
+    'IMO',
+    'Type',
+    'Flag / Registered Country',
+    'Port of Registry',
+    'Status',
+    'Last Updated',
+  ]
   const lines = rows.map(row =>
     [
       row.vesselName,
@@ -46,7 +57,6 @@ export function downloadVesselCsv(rows: VesselMaster[]) {
       vesselTypeLabel[row.vesselType],
       row.flagCountry,
       row.portOfRegistry,
-      row.contactPersonName,
       vesselStatusLabel[row.status],
       formatVesselDate(row.updatedAt),
     ]

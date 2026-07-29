@@ -34,18 +34,25 @@ export function buildGstRateColumns({
       key: 'slabName',
       label: 'Slab Name',
       widthSize: adminListingColumnWidthSize('name'),
+      sortable: true,
+      filterable: false,
       searchable: true,
     },
     {
       key: 'ratePercent',
       label: 'Rate %',
       widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => `${row.ratePercent}%`,
     },
     {
       key: 'description',
       label: 'Description',
       widthSize: adminListingColumnWidthSize('description'),
+      sortable: false,
+      filterable: false,
+      searchable: true,
       render: (_, row) => (
         <span
           style={{
@@ -65,6 +72,8 @@ export function buildGstRateColumns({
       key: 'status',
       label: 'Status',
       widthSize: adminListingColumnWidthSize('status'),
+      sortable: false,
+      filterable: true,
       render: (_, row) => (
         <Badge
           label={masterStatusLabel[row.status]}
@@ -77,12 +86,16 @@ export function buildGstRateColumns({
       key: 'createdAudit',
       label: 'Created By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
     },
     {
       key: 'updatedAudit',
       label: 'Updated By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
     },
     {

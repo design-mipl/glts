@@ -191,7 +191,7 @@ export function AgreementFinanceContactsPanel({
         }
       >
         {editContact ? (
-          <FormSection columns={1}>
+          <FormSection columns={2}>
             <FormField label="Source" required>
               <Select
                 value={getFinanceContactSourceValue(editContact)}

@@ -30,7 +30,7 @@ export interface ExecutiveKpiSectionProps {
 
 export function ExecutiveKpiSection({ metrics }: ExecutiveKpiSectionProps) {
   return (
-    <Grid container spacing={2}>
+    <Grid container spacing={1.25}>
       {metrics.map((metric) => (
         <Grid key={metric.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
           <ExecutiveCompactKpiCard
@@ -38,6 +38,7 @@ export function ExecutiveKpiSection({ metrics }: ExecutiveKpiSectionProps) {
             value={metric.formattedValue ?? metric.value.toLocaleString()}
             comparisonLabel={metric.subtitle || metric.deltaLabel}
             delta={metric.delta}
+            accent={metric.accent}
             icon={ICON_MAP[metric.iconKey] ?? FileText}
             href={metric.href}
           />

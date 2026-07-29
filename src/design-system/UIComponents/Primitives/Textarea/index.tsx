@@ -38,7 +38,7 @@ export default function Textarea({
   required = false,
   rows,
   maxRows,
-  minRows = 3,
+  minRows = FORM_CONTROL.textareaMinRows,
   autoResize = true,
   maxLength,
   showCount = false,

@@ -4,6 +4,8 @@ import type { CityTeam } from '@/shared/types/operationalCaseHandling'
 
 export type AssignmentPriority = 'Urgent' | 'High' | 'Medium' | 'Low'
 
+export type AssignmentAssigneeType = 'user' | 'vendor' | 'passenger'
+
 export type PassengerOperationalStatus =
   | 'Pending Assignment'
   | 'Assigned'
@@ -52,8 +54,10 @@ export interface AssignmentHistoryEntry {
 
 export interface OperationalPassengerOverlay {
   priority: AssignmentPriority
+  assigneeType: AssignmentAssigneeType
   assignedTeam: CityTeam | ''
   assignedUser: string
+  assignedVendor: string
   operationalDate: string
   passengerStatus: PassengerOperationalStatus
   carryForward: boolean
@@ -73,6 +77,8 @@ export interface OperationalPassengerRow {
   sequenceNo: number
   passengerName: string
   passportNo: string
+  passengerPhone: string
+  passengerEmail: string
   companyName: string
   bookerName: string
   country: string
@@ -87,8 +93,10 @@ export interface OperationalPassengerRow {
   invoiceStatus: InvoiceStatus | ''
   paymentStatus: PaymentStatus | ''
   priority: AssignmentPriority
+  assigneeType: AssignmentAssigneeType
   assignedTeam: CityTeam | ''
   assignedUser: string
+  assignedVendor: string
   operationalDate: string
   passengerStatus: PassengerOperationalStatus
   carryForward: boolean
@@ -107,6 +115,8 @@ export interface OperationalPassengerRow {
 
 export type AssignmentSlaFilter = '' | 'at_risk' | 'due_today' | 'on_track'
 
+export type AssignmentFundFilter = '' | 'requested' | 'allocated' | 'none'
+
 export interface AssignmentQueueFilters {
   datePreset: OperationalDateFilterPreset
   customDateFrom?: string
@@ -119,6 +129,8 @@ export interface AssignmentQueueFilters {
   visaType: string
   status: string
   sla: string
+  /** Filter by fund allocation state — only rows with an active fund workflow when set. */
+  fundStatus: AssignmentFundFilter
   search: string
 }
 

@@ -3,7 +3,7 @@ import { Box, Grid, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { BarChart, ChartCard, Tabs } from '@/design-system/UIComponents'
 import { useChartTheme } from '@/design-system/UIComponents/Charts/utils/chartTheme'
-import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
+import { DashboardSectionTable } from '@/pages/admin/dashboard/components'
 import { buildTopRevenueColumns } from '../columns/topRevenueColumns'
 import type { PurchaseVsRevenueSnapshot, TopRevenueRow } from '../../data/accountsDashboardMock'
 

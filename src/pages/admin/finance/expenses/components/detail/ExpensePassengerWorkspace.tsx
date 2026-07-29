@@ -1,9 +1,8 @@
 import { Box } from '@mui/material'
 import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
-import type { ApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
-import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import type { VerifyOverviewData } from '@/pages/admin/application-management/marine/utils/verifyDocumentsUtils'
 import type {
+  ApplicationExpenseDetailView,
   ApplicationExpenseRecord,
 } from '@/shared/types/applicationExpenseManagement'
 import type { ExpenseItemAction } from './ExpenseItemsTable'
@@ -12,10 +11,9 @@ import { ExpenseTravelerDetailPanel } from './ExpenseTravelerDetailPanel'
 
 interface ExpensePassengerWorkspaceProps {
   applicationId: string
-  applicationDetail: ApplicationDetailViewModel
+  expenseDetail: ApplicationExpenseDetailView
   rows: UploadQueueRow[]
   overview: VerifyOverviewData
-  summaryOverview: ApplicationReviewOverview
   singleListing: boolean
   selectedTravelerId: string | null
   onSelectTraveler: (id: string) => void
@@ -29,10 +27,9 @@ interface ExpensePassengerWorkspaceProps {
 
 export function ExpensePassengerWorkspace({
   applicationId,
-  applicationDetail,
+  expenseDetail,
   rows,
   overview,
-  summaryOverview,
   singleListing,
   selectedTravelerId,
   onSelectTraveler,
@@ -89,10 +86,8 @@ export function ExpensePassengerWorkspace({
       >
         <ExpenseTravelerDetailPanel
           applicationId={applicationId}
-          applicationDetail={applicationDetail}
           selectedRow={selectedRow}
-          summaryOverview={summaryOverview}
-          singleListing={singleListing}
+          expenseDetail={expenseDetail}
           allExpenses={allExpenses}
           onAddExpense={onAddExpense}
           onExpenseAction={onExpenseAction}

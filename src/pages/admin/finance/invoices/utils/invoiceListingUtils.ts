@@ -1,4 +1,5 @@
 import type { Invoice, InvoiceListFilters } from '@/shared/types/invoice'
+import { invoiceService } from '@/shared/services/invoiceService'
 import { formatInr, getInvoiceApplicationCount } from '@/shared/utils/invoiceCalculations'
 import {
   billingModeLabel,
@@ -7,6 +8,27 @@ import {
   paymentStatusLabel,
 } from '../config/invoiceStatusConfig'
 import type { InvoiceListingTab } from '../config/invoiceListingTabs'
+import {
+  formatInvoiceOpenItemsLabel,
+  getInvoiceOpenItemFlags,
+} from './invoiceDetailSideTabs'
+
+/** Invoice number shown in listing — source invoice for credit notes. */
+export function getListingInvoiceNumber(record: Invoice): string {
+  if (record.invoiceType !== 'credit_note') return record.invoiceId
+  if (!record.sourceInvoiceId) return '—'
+  return invoiceService.getById(record.sourceInvoiceId)?.invoiceId ?? record.sourceInvoiceId
+}
+
+/** Credit note number(s) for listing — own id for CN rows, linked CNs for invoices. */
+export function getListingCreditNoteNumber(record: Invoice): string {
+  if (record.invoiceType === 'credit_note') return record.invoiceId
+  const linked = invoiceService
+    .listCreditNotes()
+    .filter(cn => cn.sourceInvoiceId === record.id)
+    .map(cn => cn.invoiceId)
+  return linked.length > 0 ? linked.join(', ') : '—'
+}
 
 export interface InvoiceAdvancedFilterState {
   company: string
@@ -45,12 +67,12 @@ export function matchesInvoiceSearch(record: Invoice, query: string): boolean {
   if (!q) return true
   return (
     record.invoiceId.toLowerCase().includes(q) ||
+    getListingInvoiceNumber(record).toLowerCase().includes(q) ||
+    getListingCreditNoteNumber(record).toLowerCase().includes(q) ||
     record.companyName.toLowerCase().includes(q) ||
     record.billingEntity.toLowerCase().includes(q) ||
     (record.vesselName ?? '').toLowerCase().includes(q) ||
-    (record.poReference ?? '').toLowerCase().includes(q) ||
-    record.gltsReferences.some(r => r.toLowerCase().includes(q)) ||
-    record.batchIds.some(b => b.toLowerCase().includes(q))
+    (record.poReference ?? '').toLowerCase().includes(q)
   )
 }
 
@@ -101,7 +123,9 @@ export function advancedFiltersToServiceFilters(
 export function getInvoiceCellValue(record: Invoice, columnKey: string): string {
   switch (columnKey) {
     case 'invoiceId':
-      return record.invoiceId
+      return getListingInvoiceNumber(record)
+    case 'creditNoteNumber':
+      return getListingCreditNoteNumber(record)
     case 'billingMode':
       return billingModeLabel[record.billingMode]
     case 'invoiceType':
@@ -112,20 +136,18 @@ export function getInvoiceCellValue(record: Invoice, columnKey: string): string 
       return record.billingEntity
     case 'vessel':
       return record.vesselName ?? '—'
-    case 'gltsReference':
-      return record.gltsReferences.join(', ') || '—'
-    case 'batchId':
-      return record.batchIds.join(', ') || '—'
     case 'totalApplications':
       return String(getInvoiceApplicationCount(record))
     case 'invoiceAmount':
       return formatInr(record.totals.finalAmount)
-    case 'advanceAdjusted':
-      return formatInr(record.totals.advanceAdjusted)
     case 'balancePayable':
       return formatInr(record.totals.balancePayable)
     case 'invoiceStatus':
       return invoiceStatusLabel[record.invoiceStatus]
+    case 'openItems':
+      return formatInvoiceOpenItemsLabel(getInvoiceOpenItemFlags(record))
+    case 'gstFiled':
+      return record.gstFiledAt ? `Filed ${record.gstFiledAt}` : 'Not filed'
     case 'paymentStatus':
       return paymentStatusLabel[record.paymentStatus]
     case 'invoiceDate':
@@ -142,18 +164,17 @@ export function getInvoiceCellValue(record: Invoice, columnKey: string): string 
 export function downloadInvoiceCsv(records: Invoice[]) {
   const headers = [
     'Invoice ID',
+    'Credit Note Number',
     'Billing Mode',
     'Invoice Type',
     'Company',
     'Billing Entity',
     'Vessel',
-    'GLTS Reference',
-    'Batch ID',
     'Total Applications',
     'Invoice Amount',
-    'Advance Adjusted',
     'Balance Payable',
     'Invoice Status',
+    'Unbilled / Refund',
     'Payment Status',
     'Invoice Date',
     'Due Date',
@@ -161,19 +182,18 @@ export function downloadInvoiceCsv(records: Invoice[]) {
   ]
   const rows = records.map(r =>
     [
-      r.invoiceId,
+      getListingInvoiceNumber(r),
+      getListingCreditNoteNumber(r),
       billingModeLabel[r.billingMode],
       invoiceTypeLabel[r.invoiceType],
       r.companyName,
       r.billingEntity,
       r.vesselName ?? '',
-      r.gltsReferences.join(';'),
-      r.batchIds.join(';'),
       getInvoiceApplicationCount(r),
       r.totals.finalAmount,
-      r.totals.advanceAdjusted,
       r.totals.balancePayable,
       invoiceStatusLabel[r.invoiceStatus],
+      formatInvoiceOpenItemsLabel(getInvoiceOpenItemFlags(r)),
       paymentStatusLabel[r.paymentStatus],
       r.invoiceDate,
       r.dueDate,
@@ -201,14 +221,13 @@ export function mapInvoiceRowsToGridItems(records: Invoice[]) {
 
 export function getInvoiceEmptyState(tab: InvoiceListingTab, hasSearch: boolean) {
   const tabLabels: Record<InvoiceListingTab, string> = {
-    all: 'invoices',
     draft: 'draft invoices',
-    submitted: 'submitted invoices',
+    submitted: 'invoiced invoices',
     shared: 'shared invoices',
     paid: 'paid invoices',
     overdue: 'overdue invoices',
+    cancelled: 'cancelled invoices',
     credit_notes: 'credit notes',
-    debit_notes: 'debit notes',
   }
   const tabLabel = tabLabels[tab]
 

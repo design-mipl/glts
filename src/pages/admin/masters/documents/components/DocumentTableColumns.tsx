@@ -28,7 +28,8 @@ export function buildDocumentColumns({
       key: 'documentType',
       label: 'Document Type',
       widthSize: adminListingColumnWidthSize('service'),
-      sortable: false,
+      sortable: true,
+      filterable: false,
       searchable: true,
       hideable: false,
     },
@@ -37,6 +38,8 @@ export function buildDocumentColumns({
       label: 'Description',
       widthSize: adminListingColumnWidthSize('description'),
       sortable: false,
+      filterable: false,
+      searchable: true,
       render: (_, row) => {
         const plainDescription = richTextToPlainText(row.description)
         return (
@@ -60,7 +63,7 @@ export function buildDocumentColumns({
       label: 'Status',
       widthSize: adminListingColumnWidthSize('status'),
       sortable: false,
-      filterable: false,
+      filterable: true,
       render: (_, row) => (
         <Badge
           label={documentStatusLabel[row.status]}
@@ -73,7 +76,8 @@ export function buildDocumentColumns({
       key: 'createdAt',
       label: 'Created Date',
       widthSize: adminListingColumnWidthSize('date'),
-      sortable: false,
+      sortable: true,
+      filterable: false,
       render: (_, row) => formatDocumentDate(row.createdAt),
     },
     {

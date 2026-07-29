@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
-import { RefreshCw } from 'lucide-react'
-import { Button, Pagination, Tabs, useToast } from '@/design-system/UIComponents'
+import { Pagination, Tabs, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import { AdminListingStickyHeader, AdminListingToolbar } from '@/pages/admin/components/listing'
 import {
@@ -59,17 +58,6 @@ export function LogisticsListingPage() {
           <AdminListingStickyHeader
             title="Tracking & Logistics"
             description="Passenger cases after document submission — collection, dispatch, and completion"
-            actions={
-              <Button
-                label="Refresh queue"
-                variant="outlined"
-                startIcon={<RefreshCw size={14} />}
-                onClick={() => {
-                  refresh()
-                  showToast({ title: 'Queue refreshed', variant: 'info' })
-                }}
-              />
-            }
           />
         }
         toolbar={

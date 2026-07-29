@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Typography } from '@mui/material'
-import { Plus } from 'lucide-react'
+import { Download, Plus, Upload } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button, ConfirmDialog, useToast } from '@/design-system/UIComponents'
 import { entityMasterService } from '@/shared/services/entityMasterService'
 import type { EntityMaster } from '@/shared/types/entityMaster'
+import {
+  downloadEntityMasterUploadTemplate,
+  importEntityMastersFromCsv,
+} from '@/shared/utils/entityMasterBulkUpload'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { CustomerListingShell } from '@/pages/customer/features/shared/components/listing/CustomerListingShell'
@@ -31,6 +35,7 @@ export function EntityListingPage() {
   const navigate = useNavigate()
   const { base, canAccessMasters } = useCustomerPortalBase()
   const { showToast } = useToast()
+  const uploadInputRef = useRef<HTMLInputElement>(null)
 
   const [rows, setRows] = useState<EntityMaster[]>([])
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
@@ -122,6 +127,37 @@ export function EntityListingPage() {
     setActionLoading(false)
   }
 
+  const handleDownloadTemplate = () => {
+    downloadEntityMasterUploadTemplate()
+    showToast({ title: 'Export format downloaded', variant: 'success' })
+  }
+
+  const handleUploadFile = async (file: File) => {
+    const text = await file.text()
+    const result = importEntityMastersFromCsv(text, {
+      existingEntityIds: rows.map((row) => row.id),
+    })
+
+    if (result.imported.length === 0) {
+      showToast({
+        title: 'No entities imported',
+        description: result.skipped[0]?.reason ?? 'Check the file format and try again.',
+        variant: 'error',
+      })
+      return
+    }
+
+    loadRows()
+    showToast({
+      title: `${result.imported.length} entit${result.imported.length === 1 ? 'y' : 'ies'} uploaded`,
+      description:
+        result.skipped.length > 0
+          ? `${result.skipped.length} row${result.skipped.length === 1 ? '' : 's'} skipped.`
+          : undefined,
+      variant: result.skipped.length > 0 ? 'warning' : 'success',
+    })
+  }
+
   const columns = useMemo(
     () =>
       buildEntityColumns({
@@ -161,37 +197,62 @@ export function EntityListingPage() {
           />
         }
         toolbar={
-          <CustomerListingToolbar
-            searchValue={listing.tableState.searchQuery}
-            onSearch={listing.handleSearch}
-            searchPlaceholder="Search entities…"
-            onExport={() => {
-              downloadEntityCsv(listing.filteredRows)
-              showToast({ title: 'Export complete', description: 'Entity list downloaded.', variant: 'success' })
-            }}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            columns={columns.filter(c => c.key !== 'actions').map(c => ({ key: c.key, label: c.label }))}
-            hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
-            onHiddenColumnKeysChange={keys => listing.setTableState(s => ({ ...s, hiddenColumnKeys: keys }))}
-            filterPopover={{
-              active: hasEntityFiltersActive(listFilters),
-              value: listFilters,
-              onApply: next => {
-                setListFilters(next)
-                listing.setTableState(s => ({ ...s, page: 0 }))
-              },
-              onClear: () => setListFilters(EMPTY_ENTITY_LIST_FILTERS),
-              hasActive: hasEntityFiltersActive,
-              children: (draft, patch) => (
-                <EntityAdvancedFilterFields
-                  draft={draft}
-                  patch={patch}
-                  countryOptions={countryOptions}
-                />
-              ),
-            }}
-          />
+          <>
+            <CustomerListingToolbar
+              searchValue={listing.tableState.searchQuery}
+              onSearch={listing.handleSearch}
+              searchPlaceholder="Search entities…"
+              onExport={() => {
+                downloadEntityCsv(listing.filteredRows)
+                showToast({ title: 'Export complete', description: 'Entity list downloaded.', variant: 'success' })
+              }}
+              exportMenuItems={[
+                {
+                  label: 'Download export format',
+                  icon: <Download size={16} />,
+                  onClick: handleDownloadTemplate,
+                },
+                {
+                  label: 'Upload entities',
+                  icon: <Upload size={16} />,
+                  onClick: () => uploadInputRef.current?.click(),
+                },
+              ]}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              columns={columns.filter(c => c.key !== 'actions').map(c => ({ key: c.key, label: c.label }))}
+              hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
+              onHiddenColumnKeysChange={keys => listing.setTableState(s => ({ ...s, hiddenColumnKeys: keys }))}
+              filterPopover={{
+                active: hasEntityFiltersActive(listFilters),
+                value: listFilters,
+                onApply: next => {
+                  setListFilters(next)
+                  listing.setTableState(s => ({ ...s, page: 0 }))
+                },
+                onClear: () => setListFilters(EMPTY_ENTITY_LIST_FILTERS),
+                hasActive: hasEntityFiltersActive,
+                children: (draft, patch) => (
+                  <EntityAdvancedFilterFields
+                    draft={draft}
+                    patch={patch}
+                    countryOptions={countryOptions}
+                  />
+                ),
+              }}
+            />
+            <input
+              ref={uploadInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              hidden
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                event.target.value = ''
+                if (file) void handleUploadFile(file)
+              }}
+            />
+          </>
         }
         table={
           viewMode === 'table' ? (

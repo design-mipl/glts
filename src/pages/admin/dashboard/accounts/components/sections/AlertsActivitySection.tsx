@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Grid } from '@mui/material'
-import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
+import { DashboardSectionTable } from '@/pages/admin/dashboard/components'
 import { FinancialAlertsPanel } from '../FinancialAlertsPanel'
 import { buildAccountsActivityColumns } from '../columns/accountsActivityColumns'
 import type { AccountsActivityRow, FinancialAlert } from '../../data/accountsDashboardMock'

@@ -14,7 +14,7 @@ import { getSelectedFinanceContactPersons } from '@/shared/utils/agreementFinanc
 import { AgreementBillingConfigSection } from '../workspace/AgreementBillingConfigSection'
 import { AgreementOnboardingDocumentsSection } from '../workspace/AgreementOnboardingDocumentsSection'
 import { AgreementEntitiesTable } from '../workspace/AgreementEntitiesTable'
-import { AgreementPricingMatrixTable } from '../workspace/AgreementPricingMatrixTable'
+import { AgreementCommercialPricingSection } from '../workspace/AgreementCommercialPricingSection'
 import { AgreementTaxConfigSection } from '../workspace/AgreementTaxConfigSection'
 
 interface TabProps {
@@ -155,7 +155,14 @@ export function EntitiesTab({ agreement }: TabProps) {
 
 export function PricingMatrixTab({ agreement }: TabProps) {
   const formData = commercialAgreementService.agreementToFormData(agreement)
-  return <AgreementPricingMatrixTable data={formData} errors={{}} onChange={() => {}} readOnly />
+  return (
+    <AgreementCommercialPricingSection
+      data={formData}
+      errors={{}}
+      onChange={() => {}}
+      readOnly
+    />
+  )
 }
 
 export function BillingConfigurationTab({ agreement }: TabProps) {

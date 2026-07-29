@@ -1,14 +1,16 @@
-import { FormField, Input, MultiSelect, Select, Textarea } from '@/design-system/UIComponents'
+import { Box, IconButton, Stack, Typography } from '@mui/material'
+import { FileText, X } from 'lucide-react'
+import { FileUpload, FormField, Input, MultiSelect, Select, Textarea } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import type { ApplicationExpensePassengerSummaryRow } from '@/shared/types/applicationExpenseManagement'
+import { taxMasterService } from '@/shared/services/taxMasterService'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
-  EXPENSE_BILL_TO_OPTIONS,
   EXPENSE_PAID_BY_OPTIONS,
   EXPENSE_PROOF_TYPE_OPTIONS,
-  EXPENSE_SERVICE_OPTIONS,
   EXPENSE_VENDOR_OPTIONS,
 } from '../../config/expenseDetailFormConfig'
+import type { AgreementExpenseServiceOption } from '../../utils/agreementExpenseServiceUtils'
 import type { AddExpenseFormValue } from './addExpenseFormTypes'
 
 type AddExpenseFormSection = 'service' | 'amount' | 'billing'
@@ -19,8 +21,11 @@ interface AddExpenseFormFieldsProps {
   isSinglePassenger: boolean
   isEdit?: boolean
   serviceDisplayName?: string
+  agreementServiceOptions: AgreementExpenseServiceOption[]
+  agreementLabel?: string
   totalAmount: number
   onPatch: (partial: Partial<AddExpenseFormValue>) => void
+  onSelectAgreementService: (serviceId: string) => void
   section: AddExpenseFormSection
 }
 
@@ -30,31 +35,57 @@ export function AddExpenseFormFields({
   isSinglePassenger,
   isEdit = false,
   serviceDisplayName,
+  agreementServiceOptions,
+  agreementLabel,
   totalAmount,
   onPatch,
+  onSelectAgreementService,
   section,
 }: AddExpenseFormFieldsProps) {
   if (section === 'service') {
+    const serviceOptions = agreementServiceOptions.map(option => ({
+      value: option.id,
+      label: option.label,
+      description: [option.description, option.amount > 0 ? formatInr(option.amount) : undefined]
+        .filter(Boolean)
+        .join(' · '),
+    }))
+
     return (
       <>
-        <FormField label="Service" required>
-          {isEdit ? (
-            <Input
-              value={serviceDisplayName ?? '—'}
-              disabled
-              size="sm"
-              fullWidth
-            />
-          ) : (
-            <Select
-              value={form.service}
-              onChange={v => onPatch({ service: String(v) as AddExpenseFormValue['service'] })}
-              options={EXPENSE_SERVICE_OPTIONS.map(option => ({ value: option.value, label: option.label }))}
-              size="sm"
-              fullWidth
-            />
-          )}
-        </FormField>
+        <AdminFullPageFormFieldSpan>
+          <FormField
+            label="Service"
+            required={!isEdit}
+            helperText={
+              isEdit
+                ? undefined
+                : agreementServiceOptions.length > 0
+                  ? agreementLabel
+                    ? `Pick a service (or add-on) from agreement ${agreementLabel} to add as an expense`
+                    : 'Pick a service or add-on from the client commercial agreement'
+                  : 'No active agreement services found for this client. Activate an agreement or add pricing / add-on services.'
+            }
+          >
+            {isEdit ? (
+              <Input value={serviceDisplayName ?? '—'} disabled size="sm" fullWidth />
+            ) : (
+              <Select
+                value={form.agreementServiceId}
+                onChange={v => onSelectAgreementService(String(v))}
+                options={serviceOptions}
+                placeholder={
+                  agreementServiceOptions.length > 0
+                    ? 'Select service or add-on to add'
+                    : 'No agreement services available'
+                }
+                disabled={agreementServiceOptions.length === 0}
+                size="sm"
+                fullWidth
+              />
+            )}
+          </FormField>
+        </AdminFullPageFormFieldSpan>
         <FormField label="Vendor / provider">
           <Select
             value={form.vendorProvider}
@@ -143,12 +174,15 @@ export function AddExpenseFormFields({
         <FormField label="GST applicable">
           <Select
             value={form.gstApplicable ? 'yes' : 'no'}
-            onChange={v =>
+            onChange={v => {
+              const applicable = v === 'yes'
+              const defaultRateId =
+                form.gstRateId || String(taxMasterService.listActiveGstOptions()[0]?.value ?? 'gst-18')
               onPatch({
-                gstApplicable: v === 'yes',
-                gstValue: v === 'yes' ? form.gstValue : '0',
+                gstApplicable: applicable,
+                gstRateId: applicable ? defaultRateId : '',
               })
-            }
+            }}
             options={[
               { value: 'yes', label: 'Yes' },
               { value: 'no', label: 'No' },
@@ -157,11 +191,12 @@ export function AddExpenseFormFields({
             fullWidth
           />
         </FormField>
-        <FormField label="GST value">
-          <Input
-            value={form.gstValue}
-            onChange={v => onPatch({ gstValue: v })}
-            placeholder="0"
+        <FormField label="GST rate" helperText={form.gstApplicable ? 'From GST master' : undefined}>
+          <Select
+            value={form.gstRateId}
+            onChange={v => onPatch({ gstRateId: String(v) })}
+            options={taxMasterService.listActiveGstOptions()}
+            placeholder="Select GST %"
             disabled={!form.gstApplicable}
             size="sm"
             fullWidth
@@ -185,14 +220,8 @@ export function AddExpenseFormFields({
           fullWidth
         />
       </FormField>
-      <FormField label="Bill to">
-        <Select
-          value={form.billTo}
-          onChange={v => onPatch({ billTo: String(v) as AddExpenseFormValue['billTo'] })}
-          options={EXPENSE_BILL_TO_OPTIONS}
-          size="sm"
-          fullWidth
-        />
+      <FormField label="Bill to" helperText="Most expenses are billed to the client.">
+        <Input value="Client" disabled size="sm" fullWidth />
       </FormField>
       <AdminFullPageFormFieldSpan>
         <FormField label="Notes" optional>
@@ -220,14 +249,60 @@ export function AddExpenseFormFields({
         />
       </FormField>
       <AdminFullPageFormFieldSpan>
-        <FormField label="Proof upload" optional helperText="Attach bill, receipt, invoice, or supporting document.">
-          <Input
-            value={form.proofFileName}
-            onChange={v => onPatch({ proofFileName: v })}
-            placeholder="Enter file name (mock upload)"
-            size="sm"
-            fullWidth
-          />
+        <FormField
+          label="Proof upload"
+          optional
+          helperText="Attach bill, receipt, invoice, or supporting document (PDF, JPG, or PNG)."
+        >
+          <Stack spacing={1}>
+            <FileUpload
+              key={`expense-proof-${form.proofFileName || 'empty'}`}
+              compact
+              dropzoneTitle="Choose a file or drag & drop it here"
+              dropzoneCaption="PDF, JPG, or PNG · max 10 MB"
+              browseLabel="Browse files"
+              accept=".pdf,.jpg,.jpeg,.png"
+              maxSize={10 * 1024 * 1024}
+              maxFiles={1}
+              onUpload={files => {
+                onPatch({ proofFileName: files[0]?.name ?? '' })
+              }}
+            />
+            {form.proofFileName.trim() ? (
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={1}
+                sx={{
+                  px: 1,
+                  py: 0.75,
+                  border: 1,
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  bgcolor: 'background.paper',
+                }}
+              >
+                <Box sx={{ color: 'text.secondary', display: 'flex' }}>
+                  <FileText size={16} />
+                </Box>
+                <Typography
+                  variant="body2"
+                  sx={{ flex: 1, fontSize: 12, minWidth: 0 }}
+                  noWrap
+                  title={form.proofFileName}
+                >
+                  {form.proofFileName}
+                </Typography>
+                <IconButton
+                  size="small"
+                  aria-label={`Remove ${form.proofFileName}`}
+                  onClick={() => onPatch({ proofFileName: '' })}
+                >
+                  <X size={14} />
+                </IconButton>
+              </Stack>
+            ) : null}
+          </Stack>
         </FormField>
       </AdminFullPageFormFieldSpan>
     </>

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
-import { RefreshCw, Wallet } from 'lucide-react'
-import { BulkActions, Button, Pagination, type TableState, useToast } from '@/design-system/UIComponents'
+import { Wallet } from 'lucide-react'
+import { BulkActions, ConfirmDialog, Pagination, type TableState, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   AdminListingGrid,
@@ -10,8 +10,10 @@ import {
   AdminListingToolbar,
 } from '@/pages/admin/components/listing'
 import { fundAllocationService } from '@/shared/services/fundAllocationService'
+import { groundOpsClaimSheetService } from '@/shared/services/groundOpsClaimSheetService'
 import type { FundAllocationListingTab } from '@/shared/types/fundAllocation'
 import type { FundAllocationPassengerRow } from '@/shared/types/fundAllocation'
+import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
 import {
   FundAllocationActionModal,
   type FundAllocationActionPayload,
@@ -25,24 +27,39 @@ import {
   hasFundAllocationFiltersActive,
 } from '../components/FundAllocationAdvancedFilters'
 import { FundAllocationDetailDrawer } from '../components/FundAllocationDetailDrawer'
+import { FundAllocationBatchDetailDrawer } from '../components/FundAllocationBatchDetailDrawer'
+import { FundAllocationClaimSheetDetailDrawer } from '../components/FundAllocationClaimSheetDetailDrawer'
 import { FundAllocationKpiRow } from '../components/FundAllocationKpiRow'
 import {
   buildFundAllocationTableColumns,
   type FundAllocationAdminAction,
 } from '../components/FundAllocationTableColumns'
+import {
+  buildFundAllocationBatchTableColumns,
+  type FundAllocationBatchAction,
+} from '../components/FundAllocationBatchTableColumns'
+import {
+  buildFundAllocationClaimSheetTableColumns,
+  type FundAllocationClaimSheetAction,
+} from '../components/FundAllocationClaimSheetTableColumns'
 import { FUND_ALLOCATION_LISTING_TABS } from '../config/fundAllocationListingTabs'
 import { useFundAllocationListing } from '../hooks/useFundAllocationListing'
 import {
   computeFundAllocationKpis,
+  downloadFundAllocationClaimSheetsCsv,
   downloadFundAllocationCsv,
   getFundAllocationCellValue,
+  getFundAllocationClaimSheetCellValue,
   getFundAllocationCountryKey,
+  getFundAllocationAssigneeKey,
   getFundAllocationFilterOptions,
   getFundAllocationTabEmptyState,
   sanitizeFundAllocationSelection,
 } from '../utils/fundAllocationListingUtils'
-import { computePassengerBulkAllocationInput } from '../utils/fundAllocationBulkUtils'
+import { computePassengerRequestedBulkAllocationInput, computeRequestedBulkSummary } from '../utils/fundAllocationBulkUtils'
 import { customerSegmentDisplayLabel } from '../config/fundAllocationStatusConfig'
+import { getFundAllocationBatchCellValue } from '@/shared/utils/fundAllocationBatchUtils'
+import type { FundAllocationBatchRow } from '@/shared/types/fundAllocation'
 
 export function FundAllocationListingPage() {
   const theme = useTheme()
@@ -50,6 +67,10 @@ export function FundAllocationListingPage() {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [actionModalRecord, setActionModalRecord] = useState<FundAllocationPassengerRow | null>(null)
   const [bulkModalRecords, setBulkModalRecords] = useState<FundAllocationPassengerRow[]>([])
+  const [claimReviewConfirm, setClaimReviewConfirm] = useState<{
+    action: 'approve' | 'reject'
+    sheet: GroundOpsClaimSheet
+  } | null>(null)
 
   const {
     listingTab,
@@ -64,11 +85,21 @@ export function FundAllocationListingPage() {
     paginatedRows,
     total,
     selectedPassenger,
+    filterSourceBatches,
+    paginatedBatches,
+    totalBatches,
+    selectedBatch,
+    filterSourceClaimSheets,
+    paginatedClaimSheets,
+    totalClaimSheets,
+    selectedClaimSheet,
     searchValue,
     handleListingTabChange,
     handleSearch,
     clearFilters,
     selectPassenger,
+    selectBatch,
+    selectClaimSheet,
     closeDetail,
     refresh,
     mutateAndRefresh,
@@ -83,11 +114,16 @@ export function FundAllocationListingPage() {
     [filterSourceRows, tableState.selectedRows],
   )
 
+  const isAllocatedTab = listingTab === 'allocated'
+  const isClaimSheetsTab = listingTab === 'claim_sheets'
+
   const hasActiveFilters = Boolean(
     queueFilters.customerSegment ||
       queueFilters.country ||
       queueFilters.visaType ||
       queueFilters.jurisdiction ||
+      queueFilters.assignedTeam ||
+      queueFilters.assignedUser ||
       queueFilters.dateFrom ||
       queueFilters.dateTo ||
       searchValue ||
@@ -97,21 +133,40 @@ export function FundAllocationListingPage() {
 
   const handleTableStateChange = useCallback(
     (next: TableState) => {
-      const { ids, rejected } = sanitizeFundAllocationSelection(
+      if (isClaimSheetsTab || isAllocatedTab) {
+        setTableState({ ...next, selectedRows: [] })
+        return
+      }
+      const { ids, rejected, reason } = sanitizeFundAllocationSelection(
         filterSourceRows,
         next.selectedRows,
         tableState.selectedRows,
       )
       if (rejected) {
-        showToast({
-          title: 'Different country',
-          description: 'Bulk allocation is only allowed for passengers in the same country.',
-          variant: 'warning',
-        })
+        if (reason === 'assignee') {
+          showToast({
+            title: 'Different user',
+            description: 'Bulk allocation is only allowed for passengers assigned to the same user.',
+            variant: 'warning',
+          })
+        } else {
+          showToast({
+            title: 'Different country',
+            description: 'Bulk allocation is only allowed for passengers in the same country.',
+            variant: 'warning',
+          })
+        }
       }
       setTableState({ ...next, selectedRows: ids })
     },
-    [filterSourceRows, setTableState, showToast, tableState.selectedRows],
+    [
+      filterSourceRows,
+      isAllocatedTab,
+      isClaimSheetsTab,
+      setTableState,
+      showToast,
+      tableState.selectedRows,
+    ],
   )
 
   const openBulkAllocate = useCallback(
@@ -124,7 +179,23 @@ export function FundAllocationListingPage() {
         })
         return
       }
-      const countries = new Set(rows.map(getFundAllocationCountryKey))
+      const eligible = rows.filter(row => row.fundRequested && row.totalAmount > 0)
+      if (eligible.length === 0) {
+        showToast({
+          title: 'No fund requests',
+          description: 'Selected passengers do not have fund requests from Assignment & Priority.',
+          variant: 'warning',
+        })
+        return
+      }
+      if (eligible.length !== rows.length) {
+        showToast({
+          title: 'Some passengers skipped',
+          description: 'Only passengers with fund requests will be included in bulk allocation.',
+          variant: 'warning',
+        })
+      }
+      const countries = new Set(eligible.map(getFundAllocationCountryKey))
       if (countries.size > 1) {
         showToast({
           title: 'Different country',
@@ -133,7 +204,16 @@ export function FundAllocationListingPage() {
         })
         return
       }
-      setBulkModalRecords(rows)
+      const assignees = new Set(eligible.map(getFundAllocationAssigneeKey))
+      if (assignees.size > 1) {
+        showToast({
+          title: 'Different user',
+          description: 'Bulk allocation is only allowed for passengers assigned to the same user. Filter by team/user first.',
+          variant: 'warning',
+        })
+        return
+      }
+      setBulkModalRecords(eligible)
     },
     [showToast],
   )
@@ -144,20 +224,95 @@ export function FundAllocationListingPage() {
         selectPassenger(row)
         return
       }
+      if (!row.fundRequested || row.totalAmount <= 0) {
+        showToast({
+          title: 'No fund request',
+          description: 'Request funds from Assignment & Priority before allocating.',
+          variant: 'warning',
+        })
+        return
+      }
       setActionModalRecord(row)
     },
-    [selectPassenger],
+    [selectPassenger, showToast],
   )
 
-  const columns = useMemo(
-    () => buildFundAllocationTableColumns({ listingTab, onAction: handleAction }),
+  const handleBatchAction = useCallback(
+    (action: FundAllocationBatchAction, row: FundAllocationBatchRow) => {
+      if (action === 'view_details') {
+        selectBatch(row)
+      }
+    },
+    [selectBatch],
+  )
+
+  const handleClaimSheetAction = useCallback(
+    (action: FundAllocationClaimSheetAction, row: GroundOpsClaimSheet) => {
+      if (action === 'view_details') {
+        selectClaimSheet(row)
+        return
+      }
+      setClaimReviewConfirm({ action, sheet: row })
+    },
+    [selectClaimSheet],
+  )
+
+  const handleConfirmClaimReview = useCallback(() => {
+    if (!claimReviewConfirm) return
+
+    const { action, sheet } = claimReviewConfirm
+    const result =
+      action === 'approve'
+        ? groundOpsClaimSheetService.approve(sheet.id)
+        : groundOpsClaimSheetService.reject(sheet.id)
+
+    if (!result.ok || !result.sheet) {
+      showToast({
+        title: action === 'approve' ? 'Could not approve' : 'Could not reject',
+        description: result.error,
+        variant: 'error',
+      })
+      setClaimReviewConfirm(null)
+      return
+    }
+
+    showToast({
+      title: action === 'approve' ? 'Claim sheet approved' : 'Claim sheet rejected',
+      description:
+        action === 'approve'
+          ? `${result.sheet.claimNumber} is approved for settlement.`
+          : `${result.sheet.claimNumber} was rejected.`,
+      variant: action === 'approve' ? 'success' : 'warning',
+    })
+    setClaimReviewConfirm(null)
+    closeDetail()
+    refresh()
+  }, [claimReviewConfirm, closeDetail, refresh, showToast])
+
+  const passengerColumns = useMemo(
+    () =>
+      buildFundAllocationTableColumns({
+        listingTab: listingTab === 'allocated' ? 'allocated' : 'pending_allocation',
+        onAction: handleAction,
+      }),
     [handleAction, listingTab],
   )
 
-  const toolbarColumns = useMemo(
-    () => columns.filter(col => col.key !== 'actions').map(col => ({ key: col.key, label: col.label })),
-    [columns],
+  const batchColumns = useMemo(
+    () => buildFundAllocationBatchTableColumns({ onAction: handleBatchAction }),
+    [handleBatchAction],
   )
+
+  const claimSheetColumns = useMemo(
+    () => buildFundAllocationClaimSheetTableColumns({ onAction: handleClaimSheetAction }),
+    [handleClaimSheetAction],
+  )
+
+  const columns = isClaimSheetsTab
+    ? claimSheetColumns
+    : isAllocatedTab
+      ? batchColumns
+      : passengerColumns
 
   const bulkActions = useMemo(() => {
     if (listingTab !== 'pending_allocation') return undefined
@@ -170,14 +325,130 @@ export function FundAllocationListingPage() {
     ]
   }, [listingTab, openBulkAllocate])
 
+  const allocatedTable = (
+    <AdminListingTable
+      columns={batchColumns}
+      data={paginatedBatches}
+      filterSourceData={filterSourceBatches}
+      rowKey="id"
+      state={tableState}
+      onStateChange={handleTableStateChange}
+      columnFilters={columnFilters}
+      onColumnFiltersChange={setColumnFilters}
+      getCellValue={getFundAllocationBatchCellValue}
+      onRowClick={selectBatch}
+      stickyHeader
+      emptyTitle={emptyState.title}
+      emptyDescription={emptyState.description}
+    />
+  )
+
+  const pendingTable = (
+    <AdminListingTable
+      columns={passengerColumns}
+      data={paginatedRows}
+      filterSourceData={filterSourceRows}
+      rowKey="id"
+      state={tableState}
+      onStateChange={handleTableStateChange}
+      columnFilters={columnFilters}
+      onColumnFiltersChange={setColumnFilters}
+      getCellValue={getFundAllocationCellValue}
+      onRowClick={selectPassenger}
+      bulkActions={bulkActions}
+      stickyHeader
+      emptyTitle={emptyState.title}
+      emptyDescription={emptyState.description}
+    />
+  )
+
+  const claimSheetsTable = (
+    <AdminListingTable
+      columns={claimSheetColumns}
+      data={paginatedClaimSheets}
+      filterSourceData={filterSourceClaimSheets}
+      rowKey="id"
+      state={tableState}
+      onStateChange={handleTableStateChange}
+      columnFilters={columnFilters}
+      onColumnFiltersChange={setColumnFilters}
+      getCellValue={getFundAllocationClaimSheetCellValue}
+      onRowClick={selectClaimSheet}
+      stickyHeader
+      emptyTitle={emptyState.title}
+      emptyDescription={emptyState.description}
+    />
+  )
+
+  const toolbarColumns = useMemo(
+    () => columns.filter(col => col.key !== 'actions').map(col => ({ key: col.key, label: col.label })),
+    [columns],
+  )
+
   const handleExport = useCallback(() => {
-    downloadFundAllocationCsv(filterSourceRows)
+    if (isClaimSheetsTab) {
+      downloadFundAllocationClaimSheetsCsv(filterSourceClaimSheets)
+      showToast({
+        title: 'Export started',
+        description: 'Your claim sheet export will download shortly.',
+        variant: 'success',
+      })
+      return
+    }
+    if (isAllocatedTab) {
+      downloadFundAllocationCsv(filterSourceBatches.flatMap(batch => batch.passengers))
+    } else {
+      downloadFundAllocationCsv(filterSourceRows)
+    }
     showToast({
       title: 'Export started',
       description: 'Your fund allocation export will download shortly.',
       variant: 'success',
     })
-  }, [filterSourceRows, showToast])
+  }, [
+    filterSourceBatches,
+    filterSourceClaimSheets,
+    filterSourceRows,
+    isAllocatedTab,
+    isClaimSheetsTab,
+    showToast,
+  ])
+
+  const gridItems = useMemo(() => {
+    if (isClaimSheetsTab) {
+      return paginatedClaimSheets.map(sheet => ({
+        id: sheet.id,
+        title: sheet.claimNumber,
+        subtitle: `${sheet.generatedBy} · ${sheet.team || '—'}`,
+        meta: `${sheet.cases.length} case${sheet.cases.length === 1 ? '' : 's'}`,
+        status: sheet.status,
+      }))
+    }
+
+    if (isAllocatedTab) {
+      return paginatedBatches.map(batch => ({
+        id: batch.id,
+        title: batch.passengerLabel,
+        subtitle: `${batch.country} • ${batch.visaType}`,
+        meta: `${batch.passengerCount} passenger${batch.passengerCount === 1 ? '' : 's'} · ${batch.gltsApplicationId}`,
+        status: 'allocated',
+      }))
+    }
+
+    return paginatedRows.map(row => ({
+      id: row.id,
+      title: row.passengerName,
+      subtitle: `${row.country} • ${row.visaType}`,
+      meta: `${customerSegmentDisplayLabel(row.customerSegment)} · ${row.gltsApplicationId}`,
+      status: row.allocationStatus,
+    }))
+  }, [
+    isAllocatedTab,
+    isClaimSheetsTab,
+    paginatedBatches,
+    paginatedClaimSheets,
+    paginatedRows,
+  ])
 
   const handleAllocate = useCallback(
     (payload: FundAllocationActionPayload) => {
@@ -189,18 +460,25 @@ export function FundAllocationListingPage() {
       })
 
       setActionModalRecord(null)
-      showToast({ title: 'Funds allocated', variant: 'success' })
+      showToast({
+        title: 'Funds allocated',
+        description: 'Amount and fund transfer synced to Ground Operations.',
+        variant: 'success',
+      })
     },
     [actionModalRecord, mutateAndRefresh, showToast],
   )
 
   const handleBulkAllocate = useCallback(
     (records: FundAllocationPassengerRow[], payload: FundAllocationBulkConfirmPayload) => {
+      const summary = computeRequestedBulkSummary(records)
       mutateAndRefresh(() => {
         fundAllocationService.allocateFundsBulk(records.map(record => record.id), record =>
-          computePassengerBulkAllocationInput(record, payload.selectedServiceKeys, {
-            creditCardId: payload.creditCardId,
+          computePassengerRequestedBulkAllocationInput(record, {
+            fundTransfer: payload.fundTransfer,
             notes: payload.notes,
+            allocatedAmount: payload.allocatedAmount,
+            grandTotal: summary.grandTotal,
           }),
         )
       })
@@ -209,29 +487,23 @@ export function FundAllocationListingPage() {
       setTableState(state => ({ ...state, selectedRows: [] }))
       showToast({
         title: 'Funds allocated',
-        description: `${records.length} passenger${records.length === 1 ? '' : 's'} updated.`,
+        description: `${records.length} passenger${records.length === 1 ? '' : 's'} updated. Amount and fund transfer synced to Ground Operations.`,
         variant: 'success',
       })
     },
     [mutateAndRefresh, setTableState, showToast],
   )
 
-  const gridItems = useMemo(
-    () =>
-      paginatedRows.map(row => ({
-        id: row.id,
-        title: row.passengerName,
-        subtitle: `${row.country} • ${row.visaType}`,
-        meta: `${customerSegmentDisplayLabel(row.customerSegment)} · ${row.gltsApplicationId}`,
-        status: row.allocationStatus,
-      })),
-    [paginatedRows],
-  )
-
   const footerBg =
     theme.palette.mode === 'dark'
       ? alpha(theme.palette.common.white, 0.04)
       : alpha(theme.palette.common.black, 0.02)
+
+  const paginationTotal = isClaimSheetsTab
+    ? totalClaimSheets
+    : isAllocatedTab
+      ? totalBatches
+      : total
 
   const listingBody =
     viewMode === 'table' ? (
@@ -244,27 +516,22 @@ export function FundAllocationListingPage() {
             onDeselectAll={() => setTableState(state => ({ ...state, selectedRows: [] }))}
           />
         ) : null}
-        <AdminListingTable
-          columns={columns}
-          data={paginatedRows}
-          filterSourceData={filterSourceRows}
-          rowKey="id"
-          state={tableState}
-          onStateChange={handleTableStateChange}
-          columnFilters={columnFilters}
-          onColumnFiltersChange={setColumnFilters}
-          getCellValue={getFundAllocationCellValue}
-          onRowClick={selectPassenger}
-          bulkActions={bulkActions}
-          stickyHeader
-          emptyTitle={emptyState.title}
-          emptyDescription={emptyState.description}
-        />
+        {isClaimSheetsTab ? claimSheetsTable : isAllocatedTab ? allocatedTable : pendingTable}
       </Stack>
     ) : (
       <AdminListingGrid
         items={gridItems}
         onItemClick={id => {
+          if (isClaimSheetsTab) {
+            const sheet = paginatedClaimSheets.find(entry => entry.id === id)
+            if (sheet) selectClaimSheet(sheet)
+            return
+          }
+          if (isAllocatedTab) {
+            const batch = paginatedBatches.find(entry => entry.id === id)
+            if (batch) selectBatch(batch)
+            return
+          }
           const row = paginatedRows.find(entry => entry.id === id)
           if (row) selectPassenger(row)
         }}
@@ -278,27 +545,17 @@ export function FundAllocationListingPage() {
           <AdminListingStickyHeader
             title="Fund allocation"
             description="Passenger-level VFS submission fund allocation across retail, corporate, marine, and B2B agent applications."
-            actions={
-              <Button
-                label="Refresh queue"
-                variant="neutral"
-                size="sm"
-                startIcon={<RefreshCw size={14} />}
-                onClick={() => {
-                  refresh()
-                  showToast({ title: 'Queue refreshed', variant: 'info' })
-                }}
-              />
-            }
           />
         }
         kpis={
-          <FundAllocationKpiRow
-            totalPassengers={kpis.totalPassengers}
-            pendingAllocation={kpis.pendingAllocation}
-            allocatedPassengers={kpis.allocatedPassengers}
-            pendingAmount={kpis.pendingAmount}
-          />
+          isClaimSheetsTab ? undefined : (
+            <FundAllocationKpiRow
+              totalPassengers={kpis.totalPassengers}
+              pendingAllocation={kpis.pendingAllocation}
+              allocatedPassengers={kpis.allocatedPassengers}
+              pendingAmount={kpis.pendingAmount}
+            />
+          )
         }
         tabs={[...FUND_ALLOCATION_LISTING_TABS]}
         tabValue={listingTab}
@@ -307,7 +564,13 @@ export function FundAllocationListingPage() {
           <AdminListingToolbar
             searchValue={searchValue}
             onSearch={handleSearch}
-            searchPlaceholder="Search passenger, application ID, company, jurisdiction…"
+            searchPlaceholder={
+              isClaimSheetsTab
+                ? 'Search claim number, generated by, passenger, application…'
+                : isAllocatedTab
+                  ? 'Search allocation, passenger, application ID, company, team, user…'
+                  : 'Search passenger, application ID, company, jurisdiction, team, user…'
+            }
             onExport={handleExport}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
@@ -316,22 +579,26 @@ export function FundAllocationListingPage() {
             onHiddenColumnKeysChange={keys =>
               setTableState(state => ({ ...state, hiddenColumnKeys: keys }))
             }
-            filterPopover={{
-              active: hasActiveFilters,
-              value: queueFilters,
-              onApply: setQueueFilters,
-              onClear: clearFilters,
-              hasActive: hasFundAllocationFiltersActive,
-              width: 'wide',
-              scrollable: true,
-              children: (draft, patch) => (
-                <FundAllocationAdvancedFilterFields
-                  draft={draft}
-                  patch={patch}
-                  options={filterOptions}
-                />
-              ),
-            }}
+            filterPopover={
+              isClaimSheetsTab
+                ? undefined
+                : {
+                    active: hasActiveFilters,
+                    value: queueFilters,
+                    onApply: setQueueFilters,
+                    onClear: clearFilters,
+                    hasActive: hasFundAllocationFiltersActive,
+                    width: 'wide',
+                    scrollable: true,
+                    children: (draft, patch) => (
+                      <FundAllocationAdvancedFilterFields
+                        draft={draft}
+                        patch={patch}
+                        options={filterOptions}
+                      />
+                    ),
+                  }
+            }
           />
         }
         listingContent={listingBody}
@@ -340,7 +607,7 @@ export function FundAllocationListingPage() {
             <Pagination
               page={tableState.page}
               pageSize={tableState.pageSize}
-              total={total}
+              total={paginationTotal}
               onPage={page => setTableState(state => ({ ...state, page }))}
               onPageSize={pageSize => setTableState(state => ({ ...state, pageSize, page: 0 }))}
             />
@@ -349,9 +616,49 @@ export function FundAllocationListingPage() {
       />
 
       <FundAllocationDetailDrawer
-        open={Boolean(selectedPassenger)}
+        open={Boolean(selectedPassenger) && !isAllocatedTab && !isClaimSheetsTab}
         record={selectedPassenger ?? null}
         onClose={closeDetail}
+      />
+
+      <FundAllocationBatchDetailDrawer
+        open={Boolean(selectedBatch) && isAllocatedTab}
+        record={selectedBatch ?? null}
+        onClose={closeDetail}
+      />
+
+      <FundAllocationClaimSheetDetailDrawer
+        open={Boolean(selectedClaimSheet) && isClaimSheetsTab}
+        sheet={selectedClaimSheet ?? null}
+        onClose={closeDetail}
+        onReviewed={refresh}
+      />
+
+      <ConfirmDialog
+        open={claimReviewConfirm?.action === 'approve'}
+        onClose={() => setClaimReviewConfirm(null)}
+        title="Approve claim sheet"
+        description={
+          claimReviewConfirm
+            ? `Approve ${claimReviewConfirm.sheet.claimNumber}? Finance will mark this claim as approved.`
+            : undefined
+        }
+        confirmLabel="Approve"
+        onConfirm={handleConfirmClaimReview}
+      />
+
+      <ConfirmDialog
+        open={claimReviewConfirm?.action === 'reject'}
+        onClose={() => setClaimReviewConfirm(null)}
+        title="Reject claim sheet"
+        description={
+          claimReviewConfirm
+            ? `Reject ${claimReviewConfirm.sheet.claimNumber}? Ground Operations will need to revise and resubmit.`
+            : undefined
+        }
+        confirmLabel="Reject"
+        variant="destructive"
+        onConfirm={handleConfirmClaimReview}
       />
 
       <FundAllocationActionModal

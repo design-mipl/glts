@@ -2,6 +2,7 @@ import { deriveOperationalPassengerRows } from '@/pages/admin/assignment-priorit
 import type { ApplicationCustomerSegment } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { SEED_OPERATIONAL_PASSENGER_OVERLAYS } from '@/shared/data/mockOperationalPassengerAssignments'
 import type {
+  AssignmentAssigneeType,
   AssignmentHistoryEntry,
   AssignmentPriority,
   AssignmentTimelineEvent,
@@ -110,8 +111,10 @@ function ensureOverlay(id: string): OperationalPassengerOverlay | undefined {
 
   const fresh: OperationalPassengerOverlay = {
     priority: derived.priority,
+    assigneeType: derived.assigneeType,
     assignedTeam: derived.assignedTeam,
     assignedUser: derived.assignedUser,
+    assignedVendor: derived.assignedVendor,
     operationalDate: derived.operationalDate,
     passengerStatus: derived.passengerStatus,
     carryForward: derived.carryForward,
@@ -184,21 +187,30 @@ export const operationalPassengerAssignmentService = {
   assignVendor(
     id: string,
     vendor: string,
+    team: CityTeam | '',
+    user: string,
     priority?: AssignmentPriority,
   ): OperationalPassengerRow | undefined {
     return mutate(id, overlay => {
-      overlay.assignedTeam = ''
-      overlay.assignedUser = vendor
-      overlay.passengerStatus = vendor ? 'Assigned' : 'Pending Assignment'
+      overlay.assigneeType = 'vendor'
+      overlay.assignedVendor = vendor
+      overlay.assignedTeam = team
+      overlay.assignedUser = user
+      overlay.passengerStatus = vendor && user ? 'Assigned' : 'Pending Assignment'
       if (priority) {
         overlay.priority = priority
         if (priority === 'Urgent' || priority === 'High') {
           overlay.escalated = overlay.carryForward
         }
       }
-      appendHistory(overlay, '', vendor, 'Vendor assigned')
+      appendHistory(overlay, team, user, vendor ? `Vendor assigned · ${vendor}` : 'Vendor assigned')
       const priorityNote = priority ? ` · ${priority} priority` : ''
-      appendTimeline(overlay, vendor ? `Assigned to vendor ${vendor}${priorityNote}` : 'Vendor assignment cleared')
+      appendTimeline(
+        overlay,
+        vendor
+          ? `Assigned to vendor ${vendor} · ${user || 'unassigned'}${priorityNote}`
+          : 'Vendor assignment cleared',
+      )
     })
   },
 
@@ -209,6 +221,8 @@ export const operationalPassengerAssignmentService = {
     priority?: AssignmentPriority,
   ): OperationalPassengerRow | undefined {
     return mutate(id, overlay => {
+      overlay.assigneeType = 'user'
+      overlay.assignedVendor = ''
       overlay.assignedTeam = team
       overlay.assignedUser = user
       overlay.passengerStatus = user ? 'Assigned' : 'Pending Assignment'
@@ -224,18 +238,49 @@ export const operationalPassengerAssignmentService = {
     })
   },
 
+  assignPassenger(
+    id: string,
+    team: CityTeam | '',
+    user: string,
+    priority?: AssignmentPriority,
+  ): OperationalPassengerRow | undefined {
+    return mutate(id, overlay => {
+      overlay.assigneeType = 'passenger'
+      overlay.assignedVendor = ''
+      overlay.assignedTeam = team
+      overlay.assignedUser = user
+      overlay.passengerStatus = user ? 'Assigned' : 'Pending Assignment'
+      if (priority) {
+        overlay.priority = priority
+        if (priority === 'Urgent' || priority === 'High') {
+          overlay.escalated = overlay.carryForward
+        }
+      }
+      appendHistory(overlay, team, user, 'Passenger assigned')
+      const priorityNote = priority ? ` · ${priority} priority` : ''
+      appendTimeline(
+        overlay,
+        user ? `Assigned to passenger · owned by ${user}${priorityNote}` : 'Passenger assignment cleared',
+      )
+    })
+  },
+
   reassign(
     id: string,
     team: CityTeam | '',
     user: string,
     priority?: AssignmentPriority,
-    assigneeType: 'user' | 'vendor' = 'user',
+    assigneeType: AssignmentAssigneeType = 'user',
+    vendor = '',
   ): OperationalPassengerRow | undefined {
     return mutate(id, overlay => {
+      overlay.assigneeType = assigneeType
       if (assigneeType === 'vendor') {
-        overlay.assignedTeam = ''
+        overlay.assignedVendor = vendor
+        overlay.assignedTeam = team
         overlay.assignedUser = user
       } else {
+        overlay.assignedVendor = ''
         overlay.assignedTeam = team
         overlay.assignedUser = user
       }
@@ -246,11 +291,20 @@ export const operationalPassengerAssignmentService = {
           overlay.escalated = overlay.carryForward
         }
       }
-      const historyNote = assigneeType === 'vendor' ? 'Vendor reassigned' : 'Reassigned'
-      appendHistory(overlay, assigneeType === 'vendor' ? '' : team, user, historyNote)
+      const historyNote =
+        assigneeType === 'vendor'
+          ? `Vendor reassigned${vendor ? ` · ${vendor}` : ''}`
+          : assigneeType === 'passenger'
+            ? 'Passenger reassigned'
+            : 'Reassigned'
+      appendHistory(overlay, team, user, historyNote)
       const priorityNote = priority ? ` · ${priority} priority` : ''
       const assigneeLabel =
-        assigneeType === 'vendor' ? `vendor ${user}` : user || team || 'unassigned'
+        assigneeType === 'vendor'
+          ? `vendor ${vendor || user}`
+          : assigneeType === 'passenger'
+            ? `passenger · owned by ${user || team || 'unassigned'}`
+            : user || team || 'unassigned'
       appendTimeline(overlay, `Reassigned to ${assigneeLabel}${priorityNote}`)
     })
   },

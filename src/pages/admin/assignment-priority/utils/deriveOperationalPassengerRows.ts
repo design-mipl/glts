@@ -2,6 +2,7 @@ import {
   mockBulkBatches,
   mockSingleApplications,
   mockUploadQueue,
+  getSingleApplicationDemoSeed,
   type BulkBatchRow,
   type SingleApplicationRow,
 } from '@/pages/customer/features/applications/data/applicationFlowData'
@@ -61,8 +62,10 @@ function defaultOverlay(
   const slaDue = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString()
   return {
     priority,
+    assigneeType: 'user',
     assignedTeam: '',
     assignedUser: '',
+    assignedVendor: '',
     operationalDate,
     passengerStatus,
     carryForward: false,
@@ -85,6 +88,30 @@ function mergeOverlay(
   return { ...base, ...merged }
 }
 
+function resolvePassengerContact(
+  applicationId: string,
+  passengerName: string,
+): { passengerPhone: string; passengerEmail: string } {
+  const seed = getSingleApplicationDemoSeed(applicationId)
+  const phone = seed?.additionalDetails?.paxContactNo?.trim()
+  const email = seed?.additionalDetails?.paxEmailId?.trim()
+  if (phone || email) {
+    return {
+      passengerPhone: phone || '—',
+      passengerEmail: email || '—',
+    }
+  }
+
+  const slug = passengerName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '.')
+    .replace(/^\.+|\.+$/g, '')
+  return {
+    passengerPhone: '+91 90000 00000',
+    passengerEmail: slug ? `${slug}@passenger.glts.com` : 'passenger@glts.com',
+  }
+}
+
 function baseFromApplication(
   app: SingleApplicationRow | BulkBatchRow,
   applicantId: string,
@@ -93,6 +120,7 @@ function baseFromApplication(
   passportNo: string,
 ): Omit<OperationalPassengerRow, keyof OperationalPassengerOverlay> {
   const invoice = invoiceContextForApplication(app.id)
+  const contact = resolvePassengerContact(app.id, passengerName)
   return {
     id: buildPassengerId(app.id, applicantId),
     gltsApplicantId: applicantId,
@@ -100,6 +128,8 @@ function baseFromApplication(
     sequenceNo,
     passengerName,
     passportNo,
+    passengerPhone: contact.passengerPhone,
+    passengerEmail: contact.passengerEmail,
     companyName: resolveApplicationCompanyName(app),
     bookerName: resolveApplicationCreatorLabel(app.createdByEmail),
     country: app.country,
@@ -140,13 +170,22 @@ function deriveFromBulk(
       .filter(q => q.status !== 'processing' && q.travelerName !== '—')
       .map(q => {
         const id = buildPassengerId(app.id, q.gltsApplicantId)
-        const base = baseFromApplication(
-          app,
-          q.gltsApplicantId,
-          q.sequenceNo,
-          q.travelerName,
-          q.passportNo,
-        )
+        const contact = q.additionalDetails
+          ? {
+              passengerPhone: q.additionalDetails.paxContactNo || '—',
+              passengerEmail: q.additionalDetails.paxEmailId || '—',
+            }
+          : resolvePassengerContact(app.id, q.travelerName)
+        const base = {
+          ...baseFromApplication(
+            app,
+            q.gltsApplicantId,
+            q.sequenceNo,
+            q.travelerName,
+            q.passportNo,
+          ),
+          ...contact,
+        }
         return mergeOverlay(base, overlays.get(id))
       })
   }

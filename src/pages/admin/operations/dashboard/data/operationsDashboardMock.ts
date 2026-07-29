@@ -13,7 +13,6 @@ export type OperationalTeam =
 export interface DashboardFilters {
   dateRange: [Date | null, Date | null]
   country: string
-  branch: string
   applicationType: string
   team: string
 }
@@ -21,7 +20,6 @@ export interface DashboardFilters {
 export const DEFAULT_DASHBOARD_FILTERS: DashboardFilters = {
   dateRange: [null, null],
   country: 'all',
-  branch: 'all',
   applicationType: 'all',
   team: 'all',
 }
@@ -33,14 +31,6 @@ export const COUNTRY_FILTER_OPTIONS = [
   { label: 'Singapore', value: 'Singapore' },
   { label: 'United Arab Emirates', value: 'United Arab Emirates' },
   { label: 'Germany', value: 'Germany' },
-]
-
-export const BRANCH_FILTER_OPTIONS = [
-  { label: 'All branches', value: 'all' },
-  { label: 'Mumbai', value: 'Mumbai' },
-  { label: 'Delhi', value: 'Delhi' },
-  { label: 'Chennai', value: 'Chennai' },
-  { label: 'Bengaluru', value: 'Bengaluru' },
 ]
 
 export const APPLICATION_TYPE_OPTIONS = [
@@ -262,7 +252,7 @@ export const EXECUTIVE_KPIS: DashboardKpiMetric[] = [
     deltaLabel: 'vs previous period',
     accent: 'info',
     iconKey: 'users',
-    href: '/admin/access/teams',
+    href: '/admin/user-management/teams',
   },
   {
     id: 'revenue_today',
@@ -302,13 +292,13 @@ export const TEAM_WORKLOAD_ROWS: TeamWorkloadRow[] = [
 
 export const EXECUTIVE_CRITICAL_ALERTS: ExecutiveCriticalAlert[] = [
   { id: 'ca1', title: 'SLA Breached', count: 12, oldestWaiting: '6h 20m', priority: 'critical' },
-  { id: 'ca2', title: 'Awaiting Client Documents', count: 28, oldestWaiting: '3d 4h', priority: 'high' },
+  { id: 'ca2', title: 'Documents Required', count: 28, oldestWaiting: '3d 4h', priority: 'high' },
   { id: 'ca3', title: 'Pending QC > 4 Hours', count: 9, oldestWaiting: '5h 10m', priority: 'high' },
-  { id: 'ca4', title: 'Passport Expiring Soon', count: 6, oldestWaiting: '2d 1h', priority: 'medium' },
+  { id: 'ca6', title: 'Corrections Required', count: 11, oldestWaiting: '1d 8h', priority: 'high' },
   { id: 'ca5', title: 'Marine Crew Joining Within 7 Days', count: 14, oldestWaiting: '4d 6h', priority: 'critical' },
-  { id: 'ca6', title: 'Corrected Documents Pending', count: 11, oldestWaiting: '1d 8h', priority: 'high' },
   { id: 'ca7', title: 'No Movement Cases', count: 19, oldestWaiting: '5d 2h', priority: 'medium' },
   { id: 'ca8', title: 'Escalations', count: 7, oldestWaiting: '8h 45m', priority: 'critical' },
+  { id: 'ca4', title: 'Passport Expiring Soon', count: 6, oldestWaiting: '2d 1h', priority: 'medium' },
 ]
 
 export const VERIFICATION_QUEUE: VerificationQueueRow[] = [

@@ -10,10 +10,12 @@ export const FORM_CONTROL = {
   labelFontWeight: 600,
   helperFontSize: '12px',
   borderRadius: '10px',
-  paddingX: '12px',
+  paddingX: '8px',
   paddingY: '8px',
   borderWidth: '1px',
   textareaLineHeight: 1.6,
+  /** Default auto-size floor for DS Textarea */
+  textareaMinRows: 2,
 } as const
 
 /** Text-button padding: horizontal = 2 × vertical (not used for IconButton). */
@@ -429,6 +431,7 @@ export const multilineOutlinedInputThemeOverrides = {
     minHeight: 'unset !important',
     height: 'auto !important',
     alignItems: 'flex-start',
+    padding: 0,
   },
   '& .MuiOutlinedInput-inputMultiline': {
     padding: `${FORM_CONTROL.paddingY} ${FORM_CONTROL.paddingX}`,
@@ -442,6 +445,7 @@ export const multilineOutlinedInputRootOverrides = {
     minHeight: 'unset !important',
     height: 'auto !important',
     alignItems: 'flex-start',
+    padding: 0,
   },
 } as const
 
@@ -489,6 +493,7 @@ export function textareaOutlinedFieldSx(theme: Theme) {
         borderWidth: FORM_CONTROL.borderWidth,
       },
     '& .MuiInputBase-inputMultiline': {
+      padding: `${FORM_CONTROL.paddingY} ${FORM_CONTROL.paddingX}`,
       lineHeight: FORM_CONTROL.textareaLineHeight,
       fontFamily: 'inherit',
       resize: 'vertical',

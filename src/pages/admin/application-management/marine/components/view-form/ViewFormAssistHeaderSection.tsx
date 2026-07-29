@@ -8,17 +8,18 @@ import {
 } from '@/pages/admin/components/adminRecordPageTitle'
 import { toApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
 import { resolveApplicationReferenceDisplay } from '@/pages/customer/features/applications/utils/gltsReferenceIds'
-import { ApplicationTrackingUrlLink } from '@/shared/components/ApplicationTrackingUrlLink'
 import type { VerifyOverviewData } from '../../utils/verifyDocumentsUtils'
 
 interface ViewFormAssistHeaderSectionProps {
   overview: VerifyOverviewData
+  title?: string
   description?: string
   headerActions?: ReactNode
 }
 
 export function ViewFormAssistHeaderSection({
   overview,
+  title = 'External portal form assist',
   description,
   headerActions,
 }: ViewFormAssistHeaderSectionProps) {
@@ -42,7 +43,7 @@ export function ViewFormAssistHeaderSection({
             justifyContent="space-between"
             spacing={1.5}
           >
-            <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ minWidth: 0, flexShrink: { sm: 1 } }}>
               <Typography
                 variant={ADMIN_RECORD_PAGE_TITLE_VARIANT}
                 component="h1"
@@ -50,7 +51,7 @@ export function ViewFormAssistHeaderSection({
                 color="text.primary"
                 sx={ADMIN_RECORD_PAGE_TITLE_SX}
               >
-                External portal form assist
+                {title}
               </Typography>
               {description ? (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75, maxWidth: 720 }}>
@@ -59,7 +60,18 @@ export function ViewFormAssistHeaderSection({
               ) : null}
             </Box>
             {headerActions ? (
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                flexWrap="wrap"
+                useFlexGap
+                sx={{
+                  width: { xs: '100%', sm: 'auto' },
+                  flexShrink: 0,
+                  justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                }}
+              >
                 {headerActions}
               </Stack>
             ) : null}
@@ -101,11 +113,6 @@ export function ViewFormAssistHeaderSection({
                 </Grid>
               ))}
             </Grid>
-            <ApplicationTrackingUrlLink
-              countryName={reviewOverview.countryName}
-              label="Track on embassy / VFS portal"
-              sx={{ mt: 1.5 }}
-            />
           </Box>
         </Stack>
       </Box>

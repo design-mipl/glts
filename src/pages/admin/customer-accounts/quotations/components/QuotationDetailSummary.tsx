@@ -1,10 +1,13 @@
 import { Box, Stack, Typography } from '@mui/material'
-import { ArrowRight, FileText, PencilLine, Share2 } from 'lucide-react'
+import { ArrowRight, FileText, PencilLine, RefreshCw, Share2 } from 'lucide-react'
 import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
 import type { QuotationRecord } from '@/shared/types/quotation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { getCurrentVersion } from '@/shared/utils/quotationValidation'
+import { canConvertQuotationToAgreement } from '@/shared/utils/quotationPricingUtils'
 import {
+  quotationPipelineStatusColor,
+  quotationPipelineStatusLabel,
   quotationSharedStatusColor,
   quotationSharedStatusLabel,
   quotationSourceTypeLabel,
@@ -18,6 +21,7 @@ interface QuotationDetailSummaryProps {
   onShare?: () => void
   onGeneratePdf?: () => void
   onConvert?: () => void
+  onUpdateStatus?: () => void
 }
 
 export function QuotationDetailSummary({
@@ -26,9 +30,10 @@ export function QuotationDetailSummary({
   onShare,
   onGeneratePdf,
   onConvert,
+  onUpdateStatus,
 }: QuotationDetailSummaryProps) {
   const version = getCurrentVersion(quotation)
-  const canConvert = !quotation.convertedAgreementId && quotation.pricingVersions.some((v) => v.pricingMatrix.length > 0)
+  const canConvert = canConvertQuotationToAgreement(quotation)
 
   return (
     <BaseCard>
@@ -48,6 +53,15 @@ export function QuotationDetailSummary({
               {onEdit ? (
                 <Button label="Edit" size="sm" variant="neutral" startIcon={<PencilLine size={14} />} onClick={onEdit} />
               ) : null}
+              {onUpdateStatus ? (
+                <Button
+                  label="Update Status"
+                  size="sm"
+                  variant="neutral"
+                  startIcon={<RefreshCw size={14} />}
+                  onClick={onUpdateStatus}
+                />
+              ) : null}
               {quotation.sharedStatus === 'not_shared' && onShare ? (
                 <Button label="Share" size="sm" startIcon={<Share2 size={14} />} onClick={onShare} />
               ) : null}
@@ -61,6 +75,11 @@ export function QuotationDetailSummary({
           </Stack>
 
           <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+            <Badge
+              label={quotationPipelineStatusLabel[quotation.status]}
+              color={quotationPipelineStatusColor[quotation.status]}
+              size="sm"
+            />
             <Badge
               label={quotationSharedStatusLabel[quotation.sharedStatus]}
               color={quotationSharedStatusColor[quotation.sharedStatus]}

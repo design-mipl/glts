@@ -7,6 +7,7 @@ import { quotationService } from '@/shared/services/quotationService'
 import type { QuotationRecord } from '@/shared/types/quotation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { getCurrentVersion } from '@/shared/utils/quotationValidation'
+import { canConvertQuotationToAgreement } from '@/shared/utils/quotationPricingUtils'
 import { QuotationPricingMatrixTable } from '../QuotationPricingMatrixTable'
 import { QuotationPricingSummary } from '../QuotationPricingSummary'
 import { agreementEmbeddedTableHeadCellSx, agreementEmbeddedTableSx } from '../../../agreements/components/agreementFormLayout'
@@ -25,7 +26,7 @@ export function PricingVersionsTab({ quotation, onReload, onConvert }: PricingVe
   const versions = [...quotation.pricingVersions].sort((a, b) => b.versionNumber - a.versionNumber)
   const viewVersion = versions.find((v) => v.id === viewVersionId)
   const current = getCurrentVersion(quotation)
-  const canConvert = !quotation.convertedAgreementId
+  const canConvert = canConvertQuotationToAgreement(quotation)
 
   return (
     <Stack spacing={2}>
@@ -84,7 +85,9 @@ export function PricingVersionsTab({ quotation, onReload, onConvert }: PricingVe
                   >
                     <Copy size={14} />
                   </IconButton>
-                  {canConvert && version.pricingMatrix.length > 0 ? (
+                  {canConvert &&
+                  ((version.commercialVisaPricing?.length ?? 0) > 0 ||
+                    version.pricingMatrix.length > 0) ? (
                     <IconButton
                       size="small"
                       aria-label="Convert version to agreement"

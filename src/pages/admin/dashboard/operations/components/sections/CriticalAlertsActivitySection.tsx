@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Grid } from '@mui/material'
-import { DashboardSectionTable } from '@/pages/admin/operations/dashboard/components/DashboardSectionTable'
+import { DashboardSectionTable } from '@/pages/admin/dashboard/components'
 import { OperationsCriticalAlertsPanel } from '../OperationsCriticalAlertsPanel'
 import { buildMyActivityColumns } from '../columns/myActivityColumns'
 import type { MyActivityRow, OperationsCriticalAlert } from '../../data/operationsConsultantDashboardMock'

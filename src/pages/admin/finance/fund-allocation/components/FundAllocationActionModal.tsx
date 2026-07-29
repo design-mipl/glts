@@ -1,22 +1,20 @@
-import { Box, Divider, Stack, Typography } from '@mui/material'
-import { Search } from 'lucide-react'
+import { Stack } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Checkbox, FormField, Input, Modal, Select, Textarea } from '@/design-system/UIComponents'
-import { fundAllocationService } from '@/shared/services/fundAllocationService'
+import { Modal } from '@/design-system/UIComponents'
 import type { FundAllocationActionInput, FundAllocationPassengerRow } from '@/shared/types/fundAllocation'
-import { listCreditCardSelectOptions } from '@/shared/utils/creditCardMasterOptions'
-import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
-  mapVfsPickerServicesToChargeLines,
-  sumVfsPickerServiceAmounts,
-  type VfsPickerService,
-} from '@/shared/utils/vfsServicePickerUtils'
+  createEmptyFundTransferDetails,
+  isFundTransferValid,
+  type FundTransferDetails,
+} from '@/shared/types/fundAllocation'
+import { FundAllocationFundTransferSection } from './FundAllocationFundTransferSection'
 import {
-  vfsServicePickerEmptyStateSx,
-  vfsServicePickerLayout,
-  vfsServicePickerListSx,
-  vfsServicePickerServiceRowSx,
-} from '@/shared/utils/vfsServicePickerLayout'
+  AllocateFundsFormFields,
+  AllocateFundsModalFooter,
+  AllocateFundsTwoPanelLayout,
+  RequestedPassengerSummaryCard,
+  RequestedServicesSection,
+} from './FundAllocationAllocateModalLayout'
 
 export type FundAllocationActionPayload = FundAllocationActionInput
 
@@ -27,67 +25,44 @@ interface FundAllocationActionModalProps {
   onConfirm: (payload: FundAllocationActionPayload) => void
 }
 
-function ContextLine({ label, value }: { label: string; value: string }) {
-  return (
-    <Stack direction="row" spacing={1} alignItems="baseline">
-      <Typography
-        variant="body2"
-        color="text.secondary"
-        sx={{ fontSize: vfsServicePickerLayout.bodyFontSize, minWidth: vfsServicePickerLayout.contextLabelMinWidth }}
-      >
-        {label}
-      </Typography>
-      <Typography variant="body2" sx={{ fontSize: vfsServicePickerLayout.bodyFontSize, fontWeight: 600 }}>
-        {value || '—'}
-      </Typography>
-    </Stack>
-  )
-}
-
 export function FundAllocationActionModal({
   open,
   record,
   onClose,
   onConfirm,
 }: FundAllocationActionModalProps) {
-  const [search, setSearch] = useState('')
-  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
   const [allocatedAmount, setAllocatedAmount] = useState('')
   const [allocatedAmountTouched, setAllocatedAmountTouched] = useState(false)
-  const [creditCardId, setCreditCardId] = useState('')
-  const [notes, setNotes] = useState('')
+  const [fundTransfer, setFundTransfer] = useState<FundTransferDetails>(createEmptyFundTransferDetails())
 
-  const creditCardOptions = useMemo(() => listCreditCardSelectOptions(), [])
-
-  const catalogServices = useMemo(() => {
-    if (!record) return []
-    return fundAllocationService.listVfsServicesForPassenger(record)
-  }, [record])
-
-  const filteredServices = useMemo(() => {
-    const query = search.trim().toLowerCase()
-    if (!query) return catalogServices
-    return catalogServices.filter(service => service.serviceName.toLowerCase().includes(query))
-  }, [catalogServices, search])
-
-  const selectedServices = useMemo(
-    () => catalogServices.filter(service => selectedServiceIds.includes(service.id)),
-    [catalogServices, selectedServiceIds],
+  const requestedServices = useMemo(
+    () => record?.selectedServices ?? [],
+    [record?.selectedServices],
   )
 
-  const totalAmount = useMemo(
-    () => sumVfsPickerServiceAmounts(selectedServices),
-    [selectedServices],
-  )
+  const totalAmount = record?.totalAmount ?? 0
+  const fundHolderName = record?.allocatedTo?.trim() || ''
 
   useEffect(() => {
     if (!open || !record) return
-    setSearch('')
-    setSelectedServiceIds([])
-    setAllocatedAmount('')
     setAllocatedAmountTouched(false)
-    setCreditCardId('')
-    setNotes('')
+    setFundTransfer(
+      createEmptyFundTransferDetails({
+        ...(record.fundTransfer ?? {}),
+        paymentRemark: record.fundTransfer?.paymentRemark || record.allocationNotes || '',
+        receivedBy: record.fundTransfer?.receivedBy || record.allocatedTo || record.assignedUser || '',
+      }),
+    )
+    setAllocatedAmount(
+      record.allocatedAmount > 0
+        ? String(record.allocatedAmount)
+        : record.totalAmount > 0
+          ? String(record.totalAmount)
+          : '',
+    )
+    if (record.allocatedAmount > 0 && record.allocatedAmount !== record.totalAmount) {
+      setAllocatedAmountTouched(true)
+    }
   }, [open, record])
 
   useEffect(() => {
@@ -99,36 +74,30 @@ export function FundAllocationActionModal({
 
   const parsedAllocatedAmount = Number(allocatedAmount)
   const canSubmit =
-    selectedServices.length > 0 &&
-    creditCardId.trim().length > 0 &&
+    requestedServices.length > 0 &&
+    totalAmount > 0 &&
+    isFundTransferValid(fundTransfer) &&
     Number.isFinite(parsedAllocatedAmount) &&
     parsedAllocatedAmount > 0
 
   const handleClose = () => {
-    setSearch('')
-    setSelectedServiceIds([])
     setAllocatedAmount('')
     setAllocatedAmountTouched(false)
-    setCreditCardId('')
-    setNotes('')
+    setFundTransfer(createEmptyFundTransferDetails())
     onClose()
-  }
-
-  const toggleService = (serviceId: string, checked: boolean) => {
-    setSelectedServiceIds(current =>
-      checked ? [...new Set([...current, serviceId])] : current.filter(id => id !== serviceId),
-    )
   }
 
   const handleConfirm = () => {
     if (!canSubmit) return
-    const chargeLines = mapVfsPickerServicesToChargeLines(selectedServices)
     onConfirm({
-      selectedServices: chargeLines,
+      selectedServices: requestedServices.map(line => ({ ...line })),
       totalAmount,
       allocatedAmount: parsedAllocatedAmount,
-      creditCardId,
-      notes,
+      fundTransfer: {
+        ...fundTransfer,
+        receivedBy: fundTransfer.receivedBy || fundHolderName,
+      },
+      notes: fundTransfer.paymentRemark,
     })
     handleClose()
   }
@@ -139,132 +108,51 @@ export function FundAllocationActionModal({
       onClose={handleClose}
       title="Allocate funds"
       subtitle={`${record.passengerName} · ${record.gltsApplicationId}`}
-      size="md"
+      size="lg"
       footer={
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-          justifyContent="space-between"
-          spacing={1.5}
-          sx={{ width: '100%' }}
-        >
-          <Stack spacing={0.25}>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: vfsServicePickerLayout.bodyFontSize }}>
-              Selected services: {selectedServices.length}
-            </Typography>
-            <Typography variant="body2" fontWeight={600} sx={{ fontSize: vfsServicePickerLayout.bodyFontSize }}>
-              Total value: {totalAmount > 0 ? formatInr(totalAmount) : '—'}
-            </Typography>
-          </Stack>
-          <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button label="Cancel" variant="neutral" onClick={handleClose} />
-            <Button label="Allocate funds" onClick={handleConfirm} disabled={!canSubmit} />
-          </Stack>
-        </Stack>
+        <AllocateFundsModalFooter
+          requestedTotal={totalAmount}
+          allocatedAmount={allocatedAmount}
+          onCancel={handleClose}
+          onConfirm={handleConfirm}
+          canSubmit={canSubmit}
+        />
       }
     >
-      <Stack spacing={2} sx={{ pt: 0.5 }}>
-        <Stack spacing={0.75}>
-          <ContextLine label="Country" value={record.country} />
-          <ContextLine label="Visa type" value={record.visaType} />
-          <ContextLine label="Jurisdiction" value={record.jurisdiction} />
-        </Stack>
-
-        <Divider />
-
-        <Stack spacing={1}>
-          <Typography variant="body2" fontWeight={600} sx={{ fontSize: vfsServicePickerLayout.bodyFontSize }}>
-            VFS services
-          </Typography>
-          <Input
-            value={search}
-            onChange={setSearch}
-            placeholder="Search by service name..."
-            size="sm"
-            fullWidth
-            startAdornment={<Search size={16} />}
-          />
-        </Stack>
-
-        <Box sx={vfsServicePickerListSx}>
-          {filteredServices.length === 0 ? (
-            <Box sx={vfsServicePickerEmptyStateSx}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: vfsServicePickerLayout.bodyFontSize }}>
-                {catalogServices.length === 0
-                  ? 'No VFS services are configured for this country and visa type in country master.'
-                  : 'No services match your search.'}
-              </Typography>
-            </Box>
-          ) : (
-            <Stack divider={<Divider />}>
-              {filteredServices.map((service: VfsPickerService) => (
-                <Stack
-                  key={service.id}
-                  direction="row"
-                  alignItems="center"
-                  spacing={1}
-                  sx={vfsServicePickerServiceRowSx}
-                >
-                  <Checkbox
-                    checked={selectedServiceIds.includes(service.id)}
-                    onChange={checked => toggleService(service.id, checked)}
-                    size="sm"
-                  />
-                  <Typography variant="body2" sx={{ flex: 1, fontSize: vfsServicePickerLayout.bodyFontSize }}>
-                    {service.serviceName}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontSize: vfsServicePickerLayout.bodyFontSize,
-                      fontVariantNumeric: 'tabular-nums',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {formatInr(service.amount)}
-                  </Typography>
-                </Stack>
-              ))}
-            </Stack>
-          )}
-        </Box>
-
-        <Divider />
-
-        <Stack spacing={1.5}>
-          <FormField label="Total value">
-            <Input value={totalAmount > 0 ? formatInr(totalAmount) : '—'} disabled size="sm" />
-          </FormField>
-          <FormField
-            label="Allocated fund value"
-            required
-            helperText="Defaults to total value. You can enter an approximate amount if needed."
+      <AllocateFundsTwoPanelLayout
+        contextItems={[
+          { label: 'Country', value: record.country },
+          { label: 'Visa type', value: record.visaType },
+          { label: 'Jurisdiction', value: record.jurisdiction },
+          { label: 'Team', value: record.assignedTeam || '—' },
+          { label: 'User', value: record.assignedUser || '—' },
+        ]}
+        leftPanel={
+          <RequestedServicesSection
+            serviceCount={requestedServices.length}
+            emptyMessage="No fund request on this passenger. Request funds from Assignment & Priority first."
           >
-            <Input
-              value={allocatedAmount}
-              onChange={value => {
+            <RequestedPassengerSummaryCard record={record} />
+          </RequestedServicesSection>
+        }
+        rightPanel={
+          <Stack spacing={2}>
+            <AllocateFundsFormFields
+              requestedTotal={totalAmount}
+              allocatedAmount={allocatedAmount}
+              onAllocatedAmountChange={value => {
                 setAllocatedAmountTouched(true)
-                setAllocatedAmount(value.replace(/[^\d.]/g, ''))
+                setAllocatedAmount(value)
               }}
-              placeholder="Enter allocated fund value"
-              size="sm"
             />
-          </FormField>
-          <FormField label="Payment card" required>
-            <Select
-              value={creditCardId}
-              onChange={value => setCreditCardId(String(value))}
-              options={[{ value: '', label: 'Select card' }, ...creditCardOptions]}
-              placeholder="Select card from card master"
-              size="sm"
-              fullWidth
+            <FundAllocationFundTransferSection
+              value={fundTransfer}
+              onChange={setFundTransfer}
+              fundHolderName={fundHolderName}
             />
-          </FormField>
-          <FormField label="Notes">
-            <Textarea value={notes} onChange={setNotes} placeholder="Optional allocation notes" rows={3} />
-          </FormField>
-        </Stack>
-      </Stack>
+          </Stack>
+        }
+      />
     </Modal>
   )
 }

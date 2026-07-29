@@ -1,6 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
-import { RefreshCw } from 'lucide-react'
 import { Button, Pagination, Tabs, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import { AdminListingStickyHeader, AdminListingToolbar } from '@/pages/admin/components/listing'
@@ -8,6 +7,8 @@ import {
   OperationsDeskFilterFields,
   hasOperationsDeskFiltersActive,
 } from '../components/CaseHandlingFilterBar'
+import { ClaimSheetCreateDrawer } from '../components/ClaimSheetCreateDrawer'
+import { ClaimSheetListDrawer } from '../components/ClaimSheetListDrawer'
 import { OperationalCaseDetailDrawer } from '../components/OperationalCaseDetailDrawer'
 import { OperationsDeskCardList } from '../components/OperationsDeskCardList'
 import { useOperationalCaseHandling } from '../hooks/useOperationalCaseHandling'
@@ -20,6 +21,9 @@ import {
 export function OperationalCaseHandlingPage() {
   const theme = useTheme()
   const { showToast } = useToast()
+  const [claimCreateOpen, setClaimCreateOpen] = useState(false)
+  const [claimListOpen, setClaimListOpen] = useState(false)
+  const [claimRefreshKey, setClaimRefreshKey] = useState(0)
 
   const {
     deskFilters,
@@ -60,15 +64,18 @@ export function OperationalCaseHandlingPage() {
             title="Operations Desk"
             description="Passenger-level ground execution workspace for assigned operational records"
             actions={
-              <Button
-                label="Refresh desk"
-                variant="outlined"
-                startIcon={<RefreshCw size={14} />}
-                onClick={() => {
-                  refresh()
-                  showToast({ title: 'Desk refreshed', variant: 'info' })
-                }}
-              />
+              <Stack direction="row" spacing={1}>
+                <Button
+                  label="View claim sheets"
+                  variant="neutral"
+                  onClick={() => setClaimListOpen(true)}
+                />
+                <Button
+                  label="Claim sheet"
+                  variant="contained"
+                  onClick={() => setClaimCreateOpen(true)}
+                />
+              </Stack>
             }
           />
         }
@@ -157,6 +164,18 @@ export function OperationalCaseHandlingPage() {
         onClose={closeDetail}
         onUpdated={refresh}
         onSubmitted={handleDocumentsSubmitted}
+      />
+
+      <ClaimSheetCreateDrawer
+        open={claimCreateOpen}
+        onClose={() => setClaimCreateOpen(false)}
+        onCreated={() => setClaimRefreshKey(key => key + 1)}
+      />
+
+      <ClaimSheetListDrawer
+        open={claimListOpen}
+        refreshKey={claimRefreshKey}
+        onClose={() => setClaimListOpen(false)}
       />
     </>
   )

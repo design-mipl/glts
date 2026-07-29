@@ -35,24 +35,32 @@ export function buildTdsSectionColumns({
       key: 'sectionCode',
       label: 'TDS Section',
       widthSize: adminListingColumnWidthSize('code'),
+      sortable: true,
+      filterable: false,
       searchable: true,
     },
     {
       key: 'ratePercent',
       label: 'TDS %',
       widthSize: adminListingColumnWidthSize('count'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => `${row.ratePercent}%`,
     },
     {
       key: 'applicableOn',
       label: 'Applicable On',
       widthSize: adminListingColumnWidthSize('service'),
+      sortable: true,
+      filterable: true,
       render: (_, row) => getTdsApplicableOnLabel(row.applicableOn),
     },
     {
       key: 'thresholdLimit',
       label: 'Threshold Limit',
       widthSize: 'md',
+      sortable: true,
+      filterable: false,
       render: (_, row) =>
         row.thresholdLimit != null ? row.thresholdLimit.toLocaleString() : '—',
     },
@@ -60,6 +68,8 @@ export function buildTdsSectionColumns({
       key: 'status',
       label: 'Status',
       widthSize: adminListingColumnWidthSize('status'),
+      sortable: false,
+      filterable: true,
       render: (_, row) => (
         <Badge
           label={masterStatusLabel[row.status]}
@@ -72,12 +82,16 @@ export function buildTdsSectionColumns({
       key: 'createdAudit',
       label: 'Created By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.createdBy} date={row.createdAt} />,
     },
     {
       key: 'updatedAudit',
       label: 'Updated By / Date',
       widthSize: adminListingColumnWidthSize('audit'),
+      sortable: true,
+      filterable: false,
       render: (_, row) => <AuditCell name={row.updatedBy} date={row.updatedAt} />,
     },
     {

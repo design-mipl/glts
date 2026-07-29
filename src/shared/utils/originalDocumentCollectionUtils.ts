@@ -1,4 +1,3 @@
-import { entityMasterService } from '@/shared/services/entityMasterService'
 import {
   getDocumentWorkspaceItems,
   getVisaOfferingById,
@@ -32,6 +31,7 @@ export const ORIGINAL_COLLECTION_METHOD_OPTIONS: {
   { value: 'delivered_to_office', label: 'Delivered to GLTS Office' },
   { value: 'picked_up_at_airport', label: 'Picked up from Applicant at Airport' },
   { value: 'picked_up_from_cargo', label: 'Picked up from Air Cargo Office' },
+  { value: 'hand_carry_by_applicant', label: 'Hand carry by applicant' },
 ]
 
 export const COLLECTION_DETAIL_FIELDS_BY_METHOD: Record<
@@ -81,6 +81,14 @@ export const COLLECTION_DETAIL_FIELDS_BY_METHOD: Record<
     { key: 'pickupExecutive', label: 'Pickup Executive', type: 'text', required: true },
     { key: 'remarks', label: 'Remarks', type: 'textarea' },
   ],
+  hand_carry_by_applicant: [
+    { key: 'receivingOfficeId', label: 'Receiving Office / Partner', type: 'select', optionsKey: 'receivingOffice', required: true },
+    { key: 'handCarryDate', label: 'Hand Carry Date', type: 'date', required: true },
+    { key: 'handCarryTime', label: 'Hand Carry Time', type: 'time', required: true },
+    { key: 'applicantName', label: 'Applicant Name', type: 'text', required: true },
+    { key: 'applicantContactNumber', label: 'Applicant Contact Number', type: 'tel', required: true },
+    { key: 'remarks', label: 'Remarks', type: 'textarea' },
+  ],
 }
 
 function emptyDetailsForMethod<M extends OriginalDocumentCollectionMethod>(
@@ -103,6 +111,7 @@ export function emptyOriginalDocumentCollectionState(
     delivered_to_office: emptyDetailsForMethod('delivered_to_office'),
     picked_up_at_airport: emptyDetailsForMethod('picked_up_at_airport'),
     picked_up_from_cargo: emptyDetailsForMethod('picked_up_from_cargo'),
+    hand_carry_by_applicant: emptyDetailsForMethod('hand_carry_by_applicant'),
   }
 
   return {
@@ -255,11 +264,18 @@ export function patchCollectionDetailField(
   }
 }
 
-export function listReceivingOfficeOptions(): { value: string; label: string }[] {
-  return entityMasterService.list({ status: 'active' }).map(entity => ({
-    value: entity.id,
-    label: entity.entityName,
-  }))
+export function listReceivingOfficeOptions(): {
+  value: string
+  label: string
+  description?: string
+}[] {
+  return [
+    { value: 'office-mumbai', label: 'GLTS Mumbai Branch', description: 'Office' },
+    { value: 'office-delhi', label: 'GLTS Delhi Branch', description: 'Office' },
+    { value: 'partner-chennai', label: 'Chennai', description: 'Partner' },
+    { value: 'partner-kolkata', label: 'Kolkata', description: 'Partner' },
+    { value: 'partner-bangalore', label: 'Bangalore', description: 'Partner' },
+  ]
 }
 
 export function originalCollectionCollapsedHint(state: OriginalDocumentCollectionState): string {

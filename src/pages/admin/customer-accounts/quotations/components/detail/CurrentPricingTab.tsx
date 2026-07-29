@@ -1,22 +1,38 @@
-import { Stack } from '@mui/material'
-import type { QuotationRecord } from '@/shared/types/quotation'
+import type { QuotationFormData, QuotationRecord } from '@/shared/types/quotation'
 import { getCurrentVersion } from '@/shared/utils/quotationValidation'
-import { QuotationPricingMatrixTable } from '../QuotationPricingMatrixTable'
-import { QuotationPricingSummary } from '../QuotationPricingSummary'
+import { hydrateStructuredPricingFromMatrix } from '@/shared/utils/quotationPricingUtils'
+import { QuotationPricingSection } from '../pricing/QuotationPricingSection'
 
 export function CurrentPricingTab({ quotation }: { quotation: QuotationRecord }) {
   const version = getCurrentVersion(quotation)
   if (!version) return null
 
-  return (
-    <Stack spacing={2}>
-      <QuotationPricingMatrixTable
-        workflowType={quotation.workflowType}
-        pricingMatrix={version.pricingMatrix}
-        onChange={() => {}}
-        readOnly
-      />
-      <QuotationPricingSummary totals={version.totals} gstPercentage={quotation.gstPercentage} />
-    </Stack>
-  )
+  const hasStructured =
+    (version.retailVisaPricing?.length ?? 0) > 0 ||
+    (version.commercialVisaPricing?.length ?? 0) > 0 ||
+    (version.miscellaneousServices?.length ?? 0) > 0
+
+  const structured = hasStructured
+    ? {
+        retailVisaPricing: version.retailVisaPricing ?? [],
+        commercialVisaPricing: version.commercialVisaPricing ?? [],
+        miscellaneousServices: version.miscellaneousServices ?? [],
+      }
+    : hydrateStructuredPricingFromMatrix(version.pricingMatrix, quotation.workflowType)
+
+  const formData: QuotationFormData = {
+    sourceType: quotation.sourceType,
+    enquiryId: quotation.enquiryId,
+    workflowType: quotation.workflowType,
+    customer: quotation.customer,
+    quotationDate: quotation.quotationDate,
+    validTill: quotation.validTill,
+    notes: quotation.notes,
+    gstRateId: quotation.gstRateId,
+    gstPercentage: quotation.gstPercentage,
+    pricingMatrix: version.pricingMatrix,
+    ...structured,
+  }
+
+  return <QuotationPricingSection formData={formData} onChange={() => {}} readOnly />
 }

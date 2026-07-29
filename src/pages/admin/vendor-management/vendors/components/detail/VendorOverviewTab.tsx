@@ -71,6 +71,8 @@ export function VendorOverviewTab({ vendor }: { vendor: Vendor }) {
         <ReadOnlyField label="Vendor name" value={vendor.vendorName} />
         <ReadOnlyField label="Category" value={vendorCategoryLabel[vendor.vendorCategory]} />
         <ReadOnlyField label="Type" value={vendorTypeLabel[vendor.vendorType]} />
+        <ReadOnlyField label="Country" value={vendor.serviceCountry} />
+        <ReadOnlyField label="Visa type" value={vendor.visaType} />
         <ReadOnlyField label="GST applicable" value={vendor.gstApplicable ? 'Yes' : 'No'} />
         <ReadOnlyField label="GST number" value={vendor.gstNumber} />
         <ReadOnlyField label="PAN number" value={vendor.panNumber} />
@@ -84,7 +86,7 @@ export function VendorOverviewTab({ vendor }: { vendor: Vendor }) {
         <ReadOnlyField label="Address" value={vendor.address} />
         <ReadOnlyField label="City" value={vendor.city} />
         <ReadOnlyField label="State" value={vendor.state} />
-        <ReadOnlyField label="Country" value={vendor.country} />
+        <ReadOnlyField label="Country (location)" value={vendor.country} />
       </InfoCard>
 
       <InfoCard title="Commercial information">
