@@ -33,6 +33,10 @@ export interface ApplicationPipelineProps {
   empty?: boolean
   permission?: boolean
   onRetry?: () => void
+  /** Wrap in ExecutiveCard. Default false to match existing dashboard embeds. */
+  card?: boolean
+  /** Skip SectionHeader — parent owns the title/tabs chrome. */
+  hideHeader?: boolean
 }
 
 export function ApplicationPipeline({
@@ -45,6 +49,8 @@ export function ApplicationPipeline({
   empty,
   permission,
   onRetry,
+  card = false,
+  hideHeader = false,
 }: ApplicationPipelineProps) {
   const chartHeight = DASHBOARD_CHART_HEIGHT_SPACING * 8
   const funnelData = stages.map((stage) => ({
@@ -55,14 +61,14 @@ export function ApplicationPipeline({
 
   return (
     <BusinessWidgetFrame
-      title={title}
-      subtitle={subtitle}
+      title={hideHeader ? undefined : title}
+      subtitle={hideHeader ? undefined : subtitle}
       loading={loading}
       error={error}
       empty={empty ?? stages.length === 0}
       permission={permission}
       onRetry={onRetry}
-      card={false}
+      card={card}
       skeletonHeightSpacing={28}
     >
       <ComparisonLayout
@@ -93,17 +99,24 @@ export function ApplicationPipeline({
                     sx={{ height: '100%', cursor: onStageClick ? 'pointer' : 'default' }}
                   >
                     <InsightCard
-                      accent={stage.delayedCount > 0 ? 'warning' : 'success'}
+                      accent="neutral"
                       density="compact"
+                      elevation="flat"
+                      sx={{
+                        borderLeft: '1px solid',
+                        borderLeftColor: 'divider',
+                        boxShadow: 'none',
+                        bgcolor: 'background.paper',
+                      }}
                     >
                       <Stack spacing={UI_KIT_SPACING.field}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
-                          <Typography variant="body2" fontWeight={600}>
+                          <Typography variant="body2" fontWeight={600} color="text.primary">
                             {label}
                           </Typography>
                           <StatusBadge
                             label={`${stage.count}`}
-                            tone={stage.delayedCount > 0 ? 'warning' : 'success'}
+                            tone={stage.delayedCount > 0 ? 'warning' : 'neutral'}
                           />
                         </Stack>
                         <Typography variant="caption" color="text.secondary">

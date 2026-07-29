@@ -41,7 +41,9 @@ export interface DashboardExecutiveRowProps {
 }
 
 /**
- * Standard executive row: Alerts · Primary visualization · Quick actions.
+ * Standard executive layout:
+ * 1) Primary visualization + quick actions
+ * 2) Alerts & notifications
  * Exactly one primary visualization per dashboard.
  */
 export function DashboardExecutiveRow({
@@ -51,9 +53,9 @@ export function DashboardExecutiveRow({
 }: DashboardExecutiveRowProps) {
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
-      <Grid size={{ xs: 12, md: 4 }}>{alerts}</Grid>
-      <Grid size={{ xs: 12, md: 4 }}>{primaryVisualization}</Grid>
-      <Grid size={{ xs: 12, md: 4 }}>{quickActions}</Grid>
+      <Grid size={{ xs: 12, lg: 8 }}>{primaryVisualization}</Grid>
+      <Grid size={{ xs: 12, lg: 4 }}>{quickActions}</Grid>
+      <Grid size={{ xs: 12 }}>{alerts}</Grid>
     </Grid>
   )
 }

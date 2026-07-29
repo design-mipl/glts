@@ -116,8 +116,9 @@ export const adminNav: NavConfig[] = [
     label: 'User management',
     icon: createElement(Shield, iconProps),
     children: [
-      { type: 'item', label: 'Team', href: '/admin/access/teams' },
-      { type: 'item', label: 'User & permission', href: '/admin/access/users' },
+      { type: 'item', label: 'Department', href: '/admin/user-management/departments' },
+      { type: 'item', label: 'Team', href: '/admin/user-management/teams' },
+      { type: 'item', label: 'User & permission', href: '/admin/user-management/users' },
     ],
   },
   {

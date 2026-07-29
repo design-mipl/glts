@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AdminModulePlaceholder } from '../components/AdminModulePlaceholder'
 import { PermissionGuard } from '../components/PermissionGuard'
 import {
@@ -84,14 +84,18 @@ import {
   VendorBillingListingPage,
 } from '../finance/vendor-billing'
 import { FundAllocationListingPage } from '../finance/fund-allocation'
-import { TeamDetailPage, TeamListingPage } from '../access/teams'
+import { TeamDetailPage, TeamListingPage } from '../user-management/teams'
+import {
+  DepartmentDetailPage,
+  DepartmentListingPage,
+} from '../user-management/departments'
 import {
   CreateUserPage,
   EditUserPage,
   UserDetailPage,
   UserListingPage,
   UserPermissionConfigurationPage,
-} from '../access/users'
+} from '../user-management/users'
 import ComponentLibrary from '../_tools/ComponentLibrary'
 import TemplateShowcaseRoutes from '../_tools/TemplateShowcase'
 import { OperationalCaseHandlingPage } from '../ground-operations/case-handling'
@@ -124,6 +128,13 @@ interface AdminRouteDefinition {
   description: string
   eyebrow: string
   kind: AdminRouteKind
+}
+
+/** Remap legacy `/admin/access/*` bookmarks to `/admin/user-management/*`. */
+function LegacyAccessRedirect() {
+  const location = useLocation()
+  const nextPath = location.pathname.replace(/^\/admin\/access/, '/admin/user-management')
+  return <Navigate to={`${nextPath}${location.search}${location.hash}`} replace />
 }
 
 const adminDashboardRoutes: AdminRouteDefinition[] = ADMIN_ALL_DASHBOARDS.filter(
@@ -648,7 +659,23 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="access/teams"
+        path="user-management/departments"
+        element={
+          <PermissionGuard>
+            <DepartmentListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="user-management/departments/:departmentId"
+        element={
+          <PermissionGuard>
+            <DepartmentDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="user-management/teams"
         element={
           <PermissionGuard>
             <TeamListingPage />
@@ -656,7 +683,7 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="access/teams/:teamId"
+        path="user-management/teams/:teamId"
         element={
           <PermissionGuard>
             <TeamDetailPage />
@@ -664,7 +691,7 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="access/users"
+        path="user-management/users"
         element={
           <PermissionGuard>
             <UserListingPage />
@@ -672,7 +699,7 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="access/users/new"
+        path="user-management/users/new"
         element={
           <PermissionGuard>
             <CreateUserPage />
@@ -680,7 +707,7 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="access/users/:userId/edit"
+        path="user-management/users/:userId/edit"
         element={
           <PermissionGuard>
             <EditUserPage />
@@ -688,7 +715,7 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="access/users/:userId/permissions"
+        path="user-management/users/:userId/permissions"
         element={
           <PermissionGuard>
             <UserPermissionConfigurationPage />
@@ -696,14 +723,15 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="access/users/:userId"
+        path="user-management/users/:userId"
         element={
           <PermissionGuard>
             <UserDetailPage />
           </PermissionGuard>
         }
       />
-      <Route path="access/roles" element={<Navigate to="/admin/access/users" replace />} />
+      <Route path="user-management/roles" element={<Navigate to="/admin/user-management/users" replace />} />
+      <Route path="access/*" element={<LegacyAccessRedirect />} />
       <Route
         path="tools/templates/*"
         element={

@@ -9,7 +9,11 @@ export interface AccountsExecutiveRowProps {
   quickActions: ReactNode
 }
 
-/** Accounts executive row: alerts · collections funnel (focus) · quick actions. */
+/**
+ * Accounts executive layout:
+ * 1) Primary visualization + quick actions
+ * 2) Alerts & notifications
+ */
 export function AccountsExecutiveRow({
   alerts,
   primaryVisualization,
@@ -17,9 +21,9 @@ export function AccountsExecutiveRow({
 }: AccountsExecutiveRowProps) {
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
-      <Grid size={{ xs: 12, md: 3 }}>{alerts}</Grid>
-      <Grid size={{ xs: 12, md: 6 }}>{primaryVisualization}</Grid>
-      <Grid size={{ xs: 12, md: 3 }}>{quickActions}</Grid>
+      <Grid size={{ xs: 12, lg: 8 }}>{primaryVisualization}</Grid>
+      <Grid size={{ xs: 12, lg: 4 }}>{quickActions}</Grid>
+      <Grid size={{ xs: 12 }}>{alerts}</Grid>
     </Grid>
   )
 }

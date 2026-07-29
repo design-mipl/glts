@@ -27,9 +27,16 @@ export function buildAdminSearchItems(options: {
       onSelect: () => options.onOpenTab('operations'),
     },
     {
+      id: 'admin-tab-teams-productivity',
+      title: 'Teams & Productivity',
+      subtitle: 'Ops · Docs · Ground · Accounts',
+      category: 'section',
+      onSelect: () => options.onOpenTab('teams-productivity'),
+    },
+    {
       id: 'admin-tab-analytics',
-      title: 'Analytics',
-      subtitle: 'Revenue · branch · country',
+      title: 'Visa Analytics',
+      subtitle: 'Volume · submission · refusal · SLA · revenue',
       category: 'section',
       onSelect: () => options.onOpenTab('analytics'),
     },
@@ -39,6 +46,13 @@ export function buildAdminSearchItems(options: {
       subtitle: 'SLA · risk alerts',
       category: 'section',
       onSelect: () => options.onOpenTab('risk-compliance'),
+    },
+    {
+      id: 'admin-tab-reports',
+      title: 'Reports',
+      subtitle: 'Exports · report center',
+      category: 'section',
+      onSelect: () => options.onOpenTab('reports'),
     },
     {
       id: 'admin-retail-queue',

@@ -11,6 +11,7 @@ import {
   MetricComparison,
   OperationsHealth,
   ProcessingTrend,
+  TeamProductivityInfographic,
   DASHBOARD_SPACING,
 } from '../../shared'
 import {
@@ -62,6 +63,7 @@ export function OverviewTab({
   data,
   loading,
   onRetry,
+  onNavigate,
   insights = [],
   recommendations = [],
   managementAlerts,
@@ -75,6 +77,13 @@ export function OverviewTab({
           ))}
         </Stack>
       ) : null}
+
+      <TeamProductivityInfographic
+        data={data.teamProductivity}
+        loading={loading}
+        onViewAll={() => onNavigate('/admin/user-management/teams')}
+        description="Network Ops, Documentation, Ground, and Accounts — filter by Marine, Corporate, or Retail."
+      />
 
       <Grid container spacing={DASHBOARD_SPACING.field}>
         <Grid size={{ xs: 12, md: 4 }}>

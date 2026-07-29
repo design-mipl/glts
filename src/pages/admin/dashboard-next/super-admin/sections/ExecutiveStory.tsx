@@ -30,6 +30,7 @@ import {
   RiskOverview,
   SLAOverview,
   TeamCapacity,
+  TeamProductivityInfographic,
   VisaDistribution,
   DASHBOARD_SPACING,
 } from '../../shared'
@@ -759,9 +760,15 @@ export function ExecutiveStory({
                 rows={data.teamCapacity}
                 loading={loading}
                 onRetry={onRetry}
-                onViewAll={() => onNavigate('/admin/access/teams')}
+                onViewAll={() => onNavigate('/admin/user-management/teams')}
               />
             }
+          />
+          <TeamProductivityInfographic
+            data={data.teamProductivity}
+            loading={loading}
+            onViewAll={() => onNavigate('/admin/user-management/teams')}
+            description="Ops, Documentation, Ground, and Accounts — Marine · Corporate · Retail."
           />
         </Stack>
       </ExecutiveSection>

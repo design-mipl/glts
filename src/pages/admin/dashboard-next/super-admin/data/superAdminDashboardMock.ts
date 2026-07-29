@@ -4,6 +4,7 @@ import {
 } from '../../shared/config/applicationPipeline'
 import { PASSPORT_JOURNEY_STAGE_IDS } from '../../shared/config/passportJourney'
 import { AGEING_BUCKET_IDS } from '../../shared/config/ageingBuckets'
+import { buildTeamProductivityByChannel } from '../../shared/widgets/operations/teamProductivityData'
 import type { SuperAdminDashboardData, SuperAdminDashboardFilters } from '../types'
 
 export const SUPER_ADMIN_DATE_OPTIONS = [
@@ -463,6 +464,40 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       slaPercent: 87,
     },
   ],
+  teamProductivity: buildTeamProductivityByChannel([
+    {
+      teamId: 'ops',
+      label: 'Operations',
+      openCases: 186,
+      completedToday: 42,
+      capacity: 220,
+      slaPercent: 92,
+    },
+    {
+      teamId: 'docs',
+      label: 'Documentation',
+      openCases: 142,
+      completedToday: 31,
+      capacity: 160,
+      slaPercent: 88,
+    },
+    {
+      teamId: 'ground',
+      label: 'Ground Ops',
+      openCases: 76,
+      completedToday: 20,
+      capacity: 90,
+      slaPercent: 87,
+    },
+    {
+      teamId: 'accounts',
+      label: 'Accounts',
+      openCases: 64,
+      completedToday: 18,
+      capacity: 80,
+      slaPercent: 94,
+    },
+  ]),
   marineTimeline: [
     {
       id: 'sm-1',

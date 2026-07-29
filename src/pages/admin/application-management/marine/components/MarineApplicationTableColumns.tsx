@@ -120,6 +120,13 @@ export function buildMarineApplicationColumns({
 }: MarineApplicationTableColumnsParams): Column<MarineApplicationRow>[] {
   return [
     {
+      key: 'createdAt',
+      label: 'Creation date',
+      widthSize: 'md',
+      sortable: true,
+      filterable: true,
+    },
+    {
       key: 'id',
       label: 'GLTS reference',
       widthSize: 'md',

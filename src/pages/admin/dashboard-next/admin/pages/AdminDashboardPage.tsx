@@ -8,32 +8,33 @@ import {
   LayoutDashboard,
   LineChart,
   ShieldAlert,
+  Users,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/design-system/UIComponents'
 import {
-  AlertCenter,
-  ApplicationPipeline,
   DASHBOARD_SPACING,
   DashboardWorkspace,
-  QuickActions,
 } from '../../shared'
 import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intelligence'
 import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
 import { useAdminDashboardNext } from '../hooks/useAdminDashboardNext'
 import { ADMIN_DASHBOARD_NEXT_MOCK } from '../data/adminDashboardNextMock'
 import { buildAdminSearchItems } from '../data/adminSearchItems'
+import { AdminApplicationFunnelSection } from '../components/AdminApplicationFunnelSection'
 import { AdminExecutiveRow } from '../components/AdminExecutiveRow'
 import { AdminHeroStrip } from '../components/AdminHeroStrip'
+import { NeedsImmediateAttentionSection } from '@/pages/admin/dashboard/components'
 import {
-  ACTION_ICONS,
   AnalyticsTab,
   ApplicationsTab,
   OperationsTab,
   OverviewTab,
+  ProductivityTab,
   ReportsTab,
   RiskComplianceTab,
 } from '../tabs'
+import { resolveAdminAttentionIcon } from '../utils/resolveAdminAttentionIcon'
 import type { AdminDashboardTabProps } from '../types'
 
 function AdminNotificationsAction({
@@ -136,7 +137,8 @@ export function AdminDashboardPage() {
       navigate(`/admin/application-management/retail?stage=${stageId}`)
     },
     onVerificationOpen: () => navigate('/admin/application-management/retail'),
-    onViewVerificationQueue: () => navigate('/admin/assignment-priority/retail'),
+    onViewVerificationQueue: () =>
+      navigate('/admin/application-management/marine?tab=verification_pending'),
   }
 
   return (
@@ -163,50 +165,32 @@ export function AdminDashboardPage() {
           content: (
             <Stack spacing={DASHBOARD_SPACING.field}>
               <AdminExecutiveRow
-                alerts={
-                  <AlertCenter
-                    title="Alerts & notifications"
-                    alerts={data.notifications.map((n, index) => ({
-                      id: n.id,
-                      title: n.title,
-                      description: [n.body, n.createdAt].filter(Boolean).join(' · '),
-                      severity: index === 0 ? 'critical' : index === 1 ? 'warning' : 'info',
-                    }))}
-                    loading={loading}
-                    maxItems={4}
-                    onShowMore={() => openTab('risk-compliance')}
-                  />
-                }
                 primaryVisualization={
-                  <ApplicationPipeline
-                    title="Application funnel"
-                    subtitle="Primary visualization — stage health across the network"
+                  <AdminApplicationFunnelSection
                     stages={data.pipelineStages}
                     loading={loading}
                     onRetry={dashboard.retry}
-                    onStageClick={(stageId) => {
-                      navigate(`/admin/application-management/retail?stage=${stageId}`)
-                    }}
+                    onNavigate={(href) => navigate(href)}
                   />
                 }
                 quickActions={
-                  <QuickActions
-                    title="Quick actions"
-                    variant="tiles"
-                    columns={1}
-                    loading={loading}
-                    items={data.quickActions.map((action) => ({
-                      id: action.id,
-                      title: action.title,
-                      description: action.description,
-                      badge: action.badge,
-                      icon: ACTION_ICONS[action.id],
-                      onClick: () => navigate(action.href),
-                    }))}
+                  <NeedsImmediateAttentionSection
+                    alerts={data.attentionAlerts}
+                    resolveIcon={resolveAdminAttentionIcon}
+                    density="compact"
+                    onOpenAlertCenter={() => openTab('risk-compliance')}
+                    onViewAlert={(alert) => {
+                      navigate(
+                        `/admin/ground-operations/case-handling?attention=${encodeURIComponent(alert.id)}`,
+                      )
+                    }}
                   />
                 }
               />
-              <OverviewTab {...tabProps} />
+              <OverviewTab
+                {...tabProps}
+                onShowMoreAlerts={() => openTab('risk-compliance')}
+              />
             </Stack>
           ),
         },
@@ -225,8 +209,14 @@ export function AdminDashboardPage() {
           content: <OperationsTab {...tabProps} />,
         },
         {
+          id: 'teams-productivity',
+          label: 'Teams & Productivity',
+          icon: <Users size={16} />,
+          content: <ProductivityTab {...tabProps} />,
+        },
+        {
           id: 'analytics',
-          label: 'Analytics',
+          label: 'Visa Analytics',
           icon: <BarChart3 size={16} />,
           content: <AnalyticsTab {...tabProps} />,
         },

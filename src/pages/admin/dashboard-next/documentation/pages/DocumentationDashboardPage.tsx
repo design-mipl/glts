@@ -179,7 +179,7 @@ export function DocumentationDashboardPage() {
                   <QuickActions
                     title="Quick actions"
                     variant="tiles"
-                    columns={1}
+                    columns={2}
                     loading={loading}
                     items={data.quickActions.map((action) => ({
                       id: action.id,

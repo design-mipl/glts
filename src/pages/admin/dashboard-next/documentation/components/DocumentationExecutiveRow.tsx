@@ -8,7 +8,11 @@ export interface DocumentationExecutiveRowProps {
   quickActions: ReactNode
 }
 
-/** Documentation executive row: alerts · pipeline / verification · quick actions. */
+/**
+ * Documentation executive layout:
+ * 1) Primary visualization + quick actions
+ * 2) Alerts & notifications
+ */
 export function DocumentationExecutiveRow({
   alerts,
   primaryVisualization,
@@ -16,9 +20,9 @@ export function DocumentationExecutiveRow({
 }: DocumentationExecutiveRowProps) {
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
-      <Grid size={{ xs: 12, md: 3 }}>{alerts}</Grid>
-      <Grid size={{ xs: 12, md: 6 }}>{primaryVisualization}</Grid>
-      <Grid size={{ xs: 12, md: 3 }}>{quickActions}</Grid>
+      <Grid size={{ xs: 12, lg: 8 }}>{primaryVisualization}</Grid>
+      <Grid size={{ xs: 12, lg: 4 }}>{quickActions}</Grid>
+      <Grid size={{ xs: 12 }}>{alerts}</Grid>
     </Grid>
   )
 }

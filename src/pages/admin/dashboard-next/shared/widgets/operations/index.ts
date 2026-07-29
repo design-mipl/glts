@@ -22,3 +22,11 @@ export type { MarineTimelineProps, MarineTimelineRow } from './MarineTimeline'
 
 export { TeamCapacity } from './TeamCapacity'
 export type { TeamCapacityProps, TeamCapacityRow } from './TeamCapacity'
+
+export { TeamProductivityInfographic } from './TeamProductivityInfographic'
+export type {
+  TeamProductivityInfographicProps,
+  TeamProductivityByChannel,
+  TeamProductivityMetric,
+} from './TeamProductivityInfographic'
+export { buildTeamProductivityByChannel } from './teamProductivityData'

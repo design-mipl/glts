@@ -3,6 +3,7 @@ import {
   type ApplicationPipelineStageId,
 } from '../../shared/config/applicationPipeline'
 import { PASSPORT_JOURNEY_STAGE_IDS } from '../../shared/config/passportJourney'
+import { buildTeamProductivityByChannel } from '../../shared/widgets/operations/teamProductivityData'
 import type { AdminDashboardNextData, AdminDashboardNextFilters } from '../types'
 
 export const ADMIN_DASHBOARD_NEXT_PERIOD_OPTIONS = [
@@ -150,6 +151,40 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
       body: 'Courier partner Q2 review scheduled Friday.',
       unread: false,
       createdAt: '3 hr ago',
+    },
+  ],
+  attentionAlerts: [
+    { id: 'ca1', title: 'SLA Breached', count: 12, oldestWaiting: '6h 20m', priority: 'critical' },
+    {
+      id: 'ca2',
+      title: 'Documents Required',
+      count: 28,
+      oldestWaiting: '3d 4h',
+      priority: 'high',
+    },
+    { id: 'ca3', title: 'Pending QC > 4 Hours', count: 9, oldestWaiting: '5h 10m', priority: 'high' },
+    {
+      id: 'ca6',
+      title: 'Corrections Required',
+      count: 11,
+      oldestWaiting: '1d 8h',
+      priority: 'high',
+    },
+    {
+      id: 'ca5',
+      title: 'Marine Crew Joining Within 7 Days',
+      count: 14,
+      oldestWaiting: '4d 6h',
+      priority: 'critical',
+    },
+    { id: 'ca7', title: 'No Movement Cases', count: 19, oldestWaiting: '5d 2h', priority: 'medium' },
+    { id: 'ca8', title: 'Escalations', count: 7, oldestWaiting: '8h 45m', priority: 'critical' },
+    {
+      id: 'ca4',
+      title: 'Passport Expiring Soon',
+      count: 6,
+      oldestWaiting: '2d 1h',
+      priority: 'medium',
     },
   ],
   pipelineStages: APPLICATION_PIPELINE_STAGE_IDS.map((id) => ({
@@ -300,6 +335,40 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
       slaPercent: 86,
     },
   ],
+  teamProductivity: buildTeamProductivityByChannel([
+    {
+      teamId: 'ops',
+      label: 'Operations',
+      openCases: 64,
+      completedToday: 18,
+      capacity: 80,
+      slaPercent: 92,
+    },
+    {
+      teamId: 'docs',
+      label: 'Documentation',
+      openCases: 52,
+      completedToday: 14,
+      capacity: 60,
+      slaPercent: 88,
+    },
+    {
+      teamId: 'ground',
+      label: 'Ground Ops',
+      openCases: 41,
+      completedToday: 11,
+      capacity: 45,
+      slaPercent: 86,
+    },
+    {
+      teamId: 'accounts',
+      label: 'Accounts',
+      openCases: 28,
+      completedToday: 9,
+      capacity: 40,
+      slaPercent: 95,
+    },
+  ]),
   marineTimeline: [
     {
       id: 'mt-1',

@@ -131,7 +131,7 @@ export function OperationsTab({
               rows={data.teamCapacity}
               loading={loading}
               onRetry={onRetry}
-              onViewAll={() => onNavigate('/admin/access/teams')}
+              onViewAll={() => onNavigate('/admin/user-management/teams')}
             />
           }
         />

@@ -152,6 +152,7 @@ export function mapMarineApplicationRowsToGridItems(rows: MarineApplicationRow[]
 
 export function exportMarineApplicationsToCsv(rows: MarineApplicationRow[]): string {
   const headers = [
+    'Creation date',
     'GLTS reference',
     'Type',
     'Pax name',
@@ -172,6 +173,7 @@ export function exportMarineApplicationsToCsv(rows: MarineApplicationRow[]): str
     const companyName = resolveApplicationCompanyName(row)
     const createdBy = getMarineApplicationCellValue(row, 'createdBy')
     return [
+      row.createdAt,
       row.id,
       type,
       applicant,

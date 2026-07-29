@@ -82,7 +82,14 @@ export const DEFAULT_INTELLIGENCE_FILTER_FIELDS: IntelligenceFilterFieldConfig[]
   {
     id: 'employee',
     label: 'Employee',
-    options: [ALL, { label: 'Network', value: 'network' }],
+    options: [
+      ALL,
+      { label: 'Rahul Sharma', value: 'e1' },
+      { label: 'Priya Nair', value: 'e2' },
+      { label: 'Ajay Patel', value: 'e3' },
+      { label: 'Riya Kapoor', value: 'e4' },
+      { label: 'Suresh Iyer', value: 'e5' },
+    ],
   },
   {
     id: 'status',

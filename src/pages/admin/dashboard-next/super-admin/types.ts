@@ -12,6 +12,7 @@ import type { ApplicationPipelineStageData } from '../shared/widgets/operations/
 import type { PassportJourneyStageData } from '../shared/widgets/operations/PassportJourney'
 import type { MarineTimelineRow } from '../shared/widgets/operations/MarineTimeline'
 import type { TeamCapacityRow } from '../shared/widgets/operations/TeamCapacity'
+import type { TeamProductivityByChannel } from '../shared/widgets/operations/TeamProductivityInfographic'
 import type { RevenueSnapshotData } from '../shared/widgets/finance/RevenueSnapshot'
 import type { CollectionSummaryData } from '../shared/widgets/finance/CollectionSummary'
 import type { AgeingBucketValue } from '../shared/widgets/finance/AgeingAnalysis'
@@ -174,6 +175,7 @@ export interface SuperAdminDashboardData {
   quickActions: SuperAdminQuickActionDefinition[]
   pipelineStages: ApplicationPipelineStageData[]
   teamCapacity: TeamCapacityRow[]
+  teamProductivity: TeamProductivityByChannel
   marineTimeline: MarineTimelineRow[]
   passportJourney: SuperAdminPassportJourneyData
   marineByCompany: SuperAdminRankItem[]
