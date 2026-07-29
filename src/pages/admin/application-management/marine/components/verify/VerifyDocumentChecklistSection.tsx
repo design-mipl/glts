@@ -63,6 +63,8 @@ export function VerifyDocumentsTabPanel({ children }: { children: ReactNode }) {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        // Allow nested overflow:auto children to shrink inside flex parents.
+        '& > *': { minHeight: 0 },
       }}
     >
       {children}

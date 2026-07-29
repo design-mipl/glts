@@ -108,7 +108,7 @@ export function ListingTemplatePage() {
           <AdminListingStickyHeader
             title="Listing module"
             actions={
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={2.5} flexWrap="wrap" useFlexGap>
                 <Button label="New record" startIcon={<Plus size={14} />} />
               </Stack>
             }

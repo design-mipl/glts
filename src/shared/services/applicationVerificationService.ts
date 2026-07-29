@@ -191,6 +191,7 @@ function getDemoVerificationSeeds(applicationId: string): VerificationDocumentOv
         travelerRowId: `${applicationId}-q1`,
         documentId: 'bank',
         status: 'rejected',
+        customerVisible: true,
         comment: 'Upload the last 3 months of bank statements with account holder name matching the passport.',
         updatedAt,
       },
@@ -208,6 +209,83 @@ function getDemoVerificationSeeds(applicationId: string): VerificationDocumentOv
         documentId: 'insurance',
         status: 'missing',
         comment: 'Upload travel medical insurance meeting Schengen coverage requirements.',
+        updatedAt,
+      },
+    ]
+  }
+
+  // Marine Verification Pending — Marco Silva: both Ops + Document team rejected cards.
+  if (applicationId === 'GLTS-APP-2026-881') {
+    const travelerRowId = `${applicationId}-q1`
+    return [
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'itinerary',
+        status: 'rejected',
+        customerVisible: true,
+        comment: 'Itinerary must cover the full stay in France with day-by-day addresses matching the invitation letter.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'bank',
+        status: 'rejected',
+        customerVisible: true,
+        comment: 'Bank statement must show the last 90 days and account holder name matching the passport.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'photo',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'Photo background is not plain white. Documents team flagged during Submission Pending — Ops to confirm or upload replacement.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'travel-ticket',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'Flight reservation name does not match passport. Internal only until Ops rejects again or uploads a replacement.',
+        updatedAt,
+      },
+    ]
+  }
+
+  // Marine Verification Pending — Jonas Berg: Document Rejected queue with Document team handoff.
+  if (applicationId === 'GLTS-APP-2026-887') {
+    const travelerRowId = `${applicationId}-q1`
+    return [
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'bank',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'Statement period does not cover travel dates. Flagged by Documents team in Submission Pending.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'insurance',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'Insurance certificate missing Schengen minimum coverage amount. Internal — upload or reject again for customer.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'passport',
+        status: 'rejected',
+        customerVisible: true,
+        comment: 'Passport bio page is cropped. Re-upload a full clear scan — visible in the customer portal.',
         updatedAt,
       },
     ]
@@ -279,6 +357,35 @@ function overrideMatchesRow(row: UploadQueueRow, override: VerificationDocumentO
   return travelerPatchMatchesRow(row, override)
 }
 
+/** Prefer the newest override when duplicates exist for the same document. */
+function pickLatestOverride(
+  overrides: VerificationDocumentOverride[],
+): VerificationDocumentOverride | undefined {
+  if (overrides.length === 0) return undefined
+  return [...overrides].sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))[0]
+}
+
+function resolveUploadQueueRows(applicationId: string): UploadQueueRow[] {
+  const detail = customerPortalService.getApplicationDetail(applicationId, {
+    ignoreAccessControl: true,
+  })
+  return detail.uploadQueueRows ?? []
+}
+
+function resolveTravelerRow(
+  applicationId: string,
+  travelerRowId: string,
+): UploadQueueRow | undefined {
+  const rows = resolveUploadQueueRows(applicationId)
+  return rows.find(
+    row =>
+      row.id === travelerRowId ||
+      row.gltsApplicantId === travelerRowId ||
+      (Boolean(row.gltsApplicationId) &&
+        `${row.gltsApplicationId}-q${row.sequenceNo}` === travelerRowId),
+  )
+}
+
 function findDemoOverride(
   applicationId: string,
   override: VerificationDocumentOverride,
@@ -320,6 +427,12 @@ function resolveOverrideComment(
   return undefined
 }
 
+function overrideSeedKey(override: VerificationDocumentOverride): string {
+  return override.scope === 'traveler'
+    ? `traveler:${override.travelerRowId ?? ''}:${override.documentId}`
+    : `global:${override.documentId}`
+}
+
 function enrichPersistedOverrides(
   applicationId: string,
   overrides: VerificationDocumentOverride[],
@@ -335,11 +448,25 @@ function enrichPersistedOverrides(
     return override
   })
 
-  if (overrides.length > 0 || demoSeeds.length === 0) {
-    return enriched
-  }
+  if (demoSeeds.length === 0) return enriched
 
-  return demoSeeds
+  if (overrides.length === 0) return demoSeeds
+
+  // Keep user overrides, and backfill any demo seed docs that are not persisted yet
+  // (so Verification Pending demos still show Ops + Document team cards).
+  const existingKeys = new Set(enriched.map(overrideSeedKey))
+  const missingSeeds = demoSeeds.filter(seed => !existingKeys.has(overrideSeedKey(seed)))
+  return missingSeeds.length > 0 ? [...enriched, ...missingSeeds] : enriched
+}
+
+function demoSeedsOperationalStatus(
+  seeds: VerificationDocumentOverride[],
+): ApplicationOperationalStatus {
+  const hasInternalRejection = seeds.some(
+    o =>
+      (o.status === 'rejected' || o.status === 'needs_review') && o.customerVisible === false,
+  )
+  return hasInternalRejection ? 'Document Rejected' : 'Correction Required'
 }
 
 function getRecord(applicationId: string): ApplicationVerificationRecord {
@@ -353,7 +480,7 @@ function getRecord(applicationId: string): ApplicationVerificationRecord {
         applicationId,
         documentOverrides: demoSeeds,
         documentWorkflowPatches: getDemoWorkflowPatches(applicationId) ?? [],
-        operationalStatus: 'Correction Required',
+        operationalStatus: demoSeedsOperationalStatus(demoSeeds),
       }
     }
     return {
@@ -453,7 +580,7 @@ function applyOverridesToRow(
 
   const documents = row.documents.map(doc => {
     let next = doc
-    const override = rowOverrides.find(o => o.documentId === doc.documentId)
+    const override = pickLatestOverride(rowOverrides.filter(o => o.documentId === doc.documentId))
     if (override) {
       if (forCustomer && !isCustomerVisibleOverride(override)) {
         // Internal QC rejection — keep pre-rejection document for customer portal.
@@ -652,13 +779,27 @@ function findTravelerDocumentOverride(
   record: ApplicationVerificationRecord,
   travelerRowId: string,
   documentId: string,
+  row?: UploadQueueRow,
 ): VerificationDocumentOverride | undefined {
-  return record.documentOverrides.find(
-    o =>
-      o.scope === 'traveler' &&
-      o.travelerRowId === travelerRowId &&
-      o.documentId === documentId,
-  )
+  const matches = record.documentOverrides.filter(o => {
+    if (o.scope !== 'traveler' || o.documentId !== documentId) return false
+    if (row) return overrideMatchesRow(row, o)
+    return o.travelerRowId === travelerRowId
+  })
+  return pickLatestOverride(matches)
+}
+
+function removeTravelerDocumentOverrides(
+  overrides: VerificationDocumentOverride[],
+  travelerRowId: string,
+  documentId: string,
+  row?: UploadQueueRow,
+): VerificationDocumentOverride[] {
+  return overrides.filter(o => {
+    if (o.scope !== 'traveler' || o.documentId !== documentId) return true
+    if (row) return !overrideMatchesRow(row, o)
+    return o.travelerRowId !== travelerRowId
+  })
 }
 
 export const applicationVerificationService = {
@@ -682,14 +823,25 @@ export const applicationVerificationService = {
   /** Visibility map for rejected docs: key `traveler:{rowId}:{docId}` or `global:{docId}`. */
   getRejectionVisibilityMap(applicationId: string): Record<string, boolean> {
     const record = getRecord(applicationId)
+    const rows = resolveUploadQueueRows(applicationId)
     const map: Record<string, boolean> = {}
     for (const override of record.documentOverrides) {
       if (override.status !== 'rejected' && override.status !== 'needs_review') continue
-      const key =
-        override.scope === 'traveler'
-          ? `traveler:${override.travelerRowId ?? ''}:${override.documentId}`
-          : `global:${override.documentId}`
-      map[key] = override.customerVisible !== false
+      const visible = override.customerVisible !== false
+      if (override.scope === 'global') {
+        map[`global:${override.documentId}`] = visible
+        continue
+      }
+      if (override.travelerRowId) {
+        map[`traveler:${override.travelerRowId}:${override.documentId}`] = visible
+      }
+      const row = rows.find(r => overrideMatchesRow(r, override))
+      if (row) {
+        map[`traveler:${row.id}:${override.documentId}`] = visible
+        if (row.gltsApplicantId) {
+          map[`traveler:${row.gltsApplicantId}:${override.documentId}`] = visible
+        }
+      }
     }
     return map
   },
@@ -703,14 +855,14 @@ export const applicationVerificationService = {
     options?: { customerVisible?: boolean },
   ) {
     const record = getRecord(applicationId)
-    const existing = findTravelerDocumentOverride(record, travelerRowId, documentId)
-    const without = record.documentOverrides.filter(
-      o =>
-        !(
-          o.scope === 'traveler' &&
-          o.travelerRowId === travelerRowId &&
-          o.documentId === documentId
-        ),
+    const row = resolveTravelerRow(applicationId, travelerRowId)
+    const canonicalTravelerRowId = row?.id ?? travelerRowId
+    const existing = findTravelerDocumentOverride(record, travelerRowId, documentId, row)
+    const without = removeTravelerDocumentOverrides(
+      record.documentOverrides,
+      travelerRowId,
+      documentId,
+      row,
     )
     const isRejection = status === 'rejected' || status === 'needs_review'
     const customerVisible = isRejection
@@ -722,7 +874,7 @@ export const applicationVerificationService = {
         ...without,
         {
           scope: 'traveler',
-          travelerRowId,
+          travelerRowId: canonicalTravelerRowId,
           documentId,
           status,
           comment: comment?.trim() ? comment.trim() : undefined,
@@ -744,21 +896,22 @@ export const applicationVerificationService = {
     received: boolean,
   ) {
     const record = getRecord(applicationId)
-    const existing = findTravelerDocumentOverride(record, travelerRowId, documentId)
+    const row = resolveTravelerRow(applicationId, travelerRowId)
+    const canonicalTravelerRowId = row?.id ?? travelerRowId
+    const existing = findTravelerDocumentOverride(record, travelerRowId, documentId, row)
     const workspace = this.getWorkspace(applicationId)
     let status: ApplicantDocumentStatus = existing?.status ?? 'uploaded'
     if (workspace.ok && workspace.detail) {
-      const row = workspace.detail.uploadQueueRows.find(r => r.id === travelerRowId)
-      const doc = row?.documents.find(d => d.documentId === documentId)
+      const matchedRow =
+        workspace.detail.uploadQueueRows.find(r => r.id === canonicalTravelerRowId) ?? row
+      const doc = matchedRow?.documents.find(d => d.documentId === documentId)
       if (doc) status = doc.status
     }
-    const without = record.documentOverrides.filter(
-      o =>
-        !(
-          o.scope === 'traveler' &&
-          o.travelerRowId === travelerRowId &&
-          o.documentId === documentId
-        ),
+    const without = removeTravelerDocumentOverrides(
+      record.documentOverrides,
+      travelerRowId,
+      documentId,
+      row,
     )
     const next: ApplicationVerificationRecord = {
       ...record,
@@ -766,7 +919,7 @@ export const applicationVerificationService = {
         ...without,
         {
           scope: 'traveler',
-          travelerRowId,
+          travelerRowId: canonicalTravelerRowId,
           documentId,
           status,
           comment: existing?.comment,
@@ -785,22 +938,22 @@ export const applicationVerificationService = {
     collection: OriginalDocumentCollectionState,
   ) {
     const record = getRecord(applicationId)
+    const row = resolveTravelerRow(applicationId, travelerRowId)
+    const canonicalTravelerRowId = row?.id ?? travelerRowId
     let documentOverrides = [...record.documentOverrides]
 
     for (const item of collection.receivedDocuments) {
-      const existing = findTravelerDocumentOverride(record, travelerRowId, item.documentId)
-      documentOverrides = documentOverrides.filter(
-        o =>
-          !(
-            o.scope === 'traveler' &&
-            o.travelerRowId === travelerRowId &&
-            o.documentId === item.documentId
-          ),
+      const existing = findTravelerDocumentOverride(record, travelerRowId, item.documentId, row)
+      documentOverrides = removeTravelerDocumentOverrides(
+        documentOverrides,
+        travelerRowId,
+        item.documentId,
+        row,
       )
       if (item.received || existing) {
         documentOverrides.push({
           scope: 'traveler',
-          travelerRowId,
+          travelerRowId: canonicalTravelerRowId,
           documentId: item.documentId,
           status: existing?.status ?? 'uploaded',
           comment: existing?.comment,
@@ -814,7 +967,7 @@ export const applicationVerificationService = {
       ...record,
       originalDocumentCollections: {
         ...(record.originalDocumentCollections ?? {}),
-        [travelerRowId]: collection,
+        [canonicalTravelerRowId]: collection,
       },
       documentOverrides,
     }
@@ -860,20 +1013,20 @@ export const applicationVerificationService = {
       documentWorkflowPatches: [...without, workflowPatch],
     }
     if (patch.status || patch.uploadedFileName) {
-      const existing = findTravelerDocumentOverride(record, travelerRowId, documentId)
-      const statusWithout = record.documentOverrides.filter(
-        o =>
-          !(
-            o.scope === 'traveler' &&
-            o.travelerRowId === travelerRowId &&
-            o.documentId === documentId
-          ),
+      const row = resolveTravelerRow(applicationId, travelerRowId)
+      const canonicalTravelerRowId = row?.id ?? travelerRowId
+      const existing = findTravelerDocumentOverride(record, travelerRowId, documentId, row)
+      const statusWithout = removeTravelerDocumentOverrides(
+        record.documentOverrides,
+        travelerRowId,
+        documentId,
+        row,
       )
       next.documentOverrides = [
         ...statusWithout,
         {
           scope: 'traveler',
-          travelerRowId,
+          travelerRowId: canonicalTravelerRowId,
           documentId,
           status: patch.status ?? existing?.status ?? 'uploaded',
           uploadedFileName: patch.uploadedFileName?.trim() || existing?.uploadedFileName,

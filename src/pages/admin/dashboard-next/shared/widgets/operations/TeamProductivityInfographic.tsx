@@ -1,7 +1,6 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { Box, Stack, Typography, alpha, useTheme } from '@mui/material'
-import { ClipboardList, FileText, HandCoins, Truck } from 'lucide-react'
-import { BarChart, DonutChart, ProgressBar, Tabs } from '@/design-system/UIComponents'
+import { BarChart, DonutChart, Tabs } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import { ExecutiveSectionHeader } from '@/pages/admin/dashboard/components'
@@ -9,31 +8,11 @@ import {
   TEAM_PRODUCTIVITY_CHANNEL_TABS,
   TEAM_PRODUCTIVITY_TEAM_LABELS,
   type TeamProductivityChannelId,
-  type TeamProductivityTeamId,
 } from '../../config/teamProductivity'
-import {
-  resolveTeamCapacityStatus,
-  TEAM_CAPACITY_STATUS_LABELS,
-} from '../../config/teamCapacity'
-import { StatusBadge } from '../StatusBadge'
-import type { DashboardStatusTone } from '../../types'
+import { DepartmentPerfCard } from './DepartmentPerfCard'
 import type { TeamProductivityByChannel, TeamProductivityMetric } from './teamProductivityData'
 
 export type { TeamProductivityByChannel, TeamProductivityMetric } from './teamProductivityData'
-
-const TEAM_ICONS: Record<TeamProductivityTeamId, ReactNode> = {
-  ops: <ClipboardList size={18} />,
-  docs: <FileText size={18} />,
-  ground: <Truck size={18} />,
-  accounts: <HandCoins size={18} />,
-}
-
-function statusTone(utilization: number): DashboardStatusTone {
-  const status = resolveTeamCapacityStatus(utilization)
-  if (status === 'overloaded') return 'error'
-  if (status === 'busy') return 'warning'
-  return 'success'
-}
 
 function utilizationOf(row: TeamProductivityMetric): number {
   if (row.capacity <= 0) return 0
@@ -135,91 +114,17 @@ export function TeamProductivityInfographic({
                   gap: 1.5,
                 }}
               >
-                {teams.map((row) => {
-                  const utilization = utilizationOf(row)
-                  const tone = statusTone(utilization)
-                  const status = resolveTeamCapacityStatus(utilization)
-                  const accent =
-                    tone === 'error'
-                      ? theme.palette.error.main
-                      : tone === 'warning'
-                        ? theme.palette.warning.main
-                        : theme.palette.success.main
-
-                  return (
-                    <Box
-                      key={row.teamId}
-                      sx={{
-                        p: 1.75,
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        bgcolor: 'background.paper',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 1.25,
-                        minHeight: 168,
-                      }}
-                    >
-                      <Stack direction="row" alignItems="center" justifyContent="space-between">
-                        <Stack direction="row" spacing={1} alignItems="center" minWidth={0}>
-                          <Box
-                            sx={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: 1.5,
-                              display: 'grid',
-                              placeItems: 'center',
-                              bgcolor: alpha(accent, 0.12),
-                              color: accent,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {TEAM_ICONS[row.teamId]}
-                          </Box>
-                          <Typography
-                            variant="body2"
-                            fontWeight={700}
-                            sx={{ fontSize: 13 }}
-                            noWrap
-                          >
-                            {row.label || TEAM_PRODUCTIVITY_TEAM_LABELS[row.teamId]}
-                          </Typography>
-                        </Stack>
-                        <StatusBadge
-                          label={TEAM_CAPACITY_STATUS_LABELS[status]}
-                          tone={tone}
-                          size="sm"
-                        />
-                      </Stack>
-
-                      <Box>
-                        <Typography
-                          sx={{
-                            fontSize: 28,
-                            fontWeight: 800,
-                            lineHeight: 1,
-                            letterSpacing: '-0.03em',
-                            color: accent,
-                          }}
-                        >
-                          {utilization}%
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
-                          Capacity used
-                        </Typography>
-                      </Box>
-
-                      <ProgressBar value={utilization} size="sm" showValue={false} />
-
-                      <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-                        <MetricChip label="Open" value={row.openCases} />
-                        <MetricChip label="Done today" value={row.completedToday} />
-                        <MetricChip label="SLA" value={`${row.slaPercent}%`} />
-                      </Stack>
-                    </Box>
-                  )
-                })}
+                {teams.map((row) => (
+                  <DepartmentPerfCard
+                    key={row.teamId}
+                    id={row.teamId}
+                    label={row.label || TEAM_PRODUCTIVITY_TEAM_LABELS[row.teamId]}
+                    capacityPercent={utilizationOf(row)}
+                    openCases={row.openCases}
+                    completedToday={row.completedToday}
+                    slaPercent={row.slaPercent}
+                  />
+                ))}
               </Box>
 
               <Stack
@@ -246,7 +151,11 @@ export function TeamProductivityInfographic({
                   >
                     Team workload comparison
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontSize: 11 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 1, fontSize: 11 }}
+                  >
                     Open cases vs completions today by team
                   </Typography>
                   <BarChart
@@ -305,23 +214,6 @@ export function TeamProductivityInfographic({
           )}
         </Box>
       </Stack>
-    </Box>
-  )
-}
-
-function MetricChip({ label, value }: { label: string; value: string | number }) {
-  return (
-    <Box sx={{ minWidth: 0 }}>
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ fontSize: 10, display: 'block', lineHeight: 1.2 }}
-      >
-        {label}
-      </Typography>
-      <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13, lineHeight: 1.3 }}>
-        {value}
-      </Typography>
     </Box>
   )
 }

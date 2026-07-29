@@ -53,7 +53,17 @@ export function DepartmentOverviewSection({ data }: { data: WorkforceAnalyticsDa
       <Grid container spacing={1.5}>
         {data.departments.map((dept) => (
           <Grid key={dept.id} size={{ xs: 12, sm: 6, lg: 3 }}>
-            <DepartmentPerfCard {...dept} />
+            <DepartmentPerfCard
+              id={dept.id}
+              label={dept.label}
+              users={dept.users}
+              openCases={dept.openCases}
+              completedToday={dept.completedToday}
+              pending={dept.pending}
+              capacityPercent={dept.capacityPercent}
+              slaPercent={dept.slaPercent}
+              productivityPercent={dept.productivityPercent}
+            />
           </Grid>
         ))}
         <Grid size={{ xs: 12 }}>

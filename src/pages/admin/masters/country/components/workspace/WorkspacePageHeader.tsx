@@ -67,7 +67,7 @@ export function WorkspacePageHeader({ country, actions }: WorkspacePageHeaderPro
           </Box>
         </Stack>
         {actions ? (
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Stack direction="row" spacing={2.5} flexWrap="wrap" useFlexGap>
             {actions}
           </Stack>
         ) : null}
