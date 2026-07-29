@@ -191,7 +191,7 @@ export function MarineApplicationListingPage() {
           title="Application Management"
           description="Operational workspace for marine applications across the full submission pipeline"
           actions={
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Stack direction="row" spacing={2.5} flexWrap="wrap" useFlexGap>
               <Button label="Create application" startIcon={<Plus size={14} />} onClick={handleCreate} />
             </Stack>
           }

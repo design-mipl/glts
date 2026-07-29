@@ -209,7 +209,7 @@ export function EnquiryListingPage() {
             title="Lead Management"
             description="Capture, qualify, assign, and progress customer enquiries toward quotation."
             actions={
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={2.5} flexWrap="wrap" useFlexGap>
                 <Button label="Create Enquiry" startIcon={<Plus size={14} />} onClick={handleCreate} />
               </Stack>
             }

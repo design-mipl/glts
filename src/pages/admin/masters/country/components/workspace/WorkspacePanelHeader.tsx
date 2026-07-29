@@ -52,7 +52,7 @@ export function WorkspacePanelHeader({ meta, actions }: WorkspacePanelHeaderProp
           </Typography>
         </Box>
         {actions ? (
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ flexShrink: 0 }}>
+          <Stack direction="row" spacing={2.5} flexWrap="wrap" useFlexGap sx={{ flexShrink: 0 }}>
             {actions}
           </Stack>
         ) : null}
