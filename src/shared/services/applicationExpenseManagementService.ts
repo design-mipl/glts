@@ -92,9 +92,15 @@ function writeStore(store: ExpenseStore) {
 }
 
 function listAllExpenses(): ApplicationExpenseRecord[] {
-  return Object.values(readStore()).sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-  )
+  return Object.values(readStore())
+    .map(expense => ({
+      ...expense,
+      costAmount: typeof expense.costAmount === 'number' ? expense.costAmount : 0,
+      invoiceStatus:
+        expense.invoiceStatus ??
+        (expense.readyForReconciliation ? 'invoiced' : 'not_invoiced'),
+    }))
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
 }
 
 function expensesForApplication(applicationId: string): ApplicationExpenseRecord[] {
@@ -274,6 +280,7 @@ function syncAutoServiceExpenses(applicationId: string, existing: ExpenseStore):
       serviceSourceLabel: getServiceSourceLabel(def.serviceSource),
       linkedService: def.linkedService,
       passengerMapping: { scope: 'application' as const, displayLabel: 'Application' },
+      costAmount: 0,
       amount: def.amount,
       gstIncluded: true,
       gstAmount: 900,
@@ -412,6 +419,7 @@ export const applicationExpenseManagementService = {
       linkedService: input.linkedService,
       passengerMapping: input.passengerMapping,
       vendorStaffPartner: input.vendorStaffPartner,
+      costAmount: input.costAmount ?? 0,
       amount: input.amount,
       gstIncluded: input.gstIncluded,
       gstAmount: input.gstAmount,
@@ -425,6 +433,9 @@ export const applicationExpenseManagementService = {
       proofFileName: input.proofFileName,
       proofDocumentType: input.proofDocumentType,
       paidBy: input.paidBy,
+      paidByUser: input.paidByUser,
+      paidByTeam: input.paidByTeam,
+      paidByDepartment: input.paidByDepartment,
       billTo: input.billTo ?? 'client',
       createdFrom: 'manual_finance_entry',
       createdBy: 'Finance User',
@@ -456,6 +467,7 @@ export const applicationExpenseManagementService = {
       linkedService: input.linkedService ?? existing.linkedService,
       passengerMapping: input.passengerMapping ?? existing.passengerMapping,
       vendorStaffPartner: input.vendorStaffPartner ?? existing.vendorStaffPartner,
+      costAmount: input.costAmount ?? existing.costAmount ?? 0,
       amount: input.amount ?? existing.amount,
       gstIncluded: input.gstIncluded ?? existing.gstIncluded,
       gstAmount: input.gstAmount ?? existing.gstAmount,
@@ -469,6 +481,9 @@ export const applicationExpenseManagementService = {
       proofFileName: input.proofFileName ?? existing.proofFileName,
       proofDocumentType: input.proofDocumentType ?? existing.proofDocumentType,
       paidBy: input.paidBy ?? existing.paidBy,
+      paidByUser: input.paidByUser ?? existing.paidByUser,
+      paidByTeam: input.paidByTeam ?? existing.paidByTeam,
+      paidByDepartment: input.paidByDepartment ?? existing.paidByDepartment,
       billTo: input.billTo ?? existing.billTo ?? 'client',
       internalRemarks: input.internalRemarks ?? existing.internalRemarks,
       expenseDate: input.expenseDate ?? existing.expenseDate,

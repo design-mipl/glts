@@ -127,7 +127,7 @@ function selectedServiceLines(record: OperationalCase): ClaimSheetServiceLine[] 
     if (!service.selected) continue
     lines.push({
       serviceName: service.serviceName,
-      amount: service.actualAmount || service.prefilledAmount || 0,
+      amount: service.actualAmount || 0,
       receiptFileName: service.receiptFileName,
     })
   }

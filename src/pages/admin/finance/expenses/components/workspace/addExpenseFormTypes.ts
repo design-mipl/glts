@@ -12,10 +12,14 @@ export interface AddExpenseFormValue {
   mappingScope: ApplicationExpensePassengerMappingScope
   passengerId: string
   passengerIds: string[]
-  amount: string
+  /** Vendor / actual outlay (Cost). */
+  costAmount: string
+  /** Client quote / agreed total before GST (Total Amount). */
+  totalAmount: string
   gstApplicable: boolean
   /** Tax master GST rate id (percentage comes from GST master). */
   gstRateId: string
+  paymentMode: string
   paidBy: ApplicationExpensePaidBy
   billTo: ApplicationExpenseBillTo
   notes: string
@@ -33,9 +37,11 @@ export function createEmptyAddExpenseForm(
     mappingScope: isSinglePassenger ? 'passenger' : 'application',
     passengerId: defaultPassengerId,
     passengerIds: defaultPassengerId ? [defaultPassengerId] : [],
-    amount: '',
+    costAmount: '',
+    totalAmount: '',
     gstApplicable: false,
     gstRateId: '',
+    paymentMode: '',
     paidBy: 'glts_team',
     billTo: 'client',
     notes: '',

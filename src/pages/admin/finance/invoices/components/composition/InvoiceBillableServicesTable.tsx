@@ -7,7 +7,9 @@ import {
   agreementEmbeddedTableHeadCellSx,
   agreementEmbeddedTableSx,
 } from '@/pages/admin/customer-accounts/agreements/components/agreementFormLayout'
+import { computeExpenseIwAmount } from '@/pages/admin/finance/expenses/config/expenseDetailFormConfig'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
+import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { INVOICE_COMPOSITION_FEE_LABELS } from '../../config/invoiceFeeCategoryLabels'
 import type {
   InvoiceBillableServiceLine,
@@ -50,7 +52,13 @@ type PickerKind = 'misc' | 'vfs' | null
 type LinePatch = Partial<
   Pick<
     InvoiceBillableServiceLine,
-    'amount' | 'creditAmount' | 'updatedAmount' | 'remark' | 'gstApplicable' | 'selected'
+    | 'costAmount'
+    | 'amount'
+    | 'creditAmount'
+    | 'updatedAmount'
+    | 'remark'
+    | 'gstApplicable'
+    | 'selected'
   >
 >
 
@@ -62,6 +70,19 @@ interface InvoiceBillableServicesTableProps {
   visaType?: string
   allowAddServices?: boolean
   mode?: InvoiceCompositionMode
+}
+
+function resolveLineCost(line: InvoiceBillableServiceLine): number {
+  return typeof line.costAmount === 'number' && Number.isFinite(line.costAmount)
+    ? Math.max(0, line.costAmount)
+    : 0
+}
+
+function resolveLineTotalForIw(line: InvoiceBillableServiceLine, mode: InvoiceCompositionMode): number {
+  if (mode === 'revised' && line.updatedAmount != null && Number.isFinite(line.updatedAmount)) {
+    return Math.max(0, line.updatedAmount)
+  }
+  return Math.max(0, line.amount || 0)
 }
 
 export function InvoiceBillableServicesTable({
@@ -134,7 +155,8 @@ export function InvoiceBillableServicesTable({
     setPickerKind(null)
   }
 
-  const colSpan = isCreditNote ? 7 : isRevised ? 6 : 5
+  // Service + Cost + IW + Total (+ credit/updated) + GST + Remark + Actions (+ select)
+  const colSpan = isCreditNote ? 9 : isRevised ? 9 : 7
 
   return (
     <Box>
@@ -182,6 +204,7 @@ export function InvoiceBillableServicesTable({
             <Table
               size="small"
               sx={{
+                minWidth: 880,
                 '& .MuiTableCell-root': { py: 0.5 },
                 '& .MuiTableCell-head': { py: 0.625 },
               }}
@@ -194,18 +217,24 @@ export function InvoiceBillableServicesTable({
                     </TableCell>
                   ) : null}
                   <TableCell sx={headCellSx}>{LABELS.serviceColumn}</TableCell>
+                  <TableCell sx={{ ...headCellSx, width: 110 }} align="right">
+                    {LABELS.costColumn}
+                  </TableCell>
+                  <TableCell sx={{ ...headCellSx, width: 100 }} align="right">
+                    {LABELS.iwColumn}
+                  </TableCell>
                   {!isRevised ? (
-                    <TableCell sx={{ ...headCellSx, width: 140 }} align="right">
+                    <TableCell sx={{ ...headCellSx, width: 120 }} align="right">
                       {LABELS.amountColumn}
                     </TableCell>
                   ) : null}
                   {isCreditNote || isRevised ? (
-                    <TableCell sx={{ ...headCellSx, width: 140 }} align="right">
+                    <TableCell sx={{ ...headCellSx, width: 120 }} align="right">
                       {LABELS.creditAmountColumn}
                     </TableCell>
                   ) : null}
                   {isRevised ? (
-                    <TableCell sx={{ ...headCellSx, width: 140 }} align="right">
+                    <TableCell sx={{ ...headCellSx, width: 120 }} align="right">
                       {LABELS.updatedAmountColumn}
                     </TableCell>
                   ) : null}
@@ -312,6 +341,9 @@ function CategoryRows({
       {lines.map(line => {
         const lockRemove = line.category === 'glts_processing' && !allowRemoveGlts
         const selected = line.selected !== false
+        const cost = resolveLineCost(line)
+        const iw = computeExpenseIwAmount(cost, resolveLineTotalForIw(line, mode))
+
         return (
           <TableRow key={line.id} sx={{ opacity: isCreditNote && !selected ? 0.55 : 1 }}>
             {isCreditNote ? (
@@ -328,12 +360,32 @@ function CategoryRows({
                 fontSize: 13,
                 fontWeight: 600,
                 verticalAlign: 'middle',
-                minWidth: 180,
+                minWidth: 160,
                 py: 0.5,
                 px: 1.25,
               }}
             >
               {line.serviceLabel || '—'}
+            </TableCell>
+            <TableCell align="right" sx={{ verticalAlign: 'middle', py: 0.5, px: 1 }}>
+              <Input
+                type="number"
+                value={cost > 0 || line.costAmount === 0 ? String(cost) : ''}
+                onChange={v => onUpdate(line.id, { costAmount: Number(v) || 0 })}
+                placeholder="0"
+                size="sm"
+                fullWidth
+                disabled={isCreditNote && !selected}
+              />
+            </TableCell>
+            <TableCell align="right" sx={{ verticalAlign: 'middle', py: 0.5, px: 1 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}
+              >
+                {formatInr(iw)}
+              </Typography>
             </TableCell>
             {!isRevised ? (
               <TableCell align="right" sx={{ verticalAlign: 'middle', py: 0.5, px: 1 }}>
@@ -425,7 +477,7 @@ function CategoryRows({
                 />
               </Box>
             </TableCell>
-            <TableCell sx={{ verticalAlign: 'middle', minWidth: 200, py: 0.5, px: 1 }}>
+            <TableCell sx={{ verticalAlign: 'middle', minWidth: 160, py: 0.5, px: 1 }}>
               <Input
                 value={line.remark}
                 onChange={v => onUpdate(line.id, { remark: v })}

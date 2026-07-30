@@ -1,6 +1,8 @@
 export { OverviewTab, ACCOUNTS_ACTION_ICONS } from './OverviewTab'
+export { WorkTab } from './WorkTab'
 export { CollectionsTab } from './CollectionsTab'
 export { InvoicingTab } from './InvoicingTab'
 export { ReconciliationTab } from './ReconciliationTab'
+export { PerformanceTab } from './PerformanceTab'
 export { AnalyticsTab } from './AnalyticsTab'
 export { ReportsTab } from './ReportsTab'

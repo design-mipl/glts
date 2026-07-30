@@ -110,11 +110,21 @@ export function inferServiceLineCategory(
 }
 
 function mapExpenseToServiceLine(expense: ApplicationExpenseRecord): InvoiceBillableServiceLine {
+  const costAmount =
+    typeof expense.costAmount === 'number' && Number.isFinite(expense.costAmount)
+      ? Math.max(0, expense.costAmount)
+      : 0
+  // Prefer client Total Amount; fall back to net payable for legacy expense rows.
+  const totalAmount =
+    typeof expense.amount === 'number' && expense.amount > 0
+      ? expense.amount
+      : expense.netPayableAmount
   return {
     id: `svc-${expense.id}`,
     expenseRecordId: expense.id,
     serviceLabel: expense.expenseTypeLabel || expense.expenseName,
-    amount: expense.netPayableAmount,
+    costAmount,
+    amount: Math.max(0, totalAmount),
     remark: expense.remarks ?? '',
     gstApplicable: expense.gstIncluded ?? true,
     category: categorizeExpense(expense),
@@ -225,6 +235,7 @@ export function createGltsProcessingServiceLine(
     id: newId('svc-glts'),
     expenseRecordId: resolved.ruleId,
     serviceLabel: GLTS_PROCESSING_FEE_LABEL,
+    costAmount: 0,
     amount: resolved.amount,
     remark: resolved.remark,
     gstApplicable: resolved.gstApplicable,
@@ -439,6 +450,10 @@ export function buildCompositionFromSourceInvoice(invoice: Invoice): InvoiceFeeC
             id: `svc-${li.id}`,
             expenseRecordId: li.servicePresetId ?? li.id,
             serviceLabel: (li.description || li.serviceType).replace(/^Credit:\s*/i, ''),
+            costAmount:
+              typeof li.costAmount === 'number' && Number.isFinite(li.costAmount)
+                ? Math.max(0, li.costAmount)
+                : 0,
             amount,
             creditAmount: amount,
             selected: true,
@@ -673,6 +688,7 @@ function pushServiceLines(
           applicantName: meta.applicantName,
           serviceType: line.serviceLabel || LABELS.section,
           description: line.serviceLabel || LABELS.section,
+          costAmount: Math.max(0, line.costAmount || 0),
           unitPrice,
           remarks: line.remark,
           servicePresetId: line.expenseRecordId,
@@ -856,11 +872,19 @@ function hydrateServiceLinesFromItems(
       const match = byExpenseId.get(line.expenseRecordId) ?? byLabel.get(normalizeKey(line.serviceLabel))
       if (!match) {
         return mode === 'revised'
-          ? { ...line, updatedAmount: line.updatedAmount ?? line.amount }
-          : line
+          ? {
+              ...line,
+              costAmount: line.costAmount ?? 0,
+              updatedAmount: line.updatedAmount ?? line.amount,
+            }
+          : { ...line, costAmount: line.costAmount ?? 0 }
       }
       return {
         ...line,
+        costAmount:
+          typeof match.costAmount === 'number' && Number.isFinite(match.costAmount)
+            ? Math.max(0, match.costAmount)
+            : line.costAmount ?? 0,
         amount: mode === 'revised' ? line.amount : Math.abs(match.unitPrice),
         updatedAmount:
           mode === 'revised' ? Math.abs(match.unitPrice) : line.updatedAmount,
@@ -884,6 +908,10 @@ function hydrateServiceLinesFromItems(
       id: newId('svc'),
       expenseRecordId: li.servicePresetId ?? li.id,
       serviceLabel: (li.description || li.serviceType).replace(/^Credit:\s*/i, ''),
+      costAmount:
+        typeof li.costAmount === 'number' && Number.isFinite(li.costAmount)
+          ? Math.max(0, li.costAmount)
+          : 0,
       amount,
       updatedAmount: mode === 'revised' ? amount : undefined,
       creditAmount: li.creditAmount != null ? Math.abs(li.creditAmount) : undefined,
@@ -1104,6 +1132,7 @@ export function createBillableServiceLineFromAgreement(
     id: newId('svc'),
     expenseRecordId: option.value,
     serviceLabel: option.label,
+    costAmount: 0,
     amount: option.defaultAmount,
     remark: '',
     gstApplicable: option.gstApplicable !== false,
@@ -1171,6 +1200,7 @@ export function createBillableServiceLineFromVfs(
     id: newId('svc-vfs'),
     expenseRecordId: option.value,
     serviceLabel: option.label,
+    costAmount: 0,
     amount: option.defaultAmount,
     remark: '',
     gstApplicable: option.gstApplicable,

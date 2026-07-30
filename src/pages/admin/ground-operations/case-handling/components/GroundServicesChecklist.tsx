@@ -19,6 +19,11 @@ interface GroundServicesChecklistProps {
   /** Service ids that are already paid (checked + disabled). */
   lockedServiceIds?: ReadonlySet<string>
   readOnly?: boolean
+  /**
+   * `agreed` — show prefilled/agreed price; selecting copies it into actual amount.
+   * `actual` — hide prices until selected; user enters actual cost (no prefilled copy).
+   */
+  amountMode?: 'agreed' | 'actual'
   onServiceChange?: (serviceId: string, patch: Partial<GroundServiceLine>) => void
 }
 
@@ -30,6 +35,7 @@ export function GroundServicesChecklist({
   services,
   lockedServiceIds,
   readOnly = false,
+  amountMode = 'agreed',
   onServiceChange,
 }: GroundServicesChecklistProps) {
   return (
@@ -41,6 +47,7 @@ export function GroundServicesChecklist({
             service={service}
             locked={lockedServiceIds?.has(service.id) ?? false}
             readOnly={readOnly}
+            amountMode={amountMode}
             onChange={patch => onServiceChange?.(service.id, patch)}
           />
         ))}
@@ -53,17 +60,23 @@ function ServiceRow({
   service,
   locked,
   readOnly,
+  amountMode,
   onChange,
 }: {
   service: GroundServiceLine
   locked: boolean
   readOnly?: boolean
+  amountMode: 'agreed' | 'actual'
   onChange?: (patch: Partial<GroundServiceLine>) => void
 }) {
-  const displayAmount = service.actualAmount || service.prefilledAmount
+  const actualOnly = amountMode === 'actual'
+  const displayAmount = actualOnly
+    ? service.actualAmount
+    : service.actualAmount || service.prefilledAmount
   const isLocked = locked || readOnly
   const checked = locked ? true : service.selected
   const canEditAmount = checked && !isLocked
+  const showReadonlyAmount = checked && (!actualOnly || displayAmount > 0)
 
   return (
     <Stack
@@ -83,9 +96,13 @@ function ServiceRow({
           if (isLocked) return
           onChange?.({
             selected: checkedNext,
-            ...(checkedNext && service.actualAmount <= 0 && service.prefilledAmount > 0
-              ? { actualAmount: service.prefilledAmount }
-              : {}),
+            ...(!checkedNext
+              ? { actualAmount: 0 }
+              : !actualOnly &&
+                  service.actualAmount <= 0 &&
+                  service.prefilledAmount > 0
+                ? { actualAmount: service.prefilledAmount }
+                : {}),
           })
         }}
       />
@@ -111,25 +128,25 @@ function ServiceRow({
             size="sm"
             type="number"
             value={String(displayAmount || '')}
-            placeholder="Amount"
+            placeholder="Actual cost"
             onChange={value => {
               onChange?.({ actualAmount: Number(value) || 0 })
             }}
           />
         </Box>
-      ) : (
+      ) : showReadonlyAmount ? (
         <Typography
           variant="body2"
           sx={{
             fontSize: vfsServicePickerLayout.bodyFontSize,
             fontVariantNumeric: 'tabular-nums',
             fontWeight: 600,
-            color: checked ? 'text.primary' : 'text.secondary',
+            color: 'text.primary',
           }}
         >
           {formatInr(displayAmount)}
         </Typography>
-      )}
+      ) : null}
     </Stack>
   )
 }

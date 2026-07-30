@@ -44,28 +44,51 @@ function ReadOnlyServiceTable({ lines }: { lines: InvoiceLineItem[] }) {
           <TableCell sx={{ ...agreementEmbeddedTableHeadCellSx, width: 64 }} align="right">
             Qty
           </TableCell>
-          <TableCell sx={{ ...agreementEmbeddedTableHeadCellSx, width: 120 }} align="right">
-            Amount
+          <TableCell sx={{ ...agreementEmbeddedTableHeadCellSx, width: 100 }} align="right">
+            Cost
+          </TableCell>
+          <TableCell sx={{ ...agreementEmbeddedTableHeadCellSx, width: 100 }} align="right">
+            IW
+          </TableCell>
+          <TableCell sx={{ ...agreementEmbeddedTableHeadCellSx, width: 110 }} align="right">
+            Total
           </TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
-        {lines.map(line => (
-          <TableRow key={line.id}>
-            <TableCell sx={{ fontSize: 13, fontWeight: 600, verticalAlign: 'middle' }}>
-              {line.serviceType || '—'}
-            </TableCell>
-            <TableCell sx={{ fontSize: 13, verticalAlign: 'middle', color: 'text.secondary' }}>
-              {line.description || '—'}
-            </TableCell>
-            <TableCell sx={{ fontSize: 13, verticalAlign: 'middle' }} align="right">
-              {line.quantity}
-            </TableCell>
-            <TableCell sx={{ fontSize: 13, fontWeight: 600, verticalAlign: 'middle' }} align="right">
-              {formatInr(line.amount)}
-            </TableCell>
-          </TableRow>
-        ))}
+        {lines.map(line => {
+          const cost =
+            typeof line.costAmount === 'number' && Number.isFinite(line.costAmount)
+              ? Math.max(0, line.costAmount)
+              : 0
+          const total = Math.abs(line.unitPrice)
+          const iw = Math.max(0, Math.round((total - cost) * 100) / 100)
+          return (
+            <TableRow key={line.id}>
+              <TableCell sx={{ fontSize: 13, fontWeight: 600, verticalAlign: 'middle' }}>
+                {line.serviceType || '—'}
+              </TableCell>
+              <TableCell sx={{ fontSize: 13, verticalAlign: 'middle', color: 'text.secondary' }}>
+                {line.description || '—'}
+              </TableCell>
+              <TableCell sx={{ fontSize: 13, verticalAlign: 'middle' }} align="right">
+                {line.quantity}
+              </TableCell>
+              <TableCell sx={{ fontSize: 13, verticalAlign: 'middle' }} align="right">
+                {formatInr(cost)}
+              </TableCell>
+              <TableCell
+                sx={{ fontSize: 13, verticalAlign: 'middle', color: 'text.secondary' }}
+                align="right"
+              >
+                {formatInr(iw)}
+              </TableCell>
+              <TableCell sx={{ fontSize: 13, fontWeight: 600, verticalAlign: 'middle' }} align="right">
+                {formatInr(line.amount)}
+              </TableCell>
+            </TableRow>
+          )
+        })}
       </TableBody>
     </Table>
   )

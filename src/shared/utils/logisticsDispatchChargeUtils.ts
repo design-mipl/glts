@@ -1,5 +1,6 @@
 import type { GroundServiceLine, OperationalCase } from '@/shared/types/operationalCaseHandling'
 import type { LogisticsDispatchDetails } from '@/shared/types/logisticsDispatch'
+import { isAirportAssistanceDeliveryMethod } from '@/shared/types/logisticsDispatch'
 
 export const LOGISTICS_GROUND_SERVICE_NAMES = {
   courier: 'Courier',
@@ -47,16 +48,16 @@ export function resolveDispatchAmountPaid(
     'deliveryMethod' | 'courierCharges' | 'airportAssistanceCharges' | 'cargoHandlingCharges'
   >,
 ): number | null {
-  switch (details.deliveryMethod) {
-    case 'Courier':
-      return details.courierCharges ?? null
-    case 'Airport Assistance':
-      return details.airportAssistanceCharges ?? null
-    case 'Cargo':
-      return details.cargoHandlingCharges ?? null
-    default:
-      return null
+  if (details.deliveryMethod === 'Courier') {
+    return details.courierCharges ?? null
   }
+  if (isAirportAssistanceDeliveryMethod(details.deliveryMethod)) {
+    return details.airportAssistanceCharges ?? null
+  }
+  if (details.deliveryMethod === 'Cargo') {
+    return details.cargoHandlingCharges ?? null
+  }
+  return null
 }
 
 export function formatDispatchAmountPaidField(amount: number | null | undefined): string {

@@ -12,16 +12,16 @@ import {
 import { cardMasterService } from '@/shared/services/cardMasterService'
 import type { OperationalCase } from '@/shared/types/operationalCaseHandling'
 import type {
-  AirportAssistanceType,
   HandDeliveryLocation,
   LogisticsDeliveryMethod,
   LogisticsDispatchDetails,
   LogisticsPaymentMode,
 } from '@/shared/types/logisticsDispatch'
 import {
-  AIRPORT_ASSISTANCE_TYPES,
+  assistanceTypeFromDeliveryMethod,
   createEmptyLogisticsDispatchDetails,
   HAND_DELIVERY_LOCATIONS,
+  isAirportAssistanceDeliveryMethod,
   LOGISTICS_COURIER_PARTNERS,
   LOGISTICS_DELIVERY_METHODS,
   LOGISTICS_PAYMENT_MODE_OPTIONS,
@@ -89,7 +89,7 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
   const deliveryMethod = dispatchForm.deliveryMethod
   const showPaymentSection =
     deliveryMethod === 'Courier' ||
-    deliveryMethod === 'Airport Assistance' ||
+    isAirportAssistanceDeliveryMethod(deliveryMethod) ||
     deliveryMethod === 'Cargo'
   const autoAmountPaid = useMemo(
     () => formatDispatchAmountPaidField(resolveDispatchAmountPaid(dispatchForm)),
@@ -112,8 +112,10 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
     switch (method) {
       case 'Courier':
         return { courierCharges: resolveCourierServiceCharge(record) ?? undefined }
-      case 'Airport Assistance':
+      case 'Airport Assistance - Working Hours':
+      case 'Airport Assistance - Non-Working Hours':
         return {
+          assistanceType: assistanceTypeFromDeliveryMethod(method),
           airportAssistanceCharges: resolveAirportAssistanceCharge(record) ?? undefined,
         }
       case 'Cargo':
@@ -301,7 +303,7 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
         </Stack>
       ) : null}
 
-      {deliveryMethod === 'Airport Assistance' ? (
+      {isAirportAssistanceDeliveryMethod(deliveryMethod) ? (
         <Stack spacing={1.25}>
           <FormField label="Airport assistance charges" required>
             <Input
@@ -322,34 +324,16 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
               disabled={fieldsDisabled}
             />
           </FormField>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 1.25 }}>
-            <FormField label="Assistance Type" required>
-              <Select
-                value={dispatchForm.assistanceType ?? ''}
-                onChange={value =>
-                  patchDispatch({ assistanceType: String(value) as AirportAssistanceType })
-                }
-                options={AIRPORT_ASSISTANCE_TYPES.map(type => ({
-                  value: type,
-                  label: type,
-                }))}
-                placeholder="Select assistance type"
-                size="sm"
-                fullWidth
-                disabled={fieldsDisabled}
-              />
-            </FormField>
-            <FormField label="Tracking URL" optional>
-              <Input
-                size="sm"
-                value={dispatchForm.trackingUrl ?? ''}
-                onChange={value => patchDispatch({ trackingUrl: value })}
-                placeholder="https://"
-                fullWidth
-                disabled={fieldsDisabled}
-              />
-            </FormField>
-          </Box>
+          <FormField label="Tracking URL" optional>
+            <Input
+              size="sm"
+              value={dispatchForm.trackingUrl ?? ''}
+              onChange={value => patchDispatch({ trackingUrl: value })}
+              placeholder="https://"
+              fullWidth
+              disabled={fieldsDisabled}
+            />
+          </FormField>
         </Stack>
       ) : null}
 

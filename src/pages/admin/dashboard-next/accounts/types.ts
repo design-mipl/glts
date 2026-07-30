@@ -128,6 +128,63 @@ export interface AccountsDailyReportCard {
   reportKey: string
 }
 
+/** Expense-sourced daily reconciliation pack row. */
+export interface AccountsExpenseDailyRow {
+  id: string
+  pack:
+    | 'credit_card'
+    | 'insurance'
+    | 'courier'
+    | 'ticketing'
+    | 'cash'
+    | 'invoiced_uninvoiced'
+  packLabel: string
+  reference: string
+  vendor: string
+  detail: string
+  amount: string
+  date: string
+  status: string
+}
+
+/** Visa cases awaiting invoice posting. */
+export interface AccountsVisaSubmissionCaseRow {
+  id: string
+  caseId: string
+  applicant: string
+  client: string
+  country: string
+  visaType: string
+  submissionStatus: string
+  billingCycle: string
+  invoiceReady: string
+}
+
+/** Payment receipt allocation queue (credit control). */
+export interface AccountsPaymentAllocationRow {
+  id: string
+  receiptRef: string
+  client: string
+  clientType: 'Walk-in' | 'Client' | 'B2B'
+  amount: string
+  invoiceNumber: string
+  allocationStatus: string
+  receivedDate: string
+}
+
+/** Daily follow-up log for credit control. */
+export interface AccountsFollowUpRow {
+  id: string
+  client: string
+  clientType: string
+  invoiceNumber: string
+  outstandingAmount: string
+  followUpDate: string
+  lastNote: string
+  status: string
+  assignedExecutive: string
+}
+
 export interface AccountsDashboardData {
   quickStats: DashboardKpiItem[]
   notifications: NotificationItem[]
@@ -144,6 +201,10 @@ export interface AccountsDashboardData {
   invoicePostingQueue: AccountsInvoicePostingRow[]
   vendorPayments: AccountsVendorPaymentRow[]
   invoiceSubmissions: AccountsInvoiceSubmissionRow[]
+  expenseDailyRows: AccountsExpenseDailyRow[]
+  visaSubmissionRows: AccountsVisaSubmissionCaseRow[]
+  paymentAllocationRows: AccountsPaymentAllocationRow[]
+  followUpRows: AccountsFollowUpRow[]
   reconciliationSummary: CollectionSummaryData
   reconciliationRows: AccountsReconciliationRow[]
   reconciliationActivity: RecentActivityItem[]
@@ -168,6 +229,7 @@ export interface AccountsDashboardTabProps {
   loading?: boolean
   onRetry?: () => void
   onNavigate: (href: string) => void
+  onOpenTab?: (tabId: string) => void
   onOpenInvoice?: (invoiceId: string) => void
   onOpenCollection?: (rowId: string) => void
   onOpenReconciliation?: (rowId: string) => void

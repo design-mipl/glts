@@ -43,3 +43,11 @@ export const expenseProofStatusLabel: Record<ApplicationExpenseProofStatus, stri
   uploaded: 'Uploaded',
   verified: 'Verified',
 }
+
+export const expenseInvoiceStatusColor: Record<
+  'invoiced' | 'not_invoiced',
+  'success' | 'warning' | 'error' | 'info' | 'neutral'
+> = {
+  invoiced: 'success',
+  not_invoiced: 'neutral',
+}

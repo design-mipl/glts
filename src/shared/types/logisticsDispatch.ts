@@ -1,10 +1,11 @@
 export type LogisticsDeliveryMethod =
   | 'Courier'
-  | 'Airport Assistance'
+  | 'Airport Assistance - Working Hours'
+  | 'Airport Assistance - Non-Working Hours'
   | 'Cargo'
   | 'Hand Delivery'
 
-export type AirportAssistanceType = 'Office Hours' | 'Outside Office Hours'
+export type AirportAssistanceType = 'Working Hours' | 'Non-Working Hours'
 
 export type HandDeliveryLocation = 'Office' | 'Residence' | 'Hotel'
 
@@ -70,15 +71,33 @@ export interface LogisticsDispatchDetails {
 
 export const LOGISTICS_DELIVERY_METHODS: LogisticsDeliveryMethod[] = [
   'Courier',
-  'Airport Assistance',
+  'Airport Assistance - Working Hours',
+  'Airport Assistance - Non-Working Hours',
   'Cargo',
   'Hand Delivery',
 ]
 
 export const AIRPORT_ASSISTANCE_TYPES: AirportAssistanceType[] = [
-  'Office Hours',
-  'Outside Office Hours',
+  'Working Hours',
+  'Non-Working Hours',
 ]
+
+export function isAirportAssistanceDeliveryMethod(
+  method: LogisticsDeliveryMethod | '' | undefined,
+): boolean {
+  return (
+    method === 'Airport Assistance - Working Hours' ||
+    method === 'Airport Assistance - Non-Working Hours'
+  )
+}
+
+export function assistanceTypeFromDeliveryMethod(
+  method: LogisticsDeliveryMethod | '',
+): AirportAssistanceType | undefined {
+  if (method === 'Airport Assistance - Working Hours') return 'Working Hours'
+  if (method === 'Airport Assistance - Non-Working Hours') return 'Non-Working Hours'
+  return undefined
+}
 
 export const HAND_DELIVERY_LOCATIONS: HandDeliveryLocation[] = [
   'Office',

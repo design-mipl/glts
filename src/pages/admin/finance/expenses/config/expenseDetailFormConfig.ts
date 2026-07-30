@@ -122,6 +122,70 @@ export function getPaidByLabel(value?: ApplicationExpensePaidBy): string {
   return EXPENSE_PAID_BY_OPTIONS.find(option => option.value === value)?.label ?? '—'
 }
 
+/** Display-only markup: Total Amount − Cost. Never an editable field. */
+export function computeExpenseIwAmount(costAmount: number, totalAmount: number): number {
+  const cost = Number.isFinite(costAmount) ? Math.max(0, costAmount) : 0
+  const total = Number.isFinite(totalAmount) ? Math.max(0, totalAmount) : 0
+  return Math.max(0, Math.round((total - cost) * 100) / 100)
+}
+
+export function resolveExpenseCostAmount(expense: {
+  costAmount?: number
+  amount: number
+}): number {
+  if (typeof expense.costAmount === 'number' && Number.isFinite(expense.costAmount)) {
+    return Math.max(0, expense.costAmount)
+  }
+  return 0
+}
+
+/** Prefer autofetched user name · department · team; fall back to paid-by type label. */
+export function formatExpensePaidByDisplay(expense: {
+  paidBy?: ApplicationExpensePaidBy
+  paidByUser?: string
+  paidByTeam?: string
+  paidByDepartment?: string
+}): string {
+  const parts = [expense.paidByUser, expense.paidByDepartment, expense.paidByTeam]
+    .map(part => part?.trim())
+    .filter(Boolean) as string[]
+  if (parts.length > 0) return parts.join(' · ')
+  return getPaidByLabel(expense.paidBy)
+}
+
+export function resolveExpenseInvoiceStatus(expense: {
+  invoiceStatus?: 'invoiced' | 'not_invoiced'
+  readyForReconciliation?: boolean
+}): 'invoiced' | 'not_invoiced' {
+  if (expense.invoiceStatus === 'invoiced' || expense.invoiceStatus === 'not_invoiced') {
+    return expense.invoiceStatus
+  }
+  return expense.readyForReconciliation ? 'invoiced' : 'not_invoiced'
+}
+
+export function getExpenseInvoiceStatusLabel(status: 'invoiced' | 'not_invoiced'): string {
+  return status === 'invoiced' ? 'Invoiced' : 'Not invoiced'
+}
+
+export const EXPENSE_PAYMENT_MODE_OPTIONS = [
+  { value: 'card', label: 'Card' },
+  { value: 'card_cash', label: 'Card + cash' },
+  { value: 'upi', label: 'UPI' },
+  { value: 'dd', label: 'DD' },
+  { value: 'cash', label: 'Cash' },
+  { value: 'bank_transfer', label: 'Bank transfer' },
+] as const
+
+export function getExpensePaymentModeLabel(value?: string): string {
+  if (!value?.trim()) return '—'
+  const match = EXPENSE_PAYMENT_MODE_OPTIONS.find(option => option.value === value)
+  if (match) return match.label
+  return value
+    .split(/[_\s]+/)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
 export function getBillToLabel(value?: ApplicationExpenseBillTo): string {
   if (!value || value === 'client') return 'Client'
   return EXPENSE_BILL_TO_OPTIONS.find(option => option.value === value)?.label ?? 'Client'
