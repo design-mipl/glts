@@ -1,4 +1,5 @@
 import type {
+  DashboardAlertSeverity,
   DashboardKpiItem,
   DashboardProgressItem,
 } from '../shared/types'
@@ -7,13 +8,11 @@ import type { RecentActivityItem } from '../shared/widgets/common/RecentActivity
 import type { AnnouncementItem } from '../shared/widgets/common/Announcements'
 import type { NotificationItem } from '../shared/widgets/common/NotificationPanel'
 import type { ApplicationPipelineStageData } from '../shared/widgets/operations/ApplicationPipeline'
-import type { PendingVerificationRow } from '../shared/widgets/operations/PendingVerification'
-import type { PassportJourneyStageData } from '../shared/widgets/operations/PassportJourney'
-import type { MarineTimelineRow } from '../shared/widgets/operations/MarineTimeline'
-import type { TeamCapacityRow } from '../shared/widgets/operations/TeamCapacity'
 import type { TrendPoint } from '../shared/widgets/analytics/AnalyticsWidgets'
-import type { TodaysJobRow } from '../shared/widgets/ground/GroundWidgets'
-import type { DocumentMovementPoint } from '../shared/widgets/ground/GroundWidgets'
+import type { TeamCapacityRow } from '../shared/widgets/operations/TeamCapacity'
+import type { OpsSegmentKey } from './utils/opsSegmentPaths'
+
+export type { OpsSegmentKey }
 
 export interface OperationsDashboardFilters {
   date: string
@@ -25,30 +24,77 @@ export interface OperationsDashboardFilters {
   search: string
 }
 
-export type OperationsQueueKind =
-  | 'pending-qc'
-  | 'correction'
-  | 'appointment'
+export type OpsWorkQueueKind =
+  | 'verification'
+  | 'recheck'
+  | 'payment'
+  | 'glts_arrange'
   | 'submission'
-  | 'blocked'
+  | 'collection'
+  | 'correction_watch'
+  | 'assignment'
 
-export interface OperationsQueueRow {
+export type OpsAssigneeKind = 'user' | 'vendor' | 'passenger' | 'unassigned'
+
+export type OpsAlertType =
+  | 'verification_sla'
+  | 'recheck_ready'
+  | 'correction_waiting'
+  | 'pending_payment'
+  | 'glts_ticket_needed'
+  | 'glts_insurance_needed'
+  | 'assignment_unassigned'
+  | 'ground_handoff'
+
+export interface OperationsWorkRow {
   id: string
   glNumber: string
   applicant: string
-  queue: OperationsQueueKind
+  company: string
+  segment: OpsSegmentKey
+  country: string
+  visaType: string
+  queue: OpsWorkQueueKind
   queueLabel: string
   priority: string
   waitingTime: string
   status: string
+  assigneeKind: OpsAssigneeKind
+  assigneeLabel: string
+  showGroundBadge: boolean
+  serviceType?: 'ticket' | 'insurance'
+  applicationHref: string
+  passengerId?: string
 }
 
-export interface OperationsPassportJourneyData {
-  stages: PassportJourneyStageData[]
-  journeyStatus: string
-  eta?: string
-  trackingNumber?: string
-  courier?: string
+export interface OperationsAlertRow {
+  id: string
+  title: string
+  description: string
+  severity: DashboardAlertSeverity
+  type: OpsAlertType
+  href: string
+  count?: number
+}
+
+export interface OpsChartSlice {
+  key: string
+  label: string
+  value: number
+  color: string
+}
+
+export interface OpsSegmentWorkloadPoint {
+  segment: string
+  verification: number
+  payment: number
+  arrange: number
+  submission: number
+}
+
+export interface OpsAgeingPoint {
+  bucket: string
+  count: number
 }
 
 export interface OperationsQuickActionDefinition {
@@ -59,122 +105,38 @@ export interface OperationsQuickActionDefinition {
   href: string
 }
 
-/** Carry-forward — consultant application listing. */
-export interface OperationsApplicationRow {
+export interface OperationsReportCard {
   id: string
-  glNumber: string
-  applicant: string
-  company: string
-  country: string
-  visaType: string
-  currentStage: string
-  nextActionRequired: string
-  waitingOn: string
-  priority: string
-  slaStatus: string
-  slaTimer: string
-  dueDate: string
-  channel: string
-  applicationHref: string
-}
-
-export interface OperationsCorrectionRow {
-  id: string
-  applicationId: string
-  applicant: string
-  raisedBy: string
-  reason: string
-  waitingSince: string
-  assignedTo: string
-  isOverdue: boolean
-}
-
-export interface OperationsAwaitingDocumentRow {
-  id: string
-  applicant: string
-  outstandingDocuments: string
-  lastReminderSent: string
-  reminderCount: number
-  daysWaiting: number
-  country: string
-  channel: string
-}
-
-export interface OperationsReviewQcRow {
-  id: string
-  applicationId: string
-  applicant: string
-  country: string
-  submittedBy: string
-  currentStage: string
-  slaTimer: string
-  slaStatus: string
-}
-
-export interface OperationsAppointmentSubmissionRow {
-  id: string
-  applicant: string
-  appointmentDate: string
-  country: string
-  vfsLocation: string
-  submissionStatus: string
-  assignedExecutive: string
-}
-
-export interface OperationsMarinePriorityRow {
-  id: string
-  vesselName: string
-  crewName: string
-  joiningPort: string
-  joiningDate: string
-  daysRemaining: number
-  visaStatus: string
-  priority: string
-}
-
-export interface OperationsTodayTaskItem {
-  id: string
-  title: string
-  taskCount: number
-  dueTime: string
-  priority: string
+  name: string
+  category: string
+  lastGenerated: string
 }
 
 /** Consultant-scoped payload for Operations Dashboard Next. */
 export interface OperationsDashboardData {
   consultantName: string
   myQuickStats: DashboardKpiItem[]
+  alerts: OperationsAlertRow[]
   notifications: NotificationItem[]
-  myPendingVerification: PendingVerificationRow[]
   myPipelineStages: ApplicationPipelineStageData[]
-  myPassportJourney: OperationsPassportJourneyData
-  myMarineTimeline: MarineTimelineRow[]
-  myRecentActivity: RecentActivityItem[]
   quickActions: OperationsQuickActionDefinition[]
-  myApplications: OperationsApplicationRow[]
-  todayTasks: OperationsTodayTaskItem[]
-  correctionRequests: OperationsCorrectionRow[]
-  awaitingDocuments: OperationsAwaitingDocumentRow[]
-  reviewQcQueue: OperationsReviewQcRow[]
-  appointmentSubmissionQueue: OperationsAppointmentSubmissionRow[]
-  marinePriorityCases: OperationsMarinePriorityRow[]
-  queueItems: OperationsQueueRow[]
-  queuePendingVerification: PendingVerificationRow[]
-  queuePipelineStages: ApplicationPipelineStageData[]
-  queuePassportJourney: OperationsPassportJourneyData
-  queueMarineTimeline: MarineTimelineRow[]
-  queueRecentActivity: RecentActivityItem[]
-  todaysJobs: TodaysJobRow[]
-  todaysActivity: RecentActivityItem[]
+  /** Personal desk rows (legacy) — Work tab filters queueRows for desk work. */
+  myWorkRows: OperationsWorkRow[]
+  /** Full ops backlog; Work tab shows personal desk only. Team views live on admin dashboards. */
+  queueRows: OperationsWorkRow[]
+  /** Assignment desk snapshot. */
+  assignmentRows: OperationsWorkRow[]
+  queueMix: OpsChartSlice[]
+  workloadBySegment: OpsSegmentWorkloadPoint[]
+  ageingBuckets: OpsAgeingPoint[]
+  assigneeMix: OpsChartSlice[]
+  myRecentActivity: RecentActivityItem[]
   announcements: AnnouncementItem[]
-  activityFeed: RecentActivityItem[]
-  activityNotifications: NotificationItem[]
-  activityPassportJourney: OperationsPassportJourneyData
-  documentMovement: DocumentMovementPoint[]
   processingTrend: TrendPoint[]
   metricComparison: MetricComparisonItem[]
   teamCapacity: TeamCapacityRow[]
   personalSla: DashboardProgressItem[]
+  reports: OperationsReportCard[]
 }
 
 export interface OperationsDashboardTabProps {
@@ -183,9 +145,6 @@ export interface OperationsDashboardTabProps {
   onRetry?: () => void
   onNavigate: (href: string) => void
   onPipelineStageClick?: (stageId: string) => void
-  onVerificationOpen?: (rowId: string) => void
-  onViewVerificationQueue?: () => void
-  onQueueRowClick?: (rowId: string) => void
-  onJobClick?: (jobId: string) => void
   onOpenApplication?: (href: string) => void
+  onOpenTab?: (tabId: string) => void
 }

@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react'
 import { Stack } from '@mui/material'
 import {
   Activity,
-  Bell,
   ClipboardCheck,
   FileSpreadsheet,
   FileStack,
@@ -10,7 +9,6 @@ import {
   Send,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@/design-system/UIComponents'
 import {
   AlertCenter,
   ApplicationPipeline,
@@ -19,7 +17,6 @@ import {
   QuickActions,
 } from '../../shared'
 import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intelligence'
-import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
 import { useDocumentationDashboardNext } from '../hooks/useDocumentationDashboardNext'
 import { DOCUMENTATION_DASHBOARD_MOCK } from '../data/documentationDashboardMock'
 import { buildDocumentationSearchItems } from '../data/documentationSearchItems'
@@ -35,38 +32,6 @@ import {
   SubmissionTab,
 } from '../tabs'
 import type { DocumentationDashboardTabProps } from '../types'
-
-function DocumentationWorkspaceActions({
-  unreadCount,
-  notifications,
-}: {
-  unreadCount: number
-  notifications: typeof DOCUMENTATION_DASHBOARD_MOCK.notifications
-}) {
-  const drilldown = useDrilldownOptional()
-  return (
-    <Button
-      label={unreadCount > 0 ? `Alerts (${unreadCount})` : 'Alerts'}
-      variant="outlined"
-      size="sm"
-      startIcon={<Bell size={16} />}
-      onClick={() =>
-        drilldown?.openDrilldown({
-          id: 'documentation-notifications',
-          title: 'Documentation notifications',
-          subtitle: `${unreadCount} unread`,
-          entityType: 'custom',
-          entityId: 'notifications',
-          meta: {
-            count: notifications.length,
-            preview: notifications[0]?.title,
-          },
-        })
-      }
-      aria-label={`Open documentation notifications, ${unreadCount} unread`}
-    />
-  )
-}
 
 export function DocumentationDashboardPage() {
   const navigate = useNavigate()
@@ -112,8 +77,6 @@ export function DocumentationDashboardPage() {
     [navigate, openTab],
   )
 
-  const unreadCount = data.notifications.filter((n) => n.unread).length
-
   const tabProps: DocumentationDashboardTabProps = {
     data,
     loading,
@@ -133,12 +96,6 @@ export function DocumentationDashboardPage() {
       onRefresh={dashboard.retry}
       onFiltersChange={onFiltersChange}
       searchItems={searchItems}
-      extraActions={
-        <DocumentationWorkspaceActions
-          unreadCount={unreadCount}
-          notifications={data.notifications}
-        />
-      }
       defaultTab="overview"
       hero={<DocumentationHeroStrip items={data.quickStats} loading={loading} />}
       tabs={[

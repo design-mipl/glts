@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { Stack } from '@mui/material'
 import {
-  Bell,
   Briefcase,
   FileSpreadsheet,
   LayoutDashboard,
@@ -11,7 +10,6 @@ import {
   Wallet,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@/design-system/UIComponents'
 import {
   AlertCenter,
   DASHBOARD_SPACING,
@@ -20,7 +18,6 @@ import {
   RouteTimeline,
 } from '../../shared'
 import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intelligence'
-import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
 import { GROUND_OPERATIONS_DASHBOARD_MOCK } from '../data/groundOperationsDashboardMock'
 import { buildGroundSearchItems } from '../data/groundSearchItems'
 import { useGroundOperationsDashboardNext } from '../hooks/useGroundOperationsDashboardNext'
@@ -37,38 +34,6 @@ import {
   TodaysJobsTab,
 } from '../tabs'
 import type { GroundOperationsDashboardTabProps } from '../types'
-
-function GroundWorkspaceActions({
-  unreadCount,
-  notifications,
-}: {
-  unreadCount: number
-  notifications: typeof GROUND_OPERATIONS_DASHBOARD_MOCK.notifications
-}) {
-  const drilldown = useDrilldownOptional()
-  return (
-    <Button
-      label={unreadCount > 0 ? `Alerts (${unreadCount})` : 'Alerts'}
-      variant="outlined"
-      size="sm"
-      startIcon={<Bell size={16} />}
-      onClick={() =>
-        drilldown?.openDrilldown({
-          id: 'ground-notifications',
-          title: 'Field notifications',
-          subtitle: `${unreadCount} unread`,
-          entityType: 'custom',
-          entityId: 'notifications',
-          meta: {
-            count: notifications.length,
-            preview: notifications[0]?.title,
-          },
-        })
-      }
-      aria-label={`Open field notifications, ${unreadCount} unread`}
-    />
-  )
-}
 
 export function GroundOperationsDashboardPage() {
   const navigate = useNavigate()
@@ -115,7 +80,6 @@ export function GroundOperationsDashboardPage() {
     [navigate, openTab],
   )
 
-  const unreadCount = data.notifications.filter((n) => n.unread).length
   const pendingSettlements = data.fundCaseRows.filter((row) =>
     /pending|review/i.test(row.status),
   ).length
@@ -142,9 +106,6 @@ export function GroundOperationsDashboardPage() {
       onRefresh={dashboard.retry}
       onFiltersChange={onFiltersChange}
       searchItems={searchItems}
-      extraActions={
-        <GroundWorkspaceActions unreadCount={unreadCount} notifications={data.notifications} />
-      }
       defaultTab="overview"
       hero={<GroundHeroStrip items={data.quickStats} loading={loading} />}
       tabs={[
