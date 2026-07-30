@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react'
 import { Stack } from '@mui/material'
 import {
   BarChart3,
-  Bell,
   FileSpreadsheet,
   FileText,
   HandCoins,
@@ -10,7 +9,6 @@ import {
   Scale,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@/design-system/UIComponents'
 import {
   AlertCenter,
   CollectionSummary,
@@ -19,7 +17,6 @@ import {
   QuickActions,
 } from '../../shared'
 import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intelligence'
-import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
 import { useAccountsDashboardNext } from '../hooks/useAccountsDashboardNext'
 import { ACCOUNTS_DASHBOARD_MOCK } from '../data/accountsDashboardMock'
 import { buildAccountsSearchItems } from '../data/accountsSearchItems'
@@ -35,38 +32,6 @@ import {
   ReportsTab,
 } from '../tabs'
 import type { AccountsDashboardTabProps } from '../types'
-
-function AccountsWorkspaceActions({
-  unreadCount,
-  notifications,
-}: {
-  unreadCount: number
-  notifications: typeof ACCOUNTS_DASHBOARD_MOCK.notifications
-}) {
-  const drilldown = useDrilldownOptional()
-  return (
-    <Button
-      label={unreadCount > 0 ? `Alerts (${unreadCount})` : 'Alerts'}
-      variant="outlined"
-      size="sm"
-      startIcon={<Bell size={16} />}
-      onClick={() =>
-        drilldown?.openDrilldown({
-          id: 'accounts-notifications',
-          title: 'Financial notifications',
-          subtitle: `${unreadCount} unread`,
-          entityType: 'custom',
-          entityId: 'notifications',
-          meta: {
-            count: notifications.length,
-            preview: notifications[0]?.title,
-          },
-        })
-      }
-      aria-label={`Open financial notifications, ${unreadCount} unread`}
-    />
-  )
-}
 
 export function AccountsDashboardPage() {
   const navigate = useNavigate()
@@ -114,8 +79,6 @@ export function AccountsDashboardPage() {
     [navigate, openTab],
   )
 
-  const unreadCount = data.notifications.filter((n) => n.unread).length
-
   const tabProps: AccountsDashboardTabProps = {
     data,
     loading,
@@ -137,9 +100,6 @@ export function AccountsDashboardPage() {
       onRefresh={dashboard.retry}
       onFiltersChange={onFiltersChange}
       searchItems={searchItems}
-      extraActions={
-        <AccountsWorkspaceActions unreadCount={unreadCount} notifications={data.notifications} />
-      }
       defaultTab="overview"
       hero={<AccountsHeroStrip items={data.quickStats} loading={loading} />}
       tabs={[

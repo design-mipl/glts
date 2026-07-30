@@ -1,79 +1,31 @@
 import { useCallback, useMemo } from 'react'
 import { Stack } from '@mui/material'
 import {
-  Bell,
-  CalendarDays,
   ClipboardList,
   FileSpreadsheet,
   Gauge,
   LayoutDashboard,
-  ListTodo,
-  Ship,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@/design-system/UIComponents'
-import {
-  AlertCenter,
-  ApplicationPipeline,
-  DASHBOARD_SPACING,
-  DashboardWorkspace,
-  QuickActions,
-} from '../../shared'
+import { DASHBOARD_SPACING, DashboardWorkspace } from '../../shared'
 import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intelligence'
-import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
 import { useOperationsDashboardNext } from '../hooks/useOperationsDashboardNext'
-import { OPERATIONS_DASHBOARD_MOCK } from '../data/operationsDashboardMock'
+import { buildOperationsDashboardFromMocks } from '../data/buildOperationsDashboardFromMocks'
 import { buildOperationsSearchItems } from '../data/operationsSearchItems'
-import { OperationsExecutiveRow } from '../components/OperationsExecutiveRow'
 import { OperationsHeroStrip } from '../components/OperationsHeroStrip'
 import {
-  AppointmentsTab,
-  MarineTab,
-  MyWorkTab,
-  OPS_ACTION_ICONS,
   OverviewTab,
   PerformanceTab,
-  QueuesTab,
   ReportsTab,
+  WorkTab,
 } from '../tabs'
 import type { OperationsDashboardTabProps } from '../types'
-
-function OperationsWorkspaceActions({
-  unreadCount,
-  notifications,
-}: {
-  unreadCount: number
-  notifications: typeof OPERATIONS_DASHBOARD_MOCK.notifications
-}) {
-  const drilldown = useDrilldownOptional()
-  return (
-    <Button
-      label={unreadCount > 0 ? `Alerts (${unreadCount})` : 'Alerts'}
-      variant="outlined"
-      size="sm"
-      startIcon={<Bell size={16} />}
-      onClick={() =>
-        drilldown?.openDrilldown({
-          id: 'ops-notifications',
-          title: 'Operations notifications',
-          subtitle: `${unreadCount} unread`,
-          entityType: 'custom',
-          entityId: 'notifications',
-          meta: {
-            count: notifications.length,
-            preview: notifications[0]?.title,
-          },
-        })
-      }
-      aria-label={`Open operations notifications, ${unreadCount} unread`}
-    />
-  )
-}
+import { opsPipelineStageToApplicationHref } from '../utils/opsSegmentPaths'
 
 export function OperationsDashboardPage() {
   const navigate = useNavigate()
   const dashboard = useOperationsDashboardNext()
-  const data = dashboard.data ?? OPERATIONS_DASHBOARD_MOCK
+  const data = dashboard.data ?? buildOperationsDashboardFromMocks()
   const loading = dashboard.isLoading
   const setFilters = dashboard.setFilters
 
@@ -113,7 +65,9 @@ export function OperationsDashboardPage() {
     [navigate, openTab],
   )
 
-  const unreadCount = data.notifications.filter((n) => n.unread).length
+  const workBadge = data.queueRows.filter(
+    (row) => !row.showGroundBadge && (row.assigneeKind === 'user' || row.assigneeKind === 'unassigned'),
+  ).length
 
   const tabProps: OperationsDashboardTabProps = {
     data,
@@ -121,32 +75,29 @@ export function OperationsDashboardPage() {
     onRetry: dashboard.retry,
     onNavigate: (href) => navigate(href),
     onOpenApplication: (href) => navigate(href),
-    onPipelineStageClick: (stageId) =>
-      navigate(`/admin/application-management/retail?stage=${stageId}`),
-    onVerificationOpen: () => navigate('/admin/application-management/retail'),
-    onViewVerificationQueue: () => navigate('/admin/assignment-priority/retail'),
-    onQueueRowClick: () => navigate('/admin/application-management/retail'),
-    onJobClick: () => navigate('/admin/application-management/retail'),
+    onOpenTab: openTab,
+    onPipelineStageClick: (stageId) => navigate(opsPipelineStageToApplicationHref(stageId)),
   }
-
-  const showMarineTab = loading || data.marinePriorityCases.length > 0
 
   return (
     <DashboardWorkspace
       workspaceId="operations"
       title="Operations dashboard"
-      subtitle={`Workbench for ${data.consultantName} — know what needs attention and start the next task.`}
+      subtitle={`Workbench for ${data.consultantName} — verification, payment, and ground handoffs across segments.`}
       loading={loading}
       error={dashboard.isError}
       onRetry={dashboard.retry}
       onRefresh={dashboard.retry}
       onFiltersChange={onFiltersChange}
       searchItems={searchItems}
-      extraActions={
-        <OperationsWorkspaceActions unreadCount={unreadCount} notifications={data.notifications} />
-      }
       defaultTab="overview"
-      hero={<OperationsHeroStrip items={data.myQuickStats} loading={loading} />}
+      hero={
+        <OperationsHeroStrip
+          items={data.myQuickStats}
+          loading={loading}
+          onNavigate={(href) => navigate(href)}
+        />
+      }
       tabs={[
         {
           id: 'overview',
@@ -154,85 +105,16 @@ export function OperationsDashboardPage() {
           icon: <LayoutDashboard size={16} />,
           content: (
             <Stack spacing={DASHBOARD_SPACING.field}>
-              <OperationsExecutiveRow
-                alerts={
-                  <AlertCenter
-                    title="My alerts"
-                    alerts={data.notifications.map((n, index) => ({
-                      id: n.id,
-                      title: n.title,
-                      description: [n.body, n.createdAt].filter(Boolean).join(' · '),
-                      severity: index === 0 ? 'critical' : index === 1 ? 'warning' : 'info',
-                    }))}
-                    loading={loading}
-                    maxItems={4}
-                    onShowMore={() => openTab('my-work')}
-                  />
-                }
-                primaryVisualization={
-                  <ApplicationPipeline
-                    title="Queue status"
-                    subtitle="Primary visualization — your pipeline health"
-                    stages={data.myPipelineStages}
-                    loading={loading}
-                    onRetry={dashboard.retry}
-                    onStageClick={(stageId) => {
-                      navigate(`/admin/application-management/retail?stage=${stageId}`)
-                    }}
-                  />
-                }
-                quickActions={
-                  <QuickActions
-                    title="Quick actions"
-                    variant="tiles"
-                    columns={2}
-                    loading={loading}
-                    items={data.quickActions.map((action) => ({
-                      id: action.id,
-                      title: action.title,
-                      description: action.description,
-                      badge: action.badge,
-                      icon: OPS_ACTION_ICONS[action.id],
-                      onClick: () => navigate(action.href),
-                    }))}
-                  />
-                }
-              />
               <OverviewTab {...tabProps} />
             </Stack>
           ),
         },
         {
-          id: 'my-work',
-          label: 'My Work',
+          id: 'work',
+          label: 'Work',
           icon: <ClipboardList size={16} />,
-          badge: data.myPendingVerification.length,
-          content: <MyWorkTab {...tabProps} />,
-        },
-        {
-          id: 'queues',
-          label: 'Queues',
-          icon: <ListTodo size={16} />,
-          badge: data.queueItems.length,
-          content: <QueuesTab {...tabProps} />,
-        },
-        ...(showMarineTab
-          ? [
-              {
-                id: 'marine',
-                label: 'Marine',
-                icon: <Ship size={16} />,
-                badge: data.marinePriorityCases.length,
-                content: <MarineTab {...tabProps} />,
-              },
-            ]
-          : []),
-        {
-          id: 'appointments',
-          label: 'Appointments',
-          icon: <CalendarDays size={16} />,
-          badge: data.todaysJobs.length,
-          content: <AppointmentsTab {...tabProps} />,
+          badge: workBadge,
+          content: <WorkTab {...tabProps} />,
         },
         {
           id: 'performance',

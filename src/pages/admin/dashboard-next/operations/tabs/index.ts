@@ -1,7 +1,4 @@
 export { OverviewTab } from './OverviewTab'
-export { MyWorkTab, OPS_ACTION_ICONS } from './MyWorkTab'
-export { QueuesTab } from './QueuesTab'
-export { MarineTab } from './MarineTab'
-export { TodaysTasksTab as AppointmentsTab } from './TodaysTasksTab'
+export { WorkTab } from './WorkTab'
 export { PerformanceTab } from './PerformanceTab'
 export { ReportsTab } from './ReportsTab'

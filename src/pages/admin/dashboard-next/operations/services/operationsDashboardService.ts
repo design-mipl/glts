@@ -1,8 +1,6 @@
 import type { OperationsDashboardData, OperationsDashboardFilters } from '../types'
-import {
-  OPERATIONS_DASHBOARD_MOCK,
-  applyOperationsDashboardFilters,
-} from '../data/operationsDashboardMock'
+import { applyOperationsDashboardFilters } from '../data/operationsDashboardMock'
+import { buildOperationsDashboardFromMocks } from '../data/buildOperationsDashboardFromMocks'
 
 const LOAD_DELAY_MS = 300
 
@@ -12,11 +10,14 @@ function delay(ms: number): Promise<void> {
   })
 }
 
-/** Mock fetch — replace with API while keeping filters + return shape. */
+/**
+ * Fetch operations dashboard from existing mock services:
+ * Application Management · Assignment Priority · Ground Operations.
+ */
 export async function fetchOperationsDashboard(
   filters: OperationsDashboardFilters,
 ): Promise<OperationsDashboardData> {
   await delay(LOAD_DELAY_MS)
-  const clone = structuredClone(OPERATIONS_DASHBOARD_MOCK)
-  return applyOperationsDashboardFilters(clone, filters)
+  const data = buildOperationsDashboardFromMocks()
+  return applyOperationsDashboardFilters(data, filters)
 }

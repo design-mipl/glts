@@ -3,7 +3,6 @@ import { FunnelChart, Tooltip } from '@/design-system/UIComponents'
 import {
   ComparisonLayout,
   ExecutiveGrid,
-  FunnelContainer,
   InsightCard,
   UI_KIT_SPACING,
 } from '../../dashboard-ui-kit'
@@ -33,7 +32,7 @@ export interface ApplicationPipelineProps {
   empty?: boolean
   permission?: boolean
   onRetry?: () => void
-  /** Wrap in ExecutiveCard. Default false to match existing dashboard embeds. */
+  /** Wrap in ExecutiveCard. Default false when parent already provides a card shell. */
   card?: boolean
   /** Skip SectionHeader — parent owns the title/tabs chrome. */
   hideHeader?: boolean
@@ -73,9 +72,9 @@ export function ApplicationPipeline({
     >
       <ComparisonLayout
         left={
-          <FunnelContainer title="Funnel" minHeight={chartHeight} width="auto">
+          <Box sx={{ minHeight: chartHeight, minWidth: 0, width: '100%' }}>
             <FunnelChart data={funnelData} height={chartHeight} />
-          </FunnelContainer>
+          </Box>
         }
         right={
           <ExecutiveGrid columns={2}>

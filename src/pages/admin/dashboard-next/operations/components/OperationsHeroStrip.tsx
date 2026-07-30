@@ -2,78 +2,101 @@ import type { ReactNode } from 'react'
 import { Box } from '@mui/material'
 import {
   AlertTriangle,
-  CalendarClock,
-  CheckCircle2,
+  ClipboardCheck,
   ClipboardList,
-  Clock3,
-  ListTodo,
+  CreditCard,
+  FileStack,
+  Package,
+  Plane,
+  UserPlus,
 } from 'lucide-react'
 import { ExecutiveGrid, HeroMetric, InsightStack } from '../../shared/dashboard-ui-kit'
-import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
 import type { DashboardKpiItem } from '../../shared/types'
 import { DASHBOARD_SPACING } from '../../shared/constants'
+import {
+  opsApplicationListPath,
+  opsAssignmentPath,
+} from '../utils/opsSegmentPaths'
 
 const KPI_ICONS: Record<string, ReactNode> = {
-  'my-assigned': <ClipboardList size={16} />,
-  'my-due-today': <CalendarClock size={16} />,
-  'my-blocked': <AlertTriangle size={16} />,
-  'my-completed': <CheckCircle2 size={16} />,
-  'my-verification': <ListTodo size={16} />,
-  'my-sla': <Clock3 size={16} />,
+  'kpi-total-applications': <FileStack size={16} />,
+  'kpi-total-verification': <ClipboardList size={16} />,
+  'kpi-verification': <ClipboardList size={16} />,
+  'kpi-recheck': <ClipboardCheck size={16} />,
+  'kpi-payment': <CreditCard size={16} />,
+  'kpi-arrange': <Plane size={16} />,
+  'kpi-assignment': <UserPlus size={16} />,
+  'kpi-submission': <Package size={16} />,
 }
 
 function kpiTone(id: string, delta?: number): 'positive' | 'negative' | 'warning' | 'info' | 'neutral' {
-  if (id === 'my-blocked') return 'negative'
-  if (id === 'my-due-today' || id === 'my-verification') return 'warning'
-  if (id === 'my-completed') return 'positive'
-  if (delta != null && delta > 0) return 'info'
+  if (id === 'kpi-payment' || id === 'kpi-recheck') return 'warning'
+  if (id === 'kpi-assignment') return 'negative'
+  if (
+    id === 'kpi-total-applications' ||
+    id === 'kpi-total-verification' ||
+    id === 'kpi-verification' ||
+    id === 'kpi-arrange'
+  ) {
+    return 'info'
+  }
+  if (id === 'kpi-submission') return 'neutral'
+  if (delta != null && delta > 0) return 'warning'
   if (delta != null && delta < 0) return 'positive'
   return 'neutral'
+}
+
+/** Hero KPI → live module (assignment-priority or application-management). */
+export function opsHeroKpiHref(kpiId: string): string {
+  switch (kpiId) {
+    case 'kpi-assignment':
+      return opsAssignmentPath('retail')
+    case 'kpi-payment':
+      return opsApplicationListPath('marine', 'pending_payment')
+    case 'kpi-submission':
+      return opsApplicationListPath('marine', 'online_submission_pending')
+    case 'kpi-total-applications':
+      return opsApplicationListPath('marine')
+    case 'kpi-total-verification':
+    case 'kpi-verification':
+    case 'kpi-recheck':
+    case 'kpi-arrange':
+    default:
+      return opsApplicationListPath('marine', 'verification_pending')
+  }
 }
 
 export interface OperationsHeroStripProps {
   items: DashboardKpiItem[]
   loading?: boolean
+  onNavigate?: (href: string) => void
 }
 
-/** Operations hero KPIs — dense HeroMetric + drilldown. */
-export function OperationsHeroStrip({ items, loading }: OperationsHeroStripProps) {
-  const drilldown = useDrilldownOptional()
-
+/** Operations hero KPIs — click opens the owning module (not a dashboard tab). */
+export function OperationsHeroStrip({ items, loading, onNavigate }: OperationsHeroStripProps) {
   const openKpi = (kpi: DashboardKpiItem) => {
-    drilldown?.openDrilldown({
-      id: `ops-kpi-${kpi.id}`,
-      title: kpi.label,
-      subtitle: 'Operations hero KPI',
-      entityType: 'kpi',
-      entityId: kpi.id,
-      meta: {
-        value: kpi.value,
-        delta: kpi.delta,
-        comparison: kpi.deltaLabel,
-      },
-    })
+    onNavigate?.(opsHeroKpiHref(kpi.id))
   }
 
   return (
     <InsightStack spacing={DASHBOARD_SPACING.dense}>
-      <ExecutiveGrid columns={items.length >= 6 ? 6 : 4} spacing={1}>
+      <ExecutiveGrid columns={4} spacing={1}>
         {items.map((kpi) => (
           <Box
             key={kpi.id}
-            role={drilldown ? 'button' : undefined}
-            tabIndex={drilldown ? 0 : undefined}
-            aria-label={`${kpi.label}: ${kpi.value}`}
+            role={onNavigate ? 'button' : undefined}
+            tabIndex={onNavigate ? 0 : undefined}
+            aria-label={`${kpi.label}: ${kpi.value}${kpi.deltaLabel ? ` — ${kpi.deltaLabel}` : ''}`}
             onClick={() => openKpi(kpi)}
             onKeyDown={(event) => {
-              if (!drilldown) return
+              if (!onNavigate) return
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault()
                 openKpi(kpi)
               }
             }}
             sx={{
-              cursor: drilldown ? 'pointer' : 'default',
+              cursor: onNavigate ? 'pointer' : 'default',
               minWidth: 0,
               outline: 'none',
               '&:focus-visible': {
@@ -87,7 +110,7 @@ export function OperationsHeroStrip({ items, loading }: OperationsHeroStripProps
               value={kpi.value}
               delta={kpi.delta}
               deltaLabel={kpi.deltaLabel}
-              icon={KPI_ICONS[kpi.id] ?? kpi.icon}
+              icon={KPI_ICONS[kpi.id] ?? <AlertTriangle size={16} />}
               tone={kpiTone(kpi.id, kpi.delta)}
               loading={loading}
               animate

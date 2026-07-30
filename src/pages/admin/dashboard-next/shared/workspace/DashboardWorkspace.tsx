@@ -1,5 +1,8 @@
-import type { ReactNode } from 'react'
-import { Stack } from '@mui/material'
+import { useState, type ReactNode } from 'react'
+import { Stack, useMediaQuery } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import { Search } from 'lucide-react'
+import { IconButton } from '@/design-system/UIComponents'
 import { DashboardShell } from '../components/DashboardShell'
 import type { DashboardShellProps } from '../components/DashboardShell'
 import type { DashboardTabDefinition } from '../types'
@@ -8,6 +11,7 @@ import {
   DashboardFilterBar,
   DashboardIntelligenceProvider,
   DrilldownHost,
+  ExecutiveSearch,
   type DashboardIntelligenceFilters,
   type ExecutiveSearchItem,
   type IntelligenceFilterFieldConfig,
@@ -37,8 +41,9 @@ export interface DashboardWorkspaceProps
   filterFields?: IntelligenceFilterFieldConfig[]
   onFiltersChange?: (filters: DashboardIntelligenceFilters) => void
   onRefresh?: () => void | Promise<void>
-  /** Retained for callers; header search control removed. */
+  /** Command-palette search items (Ctrl/Cmd+K + desktop header search icon). */
   searchItems?: ExecutiveSearchItem[]
+  /** Optional header actions beside the search icon. */
   extraActions?: ReactNode
   filterDensity?: 'compact' | 'full'
   /** Optional legacy filters if intelligence bar should be supplemented. */
@@ -47,8 +52,9 @@ export interface DashboardWorkspaceProps
 
 /**
  * Standard Dashboard Next workspace:
- * Dense header → collapsible filters → Hero KPIs → Sticky tabs
+ * Dense header (desktop search icon) → collapsible filters → Hero KPIs → Sticky tabs
  * (Overview tab owns alerts / primary viz / quick actions).
+ * Mobile omits the page search icon — AppShell top header already provides search.
  */
 export function DashboardWorkspace({
   workspaceId,
@@ -59,13 +65,34 @@ export function DashboardWorkspace({
   filterFields,
   onFiltersChange,
   onRefresh,
-  searchItems: _searchItems = [],
+  searchItems = [],
   extraActions,
   filterDensity = 'compact',
   legacyFilters,
   ...shellProps
 }: DashboardWorkspaceProps) {
+  const theme = useTheme()
+  const isDesktop = useMediaQuery(theme.breakpoints.up('desktop'))
   const { activeTab, setActiveTab } = useWorkspaceTabState(workspaceId, defaultTab)
+  const [searchOpen, setSearchOpen] = useState(false)
+
+  const headerActions =
+    isDesktop || extraActions ? (
+      <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+        {isDesktop ? (
+          <IconButton
+            icon={<Search size={16} strokeWidth={1.75} />}
+            tooltip="Search"
+            variant="soft"
+            color="primary"
+            size="sm"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Open dashboard search"
+          />
+        ) : null}
+        {extraActions}
+      </Stack>
+    ) : undefined
 
   return (
     <DashboardIntelligenceProvider
@@ -77,13 +104,7 @@ export function DashboardWorkspace({
       <DashboardShell
         {...shellProps}
         denseChrome
-        actions={
-          extraActions ? (
-            <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
-              {extraActions}
-            </Stack>
-          ) : undefined
-        }
+        actions={headerActions}
         filters={
           <Stack spacing={DASHBOARD_SPACING.field}>
             <DashboardFilterBar
@@ -103,6 +124,12 @@ export function DashboardWorkspace({
         defaultTab={defaultTab}
         tabValue={activeTab}
         onTabChange={setActiveTab}
+      />
+      <ExecutiveSearch
+        items={searchItems}
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        hotkey={isDesktop}
       />
       <DrilldownHost />
     </DashboardIntelligenceProvider>

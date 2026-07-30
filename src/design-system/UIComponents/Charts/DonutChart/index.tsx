@@ -1,7 +1,7 @@
-import { Skeleton, Typography } from '@mui/material'
+import { Skeleton } from '@mui/material'
 import {
   PieChart as RechartsPieChart,
-  Pie, Cell, Tooltip, Legend, ResponsiveContainer,
+  Pie, Cell, Tooltip, Legend, ResponsiveContainer, usePlotArea,
 } from 'recharts'
 import { useChartTheme } from '../utils/chartTheme'
 
@@ -21,6 +21,59 @@ export interface DonutChartProps {
   centerValue?: string
   centerLabel?: string
   formatTooltip?: (value: any) => string
+}
+
+/**
+ * Center label using plot-area center (legend-aware), matching Pie's cx/cy math.
+ * Recharts polar Label viewBox uses full SVG size and ignores legend offset.
+ */
+function DonutCenterLabel({
+  centerValue,
+  centerLabel,
+  fontFamily,
+  valueColor,
+  labelColor,
+}: {
+  centerValue?: string
+  centerLabel?: string
+  fontFamily: string
+  valueColor: string
+  labelColor: string
+}) {
+  const plotArea = usePlotArea()
+  if (!plotArea || (!centerValue && !centerLabel)) return null
+
+  const cx = plotArea.x + plotArea.width / 2
+  const cy = plotArea.y + plotArea.height / 2
+  const hasBoth = Boolean(centerValue && centerLabel)
+
+  return (
+    <text textAnchor="middle" dominantBaseline="central" style={{ pointerEvents: 'none' }}>
+      {centerValue ? (
+        <tspan
+          x={cx}
+          y={hasBoth ? cy - 8 : cy}
+          fill={valueColor}
+          fontSize={20}
+          fontWeight={700}
+          fontFamily={fontFamily}
+        >
+          {centerValue}
+        </tspan>
+      ) : null}
+      {centerLabel ? (
+        <tspan
+          x={cx}
+          y={hasBoth ? cy + 12 : cy}
+          fill={labelColor}
+          fontSize={12}
+          fontFamily={fontFamily}
+        >
+          {centerLabel}
+        </tspan>
+      ) : null}
+    </text>
+  )
 }
 
 export default function DonutChart({
@@ -68,47 +121,16 @@ export default function DonutChart({
               fill={slice.color ?? ct.colors[i % ct.colors.length]}
             />
           ))}
-          {(centerValue || centerLabel) && (
-            <foreignObject
-              x="50%"
-              y="50%"
-              width={innerRadius * 2}
-              height={innerRadius * 2}
-              style={{ transform: `translate(-${innerRadius}px, -${innerRadius}px)`, pointerEvents: 'none' }}
-            >
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: ct.fontFamily,
-                }}
-              >
-                {centerValue && (
-                  <Typography
-                    variant="h5"
-                    component="span"
-                    sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}
-                  >
-                    {centerValue}
-                  </Typography>
-                )}
-                {centerLabel && (
-                  <Typography
-                    variant="caption"
-                    component="span"
-                    sx={{ color: 'text.secondary', lineHeight: 1.2 }}
-                  >
-                    {centerLabel}
-                  </Typography>
-                )}
-              </div>
-            </foreignObject>
-          )}
         </Pie>
+        {(centerValue || centerLabel) && (
+          <DonutCenterLabel
+            centerValue={centerValue}
+            centerLabel={centerLabel}
+            fontFamily={ct.fontFamily}
+            valueColor={ct.theme.palette.text.primary}
+            labelColor={ct.theme.palette.text.secondary}
+          />
+        )}
       </RechartsPieChart>
     </ResponsiveContainer>
   )

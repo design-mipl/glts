@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react'
 import { Stack } from '@mui/material'
 import {
   BarChart3,
-  Bell,
   ClipboardList,
   FileText,
   LayoutDashboard,
@@ -11,13 +10,11 @@ import {
   Users,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@/design-system/UIComponents'
 import {
   DASHBOARD_SPACING,
   DashboardWorkspace,
 } from '../../shared'
 import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intelligence'
-import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
 import { useAdminDashboardNext } from '../hooks/useAdminDashboardNext'
 import { ADMIN_DASHBOARD_NEXT_MOCK } from '../data/adminDashboardNextMock'
 import { buildAdminSearchItems } from '../data/adminSearchItems'
@@ -36,53 +33,6 @@ import {
 } from '../tabs'
 import { resolveAdminAttentionIcon } from '../utils/resolveAdminAttentionIcon'
 import type { AdminDashboardTabProps } from '../types'
-
-function AdminNotificationsAction({
-  count,
-  onOpen,
-}: {
-  count: number
-  onOpen: () => void
-}) {
-  return (
-    <Button
-      label={count > 0 ? `Alerts (${count})` : 'Alerts'}
-      variant="outlined"
-      size="sm"
-      startIcon={<Bell size={16} />}
-      onClick={onOpen}
-      aria-label={`Open notifications, ${count} unread`}
-    />
-  )
-}
-
-function AdminWorkspaceActions({
-  unreadCount,
-  notifications,
-}: {
-  unreadCount: number
-  notifications: typeof ADMIN_DASHBOARD_NEXT_MOCK.notifications
-}) {
-  const drilldown = useDrilldownOptional()
-  return (
-    <AdminNotificationsAction
-      count={unreadCount}
-      onOpen={() =>
-        drilldown?.openDrilldown({
-          id: 'admin-notifications',
-          title: 'Admin notifications',
-          subtitle: `${unreadCount} unread`,
-          entityType: 'custom',
-          entityId: 'notifications',
-          meta: {
-            count: notifications.length,
-            preview: notifications[0]?.title,
-          },
-        })
-      }
-    />
-  )
-}
 
 export function AdminDashboardPage() {
   const navigate = useNavigate()
@@ -126,8 +76,6 @@ export function AdminDashboardPage() {
     [navigate, openTab],
   )
 
-  const unreadCount = data.notifications.filter((n) => n.unread).length
-
   const tabProps: AdminDashboardTabProps = {
     data,
     loading,
@@ -152,9 +100,6 @@ export function AdminDashboardPage() {
       onRefresh={dashboard.retry}
       onFiltersChange={onFiltersChange}
       searchItems={searchItems}
-      extraActions={
-        <AdminWorkspaceActions unreadCount={unreadCount} notifications={data.notifications} />
-      }
       defaultTab="overview"
       hero={<AdminHeroStrip items={data.quickStats} loading={loading} />}
       tabs={[
