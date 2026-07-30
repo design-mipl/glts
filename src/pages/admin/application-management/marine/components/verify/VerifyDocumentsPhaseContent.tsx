@@ -194,10 +194,10 @@ export function VerifyDocumentsPhaseContent({
   const rejectedDocumentsSection =
     flaggedDuringQc.length > 0 || customerRejectedDocuments.length > 0 ? (
       <Stack spacing={1.5}>
-        {flaggedDuringQc.length > 0 ? (
+        {customerRejectedDocuments.length > 0 ? (
           <VerifyRejectedDocumentsSection
-            entries={flaggedDuringQc}
-            variant="qc_flagged"
+            entries={customerRejectedDocuments}
+            variant="customer_rejected"
             previewOnly={readOnly}
             onPreview={onRejectedPreview}
             onVerify={onRejectedVerify}
@@ -206,10 +206,10 @@ export function VerifyDocumentsPhaseContent({
             onGltsUpload={onRejectedGltsUpload}
           />
         ) : null}
-        {customerRejectedDocuments.length > 0 ? (
+        {flaggedDuringQc.length > 0 ? (
           <VerifyRejectedDocumentsSection
-            entries={customerRejectedDocuments}
-            variant="customer_rejected"
+            entries={flaggedDuringQc}
+            variant="qc_flagged"
             previewOnly={readOnly}
             onPreview={onRejectedPreview}
             onVerify={onRejectedVerify}
@@ -264,7 +264,7 @@ export function VerifyDocumentsPhaseContent({
             />
           </Box>
         ) : null}
-        <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+        <Box sx={{ flex: 1, height: 0, minHeight: 0, overflow: 'auto' }}>
           <Stack spacing={2}>
             {activeTab === 'checklist' ? (
               <>
@@ -280,31 +280,102 @@ export function VerifyDocumentsPhaseContent({
   )
 
   const detailContent = isFinalPhase ? (
-    <Grid
-      container
-      spacing={2}
-      alignItems="stretch"
-      sx={{ height: '100%', minHeight: 0, flex: 1 }}
+    <Box
+      sx={{
+        flex: 1,
+        height: 0,
+        minHeight: 0,
+        alignSelf: 'stretch',
+        width: '100%',
+        overflow: { xs: 'auto', lg: 'hidden' },
+        display: 'flex',
+        flexDirection: 'column',
+      }}
     >
-      <Grid size={{ xs: 12, lg: 7 }} sx={{ minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {documentsPane}
-        </Box>
-      </Grid>
       <Grid
-        size={{ xs: 12, lg: 5 }}
-        sx={{ minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+        container
+        spacing={2}
+        alignItems="stretch"
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          height: '100%',
+          overflow: { lg: 'hidden' },
+          gridAutoRows: { lg: 'minmax(0, 1fr)' },
+        }}
       >
-        <VerifyFinalVerificationChecklist
-          countryId={countryId}
-          visaOfferingId={visaOfferingId}
-          jurisdictionId={jurisdictionId}
-          readOnly={readOnly}
-        />
+        <Grid
+          size={{ xs: 12, lg: 7 }}
+          sx={{
+            minWidth: 0,
+            minHeight: 0,
+            height: { lg: '100%' },
+            maxHeight: { lg: '100%' },
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            {documentsPane}
+          </Box>
+        </Grid>
+        <Grid
+          size={{ xs: 12, lg: 5 }}
+          sx={{
+            minWidth: 0,
+            minHeight: 0,
+            height: { lg: '100%' },
+            maxHeight: { lg: '100%' },
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            <VerifyFinalVerificationChecklist
+              countryId={countryId}
+              visaOfferingId={visaOfferingId}
+              jurisdictionId={jurisdictionId}
+              readOnly={readOnly}
+            />
+          </Box>
+        </Grid>
       </Grid>
-    </Grid>
+    </Box>
   ) : (
-    documentsPane
+    <Box
+      sx={{
+        flex: 1,
+        height: 0,
+        minHeight: 0,
+        alignSelf: 'stretch',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      {documentsPane}
+    </Box>
   )
 
   return (

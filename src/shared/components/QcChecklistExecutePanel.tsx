@@ -99,7 +99,7 @@ export function QcChecklistExecutePanel({
         ) : null}
       </Box>
 
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 2, pb: 1 }}>
+      <Box sx={{ flex: 1, height: 0, minHeight: 0, overflowY: 'auto', px: 2, pb: 1 }}>
         <Stack spacing={2} divider={<Divider flexItem />}>
           {sections.map((section) => {
             const sectionState = getSectionCheckState(section, checked)

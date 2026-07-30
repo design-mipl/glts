@@ -240,6 +240,7 @@ export function VerifyTravelerDetailPanel({
       <Box
         sx={{
           flex: 1,
+          height: 0,
           minHeight: 0,
           overflow: activeWorkTab ? 'hidden' : 'auto',
           p: 2,
@@ -266,8 +267,8 @@ export function VerifyTravelerDetailPanel({
         ) : null}
 
         {activeTab === TIMELINE_TAB ? (
-          <Stack spacing={1.5} sx={{ flex: 1, minHeight: 0 }}>
-            <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+          <Stack spacing={1.5} sx={{ flex: 1, height: 0, minHeight: 0 }}>
+            <Box sx={{ flex: 1, height: 0, minHeight: 0, overflow: 'auto' }}>
               <ApplicationProcessingTimeline steps={timelineSteps} orientation="vertical" />
             </Box>
             {processingStatus && applicationId ? (
@@ -288,9 +289,20 @@ export function VerifyTravelerDetailPanel({
         ) : null}
 
         {activeWorkTab ? (
-          <Stack spacing={1.5} sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          <Stack spacing={1.5} sx={{ flex: 1, height: 0, minHeight: 0, overflow: 'hidden' }}>
             {workTabHint ? <Box sx={{ flexShrink: 0 }}>{workTabHint}</Box> : null}
-            <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <Box
+              sx={{
+                flex: 1,
+                height: 0,
+                minHeight: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                // Nested panes may scroll internally; auto also covers work-tab
+                // content that grows with the page (payment, form, etc.).
+                overflow: 'auto',
+              }}
+            >
               {activeWorkTab.content}
             </Box>
           </Stack>

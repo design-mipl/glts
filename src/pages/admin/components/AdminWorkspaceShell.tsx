@@ -1,6 +1,7 @@
 import { Box, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 import { BaseCard, type BreadcrumbItem } from '@/design-system/UIComponents'
+import { ADMIN_HEADER_ACTION_BUTTONS_SPACING } from './adminHeaderChromeLayout'
 import { AdminRecordPageChrome } from '@/pages/admin/components/AdminRecordPageChrome'
 import { ADMIN_FULL_PAGE_FORM_LAYOUT } from '@/pages/admin/components/adminFullPageFormLayout'
 import {
@@ -79,7 +80,12 @@ export function AdminWorkspaceShell({
                   ) : null}
                 </Box>
                 {headerActions ? (
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  <Stack
+                    direction="row"
+                    spacing={ADMIN_HEADER_ACTION_BUTTONS_SPACING}
+                    flexWrap="wrap"
+                    useFlexGap
+                  >
                     {headerActions}
                   </Stack>
                 ) : null}

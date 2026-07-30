@@ -2,6 +2,7 @@ import { Stack } from '@mui/material'
 import type { ReactNode } from 'react'
 import { Breadcrumb, type BreadcrumbItem } from '@/design-system/UIComponents'
 import { ADMIN_FULL_PAGE_FORM_LAYOUT } from './adminFullPageFormLayout'
+import { ADMIN_HEADER_END_ACTIONS_SPACING } from './adminHeaderChromeLayout'
 import { AdminHeaderChrome } from './AdminHeaderChrome'
 
 export interface AdminRecordPageChromeProps {
@@ -27,7 +28,14 @@ export function AdminRecordPageChrome({
   const chrome = showChrome ? <AdminHeaderChrome /> : null
   const endActions =
     actions || chrome ? (
-      <Stack direction="row" alignItems="center" spacing={1.5} flexShrink={0} flexWrap="wrap" useFlexGap>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={ADMIN_HEADER_END_ACTIONS_SPACING}
+        flexShrink={0}
+        flexWrap="wrap"
+        useFlexGap
+      >
         {actions}
         {chrome}
       </Stack>

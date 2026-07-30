@@ -82,9 +82,11 @@ export function VerifyPassengerWorkspace({
           flexShrink: 0,
           minHeight: { xs: 320, md: 0 },
           maxHeight: { xs: 400, md: 'none' },
+          height: { md: '100%' },
           display: 'flex',
           flexDirection: 'column',
           minWidth: 0,
+          overflow: 'hidden',
         }}
       >
         <VerifyTravelerList
@@ -106,6 +108,8 @@ export function VerifyPassengerWorkspace({
           flex: 1,
           minWidth: 0,
           minHeight: { xs: 480, md: 0 },
+          height: { md: '100%' },
+          alignSelf: 'stretch',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',

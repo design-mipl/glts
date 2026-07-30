@@ -4,6 +4,7 @@ import type { BreadcrumbItem } from '@/design-system/UIComponents'
 import { BaseCard } from '@/design-system/UIComponents'
 import { AdminRecordPageChrome } from './AdminRecordPageChrome'
 import { ADMIN_FULL_PAGE_FORM_LAYOUT } from './adminFullPageFormLayout'
+import { ADMIN_HEADER_ACTION_BUTTONS_SPACING } from './adminHeaderChromeLayout'
 import {
   ADMIN_RECORD_PAGE_TITLE_SX,
   ADMIN_RECORD_PAGE_TITLE_VARIANT,
@@ -60,7 +61,12 @@ export function AdminFinanceWorkspaceShell({
                 ) : null}
               </Box>
               {headerActions ? (
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                <Stack
+                  direction="row"
+                  spacing={ADMIN_HEADER_ACTION_BUTTONS_SPACING}
+                  flexWrap="wrap"
+                  useFlexGap
+                >
                   {headerActions}
                 </Stack>
               ) : null}

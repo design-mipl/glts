@@ -2,6 +2,7 @@ import { Box, Chip, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 import { Breadcrumb } from '@/design-system/UIComponents'
 import type { BreadcrumbItem } from '@/design-system/UIComponents'
+import { ADMIN_HEADER_END_ACTIONS_SPACING } from './adminHeaderChromeLayout'
 import { AdminHeaderChrome } from './AdminHeaderChrome'
 
 export interface AdminPageHeaderProps {
@@ -38,7 +39,7 @@ export function AdminPageHeader({
       <Stack
         direction="row"
         alignItems="center"
-        spacing={1.5}
+        spacing={ADMIN_HEADER_END_ACTIONS_SPACING}
         flexWrap="wrap"
         useFlexGap
         sx={{ flexShrink: 0, width: { xs: hasBreadcrumbs ? 'auto' : '100%', md: 'auto' } }}

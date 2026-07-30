@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Grid, Stack } from '@mui/material'
+import { Box, Grid, Stack } from '@mui/material'
 import { Tabs } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
@@ -130,10 +130,10 @@ export function ViewFormQcCheckSection({
   const rejectedDocumentsSection =
     flaggedDuringQc.length > 0 || customerRejectedDocuments.length > 0 ? (
       <Stack spacing={1.5}>
-        {flaggedDuringQc.length > 0 ? (
+        {customerRejectedDocuments.length > 0 ? (
           <VerifyRejectedDocumentsSection
-            entries={flaggedDuringQc}
-            variant="qc_flagged"
+            entries={customerRejectedDocuments}
+            variant="customer_rejected"
             previewOnly={readOnly}
             onPreview={onRejectedPreview}
             onVerify={onRejectedVerify}
@@ -141,10 +141,10 @@ export function ViewFormQcCheckSection({
             onRequestReupload={onRejectedReupload}
           />
         ) : null}
-        {customerRejectedDocuments.length > 0 ? (
+        {flaggedDuringQc.length > 0 ? (
           <VerifyRejectedDocumentsSection
-            entries={customerRejectedDocuments}
-            variant="customer_rejected"
+            entries={flaggedDuringQc}
+            variant="qc_flagged"
             previewOnly={readOnly}
             onPreview={onRejectedPreview}
             onVerify={onRejectedVerify}
@@ -186,46 +186,125 @@ export function ViewFormQcCheckSection({
 
   const documentsPane = (
     <VerifyDocumentsTabPanel>
-      <Stack spacing={2}>
+      <Stack spacing={2} sx={{ height: '100%', minHeight: 0, overflow: 'hidden' }}>
         {tabItems.length > 1 ? (
-          <Tabs
-            value={activeTab}
-            onChange={value => setActiveTab(value as QcDocumentTab)}
-            variant="underline"
-            size="sm"
-            items={tabItems}
-          />
+          <Box sx={{ flexShrink: 0 }}>
+            <Tabs
+              value={activeTab}
+              onChange={value => setActiveTab(value as QcDocumentTab)}
+              variant="underline"
+              size="sm"
+              items={tabItems}
+            />
+          </Box>
         ) : null}
-        {activeTab === 'checklist' ? (
-          <>
-            {rejectedDocumentsSection}
-            {documentChecklistsSection}
-          </>
-        ) : null}
-        {activeTab === 'original' ? originalDocumentsSection : null}
+        <Box sx={{ flex: 1, height: 0, minHeight: 0, overflow: 'auto' }}>
+          <Stack spacing={2}>
+            {activeTab === 'checklist' ? (
+              <>
+                {rejectedDocumentsSection}
+                {documentChecklistsSection}
+              </>
+            ) : null}
+            {activeTab === 'original' ? originalDocumentsSection : null}
+          </Stack>
+        </Box>
       </Stack>
     </VerifyDocumentsTabPanel>
   )
 
   return (
-    <Grid container spacing={2} alignItems="stretch">
-      <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
-        {documentsPane}
+    <Box
+      sx={{
+        // height: 0 + flex: 1 forces this flex child to the parent's remaining
+        // space instead of growing with content (which breaks nested scroll).
+        flex: 1,
+        height: 0,
+        minHeight: 0,
+        alignSelf: 'stretch',
+        width: '100%',
+        // Mobile: stack scrolls as one column. Desktop: panes scroll independently.
+        overflow: { xs: 'auto', md: 'hidden' },
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <Grid
+        container
+        spacing={2}
+        alignItems="stretch"
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          height: '100%',
+          overflow: { md: 'hidden' },
+          // Without minmax(0, 1fr), CSS grid rows size to content and nested
+          // overflow:auto never activates — parents clip with no scrollbar.
+          gridAutoRows: { md: 'minmax(0, 1fr)' },
+        }}
+      >
+        <Grid
+          size={{ xs: 12, md: 6 }}
+          sx={{
+            minWidth: 0,
+            minHeight: 0,
+            height: { md: '100%' },
+            maxHeight: { md: '100%' },
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            {documentsPane}
+          </Box>
+        </Grid>
+        <Grid
+          size={{ xs: 12, md: 6 }}
+          sx={{
+            minWidth: 0,
+            minHeight: 0,
+            height: { md: '100%' },
+            maxHeight: { md: '100%' },
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            <QcCheckChecklist
+              template={docsQcTemplate}
+              checked={docsQcChecked}
+              outcome={docsQcOutcome}
+              onCheckedChange={onDocsQcCheckedChange}
+              onOutcomeChange={onDocsQcOutcomeChange}
+              submitLabel={docsQcSubmitLabel}
+              submitHint={docsQcSubmitHint}
+              submitDisabled={docsQcSubmitDisabled}
+              onSubmit={onDocsQcSubmit}
+              readOnly={readOnly}
+            />
+          </Box>
+        </Grid>
       </Grid>
-      <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0, display: 'flex' }}>
-        <QcCheckChecklist
-          template={docsQcTemplate}
-          checked={docsQcChecked}
-          outcome={docsQcOutcome}
-          onCheckedChange={onDocsQcCheckedChange}
-          onOutcomeChange={onDocsQcOutcomeChange}
-          submitLabel={docsQcSubmitLabel}
-          submitHint={docsQcSubmitHint}
-          submitDisabled={docsQcSubmitDisabled}
-          onSubmit={onDocsQcSubmit}
-          readOnly={readOnly}
-        />
-      </Grid>
-    </Grid>
+    </Box>
   )
 }

@@ -281,7 +281,7 @@ export function DocumentListingPage() {
             title="Document Master"
             description={pageDescription}
             actions={
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={2.5} flexWrap="wrap" useFlexGap>
                 <Button
                   label={activeTab === 'documents' ? 'New Document' : 'New Client Document'}
                   startIcon={<Plus size={14} />}
