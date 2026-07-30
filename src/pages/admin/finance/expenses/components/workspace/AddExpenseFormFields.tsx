@@ -7,6 +7,7 @@ import { taxMasterService } from '@/shared/services/taxMasterService'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
   EXPENSE_PAID_BY_OPTIONS,
+  EXPENSE_PAYMENT_MODE_OPTIONS,
   EXPENSE_PROOF_TYPE_OPTIONS,
   EXPENSE_VENDOR_OPTIONS,
 } from '../../config/expenseDetailFormConfig'
@@ -23,7 +24,10 @@ interface AddExpenseFormFieldsProps {
   serviceDisplayName?: string
   agreementServiceOptions: AgreementExpenseServiceOption[]
   agreementLabel?: string
-  totalAmount: number
+  /** Computed markup (Total − Cost). Display only. */
+  iwAmount: number
+  /** Total Amount + GST. */
+  payableAmount: number
   onPatch: (partial: Partial<AddExpenseFormValue>) => void
   onSelectAgreementService: (serviceId: string) => void
   section: AddExpenseFormSection
@@ -37,7 +41,8 @@ export function AddExpenseFormFields({
   serviceDisplayName,
   agreementServiceOptions,
   agreementLabel,
-  totalAmount,
+  iwAmount,
+  payableAmount,
   onPatch,
   onSelectAgreementService,
   section,
@@ -162,11 +167,23 @@ export function AddExpenseFormFields({
   if (section === 'amount') {
     return (
       <>
-        <FormField label="Amount" required>
+        <FormField label="Cost" helperText="Vendor / actual outlay">
           <Input
-            value={form.amount}
-            onChange={v => onPatch({ amount: v })}
-            placeholder="Enter amount in INR"
+            value={form.costAmount}
+            onChange={v => onPatch({ costAmount: v })}
+            placeholder="Enter cost in INR"
+            size="sm"
+            fullWidth
+          />
+        </FormField>
+        <FormField label="IW" helperText="Markup (Total − Cost)">
+          <Input value={formatInr(iwAmount)} disabled size="sm" fullWidth />
+        </FormField>
+        <FormField label="Total amount" required helperText="Agreed / Country Master client quote">
+          <Input
+            value={form.totalAmount}
+            onChange={v => onPatch({ totalAmount: v })}
+            placeholder="Enter total amount in INR"
             size="sm"
             fullWidth
           />
@@ -191,7 +208,7 @@ export function AddExpenseFormFields({
             fullWidth
           />
         </FormField>
-        <FormField label="GST rate" helperText={form.gstApplicable ? 'From GST master' : undefined}>
+        <FormField label="GST rate" helperText={form.gstApplicable ? 'Applied on Total amount' : undefined}>
           <Select
             value={form.gstRateId}
             onChange={v => onPatch({ gstRateId: String(v) })}
@@ -202,8 +219,8 @@ export function AddExpenseFormFields({
             fullWidth
           />
         </FormField>
-        <FormField label="Total amount">
-          <Input value={formatInr(totalAmount)} disabled size="sm" fullWidth />
+        <FormField label="Payable">
+          <Input value={formatInr(payableAmount)} disabled size="sm" fullWidth />
         </FormField>
       </>
     )
@@ -211,6 +228,21 @@ export function AddExpenseFormFields({
 
   return (
     <>
+      <FormField label="Payment mode" optional>
+        <Select
+          value={form.paymentMode}
+          onChange={v => onPatch({ paymentMode: String(v) })}
+          options={[
+            { value: '', label: 'Not set' },
+            ...EXPENSE_PAYMENT_MODE_OPTIONS.map(option => ({
+              value: option.value,
+              label: option.label,
+            })),
+          ]}
+          size="sm"
+          fullWidth
+        />
+      </FormField>
       <FormField label="Paid by">
         <Select
           value={form.paidBy}

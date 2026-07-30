@@ -1,36 +1,18 @@
 import { useCallback, useMemo } from 'react'
-import { Stack } from '@mui/material'
 import {
-  BarChart3,
+  ClipboardList,
   FileSpreadsheet,
-  FileText,
-  HandCoins,
+  Gauge,
   LayoutDashboard,
-  Scale,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import {
-  AlertCenter,
-  CollectionSummary,
-  DASHBOARD_SPACING,
-  DashboardWorkspace,
-  QuickActions,
-} from '../../shared'
+import { DashboardWorkspace } from '../../shared'
 import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intelligence'
 import { useAccountsDashboardNext } from '../hooks/useAccountsDashboardNext'
 import { ACCOUNTS_DASHBOARD_MOCK } from '../data/accountsDashboardMock'
 import { buildAccountsSearchItems } from '../data/accountsSearchItems'
-import { AccountsExecutiveRow } from '../components/AccountsExecutiveRow'
 import { AccountsHeroStrip } from '../components/AccountsHeroStrip'
-import {
-  ACCOUNTS_ACTION_ICONS,
-  AnalyticsTab,
-  CollectionsTab,
-  InvoicingTab,
-  OverviewTab,
-  ReconciliationTab,
-  ReportsTab,
-} from '../tabs'
+import { OverviewTab, PerformanceTab, ReportsTab, WorkTab } from '../tabs'
 import type { AccountsDashboardTabProps } from '../types'
 
 export function AccountsDashboardPage() {
@@ -79,11 +61,17 @@ export function AccountsDashboardPage() {
     [navigate, openTab],
   )
 
+  const workBadge =
+    data.expenseDailyRows.length +
+    data.paymentAllocationRows.filter((r) => r.allocationStatus !== 'Allocated').length +
+    data.visaSubmissionRows.filter((r) => r.invoiceReady === 'Yes').length
+
   const tabProps: AccountsDashboardTabProps = {
     data,
     loading,
     onRetry: dashboard.retry,
     onNavigate: (href) => navigate(href),
+    onOpenTab: openTab,
     onOpenInvoice: openInvoices,
     onOpenCollection: openInvoices,
     onOpenReconciliation: openVendorBilling,
@@ -93,7 +81,7 @@ export function AccountsDashboardPage() {
     <DashboardWorkspace
       workspaceId="accounts"
       title="Accounts dashboard"
-      subtitle="Finance workspace for collections, invoicing, reconciliation, and cash discipline."
+      subtitle="Finance workspace for reconciliation, invoicing, credit control, and cash discipline."
       loading={loading}
       error={dashboard.isError}
       onRetry={dashboard.retry}
@@ -107,79 +95,20 @@ export function AccountsDashboardPage() {
           id: 'overview',
           label: 'Overview',
           icon: <LayoutDashboard size={16} />,
-          content: (
-            <Stack spacing={DASHBOARD_SPACING.field}>
-              <AccountsExecutiveRow
-                alerts={
-                  <AlertCenter
-                    title="Financial alerts"
-                    alerts={data.notifications.map((n, index) => ({
-                      id: n.id,
-                      title: n.title,
-                      description: [n.body, n.createdAt].filter(Boolean).join(' · '),
-                      severity: index === 0 ? 'critical' : index === 1 ? 'warning' : 'info',
-                    }))}
-                    loading={loading}
-                    maxItems={4}
-                    onShowMore={() => openTab('collections')}
-                  />
-                }
-                primaryVisualization={
-                  <CollectionSummary
-                    title="Collections funnel"
-                    subtitle="Primary visualization — outstanding vs collected"
-                    data={data.collectionSummary}
-                    loading={loading}
-                    onRetry={dashboard.retry}
-                  />
-                }
-                quickActions={
-                  <QuickActions
-                    title="Quick actions"
-                    variant="tiles"
-                    columns={2}
-                    loading={loading}
-                    items={data.quickActions.map((action) => ({
-                      id: action.id,
-                      title: action.title,
-                      description: action.description,
-                      badge: action.badge,
-                      icon: ACCOUNTS_ACTION_ICONS[action.id],
-                      onClick: () => navigate(action.href),
-                    }))}
-                  />
-                }
-              />
-              <OverviewTab {...tabProps} />
-            </Stack>
-          ),
+          content: <OverviewTab {...tabProps} />,
         },
         {
-          id: 'collections',
-          label: 'Collections',
-          icon: <HandCoins size={16} />,
-          badge: data.collectionRows.length,
-          content: <CollectionsTab {...tabProps} />,
+          id: 'work',
+          label: 'Work',
+          icon: <ClipboardList size={16} />,
+          badge: workBadge,
+          content: <WorkTab {...tabProps} />,
         },
         {
-          id: 'invoices',
-          label: 'Invoices',
-          icon: <FileText size={16} />,
-          badge: data.invoiceRows.length,
-          content: <InvoicingTab {...tabProps} />,
-        },
-        {
-          id: 'reconciliation',
-          label: 'Reconciliation',
-          icon: <Scale size={16} />,
-          badge: data.reconciliationRows.length,
-          content: <ReconciliationTab {...tabProps} />,
-        },
-        {
-          id: 'analytics',
-          label: 'Analytics',
-          icon: <BarChart3 size={16} />,
-          content: <AnalyticsTab {...tabProps} />,
+          id: 'performance',
+          label: 'Performance',
+          icon: <Gauge size={16} />,
+          content: <PerformanceTab {...tabProps} />,
         },
         {
           id: 'reports',

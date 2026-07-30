@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Box, Grid, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import { Badge, Tabs } from '@/design-system/UIComponents'
-import { ExecutiveCard } from '../../shared/dashboard-ui-kit'
-import { DashboardTable, StatusBadge, DASHBOARD_SPACING } from '../../shared'
-import type { Column } from '@/design-system/UIComponents'
+import { Badge, Tabs, type Column } from '@/design-system/UIComponents'
+import { DASHBOARD_SPACING } from '../../shared/constants'
+import { AccountsWorkListing } from './AccountsWorkListing'
 import type { AccountsInvoiceSubmissionRow } from '../types'
 
 function CalendarGrid({ submissions }: { submissions: AccountsInvoiceSubmissionRow[] }) {
@@ -77,41 +76,80 @@ function CalendarGrid({ submissions }: { submissions: AccountsInvoiceSubmissionR
   )
 }
 
-const listColumns: Column<AccountsInvoiceSubmissionRow>[] = [
-  { key: 'company', label: 'Company', widthSize: 'lg', sortable: false },
-  { key: 'submissionDate', label: 'Submission date', widthSize: 'md', sortable: false },
-  { key: 'billingCycle', label: 'Billing cycle', widthSize: 'md', sortable: false },
-  {
-    key: 'status',
-    label: 'Status',
-    widthSize: 'sm',
-    sortable: false,
-    render: (_value, row) => <StatusBadge label={row.status} status={row.status} />,
-  },
-  { key: 'branch', label: 'Branch', widthSize: 'md', sortable: false },
-]
+function getCellValue(row: AccountsInvoiceSubmissionRow, key: string): string {
+  const value = row[key as keyof AccountsInvoiceSubmissionRow]
+  return value == null ? '' : String(value)
+}
+
+function statusColor(status: string): 'success' | 'warning' | 'error' | 'info' | 'neutral' {
+  const s = status.toLowerCase()
+  if (s.includes('due')) return 'warning'
+  if (s.includes('draft') || s.includes('ready')) return 'info'
+  if (s.includes('pending')) return 'error'
+  return 'neutral'
+}
 
 export interface InvoiceSubmissionCalendarProps {
   submissions: AccountsInvoiceSubmissionRow[]
   loading?: boolean
 }
 
-/** List + calendar views for upcoming invoice submissions (Original Accounts carry-forward). */
+/** List + calendar views for upcoming invoice submissions. */
 export function InvoiceSubmissionCalendar({
   submissions,
   loading,
 }: InvoiceSubmissionCalendarProps) {
   const [view, setView] = useState<'list' | 'calendar'>('list')
 
+  const listColumns: Column<AccountsInvoiceSubmissionRow>[] = useMemo(
+    () => [
+      {
+        key: 'company',
+        label: 'Company',
+        widthSize: 'lg',
+        sortable: true,
+        filterable: true,
+        searchable: true,
+      },
+      {
+        key: 'submissionDate',
+        label: 'Submission date',
+        widthSize: 'md',
+        sortable: true,
+        filterable: true,
+      },
+      {
+        key: 'billingCycle',
+        label: 'Billing cycle',
+        widthSize: 'md',
+        sortable: true,
+        filterable: true,
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        widthSize: 'sm',
+        sortable: true,
+        filterable: true,
+        render: (_value, row) => <Badge label={row.status} color={statusColor(row.status)} />,
+      },
+      {
+        key: 'branch',
+        label: 'Branch',
+        widthSize: 'md',
+        sortable: true,
+        filterable: true,
+      },
+    ],
+    [],
+  )
+
   return (
-    <ExecutiveCard
-      title="Invoice submission calendar"
-      subtitle="Upcoming corporate and marine billing submissions"
-      density="comfortable"
-    >
-      <Box sx={{ mb: DASHBOARD_SPACING.field }}>
+    <Box>
+      <Box sx={{ mb: DASHBOARD_SPACING.field, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           size="sm"
+          variant="underline"
           items={[
             { label: 'List view', value: 'list' },
             { label: 'Calendar view', value: 'calendar' },
@@ -122,13 +160,15 @@ export function InvoiceSubmissionCalendar({
       </Box>
 
       {view === 'list' ? (
-        <DashboardTable
-          title="Scheduled submissions"
+        <AccountsWorkListing
+          title="Invoice submission calendar"
+          description="Upcoming corporate and marine billing submissions"
+          rows={submissions}
           columns={listColumns}
-          data={submissions}
-          rowKey="id"
+          getCellValue={getCellValue}
           loading={loading}
-          pageSize={5}
+          emptyTitle="No scheduled submissions"
+          emptyDescription="Invoice submission reminders will appear here."
         />
       ) : (
         <Grid container spacing={1}>
@@ -144,6 +184,6 @@ export function InvoiceSubmissionCalendar({
           </Grid>
         </Grid>
       )}
-    </ExecutiveCard>
+    </Box>
   )
 }

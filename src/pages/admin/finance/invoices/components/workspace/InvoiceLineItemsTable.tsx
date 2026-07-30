@@ -12,6 +12,16 @@ interface InvoiceLineItemsTableProps {
   gstPercentage: number
 }
 
+function resolveCost(item: InvoiceLineItem): number {
+  return typeof item.costAmount === 'number' && Number.isFinite(item.costAmount)
+    ? Math.max(0, item.costAmount)
+    : 0
+}
+
+function resolveIw(item: InvoiceLineItem): number {
+  return Math.max(0, Math.round((Math.abs(item.unitPrice) - resolveCost(item)) * 100) / 100)
+}
+
 function newRow(gstPercentage: number): InvoiceLineItem {
   const base = {
     id: `li-${Date.now()}`,
@@ -19,6 +29,7 @@ function newRow(gstPercentage: number): InvoiceLineItem {
     description: '',
     quantity: 1,
     unitPrice: 0,
+    costAmount: 0,
     gstApplicable: true,
     gstAmount: 0,
     amount: 0,
@@ -82,7 +93,9 @@ export function InvoiceLineItemsTable({ lineItems, onChange, gstPercentage }: In
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Service Name</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Description</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Qty</TableCell>
-                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Unit Price</TableCell>
+                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Cost</TableCell>
+                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>IW</TableCell>
+                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Total</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>GST</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Amount</TableCell>
                   <TableCell sx={agreementEmbeddedTableHeadCellSx}>Billing Status</TableCell>
@@ -146,6 +159,17 @@ export function InvoiceLineItemsTable({ lineItems, onChange, gstPercentage }: In
                         size="sm"
                         fullWidth
                       />
+                    </TableCell>
+                    <TableCell sx={{ width: 90 }}>
+                      <Input
+                        value={String(resolveCost(item))}
+                        onChange={v => updateItem(item.id, { costAmount: Number(v) || 0 })}
+                        size="sm"
+                        fullWidth
+                      />
+                    </TableCell>
+                    <TableCell sx={{ width: 80, fontSize: 13, color: 'text.secondary' }}>
+                      {formatInr(resolveIw(item))}
                     </TableCell>
                     <TableCell sx={{ width: 100 }}>
                       <Input

@@ -337,7 +337,7 @@ function OperationalCaseDetailContent({
                 }
               />
               <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12, color: 'text.primary' }}>
-                GLTS charges
+                Onsite expenses
               </Typography>
               {(isViewOnly ? (record.gltsOpsFees ?? []).some(service => service.selected) : true) ? (
                 <GroundServicesChecklist
@@ -346,6 +346,7 @@ function OperationalCaseDetailContent({
                       ? (record.gltsOpsFees ?? []).filter(service => service.selected)
                       : (record.gltsOpsFees ?? [])
                   }
+                  amountMode="actual"
                   readOnly={isViewOnly}
                   onServiceChange={
                     isViewOnly
@@ -358,7 +359,7 @@ function OperationalCaseDetailContent({
                 />
               ) : (
                 <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12 }}>
-                  No GLTS charges recorded for this passenger.
+                  No onsite expenses recorded for this passenger.
                 </Typography>
               )}
               <OnSiteFeeDocumentsSection

@@ -54,7 +54,7 @@ export function getSelectedApplicationFeesTotal(
     .reduce((sum, fee) => sum + (fee.actualAmount || fee.prefilledAmount), 0)
   const glts = gltsOpsFees
     .filter(fee => fee.selected)
-    .reduce((sum, fee) => sum + (fee.actualAmount || fee.prefilledAmount), 0)
+    .reduce((sum, fee) => sum + (fee.actualAmount || 0), 0)
   return onSite + glts
 }
 

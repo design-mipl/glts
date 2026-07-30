@@ -11,7 +11,7 @@ export function OperationsLoginPage() {
       portal: 'operations',
       email,
     })
-    navigate('/admin', { replace: true })
+    navigate('/admin/dashboard-next/super-admin', { replace: true })
   }
 
   return (

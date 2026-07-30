@@ -88,23 +88,22 @@ function normalizeServiceLines(record: OperationalCase) {
   record.gltsOpsFees = normalizeGltsOpsFees(record.gltsOpsFees)
 }
 
-function payableServiceLines(record: OperationalCase): GroundServiceLine[] {
+function recomputeServiceTotals(record: OperationalCase) {
   const snapshot = resolveOperationalCaseSubmissionSnapshot(record)
   const onSite = record.applicationFees.filter(
     service => service.selected && !findSubmissionPaidCharge(service.serviceName, snapshot),
   )
   const glts = (record.gltsOpsFees ?? []).filter(service => service.selected)
-  return [...onSite, ...glts]
-}
-
-function recomputeServiceTotals(record: OperationalCase) {
-  const selected = payableServiceLines(record)
+  const selected = [...onSite, ...glts]
   record.servicesSummary = selected.map(service => service.serviceName).join(', ') || '—'
-  record.estimatedExpense = selected.reduce((sum, service) => sum + service.prefilledAmount, 0)
-  const serviceActual = selected.reduce(
+  // Estimated uses agreed/prefilled on-site fees only; onsite expenses have no agreed price in totals.
+  record.estimatedExpense = onSite.reduce((sum, service) => sum + service.prefilledAmount, 0)
+  const onSiteActual = onSite.reduce(
     (sum, service) => sum + (service.actualAmount || service.prefilledAmount),
     0,
   )
+  const gltsActual = glts.reduce((sum, service) => sum + (service.actualAmount || 0), 0)
+  const serviceActual = onSiteActual + gltsActual
   const extraActual = record.expenses.reduce((sum, expense) => sum + expense.actualAmount, 0)
   record.actualExpense = serviceActual + extraActual
   record.expenseSummary = `₹${record.estimatedExpense.toLocaleString('en-IN')} Est.${record.actualExpense > 0 ? ` · ₹${record.actualExpense.toLocaleString('en-IN')} Actual` : ''}`

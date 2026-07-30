@@ -4,12 +4,20 @@ export type InvoiceServiceLineCategory =
   | 'miscellaneous_dispatch'
   | 'vfs'
 
-/** Client-billable service line seeded from Expense Management; amount/remark editable on invoice. */
+/** Client-billable service line seeded from Expense Management; Cost / Total editable on invoice. */
 export interface InvoiceBillableServiceLine {
   id: string
   expenseRecordId: string
   serviceLabel: string
-  /** Original / application service amount. */
+  /**
+   * Vendor / actual outlay (Cost).
+   * IW is display-only: Total − Cost.
+   */
+  costAmount: number
+  /**
+   * Client quote / billable total before GST (Total Amount).
+   * Original / application service amount on generate.
+   */
   amount: number
   /**
    * Credit note: amount to credit (editable when selected).

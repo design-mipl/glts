@@ -10,8 +10,10 @@ import type {
 import { taxMasterService } from '@/shared/services/taxMasterService'
 import {
   computeExpenseGstAmount,
+  computeExpenseIwAmount,
   computeExpenseTotalAmount,
   getExpenseServiceDefinition,
+  resolveExpenseCostAmount,
 } from '../../config/expenseDetailFormConfig'
 import {
   defaultGstRateIdForAgreement,
@@ -55,6 +57,7 @@ function recordToForm(
 ): AddExpenseFormValue {
   const serviceDefinition = getExpenseServiceDefinition(record.expenseType)
   const gstApplicable = record.gstAmount > 0 || record.gstIncluded
+  const cost = resolveExpenseCostAmount(record)
 
   return {
     agreementServiceId: '',
@@ -62,9 +65,11 @@ function recordToForm(
     mappingScope: isSinglePassenger ? 'passenger' : record.passengerMapping.scope,
     passengerId: record.passengerMapping.passengerIds?.[0] ?? defaultPassengerId,
     passengerIds: record.passengerMapping.passengerIds ?? [],
-    amount: String(record.amount),
+    costAmount: cost > 0 ? String(cost) : '',
+    totalAmount: String(record.amount),
     gstApplicable,
     gstRateId: gstApplicable ? resolveGstRateIdFromRecord(record.amount, record.gstAmount) : '',
+    paymentMode: record.paymentMode ?? '',
     paidBy: record.paidBy ?? 'glts_team',
     billTo: record.billTo ?? 'client',
     notes: record.internalRemarks ?? record.remarks ?? '',
@@ -126,7 +131,7 @@ export function AddExpenseDrawer({
       setForm(prev => ({
         ...prev,
         agreementServiceId: serviceId,
-        amount: selected.amount > 0 ? String(selected.amount) : prev.amount,
+        totalAmount: selected.amount > 0 ? String(selected.amount) : prev.totalAmount,
         gstApplicable,
         gstRateId: gstApplicable ? defaultGstRateIdForAgreement(true) : '',
         vendorProvider: prev.vendorProvider || 'GLTS Operations',
@@ -140,9 +145,15 @@ export function AddExpenseDrawer({
     [form.gstApplicable, form.gstRateId],
   )
 
-  const totalAmount = useMemo(
-    () => computeExpenseTotalAmount(parseAmount(form.amount), form.gstApplicable, gstPercent),
-    [form.amount, form.gstApplicable, gstPercent],
+  const costAmount = useMemo(() => parseAmount(form.costAmount), [form.costAmount])
+  const totalAmount = useMemo(() => parseAmount(form.totalAmount), [form.totalAmount])
+  const iwAmount = useMemo(
+    () => computeExpenseIwAmount(costAmount, totalAmount),
+    [costAmount, totalAmount],
+  )
+  const payableAmount = useMemo(
+    () => computeExpenseTotalAmount(totalAmount, form.gstApplicable, gstPercent),
+    [totalAmount, form.gstApplicable, gstPercent],
   )
 
   const selectedAgreementService = useMemo(
@@ -182,10 +193,9 @@ export function AddExpenseDrawer({
   }
 
   const handleSubmit = () => {
-    const amount = parseAmount(form.amount)
-    if (amount <= 0) return
+    if (totalAmount <= 0) return
 
-    const gstAmount = computeExpenseGstAmount(amount, form.gstApplicable, gstPercent)
+    const gstAmount = computeExpenseGstAmount(totalAmount, form.gstApplicable, gstPercent)
 
     if (isEdit && record) {
       onSubmit({
@@ -196,17 +206,22 @@ export function AddExpenseDrawer({
         linkedService: record.linkedService,
         passengerMapping: buildMapping(),
         vendorStaffPartner: form.vendorProvider || undefined,
-        amount,
+        costAmount,
+        amount: totalAmount,
         gstIncluded: form.gstApplicable,
         gstAmount,
         tdsApplicable: record.tdsApplicable,
         tdsAmount: record.tdsAmount,
-        netPayableAmount: totalAmount,
+        netPayableAmount: payableAmount,
+        paymentMode: form.paymentMode || undefined,
         paymentStatus: record.paymentStatus,
         proofStatus: form.proofFileName.trim() ? 'uploaded' : 'missing',
         proofFileName: form.proofFileName.trim() || undefined,
         proofDocumentType: form.proofDocumentType || undefined,
         paidBy: form.paidBy,
+        paidByUser: record.paidByUser,
+        paidByTeam: record.paidByTeam,
+        paidByDepartment: record.paidByDepartment,
         billTo: 'client',
         internalRemarks: form.notes.trim() || undefined,
       })
@@ -224,12 +239,14 @@ export function AddExpenseDrawer({
       linkedService: selectedAgreementService.linkedService,
       passengerMapping: buildMapping(),
       vendorStaffPartner: form.vendorProvider || undefined,
-      amount,
+      costAmount,
+      amount: totalAmount,
       gstIncluded: form.gstApplicable,
       gstAmount,
       tdsApplicable: false,
       tdsAmount: 0,
-      netPayableAmount: totalAmount,
+      netPayableAmount: payableAmount,
+      paymentMode: form.paymentMode || undefined,
       paymentStatus: 'not_paid',
       proofStatus: form.proofFileName.trim() ? 'uploaded' : 'missing',
       proofFileName: form.proofFileName.trim() || undefined,
@@ -242,7 +259,7 @@ export function AddExpenseDrawer({
   }
 
   const canSave =
-    parseAmount(form.amount) > 0 && (isEdit || Boolean(selectedAgreementService))
+    totalAmount > 0 && (isEdit || Boolean(selectedAgreementService))
 
   const fieldProps = {
     form,
@@ -252,7 +269,8 @@ export function AddExpenseDrawer({
     serviceDisplayName: record ? record.expenseTypeLabel || record.expenseName : undefined,
     agreementServiceOptions: agreementServices.options,
     agreementLabel: agreementServices.agreement?.agreementId,
-    totalAmount,
+    iwAmount,
+    payableAmount,
     onPatch: patch,
     onSelectAgreementService: handleSelectAgreementService,
   }
@@ -264,8 +282,8 @@ export function AddExpenseDrawer({
       title={isEdit ? 'Edit expense' : 'Add expense'}
       subtitle={
         isEdit
-          ? 'Update vendor, mapping, amount, billing, and proof details for this expense'
-          : 'Service list comes from the client agreement (including Add-on lines). Select one, then map passengers and proof.'
+          ? 'Update cost, total amount, billing, and proof. IW recalculates from Total − Cost.'
+          : 'Service list comes from the client agreement. Total prefills from the agreement; Cost is vendor outlay; IW is computed.'
       }
       footer={
         <AdminFullPageFormFooter
@@ -285,15 +303,15 @@ export function AddExpenseDrawer({
         },
         {
           id: 'amount',
-          title: 'Amount & GST',
-          description: 'Prefills from the agreement; adjust GST % from GST master if needed',
+          title: 'Cost, IW & Total',
+          description: 'Edit Cost or Total — IW updates automatically. GST applies on Total.',
           columns: ADMIN_DRAWER_FORM_LAYOUT.primarySectionColumns,
           children: <AddExpenseFormFields {...fieldProps} section="amount" />,
         },
         {
           id: 'billing',
           title: 'Billing, notes & proof',
-          description: 'Paid by, bill to, notes, and supporting proof',
+          description: 'Payment mode, paid by, notes, and supporting proof',
           importance: 'secondary',
           columns: ADMIN_DRAWER_FORM_LAYOUT.secondarySectionColumns,
           children: <AddExpenseFormFields {...fieldProps} section="billing" />,

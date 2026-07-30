@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Box, Typography } from '@mui/material'
-import { BaseCard, Tabs } from '@/design-system/UIComponents'
+import { Box, Stack, Typography } from '@mui/material'
+import { Plus } from 'lucide-react'
+import { BaseCard, Button, Tabs } from '@/design-system/UIComponents'
 import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationExpenseDetailView, ApplicationExpenseRecord } from '@/shared/types/applicationExpenseManagement'
 import {
   computeFinanceKpis,
   filterExpensesForPassenger,
 } from '@/shared/utils/applicationExpenseManagementUtils'
+import { splitPassengerExpenses } from '../../utils/expenseRefundUtils'
 import { ExpenseItemsTable, type ExpenseItemAction } from './ExpenseItemsTable'
 import { ExpensePassengerOverview } from './ExpensePassengerOverview'
+import { ExpensePassengerRefundTab } from './ExpensePassengerRefundTab'
 
-type PassengerDetailTab = 'overview' | 'expenses'
+type PassengerDetailTab = 'overview' | 'expenses' | 'refund'
 
 interface ExpenseTravelerDetailPanelProps {
   applicationId: string
@@ -40,10 +43,13 @@ export function ExpenseTravelerDetailPanel({
     return filterExpensesForPassenger(allExpenses, selectedRow.gltsApplicantId)
   }, [allExpenses, selectedRow])
 
-  const passengerFinanceKpis = useMemo(
-    () => computeFinanceKpis(passengerExpenses),
+  const { serviceExpenses, refundExpenses } = useMemo(
+    () => splitPassengerExpenses(passengerExpenses),
     [passengerExpenses],
   )
+
+  const serviceFinanceKpis = useMemo(() => computeFinanceKpis(serviceExpenses), [serviceExpenses])
+  const refundFinanceKpis = useMemo(() => computeFinanceKpis(refundExpenses), [refundExpenses])
 
   const passengerTabs = useMemo(
     () => [
@@ -51,10 +57,15 @@ export function ExpenseTravelerDetailPanel({
       {
         value: 'expenses' as const,
         label: 'Expenses',
-        badge: passengerExpenses.length,
+        badge: serviceExpenses.length,
+      },
+      {
+        value: 'refund' as const,
+        label: 'Refund',
+        badge: refundExpenses.length,
       },
     ],
-    [passengerExpenses.length],
+    [serviceExpenses.length, refundExpenses.length],
   )
 
   if (!selectedRow) {
@@ -88,13 +99,31 @@ export function ExpenseTravelerDetailPanel({
       }}
     >
       <Box sx={{ px: 2.5, pt: 1.5, borderBottom: 1, borderColor: 'divider', flexShrink: 0 }}>
-        <Tabs
-          value={activeTab}
-          onChange={v => setActiveTab(v as PassengerDetailTab)}
-          variant="underline"
-          size="sm"
-          items={passengerTabs}
-        />
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          spacing={1.5}
+          sx={{ minWidth: 0 }}
+        >
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Tabs
+              value={activeTab}
+              onChange={v => setActiveTab(v as PassengerDetailTab)}
+              variant="underline"
+              size="sm"
+              items={passengerTabs}
+            />
+          </Box>
+          {activeTab === 'expenses' ? (
+            <Button
+              label="Add expense"
+              size="sm"
+              startIcon={<Plus size={14} />}
+              onClick={onAddExpense}
+            />
+          ) : null}
+        </Stack>
       </Box>
       <Box
         sx={{
@@ -111,18 +140,27 @@ export function ExpenseTravelerDetailPanel({
             selectedRow={selectedRow}
             expenseDetail={expenseDetail}
           />
-        ) : (
+        ) : null}
+        {activeTab === 'expenses' ? (
           <ExpenseItemsTable
             title="Expenses"
-            expenses={passengerExpenses}
-            financeKpis={passengerFinanceKpis}
+            expenses={serviceExpenses}
+            financeKpis={serviceFinanceKpis}
             onAddExpense={onAddExpense}
             onAction={onExpenseAction}
             hideMappingColumn
             embedded
+            hideHeaderAddButton
             emptyDescription="Expenses sync from Application Management (tickets, insurance, GLTS fees), Assignment vendors, Fund Allocation, Ground Operations, and passenger payments."
           />
-        )}
+        ) : null}
+        {activeTab === 'refund' ? (
+          <ExpensePassengerRefundTab
+            expenses={refundExpenses}
+            financeKpis={refundFinanceKpis}
+            onExpenseAction={onExpenseAction}
+          />
+        ) : null}
       </Box>
     </BaseCard>
   )

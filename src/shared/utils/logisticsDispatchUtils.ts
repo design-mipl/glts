@@ -3,7 +3,7 @@ import type {
   LogisticsDispatchDetails,
   LogisticsFinalQcChecks,
 } from '@/shared/types/logisticsDispatch'
-import { LOGISTICS_FINAL_QC_CHECKLIST } from '@/shared/types/logisticsDispatch'
+import { isAirportAssistanceDeliveryMethod, LOGISTICS_FINAL_QC_CHECKLIST } from '@/shared/types/logisticsDispatch'
 
 export function isLogisticsFinalQcComplete(checks: LogisticsFinalQcChecks): boolean {
   return LOGISTICS_FINAL_QC_CHECKLIST.every(item => checks[item.key])
@@ -31,10 +31,8 @@ export function validateLogisticsDispatchDetails(
         return { valid: false, message: 'Courier charges are required.' }
       }
       break
-    case 'Airport Assistance':
-      if (!details.assistanceType) {
-        return { valid: false, message: 'Assistance type is required.' }
-      }
+    case 'Airport Assistance - Working Hours':
+    case 'Airport Assistance - Non-Working Hours':
       if (details.airportAssistanceCharges == null || details.airportAssistanceCharges < 0) {
         return { valid: false, message: 'Airport assistance charges are required.' }
       }
@@ -55,7 +53,7 @@ export function validateLogisticsDispatchDetails(
 
   const hasPayableCharge =
     details.deliveryMethod === 'Courier' ||
-    details.deliveryMethod === 'Airport Assistance' ||
+    isAirportAssistanceDeliveryMethod(details.deliveryMethod) ||
     details.deliveryMethod === 'Cargo'
 
   if (hasPayableCharge) {

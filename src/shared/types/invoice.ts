@@ -32,6 +32,9 @@ export interface InvoiceLineItem {
   serviceType: string
   description: string
   quantity: number
+  /** Vendor / actual outlay (Cost). IW = |unitPrice| − costAmount when unitPrice is Total. */
+  costAmount?: number
+  /** Client billable unit price (Total Amount). */
   unitPrice: number
   gstApplicable: boolean
   gstAmount: number

@@ -16,11 +16,17 @@ import type {
   ApplicationExpenseFinanceKpis,
   ApplicationExpenseRecord,
 } from '@/shared/types/applicationExpenseManagement'
-import { paymentStatusLabel } from '@/shared/utils/applicationExpenseManagementUtils'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { getPaidByLabel } from '../../config/expenseDetailFormConfig'
-import { expenseRollupPaymentColor } from '../../config/expenseStatusConfig'
+import {
+  computeExpenseIwAmount,
+  formatExpensePaidByDisplay,
+  getExpenseInvoiceStatusLabel,
+  getExpensePaymentModeLabel,
+  resolveExpenseCostAmount,
+  resolveExpenseInvoiceStatus,
+} from '../../config/expenseDetailFormConfig'
+import { expenseInvoiceStatusColor } from '../../config/expenseStatusConfig'
 
 export type ExpenseItemAction = 'view' | 'edit' | 'upload_proof' | 'delete'
 
@@ -35,33 +41,22 @@ interface ExpenseItemsTableProps {
   hideMappingColumn?: boolean
   /** Renders without outer border/chrome when nested inside a tab panel. */
   embedded?: boolean
-}
-
-function paymentStatusColor(
-  status: ApplicationExpenseRecord['paymentStatus'],
-): 'success' | 'warning' | 'error' | 'info' | 'neutral' {
-  switch (status) {
-    case 'paid':
-      return expenseRollupPaymentColor.paid
-    case 'partially_paid':
-      return expenseRollupPaymentColor.partially_paid
-    case 'pending_reimbursement':
-      return expenseRollupPaymentColor.pending_reimbursement
-    case 'not_paid':
-    default:
-      return expenseRollupPaymentColor.not_paid
-  }
+  /** Hide the header Add expense control when the parent tab bar owns the action. */
+  hideHeaderAddButton?: boolean
 }
 
 function buildHeaders(hideMappingColumn: boolean) {
   return [
-    { key: 'service', label: 'Service', align: 'left' as const, width: hideMappingColumn ? '42%' : '34%' },
+    { key: 'service', label: 'Service', align: 'left' as const, width: hideMappingColumn ? '22%' : '18%' },
     ...(!hideMappingColumn
-      ? [{ key: 'mapping', label: 'Mapping', align: 'left' as const, width: '16%' }]
+      ? [{ key: 'mapping', label: 'Mapping', align: 'left' as const, width: '10%' }]
       : []),
-    { key: 'amount', label: 'Amount', align: 'right' as const, width: '18%' },
-    { key: 'paidBy', label: 'Paid by', align: 'left' as const, width: hideMappingColumn ? '20%' : '16%' },
-    { key: 'payment', label: 'Payment', align: 'left' as const, width: hideMappingColumn ? '14%' : '12%' },
+    { key: 'cost', label: 'Cost', align: 'right' as const, width: '10%' },
+    { key: 'iw', label: 'IW', align: 'right' as const, width: '9%' },
+    { key: 'total', label: 'Total', align: 'right' as const, width: '11%' },
+    { key: 'paidBy', label: 'Paid by', align: 'left' as const, width: hideMappingColumn ? '18%' : '14%' },
+    { key: 'mode', label: 'Mode', align: 'left' as const, width: '9%' },
+    { key: 'invoice', label: 'Invoice', align: 'left' as const, width: '11%' },
     { key: 'actions', label: '', align: 'center' as const, width: 56 },
   ]
 }
@@ -78,6 +73,53 @@ function SecondaryLine({ children }: { children: ReactNode }) {
   )
 }
 
+function MoneyCell({ value, muted }: { value: number; muted?: boolean }) {
+  return (
+    <Typography
+      variant="body2"
+      fontWeight={muted ? 500 : 700}
+      sx={{
+        fontSize: 13,
+        fontVariantNumeric: 'tabular-nums',
+        color: muted ? 'text.secondary' : 'text.primary',
+      }}
+    >
+      {formatInr(value)}
+    </Typography>
+  )
+}
+
+function PaidByCell({ expense }: { expense: ApplicationExpenseRecord }) {
+  const user = expense.paidByUser?.trim()
+  const department = expense.paidByDepartment?.trim()
+  const team = expense.paidByTeam?.trim()
+  const hasIdentity = Boolean(user || department || team)
+
+  if (!hasIdentity) {
+    return (
+      <Typography variant="body2" noWrap sx={{ fontSize: 13 }}>
+        {formatExpensePaidByDisplay(expense)}
+      </Typography>
+    )
+  }
+
+  return (
+    <Box sx={{ minWidth: 0 }}>
+      <Typography
+        variant="body2"
+        noWrap
+        title={user || undefined}
+        sx={{ fontSize: 13, fontWeight: 600 }}
+      >
+        {user || '—'}
+      </Typography>
+      {department || team ? (
+        <SecondaryLine>{[department, team].filter(Boolean).join(' · ')}</SecondaryLine>
+      ) : null}
+    </Box>
+  )
+}
+
 export function ExpenseItemsTable({
   expenses,
   financeKpis,
@@ -87,6 +129,7 @@ export function ExpenseItemsTable({
   emptyDescription = 'Add service, vendor, passenger mapping, amount, and proof details for this application.',
   hideMappingColumn = false,
   embedded = false,
+  hideHeaderAddButton = false,
 }: ExpenseItemsTableProps) {
   const colors = usePublicBrandColors()
   const headers = buildHeaders(hideMappingColumn)
@@ -134,16 +177,22 @@ export function ExpenseItemsTable({
             </Typography>
           ) : null}
         </Stack>
-        <Button label="Add expense" size="sm" startIcon={<Plus size={14} />} onClick={onAddExpense} />
+        {!hideHeaderAddButton ? (
+          <Button label="Add expense" size="sm" startIcon={<Plus size={14} />} onClick={onAddExpense} />
+        ) : null}
       </Stack>
 
       {expenses.length === 0 ? (
         <Box sx={{ px: embedded ? 0 : 1, py: 1 }}>
           <EmptyState
             variant="no-data"
-            title="No expenses added yet"
+            title={title === 'Refunds' ? 'No refunds recorded yet' : 'No expenses added yet'}
             description={emptyDescription}
-            action={{ label: 'Add expense', onClick: onAddExpense }}
+            action={
+              hideHeaderAddButton
+                ? undefined
+                : { label: 'Add expense', onClick: onAddExpense }
+            }
           />
         </Box>
       ) : (
@@ -152,6 +201,7 @@ export function ExpenseItemsTable({
             size="small"
             sx={{
               width: '100%',
+              minWidth: 960,
               tableLayout: 'fixed',
               borderCollapse: 'separate',
               borderSpacing: 0,
@@ -191,96 +241,104 @@ export function ExpenseItemsTable({
               </TableRow>
             </TableHead>
             <TableBody>
-              {expenses.map(row => (
-                <TableRow
-                  key={row.id}
-                  hover
-                  sx={{
-                    cursor: 'pointer',
-                    '&:last-of-type td': { borderBottom: 0 },
-                    '& td': {
-                      borderBottom: `1px solid ${colors.border}`,
-                      py: 1.25,
-                      px: 1.5,
-                      verticalAlign: 'middle',
-                    },
-                  }}
-                  onClick={() => onAction('view', row)}
-                >
-                  <TableCell>
-                    <Typography
-                      variant="body2"
-                      noWrap
-                      title={row.expenseTypeLabel || row.expenseName}
-                      sx={{ fontSize: 13, fontWeight: 600, color: 'text.primary' }}
-                    >
-                      {row.expenseTypeLabel || row.expenseName}
-                    </Typography>
-                    <SecondaryLine>
-                      {[row.vendorStaffPartner?.trim(), row.serviceSourceLabel]
-                        .filter(Boolean)
-                        .join(' · ') || row.serviceSourceLabel}
-                    </SecondaryLine>
-                  </TableCell>
-                  {!hideMappingColumn ? (
+              {expenses.map(row => {
+                const cost = resolveExpenseCostAmount(row)
+                const total = row.amount
+                const iw = computeExpenseIwAmount(cost, total)
+                const invoiceStatus = resolveExpenseInvoiceStatus(row)
+
+                return (
+                  <TableRow
+                    key={row.id}
+                    hover
+                    sx={{
+                      cursor: 'pointer',
+                      '&:last-of-type td': { borderBottom: 0 },
+                      '& td': {
+                        borderBottom: `1px solid ${colors.border}`,
+                        py: 1.25,
+                        px: 1.5,
+                        verticalAlign: 'middle',
+                      },
+                    }}
+                    onClick={() => onAction('view', row)}
+                  >
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        noWrap
+                        title={row.expenseTypeLabel || row.expenseName}
+                        sx={{ fontSize: 13, fontWeight: 600, color: 'text.primary' }}
+                      >
+                        {row.expenseTypeLabel || row.expenseName}
+                      </Typography>
+                      {row.serviceSourceLabel?.trim() ? (
+                        <SecondaryLine>{row.serviceSourceLabel}</SecondaryLine>
+                      ) : null}
+                    </TableCell>
+                    {!hideMappingColumn ? (
+                      <TableCell>
+                        <Typography variant="body2" noWrap sx={{ fontSize: 13 }}>
+                          {row.passengerMapping.displayLabel}
+                        </Typography>
+                      </TableCell>
+                    ) : null}
+                    <TableCell align="right">
+                      <MoneyCell value={cost} />
+                    </TableCell>
+                    <TableCell align="right">
+                      <MoneyCell value={iw} muted />
+                    </TableCell>
+                    <TableCell align="right">
+                      <MoneyCell value={total} />
+                      {row.gstAmount > 0 ? (
+                        <SecondaryLine>GST {formatInr(row.gstAmount)}</SecondaryLine>
+                      ) : null}
+                    </TableCell>
+                    <TableCell>
+                      <PaidByCell expense={row} />
+                    </TableCell>
                     <TableCell>
                       <Typography variant="body2" noWrap sx={{ fontSize: 13 }}>
-                        {row.passengerMapping.displayLabel}
+                        {getExpensePaymentModeLabel(row.paymentMode)}
                       </Typography>
                     </TableCell>
-                  ) : null}
-                  <TableCell align="right">
-                    <Typography
-                      variant="body2"
-                      fontWeight={700}
-                      sx={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}
+                    <TableCell>
+                      <Badge
+                        label={getExpenseInvoiceStatusLabel(invoiceStatus)}
+                        color={expenseInvoiceStatusColor[invoiceStatus]}
+                        size="sm"
+                      />
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{ width: 56 }}
+                      onClick={event => event.stopPropagation()}
                     >
-                      {formatInr(row.netPayableAmount)}
-                    </Typography>
-                    {row.gstAmount > 0 ? (
-                      <SecondaryLine>incl. GST {formatInr(row.gstAmount)}</SecondaryLine>
-                    ) : null}
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontSize: 13 }}>
-                      {getPaidByLabel(row.paidBy)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      label={paymentStatusLabel(row.paymentStatus)}
-                      color={paymentStatusColor(row.paymentStatus)}
-                      size="sm"
-                    />
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{ width: 56 }}
-                    onClick={event => event.stopPropagation()}
-                  >
-                    <RowActions
-                      row={row}
-                      actions={[
-                        { label: 'View', onClick: () => onAction('view', row) },
-                        { label: 'Edit', onClick: () => onAction('edit', row) },
-                        {
-                          label: row.proofFileName ? 'Replace proof' : 'Upload proof',
-                          onClick: () => onAction('upload_proof', row),
-                        },
-                        ...(!row.isAutoGenerated
-                          ? [
-                              {
-                                label: 'Delete',
-                                onClick: () => onAction('delete', row),
-                                variant: 'destructive' as const,
-                              },
-                            ]
-                          : []),
-                      ]}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+                      <RowActions
+                        row={row}
+                        actions={[
+                          { label: 'View', onClick: () => onAction('view', row) },
+                          { label: 'Edit', onClick: () => onAction('edit', row) },
+                          {
+                            label: row.proofFileName ? 'Replace proof' : 'Upload proof',
+                            onClick: () => onAction('upload_proof', row),
+                          },
+                          ...(!row.isAutoGenerated
+                            ? [
+                                {
+                                  label: 'Delete',
+                                  onClick: () => onAction('delete', row),
+                                  variant: 'destructive' as const,
+                                },
+                              ]
+                            : []),
+                        ]}
+                      />
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </Box>
