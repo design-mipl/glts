@@ -4,34 +4,7 @@ import {
 } from '../../shared/config/applicationPipeline'
 import { PASSPORT_JOURNEY_STAGE_IDS } from '../../shared/config/passportJourney'
 import { buildTeamProductivityByChannel } from '../../shared/widgets/operations/teamProductivityData'
-import type { AdminDashboardNextData, AdminDashboardNextFilters } from '../types'
-
-export const ADMIN_DASHBOARD_NEXT_PERIOD_OPTIONS = [
-  { label: 'Today', value: 'today' },
-  { label: 'This week', value: 'week' },
-  { label: 'This month', value: 'month' },
-  { label: 'This quarter', value: 'quarter' },
-]
-
-export const ADMIN_DASHBOARD_NEXT_REGION_OPTIONS = [
-  { label: 'All regions', value: 'all' },
-  { label: 'India', value: 'india' },
-  { label: 'UAE', value: 'uae' },
-  { label: 'Europe', value: 'europe' },
-]
-
-export const ADMIN_DASHBOARD_NEXT_SEGMENT_OPTIONS = [
-  { label: 'All segments', value: 'all' },
-  { label: 'Retail', value: 'retail' },
-  { label: 'Corporate', value: 'corporate' },
-  { label: 'Marine', value: 'marine' },
-]
-
-export const DEFAULT_ADMIN_DASHBOARD_NEXT_FILTERS: AdminDashboardNextFilters = {
-  period: 'week',
-  region: 'all',
-  segment: 'all',
-}
+import type { AdminDashboardNextData } from '../types'
 
 const PIPELINE_COUNTS: Record<ApplicationPipelineStageId, {
   count: number
@@ -40,15 +13,13 @@ const PIPELINE_COUNTS: Record<ApplicationPipelineStageId, {
   slaPercent: number
 }> = {
   draft: { count: 42, averageAgeHours: 6, delayedCount: 2, slaPercent: 96 },
-  'awaiting-documents': { count: 38, averageAgeHours: 28, delayedCount: 7, slaPercent: 88 },
-  verification: { count: 31, averageAgeHours: 18, delayedCount: 4, slaPercent: 91 },
-  qc: { count: 27, averageAgeHours: 14, delayedCount: 5, slaPercent: 89 },
-  appointment: { count: 22, averageAgeHours: 36, delayedCount: 3, slaPercent: 93 },
-  submission: { count: 19, averageAgeHours: 12, delayedCount: 1, slaPercent: 97 },
-  embassy: { count: 16, averageAgeHours: 72, delayedCount: 6, slaPercent: 84 },
-  collection: { count: 11, averageAgeHours: 24, delayedCount: 2, slaPercent: 92 },
-  dispatch: { count: 8, averageAgeHours: 10, delayedCount: 0, slaPercent: 99 },
-  delivered: { count: 54, averageAgeHours: 0, delayedCount: 0, slaPercent: 100 },
+  verification_pending: { count: 68, averageAgeHours: 22, delayedCount: 11, slaPercent: 89 },
+  online_submission_pending: { count: 31, averageAgeHours: 14, delayedCount: 4, slaPercent: 93 },
+  pending_payment: { count: 19, averageAgeHours: 18, delayedCount: 5, slaPercent: 88 },
+  vfs_submission_pending: { count: 27, averageAgeHours: 48, delayedCount: 8, slaPercent: 84 },
+  collection_pending: { count: 16, averageAgeHours: 24, delayedCount: 3, slaPercent: 91 },
+  collected: { count: 11, averageAgeHours: 10, delayedCount: 1, slaPercent: 97 },
+  dispatched: { count: 54, averageAgeHours: 0, delayedCount: 0, slaPercent: 100 },
 }
 
 export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
@@ -84,6 +55,14 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
       delta: 1.2,
       deltaLabel: 'SLA breach or escalation',
       sparklineData: [14, 15, 16, 15, 16, 17, 17],
+    },
+    {
+      id: 'cases-over-7d',
+      label: 'In Stage >7 Days',
+      value: 24,
+      delta: -3,
+      deltaLabel: 'Target: zero in any stage',
+      sparklineData: [32, 30, 28, 27, 26, 25, 24],
     },
     {
       id: 'sla-compliance',
@@ -175,6 +154,13 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
       title: 'Marine Crew Joining Within 7 Days',
       count: 14,
       oldestWaiting: '4d 6h',
+      priority: 'critical',
+    },
+    {
+      id: 'ca-over-7d',
+      title: 'Any Stage >7 Days',
+      count: 24,
+      oldestWaiting: '9d 2h',
       priority: 'critical',
     },
     { id: 'ca7', title: 'No Movement Cases', count: 19, oldestWaiting: '5d 2h', priority: 'medium' },
@@ -376,6 +362,7 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
       crew: '12',
       joiningPort: 'Mumbai',
       signOn: '24 Jul',
+      daysRemaining: 8,
       visaStatus: 'QC',
       priority: 'High',
       ragStatus: 'amber',
@@ -386,6 +373,7 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
       crew: '8',
       joiningPort: 'Kochi',
       signOn: '26 Jul',
+      daysRemaining: 4,
       visaStatus: 'Embassy',
       priority: 'Critical',
       ragStatus: 'red',
@@ -396,9 +384,21 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
       crew: '15',
       joiningPort: 'Chennai',
       signOn: '28 Jul',
+      daysRemaining: 12,
       visaStatus: 'Verified',
       priority: 'Medium',
       ragStatus: 'green',
+    },
+    {
+      id: 'mt-4',
+      vessel: 'MV Atlantic Crest',
+      crew: '6',
+      joiningPort: 'Mundra',
+      signOn: '02 Aug',
+      daysRemaining: 9,
+      visaStatus: 'Appointment',
+      priority: 'High',
+      ragStatus: 'amber',
     },
   ],
   processingTrend: [

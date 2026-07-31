@@ -3,33 +3,56 @@ import { Box, Stack } from '@mui/material'
 import { Tabs } from '@/design-system/UIComponents'
 import { DASHBOARD_SPACING } from '../../shared/constants'
 import { CollectionsTab } from './CollectionsTab'
+import { FundAllocationDeskTab } from './FundAllocationDeskTab'
 import { InvoicingTab } from './InvoicingTab'
 import { ReconciliationTab } from './ReconciliationTab'
+import { VendorBillingDeskTab } from './VendorBillingDeskTab'
 import type { AccountsDashboardTabProps } from '../types'
 
-type WorkTeamTabId = 'reconciliation' | 'invoicing' | 'credit_control'
+type WorkTeamTabId =
+  | 'expenses'
+  | 'fund_allocation'
+  | 'vendor_billing'
+  | 'invoicing'
+  | 'credit_control'
 
 /**
- * Work tab — daily desks for Reconciliation, Invoicing, and Credit Control teams.
+ * Work tab — desks aligned to finance modules:
+ * Expenses · Fund allocation · Vendor billing · Invoicing · Credit control.
  */
 export function WorkTab(props: AccountsDashboardTabProps) {
-  const [teamTab, setTeamTab] = useState<WorkTeamTabId>('reconciliation')
+  const [teamTab, setTeamTab] = useState<WorkTeamTabId>('expenses')
 
-  const reconBadge = props.data.expenseDailyRows.length + props.data.reconciliationRows.length
+  const expensesBadge =
+    props.data.expenseDailyRows.length +
+    props.data.expenseRefundRows.filter((r) => r.status.toLowerCase().includes('pending')).length
+
+  const fundsBadge =
+    props.data.fundAllocationRows.filter((r) => r.allocationStatus === 'Pending').length +
+    props.data.claimSheetRows.filter((r) => r.status === 'Pending review').length
+
+  const vendorBadge = props.data.vendorBillingRows.reduce(
+    (sum, r) => sum + r.awaitingInvoiceCount,
+    0,
+  )
+
   const invoiceBadge =
     props.data.visaSubmissionRows.filter((r) => r.invoiceReady === 'Yes').length +
-    props.data.invoicePostingQueue.length
+    props.data.invoiceExceptionRows.length
+
   const creditBadge =
     props.data.paymentAllocationRows.filter((r) => r.allocationStatus !== 'Allocated').length +
     props.data.followUpRows.length
 
   const tabItems = useMemo(
     () => [
-      { value: 'reconciliation' as const, label: `Reconciliation (${reconBadge})` },
+      { value: 'expenses' as const, label: `Expenses (${expensesBadge})` },
+      { value: 'fund_allocation' as const, label: `Fund allocation (${fundsBadge})` },
+      { value: 'vendor_billing' as const, label: `Vendor billing (${vendorBadge})` },
       { value: 'invoicing' as const, label: `Invoicing (${invoiceBadge})` },
       { value: 'credit_control' as const, label: `Credit control (${creditBadge})` },
     ],
-    [reconBadge, invoiceBadge, creditBadge],
+    [expensesBadge, fundsBadge, vendorBadge, invoiceBadge, creditBadge],
   )
 
   return (
@@ -44,7 +67,9 @@ export function WorkTab(props: AccountsDashboardTabProps) {
         />
       </Box>
 
-      {teamTab === 'reconciliation' ? <ReconciliationTab {...props} /> : null}
+      {teamTab === 'expenses' ? <ReconciliationTab {...props} /> : null}
+      {teamTab === 'fund_allocation' ? <FundAllocationDeskTab {...props} /> : null}
+      {teamTab === 'vendor_billing' ? <VendorBillingDeskTab {...props} /> : null}
       {teamTab === 'invoicing' ? <InvoicingTab {...props} /> : null}
       {teamTab === 'credit_control' ? <CollectionsTab {...props} /> : null}
     </Stack>

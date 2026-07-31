@@ -213,12 +213,23 @@ export interface SuperAdminDashboardData {
   reportNotifications: NotificationItem[]
 }
 
+export interface SuperAdminWorkRow {
+  id: string
+  primary: string
+  secondary: string
+  category: string
+  status: string
+  value: string
+  priority: string
+}
+
 export interface SuperAdminExecutiveStoryProps {
   data: SuperAdminDashboardData
   loading?: boolean
   onRetry?: () => void
   onNavigate: (href: string) => void
   onOpenClient?: (clientId: string) => void
+  onOpenTab?: (tabId: string) => void
   onPipelineStageClick?: (stageId: string) => void
   /** Optional intelligence overlays — does not change section order. */
   insights?: ExecutiveInsight[]

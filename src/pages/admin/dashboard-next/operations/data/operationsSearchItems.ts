@@ -20,7 +20,8 @@ export function buildOperationsSearchItems(options: {
     {
       id: 'ops-tab-work',
       title: 'Work',
-      subtitle: 'Personal desk — verify, payment, book, submit',
+      subtitle:
+        'Personal desk — Verify, Re-review, Payment, Arrange Ticket/Insurance, Submit, Collect, Waiting',
       category: 'section',
       onSelect: () => options.onOpenTab('work'),
     },

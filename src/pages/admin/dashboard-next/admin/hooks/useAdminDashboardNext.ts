@@ -1,14 +1,17 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useDashboardQuery } from '../../shared/hooks/useDashboardQuery'
-import type { DashboardFilterConfig } from '../../shared/types'
 import {
-  ADMIN_DASHBOARD_NEXT_PERIOD_OPTIONS,
-  ADMIN_DASHBOARD_NEXT_REGION_OPTIONS,
-  ADMIN_DASHBOARD_NEXT_SEGMENT_OPTIONS,
-  DEFAULT_ADMIN_DASHBOARD_NEXT_FILTERS,
-} from '../data/adminDashboardNextMock'
+  DEFAULT_INTELLIGENCE_FILTERS,
+  type DashboardIntelligenceFilters,
+} from '../../shared/dashboard-intelligence'
 import { fetchAdminDashboardNext } from '../services/adminDashboardNextService'
 import type { AdminDashboardNextFilters } from '../types'
+
+export const DEFAULT_ADMIN_DASHBOARD_NEXT_FILTERS: AdminDashboardNextFilters = {
+  ...DEFAULT_INTELLIGENCE_FILTERS,
+  /** Business performance board is reviewed daily. */
+  datePreset: 'today',
+}
 
 export function useAdminDashboardNext() {
   const [filters, setFilters] = useState<AdminDashboardNextFilters>(
@@ -18,37 +21,13 @@ export function useAdminDashboardNext() {
   const load = useCallback(() => fetchAdminDashboardNext(filters), [filters])
   const query = useDashboardQuery({ load })
 
-  const filterConfigs: DashboardFilterConfig[] = useMemo(
-    () => [
-      {
-        id: 'period',
-        label: 'Period',
-        options: ADMIN_DASHBOARD_NEXT_PERIOD_OPTIONS,
-        value: filters.period,
-        onChange: (value) => setFilters((prev) => ({ ...prev, period: value })),
-      },
-      {
-        id: 'region',
-        label: 'Region',
-        options: ADMIN_DASHBOARD_NEXT_REGION_OPTIONS,
-        value: filters.region,
-        onChange: (value) => setFilters((prev) => ({ ...prev, region: value })),
-      },
-      {
-        id: 'segment',
-        label: 'Segment',
-        options: ADMIN_DASHBOARD_NEXT_SEGMENT_OPTIONS,
-        value: filters.segment,
-        onChange: (value) => setFilters((prev) => ({ ...prev, segment: value })),
-      },
-    ],
-    [filters],
-  )
+  const handleFiltersChange = useCallback((next: DashboardIntelligenceFilters) => {
+    setFilters(next)
+  }, [])
 
   return {
     filters,
-    setFilters,
-    filterConfigs,
+    setFilters: handleFiltersChange,
     data: query.data,
     status: query.status,
     error: query.error,

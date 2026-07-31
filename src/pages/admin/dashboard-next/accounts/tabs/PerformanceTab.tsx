@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Box, Grid, Stack, Typography, alpha } from '@mui/material'
 import { BarChart, DonutChart, LineChart, Select } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
@@ -6,12 +6,20 @@ import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/execut
 import { DASHBOARD_SPACING } from '../../shared/constants'
 import { AGEING_BUCKET_LABELS, type AgeingBucketId } from '../../shared/config/ageingBuckets'
 import { ACCOUNTS_CHART_COLORS } from '../data/accountsChartColors'
-import type { AccountsDashboardTabProps } from '../types'
+import type { AccountsDashboardTabProps, AccountsTopRevenueRow } from '../types'
 
 const PERIOD_OPTIONS = [
   { label: 'This week', value: 'week' },
   { label: 'This month', value: 'month' },
 ] as const
+
+const TOP_N_OPTIONS = [
+  { label: 'Top 5', value: '5' },
+  { label: 'Top 7', value: '7' },
+  { label: 'Top 10', value: '10' },
+] as const
+
+type TopN = 5 | 7 | 10
 
 const PRODUCTIVITY_ACCENTS = [
   ACCOUNTS_CHART_COLORS.green,
@@ -19,6 +27,13 @@ const PRODUCTIVITY_ACCENTS = [
   ACCOUNTS_CHART_COLORS.amber,
   ACCOUNTS_CHART_COLORS.navy,
 ] as const
+
+const PAYMENT_MODE_COLORS: Record<string, string> = {
+  'Credit card': ACCOUNTS_CHART_COLORS.coral,
+  'Vendor payable': ACCOUNTS_CHART_COLORS.blue,
+  Cash: ACCOUNTS_CHART_COLORS.teal,
+  '—': ACCOUNTS_CHART_COLORS.slate,
+}
 
 function ChartPanel({
   title,
@@ -58,10 +73,30 @@ function ChartPanel({
   )
 }
 
-/** Performance — multi-color charts matching ops PerformanceTab. */
+function toTopBars(rows: AccountsTopRevenueRow[], limit: TopN) {
+  return rows.slice(0, limit).map((row) => ({
+    name: row.name,
+    share: row.sharePercent,
+  }))
+}
+
+function topChartHeight(count: number): number {
+  return Math.max(260, count * 44 + 56)
+}
+
+function parseAmountLakhs(amount: string): number {
+  const cleaned = amount.replace(/[₹,\s]/g, '').toUpperCase()
+  if (cleaned.endsWith('L')) return Number.parseFloat(cleaned) || 0
+  const n = Number.parseFloat(cleaned)
+  return Number.isFinite(n) ? n / 100000 : 0
+}
+
+/** Performance — AR + module throughput charts (expenses · funds · vendor · invoices). */
 export function PerformanceTab({ data, loading }: AccountsDashboardTabProps) {
   const brand = usePublicBrandColors()
   const [period, setPeriod] = useState<'week' | 'month'>('week')
+  const [clientTopN, setClientTopN] = useState<TopN>(5)
+  const [countryTopN, setCountryTopN] = useState<TopN>(5)
 
   const trendPoints = data.processingTrend.map((p) => ({
     label: p.label,
@@ -69,15 +104,15 @@ export function PerformanceTab({ data, loading }: AccountsDashboardTabProps) {
     collected: p.secondary ?? Math.round(p.value * 0.72),
   }))
 
-  const branchBars = data.branchPerformance.map((b) => ({
-    branch: b.label,
-    revenue: b.value,
-  }))
+  const topClientBars = useMemo(
+    () => toTopBars(data.topClients, clientTopN),
+    [data.topClients, clientTopN],
+  )
 
-  const topClientBars = data.topClients.slice(0, 6).map((c) => ({
-    name: c.name.length > 18 ? `${c.name.slice(0, 16)}…` : c.name,
-    revenue: c.sharePercent,
-  }))
+  const topCountryBars = useMemo(
+    () => toTopBars(data.topCountries, countryTopN),
+    [data.topCountries, countryTopN],
+  )
 
   const ageingSlices = data.ageingBuckets.map((bucket, index) => {
     const colors = [
@@ -116,6 +151,82 @@ export function PerformanceTab({ data, loading }: AccountsDashboardTabProps) {
   }))
 
   const ageingTotal = ageingSlices.reduce((s, x) => s + x.value, 0)
+
+  const paymentModeBars = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const row of data.expenseDailyRows) {
+      const mode = row.paymentMode || '—'
+      map.set(mode, (map.get(mode) ?? 0) + parseAmountLakhs(row.amount) * 100)
+    }
+    return Array.from(map.entries()).map(([mode, amount]) => ({
+      mode,
+      amount: Math.round(amount),
+    }))
+  }, [data.expenseDailyRows])
+
+  const fundThroughputBars = useMemo(() => {
+    const pending = data.fundAllocationRows.filter((r) => r.allocationStatus === 'Pending').length
+    const allocated = data.fundAllocationRows.filter((r) => r.allocationStatus === 'Allocated').length
+    const claimPending = data.claimSheetRows.filter((r) => r.status === 'Pending review').length
+    const claimApproved = data.claimSheetRows.filter((r) => r.status === 'Approved').length
+    return [
+      { stage: 'Funds pending', count: pending },
+      { stage: 'Funds allocated', count: allocated },
+      { stage: 'Claims pending', count: claimPending },
+      { stage: 'Claims approved', count: claimApproved },
+    ]
+  }, [data.fundAllocationRows, data.claimSheetRows])
+
+  const vendorBars = useMemo(
+    () =>
+      data.vendorBillingRows.map((row) => ({
+        name: row.vendorName,
+        outstanding: Math.round(parseAmountLakhs(row.outstandingAmount) * 100),
+        awaiting: row.awaitingInvoiceCount,
+      })),
+    [data.vendorBillingRows],
+  )
+
+  const exceptionSlices = useMemo(() => {
+    const unbilled = data.invoiceExceptionRows.filter((r) => r.kind === 'unbilled').length
+    const refunds = data.invoiceExceptionRows.filter((r) => r.kind === 'refund').length
+    const creditNotes = data.invoiceExceptionRows.filter((r) => r.kind === 'credit_note').length
+    const expenseRefunds = data.expenseRefundRows.filter((r) =>
+      r.status.toLowerCase().includes('pending'),
+    ).length
+    return [
+      { key: 'unbilled', label: 'Unbilled', value: unbilled, color: ACCOUNTS_CHART_COLORS.amber },
+      { key: 'inv-refund', label: 'Invoice refunds', value: refunds, color: ACCOUNTS_CHART_COLORS.coral },
+      { key: 'cn', label: 'Credit notes', value: creditNotes, color: ACCOUNTS_CHART_COLORS.violet },
+      {
+        key: 'exp-refund',
+        label: 'Expense refunds',
+        value: expenseRefunds,
+        color: ACCOUNTS_CHART_COLORS.teal,
+      },
+    ].filter((s) => s.value > 0)
+  }, [data.invoiceExceptionRows, data.expenseRefundRows])
+
+  const exceptionTotal = exceptionSlices.reduce((sum, s) => sum + s.value, 0)
+
+  const collectionRateBars = useMemo(
+    () => [
+      {
+        metric: 'Collection rate %',
+        value: data.collectionSummary.collectionRate,
+      },
+      {
+        metric: 'Overdue share',
+        value: Math.max(
+          8,
+          Math.round(
+            100 - data.collectionSummary.collectionRate + (period === 'month' ? 4 : 0),
+          ),
+        ),
+      },
+    ],
+    [data.collectionSummary.collectionRate, period],
+  )
 
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
@@ -227,6 +338,91 @@ export function PerformanceTab({ data, loading }: AccountsDashboardTabProps) {
       </Grid>
 
       <Grid size={{ xs: 12, md: 6 }}>
+        <ChartPanel title="Expense by payment mode" description="Spend mix from expense module (₹k)">
+          <BarChart
+            data={paymentModeBars}
+            xKey="mode"
+            height={220}
+            barSize={24}
+            showLegend={false}
+            loading={loading}
+            bars={[
+              {
+                key: 'amount',
+                label: 'Amount ₹k',
+                color: PAYMENT_MODE_COLORS[paymentModeBars[0]?.mode ?? ''] ?? ACCOUNTS_CHART_COLORS.coral,
+              },
+            ]}
+          />
+        </ChartPanel>
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 6 }}>
+        <ChartPanel title="Fund & claim throughput" description="Ops requests and Ground Ops claim sheets">
+          <BarChart
+            data={fundThroughputBars}
+            xKey="stage"
+            height={220}
+            barSize={22}
+            showLegend={false}
+            loading={loading}
+            bars={[{ key: 'count', label: 'Count', color: ACCOUNTS_CHART_COLORS.amber }]}
+          />
+        </ChartPanel>
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 6 }}>
+        <ChartPanel title="Vendor outstanding" description="Payables and charges awaiting invoice">
+          <BarChart
+            data={vendorBars}
+            xKey="name"
+            height={Math.max(240, vendorBars.length * 44 + 48)}
+            barSize={18}
+            orientation="horizontal"
+            wrapCategoryLabels
+            showLegend
+            loading={loading}
+            bars={[
+              { key: 'outstanding', label: 'Outstanding ₹k', color: ACCOUNTS_CHART_COLORS.blue },
+              { key: 'awaiting', label: 'Awaiting invoice', color: ACCOUNTS_CHART_COLORS.coral },
+            ]}
+          />
+        </ChartPanel>
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 6 }}>
+        <ChartPanel title="Invoice & expense exceptions" description="Unbilled · refunds · credit notes">
+          <DonutChart
+            data={
+              exceptionSlices.length > 0
+                ? exceptionSlices
+                : [{ key: 'none', label: 'None', value: 1, color: ACCOUNTS_CHART_COLORS.slate }]
+            }
+            height={240}
+            loading={loading}
+            centerLabel="open"
+            centerValue={String(exceptionTotal)}
+          />
+        </ChartPanel>
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 6 }}>
+        <ChartPanel title="Collection rate vs overdues" description="Recovery health for selected period">
+          <BarChart
+            data={collectionRateBars}
+            xKey="metric"
+            height={220}
+            barSize={28}
+            showLegend={false}
+            loading={loading}
+            bars={[
+              { key: 'value', label: '%', color: ACCOUNTS_CHART_COLORS.green },
+            ]}
+          />
+        </ChartPanel>
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 6 }}>
         <ChartPanel title="AR ageing mix" description="Outstanding by bucket (₹L)">
           <DonutChart
             data={ageingSlices}
@@ -251,32 +447,66 @@ export function PerformanceTab({ data, loading }: AccountsDashboardTabProps) {
       </Grid>
 
       <Grid size={{ xs: 12, md: 6 }}>
-        <ChartPanel title="Branch revenue" description="MTD revenue by branch (₹L)">
+        <ChartPanel
+          title="Top clients"
+          description="Share of revenue (%)"
+          action={
+            <Box sx={{ width: { xs: '100%', sm: 120 }, flexShrink: 0 }}>
+              <Select
+                size="sm"
+                fullWidth
+                aria-label="Top clients count"
+                value={String(clientTopN)}
+                options={[...TOP_N_OPTIONS]}
+                onChange={(v) => setClientTopN(Number(v) as TopN)}
+              />
+            </Box>
+          }
+        >
           <BarChart
-            data={branchBars}
-            xKey="branch"
-            height={220}
-            barSize={22}
+            data={topClientBars}
+            xKey="name"
+            height={topChartHeight(clientTopN)}
+            barSize={18}
+            orientation="horizontal"
+            wrapCategoryLabels
             showLegend={false}
             loading={loading}
             bars={[
-              { key: 'revenue', label: 'Revenue', color: ACCOUNTS_CHART_COLORS.blue },
+              { key: 'share', label: 'Share %', color: ACCOUNTS_CHART_COLORS.violet },
             ]}
           />
         </ChartPanel>
       </Grid>
 
       <Grid size={{ xs: 12, md: 6 }}>
-        <ChartPanel title="Top clients" description="Share of revenue (%)">
+        <ChartPanel
+          title="Top countries"
+          description="Share of revenue (%)"
+          action={
+            <Box sx={{ width: { xs: '100%', sm: 120 }, flexShrink: 0 }}>
+              <Select
+                size="sm"
+                fullWidth
+                aria-label="Top countries count"
+                value={String(countryTopN)}
+                options={[...TOP_N_OPTIONS]}
+                onChange={(v) => setCountryTopN(Number(v) as TopN)}
+              />
+            </Box>
+          }
+        >
           <BarChart
-            data={topClientBars}
+            data={topCountryBars}
             xKey="name"
-            height={220}
+            height={topChartHeight(countryTopN)}
             barSize={18}
+            orientation="horizontal"
+            wrapCategoryLabels
             showLegend={false}
             loading={loading}
             bars={[
-              { key: 'revenue', label: 'Share %', color: ACCOUNTS_CHART_COLORS.violet },
+              { key: 'share', label: 'Share %', color: ACCOUNTS_CHART_COLORS.blue },
             ]}
           />
         </ChartPanel>

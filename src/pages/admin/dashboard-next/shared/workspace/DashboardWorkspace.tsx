@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Stack, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { Search } from 'lucide-react'
@@ -73,7 +73,15 @@ export function DashboardWorkspace({
 }: DashboardWorkspaceProps) {
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('desktop'))
-  const { activeTab, setActiveTab } = useWorkspaceTabState(workspaceId, defaultTab)
+  const validTabIds = useMemo(
+    () => tabs.filter((t) => !t.hidden).map((t) => t.id),
+    [tabs],
+  )
+  const { activeTab, setActiveTab } = useWorkspaceTabState(
+    workspaceId,
+    defaultTab,
+    validTabIds,
+  )
   const [searchOpen, setSearchOpen] = useState(false)
 
   const headerActions =

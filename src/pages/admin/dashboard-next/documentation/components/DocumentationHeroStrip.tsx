@@ -1,12 +1,9 @@
 import type { ReactNode } from 'react'
 import { Box } from '@mui/material'
 import {
-  Calendar,
+  AlertTriangle,
   ClipboardCheck,
-  FileCheck,
-  FileStack,
-  FileText,
-  FormInput,
+  ClipboardList,
   Receipt,
   Send,
 } from 'lucide-react'
@@ -16,34 +13,36 @@ import type { DashboardKpiItem } from '../../shared/types'
 import { DASHBOARD_SPACING } from '../../shared/constants'
 
 const KPI_ICONS: Record<string, ReactNode> = {
-  my_applications: <FileStack size={16} />,
-  incomplete_documents: <FileText size={16} />,
-  pending_review: <ClipboardCheck size={16} />,
-  forms_today: <FormInput size={16} />,
-  fees_today: <Receipt size={16} />,
-  appointments_today: <Calendar size={16} />,
-  ready_submit: <FileCheck size={16} />,
   submission_pending: <Send size={16} />,
+  pending_payment: <Receipt size={16} />,
+  qc_ready: <ClipboardCheck size={16} />,
+  waiting_on_ops: <ClipboardList size={16} />,
+  sla_at_risk: <AlertTriangle size={16} />,
 }
 
 function kpiTone(id: string): 'positive' | 'negative' | 'warning' | 'info' | 'neutral' {
-  if (id === 'submission_pending' || id === 'incomplete_documents') return 'warning'
-  if (id === 'pending_review') return 'warning'
-  if (id === 'ready_submit') return 'positive'
-  if (id === 'forms_today' || id === 'fees_today') return 'info'
+  if (id === 'waiting_on_ops' || id === 'sla_at_risk' || id === 'submission_pending') return 'warning'
+  if (id === 'qc_ready') return 'positive'
+  if (id === 'pending_payment') return 'info'
   return 'neutral'
 }
 
 export interface DocumentationHeroStripProps {
   items: DashboardKpiItem[]
   loading?: boolean
+  onKpiClick?: (kpiId: string) => void
 }
 
-/** Documentation hero KPIs — HeroMetric with due today / overdue in deltaLabel. */
-export function DocumentationHeroStrip({ items, loading }: DocumentationHeroStripProps) {
+/** Docs hero KPIs — work queues only (post-submit visibility lives on Overview). */
+export function DocumentationHeroStrip({
+  items,
+  loading,
+  onKpiClick,
+}: DocumentationHeroStripProps) {
   const drilldown = useDrilldownOptional()
 
   const openKpi = (kpi: DashboardKpiItem) => {
+    onKpiClick?.(kpi.id)
     drilldown?.openDrilldown({
       id: `documentation-kpi-${kpi.id}`,
       title: kpi.label,
@@ -60,23 +59,22 @@ export function DocumentationHeroStrip({ items, loading }: DocumentationHeroStri
 
   return (
     <InsightStack spacing={DASHBOARD_SPACING.dense}>
-      <ExecutiveGrid columns={items.length >= 6 ? 4 : 4} spacing={1}>
+      <ExecutiveGrid columns={6} spacing={1}>
         {items.map((kpi) => (
           <Box
             key={kpi.id}
-            role={drilldown ? 'button' : undefined}
-            tabIndex={drilldown ? 0 : undefined}
+            role="button"
+            tabIndex={0}
             aria-label={`${kpi.label}: ${kpi.value}`}
             onClick={() => openKpi(kpi)}
             onKeyDown={(event) => {
-              if (!drilldown) return
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault()
                 openKpi(kpi)
               }
             }}
             sx={{
-              cursor: drilldown ? 'pointer' : 'default',
+              cursor: 'pointer',
               minWidth: 0,
               outline: 'none',
               '&:focus-visible': {

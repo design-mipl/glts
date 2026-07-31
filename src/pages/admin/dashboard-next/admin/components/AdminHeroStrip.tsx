@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock,
   FileText,
+  Hourglass,
   Shield,
   Users,
   Wallet,
@@ -20,13 +21,21 @@ const KPI_ICONS: Record<string, ReactNode> = {
   'applications-in-progress': <Activity size={16} />,
   'completed-today': <CheckCircle2 size={16} />,
   'critical-cases': <AlertTriangle size={16} />,
+  'cases-over-7d': <Hourglass size={16} />,
   'sla-compliance': <Shield size={16} />,
   'applications-delayed': <Clock size={16} />,
   'team-utilization': <Users size={16} />,
   'revenue-today': <Wallet size={16} />,
 }
 
-function kpiTone(id: string, delta?: number): 'positive' | 'negative' | 'warning' | 'info' | 'neutral' {
+function kpiTone(
+  id: string,
+  delta?: number,
+  value?: string | number,
+): 'positive' | 'negative' | 'warning' | 'info' | 'neutral' {
+  if (id === 'cases-over-7d') {
+    return value === 0 || value === '0' ? 'positive' : 'negative'
+  }
   if (id === 'critical-cases') return 'negative'
   if (id === 'applications-delayed') return 'warning'
   if (id === 'applications-in-progress' || id === 'team-utilization') return 'info'
@@ -96,7 +105,7 @@ export function AdminHeroStrip({ items, loading }: AdminHeroStripProps) {
               delta={kpi.delta}
               deltaLabel={kpi.deltaLabel}
               icon={KPI_ICONS[kpi.id] ?? kpi.icon}
-              tone={kpiTone(kpi.id, kpi.delta)}
+              tone={kpiTone(kpi.id, kpi.delta, kpi.value)}
               loading={loading}
               animate
             />

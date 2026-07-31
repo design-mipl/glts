@@ -1,50 +1,147 @@
-import { Grid, Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
+import { AlertTriangle } from 'lucide-react'
+import { Button } from '@/design-system/UIComponents'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import {
   AlertCenter,
-  MetricComparison,
-  ProgressSummary,
+  ApplicationPipeline,
   RecentActivity,
   DASHBOARD_SPACING,
 } from '../../shared'
+import { applicationPipelineStageHref } from '../../shared/config/applicationPipeline'
+import { DocumentationExecutiveRow } from '../components/DocumentationExecutiveRow'
+import { DocumentationInfographics, DocumentationWorkloadBySegment } from '../components/DocumentationInfographics'
+import { DocumentationVisibilityStrip } from '../components/DocumentationVisibilityStrip'
+import { getAlertWorkDesk } from '../data/documentationDashboardMock'
 import type { DocumentationDashboardTabProps } from '../types'
 
-/** Overview — performance metrics, recent activity, alerts summary. */
-export function OverviewTab({ data, loading, onRetry }: DocumentationDashboardTabProps) {
+/** Overview — signal · visibility · pipeline + alerts · infographics · to-action. */
+export function OverviewTab({
+  data,
+  loading,
+  onRetry,
+  onNavigate,
+  onOpenTab,
+  onOpenWorkDesk,
+  onKpiClick,
+}: DocumentationDashboardTabProps) {
+  const colors = usePublicBrandColors()
+
+  const pendingQc = data.submissionPendingRows.filter((r) => r.qcOutcome === 'pending_qc').length
+  const waitingOps = data.waitingOnOpsRows.length
+  const paymentDue = data.pendingPaymentRows.length
+  const breached = data.submissionPendingRows.filter((r) => r.slaStatus === 'breached').length
+
+  const signalParts = [
+    pendingQc > 0 ? `${pendingQc} pending QC` : null,
+    waitingOps > 0 ? `${waitingOps} waiting on Ops` : null,
+    paymentDue > 0 ? `${paymentDue} pending payment` : null,
+    breached > 0 ? `${breached} SLA breached` : null,
+  ].filter(Boolean)
+
   return (
-    <Grid container spacing={DASHBOARD_SPACING.field}>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Stack spacing={1}>
-          <Typography variant="subtitle2" fontWeight={700}>
-            Documentation SLA
-          </Typography>
-          <ProgressSummary items={data.personalSla} loading={loading} />
-        </Stack>
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <MetricComparison
-          title="My performance today"
-          metrics={data.metricComparison}
-          loading={loading}
-          onRetry={onRetry}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, lg: 5 }}>
-        <AlertCenter
-          title="Critical alerts summary"
-          alerts={data.criticalAlerts}
-          loading={loading}
-          maxItems={5}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, lg: 7 }}>
-        <RecentActivity
-          title="Recent activity"
-          items={data.recentActivity}
-          loading={loading}
-          onRetry={onRetry}
-          maxItems={6}
-        />
-      </Grid>
-    </Grid>
+    <Stack spacing={DASHBOARD_SPACING.field}>
+      {signalParts.length > 0 ? (
+        <Box
+          sx={{
+            ...executiveCardLevel2Sx(colors),
+            px: 2,
+            py: 1.5,
+            display: 'flex',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: 1.5,
+            flexDirection: { xs: 'column', sm: 'row' },
+          }}
+        >
+          <Stack direction="row" spacing={1.25} alignItems="center" minWidth={0}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                display: 'grid',
+                placeItems: 'center',
+                bgcolor: 'error.main',
+                color: 'error.contrastText',
+                flexShrink: 0,
+                opacity: 0.9,
+              }}
+            >
+              <AlertTriangle size={16} />
+            </Box>
+            <Box minWidth={0}>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
+                {signalParts.join(' · ')}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+                Open Work for Submission Pending, Pending Payment, or Waiting on Ops.
+              </Typography>
+            </Box>
+          </Stack>
+          <Button
+            label="Open Work"
+            variant="outlined"
+            size="sm"
+            onClick={() => onOpenTab?.('work')}
+          />
+        </Box>
+      ) : null}
+
+      <DocumentationVisibilityStrip
+        items={data.visibilityStats}
+        loading={loading}
+        onItemClick={onKpiClick}
+      />
+
+      <DocumentationExecutiveRow
+        primaryVisualization={
+          <ApplicationPipeline
+            title="Documentation pipeline"
+            subtitle="AM stages — Docs owns Submission Pending & Pending Payment"
+            stages={data.pipelineStages}
+            loading={loading}
+            onRetry={onRetry}
+            onStageClick={(stageId) => onNavigate(applicationPipelineStageHref(stageId))}
+            card
+          />
+        }
+        alerts={
+          <AlertCenter
+            title="Critical alerts"
+            subtitle="QC · awaiting client docs · correction with Ops · SLA"
+            alerts={data.criticalAlerts.map((alert) => ({
+              ...alert,
+              onClick: () => onOpenWorkDesk?.(getAlertWorkDesk(alert.id)),
+            }))}
+            loading={loading}
+            maxItems={6}
+            onShowMore={() => onOpenTab?.('work')}
+          />
+        }
+      />
+
+      <DocumentationInfographics data={data} loading={loading} />
+
+      <Stack
+        direction={{ xs: 'column', lg: 'row' }}
+        spacing={DASHBOARD_SPACING.field}
+        alignItems="stretch"
+      >
+        <Box flex={1.2} minWidth={0}>
+          <DocumentationWorkloadBySegment data={data} loading={loading} />
+        </Box>
+        <Box flex={1} minWidth={0} sx={{ '& > *': { height: '100%' } }}>
+          <RecentActivity
+            title="Recent activity"
+            items={data.recentActivity}
+            loading={loading}
+            onRetry={onRetry}
+            maxItems={6}
+          />
+        </Box>
+      </Stack>
+    </Stack>
   )
 }

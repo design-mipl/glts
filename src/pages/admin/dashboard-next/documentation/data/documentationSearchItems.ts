@@ -1,75 +1,85 @@
 import type { ExecutiveSearchItem } from '../../shared/dashboard-intelligence'
+import { applicationPipelineStageHref } from '../../shared/config/applicationPipeline'
+import type { DocWorkDeskId } from '../types'
 
 export function buildDocumentationSearchItems(options: {
   onNavigate: (href: string) => void
   onOpenTab: (tabId: string) => void
+  onOpenWorkDesk?: (deskId: DocWorkDeskId) => void
 }): ExecutiveSearchItem[] {
+  const openDesk = (desk: DocWorkDeskId) => {
+    if (options.onOpenWorkDesk) options.onOpenWorkDesk(desk)
+    else options.onOpenTab('work')
+  }
+
   return [
     {
       id: 'doc-tab-overview',
       title: 'Overview',
-      subtitle: 'Documentation workspace tab',
+      subtitle: 'Pipeline · QC · country/client · to-action',
       category: 'section',
       onSelect: () => options.onOpenTab('overview'),
     },
     {
-      id: 'doc-tab-processing',
-      title: 'Processing',
-      subtitle: 'Applications · forms · fees',
+      id: 'doc-tab-work',
+      title: 'Work',
+      subtitle: 'Submission Pending · Payment · Waiting on Ops',
       category: 'section',
-      onSelect: () => options.onOpenTab('processing'),
+      onSelect: () => options.onOpenTab('work'),
     },
     {
-      id: 'doc-tab-qc',
-      title: 'QC',
-      subtitle: 'Review · corrections',
+      id: 'doc-desk-submission',
+      title: 'Submission Pending',
+      subtitle: 'Primary Docs work desk',
       category: 'section',
-      onSelect: () => options.onOpenTab('qc'),
+      onSelect: () => openDesk('submission_pending'),
     },
     {
-      id: 'doc-tab-submission',
-      title: 'Submission',
-      subtitle: 'Ready · pending filing',
+      id: 'doc-desk-payment',
+      title: 'Pending Payment',
+      subtitle: 'Work desk',
       category: 'section',
-      onSelect: () => options.onOpenTab('submission'),
+      onSelect: () => openDesk('pending_payment'),
     },
     {
-      id: 'doc-tab-activity',
-      title: 'Activity',
-      subtitle: 'Alerts · audit trail',
+      id: 'doc-desk-ops',
+      title: 'Waiting on Ops',
+      subtitle: 'Correction / blocked with Ops',
       category: 'section',
-      onSelect: () => options.onOpenTab('activity'),
+      onSelect: () => openDesk('waiting_on_ops'),
     },
     {
-      id: 'doc-tab-reports',
-      title: 'Reports',
-      subtitle: 'Daily documentation reports',
+      id: 'doc-tab-performance',
+      title: 'Performance',
+      subtitle: 'SLA · throughput · QC mix',
       category: 'section',
-      onSelect: () => options.onOpenTab('reports'),
+      onSelect: () => options.onOpenTab('performance'),
     },
     {
-      id: 'doc-apps-marine',
-      title: 'Marine applications',
+      id: 'doc-am-submission',
+      title: 'AM — Submission Pending',
       subtitle: 'Application management',
       category: 'action',
-      href: '/admin/application-management/marine',
-      onSelect: () => options.onNavigate('/admin/application-management/marine'),
+      href: applicationPipelineStageHref('online_submission_pending'),
+      onSelect: () =>
+        options.onNavigate(applicationPipelineStageHref('online_submission_pending')),
     },
     {
-      id: 'doc-expenses',
-      title: 'Fee payments',
-      subtitle: 'Expense management',
+      id: 'doc-am-payment',
+      title: 'AM — Pending Payment',
+      subtitle: 'Application management',
       category: 'action',
-      href: '/admin/finance/expenses',
-      onSelect: () => options.onNavigate('/admin/finance/expenses'),
+      href: applicationPipelineStageHref('pending_payment'),
+      onSelect: () => options.onNavigate(applicationPipelineStageHref('pending_payment')),
     },
     {
-      id: 'doc-ground',
-      title: 'Ground case handling',
-      subtitle: 'Appointments · submission',
+      id: 'doc-am-vfs',
+      title: 'AM — Embassy/VFS Submitted',
+      subtitle: 'Visibility only',
       category: 'action',
-      href: '/admin/ground-operations/case-handling',
-      onSelect: () => options.onNavigate('/admin/ground-operations/case-handling'),
+      href: applicationPipelineStageHref('vfs_submission_pending'),
+      onSelect: () =>
+        options.onNavigate(applicationPipelineStageHref('vfs_submission_pending')),
     },
   ]
 }

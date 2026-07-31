@@ -44,7 +44,7 @@ export function CollectionsTab({
     () => [
       {
         key: 'receiptRef',
-        label: 'Receipt',
+        label: 'Receipt Reference',
         widthSize: 'md',
         sortable: true,
         filterable: true,
@@ -52,7 +52,7 @@ export function CollectionsTab({
       },
       {
         key: 'client',
-        label: 'Client',
+        label: 'Company Name',
         widthSize: 'lg',
         sortable: true,
         filterable: true,
@@ -60,30 +60,30 @@ export function CollectionsTab({
       },
       {
         key: 'clientType',
-        label: 'Type',
+        label: 'Customer type',
         widthSize: 'sm',
         sortable: true,
         filterable: true,
         render: (_value, row) => <Badge label={row.clientType} color="info" />,
       },
       {
-        key: 'amount',
-        label: 'Amount',
-        widthSize: 'md',
-        sortable: true,
-        filterable: true,
-      },
-      {
         key: 'invoiceNumber',
-        label: 'Invoice',
+        label: 'Invoice ID',
         widthSize: 'md',
         sortable: true,
         filterable: true,
         searchable: true,
       },
       {
+        key: 'amount',
+        label: 'Invoice Amount',
+        widthSize: 'md',
+        sortable: true,
+        filterable: true,
+      },
+      {
         key: 'allocationStatus',
-        label: 'Allocation',
+        label: 'Payment Status',
         widthSize: 'sm',
         sortable: true,
         filterable: true,
@@ -93,7 +93,7 @@ export function CollectionsTab({
       },
       {
         key: 'receivedDate',
-        label: 'Received',
+        label: 'Last Updated',
         widthSize: 'md',
         sortable: true,
         filterable: true,
@@ -119,7 +119,7 @@ export function CollectionsTab({
                   }),
               },
               {
-                label: 'Open invoice',
+                label: 'View Details',
                 onClick: () => onOpenCollection?.(row.id),
               },
             ]}
@@ -133,58 +133,42 @@ export function CollectionsTab({
   const followUpColumns: Column<AccountsFollowUpRow>[] = useMemo(
     () => [
       {
-        key: 'client',
-        label: 'Client',
-        widthSize: 'lg',
+        key: 'invoiceNumber',
+        label: 'Invoice ID',
+        widthSize: 'md',
         sortable: true,
         filterable: true,
         searchable: true,
       },
       {
-        key: 'invoiceNumber',
-        label: 'Invoice',
-        widthSize: 'md',
+        key: 'client',
+        label: 'Company Name',
+        widthSize: 'lg',
         sortable: true,
         filterable: true,
         searchable: true,
       },
       {
         key: 'outstandingAmount',
-        label: 'Outstanding',
+        label: 'Balance Payable',
         widthSize: 'md',
         sortable: true,
         filterable: true,
       },
       {
         key: 'followUpDate',
-        label: 'Follow-up date',
+        label: 'Due Date',
         widthSize: 'md',
         sortable: true,
         filterable: true,
       },
       {
-        key: 'lastNote',
-        label: 'Last note',
-        widthSize: 'lg',
-        sortable: false,
-        filterable: true,
-        searchable: true,
-      },
-      {
         key: 'status',
-        label: 'Status',
+        label: 'Invoice Status',
         widthSize: 'sm',
         sortable: true,
         filterable: true,
         render: (_value, row) => <Badge label={row.status} color={statusColor(row.status)} />,
-      },
-      {
-        key: 'assignedExecutive',
-        label: 'Assigned',
-        widthSize: 'md',
-        sortable: true,
-        filterable: true,
-        searchable: true,
       },
       {
         key: 'actions',
@@ -198,16 +182,7 @@ export function CollectionsTab({
           <RowActions
             actions={[
               {
-                label: 'Log follow-up',
-                onClick: () =>
-                  showToast({
-                    title: 'Follow-up recorded',
-                    description: `Follow-up logged for ${row.invoiceNumber}.`,
-                    variant: 'info',
-                  }),
-              },
-              {
-                label: 'Open invoice',
+                label: 'View Details',
                 onClick: () => onOpenCollection?.(row.id),
               },
             ]}
@@ -215,7 +190,7 @@ export function CollectionsTab({
         ),
       },
     ],
-    [onOpenCollection, showToast],
+    [onOpenCollection],
   )
 
   const unallocated = data.paymentAllocationRows.filter((r) => r.allocationStatus !== 'Allocated')
@@ -252,6 +227,8 @@ export function CollectionsTab({
           onOpen={(row) => onOpenCollection?.(row.id)}
           onViewAll={() => onNavigate('/admin/finance/invoices')}
           viewAllLabel="Open invoices"
+          searchPlaceholder="Search receipt, client, mode…"
+          exportFileName="payment-allocation"
           emptyTitle="No receipts to allocate"
           emptyDescription="Today's payment receipts will appear here for allocation."
         />
@@ -268,6 +245,8 @@ export function CollectionsTab({
           onOpen={(row) => onOpenCollection?.(row.id)}
           onViewAll={() => onNavigate('/admin/finance/invoices')}
           viewAllLabel="Open invoices"
+          searchPlaceholder="Search client, follow-up, status…"
+          exportFileName="daily-follow-ups"
           emptyTitle="No follow-ups"
           emptyDescription="Client follow-up tasks will appear here."
         />

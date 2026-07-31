@@ -27,7 +27,7 @@ const WORK_QUEUE_TABS: Array<{
   { value: 'verification', label: 'Verify', queues: ['verification'] },
   { value: 'recheck', label: 'Re-review', queues: ['recheck'] },
   { value: 'payment', label: 'Payment', queues: ['payment'] },
-  { value: 'glts_arrange', label: 'Book', queues: ['glts_arrange'] },
+  { value: 'glts_arrange', label: 'Arrange Ticket/Insurance', queues: ['glts_arrange'] },
   { value: 'submission', label: 'Submit', queues: ['submission'] },
   { value: 'collection', label: 'Collect', queues: ['collection'] },
   { value: 'correction_watch', label: 'Waiting', queues: ['correction_watch'] },
@@ -39,7 +39,7 @@ function isPersonalDeskRow(row: OperationsWorkRow): boolean {
 }
 
 /**
- * Work tab — personal ops queue (verify, payment, book, submit).
+ * Work tab — personal ops queue across all desk stages.
  * Team-wide views belong on the admin / team-lead dashboard.
  */
 export function WorkTab({
@@ -66,6 +66,8 @@ export function WorkTab({
     return { value: t.value, label: `${t.label} (${count})` }
   })
 
+  const activeTab = WORK_QUEUE_TABS.find((t) => t.value === queueTab)
+
   return (
     <Stack spacing={DASHBOARD_SPACING.field}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -79,8 +81,8 @@ export function WorkTab({
       </Box>
 
       <OperationsWorkListing
-        title="My work"
-        description="Your desk — verify, payment, book, submit. Open the application case to continue."
+        title={activeTab?.label ?? 'My work'}
+        description="Open the application case to continue."
         rows={rows}
         loading={loading}
         openLabel="Open case"

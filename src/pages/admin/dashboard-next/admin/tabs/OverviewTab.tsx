@@ -1,5 +1,5 @@
 import { Box, Grid } from '@mui/material'
-import { AlertCenter, RecentActivity, DASHBOARD_SPACING } from '../../shared'
+import { AlertCenter, MarineTimeline, RecentActivity, DASHBOARD_SPACING } from '../../shared'
 import type { AdminDashboardTabProps } from '../types'
 export { ACTION_ICONS, KPI_ICONS } from './overviewIcons'
 
@@ -7,11 +7,12 @@ export interface OverviewTabProps extends AdminDashboardTabProps {
   onShowMoreAlerts?: () => void
 }
 
-/** Overview story — alerts and recent activity side by side. */
+/** Overview story — alerts, activity, and active crew changes. */
 export function OverviewTab({
   data,
   loading,
   onRetry,
+  onNavigate,
   onShowMoreAlerts,
 }: OverviewTabProps) {
   return (
@@ -41,6 +42,15 @@ export function OverviewTab({
             maxItems={6}
           />
         </Box>
+      </Grid>
+      <Grid size={{ xs: 12 }}>
+        <MarineTimeline
+          title="Active Crew Changes"
+          rows={data.marineTimeline}
+          loading={loading}
+          onRetry={onRetry}
+          onViewAll={() => onNavigate('/admin/application-management/marine')}
+        />
       </Grid>
     </Grid>
   )

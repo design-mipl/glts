@@ -128,7 +128,7 @@ export interface AccountsDailyReportCard {
   reportKey: string
 }
 
-/** Expense-sourced daily reconciliation pack row. */
+/** Expense-sourced daily pack row (payment mode on application expense detail). */
 export interface AccountsExpenseDailyRow {
   id: string
   pack:
@@ -140,11 +140,78 @@ export interface AccountsExpenseDailyRow {
     | 'invoiced_uninvoiced'
   packLabel: string
   reference: string
+  applicationId: string
   vendor: string
   detail: string
+  paymentMode: string
   amount: string
   date: string
   status: string
+  hasRefund?: boolean
+}
+
+/** Passenger / service refunds from expense module. */
+export interface AccountsExpenseRefundRow {
+  id: string
+  applicationId: string
+  passenger: string
+  expenseType: string
+  refundAmount: string
+  paymentMode: string
+  status: string
+  requestedDate: string
+}
+
+/** Fund allocation queue — Ops request via Assignment Priority. */
+export interface AccountsFundAllocationRow {
+  id: string
+  glNumber: string
+  applicant: string
+  company: string
+  country: string
+  visaType: string
+  amount: string
+  allocationStatus: 'Pending' | 'Allocated'
+  requestedBy: string
+  requestedDate: string
+  segment: string
+}
+
+/** Ground Ops claim sheets awaiting finance approve / reject. */
+export interface AccountsClaimSheetRow {
+  id: string
+  claimSheetNo: string
+  groundOpsUser: string
+  casesCount: number
+  amount: string
+  status: 'Pending review' | 'Approved' | 'Rejected'
+  submittedDate: string
+  branch: string
+}
+
+/** Vendor billing summary — awaiting invoice / bills / payments. */
+export interface AccountsVendorBillingRow {
+  id: string
+  vendorId: string
+  vendorName: string
+  awaitingInvoiceCount: number
+  openBills: number
+  outstandingAmount: string
+  lastInvoiceDate: string
+  status: string
+}
+
+/** Invoice exceptions — unbilled expenses, refunds, credit notes. */
+export interface AccountsInvoiceExceptionRow {
+  id: string
+  kind: 'unbilled' | 'refund' | 'credit_note'
+  kindLabel: string
+  reference: string
+  client: string
+  application: string
+  amount: string
+  status: string
+  date: string
 }
 
 /** Visa cases awaiting invoice posting. */
@@ -202,6 +269,11 @@ export interface AccountsDashboardData {
   vendorPayments: AccountsVendorPaymentRow[]
   invoiceSubmissions: AccountsInvoiceSubmissionRow[]
   expenseDailyRows: AccountsExpenseDailyRow[]
+  expenseRefundRows: AccountsExpenseRefundRow[]
+  fundAllocationRows: AccountsFundAllocationRow[]
+  claimSheetRows: AccountsClaimSheetRow[]
+  vendorBillingRows: AccountsVendorBillingRow[]
+  invoiceExceptionRows: AccountsInvoiceExceptionRow[]
   visaSubmissionRows: AccountsVisaSubmissionCaseRow[]
   paymentAllocationRows: AccountsPaymentAllocationRow[]
   followUpRows: AccountsFollowUpRow[]

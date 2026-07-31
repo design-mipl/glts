@@ -22,7 +22,7 @@ const WORKLOAD_METRIC_OPTIONS = [
   { label: 'All queues', value: 'all' },
   { label: 'Verification', value: 'verification' },
   { label: 'Payment', value: 'payment' },
-  { label: 'GLTS arrange', value: 'arrange' },
+  { label: 'Arrange Ticket/Insurance', value: 'arrange' },
   { label: 'Submission', value: 'submission' },
 ] as const
 
@@ -94,7 +94,7 @@ export function OperationsInfographics({ data, loading }: OperationsInfographics
       <Grid size={{ xs: 12, md: 6, lg: 4 }}>
         <ChartPanel
           title="Queue mix"
-          description="Verification · re-check · payment · arrange · submission"
+          description="Verification · re-check · payment · Arrange Ticket/Insurance · submission"
         >
           <DonutChart
             data={data.queueMix}
@@ -226,7 +226,7 @@ export function OperationsWorkloadBySegment({ data, loading }: OperationsWorkloa
           bars={[
             { key: 'verification', label: 'Verification', color: OPS_CHART_COLORS.navy },
             { key: 'payment', label: 'Payment', color: OPS_CHART_COLORS.coral },
-            { key: 'arrange', label: 'GLTS arrange', color: OPS_CHART_COLORS.blue },
+            { key: 'arrange', label: 'Arrange Ticket/Insurance', color: OPS_CHART_COLORS.blue },
             { key: 'submission', label: 'Submission', color: OPS_CHART_COLORS.teal },
           ]}
         />

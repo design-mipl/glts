@@ -34,7 +34,7 @@ export const ACCOUNTS_ACTION_ICONS: Record<string, ReactNode> = {
   'qa-accounts-legacy': <LayoutDashboard size={18} />,
 }
 
-/** Overview — signal · executive row · multi-color infographics · trend + activity (ops layout). */
+/** Overview — signal · executive row · multi-color infographics · trend + activity. */
 export function OverviewTab({
   data,
   loading,
@@ -43,17 +43,66 @@ export function OverviewTab({
   onOpenTab,
 }: AccountsDashboardTabProps) {
   const colors = usePublicBrandColors()
+
+  const pendingFunds = data.fundAllocationRows.filter((r) => r.allocationStatus === 'Pending').length
+  const pendingClaims = data.claimSheetRows.filter((r) => r.status === 'Pending review').length
+  const awaitingVendor = data.vendorBillingRows.reduce((sum, r) => sum + r.awaitingInvoiceCount, 0)
   const overdueCount = data.collectionRows.filter((r) =>
     r.status.toLowerCase().includes('overdue'),
   ).length
-  const unallocatedCount = data.paymentAllocationRows.filter(
-    (r) => r.allocationStatus !== 'Allocated',
+  const exceptionCount = data.invoiceExceptionRows.filter((r) =>
+    ['draft', 'pending', 'awaiting'].some((s) => r.status.toLowerCase().includes(s)),
   ).length
-  const signalCount = overdueCount + unallocatedCount
+
+  const signalParts = [
+    pendingFunds > 0 ? `${pendingFunds} fund requests` : null,
+    pendingClaims > 0 ? `${pendingClaims} claim sheets` : null,
+    awaitingVendor > 0 ? `${awaitingVendor} vendor charges` : null,
+    overdueCount > 0 ? `${overdueCount} overdue AR` : null,
+    exceptionCount > 0 ? `${exceptionCount} invoice exceptions` : null,
+  ].filter(Boolean)
+
+  const moduleAlerts = [
+    {
+      id: 'alert-funds',
+      title: 'Pending fund allocation',
+      description: `${pendingFunds} Ops requests from Assignment Priority`,
+      severity: pendingFunds > 0 ? ('warning' as const) : ('info' as const),
+      onClick: () => onNavigate('/admin/finance/fund-allocation?tab=pending_allocation'),
+    },
+    {
+      id: 'alert-claims',
+      title: 'Claim sheets pending review',
+      description: `${pendingClaims} Ground Ops sheets await approve / reject`,
+      severity: pendingClaims > 0 ? ('critical' as const) : ('info' as const),
+      onClick: () => onNavigate('/admin/finance/fund-allocation?tab=claim_sheets'),
+    },
+    {
+      id: 'alert-vendor',
+      title: 'Vendor charges awaiting invoice',
+      description: `${awaitingVendor} charges across vendor billing`,
+      severity: awaitingVendor > 0 ? ('warning' as const) : ('info' as const),
+      onClick: () => onNavigate('/admin/finance/vendor-billing'),
+    },
+    {
+      id: 'alert-exceptions',
+      title: 'Unbilled / refunds / credit notes',
+      description: `${data.invoiceExceptionRows.length} invoice exceptions open`,
+      severity: exceptionCount > 0 ? ('warning' as const) : ('info' as const),
+      onClick: () => onNavigate('/admin/finance/invoices'),
+    },
+    ...data.notifications.slice(0, 2).map((n, index) => ({
+      id: n.id,
+      title: n.title,
+      description: [n.body, n.createdAt].filter(Boolean).join(' · '),
+      severity: (index === 0 ? 'critical' : 'info') as 'critical' | 'info',
+      onClick: () => onOpenTab?.('work'),
+    })),
+  ]
 
   return (
     <Stack spacing={DASHBOARD_SPACING.field}>
-      {signalCount > 0 ? (
+      {signalParts.length > 0 ? (
         <Box
           sx={{
             ...executiveCardLevel2Sx(colors),
@@ -84,15 +133,15 @@ export function OverviewTab({
             </Box>
             <Box minWidth={0}>
               <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
-                {overdueCount} overdue · {unallocatedCount} unallocated receipts
+                {signalParts.join(' · ')}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-                Open the credit control desk to chase AR and allocate payments.
+                Open Work desks for expenses, funds, vendor billing, invoicing, and credit control.
               </Typography>
             </Box>
           </Stack>
           <Button
-            label="Open credit control"
+            label="Open Work"
             variant="outlined"
             size="sm"
             onClick={() => onOpenTab?.('work')}
@@ -113,14 +162,8 @@ export function OverviewTab({
         alerts={
           <AlertCenter
             title="Financial alerts"
-            subtitle="Overdue · reconciliation · vendor · follow-ups"
-            alerts={data.notifications.map((n, index) => ({
-              id: n.id,
-              title: n.title,
-              description: [n.body, n.createdAt].filter(Boolean).join(' · '),
-              severity: index === 0 ? 'critical' : index === 1 ? 'warning' : 'info',
-              onClick: () => onNavigate('/admin/finance/invoices'),
-            }))}
+            subtitle="Funds · claim sheets · vendor · invoices · AR"
+            alerts={moduleAlerts}
             loading={loading}
             maxItems={5}
             onShowMore={() => onOpenTab?.('work')}

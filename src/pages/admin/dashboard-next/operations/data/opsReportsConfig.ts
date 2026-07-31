@@ -184,8 +184,9 @@ function parseWaitingHours(waitingTime: string): number {
 }
 
 function ragFromDaysRemaining(days: number): string {
-  if (days <= 2) return 'Red'
-  if (days <= 5) return 'Amber'
+  // Align with dashboard RAG: Green >10 · Amber 7–10 · Red <7
+  if (days < 7) return 'Red'
+  if (days <= 10) return 'Amber'
   return 'Green'
 }
 
@@ -260,11 +261,11 @@ export function getOpsReportColumns(reportType: OpsReportTypeId): Column<OpsRepo
       return [
         textColumn('vertical', 'Vertical', 'md'),
         textColumn('draft', 'Draft', 'sm'),
-        textColumn('docsPending', 'Docs Pending', 'sm'),
-        textColumn('verification', 'Verification', 'sm'),
-        textColumn('qc', 'QC', 'sm'),
-        textColumn('submission', 'Submission', 'sm'),
-        textColumn('issued', 'Issued', 'sm'),
+        textColumn('verification', 'Verification Pending', 'sm'),
+        textColumn('submission', 'Submission Pending', 'sm'),
+        textColumn('pendingPayment', 'Pending Payment', 'sm'),
+        textColumn('vfsSubmission', 'Embassy/VFS Submission', 'sm'),
+        textColumn('collectionPending', 'Collection Pending', 'sm'),
         textColumn('collected', 'Collected', 'sm'),
         textColumn('dispatched', 'Dispatched', 'sm'),
         textColumn('bottleneckFlag', 'Bottleneck Flag', 'md'),
@@ -424,24 +425,24 @@ export function buildOpsReportRows(
       const countById = (id: string) => stages.find((s) => s.id === id)?.count ?? 0
       const totals = {
         draft: countById('draft'),
-        docsPending: countById('awaiting-documents'),
-        verification: countById('verification'),
-        qc: countById('qc'),
-        submission: countById('submission') + countById('embassy'),
-        issued: countById('appointment'),
-        collected: countById('collection'),
-        dispatched: countById('dispatch') + countById('delivered'),
+        verification: countById('verification_pending'),
+        submission: countById('online_submission_pending'),
+        pendingPayment: countById('pending_payment'),
+        vfsSubmission: countById('vfs_submission_pending'),
+        collectionPending: countById('collection_pending'),
+        collected: countById('collected'),
+        dispatched: countById('dispatched'),
       }
 
       const byVertical = new Map<OpsSegmentKey, typeof totals>()
       for (const segment of Object.keys(VERTICAL_LABEL) as OpsSegmentKey[]) {
         byVertical.set(segment, {
           draft: 0,
-          docsPending: 0,
           verification: 0,
-          qc: 0,
           submission: 0,
-          issued: 0,
+          pendingPayment: 0,
+          vfsSubmission: 0,
+          collectionPending: 0,
           collected: 0,
           dispatched: 0,
         })
@@ -451,11 +452,11 @@ export function buildOpsReportRows(
         const bucket = byVertical.get(row.segment)
         if (!bucket) continue
         if (row.queue === 'verification' || row.queue === 'recheck') bucket.verification += 1
-        else if (row.queue === 'payment' || row.queue === 'glts_arrange') bucket.docsPending += 1
+        else if (row.queue === 'payment' || row.queue === 'glts_arrange') bucket.pendingPayment += 1
         else if (row.queue === 'submission') bucket.submission += 1
-        else if (row.queue === 'collection') bucket.collected += 1
+        else if (row.queue === 'collection') bucket.collectionPending += 1
         else if (row.showGroundBadge) bucket.dispatched += 1
-        else bucket.qc += 1
+        else bucket.vfsSubmission += 1
       }
 
       const verticals = (Object.keys(VERTICAL_LABEL) as OpsSegmentKey[]).map((segment, index) => {
@@ -466,23 +467,25 @@ export function buildOpsReportRows(
           ? counts
           : {
               draft: Math.max(0, Math.floor(totals.draft / 4) + (index === 0 ? totals.draft % 4 : 0)),
-              docsPending:
-                Math.max(0, Math.floor(totals.docsPending / 4) + (index === 1 ? totals.docsPending % 4 : 0)),
               verification:
-                Math.max(0, Math.floor(totals.verification / 4) + (index === 2 ? totals.verification % 4 : 0)),
-              qc: Math.max(0, Math.floor(totals.qc / 4)),
+                Math.max(
+                  0,
+                  Math.floor(totals.verification / 4) + (index === 1 ? totals.verification % 4 : 0),
+                ),
               submission: Math.max(0, Math.floor(totals.submission / 4)),
-              issued: Math.max(0, Math.floor(totals.issued / 4)),
+              pendingPayment: Math.max(0, Math.floor(totals.pendingPayment / 4)),
+              vfsSubmission: Math.max(0, Math.floor(totals.vfsSubmission / 4)),
+              collectionPending: Math.max(0, Math.floor(totals.collectionPending / 4)),
               collected: Math.max(0, Math.floor(totals.collected / 4)),
               dispatched: Math.max(0, Math.floor(totals.dispatched / 4)),
             }
         const peak = Math.max(
           seeded.draft,
-          seeded.docsPending,
           seeded.verification,
-          seeded.qc,
           seeded.submission,
-          seeded.issued,
+          seeded.pendingPayment,
+          seeded.vfsSubmission,
+          seeded.collectionPending,
           seeded.collected,
           seeded.dispatched,
         )
@@ -490,24 +493,28 @@ export function buildOpsReportRows(
           peak === 0
             ? 'None'
             : peak === seeded.verification
-              ? 'Verification'
-              : peak === seeded.docsPending
-                ? 'Docs Pending'
+              ? 'Verification Pending'
+              : peak === seeded.pendingPayment
+                ? 'Pending Payment'
                 : peak === seeded.submission
-                  ? 'Submission'
-                  : peak === seeded.collected
-                    ? 'Collected'
-                    : 'None'
+                  ? 'Submission Pending'
+                  : peak === seeded.vfsSubmission
+                    ? 'Embassy/VFS Submission'
+                    : peak === seeded.collectionPending
+                      ? 'Collection Pending'
+                      : peak === seeded.collected
+                        ? 'Collected'
+                        : 'None'
 
         return {
           id: `pipeline-${segment}`,
           vertical: VERTICAL_LABEL[segment],
           draft: String(seeded.draft),
-          docsPending: String(seeded.docsPending),
           verification: String(seeded.verification),
-          qc: String(seeded.qc),
           submission: String(seeded.submission),
-          issued: String(seeded.issued),
+          pendingPayment: String(seeded.pendingPayment),
+          vfsSubmission: String(seeded.vfsSubmission),
+          collectionPending: String(seeded.collectionPending),
           collected: String(seeded.collected),
           dispatched: String(seeded.dispatched),
           bottleneckFlag: bottleneck,

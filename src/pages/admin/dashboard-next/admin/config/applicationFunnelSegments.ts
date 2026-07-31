@@ -9,17 +9,6 @@ export const APPLICATION_FUNNEL_SEGMENT_IDS = [
 
 export type ApplicationFunnelSegmentId = (typeof APPLICATION_FUNNEL_SEGMENT_IDS)[number]
 
-export const APPLICATION_FUNNEL_SEGMENT_TABS: ReadonlyArray<{
-  value: ApplicationFunnelSegmentId
-  label: string
-}> = [
-  { value: 'all', label: 'All' },
-  { value: 'b2b', label: 'B2B Agent' },
-  { value: 'corporate', label: 'Corporate' },
-  { value: 'marine', label: 'Marine' },
-  { value: 'retail', label: 'Retail' },
-]
-
 /** Approximate share of total pipeline volume by segment (mock). */
 export const APPLICATION_FUNNEL_SEGMENT_SCALE: Record<
   Exclude<ApplicationFunnelSegmentId, 'all'>,
@@ -31,10 +20,11 @@ export const APPLICATION_FUNNEL_SEGMENT_SCALE: Record<
   b2b: 0.14,
 }
 
+/** Live AM module is marine; all segments deep-link there until retail/corporate ship. */
 export const APPLICATION_FUNNEL_SEGMENT_ROUTES: Record<ApplicationFunnelSegmentId, string> = {
-  all: '/admin/application-management/retail',
-  retail: '/admin/application-management/retail',
-  corporate: '/admin/application-management/corporate',
+  all: '/admin/application-management/marine',
+  retail: '/admin/application-management/marine',
+  corporate: '/admin/application-management/marine',
   marine: '/admin/application-management/marine',
-  b2b: '/admin/application-management/retail',
+  b2b: '/admin/application-management/marine',
 }

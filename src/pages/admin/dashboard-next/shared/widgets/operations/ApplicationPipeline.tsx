@@ -39,8 +39,8 @@ export interface ApplicationPipelineProps {
 }
 
 export function ApplicationPipeline({
-  title = 'Application pipeline',
-  subtitle = 'Visa workflow by stage',
+  title = 'Application pipeline — by state',
+  subtitle = 'Application Management listing queues',
   stages,
   onStageClick,
   loading,

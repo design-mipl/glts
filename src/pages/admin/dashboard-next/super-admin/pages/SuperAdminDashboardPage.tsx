@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from 'react'
-import { Stack } from '@mui/material'
 import {
   Anchor,
   BarChart3,
   Briefcase,
   Building2,
+  ClipboardList,
   FileSpreadsheet,
   HandCoins,
   LayoutDashboard,
@@ -14,15 +14,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import {
-  AlertCenter,
-  DASHBOARD_SPACING,
-  DashboardExecutiveRow,
-  DashboardWorkspace,
-  ProcessingTrend,
-  QuickActions,
-} from '../../shared'
-import { SuperAdminHeroStrip } from '../components/SuperAdminHeroStrip'
+import { DashboardWorkspace } from '../../shared'
 import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intelligence'
 import { useSuperAdminDashboardNext } from '../hooks/useSuperAdminDashboardNext'
 import { SUPER_ADMIN_DASHBOARD_MOCK } from '../data/superAdminDashboardMock'
@@ -33,6 +25,7 @@ import {
   SUPER_ADMIN_RECOMMENDATIONS,
   buildSuperAdminSearchItems,
 } from '../data/superAdminIntelligenceMock'
+import { SuperAdminHeroStrip } from '../components/SuperAdminHeroStrip'
 import {
   AnalyticsTab,
   B2bTab,
@@ -45,7 +38,8 @@ import {
   OverviewTab,
   ReportsTab,
   RetailTab,
-  SA_ACTION_ICONS,
+  WorkTab,
+  getSuperAdminWorkBadgeCount,
 } from '../tabs'
 import type { SuperAdminDashboardFilters, SuperAdminDashboardTabProps } from '../types'
 
@@ -76,6 +70,13 @@ export function SuperAdminDashboardPage() {
   const loading = dashboard.isLoading
   const setHookFilters = dashboard.setFilters
 
+  const openTab = useCallback(
+    (tabId: string) => {
+      navigate({ search: `?tab=${tabId}` }, { replace: true })
+    },
+    [navigate],
+  )
+
   const onFiltersChange = useCallback(
     (filters: DashboardIntelligenceFilters) => {
       setHookFilters(mapIntelligenceToHookFilters(filters))
@@ -104,21 +105,27 @@ export function SuperAdminDashboardPage() {
             corporate: 'corporate',
             retail: 'retail',
             b2b: 'b2b',
+            reports: 'reports',
+            work: 'work',
           }
           const tab = tabMap[sectionId] ?? 'overview'
-          navigate({ search: `?tab=${tab}` }, { replace: true })
+          openTab(tab)
         },
       }),
-    [navigate],
+    [navigate, openTab],
   )
+
+  const workBadge = getSuperAdminWorkBadgeCount(data, SUPER_ADMIN_MANAGEMENT_ALERTS)
 
   const tabProps: SuperAdminDashboardTabProps = {
     data,
     loading,
     onRetry: dashboard.retry,
     onNavigate: (href) => navigate(href),
+    onOpenTab: openTab,
     onOpenClient: () => navigate('/admin/customer-accounts/corporate-accounts'),
-    onPipelineStageClick: () => navigate('/admin/application-management/marine'),
+    onPipelineStageClick: (stageId) =>
+      navigate(`/admin/application-management/marine?tab=${encodeURIComponent(stageId)}`),
     insights: SUPER_ADMIN_INSIGHTS,
     recommendations: SUPER_ADMIN_RECOMMENDATIONS,
     managementAlerts: SUPER_ADMIN_MANAGEMENT_ALERTS,
@@ -167,70 +174,7 @@ export function SuperAdminDashboardPage() {
           id: 'overview',
           label: 'Overview',
           icon: <LayoutDashboard size={16} />,
-          content: (
-            <Stack spacing={DASHBOARD_SPACING.field}>
-              <DashboardExecutiveRow
-                alerts={
-                  <AlertCenter
-                    title="Management alerts"
-                    alerts={(SUPER_ADMIN_MANAGEMENT_ALERTS.length > 0
-                      ? SUPER_ADMIN_MANAGEMENT_ALERTS
-                      : data.managementAlerts
-                    ).map((alert) => {
-                      const severity =
-                        alert.severity === 'critical'
-                          ? 'critical'
-                          : alert.severity === 'high' || alert.severity === 'warning'
-                            ? 'warning'
-                            : alert.severity === 'success'
-                              ? 'success'
-                              : 'info'
-                      return {
-                        id: alert.id,
-                        title: alert.title,
-                        description:
-                          'description' in alert && alert.description
-                            ? alert.description
-                            : 'businessImpact' in alert
-                              ? alert.businessImpact
-                              : undefined,
-                        severity,
-                      }
-                    })}
-                    loading={loading}
-                    maxItems={4}
-                  />
-                }
-                primaryVisualization={
-                  <ProcessingTrend
-                    title="Business performance trend"
-                    subtitle="Revenue vs collections — primary board visualization"
-                    points={data.revenueTrend}
-                    secondaryLabel="Collected"
-                    loading={loading}
-                    onRetry={dashboard.retry}
-                  />
-                }
-                quickActions={
-                  <QuickActions
-                    title="Quick actions"
-                    variant="tiles"
-                    columns={2}
-                    loading={loading}
-                    items={data.quickActions.slice(0, 6).map((action) => ({
-                      id: action.id,
-                      title: action.title,
-                      description: action.description,
-                      badge: action.badge,
-                      icon: SA_ACTION_ICONS[action.id],
-                      onClick: () => navigate(action.href),
-                    }))}
-                  />
-                }
-              />
-              <OverviewTab {...tabProps} />
-            </Stack>
-          ),
+          content: <OverviewTab {...tabProps} />,
         },
         {
           id: 'business',
@@ -279,6 +223,13 @@ export function SuperAdminDashboardPage() {
           label: 'Clients',
           icon: <Users size={16} />,
           content: <ClientsTab {...tabProps} />,
+        },
+        {
+          id: 'work',
+          label: 'Work',
+          icon: <ClipboardList size={16} />,
+          badge: workBadge,
+          content: <WorkTab {...tabProps} />,
         },
         {
           id: 'analytics',

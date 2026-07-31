@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { Grid, Typography } from '@mui/material'
+import { useMemo } from 'react'
+import { Box, Grid, Stack, Typography } from '@mui/material'
 import {
   Building2,
   ClipboardList,
@@ -7,6 +8,10 @@ import {
   LayoutDashboard,
   Users,
 } from 'lucide-react'
+import { BarChart, DonutChart } from '@/design-system/UIComponents'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
+import { AGEING_BUCKET_LABELS, type AgeingBucketId } from '../../shared/config/ageingBuckets'
 import {
   AgeingAnalysis,
   CollectionSummary,
@@ -24,7 +29,35 @@ import {
   HighlightCard,
   RankingList,
 } from '../../shared/dashboard-ui-kit'
+import { SUPER_ADMIN_CHART_COLORS } from '../data/superAdminChartColors'
 import type { SuperAdminDashboardTabProps, SuperAdminRankItem } from '../types'
+
+function ChartPanel({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description?: string
+  children: React.ReactNode
+}) {
+  const colors = usePublicBrandColors()
+  return (
+    <Box sx={{ ...executiveCardLevel2Sx(colors), p: 0, overflow: 'hidden', height: '100%' }}>
+      <Stack spacing={0.5} sx={{ px: 2, pt: 2, pb: 1.25 }}>
+        <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 14 }}>
+          {title}
+        </Typography>
+        {description ? (
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+            {description}
+          </Typography>
+        ) : null}
+      </Stack>
+      <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
+    </Box>
+  )
+}
 
 const ACTION_ICONS: Record<string, ReactNode> = {
   'qa-admin-next': <LayoutDashboard size={18} />,
@@ -54,6 +87,31 @@ export function FinanceTab({
   forecasts = [],
 }: SuperAdminDashboardTabProps) {
   const cash = data.cashPosition
+
+  const ageingSlices = useMemo(() => {
+    const colors = [
+      SUPER_ADMIN_CHART_COLORS.green,
+      SUPER_ADMIN_CHART_COLORS.amber,
+      SUPER_ADMIN_CHART_COLORS.coral,
+      SUPER_ADMIN_CHART_COLORS.navy,
+    ]
+    return data.ageingBuckets.map((bucket, index) => ({
+      key: bucket.id,
+      label: AGEING_BUCKET_LABELS[bucket.id as AgeingBucketId] ?? bucket.id,
+      value: Math.round(bucket.amount / 100000),
+      color: colors[index % colors.length],
+    }))
+  }, [data.ageingBuckets])
+  const ageingTotal = ageingSlices.reduce((sum, s) => sum + s.value, 0)
+
+  const marginBars = useMemo(
+    () =>
+      data.marginByVertical.map((item) => ({
+        vertical: item.primary,
+        margin: Number.parseFloat(String(item.value).replace('%', '')) || 0,
+      })),
+    [data.marginByVertical],
+  )
 
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
@@ -102,10 +160,35 @@ export function FinanceTab({
         </ExecutiveGrid>
       </Grid>
 
-      <Grid size={{ xs: 12, md: 6 }}>
-        <RevenueSnapshot data={data.revenueSnapshot} loading={loading} onRetry={onRetry} />
+      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+        <ChartPanel title="AR ageing" description="Outstanding ₹L by bucket">
+          <DonutChart
+            data={
+              ageingSlices.length > 0
+                ? ageingSlices
+                : [{ key: 'none', label: 'None', value: 1, color: SUPER_ADMIN_CHART_COLORS.slate }]
+            }
+            height={220}
+            loading={loading}
+            centerLabel="₹L"
+            centerValue={String(ageingTotal)}
+          />
+        </ChartPanel>
       </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
+      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+        <ChartPanel title="Gross margin by vertical" description="GP % this month">
+          <BarChart
+            data={marginBars}
+            xKey="vertical"
+            height={220}
+            barSize={18}
+            showLegend={false}
+            loading={loading}
+            bars={[{ key: 'margin', label: 'Margin %', color: SUPER_ADMIN_CHART_COLORS.green }]}
+          />
+        </ChartPanel>
+      </Grid>
+      <Grid size={{ xs: 12, lg: 4 }}>
         <CollectionSummary
           data={data.collectionSummary}
           loading={loading}
@@ -113,15 +196,11 @@ export function FinanceTab({
         />
       </Grid>
 
-      <Grid size={{ xs: 12, md: 7 }}>
-        <AgeingAnalysis buckets={data.ageingBuckets} loading={loading} onRetry={onRetry} />
+      <Grid size={{ xs: 12, md: 6 }}>
+        <RevenueSnapshot data={data.revenueSnapshot} loading={loading} onRetry={onRetry} />
       </Grid>
-      <Grid size={{ xs: 12, md: 5 }}>
-        <RankingList
-          title="Gross margin by vertical"
-          items={toRankingItems(data.marginByVertical)}
-          loading={loading}
-        />
+      <Grid size={{ xs: 12, md: 6 }}>
+        <AgeingAnalysis buckets={data.ageingBuckets} loading={loading} onRetry={onRetry} />
       </Grid>
 
       <Grid size={{ xs: 12, md: 5 }}>
