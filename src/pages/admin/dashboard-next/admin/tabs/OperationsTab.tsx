@@ -35,6 +35,7 @@ export function OperationsTab({
       </Grid>
       <Grid size={{ xs: 12, lg: 7 }}>
         <MarineTimeline
+          title="Active Crew Changes"
           rows={data.marineTimeline}
           loading={loading}
           onRetry={onRetry}

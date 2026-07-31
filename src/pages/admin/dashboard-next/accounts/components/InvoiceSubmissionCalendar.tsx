@@ -105,7 +105,7 @@ export function InvoiceSubmissionCalendar({
     () => [
       {
         key: 'company',
-        label: 'Company',
+        label: 'Company Name',
         widthSize: 'lg',
         sortable: true,
         filterable: true,
@@ -113,14 +113,14 @@ export function InvoiceSubmissionCalendar({
       },
       {
         key: 'submissionDate',
-        label: 'Submission date',
+        label: 'Online Submission Date',
         widthSize: 'md',
         sortable: true,
         filterable: true,
       },
       {
         key: 'billingCycle',
-        label: 'Billing cycle',
+        label: 'Billing Cycle',
         widthSize: 'md',
         sortable: true,
         filterable: true,
@@ -132,13 +132,6 @@ export function InvoiceSubmissionCalendar({
         sortable: true,
         filterable: true,
         render: (_value, row) => <Badge label={row.status} color={statusColor(row.status)} />,
-      },
-      {
-        key: 'branch',
-        label: 'Branch',
-        widthSize: 'md',
-        sortable: true,
-        filterable: true,
       },
     ],
     [],
@@ -167,6 +160,8 @@ export function InvoiceSubmissionCalendar({
           columns={listColumns}
           getCellValue={getCellValue}
           loading={loading}
+          searchPlaceholder="Search client, cycle, status…"
+          exportFileName="invoice-submission-calendar"
           emptyTitle="No scheduled submissions"
           emptyDescription="Invoice submission reminders will appear here."
         />

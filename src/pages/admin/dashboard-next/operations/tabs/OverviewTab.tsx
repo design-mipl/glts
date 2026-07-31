@@ -95,7 +95,7 @@ export function OverviewTab({
         alerts={
           <AlertCenter
             title="Ops alerts"
-            subtitle="Re-check · payment · GLTS arrange · assignment · ground"
+            subtitle="Re-check · payment · Arrange Ticket/Insurance · assignment · ground"
             alerts={data.alerts.map((alert) => ({
               id: alert.id,
               title: alert.title,

@@ -52,7 +52,7 @@ const QUEUE_LABEL: Record<OpsWorkQueueKind, string> = {
   verification: 'Docs to verify',
   recheck: 'Re-upload to review',
   payment: 'Pending payment',
-  glts_arrange: 'Ticket / insurance to book',
+  glts_arrange: 'Arrange Ticket/Insurance',
   submission: 'Ready to submit',
   collection: 'Collect / dispatch',
   correction_watch: 'Waiting on customer',
@@ -280,7 +280,7 @@ function collectGltsArrangeRows(apps: MarineApplicationRow[]): OperationsWorkRow
         country: app.country,
         visaType: app.visaType,
         queue: 'glts_arrange',
-        queueLabel: serviceType === 'ticket' ? 'Ticket to book' : 'Insurance to book',
+        queueLabel: serviceType === 'ticket' ? 'Arrange Ticket' : 'Arrange Insurance',
         priority: 'High',
         waitingTime: formatWaitingFromDate(app.lastUpdated || app.submissionDate),
         status: status === 'pending_glts_booking' ? 'Pending GLTS booking' : 'Pending GLTS insurance',
@@ -300,29 +300,15 @@ function collectGltsArrangeRows(apps: MarineApplicationRow[]): OperationsWorkRow
 }
 
 function buildPipelineStages(apps: MarineApplicationRow[]) {
-  const counts: Record<ApplicationPipelineStageId, number> = {
-    draft: 0,
-    'awaiting-documents': 0,
-    verification: 0,
-    qc: 0,
-    appointment: 0,
-    submission: 0,
-    embassy: 0,
-    collection: 0,
-    dispatch: 0,
-    delivered: 0,
-  }
+  const counts = Object.fromEntries(
+    APPLICATION_PIPELINE_STAGE_IDS.map((id) => [id, 0]),
+  ) as Record<ApplicationPipelineStageId, number>
 
   for (const row of apps) {
     const tab = resolveMarineApplicationQueueTab(row)
-    if (tab === 'draft') counts.draft += 1
-    else if (tab === 'verification_pending') counts.verification += 1
-    else if (tab === 'pending_payment') counts['awaiting-documents'] += 1
-    else if (tab === 'online_submission_pending') counts.submission += 1
-    else if (tab === 'vfs_submission_pending') counts.embassy += 1
-    else if (tab === 'collection_pending') counts.collection += 1
-    else if (tab === 'collected') counts.dispatch += 1
-    else if (tab === 'dispatched') counts.delivered += 1
+    if (tab && tab in counts) {
+      counts[tab as ApplicationPipelineStageId] += 1
+    }
   }
 
   return APPLICATION_PIPELINE_STAGE_IDS.map((id) => ({
@@ -366,8 +352,8 @@ function buildAlerts(rows: OperationsWorkRow[]): OperationsAlertRow[] {
   if (ticket) {
     alerts.push({
       id: 'al-ticket',
-      title: `Ticket to book — ${ticket.glNumber}`,
-      description: `${ticket.applicant} · GLTS arrange`,
+      title: `Arrange Ticket — ${ticket.glNumber}`,
+      description: `${ticket.applicant} · Arrange Ticket/Insurance`,
       severity: 'warning',
       type: 'glts_ticket_needed',
       href: ticket.applicationHref,
@@ -380,7 +366,7 @@ function buildAlerts(rows: OperationsWorkRow[]): OperationsAlertRow[] {
   if (insuranceCount > 0) {
     alerts.push({
       id: 'al-insurance',
-      title: 'Insurance to book',
+      title: 'Arrange Insurance',
       description: 'Cases awaiting GLTS insurance arrangement',
       severity: 'warning',
       type: 'glts_insurance_needed',
@@ -574,10 +560,10 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
       },
       {
         id: 'kpi-arrange',
-        label: 'GLTS to arrange',
+        label: 'Arrange Ticket/Insurance',
         value: arrangeCount,
         delta: arrangeCount > 0 ? 3.1 : 0,
-        deltaLabel: 'Ticket / insurance to book',
+        deltaLabel: 'Ticket / insurance to arrange',
         sparklineData: [arrangeCount, arrangeCount, arrangeCount],
       },
       {
@@ -659,7 +645,7 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
       { key: 'verification', label: 'Verify', value: verifyCount, color: OPS_CHART_COLORS.navy },
       { key: 'recheck', label: 'Re-review', value: recheckCount, color: OPS_CHART_COLORS.amber },
       { key: 'payment', label: 'Payment', value: paymentCount, color: OPS_CHART_COLORS.coral },
-      { key: 'arrange', label: 'Book', value: arrangeCount, color: OPS_CHART_COLORS.blue },
+      { key: 'arrange', label: 'Arrange Ticket/Insurance', value: arrangeCount, color: OPS_CHART_COLORS.blue },
       { key: 'submission', label: 'Submit', value: submissionCount, color: OPS_CHART_COLORS.teal },
       { key: 'collection', label: 'Collect', value: collectionCount, color: OPS_CHART_COLORS.violet },
     ],

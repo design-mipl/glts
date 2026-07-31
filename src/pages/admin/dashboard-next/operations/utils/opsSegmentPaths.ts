@@ -1,4 +1,9 @@
 import type { MarineApplicationListingTab } from '@/pages/admin/application-management/marine/config/marineApplicationListingTabs'
+import {
+  APPLICATION_MANAGEMENT_LIST_BASE,
+  applicationPipelineStageHref,
+  type ApplicationPipelineStageId,
+} from '../../shared/config/applicationPipeline'
 
 export type OpsSegmentKey = 'retail' | 'corporate' | 'marine' | 'b2b'
 
@@ -7,7 +12,7 @@ export type OpsSegmentKey = 'retail' | 'corporate' | 'marine' | 'b2b'
  * Retail / corporate / B2B listings are coming-soon — never deep-link those
  * for case work or the router falls through to /admin (another dashboard).
  */
-const APP_MODULE_BASE = '/admin/application-management/marine'
+const APP_MODULE_BASE = APPLICATION_MANAGEMENT_LIST_BASE
 
 const ASSIGNMENT_PATH: Record<OpsSegmentKey, string> = {
   retail: '/admin/assignment-priority/retail',
@@ -16,9 +21,20 @@ const ASSIGNMENT_PATH: Record<OpsSegmentKey, string> = {
   b2b: '/admin/assignment-priority/b2b',
 }
 
-/** Pipeline stage id → marine listing tab. */
+/**
+ * Pipeline stage id === Application Management listing tab id.
+ * Keep an explicit map so unknown/legacy ids still resolve safely.
+ */
 const PIPELINE_STAGE_TO_APP_TAB: Record<string, MarineApplicationListingTab> = {
   draft: 'draft',
+  verification_pending: 'verification_pending',
+  online_submission_pending: 'online_submission_pending',
+  pending_payment: 'pending_payment',
+  vfs_submission_pending: 'vfs_submission_pending',
+  collection_pending: 'collection_pending',
+  collected: 'collected',
+  dispatched: 'dispatched',
+  // Legacy dashboard stage ids (pre–AM-tab alignment)
   'awaiting-documents': 'verification_pending',
   verification: 'verification_pending',
   qc: 'verification_pending',
@@ -26,7 +42,7 @@ const PIPELINE_STAGE_TO_APP_TAB: Record<string, MarineApplicationListingTab> = {
   submission: 'online_submission_pending',
   embassy: 'vfs_submission_pending',
   collection: 'collection_pending',
-  dispatch: 'dispatched',
+  dispatch: 'collected',
   delivered: 'dispatched',
 }
 
@@ -94,6 +110,8 @@ export function opsLogisticsPath(): string {
 
 /** Map dashboard pipeline stage click → Application Management tab. */
 export function opsPipelineStageToApplicationHref(stageId: string): string {
-  const tab = PIPELINE_STAGE_TO_APP_TAB[stageId] ?? 'verification_pending'
-  return opsApplicationListPath('marine', tab)
+  const tab =
+    PIPELINE_STAGE_TO_APP_TAB[stageId] ??
+    (stageId as ApplicationPipelineStageId)
+  return applicationPipelineStageHref(tab, APP_MODULE_BASE)
 }

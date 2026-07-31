@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
-import type { Column } from '@/design-system/UIComponents'
-import { Button } from '@/design-system/UIComponents'
-import { Grid } from '@mui/material'
+import { useMemo } from 'react'
+import { Box, Grid, Stack, Typography } from '@mui/material'
 import {
   Building2,
   ClipboardList,
@@ -9,15 +8,22 @@ import {
   LayoutDashboard,
   Users,
 } from 'lucide-react'
+import { BarChart, DonutChart } from '@/design-system/UIComponents'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import {
-  DashboardTable,
   QuickActions,
   RecentActivity,
-  StatusBadge,
   DASHBOARD_SPACING,
 } from '../../shared'
 import { ComparisonLayout, RankingList } from '../../shared/dashboard-ui-kit'
-import type { SuperAdminClientRow, SuperAdminDashboardTabProps, SuperAdminRankItem } from '../types'
+import { SuperAdminWorkListing } from '../components/SuperAdminWorkListing'
+import { SUPER_ADMIN_CHART_COLORS, SUPER_ADMIN_CHART_SERIES } from '../data/superAdminChartColors'
+import type {
+  SuperAdminDashboardTabProps,
+  SuperAdminRankItem,
+  SuperAdminWorkRow,
+} from '../types'
 
 const ACTION_ICONS: Record<string, ReactNode> = {
   'qa-admin-next': <LayoutDashboard size={18} />,
@@ -26,6 +32,33 @@ const ACTION_ICONS: Record<string, ReactNode> = {
   'qa-clients': <Users size={18} />,
   'qa-finance': <HandCoins size={18} />,
   'qa-legacy-admin': <Building2 size={18} />,
+}
+
+function ChartPanel({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description?: string
+  children: React.ReactNode
+}) {
+  const colors = usePublicBrandColors()
+  return (
+    <Box sx={{ ...executiveCardLevel2Sx(colors), p: 0, overflow: 'hidden', height: '100%' }}>
+      <Stack spacing={0.5} sx={{ px: 2, pt: 2, pb: 1.25 }}>
+        <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 14 }}>
+          {title}
+        </Typography>
+        {description ? (
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+            {description}
+          </Typography>
+        ) : null}
+      </Stack>
+      <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
+    </Box>
+  )
 }
 
 function toRankingItems(items: SuperAdminRankItem[]) {
@@ -46,35 +79,73 @@ export function ClientsTab({
   onNavigate,
   onOpenClient,
 }: SuperAdminDashboardTabProps) {
-  const columns: Column<SuperAdminClientRow>[] = [
-    { key: 'client', label: 'Client', widthSize: 'lg', sortable: false },
-    { key: 'segment', label: 'Segment', widthSize: 'md', sortable: false },
-    { key: 'applications', label: 'Applications', widthSize: 'sm', sortable: false },
-    { key: 'revenue', label: 'Revenue', widthSize: 'md', sortable: false },
-    { key: 'collections', label: 'Collections', widthSize: 'md', sortable: false },
-    { key: 'outstanding', label: 'Outstanding', widthSize: 'md', sortable: false },
-    {
-      key: 'status',
-      label: 'Status',
-      widthSize: 'sm',
-      sortable: false,
-      render: (_value, row) => <StatusBadge label={row.status} status={row.status} />,
-    },
-    {
-      key: 'actions',
-      label: '',
-      hideable: false,
-      sortable: false,
-      filterable: false,
-      searchable: false,
-      render: (_value, row) => (
-        <Button label="Open" variant="text" size="sm" onClick={() => onOpenClient?.(row.id)} />
-      ),
-    },
-  ]
+  const accountRows: SuperAdminWorkRow[] = useMemo(
+    () =>
+      data.clientRows.map((row) => ({
+        id: row.id,
+        primary: row.client,
+        secondary: `${row.segment} · ${row.applications} apps · Rev ${row.revenue}`,
+        category: row.segment,
+        status: row.status,
+        value: row.outstanding,
+        priority: row.status.toLowerCase().includes('risk') ? 'High' : 'Medium',
+      })),
+    [data.clientRows],
+  )
+
+  const segmentSlices = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const row of data.clientRows) {
+      counts.set(row.segment, (counts.get(row.segment) ?? 0) + 1)
+    }
+    return Array.from(counts.entries()).map(([label, value], index) => ({
+      key: label.toLowerCase(),
+      label,
+      value,
+      color: SUPER_ADMIN_CHART_SERIES[index % SUPER_ADMIN_CHART_SERIES.length],
+    }))
+  }, [data.clientRows])
+
+  const healthBars = useMemo(
+    () =>
+      data.clientHealth.map((item) => ({
+        client: item.primary.length > 14 ? `${item.primary.slice(0, 12)}…` : item.primary,
+        score: item.progress ?? 0,
+      })),
+    [data.clientHealth],
+  )
 
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
+      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+        <ChartPanel title="Accounts by segment" description="Key account mix">
+          <DonutChart
+            data={
+              segmentSlices.length > 0
+                ? segmentSlices
+                : [{ key: 'none', label: 'None', value: 1, color: SUPER_ADMIN_CHART_COLORS.slate }]
+            }
+            height={220}
+            loading={loading}
+            centerLabel="accts"
+            centerValue={String(data.clientRows.length)}
+          />
+        </ChartPanel>
+      </Grid>
+      <Grid size={{ xs: 12, md: 6, lg: 8 }}>
+        <ChartPanel title="Client health scores" description="Portfolio health ranking">
+          <BarChart
+            data={healthBars}
+            xKey="client"
+            height={220}
+            barSize={16}
+            showLegend={false}
+            loading={loading}
+            bars={[{ key: 'score', label: 'Score', color: SUPER_ADMIN_CHART_COLORS.green }]}
+          />
+        </ChartPanel>
+      </Grid>
+
       <Grid size={{ xs: 12, md: 6 }}>
         <RankingList
           title="Client health"
@@ -132,17 +203,17 @@ export function ClientsTab({
       </Grid>
 
       <Grid size={{ xs: 12 }}>
-        <DashboardTable
+        <SuperAdminWorkListing
           title="Key accounts"
-          subtitle="Outstanding · collections · status"
-          columns={columns}
-          data={data.clientRows}
-          rowKey="id"
+          description="Outstanding · collections · status — open to manage"
+          rows={accountRows}
           loading={loading}
-          pageSize={8}
-          onRowClick={(row) => onOpenClient?.(row.id)}
+          openLabel="Open"
+          onOpen={(row) => onOpenClient?.(row.id)}
           onViewAll={() => onNavigate('/admin/customer-accounts/corporate-accounts')}
-          actionLabel="Open clients"
+          viewAllLabel="Open clients"
+          emptyTitle="No key accounts"
+          emptyDescription="Accounts will appear here when loaded."
         />
       </Grid>
 

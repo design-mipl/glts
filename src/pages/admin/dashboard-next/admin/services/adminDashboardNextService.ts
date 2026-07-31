@@ -1,5 +1,6 @@
 import type { AdminDashboardNextData, AdminDashboardNextFilters } from '../types'
 import { ADMIN_DASHBOARD_NEXT_MOCK } from '../data/adminDashboardNextMock'
+import { applyAdminDashboardFilters } from '../utils/applyAdminDashboardFilters'
 
 const LOAD_DELAY_MS = 350
 
@@ -14,9 +15,5 @@ export async function fetchAdminDashboardNext(
   filters: AdminDashboardNextFilters,
 ): Promise<AdminDashboardNextData> {
   await delay(LOAD_DELAY_MS)
-
-  // Filters are accepted so the service contract matches future API calls.
-  void filters
-
-  return structuredClone(ADMIN_DASHBOARD_NEXT_MOCK)
+  return applyAdminDashboardFilters(structuredClone(ADMIN_DASHBOARD_NEXT_MOCK), filters)
 }

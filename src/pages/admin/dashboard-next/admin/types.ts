@@ -22,12 +22,10 @@ import type {
   TrendPoint,
 } from '../shared/widgets/analytics/AnalyticsWidgets'
 import type { ExecutiveAttentionAlert } from '@/pages/admin/dashboard/components'
+import type { DashboardIntelligenceFilters } from '../shared/dashboard-intelligence'
 
-export interface AdminDashboardNextFilters {
-  period: string
-  region: string
-  segment: string
-}
+/** Admin dashboard filters — same contract as page global intelligence filters. */
+export type AdminDashboardNextFilters = DashboardIntelligenceFilters
 
 export interface AdminQuickActionDefinition {
   id: string

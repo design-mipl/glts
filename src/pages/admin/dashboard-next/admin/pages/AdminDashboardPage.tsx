@@ -14,8 +14,7 @@ import {
   DASHBOARD_SPACING,
   DashboardWorkspace,
 } from '../../shared'
-import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intelligence'
-import { useAdminDashboardNext } from '../hooks/useAdminDashboardNext'
+import { useAdminDashboardNext, DEFAULT_ADMIN_DASHBOARD_NEXT_FILTERS } from '../hooks/useAdminDashboardNext'
 import { ADMIN_DASHBOARD_NEXT_MOCK } from '../data/adminDashboardNextMock'
 import { buildAdminSearchItems } from '../data/adminSearchItems'
 import { AdminApplicationFunnelSection } from '../components/AdminApplicationFunnelSection'
@@ -33,32 +32,13 @@ import {
 } from '../tabs'
 import { resolveAdminAttentionIcon } from '../utils/resolveAdminAttentionIcon'
 import type { AdminDashboardTabProps } from '../types'
+import { applicationPipelineStageHref } from '../../shared/config/applicationPipeline'
 
 export function AdminDashboardPage() {
   const navigate = useNavigate()
   const dashboard = useAdminDashboardNext()
   const data = dashboard.data ?? ADMIN_DASHBOARD_NEXT_MOCK
   const loading = dashboard.isLoading
-  const setFilters = dashboard.setFilters
-
-  const onFiltersChange = useCallback(
-    (filters: DashboardIntelligenceFilters) => {
-      setFilters((prev) => ({
-        ...prev,
-        period:
-          filters.datePreset === 'week' ||
-          filters.datePreset === 'quarter' ||
-          filters.datePreset === 'year' ||
-          filters.datePreset === 'month' ||
-          filters.datePreset === 'today'
-            ? filters.datePreset
-            : prev.period,
-        region: filters.branch === 'all' ? prev.region : filters.branch,
-        segment: filters.segment === 'all' ? 'all' : filters.segment,
-      }))
-    },
-    [setFilters],
-  )
 
   const openTab = useCallback(
     (tabId: string) => {
@@ -82,9 +62,9 @@ export function AdminDashboardPage() {
     onRetry: dashboard.retry,
     onNavigate: (href) => navigate(href),
     onPipelineStageClick: (stageId) => {
-      navigate(`/admin/application-management/retail?stage=${stageId}`)
+      navigate(applicationPipelineStageHref(stageId))
     },
-    onVerificationOpen: () => navigate('/admin/application-management/retail'),
+    onVerificationOpen: () => navigate('/admin/application-management/marine'),
     onViewVerificationQueue: () =>
       navigate('/admin/application-management/marine?tab=verification_pending'),
   }
@@ -98,7 +78,8 @@ export function AdminDashboardPage() {
       error={dashboard.isError}
       onRetry={dashboard.retry}
       onRefresh={dashboard.retry}
-      onFiltersChange={onFiltersChange}
+      initialFilters={DEFAULT_ADMIN_DASHBOARD_NEXT_FILTERS}
+      onFiltersChange={dashboard.setFilters}
       searchItems={searchItems}
       defaultTab="overview"
       hero={<AdminHeroStrip items={data.quickStats} loading={loading} />}

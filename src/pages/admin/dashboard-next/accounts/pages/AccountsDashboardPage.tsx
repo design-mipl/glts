@@ -63,8 +63,11 @@ export function AccountsDashboardPage() {
 
   const workBadge =
     data.expenseDailyRows.length +
-    data.paymentAllocationRows.filter((r) => r.allocationStatus !== 'Allocated').length +
-    data.visaSubmissionRows.filter((r) => r.invoiceReady === 'Yes').length
+    data.fundAllocationRows.filter((r) => r.allocationStatus === 'Pending').length +
+    data.claimSheetRows.filter((r) => r.status === 'Pending review').length +
+    data.vendorBillingRows.reduce((sum, r) => sum + r.awaitingInvoiceCount, 0) +
+    data.invoiceExceptionRows.length +
+    data.paymentAllocationRows.filter((r) => r.allocationStatus !== 'Allocated').length
 
   const tabProps: AccountsDashboardTabProps = {
     data,
@@ -81,7 +84,7 @@ export function AccountsDashboardPage() {
     <DashboardWorkspace
       workspaceId="accounts"
       title="Accounts dashboard"
-      subtitle="Finance workspace for reconciliation, invoicing, credit control, and cash discipline."
+      subtitle="Finance workspace for expenses, fund allocation, vendor billing, invoicing, and credit control."
       loading={loading}
       error={dashboard.isError}
       onRetry={dashboard.retry}

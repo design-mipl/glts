@@ -3,15 +3,40 @@ import { AGEING_BUCKET_LABELS, type AgeingBucketId } from '../../shared/config/a
 import type { AccountsDashboardData } from '../types'
 
 export type AccountsReportTypeId =
-  // Reconciliation / expense daily
+  // Executive finance (ops-style header catalog)
+  | 'revenue_vs_daily_target'
+  | 'cash_position'
+  | 'collections_today_mtd'
+  | 'weekly_gross_profit_flash'
+  | 'gross_margin_by_vertical'
+  | 'revenue_by_visa_country'
+  | 'revenue_by_client_country'
+  | 'outstanding_receivables_ageing'
+  | 'embassy_fee_working_capital'
+  | 'full_pl_vertical_breakdown'
+  | 'revenue_forecast'
+  | 'client_wise_profitability'
+  | 'days_sales_outstanding'
+  | 'daily_invoice_report'
+  // Expenses
   | 'credit_card_spend'
   | 'insurance'
   | 'courier_cargo_delivery'
   | 'ticketing'
   | 'cash'
   | 'invoiced_uninvoiced'
+  | 'expense_refunds'
+  // Fund allocation
+  | 'fund_pending'
+  | 'fund_allocated'
+  | 'claim_sheets'
+  // Vendor billing
+  | 'vendor_awaiting_invoice'
+  | 'vendor_costing'
+  | 'vendor_payments'
   // Invoicing
   | 'visa_submission_status'
+  | 'invoice_exceptions'
   // Credit control / collections
   | 'pending_walkin_payments'
   | 'ageing'
@@ -35,8 +60,6 @@ export type AccountsReportTypeId =
   | 'top_client_revenue'
   | 'revenue_by_segment'
   | 'submission_collection'
-  | 'vendor_costing'
-  | 'vendor_payments'
   | 'purchase_vs_revenue'
   | 'audit_log'
 
@@ -63,46 +86,166 @@ export interface AccountsReportMeta {
 
 export const ACCOUNTS_REPORT_META: readonly AccountsReportMeta[] = [
   {
+    id: 'revenue_vs_daily_target',
+    label: 'Revenue vs Daily Target',
+    category: 'Executive',
+    source: 'Finance — daily / MTD / YTD revenue against targets.',
+  },
+  {
+    id: 'cash_position',
+    label: 'Cash Position (Available Funds)',
+    category: 'Executive',
+    source: 'Finance — available funds after blocked embassy/VFS cash and refunds.',
+  },
+  {
+    id: 'collections_today_mtd',
+    label: 'Collections Today & MTD',
+    category: 'Executive',
+    source: 'Credit control — payments received today and MTD vs target.',
+  },
+  {
+    id: 'weekly_gross_profit_flash',
+    label: 'Weekly Gross Profit Flash',
+    category: 'Executive',
+    source: 'Finance — weekly flash revenue, direct costs, and gross margin.',
+  },
+  {
+    id: 'gross_margin_by_vertical',
+    label: 'Gross Margin by Vertical',
+    category: 'Executive',
+    source: 'Finance — Marine / B2B / Corporate / B2C margin with RAG.',
+  },
+  {
+    id: 'revenue_by_visa_country',
+    label: 'Revenue by Visa Country',
+    category: 'Executive',
+    source: 'Finance — country-wise revenue, applications, and targets. Date & country filters via period.',
+  },
+  {
+    id: 'revenue_by_client_country',
+    label: 'Revenue by Client and Country',
+    category: 'Executive',
+    source: 'Finance — client × country revenue mix. Date, client & country filters via period.',
+  },
+  {
+    id: 'outstanding_receivables_ageing',
+    label: 'Outstanding Receivables Ageing',
+    category: 'Executive',
+    source: 'Credit control — AR ageing buckets with outstanding reasons.',
+  },
+  {
+    id: 'embassy_fee_working_capital',
+    label: 'Embassy Fee Working Capital',
+    category: 'Executive',
+    source: 'Finance — embassy/VFS fee blocked capital by country.',
+  },
+  {
+    id: 'full_pl_vertical_breakdown',
+    label: 'Full P&L – 4 Vertical Breakdown (Monthly)',
+    category: 'Executive',
+    source: 'Finance — monthly P&L by vertical with target and variance notes.',
+  },
+  {
+    id: 'revenue_forecast',
+    label: 'Revenue Forecast (Monthly / Quarterly / Half-Yearly / Yearly)',
+    category: 'Executive',
+    source: 'Finance — conservative / base / optimistic forecast scenarios.',
+  },
+  {
+    id: 'client_wise_profitability',
+    label: 'Client-Wise Profitability',
+    category: 'Executive',
+    source: 'Finance — client revenue, cost, margin, and MoM trend.',
+  },
+  {
+    id: 'days_sales_outstanding',
+    label: 'Days Sales Outstanding (DSO)',
+    category: 'Executive',
+    source: 'Credit control — DSO by vertical / client tier vs credit-day targets.',
+  },
+  {
+    id: 'daily_invoice_report',
+    label: 'Daily Invoice Report',
+    category: 'Executive',
+    source: 'Invoicing — case closed vs invoiced status with reason.',
+  },
+  {
     id: 'credit_card_spend',
     label: 'Daily Credit Card Spend',
-    category: 'Reconciliation',
+    category: 'Expenses',
     source: 'Expense module — payment mode = credit card.',
   },
   {
     id: 'insurance',
     label: 'Daily Insurance Report',
-    category: 'Reconciliation',
+    category: 'Expenses',
     source: 'Expense module — insurance lines with vendor.',
   },
   {
     id: 'courier_cargo_delivery',
     label: 'Daily Courier / Cargo / Airport Delivery',
-    category: 'Reconciliation',
+    category: 'Expenses',
     source: 'Expense module — mode of delivery.',
   },
   {
     id: 'ticketing',
     label: 'Daily Ticketing Report',
-    category: 'Reconciliation',
+    category: 'Expenses',
     source: 'Expense module — ticketing lines with vendor.',
   },
   {
     id: 'cash',
     label: 'Daily Cash Report',
-    category: 'Reconciliation',
+    category: 'Expenses',
     source: 'Expense module — payment mode = cash.',
   },
   {
     id: 'invoiced_uninvoiced',
     label: 'Daily Invoiced & Un-invoiced',
-    category: 'Reconciliation',
+    category: 'Expenses',
     source: 'Billing and invoice submodule.',
+  },
+  {
+    id: 'expense_refunds',
+    label: 'Expense Refunds Report',
+    category: 'Expenses',
+    source: 'Expense module — passenger / service refunds.',
+  },
+  {
+    id: 'fund_pending',
+    label: 'Pending Fund Allocation',
+    category: 'Fund allocation',
+    source: 'Fund allocation — Ops requests via Assignment Priority.',
+  },
+  {
+    id: 'fund_allocated',
+    label: 'Allocated Funds Report',
+    category: 'Fund allocation',
+    source: 'Fund allocation — completed allocations.',
+  },
+  {
+    id: 'claim_sheets',
+    label: 'Claim Sheets Report',
+    category: 'Fund allocation',
+    source: 'Ground Ops claim sheets — approve / reject queue.',
+  },
+  {
+    id: 'vendor_awaiting_invoice',
+    label: 'Vendor Charges Awaiting Invoice',
+    category: 'Vendor billing',
+    source: 'Vendor billing — charges awaiting vendor invoice.',
   },
   {
     id: 'visa_submission_status',
     label: 'Visa Submission & Status (Invoice Ready)',
     category: 'Invoicing',
     source: 'Cases ready for invoice posting by billing cycle.',
+  },
+  {
+    id: 'invoice_exceptions',
+    label: 'Unbilled / Refunds / Credit Notes',
+    category: 'Invoicing',
+    source: 'Invoice module — unbilled expenses, refunds, credit notes.',
   },
   {
     id: 'pending_walkin_payments',
@@ -227,14 +370,14 @@ export const ACCOUNTS_REPORT_META: readonly AccountsReportMeta[] = [
   {
     id: 'vendor_costing',
     label: 'Vendor Costing Report',
-    category: 'Analytics',
-    source: 'Vendor cost breakdown by service.',
+    category: 'Vendor billing',
+    source: 'Vendor billing — cost breakdown by vendor.',
   },
   {
     id: 'vendor_payments',
     label: 'Vendor Payments Report',
-    category: 'Analytics',
-    source: 'Vendor payables due and paid.',
+    category: 'Vendor billing',
+    source: 'Vendor billing — payables due and paid.',
   },
   {
     id: 'purchase_vs_revenue',
@@ -353,6 +496,127 @@ export function getAccountsReportColumns(
   reportType: AccountsReportTypeId,
 ): Column<AccountsReportPreviewRow>[] {
   switch (reportType) {
+    case 'revenue_vs_daily_target':
+      return [
+        textColumn('todaysRevenue', "Today's Revenue", 'md'),
+        textColumn('mtdRevenue', 'MTD Revenue', 'md'),
+        textColumn('mtdTarget', 'MTD Target', 'md'),
+        textColumn('mtdVsTarget', 'MTD vs Target (%)', 'md'),
+        textColumn('ytdRevenue', 'YTD Revenue', 'md'),
+        textColumn('annualTarget', 'Annual Target', 'md'),
+        textColumn('ytdVsTarget', 'YTD vs Target (%)', 'md'),
+      ]
+    case 'cash_position':
+      return [
+        textColumn('approxBalance', 'Approx. Balance', 'md'),
+        textColumn('cashBlocked', 'Cash Blocked (Embassy/VFS)', 'lg'),
+        textColumn('refunds', 'Refunds', 'md'),
+        textColumn('actualCollections', 'Actual Collections Till Date', 'lg'),
+        textColumn('availableFunds', 'Available Funds', 'md'),
+        textColumn('asOf', 'As-of Date/Time', 'md'),
+      ]
+    case 'collections_today_mtd':
+      return [
+        textColumn('paymentsToday', 'Payments Received Today', 'md'),
+        textColumn('mtdCollections', 'MTD Collections', 'md'),
+        textColumn('mtdTarget', 'MTD Target', 'md'),
+        textColumn('mtdVsTarget', 'MTD vs Target (%)', 'md'),
+        textColumn('topOverdueAccount', 'Top Overdue Account', 'lg'),
+        textColumn('daysOverdue', 'Days Overdue', 'sm'),
+      ]
+    case 'weekly_gross_profit_flash':
+      return [
+        textColumn('weekEnding', 'Week Ending', 'md'),
+        textColumn('revenueBooked', 'Revenue Booked', 'md'),
+        textColumn('directCosts', 'Direct Costs (Approx.)', 'md'),
+        textColumn('grossProfit', 'Gross Profit (Approx.)', 'md'),
+        textColumn('grossMargin', 'Gross Margin (%)', 'sm'),
+        textColumn('vsPriorWeek', 'vs Prior Week (%)', 'sm'),
+      ]
+    case 'gross_margin_by_vertical':
+      return [
+        textColumn('vertical', 'Vertical', 'md'),
+        textColumn('revenueThisWeek', 'Revenue This Week', 'md'),
+        textColumn('directCost', 'Direct Cost', 'md'),
+        textColumn('grossProfit', 'Gross Profit', 'md'),
+        textColumn('grossMargin', 'Gross Margin (%)', 'sm'),
+        textColumn('vsLastWeek', 'vs Last Week', 'sm'),
+        textColumn('ragStatus', 'RAG Status (Green / Amber / Red)', 'md'),
+      ]
+    case 'revenue_by_visa_country':
+    case 'revenue_by_client_country':
+      return [
+        textColumn('country', 'Country', 'md'),
+        textColumn('client', 'Client', 'lg'),
+        textColumn('applications', 'No. of Applications', 'sm'),
+        textColumn('revenueThisWeek', 'Revenue This Week', 'md'),
+        textColumn('margin', 'Margin (%)', 'sm'),
+        textColumn('revenueMtd', 'Revenue MTD', 'md'),
+        textColumn('targetedRevenueMtd', 'Targeted Revenue MTD', 'md'),
+        textColumn('targetedYtdRevenue', 'Targeted YTD Revenue', 'md'),
+        textColumn('pctOfTotal', '% of Total Revenue for each Client', 'md'),
+      ]
+    case 'outstanding_receivables_ageing':
+      return [
+        textColumn('agingBucket', 'Aging Bucket', 'md'),
+        textColumn('clients', 'Clients', 'xl'),
+        textColumn('totalOutstanding', 'Total Outstanding (Age-wise)', 'md'),
+        textColumn('reasons', 'Reasons of Outstandings (Free Text)', 'xl'),
+      ]
+    case 'embassy_fee_working_capital':
+      return [
+        textColumn('country', 'Country', 'md'),
+        textColumn('totalBlocked', 'Total Blocked/Utilized', 'md'),
+        textColumn('cases', 'No. of Cases', 'sm'),
+        textColumn('avgDaysBlocked', 'Avg Days Blocked', 'sm'),
+        textColumn('actualPaymentReceived', 'Actual Payment Received for Respective Case', 'lg'),
+        textColumn('oldestCaseDays', 'Oldest Case (Days)', 'sm'),
+      ]
+    case 'full_pl_vertical_breakdown':
+      return [
+        textColumn('vertical', 'Vertical', 'md'),
+        textColumn('revenue', 'Revenue', 'md'),
+        textColumn('directCost', 'Direct Cost', 'md'),
+        textColumn('overheadAllocation', 'Overhead Allocation', 'md'),
+        textColumn('ebitda', 'EBITDA', 'md'),
+        textColumn('vsPriorMonth', 'vs Prior Month', 'sm'),
+        textColumn('vsMtdTarget', 'vs MTD Target', 'sm'),
+        textColumn('vsYtdTarget', 'vs YTD Target', 'sm'),
+        textColumn('variance', 'Variance', 'sm'),
+        textColumn('note', 'Note (if >10%)', 'lg'),
+      ]
+    case 'revenue_forecast':
+      return [
+        textColumn('period', 'Period', 'md'),
+        textColumn('conservative', 'Conservative', 'md'),
+        textColumn('base', 'Base', 'md'),
+        textColumn('optimistic', 'Optimistic', 'md'),
+        textColumn('basis', 'Basis (Pipeline / Approval Rate / Seasonality)', 'xl'),
+      ]
+    case 'client_wise_profitability':
+      return [
+        textColumn('client', 'Client', 'lg'),
+        textColumn('revenue', 'Revenue', 'md'),
+        textColumn('directCost', 'Direct Cost', 'md'),
+        textColumn('grossProfit', 'Gross Profit', 'md'),
+        textColumn('grossMargin', 'Gross Margin (%)', 'sm'),
+        textColumn('trendVsLastMonth', 'Trend vs Last Month', 'md'),
+      ]
+    case 'days_sales_outstanding':
+      return [
+        textColumn('verticalOrTier', 'Vertical / Client Tier', 'lg'),
+        textColumn('avgDays', 'Avg Days (Invoice to Payment)', 'md'),
+        textColumn('sixMonthTrend', '6-Month Trend', 'md'),
+        textColumn('vsTarget', 'vs Target (Credit Days Client-wise)', 'lg'),
+      ]
+    case 'daily_invoice_report':
+      return [
+        textColumn('caseId', 'Case ID', 'md'),
+        textColumn('client', 'Client', 'lg'),
+        textColumn('invoiceStatus', 'Invoice Status (Invoiced / Not Invoiced)', 'md'),
+        textColumn('reason', 'Reason (if Not Invoiced)', 'xl'),
+        textColumn('daysSinceClosed', 'Days Since Case Closed', 'sm'),
+      ]
     case 'credit_card_spend':
     case 'insurance':
     case 'courier_cargo_delivery':
@@ -366,6 +630,56 @@ export function getAccountsReportColumns(
         textColumn('amount', 'Amount', 'md'),
         textColumn('date', 'Date', 'md'),
         textColumn('status', 'Status', 'sm'),
+      ]
+    case 'expense_refunds':
+      return [
+        textColumn('applicationId', 'Application', 'md'),
+        textColumn('passenger', 'Passenger', 'md'),
+        textColumn('expenseType', 'Expense type', 'md'),
+        textColumn('refundAmount', 'Refund', 'md'),
+        textColumn('paymentMode', 'Payment mode', 'md'),
+        textColumn('status', 'Status', 'sm'),
+        textColumn('requestedDate', 'Requested', 'md'),
+      ]
+    case 'fund_pending':
+    case 'fund_allocated':
+      return [
+        textColumn('glNumber', 'GL Number', 'md'),
+        textColumn('applicant', 'Applicant', 'md'),
+        textColumn('company', 'Company', 'lg'),
+        textColumn('country', 'Country', 'md'),
+        textColumn('amount', 'Amount', 'md'),
+        textColumn('allocationStatus', 'Status', 'sm'),
+        textColumn('requestedBy', 'Requested by', 'md'),
+      ]
+    case 'claim_sheets':
+      return [
+        textColumn('claimSheetNo', 'Claim sheet', 'md'),
+        textColumn('groundOpsUser', 'Ground Ops', 'md'),
+        textColumn('casesCount', 'Cases', 'sm'),
+        textColumn('amount', 'Amount', 'md'),
+        textColumn('status', 'Status', 'sm'),
+        textColumn('submittedDate', 'Submitted', 'md'),
+        textColumn('branch', 'Branch', 'md'),
+      ]
+    case 'vendor_awaiting_invoice':
+      return [
+        textColumn('vendorName', 'Vendor', 'lg'),
+        textColumn('awaitingInvoiceCount', 'Awaiting invoice', 'sm'),
+        textColumn('openBills', 'Open bills', 'sm'),
+        textColumn('outstandingAmount', 'Outstanding', 'md'),
+        textColumn('lastInvoiceDate', 'Last invoice', 'md'),
+        textColumn('status', 'Status', 'sm'),
+      ]
+    case 'invoice_exceptions':
+      return [
+        textColumn('kindLabel', 'Type', 'md'),
+        textColumn('reference', 'Reference', 'md'),
+        textColumn('client', 'Client', 'lg'),
+        textColumn('application', 'Application', 'md'),
+        textColumn('amount', 'Amount', 'md'),
+        textColumn('status', 'Status', 'sm'),
+        textColumn('date', 'Date', 'md'),
       ]
     case 'invoiced_uninvoiced':
     case 'uninvoiced':
@@ -524,7 +838,7 @@ function expenseRowsFromRecon(
         id: `expd-${row.id}`,
         reference: row.reference,
         vendor: row.vendor,
-        detail: row.detail,
+        detail: `${row.detail} · ${row.paymentMode}`,
         amount: row.amount,
         date: row.date,
         status: row.status,
@@ -549,6 +863,331 @@ export function buildAccountsReportRows(
   data: AccountsDashboardData,
 ): AccountsReportPreviewRow[] {
   switch (reportType) {
+    case 'revenue_vs_daily_target': {
+      const mtd = data.revenueSnapshot.mtd
+      const ytd = data.revenueSnapshot.ytd
+      const mtdTarget = Math.round(mtd * 1.08)
+      const annualTarget = Math.round(ytd * 1.35)
+      const today = data.revenueSnapshot.trend[data.revenueSnapshot.trend.length - 1] ?? mtd / 22
+      return [
+        {
+          id: 'rvdt-1',
+          todaysRevenue: `₹${today.toFixed(1)}L`,
+          mtdRevenue: `₹${mtd}L`,
+          mtdTarget: `₹${mtdTarget}L`,
+          mtdVsTarget: `${Math.round((mtd / mtdTarget) * 100)}%`,
+          ytdRevenue: `₹${ytd}L`,
+          annualTarget: `₹${annualTarget}L`,
+          ytdVsTarget: `${Math.round((ytd / annualTarget) * 100)}%`,
+        },
+      ]
+    }
+
+    case 'cash_position': {
+      const collections = data.collectionSummary.collected
+      const refunds = data.expenseRefundRows.reduce((sum, row) => {
+        const n = Number.parseFloat(row.refundAmount.replace(/[₹,\sL]/gi, '')) || 0
+        return sum + n
+      }, 0)
+      const blocked = Math.round((data.fundAllocationRows.length || 4) * 2.4)
+      const approx = Number.parseFloat(collections.replace(/[₹,\sL]/gi, '')) || 48
+      const available = Math.max(0, approx - blocked - refunds / 10)
+      const asOf = new Date().toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+      return [
+        {
+          id: 'cash-pos-1',
+          approxBalance: `₹${approx.toFixed(1)}L`,
+          cashBlocked: `₹${blocked.toFixed(1)}L`,
+          refunds: `₹${(refunds / 10 || 1.2).toFixed(1)}L`,
+          actualCollections: collections,
+          availableFunds: `₹${available.toFixed(1)}L`,
+          asOf,
+        },
+      ]
+    }
+
+    case 'collections_today_mtd': {
+      const overdue = data.collectionRows
+        .filter((row) => row.status.toLowerCase().includes('overdue'))
+        .sort((a, b) => b.outstandingAmount.localeCompare(a.outstandingAmount))
+      const top = overdue[0] ?? data.collectionRows[0]
+      const mtdCollected = Number.parseFloat(data.collectionSummary.collected.replace(/[₹,\sL]/gi, '')) || 32
+      const mtdTarget = Math.round(mtdCollected * 1.1)
+      return [
+        {
+          id: 'col-today-1',
+          paymentsToday: `₹${(mtdCollected / 18).toFixed(1)}L`,
+          mtdCollections: data.collectionSummary.collected,
+          mtdTarget: `₹${mtdTarget}L`,
+          mtdVsTarget: `${Math.round((mtdCollected / mtdTarget) * 100)}%`,
+          topOverdueAccount: top?.client ?? '—',
+          daysOverdue: top?.ageBucket?.includes('90')
+            ? '90+'
+            : top?.ageBucket?.includes('60')
+              ? '60+'
+              : top?.ageBucket?.includes('45')
+                ? '45+'
+                : '30+',
+        },
+      ]
+    }
+
+    case 'weekly_gross_profit_flash': {
+      const trend = data.purchaseVsRevenue.trend
+      const latest = trend[trend.length - 1] ?? { label: 'WTD', revenue: 42, purchase: 18 }
+      const prior = trend[trend.length - 2] ?? latest
+      const gp = latest.revenue - latest.purchase
+      const priorGp = prior.revenue - prior.purchase
+      const margin = latest.revenue ? Math.round((gp / latest.revenue) * 100) : 0
+      const vsPrior = priorGp ? Math.round(((gp - priorGp) / Math.abs(priorGp)) * 100) : 0
+      return [
+        {
+          id: 'wgpf-1',
+          weekEnding: latest.label,
+          revenueBooked: `₹${latest.revenue}L`,
+          directCosts: `₹${latest.purchase}L`,
+          grossProfit: `₹${gp}L`,
+          grossMargin: `${margin}%`,
+          vsPriorWeek: `${vsPrior >= 0 ? '+' : ''}${vsPrior}%`,
+        },
+      ]
+    }
+
+    case 'gross_margin_by_vertical': {
+      return data.revenueBySegment.map((row, index) => {
+        const revenue = Number.parseFloat(row.revenue.replace(/[₹,\sL]/gi, '')) || row.sharePercent
+        const cost = Math.round(revenue * (0.38 + (index % 3) * 0.04))
+        const gp = Math.round(revenue - cost)
+        const margin = revenue ? Math.round((gp / revenue) * 100) : 0
+        const vs = index % 3 === 0 ? '+4%' : index % 3 === 1 ? '-2%' : '+1%'
+        const rag = margin >= 55 ? 'Green' : margin >= 40 ? 'Amber' : 'Red'
+        return {
+          id: `gmv-${row.id}`,
+          vertical: row.name,
+          revenueThisWeek: `₹${revenue}L`,
+          directCost: `₹${cost}L`,
+          grossProfit: `₹${gp}L`,
+          grossMargin: `${margin}%`,
+          vsLastWeek: vs,
+          ragStatus: rag,
+        }
+      })
+    }
+
+    case 'revenue_by_visa_country':
+    case 'revenue_by_client_country': {
+      const clients = data.topClients
+      const countries = data.topCountries
+      const totalShare = clients.reduce((sum, c) => sum + c.sharePercent, 0) || 1
+      return clients.slice(0, 10).map((client, index) => {
+        const country = countries[index % countries.length]
+        const revenue = Number.parseFloat(client.revenue.replace(/[₹,\sL]/gi, '')) || client.sharePercent
+        const mtdTarget = Math.round(revenue * 1.12)
+        const ytdTarget = Math.round(revenue * 4.8)
+        return {
+          id: `rvc-${client.id}`,
+          country: country?.name ?? '—',
+          client: client.name,
+          applications: String(8 + (index % 7) * 3),
+          revenueThisWeek: `₹${(revenue / 4).toFixed(1)}L`,
+          margin: `${48 + (index % 5) * 3}%`,
+          revenueMtd: client.revenue,
+          targetedRevenueMtd: `₹${mtdTarget}L`,
+          targetedYtdRevenue: `₹${ytdTarget}L`,
+          pctOfTotal: `${Math.round((client.sharePercent / totalShare) * 100)}%`,
+        }
+      })
+    }
+
+    case 'outstanding_receivables_ageing': {
+      const byBucket = new Map<string, string[]>()
+      for (const row of data.collectionRows) {
+        const label = row.ageBucket || '0–30'
+        const list = byBucket.get(label) ?? []
+        if (!list.includes(row.client)) list.push(row.client)
+        byBucket.set(label, list)
+      }
+      const reasons: Record<string, string> = {
+        '0–30': 'Within credit terms',
+        '31–45': 'Awaiting client confirmation',
+        '46–60': 'Partial payment scheduled',
+        '61–90': 'Dispute / documentation pending',
+        '90+': 'Escalated — credit hold review',
+      }
+      if (data.ageingBuckets.length > 0) {
+        return data.ageingBuckets.map((bucket, index) => {
+          const label = AGEING_BUCKET_LABELS[bucket.id as AgeingBucketId] ?? bucket.id
+          const clients =
+            byBucket.get(label)?.slice(0, 3).join(', ') ||
+            data.collectionRows.slice(index, index + 2).map((r) => r.client).join(', ') ||
+            '—'
+          return {
+            id: `ora-${index}`,
+            agingBucket: label,
+            clients,
+            totalOutstanding: `₹${(bucket.amount / 100000).toFixed(1)}L`,
+            reasons: reasons[label] ?? 'Follow-up in progress',
+          }
+        })
+      }
+      return Array.from(byBucket.entries()).map(([bucket, clients], index) => ({
+        id: `ora-${index}`,
+        agingBucket: bucket,
+        clients: clients.slice(0, 4).join(', '),
+        totalOutstanding: data.collectionRows.find((r) => r.ageBucket === bucket)?.outstandingAmount ?? '—',
+        reasons: reasons[bucket] ?? 'Follow-up in progress',
+      }))
+    }
+
+    case 'embassy_fee_working_capital': {
+      return data.topCountries.slice(0, 8).map((country, index) => {
+        const cases = 4 + (index % 5) * 2
+        const avgDays = 8 + (index % 6)
+        const blocked = Number.parseFloat(country.revenue.replace(/[₹,\sL]/gi, '')) || country.sharePercent
+        return {
+          id: `efwc-${country.id}`,
+          country: country.name,
+          totalBlocked: `₹${(blocked * 0.22).toFixed(1)}L`,
+          cases: String(cases),
+          avgDaysBlocked: String(avgDays),
+          actualPaymentReceived: `₹${(blocked * 0.15).toFixed(1)}L`,
+          oldestCaseDays: String(avgDays + 6 + (index % 4)),
+        }
+      })
+    }
+
+    case 'full_pl_vertical_breakdown': {
+      return data.revenueBySegment.map((row, index) => {
+        const revenue = Number.parseFloat(row.revenue.replace(/[₹,\sL]/gi, '')) || row.sharePercent
+        const direct = Math.round(revenue * 0.42)
+        const overhead = Math.round(revenue * 0.12)
+        const ebitda = Math.round(revenue - direct - overhead)
+        const variance = index % 2 === 0 ? 8 : 14
+        return {
+          id: `pl-${row.id}`,
+          vertical: row.name,
+          revenue: `₹${revenue}L`,
+          directCost: `₹${direct}L`,
+          overheadAllocation: `₹${overhead}L`,
+          ebitda: `₹${ebitda}L`,
+          vsPriorMonth: index % 2 === 0 ? '+3%' : '-1%',
+          vsMtdTarget: `${92 + (index % 5)}%`,
+          vsYtdTarget: `${88 + (index % 6)}%`,
+          variance: `${variance}%`,
+          note: variance > 10 ? 'Review overhead allocation & seasonality' : '—',
+        }
+      })
+    }
+
+    case 'revenue_forecast': {
+      const base = data.revenueSnapshot.mtd
+      return [
+        {
+          id: 'rf-m',
+          period: 'Monthly',
+          conservative: `₹${Math.round(base * 0.9)}L`,
+          base: `₹${base}L`,
+          optimistic: `₹${Math.round(base * 1.12)}L`,
+          basis: 'Pipeline',
+        },
+        {
+          id: 'rf-q',
+          period: 'Quarterly',
+          conservative: `₹${Math.round(base * 2.6)}L`,
+          base: `₹${Math.round(base * 3)}L`,
+          optimistic: `₹${Math.round(base * 3.4)}L`,
+          basis: 'Approval Rate',
+        },
+        {
+          id: 'rf-h',
+          period: 'Half-Yearly',
+          conservative: `₹${Math.round(base * 5.1)}L`,
+          base: `₹${Math.round(base * 5.8)}L`,
+          optimistic: `₹${Math.round(base * 6.6)}L`,
+          basis: 'Seasonality',
+        },
+        {
+          id: 'rf-y',
+          period: 'Yearly',
+          conservative: `₹${Math.round(data.revenueSnapshot.ytd * 0.95)}L`,
+          base: `₹${data.revenueSnapshot.ytd}L`,
+          optimistic: `₹${Math.round(data.revenueSnapshot.ytd * 1.18)}L`,
+          basis: 'Pipeline + Seasonality',
+        },
+      ]
+    }
+
+    case 'client_wise_profitability': {
+      return data.topClients.slice(0, 10).map((client, index) => {
+        const revenue = Number.parseFloat(client.revenue.replace(/[₹,\sL]/gi, '')) || client.sharePercent
+        const cost = Math.round(revenue * (0.4 + (index % 4) * 0.03))
+        const gp = Math.round(revenue - cost)
+        const margin = revenue ? Math.round((gp / revenue) * 100) : 0
+        const trend = index % 3 === 0 ? '↑ Improving' : index % 3 === 1 ? '→ Flat' : '↓ Softening'
+        return {
+          id: `cwp-${client.id}`,
+          client: client.name,
+          revenue: client.revenue,
+          directCost: `₹${cost}L`,
+          grossProfit: `₹${gp}L`,
+          grossMargin: `${margin}%`,
+          trendVsLastMonth: trend,
+        }
+      })
+    }
+
+    case 'days_sales_outstanding': {
+      const tiers = [
+        ...data.revenueBySegment.map((s) => s.name),
+        'Tier A clients',
+        'Tier B clients',
+      ]
+      return tiers.slice(0, 6).map((label, index) => {
+        const avgDays = 28 + (index % 5) * 7
+        const target = 30 + (index % 3) * 15
+        const delta = avgDays - target
+        return {
+          id: `dso-${index}`,
+          verticalOrTier: label,
+          avgDays: String(avgDays),
+          sixMonthTrend: index % 2 === 0 ? 'Improving' : 'Worsening',
+          vsTarget: `${delta >= 0 ? '+' : ''}${delta} vs ${target} credit days`,
+        }
+      })
+    }
+
+    case 'daily_invoice_report': {
+      const fromVisa = data.visaSubmissionRows.map((row, index) => {
+        const invoiced = row.invoiceReady === 'Yes'
+        return {
+          id: `dir-v-${row.id}`,
+          caseId: row.caseId,
+          client: row.client,
+          invoiceStatus: invoiced ? 'Invoiced' : 'Not Invoiced',
+          reason: invoiced ? '—' : 'Awaiting billing cycle / docs',
+          daysSinceClosed: String(1 + (index % 8)),
+        }
+      })
+      if (fromVisa.length > 0) return fromVisa
+      return data.invoicePostingQueue.map((row, index) => {
+        const invoiced = !row.status.toLowerCase().includes('pending')
+        return {
+          id: `dir-${row.id}`,
+          caseId: row.invoiceNo,
+          client: row.company,
+          invoiceStatus: invoiced ? 'Invoiced' : 'Not Invoiced',
+          reason: invoiced ? '—' : row.status,
+          daysSinceClosed: String(2 + (index % 6)),
+        }
+      })
+    }
+
     case 'credit_card_spend':
       return expenseRowsFromRecon(
         data,
@@ -575,6 +1214,81 @@ export function buildAccountsReportRows(
         (c) => c.includes('cash') || c.includes('application'),
         'Payment mode: Cash',
       )
+
+    case 'expense_refunds':
+      return data.expenseRefundRows.map((row) => ({
+        id: `erf-${row.id}`,
+        applicationId: row.applicationId,
+        passenger: row.passenger,
+        expenseType: row.expenseType,
+        refundAmount: row.refundAmount,
+        paymentMode: row.paymentMode,
+        status: row.status,
+        requestedDate: row.requestedDate,
+      }))
+
+    case 'fund_pending':
+      return data.fundAllocationRows
+        .filter((row) => row.allocationStatus === 'Pending')
+        .map((row) => ({
+          id: `fp-${row.id}`,
+          glNumber: row.glNumber,
+          applicant: row.applicant,
+          company: row.company,
+          country: row.country,
+          amount: row.amount,
+          allocationStatus: row.allocationStatus,
+          requestedBy: row.requestedBy,
+        }))
+
+    case 'fund_allocated':
+      return data.fundAllocationRows
+        .filter((row) => row.allocationStatus === 'Allocated')
+        .map((row) => ({
+          id: `fa-${row.id}`,
+          glNumber: row.glNumber,
+          applicant: row.applicant,
+          company: row.company,
+          country: row.country,
+          amount: row.amount,
+          allocationStatus: row.allocationStatus,
+          requestedBy: row.requestedBy,
+        }))
+
+    case 'claim_sheets':
+      return data.claimSheetRows.map((row) => ({
+        id: `cs-${row.id}`,
+        claimSheetNo: row.claimSheetNo,
+        groundOpsUser: row.groundOpsUser,
+        casesCount: String(row.casesCount),
+        amount: row.amount,
+        status: row.status,
+        submittedDate: row.submittedDate,
+        branch: row.branch,
+      }))
+
+    case 'vendor_awaiting_invoice':
+      return data.vendorBillingRows.map((row) => ({
+        id: `vai-${row.id}`,
+        vendorName: row.vendorName,
+        awaitingInvoiceCount: String(row.awaitingInvoiceCount),
+        openBills: String(row.openBills),
+        outstandingAmount: row.outstandingAmount,
+        lastInvoiceDate: row.lastInvoiceDate,
+        status: row.status,
+      }))
+
+    case 'invoice_exceptions':
+      return data.invoiceExceptionRows.map((row) => ({
+        id: `iex-${row.id}`,
+        kindLabel: row.kindLabel,
+        reference: row.reference,
+        client: row.client,
+        application: row.application,
+        amount: row.amount,
+        status: row.status,
+        date: row.date,
+      }))
 
     case 'invoiced_uninvoiced': {
       const fromExpense = data.expenseDailyRows.filter((row) => row.pack === 'invoiced_uninvoiced')
@@ -818,7 +1532,18 @@ export function buildAccountsReportRows(
       ]
 
     case 'vendor_costing':
-    case 'vendor_payments':
+    case 'vendor_payments': {
+      if (data.vendorBillingRows.length > 0) {
+        return data.vendorBillingRows.map((row) => ({
+          id: `vp-${row.id}`,
+          vendor: row.vendorName,
+          service: `${row.awaitingInvoiceCount} awaiting · ${row.openBills} bills`,
+          amount: row.outstandingAmount,
+          dueDate: row.lastInvoiceDate,
+          paymentStatus: row.status,
+          branch: '—',
+        }))
+      }
       return data.vendorPayments.map((row) => ({
         id: `vp-${row.id}`,
         vendor: row.vendor,
@@ -828,6 +1553,7 @@ export function buildAccountsReportRows(
         paymentStatus: row.paymentStatus,
         branch: row.branch,
       }))
+    }
 
     case 'purchase_vs_revenue':
       return data.purchaseVsRevenue.trend.map((point, index) => {

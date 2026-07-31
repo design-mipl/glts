@@ -77,15 +77,13 @@ const PIPELINE: Record<
   { count: number; averageAgeHours: number; delayedCount: number; slaPercent: number }
 > = {
   draft: { count: 86, averageAgeHours: 8, delayedCount: 4, slaPercent: 96 },
-  'awaiting-documents': { count: 112, averageAgeHours: 30, delayedCount: 18, slaPercent: 87 },
-  verification: { count: 94, averageAgeHours: 16, delayedCount: 9, slaPercent: 91 },
-  qc: { count: 71, averageAgeHours: 12, delayedCount: 11, slaPercent: 88 },
-  appointment: { count: 58, averageAgeHours: 28, delayedCount: 7, slaPercent: 90 },
-  submission: { count: 49, averageAgeHours: 10, delayedCount: 3, slaPercent: 95 },
-  embassy: { count: 63, averageAgeHours: 64, delayedCount: 14, slaPercent: 82 },
-  collection: { count: 34, averageAgeHours: 20, delayedCount: 4, slaPercent: 93 },
-  dispatch: { count: 28, averageAgeHours: 9, delayedCount: 1, slaPercent: 98 },
-  delivered: { count: 210, averageAgeHours: 0, delayedCount: 0, slaPercent: 100 },
+  verification_pending: { count: 206, averageAgeHours: 22, delayedCount: 28, slaPercent: 88 },
+  online_submission_pending: { count: 94, averageAgeHours: 14, delayedCount: 9, slaPercent: 91 },
+  pending_payment: { count: 58, averageAgeHours: 18, delayedCount: 7, slaPercent: 89 },
+  vfs_submission_pending: { count: 112, averageAgeHours: 48, delayedCount: 17, slaPercent: 83 },
+  collection_pending: { count: 63, averageAgeHours: 24, delayedCount: 8, slaPercent: 90 },
+  collected: { count: 34, averageAgeHours: 12, delayedCount: 2, slaPercent: 96 },
+  dispatched: { count: 210, averageAgeHours: 0, delayedCount: 0, slaPercent: 100 },
 }
 
 function passportStages(activeIndex: number) {
@@ -959,8 +957,39 @@ export function applySuperAdminDashboardFilters(
     filters.applicationStatus === 'all' ||
     status.toLowerCase().replace(/\s+/g, '-') === filters.applicationStatus
 
+  let factor = 1
+  switch (filters.date) {
+    case 'today':
+      factor *= 0.35
+      break
+    case 'week':
+      factor *= 0.72
+      break
+    case 'quarter':
+      factor *= 1.18
+      break
+    case 'year':
+      factor *= 1.35
+      break
+    default:
+      break
+  }
+  if (filters.segment !== 'all') factor *= 0.28
+  if (filters.branch !== 'all') factor *= 0.55
+  if (filters.country !== 'all') factor *= 0.7
+  if (filters.client !== 'all') factor *= 0.45
+  if (filters.visaType !== 'all') factor *= 0.75
+  if (query) factor *= 0.4
+
+  const pipelineStages = data.pipelineStages.map((stage) => ({
+    ...stage,
+    count: Math.max(0, Math.round(stage.count * factor)),
+    delayedCount: Math.max(0, Math.round(stage.delayedCount * factor)),
+  }))
+
   return {
     ...data,
+    pipelineStages,
     clientRows: data.clientRows.filter(
       (row) =>
         matchSegment(row.segment) &&

@@ -1,26 +1,20 @@
 import type { ReactNode } from 'react'
-import { Grid, Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
+import { AlertTriangle, Building2, ClipboardList, HandCoins, LayoutDashboard, Users } from 'lucide-react'
+import { Button } from '@/design-system/UIComponents'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import {
-  Building2,
-  ClipboardList,
-  HandCoins,
-  LayoutDashboard,
-  Users,
-} from 'lucide-react'
-import {
-  MetricComparison,
-  OperationsHealth,
+  AlertCenter,
   ProcessingTrend,
-  TeamProductivityInfographic,
+  RecentActivity,
   DASHBOARD_SPACING,
 } from '../../shared'
+import { SuperAdminExecutiveRow } from '../components/SuperAdminExecutiveRow'
 import {
-  ExecutiveInsightCard,
-  InsightBanner,
-  IntelligenceRecommendationPanel,
-  ManagementAlertCenter,
-} from '../../shared/dashboard-intelligence'
-import { AlertPanel, ExecutiveGrid, HighlightCard } from '../../shared/dashboard-ui-kit'
+  SuperAdminInfographics,
+  SuperAdminRevenueTrend,
+} from '../components/SuperAdminInfographics'
 import type { SuperAdminDashboardTabProps } from '../types'
 
 export const SA_ACTION_ICONS: Record<string, ReactNode> = {
@@ -32,129 +26,151 @@ export const SA_ACTION_ICONS: Record<string, ReactNode> = {
   'qa-legacy-admin': <Building2 size={18} />,
 }
 
-function alertTone(severity: string) {
-  switch (severity) {
-    case 'critical':
-      return 'negative' as const
-    case 'warning':
-      return 'warning' as const
-    case 'success':
-      return 'positive' as const
-    default:
-      return 'info' as const
-  }
-}
-
-function alertBadge(severity: string) {
-  switch (severity) {
-    case 'critical':
-      return 'Critical'
-    case 'warning':
-      return 'High'
-    case 'info':
-      return 'Medium'
-    default:
-      return 'Low'
-  }
-}
-
-/** Overview — risks, approval trend, blocked cash detail, act-today alerts. */
+/** Overview — signal · executive row · multi-color infographics · trend + activity. */
 export function OverviewTab({
   data,
   loading,
   onRetry,
-  onNavigate,
-  insights = [],
-  recommendations = [],
+  onOpenTab,
   managementAlerts,
 }: SuperAdminDashboardTabProps) {
+  const colors = usePublicBrandColors()
+
+  const criticalAlerts = (managementAlerts?.length ? managementAlerts : data.managementAlerts).filter(
+    (a) => a.severity === 'critical' || a.severity === 'high',
+  ).length
+  const slaBreaches = data.operationsToday.slaBreaches
+  const blockedApps = data.blockedCash.applicationCount
+  const atRiskClients = data.highRiskClients.length
+
+  const signalParts = [
+    criticalAlerts > 0 ? `${criticalAlerts} critical alerts` : null,
+    slaBreaches > 0 ? `${slaBreaches} SLA breaches` : null,
+    blockedApps > 0 ? `${data.blockedCash.amount} blocked cash` : null,
+    atRiskClients > 0 ? `${atRiskClients} at-risk clients` : null,
+  ].filter(Boolean)
+
+  const moduleAlerts = (
+    managementAlerts && managementAlerts.length > 0
+      ? managementAlerts
+      : data.managementAlerts
+  )
+    .slice(0, 5)
+    .map((alert) => {
+      const severity =
+        alert.severity === 'critical'
+          ? ('critical' as const)
+          : alert.severity === 'high' || alert.severity === 'warning'
+            ? ('warning' as const)
+            : alert.severity === 'success'
+              ? ('success' as const)
+              : ('info' as const)
+      return {
+        id: alert.id,
+        title: alert.title,
+        description:
+          'description' in alert && alert.description
+            ? String(alert.description)
+            : 'businessImpact' in alert
+              ? String((alert as { businessImpact?: string }).businessImpact ?? '')
+              : undefined,
+        severity,
+        onClick: () => onOpenTab?.('work'),
+      }
+    })
+
   return (
     <Stack spacing={DASHBOARD_SPACING.field}>
-      {insights.length > 0 ? (
-        <Stack spacing={DASHBOARD_SPACING.field}>
-          {insights.slice(0, 2).map((insight) => (
-            <InsightBanner key={insight.id} insight={insight} />
-          ))}
-        </Stack>
+      {signalParts.length > 0 ? (
+        <Box
+          sx={{
+            ...executiveCardLevel2Sx(colors),
+            px: 2,
+            py: 1.5,
+            display: 'flex',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: 1.5,
+            flexDirection: { xs: 'column', sm: 'row' },
+          }}
+        >
+          <Stack direction="row" spacing={1.25} alignItems="center" minWidth={0}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                display: 'grid',
+                placeItems: 'center',
+                bgcolor: 'error.main',
+                color: 'error.contrastText',
+                flexShrink: 0,
+                opacity: 0.9,
+              }}
+            >
+              <AlertTriangle size={16} />
+            </Box>
+            <Box minWidth={0}>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
+                {signalParts.join(' · ')}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+                Open Work desks for key accounts, risk, marine, ops, and finance exceptions.
+              </Typography>
+            </Box>
+          </Stack>
+          <Button
+            label="Open Work"
+            variant="outlined"
+            size="sm"
+            onClick={() => onOpenTab?.('work')}
+          />
+        </Box>
       ) : null}
 
-      <TeamProductivityInfographic
-        data={data.teamProductivity}
-        loading={loading}
-        onViewAll={() => onNavigate('/admin/user-management/teams')}
-        description="Network Ops, Documentation, Ground, and Accounts — filter by Marine, Corporate, or Retail."
-      />
-
-      <Grid container spacing={DASHBOARD_SPACING.field}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <HighlightCard
-            title="Cash blocked in fees"
-            subtitle="Released when visa issues & fee hits client invoice"
-            highlight={data.blockedCash.amount}
-            highlightLabel={data.blockedCash.expectedReleaseLabel}
-            loading={loading}
-          >
-            <Typography variant="caption" color="text.secondary">
-              {data.blockedCash.note} · {data.blockedCash.applicationCount} applications.
-            </Typography>
-          </HighlightCard>
-        </Grid>
-        <Grid size={{ xs: 12, md: 8 }}>
+      <SuperAdminExecutiveRow
+        primaryVisualization={
           <ProcessingTrend
-            title="Visa approval rate"
-            subtitle="30-day rolling · network"
-            points={data.approvalRateTrend30d}
+            title="Business performance trend"
+            subtitle="Revenue vs collections — primary board visualization"
+            points={data.revenueTrend}
+            secondaryLabel="Collected"
             loading={loading}
             onRetry={onRetry}
           />
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={DASHBOARD_SPACING.field}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <MetricComparison
-            title="Working signals"
-            metrics={data.metricComparison}
+        }
+        alerts={
+          <AlertCenter
+            title="Management alerts"
+            subtitle="Risks · cash · SLA · clients"
+            alerts={moduleAlerts}
             loading={loading}
+            maxItems={5}
+            onShowMore={() => onOpenTab?.('work')}
           />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <OperationsHealth metrics={data.operationsHealth} loading={loading} />
-        </Grid>
-      </Grid>
+        }
+      />
 
-      {managementAlerts && managementAlerts.length > 0 ? (
-        <ManagementAlertCenter
-          alerts={managementAlerts}
-          loading={loading}
-          defaultSort="severity"
-        />
-      ) : (
-        <AlertPanel
-          title="Executive alert center"
-          loading={loading}
-          maxItems={6}
-          items={data.managementAlerts.map((alert) => ({
-            id: alert.id,
-            primary: alert.title,
-            secondary: alert.description,
-            badgeLabel: alertBadge(alert.severity),
-            badgeTone: alertTone(alert.severity),
-          }))}
-        />
-      )}
+      <SuperAdminInfographics data={data} loading={loading} />
 
-      {recommendations.length > 0 ? (
-        <IntelligenceRecommendationPanel items={recommendations} />
-      ) : null}
-
-      {insights.length > 2 ? (
-        <ExecutiveGrid columns={2}>
-          {insights.slice(2).map((insight) => (
-            <ExecutiveInsightCard key={insight.id} insight={insight} />
-          ))}
-        </ExecutiveGrid>
-      ) : null}
+      <Stack
+        direction={{ xs: 'column', lg: 'row' }}
+        spacing={DASHBOARD_SPACING.field}
+        alignItems="stretch"
+      >
+        <Box flex={1.2} minWidth={0}>
+          <SuperAdminRevenueTrend data={data} loading={loading} />
+        </Box>
+        <Box flex={1} minWidth={0} sx={{ '& > *': { height: '100%' } }}>
+          <RecentActivity
+            title="Recent activity"
+            items={data.recentActivity}
+            loading={loading}
+            onRetry={onRetry}
+            maxItems={6}
+          />
+        </Box>
+      </Stack>
     </Stack>
   )
 }

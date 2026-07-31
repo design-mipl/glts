@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { useMemo } from 'react'
+import { Box, Grid, Stack, Typography } from '@mui/material'
 import { Anchor, Briefcase, Ship, Store } from 'lucide-react'
+import { BarChart, DonutChart } from '@/design-system/UIComponents'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import {
   BranchPerformance,
-  BusinessSegmentBreakdown,
-  CountryDistribution,
   ProcessingTrend,
-  RevenueSnapshot,
-  VisaDistribution,
   DASHBOARD_SPACING,
 } from '../../shared'
 import {
@@ -16,6 +16,7 @@ import {
   RankingList,
   SegmentCard,
 } from '../../shared/dashboard-ui-kit'
+import { SUPER_ADMIN_CHART_COLORS, SUPER_ADMIN_CHART_SERIES } from '../data/superAdminChartColors'
 import type { SuperAdminDashboardTabProps, SuperAdminRankItem, SuperAdminSegmentCard } from '../types'
 
 const SEGMENT_ICONS = {
@@ -24,6 +25,33 @@ const SEGMENT_ICONS = {
   retail: <Store size={20} />,
   b2b: <Anchor size={20} />,
 } as const
+
+function ChartPanel({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description?: string
+  children: React.ReactNode
+}) {
+  const colors = usePublicBrandColors()
+  return (
+    <Box sx={{ ...executiveCardLevel2Sx(colors), p: 0, overflow: 'hidden', height: '100%' }}>
+      <Stack spacing={0.5} sx={{ px: 2, pt: 2, pb: 1.25 }}>
+        <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 14 }}>
+          {title}
+        </Typography>
+        {description ? (
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+            {description}
+          </Typography>
+        ) : null}
+      </Stack>
+      <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
+    </Box>
+  )
+}
 
 function toRankingItems(items: SuperAdminRankItem[]) {
   return items.map((item, index) => ({
@@ -89,8 +117,35 @@ function SegmentMetrics({ segment }: { segment: SuperAdminSegmentCard }) {
   )
 }
 
-/** Business story — revenue, rich segment cards, and growth drivers. */
+/** Business story — revenue, rich segment cards, multi-color mix charts, growth drivers. */
 export function BusinessTab({ data, loading, onRetry }: SuperAdminDashboardTabProps) {
+  const segmentSlices = useMemo(
+    () =>
+      data.businessSegments.map((slice, index) => ({
+        key: slice.id,
+        label: slice.label,
+        value: slice.value,
+        color: SUPER_ADMIN_CHART_SERIES[index % SUPER_ADMIN_CHART_SERIES.length],
+      })),
+    [data.businessSegments],
+  )
+  const segmentTotal = segmentSlices.reduce((sum, s) => sum + s.value, 0)
+
+  const countryBars = useMemo(
+    () => data.countryDistribution.map((s) => ({ country: s.label, share: s.value })),
+    [data.countryDistribution],
+  )
+
+  const visaBars = useMemo(
+    () => data.visaDistribution.map((s) => ({ visa: s.label, share: s.value })),
+    [data.visaDistribution],
+  )
+
+  const branchBars = useMemo(
+    () => data.branchPerformance.map((b) => ({ branch: b.label, score: b.value })),
+    [data.branchPerformance],
+  )
+
   return (
     <Stack spacing={DASHBOARD_SPACING.field}>
       <ProcessingTrend
@@ -116,57 +171,92 @@ export function BusinessTab({ data, loading, onRetry }: SuperAdminDashboardTabPr
         ))}
       </ExecutiveGrid>
 
-      <BusinessSegmentBreakdown
-        title="Revenue by segment"
-        subtitle="Share of network volume"
-        slices={data.businessSegments}
-        loading={loading}
-        onRetry={onRetry}
-      />
+      <Grid container spacing={DASHBOARD_SPACING.field}>
+        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+          <ChartPanel title="Revenue by segment" description="Share of network volume">
+            <DonutChart
+              data={
+                segmentSlices.length > 0
+                  ? segmentSlices
+                  : [{ key: 'none', label: 'None', value: 1, color: SUPER_ADMIN_CHART_COLORS.slate }]
+              }
+              height={220}
+              loading={loading}
+              centerLabel="%"
+              centerValue={String(segmentTotal)}
+            />
+          </ChartPanel>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+          <ChartPanel title="By country" description="Destination mix">
+            <BarChart
+              data={countryBars}
+              xKey="country"
+              height={220}
+              barSize={14}
+              showLegend={false}
+              loading={loading}
+              bars={[{ key: 'share', label: 'Share %', color: SUPER_ADMIN_CHART_COLORS.blue }]}
+            />
+          </ChartPanel>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+          <ChartPanel title="By visa type" description="Product mix">
+            <BarChart
+              data={visaBars}
+              xKey="visa"
+              height={220}
+              barSize={14}
+              showLegend={false}
+              loading={loading}
+              bars={[{ key: 'share', label: 'Share %', color: SUPER_ADMIN_CHART_COLORS.violet }]}
+            />
+          </ChartPanel>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+          <ChartPanel title="Branch contribution" description="Composite score">
+            <BarChart
+              data={branchBars}
+              xKey="branch"
+              height={220}
+              barSize={14}
+              showLegend={false}
+              loading={loading}
+              bars={[{ key: 'score', label: 'Score', color: SUPER_ADMIN_CHART_COLORS.teal }]}
+            />
+          </ChartPanel>
+        </Grid>
+      </Grid>
 
       <ComparisonLayout
         left={
-          <RevenueSnapshot data={data.revenueSnapshot} loading={loading} onRetry={onRetry} />
-        }
-        right={
-          <CountryDistribution
-            title="Revenue by country"
-            slices={data.countryDistribution}
-            loading={loading}
-            onRetry={onRetry}
-          />
-        }
-      />
-      <ComparisonLayout
-        left={
-          <VisaDistribution
-            title="Revenue by visa type"
-            slices={data.visaDistribution}
-            loading={loading}
-            onRetry={onRetry}
-          />
-        }
-        right={
           <BranchPerformance
-            title="Branch contribution"
+            title="Branch detail"
             branches={data.branchPerformance}
             loading={loading}
             onRetry={onRetry}
           />
         }
-      />
-      <ComparisonLayout
-        left={
+        right={
           <RankingList
             title="Top 10 revenue clients"
             items={toRankingItems(data.topRevenueClients)}
             loading={loading}
           />
         }
-        right={
+      />
+      <ComparisonLayout
+        left={
           <RankingList
             title="Fastest growing clients"
             items={toRankingItems(data.fastestGrowingClients)}
+            loading={loading}
+          />
+        }
+        right={
+          <RankingList
+            title="Margin by vertical"
+            items={toRankingItems(data.marginByVertical)}
             loading={loading}
           />
         }

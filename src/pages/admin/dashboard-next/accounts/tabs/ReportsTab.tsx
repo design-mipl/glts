@@ -111,12 +111,14 @@ export function ReportsTab({ data, loading }: AccountsDashboardTabProps) {
           flexWrap="wrap"
           useFlexGap
         >
-          <Box sx={{ flex: '1 1 280px', minWidth: 200, maxWidth: { md: 380 } }}>
+          <Box sx={{ flex: '1 1 320px', minWidth: 220, maxWidth: { md: 480 } }}>
             <FormField label="Report type">
               <Select
                 size="sm"
                 fullWidth
-                placeholder="Select report type"
+                searchable
+                clearable
+                placeholder="Search or select report type"
                 value={reportType}
                 options={[...ACCOUNTS_REPORT_TYPE_OPTIONS]}
                 onChange={(value) =>

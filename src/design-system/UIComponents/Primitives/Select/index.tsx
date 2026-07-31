@@ -10,12 +10,21 @@ import MuiAvatar from '@mui/material/Avatar'
 import CircularProgress from '@mui/material/CircularProgress'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import Autocomplete from '@mui/material/Autocomplete'
+import TextField from '@mui/material/TextField'
 import { X } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
 import type { SelectChangeEvent } from '@mui/material/Select'
 import type { ReactNode } from 'react'
-import { FORM_CONTROL, formControlHeight, outlinedFieldSx, selectMenuSlotProps } from '../../../formControl'
+import {
+  FORM_CONTROL,
+  autocompleteOutlinedFieldSx,
+  autocompleteSlotProps,
+  formControlHeight,
+  outlinedFieldSx,
+  selectMenuSlotProps,
+} from '../../../formControl'
 
 interface SelectOption {
   label: string
@@ -40,6 +49,8 @@ export interface SelectProps {
   fullWidth?: boolean
   clearable?: boolean
   loading?: boolean
+  /** When true, renders an Autocomplete so options can be filtered by typing. */
+  searchable?: boolean
   sx?: SxProps<Theme>
 }
 
@@ -57,6 +68,7 @@ export default function Select({
   fullWidth = false,
   clearable = false,
   loading = false,
+  searchable = false,
   sx,
 }: SelectProps) {
   const theme = useTheme()
@@ -75,6 +87,92 @@ export default function Select({
 
   const showClear = clearable && value !== undefined && value !== ''
   const isEmpty = value === undefined || value === ''
+  const selectedOption = options.find((o) => o.value === value) ?? null
+
+  if (searchable) {
+    const fieldSx = autocompleteOutlinedFieldSx(theme, inputHeight)
+    return (
+      <Box sx={{ width: fullWidth ? '100%' : undefined }}>
+        <Autocomplete
+          options={options}
+          value={selectedOption}
+          onChange={(_, next) => onChange?.(next?.value ?? '')}
+          disabled={disabled || loading}
+          disableClearable={!clearable}
+          fullWidth={fullWidth}
+          getOptionLabel={(opt) => opt.label}
+          isOptionEqualToValue={(opt, val) => opt.value === val.value}
+          getOptionDisabled={(opt) => Boolean(opt.disabled)}
+          slotProps={autocompleteSlotProps(theme)}
+          sx={[
+            { minWidth: fullWidth ? undefined : 200, width: fullWidth ? '100%' : undefined },
+            ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+          ]}
+          renderOption={(props, option) => {
+            const { key, ...rest } = props as { key: string } & React.HTMLAttributes<HTMLLIElement>
+            return (
+              <li key={key} {...rest}>
+                {option.avatar ? (
+                  <MuiAvatar
+                    src={option.avatar}
+                    sx={{ width: 24, height: 24, mr: 1, fontSize: '11px', flexShrink: 0 }}
+                  >
+                    {option.label[0]}
+                  </MuiAvatar>
+                ) : null}
+                {option.icon && !option.avatar ? (
+                  <Box
+                    component="span"
+                    sx={{
+                      mr: 1,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      color: 'text.secondary',
+                    }}
+                  >
+                    {option.icon}
+                  </Box>
+                ) : null}
+                {option.description ? (
+                  <Box>
+                    <Typography variant="body2" sx={{ fontSize: '13px', lineHeight: 1.3 }}>
+                      {option.label}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '11px' }}>
+                      {option.description}
+                    </Typography>
+                  </Box>
+                ) : (
+                  option.label
+                )}
+              </li>
+            )
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={label}
+              placeholder={placeholder}
+              error={error}
+              helperText={helperText}
+              required={required}
+              size="small"
+              sx={fieldSx}
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {loading ? <CircularProgress color="inherit" size={16} sx={{ mr: 1 }} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+        />
+      </Box>
+    )
+  }
 
   const renderValue = (selected: string | number) => {
     if (selected === '' || selected === undefined) {
@@ -148,14 +246,21 @@ export default function Select({
               </MuiAvatar>
             )}
             {opt.icon && !opt.avatar && (
-              <Box component="span" sx={{ mr: 1, display: 'inline-flex', alignItems: 'center', color: 'text.secondary' }}>
+              <Box
+                component="span"
+                sx={{ mr: 1, display: 'inline-flex', alignItems: 'center', color: 'text.secondary' }}
+              >
                 {opt.icon}
               </Box>
             )}
             {opt.description ? (
               <Box>
-                <Typography variant="body2" sx={{ fontSize: '13px', lineHeight: 1.3 }}>{opt.label}</Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '11px' }}>{opt.description}</Typography>
+                <Typography variant="body2" sx={{ fontSize: '13px', lineHeight: 1.3 }}>
+                  {opt.label}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '11px' }}>
+                  {opt.description}
+                </Typography>
               </Box>
             ) : (
               opt.label
@@ -164,7 +269,9 @@ export default function Select({
         ))}
       </MuiSelect>
       {helperText && (
-        <FormHelperText sx={{ fontSize: FORM_CONTROL.helperFontSize, mx: 0, mt: '4px' }}>{helperText}</FormHelperText>
+        <FormHelperText sx={{ fontSize: FORM_CONTROL.helperFontSize, mx: 0, mt: '4px' }}>
+          {helperText}
+        </FormHelperText>
       )}
     </FormControl>
   )
