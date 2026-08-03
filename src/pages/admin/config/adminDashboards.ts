@@ -5,12 +5,12 @@ export type LegacyDashboardId =
   | 'accounts'
 
 export type DashboardNextId =
+  | 'super-admin'
   | 'admin'
   | 'operations'
-  | 'accounts'
-  | 'super-admin'
-  | 'ground-operations'
   | 'documentation'
+  | 'accounts'
+  | 'ground-operations'
 
 export interface AdminDashboardDefinition {
   id: string
@@ -92,6 +92,14 @@ export const ADMIN_DASHBOARD_NEXT: DashboardNextDefinition[] = [
     status: 'live',
   },
   {
+    id: 'documentation',
+    label: 'Documentation',
+    href: '/admin/dashboard-next/documentation',
+    title: 'Documentation dashboard (next)',
+    description: 'Next-generation document processing and QC workspace.',
+    status: 'live',
+  },
+  {
     id: 'accounts',
     label: 'Accounts',
     href: '/admin/dashboard-next/accounts',
@@ -105,14 +113,6 @@ export const ADMIN_DASHBOARD_NEXT: DashboardNextDefinition[] = [
     href: '/admin/dashboard-next/ground-operations',
     title: 'Ground Operations dashboard (next)',
     description: 'Next-generation ground operations workspace.',
-    status: 'live',
-  },
-  {
-    id: 'documentation',
-    label: 'Documentation',
-    href: '/admin/dashboard-next/documentation',
-    title: 'Documentation dashboard (next)',
-    description: 'Next-generation document processing and QC workspace.',
     status: 'live',
   },
 ]

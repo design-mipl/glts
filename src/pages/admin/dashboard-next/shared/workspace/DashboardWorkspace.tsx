@@ -2,7 +2,9 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { Stack, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { Search } from 'lucide-react'
-import { IconButton } from '@/design-system/UIComponents'
+import { IconButton, UserMenu } from '@/design-system/UIComponents'
+import { ADMIN_HEADER_END_ACTIONS_SPACING } from '@/pages/admin/components/adminHeaderChromeLayout'
+import { useAdminSession } from '@/pages/admin/hooks/useAdminSession'
 import { DashboardShell } from '../components/DashboardShell'
 import type { DashboardShellProps } from '../components/DashboardShell'
 import type { DashboardTabDefinition } from '../types'
@@ -52,9 +54,9 @@ export interface DashboardWorkspaceProps
 
 /**
  * Standard Dashboard Next workspace:
- * Dense header (desktop search icon) → collapsible filters → Hero KPIs → Sticky tabs
+ * Dense header (desktop search + profile) → collapsible filters → Hero KPIs → Sticky tabs
  * (Overview tab owns alerts / primary viz / quick actions).
- * Mobile omits the page search icon — AppShell top header already provides search.
+ * Mobile omits page search/profile — AppShell MobileNavStrip already provides them.
  */
 export function DashboardWorkspace({
   workspaceId,
@@ -73,6 +75,7 @@ export function DashboardWorkspace({
 }: DashboardWorkspaceProps) {
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('desktop'))
+  const { user, signOut, goToProfile } = useAdminSession()
   const validTabIds = useMemo(
     () => tabs.filter((t) => !t.hidden).map((t) => t.id),
     [tabs],
@@ -84,9 +87,16 @@ export function DashboardWorkspace({
   )
   const [searchOpen, setSearchOpen] = useState(false)
 
+  // Desktop: search + profile match AdminHeaderChrome; mobile uses AppShell MobileNavStrip.
   const headerActions =
     isDesktop || extraActions ? (
-      <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+      <Stack
+        direction="row"
+        spacing={ADMIN_HEADER_END_ACTIONS_SPACING}
+        alignItems="center"
+        flexWrap="wrap"
+        useFlexGap
+      >
         {isDesktop ? (
           <IconButton
             icon={<Search size={16} strokeWidth={1.75} />}
@@ -99,6 +109,14 @@ export function DashboardWorkspace({
           />
         ) : null}
         {extraActions}
+        {isDesktop ? (
+          <UserMenu
+            user={user}
+            onSignOut={signOut}
+            onProfileClick={goToProfile}
+            showDetails={false}
+          />
+        ) : null}
       </Stack>
     ) : undefined
 

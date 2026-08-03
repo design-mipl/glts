@@ -2,9 +2,9 @@ export type DashboardNextRoleId =
   | 'super-admin'
   | 'admin'
   | 'operations'
+  | 'documentation'
   | 'accounts'
   | 'ground-operations'
-  | 'documentation'
 
 export interface DashboardNextRoleConfig {
   id: DashboardNextRoleId
@@ -41,6 +41,14 @@ export const DASHBOARD_NEXT_ROLES: DashboardNextRoleConfig[] = [
     status: 'live',
   },
   {
+    id: 'documentation',
+    label: 'Documentation',
+    title: 'Documentation dashboard (next)',
+    description: 'Next-generation document processing and QC workspace.',
+    href: '/admin/dashboard-next/documentation',
+    status: 'live',
+  },
+  {
     id: 'accounts',
     label: 'Accounts',
     title: 'Accounts dashboard (next)',
@@ -54,14 +62,6 @@ export const DASHBOARD_NEXT_ROLES: DashboardNextRoleConfig[] = [
     title: 'Ground Operations dashboard (next)',
     description: 'Next-generation ground operations workspace.',
     href: '/admin/dashboard-next/ground-operations',
-    status: 'live',
-  },
-  {
-    id: 'documentation',
-    label: 'Documentation',
-    title: 'Documentation dashboard (next)',
-    description: 'Next-generation document processing and QC workspace.',
-    href: '/admin/dashboard-next/documentation',
     status: 'live',
   },
 ]
