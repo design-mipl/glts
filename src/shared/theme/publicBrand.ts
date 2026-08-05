@@ -97,12 +97,13 @@ export const publicFonts = {
 
 export const publicLayout = {
   containerStandard: 1280,
-  containerHero: 1400,
+  /** Wide premium hero / marketing shell (Airbnb / Linear-style). */
+  containerHero: 1760,
   sectionMajor: { xs: 10, md: 17.5, lg: 20 },
   sectionMedium: { xs: 9, md: 12, lg: 15 },
   cardRadius: '22px',
   cardPadding: { xs: 3, md: 4 },
-  navHeight: 80,
+  navHeight: 72,
 } as const
 
 export const publicShadows = {

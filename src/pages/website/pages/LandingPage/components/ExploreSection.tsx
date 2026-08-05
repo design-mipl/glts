@@ -5,15 +5,12 @@ import { useNavigate } from 'react-router-dom'
 import { getAllCountries } from '@/shared/services/visaService'
 import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
 import { PublicContainer } from '../../../components/PublicContainer'
-import { defaultExploreFilters, applyExploreFilters } from '../../../utils/applyExploreFilters'
 import { HomepageDestinationCard } from '../../../components/HomepageDestinationCard'
 import { destinationCardGridSx } from '../../../components/destinationCardGrid'
-import {
-  landingSectionHeaderMb,
-  landingSectionPy,
-  landingTrustFloatOverlap,
-} from '../landingPageSpacing'
+import { defaultExploreFilters, applyExploreFilters } from '../../../utils/applyExploreFilters'
+import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
 
+/** Two full rows on the desktop 5-column grid. */
 const HOMEPAGE_DESTINATION_COUNT = 10
 
 export function ExploreSection() {
@@ -52,33 +49,63 @@ export function ExploreSection() {
       id="destinations"
       sx={{
         bgcolor: colors.white,
-        pt: {
-          xs: landingTrustFloatOverlap.xs + 4,
-          md: landingTrustFloatOverlap.md + 5,
-          lg: landingTrustFloatOverlap.md + 6,
-        },
+        pt: landingSectionPy,
         pb: landingSectionPy,
-        overflow: 'hidden',
       }}
     >
       <PublicContainer variant="hero">
-        <Box sx={{ mb: landingSectionHeaderMb }}>
-          <Typography
-            component="h2"
+        <Box
+          sx={{
+            mb: landingSectionHeaderMb,
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'flex-start', sm: 'flex-end' },
+            justifyContent: 'space-between',
+            gap: { xs: 2, sm: 3 },
+          }}
+        >
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography
+              component="h2"
+              sx={{
+                fontFamily: publicFonts.heading,
+                fontWeight: 800,
+                fontSize: { xs: '28px', md: '36px' },
+                color: colors.navy,
+                lineHeight: 1.15,
+                mb: 1,
+              }}
+            >
+              Where Are You Travelling?
+            </Typography>
+            <Typography sx={{ fontSize: '15px', color: colors.textSecondary, maxWidth: 520 }}>
+              Explore popular destinations and estimated travel costs.
+            </Typography>
+          </Box>
+
+          <Button
+            variant="outlined"
+            endIcon={<ArrowRight size={16} />}
+            onClick={() => navigate('/countries')}
             sx={{
-              fontFamily: publicFonts.heading,
-              fontWeight: 800,
-              fontSize: { xs: '28px', md: '36px' },
-              color: colors.navy,
-              lineHeight: 1.15,
-              mb: 1,
+              textTransform: 'none',
+              borderRadius: '10px',
+              borderColor: colors.border,
+              color: colors.greenBright,
+              fontWeight: 600,
+              px: 3,
+              py: 1.1,
+              flexShrink: 0,
+              alignSelf: { xs: 'stretch', sm: 'center' },
+              '&:hover': {
+                borderColor: colors.greenBright,
+                bgcolor: colors.greenMuted,
+                color: colors.greenDark,
+              },
             }}
           >
-            Where Are You Travelling?
-          </Typography>
-          <Typography sx={{ fontSize: '15px', color: colors.textSecondary, maxWidth: 520 }}>
-            Explore popular destinations and estimated travel costs.
-          </Typography>
+            View all destinations
+          </Button>
         </Box>
 
         {homepageCountries.length === 0 ? (
@@ -96,36 +123,17 @@ export function ExploreSection() {
             </Typography>
           </Box>
         ) : (
-          <>
-            <Box sx={destinationCardGridSx}>
-              {homepageCountries.map((country, index) => (
-                <HomepageDestinationCard key={country.id} country={country} index={index} />
-              ))}
-            </Box>
-
-            <Box sx={{ mt: { xs: 5, md: 6 }, textAlign: 'center' }}>
-              <Button
-                variant="outlined"
-                endIcon={<ArrowRight size={16} />}
-                onClick={() => navigate('/countries')}
-                sx={{
-                  textTransform: 'none',
-                  borderRadius: '10px',
-                  borderColor: colors.border,
-                  color: colors.navy,
-                  fontWeight: 600,
-                  px: 3,
-                  py: 1.1,
-                  '&:hover': {
-                    borderColor: colors.greenBright,
-                    bgcolor: colors.greenMuted,
-                  },
-                }}
-              >
-                View all destinations
-              </Button>
-            </Box>
-          </>
+          <Box
+            role="list"
+            aria-label="Destination cards"
+            sx={destinationCardGridSx}
+          >
+            {homepageCountries.map((country, index) => (
+              <Box key={country.id} role="listitem">
+                <HomepageDestinationCard country={country} index={index} animate={false} />
+              </Box>
+            ))}
+          </Box>
         )}
       </PublicContainer>
     </Box>

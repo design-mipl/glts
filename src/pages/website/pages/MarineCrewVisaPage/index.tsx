@@ -1,11 +1,9 @@
 import { useMemo } from 'react'
 import { Box } from '@mui/material'
-import { SolutionPageSection } from '../../components/solutionPage/SolutionPageSection'
-import { RetainerPlanCards } from '../../components/solutionPage/RetainerPlanCards'
 import { CommonDestinationsSection } from '../../components/CommonDestinationsSection'
 import { VisaCategoryCardsSection } from '../../components/VisaCategoryCardsSection'
 import { WhyAccuracySplitSection } from '../../components/WhyAccuracySplitSection'
-import { ServiceShowcaseMosaic } from '../../components/ServiceShowcaseMosaic'
+import { AdditionalServicesSection } from '../../components/AdditionalServicesSection'
 import { TestimonialSection } from '../../components/TestimonialSection'
 import { FAQSection } from '../../components/FAQSection'
 import { SolutionFinalCtaSection } from '../../components/solutionPage/SolutionFinalCtaSection'
@@ -14,13 +12,13 @@ import { resolveDestinationCountries } from '../../utils/resolveDestinationCount
 import { usePublicBrandColors } from '../../theme/publicSiteTokens'
 import { MarineHero } from './components/MarineHero'
 import { CompaniesWeWorkWithSection } from './components/CompaniesWeWorkWithSection'
+import { MarineRetainerPlansSection } from './components/MarineRetainerPlansSection'
 import {
   marineImpactPoints,
   marineAccuracyVisuals,
   marineVisaCategories,
   marineDestinations,
-  marineAdditionalServiceCards,
-  marineRetainerPlans,
+  marineAdditionalServices,
   marineTestimonials,
   marineFaqs,
   marineProcessSteps,
@@ -41,7 +39,6 @@ export function MarineCrewVisaPage() {
         id="why-marine-visa-accuracy"
         title="Why Marine Visa Accuracy Matters"
         description="In marine operations, visa delays affect vessel schedules, crew rotations, port operations, and contractual commitments."
-        badgeLabel={marineAccuracyVisuals.badgeLabel}
         images={{
           primary: marineAccuracyVisuals.primary,
           secondaryTop: marineAccuracyVisuals.secondaryTop,
@@ -67,13 +64,15 @@ export function MarineCrewVisaPage() {
 
       <CompaniesWeWorkWithSection />
 
-      <SolutionPageSection id="additional-marine-services" title="Additional Marine Services">
-        <ServiceShowcaseMosaic items={marineAdditionalServiceCards} />
-      </SolutionPageSection>
+      <AdditionalServicesSection
+        id="additional-marine-services"
+        sectionLabel="Additional Services"
+        heading="Everything Your Crew Needs Beyond Visas"
+        description="Documentation, compliance, insurance, and travel support built for seafarers, offshore crew, and marine operations teams."
+        services={marineAdditionalServices}
+      />
 
-      <SolutionPageSection id="marine-retainer-plans" title="Marine Retainer Plans">
-        <RetainerPlanCards items={marineRetainerPlans} />
-      </SolutionPageSection>
+      <MarineRetainerPlansSection />
 
       <TestimonialSection
         testimonials={marineTestimonials}

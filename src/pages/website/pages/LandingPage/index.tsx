@@ -1,7 +1,6 @@
 import { Box } from '@mui/material'
 import { HeroSection } from './components/HeroSection'
 import { ExploreSection } from './components/ExploreSection'
-import { SpecializedSolutionsSection } from './components/SpecializedSolutionsSection'
 import { HowItWorks } from './components/HowItWorks'
 import { WhyGreenLightWorksSection } from './components/WhyGreenLightWorksSection'
 import { VisaServicesSection } from './components/VisaServicesSection'
@@ -19,10 +18,9 @@ export function LandingPage() {
     <Box sx={{ width: '100%', bgcolor: colors.white }}>
       <HeroSection />
       <ExploreSection />
-      <SpecializedSolutionsSection />
       <HowItWorks />
-      <WhyGreenLightWorksSection />
       <VisaServicesSection />
+      <WhyGreenLightWorksSection />
       <VisaMasterSection />
       <AdditionalServicesSection />
       <TestimonialSection testimonials={landingTestimonials} markerIcon="plane" />

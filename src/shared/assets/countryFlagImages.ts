@@ -11,10 +11,12 @@ import philippinesFlag from '@/assets/flags/philippines.png'
 import singaporeFlag from '@/assets/flags/singapore.png'
 import southKoreaFlag from '@/assets/flags/south korea.png'
 import taiwanFlag from '@/assets/flags/taiwan.png'
+import unitedArabEmiratesFlag from '@/assets/flags/united arab emirates.png'
 import unitedKingdomFlag from '@/assets/flags/united kingdom.png'
 import unitedStatesFlag from '@/assets/flags/united states.png'
 
 const COUNTRY_FLAG_IMAGES_BY_CODE: Partial<Record<string, string>> = {
+  AE: unitedArabEmiratesFlag,
   AU: australiaFlag,
   BE: belgiumFlag,
   CA: canadaFlag,

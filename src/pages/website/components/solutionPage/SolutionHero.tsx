@@ -27,7 +27,6 @@ export function SolutionHero({ title, subtitle, children }: SolutionHeroProps) {
         minHeight: publicHeroSectionMinHeight,
         display: 'flex',
         alignItems: 'center',
-        borderBottom: `1px solid ${colors.borderSoft}`,
       }}
     >
       <PublicContainer variant="hero">
