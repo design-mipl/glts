@@ -7,7 +7,7 @@ import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
 import { publicFonts, usePublicBrandColors } from '../theme/publicSiteTokens'
 
 /** Fixed destination card dimensions — shared across homepage and listing grids. */
-export const DESTINATION_CARD_HEIGHT = 300
+export const DESTINATION_CARD_HEIGHT = 380
 export const DESTINATION_CARD_BORDER_RADIUS = '16px'
 export const DESTINATION_CARD_CONTENT_PADDING = 2
 export const DESTINATION_FLAG_BADGE_SIZE = 36

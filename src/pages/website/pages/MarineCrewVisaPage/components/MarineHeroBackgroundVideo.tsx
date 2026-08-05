@@ -37,7 +37,7 @@ export function MarineHeroBackgroundVideo() {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          objectPosition: 'center 42%',
+          objectPosition: 'center center',
           opacity: videoReady ? 0 : 1,
           transition: 'opacity 0.8s ease',
         }}
@@ -61,7 +61,7 @@ export function MarineHeroBackgroundVideo() {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            objectPosition: 'center 42%',
+            objectPosition: 'center center',
             opacity: videoReady ? 1 : 0,
             transition: 'opacity 0.8s ease',
           }}

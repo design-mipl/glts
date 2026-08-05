@@ -67,27 +67,27 @@ export const landingTestimonials: TestimonialItem[] = [
 
 export const landingFaqs: FAQItem[] = [
   {
-    q: 'How fast is fast?',
-    a: 'Median eVisa: 3.4 days. Embassy stamps: 12–18 days. We show you the exact ETA before you pay.',
+    q: 'How do you handle urgent business travel visa requests?',
+    a: 'Corporate accounts receive priority review, dedicated escalation paths, and timeline estimates before submission so travel coordinators can plan around meeting dates.',
   },
   {
-    q: 'What if my application is rejected?',
-    a: 'We refund the service fee and re-file at no extra cost. Our team reviews before submission to reduce this risk.',
+    q: 'Can we manage employee visas across multiple destinations?',
+    a: 'Yes. Corporate portals support multi-country business visa workflows, centralized document storage, and live status for authorized team members.',
   },
   {
-    q: 'Do you store my passport?',
-    a: 'No. Encrypted at rest, purged 30 days after approval. We comply with GDPR and ISO 27001.',
+    q: 'Do you support group visa applications for corporate delegations?',
+    a: 'Yes. We coordinate bulk business travel filings, shared documentation standards, and embassy submissions for teams attending conferences, site visits, and client engagements.',
   },
   {
-    q: 'Marine crew without a fixed address?',
-    a: 'We accept seaman book + employer letter in lieu of utility bills and rental agreements.',
+    q: 'How does compliance documentation work for corporate accounts?',
+    a: 'Invitation letters, employment records, and embassy-specific requirements are reviewed before filing. Compliance trails are maintained for audit and internal reporting.',
   },
   {
-    q: 'Can I manage multiple travelers at once?',
-    a: 'Yes. Corporate and marine accounts support bulk CSV uploads, team dashboards, and parallel filing.',
+    q: 'Can our travel management team track all active applications?',
+    a: 'Yes. Travel coordinators and stakeholders receive live application status, milestone updates, and visibility across active corporate cases from one workspace.',
   },
   {
-    q: 'Do you support all nationalities?',
-    a: 'We support 192 destination countries and most major nationalities. Check your eligibility on the country page.',
+    q: 'What account support is available for corporate retainer clients?',
+    a: 'Retainer plans may include a dedicated account manager, priority processing, documentation management, monthly reporting, and escalation handling.',
   },
 ]

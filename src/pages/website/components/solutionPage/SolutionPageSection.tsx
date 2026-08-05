@@ -20,10 +20,9 @@ export function SolutionPageSection({ id, title, subtitle, children }: SolutionP
       id={id}
       sx={{
         py: landingSectionPy,
-        borderTop: `1px solid ${colors.borderSoft}`,
       }}
     >
-      <PublicContainer>
+      <PublicContainer variant="hero">
         <Box sx={{ mb: landingSectionHeaderMb, maxWidth: 720 }}>
           <Typography
             component="h2"

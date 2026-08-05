@@ -1,6 +1,6 @@
 import { Box } from '@mui/material'
 import { usePublicBrandColors } from '../../theme/publicSiteTokens'
-import { WORKFLOW_ZIGZAG_PATH } from './workflowGeometry'
+import { WORKFLOW_ZIGZAG_PATH, WORKFLOW_ZIGZAG_VIEWBOX } from './workflowGeometry'
 
 interface WorkflowZigZagConnectorProps {
   visible: boolean
@@ -15,7 +15,7 @@ export function WorkflowZigZagConnector({ visible, trackHeight }: WorkflowZigZag
     <Box
       component="svg"
       aria-hidden
-      viewBox="0 0 1000 120"
+      viewBox={WORKFLOW_ZIGZAG_VIEWBOX}
       preserveAspectRatio="none"
       sx={{
         position: 'absolute',
@@ -33,7 +33,7 @@ export function WorkflowZigZagConnector({ visible, trackHeight }: WorkflowZigZag
         d={WORKFLOW_ZIGZAG_PATH}
         fill="none"
         stroke={colors.greenBright}
-        strokeWidth="1.5"
+        strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray="5 7"

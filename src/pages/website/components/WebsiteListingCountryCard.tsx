@@ -34,7 +34,7 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
       <BaseCard
         hoverable
         sx={{
-          p: 1.5,
+          p: { xs: 1.75, md: 2 },
           height: '100%',
           borderRadius: '16px',
           border: `1px solid ${colors.border}`,
@@ -47,10 +47,11 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
           },
         }}
       >
-        <Box sx={{ position: 'relative', mb: 2.25 }}>
+        <Box sx={{ position: 'relative', mb: 2.5 }}>
           <Box
             sx={{
-              height: 112,
+              // ~14% taller than prior 112px — matches wider listing cards
+              height: { xs: 124, md: 128 },
               borderRadius: '12px',
               overflow: 'hidden',
               bgcolor: colors.surfaceAlt,
@@ -89,10 +90,10 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
           <Box
             sx={{
               position: 'absolute',
-              bottom: -16,
-              right: 12,
-              width: 34,
-              height: 34,
+              bottom: -18,
+              right: 14,
+              width: 36,
+              height: 36,
               borderRadius: '50%',
               bgcolor: colors.white,
               border: `2px solid ${colors.white}`,
@@ -104,18 +105,18 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
               overflow: 'hidden',
             }}
           >
-            <CountryFlagVisual flag={country.flags} countryCode={country.code} size={30} />
+            <CountryFlagVisual flag={country.flags} countryCode={country.code} size={32} />
           </Box>
         </Box>
 
-        <Box sx={{ mb: 0.25, px: 0.25 }}>
+        <Box sx={{ mb: 0.5, px: 0.5 }}>
           <Typography
             sx={{
               fontFamily: publicFonts.heading,
-              fontSize: '17px',
+              fontSize: { xs: '17px', md: '18px' },
               fontWeight: 800,
               color: colors.navy,
-              lineHeight: 1.2,
+              lineHeight: 1.25,
             }}
           >
             {country.name}
@@ -123,10 +124,10 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
           {country.cities ? (
             <Typography
               sx={{
-                fontSize: '12px',
+                fontSize: '12.5px',
                 color: colors.textSecondary,
-                lineHeight: 1.35,
-                mt: 0.25,
+                lineHeight: 1.4,
+                mt: 0.4,
               }}
             >
               {country.cities}
@@ -136,13 +137,13 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
 
         <Box
           sx={{
-            mt: 1.25,
-            pt: 1.25,
+            mt: 1.5,
+            pt: 1.5,
             borderTop: `1px dashed ${colors.border}`,
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: 1,
-            px: 0.25,
+            gap: 1.25,
+            px: 0.5,
           }}
         >
           <Box>
@@ -183,8 +184,9 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
           sx={{
             fontSize: '11px',
             color: colors.textMuted,
-            mt: 1,
-            px: 0.25,
+            mt: 1.25,
+            px: 0.5,
+            lineHeight: 1.4,
           }}
         >
           {visaLabel} · Valid till {country.validity}

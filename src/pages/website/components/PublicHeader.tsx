@@ -24,11 +24,13 @@ import { PublicContainer } from './PublicContainer'
 const NAV_HEIGHT = 72
 
 const navLinks = [
+  { label: 'Home', href: '/' },
   { label: 'Destinations', href: '/countries' },
-  { label: 'Marine Crew', href: '/marine-crew' },
+  { label: 'Retail', href: '/retail-visas' },
+  { label: 'Marine', href: '/marine-crew' },
   { label: 'Corporate', href: '/corporate' },
-  { label: 'Pricing', href: '/pricing' },
-  { label: 'Track', href: '/track', shortLabel: 'Track' },
+  { label: 'Services', href: '/services' },
+  { label: 'About Us', href: '/about' },
 ]
 
 function NavLink({
@@ -50,7 +52,7 @@ function NavLink({
       href={href}
       disableRipple
       sx={{
-        color: active ? colors.navy : colors.textSecondary,
+        color: active ? colors.navy : '#4B5563',
         fontWeight: active ? 700 : 500,
         fontSize: compact ? '13px' : '14px',
         px: compact ? 1.25 : 1.75,
@@ -90,9 +92,19 @@ export function PublicHeader() {
   const isWide = useMediaQuery(theme.breakpoints.up('desktop'))
   const isTablet = useMediaQuery(theme.breakpoints.up('lg'))
   const showCenterNav = isTablet
+  const isHome = pathname === '/'
+  /** Homepage at top: nav blends into the hero (no white bar / gap). */
+  const heroOverlay = isHome && !scrolled
 
-  const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`)
+  const isActive = (href: string) => {
+    const pathOnly = href.split('#')[0] || '/'
+    if (pathOnly === '/') {
+      // Hash-only home anchors (e.g. Visa Master) should not mark Home active.
+      if (href.includes('#')) return false
+      return pathname === '/'
+    }
+    return pathname === pathOnly || pathname.startsWith(`${pathOnly}/`)
+  }
 
   const handleSearchSubmit = () => {
     const q = searchQuery.trim()
@@ -111,12 +123,17 @@ export function PublicHeader() {
           height: NAV_HEIGHT,
           display: 'flex',
           alignItems: 'center',
-          bgcolor: alpha(colors.white, scrolled ? 0.98 : 0.94),
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: `1px solid ${scrolled ? colors.border : colors.borderSoft}`,
-          boxShadow: scrolled ? publicShadows.nav : 'none',
-          transition: 'box-shadow 0.25s ease, border-color 0.25s ease',
+          bgcolor: heroOverlay
+            ? 'transparent'
+            : alpha(colors.white, scrolled || !isHome ? 0.98 : 0.94),
+          backdropFilter: heroOverlay ? 'none' : 'blur(20px)',
+          WebkitBackdropFilter: heroOverlay ? 'none' : 'blur(20px)',
+          borderBottom: heroOverlay
+            ? '1px solid transparent'
+            : `1px solid ${scrolled ? colors.border : colors.borderSoft}`,
+          boxShadow: heroOverlay ? 'none' : scrolled ? publicShadows.nav : 'none',
+          transition:
+            'background-color 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, backdrop-filter 0.25s ease',
         }}
       >
         <PublicContainer
@@ -204,10 +221,10 @@ export function PublicHeader() {
                 zIndex: 1,
               }}
             >
-              {navLinks.map(({ label, href, shortLabel }) => (
+              {navLinks.map(({ label, href }) => (
                 <NavLink
                   key={href + label}
-                  label={isWide ? label : (shortLabel ?? label)}
+                  label={label}
                   href={href}
                   active={isActive(href)}
                   compact={!isWide}

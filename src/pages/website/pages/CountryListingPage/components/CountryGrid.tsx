@@ -69,7 +69,7 @@ export function CountryGrid({
   }
 
   return (
-    <Grid container spacing={2}>
+    <Grid container columnSpacing={{ xs: 1.5, sm: 1.75, md: 2 }} rowSpacing={{ xs: 2, md: 2.5 }}>
       {filtered.map(country => (
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={country.id}>
           <CountryCard country={country} />

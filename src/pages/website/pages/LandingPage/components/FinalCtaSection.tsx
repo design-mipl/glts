@@ -9,6 +9,7 @@ import {
   getMarketingPrimaryButtonSx,
   getOutlinedButtonSx,
 } from '@/shared/theme/publicBrand'
+import { finalCtaContentSpacing, finalCtaSectionSx } from '../landingPageSpacing'
 
 export function FinalCtaSection() {
   const colors = usePublicBrandColors()
@@ -18,14 +19,7 @@ export function FinalCtaSection() {
     <Box
       component="section"
       id="final-cta"
-      sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        minHeight: { xs: 240, sm: 272, md: 304, lg: 320 },
-        display: 'flex',
-        alignItems: 'center',
-        py: { xs: 5.5, md: 8, lg: 9 },
-      }}
+      sx={finalCtaSectionSx}
     >
       <Box
         component="img"
@@ -40,7 +34,7 @@ export function FinalCtaSection() {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          objectPosition: 'center 40%',
+          objectPosition: 'center right',
         }}
       />
 
@@ -50,17 +44,12 @@ export function FinalCtaSection() {
           position: 'absolute',
           inset: 0,
           background:
-            'linear-gradient(90deg, rgba(0,31,63,0.88) 0%, rgba(0,31,63,0.78) 42%, rgba(0,31,63,0.62) 100%)',
+            'linear-gradient(90deg, rgba(0,31,63,0.72) 0%, rgba(0,31,63,0.45) 48%, rgba(0,31,63,0.2) 100%)',
         }}
       />
 
       <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1, width: '100%' }}>
-        <Stack
-          spacing={2.5}
-          sx={{
-            maxWidth: 720,
-          }}
-        >
+        <Stack spacing={finalCtaContentSpacing} sx={{ maxWidth: 720 }}>
           <Typography
             component="h2"
             sx={{
@@ -86,11 +75,7 @@ export function FinalCtaSection() {
             dedicated support from start to finish.
           </Typography>
 
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1.5}
-            sx={{ pt: 0.5 }}
-          >
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: 1 }}>
             <Button
               variant="contained"
               href="/countries"

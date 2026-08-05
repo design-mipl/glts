@@ -1,142 +1,229 @@
-import { useState } from 'react'
-import { Box, Typography, Grid } from '@mui/material'
+import { useEffect, useRef, useState } from 'react'
+import { Box, Typography, useMediaQuery } from '@mui/material'
+import { ArrowRight } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
 import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { visaServiceShowcaseImages } from '../../../assets/landingPageImages'
-import { destinationCardCarouselGap } from '../../../components/destinationCardGrid'
+
+const CARD_RADIUS = '16px'
+const IMAGE_RADIUS = '14px'
+const TRANSITION = '300ms cubic-bezier(0.22, 1, 0.36, 1)'
 
 const visaServices = [
   {
     id: 'tourist',
     title: 'Tourist Visa',
-    description: 'Leisure travel with expert document review and embassy-ready filing.',
+    description: 'For travel, leisure and vacation',
     image: visaServiceShowcaseImages.tourist,
+    href: '/countries',
+    objectPosition: 'center center',
   },
   {
     id: 'business',
     title: 'Business Visa',
-    description: 'Meetings, conferences, and short-term business visits handled with compliance.',
+    description: 'For business meetings, conferences and events',
     image: visaServiceShowcaseImages.business,
+    href: '/countries',
+    objectPosition: 'center 35%',
   },
   {
     id: 'student',
     title: 'Student Visa',
-    description: 'Admission-aligned documentation and category guidance for study abroad.',
+    description: 'For studying abroad at top universities',
     image: visaServiceShowcaseImages.student,
+    href: '/countries',
+    objectPosition: 'center 32%',
   },
   {
-    id: 'work',
-    title: 'Work Visa',
-    description: 'Employment visas with employer documentation and eligibility checks.',
-    image: visaServiceShowcaseImages.work,
+    id: 'transit',
+    title: 'Transit Visa',
+    description: 'For short layovers and transit through a country',
+    image: visaServiceShowcaseImages.transit,
+    href: '/countries',
+    objectPosition: 'center 40%',
   },
   {
-    id: 'family-visit',
-    title: 'Family Visit Visa',
-    description: 'Visit relatives abroad with invitation letters and proof requirements covered.',
-    image: visaServiceShowcaseImages.familyVisit,
+    id: 'project',
+    title: 'Project Visa',
+    description: 'For project assignments and on-site work',
+    image: visaServiceShowcaseImages.project,
+    href: '/countries',
+    objectPosition: 'center 35%',
   },
-  {
-    id: 'refusal-support',
-    title: 'Visa Refusal Support',
-    description: 'Refusal review, gap analysis, and reapplication strategy from specialists.',
-    image: visaServiceShowcaseImages.refusalSupport,
-  },
-]
+] as const
 
-type VisaServiceCardProps = (typeof visaServices)[number] & {
-  minHeight: { xs: number; md: number }
-  objectPosition?: string
+function useRowReveal() {
+  const ref = useRef<HTMLDivElement>(null)
+  const playedRef = useRef(false)
+  const [active, setActive] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || playedRef.current) return
+        playedRef.current = true
+        setActive(true)
+      },
+      { threshold: 0.18, rootMargin: '0px 0px -6% 0px' },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  return { ref, active }
 }
 
-function VisaServiceImageCard({
+function VisaServiceCard({
   title,
   description,
   image,
-  minHeight,
-  objectPosition = 'center',
-}: VisaServiceCardProps) {
-  const [imageSrc, setImageSrc] = useState<string>(image.src)
+  href,
+  objectPosition,
+  index,
+  active,
+  reducedMotion,
+}: (typeof visaServices)[number] & {
+  index: number
+  active: boolean
+  reducedMotion: boolean
+}) {
+  const colors = usePublicBrandColors()
+  const [imageSrc, setImageSrc] = useState(image.src)
+  const delayMs = reducedMotion ? 0 : index * 70
 
   return (
     <Box
+      component="a"
+      href={href}
       sx={{
-        position: 'relative',
-        minHeight,
-        height: '100%',
-        borderRadius: '22px',
-        overflow: 'hidden',
-        boxShadow: '0 10px 26px rgba(2, 20, 39, 0.16)',
-        isolation: 'isolate',
-        '& img': {
-          transition: 'transform 0.5s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        flex: '0 0 auto',
+        width: {
+          xs: 'min(220px, 72vw)',
+          sm: 200,
+          md: 210,
+          lg: '100%',
         },
-        '&:hover': {
-          boxShadow: '0 14px 34px rgba(2, 20, 39, 0.22)',
-        },
-        '&:hover img': {
-          transform: 'scale(1.04)',
+        minWidth: 0,
+        textDecoration: 'none',
+        color: 'inherit',
+        borderRadius: CARD_RADIUS,
+        bgcolor: colors.white,
+        opacity: active ? 1 : 0,
+        transform: active ? 'translate3d(0, 0, 0)' : 'translate3d(0, 16px, 0)',
+        transition: reducedMotion
+          ? 'none'
+          : `opacity 0.5s ${TRANSITION} ${delayMs}ms, transform 0.5s ${TRANSITION} ${delayMs}ms`,
+        willChange: 'opacity, transform',
+        '@media (hover: hover)': {
+          '&:hover': {
+            transform: active ? 'translate3d(0, -4px, 0)' : undefined,
+          },
+          '&:hover .visa-card-image': {
+            transform: 'scale(1.04)',
+          },
+          '&:hover .visa-card-cta': {
+            color: colors.greenDark,
+          },
+          '&:hover .visa-card-arrow': {
+            transform: 'translateX(4px)',
+          },
         },
       }}
     >
       <Box
-        component="img"
-        src={imageSrc}
-        alt={image.alt}
-        loading="lazy"
-        onError={() => setImageSrc(image.fallback)}
         sx={{
-          position: 'absolute',
-          inset: 0,
+          position: 'relative',
           width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          objectPosition,
-        }}
-      />
-      <Box
-        aria-hidden
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          background:
-            'linear-gradient(180deg, rgba(0, 22, 46, 0.12) 20%, rgba(0, 22, 46, 0.72) 72%, rgba(0, 22, 46, 0.9) 100%)',
-        }}
-      />
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          p: { xs: 2.25, md: 2.75 },
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end',
+          aspectRatio: '4 / 5',
+          borderRadius: IMAGE_RADIUS,
+          overflow: 'hidden',
+          mb: 1.75,
+          bgcolor: colors.surfaceAlt,
+          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.1)',
         }}
       >
-        <Typography
+        <Box
+          component="img"
+          className="visa-card-image"
+          src={imageSrc}
+          alt={image.alt}
+          loading="lazy"
+          onError={() => setImageSrc(image.fallback)}
           sx={{
-            fontFamily: publicFonts.heading,
-            fontSize: { xs: '21px', md: '23px' },
-            fontWeight: 800,
-            color: '#fff',
-            lineHeight: 1.15,
-            mb: 0.8,
-            letterSpacing: '-0.03em',
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition,
+            display: 'block',
+            transform: 'scale(1)',
+            transition: reducedMotion ? 'none' : `transform 0.5s ${TRANSITION}`,
+            willChange: 'transform',
+          }}
+        />
+      </Box>
+
+      <Typography
+        sx={{
+          fontFamily: publicFonts.heading,
+          fontSize: { xs: '15px', md: '16px' },
+          fontWeight: 800,
+          color: colors.navy,
+          lineHeight: 1.25,
+          letterSpacing: '-0.02em',
+          mb: 0.6,
+        }}
+      >
+        {title}
+      </Typography>
+
+      <Typography
+        sx={{
+          fontSize: { xs: '12.5px', md: '13px' },
+          color: colors.textSecondary,
+          lineHeight: 1.4,
+          mb: 1.25,
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          minHeight: '2.8em',
+        }}
+      >
+        {description}
+      </Typography>
+
+      <Box
+        className="visa-card-cta"
+        sx={{
+          mt: 'auto',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 0.5,
+          color: colors.greenBright,
+          fontSize: '13.5px',
+          fontWeight: 700,
+          letterSpacing: '-0.01em',
+          transition: reducedMotion ? 'none' : `color ${TRANSITION}`,
+        }}
+      >
+        Apply Now
+        <Box
+          component="span"
+          className="visa-card-arrow"
+          sx={{
+            display: 'inline-flex',
+            transition: reducedMotion ? 'none' : `transform ${TRANSITION}`,
           }}
         >
-          {title}
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: { xs: '14px', md: '14.5px' },
-            color: 'rgba(255, 255, 255, 0.9)',
-            lineHeight: 1.5,
-            maxWidth: 360,
-          }}
-        >
-          {description}
-        </Typography>
+          <ArrowRight size={15} strokeWidth={2.25} />
+        </Box>
       </Box>
     </Box>
   )
@@ -144,20 +231,17 @@ function VisaServiceImageCard({
 
 export function VisaServicesSection() {
   const colors = usePublicBrandColors()
-  const tourist = visaServices[0]
-  const business = visaServices[1]
-  const student = visaServices[2]
-  const work = visaServices[3]
-  const familyVisit = visaServices[4]
-  const refusalSupport = visaServices[5]
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  const { ref, active } = useRowReveal()
 
   return (
     <Box
       component="section"
+      id="visa-services"
       sx={{
         bgcolor: colors.white,
         py: landingSectionPy,
-        borderTop: `1px solid ${colors.borderSoft}`,
+        scrollMarginTop: 88,
       }}
     >
       <PublicContainer variant="hero">
@@ -202,53 +286,36 @@ export function VisaServicesSection() {
           </Typography>
         </Box>
 
-        <Grid container spacing={destinationCardCarouselGap}>
-          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-            <VisaServiceImageCard
-              {...tourist}
-              minHeight={{ xs: 300, md: 520 }}
-              objectPosition="center center"
+        <Box
+          ref={ref}
+          sx={{
+            display: { xs: 'flex', lg: 'grid' },
+            gridTemplateColumns: {
+              lg: 'repeat(5, minmax(0, 1fr))',
+            },
+            gap: { xs: 2.5, sm: 2.75, md: 3 },
+            overflowX: { xs: 'auto', lg: 'visible' },
+            pb: { xs: 1, lg: 0 },
+            mx: { xs: -2, sm: -2.5, md: -3, lg: 0 },
+            px: { xs: 2, sm: 2.5, md: 3, lg: 0 },
+            scrollSnapType: { xs: 'x mandatory', lg: 'none' },
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'thin',
+            '& > *': {
+              scrollSnapAlign: { xs: 'start', lg: 'unset' },
+            },
+          }}
+        >
+          {visaServices.map((service, index) => (
+            <VisaServiceCard
+              key={service.id}
+              {...service}
+              index={index}
+              active={active}
+              reducedMotion={reducedMotion}
             />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: destinationCardCarouselGap, height: '100%' }}>
-              <VisaServiceImageCard
-                {...business}
-                minHeight={{ xs: 240, md: 248 }}
-                objectPosition="center 35%"
-              />
-              <VisaServiceImageCard
-                {...student}
-                minHeight={{ xs: 240, md: 248 }}
-                objectPosition="center 32%"
-              />
-            </Box>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-            <VisaServiceImageCard
-              {...work}
-              minHeight={{ xs: 300, md: 520 }}
-              objectPosition="center center"
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: destinationCardCarouselGap, height: '100%' }}>
-              <VisaServiceImageCard
-                {...familyVisit}
-                minHeight={{ xs: 240, md: 248 }}
-                objectPosition="center 30%"
-              />
-              <VisaServiceImageCard
-                {...refusalSupport}
-                minHeight={{ xs: 240, md: 248 }}
-                objectPosition="center 45%"
-              />
-            </Box>
-          </Grid>
-        </Grid>
+          ))}
+        </Box>
       </PublicContainer>
     </Box>
   )

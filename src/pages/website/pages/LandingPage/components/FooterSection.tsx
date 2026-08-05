@@ -4,11 +4,31 @@ import { PublicContainer } from '../../../components/PublicContainer'
 import { GREENLIGHT_LOGO_DARK_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
 
-const footerSections = {
-  Product: ['Destinations', 'Marine crew', 'Corporate setup', 'API'],
-  Company: ['About', 'Careers', 'Press', 'Blog'],
-  Legal: ['Privacy', 'Terms', 'Security', 'Compliance'],
-  Support: ['Help center', 'Track application', 'Status page', 'Contact us'],
+const footerSections: Record<string, { label: string; href: string }[]> = {
+  Product: [
+    { label: 'Retail Services', href: '/retail-visas' },
+    { label: 'Marine crew', href: '/marine-crew' },
+    { label: 'Corporate setup', href: '/corporate' },
+    { label: 'Destinations', href: '/countries' },
+  ],
+  Company: [
+    { label: 'About', href: '/about' },
+    { label: 'Careers', href: '#' },
+    { label: 'Press', href: '#' },
+    { label: 'Blog', href: '#' },
+  ],
+  Legal: [
+    { label: 'Privacy Policy', href: '#' },
+    { label: 'Terms & Conditions', href: '#' },
+    { label: 'Security', href: '#' },
+    { label: 'Compliance', href: '#' },
+  ],
+  Support: [
+    { label: 'Portal Access', href: '/sign-in' },
+    { label: 'Track application', href: '/track' },
+    { label: 'Help center', href: '#' },
+    { label: 'Contact us', href: '/track' },
+  ],
 }
 
 export function FooterSection() {
@@ -83,8 +103,8 @@ export function FooterSection() {
               <Stack spacing={2.5}>
                 {links.map(link => (
                   <Link
-                    key={link}
-                    href="#"
+                    key={link.label}
+                    href={link.href}
                     sx={{
                       color: 'rgba(255,255,255,0.6)',
                       textDecoration: 'none',
@@ -95,7 +115,7 @@ export function FooterSection() {
                       '&:hover': { color: colors.green },
                     }}
                   >
-                    {link}
+                    {link.label}
                   </Link>
                 ))}
               </Stack>

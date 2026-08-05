@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Box, Typography } from '@mui/material'
+import type { LucideIcon } from 'lucide-react'
 import { PublicContainer } from './PublicContainer'
 import { publicFonts, usePublicBrandColors, brandPrimaryGreenRgb } from '../theme/publicSiteTokens'
 import { landingSectionPy } from '../pages/LandingPage/landingPageSpacing'
@@ -13,6 +14,7 @@ interface CollageImage {
 interface ImpactPoint {
   title: string
   description: string
+  icon: LucideIcon
 }
 
 interface WhyAccuracySplitSectionProps {
@@ -99,8 +101,8 @@ export function WhyAccuracySplitSection({
   const colors = usePublicBrandColors()
 
   return (
-    <Box component="section" id={id} sx={{ py: landingSectionPy, borderTop: `1px solid ${colors.borderSoft}` }}>
-      <PublicContainer>
+    <Box component="section" id={id} sx={{ py: landingSectionPy }}>
+      <PublicContainer variant="hero">
         <Box
           sx={{
             display: 'grid',
@@ -182,43 +184,61 @@ export function WhyAccuracySplitSection({
             </Typography>
 
             <Box sx={{ display: 'grid', gap: 1.5 }}>
-              {impacts.map((item, index) => (
-                <Box
-                  key={item.title}
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: '36px 1fr',
-                    gap: 1.25,
-                    alignItems: 'start',
-                    py: 1.75,
-                  }}
-                >
+              {impacts.map((item) => {
+                const Icon = item.icon
+                return (
                   <Box
+                    key={item.title}
                     sx={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: '50%',
-                      bgcolor: colors.greenMuted,
-                      border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.28)`,
                       display: 'grid',
-                      placeItems: 'center',
-                      fontWeight: 800,
-                      color: colors.greenDark,
-                      fontSize: '14px',
+                      gridTemplateColumns: '44px 1fr',
+                      gap: 1.5,
+                      alignItems: 'start',
+                      p: { xs: 1.75, md: 2 },
+                      borderRadius: '16px',
+                      bgcolor: colors.white,
+                      border: `1px solid ${colors.border}`,
+                      boxShadow: '0 6px 18px rgba(15, 23, 42, 0.05)',
+                      transition:
+                        'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
+                      '@media (hover: hover)': {
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          borderColor: `rgba(${brandPrimaryGreenRgb}, 0.4)`,
+                          boxShadow: `0 12px 28px rgba(${brandPrimaryGreenRgb}, 0.12)`,
+                        },
+                      },
                     }}
                   >
-                    {index + 1}
+                    <Box
+                      sx={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: '12px',
+                        bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
+                        border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.22)`,
+                        display: 'grid',
+                        placeItems: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Icon size={20} color={colors.greenBright} strokeWidth={2.1} />
+                    </Box>
+                    <Box sx={{ minWidth: 0, pt: 0.15 }}>
+                      <Typography
+                        sx={{ fontSize: '15px', fontWeight: 700, color: colors.navy, mb: 0.4 }}
+                      >
+                        {item.title}
+                      </Typography>
+                      <Typography
+                        sx={{ fontSize: '14px', color: colors.textSecondary, lineHeight: 1.55 }}
+                      >
+                        {item.description}
+                      </Typography>
+                    </Box>
                   </Box>
-                  <Box>
-                    <Typography sx={{ fontSize: '15px', fontWeight: 700, color: colors.navy, mb: 0.4 }}>
-                      {item.title}
-                    </Typography>
-                    <Typography sx={{ fontSize: '14px', color: colors.textSecondary, lineHeight: 1.55 }}>
-                      {item.description}
-                    </Typography>
-                  </Box>
-                </Box>
-              ))}
+                )
+              })}
             </Box>
           </Box>
         </Box>

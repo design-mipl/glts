@@ -76,7 +76,7 @@ function WorkflowStepIcon({
           borderRadius: '50%',
           bgcolor: colors.greenBright,
           color: colors.white,
-          fontSize: '10px',
+          fontSize: '11px',
           fontWeight: 700,
           lineHeight: 1,
           display: 'flex',
@@ -104,7 +104,7 @@ function WorkflowStepText({
   return (
     <Box
       sx={{
-        maxWidth: 210,
+        maxWidth: 260,
         px: 0.75,
         mx: 'auto',
         opacity: revealed ? 1 : 0,
@@ -115,18 +115,18 @@ function WorkflowStepText({
       <Typography
         sx={{
           fontFamily: publicFonts.heading,
-          fontSize: { xs: '13px', md: '14px' },
+          fontSize: { xs: '15px', md: '17px' },
           fontWeight: 700,
           color: colors.navy,
-          lineHeight: 1.35,
-          mb: 0.75,
+          lineHeight: 1.3,
+          mb: 1,
         }}
       >
         {title}
       </Typography>
       <Typography
         sx={{
-          fontSize: { xs: '12px', md: '12.5px' },
+          fontSize: { xs: '13.5px', md: '14.5px' },
           color: colors.textSecondary,
           lineHeight: 1.55,
         }}
@@ -150,9 +150,9 @@ function HorizontalWorkflowFlow({
   lineVisible: boolean
   revealedCount: number
 }) {
-  const textGap = 1.75
+  const textGap = 2
   const flowMinHeight =
-    Math.max(...stepYPositions) + WORKFLOW_ICON_SIZE / 2 + 96
+    Math.max(...stepYPositions) + WORKFLOW_ICON_SIZE / 2 + 128
 
   return (
     <Box sx={{ position: 'relative', minHeight: flowMinHeight }}>
@@ -178,7 +178,7 @@ function HorizontalWorkflowFlow({
             top: stepYPositions[index] - WORKFLOW_ICON_SIZE / 2,
             transform: 'translateX(-50%)',
             zIndex: 1,
-            width: 210,
+            width: 260,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -325,7 +325,6 @@ export function WorkflowTimelineSection({
       sx={{
         bgcolor: colors.white,
         py: landingSectionPy,
-        borderTop: `1px solid ${colors.borderSoft}`,
       }}
     >
       <PublicContainer variant="hero">

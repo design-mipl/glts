@@ -17,7 +17,16 @@ export function SearchAndSort({
 }: SearchAndSortProps) {
   const colors = usePublicBrandColors()
   return (
-    <Box sx={{ mb: 5, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+    <Box
+      sx={{
+        mb: 5,
+        display: 'flex',
+        gap: { xs: 1.5, sm: 2 },
+        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+        alignItems: 'stretch',
+        width: '100%',
+      }}
+    >
       <TextField
         placeholder="Search destinations..."
         value={searchTerm}
@@ -31,8 +40,8 @@ export function SearchAndSort({
           ),
         }}
         sx={{
-          flex: { xs: '1 1 100%', sm: 1 },
-          minWidth: 280,
+          flex: 1,
+          minWidth: { xs: '100%', sm: 0 },
           '& .MuiOutlinedInput-root': {
             borderRadius: '14px',
             bgcolor: '#fff',
@@ -44,7 +53,8 @@ export function SearchAndSort({
         value={sortBy}
         onChange={e => onSortChange(e.target.value)}
         sx={{
-          minWidth: 180,
+          flexShrink: 0,
+          minWidth: { xs: '100%', sm: 180 },
           borderRadius: '14px',
           bgcolor: '#fff',
           fontSize: '15px',
