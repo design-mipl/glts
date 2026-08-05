@@ -285,7 +285,7 @@ export function DashboardGrid({
 export interface ExecutiveGridProps {
   children: ReactNode
   /** Columns at large breakpoint (default 4). */
-  columns?: 2 | 3 | 4 | 6
+  columns?: 2 | 3 | 4 | 5 | 6
   spacing?: number
   sx?: SxProps<Theme>
 }
@@ -302,9 +302,17 @@ export function ExecutiveGrid({
         display: 'grid',
         gap: spacing,
         gridTemplateColumns: {
-          xs: '1fr',
-          sm: 'repeat(2, minmax(0, 1fr))',
-          md: columns >= 4 ? 'repeat(2, minmax(0, 1fr))' : `repeat(${columns}, minmax(0, 1fr))`,
+          xs: columns >= 5 ? 'repeat(2, minmax(0, 1fr))' : '1fr',
+          sm:
+            columns >= 5
+              ? `repeat(${columns}, minmax(0, 1fr))`
+              : 'repeat(2, minmax(0, 1fr))',
+          md:
+            columns >= 5
+              ? `repeat(${columns}, minmax(0, 1fr))`
+              : columns >= 4
+                ? 'repeat(2, minmax(0, 1fr))'
+                : `repeat(${columns}, minmax(0, 1fr))`,
           lg: `repeat(${columns}, minmax(0, 1fr))`,
         },
         ...((sx as object) ?? {}),

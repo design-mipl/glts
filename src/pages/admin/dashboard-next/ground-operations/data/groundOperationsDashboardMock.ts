@@ -10,13 +10,16 @@ export const GROUND_OPS_DATE_OPTIONS = [
   { label: 'This week', value: 'week' },
 ]
 
-export const GROUND_OPS_BRANCH_OPTIONS = [
-  { label: 'All branches', value: 'all' },
+export const GROUND_OPS_JURISDICTION_OPTIONS = [
+  { label: 'All jurisdictions', value: 'all' },
   { label: 'Mumbai', value: 'mumbai' },
   { label: 'Delhi', value: 'delhi' },
   { label: 'Bengaluru', value: 'bengaluru' },
   { label: 'Chennai', value: 'chennai' },
 ]
+
+/** @deprecated Prefer GROUND_OPS_JURISDICTION_OPTIONS */
+export const GROUND_OPS_BRANCH_OPTIONS = GROUND_OPS_JURISDICTION_OPTIONS
 
 export const GROUND_OPS_CITY_OPTIONS = [
   { label: 'All cities', value: 'all' },
@@ -620,7 +623,9 @@ export function applyGroundOperationsDashboardFilters(
         row.applicationNumber,
         row.applicant,
         row.trackingNumber,
+        row.trackingUrl,
         row.courier,
+        row.deliveryMethod,
         row.status,
       ),
     ),

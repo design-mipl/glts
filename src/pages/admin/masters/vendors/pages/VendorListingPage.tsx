@@ -68,8 +68,8 @@ export function VendorListingPage() {
   const columns = useMemo(
     () =>
       buildVendorColumns({
-        onOpenDetail: (row) => navigate(`/admin/vendor-management/vendors/${row.id}`),
-        onOpenEdit: (row) => navigate(`/admin/vendor-management/vendors/${row.id}/edit`),
+        onOpenDetail: (row) => navigate(`/admin/masters/vendors/${row.id}`),
+        onOpenEdit: (row) => navigate(`/admin/masters/vendors/${row.id}/edit`),
         onActivate: (row) => openStatusToggle(row, 'activate'),
         onDeactivate: (row) => openStatusToggle(row, 'deactivate'),
       }),
@@ -82,7 +82,7 @@ export function VendorListingPage() {
   )
 
   const handleCreate = useCallback(() => {
-    navigate('/admin/vendor-management/vendors/new')
+    navigate('/admin/masters/vendors/new')
   }, [navigate])
 
   const emptyState = useMemo(() => {
@@ -120,8 +120,8 @@ export function VendorListingPage() {
       <AdminListingShell
         stickyPageHeader={
           <AdminListingStickyHeader
-            title="Vendors"
-            description="Centralized vendor management for operational and financial partners across GLTS services"
+            title="Vendor Master"
+            description="Master list of operational and financial vendor partners across GLTS services"
             actions={<Button label="Add vendor" startIcon={<Plus size={14} />} onClick={handleCreate} />}
           />
         }
@@ -167,7 +167,7 @@ export function VendorListingPage() {
               columnFilters={listing.columnFilters}
               onColumnFiltersChange={listing.setColumnFilters}
               getCellValue={getVendorCellValue}
-              onRowClick={(row) => navigate(`/admin/vendor-management/vendors/${row.id}`)}
+              onRowClick={(row) => navigate(`/admin/masters/vendors/${row.id}`)}
               loading={loading}
               stickyHeader
               emptyTitle={emptyState.emptyTitle}
@@ -177,7 +177,7 @@ export function VendorListingPage() {
           ) : (
             <AdminListingGrid
               items={gridItems}
-              onItemClick={(id) => navigate(`/admin/vendor-management/vendors/${id}`)}
+              onItemClick={(id) => navigate(`/admin/masters/vendors/${id}`)}
             />
           )
         }

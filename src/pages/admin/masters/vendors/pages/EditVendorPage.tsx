@@ -8,10 +8,9 @@ export function EditVendorPage() {
     <VendorFormPage
       mode="edit"
       vendorId={vendorId}
-      cancelHref={`/admin/vendor-management/vendors/${vendorId}`}
+      cancelHref={`/admin/masters/vendors/${vendorId}`}
       breadcrumbs={[
-        { label: 'Vendor Management', href: '/admin/vendor-management/vendors' },
-        { label: 'Vendors', href: '/admin/vendor-management/vendors' },
+        { label: 'Vendor Master', href: '/admin/masters/vendors' },
         { label: 'Edit vendor' },
       ]}
     />

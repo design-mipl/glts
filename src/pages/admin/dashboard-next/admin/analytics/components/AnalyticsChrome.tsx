@@ -17,7 +17,7 @@ export function TopNSelect({
   ariaLabel?: string
 }) {
   return (
-    <Box sx={{ width: { xs: '100%', sm: 140 }, flexShrink: 0 }}>
+    <Box sx={{ width: { xs: '100%', sm: 120 }, flexShrink: 0 }}>
       <Select
         size="sm"
         fullWidth
@@ -30,6 +30,7 @@ export function TopNSelect({
   )
 }
 
+/** Compact chart/table panel. */
 export function AnalyticsPanel({
   title,
   description,
@@ -48,22 +49,25 @@ export function AnalyticsPanel({
         direction={{ xs: 'column', sm: 'row' }}
         alignItems={{ xs: 'stretch', sm: 'flex-start' }}
         justifyContent="space-between"
-        spacing={1}
-        sx={{ px: 2, pt: 2, pb: 1.25 }}
+        spacing={0.75}
+        sx={{ px: 1.5, pt: 1.25, pb: 0.75 }}
       >
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 14 }}>
+          <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
             {title}
           </Typography>
           {description ? (
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
               {description}
             </Typography>
           ) : null}
         </Box>
         {action}
       </Stack>
-      <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
+      <Box sx={{ px: 1.5, pb: 1.5 }}>{children}</Box>
     </Box>
   )
 }
+
+/** Compact chart height used across Visa Analytics sections. */
+export const ANALYTICS_CHART_HEIGHT = 180

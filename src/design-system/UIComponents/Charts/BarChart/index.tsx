@@ -1,7 +1,7 @@
 import { Skeleton } from '@mui/material'
 import {
   BarChart as RechartsBarChart,
-  Bar, XAxis, YAxis, CartesianGrid,
+  Bar, XAxis, YAxis, CartesianGrid, Cell,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { useChartTheme } from '../utils/chartTheme'
@@ -189,6 +189,7 @@ export default function BarChart({
           const isLast = i === bars.length - 1
           const radius: [number, number, number, number] =
             stacked && !isLast ? [0, 0, 0, 0] : [4, 4, 0, 0]
+          const varyCategories = bars.length === 1 && !stacked
           return (
             <Bar
               key={bar.key}
@@ -199,10 +200,15 @@ export default function BarChart({
               maxBarSize={barSize}
               stackId={stacked ? 'stack' : undefined}
               animationDuration={800}
-            />
+            >
+              {varyCategories
+                ? data.map((_, idx) => (
+                    <Cell key={`cell-${bar.key}-${idx}`} fill={ct.colors[idx % ct.colors.length]} />
+                  ))
+                : null}
+            </Bar>
           )
-        })}
-      </RechartsBarChart>
+        })}      </RechartsBarChart>
     </ResponsiveContainer>
   )
 }

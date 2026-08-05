@@ -1,17 +1,33 @@
 import { Box, Typography, Button, Stack } from '@mui/material'
-import { Building2, Cog, ArrowRight } from 'lucide-react'
+import { Building2, Cog, Ship, Users, ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
 
 const PORTALS = [
   {
-    id: 'business',
-    title: 'Business Portal',
-    subtitle: 'Corporate, Marine & B2B customers',
-    description: 'Manage visa applications, crew manifests, and corporate travel programs.',
+    id: 'marine',
+    title: 'Marine Portal',
+    subtitle: 'Crew & vessel customers',
+    description: 'Manage crew manifests, vessel assignments, and marine visa applications.',
+    icon: Ship,
+    href: '/sign-in/business/marine',
+  },
+  {
+    id: 'corporate',
+    title: 'Corporate Portal',
+    subtitle: 'Enterprise travel customers',
+    description: 'Manage corporate travel visas, travelers, bookers, and compliance workflows.',
     icon: Building2,
-    href: '/sign-in/business',
+    href: '/sign-in/business/corporate',
+  },
+  {
+    id: 'b2b',
+    title: 'B2B Agent Portal',
+    subtitle: 'Travel agents & partners',
+    description: 'File multi-client applications, manage bookers, and track bulk submissions.',
+    icon: Users,
+    href: '/sign-in/business/b2b',
   },
   {
     id: 'operations',
@@ -76,16 +92,17 @@ export function PortalSelectionPage() {
           color: colors.textSecondary,
           textAlign: 'center',
           mb: 5,
-          maxWidth: 480,
+          maxWidth: 520,
         }}
       >
-        Select the workspace that matches your role. Customer and GLTS internal access are kept separate for security.
+        Select the portal that matches your customer type or GLTS internal role. Access is kept separate for security.
       </Typography>
 
       <Stack
         direction={{ xs: 'column', md: 'row' }}
-        spacing={3}
-        sx={{ width: '100%', maxWidth: 820 }}
+        spacing={2.5}
+        sx={{ width: '100%', maxWidth: 1100, flexWrap: { md: 'wrap' }, justifyContent: 'center' }}
+        useFlexGap
       >
         {PORTALS.map(portal => {
           const Icon = portal.icon
@@ -93,7 +110,8 @@ export function PortalSelectionPage() {
             <Box
               key={portal.id}
               sx={{
-                flex: 1,
+                flex: { xs: '1 1 auto', md: '1 1 240px' },
+                maxWidth: { md: 260 },
                 p: 3,
                 borderRadius: '16px',
                 border: `1px solid ${colors.border}`,
@@ -122,13 +140,13 @@ export function PortalSelectionPage() {
               >
                 <Icon size={24} color={colors.greenBright} />
               </Box>
-              <Typography sx={{ fontWeight: 800, fontSize: '20px', color: colors.navy, mb: 0.5 }}>
+              <Typography sx={{ fontWeight: 800, fontSize: '18px', color: colors.navy, mb: 0.5 }}>
                 {portal.title}
               </Typography>
               <Typography sx={{ fontSize: '13px', fontWeight: 600, color: colors.greenBright, mb: 1.5 }}>
                 {portal.subtitle}
               </Typography>
-              <Typography sx={{ fontSize: '14px', color: colors.textSecondary, lineHeight: 1.6, mb: 2.5 }}>
+              <Typography sx={{ fontSize: '13px', color: colors.textSecondary, lineHeight: 1.6, mb: 2.5 }}>
                 {portal.description}
               </Typography>
               <Button

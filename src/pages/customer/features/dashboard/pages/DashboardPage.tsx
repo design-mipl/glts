@@ -43,12 +43,30 @@ function applicationPanelDescription(app: CustomerApplication, isMarinePortal: b
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { base, session, contactName } = useCustomerPortalBase()
+  const { base, session, contactName, isBusiness, customerType } = useCustomerPortalBase()
   const dashboard = customerPortalService.getDashboard()
   const applications = dashboard.applications
   const isMarinePortal = dashboard.isMarinePortal
-  const marineVariant = isMarinePortal ? getBusinessDashboardVariant(session?.customerType) : null
+  const variant = isBusiness ? getBusinessDashboardVariant(customerType ?? session?.customerType) : null
   const colors = usePublicBrandColors()
+
+  const quickActions =
+    variant?.quickActions.map(action => ({
+      label: action.label,
+      path: action.pathSuffix,
+      icon:
+        action.pathSuffix.includes('crew') || action.pathSuffix.includes('vessel')
+          ? Ship
+          : action.pathSuffix.includes('document')
+            ? Upload
+            : action.pathSuffix.includes('track')
+              ? CheckCircle2
+              : FileText,
+    })) ?? [
+      { label: 'Create application', icon: FileText, path: '/applications/new' },
+      { label: 'Upload documents', icon: Upload, path: '/documents' },
+      { label: 'Track application', icon: CheckCircle2, path: '/tracking' },
+    ]
 
   return (
     <Box>
@@ -56,9 +74,10 @@ export function DashboardPage() {
         prominent
         title={`${greeting()}, ${contactName.split(' ')[0]}.`}
         subtitle={
-          isMarinePortal
-            ? marineVariant?.subtitle ?? 'Track crew visas, vessel assignments, and pending corrections from one place.'
-            : 'Track active visa work, complete pending actions, and start new applications from one place.'
+          variant?.subtitle ??
+          (isMarinePortal
+            ? 'Track crew visas, vessel assignments, and pending corrections from one place.'
+            : 'Track active visa work, complete pending actions, and start new applications from one place.')
         }
         action={
           <Button
@@ -240,17 +259,17 @@ export function DashboardPage() {
 
             <CustomerCard title="Quick actions" icon={CheckCircle2}>
               <Stack spacing={1}>
-                {[
-                  { label: 'Create application', icon: FileText, action: () => navigateToCreateApplication(navigate, base) },
-                  { label: 'Upload documents', icon: Upload, path: '/documents' },
-                  { label: 'Track application', icon: CheckCircle2, path: '/tracking' },
-                ].map(({ label, icon: Icon, path, action }) => (
+                {quickActions.map(({ label, icon: Icon, path }) => (
                   <Button
                     key={label}
                     variant="outlined"
                     fullWidth
                     startIcon={<Icon size={16} />}
-                    onClick={() => (action ? action() : navigate(`${base}${path}`))}
+                    onClick={() =>
+                      path === '/applications/new'
+                        ? navigateToCreateApplication(navigate, base)
+                        : navigate(`${base}${path}`)
+                    }
                     sx={{ justifyContent: 'flex-start' }}
                   >
                     {label}

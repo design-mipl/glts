@@ -45,7 +45,7 @@ export function VendorDetailPage() {
       <EmptyState
         variant="no-data"
         title="Vendor not found"
-        action={{ label: 'Back to vendors', onClick: () => navigate('/admin/vendor-management/vendors') }}
+        action={{ label: 'Back to vendors', onClick: () => navigate('/admin/masters/vendors') }}
       />
     )
   }
@@ -65,14 +65,13 @@ export function VendorDetailPage() {
     <>
       <AdminDetailShell
         breadcrumbs={[
-          { label: 'Vendor Management', href: '/admin/vendor-management/vendors' },
-          { label: 'Vendors', href: '/admin/vendor-management/vendors' },
+          { label: 'Vendor Master', href: '/admin/masters/vendors' },
           { label: vendor.vendorName },
         ]}
         summary={
           <VendorDetailSummary
             vendor={vendor}
-            onEdit={() => navigate(`/admin/vendor-management/vendors/${vendor.id}/edit`)}
+            onEdit={() => navigate(`/admin/masters/vendors/${vendor.id}/edit`)}
             onActivate={
               vendor.status === 'inactive'
                 ? () => {

@@ -11,6 +11,7 @@ import {
 } from '@/shared/theme/portalChromeLayout'
 import { useCustomerPortalBase } from '../hooks/useCustomerPortalBase'
 import { buildCustomerFooterNavConfig, buildCustomerNavConfig } from '../config/customerNav'
+import { useCustomerSegmentPortalConfig } from '@/pages/customer/shared/CustomerSegmentPortalContext'
 
 /** @deprecated Use PORTAL_SIDEBAR_WIDTH — kept for import stability. */
 export const CUSTOMER_SIDEBAR_WIDTH = PORTAL_SIDEBAR_WIDTH
@@ -46,6 +47,7 @@ function SidebarPanel({
     canAccessBookerManagement,
     canAccessMasters,
   } = useCustomerPortalBase()
+  const segmentConfig = useCustomerSegmentPortalConfig()
 
   const navConfig = buildCustomerNavConfig({
     base,
@@ -53,6 +55,7 @@ function SidebarPanel({
     canAccessAdminManagement,
     canAccessBookerManagement,
     canAccessMasters,
+    showVesselMaster: isBusiness && segmentConfig.showVesselMaster,
   })
   const footerNavConfig = buildCustomerFooterNavConfig(base)
   const currentPath = location.pathname

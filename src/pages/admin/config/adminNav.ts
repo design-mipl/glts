@@ -9,34 +9,22 @@ import {
   LayoutDashboard,
   Shield,
   SlidersHorizontal,
-  Truck,
   Wrench,
 } from 'lucide-react'
 import type { NavConfig } from '@/design-system/UIComponents'
-import { ADMIN_DASHBOARDS, ADMIN_DASHBOARD_NEXT } from './adminDashboards'
+import { ADMIN_DASHBOARD_NEXT } from './adminDashboards'
 
 const iconProps = { size: 16, strokeWidth: 1.75 }
 
 export const adminNav: NavConfig[] = [
   {
     type: 'group',
-    label: 'Dashboard Next',
+    label: 'Dashboard',
     icon: createElement(LayoutDashboard, iconProps),
     children: ADMIN_DASHBOARD_NEXT.map((dashboard) => ({
       type: 'item' as const,
       label: dashboard.label,
       href: dashboard.href,
-    })),
-  },
-  {
-    type: 'group',
-    label: 'Dashboard',
-    icon: createElement(LayoutDashboard, iconProps),
-    children: ADMIN_DASHBOARDS.map((dashboard) => ({
-      type: 'item' as const,
-      label: dashboard.label,
-      href: dashboard.href,
-      badge: 'Live',
     })),
   },
   {
@@ -88,12 +76,6 @@ export const adminNav: NavConfig[] = [
   },
   {
     type: 'item',
-    label: 'Vendor Management',
-    icon: createElement(Truck, iconProps),
-    href: '/admin/vendor-management/vendors',
-  },
-  {
-    type: 'item',
     label: 'Support tickets',
     icon: createElement(Headphones, iconProps),
     href: '/admin/support/tickets',
@@ -135,6 +117,7 @@ export const adminNav: NavConfig[] = [
       { type: 'item', label: 'SAC Code Master', href: '/admin/masters/sac-codes' },
       { type: 'item', label: 'GST & TDS Master', href: '/admin/masters/tax' },
       { type: 'item', label: 'Workflow Master', href: '/admin/masters/workflows' },
+      { type: 'item', label: 'Vendor Master', href: '/admin/masters/vendors' },
     ],
   },
   {

@@ -117,7 +117,7 @@ function SegmentMetrics({ segment }: { segment: SuperAdminSegmentCard }) {
   )
 }
 
-/** Business story — revenue, rich segment cards, multi-color mix charts, growth drivers. */
+/** Business — commercial story: revenue, segment cards, mix charts. Client lists live on Clients. */
 export function BusinessTab({ data, loading, onRetry }: SuperAdminDashboardTabProps) {
   const segmentSlices = useMemo(
     () =>
@@ -141,8 +141,8 @@ export function BusinessTab({ data, loading, onRetry }: SuperAdminDashboardTabPr
     [data.visaDistribution],
   )
 
-  const branchBars = useMemo(
-    () => data.branchPerformance.map((b) => ({ branch: b.label, score: b.value })),
+  const jurisdictionBars = useMemo(
+    () => data.branchPerformance.map((b) => ({ jurisdiction: b.label, score: b.value })),
     [data.branchPerformance],
   )
 
@@ -196,7 +196,7 @@ export function BusinessTab({ data, loading, onRetry }: SuperAdminDashboardTabPr
               barSize={14}
               showLegend={false}
               loading={loading}
-              bars={[{ key: 'share', label: 'Share %', color: SUPER_ADMIN_CHART_COLORS.blue }]}
+              bars={[{ key: 'share', label: 'Share %' }]}
             />
           </ChartPanel>
         </Grid>
@@ -209,20 +209,20 @@ export function BusinessTab({ data, loading, onRetry }: SuperAdminDashboardTabPr
               barSize={14}
               showLegend={false}
               loading={loading}
-              bars={[{ key: 'share', label: 'Share %', color: SUPER_ADMIN_CHART_COLORS.violet }]}
+              bars={[{ key: 'share', label: 'Share %' }]}
             />
           </ChartPanel>
         </Grid>
         <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-          <ChartPanel title="Branch contribution" description="Composite score">
+          <ChartPanel title="Jurisdiction contribution" description="Composite score">
             <BarChart
-              data={branchBars}
-              xKey="branch"
+              data={jurisdictionBars}
+              xKey="jurisdiction"
               height={220}
               barSize={14}
               showLegend={false}
               loading={loading}
-              bars={[{ key: 'score', label: 'Score', color: SUPER_ADMIN_CHART_COLORS.teal }]}
+              bars={[{ key: 'score', label: 'Score' }]}
             />
           </ChartPanel>
         </Grid>
@@ -231,26 +231,10 @@ export function BusinessTab({ data, loading, onRetry }: SuperAdminDashboardTabPr
       <ComparisonLayout
         left={
           <BranchPerformance
-            title="Branch detail"
+            title="Jurisdiction detail"
             branches={data.branchPerformance}
             loading={loading}
             onRetry={onRetry}
-          />
-        }
-        right={
-          <RankingList
-            title="Top 10 revenue clients"
-            items={toRankingItems(data.topRevenueClients)}
-            loading={loading}
-          />
-        }
-      />
-      <ComparisonLayout
-        left={
-          <RankingList
-            title="Fastest growing clients"
-            items={toRankingItems(data.fastestGrowingClients)}
-            loading={loading}
           />
         }
         right={

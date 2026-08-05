@@ -1,66 +1,180 @@
-import { Grid } from '@mui/material'
+import { Box, Grid, Stack, Typography } from '@mui/material'
+import { Truck, UserPlus } from 'lucide-react'
+import { Button } from '@/design-system/UIComponents'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import {
+  AlertCenter,
+  InTransitCourierListing,
   MarineTimeline,
-  OperationsHealth,
-  PassportJourney,
-  TeamCapacity,
-  RecentActivity,
+  OpsOrgInfographics,
+  OpsOrgWorkloadBySegment,
+  ProcessingTrend,
   DASHBOARD_SPACING,
 } from '../../shared'
 import type { AdminDashboardTabProps } from '../types'
 
-/** Operations story — health, capacity, marine & passport (funnel lives in executive row). */
+/**
+ * Operations story (org-level, dense composition):
+ * pulse → alerts | workload → queue mix trio → IN TRANSIT →
+ * throughput | marine.
+ */
 export function OperationsTab({
   data,
   loading,
   onRetry,
   onNavigate,
 }: AdminDashboardTabProps) {
+  const colors = usePublicBrandColors()
+  const inTransitRows = data.inTransitCourierRows ?? []
+  const inTransitCount = inTransitRows.length
+  const delayed = data.operationsHealth.delayedCases
+  const critical = data.operationsHealth.criticalCases
+  const unassigned = data.unassignedCount ?? 0
+
+  const openLogistics = () => onNavigate('/admin/ground-operations/logistics')
+  const openMarine = () => onNavigate('/admin/application-management/marine')
+  const openAssignment = () => onNavigate('/admin/assignment-priority/retail')
+
+  const signalParts = [
+    inTransitCount > 0 ? `${inTransitCount} in transit` : null,
+    delayed > 0 ? `${delayed} delayed` : null,
+    critical > 0 ? `${critical} critical` : null,
+    unassigned > 0 ? `${unassigned} unassigned` : null,
+  ].filter(Boolean)
+
+  const pulseNeedsAttention = critical > 0 || delayed > 0 || unassigned > 0
+
   return (
-    <Grid container spacing={DASHBOARD_SPACING.field}>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <OperationsHealth
-          metrics={data.operationsHealth}
-          loading={loading}
-          onRetry={onRetry}
-        />
+    <Stack spacing={DASHBOARD_SPACING.field}>
+      {signalParts.length > 0 ? (
+        <Box
+          sx={{
+            ...executiveCardLevel2Sx(colors),
+            px: 2,
+            py: 1.5,
+            display: 'flex',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: 1.5,
+            flexDirection: { xs: 'column', sm: 'row' },
+          }}
+        >
+          <Stack direction="row" spacing={1.25} alignItems="center" minWidth={0}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                display: 'grid',
+                placeItems: 'center',
+                bgcolor: pulseNeedsAttention
+                  ? unassigned > 0
+                    ? 'error.main'
+                    : 'warning.main'
+                  : 'info.main',
+                color: 'common.white',
+                flexShrink: 0,
+                opacity: 0.92,
+              }}
+            >
+              {unassigned > 0 ? <UserPlus size={16} /> : <Truck size={16} />}
+            </Box>
+            <Box minWidth={0}>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
+                Operations pulse
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+                {signalParts.join(' · ')}
+                {unassigned > 0
+                  ? ' — open Assignment Priority to assign user, vendor, or passenger.'
+                  : ' — open logistics to manage courier and delivery.'}
+              </Typography>
+            </Box>
+          </Stack>
+          <Button
+            label={unassigned > 0 ? 'Open assignment desk' : 'Open logistics'}
+            variant="outlined"
+            size="sm"
+            onClick={unassigned > 0 ? openAssignment : openLogistics}
+          />
+        </Box>
+      ) : null}
+
+      <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Box sx={{ height: '100%', minWidth: 0, '& > *': { height: '100%' } }}>
+            <AlertCenter
+              title="Ops alerts"
+              subtitle="Re-check · payment · arrange · assignment · ground"
+              alerts={data.opsAlerts.map((alert) => ({
+                id: alert.id,
+                title: alert.title,
+                description: alert.description,
+                severity: alert.severity,
+                count: alert.count,
+                onClick: () => onNavigate(alert.href),
+              }))}
+              loading={loading}
+              maxItems={4}
+              onShowMore={openAssignment}
+            />
+          </Box>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Box sx={{ height: '100%', minWidth: 0, '& > *': { height: '100%' } }}>
+            <OpsOrgWorkloadBySegment data={data.opsQueueSnapshot} loading={loading} dense />
+          </Box>
+        </Grid>
       </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <TeamCapacity
-          rows={data.teamCapacity}
-          loading={loading}
-          onRetry={onRetry}
-          onViewAll={() => onNavigate('/admin/user-management/teams')}
-        />
+
+      <OpsOrgInfographics data={data.opsQueueSnapshot} loading={loading} dense />
+
+      <InTransitCourierListing
+        title="IN TRANSIT"
+        description="Passport/visa with courier — AWB and tracking from Tracking & Logistics"
+        rows={inTransitRows}
+        loading={loading}
+        includeMethod
+        pageSize={10}
+        onOpen={openLogistics}
+        onViewAll={openLogistics}
+        viewAllLabel="Open logistics"
+      />
+
+      <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Box
+            sx={{
+              ...executiveCardLevel2Sx(colors),
+              p: 2,
+              height: '100%',
+              minWidth: 0,
+              '& > *': { height: '100%' },
+            }}
+          >
+            <ProcessingTrend
+              title="Throughput trend"
+              subtitle="Processed vs completed"
+              points={data.processingTrend}
+              loading={loading}
+              onRetry={onRetry}
+              secondaryLabel="Completed"
+            />
+          </Box>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <MarineTimeline
+            title="Active crew changes"
+            subtitle="Marine sign-ons · RAG by days remaining"
+            rows={data.marineTimeline}
+            loading={loading}
+            onRetry={onRetry}
+            onViewAll={openMarine}
+            onRowClick={() => openMarine()}
+          />
+        </Grid>
       </Grid>
-      <Grid size={{ xs: 12, lg: 7 }}>
-        <MarineTimeline
-          title="Active Crew Changes"
-          rows={data.marineTimeline}
-          loading={loading}
-          onRetry={onRetry}
-          onViewAll={() => onNavigate('/admin/application-management/marine')}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, lg: 5 }}>
-        <PassportJourney
-          stages={data.passportJourney.stages}
-          journeyStatus={data.passportJourney.journeyStatus}
-          eta={data.passportJourney.eta}
-          trackingNumber={data.passportJourney.trackingNumber}
-          courier={data.passportJourney.courier}
-          loading={loading}
-          onRetry={onRetry}
-        />
-      </Grid>
-      <Grid size={{ xs: 12 }}>
-        <RecentActivity
-          items={data.recentActivity}
-          loading={loading}
-          onRetry={onRetry}
-          maxItems={6}
-        />
-      </Grid>
-    </Grid>
+    </Stack>
   )
 }

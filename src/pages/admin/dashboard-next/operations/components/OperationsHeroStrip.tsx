@@ -13,6 +13,7 @@ import {
 import { ExecutiveGrid, HeroMetric, InsightStack } from '../../shared/dashboard-ui-kit'
 import type { DashboardKpiItem } from '../../shared/types'
 import { DASHBOARD_SPACING } from '../../shared/constants'
+import { kpiColumns } from '../../shared/utils/kpiColumns'
 import {
   opsApplicationListPath,
   opsAssignmentPath,
@@ -80,7 +81,7 @@ export function OperationsHeroStrip({ items, loading, onNavigate }: OperationsHe
 
   return (
     <InsightStack spacing={DASHBOARD_SPACING.dense}>
-      <ExecutiveGrid columns={4} spacing={1}>
+      <ExecutiveGrid columns={kpiColumns(items.length)} spacing={1}>
         {items.map((kpi) => (
           <Box
             key={kpi.id}

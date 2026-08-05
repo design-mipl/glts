@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Divider, Stack, Typography } from '@mui/material'
 import { Tabs } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
@@ -34,56 +34,113 @@ export interface TeamProductivityAnalyticsTabProps {
   loading?: boolean
 }
 
-function OverviewPanel({ data }: { data: WorkforceAnalyticsData }) {
-  return <DepartmentOverviewSection data={data} />
-}
-
-function PeoplePanel({ data }: { data: WorkforceAnalyticsData }) {
+function StageBlock({
+  title,
+  description,
+  children,
+  showDivider = false,
+}: {
+  title: string
+  description?: string
+  children: React.ReactNode
+  showDivider?: boolean
+}) {
   return (
-    <Stack spacing={DASHBOARD_SPACING.section}>
-      <EmployeeProductivitySection data={data} />
-      <WorkloadSection data={data} />
-      <CapacitySection data={data} />
+    <Stack spacing={1.25}>
+      {showDivider ? <Divider /> : null}
+      <Box>
+        <Typography variant="h6" fontWeight={700} sx={{ fontSize: 15, lineHeight: 1.3 }}>
+          {title}
+        </Typography>
+        {description ? (
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12, mt: 0.25 }}>
+            {description}
+          </Typography>
+        ) : null}
+      </Box>
+      {children}
     </Stack>
   )
 }
 
-function SlaTrendsPanel({ data }: { data: WorkforceAnalyticsData }) {
+/** Departments + teams — primary workforce picture. */
+function WorkforcePanel({ data }: { data: WorkforceAnalyticsData }) {
   return (
-    <Stack spacing={DASHBOARD_SPACING.section}>
-      <SlaSection data={data} />
-      <TrendsSection data={data} />
+    <Stack spacing={2}>
+      <StageBlock
+        title="Departments"
+        description="Operations, Documentation, Ground Operations, and Accounts"
+      >
+        <DepartmentOverviewSection data={data} />
+      </StageBlock>
+      <StageBlock
+        title="Teams"
+        description="Productivity and throughput by team"
+        showDivider
+      >
+        <TeamProductivitySection data={data} />
+      </StageBlock>
     </Stack>
   )
 }
 
-function QualityActivityPanel({ data }: { data: WorkforceAnalyticsData }) {
+/** People, workload, and capacity. */
+function CapacityPanel({ data }: { data: WorkforceAnalyticsData }) {
   return (
-    <Stack spacing={DASHBOARD_SPACING.section}>
-      <QualitySection data={data} />
-      <ActivitySection data={data} />
+    <Stack spacing={2}>
+      <StageBlock title="Employees" description="Individual productivity and output">
+        <EmployeeProductivitySection data={data} />
+      </StageBlock>
+      <StageBlock title="Workload" description="Load distribution across the workforce" showDivider>
+        <WorkloadSection data={data} />
+      </StageBlock>
+      <StageBlock title="Capacity" description="Utilization and headroom" showDivider>
+        <CapacitySection data={data} />
+      </StageBlock>
     </Stack>
   )
 }
 
-function InsightsPanel({ data }: { data: WorkforceAnalyticsData }) {
+/** SLA, quality, activity, and insight rankings — one performance focus. */
+function PerformancePanel({ data }: { data: WorkforceAnalyticsData }) {
   return (
-    <Stack spacing={DASHBOARD_SPACING.section}>
-      <ComparisonSection data={data} />
-      <LeaderboardsSection data={data} />
-      <BottlenecksSection data={data} />
+    <Stack spacing={2}>
+      <StageBlock title="SLA" description="On-time delivery and breach risk">
+        <SlaSection data={data} />
+      </StageBlock>
+      <StageBlock title="Trends" description="Throughput and productivity over time" showDivider>
+        <TrendsSection data={data} />
+      </StageBlock>
+      <StageBlock title="Quality" description="Rework, errors, and completion quality" showDivider>
+        <QualitySection data={data} />
+      </StageBlock>
+      <StageBlock title="Activity" description="Recent operational activity" showDivider>
+        <ActivitySection data={data} />
+      </StageBlock>
+      <StageBlock title="Comparison" description="Department and team benchmarks" showDivider>
+        <ComparisonSection data={data} />
+      </StageBlock>
+      <StageBlock title="Leaderboards" description="Top and bottom performers" showDivider>
+        <LeaderboardsSection data={data} />
+      </StageBlock>
+      <StageBlock title="Bottlenecks" description="Where work is stuck" showDivider>
+        <BottlenecksSection data={data} />
+      </StageBlock>
     </Stack>
   )
 }
 
-/** Executive Team & Productivity analytics — filter-aware workforce intelligence. */
+/**
+ * Team & Productivity analytics — one focus at a time.
+ * Stages inside each tab stack with dividers (Visa Analytics pattern).
+ */
 export function TeamProductivityAnalyticsTab({
   loading = false,
 }: TeamProductivityAnalyticsTabProps) {
   const colors = usePublicBrandColors()
   const filterCtx = useDashboardFiltersOptional()
   const filters = filterCtx?.filters
-  const [section, setSection] = useState<WorkforceSectionId>('overview')
+  const [section, setSection] = useState<WorkforceSectionId>('workforce')
 
   const data = useMemo(() => {
     if (!filters) return WORKFORCE_ANALYTICS_MOCK
@@ -108,11 +165,11 @@ export function TeamProductivityAnalyticsTab({
     <Box sx={{ ...executiveCardLevel2Sx(colors), p: 0, overflow: 'hidden' }}>
       <Box sx={{ px: 2, pt: 2, pb: 1.25 }}>
         <ExecutiveSectionHeader
-          title="Team & Productivity Analytics"
+          title="Team & Productivity"
           description={
             filterHint
-              ? `Workforce intelligence across departments, teams, and employees — ${filterHint}.`
-              : 'Complete visibility into department, team, and employee workload, capacity, SLA, and productivity. Uses the page global filters.'
+              ? `Workforce, capacity, and performance — ${filterHint}.`
+              : 'One focus at a time — workforce, capacity, or performance. Uses page global filters.'
           }
         />
       </Box>
@@ -122,7 +179,6 @@ export function TeamProductivityAnalyticsTab({
           px: 2,
           borderBottom: '1px solid',
           borderColor: 'divider',
-          overflowX: 'auto',
         }}
       >
         <Tabs
@@ -144,12 +200,9 @@ export function TeamProductivityAnalyticsTab({
           </Typography>
         ) : (
           <Stack spacing={DASHBOARD_SPACING.field}>
-            {section === 'overview' ? <OverviewPanel data={data} /> : null}
-            {section === 'teams' ? <TeamProductivitySection data={data} /> : null}
-            {section === 'people' ? <PeoplePanel data={data} /> : null}
-            {section === 'sla-trends' ? <SlaTrendsPanel data={data} /> : null}
-            {section === 'quality-activity' ? <QualityActivityPanel data={data} /> : null}
-            {section === 'insights' ? <InsightsPanel data={data} /> : null}
+            {section === 'workforce' ? <WorkforcePanel data={data} /> : null}
+            {section === 'capacity' ? <CapacityPanel data={data} /> : null}
+            {section === 'performance' ? <PerformancePanel data={data} /> : null}
           </Stack>
         )}
       </Box>

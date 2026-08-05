@@ -16,14 +16,14 @@ export const WORKFORCE_BOTTOM_N_OPTIONS = [
 export type WorkforceTopN = '5' | '7' | '10' | '20' | 'all'
 export type WorkforceBottomN = '5' | '7' | '10'
 
-/** Consolidated section tabs (grouped from the full 13-area workforce spec). */
+/**
+ * Focus tabs (one focus at a time).
+ * Stages inside each tab stack with dividers — no nested tab chrome.
+ */
 export const WORKFORCE_SECTION_IDS = [
-  'overview',
-  'teams',
-  'people',
-  'sla-trends',
-  'quality-activity',
-  'insights',
+  'workforce',
+  'capacity',
+  'performance',
 ] as const
 
 export type WorkforceSectionId = (typeof WORKFORCE_SECTION_IDS)[number]
@@ -32,12 +32,9 @@ export const WORKFORCE_SECTION_TABS: ReadonlyArray<{
   value: WorkforceSectionId
   label: string
 }> = [
-  { value: 'overview', label: 'Overview' },
-  { value: 'teams', label: 'Teams' },
-  { value: 'people', label: 'People' },
-  { value: 'sla-trends', label: 'SLA & trends' },
-  { value: 'quality-activity', label: 'Quality & activity' },
-  { value: 'insights', label: 'Insights' },
+  { value: 'workforce', label: 'Workforce' },
+  { value: 'capacity', label: 'Capacity' },
+  { value: 'performance', label: 'Performance' },
 ]
 
 export const WORKFORCE_DEPARTMENT_IDS = [

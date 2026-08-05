@@ -34,7 +34,7 @@ import { DashboardIntelligence } from '@/pages/admin/dashboard-next/shared'
 | `drilldown/` | Drawer / dialog / slide-over drilldown engine |
 | `insights/` | Insight banners / cards / recommendations |
 | `alerts/` | Management alert center (business impact) |
-| `comparisons/` | Period / branch / segment comparison models |
+| `comparisons/` | Period / jurisdiction / segment comparison models |
 | `search/` | Ctrl/Cmd+K command search |
 | `exports/` | PDF / Excel / CSV / PPTX framework |
 | `refresh/` | Live refresh + last updated |

@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import { Grid, Stack, Typography } from '@mui/material'
 import { BarChart, DonutChart, LineChart, PieChart } from '@/design-system/UIComponents'
-import { AnalyticsPanel, TopNSelect } from '../components/AnalyticsChrome'
+import {
+  ANALYTICS_CHART_HEIGHT,
+  AnalyticsPanel,
+  TopNSelect,
+} from '../components/AnalyticsChrome'
 import { AnalyticsKpiGrid } from '../components/AnalyticsKpiGrid'
+import { ADMIN_CHART_COLORS } from '../../data/adminChartColors'
 import { sliceTopN, type VisaAnalyticsTopN } from '../config/visaAnalyticsConfig'
 import type { VisaAnalyticsData } from '../types'
 
@@ -16,32 +21,42 @@ function useTopN(initial: VisaAnalyticsTopN = '10') {
 }
 
 export function RefusalSection({ data }: { data: VisaAnalyticsData }) {
+  const byCountry = useTopN('10')
+  const byEmbassy = useTopN('10')
   const clients = useTopN('10')
+  const byStaff = useTopN('10')
+
   return (
-    <Stack spacing={1.5}>
-      <AnalyticsKpiGrid items={data.refusalKpis} columns={3} />
-      <Grid container spacing={1.5}>
+    <Stack spacing={1.25}>
+      <AnalyticsKpiGrid items={data.refusalKpis} />
+      <Grid container spacing={1.25}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <AnalyticsPanel title="Refusal by country">
+          <AnalyticsPanel
+            title="Refusal by country"
+            action={<TopNSelect value={byCountry.topN} onChange={byCountry.setTopN} />}
+          >
             <BarChart
-              data={toBarRows(data.refusalByCountry)}
+              data={toBarRows(sliceTopN(data.refusalByCountry, byCountry.topN))}
               xKey="name"
               bars={[{ key: 'value', label: 'Refusals' }]}
               orientation="horizontal"
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
           </AnalyticsPanel>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <AnalyticsPanel title="Refusal by embassy">
+          <AnalyticsPanel
+            title="Refusal by embassy"
+            action={<TopNSelect value={byEmbassy.topN} onChange={byEmbassy.setTopN} />}
+          >
             <BarChart
-              data={toBarRows(data.refusalByEmbassy)}
+              data={toBarRows(sliceTopN(data.refusalByEmbassy, byEmbassy.topN))}
               xKey="name"
               bars={[{ key: 'value', label: 'Refusals' }]}
               orientation="horizontal"
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
@@ -57,27 +72,31 @@ export function RefusalSection({ data }: { data: VisaAnalyticsData }) {
               xKey="name"
               bars={[{ key: 'value', label: 'Refusals' }]}
               orientation="horizontal"
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
           </AnalyticsPanel>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <AnalyticsPanel title="Refusal by staff" description="Count and error %">
+          <AnalyticsPanel
+            title="Refusal by staff"
+            description="Count and error %"
+            action={<TopNSelect value={byStaff.topN} onChange={byStaff.setTopN} />}
+          >
             <BarChart
-              data={data.refusalByStaff.map((row) => ({
+              data={sliceTopN(data.refusalByStaff, byStaff.topN).map((row) => ({
                 name: row.label,
                 refusals: row.value,
                 errorPct: row.secondary,
               }))}
               xKey="name"
               bars={[
-                { key: 'refusals', label: 'Refusals' },
-                { key: 'errorPct', label: 'Error %' },
+                { key: 'refusals', label: 'Refusals', color: ADMIN_CHART_COLORS.coral },
+                { key: 'errorPct', label: 'Error %', color: ADMIN_CHART_COLORS.amber },
               ]}
               orientation="horizontal"
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={12}
             />
           </AnalyticsPanel>
@@ -90,7 +109,7 @@ export function RefusalSection({ data }: { data: VisaAnalyticsData }) {
                 label: s.label,
                 value: s.value,
               }))}
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
             />
           </AnalyticsPanel>
         </Grid>
@@ -102,7 +121,7 @@ export function RefusalSection({ data }: { data: VisaAnalyticsData }) {
                 label: s.label,
                 value: s.value,
               }))}
-              height={220}
+              height={ANALYTICS_CHART_HEIGHT}
               centerLabel="%"
             />
           </AnalyticsPanel>
@@ -113,31 +132,40 @@ export function RefusalSection({ data }: { data: VisaAnalyticsData }) {
 }
 
 export function ApprovalSection({ data }: { data: VisaAnalyticsData }) {
+  const byCountry = useTopN('10')
+  const byClient = useTopN('10')
+
   return (
-    <Stack spacing={1.5}>
-      <AnalyticsKpiGrid items={data.approvalKpis} columns={3} />
-      <Grid container spacing={1.5}>
+    <Stack spacing={1.25}>
+      <AnalyticsKpiGrid items={data.approvalKpis} />
+      <Grid container spacing={1.25}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <AnalyticsPanel title="Approval by country">
+          <AnalyticsPanel
+            title="Approval by country"
+            action={<TopNSelect value={byCountry.topN} onChange={byCountry.setTopN} />}
+          >
             <BarChart
-              data={toBarRows(data.approvalByCountry)}
+              data={toBarRows(sliceTopN(data.approvalByCountry, byCountry.topN))}
               xKey="name"
               bars={[{ key: 'value', label: 'Approved' }]}
               orientation="horizontal"
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
           </AnalyticsPanel>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <AnalyticsPanel title="Approval by client">
+          <AnalyticsPanel
+            title="Approval by client"
+            action={<TopNSelect value={byClient.topN} onChange={byClient.setTopN} />}
+          >
             <BarChart
-              data={toBarRows(data.approvalByClient)}
+              data={toBarRows(sliceTopN(data.approvalByClient, byClient.topN))}
               xKey="name"
               bars={[{ key: 'value', label: 'Approved' }]}
               orientation="horizontal"
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
@@ -149,7 +177,7 @@ export function ApprovalSection({ data }: { data: VisaAnalyticsData }) {
               data={data.approvalTrend}
               xKey="label"
               lines={[{ key: 'value', label: 'Approval rate %' }]}
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
             />
           </AnalyticsPanel>
         </Grid>
@@ -159,9 +187,13 @@ export function ApprovalSection({ data }: { data: VisaAnalyticsData }) {
 }
 
 export function SlaSection({ data }: { data: VisaAnalyticsData }) {
+  const byCountry = useTopN('10')
+  const byClient = useTopN('10')
+  const byJurisdiction = useTopN('10')
+
   return (
-    <Stack spacing={1.5}>
-      <AnalyticsKpiGrid items={data.slaKpis} columns={3} />
+    <Stack spacing={1.25}>
+      <AnalyticsKpiGrid items={data.slaKpis} />
       <AnalyticsPanel title="Average processing time by stage" description="Hours across pipeline">
         <Grid container spacing={1.25}>
           {data.processingStageTimes.map((stage) => (
@@ -169,7 +201,7 @@ export function SlaSection({ data }: { data: VisaAnalyticsData }) {
               <Stack
                 spacing={0.5}
                 sx={{
-                  p: 1.5,
+                  p: 1.25,
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: 2,
@@ -179,7 +211,7 @@ export function SlaSection({ data }: { data: VisaAnalyticsData }) {
                 <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
                   {stage.label}
                 </Typography>
-                <Typography fontWeight={800} sx={{ fontSize: 20 }}>
+                <Typography fontWeight={800} sx={{ fontSize: 18 }}>
                   {stage.hours}h
                 </Typography>
               </Stack>
@@ -187,41 +219,51 @@ export function SlaSection({ data }: { data: VisaAnalyticsData }) {
           ))}
         </Grid>
       </AnalyticsPanel>
-      <Grid container spacing={1.5}>
+      <Grid container spacing={1.25}>
         <Grid size={{ xs: 12, md: 4 }}>
-          <AnalyticsPanel title="SLA by country" description="Compliance %">
+          <AnalyticsPanel
+            title="SLA by country"
+            description="Compliance %"
+            action={<TopNSelect value={byCountry.topN} onChange={byCountry.setTopN} />}
+          >
             <BarChart
-              data={toBarRows(data.slaByCountry)}
+              data={toBarRows(sliceTopN(data.slaByCountry, byCountry.topN))}
               xKey="name"
               bars={[{ key: 'value', label: 'SLA %' }]}
               orientation="horizontal"
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
           </AnalyticsPanel>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <AnalyticsPanel title="SLA by client">
+          <AnalyticsPanel
+            title="SLA by client"
+            action={<TopNSelect value={byClient.topN} onChange={byClient.setTopN} />}
+          >
             <BarChart
-              data={toBarRows(data.slaByClient)}
+              data={toBarRows(sliceTopN(data.slaByClient, byClient.topN))}
               xKey="name"
               bars={[{ key: 'value', label: 'SLA %' }]}
               orientation="horizontal"
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
           </AnalyticsPanel>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <AnalyticsPanel title="SLA by branch">
+          <AnalyticsPanel
+            title="SLA by jurisdiction"
+            action={<TopNSelect value={byJurisdiction.topN} onChange={byJurisdiction.setTopN} />}
+          >
             <BarChart
-              data={toBarRows(data.slaByBranch)}
+              data={toBarRows(sliceTopN(data.slaByJurisdiction, byJurisdiction.topN))}
               xKey="name"
               bars={[{ key: 'value', label: 'SLA %' }]}
               orientation="horizontal"
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
@@ -233,7 +275,7 @@ export function SlaSection({ data }: { data: VisaAnalyticsData }) {
               data={data.processingTimeTrend}
               xKey="label"
               lines={[{ key: 'value', label: 'Avg days' }]}
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
             />
           </AnalyticsPanel>
         </Grid>
@@ -245,11 +287,11 @@ export function SlaSection({ data }: { data: VisaAnalyticsData }) {
 export function RankingsSection({ data }: { data: VisaAnalyticsData }) {
   const topN = useTopN('10')
   return (
-    <Stack spacing={1.5}>
+    <Stack spacing={1.25}>
       <Stack direction="row" justifyContent="flex-end">
         <TopNSelect value={topN.topN} onChange={topN.setTopN} ariaLabel="Business ranking limit" />
       </Stack>
-      <Grid container spacing={1.5}>
+      <Grid container spacing={1.25}>
         <Grid size={{ xs: 12, md: 6 }}>
           <AnalyticsPanel title="Top countries" description="Applications · approval · SLA · revenue">
             <BarChart
@@ -257,7 +299,7 @@ export function RankingsSection({ data }: { data: VisaAnalyticsData }) {
               xKey="name"
               bars={[{ key: 'value', label: 'Applications' }]}
               orientation="horizontal"
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
@@ -270,20 +312,20 @@ export function RankingsSection({ data }: { data: VisaAnalyticsData }) {
               xKey="name"
               bars={[{ key: 'value', label: 'Applications' }]}
               orientation="horizontal"
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
           </AnalyticsPanel>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <AnalyticsPanel title="Top branches">
+          <AnalyticsPanel title="Top jurisdictions">
             <BarChart
-              data={toBarRows(sliceTopN(data.topBranches, topN.topN))}
+              data={toBarRows(sliceTopN(data.topJurisdictions, topN.topN))}
               xKey="name"
               bars={[{ key: 'value', label: 'Applications' }]}
               orientation="horizontal"
-              height={220}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
@@ -296,7 +338,7 @@ export function RankingsSection({ data }: { data: VisaAnalyticsData }) {
               xKey="name"
               bars={[{ key: 'value', label: 'Applications' }]}
               orientation="horizontal"
-              height={220}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
@@ -309,7 +351,7 @@ export function RankingsSection({ data }: { data: VisaAnalyticsData }) {
               xKey="name"
               bars={[{ key: 'value', label: 'SLA %' }]}
               orientation="horizontal"
-              height={200}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
@@ -322,20 +364,20 @@ export function RankingsSection({ data }: { data: VisaAnalyticsData }) {
               xKey="name"
               bars={[{ key: 'value', label: 'Approval %' }]}
               orientation="horizontal"
-              height={200}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
           </AnalyticsPanel>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <AnalyticsPanel title="Bottom branches">
+          <AnalyticsPanel title="Bottom jurisdictions">
             <BarChart
-              data={toBarRows(data.bottomBranches)}
+              data={toBarRows(data.bottomJurisdictions)}
               xKey="name"
               bars={[{ key: 'value', label: 'SLA %' }]}
               orientation="horizontal"
-              height={200}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
@@ -347,30 +389,41 @@ export function RankingsSection({ data }: { data: VisaAnalyticsData }) {
 }
 
 export function RevenueSection({ data }: { data: VisaAnalyticsData }) {
+  const byCountry = useTopN('10')
+  const byClient = useTopN('10')
+
   return (
-    <Stack spacing={1.5}>
-      <AnalyticsKpiGrid items={data.revenueKpis} columns={3} />
-      <Grid container spacing={1.5}>
+    <Stack spacing={1.25}>
+      <AnalyticsKpiGrid items={data.revenueKpis} />
+      <Grid container spacing={1.25}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <AnalyticsPanel title="Revenue by country" description="₹ Lakhs">
+          <AnalyticsPanel
+            title="Revenue by country"
+            description="₹ Lakhs"
+            action={<TopNSelect value={byCountry.topN} onChange={byCountry.setTopN} />}
+          >
             <BarChart
-              data={toBarRows(data.revenueByCountry)}
+              data={toBarRows(sliceTopN(data.revenueByCountry, byCountry.topN))}
               xKey="name"
               bars={[{ key: 'value', label: '₹ Lakh' }]}
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={22}
               showLegend={false}
             />
           </AnalyticsPanel>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <AnalyticsPanel title="Revenue by client" description="₹ Lakhs">
+          <AnalyticsPanel
+            title="Revenue by client"
+            description="₹ Lakhs"
+            action={<TopNSelect value={byClient.topN} onChange={byClient.setTopN} />}
+          >
             <BarChart
-              data={toBarRows(data.revenueByClient)}
+              data={toBarRows(sliceTopN(data.revenueByClient, byClient.topN))}
               xKey="name"
               bars={[{ key: 'value', label: '₹ Lakh' }]}
               orientation="horizontal"
-              height={240}
+              height={ANALYTICS_CHART_HEIGHT}
               barSize={14}
               showLegend={false}
             />
@@ -384,7 +437,7 @@ export function RevenueSection({ data }: { data: VisaAnalyticsData }) {
                 label: s.label,
                 value: s.value,
               }))}
-              height={220}
+              height={ANALYTICS_CHART_HEIGHT}
               centerLabel="share"
             />
           </AnalyticsPanel>
@@ -395,7 +448,7 @@ export function RevenueSection({ data }: { data: VisaAnalyticsData }) {
               data={data.revenueTrend}
               xKey="label"
               lines={[{ key: 'value', label: 'Revenue' }]}
-              height={220}
+              height={ANALYTICS_CHART_HEIGHT}
             />
           </AnalyticsPanel>
         </Grid>
@@ -405,7 +458,7 @@ export function RevenueSection({ data }: { data: VisaAnalyticsData }) {
               data={data.momGrowthTrend}
               xKey="label"
               lines={[{ key: 'value', label: 'MoM %' }]}
-              height={220}
+              height={ANALYTICS_CHART_HEIGHT}
             />
           </AnalyticsPanel>
         </Grid>

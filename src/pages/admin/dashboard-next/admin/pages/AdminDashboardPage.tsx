@@ -17,6 +17,7 @@ import {
 import { useAdminDashboardNext, DEFAULT_ADMIN_DASHBOARD_NEXT_FILTERS } from '../hooks/useAdminDashboardNext'
 import { ADMIN_DASHBOARD_NEXT_MOCK } from '../data/adminDashboardNextMock'
 import { buildAdminSearchItems } from '../data/adminSearchItems'
+import { listLogisticsInTransitRows } from '../../shared/utils/mapLogisticsInTransitRows'
 import { AdminApplicationFunnelSection } from '../components/AdminApplicationFunnelSection'
 import { AdminExecutiveRow } from '../components/AdminExecutiveRow'
 import { AdminHeroStrip } from '../components/AdminHeroStrip'
@@ -37,7 +38,13 @@ import { applicationPipelineStageHref } from '../../shared/config/applicationPip
 export function AdminDashboardPage() {
   const navigate = useNavigate()
   const dashboard = useAdminDashboardNext()
-  const data = dashboard.data ?? ADMIN_DASHBOARD_NEXT_MOCK
+  const data =
+    dashboard.data ??
+    (() => {
+      const fallback = structuredClone(ADMIN_DASHBOARD_NEXT_MOCK)
+      fallback.inTransitCourierRows = listLogisticsInTransitRows()
+      return fallback
+    })()
   const loading = dashboard.isLoading
 
   const openTab = useCallback(
@@ -115,7 +122,7 @@ export function AdminDashboardPage() {
               />
               <OverviewTab
                 {...tabProps}
-                onShowMoreAlerts={() => openTab('risk-compliance')}
+                onOpenVisaAnalytics={() => openTab('analytics')}
               />
             </Stack>
           ),
@@ -131,7 +138,8 @@ export function AdminDashboardPage() {
           id: 'operations',
           label: 'Operations',
           icon: <ClipboardList size={16} />,
-          badge: data.operationsHealth.delayedCases,
+          badge:
+            data.inTransitCourierRows?.length || data.operationsHealth.delayedCases,
           content: <OperationsTab {...tabProps} />,
         },
         {

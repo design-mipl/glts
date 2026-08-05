@@ -160,7 +160,7 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
     onDispatched?.()
     showToast({
       title: 'Passport dispatched',
-      description: 'Dispatch details saved and case marked completed.',
+      description: 'In transit — confirm delivery when the courier hands over.',
       variant: 'success',
     })
   }
@@ -185,7 +185,17 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
         </Typography>
       ) : null}
 
-      {!canEditDispatch && record.status !== 'Document Submitted' && isViewOnly ? (
+      {!canEditDispatch && record.status === 'Dispatched' ? (
+        <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+          In transit — dispatch details are read-only. Mark as delivered on Overview when the
+          courier hands over.
+        </Typography>
+      ) : null}
+
+      {!canEditDispatch &&
+      record.status !== 'Document Submitted' &&
+      record.status !== 'Dispatched' &&
+      isViewOnly ? (
         <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
           Dispatch is complete. Fields are shown read-only.
         </Typography>

@@ -4,11 +4,15 @@ import { BarChart, DonutChart, LineChart, ProgressBar } from '@/design-system/UI
 import { AdminListingTable } from '@/pages/admin/components/listing'
 import type { Column, TableState } from '@/design-system/UIComponents'
 import { AnalyticsKpiGrid } from '../../analytics/components/AnalyticsKpiGrid'
+import { ADMIN_CHART_COLORS } from '../../data/adminChartColors'
 import {
   AnalyticsPanel,
   BottomNSelect,
   DepartmentPerfCard,
   TopNSelect,
+  WORKFORCE_CHART_HEIGHT,
+  WORKFORCE_BAR_SIZE,
+  WORKFORCE_CHART_HEIGHT_LG,
   WorkloadHeatmap,
 } from '../components/WorkforceChrome'
 import {
@@ -39,7 +43,7 @@ export function ExecutiveSummarySection({ data }: { data: WorkforceAnalyticsData
         High-level workforce performance — click any KPI to drill down. Values follow the page
         global filters.
       </Typography>
-      <AnalyticsKpiGrid items={data.executiveKpis} columns={4} />
+      <AnalyticsKpiGrid items={data.executiveKpis} />
     </Stack>
   )
 }
@@ -47,9 +51,6 @@ export function ExecutiveSummarySection({ data }: { data: WorkforceAnalyticsData
 export function DepartmentOverviewSection({ data }: { data: WorkforceAnalyticsData }) {
   return (
     <Stack spacing={1.5}>
-      <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-        Compare Operations, Documentation, Ground Operations, and Accounts.
-      </Typography>
       <Grid container spacing={1.5}>
         {data.departments.map((dept) => (
           <Grid key={dept.id} size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -81,13 +82,13 @@ export function DepartmentOverviewSection({ data }: { data: WorkforceAnalyticsDa
               }))}
               xKey="name"
               orientation="horizontal"
-              height={280}
-              barSize={12}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               bars={[
-                { key: 'productivity', label: 'Productivity %' },
-                { key: 'capacity', label: 'Capacity %' },
-                { key: 'sla', label: 'SLA %' },
-                { key: 'completion', label: 'Completion rate' },
+                { key: 'productivity', label: 'Productivity %', color: ADMIN_CHART_COLORS.navy },
+                { key: 'capacity', label: 'Capacity %', color: ADMIN_CHART_COLORS.blue },
+                { key: 'sla', label: 'SLA %', color: ADMIN_CHART_COLORS.green },
+                { key: 'completion', label: 'Completion rate', color: ADMIN_CHART_COLORS.teal },
               ]}
             />
           </AnalyticsPanel>
@@ -102,7 +103,7 @@ export function TeamProductivitySection({ data }: { data: WorkforceAnalyticsData
 
   return (
     <Stack spacing={1.5}>
-      <AnalyticsKpiGrid items={data.teamKpis} columns={4} />
+      <AnalyticsKpiGrid items={data.teamKpis} />
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 12, lg: 7 }}>
           <AnalyticsPanel
@@ -120,14 +121,14 @@ export function TeamProductivitySection({ data }: { data: WorkforceAnalyticsData
               }))}
               xKey="name"
               orientation="horizontal"
-              height={280}
-              barSize={12}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               bars={[
-                { key: 'open', label: 'Open' },
-                { key: 'completed', label: 'Completed' },
-                { key: 'delayed', label: 'Delayed' },
-                { key: 'sla', label: 'SLA %' },
-                { key: 'productivity', label: 'Productivity %' },
+                { key: 'open', label: 'Open', color: ADMIN_CHART_COLORS.navy },
+                { key: 'completed', label: 'Completed', color: ADMIN_CHART_COLORS.green },
+                { key: 'delayed', label: 'Delayed', color: ADMIN_CHART_COLORS.coral },
+                { key: 'sla', label: 'SLA %', color: ADMIN_CHART_COLORS.teal },
+                { key: 'productivity', label: 'Productivity %', color: ADMIN_CHART_COLORS.violet },
               ]}
             />
           </AnalyticsPanel>
@@ -140,7 +141,7 @@ export function TeamProductivitySection({ data }: { data: WorkforceAnalyticsData
                 label: s.label,
                 value: s.value,
               }))}
-              height={260}
+              height={WORKFORCE_CHART_HEIGHT}
               centerLabel="done"
               centerValue={String(contributionTotal)}
             />
@@ -154,12 +155,12 @@ export function TeamProductivitySection({ data }: { data: WorkforceAnalyticsData
             <LineChart
               data={data.teamMonthlyTrend}
               xKey="label"
-              height={260}
+              height={WORKFORCE_CHART_HEIGHT}
               lines={[
-                { key: 'value', label: 'Marine' },
-                { key: 'secondary', label: 'Corporate' },
-                { key: 'tertiary', label: 'Retail' },
-                { key: 'quaternary', label: 'B2B' },
+                { key: 'value', label: 'Marine', color: ADMIN_CHART_COLORS.navy },
+                { key: 'secondary', label: 'Corporate', color: ADMIN_CHART_COLORS.green },
+                { key: 'tertiary', label: 'Retail', color: ADMIN_CHART_COLORS.amber },
+                { key: 'quaternary', label: 'B2B', color: ADMIN_CHART_COLORS.blue },
               ]}
             />
           </AnalyticsPanel>
@@ -225,7 +226,7 @@ export function EmployeeProductivitySection({ data }: { data: WorkforceAnalytics
 
   return (
     <Stack spacing={1.5}>
-      <AnalyticsKpiGrid items={data.employeeKpis} columns={3} />
+      <AnalyticsKpiGrid items={data.employeeKpis} />
       <AnalyticsPanel
         title="Employee productivity table"
         description="Workload and performance by individual"
@@ -263,8 +264,8 @@ export function EmployeeProductivitySection({ data }: { data: WorkforceAnalytics
               )}
               xKey="name"
               orientation="horizontal"
-              height={280}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'Productivity %' }]}
             />
@@ -285,8 +286,8 @@ export function EmployeeProductivitySection({ data }: { data: WorkforceAnalytics
               )}
               xKey="name"
               orientation="horizontal"
-              height={280}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'Productivity %' }]}
             />
@@ -300,7 +301,7 @@ export function EmployeeProductivitySection({ data }: { data: WorkforceAnalytics
 export function WorkloadSection({ data }: { data: WorkforceAnalyticsData }) {
   return (
     <Stack spacing={1.5}>
-      <AnalyticsKpiGrid items={data.workloadKpis} columns={3} />
+      <AnalyticsKpiGrid items={data.workloadKpis} />
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 12, lg: 6 }}>
           <AnalyticsPanel title="Workload by employee" description="Assigned cases per employee">
@@ -308,8 +309,8 @@ export function WorkloadSection({ data }: { data: WorkforceAnalyticsData }) {
               data={toBarRows(data.workloadByEmployee)}
               xKey="name"
               orientation="horizontal"
-              height={280}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'Assigned' }]}
             />
@@ -323,13 +324,13 @@ export function WorkloadSection({ data }: { data: WorkforceAnalyticsData }) {
             <BarChart
               data={data.workloadStack}
               xKey="label"
-              height={280}
-              barSize={18}
+              height={WORKFORCE_CHART_HEIGHT}
+              barSize={WORKFORCE_BAR_SIZE}
               bars={[
-                { key: 'open', label: 'Open' },
-                { key: 'pending', label: 'Pending' },
-                { key: 'completed', label: 'Completed' },
-                { key: 'delayed', label: 'Delayed' },
+                { key: 'open', label: 'Open', color: ADMIN_CHART_COLORS.navy },
+                { key: 'pending', label: 'Pending', color: ADMIN_CHART_COLORS.amber },
+                { key: 'completed', label: 'Completed', color: ADMIN_CHART_COLORS.green },
+                { key: 'delayed', label: 'Delayed', color: ADMIN_CHART_COLORS.coral },
               ]}
             />
           </AnalyticsPanel>
@@ -353,7 +354,7 @@ export function WorkloadSection({ data }: { data: WorkforceAnalyticsData }) {
 export function CapacitySection({ data }: { data: WorkforceAnalyticsData }) {
   return (
     <Stack spacing={1.5}>
-      <AnalyticsKpiGrid items={data.capacityKpis} columns={4} />
+      <AnalyticsKpiGrid items={data.capacityKpis} />
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 12, md: 6 }}>
           <AnalyticsPanel title="Department capacity" description="Utilization by department">

@@ -58,17 +58,11 @@ export const DEFAULT_OPERATIONS_DASHBOARD_FILTERS: OperationsDashboardFilters = 
   search: '',
 }
 
-/** Multi-color chart palette — navy · green · amber · coral · blue · teal (not green-only). */
-export const OPS_CHART_COLORS = {
-  navy: '#001F3F',
-  green: '#73C064',
-  amber: '#F59E0B',
-  coral: '#EF4444',
-  blue: '#3B82F6',
-  teal: '#14B8A6',
-  violet: '#8B5CF6',
-  slate: '#64748B',
-} as const
+/** Multi-color chart palette — brand + design tokens (shared across dashboards). */
+export { getDashboardChartColors as getOpsChartColors } from '@/shared/theme/dashboardChartColors'
+import { getDashboardChartColors } from '@/shared/theme/dashboardChartColors'
+
+export const OPS_CHART_COLORS = getDashboardChartColors('light')
 
 function matchSegment(rowSegment: OpsSegmentKey, filterSegment: string): boolean {
   return filterSegment === 'all' || rowSegment === filterSegment

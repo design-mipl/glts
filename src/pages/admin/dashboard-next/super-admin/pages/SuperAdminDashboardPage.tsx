@@ -3,14 +3,11 @@ import {
   Anchor,
   BarChart3,
   Briefcase,
-  Building2,
   ClipboardList,
   FileSpreadsheet,
   HandCoins,
+  Layers,
   LayoutDashboard,
-  Network,
-  Ship,
-  Store,
   Users,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -28,16 +25,13 @@ import {
 import { SuperAdminHeroStrip } from '../components/SuperAdminHeroStrip'
 import {
   AnalyticsTab,
-  B2bTab,
   BusinessTab,
   ClientsTab,
-  CorporateTab,
   FinanceTab,
-  MarineTab,
   OperationsTab,
   OverviewTab,
   ReportsTab,
-  RetailTab,
+  SegmentsTab,
   WorkTab,
   getSuperAdminWorkBadgeCount,
 } from '../tabs'
@@ -77,6 +71,16 @@ export function SuperAdminDashboardPage() {
     [navigate],
   )
 
+  const openSegments = useCallback(
+    (segment: 'marine' | 'corporate' | 'retail' | 'b2b' | 'all' = 'all') => {
+      const params = new URLSearchParams()
+      params.set('tab', 'segments')
+      if (segment !== 'all') params.set('segment', segment)
+      navigate({ search: `?${params.toString()}` }, { replace: true })
+    },
+    [navigate],
+  )
+
   const onFiltersChange = useCallback(
     (filters: DashboardIntelligenceFilters) => {
       setHookFilters(mapIntelligenceToHookFilters(filters))
@@ -95,24 +99,40 @@ export function SuperAdminDashboardPage() {
             'business-segments': 'business',
             'revenue-intelligence': 'business',
             'client-intelligence': 'clients',
-            'marine-intelligence': 'marine',
+            'marine-intelligence': 'segments',
             finance: 'finance',
             operations: 'operations',
             sales: 'analytics',
             'management-alerts': 'overview',
             'staff-productivity': 'analytics',
             'quick-actions': 'overview',
-            corporate: 'corporate',
-            retail: 'retail',
-            b2b: 'b2b',
+            corporate: 'segments',
+            retail: 'segments',
+            b2b: 'segments',
+            segments: 'segments',
             reports: 'reports',
             work: 'work',
           }
+          const segmentBySection: Record<string, 'marine' | 'corporate' | 'retail' | 'b2b'> = {
+            'marine-intelligence': 'marine',
+            corporate: 'corporate',
+            retail: 'retail',
+            b2b: 'b2b',
+          }
+          const segment = segmentBySection[sectionId]
+          if (segment) {
+            openSegments(segment)
+            return
+          }
           const tab = tabMap[sectionId] ?? 'overview'
+          if (tab === 'segments') {
+            openSegments('all')
+            return
+          }
           openTab(tab)
         },
       }),
-    [navigate, openTab],
+    [navigate, openSegments, openTab],
   )
 
   const workBadge = getSuperAdminWorkBadgeCount(data, SUPER_ADMIN_MANAGEMENT_ALERTS)
@@ -164,6 +184,7 @@ export function SuperAdminDashboardPage() {
       hero={
         <SuperAdminHeroStrip
           revenue={data.revenueHero}
+          collections={data.collectionsHero}
           items={data.heroKpis}
           blockedCash={data.blockedCash}
           loading={loading}
@@ -183,28 +204,10 @@ export function SuperAdminDashboardPage() {
           content: <BusinessTab {...tabProps} />,
         },
         {
-          id: 'marine',
-          label: 'Marine',
-          icon: <Ship size={16} />,
-          content: <MarineTab {...tabProps} />,
-        },
-        {
-          id: 'corporate',
-          label: 'Corporate',
-          icon: <Building2 size={16} />,
-          content: <CorporateTab {...tabProps} />,
-        },
-        {
-          id: 'retail',
-          label: 'Retail',
-          icon: <Store size={16} />,
-          content: <RetailTab {...tabProps} />,
-        },
-        {
-          id: 'b2b',
-          label: 'B2B',
-          icon: <Network size={16} />,
-          content: <B2bTab {...tabProps} />,
+          id: 'segments',
+          label: 'Segments',
+          icon: <Layers size={16} />,
+          content: <SegmentsTab {...tabProps} />,
         },
         {
           id: 'operations',

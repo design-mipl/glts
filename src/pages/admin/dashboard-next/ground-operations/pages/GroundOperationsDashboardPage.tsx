@@ -21,6 +21,10 @@ import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intell
 import { GROUND_OPERATIONS_DASHBOARD_MOCK } from '../data/groundOperationsDashboardMock'
 import { buildGroundSearchItems } from '../data/groundSearchItems'
 import { useGroundOperationsDashboardNext } from '../hooks/useGroundOperationsDashboardNext'
+import {
+  buildCourierTrackingFromInTransitRow,
+  listLogisticsInTransitRows,
+} from '../../shared/utils/mapLogisticsInTransitRows'
 import { GroundExecutiveRow } from '../components/GroundExecutiveRow'
 import { GroundHeroStrip } from '../components/GroundHeroStrip'
 import {
@@ -38,7 +42,27 @@ import type { GroundOperationsDashboardTabProps } from '../types'
 export function GroundOperationsDashboardPage() {
   const navigate = useNavigate()
   const dashboard = useGroundOperationsDashboardNext()
-  const data = dashboard.data ?? GROUND_OPERATIONS_DASHBOARD_MOCK
+  const data = dashboard.data ?? (() => {
+    const fallback = structuredClone(GROUND_OPERATIONS_DASHBOARD_MOCK)
+    const inTransit = listLogisticsInTransitRows()
+    if (inTransit.length === 0) return fallback
+    return {
+      ...fallback,
+      passportRows: inTransit.map((row) => ({
+        id: row.id,
+        applicationNumber: row.applicationNumber,
+        applicant: row.applicant,
+        currentLocation: row.currentLocation,
+        courier: row.courier,
+        trackingNumber: row.trackingNumber,
+        trackingUrl: row.trackingUrl,
+        deliveryMethod: row.deliveryMethod,
+        eta: row.eta,
+        status: row.status,
+      })),
+      courierTracking: buildCourierTrackingFromInTransitRow(inTransit[0]),
+    }
+  })()
   const loading = dashboard.isLoading
   const setFilters = dashboard.setFilters
 
@@ -82,6 +106,10 @@ export function GroundOperationsDashboardPage() {
 
   const pendingSettlements = data.fundCaseRows.filter((row) =>
     /pending|review/i.test(row.status),
+  ).length
+
+  const inTransitCount = data.passportRows.filter((row) =>
+    /in\s*transit/i.test(row.status),
   ).length
 
   const tabProps: GroundOperationsDashboardTabProps = {
@@ -191,7 +219,7 @@ export function GroundOperationsDashboardPage() {
           id: 'courier',
           label: 'Courier',
           icon: <Package size={16} />,
-          badge: data.passportRows.length,
+          badge: inTransitCount || data.passportRows.length,
           content: <CourierTab {...tabProps} />,
         },
         {

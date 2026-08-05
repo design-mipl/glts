@@ -524,20 +524,18 @@ export const operationalCaseHandlingService = {
       const dispatchSnapshot: LogisticsDispatchDetails = {
         ...details,
         dispatchedAt: nowIso(),
+        deliveredAt: undefined,
       }
 
       record.dispatchDetails = dispatchSnapshot
       record.status = 'Dispatched'
       record.progressPercent = Math.max(record.progressPercent, 90)
+      record.nextAction = 'Confirm delivery / tracking'
       appendTimeline(
         record,
         `Passport dispatched via ${details.deliveryMethod}`,
         'Tracking & Logistics',
       )
-      record.status = 'Completed'
-      record.progressPercent = 100
-      record.nextAction = '—'
-      appendTimeline(record, 'Case completed', 'System')
     })
   },
 
@@ -546,9 +544,25 @@ export const operationalCaseHandlingService = {
       if (record.status !== 'Collected') return
       record.status = 'Dispatched'
       record.progressPercent = Math.max(record.progressPercent, 90)
+      record.nextAction = 'Confirm delivery / tracking'
       appendTimeline(record, 'Passport/documents dispatched', 'Tracking & Logistics')
+    })
+  },
+
+  /** Ends IN TRANSIT — courier/handover confirmed delivered to client. */
+  markDelivered(id: string): OperationalCase | undefined {
+    return mutate(id, record => {
+      if (record.status !== 'Dispatched') return
+      if (record.dispatchDetails) {
+        record.dispatchDetails = {
+          ...record.dispatchDetails,
+          deliveredAt: nowIso(),
+        }
+      }
       record.status = 'Completed'
       record.progressPercent = 100
+      record.nextAction = '—'
+      appendTimeline(record, 'Passport/documents delivered', 'Tracking & Logistics')
       appendTimeline(record, 'Case completed', 'System')
     })
   },

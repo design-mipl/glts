@@ -1,16 +1,24 @@
-import type { Column } from '@/design-system/UIComponents'
-import { Button } from '@/design-system/UIComponents'
 import { Grid } from '@mui/material'
-import {
-  CourierTracking,
-  DashboardTable,
-  DASHBOARD_SPACING,
-  StatusBadge,
-} from '../../shared'
-import type {
-  GroundOperationsDashboardTabProps,
-  GroundPassportMovementRow,
-} from '../types'
+import { CourierTracking, DASHBOARD_SPACING, InTransitCourierListing } from '../../shared'
+import type { LogisticsInTransitRow } from '../../shared/utils/mapLogisticsInTransitRows'
+import type { GroundOperationsDashboardTabProps, GroundPassportMovementRow } from '../types'
+
+function toInTransitRow(row: GroundPassportMovementRow): LogisticsInTransitRow {
+  return {
+    id: row.id,
+    applicationNumber: row.applicationNumber,
+    applicant: row.applicant,
+    currentLocation: row.currentLocation,
+    courier: row.courier,
+    trackingNumber: row.trackingNumber,
+    trackingUrl: row.trackingUrl,
+    deliveryMethod: row.deliveryMethod ?? '—',
+    eta: row.eta,
+    status: row.status,
+    assignedTeam: row.currentLocation,
+    assignedExecutive: '—',
+  }
+}
 
 export function CourierTab({
   data,
@@ -19,50 +27,32 @@ export function CourierTab({
   onNavigate,
   onOpenPassport,
 }: GroundOperationsDashboardTabProps) {
-  const columns: Column<GroundPassportMovementRow>[] = [
-    { key: 'applicationNumber', label: 'Application Number', widthSize: 'md', sortable: false },
-    { key: 'applicant', label: 'Applicant', widthSize: 'lg', sortable: false },
-    { key: 'currentLocation', label: 'Current Location', widthSize: 'md', sortable: false },
-    { key: 'courier', label: 'Courier', widthSize: 'md', sortable: false },
-    { key: 'trackingNumber', label: 'Tracking Number', widthSize: 'md', sortable: false },
-    { key: 'eta', label: 'ETA', widthSize: 'md', sortable: false },
-    {
-      key: 'status',
-      label: 'Status',
-      widthSize: 'sm',
-      sortable: false,
-      render: (_value, row) => <StatusBadge label={row.status} status={row.status} />,
-    },
-    {
-      key: 'actions',
-      label: '',
-      hideable: false,
-      sortable: false,
-      filterable: false,
-      searchable: false,
-      render: (_value, row) => (
-        <Button label="Open" variant="text" size="sm" onClick={() => onOpenPassport?.(row.id)} />
-      ),
-    },
-  ]
+  const inTransitRows = data.passportRows.filter((row) => /in\s*transit/i.test(row.status))
+  const tableRows = (inTransitRows.length > 0 ? inTransitRows : data.passportRows).map(
+    toInTransitRow,
+  )
 
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
       <Grid size={{ xs: 12, md: 5 }}>
-        <CourierTracking data={data.courierTracking} loading={loading} onRetry={onRetry} />
+        <CourierTracking
+          title="Featured consignment"
+          subtitle="From Tracking & Logistics — in transit"
+          data={data.courierTracking}
+          loading={loading}
+          onRetry={onRetry}
+        />
       </Grid>
       <Grid size={{ xs: 12, md: 7 }}>
-        <DashboardTable
-          title="Courier & passport movement"
-          subtitle="In transit · awaiting collection · delivered"
-          columns={columns}
-          data={data.passportRows}
-          rowKey="id"
+        <InTransitCourierListing
+          title="IN TRANSIT"
+          description="Courier name · AWB · tracking link — updated at dispatch on Tracking & Logistics"
+          rows={tableRows}
           loading={loading}
-          pageSize={8}
-          onRowClick={(row) => onOpenPassport?.(row.id)}
+          includeMethod
+          onOpen={(row) => onOpenPassport?.(row.id)}
           onViewAll={() => onNavigate('/admin/ground-operations/logistics')}
-          actionLabel="Open logistics"
+          viewAllLabel="Open logistics"
         />
       </Grid>
     </Grid>

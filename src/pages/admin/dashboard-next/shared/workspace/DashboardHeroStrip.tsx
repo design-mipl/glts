@@ -3,22 +3,24 @@ import { Grid } from '@mui/material'
 import { QuickStats } from '../widgets'
 import type { DashboardKpiItem } from '../types'
 import { DASHBOARD_SPACING } from '../constants'
+import type { KpiColumnCount } from '../utils/kpiColumns'
+import { kpiColumns } from '../utils/kpiColumns'
 
 export interface DashboardHeroStripProps {
   items: DashboardKpiItem[]
   loading?: boolean
   onRetry?: () => void
-  columns?: 2 | 3 | 4 | 6
+  columns?: KpiColumnCount
   title?: string
   subtitle?: string
 }
 
-/** Standard 4–8 hero metric strip above tabs. */
+/** Standard hero metric strip above tabs — columns match item count (max 6). */
 export function DashboardHeroStrip({
   items,
   loading,
   onRetry,
-  columns = 4,
+  columns,
   title,
   subtitle,
 }: DashboardHeroStripProps) {
@@ -29,7 +31,7 @@ export function DashboardHeroStrip({
       items={items}
       loading={loading}
       onRetry={onRetry}
-      columns={columns <= 3 ? 3 : columns === 6 ? 6 : 4}
+      columns={columns ?? kpiColumns(items.length)}
     />
   )
 }

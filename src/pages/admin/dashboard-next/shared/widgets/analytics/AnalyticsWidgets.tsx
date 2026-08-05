@@ -151,6 +151,7 @@ export function BusinessSegmentBreakdown(props: BusinessSegmentBreakdownProps) {
   )
 }
 
+/** Jurisdiction rollup (Jurisdiction Master). Prop name `branches` kept for call-site compat. */
 export interface BranchPerformanceProps {
   title?: string
   subtitle?: string
@@ -163,8 +164,8 @@ export interface BranchPerformanceProps {
 }
 
 export function BranchPerformance({
-  title = 'Branch performance',
-  subtitle = 'Throughput by branch',
+  title = 'Jurisdiction performance',
+  subtitle = 'Throughput by jurisdiction',
   branches,
   loading,
   error,
@@ -173,9 +174,9 @@ export function BranchPerformance({
   onRetry,
 }: BranchPerformanceProps) {
   const chartHeight = DASHBOARD_CHART_HEIGHT_SPACING * 8
-  const data = branches.map((branch) => ({
-    branch: branch.label,
-    value: branch.value,
+  const data = branches.map((point) => ({
+    jurisdiction: point.label,
+    value: point.value,
   }))
 
   return (
@@ -191,7 +192,7 @@ export function BranchPerformance({
       <AnalyticsChart title={title} subtitle={subtitle} minHeight={chartHeight}>
         <BarChart
           data={data}
-          xKey="branch"
+          xKey="jurisdiction"
           bars={[{ key: 'value', label: 'Volume' }]}
           height={chartHeight}
           showLegend={false}

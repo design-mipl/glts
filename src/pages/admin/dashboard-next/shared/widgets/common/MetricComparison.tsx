@@ -3,6 +3,7 @@ import {
   ExecutiveGrid,
 } from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from './BusinessWidgetFrame'
+import { kpiColumns } from '../../utils/kpiColumns'
 
 export interface MetricComparisonItem {
   label: string
@@ -44,7 +45,7 @@ export function MetricComparison({
       onRetry={onRetry}
       skeletonHeightSpacing={14}
     >
-      <ExecutiveGrid columns={metrics.length >= 3 ? 3 : 2}>
+      <ExecutiveGrid columns={kpiColumns(metrics.length)}>
         {metrics.map((metric) => (
           <ComparisonMetric
             key={metric.label}

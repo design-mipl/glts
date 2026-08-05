@@ -3,9 +3,9 @@ import { Badge, BaseCard } from '@/design-system/UIComponents'
 import type { Vendor } from '@/shared/types/vendor'
 import type { VendorBillingSummaryRow } from '@/shared/types/vendorBilling'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
-import { vendorCategoryLabel } from '@/pages/admin/vendor-management/vendors/config/vendorCategoryConfig'
-import { vendorStatusColor, vendorStatusLabel } from '@/pages/admin/vendor-management/vendors/config/vendorStatusConfig'
-import { paymentTermsLabel } from '@/pages/admin/vendor-management/vendors/config/paymentTermsConfig'
+import { vendorCategoryLabel } from '@/pages/admin/masters/vendors/config/vendorCategoryConfig'
+import { vendorStatusColor, vendorStatusLabel } from '@/pages/admin/masters/vendors/config/vendorStatusConfig'
+import { paymentTermsLabel } from '@/pages/admin/masters/vendors/config/paymentTermsConfig'
 
 interface VendorBillingDetailSummaryProps {
   vendor: Vendor

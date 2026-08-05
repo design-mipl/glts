@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useDashboardQuery } from '../../shared/hooks/useDashboardQuery'
 import type { DashboardFilterConfig } from '../../shared/types'
 import {
-  ACCOUNTS_BRANCH_OPTIONS,
+  ACCOUNTS_JURISDICTION_OPTIONS,
   ACCOUNTS_CLIENT_OPTIONS,
   ACCOUNTS_COLLECTION_STATUS_OPTIONS,
   ACCOUNTS_COUNTRY_OPTIONS,
@@ -34,8 +34,8 @@ export function useAccountsDashboardNext() {
       },
       {
         id: 'branch',
-        label: 'Branch',
-        options: ACCOUNTS_BRANCH_OPTIONS,
+        label: 'Jurisdiction',
+        options: ACCOUNTS_JURISDICTION_OPTIONS,
         value: filters.branch,
         onChange: (value) => setFilters((prev) => ({ ...prev, branch: value })),
       },

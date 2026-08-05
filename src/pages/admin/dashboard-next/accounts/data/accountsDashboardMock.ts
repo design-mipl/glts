@@ -8,13 +8,16 @@ export const ACCOUNTS_DATE_OPTIONS = [
   { label: 'This quarter', value: 'quarter' },
 ]
 
-export const ACCOUNTS_BRANCH_OPTIONS = [
-  { label: 'All branches', value: 'all' },
+export const ACCOUNTS_JURISDICTION_OPTIONS = [
+  { label: 'All jurisdictions', value: 'all' },
   { label: 'Mumbai', value: 'mumbai' },
   { label: 'Delhi', value: 'delhi' },
   { label: 'Bengaluru', value: 'bengaluru' },
   { label: 'Chennai', value: 'chennai' },
 ]
+
+/** @deprecated Prefer ACCOUNTS_JURISDICTION_OPTIONS */
+export const ACCOUNTS_BRANCH_OPTIONS = ACCOUNTS_JURISDICTION_OPTIONS
 
 export const ACCOUNTS_SEGMENT_OPTIONS = [
   { label: 'All segments', value: 'all' },

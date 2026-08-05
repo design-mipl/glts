@@ -60,7 +60,7 @@ export function VendorFormPage({ mode, vendorId, breadcrumbs, cancelHref }: Vend
       <EmptyState
         variant="no-data"
         title="Vendor not found"
-        action={{ label: 'Back to vendors', onClick: () => navigate('/admin/vendor-management/vendors') }}
+        action={{ label: 'Back to vendors', onClick: () => navigate('/admin/masters/vendors') }}
       />
     )
   }
@@ -85,11 +85,11 @@ export function VendorFormPage({ mode, vendorId, breadcrumbs, cancelHref }: Vend
       if (mode === 'create') {
         const created = vendorService.create(formData)
         showToast({ title: 'Vendor created', variant: 'success' })
-        navigate(`/admin/vendor-management/vendors/${created.id}`)
+        navigate(`/admin/masters/vendors/${created.id}`)
       } else if (vendorId) {
         vendorService.update(vendorId, formData)
         showToast({ title: 'Vendor updated', variant: 'success' })
-        navigate(`/admin/vendor-management/vendors/${vendorId}`)
+        navigate(`/admin/masters/vendors/${vendorId}`)
       }
     } finally {
       setSubmitting(false)

@@ -54,6 +54,9 @@ const errorScale    = generateScale('#EF4444');
 const successScale  = generateScale(BRAND_COLOR);
 const warningScale  = generateScale('#F59E0B');
 const infoScale     = generateScale('#3B82F6');
+/** Extra chart accents (Ops / Accounts / Admin series) — not MUI semantic slots. */
+const chartTealScale = generateScale('#14B8A6');
+const chartVioletScale = generateScale('#8B5CF6');
 
 // ─── Responsive density (10 tiers = FOUNDATION_BREAKPOINT_MIN_WIDTHS order) ───
 
@@ -147,6 +150,9 @@ export const tokens = {
     success: successScale,
     warning: warningScale,
     info:    infoScale,
+    /** Chart-only accents used by dashboard series (teal / violet). */
+    chartTeal: chartTealScale,
+    chartViolet: chartVioletScale,
     white:   '#ffffff',
     black:   '#000000',
   },

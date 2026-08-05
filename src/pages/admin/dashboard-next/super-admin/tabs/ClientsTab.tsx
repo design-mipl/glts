@@ -141,19 +141,12 @@ export function ClientsTab({
             barSize={16}
             showLegend={false}
             loading={loading}
-            bars={[{ key: 'score', label: 'Score', color: SUPER_ADMIN_CHART_COLORS.green }]}
+            bars={[{ key: 'score', label: 'Score' }]}
           />
         </ChartPanel>
       </Grid>
 
-      <Grid size={{ xs: 12, md: 6 }}>
-        <RankingList
-          title="Client health"
-          items={toRankingItems(data.clientHealth)}
-          loading={loading}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
+      <Grid size={{ xs: 12 }}>
         <RankingList
           title="High-risk clients"
           items={toRankingItems(data.highRiskClients)}

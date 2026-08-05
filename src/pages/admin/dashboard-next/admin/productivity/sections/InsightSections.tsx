@@ -10,10 +10,14 @@ import {
 import { AdminListingTable } from '@/pages/admin/components/listing'
 import type { Column, TableState } from '@/design-system/UIComponents'
 import { AnalyticsKpiGrid } from '../../analytics/components/AnalyticsKpiGrid'
+import { ADMIN_CHART_COLORS } from '../../data/adminChartColors'
 import {
   AnalyticsPanel,
   BottomNSelect,
   TopNSelect,
+  WORKFORCE_CHART_HEIGHT,
+  WORKFORCE_BAR_SIZE,
+  WORKFORCE_CHART_HEIGHT_LG,
 } from '../components/WorkforceChrome'
 import {
   sliceTopN,
@@ -44,7 +48,7 @@ export function SlaSection({ data }: { data: WorkforceAnalyticsData }) {
 
   return (
     <Stack spacing={1.5}>
-      <AnalyticsKpiGrid items={data.slaKpis} columns={3} />
+      <AnalyticsKpiGrid items={data.slaKpis} />
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 12, md: 6 }}>
           <AnalyticsPanel title="SLA by department">
@@ -52,8 +56,8 @@ export function SlaSection({ data }: { data: WorkforceAnalyticsData }) {
               data={toBarRows(data.slaByDepartment)}
               xKey="name"
               orientation="horizontal"
-              height={240}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'SLA %' }]}
             />
@@ -65,8 +69,8 @@ export function SlaSection({ data }: { data: WorkforceAnalyticsData }) {
               data={toBarRows(data.slaByTeam)}
               xKey="name"
               orientation="horizontal"
-              height={240}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'SLA %' }]}
             />
@@ -81,8 +85,8 @@ export function SlaSection({ data }: { data: WorkforceAnalyticsData }) {
               data={toBarRows(sliceTopN(ranked, emp.topN))}
               xKey="name"
               orientation="horizontal"
-              height={260}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'SLA %' }]}
             />
@@ -97,8 +101,8 @@ export function SlaSection({ data }: { data: WorkforceAnalyticsData }) {
               data={toBarRows(bottomRanked.slice(0, Number(bottom.bottomN)))}
               xKey="name"
               orientation="horizontal"
-              height={260}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'SLA %' }]}
             />
@@ -109,7 +113,7 @@ export function SlaSection({ data }: { data: WorkforceAnalyticsData }) {
             <LineChart
               data={data.slaTrend}
               xKey="label"
-              height={240}
+              height={WORKFORCE_CHART_HEIGHT}
               lines={[{ key: 'value', label: 'SLA %' }]}
             />
           </AnalyticsPanel>
@@ -128,7 +132,7 @@ export function TrendsSection({ data }: { data: WorkforceAnalyticsData }) {
             <LineChart
               data={data.dailyProductivity}
               xKey="label"
-              height={220}
+              height={WORKFORCE_CHART_HEIGHT}
               lines={[{ key: 'value', label: 'Productivity %' }]}
             />
           </AnalyticsPanel>
@@ -138,7 +142,7 @@ export function TrendsSection({ data }: { data: WorkforceAnalyticsData }) {
             <LineChart
               data={data.weeklyProductivity}
               xKey="label"
-              height={220}
+              height={WORKFORCE_CHART_HEIGHT}
               lines={[{ key: 'value', label: 'Productivity %' }]}
             />
           </AnalyticsPanel>
@@ -148,7 +152,7 @@ export function TrendsSection({ data }: { data: WorkforceAnalyticsData }) {
             <LineChart
               data={data.monthlyProductivity}
               xKey="label"
-              height={220}
+              height={WORKFORCE_CHART_HEIGHT}
               lines={[{ key: 'value', label: 'Productivity %' }]}
             />
           </AnalyticsPanel>
@@ -161,12 +165,12 @@ export function TrendsSection({ data }: { data: WorkforceAnalyticsData }) {
             <LineChart
               data={data.departmentTrend}
               xKey="label"
-              height={280}
+              height={WORKFORCE_CHART_HEIGHT}
               lines={[
-                { key: 'value', label: 'Operations' },
-                { key: 'secondary', label: 'Documentation' },
-                { key: 'tertiary', label: 'Ground Operations' },
-                { key: 'quaternary', label: 'Accounts' },
+                { key: 'value', label: 'Operations', color: ADMIN_CHART_COLORS.navy },
+                { key: 'secondary', label: 'Documentation', color: ADMIN_CHART_COLORS.green },
+                { key: 'tertiary', label: 'Ground Operations', color: ADMIN_CHART_COLORS.blue },
+                { key: 'quaternary', label: 'Accounts', color: ADMIN_CHART_COLORS.amber },
               ]}
             />
           </AnalyticsPanel>
@@ -179,7 +183,7 @@ export function TrendsSection({ data }: { data: WorkforceAnalyticsData }) {
 export function QualitySection({ data }: { data: WorkforceAnalyticsData }) {
   return (
     <Stack spacing={1.5}>
-      <AnalyticsKpiGrid items={data.qualityKpis} columns={3} />
+      <AnalyticsKpiGrid items={data.qualityKpis} />
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 12, md: 5 }}>
           <AnalyticsPanel title="Error distribution">
@@ -189,7 +193,7 @@ export function QualitySection({ data }: { data: WorkforceAnalyticsData }) {
                 label: s.label,
                 value: s.value,
               }))}
-              height={260}
+              height={WORKFORCE_CHART_HEIGHT}
             />
           </AnalyticsPanel>
         </Grid>
@@ -199,8 +203,8 @@ export function QualitySection({ data }: { data: WorkforceAnalyticsData }) {
               data={toBarRows(data.qcByDepartment)}
               xKey="name"
               orientation="horizontal"
-              height={260}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'QC pass %' }]}
             />
@@ -211,7 +215,7 @@ export function QualitySection({ data }: { data: WorkforceAnalyticsData }) {
             <LineChart
               data={data.reworkTrend}
               xKey="label"
-              height={240}
+              height={WORKFORCE_CHART_HEIGHT}
               lines={[{ key: 'value', label: 'Rework cases' }]}
             />
           </AnalyticsPanel>
@@ -224,7 +228,7 @@ export function QualitySection({ data }: { data: WorkforceAnalyticsData }) {
 export function ActivitySection({ data }: { data: WorkforceAnalyticsData }) {
   return (
     <Stack spacing={1.5}>
-      <AnalyticsKpiGrid items={data.activityKpis} columns={4} />
+      <AnalyticsKpiGrid items={data.activityKpis} />
       <AnalyticsPanel title="Activity timeline" description="Employee activity through the day">
         <Stack spacing={1.25}>
           {data.activityTimeline.map((event) => (
@@ -350,12 +354,12 @@ export function ComparisonSection({ data }: { data: WorkforceAnalyticsData }) {
                 capacity: row.tertiary,
               }))}
               xKey="name"
-              height={280}
-              barSize={18}
+              height={WORKFORCE_CHART_HEIGHT}
+              barSize={WORKFORCE_BAR_SIZE}
               bars={[
-                { key: 'productivity', label: 'Productivity' },
-                { key: 'sla', label: 'SLA' },
-                { key: 'capacity', label: 'Capacity' },
+                { key: 'productivity', label: 'Productivity', color: ADMIN_CHART_COLORS.navy },
+                { key: 'sla', label: 'SLA', color: ADMIN_CHART_COLORS.green },
+                { key: 'capacity', label: 'Capacity', color: ADMIN_CHART_COLORS.blue },
               ]}
             />
           </AnalyticsPanel>
@@ -365,13 +369,13 @@ export function ComparisonSection({ data }: { data: WorkforceAnalyticsData }) {
             <RadarChart
               data={data.radarComparison}
               radars={[
-                { key: 'operations', label: 'Operations' },
-                { key: 'documentation', label: 'Documentation' },
-                { key: 'ground', label: 'Ground Operations' },
-                { key: 'accounts', label: 'Accounts' },
+                { key: 'operations', label: 'Operations', color: ADMIN_CHART_COLORS.navy },
+                { key: 'documentation', label: 'Documentation', color: ADMIN_CHART_COLORS.green },
+                { key: 'ground', label: 'Ground Operations', color: ADMIN_CHART_COLORS.blue },
+                { key: 'accounts', label: 'Accounts', color: ADMIN_CHART_COLORS.amber },
               ]}
               angleKey="metric"
-              height={280}
+              height={WORKFORCE_CHART_HEIGHT}
             />
           </AnalyticsPanel>
         </Grid>
@@ -387,9 +391,6 @@ export function LeaderboardsSection({ data }: { data: WorkforceAnalyticsData }) 
 
   return (
     <Stack spacing={1.5}>
-      <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-        Recognize top performers, teams, and departments for the filtered period.
-      </Typography>
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 12, md: 6 }}>
           <AnalyticsPanel
@@ -400,8 +401,8 @@ export function LeaderboardsSection({ data }: { data: WorkforceAnalyticsData }) 
               data={toBarRows(sliceTopN(data.topPerformers, performers.topN))}
               xKey="name"
               orientation="horizontal"
-              height={280}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'Productivity' }]}
             />
@@ -416,8 +417,8 @@ export function LeaderboardsSection({ data }: { data: WorkforceAnalyticsData }) 
               data={toBarRows(sliceTopN(data.topTeams, teams.topN))}
               xKey="name"
               orientation="horizontal"
-              height={280}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'Productivity' }]}
             />
@@ -432,8 +433,8 @@ export function LeaderboardsSection({ data }: { data: WorkforceAnalyticsData }) 
               data={toBarRows(sliceTopN(data.topDepartments, departments.topN))}
               xKey="name"
               orientation="horizontal"
-              height={260}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'Productivity' }]}
             />
@@ -448,8 +449,8 @@ export function LeaderboardsSection({ data }: { data: WorkforceAnalyticsData }) 
               data={toBarRows(data.mostImproved)}
               xKey="name"
               orientation="horizontal"
-              height={260}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'Improvement %' }]}
             />
@@ -463,7 +464,7 @@ export function LeaderboardsSection({ data }: { data: WorkforceAnalyticsData }) 
 export function BottlenecksSection({ data }: { data: WorkforceAnalyticsData }) {
   return (
     <Stack spacing={1.5}>
-      <AnalyticsKpiGrid items={data.bottleneckKpis} columns={3} />
+      <AnalyticsKpiGrid items={data.bottleneckKpis} />
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 12, md: 4 }}>
           <AnalyticsPanel title="Bottleneck by department">
@@ -471,8 +472,8 @@ export function BottlenecksSection({ data }: { data: WorkforceAnalyticsData }) {
               data={toBarRows(data.bottleneckByDepartment)}
               xKey="name"
               orientation="horizontal"
-              height={240}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'Issues' }]}
             />
@@ -484,8 +485,8 @@ export function BottlenecksSection({ data }: { data: WorkforceAnalyticsData }) {
               data={toBarRows(data.bottleneckByTeam)}
               xKey="name"
               orientation="horizontal"
-              height={240}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'Issues' }]}
             />
@@ -497,8 +498,8 @@ export function BottlenecksSection({ data }: { data: WorkforceAnalyticsData }) {
               data={toBarRows(data.bottleneckByEmployee)}
               xKey="name"
               orientation="horizontal"
-              height={240}
-              barSize={14}
+              height={WORKFORCE_CHART_HEIGHT_LG}
+              barSize={WORKFORCE_BAR_SIZE}
               showLegend={false}
               bars={[{ key: 'value', label: 'Issues' }]}
             />
@@ -512,7 +513,7 @@ export function BottlenecksSection({ data }: { data: WorkforceAnalyticsData }) {
                 label: s.label,
                 value: s.value,
               }))}
-              height={260}
+              height={WORKFORCE_CHART_HEIGHT}
             />
           </AnalyticsPanel>
         </Grid>
@@ -524,7 +525,7 @@ export function BottlenecksSection({ data }: { data: WorkforceAnalyticsData }) {
                 label: s.label,
                 value: s.value,
               }))}
-              height={260}
+              height={WORKFORCE_CHART_HEIGHT}
               centerLabel="delays"
               centerValue={String(data.delayReasons.reduce((sum, s) => sum + s.value, 0))}
             />

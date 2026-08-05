@@ -1,32 +1,10 @@
-import type { ReactNode } from 'react'
 import { Box } from '@mui/material'
-import {
-  Activity,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  FileText,
-  Hourglass,
-  Shield,
-  Users,
-  Wallet,
-} from 'lucide-react'
 import { ExecutiveGrid, HeroMetric, InsightStack } from '../../shared/dashboard-ui-kit'
 import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
 import type { DashboardKpiItem } from '../../shared/types'
 import { DASHBOARD_SPACING } from '../../shared/constants'
-
-const KPI_ICONS: Record<string, ReactNode> = {
-  'total-applications': <FileText size={16} />,
-  'applications-in-progress': <Activity size={16} />,
-  'completed-today': <CheckCircle2 size={16} />,
-  'critical-cases': <AlertTriangle size={16} />,
-  'cases-over-7d': <Hourglass size={16} />,
-  'sla-compliance': <Shield size={16} />,
-  'applications-delayed': <Clock size={16} />,
-  'team-utilization': <Users size={16} />,
-  'revenue-today': <Wallet size={16} />,
-}
+import { kpiColumns } from '../../shared/utils/kpiColumns'
+import { KPI_ICONS } from '../tabs/overviewIcons'
 
 function kpiTone(
   id: string,
@@ -74,7 +52,7 @@ export function AdminHeroStrip({ items, loading }: AdminHeroStripProps) {
 
   return (
     <InsightStack spacing={DASHBOARD_SPACING.dense}>
-      <ExecutiveGrid columns={4} spacing={1}>
+      <ExecutiveGrid columns={kpiColumns(items.length)} spacing={1}>
         {items.map((kpi) => (
           <Box
             key={kpi.id}

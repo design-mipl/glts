@@ -1,6 +1,7 @@
 import type { AdminDashboardNextData, AdminDashboardNextFilters } from '../types'
 import { ADMIN_DASHBOARD_NEXT_MOCK } from '../data/adminDashboardNextMock'
 import { applyAdminDashboardFilters } from '../utils/applyAdminDashboardFilters'
+import { listLogisticsInTransitRows } from '../../shared/utils/mapLogisticsInTransitRows'
 
 const LOAD_DELAY_MS = 350
 
@@ -15,5 +16,7 @@ export async function fetchAdminDashboardNext(
   filters: AdminDashboardNextFilters,
 ): Promise<AdminDashboardNextData> {
   await delay(LOAD_DELAY_MS)
-  return applyAdminDashboardFilters(structuredClone(ADMIN_DASHBOARD_NEXT_MOCK), filters)
+  const base = structuredClone(ADMIN_DASHBOARD_NEXT_MOCK)
+  base.inTransitCourierRows = listLogisticsInTransitRows()
+  return applyAdminDashboardFilters(base, filters)
 }

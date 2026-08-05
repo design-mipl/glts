@@ -1,57 +1,43 @@
-import { Box, Grid } from '@mui/material'
-import { AlertCenter, MarineTimeline, RecentActivity, DASHBOARD_SPACING } from '../../shared'
+import { Stack } from '@mui/material'
+import { RecentActivity, DASHBOARD_SPACING } from '../../shared'
+import { VisaAnalyticsOverviewSnapshot } from '../analytics/VisaAnalyticsTab'
 import type { AdminDashboardTabProps } from '../types'
 export { ACTION_ICONS, KPI_ICONS } from './overviewIcons'
 
 export interface OverviewTabProps extends AdminDashboardTabProps {
-  onShowMoreAlerts?: () => void
+  onOpenVisaAnalytics?: () => void
 }
 
-/** Overview story — alerts, activity, and active crew changes. */
+/**
+ * Overview story:
+ * 1. Recent activity — what’s moving now
+ * 2. Visa performance — thin snapshot (deep dive on Analytics)
+ *
+ * Funnel + Needs Immediate Attention live in the page executive row.
+ * Ops / risk alerts live on Operations and Risk tabs.
+ */
 export function OverviewTab({
   data,
   loading,
   onRetry,
   onNavigate,
-  onShowMoreAlerts,
+  onOpenVisaAnalytics,
 }: OverviewTabProps) {
   return (
-    <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Box sx={{ height: '100%', minWidth: 0, '& > *': { height: '100%' } }}>
-          <AlertCenter
-            title="Alerts & notifications"
-            alerts={data.notifications.map((n, index) => ({
-              id: n.id,
-              title: n.title,
-              description: [n.body, n.createdAt].filter(Boolean).join(' · '),
-              severity: index === 0 ? 'critical' : index === 1 ? 'warning' : 'info',
-            }))}
-            loading={loading}
-            maxItems={4}
-            onShowMore={onShowMoreAlerts}
-          />
-        </Box>
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Box sx={{ height: '100%', minWidth: 0, '& > *': { height: '100%' } }}>
-          <RecentActivity
-            items={data.recentActivity}
-            loading={loading}
-            onRetry={onRetry}
-            maxItems={6}
-          />
-        </Box>
-      </Grid>
-      <Grid size={{ xs: 12 }}>
-        <MarineTimeline
-          title="Active Crew Changes"
-          rows={data.marineTimeline}
-          loading={loading}
-          onRetry={onRetry}
-          onViewAll={() => onNavigate('/admin/application-management/marine')}
-        />
-      </Grid>
-    </Grid>
+    <Stack spacing={DASHBOARD_SPACING.field}>
+      <RecentActivity
+        items={data.recentActivity}
+        loading={loading}
+        onRetry={onRetry}
+        maxItems={5}
+      />
+
+      <VisaAnalyticsOverviewSnapshot
+        loading={loading}
+        onOpenAnalytics={
+          onOpenVisaAnalytics ?? (() => onNavigate('/admin/dashboard-next?tab=analytics'))
+        }
+      />
+    </Stack>
   )
 }

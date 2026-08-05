@@ -102,9 +102,9 @@ export function loadSession(): AuthSession | null {
         session.email = session.email.replace(/@interics\./i, '@glts.')
         changed = true
       }
-      const inferredCustomerType = inferCustomerType(session.email)
-      if (session.customerType !== inferredCustomerType) {
-        session.customerType = inferredCustomerType
+      // Keep explicit login segment; only backfill when missing (legacy sessions).
+      if (!session.customerType) {
+        session.customerType = inferCustomerType(session.email)
         changed = true
       }
     }

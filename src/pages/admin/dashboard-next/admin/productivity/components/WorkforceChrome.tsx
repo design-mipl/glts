@@ -1,4 +1,4 @@
-import { Box, Stack, Typography, alpha, useTheme } from '@mui/material'
+import { Box, Stack, Typography, useTheme } from '@mui/material'
 import { Select } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
@@ -12,6 +12,15 @@ import {
 export { DepartmentPerfCard } from '../../../shared/widgets/operations/DepartmentPerfCard'
 export type { DepartmentPerfCardProps } from '../../../shared/widgets/operations/DepartmentPerfCard'
 
+/** Compact chart height — readable bars without dominating the section. */
+export const WORKFORCE_CHART_HEIGHT = 240
+
+/** Bar thickness — DS default is 32; keep slightly denser for multi-series. */
+export const WORKFORCE_BAR_SIZE = 22
+
+/** Taller chart for horizontal rankings with several categories. */
+export const WORKFORCE_CHART_HEIGHT_LG = 300
+
 export function TopNSelect({
   value,
   onChange,
@@ -22,7 +31,7 @@ export function TopNSelect({
   ariaLabel?: string
 }) {
   return (
-    <Box sx={{ width: { xs: '100%', sm: 140 }, flexShrink: 0 }}>
+    <Box sx={{ width: { xs: '100%', sm: 120 }, flexShrink: 0 }}>
       <Select
         size="sm"
         fullWidth
@@ -45,7 +54,7 @@ export function BottomNSelect({
   ariaLabel?: string
 }) {
   return (
-    <Box sx={{ width: { xs: '100%', sm: 150 }, flexShrink: 0 }}>
+    <Box sx={{ width: { xs: '100%', sm: 130 }, flexShrink: 0 }}>
       <Select
         size="sm"
         fullWidth
@@ -58,6 +67,7 @@ export function BottomNSelect({
   )
 }
 
+/** Compact chart/table panel. */
 export function AnalyticsPanel({
   title,
   description,
@@ -76,22 +86,22 @@ export function AnalyticsPanel({
         direction={{ xs: 'column', sm: 'row' }}
         alignItems={{ xs: 'stretch', sm: 'flex-start' }}
         justifyContent="space-between"
-        spacing={1}
-        sx={{ px: 2, pt: 2, pb: 1.25 }}
+        spacing={0.75}
+        sx={{ px: 1.5, pt: 1.25, pb: 0.75 }}
       >
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 14 }}>
+          <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
             {title}
           </Typography>
           {description ? (
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
               {description}
             </Typography>
           ) : null}
         </Box>
         {action}
       </Stack>
-      <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
+      <Box sx={{ px: 1.5, pb: 1.5 }}>{children}</Box>
     </Box>
   )
 }
@@ -114,18 +124,17 @@ export function WorkloadHeatmap({
   }
 
   return (
-    <Stack spacing={1}>
+    <Stack spacing={0.75}>
       {rows.map((row) => {
         const color = colorFor(row.tone)
         return (
-          <Stack key={row.id} direction="row" spacing={1.25} alignItems="center">
+          <Stack key={row.id} direction="row" spacing={1} alignItems="center">
             <Box
               sx={{
-                width: 12,
-                height: 12,
+                width: 8,
+                height: 8,
                 borderRadius: '50%',
                 bgcolor: color,
-                boxShadow: `0 0 0 4px ${alpha(color, 0.16)}`,
                 flexShrink: 0,
               }}
               aria-hidden

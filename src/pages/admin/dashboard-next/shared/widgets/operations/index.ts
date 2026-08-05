@@ -33,3 +33,16 @@ export type {
   TeamProductivityMetric,
 } from './TeamProductivityInfographic'
 export { buildTeamProductivityByChannel } from './teamProductivityData'
+
+export { OpsOrgInfographics, OpsOrgWorkloadBySegment } from './OpsOrgInfographics'
+export type {
+  OpsOrgInfographicsProps,
+  OpsOrgWorkloadBySegmentProps,
+} from './OpsOrgInfographics'
+export type {
+  OpsOrgQueueSnapshot,
+  OpsOrgChartSlice,
+  OpsOrgAgeingBucket,
+  OpsOrgSegmentWorkload,
+  OpsOrgAlertRow,
+} from './opsOrgQueueTypes'

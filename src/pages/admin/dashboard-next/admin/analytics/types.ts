@@ -46,6 +46,17 @@ export interface VisaAnalyticsCityRow {
   slaPercent: number
 }
 
+/** Jurisdiction Master rollup for Pan India / Jurisdictions analytics. */
+export interface VisaAnalyticsJurisdictionRow {
+  id: string
+  jurisdiction: string
+  submitted: number
+  pending: number
+  completed: number
+  delayed: number
+  slaPercent: number
+}
+
 export interface VisaAnalyticsStageTime {
   id: string
   label: string
@@ -62,17 +73,19 @@ export interface VisaAnalyticsData {
   submissionKpis: VisaAnalyticsKpi[]
   submissionTrend: VisaAnalyticsTrendPoint[]
   submissionByCountry: VisaAnalyticsNamedMetric[]
-  submissionByBranch: VisaAnalyticsNamedMetric[]
+  submissionByJurisdiction: VisaAnalyticsNamedMetric[]
   submissionStatus: VisaAnalyticsSlice[]
   collectionKpis: VisaAnalyticsKpi[]
   collectionStatus: VisaAnalyticsSlice[]
   collectionTrend: VisaAnalyticsTrendPoint[]
-  collectionByBranch: VisaAnalyticsNamedMetric[]
+  collectionByJurisdiction: VisaAnalyticsNamedMetric[]
   dispatchKpis: VisaAnalyticsKpi[]
   dispatchMode: VisaAnalyticsSlice[]
   dispatchTrend: VisaAnalyticsTrendPoint[]
   courierPerformance: VisaAnalyticsNamedMetric[]
+  /** @deprecated Prefer panIndiaJurisdictions — kept for transitional mocks. */
   panIndiaCities: VisaAnalyticsCityRow[]
+  panIndiaJurisdictions: VisaAnalyticsJurisdictionRow[]
   refusalKpis: VisaAnalyticsKpi[]
   refusalByCountry: VisaAnalyticsNamedMetric[]
   refusalByEmbassy: VisaAnalyticsNamedMetric[]
@@ -90,16 +103,16 @@ export interface VisaAnalyticsData {
   processingStageTimes: VisaAnalyticsStageTime[]
   slaByCountry: VisaAnalyticsNamedMetric[]
   slaByClient: VisaAnalyticsNamedMetric[]
-  slaByBranch: VisaAnalyticsNamedMetric[]
+  slaByJurisdiction: VisaAnalyticsNamedMetric[]
   processingTimeTrend: VisaAnalyticsTrendPoint[]
   topCountries: VisaAnalyticsNamedMetric[]
   topClients: VisaAnalyticsNamedMetric[]
   topCategories: VisaAnalyticsNamedMetric[]
-  topBranches: VisaAnalyticsNamedMetric[]
+  topJurisdictions: VisaAnalyticsNamedMetric[]
   topSubmissionCities: VisaAnalyticsNamedMetric[]
   bottomCountries: VisaAnalyticsNamedMetric[]
   bottomClients: VisaAnalyticsNamedMetric[]
-  bottomBranches: VisaAnalyticsNamedMetric[]
+  bottomJurisdictions: VisaAnalyticsNamedMetric[]
   revenueKpis: VisaAnalyticsKpi[]
   revenueByCountry: VisaAnalyticsNamedMetric[]
   revenueByClient: VisaAnalyticsNamedMetric[]

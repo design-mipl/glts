@@ -57,7 +57,7 @@ export function LogisticsListingPage() {
         stickyPageHeader={
           <AdminListingStickyHeader
             title="Tracking & Logistics"
-            description="Passenger cases after document submission — collection, dispatch, and completion"
+            description="Collection, dispatch (IN TRANSIT), and delivery confirmation — courier AWB and tracking"
           />
         }
         toolbar={

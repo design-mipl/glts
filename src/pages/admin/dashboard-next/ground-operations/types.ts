@@ -41,6 +41,9 @@ export interface GroundPassportMovementRow {
   currentLocation: string
   courier: string
   trackingNumber: string
+  /** Courier partner tracking URL — shown as AWB hyperlink when present. */
+  trackingUrl?: string
+  deliveryMethod?: string
   eta: string
   status: string
 }

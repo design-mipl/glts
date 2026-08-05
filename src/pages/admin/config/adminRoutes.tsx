@@ -106,7 +106,7 @@ import {
   EditVendorPage,
   VendorDetailPage,
   VendorListingPage,
-} from '../vendor-management/vendors'
+} from '../masters/vendors'
 import {
   SupportTicketDetailPage,
   SupportTicketListingPage,
@@ -134,6 +134,16 @@ interface AdminRouteDefinition {
 function LegacyAccessRedirect() {
   const location = useLocation()
   const nextPath = location.pathname.replace(/^\/admin\/access/, '/admin/user-management')
+  return <Navigate to={`${nextPath}${location.search}${location.hash}`} replace />
+}
+
+/** Remap legacy `/admin/vendor-management/vendors/*` to `/admin/masters/vendors/*`. */
+function LegacyVendorRedirect() {
+  const location = useLocation()
+  const nextPath = location.pathname.replace(
+    /^\/admin\/vendor-management\/vendors/,
+    '/admin/masters/vendors',
+  )
   return <Navigate to={`${nextPath}${location.search}${location.hash}`} replace />
 }
 
@@ -568,7 +578,7 @@ export function AdminRoutes() {
       />
       <Route path="support/communications" element={<Navigate to="/admin/support/tickets" replace />} />
       <Route
-        path="vendor-management/vendors"
+        path="masters/vendors"
         element={
           <PermissionGuard>
             <VendorListingPage />
@@ -576,7 +586,7 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="vendor-management/vendors/new"
+        path="masters/vendors/new"
         element={
           <PermissionGuard>
             <CreateVendorPage />
@@ -584,7 +594,7 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="vendor-management/vendors/:vendorId/edit"
+        path="masters/vendors/:vendorId/edit"
         element={
           <PermissionGuard>
             <EditVendorPage />
@@ -592,13 +602,15 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="vendor-management/vendors/:vendorId"
+        path="masters/vendors/:vendorId"
         element={
           <PermissionGuard>
             <VendorDetailPage />
           </PermissionGuard>
         }
       />
+      <Route path="vendor-management/vendors/*" element={<LegacyVendorRedirect />} />
+      <Route path="vendor-management/vendors" element={<LegacyVendorRedirect />} />
       <Route
         path="assignment-priority/marine"
         element={

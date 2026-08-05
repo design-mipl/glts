@@ -3,7 +3,12 @@ import {
   BUSINESS_WORKSPACE_ID,
   loadSession,
   type CustomerPortalRole,
+  type CustomerType,
 } from '@/shared/auth/session'
+import {
+  businessAppBase,
+  parseBusinessSegmentFromPath,
+} from '@/shared/auth/customerSegment'
 import {
   canAccessAdminManagement,
   canAccessBookerManagement,
@@ -18,9 +23,16 @@ import {
 } from '@/shared/auth/customerRoleAccess'
 
 export function useCustomerPortalBase() {
-  const isBusiness = useLocation().pathname.startsWith('/business')
-  const base = isBusiness ? '/business/app' : '/retail'
+  const pathname = useLocation().pathname
+  const isBusiness = pathname.startsWith('/business')
   const session = loadSession()
+  const pathSegment = parseBusinessSegmentFromPath(pathname)
+  const customerType: CustomerType | undefined = pathSegment ?? session?.customerType
+  const base = isBusiness
+    ? customerType
+      ? businessAppBase(customerType)
+      : '/business/app'
+    : '/retail'
   const userRole = session?.userRole
   const contactName = session?.contactName ?? 'User'
   const companyName =
@@ -30,6 +42,7 @@ export function useCustomerPortalBase() {
     isBusiness,
     base,
     session,
+    customerType,
     userRole,
     isSuperAdmin: isSuperAdmin(userRole),
     isAdmin: isPortalAdmin(userRole),

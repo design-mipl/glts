@@ -11,6 +11,7 @@ import { ExecutiveGrid, HeroMetric, InsightStack } from '../../shared/dashboard-
 import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
 import type { DashboardKpiItem } from '../../shared/types'
 import { DASHBOARD_SPACING } from '../../shared/constants'
+import { kpiColumns } from '../../shared/utils/kpiColumns'
 
 const KPI_ICONS: Record<string, ReactNode> = {
   submission_pending: <Send size={16} />,
@@ -59,7 +60,7 @@ export function DocumentationHeroStrip({
 
   return (
     <InsightStack spacing={DASHBOARD_SPACING.dense}>
-      <ExecutiveGrid columns={6} spacing={1}>
+      <ExecutiveGrid columns={kpiColumns(items.length)} spacing={1}>
         {items.map((kpi) => (
           <Box
             key={kpi.id}

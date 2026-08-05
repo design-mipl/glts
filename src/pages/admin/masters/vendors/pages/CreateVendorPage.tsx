@@ -4,10 +4,9 @@ export function CreateVendorPage() {
   return (
     <VendorFormPage
       mode="create"
-      cancelHref="/admin/vendor-management/vendors"
+      cancelHref="/admin/masters/vendors"
       breadcrumbs={[
-        { label: 'Vendor Management', href: '/admin/vendor-management/vendors' },
-        { label: 'Vendors', href: '/admin/vendor-management/vendors' },
+        { label: 'Vendor Master', href: '/admin/masters/vendors' },
         { label: 'Add vendor' },
       ]}
     />

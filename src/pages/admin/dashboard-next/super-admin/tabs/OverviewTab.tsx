@@ -6,7 +6,6 @@ import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import {
   AlertCenter,
-  ProcessingTrend,
   RecentActivity,
   DASHBOARD_SPACING,
 } from '../../shared'
@@ -26,7 +25,7 @@ export const SA_ACTION_ICONS: Record<string, ReactNode> = {
   'qa-legacy-admin': <Building2 size={18} />,
 }
 
-/** Overview — signal · executive row · multi-color infographics · trend + activity. */
+/** Overview — signal · revenue + alerts · slim mix strip · activity. */
 export function OverviewTab({
   data,
   loading,
@@ -130,14 +129,7 @@ export function OverviewTab({
 
       <SuperAdminExecutiveRow
         primaryVisualization={
-          <ProcessingTrend
-            title="Business performance trend"
-            subtitle="Revenue vs collections — primary board visualization"
-            points={data.revenueTrend}
-            secondaryLabel="Collected"
-            loading={loading}
-            onRetry={onRetry}
-          />
+          <SuperAdminRevenueTrend data={data} loading={loading} />
         }
         alerts={
           <AlertCenter
@@ -151,26 +143,15 @@ export function OverviewTab({
         }
       />
 
-      <SuperAdminInfographics data={data} loading={loading} />
+      <SuperAdminInfographics data={data} loading={loading} onRetry={onRetry} />
 
-      <Stack
-        direction={{ xs: 'column', lg: 'row' }}
-        spacing={DASHBOARD_SPACING.field}
-        alignItems="stretch"
-      >
-        <Box flex={1.2} minWidth={0}>
-          <SuperAdminRevenueTrend data={data} loading={loading} />
-        </Box>
-        <Box flex={1} minWidth={0} sx={{ '& > *': { height: '100%' } }}>
-          <RecentActivity
-            title="Recent activity"
-            items={data.recentActivity}
-            loading={loading}
-            onRetry={onRetry}
-            maxItems={6}
-          />
-        </Box>
-      </Stack>
+      <RecentActivity
+        title="Recent activity"
+        items={data.recentActivity}
+        loading={loading}
+        onRetry={onRetry}
+        maxItems={6}
+      />
     </Stack>
   )
 }
