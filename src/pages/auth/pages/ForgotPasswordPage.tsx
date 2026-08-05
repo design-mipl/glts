@@ -20,7 +20,12 @@ export function ForgotPasswordPage() {
   const location = useLocation()
   const isOps = location.pathname.includes('/operations/')
   const navigate = useNavigate()
-  const loginPath = isOps ? '/sign-in/operations' : '/sign-in/business'
+  const segmentMatch = location.pathname.match(/\/sign-in\/business\/(marine|corporate|b2b)(?:\/|$)/)
+  const loginPath = isOps
+    ? '/sign-in/operations'
+    : segmentMatch
+      ? `/sign-in/business/${segmentMatch[1]}`
+      : '/sign-in/business'
 
   const [step, setStep] = useState<Step>('request')
   const [contact, setContact] = useState('')
@@ -30,7 +35,15 @@ export function ForgotPasswordPage() {
   const [showNew, setShowNew] = useState(false)
 
   const variant = isOps ? 'operations' : 'business'
-  const portalLabel = isOps ? 'GLTS Portal' : 'Business Portal'
+  const portalLabel = isOps
+    ? 'GLTS Portal'
+    : segmentMatch?.[1] === 'marine'
+      ? 'Marine Portal'
+      : segmentMatch?.[1] === 'corporate'
+        ? 'Corporate Portal'
+        : segmentMatch?.[1] === 'b2b'
+          ? 'B2B Agent Portal'
+          : 'Business Portal'
 
   const handleSendOtp = () => {
     if (!contact.trim()) return

@@ -1,3 +1,15 @@
+import {
+  CalendarX,
+  Clock,
+  Plane,
+  CircleDollarSign,
+  Building2,
+  FileCheck2,
+  BadgeCheck,
+  Headphones,
+  Globe2,
+  type LucideIcon,
+} from 'lucide-react'
 import type { FAQItem } from '../../components/FAQSection'
 import type { TestimonialItem } from '../../components/TestimonialSection'
 import type { VisaCategoryCardItem } from '../../components/VisaCategoryCardsSection'
@@ -7,6 +19,18 @@ export const corporateHeroCtas = {
   primary: { label: 'Speak with Our Corporate Team', href: '/track' },
   secondary: { label: 'Schedule a Consultation', href: '/track' },
 } as const
+
+export const corporateHeroStats: {
+  value: string
+  label: string
+  icon: LucideIcon
+}[] = [
+  { value: '500+', label: 'Corporate Clients', icon: Building2 },
+  { value: '25,000+', label: 'Business Visas Processed', icon: FileCheck2 },
+  { value: '98%', label: 'Approval Success Rate*', icon: BadgeCheck },
+  { value: '24/7', label: 'Dedicated Corporate Support', icon: Headphones },
+  { value: '35+', label: 'Countries Covered', icon: Globe2 },
+]
 
 export const corporateTestimonials: TestimonialItem[] = [
   {
@@ -98,28 +122,26 @@ export const corporateFaqs: FAQItem[] = [
   },
 ]
 
-export const corporateTrustPoints = [
-  'End-to-end transparency across business visa cases',
-  'Real-time status updates for travel coordinators and stakeholders',
-  'Expert support for corporate documentation and embassy requirements',
-]
-
 export const corporateImpactPoints = [
   {
     title: 'Missed Meetings',
     description: 'Business travelers cannot enter destination countries on schedule.',
+    icon: CalendarX,
   },
   {
     title: 'Project Delays',
     description: 'Incomplete documentation and visa processing gaps impact project timelines.',
+    icon: Clock,
   },
   {
     title: 'Travel Interruptions',
     description: 'Assignment travel, site visits, and client engagements are disrupted.',
+    icon: Plane,
   },
   {
     title: 'Operational Costs',
     description: 'Rebooking, rescheduling, and last-minute travel changes increase costs.',
+    icon: CircleDollarSign,
   },
 ] as const
 
@@ -185,63 +207,101 @@ export const corporateVisaCategories: VisaCategoryCardItem[] = [
   },
 ]
 
-export const corporateAdditionalServiceCards = [
+export const corporateAdditionalServices = [
   {
     id: 'travel-transit-documentation',
     title: 'Travel & Transit Documentation',
-    points: [
-      'Business travel documentation',
-      'Transit requirements',
-      'Destination-specific travel support',
-    ],
-    image:
-      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&h=900&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&h=900&q=90',
+    description:
+      'Business travel documentation, transit requirements, and destination-specific travel support for corporate travelers.',
+    ctaLabel: 'Get Started',
+    href: '/track',
+    image: {
+      src: '/images/corporate-additional-services/travel-transit-documentation.png',
+      fallback: '/images/corporate-additional-services/travel-transit-documentation.png',
+      alt: 'Passport, visa booklet, boarding passes, and stamp arranged for travel documentation',
+    },
   },
   {
     id: 'compliance-record-management',
     title: 'Compliance Record Management',
-    points: [
-      'Centralized visa records',
-      'Audit-ready documentation',
-      'Compliance tracking for corporate travelers',
-    ],
-    image:
-      'https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1200&h=900&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&h=900&q=90',
+    description:
+      'Centralized visa records, audit-ready documentation, and compliance tracking for corporate travelers.',
+    ctaLabel: 'Learn More',
+    href: '/track',
+    image: {
+      src: '/images/corporate-additional-services/compliance-record-management.png',
+      fallback: '/images/corporate-additional-services/compliance-record-management.png',
+      alt: 'Compliance checklist and dashboard review for corporate visa records',
+    },
   },
   {
     id: 'travel-insurance-support',
     title: 'Travel Insurance Support',
-    points: [
-      'Travel protection and insurance assistance for employees',
-      'Executive and project team coverage',
-    ],
-    image:
-      'https://images.unsplash.com/photo-1554224154-26032fced8bd?auto=format&fit=crop&w=1200&h=900&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&h=900&q=90',
+    description:
+      'Travel protection and insurance assistance for employees, executives, and project teams.',
+    ctaLabel: 'Learn More',
+    href: '/track',
+    image: {
+      src: '/images/corporate-additional-services/travel-insurance-support.png',
+      fallback: '/images/corporate-additional-services/travel-insurance-support.png',
+      alt: 'Travel insurance application form with passport and boarding passes',
+    },
   },
   {
     id: 'forex-support',
     title: 'Forex Support',
-    points: [
-      'Foreign exchange assistance',
-      'Global business travel and assignment support',
-    ],
-    image:
-      'https://images.unsplash.com/photo-1621761191319-c6fb62004040?auto=format&fit=crop&w=1200&h=900&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1200&h=900&q=90',
+    description:
+      'Foreign exchange assistance for global business travel and international assignments.',
+    ctaLabel: 'Learn More',
+    href: '/track',
+    image: {
+      src: '/images/corporate-additional-services/forex-support.png',
+      fallback: '/images/corporate-additional-services/forex-support.png',
+      alt: 'International currencies and card on a world map for forex support',
+    },
   },
 ] as const
 
 export const corporateRetainerPlans = [
-  'Dedicated corporate account manager',
-  'Priority visa processing',
-  'Documentation management',
-  'Monthly activity and status reporting',
-  'Escalation handling',
+  {
+    id: 'account-manager',
+    title: 'Dedicated Corporate Account Manager',
+    description: 'A single point of contact for all your needs.',
+    icon: 'user',
+  },
+  {
+    id: 'priority-processing',
+    title: 'Priority Visa Processing',
+    description: 'Faster turnaround and priority handling.',
+    icon: 'priority',
+  },
+  {
+    id: 'documentation',
+    title: 'Documentation Management',
+    description: 'End-to-end handling with accuracy.',
+    icon: 'docs',
+  },
+  {
+    id: 'reporting',
+    title: 'Monthly Activity & Status Reporting',
+    description: 'Regular insights and performance updates.',
+    icon: 'reporting',
+  },
+  {
+    id: 'escalation',
+    title: 'Escalation Handling',
+    description: 'Quick resolution with priority escalation.',
+    icon: 'escalation',
+  },
 ] as const
+
+export const corporateRetainerPlansHeading = 'Reliable Support. Measurable Value.'
+
+export const corporateRetainerPlansSubtitle =
+  'Retainer plans designed to simplify your corporate travel needs with priority service and expert support.'
+
+export const corporateRetainerPlansImage = {
+  src: '/images/corporate-retainer-plans/boardroom.png',
+  fallback: '/images/corporate-retainer-plans/boardroom.png',
+  alt: 'Modern corporate boardroom overlooking a city skyline',
+} as const

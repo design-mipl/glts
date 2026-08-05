@@ -1,4 +1,4 @@
-import { Box, Grid, CircularProgress } from '@mui/material'
+import { Box, CircularProgress } from '@mui/material'
 import { useState } from 'react'
 import { useCountries } from '@/shared/hooks/useCountries'
 import { FilterSidebar } from './components/FilterSidebar'
@@ -8,6 +8,10 @@ import { DestinationsHeroSection } from './components/DestinationsHeroSection'
 import { PublicContainer } from '../../components/PublicContainer'
 import { defaultExploreFilters } from '../../utils/applyExploreFilters'
 import { usePublicBrandColors } from '../../theme/publicSiteTokens'
+import { landingSectionPy } from '../LandingPage/landingPageSpacing'
+
+/** Keep filter sidebar at its prior ~25%-of-1280 width while the listing expands. */
+const FILTER_SIDEBAR_WIDTH_PX = 288
 
 export function CountryListingPage() {
   const colors = usePublicBrandColors()
@@ -31,10 +35,22 @@ export function CountryListingPage() {
     <Box sx={{ bgcolor: colors.surface, minHeight: 'calc(100vh - 80px)', pb: { xs: 12, md: 4 } }}>
       <DestinationsHeroSection destinationCount={countries.length} />
 
-      <Box sx={{ py: { xs: 6, md: 8 } }}>
-        <PublicContainer>
-          <Grid container spacing={4}>
-            <Grid size={{ xs: 12, md: 3 }}>
+      <Box sx={{ py: landingSectionPy }}>
+        <PublicContainer variant="hero">
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              alignItems: 'flex-start',
+              gap: { xs: 3, md: 3.5 },
+            }}
+          >
+            <Box
+              sx={{
+                width: { xs: '100%', md: FILTER_SIDEBAR_WIDTH_PX },
+                flexShrink: 0,
+              }}
+            >
               <FilterSidebar
                 filters={{ regions: selectedRegions, priceRange, visaTypes: selectedVisaTypes }}
                 exploreFilters={exploreFilters}
@@ -45,8 +61,9 @@ export function CountryListingPage() {
                 }}
                 onExploreFiltersChange={setExploreFilters}
               />
-            </Grid>
-            <Grid size={{ xs: 12, md: 9 }}>
+            </Box>
+
+            <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
               <SearchAndSort
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
@@ -62,8 +79,8 @@ export function CountryListingPage() {
                 sortBy={sortBy}
                 exploreFilters={exploreFilters}
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </PublicContainer>
       </Box>
     </Box>

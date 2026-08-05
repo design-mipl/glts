@@ -1,18 +1,13 @@
 import { useMemo } from 'react'
 import { Box, Grid, Stack, Typography } from '@mui/material'
-import { BarChart, DonutChart } from '@/design-system/UIComponents'
+import { BarChart } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
-import {
-  APPLICATION_PIPELINE_STAGE_LABELS,
-  type ApplicationPipelineStageId,
-} from '../../shared/config/applicationPipeline'
 import {
   ApplicationPipeline,
   MetricComparison,
   OperationsHealth,
   ProcessingTrend,
-  RecentActivity,
   TeamCapacity,
   DASHBOARD_SPACING,
 } from '../../shared'
@@ -23,7 +18,6 @@ import {
   ProgressMetric,
   RankingList,
 } from '../../shared/dashboard-ui-kit'
-import { SUPER_ADMIN_CHART_COLORS, SUPER_ADMIN_CHART_SERIES } from '../data/superAdminChartColors'
 import type { SuperAdminDashboardTabProps, SuperAdminRankItem } from '../types'
 
 function ChartPanel({
@@ -73,35 +67,9 @@ export function OperationsTab({
 }: SuperAdminDashboardTabProps) {
   const today = data.operationsToday
 
-  const pipelineSlices = useMemo(
-    () =>
-      data.pipelineStages
-        .filter((stage) => stage.count > 0)
-        .map((stage, index) => ({
-          key: stage.id,
-          label:
-            APPLICATION_PIPELINE_STAGE_LABELS[stage.id as ApplicationPipelineStageId] ?? stage.id,
-          value: stage.count,
-          color: SUPER_ADMIN_CHART_SERIES[index % SUPER_ADMIN_CHART_SERIES.length],
-        })),
-    [data.pipelineStages],
-  )
-  const pipelineTotal = pipelineSlices.reduce((sum, s) => sum + s.value, 0)
-
   const tatBars = useMemo(
     () => data.processingTimeByCountry.map((p) => ({ country: p.label, days: p.value })),
     [data.processingTimeByCountry],
-  )
-
-  const capacityBars = useMemo(
-    () =>
-      data.teamCapacity.map((row) => ({
-        team: row.department,
-        open: row.openCases,
-        capacity: row.capacity,
-        done: row.completedToday,
-      })),
-    [data.teamCapacity],
   )
 
   return (
@@ -136,52 +104,6 @@ export function OperationsTab({
         </ExecutiveGrid>
       </Grid>
 
-      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-        <ChartPanel title="Pipeline mix" description="Open applications by stage">
-          <DonutChart
-            data={
-              pipelineSlices.length > 0
-                ? pipelineSlices
-                : [{ key: 'none', label: 'None', value: 1, color: SUPER_ADMIN_CHART_COLORS.slate }]
-            }
-            height={220}
-            loading={loading}
-            centerLabel="open"
-            centerValue={String(pipelineTotal)}
-          />
-        </ChartPanel>
-      </Grid>
-      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-        <ChartPanel title="Avg TAT by country" description="Days · network sample">
-          <BarChart
-            data={tatBars}
-            xKey="country"
-            height={220}
-            barSize={16}
-            showLegend={false}
-            loading={loading}
-            bars={[{ key: 'days', label: 'Days', color: SUPER_ADMIN_CHART_COLORS.amber }]}
-          />
-        </ChartPanel>
-      </Grid>
-      <Grid size={{ xs: 12, lg: 4 }}>
-        <ChartPanel title="Capacity vs load" description="Open · capacity · done">
-          <BarChart
-            data={capacityBars}
-            xKey="team"
-            height={220}
-            barSize={12}
-            showLegend
-            loading={loading}
-            bars={[
-              { key: 'open', label: 'Open', color: SUPER_ADMIN_CHART_COLORS.amber },
-              { key: 'capacity', label: 'Capacity', color: SUPER_ADMIN_CHART_COLORS.navy },
-              { key: 'done', label: 'Done', color: SUPER_ADMIN_CHART_COLORS.teal },
-            ]}
-          />
-        </ChartPanel>
-      </Grid>
-
       <Grid size={{ xs: 12, md: 6 }}>
         <OperationsHealth
           metrics={data.operationsHealth}
@@ -199,20 +121,25 @@ export function OperationsTab({
       </Grid>
 
       <Grid size={{ xs: 12, md: 6 }}>
+        <ChartPanel title="Avg TAT by country" description="Days · network sample">
+          <BarChart
+            data={tatBars}
+            xKey="country"
+            height={220}
+            barSize={16}
+            showLegend={false}
+            loading={loading}
+            bars={[{ key: 'days', label: 'Days' }]}
+          />
+        </ChartPanel>
+      </Grid>
+      <Grid size={{ xs: 12, md: 6 }}>
         <ProcessingTrend
           title="Processing trend"
           points={data.processingTrend}
           loading={loading}
           onRetry={onRetry}
           secondaryLabel="Completed"
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <BranchLikeCountryTat
-          title="Avg processing time by country"
-          subtitle="Days · sample network"
-          points={data.processingTimeByCountry}
-          loading={loading}
         />
       </Grid>
 
@@ -250,7 +177,7 @@ export function OperationsTab({
         />
       </Grid>
 
-      <Grid size={{ xs: 12, md: 6 }}>
+      <Grid size={{ xs: 12 }}>
         <MetricComparison
           title="Working signals"
           metrics={data.metricComparison}
@@ -258,41 +185,6 @@ export function OperationsTab({
           onRetry={onRetry}
         />
       </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <RecentActivity
-          items={data.recentActivity}
-          loading={loading}
-          onRetry={onRetry}
-          maxItems={6}
-        />
-      </Grid>
     </Grid>
-  )
-}
-
-function BranchLikeCountryTat({
-  title,
-  subtitle,
-  points,
-  loading,
-}: {
-  title: string
-  subtitle: string
-  points: SuperAdminDashboardTabProps['data']['processingTimeByCountry']
-  loading?: boolean
-}) {
-  return (
-    <RankingList
-      title={title}
-      subtitle={subtitle}
-      loading={loading}
-      items={points.map((point, index) => ({
-        id: point.id,
-        primary: point.label,
-        rank: index + 1,
-        value: `${point.value}d`,
-        progress: Math.min(100, Math.round((point.value / 12) * 100)),
-      }))}
-    />
   )
 }

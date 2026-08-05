@@ -77,8 +77,8 @@ export function AnalyticsTab({
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
         <BranchPerformance
-          title="Branch revenue"
-          subtitle="MTD revenue by branch (₹L)"
+          title="Jurisdiction revenue"
+          subtitle="MTD revenue by jurisdiction (₹L)"
           branches={data.branchPerformance}
           loading={loading}
           onRetry={onRetry}

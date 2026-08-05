@@ -56,7 +56,7 @@ export const LOGISTICS_STATUS_TAB_ITEMS: {
   label: string
 }[] = LOGISTICS_STATUSES.map(status => ({
   value: status,
-  label: status,
+  label: status === 'Dispatched' ? 'In transit' : status,
 }))
 
 export function filterLogisticsRowsByStatusTab(
@@ -240,13 +240,14 @@ export function getLogisticsDeskEmptyState(tab: LogisticsStatusTab = 'Document S
       }
     case 'Dispatched':
       return {
-        emptyTitle: 'No dispatched cases',
-        emptyDescription: 'Cases marked dispatched appear here.',
+        emptyTitle: 'No in-transit cases',
+        emptyDescription:
+          'Cases appear here after dispatch — courier AWB and tracking until delivery is confirmed.',
       }
     case 'Completed':
       return {
         emptyTitle: 'No completed cases',
-        emptyDescription: 'Cases auto-completed after dispatch appear here.',
+        emptyDescription: 'Cases appear here after delivery is confirmed.',
       }
     default:
       return {

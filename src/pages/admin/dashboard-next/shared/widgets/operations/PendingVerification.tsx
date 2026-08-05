@@ -1,9 +1,9 @@
+import { useMemo } from 'react'
 import type { Column } from '@/design-system/UIComponents'
-import { Button } from '@/design-system/UIComponents'
-import { ExecutiveTable } from '../../dashboard-ui-kit'
+import { RowActions } from '@/design-system/UIComponents'
 import { StatusBadge } from '../StatusBadge'
-import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
 import type { DashboardStatusTone } from '../../types'
+import { DashboardAdminListing } from '../../components/DashboardAdminListing'
 
 export type VerificationPriority = 'low' | 'medium' | 'high' | 'critical'
 
@@ -45,6 +45,12 @@ function priorityTone(priority: VerificationPriority): DashboardStatusTone {
   }
 }
 
+function getPendingVerificationCellValue(row: PendingVerificationRow, key: string): string {
+  const value = row[key as keyof PendingVerificationRow]
+  if (value == null) return ''
+  return String(value)
+}
+
 export function PendingVerification({
   title = 'Pending verification',
   subtitle = 'Applications waiting for verification',
@@ -53,63 +59,91 @@ export function PendingVerification({
   onViewAll,
   onAction,
   loading,
-  error,
-  empty,
-  permission,
-  onRetry,
 }: PendingVerificationProps) {
-  const columns: Column<PendingVerificationRow>[] = [
-    { key: 'glNumber', label: 'GL Number', widthSize: 'md', sortable: false },
-    { key: 'applicant', label: 'Applicant', widthSize: 'lg', sortable: false },
-    { key: 'company', label: 'Company', widthSize: 'lg', sortable: false },
-    { key: 'consultant', label: 'Consultant', widthSize: 'md', sortable: false },
-    {
-      key: 'priority',
-      label: 'Priority',
-      widthSize: 'sm',
-      sortable: false,
-      render: (_value, row) => (
-        <StatusBadge label={row.priority} tone={priorityTone(row.priority)} />
-      ),
-    },
-    { key: 'waitingTime', label: 'Waiting Time', widthSize: 'md', sortable: false },
-    {
-      key: 'actions',
-      label: '',
-      hideable: false,
-      sortable: false,
-      filterable: false,
-      searchable: false,
-      render: (_value, row) =>
-        onAction ? (
-          <Button label="Open" variant="text" size="sm" onClick={() => onAction(row)} />
-        ) : null,
-    },
-  ]
+  const columns: Column<PendingVerificationRow>[] = useMemo(
+    () => [
+      {
+        key: 'glNumber',
+        label: 'GL Number',
+        widthSize: 'md',
+        sortable: true,
+        filterable: true,
+        searchable: true,
+      },
+      {
+        key: 'applicant',
+        label: 'Applicant',
+        widthSize: 'lg',
+        sortable: true,
+        filterable: true,
+        searchable: true,
+      },
+      {
+        key: 'company',
+        label: 'Company',
+        widthSize: 'lg',
+        sortable: true,
+        filterable: true,
+        searchable: true,
+      },
+      {
+        key: 'consultant',
+        label: 'Consultant',
+        widthSize: 'md',
+        sortable: true,
+        filterable: true,
+        searchable: true,
+      },
+      {
+        key: 'priority',
+        label: 'Priority',
+        widthSize: 'sm',
+        sortable: true,
+        filterable: true,
+        render: (_value, row) => (
+          <StatusBadge label={row.priority} tone={priorityTone(row.priority)} />
+        ),
+      },
+      {
+        key: 'waitingTime',
+        label: 'Waiting Time',
+        widthSize: 'md',
+        sortable: true,
+        filterable: true,
+      },
+      {
+        key: 'actions',
+        label: '',
+        hideable: false,
+        sortable: false,
+        filterable: false,
+        searchable: false,
+        width: 56,
+        render: (_value, row) =>
+          onAction ? (
+            <RowActions
+              row={row}
+              actions={[{ label: 'Open', onClick: () => onAction(row) }]}
+            />
+          ) : null,
+      },
+    ],
+    [onAction],
+  )
 
   return (
-    <BusinessWidgetFrame
-      title={undefined}
-      card={false}
+    <DashboardAdminListing
+      title={title}
+      description={subtitle}
+      columns={columns}
+      rows={rows}
+      getCellValue={getPendingVerificationCellValue}
       loading={loading}
-      error={error}
-      empty={empty ?? rows.length === 0}
-      permission={permission}
-      onRetry={onRetry}
+      onRowClick={onRowClick}
+      onViewAll={onViewAll}
+      viewAllLabel="View queue"
       emptyTitle="No pending verifications"
-    >
-      <ExecutiveTable
-        title={title}
-        subtitle={subtitle}
-        columns={columns}
-        data={rows}
-        rowKey="id"
-        onRowClick={onRowClick}
-        actionLabel={onViewAll ? 'View queue' : undefined}
-        onAction={onViewAll}
-        fullWidth
-        loading={loading}
-      />
-    </BusinessWidgetFrame>
+      emptyDescription="Verification queue is clear for the current filters."
+    />
   )
 }

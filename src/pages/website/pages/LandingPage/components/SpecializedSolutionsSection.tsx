@@ -31,7 +31,7 @@ const solutions = [
     icon: User,
     title: 'B2B Travelers',
     description: 'Individual visa assistance for tourists, students, families, and professionals.',
-    href: '/countries',
+    href: '/retail-visas',
     image: travelSolutionImages.retail,
   },
 ] as const
@@ -170,7 +170,6 @@ export function SpecializedSolutionsSection() {
       sx={{
         bgcolor: colors.white,
         py: landingSectionPy,
-        borderTop: `1px solid ${colors.borderSoft}`,
       }}
     >
       <PublicContainer variant="hero">

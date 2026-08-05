@@ -23,6 +23,11 @@ import type {
 } from '../shared/widgets/analytics/AnalyticsWidgets'
 import type { ExecutiveAttentionAlert } from '@/pages/admin/dashboard/components'
 import type { DashboardIntelligenceFilters } from '../shared/dashboard-intelligence'
+import type { LogisticsInTransitRow } from '../shared/utils/mapLogisticsInTransitRows'
+import type {
+  OpsOrgAlertRow,
+  OpsOrgQueueSnapshot,
+} from '../shared/widgets/operations/opsOrgQueueTypes'
 
 /** Admin dashboard filters — same contract as page global intelligence filters. */
 export type AdminDashboardNextFilters = DashboardIntelligenceFilters
@@ -54,6 +59,12 @@ export interface AdminDashboardNextData {
   pipelineStages: ApplicationPipelineStageData[]
   pendingVerification: PendingVerificationRow[]
   passportJourney: AdminPassportJourneyData
+  /** Live IN TRANSIT rows from Tracking & Logistics. */
+  inTransitCourierRows: LogisticsInTransitRow[]
+  /** Org-level ops queue signals (shared shape with Ops Overview). */
+  opsQueueSnapshot: OpsOrgQueueSnapshot
+  opsAlerts: OpsOrgAlertRow[]
+  unassignedCount: number
   recentActivity: RecentActivityItem[]
   quickActions: AdminQuickActionDefinition[]
   teamCapacity: TeamCapacityRow[]

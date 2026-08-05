@@ -1,13 +1,12 @@
 import { useMemo } from 'react'
 import { Box } from '@mui/material'
-import { SolutionPageSection, SolutionList } from '../../components/solutionPage/SolutionPageSection'
-import { RetainerPlanCards } from '../../components/solutionPage/RetainerPlanCards'
 import { CorporateHero } from './components/CorporateHero'
+import { CorporateRetainerPlansSection } from './components/CorporateRetainerPlansSection'
 import { WorkflowTimelineSection } from '../../components/workflowTimeline/WorkflowTimelineSection'
 import { CommonDestinationsSection } from '../../components/CommonDestinationsSection'
 import { VisaCategoryCardsSection } from '../../components/VisaCategoryCardsSection'
 import { WhyAccuracySplitSection } from '../../components/WhyAccuracySplitSection'
-import { ServiceShowcaseMosaic } from '../../components/ServiceShowcaseMosaic'
+import { AdditionalServicesSection } from '../../components/AdditionalServicesSection'
 import { TestimonialSection } from '../../components/TestimonialSection'
 import { FAQSection } from '../../components/FAQSection'
 import { SolutionFinalCtaSection } from '../../components/solutionPage/SolutionFinalCtaSection'
@@ -16,13 +15,11 @@ import { usePublicBrandColors } from '../../theme/publicSiteTokens'
 import {
   corporateTestimonials,
   corporateFaqs,
-  corporateTrustPoints,
   corporateImpactPoints,
   corporateAccuracyVisuals,
   corporateDestinations,
   corporateVisaCategories,
-  corporateAdditionalServiceCards,
-  corporateRetainerPlans,
+  corporateAdditionalServices,
 } from './corporatePageData'
 import { corporateProcessSteps } from './corporateWorkflowContent'
 
@@ -65,22 +62,20 @@ export function CorporateBusinessVisaPage() {
         steps={corporateProcessSteps}
       />
 
-      <SolutionPageSection id="additional-corporate-visa-services" title="Additional Corporate Visa Services">
-        <ServiceShowcaseMosaic items={corporateAdditionalServiceCards} />
-      </SolutionPageSection>
+      <AdditionalServicesSection
+        id="additional-corporate-visa-services"
+        sectionLabel="Additional Services"
+        heading="Everything Your Teams Need Beyond Visas"
+        description="Documentation, compliance, insurance, and travel support built for HR teams, business travelers, and corporate mobility programs."
+        services={corporateAdditionalServices}
+      />
 
-      <SolutionPageSection id="corporate-visa-retainer-plans" title="Corporate Visa Retainer Plans">
-        <RetainerPlanCards items={corporateRetainerPlans} />
-      </SolutionPageSection>
+      <CorporateRetainerPlansSection />
 
       <TestimonialSection
         testimonials={corporateTestimonials}
         subtitle="HR teams, business travelers, and corporate travel coordinators at multinational companies trust GreenLight for reliable business visa support."
       />
-
-      <SolutionPageSection id="why-teams-trust-greenlight" title="Why teams trust GreenLight">
-        <SolutionList items={corporateTrustPoints} />
-      </SolutionPageSection>
 
       <SolutionFinalCtaSection
         variant="corporate"

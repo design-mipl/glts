@@ -5,12 +5,13 @@ import {
 } from '../../dashboard-ui-kit'
 import { BusinessWidgetFrame } from './BusinessWidgetFrame'
 import type { DashboardKpiItem } from '../../types'
+import { kpiColumns, type KpiColumnCount } from '../../utils/kpiColumns'
 
 export interface QuickStatsProps {
   title?: string
   subtitle?: string
   items: DashboardKpiItem[]
-  columns?: 2 | 3 | 4 | 6
+  columns?: KpiColumnCount
   loading?: boolean
   error?: boolean
   empty?: boolean
@@ -23,16 +24,18 @@ export function QuickStats({
   title,
   subtitle,
   items,
-  columns = 4,
+  columns,
   loading = false,
   error,
   empty,
   permission,
   onRetry,
 }: QuickStatsProps) {
+  const resolvedColumns = columns ?? kpiColumns(items.length)
+
   const displayItems =
     loading && items.length === 0
-      ? Array.from({ length: columns }, (_, i) => ({
+      ? Array.from({ length: resolvedColumns }, (_, i) => ({
           id: `kpi-skeleton-${i}`,
           label: '—',
           value: '—' as string | number,
@@ -52,10 +55,7 @@ export function QuickStats({
       skeletonHeightSpacing={8}
     >
       <InsightStack>
-        <ExecutiveGrid
-          columns={columns === 6 ? 6 : columns === 3 ? 3 : columns === 2 ? 2 : 4}
-          spacing={1}
-        >
+        <ExecutiveGrid columns={resolvedColumns} spacing={1}>
           {displayItems.map((item) => (
             <HeroMetric
               key={item.id}

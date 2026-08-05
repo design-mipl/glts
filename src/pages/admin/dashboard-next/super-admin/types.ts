@@ -30,6 +30,7 @@ import type {
 
 export interface SuperAdminDashboardFilters {
   date: string
+  /** Jurisdiction Master id / slug (legacy filter key name). */
   branch: string
   country: string
   segment: string
@@ -113,11 +114,15 @@ export interface SuperAdminRevenuePeriod {
   targetLabel?: string
 }
 
-export interface SuperAdminRevenueHero {
+/** Today / MTD / YTD period bundle (revenue, collections, etc.). */
+export interface SuperAdminPeriodHero {
   today: SuperAdminRevenuePeriod
   mtd: SuperAdminRevenuePeriod
   ytd: SuperAdminRevenuePeriod
 }
+
+/** @deprecated Prefer SuperAdminPeriodHero — same shape. */
+export type SuperAdminRevenueHero = SuperAdminPeriodHero
 
 export interface SuperAdminBlockedCash {
   amount: string
@@ -155,7 +160,9 @@ export interface SuperAdminVerticalPreview {
 export interface SuperAdminDashboardData {
   /** Combined Today / MTD / YTD revenue card. */
   revenueHero: SuperAdminRevenueHero
-  /** Remaining hero KPIs (health, GP, outstanding, collections, apps, approval, at-risk). */
+  /** Combined Today / MTD / YTD collections card. */
+  collectionsHero: SuperAdminPeriodHero
+  /** Remaining hero KPIs (health, GP, outstanding, apps, approval, at-risk). */
   heroKpis: DashboardKpiItem[]
   blockedCash: SuperAdminBlockedCash
   approvalRateTrend30d: TrendPoint[]
@@ -238,5 +245,5 @@ export interface SuperAdminExecutiveStoryProps {
   forecasts?: PredictivePanelModel[]
 }
 
-/** Tab props shared by Super Admin workspace tabs (and legacy ExecutiveStory). */
+/** Tab props shared by Super Admin workspace tabs. */
 export type SuperAdminDashboardTabProps = SuperAdminExecutiveStoryProps

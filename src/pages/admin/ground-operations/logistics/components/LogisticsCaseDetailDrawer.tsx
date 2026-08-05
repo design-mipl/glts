@@ -262,7 +262,7 @@ function LogisticsCaseDetailContent({
             ref={dispatchRef}
             record={record}
             onUpdated={onUpdated}
-            onDispatched={() => onStatusChanged?.('Completed')}
+            onDispatched={() => onStatusChanged?.('Dispatched')}
           />
         ) : null}
 
@@ -295,6 +295,8 @@ export function LogisticsCaseDetailDrawer({
   if (!record) return null
 
   const showCollectAction = record.status === 'Document Submitted'
+  const showDeliverAction =
+    record.status === 'Dispatched' && !Boolean(record.dispatchDetails?.deliveredAt)
   const canEditDispatch =
     record.status === 'Collected' && !Boolean(record.dispatchDetails?.dispatchedAt)
 
@@ -313,6 +315,33 @@ export function LogisticsCaseDetailDrawer({
               showToast({
                 title: 'Marked as collected',
                 description: 'Passport/documents collected from Embassy/VFS.',
+                variant: 'success',
+              })
+            }}
+          />
+        )
+      }
+      if (showDeliverAction) {
+        return (
+          <Button
+            label="Mark as delivered"
+            size="sm"
+            fullWidth
+            onClick={() => {
+              const updated = operationalCaseHandlingService.markDelivered(record.id)
+              if (!updated) {
+                showToast({
+                  title: 'Unable to mark delivered',
+                  description: 'Case must be in Dispatched (in transit) status.',
+                  variant: 'error',
+                })
+                return
+              }
+              onUpdated()
+              onStatusChanged?.('Completed')
+              showToast({
+                title: 'Marked as delivered',
+                description: 'In transit ended — case completed.',
                 variant: 'success',
               })
             }}

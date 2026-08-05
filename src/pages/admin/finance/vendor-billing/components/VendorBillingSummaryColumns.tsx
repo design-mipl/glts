@@ -3,7 +3,7 @@ import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { VendorBillingSummaryRow } from '@/shared/types/vendorBilling'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
-import { vendorStatusColor, vendorStatusLabel } from '@/pages/admin/vendor-management/vendors/config/vendorStatusConfig'
+import { vendorStatusColor, vendorStatusLabel } from '@/pages/admin/masters/vendors/config/vendorStatusConfig'
 
 interface Handlers {
   onOpenDetail: (row: VendorBillingSummaryRow) => void

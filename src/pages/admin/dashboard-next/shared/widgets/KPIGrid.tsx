@@ -1,28 +1,31 @@
 import { ExecutiveGrid, HeroMetric } from '../dashboard-ui-kit'
 import type { DashboardKpiItem } from '../types'
 import { isDashboardPermissionGranted } from '../utils/permission'
+import { kpiColumns, type KpiColumnCount } from '../utils/kpiColumns'
 
 export interface KPIGridProps {
   items: DashboardKpiItem[]
   loading?: boolean
   permission?: boolean
-  /** Columns at lg breakpoint (default 4). Use 6 for executive strips. */
-  columns?: 2 | 3 | 4 | 6
+  /** Columns at lg breakpoint. Defaults to matching item count (max 6). */
+  columns?: KpiColumnCount
 }
 
 export function KPIGrid({
   items,
   loading = false,
   permission,
-  columns = 4,
+  columns,
 }: KPIGridProps) {
   if (!isDashboardPermissionGranted(permission)) {
     return null
   }
 
+  const resolvedColumns = columns ?? kpiColumns(items.length)
+
   const displayItems: DashboardKpiItem[] =
     loading && items.length === 0
-      ? Array.from({ length: columns }, (_, i) => ({
+      ? Array.from({ length: resolvedColumns }, (_, i) => ({
           id: `kpi-skeleton-${i}`,
           label: '—',
           value: '—',
@@ -30,10 +33,7 @@ export function KPIGrid({
       : items
 
   return (
-    <ExecutiveGrid
-      columns={columns === 6 ? 6 : columns === 3 ? 3 : columns === 2 ? 2 : 4}
-      spacing={1}
-    >
+    <ExecutiveGrid columns={resolvedColumns} spacing={1}>
       {displayItems.map((item) => (
         <HeroMetric
           key={item.id}

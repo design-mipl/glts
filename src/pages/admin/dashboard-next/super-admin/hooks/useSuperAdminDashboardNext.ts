@@ -4,7 +4,7 @@ import type { DashboardFilterConfig } from '../../shared/types'
 import {
   DEFAULT_SUPER_ADMIN_DASHBOARD_FILTERS,
   SUPER_ADMIN_APPLICATION_STATUS_OPTIONS,
-  SUPER_ADMIN_BRANCH_OPTIONS,
+  SUPER_ADMIN_JURISDICTION_OPTIONS,
   SUPER_ADMIN_CLIENT_OPTIONS,
   SUPER_ADMIN_COUNTRY_OPTIONS,
   SUPER_ADMIN_DATE_OPTIONS,
@@ -33,8 +33,8 @@ export function useSuperAdminDashboardNext() {
       },
       {
         id: 'branch',
-        label: 'Branch',
-        options: SUPER_ADMIN_BRANCH_OPTIONS,
+        label: 'Jurisdiction',
+        options: SUPER_ADMIN_JURISDICTION_OPTIONS,
         value: filters.branch,
         onChange: (value) => setFilters((prev) => ({ ...prev, branch: value })),
       },

@@ -21,6 +21,8 @@ export interface BuildCustomerNavOptions {
   canAccessAdminManagement: boolean
   canAccessBookerManagement: boolean
   canAccessMasters: boolean
+  /** Marine-only vessel master. */
+  showVesselMaster?: boolean
 }
 
 /** Primary sidebar navigation (scroll area). */
@@ -30,6 +32,7 @@ export function buildCustomerNavConfig({
   canAccessAdminManagement,
   canAccessBookerManagement,
   canAccessMasters,
+  showVesselMaster = false,
 }: BuildCustomerNavOptions): NavConfig[] {
   const items: NavConfig[] = [
     {
@@ -95,22 +98,25 @@ export function buildCustomerNavConfig({
   }
 
   if (isBusiness && canAccessMasters) {
+    const masterChildren: NavConfig[] = [
+      {
+        type: 'item',
+        label: 'Entity master',
+        href: `${base}/masters/entities`,
+      },
+    ]
+    if (showVesselMaster) {
+      masterChildren.push({
+        type: 'item',
+        label: 'Vessel master',
+        href: `${base}/masters/vessels`,
+      })
+    }
     items.push({
       type: 'group',
       label: 'Masters',
       icon: createElement(Database, iconProps),
-      children: [
-        {
-          type: 'item',
-          label: 'Entity master',
-          href: `${base}/masters/entities`,
-        },
-        {
-          type: 'item',
-          label: 'Vessel master',
-          href: `${base}/masters/vessels`,
-        },
-      ],
+      children: masterChildren,
     })
   }
 

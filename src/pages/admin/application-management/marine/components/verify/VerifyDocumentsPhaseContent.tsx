@@ -305,7 +305,7 @@ export function VerifyDocumentsPhaseContent({
         }}
       >
         <Grid
-          size={{ xs: 12, lg: 7 }}
+          size={{ xs: 12, lg: 6 }}
           sx={{
             minWidth: 0,
             minHeight: 0,
@@ -330,7 +330,7 @@ export function VerifyDocumentsPhaseContent({
           </Box>
         </Grid>
         <Grid
-          size={{ xs: 12, lg: 5 }}
+          size={{ xs: 12, lg: 6 }}
           sx={{
             minWidth: 0,
             minHeight: 0,

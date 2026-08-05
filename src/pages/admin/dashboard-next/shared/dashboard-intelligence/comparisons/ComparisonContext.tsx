@@ -28,9 +28,9 @@ export const COMPARISON_PRESETS: Array<{
   },
   {
     mode: 'branch-vs-branch',
-    label: 'Branch vs branch',
-    primaryLabel: 'Branch A',
-    secondaryLabel: 'Branch B',
+    label: 'Jurisdiction vs jurisdiction',
+    primaryLabel: 'Jurisdiction A',
+    secondaryLabel: 'Jurisdiction B',
   },
   {
     mode: 'country-vs-country',

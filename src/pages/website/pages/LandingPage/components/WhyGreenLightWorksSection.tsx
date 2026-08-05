@@ -1,370 +1,133 @@
-import { useCallback, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { Box, Typography, Stack, Button } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import {
-  ArrowRight,
-  Check,
-  ChevronLeft,
-  ChevronRight,
+  Zap,
+  BadgeCheck,
+  ShieldCheck,
+  CircleDollarSign,
+  Headphones,
+  TrendingUp,
+  type LucideIcon,
 } from 'lucide-react'
-import { motion, useReducedMotion } from 'framer-motion'
 import { PublicContainer } from '../../../components/PublicContainer'
-import { landingSectionHeaderMb } from '../landingPageSpacing'
+import { whyChooseGreenlightImage } from '../../../assets/landingPageImages'
+import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
 import {
   publicFonts,
   usePublicBrandColors,
   brandPrimaryGreenRgb,
-  getMarketingPrimaryButtonSx,
-} from '../../../theme/publicSiteTokens'
-import { methodologyCarouselImages } from '../../../assets/landingPageImages'
+} from '@/shared/theme/publicBrand'
 
-const IMAGE_RADIUS = '22px'
-const SLIDE_COUNT = 3
-const SWIPE_THRESHOLD_PX = 48
-const CAROUSEL_TRANSITION_SECONDS = 0.42
-
-const methodologySlides = [
+const FEATURES: {
+  title: string
+  description: string
+  icon: LucideIcon
+}[] = [
   {
-    id: 'what-we-do',
-    title: 'What We Do',
-    description:
-      'Our specialists handle every step between your documents and embassy submission — with precision, clarity, and zero shortcuts.',
-    items: [
-      'Expert Review',
-      'Document Matching',
-      'Application Validation',
-      'Submission Preparation',
-    ],
-    layout: 'content-left' as const,
-    image: methodologyCarouselImages.whatWeDo,
+    title: 'Fast Processing',
+    description: 'Applications reviewed and submitted with precision — without unnecessary delays.',
+    icon: Zap,
   },
   {
-    id: 'why-greenlight',
-    title: 'Why GreenLight',
-    description:
-      'Structured methodology meets modern tooling — so every application is reviewed by experts, tracked in real time, and submitted with confidence.',
-    items: ['Zero Guesswork', 'Tech-enabled', 'Human + Expert', 'Faster Processing'],
-    layout: 'content-right' as const,
-    image: methodologyCarouselImages.whyGreenlight,
-    cta: { label: 'Start your application', href: '/countries' },
+    title: 'Expert Guidance',
+    description: 'Visa specialists guide every step so your file meets embassy standards.',
+    icon: BadgeCheck,
   },
   {
-    id: 'what-we-check',
-    title: 'What We Check',
-    description:
-      'Before anything reaches an embassy, we validate against official requirements — catching gaps early and protecting your approval odds.',
-    items: [
-      'Embassy Requirements',
-      'Document Accuracy',
-      'Eligibility Criteria',
-      'Application Completeness',
-    ],
-    layout: 'content-left' as const,
-    collage: methodologyCarouselImages.checkCollage,
-    cta: { label: 'Explore destinations', href: '/countries' },
+    title: 'Secure & Reliable',
+    description: 'Your documents stay protected with secure handling and compliance checks.',
+    icon: ShieldCheck,
   },
-] as const
+  {
+    title: 'No Hidden Fees',
+    description: 'Transparent pricing with clear deliverables — no surprises along the way.',
+    icon: CircleDollarSign,
+  },
+  {
+    title: '24/7 Support',
+    description: 'Get help whenever you need it with responsive support around the clock.',
+    icon: Headphones,
+  },
+  {
+    title: 'High Success Rate',
+    description: 'Structured reviews that improve approval confidence before submission.',
+    icon: TrendingUp,
+  },
+]
 
-function EditorialImage({
-  src,
-  fallback,
-  alt,
-  sx,
-}: {
-  src: string
-  fallback: string
-  alt: string
-  sx?: object
-}) {
-  const [imgSrc, setImgSrc] = useState(src)
-
-  return (
-    <Box
-      component="img"
-      src={imgSrc}
-      alt={alt}
-      loading="lazy"
-      onError={() => setImgSrc(fallback)}
-      sx={{
-        display: 'block',
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        ...sx,
-      }}
-    />
-  )
-}
-
-function ImageCollage({
-  images,
-}: {
-  images: readonly { src: string; fallback: string; alt: string }[]
-}) {
-  const colors = usePublicBrandColors()
-
-  return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gridTemplateRows: 'repeat(2, 1fr)',
-        gap: { xs: 1.25, md: 1.75 },
-        height: { xs: 340, sm: 400, md: 480, lg: 540 },
-        width: '100%',
-      }}
-    >
-      {images.map((image, index) => {
-        const isTall = index === 0 || index === 3
-
-        return (
-          <Box
-            key={image.alt}
-            sx={{
-              gridColumn: index === 0 ? 1 : index === 3 ? 3 : 2,
-              gridRow: isTall ? '1 / 3' : index === 1 ? 1 : 2,
-              borderRadius: IMAGE_RADIUS,
-              overflow: 'hidden',
-              boxShadow: '0 12px 40px rgba(15, 23, 42, 0.1)',
-              border: `1px solid ${colors.borderSoft}`,
-              minHeight: 0,
-            }}
-          >
-            <EditorialImage {...image} />
-          </Box>
-        )
-      })}
-    </Box>
-  )
-}
-
-function SlideContent({
+function FeatureCard({
   title,
   description,
-  items,
-  cta,
+  icon: Icon,
 }: {
   title: string
   description: string
-  items: readonly string[]
-  cta?: { label: string; href: string }
+  icon: LucideIcon
 }) {
   const colors = usePublicBrandColors()
 
   return (
-    <Stack
-      spacing={{ xs: 2.5, md: 3 }}
+    <Box
       sx={{
-        justifyContent: 'center',
         height: '100%',
-        py: { xs: 1, md: 2 },
-        pr: { md: 2, lg: 4 },
-      }}
-    >
-      <Typography
-        component="h3"
-        sx={{
-          fontFamily: publicFonts.heading,
-          fontSize: { xs: '32px', sm: '36px', md: '42px', lg: '46px' },
-          fontWeight: 800,
-          color: colors.navy,
-          lineHeight: 1.08,
-          letterSpacing: '-0.8px',
-        }}
-      >
-        {title}
-      </Typography>
-
-      <Typography
-        sx={{
-          fontSize: { xs: '16px', md: '17px', lg: '18px' },
-          color: colors.textSecondary,
-          lineHeight: 1.7,
-          maxWidth: 480,
-        }}
-      >
-        {description}
-      </Typography>
-
-      <Stack spacing={1.75} sx={{ pt: 0.5 }}>
-        {items.map(item => (
-          <Stack key={item} direction="row" spacing={1.5} alignItems="flex-start">
-            <Box
-              sx={{
-                width: 22,
-                height: 22,
-                borderRadius: '50%',
-                bgcolor: colors.greenMuted,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                mt: 0.1,
-              }}
-            >
-              <Check size={13} color={colors.greenBright} strokeWidth={2.75} />
-            </Box>
-            <Typography
-              sx={{
-                fontSize: { xs: '16px', md: '17px' },
-                fontWeight: 600,
-                color: colors.navy,
-                lineHeight: 1.45,
-              }}
-            >
-              {item}
-            </Typography>
-          </Stack>
-        ))}
-      </Stack>
-
-      {cta ? (
-        <Box sx={{ pt: { xs: 0.5, md: 1 } }}>
-          <Button
-            component="a"
-            href={cta.href}
-            variant="contained"
-            endIcon={<ArrowRight size={18} />}
-            sx={{
-              ...getMarketingPrimaryButtonSx(colors),
-              px: 3.5,
-              alignSelf: 'flex-start',
-            }}
-          >
-            {cta.label}
-          </Button>
-        </Box>
-      ) : null}
-    </Stack>
-  )
-}
-
-function MethodologySlide({
-  slide,
-}: {
-  slide: (typeof methodologySlides)[number]
-}) {
-  const colors = usePublicBrandColors()
-  const isReversed = slide.layout === 'content-right'
-
-  const visual = (
-    <Box
-      sx={{
-        flex: { md: '0 0 60%' },
-        width: { xs: '100%', md: '60%' },
-        minWidth: 0,
-        height: { xs: 280, sm: 360, md: 'auto' },
-        minHeight: { md: 420, lg: 500 },
-      }}
-    >
-      {'collage' in slide ? (
-        <ImageCollage images={slide.collage} />
-      ) : (
-        <Box
-          sx={{
-            height: '100%',
-            minHeight: { md: 420, lg: 500 },
-            borderRadius: IMAGE_RADIUS,
-            overflow: 'hidden',
-            boxShadow: '0 20px 60px rgba(15, 23, 42, 0.12)',
-            border: `1px solid ${colors.borderSoft}`,
-          }}
-        >
-          <EditorialImage {...slide.image} />
-        </Box>
-      )}
-    </Box>
-  )
-
-  const content = (
-    <Box
-      sx={{
-        flex: { md: '0 0 40%' },
-        width: { xs: '100%', md: '40%' },
-        minWidth: 0,
-      }}
-    >
-      <SlideContent
-        title={slide.title}
-        description={slide.description}
-        items={slide.items}
-        cta={slide.cta}
-      />
-    </Box>
-  )
-
-  return (
-    <Box
-      role="group"
-      aria-roledescription="slide"
-      aria-label={`${slide.title} — slide ${methodologySlides.findIndex(s => s.id === slide.id) + 1} of ${SLIDE_COUNT}`}
-      sx={{
-        flex: '0 0 100%',
-        minWidth: '100%',
-        px: { xs: 0, md: 0.5 },
+        bgcolor: colors.white,
+        border: `1px solid ${colors.border}`,
+        borderRadius: '16px',
+        boxShadow: '0 6px 18px rgba(15, 23, 42, 0.06)',
+        p: { xs: 2, md: 2.25 },
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1.25,
+        transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
+        '@media (hover: hover)': {
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            borderColor: `rgba(${brandPrimaryGreenRgb}, 0.45)`,
+            boxShadow: `0 14px 32px rgba(${brandPrimaryGreenRgb}, 0.14)`,
+          },
+        },
       }}
     >
       <Box
         sx={{
+          width: 40,
+          height: 40,
+          borderRadius: '12px',
+          bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
           display: 'flex',
-          flexDirection: {
-            xs: 'column',
-            md: isReversed ? 'row-reverse' : 'row',
-          },
-          alignItems: { xs: 'stretch', md: 'center' },
-          gap: { xs: 4, md: 5, lg: 7 },
-          minHeight: { md: 480, lg: 560 },
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
         }}
       >
-        {content}
-        {visual}
+        <Icon size={20} color={colors.greenBright} strokeWidth={2.1} />
       </Box>
+      <Typography
+        sx={{
+          fontFamily: publicFonts.heading,
+          fontSize: '15px',
+          fontWeight: 700,
+          color: colors.navy,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.3,
+        }}
+      >
+        {title}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: '13px',
+          color: colors.textSecondary,
+          lineHeight: 1.5,
+        }}
+      >
+        {description}
+      </Typography>
     </Box>
   )
 }
 
-
 export function WhyGreenLightWorksSection() {
   const colors = usePublicBrandColors()
-  const prefersReducedMotion = useReducedMotion()
-  const [activeIndex, setActiveIndex] = useState(0)
-  const dragStartX = useRef<number | null>(null)
-  const isDragging = useRef(false)
-
-  const goTo = useCallback((index: number) => {
-    setActiveIndex(Math.max(0, Math.min(SLIDE_COUNT - 1, index)))
-  }, [])
-
-  const goNext = useCallback(() => {
-    setActiveIndex(prev => Math.min(SLIDE_COUNT - 1, prev + 1))
-  }, [])
-
-  const goPrev = useCallback(() => {
-    setActiveIndex(prev => Math.max(0, prev - 1))
-  }, [])
-
-  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return
-    isDragging.current = true
-    dragStartX.current = event.clientX
-    event.currentTarget.setPointerCapture(event.pointerId)
-  }
-
-  const handlePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!isDragging.current || dragStartX.current === null) return
-
-    const delta = event.clientX - dragStartX.current
-    if (delta <= -SWIPE_THRESHOLD_PX) goNext()
-    else if (delta >= SWIPE_THRESHOLD_PX) goPrev()
-
-    isDragging.current = false
-    dragStartX.current = null
-    event.currentTarget.releasePointerCapture(event.pointerId)
-  }
-
-  const handlePointerCancel = () => {
-    isDragging.current = false
-    dragStartX.current = null
-  }
 
   return (
     <Box
@@ -372,166 +135,108 @@ export function WhyGreenLightWorksSection() {
       id="why-greenlight-works"
       sx={{
         bgcolor: colors.white,
-        py: { xs: 12, md: 16, lg: 20 },
-        borderTop: `1px solid ${colors.borderSoft}`,
-        borderBottom: `1px solid ${colors.borderSoft}`,
-        overflow: 'visible',
+        py: landingSectionPy,
       }}
     >
       <PublicContainer variant="hero">
-        <Box sx={{ textAlign: 'center', maxWidth: 760, mx: 'auto', mb: landingSectionHeaderMb }}>
-          <Typography
-            component="h2"
-            sx={{
-              fontFamily: publicFonts.heading,
-              fontSize: { xs: '32px', md: '44px', lg: '48px' },
-              fontWeight: 800,
-              color: colors.navy,
-              lineHeight: 1.1,
-              letterSpacing: '-0.7px',
-              mb: 1.75,
-            }}
-          >
-            Why GreenLight Works
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: { xs: '16px', md: '18px' },
-              color: colors.textSecondary,
-              lineHeight: 1.7,
-            }}
-          >
-            Every application goes through a structured review process before submission, ensuring
-            accuracy, compliance, and confidence.
-          </Typography>
-        </Box>
-
         <Box
           sx={{
-            position: 'relative',
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              lg: 'minmax(0, 1.1fr) minmax(0, 0.95fr)',
+            },
+            gap: { xs: 4, md: 5, lg: 7 },
+            alignItems: 'stretch',
           }}
         >
-          <Box
-            aria-roledescription="carousel"
-            aria-label="GreenLight methodology"
-            onPointerDown={handlePointerDown}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerCancel}
-            sx={{
-              position: 'relative',
-              overflow: 'hidden',
-              touchAction: 'pan-y',
-              cursor: { md: 'grab' },
-              userSelect: 'none',
-              pb: { xs: 2, md: 0 },
-            }}
-          >
-            <motion.div
-              animate={{ x: `-${activeIndex * 100}%` }}
-              transition={
-                prefersReducedMotion
-                  ? { duration: 0 }
-                  : { duration: CAROUSEL_TRANSITION_SECONDS, ease: [0.22, 1, 0.36, 1] }
-              }
-              style={{
-                display: 'flex',
-                width: '100%',
-                willChange: 'transform',
+          {/* Left — content + 3×2 feature grid */}
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              sx={{
+                fontSize: '11px',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: colors.greenBright,
+                mb: 1.5,
               }}
             >
-              {methodologySlides.map(slide => (
-                <MethodologySlide key={slide.id} slide={slide} />
+              Why Choose GreenLight
+            </Typography>
+
+            <Typography
+              component="h2"
+              sx={{
+                fontFamily: publicFonts.heading,
+                fontSize: { xs: '28px', md: '36px', lg: '40px' },
+                fontWeight: 800,
+                color: colors.navy,
+                lineHeight: 1.15,
+                letterSpacing: '-0.03em',
+                mb: 1.75,
+              }}
+            >
+              Your Journey, Our Priority
+            </Typography>
+
+            <Typography
+              sx={{
+                fontSize: { xs: '15px', md: '16px' },
+                color: colors.textSecondary,
+                lineHeight: 1.7,
+                maxWidth: 540,
+                mb: landingSectionHeaderMb,
+              }}
+            >
+              GreenLight combines expert visa specialists, secure document handling, and modern
+              tracking technology — so every application is accurate, compliant, and customer-first
+              from start to approval.
+            </Typography>
+
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(2, minmax(0, 1fr))',
+                  md: 'repeat(3, minmax(0, 1fr))',
+                },
+                gap: 3,
+              }}
+            >
+              {FEATURES.map((feature) => (
+                <FeatureCard key={feature.title} {...feature} />
               ))}
-            </motion.div>
+            </Box>
           </Box>
 
-          <Stack
-            direction="row"
-            spacing={1.25}
-            justifyContent="center"
-            alignItems="center"
-            sx={{ mt: { xs: 5, md: 6 }, pt: { xs: 2, md: 0 } }}
-            role="tablist"
-            aria-label="Methodology slides"
+          {/* Right — single large travel image */}
+          <Box
+            sx={{
+              width: '100%',
+              minHeight: { xs: 320, md: 420, lg: 0 },
+              alignSelf: { lg: 'stretch' },
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 18px 44px rgba(15, 23, 42, 0.14)',
+              bgcolor: colors.surfaceAlt,
+            }}
           >
             <Box
-              component="button"
-              type="button"
-              aria-label="Previous slide"
-              onClick={goPrev}
-              disabled={activeIndex === 0}
+              component="img"
+              src={whyChooseGreenlightImage.src}
+              alt={whyChooseGreenlightImage.alt}
+              loading="lazy"
               sx={{
-                width: 34,
-                height: 34,
-                borderRadius: '999px',
-                border: `1px solid ${colors.border}`,
-                bgcolor: colors.white,
-                color: colors.navy,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: activeIndex === 0 ? 'not-allowed' : 'pointer',
-                opacity: activeIndex === 0 ? 0.4 : 1,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center',
+                display: 'block',
               }}
-            >
-              <ChevronLeft size={18} />
-            </Box>
-            {methodologySlides.map((slide, index) => {
-              const isActive = index === activeIndex
-
-              return (
-                <Box
-                  key={slide.id}
-                  component="button"
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-label={`Go to ${slide.title}`}
-                  onClick={() => goTo(index)}
-                  sx={{
-                    border: 'none',
-                    p: 0,
-                    cursor: 'pointer',
-                    bgcolor: 'transparent',
-                    width: isActive ? 28 : 8,
-                    height: 8,
-                    borderRadius: 999,
-                    transition: 'width 280ms ease, background-color 280ms ease',
-                    backgroundColor: isActive
-                      ? colors.greenBright
-                      : `rgba(${brandPrimaryGreenRgb}, 0.22)`,
-                    '&:hover': {
-                      backgroundColor: isActive
-                        ? colors.greenDark
-                        : `rgba(${brandPrimaryGreenRgb}, 0.4)`,
-                    },
-                  }}
-                />
-              )
-            })}
-            <Box
-              component="button"
-              type="button"
-              aria-label="Next slide"
-              onClick={goNext}
-              disabled={activeIndex === SLIDE_COUNT - 1}
-              sx={{
-                width: 34,
-                height: 34,
-                borderRadius: '999px',
-                border: `1px solid ${colors.border}`,
-                bgcolor: colors.white,
-                color: colors.navy,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: activeIndex === SLIDE_COUNT - 1 ? 'not-allowed' : 'pointer',
-                opacity: activeIndex === SLIDE_COUNT - 1 ? 0.4 : 1,
-              }}
-            >
-              <ChevronRight size={18} />
-            </Box>
-          </Stack>
+            />
+          </Box>
         </Box>
       </PublicContainer>
     </Box>

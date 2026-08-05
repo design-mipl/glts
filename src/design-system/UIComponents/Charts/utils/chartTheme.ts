@@ -1,20 +1,14 @@
 import { useTheme } from '@mui/material/styles'
 import { useMediaQuery } from '@mui/material'
 import { tokens } from '../../../tokens'
+import { getDashboardChartSeries } from '@/shared/theme/dashboardChartColors'
 
 export function useChartTheme() {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('xl'))
 
-  // 6-color palette drawn from the live MUI palette
-  const colors = [
-    theme.palette.primary.main,
-    theme.palette.primary.light,
-    theme.palette.success.main,
-    theme.palette.warning.main,
-    theme.palette.info.main,
-    theme.palette.error.main,
-  ]
+  // Multi-color series from brand + design tokens (not primary/success green twice).
+  const colors = [...getDashboardChartSeries(theme.palette.mode)]
 
   const gridProps = {
     stroke:          theme.palette.divider,

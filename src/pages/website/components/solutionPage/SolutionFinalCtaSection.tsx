@@ -11,6 +11,10 @@ import {
 } from '@/shared/theme/publicBrand'
 import { MarineCtaBackgroundPattern } from './finalCta/MarineCtaBackgroundPattern'
 import { CorporateCtaBackgroundPattern } from './finalCta/CorporateCtaBackgroundPattern'
+import {
+  finalCtaContentSpacing,
+  finalCtaSectionSx,
+} from '../../pages/LandingPage/landingPageSpacing'
 
 export type SolutionFinalCtaVariant = 'marine' | 'corporate'
 
@@ -44,14 +48,7 @@ export function SolutionFinalCtaSection({
     <Box
       component="section"
       id={id}
-      sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        minHeight: { xs: 240, sm: 272, md: 304, lg: 320 },
-        display: 'flex',
-        alignItems: 'center',
-        py: { xs: 5.5, md: 8, lg: 9 },
-      }}
+      sx={finalCtaSectionSx}
     >
       <Box
         component="img"
@@ -66,7 +63,7 @@ export function SolutionFinalCtaSection({
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          objectPosition: variant === 'marine' ? 'center 55%' : 'center 40%',
+          objectPosition: variant === 'marine' ? 'center 42%' : 'center 40%',
         }}
       />
 
@@ -83,7 +80,7 @@ export function SolutionFinalCtaSection({
       {patternByVariant[variant]}
 
       <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1, width: '100%' }}>
-        <Stack spacing={2.5} sx={{ maxWidth: 720 }}>
+        <Stack spacing={finalCtaContentSpacing} sx={{ maxWidth: 720 }}>
           <Typography
             component="h2"
             sx={{
@@ -108,7 +105,7 @@ export function SolutionFinalCtaSection({
             {description}
           </Typography>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: 0.5 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: 1 }}>
             <Button
               variant="contained"
               href={primaryButton.href}

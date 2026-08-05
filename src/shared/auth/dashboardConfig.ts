@@ -15,9 +15,9 @@ export function getBusinessDashboardVariant(customerType: CustomerType | undefin
         subtitle: 'Crew manifests, vessel assignments & fast-track visas',
         quickActions: [
           { label: 'Upload crew manifest', pathSuffix: '/marine/crew' },
-          { label: 'Bulk crew upload', pathSuffix: '/applications/new/bulk' },
+          { label: 'Create application', pathSuffix: '/applications/new' },
           { label: 'Track applications', pathSuffix: '/tracking' },
-          { label: 'Create application', pathSuffix: '/applications/new/single' },
+          { label: 'Vessel master', pathSuffix: '/masters/vessels' },
         ],
         showMarineNav: true,
       }
@@ -26,10 +26,10 @@ export function getBusinessDashboardVariant(customerType: CustomerType | undefin
         title: 'B2B agent dashboard',
         subtitle: 'Multi-client applications, bookers & commission tracking',
         quickActions: [
-          { label: 'New client application', pathSuffix: '/applications/new/single' },
-          { label: 'Manage bookers', pathSuffix: '/bookers' },
-          { label: 'Bulk upload', pathSuffix: '/applications/new/bulk' },
+          { label: 'New client application', pathSuffix: '/applications/new' },
+          { label: 'Manage bookers', pathSuffix: '/users/bookers' },
           { label: 'Track applications', pathSuffix: '/tracking' },
+          { label: 'Upload documents', pathSuffix: '/documents' },
         ],
         showMarineNav: false,
       }
@@ -39,8 +39,8 @@ export function getBusinessDashboardVariant(customerType: CustomerType | undefin
         title: 'Corporate travel dashboard',
         subtitle: 'Policy compliance, travelers & enterprise applications',
         quickActions: [
-          { label: 'Create application', pathSuffix: '/applications/new/single' },
-          { label: 'Manage bookers', pathSuffix: '/bookers' },
+          { label: 'Create application', pathSuffix: '/applications/new' },
+          { label: 'Manage bookers', pathSuffix: '/users/bookers' },
           { label: 'Upload documents', pathSuffix: '/documents' },
           { label: 'Track application', pathSuffix: '/tracking' },
         ],

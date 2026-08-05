@@ -111,11 +111,27 @@ export function OverviewTab({
         }
       />
 
-      <OperationsInfographics data={data} loading={loading} />
+      <OperationsInfographics
+        data={{
+          queueMix: data.queueMix,
+          assigneeMix: data.assigneeMix,
+          ageingBuckets: data.ageingBuckets,
+          workloadBySegment: data.workloadBySegment,
+        }}
+        loading={loading}
+      />
 
       <Stack direction={{ xs: 'column', lg: 'row' }} spacing={DASHBOARD_SPACING.field} alignItems="stretch">
         <Box flex={1.2} minWidth={0}>
-          <OperationsWorkloadBySegment data={data} loading={loading} />
+          <OperationsWorkloadBySegment
+            data={{
+              queueMix: data.queueMix,
+              assigneeMix: data.assigneeMix,
+              ageingBuckets: data.ageingBuckets,
+              workloadBySegment: data.workloadBySegment,
+            }}
+            loading={loading}
+          />
         </Box>
         <Box flex={1} minWidth={0} sx={{ '& > *': { height: '100%' } }}>
           <RecentActivity

@@ -9,10 +9,8 @@ export const marineHeroBackgroundVideo = {
   /** Served from /public — replace with your premium maritime loop. */
   src: '/videos/marine-hero-loop.mp4',
   poster: {
-    /** https://unsplash.com/photos/red-and-blue-cargo-ship-on-body-of-water-during-daytime-NndKt2kF1L4 */
-    src: 'https://images.unsplash.com/photo-1606185540834-d6e7483ee1a4?auto=format&fit=crop&w=2400&h=1350&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1583342426869-91ba1e67e142?auto=format&fit=crop&w=2400&h=1350&q=90',
-    alt: 'Red and blue cargo ship on body of water during daytime',
+    src: '/images/marine-crew-visa-hero.png',
+    fallback: '/images/marine-crew-visa-hero.png',
+    alt: 'Container ship Seasprinter at golden hour on open water',
   },
 } as const

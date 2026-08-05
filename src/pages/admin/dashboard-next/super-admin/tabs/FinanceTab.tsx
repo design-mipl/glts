@@ -13,7 +13,6 @@ import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import { AGEING_BUCKET_LABELS, type AgeingBucketId } from '../../shared/config/ageingBuckets'
 import {
-  AgeingAnalysis,
   CollectionSummary,
   MetricComparison,
   NotificationPanel,
@@ -24,13 +23,11 @@ import {
 } from '../../shared'
 import { PredictivePanel } from '../../shared/dashboard-intelligence'
 import {
-  ComparisonLayout,
   ExecutiveGrid,
   HighlightCard,
-  RankingList,
 } from '../../shared/dashboard-ui-kit'
 import { SUPER_ADMIN_CHART_COLORS } from '../data/superAdminChartColors'
-import type { SuperAdminDashboardTabProps, SuperAdminRankItem } from '../types'
+import type { SuperAdminDashboardTabProps } from '../types'
 
 function ChartPanel({
   title,
@@ -66,17 +63,6 @@ const ACTION_ICONS: Record<string, ReactNode> = {
   'qa-clients': <Users size={18} />,
   'qa-finance': <HandCoins size={18} />,
   'qa-legacy-admin': <Building2 size={18} />,
-}
-
-function toRankingItems(items: SuperAdminRankItem[]) {
-  return items.map((item, index) => ({
-    id: item.id,
-    primary: item.primary,
-    secondary: item.secondary,
-    rank: index + 1,
-    value: item.value,
-    progress: item.progress,
-  }))
 }
 
 export function FinanceTab({
@@ -184,7 +170,7 @@ export function FinanceTab({
             barSize={18}
             showLegend={false}
             loading={loading}
-            bars={[{ key: 'margin', label: 'Margin %', color: SUPER_ADMIN_CHART_COLORS.green }]}
+            bars={[{ key: 'margin', label: 'Margin %' }]}
           />
         </ChartPanel>
       </Grid>
@@ -200,10 +186,6 @@ export function FinanceTab({
         <RevenueSnapshot data={data.revenueSnapshot} loading={loading} onRetry={onRetry} />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
-        <AgeingAnalysis buckets={data.ageingBuckets} loading={loading} onRetry={onRetry} />
-      </Grid>
-
-      <Grid size={{ xs: 12, md: 5 }}>
         <MetricComparison
           title="Finance KPIs"
           metrics={data.financeMetricComparison}
@@ -211,10 +193,12 @@ export function FinanceTab({
           onRetry={onRetry}
         />
       </Grid>
-      <Grid size={{ xs: 12, md: 7 }}>
+
+      <Grid size={{ xs: 12 }}>
         <ProcessingTrend
           title="Revenue vs collections"
-          points={data.processingTrend}
+          subtitle="₹ Cr · last 12 months"
+          points={data.revenueTrend}
           secondaryLabel="Collected"
           loading={loading}
           onRetry={onRetry}
@@ -231,25 +215,6 @@ export function FinanceTab({
           />
         </Grid>
       ) : null}
-
-      <Grid size={{ xs: 12 }}>
-        <ComparisonLayout
-          left={
-            <RankingList
-              title="High margin clients"
-              items={toRankingItems(data.highMarginClients)}
-              loading={loading}
-            />
-          }
-          right={
-            <RankingList
-              title="Low margin / credit pressure"
-              items={toRankingItems(data.lowMarginClients)}
-              loading={loading}
-            />
-          }
-        />
-      </Grid>
 
       <Grid size={{ xs: 12, md: 7 }}>
         <NotificationPanel

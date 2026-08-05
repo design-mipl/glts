@@ -3,7 +3,7 @@ import type { VendorBillStatus } from '@/shared/types/vendor'
 import type { PaymentStatus } from '@/shared/types/invoice'
 import type { BadgeColor } from '@/pages/admin/finance/invoices/config/invoiceStatusConfig'
 import { paymentStatusBadgeColor, paymentStatusLabel } from '@/pages/admin/finance/invoices/config/invoiceStatusConfig'
-import { vendorBillStatusColor, vendorBillStatusLabel } from '@/pages/admin/vendor-management/vendors/config/vendorStatusConfig'
+import { vendorBillStatusColor, vendorBillStatusLabel } from '@/pages/admin/masters/vendors/config/vendorStatusConfig'
 
 export const vendorBillWorkflowStatusLabel: Record<VendorBillWorkflowStatus, string> = {
   pending_verification: 'Pending verification',

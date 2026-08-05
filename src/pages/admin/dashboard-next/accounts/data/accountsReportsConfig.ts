@@ -660,7 +660,7 @@ export function getAccountsReportColumns(
         textColumn('amount', 'Amount', 'md'),
         textColumn('status', 'Status', 'sm'),
         textColumn('submittedDate', 'Submitted', 'md'),
-        textColumn('branch', 'Branch', 'md'),
+        textColumn('branch', 'Jurisdiction', 'md'),
       ]
     case 'vendor_awaiting_invoice':
       return [
@@ -689,7 +689,7 @@ export function getAccountsReportColumns(
         textColumn('segment', 'Segment', 'md'),
         textColumn('amount', 'Amount', 'md'),
         textColumn('status', 'Status', 'md'),
-        textColumn('branch', 'Branch', 'md'),
+        textColumn('branch', 'Jurisdiction', 'md'),
       ]
     case 'visa_submission_status':
     case 'visa_submission_collection':
@@ -746,7 +746,7 @@ export function getAccountsReportColumns(
         textColumn('amount', 'Amount', 'md'),
         textColumn('status', 'Status', 'sm'),
         textColumn('date', 'Date', 'md'),
-        textColumn('branch', 'Branch', 'md'),
+        textColumn('branch', 'Jurisdiction', 'md'),
       ]
     case 'client_invoice_submissions':
       return [
@@ -754,7 +754,7 @@ export function getAccountsReportColumns(
         textColumn('submissionDate', 'Submission date', 'md'),
         textColumn('billingCycle', 'Billing cycle', 'md'),
         textColumn('status', 'Status', 'sm'),
-        textColumn('branch', 'Branch', 'md'),
+        textColumn('branch', 'Jurisdiction', 'md'),
       ]
     case 'revenue':
     case 'revenue_vs_targets':
@@ -796,7 +796,7 @@ export function getAccountsReportColumns(
         textColumn('amount', 'Amount', 'md'),
         textColumn('dueDate', 'Due date', 'md'),
         textColumn('paymentStatus', 'Status', 'sm'),
-        textColumn('branch', 'Branch', 'md'),
+        textColumn('branch', 'Jurisdiction', 'md'),
       ]
     case 'purchase_vs_revenue':
       return [

@@ -14,13 +14,17 @@ export const SUPER_ADMIN_DATE_OPTIONS = [
   { label: 'This quarter', value: 'quarter' },
 ]
 
-export const SUPER_ADMIN_BRANCH_OPTIONS = [
-  { label: 'All branches', value: 'all' },
+/** Filter options — Jurisdiction Master cities (legacy export name kept via alias below). */
+export const SUPER_ADMIN_JURISDICTION_OPTIONS = [
+  { label: 'All jurisdictions', value: 'all' },
   { label: 'Mumbai', value: 'mumbai' },
   { label: 'Delhi', value: 'delhi' },
   { label: 'Bengaluru', value: 'bengaluru' },
   { label: 'Chennai', value: 'chennai' },
 ]
+
+/** @deprecated Prefer SUPER_ADMIN_JURISDICTION_OPTIONS */
+export const SUPER_ADMIN_BRANCH_OPTIONS = SUPER_ADMIN_JURISDICTION_OPTIONS
 
 export const SUPER_ADMIN_COUNTRY_OPTIONS = [
   { label: 'All countries', value: 'all' },
@@ -145,13 +149,6 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       deltaLabel: 'vs last week',
     },
     {
-      id: 'collections',
-      label: 'Collections MTD',
-      value: '₹1.86Cr',
-      delta: 2.4,
-      deltaLabel: 'MTD recovery',
-    },
-    {
       id: 'applications',
       label: 'Active applications',
       value: 1284,
@@ -173,6 +170,29 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       deltaLabel: 'vs last week',
     },
   ],
+  collectionsHero: {
+    today: {
+      label: 'Today',
+      value: '₹6.2L',
+      delta: 3.8,
+      deltaLabel: 'vs yesterday',
+      targetLabel: '104% of daily target',
+    },
+    mtd: {
+      label: 'MTD',
+      value: '₹1.86Cr',
+      delta: 2.4,
+      deltaLabel: 'MTD recovery',
+      targetLabel: '88% of MTD target',
+    },
+    ytd: {
+      label: 'YTD',
+      value: '₹12.1Cr',
+      delta: 9.2,
+      deltaLabel: 'vs prior year',
+      targetLabel: '84% of annual target',
+    },
+  },
   blockedCash: {
     amount: '₹62.4L',
     applicationCount: 148,
@@ -374,8 +394,8 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
     },
     {
       id: 'sa-n2',
-      title: 'Mumbai branch leading revenue',
-      body: 'Branch contributed 28% of MTD revenue.',
+      title: 'Mumbai jurisdiction leading revenue',
+      body: 'Jurisdiction contributed 28% of MTD revenue.',
       unread: false,
       createdAt: '2 hr ago',
     },
@@ -594,9 +614,9 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       { label: 'Not converted', value: '72%', delta: -1.4 },
     ],
     byEntity: [
-      { id: 're-1', primary: 'Mumbai branch', value: 142, progress: 100, secondary: 'Walk-in heavy' },
+      { id: 're-1', primary: 'Mumbai jurisdiction', value: 142, progress: 100, secondary: 'Walk-in heavy' },
       { id: 're-2', primary: 'Website / app', value: 224, progress: 100, secondary: 'Online' },
-      { id: 're-3', primary: 'Delhi branch', value: 88, progress: 62 },
+      { id: 're-3', primary: 'Delhi jurisdiction', value: 88, progress: 62 },
     ],
     byCountry: [
       { id: 'rc-1', primary: 'UAE', value: 40, progress: 100 },
@@ -654,7 +674,7 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
     },
     {
       id: 'sa-a2',
-      primary: 'Chennai branch cleared marine QC backlog',
+      primary: 'Chennai jurisdiction cleared marine QC backlog',
       secondary: 'Ops · 2 hr ago',
       badgeLabel: 'Ops',
       badgeColor: 'info',
@@ -714,7 +734,7 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
     },
     {
       id: 'ma-6',
-      title: 'Low · Retail branch variance',
+      title: 'Low · Retail jurisdiction variance',
       description: 'Hyderabad trailing network average by 8 pts — monitor only.',
       severity: 'success',
       count: 1,
@@ -908,8 +928,8 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
     },
     {
       id: 'rep-2',
-      name: 'Q2 branch scorecard',
-      category: 'Branch',
+      name: 'Q2 jurisdiction scorecard',
+      category: 'Jurisdiction',
       generatedAt: 'Yesterday',
     },
     {

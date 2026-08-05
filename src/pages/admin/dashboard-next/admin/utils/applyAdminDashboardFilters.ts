@@ -201,11 +201,25 @@ export function applyAdminDashboardFilters(
     }
   })
 
+  const search = filters.search.trim().toLowerCase()
+  const inTransitCourierRows = (data.inTransitCourierRows ?? []).filter((row) => {
+    if (!search) return true
+    return [
+      row.applicationNumber,
+      row.applicant,
+      row.courier,
+      row.trackingNumber,
+      row.trackingUrl,
+      row.status,
+    ].some((part) => part?.toLowerCase().includes(search))
+  })
+
   return {
     ...data,
     quickStats,
     pipelineStages,
     marineTimeline,
+    inTransitCourierRows,
     attentionAlerts: scaleAttentionAlerts(data.attentionAlerts, factor, overSevenDays),
     operationsHealth: {
       ...data.operationsHealth,
@@ -217,5 +231,31 @@ export function applyAdminDashboardFilters(
       0,
       Math.max(0, scaleInt(data.pendingVerification.length, Math.min(factor, 1))),
     ),
+    unassignedCount: scaleInt(data.unassignedCount, factor),
+    opsAlerts: data.opsAlerts.map((alert) => ({
+      ...alert,
+      count: alert.count != null ? scaleInt(alert.count, factor) : undefined,
+    })),
+    opsQueueSnapshot: {
+      queueMix: data.opsQueueSnapshot.queueMix.map((slice) => ({
+        ...slice,
+        value: scaleInt(slice.value, factor),
+      })),
+      assigneeMix: data.opsQueueSnapshot.assigneeMix.map((slice) => ({
+        ...slice,
+        value: scaleInt(slice.value, factor),
+      })),
+      ageingBuckets: data.opsQueueSnapshot.ageingBuckets.map((bucket) => ({
+        ...bucket,
+        count: scaleInt(bucket.count, factor),
+      })),
+      workloadBySegment: data.opsQueueSnapshot.workloadBySegment.map((row) => ({
+        ...row,
+        verification: scaleInt(row.verification, factor),
+        payment: scaleInt(row.payment, factor),
+        arrange: scaleInt(row.arrange, factor),
+        submission: scaleInt(row.submission, factor),
+      })),
+    },
   }
 }

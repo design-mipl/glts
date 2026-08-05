@@ -6,6 +6,10 @@ import {
   GROUND_OPERATIONS_DASHBOARD_MOCK,
   applyGroundOperationsDashboardFilters,
 } from '../data/groundOperationsDashboardMock'
+import {
+  buildCourierTrackingFromInTransitRow,
+  listLogisticsInTransitRows,
+} from '../../shared/utils/mapLogisticsInTransitRows'
 
 const LOAD_DELAY_MS = 300
 
@@ -15,12 +19,39 @@ function delay(ms: number): Promise<void> {
   })
 }
 
+function mergeLogisticsInTransit(
+  data: GroundOperationsDashboardData,
+): GroundOperationsDashboardData {
+  const inTransitRows = listLogisticsInTransitRows().map((row) => ({
+    id: row.id,
+    applicationNumber: row.applicationNumber,
+    applicant: row.applicant,
+    currentLocation: row.currentLocation,
+    courier: row.courier,
+    trackingNumber: row.trackingNumber,
+    trackingUrl: row.trackingUrl,
+    deliveryMethod: row.deliveryMethod,
+    eta: row.eta,
+    status: row.status,
+  }))
+
+  if (inTransitRows.length === 0) return data
+
+  return {
+    ...data,
+    passportRows: inTransitRows,
+    courierTracking: buildCourierTrackingFromInTransitRow(
+      listLogisticsInTransitRows()[0],
+    ),
+  }
+}
+
 export async function fetchGroundOperationsDashboard(
   filters: GroundOperationsDashboardFilters,
 ): Promise<GroundOperationsDashboardData> {
   await delay(LOAD_DELAY_MS)
-  return applyGroundOperationsDashboardFilters(
+  const withLogistics = mergeLogisticsInTransit(
     structuredClone(GROUND_OPERATIONS_DASHBOARD_MOCK),
-    filters,
   )
+  return applyGroundOperationsDashboardFilters(withLogistics, filters)
 }

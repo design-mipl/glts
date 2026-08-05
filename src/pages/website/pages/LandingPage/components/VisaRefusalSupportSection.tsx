@@ -14,7 +14,6 @@ export function VisaRefusalSupportSection() {
       sx={{
         bgcolor: colors.white,
         py: landingSectionPy,
-        borderTop: `1px solid ${colors.borderSoft}`,
       }}
     >
       <PublicContainer variant="hero">

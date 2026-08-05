@@ -67,6 +67,8 @@ export interface LogisticsDispatchDetails {
   /** UTR / transaction reference for the payment. */
   transactionReference?: string
   dispatchedAt?: string
+  /** Set when courier/handover is confirmed delivered — ends IN TRANSIT. */
+  deliveredAt?: string
 }
 
 export const LOGISTICS_DELIVERY_METHODS: LogisticsDeliveryMethod[] = [

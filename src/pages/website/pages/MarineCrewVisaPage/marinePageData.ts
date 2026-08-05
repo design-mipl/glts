@@ -3,6 +3,10 @@ import {
   ShieldCheck,
   Send,
   Radio,
+  Ship,
+  RefreshCw,
+  ClipboardX,
+  AlertTriangle,
   type LucideIcon,
 } from 'lucide-react'
 import type { FAQItem } from '../../components/FAQSection'
@@ -14,40 +18,40 @@ export const marineImpactPoints = [
   {
     title: 'Missed sailings',
     description: 'Crew cannot join vessels on schedule when visa processing falls behind rotation windows.',
+    icon: Ship,
   },
   {
     title: 'Crew rotation issues',
     description: 'Overlapping contracts and reliefs create documentation pressure across multiple movements.',
+    icon: RefreshCw,
   },
   {
     title: 'Port clearance delays',
     description: 'Incomplete or incorrect visa documentation slows embarkation and disembarkation.',
+    icon: ClipboardX,
   },
   {
     title: 'Operational impact',
     description: 'Fleet schedules, manning plans, and client commitments are affected by travel delays.',
+    icon: AlertTriangle,
   },
 ]
 
 export const marineAccuracyVisuals = {
-  badgeLabel: 'Global Marine Operations',
   primary: {
-    src: 'https://images.unsplash.com/photo-1494412574640-08084c076e68?auto=format&fit=crop&w=1200&h=1400&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&h=1400&q=90',
-    alt: 'Cargo vessel departing international port',
+    src: '/images/marine-accuracy/primary-port.png',
+    fallback: '/images/marine-accuracy/primary-port.png',
+    alt: 'Aerial view of a commercial shipping port at sunset',
   },
   secondaryTop: {
-    src: 'https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&w=1000&h=700&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1569396116180-210c182bedb8?auto=format&fit=crop&w=1000&h=700&q=90',
-    alt: 'Offshore operations and marine platform logistics',
+    src: '/images/marine-accuracy/secondary-bridge.png',
+    fallback: '/images/marine-accuracy/secondary-bridge.png',
+    alt: 'Seafarers reviewing charts on a ship bridge',
   },
   secondaryBottom: {
-    src: 'https://images.unsplash.com/photo-1473445361085-b9a07f55608b?auto=format&fit=crop&w=1000&h=700&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1000&h=700&q=90',
-    alt: 'Crew operations and vessel movement scheduling',
+    src: '/images/marine-accuracy/secondary-documents.png',
+    fallback: '/images/marine-accuracy/secondary-documents.png',
+    alt: 'Marine officers reviewing documentation and compliance paperwork',
   },
 } as const
 
@@ -57,10 +61,9 @@ export const marineVisaCategories: VisaCategoryCardItem[] = [
     title: 'Seafarer / Crew Visas',
     description: 'Documentation and embassy filing for crew joining and leaving vessels worldwide.',
     image: {
-      src: 'https://images.unsplash.com/photo-1494412574640-08084c076e68?auto=format&fit=crop&w=1200&h=750&q=90',
-      fallback:
-        'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&h=750&q=90',
-      alt: 'Cargo vessel for seafarer and crew visa category',
+      src: '/images/marine-visa-categories/seafarer-crew-visas.png',
+      fallback: '/images/marine-visa-categories/seafarer-crew-visas.png',
+      alt: 'Port operations supervisor directing crew alongside a container vessel',
     },
   },
   {
@@ -68,10 +71,9 @@ export const marineVisaCategories: VisaCategoryCardItem[] = [
     title: 'Offshore Crew Visas',
     description: 'Visa support for offshore rotations, platform movements, and remote deployment schedules.',
     image: {
-      src: 'https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&w=1200&h=750&q=90',
-      fallback:
-        'https://images.unsplash.com/photo-1569396116180-210c182bedb8?auto=format&fit=crop&w=1200&h=750&q=90',
-      alt: 'Offshore platform operations for offshore crew visas',
+      src: '/images/marine-visa-categories/offshore-crew-visas.png',
+      fallback: '/images/marine-visa-categories/offshore-crew-visas.png',
+      alt: 'Offshore crew walking a vessel deck at sunset during rotation',
     },
   },
   {
@@ -79,10 +81,9 @@ export const marineVisaCategories: VisaCategoryCardItem[] = [
     title: 'Superintendent Visas',
     description: 'Business and assignment visas for superintendents, inspectors, and marine specialists.',
     image: {
-      src: 'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1200&h=750&q=90',
-      fallback:
-        'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200&h=750&q=90',
-      alt: 'Marine inspection and superintendent assignments',
+      src: '/images/marine-visa-categories/superintendent-visas.png',
+      fallback: '/images/marine-visa-categories/superintendent-visas.png',
+      alt: 'Marine superintendents reviewing vessel plans during a shipyard inspection',
     },
   },
 ]
@@ -156,6 +157,18 @@ export const marineFaqs: FAQItem[] = [
     q: 'Do you maintain compliance records for marine crew travel?',
     a: 'Yes. Compliance record management is available as part of marine support and retainer services, including audit-ready documentation trails.',
   },
+  {
+    q: 'Which destinations do you support for marine crew visas?',
+    a: 'We support major crew-change hubs and common marine destinations worldwide. Eligibility and document requirements are confirmed before filing for each country.',
+  },
+  {
+    q: 'Can you coordinate transit and joining documentation together?',
+    a: 'Yes. Travel and transit documentation can be handled alongside visa filing so crew arrive with embassy-ready paperwork aligned to vessel schedules.',
+  },
+  {
+    q: 'Is 24×7 support available for marine travel emergencies?',
+    a: 'Round-the-clock assistance is available for itinerary changes, urgent joiners, and travel coordination during active marine operations.',
+  },
 ]
 
 export type MarineCompanyType = {
@@ -170,9 +183,8 @@ export const marineCompanyTypes: MarineCompanyType[] = [
     title: 'Shipping Companies',
     description: 'Fleet operators managing crew rotations across international routes and port calls.',
     image: {
-      src: 'https://images.unsplash.com/photo-1494412574640-08084c076e68?auto=format&fit=crop&w=800&h=600&q=90',
-      fallback:
-        'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&h=600&q=90',
+      src: '/images/marine-companies/shipping-companies.png',
+      fallback: '/images/marine-companies/shipping-companies.png',
       alt: 'Cargo vessel and shipping fleet at international port',
     },
     entrance: 'from-top',
@@ -181,9 +193,8 @@ export const marineCompanyTypes: MarineCompanyType[] = [
     title: 'Crew Management Firms',
     description: 'Manning agencies coordinating visas for multi-vessel crew deployment programs.',
     image: {
-      src: 'https://images.unsplash.com/photo-1473445361085-b9a07f55608b?auto=format&fit=crop&w=800&h=600&q=90',
-      fallback:
-        'https://images.unsplash.com/photo-1578575437140-597bb0e5c8c0?auto=format&fit=crop&w=800&h=600&q=90',
+      src: '/images/marine-companies/crew-management.png',
+      fallback: '/images/marine-companies/crew-management.png',
       alt: 'Maritime crew coordination and vessel staffing operations',
     },
     entrance: 'from-bottom',
@@ -192,69 +203,119 @@ export const marineCompanyTypes: MarineCompanyType[] = [
     title: 'Offshore Service Providers',
     description: 'Offshore operators supporting platform crews, specialists, and rotation logistics.',
     image: {
-      src: 'https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&w=800&h=600&q=90',
-      fallback:
-        'https://images.unsplash.com/photo-1569396116180-210c182bedb8?auto=format&fit=crop&w=800&h=600&q=90',
+      src: '/images/marine-companies/offshore-operators.png',
+      fallback: '/images/marine-companies/offshore-operators.png',
       alt: 'Offshore platform and remote marine operations',
     },
     entrance: 'from-top',
   },
 ]
 
-export const marineAdditionalServiceCards = [
+export const marineAdditionalServices = [
   {
     id: 'travel-transit-documentation',
     title: 'Travel & Transit Documentation',
-    points: [
-      'Crew travel documentation',
-      'Port-entry requirements',
-      'Transit coordination',
-    ],
-    image:
-      'https://images.unsplash.com/photo-1494412574640-08084c076e68?auto=format&fit=crop&w=1200&h=900&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&h=900&q=90',
+    description:
+      'Complete documentation support including travel itineraries, transit permits, invitation letters, and embassy-ready paperwork.',
+    ctaLabel: 'Get Started',
+    href: '/track',
+    image: {
+      src: '/images/marine-additional-services/travel-transit-documentation.png',
+      fallback: '/images/marine-additional-services/travel-transit-documentation.png',
+      alt: 'Passport, boarding passes, and visa paperwork arranged for travel documentation',
+    },
   },
   {
     id: 'compliance-record-management',
     title: 'Compliance Record Management',
-    points: [
-      'Audit-ready records',
-      'Crew documentation tracking',
-      'Compliance support',
-    ],
-    image:
-      'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&h=900&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=1200&h=900&q=90',
+    description:
+      'Secure management of crew documentation, compliance records, certifications, and renewal tracking.',
+    ctaLabel: 'Learn More',
+    href: '/track',
+    image: {
+      src: '/images/marine-additional-services/compliance-record-management.png',
+      fallback: '/images/marine-additional-services/compliance-record-management.png',
+      alt: 'Compliance officer reviewing maritime documentation with port operations in view',
+    },
   },
   {
     id: 'travel-insurance-support',
     title: 'Travel Insurance Support',
-    points: ['Crew travel protection', 'Medical travel coverage'],
-    image:
-      'https://images.unsplash.com/photo-1554224154-26032fced8bd?auto=format&fit=crop&w=1200&h=900&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&h=900&q=90',
+    description:
+      'Comprehensive travel insurance solutions for crew members and offshore professionals.',
+    ctaLabel: 'Learn More',
+    href: '/track',
+    image: {
+      src: '/images/marine-additional-services/travel-insurance-support.png',
+      fallback: '/images/marine-additional-services/travel-insurance-support.png',
+      alt: 'Travel consultant advising a client on travel insurance coverage',
+    },
   },
   {
     id: 'forex-support',
     title: 'Forex Support',
-    points: ['Currency exchange assistance', 'International travel support'],
-    image:
-      'https://images.unsplash.com/photo-1621761191319-c6fb62004040?auto=format&fit=crop&w=1200&h=900&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1200&h=900&q=90',
+    description:
+      'Foreign currency exchange assistance with competitive rates for international travel.',
+    ctaLabel: 'Learn More',
+    href: '/track',
+    image: {
+      src: '/images/marine-additional-services/forex-support.png',
+      fallback: '/images/marine-additional-services/forex-support.png',
+      alt: 'International currencies and payment card on a world map',
+    },
+  },
+  {
+    id: 'travel-assistance-24x7',
+    title: '24×7 Travel Assistance',
+    description:
+      'Round-the-clock support for itinerary changes, emergencies, and travel coordination.',
+    ctaLabel: 'Learn More',
+    href: '/track',
+    image: {
+      src: '/images/marine-additional-services/travel-assistance-24x7.png',
+      fallback: '/images/marine-additional-services/travel-assistance-24x7.png',
+      alt: 'Travel specialist providing round-the-clock assistance at a service desk',
+    },
   },
 ] as const
 
 export const marineRetainerPlans = [
-  'Dedicated account manager',
-  'Priority processing',
-  'Documentation management',
-  'Monthly reporting',
-  'Escalation support',
-]
+  {
+    id: 'single-voyage',
+    title: 'Single Voyage Plan',
+    description: 'Perfect for one-time visa requirements.',
+    icon: 'ship',
+  },
+  {
+    id: 'multi-voyage',
+    title: 'Multi Voyage Plan',
+    description: 'Cost-effective solutions for multiple voyages.',
+    icon: 'globe',
+  },
+  {
+    id: 'fleet-management',
+    title: 'Fleet Management Plan',
+    description: 'Centralized visa management for your entire fleet.',
+    icon: 'fleet',
+  },
+  {
+    id: 'custom-enterprise',
+    title: 'Custom Enterprise Plan',
+    description: 'Tailored solutions for large shipping organizations.',
+    icon: 'building',
+  },
+] as const
+
+export const marineRetainerPlansHeading = 'Flexible Plans. Reliable Partnership.'
+
+export const marineRetainerPlansSubtitle =
+  'Flexible plans designed for shipping companies of all sizes. Choose the plan that fits your operations and scale with confidence.'
+
+export const marineRetainerPlansImage = {
+  src: '/images/marine-retainer-plans/cargo-ship.png',
+  fallback: '/images/marine-retainer-plans/cargo-ship.png',
+  alt: 'Aerial view of a cargo container ship underway at sea',
+} as const
 
 export const marineTestimonials: TestimonialItem[] = [
   {

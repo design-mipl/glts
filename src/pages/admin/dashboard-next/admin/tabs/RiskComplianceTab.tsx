@@ -1,7 +1,6 @@
 import { Grid } from '@mui/material'
 import {
   Announcements,
-  ProcessingTrend,
   RiskOverview,
   SLAOverview,
   TeamCapacity,
@@ -9,7 +8,7 @@ import {
 } from '../../shared'
 import type { AdminDashboardTabProps } from '../types'
 
-/** Risk & Compliance story — SLA, risk alerts, capacity signals. */
+/** Risk & Compliance — SLA, risk alerts, capacity (throughput lives on Operations). */
 export function RiskComplianceTab({
   data,
   loading,
@@ -35,14 +34,6 @@ export function RiskComplianceTab({
           loading={loading}
           onRetry={onRetry}
           onViewAll={() => onNavigate('/admin/user-management/teams')}
-        />
-      </Grid>
-      <Grid size={{ xs: 12 }}>
-        <ProcessingTrend
-          points={data.processingTrend}
-          loading={loading}
-          onRetry={onRetry}
-          secondaryLabel="Completions"
         />
       </Grid>
       <Grid size={{ xs: 12, md: 7 }}>
