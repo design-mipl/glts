@@ -10,9 +10,7 @@ import {
   Store,
 } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
-import { BarChart, Button, DonutChart } from '@/design-system/UIComponents'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
+import { Button, DonutChart } from '@/design-system/UIComponents'
 import {
   MarineTimeline,
   MetricComparison,
@@ -20,13 +18,22 @@ import {
 } from '../../shared'
 import { useDashboardFiltersOptional } from '../../shared/dashboard-intelligence'
 import {
-  ComparisonLayout,
   ExecutiveGrid,
   ExecutiveSection,
-  RankingList,
   SegmentCard,
 } from '../../shared/dashboard-ui-kit'
-import { SUPER_ADMIN_CHART_COLORS, SUPER_ADMIN_CHART_SERIES } from '../data/superAdminChartColors'
+import {
+  SA_CHART_HEIGHT,
+  SuperAdminPanel,
+  SuperAdminRankChart,
+  SuperAdminSection,
+  TopNSelect,
+  colorSlices,
+  sliceTopN,
+  useSuperAdminChartColors,
+  useSuperAdminChartSeries,
+  useTopN,
+} from '../components/SuperAdminChrome'
 import type {
   SuperAdminDashboardTabProps,
   SuperAdminRankItem,
@@ -61,46 +68,8 @@ function normalizeSegment(value: string | undefined): SegmentFocus {
   return 'all'
 }
 
-function ChartPanel({
-  title,
-  description,
-  children,
-}: {
-  title: string
-  description?: string
-  children: ReactNode
-}) {
-  const colors = usePublicBrandColors()
-  return (
-    <Box sx={{ ...executiveCardLevel2Sx(colors), p: 0, overflow: 'hidden', height: '100%' }}>
-      <Stack spacing={0.5} sx={{ px: 2, pt: 2, pb: 1.25 }}>
-        <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 14 }}>
-          {title}
-        </Typography>
-        {description ? (
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-            {description}
-          </Typography>
-        ) : null}
-      </Stack>
-      <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
-    </Box>
-  )
-}
-
-function toRankingItems(items: SuperAdminRankItem[]) {
-  return items.map((item, index) => ({
-    id: item.id,
-    primary: item.primary,
-    secondary: item.secondary,
-    rank: index + 1,
-    value: item.value,
-    progress: item.progress,
-  }))
-}
-
 function SegmentStatusChip({ status }: { status: 'live' | 'placeholder' }) {
-  const isLive = status === 'live'
+  if (status !== 'live') return null
   return (
     <Box
       component="span"
@@ -112,12 +81,11 @@ function SegmentStatusChip({ status }: { status: 'live' | 'placeholder' }) {
         borderRadius: '999px',
         fontSize: 11,
         fontWeight: 700,
-        bgcolor: (t) =>
-          alpha(isLive ? t.palette.success.main : t.palette.info.main, 0.12),
-        color: isLive ? 'success.dark' : 'info.dark',
+        bgcolor: (t) => alpha(t.palette.success.main, 0.12),
+        color: 'success.dark',
       }}
     >
-      {isLive ? 'Live' : 'Preview'}
+      Live
     </Box>
   )
 }
@@ -216,9 +184,7 @@ function AllSegmentsView({
   return (
     <Stack spacing={DASHBOARD_SPACING.section}>
       <ExecutiveSection
-        question="How do the four verticals compare?"
         title="Segment performance"
-        subtitle="Select a segment above or in global filters for a full vertical deep-dive."
       >
         <ExecutiveGrid columns={4} spacing={DASHBOARD_SPACING.field}>
           {data.segmentCards.map((segment) => (
@@ -246,7 +212,6 @@ function AllSegmentsView({
               <SegmentCard
                 icon={SEGMENT_ICONS[segment.id]}
                 title={segment.label}
-                subtitle={`${segment.status === 'live' ? 'Live' : 'Preview'} · Open ${segment.label}`}
                 hoverable
               >
                 <Stack spacing={1}>
@@ -260,27 +225,16 @@ function AllSegmentsView({
       </ExecutiveSection>
 
       <ExecutiveSection
-        question="Where should management act first?"
         title="Cross-segment risk — joining-date (Marine)"
-        subtitle="Always visible on All — critical crew sign-on pressure."
       >
         <MarineTimeline
           title="Joining date & crew risk"
-          subtitle="Vessel sign-on pressure — act on red / amber first"
-          rows={data.marineTimeline}
+          rows={[...data.marineTimeline].sort((a, b) => {
+            const rank = (r: string) => (r === 'red' ? 0 : r === 'amber' ? 1 : 2)
+            return rank(a.ragStatus) - rank(b.ragStatus)
+          })}
           loading={loading}
           onViewAll={() => onSelectSegment('marine')}
-        />
-      </ExecutiveSection>
-
-      <ExecutiveSection
-        title="Margin by vertical"
-        subtitle="Gross margin % this month across Marine · Corporate · Retail · B2B"
-      >
-        <RankingList
-          title="Gross margin by segment"
-          items={toRankingItems(data.marginByVertical)}
-          loading={loading}
         />
       </ExecutiveSection>
     </Stack>
@@ -289,134 +243,73 @@ function AllSegmentsView({
 
 function MixCharts({
   entityTitle,
-  entityDescription,
-  entityBars,
-  entityXKey,
+  entityItems,
   countryTitle,
-  countryDescription,
-  countrySlices,
+  countryItems,
   loading,
 }: {
   entityTitle: string
-  entityDescription: string
-  entityBars: Array<Record<string, string | number>>
-  entityXKey: string
+  entityItems: SuperAdminRankItem[]
   countryTitle: string
-  countryDescription: string
-  countrySlices: Array<{ key: string; label: string; value: number; color: string }>
+  countryItems: SuperAdminRankItem[]
   loading?: boolean
 }) {
+  const chartColors = useSuperAdminChartColors()
+  const series = useSuperAdminChartSeries()
+  const countryTop = useTopN('10')
+
+  const countrySlices = useMemo(() => {
+    const sorted = [...countryItems].sort(
+      (a, b) => (Number(b.value) || b.progress || 0) - (Number(a.value) || a.progress || 0),
+    )
+    return colorSlices(
+      sliceTopN(sorted, countryTop.topN).map((item) => ({
+        key: item.id,
+        label: item.primary,
+        value: Number(item.value) || item.progress || 0,
+      })),
+      series,
+    )
+  }, [countryItems, countryTop.topN, series])
+
   const countryTotal = countrySlices.reduce((sum, s) => sum + s.value, 0)
+
   return (
-    <Grid container spacing={DASHBOARD_SPACING.field}>
+    <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
       <Grid size={{ xs: 12, md: 6 }}>
-        <ChartPanel title={entityTitle} description={entityDescription}>
-          <BarChart
-            data={entityBars}
-            xKey={entityXKey}
-            height={220}
-            barSize={16}
-            showLegend={false}
-            loading={loading}
-            bars={[{ key: 'score', label: 'Score' }]}
-          />
-        </ChartPanel>
+        <SuperAdminRankChart
+          title={entityTitle}
+          items={entityItems}
+          loading={loading}
+          valueLabel="Applications"
+          initialTopN="10"
+        />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
-        <ChartPanel title={countryTitle} description={countryDescription}>
+        <SuperAdminPanel
+          title={countryTitle}
+          action={
+            <TopNSelect
+              value={countryTop.topN}
+              onChange={countryTop.setTopN}
+              ariaLabel={`${countryTitle} top N`}
+            />
+          }
+        >
           <DonutChart
             data={
               countrySlices.length > 0
                 ? countrySlices
-                : [{ key: 'none', label: 'None', value: 1, color: SUPER_ADMIN_CHART_COLORS.slate }]
+                : [{ key: 'none', label: 'None', value: 1, color: chartColors.slate }]
             }
-            height={220}
+            height={SA_CHART_HEIGHT}
             loading={loading}
             centerLabel="mix"
             centerValue={String(countryTotal)}
           />
-        </ChartPanel>
+        </SuperAdminPanel>
       </Grid>
     </Grid>
-  )
-}
-
-function VerticalLists({
-  entityTitle,
-  countryTitle,
-  pendingTitle,
-  clientsTitle,
-  byEntity,
-  byCountry,
-  pending,
-  topClients,
-  loading,
-}: {
-  entityTitle: string
-  countryTitle: string
-  pendingTitle: string
-  clientsTitle: string
-  byEntity: SuperAdminRankItem[]
-  byCountry: SuperAdminRankItem[]
-  pending: SuperAdminRankItem[]
-  topClients: SuperAdminRankItem[]
-  loading?: boolean
-}) {
-  return (
-    <Stack spacing={DASHBOARD_SPACING.field}>
-      <ComparisonLayout
-        left={
-          <RankingList
-            title={entityTitle}
-            items={toRankingItems(byEntity)}
-            loading={loading}
-          />
-        }
-        right={
-          <RankingList
-            title={countryTitle}
-            items={toRankingItems(byCountry)}
-            loading={loading}
-          />
-        }
-      />
-      <ComparisonLayout
-        left={
-          <RankingList
-            title={pendingTitle}
-            items={toRankingItems(pending)}
-            loading={loading}
-          />
-        }
-        right={
-          <RankingList
-            title={clientsTitle}
-            items={toRankingItems(topClients)}
-            loading={loading}
-          />
-        }
-      />
-    </Stack>
-  )
-}
-
-function PreviewNote({ vertical }: { vertical: string }) {
-  return (
-    <Box
-      sx={{
-        px: 1.5,
-        py: 1,
-        borderRadius: 2,
-        border: '1px solid',
-        borderColor: 'divider',
-        bgcolor: (t) => alpha(t.palette.info.main, 0.06),
-      }}
-    >
-      <Typography variant="caption" color="text.secondary">
-        {vertical} metrics are preview sample data until this application flow matches Marine depth.
-        Use global filters (date, jurisdiction, country) with this segment focus.
-      </Typography>
-    </Box>
   )
 }
 
@@ -426,31 +319,10 @@ function MarineSegmentView({
   onRetry,
   onNavigate,
 }: SuperAdminDashboardTabProps) {
-  const companyBars = useMemo(
-    () =>
-      data.marineByCompany.map((item) => ({
-        company: item.primary.length > 16 ? `${item.primary.slice(0, 14)}…` : item.primary,
-        score: item.progress ?? 0,
-      })),
-    [data.marineByCompany],
-  )
-  const countrySlices = useMemo(
-    () =>
-      data.marineByCountry.map((item, index) => ({
-        key: item.id,
-        label: item.primary,
-        value: item.progress ?? (Number(item.value) || 1),
-        color: SUPER_ADMIN_CHART_SERIES[index % SUPER_ADMIN_CHART_SERIES.length],
-      })),
-    [data.marineByCountry],
-  )
-
   return (
     <Stack spacing={DASHBOARD_SPACING.section}>
       <ExecutiveSection
-        question="How is Marine performing?"
         title="Commercial KPIs"
-        subtitle="Revenue · approval · collections · outstanding"
         action={<SegmentStatusChip status="live" />}
       >
         <MetricComparison
@@ -461,53 +333,49 @@ function MarineSegmentView({
         />
       </ExecutiveSection>
 
-      <ExecutiveSection
-        question="Where is application volume?"
-        title="Applications mix"
-        subtitle="By shipping company and destination country"
-      >
+      <ExecutiveSection title="Applications mix">
         <MixCharts
           entityTitle="By shipping company"
-          entityDescription="Application pressure score"
-          entityBars={companyBars}
-          entityXKey="company"
+          entityItems={data.marineByCompany}
           countryTitle="By country"
-          countryDescription="Marine destination mix"
-          countrySlices={countrySlices}
+          countryItems={data.marineByCountry}
           loading={loading}
         />
       </ExecutiveSection>
 
-      <ExecutiveSection
-        question="What must we clear before sign-on?"
-        title="Joining-date risk"
-        subtitle="Primary Marine action surface — red / amber first"
-      >
+      <ExecutiveSection title="Joining-date risk">
         <MarineTimeline
           title="Joining date & crew risk"
-          subtitle="Vessel sign-on pressure"
-          rows={data.marineTimeline}
+          rows={[...data.marineTimeline].sort((a, b) => {
+            const rank = (r: string) => (r === 'red' ? 0 : r === 'amber' ? 1 : 2)
+            return rank(a.ragStatus) - rank(b.ragStatus)
+          })}
           loading={loading}
           onRetry={onRetry}
           onViewAll={() => onNavigate('/admin/application-management/marine')}
         />
       </ExecutiveSection>
 
-      <ExecutiveSection
-        title="Queues & key accounts"
-        subtitle="Pending crew visas and top Marine clients"
-      >
-        <VerticalLists
-          entityTitle="Applications by shipping company"
-          countryTitle="Applications by country"
-          pendingTitle="Pending crew visas"
-          clientsTitle="Top Marine clients"
-          byEntity={data.marineByCompany}
-          byCountry={data.marineByCountry}
-          pending={data.pendingCrewVisas}
-          topClients={data.topMarineClients}
-          loading={loading}
-        />
+      <ExecutiveSection title="Queues & key accounts">
+        <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SuperAdminRankChart
+              title="Pending crew visas"
+              items={data.pendingCrewVisas}
+              loading={loading}
+              valueLabel="Priority"
+              initialTopN="5"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SuperAdminRankChart
+              title="Top Marine clients"
+              items={data.topMarineClients}
+              loading={loading}
+              valueLabel="Revenue"
+            />
+          </Grid>
+        </Grid>
       </ExecutiveSection>
     </Stack>
   )
@@ -517,93 +385,54 @@ function PreviewSegmentView({
   vertical,
   preview,
   loading,
-  entityTitle,
-  countryTitle,
   pendingTitle,
   clientsTitle,
   entityChartTitle,
-  kpisQuestion,
 }: {
   vertical: string
   preview: SuperAdminVerticalPreview
   loading?: boolean
-  entityTitle: string
-  countryTitle: string
   pendingTitle: string
   clientsTitle: string
   entityChartTitle: string
-  kpisQuestion: string
 }) {
-  const entityBars = useMemo(
-    () =>
-      preview.byEntity.map((item) => ({
-        entity: item.primary.length > 16 ? `${item.primary.slice(0, 14)}…` : item.primary,
-        score: item.progress ?? (Number(item.value) || 0),
-      })),
-    [preview.byEntity],
-  )
-  const countrySlices = useMemo(
-    () =>
-      preview.byCountry.map((item, index) => ({
-        key: item.id,
-        label: item.primary,
-        value: item.progress ?? (Number(item.value) || 1),
-        color: SUPER_ADMIN_CHART_SERIES[index % SUPER_ADMIN_CHART_SERIES.length],
-      })),
-    [preview.byCountry],
-  )
-
   return (
     <Stack spacing={DASHBOARD_SPACING.section}>
-      <PreviewNote vertical={vertical} />
-
-      <ExecutiveSection
-        question={kpisQuestion}
-        title="Commercial KPIs"
-        action={<SegmentStatusChip status="placeholder" />}
-      >
+      <ExecutiveSection title="Commercial KPIs">
         <MetricComparison title={`${vertical} KPIs`} metrics={preview.kpis} loading={loading} />
       </ExecutiveSection>
 
-      <ExecutiveSection
-        question="Where is volume concentrated?"
-        title="Applications mix"
-      >
+      <ExecutiveSection title="Applications mix">
         <MixCharts
           entityTitle={entityChartTitle}
-          entityDescription="Volume / pressure score"
-          entityBars={entityBars}
-          entityXKey="entity"
+          entityItems={preview.byEntity}
           countryTitle="By country / destination"
-          countryDescription="Mix share"
-          countrySlices={countrySlices}
+          countryItems={preview.byCountry}
           loading={loading}
         />
       </ExecutiveSection>
 
-      <ExecutiveSection title="Queues & accounts" subtitle="Pending work and top contributors">
-        <VerticalLists
-          entityTitle={entityTitle}
-          countryTitle={countryTitle}
-          pendingTitle={pendingTitle}
-          clientsTitle={clientsTitle}
-          byEntity={preview.byEntity}
-          byCountry={preview.byCountry}
-          pending={preview.pending}
-          topClients={preview.topClients}
-          loading={loading}
-        />
+      <ExecutiveSection title="Queues & accounts">
+        <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SuperAdminRankChart
+              title={pendingTitle}
+              items={preview.pending}
+              loading={loading}
+              valueLabel="Priority"
+              initialTopN="5"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SuperAdminRankChart
+              title={clientsTitle}
+              items={preview.topClients}
+              loading={loading}
+              valueLabel="Revenue"
+            />
+          </Grid>
+        </Grid>
       </ExecutiveSection>
-
-      {preview.notes.length > 0 ? (
-        <Stack spacing={0.5}>
-          {preview.notes.map((note) => (
-            <Typography key={note} variant="caption" color="text.secondary">
-              {note}
-            </Typography>
-          ))}
-        </Stack>
-      ) : null}
     </Stack>
   )
 }
@@ -646,11 +475,10 @@ export function SegmentsTab(props: SuperAdminDashboardTabProps) {
   const activeMeta = SEGMENT_OPTIONS.find((o) => o.id === active) ?? SEGMENT_OPTIONS[0]
 
   return (
-    <Stack spacing={DASHBOARD_SPACING.field}>
-      <ExecutiveSection
-        question="Which vertical needs attention?"
+    <Stack spacing={DASHBOARD_SPACING.section}>
+      <SuperAdminSection
         title="Business segments"
-        subtitle="One workspace for Marine, Corporate, Retail, and B2B. Synced with the global Segment filter."
+        description="One workspace for Marine, Corporate, Retail, and B2B"
       >
         <Stack spacing={1.5}>
           <SegmentSwitcher active={active} onChange={setSegment} />
@@ -666,7 +494,7 @@ export function SegmentsTab(props: SuperAdminDashboardTabProps) {
             </Typography>
           </Stack>
         </Stack>
-      </ExecutiveSection>
+      </SuperAdminSection>
 
       {active === 'all' ? (
         <AllSegmentsView data={data} loading={loading} onSelectSegment={setSegment} />
@@ -679,12 +507,9 @@ export function SegmentsTab(props: SuperAdminDashboardTabProps) {
           vertical="Corporate"
           preview={data.corporatePreview}
           loading={loading}
-          entityTitle="Applications by company"
-          countryTitle="Applications by country"
           pendingTitle="Pending business visas"
           clientsTitle="Top corporate clients"
           entityChartTitle="By company"
-          kpisQuestion="How is Corporate performing?"
         />
       ) : null}
 
@@ -693,12 +518,9 @@ export function SegmentsTab(props: SuperAdminDashboardTabProps) {
           vertical="Retail"
           preview={data.retailPreview}
           loading={loading}
-          entityTitle="Walk-in · online · jurisdiction mix"
-          countryTitle="Top destinations"
           pendingTitle="Payment status & ratings"
           clientsTitle="Destination revenue"
           entityChartTitle="Channel mix"
-          kpisQuestion="How is Retail converting?"
         />
       ) : null}
 
@@ -707,12 +529,9 @@ export function SegmentsTab(props: SuperAdminDashboardTabProps) {
           vertical="B2B"
           preview={data.b2bPreview}
           loading={loading}
-          entityTitle="Applications by travel partner"
-          countryTitle="Applications by country"
           pendingTitle="Partner signals · outstanding"
           clientsTitle="Most active agencies"
           entityChartTitle="By travel partner"
-          kpisQuestion="How healthy is the partner channel?"
         />
       ) : null}
     </Stack>

@@ -28,7 +28,7 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
   const navigate = useNavigate()
   const { base } = useCustomerPortalBase()
   const { showToast } = useToast()
-  const { policy, listingPath } = useApplicationFlowPolicy()
+  const { policy, listingPath, customerSegment } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
   const isAdmin = isAdminFlowPolicy(policy)
   const isWebsite = isWebsiteFlowPolicy(policy)
@@ -41,16 +41,28 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
   const cancelListingPath = listingPath || (isWebsite ? '/countries' : `${base}/applications`)
   const postSubmitBase = isWebsite ? '/retail' : base
 
+  const segmentListingLabel =
+    customerSegment === 'b2bAgents'
+      ? 'B2B agents applications listing'
+      : customerSegment === 'corporate'
+        ? 'corporate applications listing'
+        : customerSegment === 'retail'
+          ? 'retail applications listing'
+          : 'marine applications listing'
+
   const handleSubmit = () => {
     if (isAdmin) {
-      const { id, kind } = marineApplicationAdminService.createAndSubmitFromFlow(state)
+      const { id, kind } = marineApplicationAdminService.createAndSubmitFromFlow(
+        state,
+        customerSegment,
+      )
       onSubmitted()
       showToast({
         title: 'Application created',
         description:
           kind === 'single'
-            ? `${id} is now in the marine applications listing.`
-            : `${id} batch is now in the marine applications listing.`,
+            ? `${id} is now in the ${segmentListingLabel}.`
+            : `${id} batch is now in the ${segmentListingLabel}.`,
         variant: 'success',
       })
       navigate(cancelListingPath)
@@ -77,7 +89,13 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
     showToast({
       title: 'Draft saved',
       description: isAdmin
-        ? 'Resume from Marine applications when draft persistence is enabled.'
+        ? `Resume from ${
+            customerSegment === 'b2bAgents'
+              ? 'B2B agents'
+              : customerSegment === 'corporate'
+                ? 'Corporate'
+                : 'Marine'
+          } applications when draft persistence is enabled.`
         : isWebsite
           ? 'Resume from the Apply flow when you return.'
           : 'Resume from Application Management → Draft applications.',

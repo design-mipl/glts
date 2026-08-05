@@ -1,23 +1,25 @@
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { Box, Grid, Stack, Typography } from '@mui/material'
-import { Anchor, Briefcase, Ship, Store } from 'lucide-react'
-import { BarChart, DonutChart } from '@/design-system/UIComponents'
+import { Anchor, Briefcase, Ship, Store, TrendingDown, TrendingUp } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { BarChart, Button, LineChart, Tooltip } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
+import { DASHBOARD_SPACING } from '../../shared'
+import { useDashboardFiltersOptional } from '../../shared/dashboard-intelligence'
+import { ExecutiveGrid, SegmentCard } from '../../shared/dashboard-ui-kit'
 import {
-  BranchPerformance,
-  ProcessingTrend,
-  DASHBOARD_SPACING,
-} from '../../shared'
-import {
-  ComparisonLayout,
-  ExecutiveGrid,
-  RankingList,
-  SegmentCard,
-} from '../../shared/dashboard-ui-kit'
-import { SUPER_ADMIN_CHART_COLORS, SUPER_ADMIN_CHART_SERIES } from '../data/superAdminChartColors'
-import type { SuperAdminDashboardTabProps, SuperAdminRankItem, SuperAdminSegmentCard } from '../types'
+  SA_CHART_HEIGHT,
+  SuperAdminPanel,
+  SuperAdminRankChart,
+  SuperAdminSection,
+  useSuperAdminChartColors,
+} from '../components/SuperAdminChrome'
+import type {
+  SuperAdminDashboardTabProps,
+  SuperAdminSegmentCard,
+} from '../types'
 
 const SEGMENT_ICONS = {
   marine: <Ship size={20} />,
@@ -26,225 +28,420 @@ const SEGMENT_ICONS = {
   b2b: <Anchor size={20} />,
 } as const
 
-function ChartPanel({
-  title,
-  description,
-  children,
+function ComparisonSegmentCard({
+  segment,
+  loading,
+  onOpen,
 }: {
-  title: string
-  description?: string
-  children: React.ReactNode
+  segment: SuperAdminSegmentCard
+  loading?: boolean
+  onOpen: () => void
 }) {
-  const colors = usePublicBrandColors()
-  return (
-    <Box sx={{ ...executiveCardLevel2Sx(colors), p: 0, overflow: 'hidden', height: '100%' }}>
-      <Stack spacing={0.5} sx={{ px: 2, pt: 2, pb: 1.25 }}>
-        <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 14 }}>
-          {title}
-        </Typography>
-        {description ? (
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-            {description}
-          </Typography>
-        ) : null}
-      </Stack>
-      <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
-    </Box>
-  )
-}
-
-function toRankingItems(items: SuperAdminRankItem[]) {
-  return items.map((item, index) => ({
-    id: item.id,
-    primary: item.primary,
-    secondary: item.secondary,
-    rank: index + 1,
-    value: item.value,
-    progress: item.progress,
-  }))
-}
-
-function SegmentMetrics({ segment }: { segment: SuperAdminSegmentCard }) {
+  const growing = segment.growthPercent >= 0
   const rows: Array<[string, string]> = [
-    ['Cost', segment.cost],
-    ['Gross margin', segment.grossMarginPercent],
+    ['Gross revenue', segment.revenue],
+    ['Net revenue', segment.netRevenue],
+    ['Active apps', String(segment.activeApplications)],
     ['Approval', segment.approvalPercent],
-    ['Avg TAT', segment.avgTat],
-    ['Outstanding', segment.outstanding],
-    ['Clients', segment.activeClients],
-    ['Pipeline', segment.pipelineValue],
+    ['Gross margin', segment.grossMarginPercent],
+    ['Growth', segment.growthLabel],
   ]
-  if (segment.repeatBusinessPercent) {
-    rows.push(['Repeat', segment.repeatBusinessPercent])
-  }
-  if (segment.winRate) {
-    rows.push(['Win rate', segment.winRate])
-  }
 
   return (
-    <Stack spacing={1.25}>
-      <Typography variant="h5" fontWeight={800} sx={{ letterSpacing: -0.4 }}>
-        {segment.revenue}
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        {segment.applications} · {segment.growthLabel}
-      </Typography>
+    <Tooltip
+      content={`Open ${segment.label} segment dashboard`}
+      placement="top"
+    >
       <Box
+        role="button"
+        tabIndex={0}
+        onClick={onOpen}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            onOpen()
+          }
+        }}
         sx={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 0.75,
+          height: '100%',
+          cursor: 'pointer',
+          borderRadius: 2,
+          transition: 'transform 120ms ease',
+          '&:hover': { transform: 'translateY(-1px)' },
         }}
       >
-        {rows.map(([label, value]) => (
-          <Box key={label}>
-            <Typography
-              color="text.secondary"
-              sx={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.2 }}
+        <SegmentCard
+          icon={SEGMENT_ICONS[segment.id] as ReactNode}
+          title={segment.label}
+          subtitle={segment.status === 'live' ? 'Live' : segment.label}
+          hoverable
+          loading={loading}
+        >
+          <Stack spacing={1.25}>
+            <Stack direction="row" alignItems="center" spacing={0.75}>
+              <Typography variant="h5" fontWeight={800} sx={{ letterSpacing: -0.4 }}>
+                {segment.revenue}
+              </Typography>
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.35,
+                  color: growing ? 'success.main' : 'error.main',
+                }}
+              >
+                {growing ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                <Typography variant="caption" fontWeight={700} sx={{ fontSize: 11 }}>
+                  {segment.growthLabel}
+                </Typography>
+              </Box>
+            </Stack>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 0.75,
+              }}
             >
-              {label}
-            </Typography>
-            <Typography variant="body2" fontWeight={700} sx={{ fontSize: 12 }}>
-              {value}
-            </Typography>
-          </Box>
-        ))}
+              {rows.map(([label, value]) => (
+                <Box key={label}>
+                  <Typography
+                    color="text.secondary"
+                    sx={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.2 }}
+                  >
+                    {label}
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700} sx={{ fontSize: 12 }}>
+                    {value}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Stack>
+        </SegmentCard>
       </Box>
-      <Typography variant="caption" color="text.secondary">
-        {segment.insight}
-      </Typography>
-    </Stack>
+    </Tooltip>
   )
 }
 
-/** Business — commercial story: revenue, segment cards, mix charts. Client lists live on Clients. */
-export function BusinessTab({ data, loading, onRetry }: SuperAdminDashboardTabProps) {
-  const segmentSlices = useMemo(
+/**
+ * Business — vertical comparison + revenue growth only.
+ * Gross = invoiced · Net = profit · Approval = embassy approved.
+ * Deep-dives → Segments. Country / jurisdiction / embassy analytics → Analytics / Ops.
+ * Segment & Client filters do not shrink this view (compares all four verticals).
+ */
+export function BusinessTab({
+  data,
+  loading,
+  onOpenTab,
+}: SuperAdminDashboardTabProps) {
+  const filterCtx = useDashboardFiltersOptional()
+  const [, setSearchParams] = useSearchParams()
+  const chart = useSuperAdminChartColors()
+  const segments = data.segmentCards
+
+  const segmentSeries = useMemo(
     () =>
-      data.businessSegments.map((slice, index) => ({
-        key: slice.id,
-        label: slice.label,
-        value: slice.value,
-        color: SUPER_ADMIN_CHART_SERIES[index % SUPER_ADMIN_CHART_SERIES.length],
+      [
+        { key: 'marine', label: 'Marine', color: chart.navy },
+        { key: 'corporate', label: 'Corporate', color: chart.blue },
+        { key: 'retail', label: 'Retail', color: chart.green },
+        { key: 'b2b', label: 'B2B', color: chart.amber },
+      ] as const,
+    [chart],
+  )
+
+  const openSegmentsWithFilter = (id?: SuperAdminSegmentCard['id']) => {
+    const next = id ?? 'all'
+    filterCtx?.setFilter('segment', next)
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev)
+        params.set('tab', 'segments')
+        if (next === 'all') params.delete('segment')
+        else params.set('segment', next)
+        return params
+      },
+      { replace: true },
+    )
+    onOpenTab?.('segments')
+  }
+
+  const grossNetBars = useMemo(
+    () =>
+      segments.map((s) => ({
+        segment: s.label,
+        gross: s.grossRevenueL,
+        net: s.netRevenueL,
       })),
-    [data.businessSegments],
-  )
-  const segmentTotal = segmentSlices.reduce((sum, s) => sum + s.value, 0)
-
-  const countryBars = useMemo(
-    () => data.countryDistribution.map((s) => ({ country: s.label, share: s.value })),
-    [data.countryDistribution],
+    [segments],
   )
 
-  const visaBars = useMemo(
-    () => data.visaDistribution.map((s) => ({ visa: s.label, share: s.value })),
-    [data.visaDistribution],
+  const collectionsOutstanding = useMemo(
+    () =>
+      segments.map((s) => ({
+        segment: s.label,
+        collections: s.collectionsL,
+        outstanding: s.outstandingL,
+      })),
+    [segments],
   )
 
-  const jurisdictionBars = useMemo(
-    () => data.branchPerformance.map((b) => ({ jurisdiction: b.label, score: b.value })),
-    [data.branchPerformance],
+  const marginRankItems = useMemo(
+    () =>
+      segments.map((s) => ({
+        id: s.id,
+        primary: s.label,
+        value: s.marginPercent,
+        progress: s.marginPercent,
+      })),
+    [segments],
   )
+
+  const applicationBars = useMemo(
+    () =>
+      segments.map((s) => ({
+        segment: s.label,
+        active: s.activeApplications,
+        completed: s.completedApplications,
+        pending: s.pendingApplications,
+      })),
+    [segments],
+  )
+
+  const approvalRankItems = useMemo(
+    () =>
+      segments.map((s) => ({
+        id: s.id,
+        primary: s.label,
+        value: s.approvalRate,
+        progress: s.approvalRate,
+      })),
+    [segments],
+  )
+
+  const tatBars = useMemo(
+    () =>
+      segments.map((s) => ({
+        segment: s.label,
+        tat: s.avgTatDays,
+      })),
+    [segments],
+  )
+
+  const empty = !loading && segments.length === 0
 
   return (
-    <Stack spacing={DASHBOARD_SPACING.field}>
-      <ProcessingTrend
-        title="Monthly revenue trend"
-        subtitle="₹ Cr · last 12 months · vs collections"
-        points={data.revenueTrend}
-        secondaryLabel="Collected"
-        loading={loading}
-        onRetry={onRetry}
-      />
+    <Stack spacing={DASHBOARD_SPACING.section}>
+      <SuperAdminSection
+        title="Segment comparison"
+        description="Gross = invoiced · Net = profit · Approval = embassy approved"
+        action={
+          <Button
+            label="Open Segments"
+            variant="outlined"
+            size="sm"
+            onClick={() => openSegmentsWithFilter()}
+          />
+        }
+      >
+        {empty ? (
+          <Typography variant="body2" color="text.secondary">
+            No segment comparison data for the selected filters.
+          </Typography>
+        ) : (
+          <ExecutiveGrid columns={4} spacing={DASHBOARD_SPACING.field}>
+            {segments.map((segment) => (
+              <ComparisonSegmentCard
+                key={segment.id}
+                segment={segment}
+                loading={loading}
+                onOpen={() => openSegmentsWithFilter(segment.id)}
+              />
+            ))}
+          </ExecutiveGrid>
+        )}
+      </SuperAdminSection>
 
-      <ExecutiveGrid columns={4} spacing={DASHBOARD_SPACING.field}>
-        {data.segmentCards.map((segment) => (
-          <SegmentCard
-            key={segment.id}
-            icon={SEGMENT_ICONS[segment.id] as ReactNode}
-            title={segment.label}
-            subtitle={segment.status === 'live' ? 'Live' : 'Preview · sample data'}
-            hoverable={segment.status === 'live'}
+      <SuperAdminSection
+        title="Revenue & collections"
+        description="Commercial comparison by segment"
+      >
+      <SuperAdminPanel
+        title="Gross vs net revenue"
+        description="Gross = invoiced · Net = profit (₹L)"
+        onClick={() => openSegmentsWithFilter()}
+      >
+        <BarChart
+          data={grossNetBars}
+          xKey="segment"
+          height={SA_CHART_HEIGHT}
+          barSize={18}
+          showLegend
+          loading={loading}
+          bars={[
+            { key: 'gross', label: 'Gross revenue', color: chart.navy },
+            { key: 'net', label: 'Net revenue', color: chart.green },
+          ]}
+        />
+      </SuperAdminPanel>
+
+      <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+        <Grid size={{ xs: 12, md: 6 }}>
+          <SuperAdminPanel
+            title="Collections vs outstanding"
+            description="Financial health by segment (₹L)"
+            onClick={() => openSegmentsWithFilter()}
           >
-            <SegmentMetrics segment={segment} />
-          </SegmentCard>
-        ))}
-      </ExecutiveGrid>
-
-      <Grid container spacing={DASHBOARD_SPACING.field}>
-        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-          <ChartPanel title="Revenue by segment" description="Share of network volume">
-            <DonutChart
-              data={
-                segmentSlices.length > 0
-                  ? segmentSlices
-                  : [{ key: 'none', label: 'None', value: 1, color: SUPER_ADMIN_CHART_COLORS.slate }]
+            <BarChart
+              data={collectionsOutstanding}
+              xKey="segment"
+              height={SA_CHART_HEIGHT}
+              barSize={22}
+              stacked
+              showLegend
+              loading={loading}
+              bars={[
+                {
+                  key: 'collections',
+                  label: 'Collections',
+                  color: chart.green,
+                },
+                {
+                  key: 'outstanding',
+                  label: 'Outstanding',
+                  color: chart.amber,
+                },
+              ]}
+            />
+          </SuperAdminPanel>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Box
+            role="button"
+            tabIndex={0}
+            onClick={() => openSegmentsWithFilter()}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                openSegmentsWithFilter()
               }
-              height={220}
+            }}
+            sx={{ height: '100%', cursor: 'pointer' }}
+          >
+            <SuperAdminRankChart
+              title="Gross margin comparison"
+              items={marginRankItems}
               loading={loading}
-              centerLabel="%"
-              centerValue={String(segmentTotal)}
+              valueLabel="Gross margin %"
+              initialTopN="5"
             />
-          </ChartPanel>
-        </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-          <ChartPanel title="By country" description="Destination mix">
-            <BarChart
-              data={countryBars}
-              xKey="country"
-              height={220}
-              barSize={14}
-              showLegend={false}
-              loading={loading}
-              bars={[{ key: 'share', label: 'Share %' }]}
-            />
-          </ChartPanel>
-        </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-          <ChartPanel title="By visa type" description="Product mix">
-            <BarChart
-              data={visaBars}
-              xKey="visa"
-              height={220}
-              barSize={14}
-              showLegend={false}
-              loading={loading}
-              bars={[{ key: 'share', label: 'Share %' }]}
-            />
-          </ChartPanel>
-        </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-          <ChartPanel title="Jurisdiction contribution" description="Composite score">
-            <BarChart
-              data={jurisdictionBars}
-              xKey="jurisdiction"
-              height={220}
-              barSize={14}
-              showLegend={false}
-              loading={loading}
-              bars={[{ key: 'score', label: 'Score' }]}
-            />
-          </ChartPanel>
+          </Box>
         </Grid>
       </Grid>
 
-      <ComparisonLayout
-        left={
-          <BranchPerformance
-            title="Jurisdiction detail"
-            branches={data.branchPerformance}
-            loading={loading}
-            onRetry={onRetry}
-          />
-        }
-        right={
-          <RankingList
-            title="Margin by vertical"
-            items={toRankingItems(data.marginByVertical)}
-            loading={loading}
-          />
-        }
-      />
+      <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+        <Grid size={{ xs: 12, md: 6 }}>
+          <SuperAdminPanel
+            title="Active applications comparison"
+            description="Active · completed · pending"
+            onClick={() => openSegmentsWithFilter()}
+          >
+            <BarChart
+              data={applicationBars}
+              xKey="segment"
+              height={SA_CHART_HEIGHT}
+              barSize={14}
+              showLegend
+              loading={loading}
+              bars={[
+                { key: 'active', label: 'Active', color: chart.navy },
+                { key: 'completed', label: 'Completed', color: chart.green },
+                { key: 'pending', label: 'Pending', color: chart.amber },
+              ]}
+            />
+          </SuperAdminPanel>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Box
+            role="button"
+            tabIndex={0}
+            onClick={() => openSegmentsWithFilter()}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                openSegmentsWithFilter()
+              }
+            }}
+            sx={{ height: '100%', cursor: 'pointer' }}
+          >
+            <SuperAdminRankChart
+              title="Visa approval rate"
+              items={approvalRankItems}
+              loading={loading}
+              valueLabel="Approval %"
+              initialTopN="5"
+            />
+          </Box>
+        </Grid>
+      </Grid>
+      </SuperAdminSection>
+
+      <SuperAdminSection
+        title="Revenue & demand growth"
+        description="Monthly trends by segment"
+      >
+      <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+        <Grid size={{ xs: 12, md: 6 }}>
+          <SuperAdminPanel
+            title="Average turnaround time"
+            description="Processing TAT by segment (days)"
+            onClick={() => openSegmentsWithFilter()}
+          >
+            <BarChart
+              data={tatBars}
+              xKey="segment"
+              height={SA_CHART_HEIGHT}
+              barSize={28}
+              showLegend={false}
+              loading={loading}
+              bars={[{ key: 'tat', label: 'Avg TAT (days)' }]}
+            />
+          </SuperAdminPanel>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <SuperAdminPanel
+            title="Revenue growth trend"
+            description="Monthly gross (invoiced) revenue by segment (₹L)"
+            onClick={() => openSegmentsWithFilter()}
+          >
+            <LineChart
+              data={data.segmentRevenueTrend as unknown as Record<string, unknown>[]}
+              xKey="label"
+              height={SA_CHART_HEIGHT}
+              showLegend
+              loading={loading}
+              lines={[...segmentSeries]}
+            />
+          </SuperAdminPanel>
+        </Grid>
+      </Grid>
+
+      <SuperAdminPanel
+        title="Monthly application trend"
+        description="Demand and workload by segment"
+        onClick={() => openSegmentsWithFilter()}
+      >
+        <LineChart
+          data={data.segmentApplicationTrend as unknown as Record<string, unknown>[]}
+          xKey="label"
+          height={SA_CHART_HEIGHT + 40}
+          showLegend
+          loading={loading}
+          lines={[...segmentSeries]}
+        />
+      </SuperAdminPanel>
+      </SuperAdminSection>
     </Stack>
   )
 }

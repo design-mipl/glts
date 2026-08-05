@@ -13,6 +13,7 @@ import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import { exportDashboardSnapshot } from '../../shared/dashboard-intelligence'
 import { DASHBOARD_SPACING } from '../../shared/constants'
+import { SuperAdminSection } from '../components/SuperAdminChrome'
 import {
   SUPER_ADMIN_REPORT_CATEGORY_OPTIONS,
   SUPER_ADMIN_REPORT_PERIOD_OPTIONS,
@@ -106,7 +107,8 @@ export function ReportsTab({ data, loading }: SuperAdminDashboardTabProps) {
   }
 
   return (
-    <Stack spacing={DASHBOARD_SPACING.field}>
+    <Stack spacing={DASHBOARD_SPACING.section}>
+      <SuperAdminSection title="Reports">
       <Box sx={{ ...executiveCardLevel2Sx(colors), p: 2 }}>
         <Stack
           direction={{ xs: 'column', md: 'row' }}
@@ -266,6 +268,7 @@ export function ReportsTab({ data, loading }: SuperAdminDashboardTabProps) {
           </Box>
         )}
       </Box>
+      </SuperAdminSection>
     </Stack>
   )
 }

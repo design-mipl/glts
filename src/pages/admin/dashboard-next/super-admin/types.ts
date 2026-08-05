@@ -13,6 +13,7 @@ import type { PassportJourneyStageData } from '../shared/widgets/operations/Pass
 import type { MarineTimelineRow } from '../shared/widgets/operations/MarineTimeline'
 import type { TeamCapacityRow } from '../shared/widgets/operations/TeamCapacity'
 import type { TeamProductivityByChannel } from '../shared/widgets/operations/TeamProductivityInfographic'
+import type { OpsOrgQueueSnapshot } from '../shared/widgets/operations/opsOrgQueueTypes'
 import type { RevenueSnapshotData } from '../shared/widgets/finance/RevenueSnapshot'
 import type { CollectionSummaryData } from '../shared/widgets/finance/CollectionSummary'
 import type { AgeingBucketValue } from '../shared/widgets/finance/AgeingAnalysis'
@@ -81,20 +82,45 @@ export interface SuperAdminSegmentCard {
   id: 'marine' | 'corporate' | 'retail' | 'b2b'
   label: string
   status: 'live' | 'placeholder'
+  /** Gross revenue (invoice value) — display. */
   revenue: string
+  /** Net revenue / GLTS earnings — display. */
+  netRevenue: string
   cost: string
   grossMarginPercent: string
   applications: string
   approvalPercent: string
   avgTat: string
   outstanding: string
+  collections: string
   activeClients: string
   pipelineValue: string
   growthLabel: string
   insight: string
+  /** Numeric helpers for comparison charts (₹ Lakhs unless noted). */
+  grossRevenueL: number
+  netRevenueL: number
+  collectionsL: number
+  outstandingL: number
+  activeApplications: number
+  completedApplications: number
+  pendingApplications: number
+  approvalRate: number
+  marginPercent: number
+  growthPercent: number
+  avgTatDays: number
   /** Retail-only extras (optional). */
   repeatBusinessPercent?: string
   winRate?: string
+}
+
+/** Monthly series keyed by segment for Business comparison trends. */
+export interface SuperAdminSegmentTrendPoint {
+  label: string
+  marine: number
+  corporate: number
+  retail: number
+  b2b: number
 }
 
 export interface SuperAdminSalesPlaceholder {
@@ -131,6 +157,65 @@ export interface SuperAdminBlockedCash {
   note: string
 }
 
+/** Segment counts for Active Applications KPI. */
+export interface SuperAdminSegmentBreakdownItem {
+  id: string
+  label: string
+  count: number
+}
+
+/** Row-2 / extended executive summary metrics beyond period heroes. */
+export interface SuperAdminExecutiveSummary {
+  netRevenue: {
+    value: string
+    marginPercent: string
+    delta?: number
+    deltaLabel?: string
+  }
+  outstanding: {
+    amount: string
+    overdueInvoiceCount: number
+    delta?: number
+    deltaLabel?: string
+  }
+  businessHealth: {
+    score: number
+    statusLabel: string
+    delta?: number
+    deltaLabel?: string
+  }
+  activeApplications: {
+    total: number
+    segments: SuperAdminSegmentBreakdownItem[]
+  }
+  approvalRate: {
+    value: string
+    delta?: number
+    deltaLabel?: string
+  }
+  atRisk: {
+    total: number
+    critical: number
+    warning: number
+  }
+  averageTat: {
+    days: number
+    targetDays: number
+    delta?: number
+    deltaLabel?: string
+  }
+  receivedToday: {
+    count: number
+    delta?: number
+    deltaLabel?: string
+  }
+  submittedToday: {
+    count: number
+    delta?: number
+    deltaLabel?: string
+  }
+}
+
 export interface SuperAdminOperationsToday {
   receivedToday: number
   submittedToday: number
@@ -148,6 +233,27 @@ export interface SuperAdminCashPosition {
   availableFunds: string
 }
 
+/** Mock executive finance KPIs until Expense & Billing (IW) APIs are live. */
+export interface SuperAdminFinanceKpis {
+  ebitda: string
+  ebitdaDelta?: number
+  ebitdaDeltaLabel?: string
+  dsoDays: number
+  dsoDelta?: number
+  dsoDeltaLabel?: string
+  /** Gross profit after markup / courier / GST rules (from Finance when live). */
+  grossProfit: string
+  grossMarginPercent: string
+  grossProfitDelta?: number
+  /** Net revenue = GLTS profit (not invoiced gross). */
+  netRevenue: string
+  netRevenueDelta?: number
+  collectionsToday: string
+  collectionsMtd: string
+  workingCapitalExposure: string
+  creditExposure: string
+}
+
 export interface SuperAdminVerticalPreview {
   kpis: MetricComparisonItem[]
   byEntity: SuperAdminRankItem[]
@@ -162,13 +268,19 @@ export interface SuperAdminDashboardData {
   revenueHero: SuperAdminRevenueHero
   /** Combined Today / MTD / YTD collections card. */
   collectionsHero: SuperAdminPeriodHero
-  /** Remaining hero KPIs (health, GP, outstanding, apps, approval, at-risk). */
+  /** Remaining hero KPIs (health, GP, outstanding, apps, approval, at-risk) — reports compat. */
   heroKpis: DashboardKpiItem[]
   blockedCash: SuperAdminBlockedCash
+  /** 12-card Executive Summary payload (financial + operational health). */
+  executiveSummary: SuperAdminExecutiveSummary
   approvalRateTrend30d: TrendPoint[]
   operationsToday: SuperAdminOperationsToday
+  /** Org queue mix · assignee · ageing · workload — Ops / Admin Operations infographics. */
+  opsQueueSnapshot: OpsOrgQueueSnapshot
   processingTimeByCountry: NamedMetricPoint[]
   cashPosition: SuperAdminCashPosition
+  /** Mock EBITDA / DSO / GP / credit exposure until Finance APIs. */
+  financeKpis: SuperAdminFinanceKpis
   marginByVertical: SuperAdminRankItem[]
   quickStats: DashboardKpiItem[]
   metricComparison: MetricComparisonItem[]
@@ -178,6 +290,10 @@ export interface SuperAdminDashboardData {
   branchPerformance: NamedMetricPoint[]
   businessSegments: DistributionSlice[]
   segmentCards: SuperAdminSegmentCard[]
+  /** Business tab — monthly gross revenue by segment (₹L). */
+  segmentRevenueTrend: SuperAdminSegmentTrendPoint[]
+  /** Business tab — monthly applications by segment. */
+  segmentApplicationTrend: SuperAdminSegmentTrendPoint[]
   notifications: NotificationItem[]
   quickActions: SuperAdminQuickActionDefinition[]
   pipelineStages: ApplicationPipelineStageData[]

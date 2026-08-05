@@ -3,9 +3,13 @@ import { AGEING_BUCKET_IDS } from '../../shared/config/ageingBuckets'
 
 export const ACCOUNTS_DATE_OPTIONS = [
   { label: 'Today', value: 'today' },
-  { label: 'This week', value: 'week' },
-  { label: 'This month', value: 'month' },
-  { label: 'This quarter', value: 'quarter' },
+  { label: 'Yesterday', value: 'yesterday' },
+  { label: 'Last 7 Days', value: 'last7' },
+  { label: 'Last 30 Days', value: 'last30' },
+  { label: 'MTD', value: 'mtd' },
+  { label: 'QTD', value: 'qtd' },
+  { label: 'YTD', value: 'ytd' },
+  { label: 'Custom', value: 'custom' },
 ]
 
 export const ACCOUNTS_JURISDICTION_OPTIONS = [
@@ -66,7 +70,7 @@ export const ACCOUNTS_COUNTRY_OPTIONS = [
 ]
 
 export const DEFAULT_ACCOUNTS_DASHBOARD_FILTERS: AccountsDashboardFilters = {
-  date: 'month',
+  date: 'mtd',
   branch: 'all',
   segment: 'all',
   client: 'all',

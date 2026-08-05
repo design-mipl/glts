@@ -33,6 +33,7 @@ export const ASSIGNMENT_SEGMENTS: Record<AssignmentSegmentKey, AssignmentSegment
     queueSubtitle: 'Operational routing and priority management for B2B agent passenger records.',
     applicationListPath: '/admin/application-management/b2b-agents',
     routePath: '/admin/assignment-priority/b2b',
+    listingLayout: 'operational',
   },
   corporate: {
     key: 'corporate',
@@ -42,6 +43,7 @@ export const ASSIGNMENT_SEGMENTS: Record<AssignmentSegmentKey, AssignmentSegment
     queueSubtitle: 'Assign and prioritize corporate passenger operational work after submission.',
     applicationListPath: '/admin/application-management/corporate',
     routePath: '/admin/assignment-priority/corporate',
+    listingLayout: 'operational',
   },
   retail: {
     key: 'retail',

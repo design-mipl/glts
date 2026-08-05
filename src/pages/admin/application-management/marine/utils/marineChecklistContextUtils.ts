@@ -18,7 +18,7 @@ function resolveOfferingIds(
   visaType?: string,
 ): Pick<MarineChecklistContext, 'countryId' | 'visaOfferingId'> {
   if (!country?.trim() || !visaType?.trim()) return {}
-  return resolveOfferingIdsByLabels(country, visaType) ?? {}
+  return resolveOfferingIdsByLabels(country, visaType, 'marine') ?? {}
 }
 
 export function resolveMarineChecklistContext(input: {

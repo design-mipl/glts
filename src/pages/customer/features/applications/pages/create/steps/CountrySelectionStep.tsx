@@ -80,13 +80,13 @@ function SectionLabel({ children }: { children: string }) {
 
 export function CountrySelectionStep({ state, onUpdate, onContinue }: CountrySelectionStepProps) {
   const colors = usePublicBrandColors()
-  const { policy } = useApplicationFlowPolicy()
+  const { policy, customerSegment } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
   const [query, setQuery] = useState('')
   const [sortMode, setSortMode] = useState<CountrySortMode>('default')
   const { favoriteIds, isFavorite, toggleFavorite } = useFavoriteCountries()
 
-  const flowSegment = resolveApplicationFlowSegment(policy)
+  const flowSegment = resolveApplicationFlowSegment(policy, customerSegment)
 
   const filtered = useMemo(() => {
     const all = listPortalCountries({ portalDisplaySegment: flowSegment })

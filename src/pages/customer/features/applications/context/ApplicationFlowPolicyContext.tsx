@@ -1,9 +1,13 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import type { BreadcrumbItem } from '@/design-system/UIComponents'
+import type { ApplicationCustomerSegment } from '@/pages/customer/features/applications/types/applicationListing.types'
+import type { BusinessSegment } from '@/shared/types/countryMaster'
 
 export type ApplicationFlowPolicy = 'customer' | 'admin' | 'website'
 
 export const ADMIN_MARINE_APPLICATION_FLOW_STORAGE_KEY = 'glts:admin-marine-application-flow'
+export const ADMIN_B2B_APPLICATION_FLOW_STORAGE_KEY = 'glts:admin-b2b-application-flow'
+export const ADMIN_CORPORATE_APPLICATION_FLOW_STORAGE_KEY = 'glts:admin-corporate-application-flow'
 export const WEBSITE_APPLICATION_FLOW_STORAGE_KEY = 'glts:website-application-flow'
 
 export interface ApplicationFlowPolicyContextValue {
@@ -11,6 +15,8 @@ export interface ApplicationFlowPolicyContextValue {
   listingPath: string
   breadcrumbItems: BreadcrumbItem[]
   storageKey: string
+  /** Country Master / listing segment for admin create flows. */
+  customerSegment: ApplicationCustomerSegment
 }
 
 const defaultValue: ApplicationFlowPolicyContextValue = {
@@ -18,6 +24,7 @@ const defaultValue: ApplicationFlowPolicyContextValue = {
   listingPath: '',
   breadcrumbItems: [],
   storageKey: 'glts:application-flow',
+  customerSegment: 'marine',
 }
 
 const ApplicationFlowPolicyContext = createContext<ApplicationFlowPolicyContextValue>(defaultValue)
@@ -27,7 +34,27 @@ export interface ApplicationFlowPolicyProviderProps {
   listingPath: string
   breadcrumbItems: BreadcrumbItem[]
   storageKey?: string
+  /** Required for admin segment modules (marine / corporate / b2b). Defaults to marine. */
+  customerSegment?: ApplicationCustomerSegment
   children: ReactNode
+}
+
+function defaultStorageKeyFor(
+  policy: ApplicationFlowPolicy,
+  customerSegment: ApplicationCustomerSegment,
+): string {
+  if (policy === 'website') return WEBSITE_APPLICATION_FLOW_STORAGE_KEY
+  if (policy !== 'admin') return 'glts:application-flow'
+  switch (customerSegment) {
+    case 'b2bAgents':
+      return ADMIN_B2B_APPLICATION_FLOW_STORAGE_KEY
+    case 'corporate':
+      return ADMIN_CORPORATE_APPLICATION_FLOW_STORAGE_KEY
+    case 'retail':
+    case 'marine':
+    default:
+      return ADMIN_MARINE_APPLICATION_FLOW_STORAGE_KEY
+  }
 }
 
 export function ApplicationFlowPolicyProvider({
@@ -35,6 +62,7 @@ export function ApplicationFlowPolicyProvider({
   listingPath,
   breadcrumbItems,
   storageKey,
+  customerSegment = 'marine',
   children,
 }: ApplicationFlowPolicyProviderProps) {
   const value = useMemo(
@@ -42,15 +70,10 @@ export function ApplicationFlowPolicyProvider({
       policy,
       listingPath,
       breadcrumbItems,
-      storageKey:
-        storageKey ??
-        (policy === 'admin'
-          ? ADMIN_MARINE_APPLICATION_FLOW_STORAGE_KEY
-          : policy === 'website'
-            ? WEBSITE_APPLICATION_FLOW_STORAGE_KEY
-            : 'glts:application-flow'),
+      customerSegment,
+      storageKey: storageKey ?? defaultStorageKeyFor(policy, customerSegment),
     }),
-    [policy, listingPath, breadcrumbItems, storageKey],
+    [policy, listingPath, breadcrumbItems, storageKey, customerSegment],
   )
 
   return (
@@ -72,4 +95,11 @@ export function isWebsiteFlowPolicy(policy: ApplicationFlowPolicy): boolean {
 
 export function requiresFieldValidation(policy: ApplicationFlowPolicy): boolean {
   return policy === 'customer' || policy === 'website'
+}
+
+/** Map listing customer segment to Country Master business segment. */
+export function customerSegmentToBusinessSegment(
+  segment: ApplicationCustomerSegment,
+): BusinessSegment {
+  return segment
 }

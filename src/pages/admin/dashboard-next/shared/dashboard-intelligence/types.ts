@@ -5,16 +5,26 @@
 
 export type IntelligenceDatePreset =
   | 'today'
-  | 'week'
-  | 'month'
-  | 'quarter'
-  | 'year'
-  /** Single calendar day. */
-  | 'date'
-  /** Inclusive from/to calendar range. */
-  | 'range'
-  /** @deprecated Prefer `range`. */
+  | 'yesterday'
+  | 'last7'
+  | 'last30'
+  | 'mtd'
+  | 'qtd'
+  | 'ytd'
+  /** Inclusive custom from/to calendar range. */
   | 'custom'
+  /** @deprecated Prefer `last7`. */
+  | 'week'
+  /** @deprecated Prefer `mtd`. */
+  | 'month'
+  /** @deprecated Prefer `qtd`. */
+  | 'quarter'
+  /** @deprecated Prefer `ytd`. */
+  | 'year'
+  /** @deprecated Prefer `custom`. */
+  | 'date'
+  /** @deprecated Prefer `custom`. */
+  | 'range'
 
 export type IntelligenceComparisonMode =
   | 'none'

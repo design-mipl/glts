@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react'
 import {
   Box,
   Checkbox,
-  FormControlLabel,
   Stack,
   Typography,
 } from '@mui/material'
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
 import {
   Button,
   Drawer,
@@ -22,7 +23,17 @@ import type { OperationalCase } from '@/shared/types/operationalCaseHandling'
 import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
 import { ClaimSheetDetailBody } from './ClaimSheetDetailBody'
 
+dayjs.extend(customParseFormat)
+
 const DRAWER_WIDTH = 640
+
+function formatDisplayDate(value: string | undefined): string {
+  if (!value?.trim()) return '—'
+  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY'], true)
+  if (parsed.isValid()) return parsed.format('DD MMM YYYY')
+  const fallback = dayjs(value.trim())
+  return fallback.isValid() ? fallback.format('DD MMM YYYY') : value
+}
 
 interface OtherExpenseDraft {
   id: string
@@ -156,48 +167,92 @@ export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetC
       bodyVariant="default"
     >
       {step === 'select' ? (
-        <Stack spacing={1.25}>
+        <Stack spacing={1}>
           {eligibleCases.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
               No document-submitted or later cases are available for claim.
             </Typography>
           ) : (
-            eligibleCases.map(record => (
-              <Box
-                key={record.id}
-                sx={{
-                  px: 1.25,
-                  py: 1,
-                  borderRadius: 1.25,
-                  border: 1,
-                  borderColor: selectedIds.includes(record.id) ? 'primary.main' : 'divider',
-                  bgcolor: 'background.paper',
-                }}
-              >
-                <FormControlLabel
-                  control={
+            eligibleCases.map(record => {
+              const selected = selectedIds.includes(record.id)
+              return (
+                <Box
+                  key={record.id}
+                  onClick={() => toggleCase(record.id)}
+                  sx={{
+                    px: 1.25,
+                    py: 1,
+                    borderRadius: 1.25,
+                    border: 1,
+                    borderColor: selected ? 'primary.main' : 'divider',
+                    bgcolor: 'background.paper',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.15s ease, background-color 0.15s ease',
+                    '&:hover': {
+                      bgcolor: 'action.hover',
+                    },
+                  }}
+                >
+                  <Stack direction="row" spacing={1} alignItems="flex-start">
                     <Checkbox
                       size="small"
-                      checked={selectedIds.includes(record.id)}
+                      checked={selected}
+                      onClick={event => event.stopPropagation()}
                       onChange={() => toggleCase(record.id)}
+                      sx={{ p: 0.25, mt: 0.1 }}
                     />
-                  }
-                  label={
-                    <Box>
-                      <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-                        {record.passengerName} · {record.operationalId}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
-                        {record.applicationId} · {record.country} · {record.visaType} · {record.status}
+                    <Stack spacing={0.35} minWidth={0} flex={1}>
+                      <Stack
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="baseline"
+                        spacing={1}
+                      >
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          noWrap
+                          sx={{ fontSize: 13, lineHeight: 1.35 }}
+                        >
+                          {record.passengerName}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontSize: 12, lineHeight: 1.35, flexShrink: 0 }}
+                        >
+                          {formatInr(record.actualExpense || 0)}
+                        </Typography>
+                      </Stack>
+
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        noWrap
+                        sx={{ fontSize: 11, lineHeight: 1.4 }}
+                      >
+                        {record.operationalId} · {record.applicationId}
                         {' · '}
-                        {formatInr(record.actualExpense || 0)}
+                        {[record.country, record.visaType, record.status]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </Typography>
-                    </Box>
-                  }
-                  sx={{ m: 0, alignItems: 'flex-start', width: '100%' }}
-                />
-              </Box>
-            ))
+
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        noWrap
+                        sx={{ fontSize: 11, lineHeight: 1.4, opacity: 0.85 }}
+                      >
+                        Submitted {formatDisplayDate(record.submissionDate)}
+                        {' · '}
+                        Dispatched {formatDisplayDate(record.dispatchDetails?.dispatchedAt)}
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                </Box>
+              )
+            })
           )}
         </Stack>
       ) : null}

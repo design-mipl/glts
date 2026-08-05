@@ -30,10 +30,10 @@ export function SingleVisaPurposeStep({
   continueLabel = 'Continue',
 }: SingleVisaPurposeStepProps) {
   const colors = usePublicBrandColors()
-  const { policy } = useApplicationFlowPolicy()
+  const { policy, customerSegment } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
   const isWebsite = isWebsiteFlowPolicy(policy)
-  const flowSegment = resolveApplicationFlowSegment(policy)
+  const flowSegment = resolveApplicationFlowSegment(policy, customerSegment)
   const options = getVisaOfferings(state.countryId, true, flowSegment)
 
   return (

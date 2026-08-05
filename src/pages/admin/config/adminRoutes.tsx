@@ -63,6 +63,18 @@ import {
   MarineVerifyDocumentsPage,
   MarineViewFormPage,
 } from '../application-management/marine'
+import {
+  B2bApplicationListingPage,
+  B2bCreateApplicationPage,
+  B2bVerifyDocumentsPage,
+  B2bViewFormPage,
+} from '../application-management/b2b-agents'
+import {
+  CorporateApplicationListingPage,
+  CorporateCreateApplicationPage,
+  CorporateVerifyDocumentsPage,
+  CorporateViewFormPage,
+} from '../application-management/corporate'
 import { InvoiceFinanceRoutes } from '../finance/invoices/InvoiceFinanceRoutes'
 import {
   BillingReportsPage,
@@ -177,20 +189,6 @@ const adminRoutes: AdminRouteDefinition[] = [
   {
     path: 'application-management/retail',
     title: 'Retail application management',
-    description: 'This module is under development.',
-    eyebrow: 'Application management',
-    kind: 'coming-soon',
-  },
-  {
-    path: 'application-management/corporate',
-    title: 'Corporate application management',
-    description: 'This module is under development.',
-    eyebrow: 'Application management',
-    kind: 'coming-soon',
-  },
-  {
-    path: 'application-management/b2b-agents',
-    title: 'B2B agents application management',
     description: 'This module is under development.',
     eyebrow: 'Application management',
     kind: 'coming-soon',
@@ -532,6 +530,70 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <MarineVerifyDocumentsPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/corporate"
+        element={
+          <PermissionGuard>
+            <CorporateApplicationListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/corporate/new"
+        element={
+          <PermissionGuard>
+            <CorporateCreateApplicationPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/corporate/:applicationId/view-form"
+        element={
+          <PermissionGuard>
+            <CorporateViewFormPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/corporate/:applicationId"
+        element={
+          <PermissionGuard>
+            <CorporateVerifyDocumentsPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/b2b-agents"
+        element={
+          <PermissionGuard>
+            <B2bApplicationListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/b2b-agents/new"
+        element={
+          <PermissionGuard>
+            <B2bCreateApplicationPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/b2b-agents/:applicationId/view-form"
+        element={
+          <PermissionGuard>
+            <B2bViewFormPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/b2b-agents/:applicationId"
+        element={
+          <PermissionGuard>
+            <B2bVerifyDocumentsPage />
           </PermissionGuard>
         }
       />
