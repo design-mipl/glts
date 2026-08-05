@@ -100,9 +100,8 @@ export function InvoiceCompositionContextStrip({
         }}
       >
         <Box sx={{ minWidth: 0, width: { xs: '100%', sm: 160 } }}>
-          <FormField label={documentDateLabel} required htmlFor="composition-document-date">
+          <FormField label={documentDateLabel} required labelFor="composition-document-date">
             <Input
-              id="composition-document-date"
               type="date"
               value={documentDate}
               onChange={v => onDocumentDateChange(String(v))}

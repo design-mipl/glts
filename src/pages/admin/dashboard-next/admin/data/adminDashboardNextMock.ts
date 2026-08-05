@@ -502,6 +502,8 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
   revenueSnapshot: {
     todayRevenue: '₹1.8L',
     monthlyRevenue: '₹42.8L',
+    mtd: 42.8,
+    ytd: 428,
     growthPercent: 6.3,
     trend: [28, 30, 32, 35, 38, 40, 43],
   },

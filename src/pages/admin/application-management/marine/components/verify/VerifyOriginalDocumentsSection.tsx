@@ -79,7 +79,7 @@ export function VerifyOriginalDocumentsSection({
       <OriginalDocumentCollectionPanel
         documents={originalRequiredDocuments}
         state={resolvedCollection}
-        onChange={readOnly ? undefined : next => onCollectionChange?.(next)}
+        onChange={readOnly ? () => {} : next => onCollectionChange?.(next)}
         onReceivedSubmit={readOnly ? undefined : onReceivedSubmit}
         showReceivedAction={!readOnly}
         readOnly={readOnly}

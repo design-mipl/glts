@@ -1,5 +1,5 @@
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
-import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
+import type { CommercialAgreement, AgreementFinanceContactPerson } from '@/shared/types/commercialAgreement'
 import {
   financeContactsSummaryFromPersons,
   getSelectedFinanceContactPersons,
@@ -13,8 +13,16 @@ import { mapAgreementPricingToPortalGroups } from './mapAgreementPricingToPortal
 
 export { CUSTOMER_PORTAL_AGREEMENT_ID }
 
-function mapPerson(person: FinanceContactPerson): FinanceContactPerson {
-  return { ...person }
+function mapPerson(person: AgreementFinanceContactPerson): FinanceContactPerson {
+  return {
+    id: person.id,
+    sourceType: person.sourceType === 'manual' ? 'company' : person.sourceType,
+    sourceId: person.sourceId,
+    sourceLabel: person.sourceLabel,
+    contactPerson: person.contactPerson,
+    email: person.email,
+    phone: person.phone,
+  }
 }
 
 export function resolvePortalFinanceContactPersons(

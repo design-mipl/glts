@@ -104,7 +104,7 @@ export default function Drawer({
               </Typography>
             ) : null}
             {headerExtra ? (
-              <Box sx={{ mt: tokens.spacing[1.5], display: 'flex', flexWrap: 'wrap', gap: tokens.spacing[1] }}>
+              <Box sx={{ mt: tokens.spacing[2], display: 'flex', flexWrap: 'wrap', gap: tokens.spacing[1] }}>
                 {headerExtra}
               </Box>
             ) : null}

@@ -9,6 +9,8 @@ import { BusinessWidgetFrame } from '../common/BusinessWidgetFrame'
 export interface RevenueSnapshotData {
   todayRevenue: string | number
   monthlyRevenue: string | number
+  mtd: number
+  ytd: number
   growthPercent: number
   trend: number[]
 }

@@ -279,6 +279,8 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
   revenueSnapshot: {
     todayRevenue: '₹8.6L',
     monthlyRevenue: '₹2.18Cr',
+    mtd: 218,
+    ytd: 2180,
     growthPercent: 7.1,
     trend: [1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.18],
   },

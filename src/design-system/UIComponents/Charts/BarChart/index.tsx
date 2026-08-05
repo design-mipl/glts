@@ -65,7 +65,7 @@ function TwoLineCategoryTick({
   payload?: { value?: string | number }
   fill?: string
   fontSize?: number | string
-  textAnchor?: string
+  textAnchor?: 'inherit' | 'end' | 'start' | 'middle'
   formatter?: (value: unknown) => string
 }) {
   const raw = payload?.value

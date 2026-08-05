@@ -161,6 +161,8 @@ export const ACCOUNTS_DASHBOARD_MOCK: AccountsDashboardData = {
   revenueSnapshot: {
     todayRevenue: '₹1.8L',
     monthlyRevenue: '₹42.8L',
+    mtd: 42.8,
+    ytd: 428,
     growthPercent: 6.3,
     trend: [28, 30, 32, 35, 38, 40, 43],
   },

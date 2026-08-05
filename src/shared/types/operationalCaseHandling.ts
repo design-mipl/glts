@@ -15,7 +15,7 @@ export type OperationalCaseStatus =
   | 'Dispatched'
   | 'Completed'
 
-export type CityTeam = 'Mumbai Team' | 'Delhi Team' | 'Chennai Team'
+export type CityTeam = 'Mumbai Team' | 'Delhi Team' | 'Chennai Team' | 'Marine Team'
 
 export type OperationalDateFilterPreset =
   | 'today'
@@ -253,7 +253,7 @@ export const OPERATIONS_DESK_GROUP_BY_OPTIONS: { value: OperationsDeskGroupBy; l
   { value: 'status', label: 'Group By Status' },
 ]
 
-export const CITY_TEAMS: CityTeam[] = ['Mumbai Team', 'Delhi Team', 'Chennai Team']
+export const CITY_TEAMS: CityTeam[] = ['Mumbai Team', 'Delhi Team', 'Chennai Team', 'Marine Team']
 
 export const DEFAULT_GROUND_SERVICE_NAMES = [
   'Biometrics Coordination',

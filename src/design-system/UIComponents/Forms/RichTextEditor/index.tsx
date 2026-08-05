@@ -112,6 +112,8 @@ export default function RichTextEditor({
   const borderColor = error ? theme.palette.error.main : formControlBorderDefault(theme)
 
   const renderToolbarItem = (item: ToolbarItem, index: number) => {
+    if (!editor) return null
+
     if (item === 'divider') {
       return (
         <Divider

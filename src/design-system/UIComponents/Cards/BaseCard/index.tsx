@@ -39,31 +39,33 @@ export default function BaseCard({
     <Card
       elevation={elevation}
       onClick={onClick}
-      sx={[
-        {
-          borderRadius: BORDER_RADIUS.lg,
-          boxShadow: SHADOWS.sm,
-          border: selected ? BORDER_WIDTH.medium + ' solid' : BORDER_WIDTH.thin + ' solid',
-          borderColor: selected ? 'primary.main' : 'divider',
-          bgcolor: selected ? alpha(theme.palette.primary.main, 0.04) : 'background.paper',
-          backgroundImage: 'none',
-          transition: 'all 0.2s ease',
-          cursor: onClick || selectable ? 'pointer' : 'default',
-          overflow: 'hidden',
-          width: '100%',
-          ...(isInteractive && {
-            '&:hover': {
-              boxShadow: SHADOWS.md,
-              transform: 'translateY(-2px)',
-              borderColor: alpha(theme.palette.primary.main, 0.3),
-              ...(!selected && selectable && {
-                borderColor: 'primary.light',
-              }),
-            },
-          }),
-        },
-        ...normalizeSx(sx),
-      ]}
+      sx={
+        [
+          {
+            borderRadius: BORDER_RADIUS.lg,
+            boxShadow: SHADOWS.sm,
+            border: selected ? BORDER_WIDTH.medium + ' solid' : BORDER_WIDTH.thin + ' solid',
+            borderColor: selected ? 'primary.main' : 'divider',
+            bgcolor: selected ? alpha(theme.palette.primary.main, 0.04) : 'background.paper',
+            backgroundImage: 'none',
+            transition: 'all 0.2s ease',
+            cursor: onClick || selectable ? 'pointer' : 'default',
+            overflow: 'hidden',
+            width: '100%',
+            ...(isInteractive && {
+              '&:hover': {
+                boxShadow: SHADOWS.md,
+                transform: 'translateY(-2px)',
+                borderColor: alpha(theme.palette.primary.main, 0.3),
+                ...(!selected && selectable && {
+                  borderColor: 'primary.light',
+                }),
+              },
+            }),
+          },
+          ...normalizeSx(sx),
+        ] as SxProps<Theme>
+      }
     >
       {headerColor && (
         <Box

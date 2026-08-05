@@ -1,7 +1,6 @@
 import type { BusinessSegment } from '@/shared/types/countryMaster'
 import type { AgreementWorkflowType } from '@/shared/types/commercialAgreement'
 import { applicabilityForWorkflow } from '@/shared/utils/agreementDocumentUtils'
-import { getCompanyCityOptions, getCompanyStateOptions } from '@/shared/utils/companyAddressOptions'
 import { countryMasterAdminService } from '@/shared/services/countryMasterAdminService'
 import { serviceMasterService } from '@/shared/services/serviceMasterService'
 

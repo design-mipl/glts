@@ -93,7 +93,7 @@ function VisaServiceCard({
   reducedMotion: boolean
 }) {
   const colors = usePublicBrandColors()
-  const [imageSrc, setImageSrc] = useState(image.src)
+  const [imageSrc, setImageSrc] = useState<string>(image.src)
   const delayMs = reducedMotion ? 0 : index * 70
 
   return (
@@ -296,8 +296,8 @@ export function VisaServicesSection() {
             gap: { xs: 2.5, sm: 2.75, md: 3 },
             overflowX: { xs: 'auto', lg: 'visible' },
             pb: { xs: 1, lg: 0 },
-            mx: { xs: -2, sm: -2.5, md: -3, lg: 0 },
-            px: { xs: 2, sm: 2.5, md: 3, lg: 0 },
+            mx: { xs: -3, sm: -4, md: -5, lg: 0 },
+            px: { xs: 3, sm: 4, md: 5, lg: 0 },
             scrollSnapType: { xs: 'x mandatory', lg: 'none' },
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'thin',

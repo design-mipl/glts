@@ -21,11 +21,11 @@ export function getCompanyAddressCountryOptions(): AddressSelectOption[] {
 
 export function getCompanyStateOptions(countryName: string): AddressSelectOption[] {
   if (!isIndianAddressCountry(countryName)) return []
-  return INDIAN_STATE_SELECT_OPTIONS
+  return INDIAN_STATE_SELECT_OPTIONS.map((option) => ({ ...option, countryName }))
 }
 
 export function getCompanyCityOptions(countryName: string, state: string): AddressSelectOption[] {
   if (!isIndianAddressCountry(countryName) || !state.trim()) return []
   const cities = INDIAN_CITIES_BY_STATE[state] ?? []
-  return cities.map((city) => ({ value: city, label: city }))
+  return cities.map((city) => ({ value: city, label: city, countryName }))
 }

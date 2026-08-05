@@ -540,9 +540,9 @@ export function buildSuperAdminReportRows(
       return [
         {
           id: 'col-1',
-          outstanding: data.collectionSummary.outstanding,
-          collected: data.collectionSummary.collected,
-          overdue: data.collectionSummary.overdue,
+          outstanding: String(data.collectionSummary.outstanding),
+          collected: String(data.collectionSummary.collected),
+          overdue: String(data.collectionSummary.overdue),
           collectionRate: String(data.collectionSummary.collectionRate),
         },
       ]
@@ -576,13 +576,13 @@ export function buildSuperAdminReportRows(
         {
           id: 'dso-1',
           metric: 'Outstanding receivables',
-          value: data.collectionSummary.outstanding,
+          value: String(data.collectionSummary.outstanding),
           note: `Collection rate ${data.collectionSummary.collectionRate}%`,
         },
         {
           id: 'dso-2',
           metric: 'Overdue',
-          value: data.collectionSummary.overdue,
+          value: String(data.collectionSummary.overdue),
           note: 'Focus accounts in Client Reports',
         },
       ]

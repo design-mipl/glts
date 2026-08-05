@@ -74,7 +74,3 @@ export function VendorBillingDetailSummary({ vendor, summary }: VendorBillingDet
     </BaseCard>
   )
 }
-
-function BoxBadge({ status }: { status: Vendor['status'] }) {
-  return <Badge label={vendorStatusLabel[status]} color={vendorStatusColor[status]} size="sm" />
-}

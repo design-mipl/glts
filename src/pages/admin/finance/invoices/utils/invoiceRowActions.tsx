@@ -95,11 +95,7 @@ export function buildInvoiceRowActions(row: Invoice, handlers: InvoiceRowActionH
     })
   }
 
-  if (
-    row.invoiceStatus !== 'paid' &&
-    row.invoiceStatus !== 'cancelled' &&
-    row.invoiceType !== 'credit_note'
-  ) {
+  if (row.invoiceStatus !== 'paid') {
     actions.push({
       label: 'Record payment',
       icon: <Banknote size={14} />,

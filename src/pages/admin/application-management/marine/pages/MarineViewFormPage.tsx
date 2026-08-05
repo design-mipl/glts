@@ -521,8 +521,8 @@ export function MarineViewFormPage() {
       return (
         <ViewFormSubmissionSection
           submission={submission}
-          country={listingRow?.country ?? detail?.countryName ?? ''}
-          visaType={listingRow?.visaType ?? detail?.visaTypeLabel ?? ''}
+          country={listingRow?.country ?? detail?.application?.country ?? ''}
+          visaType={listingRow?.visaType ?? detail?.application?.visaType ?? ''}
           countryId={checklistContext.countryId}
           visaOfferingId={checklistContext.visaOfferingId}
           readOnly={readOnly || formInteractionDisabled}
@@ -611,8 +611,8 @@ export function MarineViewFormPage() {
       selectedRow={selectedRow}
       detail={detail}
       submission={submission}
-      country={listingRow?.country ?? detail.countryName ?? ''}
-      visaType={listingRow?.visaType ?? detail.visaTypeLabel ?? ''}
+      country={listingRow?.country ?? detail?.application?.country ?? ''}
+      visaType={listingRow?.visaType ?? detail?.application?.visaType ?? ''}
       countryId={checklistContext.countryId}
       visaOfferingId={checklistContext.visaOfferingId}
       readOnly={readOnly}

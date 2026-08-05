@@ -33,7 +33,7 @@ export function QuickStats({
 }: QuickStatsProps) {
   const resolvedColumns = columns ?? kpiColumns(items.length)
 
-  const displayItems =
+  const displayItems: DashboardKpiItem[] =
     loading && items.length === 0
       ? Array.from({ length: resolvedColumns }, (_, i) => ({
           id: `kpi-skeleton-${i}`,
