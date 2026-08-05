@@ -231,11 +231,8 @@ export function DocumentationWorkListing<T extends { id: string }>({
 }
 
 /** Generic cell value for documentation desk rows. */
-export function getDocumentationWorkCellValue<T extends Record<string, unknown>>(
-  row: T,
-  key: string,
-): string {
-  const value = row[key]
+export function getDocumentationWorkCellValue(row: object, key: string): string {
+  const value = (row as Record<string, unknown>)[key]
   if (value == null) return ''
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'
   if (value instanceof Date) return value.toISOString()

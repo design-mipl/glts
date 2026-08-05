@@ -8,6 +8,7 @@ export interface InvoiceAddServicePickerOption {
   value: string
   label: string
   defaultAmount: number
+  gstApplicable?: boolean
 }
 
 interface InvoiceAddServicePickerModalProps {

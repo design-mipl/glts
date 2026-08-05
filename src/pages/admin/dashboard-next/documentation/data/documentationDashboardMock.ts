@@ -524,7 +524,7 @@ function buildToAction(
       count: followOps,
       workDesk: 'waiting_on_ops',
     },
-  ].filter((item) => item.count > 0)
+  ].filter((item) => item.count > 0) as DocumentationToActionItem[]
 }
 
 function buildInfographics(

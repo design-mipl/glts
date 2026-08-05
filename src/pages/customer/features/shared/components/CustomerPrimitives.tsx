@@ -654,7 +654,7 @@ const CHECKLIST_STATUS_SORT_ORDER: Record<CustomerChecklistDisplayStatus, number
   verified: 3,
 }
 
-function normalizeChecklistStatus(status: CustomerChecklistItem['status']): CustomerChecklistItem['status'] {
+function normalizeChecklistStatus(status: CustomerChecklistItem['status']): CustomerChecklistDisplayStatus {
   return normalizeChecklistItemStatus(status)
 }
 

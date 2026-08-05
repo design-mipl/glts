@@ -18,7 +18,7 @@ import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCu
 import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
 import { getCurrentListingHref, navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { enquiryService } from '@/shared/services/enquiryService'
-import type { EnquiryRecord, EnquiryStatus } from '@/shared/types/enquiry'
+import type { EnquiryFollowupOutcome, EnquiryRecord, EnquiryStatus } from '@/shared/types/enquiry'
 import { AddFollowupModal, type FollowupModalValue } from '../components/AddFollowupModal'
 import { AssignmentModal, type AssignmentModalValue } from '../components/AssignmentModal'
 import { EnquiryKpiRow } from '../components/EnquiryKpiRow'
@@ -350,6 +350,9 @@ export function EnquiryListingPage() {
               ...followupValue,
               followupType: followupValue.followupType as 'call',
               followupStatus: followupValue.followupStatus as 'scheduled',
+              outcome: followupValue.outcome
+                ? (followupValue.outcome as EnquiryFollowupOutcome)
+                : undefined,
               createdBy: getEnquiryActor(),
             },
             getEnquiryActor(),

@@ -20,8 +20,8 @@ export function PublicContainer({
         maxWidth,
         px:
           variant === 'hero'
-            ? { xs: 2, sm: 2.5, md: 2.5, lg: 3, xl: 3.5 }
-            : { xs: 2.5, sm: 3, md: 4 },
+            ? { xs: 3, sm: 4, md: 5, lg: 6, xl: 8 }
+            : { xs: 3, sm: 4, md: 5, lg: 6 },
         mx: 'auto',
         width: '100%',
         ...sx,

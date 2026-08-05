@@ -160,6 +160,7 @@ function recomputeTeamCapacity() {
     'Mumbai Team': 0,
     'Delhi Team': 0,
     'Chennai Team': 0,
+    'Marine Team': 0,
   }
 
   for (const row of caseStore) {

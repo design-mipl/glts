@@ -307,8 +307,8 @@ function RiskPickersDay(props: PickersDayProps) {
       selected={selected}
       disableRipple
       disableHighlightToday
-      onClick={(event, day) => {
-        dayProps.onClick?.(event, day)
+      onClick={(event) => {
+        dayProps.onClick?.(event)
         ;(event.currentTarget as HTMLElement).blur()
       }}
       sx={[
@@ -367,10 +367,10 @@ export function TravelDateRiskCalendar({ value, onChange, config }: TravelDateRi
 
   const desktopPaperSx = useMemo(
     () => ({
+      ...compactCalendarLayoutSx,
       borderRadius: BORDER_RADIUS.lg,
       border: `1px solid ${theme.palette.divider}`,
       boxShadow: theme.shadows[2],
-      ...compactCalendarLayoutSx,
     }),
     [theme],
   )
@@ -393,10 +393,6 @@ export function TravelDateRiskCalendar({ value, onChange, config }: TravelDateRi
             slots={{ openPickerIcon: () => <Calendar size={16} />, day: RiskPickersDay }}
             slotProps={{
               desktopPaper: { sx: desktopPaperSx },
-              calendar: {
-                showDaysOutsideCurrentMonth: true,
-                fixedWeekNumber: CALENDAR_WEEKS_VISIBLE,
-              },
               textField: {
                 size: 'small',
                 fullWidth: true,
@@ -416,10 +412,10 @@ export function TravelDateRiskCalendar({ value, onChange, config }: TravelDateRi
         ) : (
           <Box
             sx={{
+              ...compactCalendarLayoutSx,
               border: `1px solid ${theme.palette.divider}`,
               borderRadius: BORDER_RADIUS.lg,
               bgcolor: 'background.paper',
-              ...compactCalendarLayoutSx,
             }}
           >
             <StaticDatePicker

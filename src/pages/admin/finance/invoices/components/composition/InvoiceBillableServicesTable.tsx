@@ -139,7 +139,10 @@ export function InvoiceBillableServicesTable({
       onChange([
         ...lines,
         ...selected.map(option => {
-          const line = createBillableServiceLineFromAgreement(option)
+          const line = createBillableServiceLineFromAgreement({
+            ...option,
+            gstApplicable: option.gstApplicable ?? true,
+          })
           return isRevised ? { ...line, updatedAmount: line.amount } : line
         }),
       ])
@@ -147,7 +150,10 @@ export function InvoiceBillableServicesTable({
       onChange([
         ...lines,
         ...selected.map(option => {
-          const line = createBillableServiceLineFromVfs(option)
+          const line = createBillableServiceLineFromVfs({
+            ...option,
+            gstApplicable: option.gstApplicable ?? true,
+          })
           return isRevised ? { ...line, updatedAmount: line.amount } : line
         }),
       ])

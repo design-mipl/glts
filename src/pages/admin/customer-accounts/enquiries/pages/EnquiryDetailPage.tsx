@@ -5,6 +5,7 @@ import { Tabs, BaseCard, EmptyState, useToast } from '@/design-system/UIComponen
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { enquiryService } from '@/shared/services/enquiryService'
 import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
+import type { EnquiryFollowupOutcome } from '@/shared/types/enquiry'
 import { AddFollowupModal, type FollowupModalValue } from '../components/AddFollowupModal'
 import { AssignmentModal, type AssignmentModalValue } from '../components/AssignmentModal'
 import { ConvertToQuotationDialog } from '../components/ConvertToQuotationDialog'
@@ -202,6 +203,9 @@ export function EnquiryDetailPage() {
               ...followupValue,
               followupType: followupValue.followupType as 'call',
               followupStatus: followupValue.followupStatus as 'scheduled',
+              outcome: followupValue.outcome
+                ? (followupValue.outcome as EnquiryFollowupOutcome)
+                : undefined,
               createdBy: getEnquiryActor(),
             },
             getEnquiryActor(),

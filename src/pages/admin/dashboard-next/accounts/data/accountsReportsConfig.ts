@@ -2,6 +2,15 @@ import type { Column } from '@/design-system/UIComponents'
 import { AGEING_BUCKET_LABELS, type AgeingBucketId } from '../../shared/config/ageingBuckets'
 import type { AccountsDashboardData } from '../types'
 
+function parseCurrencyLakhs(value: string | number): number {
+  if (typeof value === 'number') return value
+  return Number.parseFloat(value.replace(/[₹,\sL]/gi, '')) || 0
+}
+
+function asReportString(value: string | number): string {
+  return typeof value === 'number' ? String(value) : value
+}
+
 export type AccountsReportTypeId =
   // Executive finance (ops-style header catalog)
   | 'revenue_vs_daily_target'
@@ -890,7 +899,7 @@ export function buildAccountsReportRows(
         return sum + n
       }, 0)
       const blocked = Math.round((data.fundAllocationRows.length || 4) * 2.4)
-      const approx = Number.parseFloat(collections.replace(/[₹,\sL]/gi, '')) || 48
+      const approx = parseCurrencyLakhs(collections)
       const available = Math.max(0, approx - blocked - refunds / 10)
       const asOf = new Date().toLocaleString('en-IN', {
         day: '2-digit',
@@ -905,7 +914,7 @@ export function buildAccountsReportRows(
           approxBalance: `₹${approx.toFixed(1)}L`,
           cashBlocked: `₹${blocked.toFixed(1)}L`,
           refunds: `₹${(refunds / 10 || 1.2).toFixed(1)}L`,
-          actualCollections: collections,
+          actualCollections: asReportString(collections),
           availableFunds: `₹${available.toFixed(1)}L`,
           asOf,
         },
@@ -917,13 +926,13 @@ export function buildAccountsReportRows(
         .filter((row) => row.status.toLowerCase().includes('overdue'))
         .sort((a, b) => b.outstandingAmount.localeCompare(a.outstandingAmount))
       const top = overdue[0] ?? data.collectionRows[0]
-      const mtdCollected = Number.parseFloat(data.collectionSummary.collected.replace(/[₹,\sL]/gi, '')) || 32
+      const mtdCollected = parseCurrencyLakhs(data.collectionSummary.collected) || 32
       const mtdTarget = Math.round(mtdCollected * 1.1)
       return [
         {
           id: 'col-today-1',
           paymentsToday: `₹${(mtdCollected / 18).toFixed(1)}L`,
-          mtdCollections: data.collectionSummary.collected,
+          mtdCollections: asReportString(data.collectionSummary.collected),
           mtdTarget: `₹${mtdTarget}L`,
           mtdVsTarget: `${Math.round((mtdCollected / mtdTarget) * 100)}%`,
           topOverdueAccount: top?.client ?? '—',
@@ -1394,17 +1403,17 @@ export function buildAccountsReportRows(
           id: 'rate-1',
           period: 'MTD',
           collectionRate: `${data.collectionSummary.collectionRate}%`,
-          collected: data.collectionSummary.collected,
-          overdue: data.collectionSummary.overdue,
-          outstanding: data.collectionSummary.outstanding,
+          collected: asReportString(data.collectionSummary.collected),
+          overdue: asReportString(data.collectionSummary.overdue),
+          outstanding: asReportString(data.collectionSummary.outstanding),
         },
         {
           id: 'rate-2',
           period: 'This month',
           collectionRate: `${Math.max(0, data.collectionSummary.collectionRate - 4)}%`,
-          collected: data.collectionSummary.collected,
-          overdue: data.collectionSummary.overdue,
-          outstanding: data.collectionSummary.outstanding,
+          collected: asReportString(data.collectionSummary.collected),
+          overdue: asReportString(data.collectionSummary.overdue),
+          outstanding: asReportString(data.collectionSummary.outstanding),
         },
       ]
 
@@ -1517,7 +1526,7 @@ export function buildAccountsReportRows(
           collections: String(
             Math.max(1, data.visaSubmissionRows.filter((r) => r.invoiceReady === 'Yes').length),
           ),
-          value: data.collectionSummary.collected,
+          value: asReportString(data.collectionSummary.collected),
         },
         {
           id: 'sc-2',
@@ -1527,7 +1536,7 @@ export function buildAccountsReportRows(
             data.collectionRows.filter((r) => r.status.toLowerCase().includes('collect')).length ||
               3,
           ),
-          value: data.collectionSummary.outstanding,
+          value: asReportString(data.collectionSummary.outstanding),
         },
       ]
 

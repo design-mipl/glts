@@ -1,4 +1,4 @@
-import type { Dispatch, ReactNode, SetStateAction } from 'react'
+import type { ReactNode } from 'react'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import type { AdminFullPageFormSection } from '@/pages/admin/components/AdminFullPageFormShell'
 import type { VendorFormData } from '@/shared/types/vendor'
@@ -11,7 +11,7 @@ import { VendorTaxFields } from './VendorTaxFields'
 
 interface BuildVendorFormSectionsOptions {
   formData: VendorFormData
-  setFormData: Dispatch<SetStateAction<VendorFormData>>
+  setFormData: (next: VendorFormData) => void
   serviceMappingHeaderAction: ReactNode
   serviceMappingContent: ReactNode
 }

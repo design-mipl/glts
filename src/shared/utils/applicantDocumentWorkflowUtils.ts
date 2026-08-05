@@ -152,24 +152,9 @@ export function documentStatusLabel(doc: ApplicantDocumentItem): string {
 
   const workflowStatus = getSimpleDocumentWorkflowStatus(doc)
   if (workflowStatus === 'ticket_uploaded_by_glts' || workflowStatus === 'insurance_uploaded_by_glts') {
-    if (doc.status !== 'verified') {
-      return WORKFLOW_STATUS_LABELS[workflowStatus]
-    }
+    return WORKFLOW_STATUS_LABELS[workflowStatus]
   }
-  if (
-    workflowStatus === 'ticket_uploaded_by_glts' ||
-    workflowStatus === 'insurance_uploaded_by_glts' ||
-    (workflowStatus === 'verified' && doc.handlingMode === 'arrange_by_glts' && hasWorkflowFile(doc))
-  ) {
-    if (doc.status === 'verified') return 'Verified'
-    if (doc.handlingMode === 'arrange_by_glts' && hasWorkflowFile(doc)) {
-      return 'Arranged by GLTS'
-    }
-  }
-
-  if (doc.handlingMode === 'arrange_by_glts' && hasWorkflowFile(doc) && doc.status === 'verified') {
-    return 'Verified'
-  }
+  if (workflowStatus === 'verified') return 'Verified'
   if (doc.handlingMode === 'arrange_by_glts' && hasWorkflowFile(doc)) {
     return 'Arranged by GLTS'
   }

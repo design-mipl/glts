@@ -69,7 +69,6 @@ import {
   CreditNoteCompositionPage,
   GenerateInvoiceCompositionPage,
   GenerateInvoiceStepperPage,
-  GenerateInvoiceWorkspacePage,
   InvoiceDetailPage,
   InvoiceListingPage,
 } from '../finance/invoices'

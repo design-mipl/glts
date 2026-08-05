@@ -1,7 +1,7 @@
 import { Typography } from '@mui/material'
 import dayjs from 'dayjs'
 import { Check, Eye, X } from 'lucide-react'
-import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
+import { Badge, RowActions, type Column, type RowAction } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { GroundOpsClaimSheet, GroundOpsClaimSheetStatus } from '@/shared/types/groundOpsClaimSheet'
 import {
@@ -197,7 +197,7 @@ export function buildFundAllocationClaimSheetTableColumns(
       filterable: false,
       searchable: false,
       render: (_value, row) => {
-        const actions = [
+        const actions: RowAction[] = [
           {
             label: 'View details',
             icon: <Eye size={16} />,

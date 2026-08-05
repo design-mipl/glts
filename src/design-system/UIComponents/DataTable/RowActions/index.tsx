@@ -14,11 +14,11 @@ export interface RowAction {
 
 export interface RowActionsProps {
   actions: RowAction[]
-  row: any
+  row?: any
   iconButton?: boolean
 }
 
-export default function RowActions({ actions, row, iconButton = true }: RowActionsProps) {
+export default function RowActions({ actions, row = null, iconButton = true }: RowActionsProps) {
   void iconButton
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
 
