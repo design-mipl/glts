@@ -1,41 +1,30 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
 import {
-  Activity,
   AlertTriangle,
-  Banknote,
+  CheckCircle2,
+  Clock,
+  FileText,
+  HandCoins,
   HeartPulse,
+  Inbox,
+  IndianRupee,
   Lock,
   Percent,
+  Send,
   Wallet,
 } from 'lucide-react'
-import { Tabs } from '@/design-system/UIComponents'
-import {
-  ExecutiveCard,
-  ExecutiveGrid,
-  HeroMetric,
-  InsightStack,
-  formatDelta,
-} from '../../shared/dashboard-ui-kit'
+import { SparkLine } from '@/design-system/UIComponents'
 import { DASHBOARD_SPACING } from '../../shared/constants'
-import type { DashboardKpiItem } from '../../shared/types'
-import { kpiColumns } from '../../shared/utils/kpiColumns'
+import { InsightStack } from '../../shared/dashboard-ui-kit'
+import { ExecutiveKpiCard, type ExecutiveKpiPeriodKey } from './ExecutiveKpiCard'
 import type {
-  SuperAdminBlockedCash,
+  SuperAdminDashboardData,
   SuperAdminPeriodHero,
   SuperAdminRevenuePeriod,
 } from '../types'
 
-export interface SuperAdminHeroStripProps {
-  revenue: SuperAdminPeriodHero
-  collections: SuperAdminPeriodHero
-  items: DashboardKpiItem[]
-  blockedCash?: SuperAdminBlockedCash
-  loading?: boolean
-}
-
-type PeriodKey = 'today' | 'mtd' | 'ytd'
+type PeriodKey = ExecutiveKpiPeriodKey
 
 const PERIOD_OPTIONS: Array<{ value: PeriodKey; label: string }> = [
   { value: 'today', label: 'Today' },
@@ -43,207 +32,281 @@ const PERIOD_OPTIONS: Array<{ value: PeriodKey; label: string }> = [
   { value: 'ytd', label: 'YTD' },
 ]
 
-const KPI_ICONS: Record<string, ReactNode> = {
-  'blocked-cash': <Lock size={16} />,
-  health: <HeartPulse size={16} />,
-  'gross-profit': <Percent size={16} />,
-  outstanding: <Wallet size={16} />,
-  applications: <Activity size={16} />,
-  'approval-rate': <Banknote size={16} />,
-  'at-risk': <AlertTriangle size={16} />,
+export interface SuperAdminHeroStripProps {
+  data: SuperAdminDashboardData
+  loading?: boolean
+  onOpenTab?: (tabId: string) => void
+  onNavigate?: (href: string) => void
 }
 
-function kpiTone(
-  id: string,
-  delta?: number,
-): 'positive' | 'negative' | 'warning' | 'info' | 'neutral' {
-  if (id === 'at-risk' || id === 'blocked-cash') return 'warning'
-  if (id === 'outstanding') return delta != null && delta < 0 ? 'positive' : 'warning'
-  if (id === 'health' || id === 'approval-rate' || id === 'gross-profit') return 'positive'
-  if (id === 'applications') return 'info'
-  if (delta != null && delta > 0) return 'positive'
-  if (delta != null && delta < 0) return 'negative'
-  return 'neutral'
-}
-
-/** HeroMetric-style card with Today/MTD/YTD toggle on this card only. */
-function PeriodMetricCard({
+function PeriodValueCard({
   title,
+  tooltip,
+  icon,
   period,
   periodKey,
   onPeriodChange,
   loading,
+  onClick,
 }: {
   title: string
+  tooltip: string
+  icon: ReactNode
   period: SuperAdminRevenuePeriod
   periodKey: PeriodKey
   onPeriodChange: (next: PeriodKey) => void
   loading?: boolean
+  onClick?: () => void
 }) {
-  const theme = useTheme()
-  const deltaTone =
-    period.delta == null
-      ? theme.palette.text.secondary
-      : period.delta > 0
-        ? theme.palette.success.main
-        : period.delta < 0
-          ? theme.palette.error.main
-          : theme.palette.text.secondary
+  const periodLabel = PERIOD_OPTIONS.find((o) => o.value === periodKey)?.label
 
   return (
-    <ExecutiveCard
-      density="compact"
-      elevation="flat"
+    <ExecutiveKpiCard
+      title={title}
+      value={period.value}
+      tooltip={tooltip}
+      icon={icon}
+      tone="info"
+      delta={period.delta}
+      deltaLabel={period.deltaLabel}
+      supportingLines={period.targetLabel ? [period.targetLabel] : undefined}
+      periodLabel={periodLabel}
+      periodOptions={PERIOD_OPTIONS}
+      periodKey={periodKey}
+      onPeriodChange={onPeriodChange}
       loading={loading}
-      aria-label={`${title} ${period.label}`}
-      sx={{ height: '100%' }}
-    >
-      <Stack spacing={0.75}>
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          spacing={0.75}
-          useFlexGap
-        >
-          <Typography
-            color="text.secondary"
-            fontWeight={600}
-            sx={{ fontSize: 11, lineHeight: 1.25, letterSpacing: 0.15, flexShrink: 0 }}
-          >
-            {title}
-          </Typography>
-          <Tabs
-            variant="pill"
-            size="sm"
-            value={periodKey}
-            onChange={(value) => onPeriodChange(value as PeriodKey)}
-            items={PERIOD_OPTIONS}
-            scrollable={false}
-            sx={{
-              minHeight: 26,
-              flexShrink: 0,
-              '& .MuiTabs-root': { minHeight: 26 },
-              '& .MuiTab-root': {
-                minHeight: 26,
-                minWidth: 0,
-                px: 0.9,
-                py: 0,
-                fontSize: 10,
-                fontWeight: 700,
-              },
-            }}
-          />
-        </Stack>
-
-        <Typography
-          fontWeight={800}
-          sx={{
-            fontSize: { xs: '1.35rem', md: '1.5rem' },
-            lineHeight: 1.15,
-            letterSpacing: -0.35,
-            color: 'text.primary',
-          }}
-        >
-          {period.value}
-        </Typography>
-
-        {period.delta !== undefined ? (
-          <Stack direction="row" spacing={0.5} alignItems="center" useFlexGap>
-            <Typography fontWeight={700} sx={{ fontSize: 11, lineHeight: 1.2, color: deltaTone }}>
-              {formatDelta(period.delta)}
-            </Typography>
-            {period.deltaLabel || period.targetLabel ? (
-              <Typography
-                color="text.secondary"
-                sx={{
-                  fontSize: 11,
-                  lineHeight: 1.2,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {period.targetLabel ?? period.deltaLabel}
-              </Typography>
-            ) : null}
-          </Stack>
-        ) : null}
-      </Stack>
-    </ExecutiveCard>
+      onClick={onClick}
+    />
   )
 }
 
-/** Super Admin hero — shared HeroMetric cards; period toggles on Revenue + Collections only. */
+function pickPeriod(hero: SuperAdminPeriodHero, key: PeriodKey): SuperAdminRevenuePeriod {
+  return hero[key]
+}
+
+/** Executive Summary — 12 KPIs in 2×6 (financial + operational health). */
 export function SuperAdminHeroStrip({
-  revenue,
-  collections,
-  items,
-  blockedCash,
+  data,
   loading,
+  onOpenTab,
+  onNavigate,
 }: SuperAdminHeroStripProps) {
   const [revenuePeriod, setRevenuePeriod] = useState<PeriodKey>('mtd')
   const [collectionsPeriod, setCollectionsPeriod] = useState<PeriodKey>('mtd')
 
-  const otherMetrics = useMemo((): DashboardKpiItem[] => {
-    const list: DashboardKpiItem[] = []
-    if (blockedCash) {
-      list.push({
-        id: 'blocked-cash',
-        label: 'Cash blocked · VFS',
-        value: blockedCash.amount,
-        deltaLabel: `${blockedCash.applicationCount} apps · ${blockedCash.expectedReleaseLabel}`,
-      })
-    }
-    return [
-      ...list,
-      ...items.filter((item) => item.id !== 'collections'),
-    ]
-  }, [blockedCash, items])
+  const summary = data.executiveSummary
+  const sparkData = useMemo(
+    () => data.approvalRateTrend30d.map((p) => p.value),
+    [data.approvalRateTrend30d],
+  )
 
-  const columns = kpiColumns(otherMetrics.length + 2)
+  const revenue = pickPeriod(data.revenueHero, revenuePeriod)
+  const collections = pickPeriod(data.collectionsHero, collectionsPeriod)
+
+  const gridSx = {
+    display: 'grid',
+    gap: DASHBOARD_SPACING.field,
+    alignItems: 'stretch',
+    gridTemplateColumns: {
+      xs: 'repeat(2, minmax(0, 1fr))',
+      sm: 'repeat(3, minmax(0, 1fr))',
+      md: 'repeat(3, minmax(0, 1fr))',
+      lg: 'repeat(6, minmax(0, 1fr))',
+    },
+  } as const
 
   return (
     <InsightStack spacing={DASHBOARD_SPACING.dense}>
-      <ExecutiveGrid columns={columns} spacing={1}>
-        <Box sx={{ minWidth: 0 }}>
-          <PeriodMetricCard
-            title="Revenue"
-            period={revenue[revenuePeriod]}
+      <Box sx={gridSx}>
+        {/* Row 1 — Financial health */}
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <PeriodValueCard
+            title="Gross Revenue"
+            tooltip="Total invoice value raised for the selected period. Toggle Today / MTD / YTD."
+            icon={<IndianRupee size={16} />}
+            period={revenue}
             periodKey={revenuePeriod}
             onPeriodChange={setRevenuePeriod}
             loading={loading}
+            onClick={() => onOpenTab?.('business')}
           />
         </Box>
 
-        <Box sx={{ minWidth: 0 }}>
-          <PeriodMetricCard
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Net Revenue"
+            tooltip="GLTS earnings after pass-through costs. Gross margin shown as supporting context."
+            value={summary.netRevenue.value}
+            icon={<Percent size={16} />}
+            tone="positive"
+            delta={summary.netRevenue.delta}
+            deltaLabel={summary.netRevenue.deltaLabel}
+            supportingLines={[`Gross margin ${summary.netRevenue.marginPercent}`]}
+            loading={loading}
+            onClick={() => onOpenTab?.('finance')}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <PeriodValueCard
             title="Collections"
-            period={collections[collectionsPeriod]}
+            tooltip="Collections received for the selected period versus target."
+            icon={<HandCoins size={16} />}
+            period={collections}
             periodKey={collectionsPeriod}
             onPeriodChange={setCollectionsPeriod}
             loading={loading}
+            onClick={() => onOpenTab?.('finance')}
           />
         </Box>
 
-        {otherMetrics.map((kpi) => (
-          <Box key={kpi.id} sx={{ minWidth: 0 }} aria-label={`${kpi.label}: ${kpi.value}`}>
-            <HeroMetric
-              label={kpi.label}
-              value={kpi.value}
-              delta={kpi.delta}
-              deltaLabel={kpi.deltaLabel}
-              helperText={
-                kpi.id === 'blocked-cash' && !kpi.delta ? kpi.deltaLabel : undefined
-              }
-              icon={KPI_ICONS[kpi.id]}
-              tone={kpiTone(kpi.id, kpi.delta)}
-              loading={loading}
-              animate
-            />
-          </Box>
-        ))}
-      </ExecutiveGrid>
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Outstanding"
+            tooltip="Open receivables balance and overdue invoice count."
+            value={summary.outstanding.amount}
+            icon={<Wallet size={16} />}
+            tone="warning"
+            delta={summary.outstanding.delta}
+            deltaLabel={summary.outstanding.deltaLabel}
+            supportingLines={[`${summary.outstanding.overdueInvoiceCount} overdue invoices`]}
+            loading={loading}
+            onClick={() => onOpenTab?.('finance')}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Cash Blocked"
+            tooltip="Embassy / VFS fees paid and not yet recovered through client billing."
+            value={data.blockedCash.amount}
+            icon={<Lock size={16} />}
+            tone="warning"
+            supportingLines={[
+              `${data.blockedCash.applicationCount} applications`,
+              data.blockedCash.expectedReleaseLabel,
+            ]}
+            loading={loading}
+            onClick={() => onOpenTab?.('work')}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Business Health"
+            tooltip="Composite network health score (0–100) across revenue, delivery, and risk."
+            value={`${summary.businessHealth.score} /100`}
+            icon={<HeartPulse size={16} />}
+            tone="positive"
+            delta={summary.businessHealth.delta}
+            deltaLabel={summary.businessHealth.deltaLabel}
+            supportingLines={[summary.businessHealth.statusLabel]}
+            loading={loading}
+            onClick={() => onOpenTab?.('analytics')}
+          />
+        </Box>
+
+        {/* Row 2 — Operational health */}
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Active Applications"
+            tooltip="Open applications in flight, with segment mix."
+            value={summary.activeApplications.total}
+            icon={<FileText size={16} />}
+            tone="info"
+            supportingLines={summary.activeApplications.segments.map(
+              (s) => `${s.label} ${s.count.toLocaleString()}`,
+            )}
+            loading={loading}
+            onClick={() => onNavigate?.('/admin/application-management/marine')}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Approval Rate"
+            tooltip="Visa approval rate on a 30-day rolling basis."
+            value={summary.approvalRate.value}
+            icon={<CheckCircle2 size={16} />}
+            tone="positive"
+            delta={summary.approvalRate.delta}
+            deltaLabel={summary.approvalRate.deltaLabel}
+            loading={loading}
+            onClick={() => onOpenTab?.('analytics')}
+            footer={
+              <Stack spacing={0.25}>
+                <Typography color="text.secondary" sx={{ fontSize: 10, fontWeight: 600 }}>
+                  30-day rolling
+                </Typography>
+                <Box sx={{ height: 32, mx: -0.5 }}>
+                  <SparkLine data={sparkData} height={32} positive showTooltip={false} />
+                </Box>
+              </Stack>
+            }
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Applications At Risk"
+            tooltip="Applications breaching or approaching SLA thresholds."
+            value={summary.atRisk.total}
+            icon={<AlertTriangle size={16} />}
+            tone="warning"
+            supportingLines={[
+              `Critical ${summary.atRisk.critical}`,
+              `Warning ${summary.atRisk.warning}`,
+            ]}
+            loading={loading}
+            onClick={() => onOpenTab?.('operations')}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Average TAT"
+            tooltip="Average processing time from receipt to issue versus target."
+            value={`${summary.averageTat.days} Days`}
+            icon={<Clock size={16} />}
+            tone={
+              summary.averageTat.days <= summary.averageTat.targetDays ? 'positive' : 'warning'
+            }
+            delta={summary.averageTat.delta}
+            deltaLabel={summary.averageTat.deltaLabel}
+            supportingLines={[`Target ${summary.averageTat.targetDays} Days`]}
+            loading={loading}
+            onClick={() => onOpenTab?.('operations')}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Today's Applications"
+            tooltip="Applications received today versus yesterday."
+            value={summary.receivedToday.count}
+            icon={<Inbox size={16} />}
+            tone="info"
+            delta={summary.receivedToday.delta}
+            deltaLabel={summary.receivedToday.deltaLabel}
+            loading={loading}
+            onClick={() => onOpenTab?.('operations')}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Today's Submissions"
+            tooltip="Applications submitted to embassy / VFS today versus yesterday."
+            value={summary.submittedToday.count}
+            icon={<Send size={16} />}
+            tone="info"
+            delta={summary.submittedToday.delta}
+            deltaLabel={summary.submittedToday.deltaLabel}
+            loading={loading}
+            onClick={() => onOpenTab?.('operations')}
+          />
+        </Box>
+      </Box>
     </InsightStack>
   )
 }

@@ -1,84 +1,31 @@
-import type { ReactNode } from 'react'
 import { useMemo } from 'react'
-import { Box, Grid, Stack, Typography } from '@mui/material'
-import {
-  Building2,
-  ClipboardList,
-  HandCoins,
-  LayoutDashboard,
-  Users,
-} from 'lucide-react'
-import { BarChart, DonutChart } from '@/design-system/UIComponents'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
-import {
-  QuickActions,
-  RecentActivity,
-  DASHBOARD_SPACING,
-} from '../../shared'
-import { ComparisonLayout, RankingList } from '../../shared/dashboard-ui-kit'
+import { Grid, Stack } from '@mui/material'
+import { DonutChart } from '@/design-system/UIComponents'
+import { DASHBOARD_SPACING } from '../../shared'
 import { SuperAdminWorkListing } from '../components/SuperAdminWorkListing'
-import { SUPER_ADMIN_CHART_COLORS, SUPER_ADMIN_CHART_SERIES } from '../data/superAdminChartColors'
-import type {
-  SuperAdminDashboardTabProps,
-  SuperAdminRankItem,
-  SuperAdminWorkRow,
-} from '../types'
+import {
+  SA_CHART_HEIGHT,
+  SuperAdminPanel,
+  SuperAdminRankChart,
+  SuperAdminSection,
+  colorSlices,
+  useSuperAdminChartColors,
+  useSuperAdminChartSeries,
+} from '../components/SuperAdminChrome'
+import type { SuperAdminDashboardTabProps, SuperAdminWorkRow } from '../types'
 
-const ACTION_ICONS: Record<string, ReactNode> = {
-  'qa-admin-next': <LayoutDashboard size={18} />,
-  'qa-ops-next': <ClipboardList size={18} />,
-  'qa-accounts-next': <HandCoins size={18} />,
-  'qa-clients': <Users size={18} />,
-  'qa-finance': <HandCoins size={18} />,
-  'qa-legacy-admin': <Building2 size={18} />,
-}
-
-function ChartPanel({
-  title,
-  description,
-  children,
-}: {
-  title: string
-  description?: string
-  children: React.ReactNode
-}) {
-  const colors = usePublicBrandColors()
-  return (
-    <Box sx={{ ...executiveCardLevel2Sx(colors), p: 0, overflow: 'hidden', height: '100%' }}>
-      <Stack spacing={0.5} sx={{ px: 2, pt: 2, pb: 1.25 }}>
-        <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 14 }}>
-          {title}
-        </Typography>
-        {description ? (
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-            {description}
-          </Typography>
-        ) : null}
-      </Stack>
-      <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
-    </Box>
-  )
-}
-
-function toRankingItems(items: SuperAdminRankItem[]) {
-  return items.map((item, index) => ({
-    id: item.id,
-    primary: item.primary,
-    secondary: item.secondary,
-    rank: index + 1,
-    value: item.value,
-    progress: item.progress,
-  }))
-}
-
+/**
+ * Clients — account intelligence (health, risk, margin, dormant, top accounts).
+ */
 export function ClientsTab({
   data,
   loading,
-  onRetry,
   onNavigate,
   onOpenClient,
 }: SuperAdminDashboardTabProps) {
+  const chart = useSuperAdminChartColors()
+  const series = useSuperAdminChartSeries()
+
   const accountRows: SuperAdminWorkRow[] = useMemo(
     () =>
       data.clientRows.map((row) => ({
@@ -98,107 +45,115 @@ export function ClientsTab({
     for (const row of data.clientRows) {
       counts.set(row.segment, (counts.get(row.segment) ?? 0) + 1)
     }
-    return Array.from(counts.entries()).map(([label, value], index) => ({
-      key: label.toLowerCase(),
-      label,
-      value,
-      color: SUPER_ADMIN_CHART_SERIES[index % SUPER_ADMIN_CHART_SERIES.length],
-    }))
-  }, [data.clientRows])
-
-  const healthBars = useMemo(
-    () =>
-      data.clientHealth.map((item) => ({
-        client: item.primary.length > 14 ? `${item.primary.slice(0, 12)}…` : item.primary,
-        score: item.progress ?? 0,
+    return colorSlices(
+      Array.from(counts.entries()).map(([label, value]) => ({
+        key: label.toLowerCase(),
+        label,
+        value,
       })),
-    [data.clientHealth],
-  )
+      series,
+    )
+  }, [data.clientRows, series])
 
   return (
-    <Grid container spacing={DASHBOARD_SPACING.field}>
-      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-        <ChartPanel title="Accounts by segment" description="Key account mix">
-          <DonutChart
-            data={
-              segmentSlices.length > 0
-                ? segmentSlices
-                : [{ key: 'none', label: 'None', value: 1, color: SUPER_ADMIN_CHART_COLORS.slate }]
-            }
-            height={220}
-            loading={loading}
-            centerLabel="accts"
-            centerValue={String(data.clientRows.length)}
-          />
-        </ChartPanel>
-      </Grid>
-      <Grid size={{ xs: 12, md: 6, lg: 8 }}>
-        <ChartPanel title="Client health scores" description="Portfolio health ranking">
-          <BarChart
-            data={healthBars}
-            xKey="client"
-            height={220}
-            barSize={16}
-            showLegend={false}
-            loading={loading}
-            bars={[{ key: 'score', label: 'Score' }]}
-          />
-        </ChartPanel>
-      </Grid>
-
-      <Grid size={{ xs: 12 }}>
-        <RankingList
-          title="High-risk clients"
-          items={toRankingItems(data.highRiskClients)}
-          loading={loading}
-        />
-      </Grid>
-
-      <Grid size={{ xs: 12, md: 4 }}>
-        <RankingList
-          title="High margin clients"
-          items={toRankingItems(data.highMarginClients)}
-          loading={loading}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 4 }}>
-        <RankingList
-          title="Low margin clients"
-          items={toRankingItems(data.lowMarginClients)}
-          loading={loading}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 4 }}>
-        <RankingList
-          title="Dormant clients"
-          items={toRankingItems(data.dormantClients)}
-          loading={loading}
-        />
-      </Grid>
-
-      <Grid size={{ xs: 12 }}>
-        <ComparisonLayout
-          left={
-            <RankingList
-              title="Top 20 by revenue"
-              items={toRankingItems(data.topRevenueClients)}
+    <Stack spacing={DASHBOARD_SPACING.section}>
+      <SuperAdminSection title="Portfolio snapshot">
+        <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+            <SuperAdminPanel title="Accounts by segment">
+              <DonutChart
+                data={
+                  segmentSlices.length > 0
+                    ? segmentSlices
+                    : [{ key: 'none', label: 'None', value: 1, color: chart.slate }]
+                }
+                height={SA_CHART_HEIGHT}
+                loading={loading}
+                centerLabel="accts"
+                centerValue={String(data.clientRows.length)}
+              />
+            </SuperAdminPanel>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6, lg: 8 }}>
+            <SuperAdminRankChart
+              title="Client health scores"
+              items={data.clientHealth}
               loading={loading}
+              valueLabel="Score"
             />
-          }
-          right={
-            <RankingList
+          </Grid>
+        </Grid>
+      </SuperAdminSection>
+
+      <SuperAdminSection title="Risk & margin">
+        <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SuperAdminRankChart
+              title="High-risk clients"
+              items={data.highRiskClients}
+              loading={loading}
+              valueLabel="Risk"
+              initialTopN="5"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SuperAdminRankChart
+              title="Dormant clients"
+              items={data.dormantClients}
+              loading={loading}
+              valueLabel="Idle"
+              initialTopN="5"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SuperAdminRankChart
+              title="High margin clients"
+              items={data.highMarginClients}
+              loading={loading}
+              valueLabel="Margin"
+              initialTopN="5"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SuperAdminRankChart
+              title="Low margin clients"
+              items={data.lowMarginClients}
+              loading={loading}
+              valueLabel="Margin"
+              initialTopN="5"
+            />
+          </Grid>
+        </Grid>
+      </SuperAdminSection>
+
+      <SuperAdminSection title="Top accounts">
+        <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SuperAdminRankChart
+              title="Top accounts by revenue"
+              items={data.topRevenueClients}
+              loading={loading}
+              valueLabel="Revenue"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SuperAdminRankChart
               title="Top growth opportunities"
-              items={toRankingItems(data.fastestGrowingClients)}
+              items={data.fastestGrowingClients}
               loading={loading}
+              valueLabel="Growth"
             />
-          }
-        />
-      </Grid>
+          </Grid>
+        </Grid>
+      </SuperAdminSection>
 
-      <Grid size={{ xs: 12 }}>
+      <SuperAdminSection
+        title="Key accounts"
+        actionLabel="Open clients"
+        onAction={() => onNavigate('/admin/customer-accounts/corporate-accounts')}
+      >
         <SuperAdminWorkListing
           title="Key accounts"
-          description="Outstanding · collections · status — open to manage"
           rows={accountRows}
           loading={loading}
           openLabel="Open"
@@ -208,35 +163,7 @@ export function ClientsTab({
           emptyTitle="No key accounts"
           emptyDescription="Accounts will appear here when loaded."
         />
-      </Grid>
-
-      <Grid size={{ xs: 12, md: 7 }}>
-        <RecentActivity
-          title="Client activity"
-          items={data.clientActivity}
-          loading={loading}
-          onRetry={onRetry}
-          maxItems={6}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 5 }}>
-        <QuickActions
-          columns={1}
-          loading={loading}
-          items={data.quickActions
-            .filter((action) =>
-              ['qa-clients', 'qa-accounts-next', 'qa-admin-next'].includes(action.id),
-            )
-            .map((action) => ({
-              id: action.id,
-              title: action.title,
-              description: action.description,
-              badge: action.badge,
-              icon: ACTION_ICONS[action.id],
-              onClick: () => onNavigate(action.href),
-            }))}
-        />
-      </Grid>
-    </Grid>
+      </SuperAdminSection>
+    </Stack>
   )
 }

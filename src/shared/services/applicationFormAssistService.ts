@@ -14,6 +14,8 @@ export interface FormAssistVfsServiceChargeLine {
   id: string
   serviceName: string
   amount: number
+  /** Vendor outlay; IW = amount − cost when present. */
+  cost?: number
   /** When true, the rate is GST-inclusive. */
   gstIncluded?: boolean
   /** Links to Embassy / VFS Fee Master service row when sourced from rate card. */
@@ -21,6 +23,8 @@ export interface FormAssistVfsServiceChargeLine {
   /** Visa-processing vendor mapped on Country Master Consulate Rates. */
   vendorId?: string
   vendorName?: string
+  /** Consulate urgent surcharge mapped from Country Master. */
+  isUrgentCharge?: boolean
 }
 
 /** One payment recorded against one or more VFS services (Pending Payment workspace). */
@@ -128,13 +132,22 @@ function normalizeVfsServiceCharges(
   lines: FormAssistVfsServiceChargeLine[] | undefined,
 ): FormAssistVfsServiceChargeLine[] {
   if (!Array.isArray(lines)) return []
-  return lines.map((line, index) => ({
-    id: line.id?.trim() || `vfs-charge-${index}`,
-    serviceName: line.serviceName?.trim() ?? '',
-    amount: Number(line.amount) || 0,
-    gstIncluded: Boolean(line.gstIncluded),
-    embassyFeeServiceId: line.embassyFeeServiceId?.trim() || undefined,
-  }))
+  return lines.map((line, index) => {
+    const costRaw = line.cost
+    const cost =
+      costRaw != null && !Number.isNaN(Number(costRaw)) ? Number(costRaw) : undefined
+    return {
+      id: line.id?.trim() || `vfs-charge-${index}`,
+      serviceName: line.serviceName?.trim() ?? '',
+      amount: Number(line.amount) || 0,
+      cost,
+      gstIncluded: Boolean(line.gstIncluded),
+      embassyFeeServiceId: line.embassyFeeServiceId?.trim() || undefined,
+      vendorId: line.vendorId?.trim() || undefined,
+      vendorName: line.vendorName?.trim() || undefined,
+      isUrgentCharge: Boolean(line.isUrgentCharge) || undefined,
+    }
+  })
 }
 
 function normalizePaymentEntries(

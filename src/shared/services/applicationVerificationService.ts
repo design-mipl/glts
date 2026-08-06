@@ -15,7 +15,6 @@ import type { ApplicationDetailViewModel } from '@/pages/customer/features/appli
 import { REQUIRED_GLOBAL_CHECKLIST_DOCUMENTS } from '@/pages/customer/features/applications/utils/globalDocumentChecklist'
 import { withDocumentProgress } from '@/pages/customer/features/applications/utils/uploadQueueDocuments'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
-import { isCustomerSubmitted, marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
 import {
   emptyInsuranceWorkflow,
   emptyTravelTicketWorkflow,
@@ -771,8 +770,10 @@ export function mergeVerificationIntoDetail(
 }
 
 function findListingRow(applicationId: string): SingleApplicationRow | BulkBatchRow | undefined {
-  const { singles, bulks } = marineApplicationAdminService.listMarineApplications()
-  return singles.find(r => r.id === applicationId) ?? bulks.find(r => r.id === applicationId)
+  return (
+    mockSingleApplications.find(r => r.id === applicationId) ??
+    mockBulkBatches.find(r => r.id === applicationId)
+  )
 }
 
 function findTravelerDocumentOverride(
@@ -805,7 +806,7 @@ function removeTravelerDocumentOverrides(
 export const applicationVerificationService = {
   getWorkspace(applicationId: string) {
     const listingRow = findListingRow(applicationId)
-    if (!listingRow || !isCustomerSubmitted(listingRow)) {
+    if (!listingRow) {
       return { ok: false as const, listingRow: undefined, detail: undefined }
     }
     const detail = customerPortalService.getApplicationDetail(applicationId, {

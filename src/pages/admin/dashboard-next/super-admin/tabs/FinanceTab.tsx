@@ -1,70 +1,35 @@
-import type { ReactNode } from 'react'
 import { useMemo } from 'react'
-import { Box, Grid, Stack, Typography } from '@mui/material'
-import {
-  Building2,
-  ClipboardList,
-  HandCoins,
-  LayoutDashboard,
-  Users,
-} from 'lucide-react'
-import { BarChart, DonutChart } from '@/design-system/UIComponents'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
+import { Box, Grid, Stack } from '@mui/material'
+import { HandCoins } from 'lucide-react'
+import { Button, DonutChart } from '@/design-system/UIComponents'
 import { AGEING_BUCKET_LABELS, type AgeingBucketId } from '../../shared/config/ageingBuckets'
 import {
   CollectionSummary,
-  MetricComparison,
-  NotificationPanel,
   ProcessingTrend,
-  QuickActions,
-  RevenueSnapshot,
   DASHBOARD_SPACING,
 } from '../../shared'
 import { PredictivePanel } from '../../shared/dashboard-intelligence'
 import {
   ExecutiveGrid,
-  HighlightCard,
+  ExecutiveMetric,
+  FinancialMetric,
 } from '../../shared/dashboard-ui-kit'
-import { SUPER_ADMIN_CHART_COLORS } from '../data/superAdminChartColors'
+import {
+  SA_CHART_HEIGHT,
+  SuperAdminPanel,
+  SuperAdminPulseBanner,
+  SuperAdminRankChart,
+  useSuperAdminChartColors,
+} from '../components/SuperAdminChrome'
 import type { SuperAdminDashboardTabProps } from '../types'
 
-function ChartPanel({
-  title,
-  description,
-  children,
-}: {
-  title: string
-  description?: string
-  children: React.ReactNode
-}) {
-  const colors = usePublicBrandColors()
-  return (
-    <Box sx={{ ...executiveCardLevel2Sx(colors), p: 0, overflow: 'hidden', height: '100%' }}>
-      <Stack spacing={0.5} sx={{ px: 2, pt: 2, pb: 1.25 }}>
-        <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 14 }}>
-          {title}
-        </Typography>
-        {description ? (
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-            {description}
-          </Typography>
-        ) : null}
-      </Stack>
-      <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
-    </Box>
-  )
-}
+const ACCOUNTS_HREF = '/admin/dashboard-next/accounts'
+const BILLING_HREF = '/admin/finance/invoices'
 
-const ACTION_ICONS: Record<string, ReactNode> = {
-  'qa-admin-next': <LayoutDashboard size={18} />,
-  'qa-ops-next': <ClipboardList size={18} />,
-  'qa-accounts-next': <HandCoins size={18} />,
-  'qa-clients': <Users size={18} />,
-  'qa-finance': <HandCoins size={18} />,
-  'qa-legacy-admin': <Building2 size={18} />,
-}
-
+/**
+ * Finance — cash, profitability, AR, margin, forecast.
+ * Every block is an executive card container (Accounts / Analytics ChartPanel pattern).
+ */
 export function FinanceTab({
   data,
   loading,
@@ -72,177 +37,201 @@ export function FinanceTab({
   onNavigate,
   forecasts = [],
 }: SuperAdminDashboardTabProps) {
+  const chart = useSuperAdminChartColors()
   const cash = data.cashPosition
+  const blocked = data.blockedCash
+  const kpis = data.financeKpis
+  const overdueInvoices = data.executiveSummary.outstanding.overdueInvoiceCount
+
+  const pulseParts = [
+    blocked.applicationCount > 0
+      ? `${blocked.amount} blocked · ${blocked.applicationCount} apps`
+      : null,
+    overdueInvoices > 0 ? `${overdueInvoices} overdue invoices` : null,
+    kpis.creditExposure ? `Credit exposure ${kpis.creditExposure}` : null,
+  ].filter(Boolean)
 
   const ageingSlices = useMemo(() => {
-    const colors = [
-      SUPER_ADMIN_CHART_COLORS.green,
-      SUPER_ADMIN_CHART_COLORS.amber,
-      SUPER_ADMIN_CHART_COLORS.coral,
-      SUPER_ADMIN_CHART_COLORS.navy,
-    ]
+    const palette = [chart.green, chart.amber, chart.coral, chart.navy]
     return data.ageingBuckets.map((bucket, index) => ({
       key: bucket.id,
       label: AGEING_BUCKET_LABELS[bucket.id as AgeingBucketId] ?? bucket.id,
       value: Math.round(bucket.amount / 100000),
-      color: colors[index % colors.length],
+      color: palette[index % palette.length],
     }))
-  }, [data.ageingBuckets])
+  }, [chart, data.ageingBuckets])
   const ageingTotal = ageingSlices.reduce((sum, s) => sum + s.value, 0)
 
-  const marginBars = useMemo(
-    () =>
-      data.marginByVertical.map((item) => ({
-        vertical: item.primary,
-        margin: Number.parseFloat(String(item.value).replace('%', '')) || 0,
-      })),
-    [data.marginByVertical],
+  const cashActions = (
+    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+      <Button
+        label="Accounts"
+        variant="outlined"
+        size="sm"
+        onClick={() => onNavigate(ACCOUNTS_HREF)}
+      />
+      <Button
+        label="Billing"
+        variant="text"
+        size="sm"
+        onClick={() => onNavigate(BILLING_HREF)}
+      />
+    </Stack>
   )
 
   return (
-    <Grid container spacing={DASHBOARD_SPACING.field}>
-      <Grid size={{ xs: 12 }}>
+    <Stack spacing={DASHBOARD_SPACING.field}>
+      {pulseParts.length > 0 ? (
+        <SuperAdminPulseBanner
+          icon={<HandCoins size={16} />}
+          title="Finance pulse"
+          description={pulseParts.join(' · ')}
+          tone={overdueInvoices > 0 ? 'error' : 'warning'}
+          action={
+            <Button
+              label="Accounts dashboard"
+              variant="outlined"
+              size="sm"
+              onClick={() => onNavigate(ACCOUNTS_HREF)}
+            />
+          }
+        />
+      ) : null}
+
+      <SuperAdminPanel title="Net cash position" action={cashActions}>
         <ExecutiveGrid columns={4} spacing={DASHBOARD_SPACING.field}>
-          <HighlightCard
-            title="Bank balance"
-            highlight={cash.bankBalance}
-            highlightLabel="On hand"
+          <FinancialMetric
+            label="Bank balance"
+            value={cash.bankBalance}
+            helperText="Operating accounts"
+            tone="info"
             loading={loading}
-          >
-            <Typography variant="caption" color="text.secondary">
-              Mock cash position
-            </Typography>
-          </HighlightCard>
-          <HighlightCard
-            title="Blocked in visa fees"
-            highlight={cash.blockedInVisaFees}
-            highlightLabel="Embassy / VFS"
+          />
+          <FinancialMetric
+            label="Blocked Embassy / VFS"
+            value={blocked.amount}
+            helperText={`${blocked.applicationCount} apps · ${blocked.expectedReleaseLabel}`}
+            tone="warning"
             loading={loading}
-          >
-            <Typography variant="caption" color="text.secondary">
-              Pending pass-through
-            </Typography>
-          </HighlightCard>
-          <HighlightCard
-            title="Expected collections"
-            highlight={cash.expectedCollections}
-            highlightLabel="Near-term AR"
+          />
+          <FinancialMetric
+            label="Expected collections"
+            value={cash.expectedCollections}
+            helperText={`Today ${kpis.collectionsToday} · MTD ${kpis.collectionsMtd}`}
+            tone="positive"
             loading={loading}
-          >
-            <Typography variant="caption" color="text.secondary">
-              Due window
-            </Typography>
-          </HighlightCard>
-          <HighlightCard
-            title="Available funds"
-            highlight={cash.availableFunds}
-            highlightLabel="Net cash position"
+          />
+          <FinancialMetric
+            label="Available funds"
+            value={cash.availableFunds}
+            helperText="Bank − blocked + expected"
+            tone="info"
             loading={loading}
-          >
-            <Typography variant="caption" color="text.secondary">
-              Bank − blocked − expected buffer
-            </Typography>
-          </HighlightCard>
+          />
         </ExecutiveGrid>
-      </Grid>
+      </SuperAdminPanel>
 
-      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-        <ChartPanel title="AR ageing" description="Outstanding ₹L by bucket">
-          <DonutChart
-            data={
-              ageingSlices.length > 0
-                ? ageingSlices
-                : [{ key: 'none', label: 'None', value: 1, color: SUPER_ADMIN_CHART_COLORS.slate }]
-            }
-            height={220}
-            loading={loading}
-            centerLabel="₹L"
-            centerValue={String(ageingTotal)}
-          />
-        </ChartPanel>
-      </Grid>
-      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-        <ChartPanel title="Gross margin by vertical" description="GP % this month">
-          <BarChart
-            data={marginBars}
-            xKey="vertical"
-            height={220}
-            barSize={18}
-            showLegend={false}
-            loading={loading}
-            bars={[{ key: 'margin', label: 'Margin %' }]}
-          />
-        </ChartPanel>
-      </Grid>
-      <Grid size={{ xs: 12, lg: 4 }}>
-        <CollectionSummary
-          data={data.collectionSummary}
+      <ExecutiveGrid columns={6} spacing={1}>
+        <FinancialMetric
+          label="EBITDA"
+          value={kpis.ebitda}
+          delta={kpis.ebitdaDelta}
+          deltaLabel={kpis.ebitdaDeltaLabel}
+          tone="info"
           loading={loading}
-          onRetry={onRetry}
         />
-      </Grid>
-
-      <Grid size={{ xs: 12, md: 6 }}>
-        <RevenueSnapshot data={data.revenueSnapshot} loading={loading} onRetry={onRetry} />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <MetricComparison
-          title="Finance KPIs"
-          metrics={data.financeMetricComparison}
+        <FinancialMetric
+          label="Gross profit"
+          value={kpis.grossProfit}
+          helperText={`Margin ${kpis.grossMarginPercent}`}
+          delta={kpis.grossProfitDelta}
+          deltaLabel="vs prior"
+          tone="positive"
           loading={loading}
-          onRetry={onRetry}
         />
+        <FinancialMetric
+          label="Net revenue"
+          value={kpis.netRevenue}
+          helperText="GLTS earnings"
+          delta={kpis.netRevenueDelta}
+          deltaLabel="vs prior"
+          tone="positive"
+          loading={loading}
+        />
+        <ExecutiveMetric
+          label="DSO"
+          value={`${kpis.dsoDays} days`}
+          delta={kpis.dsoDelta}
+          deltaLabel={kpis.dsoDeltaLabel}
+          tone={(kpis.dsoDelta ?? 0) <= 0 ? 'positive' : 'warning'}
+          loading={loading}
+        />
+        <ExecutiveMetric
+          label="Working capital"
+          value={kpis.workingCapitalExposure}
+          helperText="AR + blocked fees"
+          tone="warning"
+          loading={loading}
+        />
+        <ExecutiveMetric
+          label="Credit exposure"
+          value={kpis.creditExposure}
+          helperText="Agreement limits"
+          tone="warning"
+          loading={loading}
+        />
+      </ExecutiveGrid>
+
+      <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <SuperAdminPanel title="AR ageing">
+            <DonutChart
+              data={
+                ageingSlices.length > 0
+                  ? ageingSlices
+                  : [{ key: 'none', label: 'None', value: 1, color: chart.slate }]
+              }
+              height={SA_CHART_HEIGHT}
+              loading={loading}
+              centerLabel="₹L"
+              centerValue={String(ageingTotal)}
+            />
+          </SuperAdminPanel>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Box sx={{ height: '100%', minWidth: 0, '& > *': { height: '100%' } }}>
+            <CollectionSummary
+              data={data.collectionSummary}
+              loading={loading}
+              onRetry={onRetry}
+            />
+          </Box>
+        </Grid>
       </Grid>
 
-      <Grid size={{ xs: 12 }}>
+      <SuperAdminRankChart
+        title="Gross margin by vertical"
+        items={data.marginByVertical}
+        loading={loading}
+        valueLabel="Margin %"
+        initialTopN="5"
+      />
+
+      <Box sx={{ minWidth: 0, '& > *': { height: '100%' } }}>
         <ProcessingTrend
-          title="Revenue vs collections"
-          subtitle="₹ Cr · last 12 months"
+          title="Gross revenue vs collections"
           points={data.revenueTrend}
           secondaryLabel="Collected"
           loading={loading}
           onRetry={onRetry}
         />
-      </Grid>
+      </Box>
 
       {forecasts.length > 0 ? (
-        <Grid size={{ xs: 12 }}>
-          <PredictivePanel
-            title="Revenue forecast"
-            subtitle="30 / 60 / 90 day scenarios (heuristic)"
-            models={forecasts}
-            loading={loading}
-          />
-        </Grid>
+        <SuperAdminPanel title="Revenue forecast · 30 / 60 / 90 days">
+          <PredictivePanel models={forecasts} loading={loading} />
+        </SuperAdminPanel>
       ) : null}
-
-      <Grid size={{ xs: 12, md: 7 }}>
-        <NotificationPanel
-          title="Finance notices"
-          items={data.financeNotifications}
-          loading={loading}
-          onRetry={onRetry}
-          maxItems={5}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 5 }}>
-        <QuickActions
-          columns={1}
-          loading={loading}
-          items={data.quickActions
-            .filter((action) =>
-              ['qa-accounts-next', 'qa-finance', 'qa-admin-next'].includes(action.id),
-            )
-            .map((action) => ({
-              id: action.id,
-              title: action.title,
-              description: action.description,
-              badge: action.badge,
-              icon: ACTION_ICONS[action.id],
-              onClick: () => onNavigate(action.href),
-            }))}
-        />
-      </Grid>
-    </Grid>
+    </Stack>
   )
 }

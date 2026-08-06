@@ -108,13 +108,18 @@ export function getCountryMasterByName(countryName: string): CountryMaster | und
 export function resolveOfferingIdsByLabels(
   countryLabel: string,
   visaTypeLabel: string,
+  segment?: BusinessSegment,
 ): { countryId: string; visaOfferingId: string } | undefined {
   const master = getCountryMasterByName(countryLabel)
   if (!master || !visaTypeLabel?.trim()) return undefined
 
   const normalizedVisa = visaTypeLabel.trim().toLowerCase()
-  for (const segment of master.segments) {
-    const visaType = segment.visaTypes.find(
+  const segments = segment
+    ? master.segments.filter((entry) => entry.segment === segment)
+    : master.segments
+
+  for (const segmentEntry of segments) {
+    const visaType = segmentEntry.visaTypes.find(
       (entry) =>
         entry.name.trim().toLowerCase() === normalizedVisa ||
         entry.id.trim().toLowerCase() === normalizedVisa,

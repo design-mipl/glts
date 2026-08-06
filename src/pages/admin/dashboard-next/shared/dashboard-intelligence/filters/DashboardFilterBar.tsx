@@ -34,7 +34,15 @@ function formatFilterDate(date: Date | null): string | undefined {
 }
 
 function isCustomDatePreset(preset: IntelligenceDatePreset): boolean {
-  return preset === 'date' || preset === 'range' || preset === 'custom'
+  return preset === 'custom' || preset === 'date' || preset === 'range'
+}
+
+function showsDateRangePicker(preset: IntelligenceDatePreset): boolean {
+  return preset === 'custom' || preset === 'range'
+}
+
+function showsSingleDatePicker(preset: IntelligenceDatePreset): boolean {
+  return preset === 'date'
 }
 
 export interface DashboardFilterBarProps {
@@ -87,7 +95,7 @@ export function DashboardFilterBar({
   )
 
   const dateMode: IntelligenceDatePreset =
-    filters.datePreset === 'custom' ? 'range' : filters.datePreset
+    filters.datePreset === 'range' ? 'custom' : filters.datePreset
 
   const filterControls = (
     <Stack
@@ -122,7 +130,7 @@ export function DashboardFilterBar({
                   size="sm"
                   placeholder={field.label}
                   aria-label={field.label}
-                  value={selectValueForDisplay(field.id, filters.datePreset)}
+                  value={selectValueForDisplay(field.id, dateMode)}
                   options={field.options}
                   onChange={(value) => {
                     const next =
@@ -131,7 +139,7 @@ export function DashboardFilterBar({
                         : (String(value) as IntelligenceDatePreset)
                     if (isCustomDatePreset(next)) {
                       setFilters({
-                        datePreset: next === 'custom' ? 'range' : next,
+                        datePreset: next === 'date' ? 'date' : 'custom',
                         dateFrom: filters.dateFrom,
                         dateTo: next === 'date' ? filters.dateFrom : filters.dateTo,
                       })
@@ -145,7 +153,7 @@ export function DashboardFilterBar({
                   }}
                 />
               </Box>
-              {dateMode === 'date' ? (
+              {showsSingleDatePicker(dateMode) ? (
                 <Box sx={{ flex: '1 1 160px', minWidth: 150, maxWidth: 200 }}>
                   <DatePicker
                     size="sm"
@@ -159,7 +167,7 @@ export function DashboardFilterBar({
                   />
                 </Box>
               ) : null}
-              {dateMode === 'range' ? (
+              {showsDateRangePicker(dateMode) ? (
                 <Box sx={{ flex: '1 1 280px', minWidth: 240, maxWidth: 420 }}>
                   <DateRangePicker
                     size="sm"

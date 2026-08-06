@@ -37,10 +37,14 @@ export interface QuotationVfsServiceLine {
   id: string
   serviceName: string
   amount: number
+  /** Vendor outlay; IW = amount − cost when present. */
+  cost?: number
   gstIncluded?: boolean
   /** Visa-processing vendor mapped on Country Master Consulate Rates. */
   vendorId?: string
   vendorName?: string
+  /** Consulate urgent surcharge mapped from Country Master. */
+  isUrgentCharge?: boolean
 }
 
 export interface RetailVisaPricingItem {

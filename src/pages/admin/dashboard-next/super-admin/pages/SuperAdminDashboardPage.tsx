@@ -30,6 +30,7 @@ import {
   FinanceTab,
   OperationsTab,
   OverviewTab,
+  ProductivityTab,
   ReportsTab,
   SegmentsTab,
   WorkTab,
@@ -40,13 +41,12 @@ import type { SuperAdminDashboardFilters, SuperAdminDashboardTabProps } from '..
 function mapIntelligenceToHookFilters(
   filters: DashboardIntelligenceFilters,
 ): SuperAdminDashboardFilters {
+  const custom =
+    filters.datePreset === 'custom' ||
+    filters.datePreset === 'date' ||
+    filters.datePreset === 'range'
   return {
-    date:
-      filters.datePreset === 'custom' ||
-      filters.datePreset === 'date' ||
-      filters.datePreset === 'range'
-        ? 'month'
-        : filters.datePreset,
+    date: custom ? 'mtd' : filters.datePreset,
     branch: filters.branch,
     country: filters.country,
     segment: filters.segment,
@@ -104,7 +104,7 @@ export function SuperAdminDashboardPage() {
             operations: 'operations',
             sales: 'analytics',
             'management-alerts': 'overview',
-            'staff-productivity': 'analytics',
+            'staff-productivity': 'teams-productivity',
             'quick-actions': 'overview',
             corporate: 'segments',
             retail: 'segments',
@@ -155,21 +155,36 @@ export function SuperAdminDashboardPage() {
   return (
     <DashboardWorkspace
       workspaceId="super-admin"
-      title="Executive command center"
-      subtitle="How are we performing · where are the risks · what to act on today"
+      title="Super Admin Dashboard"
       loading={loading}
       error={dashboard.isError}
       onRetry={dashboard.retry}
       onRefresh={dashboard.retry}
       initialFilters={{
-        datePreset:
-          dashboard.filters.date === 'today' ||
-          dashboard.filters.date === 'week' ||
-          dashboard.filters.date === 'month' ||
-          dashboard.filters.date === 'quarter' ||
-          dashboard.filters.date === 'year'
-            ? dashboard.filters.date
-            : 'month',
+        datePreset: ((): DashboardIntelligenceFilters['datePreset'] => {
+          const d = dashboard.filters.date
+          if (
+            d === 'today' ||
+            d === 'yesterday' ||
+            d === 'last7' ||
+            d === 'last30' ||
+            d === 'mtd' ||
+            d === 'qtd' ||
+            d === 'ytd' ||
+            d === 'custom' ||
+            d === 'week' ||
+            d === 'month' ||
+            d === 'quarter' ||
+            d === 'year'
+          ) {
+            if (d === 'week') return 'last7'
+            if (d === 'month') return 'mtd'
+            if (d === 'quarter') return 'qtd'
+            if (d === 'year') return 'ytd'
+            return d
+          }
+          return 'mtd'
+        })(),
         branch: dashboard.filters.branch,
         country: dashboard.filters.country,
         segment: dashboard.filters.segment,
@@ -183,11 +198,10 @@ export function SuperAdminDashboardPage() {
       defaultTab="overview"
       hero={
         <SuperAdminHeroStrip
-          revenue={data.revenueHero}
-          collections={data.collectionsHero}
-          items={data.heroKpis}
-          blockedCash={data.blockedCash}
+          data={data}
           loading={loading}
+          onOpenTab={openTab}
+          onNavigate={(href) => navigate(href)}
         />
       }
       tabs={[
@@ -210,22 +224,28 @@ export function SuperAdminDashboardPage() {
           content: <SegmentsTab {...tabProps} />,
         },
         {
+          id: 'clients',
+          label: 'Clients',
+          icon: <Users size={16} />,
+          content: <ClientsTab {...tabProps} />,
+        },
+        {
           id: 'operations',
           label: 'Operations',
           icon: <Anchor size={16} />,
           content: <OperationsTab {...tabProps} />,
         },
         {
+          id: 'teams-productivity',
+          label: 'Teams & Productivity',
+          icon: <Users size={16} />,
+          content: <ProductivityTab {...tabProps} />,
+        },
+        {
           id: 'finance',
           label: 'Finance',
           icon: <HandCoins size={16} />,
           content: <FinanceTab {...tabProps} />,
-        },
-        {
-          id: 'clients',
-          label: 'Clients',
-          icon: <Users size={16} />,
-          content: <ClientsTab {...tabProps} />,
         },
         {
           id: 'work',

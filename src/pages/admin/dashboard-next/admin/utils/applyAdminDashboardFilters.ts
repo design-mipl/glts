@@ -14,12 +14,20 @@ function dateScale(preset: DashboardIntelligenceFilters['datePreset']): number {
   switch (preset) {
     case 'today':
       return 0.35
+    case 'yesterday':
+      return 0.38
+    case 'last7':
     case 'week':
       return 0.72
+    case 'last30':
+      return 0.95
+    case 'mtd':
     case 'month':
       return 1
+    case 'qtd':
     case 'quarter':
       return 1.18
+    case 'ytd':
     case 'year':
       return 1.35
     case 'date':

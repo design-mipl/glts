@@ -2,7 +2,11 @@ import { loadSession } from '@/shared/auth/session'
 import type { AgreementWorkflowType } from '@/shared/types/commercialAgreement'
 import type { BusinessSegment } from '@/shared/types/countryMaster'
 import { resolveCustomerPortalAgreement } from '@/shared/utils/resolveCustomerPortalAgreement'
-import type { ApplicationFlowPolicy } from '../context/ApplicationFlowPolicyContext'
+import type { ApplicationCustomerSegment } from '../types/applicationListing.types'
+import {
+  type ApplicationFlowPolicy,
+  customerSegmentToBusinessSegment,
+} from '../context/ApplicationFlowPolicyContext'
 
 function workflowTypeToSegment(workflowType: AgreementWorkflowType): BusinessSegment {
   switch (workflowType) {
@@ -22,10 +26,14 @@ function workflowTypeToSegment(workflowType: AgreementWorkflowType): BusinessSeg
 
 /**
  * Business segment for visa offerings and card display in application create flows.
+ * Admin flows use the module's customerSegment (Country Master segment).
  * Customer portal defaults to marine; agreement workflow overrides when approved.
  */
-export function resolveApplicationFlowSegment(policy: ApplicationFlowPolicy): BusinessSegment {
-  if (policy === 'admin') return 'marine'
+export function resolveApplicationFlowSegment(
+  policy: ApplicationFlowPolicy,
+  adminCustomerSegment: ApplicationCustomerSegment = 'marine',
+): BusinessSegment {
+  if (policy === 'admin') return customerSegmentToBusinessSegment(adminCustomerSegment)
   if (policy === 'website') return 'retail'
 
   const session = loadSession()

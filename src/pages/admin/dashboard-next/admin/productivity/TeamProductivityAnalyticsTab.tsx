@@ -149,7 +149,9 @@ export function TeamProductivityAnalyticsTab({
 
   const filterHint = filters
     ? [
-        filters.datePreset !== 'month' ? filters.datePreset : null,
+        filters.datePreset !== 'mtd' && filters.datePreset !== 'month'
+          ? filters.datePreset
+          : null,
         filters.segment !== 'all' ? filters.segment : null,
         filters.branch !== 'all' ? filters.branch : null,
         filters.country !== 'all' ? filters.country : null,

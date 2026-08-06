@@ -6,8 +6,12 @@ import type {
 
 export const GROUND_OPS_DATE_OPTIONS = [
   { label: 'Today', value: 'today' },
+  { label: 'Yesterday', value: 'yesterday' },
   { label: 'Tomorrow', value: 'tomorrow' },
-  { label: 'This week', value: 'week' },
+  { label: 'Last 7 Days', value: 'last7' },
+  { label: 'Last 30 Days', value: 'last30' },
+  { label: 'MTD', value: 'mtd' },
+  { label: 'Custom', value: 'custom' },
 ]
 
 export const GROUND_OPS_JURISDICTION_OPTIONS = [

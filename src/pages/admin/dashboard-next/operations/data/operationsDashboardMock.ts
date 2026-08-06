@@ -3,8 +3,13 @@ import type { OpsSegmentKey } from '../utils/opsSegmentPaths'
 
 export const OPERATIONS_DATE_OPTIONS = [
   { label: 'Today', value: 'today' },
-  { label: 'This week', value: 'week' },
-  { label: 'This month', value: 'month' },
+  { label: 'Yesterday', value: 'yesterday' },
+  { label: 'Last 7 Days', value: 'last7' },
+  { label: 'Last 30 Days', value: 'last30' },
+  { label: 'MTD', value: 'mtd' },
+  { label: 'QTD', value: 'qtd' },
+  { label: 'YTD', value: 'ytd' },
+  { label: 'Custom', value: 'custom' },
 ]
 
 export const OPERATIONS_COUNTRY_OPTIONS = [

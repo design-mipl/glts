@@ -16,7 +16,6 @@ export type AccountsReportTypeId =
   | 'revenue_vs_daily_target'
   | 'cash_position'
   | 'collections_today_mtd'
-  | 'weekly_gross_profit_flash'
   | 'gross_margin_by_vertical'
   | 'revenue_by_visa_country'
   | 'revenue_by_client_country'
@@ -113,12 +112,6 @@ export const ACCOUNTS_REPORT_META: readonly AccountsReportMeta[] = [
     source: 'Credit control — payments received today and MTD vs target.',
   },
   {
-    id: 'weekly_gross_profit_flash',
-    label: 'Weekly Gross Profit Flash',
-    category: 'Executive',
-    source: 'Finance — weekly flash revenue, direct costs, and gross margin.',
-  },
-  {
     id: 'gross_margin_by_vertical',
     label: 'Gross Margin by Vertical',
     category: 'Executive',
@@ -132,7 +125,7 @@ export const ACCOUNTS_REPORT_META: readonly AccountsReportMeta[] = [
   },
   {
     id: 'revenue_by_client_country',
-    label: 'Revenue by Client and Country',
+    label: 'Revenue by Client & Country',
     category: 'Executive',
     source: 'Finance — client × country revenue mix. Date, client & country filters via period.',
   },
@@ -150,19 +143,19 @@ export const ACCOUNTS_REPORT_META: readonly AccountsReportMeta[] = [
   },
   {
     id: 'full_pl_vertical_breakdown',
-    label: 'Full P&L – 4 Vertical Breakdown (Monthly)',
+    label: 'Full P&L (4-Vertical Breakdown)',
     category: 'Executive',
     source: 'Finance — monthly P&L by vertical with target and variance notes.',
   },
   {
     id: 'revenue_forecast',
-    label: 'Revenue Forecast (Monthly / Quarterly / Half-Yearly / Yearly)',
+    label: 'Revenue Forecast per Country',
     category: 'Executive',
     source: 'Finance — conservative / base / optimistic forecast scenarios.',
   },
   {
     id: 'client_wise_profitability',
-    label: 'Client-Wise Profitability',
+    label: 'Client-wise Profitability',
     category: 'Executive',
     source: 'Finance — client revenue, cost, margin, and MoM trend.',
   },
@@ -510,7 +503,6 @@ export function getAccountsReportColumns(
         textColumn('todaysRevenue', "Today's Revenue", 'md'),
         textColumn('mtdRevenue', 'MTD Revenue', 'md'),
         textColumn('mtdTarget', 'MTD Target', 'md'),
-        textColumn('mtdVsTarget', 'MTD vs Target (%)', 'md'),
         textColumn('ytdRevenue', 'YTD Revenue', 'md'),
         textColumn('annualTarget', 'Annual Target', 'md'),
         textColumn('ytdVsTarget', 'YTD vs Target (%)', 'md'),
@@ -529,18 +521,8 @@ export function getAccountsReportColumns(
         textColumn('paymentsToday', 'Payments Received Today', 'md'),
         textColumn('mtdCollections', 'MTD Collections', 'md'),
         textColumn('mtdTarget', 'MTD Target', 'md'),
-        textColumn('mtdVsTarget', 'MTD vs Target (%)', 'md'),
         textColumn('topOverdueAccount', 'Top Overdue Account', 'lg'),
         textColumn('daysOverdue', 'Days Overdue', 'sm'),
-      ]
-    case 'weekly_gross_profit_flash':
-      return [
-        textColumn('weekEnding', 'Week Ending', 'md'),
-        textColumn('revenueBooked', 'Revenue Booked', 'md'),
-        textColumn('directCosts', 'Direct Costs (Approx.)', 'md'),
-        textColumn('grossProfit', 'Gross Profit (Approx.)', 'md'),
-        textColumn('grossMargin', 'Gross Margin (%)', 'sm'),
-        textColumn('vsPriorWeek', 'vs Prior Week (%)', 'sm'),
       ]
     case 'gross_margin_by_vertical':
       return [
@@ -550,7 +532,7 @@ export function getAccountsReportColumns(
         textColumn('grossProfit', 'Gross Profit', 'md'),
         textColumn('grossMargin', 'Gross Margin (%)', 'sm'),
         textColumn('vsLastWeek', 'vs Last Week', 'sm'),
-        textColumn('ragStatus', 'RAG Status (Green / Amber / Red)', 'md'),
+        textColumn('ragStatus', 'RAG Status', 'sm'),
       ]
     case 'revenue_by_visa_country':
     case 'revenue_by_client_country':
@@ -569,16 +551,16 @@ export function getAccountsReportColumns(
       return [
         textColumn('agingBucket', 'Aging Bucket', 'md'),
         textColumn('clients', 'Clients', 'xl'),
-        textColumn('totalOutstanding', 'Total Outstanding (Age-wise)', 'md'),
-        textColumn('reasons', 'Reasons of Outstandings (Free Text)', 'xl'),
+        textColumn('totalOutstanding', 'Total Outstanding Agewise', 'md'),
+        textColumn('reasons', 'Reasons of Outstandings', 'xl'),
       ]
     case 'embassy_fee_working_capital':
       return [
         textColumn('country', 'Country', 'md'),
-        textColumn('totalBlocked', 'Total Blocked/Utilized', 'md'),
+        textColumn('totalBlocked', 'Total Blocked / Utilized', 'md'),
         textColumn('cases', 'No. of Cases', 'sm'),
         textColumn('avgDaysBlocked', 'Avg Days Blocked', 'sm'),
-        textColumn('actualPaymentReceived', 'Actual Payment Received for Respective Case', 'lg'),
+        textColumn('actualPaymentReceived', 'Actual Payment Received', 'md'),
         textColumn('oldestCaseDays', 'Oldest Case (Days)', 'sm'),
       ]
     case 'full_pl_vertical_breakdown':
@@ -591,8 +573,7 @@ export function getAccountsReportColumns(
         textColumn('vsPriorMonth', 'vs Prior Month', 'sm'),
         textColumn('vsMtdTarget', 'vs MTD Target', 'sm'),
         textColumn('vsYtdTarget', 'vs YTD Target', 'sm'),
-        textColumn('variance', 'Variance', 'sm'),
-        textColumn('note', 'Note (if >10%)', 'lg'),
+        textColumn('varianceNote', 'Variance Note', 'lg'),
       ]
     case 'revenue_forecast':
       return [
@@ -616,13 +597,13 @@ export function getAccountsReportColumns(
         textColumn('verticalOrTier', 'Vertical / Client Tier', 'lg'),
         textColumn('avgDays', 'Avg Days (Invoice to Payment)', 'md'),
         textColumn('sixMonthTrend', '6-Month Trend', 'md'),
-        textColumn('vsTarget', 'vs Target (Credit Days Client-wise)', 'lg'),
+        textColumn('vsTarget', 'vs Target (Credit Days)', 'lg'),
       ]
     case 'daily_invoice_report':
       return [
         textColumn('caseId', 'Case ID', 'md'),
         textColumn('client', 'Client', 'lg'),
-        textColumn('invoiceStatus', 'Invoice Status (Invoiced / Not Invoiced)', 'md'),
+        textColumn('invoiceStatus', 'Invoice Status', 'md'),
         textColumn('reason', 'Reason (if Not Invoiced)', 'xl'),
         textColumn('daysSinceClosed', 'Days Since Case Closed', 'sm'),
       ]
@@ -884,7 +865,6 @@ export function buildAccountsReportRows(
           todaysRevenue: `₹${today.toFixed(1)}L`,
           mtdRevenue: `₹${mtd}L`,
           mtdTarget: `₹${mtdTarget}L`,
-          mtdVsTarget: `${Math.round((mtd / mtdTarget) * 100)}%`,
           ytdRevenue: `₹${ytd}L`,
           annualTarget: `₹${annualTarget}L`,
           ytdVsTarget: `${Math.round((ytd / annualTarget) * 100)}%`,
@@ -934,7 +914,6 @@ export function buildAccountsReportRows(
           paymentsToday: `₹${(mtdCollected / 18).toFixed(1)}L`,
           mtdCollections: asReportString(data.collectionSummary.collected),
           mtdTarget: `₹${mtdTarget}L`,
-          mtdVsTarget: `${Math.round((mtdCollected / mtdTarget) * 100)}%`,
           topOverdueAccount: top?.client ?? '—',
           daysOverdue: top?.ageBucket?.includes('90')
             ? '90+'
@@ -943,27 +922,6 @@ export function buildAccountsReportRows(
               : top?.ageBucket?.includes('45')
                 ? '45+'
                 : '30+',
-        },
-      ]
-    }
-
-    case 'weekly_gross_profit_flash': {
-      const trend = data.purchaseVsRevenue.trend
-      const latest = trend[trend.length - 1] ?? { label: 'WTD', revenue: 42, purchase: 18 }
-      const prior = trend[trend.length - 2] ?? latest
-      const gp = latest.revenue - latest.purchase
-      const priorGp = prior.revenue - prior.purchase
-      const margin = latest.revenue ? Math.round((gp / latest.revenue) * 100) : 0
-      const vsPrior = priorGp ? Math.round(((gp - priorGp) / Math.abs(priorGp)) * 100) : 0
-      return [
-        {
-          id: 'wgpf-1',
-          weekEnding: latest.label,
-          revenueBooked: `₹${latest.revenue}L`,
-          directCosts: `₹${latest.purchase}L`,
-          grossProfit: `₹${gp}L`,
-          grossMargin: `${margin}%`,
-          vsPriorWeek: `${vsPrior >= 0 ? '+' : ''}${vsPrior}%`,
         },
       ]
     }
@@ -1088,8 +1046,7 @@ export function buildAccountsReportRows(
           vsPriorMonth: index % 2 === 0 ? '+3%' : '-1%',
           vsMtdTarget: `${92 + (index % 5)}%`,
           vsYtdTarget: `${88 + (index % 6)}%`,
-          variance: `${variance}%`,
-          note: variance > 10 ? 'Review overhead allocation & seasonality' : '—',
+          varianceNote: variance > 10 ? `>${variance}% — review overhead allocation & seasonality` : 'Within band',
         }
       })
     }

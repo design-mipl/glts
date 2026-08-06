@@ -17,6 +17,7 @@ export function MarineCreateApplicationPage() {
       policy="admin"
       listingPath={listingHref}
       storageKey={ADMIN_MARINE_APPLICATION_FLOW_STORAGE_KEY}
+      customerSegment="marine"
       breadcrumbItems={[
         { label: 'Marine applications', href: listingHref },
         { label: 'Create application' },

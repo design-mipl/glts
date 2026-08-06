@@ -44,6 +44,7 @@ function buildSubmittedSingleRow(
   applicationId: string,
   now: string,
   creator: ReturnType<typeof getSessionCreatorMeta>,
+  customerSegment: ApplicationCustomerSegment = 'marine',
 ): SingleApplicationRow {
   const readyRows = state.uploadQueueRows.filter(r => r.status !== 'processing')
   const primary = readyRows[0]
@@ -81,7 +82,7 @@ function buildSubmittedSingleRow(
     statusTone: statusToneFromOperational(operationalStatus),
     createdByEmail: creator.createdByEmail,
     createdByRole: creator.createdByRole,
-    customerSegment: 'marine',
+    customerSegment,
     poReference: state.referencePo || undefined,
   }
 }
@@ -91,6 +92,7 @@ function buildSubmittedBulkRow(
   batchId: string,
   now: string,
   creator: ReturnType<typeof getSessionCreatorMeta>,
+  customerSegment: ApplicationCustomerSegment = 'marine',
 ): BulkBatchRow {
   const readyRows = state.uploadQueueRows.filter(r => r.status !== 'processing')
   const travelerCount = Math.max(readyRows.length, 1)
@@ -126,7 +128,7 @@ function buildSubmittedBulkRow(
     statusTone: tone === 'draft' ? 'processing' : tone,
     createdByEmail: creator.createdByEmail,
     createdByRole: creator.createdByRole,
-    customerSegment: 'marine',
+    customerSegment,
     poReference: state.referencePo || undefined,
   }
 }
@@ -135,10 +137,26 @@ function filterMarineSegment(rows: MarineApplicationRow[]): MarineApplicationRow
   return rows.filter(isMarineSegment)
 }
 
+function filterBySegment(
+  rows: MarineApplicationRow[],
+  segment: ApplicationCustomerSegment,
+): MarineApplicationRow[] {
+  return rows.filter(row => row.customerSegment === segment)
+}
+
 export const marineApplicationAdminService = {
   listMarineApplications(): { singles: SingleApplicationRow[]; bulks: BulkBatchRow[] } {
     const singles = filterMarineSegment(mockSingleApplications) as SingleApplicationRow[]
     const bulks = filterMarineSegment(mockBulkBatches) as BulkBatchRow[]
+    return { singles, bulks }
+  },
+
+  listApplicationsBySegment(segment: ApplicationCustomerSegment): {
+    singles: SingleApplicationRow[]
+    bulks: BulkBatchRow[]
+  } {
+    const singles = filterBySegment(mockSingleApplications, segment) as SingleApplicationRow[]
+    const bulks = filterBySegment(mockBulkBatches, segment) as BulkBatchRow[]
     return { singles, bulks }
   },
 
@@ -202,7 +220,10 @@ export const marineApplicationAdminService = {
     return undefined
   },
 
-  createAndSubmitFromFlow(state: ApplicationFlowState): { id: string; kind: 'single' | 'bulk' } {
+  createAndSubmitFromFlow(
+    state: ApplicationFlowState,
+    customerSegment: ApplicationCustomerSegment = 'marine',
+  ): { id: string; kind: 'single' | 'bulk' } {
     const now = new Date().toISOString().slice(0, 10)
     const creator = getSessionCreatorMeta(loadSession())
     const kind = deriveApplicationSubmitKind(state.uploadQueueRows)
@@ -211,7 +232,7 @@ export const marineApplicationAdminService = {
     if (kind === 'bulk') {
       const batchId = state.gltsBatchId || createGltsBatchId()
       const existingIndex = mockBulkBatches.findIndex(r => r.id === batchId)
-      const row = buildSubmittedBulkRow(state, batchId, now, creator)
+      const row = buildSubmittedBulkRow(state, batchId, now, creator, customerSegment)
       if (existingIndex >= 0) {
         mockBulkBatches[existingIndex] = row
       } else {
@@ -221,7 +242,7 @@ export const marineApplicationAdminService = {
     }
 
     const existingIndex = mockSingleApplications.findIndex(r => r.id === applicationId)
-    const row = buildSubmittedSingleRow(state, applicationId, now, creator)
+    const row = buildSubmittedSingleRow(state, applicationId, now, creator, customerSegment)
     if (existingIndex >= 0) {
       mockSingleApplications[existingIndex] = row
     } else {

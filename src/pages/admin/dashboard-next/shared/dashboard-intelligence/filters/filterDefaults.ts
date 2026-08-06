@@ -1,7 +1,7 @@
 import type { DashboardIntelligenceFilters, IntelligenceFilterFieldConfig } from '../types'
 
 export const DEFAULT_INTELLIGENCE_FILTERS: DashboardIntelligenceFilters = {
-  datePreset: 'month',
+  datePreset: 'mtd',
   branch: 'all',
   segment: 'all',
   country: 'all',
@@ -24,12 +24,13 @@ export const DEFAULT_INTELLIGENCE_FILTER_FIELDS: IntelligenceFilterFieldConfig[]
     label: 'Date range',
     options: [
       { label: 'Today', value: 'today' },
-      { label: 'This week', value: 'week' },
-      { label: 'This month', value: 'month' },
-      { label: 'This quarter', value: 'quarter' },
-      { label: 'This year', value: 'year' },
-      { label: 'Custom date', value: 'date' },
-      { label: 'Custom range', value: 'range' },
+      { label: 'Yesterday', value: 'yesterday' },
+      { label: 'Last 7 Days', value: 'last7' },
+      { label: 'Last 30 Days', value: 'last30' },
+      { label: 'MTD', value: 'mtd' },
+      { label: 'QTD', value: 'qtd' },
+      { label: 'YTD', value: 'ytd' },
+      { label: 'Custom', value: 'custom' },
     ],
   },
   {
