@@ -951,7 +951,6 @@ export function buildSuperAdminReportRows(
     }
 
     case 'collections_today_mtd': {
-      const top = data.highRiskClients[0] ?? data.clientRows[0]
       const mtdVal = parseCurrencyNumber(data.collectionsHero.mtd.value)
       const mtdTarget = Math.round(mtdVal * 1.1) || 35
       return [
@@ -960,7 +959,8 @@ export function buildSuperAdminReportRows(
           paymentsToday: String(data.collectionsHero.today.value),
           mtdCollections: String(data.collectionsHero.mtd.value),
           mtdTarget: `₹${mtdTarget}L`,
-          topOverdueAccount: top ? ('client' in top ? top.client : top.primary) : '—',
+          topOverdueAccount:
+            data.highRiskClients[0]?.primary ?? data.clientRows[0]?.client ?? '—',
           daysOverdue: String(data.collectionSummary.overdue ?? 45),
         },
       ]

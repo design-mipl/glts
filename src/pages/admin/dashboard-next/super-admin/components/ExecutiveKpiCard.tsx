@@ -2,6 +2,7 @@ import type { ReactNode, MouseEvent } from 'react'
 import { useId, useState } from 'react'
 import { Box, Divider, ListItemIcon, ListItemText, Menu, MenuItem, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
+import type { Theme } from '@mui/material/styles'
 import { Check, MoreVertical } from 'lucide-react'
 import { IconButton, Tooltip } from '@/design-system/UIComponents'
 import {
@@ -19,7 +20,7 @@ export interface ExecutiveKpiPeriodOption {
   label: string
 }
 
-function toneColor(tone: ExecutiveKpiTone, theme: ReturnType<typeof useTheme>): string {
+function toneColor(tone: ExecutiveKpiTone, theme: Theme): string {
   switch (tone) {
     case 'positive':
       return theme.palette.success.main
@@ -34,7 +35,7 @@ function toneColor(tone: ExecutiveKpiTone, theme: ReturnType<typeof useTheme>): 
   }
 }
 
-function iconToneColor(tone: ExecutiveKpiTone, theme: ReturnType<typeof useTheme>): string {
+function iconToneColor(tone: ExecutiveKpiTone, theme: Theme): string {
   if (tone === 'neutral') return theme.palette.primary.main
   return toneColor(tone, theme)
 }
