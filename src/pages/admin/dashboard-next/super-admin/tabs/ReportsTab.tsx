@@ -13,6 +13,7 @@ import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import { exportDashboardSnapshot } from '../../shared/dashboard-intelligence'
 import { DASHBOARD_SPACING } from '../../shared/constants'
+import { withReportRagStatusBadges } from '../../shared/utils/reportRagColumn'
 import { SuperAdminSection } from '../components/SuperAdminChrome'
 import {
   SUPER_ADMIN_REPORT_CATEGORY_OPTIONS,
@@ -71,7 +72,7 @@ export function ReportsTab({ data, loading }: SuperAdminDashboardTabProps) {
   const reportSource = reportType ? getSuperAdminReportSource(reportType) : ''
 
   const columns = useMemo(
-    () => (reportType ? getSuperAdminReportColumns(reportType) : []),
+    () => (reportType ? withReportRagStatusBadges(getSuperAdminReportColumns(reportType)) : []),
     [reportType],
   )
   const rows = useMemo(

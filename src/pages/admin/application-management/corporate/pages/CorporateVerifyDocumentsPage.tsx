@@ -133,7 +133,7 @@ export function CorporateVerifyDocumentsPage() {
     return (
       <EmptyState
         title="Application not found"
-        description="This application may be a draft, non-corporate, or unavailable for verification."
+        description="This application may be non-corporate or unavailable for verification."
         action={{ label: 'Back to applications', onClick: () => navigate(listingPath) }}
       />
     )

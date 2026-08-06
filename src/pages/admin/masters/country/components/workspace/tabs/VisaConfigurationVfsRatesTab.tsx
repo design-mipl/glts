@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Box,
   IconButton,
@@ -11,7 +11,7 @@ import {
   Typography,
 } from '@mui/material'
 import { PencilLine, Trash2 } from 'lucide-react'
-import { Badge, Select } from '@/design-system/UIComponents'
+import { Badge, Checkbox, Input, Select } from '@/design-system/UIComponents'
 import { AddVfsServiceRateModal } from '@/pages/admin/components/AddVfsServiceRateModal'
 import type { VfsServiceRateFormValues } from '@/pages/admin/components/AddVfsServiceRateModal'
 import {
@@ -26,7 +26,12 @@ import type {
   CountryMasterFormData,
   CountryVfsServiceRate,
 } from '@/shared/types/countryMaster'
-import { formatVfsGstLabel } from '@/shared/utils/countryVfsServiceRateUtils'
+import {
+  URGENT_CHARGE_SERVICE_NAME,
+  computeVfsIw,
+  formatVfsGstLabel,
+  splitVfsServiceRates,
+} from '@/shared/utils/countryVfsServiceRateUtils'
 import type { VisaConfigurationScope } from './VisaConfigurationDocumentsTab'
 
 interface VisaConfigurationVfsRatesTabProps {
@@ -60,6 +65,8 @@ export function VisaConfigurationVfsRatesTab({
   onAddModalOpenChange,
 }: VisaConfigurationVfsRatesTabProps) {
   const [editRate, setEditRate] = useState<CountryVfsServiceRate | null>(null)
+  const [urgentCostInput, setUrgentCostInput] = useState('')
+  const [urgentRateInput, setUrgentRateInput] = useState('')
 
   const vendorOptions = useMemo(
     () =>
@@ -83,28 +90,58 @@ export function VisaConfigurationVfsRatesTab({
     return [...(source ?? [])].sort((a, b) => a.sortOrder - b.sortOrder)
   }, [jurisdiction?.vfsServiceRates, scope, visaType?.vfsServiceRates])
 
+  const { standardRates, urgentRate } = useMemo(() => splitVfsServiceRates(rates), [rates])
+
+  useEffect(() => {
+    if (!urgentRate) {
+      setUrgentCostInput('')
+      setUrgentRateInput('')
+      return
+    }
+    setUrgentCostInput(urgentRate.cost != null ? String(urgentRate.cost) : '')
+    setUrgentRateInput(String(urgentRate.amount ?? 0))
+  }, [urgentRate])
+
   if (!visaType) return null
   if (scope === 'jurisdiction' && !jurisdiction) return null
 
-  const persistRates = (nextRates: CountryVfsServiceRate[]) => {
+  const persistRates = (
+    nextStandard: CountryVfsServiceRate[],
+    nextUrgent: CountryVfsServiceRate | null | undefined = urgentRate,
+  ) => {
+    const combined: CountryVfsServiceRate[] = [
+      ...nextStandard.map((rate, index) => ({
+        ...rate,
+        isUrgentCharge: false,
+        sortOrder: index,
+      })),
+    ]
+    if (nextUrgent) {
+      combined.push({
+        ...nextUrgent,
+        serviceName: URGENT_CHARGE_SERVICE_NAME,
+        isUrgentCharge: true,
+        sortOrder: combined.length,
+      })
+    }
     countryMasterAdminService.saveVfsServiceRates(
       countryId,
       segment,
       visaTypeId,
-      nextRates.map((rate, index) => ({ ...rate, sortOrder: index })),
+      combined,
       scope === 'jurisdiction' ? jurisdictionId : undefined,
     )
     onRefresh()
   }
 
   const removeRate = (rateId: string) => {
-    persistRates(rates.filter(rate => rate.id !== rateId))
+    persistRates(standardRates.filter(rate => rate.id !== rateId), urgentRate)
   }
 
   const updateVendor = (rateId: string, vendorId: string) => {
     const vendorName = vendorOptions.find(option => option.value === vendorId)?.label ?? ''
     persistRates(
-      rates.map(rate =>
+      standardRates.map(rate =>
         rate.id === rateId
           ? {
               ...rate,
@@ -113,29 +150,33 @@ export function VisaConfigurationVfsRatesTab({
             }
           : rate,
       ),
+      urgentRate,
     )
   }
 
   const addRate = (values: VfsServiceRateFormValues) => {
-    persistRates([
-      ...rates,
-      {
-        id: generateVfsServiceRateId(),
-        serviceName: values.serviceName,
-        amount: values.amount,
-        gstIncluded: values.gstIncluded,
-        vendorId: values.vendorId,
-        vendorName: values.vendorName,
-        sortOrder: rates.length,
-      },
-    ])
+    persistRates(
+      [
+        ...standardRates,
+        {
+          id: generateVfsServiceRateId(),
+          serviceName: values.serviceName,
+          amount: values.amount,
+          gstIncluded: values.gstIncluded,
+          vendorId: values.vendorId,
+          vendorName: values.vendorName,
+          sortOrder: standardRates.length,
+        },
+      ],
+      urgentRate,
+    )
     onAddModalOpenChange(false)
   }
 
   const saveEditedRate = (values: VfsServiceRateFormValues) => {
     if (!editRate) return
     persistRates(
-      rates.map(rate =>
+      standardRates.map(rate =>
         rate.id === editRate.id
           ? {
               ...rate,
@@ -147,16 +188,64 @@ export function VisaConfigurationVfsRatesTab({
             }
           : rate,
       ),
+      urgentRate,
     )
     setEditRate(null)
     onAddModalOpenChange(false)
   }
 
+  const toggleUrgentCharge = (enabled: boolean) => {
+    if (enabled) {
+      if (urgentRate) return
+      const defaultVendor = vendorOptions[0]
+      persistRates(standardRates, {
+        id: generateVfsServiceRateId(),
+        serviceName: URGENT_CHARGE_SERVICE_NAME,
+        amount: 0,
+        cost: 0,
+        gstIncluded: false,
+        isUrgentCharge: true,
+        vendorId: defaultVendor?.value,
+        vendorName: defaultVendor?.label,
+        sortOrder: standardRates.length,
+      })
+      return
+    }
+    persistRates(standardRates, null)
+  }
+
+  const commitUrgentAmounts = () => {
+    if (!urgentRate) return
+    const parsedCost = Number(urgentCostInput)
+    const parsedRate = Number(urgentRateInput)
+    const cost = urgentCostInput.trim() === '' || Number.isNaN(parsedCost) ? 0 : parsedCost
+    const amount = urgentRateInput.trim() === '' || Number.isNaN(parsedRate) ? 0 : parsedRate
+    if (cost === (urgentRate.cost ?? 0) && amount === urgentRate.amount) return
+    persistRates(standardRates, { ...urgentRate, cost, amount })
+  }
+
+  const updateUrgentVendor = (vendorId: string) => {
+    if (!urgentRate) return
+    const vendorName = vendorOptions.find(option => option.value === vendorId)?.label ?? ''
+    persistRates(standardRates, {
+      ...urgentRate,
+      vendorId: vendorId || undefined,
+      vendorName: vendorName || undefined,
+    })
+  }
+
+  const urgentIw = urgentRate
+    ? computeVfsIw(
+        Number(urgentRateInput) || urgentRate.amount,
+        urgentCostInput.trim() === '' ? urgentRate.cost : Number(urgentCostInput),
+      )
+    : 0
+
   return (
     <Stack spacing={1.5}>
       <Box sx={{ width: '100%' }}>
         <Box sx={agreementEmbeddedTableSx}>
-          {rates.length === 0 ? (
+          {standardRates.length === 0 ? (
             <Box sx={{ py: 3, px: 2, textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
                 No consulate services configured yet.
@@ -183,7 +272,7 @@ export function VisaConfigurationVfsRatesTab({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rates.map(rate => (
+                {standardRates.map(rate => (
                   <TableRow key={rate.id} hover>
                     <TableCell sx={{ fontSize: 13 }}>{rate.serviceName}</TableCell>
                     <TableCell align="right" sx={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>
@@ -240,6 +329,93 @@ export function VisaConfigurationVfsRatesTab({
           )}
         </Box>
       </Box>
+
+      <Checkbox
+        label="Add urgent charge"
+        checked={Boolean(urgentRate)}
+        disabled={readOnly}
+        size="sm"
+        onChange={toggleUrgentCharge}
+      />
+
+      {urgentRate ? (
+        <Box sx={{ width: '100%' }}>
+          <Box sx={agreementEmbeddedTableSx}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Service name</TableCell>
+                  <TableCell align="right" sx={agreementEmbeddedTableHeadCellSx}>
+                    Cost
+                  </TableCell>
+                  <TableCell align="right" sx={agreementEmbeddedTableHeadCellSx}>
+                    Rate
+                  </TableCell>
+                  <TableCell align="right" sx={agreementEmbeddedTableHeadCellSx}>
+                    IW
+                  </TableCell>
+                  <TableCell sx={agreementEmbeddedTableHeadCellSx}>Vendor</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow hover>
+                  <TableCell sx={{ fontSize: 13 }}>{URGENT_CHARGE_SERVICE_NAME}</TableCell>
+                  <TableCell align="right" sx={{ fontSize: 13, minWidth: 120 }}>
+                    {readOnly ? (
+                      formatInr(urgentRate.cost ?? 0)
+                    ) : (
+                      <Input
+                        type="number"
+                        value={urgentCostInput}
+                        onChange={setUrgentCostInput}
+                        onBlur={commitUrgentAmounts}
+                        size="sm"
+                        fullWidth
+                        placeholder="0"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontSize: 13, minWidth: 120 }}>
+                    {readOnly ? (
+                      formatInr(urgentRate.amount)
+                    ) : (
+                      <Input
+                        type="number"
+                        value={urgentRateInput}
+                        onChange={setUrgentRateInput}
+                        onBlur={commitUrgentAmounts}
+                        size="sm"
+                        fullWidth
+                        placeholder="0"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{ fontSize: 13, fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}
+                  >
+                    {formatInr(urgentIw)}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: 13, minWidth: 200 }}>
+                    {readOnly ? (
+                      urgentRate.vendorName || '—'
+                    ) : (
+                      <Select
+                        value={urgentRate.vendorId ?? ''}
+                        onChange={value => updateUrgentVendor(String(value))}
+                        options={vendorOptions}
+                        placeholder="Select vendor"
+                        fullWidth
+                        size="sm"
+                      />
+                    )}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </Box>
+        </Box>
+      ) : null}
 
       <AddVfsServiceRateModal
         open={addModalOpen}

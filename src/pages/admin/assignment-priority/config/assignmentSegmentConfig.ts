@@ -1,6 +1,6 @@
 import type { ApplicationCustomerSegment } from '@/pages/customer/features/applications/types/applicationListing.types'
 
-export type AssignmentSegmentKey = 'marine' | 'b2b' | 'corporate' | 'retail'
+export type AssignmentSegmentKey = 'marine' | 'corporate' | 'retail' | 'b2b'
 
 export interface AssignmentSegmentConfig {
   key: AssignmentSegmentKey
@@ -25,16 +25,6 @@ export const ASSIGNMENT_SEGMENTS: Record<AssignmentSegmentKey, AssignmentSegment
     routePath: '/admin/assignment-priority/marine',
     listingLayout: 'operational',
   },
-  b2b: {
-    key: 'b2b',
-    segment: 'b2bAgents',
-    label: 'B2B',
-    queueTitle: 'B2B assignment queue',
-    queueSubtitle: 'Operational routing and priority management for B2B agent passenger records.',
-    applicationListPath: '/admin/application-management/b2b-agents',
-    routePath: '/admin/assignment-priority/b2b',
-    listingLayout: 'operational',
-  },
   corporate: {
     key: 'corporate',
     segment: 'corporate',
@@ -53,6 +43,16 @@ export const ASSIGNMENT_SEGMENTS: Record<AssignmentSegmentKey, AssignmentSegment
     queueSubtitle: 'Retail passenger assignment and carry-forward handling after submission.',
     applicationListPath: '/admin/application-management/retail',
     routePath: '/admin/assignment-priority/retail',
+  },
+  b2b: {
+    key: 'b2b',
+    segment: 'b2bAgents',
+    label: 'B2B',
+    queueTitle: 'B2B assignment queue',
+    queueSubtitle: 'Operational routing and priority management for B2B agent passenger records.',
+    applicationListPath: '/admin/application-management/b2b-agents',
+    routePath: '/admin/assignment-priority/b2b',
+    listingLayout: 'operational',
   },
 }
 

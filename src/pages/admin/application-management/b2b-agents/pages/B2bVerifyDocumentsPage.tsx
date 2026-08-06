@@ -133,7 +133,7 @@ export function B2bVerifyDocumentsPage() {
     return (
       <EmptyState
         title="Application not found"
-        description="This application may be a draft, non-B2B, or unavailable for verification."
+        description="This application may be non-B2B or unavailable for verification."
         action={{ label: 'Back to applications', onClick: () => navigate(listingPath) }}
       />
     )

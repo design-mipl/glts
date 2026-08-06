@@ -13,6 +13,7 @@ import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import { exportDashboardSnapshot } from '../../shared/dashboard-intelligence'
 import { DASHBOARD_SPACING } from '../../shared/constants'
+import { withReportRagStatusBadges } from '../../shared/utils/reportRagColumn'
 import {
   OPS_REPORT_PERIOD_OPTIONS,
   OPS_REPORT_TYPE_OPTIONS,
@@ -64,7 +65,7 @@ export function ReportsTab({ data, loading }: OperationsDashboardTabProps) {
   const reportLabel = reportType ? getOpsReportTypeLabel(reportType) : ''
 
   const columns = useMemo(
-    () => (reportType ? getOpsReportColumns(reportType) : []),
+    () => (reportType ? withReportRagStatusBadges(getOpsReportColumns(reportType)) : []),
     [reportType],
   )
   const rows = useMemo(

@@ -1,14 +1,17 @@
 import { resolveOfferingVfsServiceRates } from '@/shared/services/countryMasterService'
 import { embassyVfsFeeMasterService } from '@/shared/services/embassyVfsFeeMasterService'
+import { isUrgentVfsServiceRate } from '@/shared/utils/countryVfsServiceRateUtils'
 
 export interface VfsPickerService {
   id: string
   serviceName: string
   amount: number
+  cost?: number
   gstIncluded?: boolean
   embassyFeeServiceId?: string
   vendorId?: string
   vendorName?: string
+  isUrgentCharge?: boolean
 }
 
 export interface VfsServiceChargeLine {
@@ -16,9 +19,11 @@ export interface VfsServiceChargeLine {
   embassyFeeServiceId?: string
   serviceName: string
   amount: number
+  cost?: number
   gstIncluded?: boolean
   vendorId?: string
   vendorName?: string
+  isUrgentCharge?: boolean
 }
 
 export function resolveVfsPickerServices(input: {
@@ -37,10 +42,12 @@ export function resolveVfsPickerServices(input: {
         id: rate.id,
         serviceName: rate.serviceName,
         amount: rate.amount,
+        cost: rate.cost,
         gstIncluded: rate.gstIncluded,
         embassyFeeServiceId: rate.embassyFeeServiceId,
         vendorId: rate.vendorId,
         vendorName: rate.vendorName,
+        isUrgentCharge: rate.isUrgentCharge || isUrgentVfsServiceRate(rate) || undefined,
       }))
     }
   }
@@ -66,9 +73,11 @@ export function mapVfsPickerServicesToChargeLines(
     embassyFeeServiceId: service.embassyFeeServiceId ?? service.id,
     serviceName: service.serviceName,
     amount: service.amount,
+    cost: service.cost,
     gstIncluded: service.gstIncluded,
     vendorId: service.vendorId,
     vendorName: service.vendorName,
+    isUrgentCharge: service.isUrgentCharge,
   }))
 }
 

@@ -18,7 +18,10 @@ import {
   agreementEmbeddedTableSx,
 } from '@/pages/admin/customer-accounts/agreements/components/agreementFormLayout'
 import type { FormAssistVfsServiceChargeLine } from '@/shared/services/applicationFormAssistService'
-import { formatVfsGstLabel } from '@/shared/utils/countryVfsServiceRateUtils'
+import {
+  computeVfsIw,
+  formatVfsGstLabel,
+} from '@/shared/utils/countryVfsServiceRateUtils'
 import { AddVfsServicesModal } from './AddVfsServicesModal'
 
 interface ViewFormVfsChargesServicesSectionProps {
@@ -64,8 +67,13 @@ export function ViewFormVfsChargesServicesSection({
     [serviceCharges],
   )
 
+  const showCostIw = useMemo(
+    () => serviceCharges.some(line => line.isUrgentCharge || line.cost != null),
+    [serviceCharges],
+  )
+
   const removeRow = (id: string) => {
-    onChange(serviceCharges.filter((line) => line.id !== id))
+    onChange(serviceCharges.filter(line => line.id !== id))
   }
 
   const addServices = (lines: FormAssistVfsServiceChargeLine[]) => {
@@ -104,10 +112,21 @@ export function ViewFormVfsChargesServicesSection({
                 <TableHead>
                   <TableRow>
                     <TableCell sx={agreementEmbeddedTableHeadCellSx}>Service name</TableCell>
+                    {showCostIw ? (
+                      <TableCell align="right" sx={agreementEmbeddedTableHeadCellSx}>
+                        Cost
+                      </TableCell>
+                    ) : null}
                     <TableCell align="right" sx={agreementEmbeddedTableHeadCellSx}>
                       Rate
                     </TableCell>
+                    {showCostIw ? (
+                      <TableCell align="right" sx={agreementEmbeddedTableHeadCellSx}>
+                        IW
+                      </TableCell>
+                    ) : null}
                     <TableCell sx={agreementEmbeddedTableHeadCellSx}>GST</TableCell>
+                    <TableCell sx={agreementEmbeddedTableHeadCellSx}>Vendor</TableCell>
                     {!readOnly ? (
                       <TableCell align="right" sx={{ ...agreementEmbeddedTableHeadCellSx, width: 72 }}>
                         Actions
@@ -116,12 +135,32 @@ export function ViewFormVfsChargesServicesSection({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {serviceCharges.map((line) => (
+                  {serviceCharges.map(line => (
                     <TableRow key={line.id} hover>
                       <TableCell sx={{ fontSize: 13 }}>{line.serviceName}</TableCell>
+                      {showCostIw ? (
+                        <TableCell
+                          align="right"
+                          sx={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}
+                        >
+                          {line.cost != null || line.isUrgentCharge
+                            ? formatInr(line.cost ?? 0)
+                            : '—'}
+                        </TableCell>
+                      ) : null}
                       <TableCell align="right" sx={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>
                         {formatInr(line.amount)}
                       </TableCell>
+                      {showCostIw ? (
+                        <TableCell
+                          align="right"
+                          sx={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}
+                        >
+                          {line.cost != null || line.isUrgentCharge
+                            ? formatInr(computeVfsIw(line.amount, line.cost))
+                            : '—'}
+                        </TableCell>
+                      ) : null}
                       <TableCell sx={{ fontSize: 13 }}>
                         <Badge
                           label={formatVfsGstLabel(line.gstIncluded ?? false)}
@@ -129,6 +168,7 @@ export function ViewFormVfsChargesServicesSection({
                           size="sm"
                         />
                       </TableCell>
+                      <TableCell sx={{ fontSize: 13 }}>{line.vendorName || '—'}</TableCell>
                       {!readOnly ? (
                         <TableCell align="right">
                           <IconButton
@@ -146,9 +186,15 @@ export function ViewFormVfsChargesServicesSection({
                 <TableFooter>
                   <TableRow>
                     <TableCell sx={vfsTableTotalRowCellSx}>Total service charges</TableCell>
-                    <TableCell align="right" sx={{ ...vfsTableTotalRowCellSx, fontVariantNumeric: 'tabular-nums' }}>
+                    {showCostIw ? <TableCell sx={vfsTableTotalRowCellSx} /> : null}
+                    <TableCell
+                      align="right"
+                      sx={{ ...vfsTableTotalRowCellSx, fontVariantNumeric: 'tabular-nums' }}
+                    >
                       {formatInr(totalAmount)}
                     </TableCell>
+                    {showCostIw ? <TableCell sx={vfsTableTotalRowCellSx} /> : null}
+                    <TableCell sx={vfsTableTotalRowCellSx} />
                     <TableCell sx={vfsTableTotalRowCellSx} />
                     {!readOnly ? <TableCell sx={vfsTableTotalRowCellSx} /> : null}
                   </TableRow>

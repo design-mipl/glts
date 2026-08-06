@@ -144,7 +144,10 @@ export interface CountryQcChecklistTemplate {
 export interface CountryVfsServiceRate {
   id: string
   serviceName: string
+  /** Sell / billable rate. */
   amount: number
+  /** Vendor outlay; used with urgent charge so IW = amount − cost. */
+  cost?: number
   /** When true, the configured rate is GST-inclusive. */
   gstIncluded: boolean
   sortOrder: number
@@ -152,6 +155,8 @@ export interface CountryVfsServiceRate {
   vendorId?: string
   /** Denormalized vendor display name. */
   vendorName?: string
+  /** Optional urgent surcharge row under consulate rates. */
+  isUrgentCharge?: boolean
   /** @deprecated Legacy link to Embassy / VFS Fee Master imports. */
   embassyFeeServiceId?: string
 }

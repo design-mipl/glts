@@ -42,6 +42,7 @@ import { SacCodeListingPage } from '../masters/sac-codes'
 import { ServiceListingPage } from '../masters/services'
 import { TaxConfigurationPage } from '../masters/tax'
 import { WorkflowListingPage } from '../masters/workflows'
+import { SlaListingPage } from '../masters/sla'
 import { OperationsDashboardPage } from '../operations/dashboard/pages/OperationsDashboardPage'
 import {
   AccountsDashboardPage,
@@ -64,17 +65,17 @@ import {
   MarineViewFormPage,
 } from '../application-management/marine'
 import {
-  B2bApplicationListingPage,
-  B2bCreateApplicationPage,
-  B2bVerifyDocumentsPage,
-  B2bViewFormPage,
-} from '../application-management/b2b-agents'
-import {
   CorporateApplicationListingPage,
   CorporateCreateApplicationPage,
   CorporateVerifyDocumentsPage,
   CorporateViewFormPage,
 } from '../application-management/corporate'
+import {
+  B2bApplicationListingPage,
+  B2bCreateApplicationPage,
+  B2bVerifyDocumentsPage,
+  B2bViewFormPage,
+} from '../application-management/b2b-agents'
 import { InvoiceFinanceRoutes } from '../finance/invoices/InvoiceFinanceRoutes'
 import {
   BillingReportsPage,
@@ -123,10 +124,10 @@ import {
   SupportTicketListingPage,
 } from '../support/tickets'
 import {
-  B2bAssignmentQueuePage,
-  CorporateAssignmentQueuePage,
   MarineAssignmentQueuePage,
+  CorporateAssignmentQueuePage,
   RetailAssignmentQueuePage,
+  B2bAssignmentQueuePage,
 } from '../assignment-priority'
 import { ADMIN_ALL_DASHBOARDS, ADMIN_DASHBOARDS } from './adminDashboards'
 
@@ -502,6 +503,14 @@ export function AdminRoutes() {
         }
       />
       <Route
+        path="masters/sla"
+        element={
+          <PermissionGuard>
+            <SlaListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
         path="application-management/marine"
         element={
           <PermissionGuard>
@@ -681,14 +690,6 @@ export function AdminRoutes() {
         }
       />
       <Route
-        path="assignment-priority/b2b"
-        element={
-          <PermissionGuard>
-            <B2bAssignmentQueuePage />
-          </PermissionGuard>
-        }
-      />
-      <Route
         path="assignment-priority/corporate"
         element={
           <PermissionGuard>
@@ -701,6 +702,14 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <RetailAssignmentQueuePage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="assignment-priority/b2b"
+        element={
+          <PermissionGuard>
+            <B2bAssignmentQueuePage />
           </PermissionGuard>
         }
       />

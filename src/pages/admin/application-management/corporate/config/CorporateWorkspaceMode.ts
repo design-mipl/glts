@@ -19,10 +19,10 @@ const READONLY_QUEUE_TABS = new Set<CorporateApplicationQueueTab>([
 
 export function resolveCorporateWorkspaceMode(row: CorporateApplicationRow): CorporateWorkspaceMode {
   const tab = resolveCorporateApplicationQueueTab(row)
-  if (!tab || tab === 'draft') {
-    return 'verification'
+  if (tab === 'draft') {
+    return 'readonly'
   }
-  if (tab === 'verification_pending') {
+  if (!tab || tab === 'verification_pending') {
     return 'verification'
   }
   if (tab === 'pending_payment') {
@@ -47,6 +47,8 @@ export function isCorporatePendingPaymentWorkspace(row: CorporateApplicationRow)
 
 /** Listing should open view-form directly (skip verify) for these modes. */
 export function opensCorporateViewFormDirectly(row: CorporateApplicationRow): boolean {
+  const tab = resolveCorporateApplicationQueueTab(row)
+  if (tab === 'draft') return false
   const mode = resolveCorporateWorkspaceMode(row)
   return mode === 'readonly' || mode === 'pending_payment'
 }

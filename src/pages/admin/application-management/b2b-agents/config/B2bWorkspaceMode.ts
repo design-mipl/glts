@@ -19,10 +19,10 @@ const READONLY_QUEUE_TABS = new Set<B2bApplicationQueueTab>([
 
 export function resolveB2bWorkspaceMode(row: B2bApplicationRow): B2bWorkspaceMode {
   const tab = resolveB2bApplicationQueueTab(row)
-  if (!tab || tab === 'draft') {
-    return 'verification'
+  if (tab === 'draft') {
+    return 'readonly'
   }
-  if (tab === 'verification_pending') {
+  if (!tab || tab === 'verification_pending') {
     return 'verification'
   }
   if (tab === 'pending_payment') {
@@ -47,6 +47,8 @@ export function isB2bPendingPaymentWorkspace(row: B2bApplicationRow): boolean {
 
 /** Listing should open view-form directly (skip verify) for these modes. */
 export function opensB2bViewFormDirectly(row: B2bApplicationRow): boolean {
+  const tab = resolveB2bApplicationQueueTab(row)
+  if (tab === 'draft') return false
   const mode = resolveB2bWorkspaceMode(row)
   return mode === 'readonly' || mode === 'pending_payment'
 }

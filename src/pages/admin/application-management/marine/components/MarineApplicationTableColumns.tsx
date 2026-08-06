@@ -26,6 +26,8 @@ import type { MarineApplicationRow } from '@/shared/services/marineApplicationAd
 import { isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
 import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { isMarineReadOnlyWorkspace, isMarinePendingPaymentWorkspace, opensMarineViewFormDirectly, resolveMarineWorkspaceMode } from '../config/marineWorkspaceMode'
+import { resolveMarineApplicationQueueTab } from '../config/marineApplicationListingTabs'
+import { ApplicationSlaCell } from '../../shared/components/ApplicationSlaCell'
 
 type ToastFn = (toast: Omit<Toast, 'id'>) => void
 
@@ -55,38 +57,37 @@ function buildRowActions(
   const workspaceMode = submitted ? resolveMarineWorkspaceMode(row) : null
   const isSubmissionPending = workspaceMode === 'online_submission'
 
+  const primaryAction = !submitted
+    ? {
+        label: 'View application',
+        icon: <FileText size={16} />,
+        onClick: () => navigateFromListing(navigate, detailPath, fromListing),
+      }
+    : {
+        label: readOnlyWorkspace
+          ? 'View application'
+          : pendingPaymentWorkspace
+            ? 'Record payment'
+            : isSubmissionPending
+              ? 'View Form'
+              : 'Verify Documents',
+        icon:
+          readOnlyWorkspace || pendingPaymentWorkspace || isSubmissionPending ? (
+            <FileText size={16} />
+          ) : (
+            <ClipboardCheck size={16} />
+          ),
+        onClick: () => {
+          navigateFromListing(
+            navigate,
+            openViewFormDirectly || isSubmissionPending ? `${detailPath}/view-form` : detailPath,
+            fromListing,
+          )
+        },
+      }
+
   return [
-    {
-      label: readOnlyWorkspace
-        ? 'View application'
-        : pendingPaymentWorkspace
-          ? 'Record payment'
-          : isSubmissionPending
-            ? 'View Form'
-            : 'Verify Documents',
-      icon:
-        readOnlyWorkspace || pendingPaymentWorkspace || isSubmissionPending ? (
-          <FileText size={16} />
-        ) : (
-          <ClipboardCheck size={16} />
-        ),
-      disabled: !submitted,
-      onClick: () => {
-        if (!submitted) {
-          showToast({
-            title: 'Draft application',
-            description: 'Submit this application before opening document verification.',
-            variant: 'info',
-          })
-          return
-        }
-        navigateFromListing(
-          navigate,
-          openViewFormDirectly || isSubmissionPending ? `${detailPath}/view-form` : detailPath,
-          fromListing,
-        )
-      },
-    },
+    primaryAction,
     {
       label: 'Add Remarks',
       icon: <MessageSquarePlus size={16} />,
@@ -269,6 +270,21 @@ export function buildMarineApplicationColumns({
         <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
           {value}
         </Typography>
+      ),
+    },
+    {
+      key: 'sla',
+      label: 'SLA',
+      widthSize: 'sm',
+      sortable: false,
+      filterable: false,
+      searchable: false,
+      render: (_: unknown, row: MarineApplicationRow) => (
+        <ApplicationSlaCell
+          row={row}
+          segment="marine"
+          queueStage={resolveMarineApplicationQueueTab(row)}
+        />
       ),
     },
     {

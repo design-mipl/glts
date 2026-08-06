@@ -13,6 +13,7 @@ import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import { exportDashboardSnapshot } from '../../shared/dashboard-intelligence'
 import { DASHBOARD_SPACING } from '../../shared/constants'
+import { withReportRagStatusBadges } from '../../shared/utils/reportRagColumn'
 import {
   ACCOUNTS_REPORT_PERIOD_OPTIONS,
   ACCOUNTS_REPORT_TYPE_OPTIONS,
@@ -66,7 +67,7 @@ export function ReportsTab({ data, loading }: AccountsDashboardTabProps) {
   const reportSource = reportType ? getAccountsReportSource(reportType) : ''
 
   const columns = useMemo(
-    () => (reportType ? getAccountsReportColumns(reportType) : []),
+    () => (reportType ? withReportRagStatusBadges(getAccountsReportColumns(reportType)) : []),
     [reportType],
   )
   const rows = useMemo(
