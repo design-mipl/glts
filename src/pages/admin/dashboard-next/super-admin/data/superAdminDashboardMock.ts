@@ -634,13 +634,6 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       badge: 'Invoices',
       href: '/admin/finance/invoices',
     },
-    {
-      id: 'qa-legacy-admin',
-      title: 'Legacy admin home',
-      description: 'Current executive dashboard.',
-      badge: 'Legacy',
-      href: '/admin',
-    },
   ],
   pipelineStages: APPLICATION_PIPELINE_STAGE_IDS.map((id) => ({
     id,

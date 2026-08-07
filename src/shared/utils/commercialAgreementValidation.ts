@@ -499,5 +499,6 @@ export function normalizeLegacyAgreement(record: CommercialAgreement): Commercia
         documentKey: normalizeDocumentKey(doc.documentKey),
       })),
     ),
+    minutes: record.minutes ?? [],
   }
 }

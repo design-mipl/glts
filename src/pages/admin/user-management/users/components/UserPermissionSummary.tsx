@@ -2,8 +2,10 @@ import { Box, Stack, Typography } from '@mui/material'
 import { ADMIN_PERMISSION_MODULES } from '@/shared/config/adminPermissionModules'
 import type { AdminUserPermissions } from '@/shared/types/adminPermission'
 import {
+  getTabActionsLabel,
   isModuleAllPermissions,
   isModuleViewOnly,
+  submoduleHasGrantedAccess,
 } from '@/shared/utils/adminPermissionEngine'
 
 interface UserPermissionSummaryProps {
@@ -11,13 +13,7 @@ interface UserPermissionSummaryProps {
   isSuperAdmin?: boolean
 }
 
-function SubmoduleSummary({
-  label,
-  actions,
-}: {
-  label: string
-  actions: string[]
-}) {
+function LineSummary({ label, actions }: { label: string; actions: string[] }) {
   if (actions.length === 0) return null
   return (
     <Typography variant="body2" sx={{ fontSize: 13, pl: 2 }}>
@@ -34,7 +30,7 @@ export function UserPermissionSummary({ permissions, isSuperAdmin }: UserPermiss
           Full access — Super Admin
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: 13 }}>
-          Super Admin has unrestricted access to all modules and submodules.
+          Super Admin has unrestricted access to all modules, submodules, and tabs.
         </Typography>
       </Box>
     )
@@ -43,10 +39,7 @@ export function UserPermissionSummary({ permissions, isSuperAdmin }: UserPermiss
   const modulesWithAccess = ADMIN_PERMISSION_MODULES.filter((mod) => {
     const state = permissions[mod.id]
     if (!state) return false
-    return mod.submodules.some((sub) => {
-      const s = state.submodules[sub.id]
-      return s?.create || s?.view || s?.update
-    })
+    return mod.submodules.some((sub) => submoduleHasGrantedAccess(state.submodules[sub.id]))
   })
 
   if (modulesWithAccess.length === 0) {
@@ -76,16 +69,37 @@ export function UserPermissionSummary({ permissions, isSuperAdmin }: UserPermiss
                 ({moduleLabel})
               </Typography>
             </Typography>
-            <Stack spacing={0.25} sx={{ mt: 0.5 }}>
+            <Stack spacing={0.75} sx={{ mt: 0.5 }}>
               {mod.submodules.map((sub) => {
-                const s = state.submodules[sub.id]
-                if (!s) return null
-                const actions: string[] = []
-                if (s.create) actions.push('Create')
-                if (s.view) actions.push('View')
-                if (s.update) actions.push('Update/Edit')
+                const subState = state.submodules[sub.id]
+                if (!submoduleHasGrantedAccess(subState)) return null
+
+                if (sub.tabs.length === 1) {
+                  const tab = sub.tabs[0]
+                  return (
+                    <LineSummary
+                      key={sub.id}
+                      label={sub.label}
+                      actions={getTabActionsLabel(subState?.tabs[tab.id])}
+                    />
+                  )
+                }
+
                 return (
-                  <SubmoduleSummary key={sub.id} label={sub.label} actions={actions} />
+                  <Box key={sub.id}>
+                    <Typography variant="body2" sx={{ fontSize: 13, pl: 2, fontWeight: 600 }}>
+                      {sub.label}
+                    </Typography>
+                    <Stack spacing={0.25} sx={{ mt: 0.25 }}>
+                      {sub.tabs.map((tab) => (
+                        <LineSummary
+                          key={tab.id}
+                          label={tab.label}
+                          actions={getTabActionsLabel(subState?.tabs[tab.id])}
+                        />
+                      ))}
+                    </Stack>
+                  </Box>
                 )
               })}
             </Stack>

@@ -22,6 +22,7 @@ import type { AgreementHoldTerminateStatus } from '@/shared/types/commercialAgre
 import {
   buildAgreementDocumentsFromMaster,
   mergeAgreementDocumentsWithExisting,
+  normalizeDocumentKey,
 } from '@/shared/utils/agreementDocumentUtils'
 import {
   syncFinanceContactsFromSources,
@@ -310,6 +311,7 @@ export const commercialAgreementService = {
       id: generateInternalId(),
       agreementId: generateAgreementId(),
       ...formToAgreement(data, companyId, companyName),
+      minutes: [],
       createdAt: ts,
       updatedAt: ts,
       activities: [makeActivity('Created', `Agreement draft created for ${companyName}`)],
@@ -450,12 +452,80 @@ export const commercialAgreementService = {
     const idx = store.findIndex((r) => r.id === agreementId)
     if (idx < 0) return undefined
     const agreement = store[idx]
+    const normalizedKey = normalizeDocumentKey(documentKey)
+    const target = agreement.documents.find((d) => normalizeDocumentKey(d.documentKey) === normalizedKey)
+    if (!target) return undefined
     const documents = agreement.documents.map((d) =>
-      d.documentKey === documentKey
-        ? { ...d, status, fileName: fileName ?? d.fileName, uploadedAt: status === 'uploaded' ? nowIso() : d.uploadedAt }
+      normalizeDocumentKey(d.documentKey) === normalizedKey
+        ? {
+            ...d,
+            status,
+            fileName: fileName ?? d.fileName,
+            uploadedAt: status === 'uploaded' ? nowIso() : d.uploadedAt,
+          }
         : d,
     )
-    const updated = { ...agreement, documents, updatedAt: nowIso() }
+    const statusLabel =
+      status === 'verified' ? 'Document verified' : status === 'rejected' ? 'Document rejected' : 'Document updated'
+    const updated: CommercialAgreement = {
+      ...agreement,
+      documents,
+      updatedAt: nowIso(),
+      activities: [makeActivity(statusLabel, target.name), ...agreement.activities],
+    }
+    const next = [...store]
+    next[idx] = updated
+    persist(next)
+    return updated
+  },
+
+  addMinutes(
+    agreementId: string,
+    files: Array<{ fileName: string; fileType: string; fileSizeKb: number }>,
+  ): CommercialAgreement | undefined {
+    if (files.length === 0) return undefined
+    const store = getStore()
+    const idx = store.findIndex((r) => r.id === agreementId)
+    if (idx < 0) return undefined
+    const agreement = store[idx]
+    const ts = nowIso()
+    const added = files.map((file, index) => ({
+      id: `agr-min-${Date.now()}-${index}-${Math.floor(Math.random() * 1000)}`,
+      fileName: file.fileName,
+      fileType: file.fileType || 'file',
+      fileSizeKb: file.fileSizeKb,
+      uploadedAt: ts,
+      uploadedBy: ADMIN_ACTOR,
+    }))
+    const label = added.length === 1 ? added[0].fileName : `${added.length} files`
+    const updated: CommercialAgreement = {
+      ...agreement,
+      minutes: [...added, ...(agreement.minutes ?? [])],
+      updatedAt: ts,
+      activities: [makeActivity('Minutes uploaded', label), ...agreement.activities],
+    }
+    const next = [...store]
+    next[idx] = updated
+    persist(next)
+    return updated
+  },
+
+  removeMinute(agreementId: string, minuteId: string): CommercialAgreement | undefined {
+    const store = getStore()
+    const idx = store.findIndex((r) => r.id === agreementId)
+    if (idx < 0) return undefined
+    const agreement = store[idx]
+    const target = (agreement.minutes ?? []).find((m) => m.id === minuteId)
+    if (!target) return undefined
+    const updated: CommercialAgreement = {
+      ...agreement,
+      minutes: (agreement.minutes ?? []).filter((m) => m.id !== minuteId),
+      updatedAt: nowIso(),
+      activities: [
+        makeActivity('Minutes removed', target.fileName),
+        ...agreement.activities,
+      ],
+    }
     const next = [...store]
     next[idx] = updated
     persist(next)

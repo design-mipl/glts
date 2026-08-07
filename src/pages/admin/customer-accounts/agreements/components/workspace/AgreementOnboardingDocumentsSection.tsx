@@ -1,12 +1,15 @@
-import { Divider, Stack, Typography, Box } from '@mui/material'
+import { Divider, Stack, Typography } from '@mui/material'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
-import type { AgreementFinanceContactPerson, CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
+import type {
+  AgreementFinanceContactPerson,
+  CommercialAgreementFormData,
+  OnboardingDocumentStatus,
+} from '@/shared/types/commercialAgreement'
 import { splitAgreementDocuments } from '@/shared/utils/agreementDocumentUtils'
 import { deriveFinanceContactPersons, syncFinanceContactsFromSources } from '@/shared/utils/agreementFinanceContacts'
 import { AgreementOnboardingDocumentCards } from '../AgreementOnboardingDocumentCards'
 import { AgreementFinanceContactsPanel } from './AgreementFinanceContactsPanel'
 import { FormField, Select } from '@/design-system/UIComponents'
-import { formatAgreementDate } from '../../utils/agreementFormUtils'
 
 interface AgreementOnboardingDocumentsSectionProps {
   data: CommercialAgreementFormData
@@ -14,6 +17,11 @@ interface AgreementOnboardingDocumentsSectionProps {
   onChange: (next: CommercialAgreementFormData) => void
   onClearError: (field: string) => void
   readOnly?: boolean
+  /** When false, hides finance contacts (e.g. detail Documents tab — shown on Overview). */
+  showFinanceContacts?: boolean
+  /** Enable Verify / Reject actions on uploaded documents. */
+  allowVerification?: boolean
+  onDocumentStatusChange?: (documentKey: string, status: OnboardingDocumentStatus) => void
 }
 
 const AGREEMENT_TYPE_OPTIONS = [
@@ -27,6 +35,9 @@ export function AgreementOnboardingDocumentsSection({
   onChange,
   onClearError,
   readOnly = false,
+  showFinanceContacts = true,
+  allowVerification = false,
+  onDocumentStatusChange,
 }: AgreementOnboardingDocumentsSectionProps) {
   const syncedData = syncFinanceContactsFromSources(data)
   const contacts = deriveFinanceContactPersons(data)
@@ -73,31 +84,16 @@ export function AgreementOnboardingDocumentsSection({
     onClearError('financeContacts')
   }
 
+  const documentCardsProps = {
+    data,
+    onChange,
+    readOnly,
+    allowVerification,
+    onStatusChange: onDocumentStatusChange,
+  }
+
   return (
     <Stack spacing={3} sx={{ pl: 2 }}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={2}
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
-          gap: 2,
-        }}
-      >
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            Agreement start date
-          </Typography>
-          <Typography variant="body2">{formatAgreementDate(data.startDate)}</Typography>
-        </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            Agreement expiry date
-          </Typography>
-          <Typography variant="body2">{formatAgreementDate(data.endDate)}</Typography>
-        </Box>
-      </Stack>
-
       <FormField label="Agreement type" required>
         <Select
           value={data.agreementType}
@@ -116,78 +112,54 @@ export function AgreementOnboardingDocumentsSection({
         />
       </FormField>
 
-      <Stack spacing={1.5}>
-        <Typography variant="body2" fontWeight={600}>
-          Finance contacts
-        </Typography>
-        {errors.financeContacts ? (
-          <Typography variant="caption" color="error.main">
-            {errors.financeContacts}
+      {showFinanceContacts ? (
+        <Stack spacing={1.5}>
+          <Typography variant="body2" fontWeight={600}>
+            Finance contacts
           </Typography>
-        ) : null}
-        <AgreementFinanceContactsPanel
-          data={data}
-          contacts={contacts}
-          selectedContactIds={selectedContactIds}
-          readOnly={readOnly}
-          onRefresh={readOnly ? undefined : refreshContacts}
-          onToggleContact={readOnly ? undefined : handleToggleContact}
-          onSaveManualContact={readOnly ? undefined : handleSaveManualContact}
-          onRemoveManualContact={readOnly ? undefined : handleRemoveManualContact}
-        />
-      </Stack>
+          {errors.financeContacts ? (
+            <Typography variant="caption" color="error.main">
+              {errors.financeContacts}
+            </Typography>
+          ) : null}
+          <AgreementFinanceContactsPanel
+            data={data}
+            contacts={contacts}
+            selectedContactIds={selectedContactIds}
+            readOnly={readOnly}
+            onRefresh={readOnly ? undefined : refreshContacts}
+            onToggleContact={readOnly ? undefined : handleToggleContact}
+            onSaveManualContact={readOnly ? undefined : handleSaveManualContact}
+            onRemoveManualContact={readOnly ? undefined : handleRemoveManualContact}
+          />
+        </Stack>
+      ) : null}
 
       <Stack spacing={1.5}>
         <Typography variant="body2" fontWeight={600}>
           Onboarding documents
         </Typography>
-        {readOnly ? (
-          <AgreementOnboardingDocumentCards
-            documents={onboardingDocuments}
-            data={data}
-            onChange={onChange}
-            readOnly
-          />
-        ) : (
-          <AgreementOnboardingDocumentCards
-            documents={onboardingDocuments}
-            data={data}
-            onChange={onChange}
-          />
-        )}
+        <AgreementOnboardingDocumentCards documents={onboardingDocuments} {...documentCardsProps} />
       </Stack>
 
       {data.agreementType === 'agreemented' ? (
         <>
           <Divider />
           <Stack spacing={1.5}>
-          <Typography variant="body2" fontWeight={600}>
-            Agreement document
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Upload is required when this document is marked mandatory in Client Document Master.
-          </Typography>
-          {readOnly ? (
-            agreementDocument ? (
-              <AgreementOnboardingDocumentCards
-                documents={[agreementDocument]}
-                data={data}
-                onChange={onChange}
-                readOnly
-              />
+            <Typography variant="body2" fontWeight={600}>
+              Agreement document
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Upload is required when this document is marked mandatory in Client Document Master.
+            </Typography>
+            {agreementDocument ? (
+              <AgreementOnboardingDocumentCards documents={[agreementDocument]} {...documentCardsProps} />
             ) : (
               <Typography variant="body2" color="text.secondary">
                 No agreement document on file.
               </Typography>
-            )
-          ) : agreementDocument ? (
-            <AgreementOnboardingDocumentCards
-              documents={[agreementDocument]}
-              data={data}
-              onChange={onChange}
-            />
-          ) : null}
-        </Stack>
+            )}
+          </Stack>
         </>
       ) : null}
     </Stack>

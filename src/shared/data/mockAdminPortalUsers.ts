@@ -1,23 +1,23 @@
-import { superAdminFullPermissions } from '@/shared/utils/adminPermissionEngine'
 import type { AdminPortalUser } from '@/shared/types/adminPortalUser'
+import {
+  applyModulePresetToPermissions,
+  createEmptyPermissions,
+  superAdminFullPermissions,
+} from '@/shared/utils/adminPermissionEngine'
 
 function applicationManagementPermissions(): AdminPortalUser['permissions'] {
-  const perms = superAdminFullPermissions()
-  const allowed = ['application_management', 'ground_operations']
-  for (const key of Object.keys(perms)) {
-    if (!allowed.includes(key)) {
-      perms[key] = {
-        preset: 'view_only',
-        submodules: Object.fromEntries(
-          Object.entries(perms[key].submodules).map(([subId]) => [
-            subId,
-            { create: false, view: true, update: false },
-          ]),
-        ),
-      }
-    }
-  }
+  let perms = createEmptyPermissions()
+  perms = applyModulePresetToPermissions(perms, 'application_management', 'all')
+  perms = applyModulePresetToPermissions(perms, 'ground_operations', 'all')
   return perms
+}
+
+function financeViewerPermissions(): AdminPortalUser['permissions'] {
+  return applyModulePresetToPermissions(createEmptyPermissions(), 'finance', 'view_only')
+}
+
+function clientManagementPermissions(): AdminPortalUser['permissions'] {
+  return applyModulePresetToPermissions(createEmptyPermissions(), 'client_management', 'all')
 }
 
 export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
@@ -30,6 +30,7 @@ export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
     teamId: 'team-ops',
     departmentId: 'dept-admin',
     designation: 'Super Admin',
+    userType: 'super_admin',
     roleTemplateId: null,
     profilePhotoUrl: null,
     status: 'active',
@@ -67,6 +68,7 @@ export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
     teamId: 'team-ops',
     departmentId: 'dept-operations',
     designation: 'Operations Manager',
+    userType: 'admin',
     roleTemplateId: 'operations_admin',
     profilePhotoUrl: null,
     status: 'active',
@@ -104,6 +106,7 @@ export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
     teamId: 'team-marine',
     departmentId: 'dept-operations',
     designation: 'Marine Operations Executive',
+    userType: 'team_leader',
     roleTemplateId: 'operations_admin',
     profilePhotoUrl: null,
     status: 'active',
@@ -126,6 +129,7 @@ export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
     teamId: 'team-marine',
     departmentId: 'dept-documentation',
     designation: 'Marine Visa Specialist',
+    userType: 'staff',
     roleTemplateId: 'operations_admin',
     profilePhotoUrl: null,
     status: 'active',
@@ -148,6 +152,7 @@ export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
     teamId: 'team-retail',
     departmentId: 'dept-operations',
     designation: 'Retail Applications Executive',
+    userType: 'staff',
     roleTemplateId: 'operations_admin',
     profilePhotoUrl: null,
     status: 'active',
@@ -170,6 +175,7 @@ export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
     teamId: 'team-corporate',
     departmentId: 'dept-sales',
     designation: 'Corporate Applications Manager',
+    userType: 'team_leader',
     roleTemplateId: 'customer_accounts_admin',
     profilePhotoUrl: null,
     status: 'active',
@@ -192,6 +198,7 @@ export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
     teamId: 'team-b2b-agent',
     departmentId: 'dept-sales',
     designation: 'B2B Agent Coordinator',
+    userType: 'staff',
     roleTemplateId: 'customer_accounts_admin',
     profilePhotoUrl: null,
     status: 'active',
@@ -214,39 +221,14 @@ export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
     teamId: 'team-finance',
     departmentId: 'dept-finance',
     designation: 'Finance Analyst',
+    userType: 'staff',
     roleTemplateId: 'finance_viewer',
     profilePhotoUrl: null,
     status: 'active',
     lastLoginAt: '2026-05-29T16:30:00.000Z',
     isSuperAdmin: false,
     passwordSetupType: 'auto_email_invite',
-    permissions: (() => {
-      const perms = superAdminFullPermissions()
-      for (const key of Object.keys(perms)) {
-        if (key === 'finance') {
-          perms[key] = {
-            preset: 'view_only',
-            submodules: Object.fromEntries(
-              Object.entries(perms[key].submodules).map(([subId]) => [
-                subId,
-                { create: false, view: true, update: false },
-              ]),
-            ),
-          }
-        } else {
-          perms[key] = {
-            preset: null,
-            submodules: Object.fromEntries(
-              Object.entries(perms[key].submodules).map(([subId]) => [
-                subId,
-                { create: false, view: false, update: false },
-              ]),
-            ),
-          }
-        }
-      }
-      return perms
-    })(),
+    permissions: financeViewerPermissions(),
     createdBy: 'Rajan Mehta',
     updatedBy: 'Priya Sharma',
     createdAt: '2025-12-10T11:00:00.000Z',
@@ -270,28 +252,14 @@ export const SEED_ADMIN_PORTAL_USERS: AdminPortalUser[] = [
     teamId: 'team-sales',
     departmentId: 'dept-sales',
     designation: 'Account Manager',
+    userType: 'admin',
     roleTemplateId: 'customer_accounts_admin',
     profilePhotoUrl: null,
     status: 'inactive',
     lastLoginAt: '2026-04-10T12:00:00.000Z',
     isSuperAdmin: false,
     passwordSetupType: 'auto_email_invite',
-    permissions: (() => {
-      const perms = superAdminFullPermissions()
-      for (const key of Object.keys(perms)) {
-        if (key === 'customer_accounts') continue
-        perms[key] = {
-          preset: null,
-          submodules: Object.fromEntries(
-            Object.entries(perms[key].submodules).map(([subId]) => [
-              subId,
-              { create: false, view: false, update: false },
-            ]),
-          ),
-        }
-      }
-      return perms
-    })(),
+    permissions: clientManagementPermissions(),
     createdBy: 'Priya Sharma',
     updatedBy: 'Rajan Mehta',
     createdAt: '2026-01-20T10:00:00.000Z',

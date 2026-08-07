@@ -28,8 +28,8 @@ export const ADMIN_ROLE_TEMPLATES: AdminRoleTemplate[] = [
   },
   {
     id: 'customer_accounts_admin',
-    label: 'Customer Accounts Admin',
-    description: 'Full access to customer and account workflows.',
+    label: 'Client Management Admin',
+    description: 'Full access to client management workflows.',
   },
 ]
 
@@ -44,7 +44,7 @@ export function getRoleTemplatePermissions(templateId: string): AdminUserPermiss
     case 'master_data_manager':
       return applyModulePresetToPermissions(base, 'masters', 'all')
     case 'customer_accounts_admin':
-      return applyModulePresetToPermissions(base, 'customer_accounts', 'all')
+      return applyModulePresetToPermissions(base, 'client_management', 'all')
     default:
       return base
   }

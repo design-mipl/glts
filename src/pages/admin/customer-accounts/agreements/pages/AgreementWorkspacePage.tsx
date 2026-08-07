@@ -30,7 +30,7 @@ const WORKSPACE_SECTIONS: { id: AgreementSectionId; navId: string; label: string
   { id: 'pricing', navId: 'section-pricing', label: 'Pricing', description: 'Processing visa fees and miscellaneous services' },
   { id: 'billing', navId: 'section-billing', label: 'Billing configuration', description: 'Advance, credit, or mixed billing rules' },
   { id: 'tax', navId: 'section-tax', label: 'Tax configuration', description: 'GST and TDS settings' },
-  { id: 'documents', navId: 'section-documents', label: 'Onboarding documents', description: 'Finance contacts and document uploads' },
+  { id: 'documents', navId: 'section-documents', label: 'Onboarding documents', description: 'Agreement type and document uploads' },
   { id: 'review', navId: 'section-review', label: 'Review & activation', description: 'Review summary and mark ready for activation' },
 ]
 
@@ -264,6 +264,7 @@ export function AgreementWorkspacePage({
             errors={errors}
             onChange={setFormData}
             onClearError={clearFieldError}
+            allowVerification
           />
         )
       case 'review':

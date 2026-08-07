@@ -2,6 +2,7 @@ import { SplitAuthLayout } from '../components/SplitAuthLayout'
 import { LoginFormPanel } from '../components/LoginFormPanel'
 import { saveSession } from '@/shared/auth/session'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
+import { ADMIN_HOME_HREF } from '@/pages/admin/config/adminDashboards'
 
 export function OperationsLoginPage() {
   const navigate = useAppNavigate()
@@ -11,7 +12,7 @@ export function OperationsLoginPage() {
       portal: 'operations',
       email,
     })
-    navigate('/admin/dashboard-next/super-admin', { replace: true })
+    navigate(ADMIN_HOME_HREF, { replace: true })
   }
 
   return (

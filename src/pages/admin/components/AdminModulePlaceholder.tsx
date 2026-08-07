@@ -2,6 +2,7 @@ import { Box, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { ArrowLeft, Construction } from 'lucide-react'
 import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
+import { ADMIN_HOME_HREF } from '../config/adminDashboards'
 import { AdminPageHeader } from './AdminPageHeader'
 
 export interface AdminModulePlaceholderProps {
@@ -16,8 +17,8 @@ export function AdminModulePlaceholder({
   eyebrow,
   title,
   description = 'This module is under development.',
-  returnHref = '/admin',
-  returnLabel = 'Back to Admin dashboard',
+  returnHref = ADMIN_HOME_HREF,
+  returnLabel = 'Back to Super Admin dashboard',
 }: AdminModulePlaceholderProps) {
   const theme = useTheme()
 

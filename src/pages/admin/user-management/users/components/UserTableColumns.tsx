@@ -1,18 +1,20 @@
 import { Box, Typography } from '@mui/material'
-import { Eye, KeyRound, PencilLine, Power, PowerOff, Shield } from 'lucide-react'
+import { Eye, KeyRound, PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import { formatMasterDate } from '@/pages/admin/masters/utils/masterListingUtils'
 import { masterStatusColor, masterStatusLabel } from '@/pages/admin/masters/config/masterStatusConfig'
 import { departmentService } from '@/shared/services/departmentService'
 import { teamService } from '@/shared/services/teamService'
-import type { AdminPortalUser } from '@/shared/types/adminPortalUser'
+import {
+  ADMIN_PORTAL_USER_TYPE_LABEL,
+  type AdminPortalUser,
+} from '@/shared/types/adminPortalUser'
 import { formatUserTime } from '../utils/userListingUtils'
 
 interface ColumnHandlers {
   onOpenDetail: (row: AdminPortalUser) => void
   onOpenEdit: (row: AdminPortalUser) => void
-  onConfigurePermissions: (row: AdminPortalUser) => void
   onToggleStatus: (row: AdminPortalUser) => void
   onResetPassword: (row: AdminPortalUser) => void
 }
@@ -46,7 +48,6 @@ function AuditCell({ name, date }: { name: string; date: string }) {
 export function buildUserColumns({
   onOpenDetail,
   onOpenEdit,
-  onConfigurePermissions,
   onToggleStatus,
   onResetPassword,
 }: ColumnHandlers): Column<AdminPortalUser>[] {
@@ -60,11 +61,21 @@ export function buildUserColumns({
       searchable: true,
     },
     {
+      key: 'userType',
+      label: 'User Type',
+      widthSize: 'sm',
+      sortable: true,
+      filterable: true,
+      searchable: true,
+      render: (_, row) => ADMIN_PORTAL_USER_TYPE_LABEL[row.userType] ?? '—',
+    },
+    {
       key: 'email',
       label: 'Email',
       widthSize: 'md',
       sortable: false,
       filterable: true,
+      render: (_, row) => row.email || '—',
     },
     {
       key: 'phone',
@@ -151,11 +162,10 @@ export function buildUserColumns({
         const isActive = row.status === 'active'
         const actions: RowAction[] = [
           { label: 'View User', icon: <Eye size={14} />, onClick: () => onOpenDetail(row) },
-          { label: 'Edit User', icon: <PencilLine size={14} />, onClick: () => onOpenEdit(row) },
           {
-            label: 'Configure Permissions',
-            icon: <Shield size={14} />,
-            onClick: () => onConfigurePermissions(row),
+            label: 'Edit User',
+            icon: <PencilLine size={14} />,
+            onClick: () => onOpenEdit(row),
           },
           {
             label: isActive ? 'Deactivate' : 'Activate',

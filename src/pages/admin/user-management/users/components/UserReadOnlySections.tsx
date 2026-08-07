@@ -3,7 +3,10 @@ import { masterStatusLabel } from '@/pages/admin/masters/config/masterStatusConf
 import { formatMasterDate } from '@/pages/admin/masters/utils/masterListingUtils'
 import { departmentService } from '@/shared/services/departmentService'
 import { teamService } from '@/shared/services/teamService'
-import type { AdminPortalUser } from '@/shared/types/adminPortalUser'
+import {
+  ADMIN_PORTAL_USER_TYPE_LABEL,
+  type AdminPortalUser,
+} from '@/shared/types/adminPortalUser'
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
@@ -25,10 +28,13 @@ export function UserBasicInfoSection({ user }: { user: AdminPortalUser }) {
         <ReadOnlyField label="Full name" value={user.fullName} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-        <ReadOnlyField label="Email" value={user.email} />
+        <ReadOnlyField label="User type" value={ADMIN_PORTAL_USER_TYPE_LABEL[user.userType]} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-        <ReadOnlyField label="Phone" value={user.phone || '—'} />
+        <ReadOnlyField label="Phone" value={user.phone} />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <ReadOnlyField label="Email" value={user.email || '—'} />
       </Grid>
       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
         <ReadOnlyField label="Employee ID" value={user.employeeId || '—'} />

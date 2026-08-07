@@ -1,7 +1,11 @@
 import { Grid, Stack } from '@mui/material'
 import { useRef } from 'react'
 import { useToast } from '@/design-system/UIComponents'
-import type { AgreementOnboardingDocument, CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
+import type {
+  AgreementOnboardingDocument,
+  CommercialAgreementFormData,
+  OnboardingDocumentStatus,
+} from '@/shared/types/commercialAgreement'
 import {
   downloadAgreementDocument,
   previewAgreementDocument,
@@ -14,6 +18,9 @@ interface AgreementOnboardingDocumentCardsProps {
   data: CommercialAgreementFormData
   onChange: (next: CommercialAgreementFormData) => void
   readOnly?: boolean
+  /** When true, shows Verify / Reject for uploaded documents. */
+  allowVerification?: boolean
+  onStatusChange?: (documentKey: string, status: OnboardingDocumentStatus) => void
 }
 
 export function AgreementOnboardingDocumentCards({
@@ -21,6 +28,8 @@ export function AgreementOnboardingDocumentCards({
   data,
   onChange,
   readOnly = false,
+  allowVerification = false,
+  onStatusChange,
 }: AgreementOnboardingDocumentCardsProps) {
   const { showToast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -70,6 +79,24 @@ export function AgreementOnboardingDocumentCards({
     showToast({ title: 'Download started', description: doc.fileName, variant: 'success' })
   }
 
+  const handleVerify = (doc: AgreementOnboardingDocument) => {
+    if (onStatusChange) {
+      onStatusChange(doc.documentKey, 'verified')
+      return
+    }
+    updateDocument(doc.documentKey, { status: 'verified' })
+    showToast({ title: 'Document verified', description: doc.name, variant: 'success' })
+  }
+
+  const handleReject = (doc: AgreementOnboardingDocument) => {
+    if (onStatusChange) {
+      onStatusChange(doc.documentKey, 'rejected')
+      return
+    }
+    updateDocument(doc.documentKey, { status: 'rejected' })
+    showToast({ title: 'Document rejected', description: doc.name, variant: 'warning' })
+  }
+
   return (
     <Stack spacing={1.5}>
       <Grid container spacing={2}>
@@ -82,6 +109,8 @@ export function AgreementOnboardingDocumentCards({
               onReplace={() => triggerUpload(doc.documentKey)}
               onPreview={() => handlePreview(doc)}
               onDownload={() => handleDownload(doc)}
+              onVerify={allowVerification ? () => handleVerify(doc) : undefined}
+              onReject={allowVerification ? () => handleReject(doc) : undefined}
             />
           </Grid>
         ))}

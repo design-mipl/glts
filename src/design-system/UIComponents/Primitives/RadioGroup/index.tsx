@@ -6,7 +6,9 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Radio from '@mui/material/Radio'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
+import { useTheme } from '@mui/material/styles'
 import type { SxProps, Theme } from '@mui/material/styles'
+import { controlLabelSx } from '../../../formControl'
 
 interface RadioOption {
   label: string
@@ -38,6 +40,8 @@ export default function RadioGroup({
   size = 'md',
   sx,
 }: RadioGroupProps) {
+  const theme = useTheme()
+
   return (
     <FormControl error={error} sx={sx}>
       {label && <FormLabel>{label}</FormLabel>}
@@ -51,7 +55,7 @@ export default function RadioGroup({
             key={opt.value}
             value={opt.value}
             disabled={opt.disabled}
-            control={<Radio size={size === 'sm' ? 'small' : 'medium'} />}
+            control={<Radio size={size === 'sm' ? 'small' : 'medium'} sx={{ pl: 0 }} />}
             label={
               opt.description ? (
                 <Box>
@@ -64,6 +68,7 @@ export default function RadioGroup({
                 opt.label
               )
             }
+            sx={controlLabelSx(theme)}
           />
         ))}
       </MuiRadioGroup>

@@ -37,7 +37,7 @@ export const adminNav: NavConfig[] = [
     children: [
       { type: 'item', label: 'Lead Management', href: '/admin/customer-accounts/enquiries' },
       { type: 'item', label: 'Quotations', href: '/admin/customer-accounts/quotations' },
-      { type: 'item', label: 'Agreements', href: '/admin/customer-accounts/agreements' },
+      { type: 'item', label: 'Clients and Agreements', href: '/admin/customer-accounts/agreements' },
       { type: 'item', label: 'Client Accounts', href: '/admin/customer-accounts/corporate-accounts' },
     ],
   },

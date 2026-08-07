@@ -1,12 +1,16 @@
 import { departmentService } from '@/shared/services/departmentService'
 import { teamService } from '@/shared/services/teamService'
-import type { AdminPortalUser } from '@/shared/types/adminPortalUser'
+import {
+  ADMIN_PORTAL_USER_TYPE_LABEL,
+  type AdminPortalUser,
+} from '@/shared/types/adminPortalUser'
 import { formatMasterDate } from '@/pages/admin/masters/utils/masterListingUtils'
 import { masterStatusLabel } from '@/pages/admin/masters/config/masterStatusConfig'
 
 export function getUserCellValue(row: AdminPortalUser, key: string): string {
   if (key === 'fullName') return row.fullName
-  if (key === 'email') return row.email
+  if (key === 'userType') return ADMIN_PORTAL_USER_TYPE_LABEL[row.userType] ?? ''
+  if (key === 'email') return row.email || '—'
   if (key === 'phone') return row.phone
   if (key === 'department') return departmentService.getById(row.departmentId)?.name ?? '—'
   if (key === 'team') return teamService.getById(row.teamId)?.name ?? '—'
@@ -29,6 +33,7 @@ export function matchesUserSearch(row: AdminPortalUser, query: string): boolean 
     row.phone,
     row.designation,
     row.employeeId,
+    ADMIN_PORTAL_USER_TYPE_LABEL[row.userType],
     departmentName,
     teamName,
   ].some((part) => part.toLowerCase().includes(normalized))
@@ -45,6 +50,7 @@ export function getUserEmptyState(onCreate: () => void) {
 export function downloadUserCsv(rows: AdminPortalUser[]) {
   const headers = [
     'User Name',
+    'User Type',
     'Email',
     'Phone',
     'Department',
@@ -56,6 +62,7 @@ export function downloadUserCsv(rows: AdminPortalUser[]) {
   const lines = rows.map((row) =>
     [
       row.fullName,
+      ADMIN_PORTAL_USER_TYPE_LABEL[row.userType] ?? '',
       row.email,
       row.phone,
       departmentService.getById(row.departmentId)?.name ?? '',

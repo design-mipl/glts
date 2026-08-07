@@ -92,7 +92,6 @@ export function UserDetailPage() {
           <UserDetailSummary
             user={user}
             onEdit={() => navigate(`/admin/user-management/users/${user.id}/edit`)}
-            onConfigurePermissions={() => navigate(`/admin/user-management/users/${user.id}/permissions`)}
             onToggleStatus={() => {
               setSuperAdminConfirm(false)
               setStatusOpen(true)

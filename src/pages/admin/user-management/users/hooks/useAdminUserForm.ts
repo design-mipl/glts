@@ -14,6 +14,7 @@ export const INITIAL_ADMIN_USER_BASIC_FORM: AdminPortalUserBasicFormData = {
   teamId: '',
   departmentId: '',
   designation: '',
+  userType: '',
   roleTemplateId: '',
   profilePhotoUrl: '',
   status: 'active',
@@ -35,6 +36,7 @@ export function AdminPortalUserToFormData(row: AdminPortalUser): AdminPortalUser
     teamId: row.teamId,
     departmentId: row.departmentId,
     designation: row.designation,
+    userType: row.userType,
     roleTemplateId: row.roleTemplateId ?? '',
     profilePhotoUrl: row.profilePhotoUrl ?? '',
     status: row.status,
@@ -53,6 +55,7 @@ export function AdminPortalUserToBasicFormData(row: AdminPortalUser): AdminPorta
     teamId: row.teamId,
     departmentId: row.departmentId,
     designation: row.designation,
+    userType: row.userType,
     roleTemplateId: row.roleTemplateId ?? '',
     profilePhotoUrl: row.profilePhotoUrl ?? '',
     status: row.status,
@@ -66,12 +69,15 @@ function validateBasicFields(
   const next: Record<string, string> = { ...errors }
   if (!formData.fullName.trim()) next.fullName = 'Full name is required'
   else delete next.fullName
-  if (!formData.email.trim()) next.email = 'Email is required'
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+  if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
     next.email = 'Enter a valid email address'
   } else {
     delete next.email
   }
+  if (!formData.phone.trim()) next.phone = 'Phone number is required'
+  else delete next.phone
+  if (!formData.userType) next.userType = 'User type is required'
+  else delete next.userType
   if (!formData.departmentId) next.departmentId = 'Department is required'
   else delete next.departmentId
   if (!formData.teamId) next.teamId = 'Team is required'

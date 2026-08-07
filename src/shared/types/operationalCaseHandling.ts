@@ -227,7 +227,7 @@ export const OPERATIONAL_CASE_STATUSES: OperationalCaseStatus[] = [
   'Completed',
 ]
 
-/** Statuses where Submit / Move to next day actions are enabled on the Operations Desk. */
+/** Statuses where Submit / Move to next date actions are enabled on the Operations Desk. */
 export const OPERATIONS_DESK_STATUSES: OperationalCaseStatus[] = ['Pending', 'Moved to Next Day']
 
 /** Cases handed off to Tracking & Logistics after document submission. */

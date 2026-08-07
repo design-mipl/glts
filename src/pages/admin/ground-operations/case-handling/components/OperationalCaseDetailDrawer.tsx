@@ -215,11 +215,15 @@ function formatDisplayDate(value: string | undefined): string {
 }
 
 function OperationalCaseDetailContent({
+  open,
   record,
+  onClose,
   onUpdated,
   onSubmitted,
 }: {
+  open: boolean
   record: OperationalCase
+  onClose: () => void
   onUpdated: () => void
   onSubmitted?: () => void
 }) {
@@ -266,353 +270,62 @@ function OperationalCaseDetailContent({
     record.submissionReferenceNumber,
   ])
 
-  return (
-    <Stack spacing={0}>
-      <Box sx={{ mx: -3, mt: -3, mb: 0 }}>
-        <Box sx={{ px: 3, pt: 0.5 }}>
-          <Tabs
-            items={[...DETAIL_TABS]}
-            value={activeTab}
-            onChange={value => setActiveTab(value as DetailTab)}
-            variant="underline"
-            size="sm"
-            scrollable
+  const handleSubmit = () => {
+    if (!submissionDate.trim() || !submissionReferenceNumber.trim()) {
+      showToast({
+        title: 'Missing required fields',
+        description: 'VFS submission date and reference number are required to submit.',
+        variant: 'error',
+      })
+      return
+    }
+    const updated = operationalCaseHandlingService.submitDocuments(record.id, {
+      submissionDate,
+      collectionDate,
+      submissionReferenceNumber,
+    })
+    if (!updated) {
+      showToast({
+        title: 'Unable to submit',
+        description: 'Submit is only available for Pending or Moved to Next Day cases.',
+        variant: 'error',
+      })
+      return
+    }
+    showToast({
+      title: 'Documents submitted',
+      description:
+        'Case moved to Tracking & Logistics and remains visible on the Operations Desk.',
+      variant: 'success',
+    })
+    onUpdated()
+    onSubmitted?.()
+  }
+
+  const handleMoveToNextDate = () => {
+    operationalCaseHandlingService.moveToNextDay(record.id)
+    onUpdated()
+    showToast({ title: 'Moved to next date', variant: 'info' })
+  }
+
+  const footer =
+    activeTab === 'services' ? (
+      <Button label="Continue" fullWidth onClick={() => setActiveTab('operations')} />
+    ) : activeTab === 'operations' && canEditCase ? (
+      <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Button label="Submit" fullWidth onClick={handleSubmit} />
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Button
+            label="Move to next date"
+            variant="outlined"
+            fullWidth
+            onClick={handleMoveToNextDate}
           />
         </Box>
-      </Box>
-
-      <Box sx={{ pt: 2 }}>
-        {activeTab === 'overview' ? (
-          <Stack spacing={2}>
-            <Stack spacing={1.25}>
-              <SectionHeading>Passenger & batch context</SectionHeading>
-              <PassengerBatchContextCard
-                record={record}
-                submissionSnapshot={submissionSnapshot}
-              />
-            </Stack>
-
-            <Divider />
-
-            <Stack spacing={1.25}>
-              <SectionHeading>Document vault</SectionHeading>
-              <PassengerApplicationDocumentVault
-                applicationId={record.applicationId}
-                gltsApplicantId={record.gltsApplicantId}
-                sequenceNo={record.passengerSequence}
-              />
-              <OperationalDocumentVault record={record} />
-            </Stack>
-          </Stack>
-        ) : null}
-
-        {activeTab === 'services' ? (
-          <Stack spacing={2}>
-            {isViewOnly && record.groundServices.some(service => service.selected) ? (
-              <Stack spacing={1.25}>
-                <SectionHeading>Ground services</SectionHeading>
-                <GroundServicesChecklist
-                  services={record.groundServices.filter(service => service.selected)}
-                  readOnly
-                />
-              </Stack>
-            ) : null}
-
-            {isViewOnly && record.groundServices.some(service => service.selected) ? <Divider /> : null}
-
-            <Stack spacing={1.25}>
-              <SectionHeading>On-site fees</SectionHeading>
-              <GroundServicesChecklist
-                services={onSiteFees}
-                lockedServiceIds={lockedOnSiteFeeIds}
-                readOnly={isViewOnly}
-                onServiceChange={
-                  isViewOnly
-                    ? undefined
-                    : (feeId, patch) => {
-                        if (lockedOnSiteFeeIds.has(feeId)) return
-                        operationalCaseHandlingService.updateApplicationFee(record.id, feeId, patch)
-                        onUpdated()
-                      }
-                }
-              />
-              <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12, color: 'text.primary' }}>
-                Onsite expenses
-              </Typography>
-              {(isViewOnly ? (record.gltsOpsFees ?? []).some(service => service.selected) : true) ? (
-                <GroundServicesChecklist
-                  services={
-                    isViewOnly
-                      ? (record.gltsOpsFees ?? []).filter(service => service.selected)
-                      : (record.gltsOpsFees ?? [])
-                  }
-                  amountMode="actual"
-                  readOnly={isViewOnly}
-                  onServiceChange={
-                    isViewOnly
-                      ? undefined
-                      : (feeId, patch) => {
-                          operationalCaseHandlingService.updateGltsOpsFee(record.id, feeId, patch)
-                          onUpdated()
-                        }
-                  }
-                />
-              ) : (
-                <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12 }}>
-                  No onsite expenses recorded for this passenger.
-                </Typography>
-              )}
-              <OnSiteFeeDocumentsSection
-                attachmentNames={record.attachmentNames}
-                readOnly={isViewOnly}
-                onAdd={fileNames => {
-                  operationalCaseHandlingService.addAttachments(record.id, fileNames)
-                  onUpdated()
-                }}
-                onRemove={fileName => {
-                  operationalCaseHandlingService.removeAttachment(record.id, fileName)
-                  onUpdated()
-                }}
-                onError={message => {
-                  showToast({ title: 'Upload failed', description: message, variant: 'error' })
-                }}
-              />
-              <ApplicationFeePaidByField
-                value={record.applicationFeesPaidBy ?? 'passenger'}
-                readOnly={isViewOnly}
-                onChange={
-                  isViewOnly
-                    ? undefined
-                    : paidBy => {
-                        operationalCaseHandlingService.updateApplicationFeesPaidBy(record.id, paidBy)
-                        onUpdated()
-                      }
-                }
-              />
-            </Stack>
-
-            <OperationalFundAllocationSection record={record} />
-
-            <Divider />
-
-            <Stack spacing={1.25}>
-              <OperationalPaymentDetailsSection
-                record={record}
-                readOnly={isViewOnly}
-                onUpdated={onUpdated}
-              />
-            </Stack>
-
-            <Divider />
-
-            <Stack spacing={1.25}>
-              <SectionHeading>Expense summary</SectionHeading>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
-                <ReadField label="Summary" value={record.expenseSummary} />
-                <ReadField label="Estimated" value={`₹${record.estimatedExpense.toLocaleString('en-IN')}`} />
-                <ReadField label="Actual" value={`₹${record.actualExpense.toLocaleString('en-IN')}`} />
-                <ReadField label="Services" value={record.servicesSummary} />
-              </Box>
-            </Stack>
-
-            {record.expenses.length > 0 ? (
-              <>
-                <Divider />
-                <Stack spacing={1}>
-                  <SectionHeading>Additional expenses</SectionHeading>
-                  {record.expenses.map(expense => (
-                    <Box
-                      key={expense.id}
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: 1,
-                        p: 1.25,
-                        borderRadius: 1,
-                        border: 1,
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <ReadField label="Service" value={expense.serviceName} />
-                      <ReadField
-                        label="Amount"
-                        value={`₹${expense.actualAmount.toLocaleString('en-IN')}`}
-                      />
-                      {expense.remarks ? <ReadField label="Remarks" value={expense.remarks} /> : null}
-                      {expense.receiptFileName ? (
-                        <ReadField label="Receipt" value={expense.receiptFileName} />
-                      ) : null}
-                    </Box>
-                  ))}
-                </Stack>
-              </>
-            ) : null}
-          </Stack>
-        ) : null}
-
-        {activeTab === 'operations' ? (
-          <Stack spacing={2}>
-            <Stack spacing={1.25}>
-              <SectionHeading>Submission details</SectionHeading>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
-                <ReadField
-                  label="Online Submission Date"
-                  value={formatDisplayDate(portalDates.onlineSubmissionDate)}
-                />
-                <ReadField
-                  label="Tentative Collection Date"
-                  value={formatDisplayDate(portalDates.tentativeCollectionDate)}
-                />
-                {canEditCase ? (
-                  <>
-                    <FormField label="VFS Submission Date">
-                      <DatePicker
-                        value={parseDateString(submissionDate)}
-                        onChange={date => setSubmissionDate(formatDateForStorage(date))}
-                        placeholder="Select VFS submission date"
-                        size="sm"
-                        fullWidth
-                      />
-                    </FormField>
-                    <FormField label="Collection Date">
-                      <DatePicker
-                        value={parseDateString(collectionDate)}
-                        onChange={date => setCollectionDate(formatDateForStorage(date))}
-                        placeholder="Select collection date"
-                        size="sm"
-                        fullWidth
-                      />
-                    </FormField>
-                  </>
-                ) : (
-                  <>
-                    <ReadField
-                      label="VFS Submission Date"
-                      value={formatDisplayDate(record.submissionDate)}
-                    />
-                    <ReadField
-                      label="Collection Date"
-                      value={formatDisplayDate(record.collectionDate)}
-                    />
-                  </>
-                )}
-              </Box>
-              {canEditCase ? (
-                <FormField label="Submission Reference No.">
-                  <Input
-                    size="sm"
-                    value={submissionReferenceNumber}
-                    onChange={setSubmissionReferenceNumber}
-                    placeholder="e.g. VFS-ONL-2026-0142"
-                    fullWidth
-                  />
-                </FormField>
-              ) : (
-                <ReadField
-                  label="Submission Reference No."
-                  value={record.submissionReferenceNumber ?? ''}
-                />
-              )}
-              {canEditCase ? (
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                  <Button
-                    label="Submit"
-                    size="sm"
-                    onClick={() => {
-                      if (!submissionDate.trim() || !submissionReferenceNumber.trim()) {
-                        showToast({
-                          title: 'Missing required fields',
-                          description:
-                            'VFS submission date and reference number are required to submit.',
-                          variant: 'error',
-                        })
-                        return
-                      }
-                      const updated = operationalCaseHandlingService.submitDocuments(record.id, {
-                        submissionDate,
-                        collectionDate,
-                        submissionReferenceNumber,
-                      })
-                      if (!updated) {
-                        showToast({
-                          title: 'Unable to submit',
-                          description: 'Submit is only available for Pending or Moved to Next Day cases.',
-                          variant: 'error',
-                        })
-                        return
-                      }
-                      showToast({
-                        title: 'Documents submitted',
-                        description:
-                          'Case moved to Tracking & Logistics and remains visible on the Operations Desk.',
-                        variant: 'success',
-                      })
-                      onUpdated()
-                      onSubmitted?.()
-                    }}
-                  />
-                  <Button
-                    label="Move to next day"
-                    variant="outlined"
-                    size="sm"
-                    onClick={() => {
-                      operationalCaseHandlingService.moveToNextDay(record.id)
-                      onUpdated()
-                      showToast({ title: 'Moved to next day', variant: 'info' })
-                    }}
-                  />
-                </Stack>
-              ) : null}
-            </Stack>
-
-            <Divider />
-
-            <Stack spacing={1.25}>
-              {isViewOnly ? (
-                <ReadField
-                  label="Visa Status Tracking URL"
-                  value={trackingUrl ? 'Configured in Country Master' : 'Not configured in Country Master'}
-                />
-              ) : (
-                <FormField label="Visa Status Tracking URL">
-                  {trackingUrl ? (
-                    <ApplicationTrackingUrlLink
-                      countryName={record.country}
-                      label="Open tracking portal"
-                    />
-                  ) : (
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-                      Not configured in Country Master
-                    </Typography>
-                  )}
-                </FormField>
-              )}
-              {isViewOnly && trackingUrl ? (
-                <ApplicationTrackingUrlLink
-                  countryName={record.country}
-                  label="Open tracking portal"
-                />
-              ) : null}
-            </Stack>
-          </Stack>
-        ) : null}
-
-        {activeTab === 'timeline' ? (
-          <OperationalTimeline events={record.timeline} />
-        ) : null}
-      </Box>
-    </Stack>
-  )
-}
-
-export function OperationalCaseDetailDrawer({
-  open,
-  record,
-  onClose,
-  onUpdated,
-  onSubmitted,
-}: OperationalCaseDetailDrawerProps) {
-  if (!record) return null
+      </Stack>
+    ) : undefined
 
   return (
     <Drawer
@@ -631,12 +344,311 @@ export function OperationalCaseDetailDrawer({
       }
       width={DETAIL_DRAWER_WIDTH}
       bodyVariant="paper"
+      footer={footer}
     >
-      <OperationalCaseDetailContent
-        record={record}
-        onUpdated={onUpdated}
-        onSubmitted={onSubmitted}
-      />
+      <Stack spacing={0}>
+        <Box sx={{ mx: -3, mt: -3, mb: 0 }}>
+          <Box sx={{ px: 3, pt: 0.5 }}>
+            <Tabs
+              items={[...DETAIL_TABS]}
+              value={activeTab}
+              onChange={value => setActiveTab(value as DetailTab)}
+              variant="underline"
+              size="sm"
+              scrollable
+            />
+          </Box>
+        </Box>
+
+        <Box sx={{ pt: 2 }}>
+          {activeTab === 'overview' ? (
+            <Stack spacing={2}>
+              <Stack spacing={1.25}>
+                <SectionHeading>Passenger & batch context</SectionHeading>
+                <PassengerBatchContextCard
+                  record={record}
+                  submissionSnapshot={submissionSnapshot}
+                />
+              </Stack>
+
+              <Divider />
+
+              <Stack spacing={1.25}>
+                <SectionHeading>Document vault</SectionHeading>
+                <PassengerApplicationDocumentVault
+                  applicationId={record.applicationId}
+                  gltsApplicantId={record.gltsApplicantId}
+                  sequenceNo={record.passengerSequence}
+                />
+                <OperationalDocumentVault record={record} />
+              </Stack>
+            </Stack>
+          ) : null}
+
+          {activeTab === 'services' ? (
+            <Stack spacing={2}>
+              {isViewOnly && record.groundServices.some(service => service.selected) ? (
+                <Stack spacing={1.25}>
+                  <SectionHeading>Ground services</SectionHeading>
+                  <GroundServicesChecklist
+                    services={record.groundServices.filter(service => service.selected)}
+                    readOnly
+                  />
+                </Stack>
+              ) : null}
+
+              {isViewOnly && record.groundServices.some(service => service.selected) ? <Divider /> : null}
+
+              <Stack spacing={1.25}>
+                <SectionHeading>On-site fees</SectionHeading>
+                <GroundServicesChecklist
+                  services={onSiteFees}
+                  lockedServiceIds={lockedOnSiteFeeIds}
+                  readOnly={isViewOnly}
+                  onServiceChange={
+                    isViewOnly
+                      ? undefined
+                      : (feeId, patch) => {
+                          if (lockedOnSiteFeeIds.has(feeId)) return
+                          operationalCaseHandlingService.updateApplicationFee(record.id, feeId, patch)
+                          onUpdated()
+                        }
+                  }
+                />
+                <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12, color: 'text.primary' }}>
+                  Onsite expenses
+                </Typography>
+                {(isViewOnly ? (record.gltsOpsFees ?? []).some(service => service.selected) : true) ? (
+                  <GroundServicesChecklist
+                    services={
+                      isViewOnly
+                        ? (record.gltsOpsFees ?? []).filter(service => service.selected)
+                        : (record.gltsOpsFees ?? [])
+                    }
+                    amountMode="actual"
+                    readOnly={isViewOnly}
+                    onServiceChange={
+                      isViewOnly
+                        ? undefined
+                        : (feeId, patch) => {
+                            operationalCaseHandlingService.updateGltsOpsFee(record.id, feeId, patch)
+                            onUpdated()
+                          }
+                    }
+                  />
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12 }}>
+                    No onsite expenses recorded for this passenger.
+                  </Typography>
+                )}
+                <OnSiteFeeDocumentsSection
+                  attachmentNames={record.attachmentNames}
+                  readOnly={isViewOnly}
+                  onAdd={fileNames => {
+                    operationalCaseHandlingService.addAttachments(record.id, fileNames)
+                    onUpdated()
+                  }}
+                  onRemove={fileName => {
+                    operationalCaseHandlingService.removeAttachment(record.id, fileName)
+                    onUpdated()
+                  }}
+                  onError={message => {
+                    showToast({ title: 'Upload failed', description: message, variant: 'error' })
+                  }}
+                />
+                <ApplicationFeePaidByField
+                  value={record.applicationFeesPaidBy ?? 'passenger'}
+                  readOnly={isViewOnly}
+                  onChange={
+                    isViewOnly
+                      ? undefined
+                      : paidBy => {
+                          operationalCaseHandlingService.updateApplicationFeesPaidBy(record.id, paidBy)
+                          onUpdated()
+                        }
+                  }
+                />
+              </Stack>
+
+              <OperationalFundAllocationSection record={record} />
+
+              <Divider />
+
+              <Stack spacing={1.25}>
+                <OperationalPaymentDetailsSection
+                  record={record}
+                  readOnly={isViewOnly}
+                  onUpdated={onUpdated}
+                />
+              </Stack>
+
+              <Divider />
+
+              <Stack spacing={1.25}>
+                <SectionHeading>Expense summary</SectionHeading>
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
+                  <ReadField label="Estimated" value={`₹${record.estimatedExpense.toLocaleString('en-IN')}`} />
+                  <ReadField label="Actual" value={`₹${record.actualExpense.toLocaleString('en-IN')}`} />
+                </Box>
+              </Stack>
+
+              {record.expenses.length > 0 ? (
+                <>
+                  <Divider />
+                  <Stack spacing={1}>
+                    <SectionHeading>Additional expenses</SectionHeading>
+                    {record.expenses.map(expense => (
+                      <Box
+                        key={expense.id}
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr',
+                          gap: 1,
+                          p: 1.25,
+                          borderRadius: 1,
+                          border: 1,
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <ReadField label="Service" value={expense.serviceName} />
+                        <ReadField
+                          label="Amount"
+                          value={`₹${expense.actualAmount.toLocaleString('en-IN')}`}
+                        />
+                        {expense.remarks ? <ReadField label="Remarks" value={expense.remarks} /> : null}
+                        {expense.receiptFileName ? (
+                          <ReadField label="Receipt" value={expense.receiptFileName} />
+                        ) : null}
+                      </Box>
+                    ))}
+                  </Stack>
+                </>
+              ) : null}
+            </Stack>
+          ) : null}
+
+          {activeTab === 'operations' ? (
+            <Stack spacing={2}>
+              <Stack spacing={1.25}>
+                <SectionHeading>Submission details</SectionHeading>
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
+                  <ReadField
+                    label="Online Submission Date"
+                    value={formatDisplayDate(portalDates.onlineSubmissionDate)}
+                  />
+                  <ReadField
+                    label="Tentative Collection Date"
+                    value={formatDisplayDate(portalDates.tentativeCollectionDate)}
+                  />
+                  {canEditCase ? (
+                    <>
+                      <FormField label="VFS Submission Date">
+                        <DatePicker
+                          value={parseDateString(submissionDate)}
+                          onChange={date => setSubmissionDate(formatDateForStorage(date))}
+                          placeholder="Select VFS submission date"
+                          size="sm"
+                          fullWidth
+                        />
+                      </FormField>
+                      <FormField label="Collection Date">
+                        <DatePicker
+                          value={parseDateString(collectionDate)}
+                          onChange={date => setCollectionDate(formatDateForStorage(date))}
+                          placeholder="Select collection date"
+                          size="sm"
+                          fullWidth
+                        />
+                      </FormField>
+                    </>
+                  ) : (
+                    <>
+                      <ReadField
+                        label="VFS Submission Date"
+                        value={formatDisplayDate(record.submissionDate)}
+                      />
+                      <ReadField
+                        label="Collection Date"
+                        value={formatDisplayDate(record.collectionDate)}
+                      />
+                    </>
+                  )}
+                </Box>
+                {canEditCase ? (
+                  <FormField label="Submission Reference No.">
+                    <Input
+                      size="sm"
+                      value={submissionReferenceNumber}
+                      onChange={setSubmissionReferenceNumber}
+                      placeholder="e.g. VFS-ONL-2026-0142"
+                      fullWidth
+                    />
+                  </FormField>
+                ) : (
+                  <ReadField
+                    label="Submission Reference No."
+                    value={record.submissionReferenceNumber ?? ''}
+                  />
+                )}
+              </Stack>
+
+              <Divider />
+
+              <Stack spacing={1.25}>
+                {isViewOnly ? (
+                  <ReadField
+                    label="Visa Status Tracking URL"
+                    value={trackingUrl ? 'Configured in Country Master' : 'Not configured in Country Master'}
+                  />
+                ) : (
+                  <FormField label="Visa Status Tracking URL">
+                    {trackingUrl ? (
+                      <ApplicationTrackingUrlLink
+                        countryName={record.country}
+                        label="Open tracking portal"
+                      />
+                    ) : (
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+                        Not configured in Country Master
+                      </Typography>
+                    )}
+                  </FormField>
+                )}
+                {isViewOnly && trackingUrl ? (
+                  <ApplicationTrackingUrlLink
+                    countryName={record.country}
+                    label="Open tracking portal"
+                  />
+                ) : null}
+              </Stack>
+            </Stack>
+          ) : null}
+
+          {activeTab === 'timeline' ? (
+            <OperationalTimeline events={record.timeline} />
+          ) : null}
+        </Box>
+      </Stack>
     </Drawer>
+  )
+}
+
+export function OperationalCaseDetailDrawer({
+  open,
+  record,
+  onClose,
+  onUpdated,
+  onSubmitted,
+}: OperationalCaseDetailDrawerProps) {
+  if (!record) return null
+
+  return (
+    <OperationalCaseDetailContent
+      open={open}
+      record={record}
+      onClose={onClose}
+      onUpdated={onUpdated}
+      onSubmitted={onSubmitted}
+    />
   )
 }
