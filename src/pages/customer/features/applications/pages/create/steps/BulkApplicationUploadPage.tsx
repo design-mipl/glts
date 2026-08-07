@@ -417,6 +417,11 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
   }
 
   const isSingleListing = rows.length === 1
+  const readyRows = rows.filter(r => r.status !== 'processing')
+  const allDocsReady =
+    readyRows.length > 0 &&
+    readyRows.every(r => r.documentsTotal === 0 || r.documentsComplete >= r.documentsTotal)
+  const continueDisabled = strict && (readyRows.length === 0 || !allDocsReady)
 
   const handleAddEmptyApplicant = useCallback(() => {
     const gltsApplicationId = ensureFlowGltsApplicationId(state)
@@ -625,34 +630,23 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
           rows={rows}
           selectedId={drawerRowId}
           onSelect={handleRowSelect}
-          onContinue={onContinue}
-          continueLabel={
-            isSingleListing
-              ? 'Continue to details →'
-              : `Continue to details with ${rows.length} traveler${rows.length === 1 ? '' : 's'} →`
-          }
           singleListing={isSingleListing}
           gltsApplicationId={gltsApplicationId}
         />
       )}
 
-      {!strict && !uploaded && (
-        <FlowStepActions
-          onContinue={onContinue}
-          continueLabel="Continue to details →"
-        />
-      )}
-
-      <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1.5 }}>
-        <Button
-          variant="outlined"
-          onClick={handleSaveDraft}
-          disabled={strict && (!state.countryId || !state.visaOfferingId)}
-          sx={{ textTransform: 'none', fontSize: 13 }}
-        >
-          Save draft
-        </Button>
-      </Stack>
+      <FlowStepActions
+        onContinue={onContinue}
+        continueLabel={
+          isSingleListing || rows.length <= 1
+            ? 'Continue to details'
+            : `Continue to details with ${rows.length} travelers`
+        }
+        continueDisabled={continueDisabled}
+        secondaryLabel="Save draft"
+        onSecondary={handleSaveDraft}
+        secondaryDisabled={strict && (!state.countryId || !state.visaOfferingId)}
+      />
 
       <ApplicantDocumentDrawer
         open={Boolean(drawerRowId && drawerRow)}

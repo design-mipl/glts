@@ -40,7 +40,7 @@ export function SlaFormDrawer({ open, record, onClose, onSaved }: SlaFormDrawerP
     if (!validate()) {
       showToast({
         title: 'Fix SLA hours',
-        description: 'Each column needs stage hours that sum to a positive E2E total.',
+        description: 'Enter hours for at least one tab in each column (single and bulk bands).',
         variant: 'error',
       })
       return
@@ -67,8 +67,8 @@ export function SlaFormDrawer({ open, record, onClose, onSaved }: SlaFormDrawerP
       }
       if (result.error === 'invalid_single_sum' || result.error === 'invalid_bulk_sum') {
         showToast({
-          title: 'Hours do not add up',
-          description: 'Per-stage hours must equal the E2E total for each column.',
+          title: 'Invalid hours',
+          description: 'Check tab hours for each column and try again.',
           variant: 'error',
         })
         validate()
@@ -76,8 +76,8 @@ export function SlaFormDrawer({ open, record, onClose, onSaved }: SlaFormDrawerP
       }
       if (result.error === 'empty_e2e') {
         showToast({
-          title: 'E2E hours required',
-          description: 'Enter hours for at least one stage in each column.',
+          title: 'Hours required',
+          description: 'Enter hours for at least one tab in each column.',
           variant: 'error',
         })
         validate()

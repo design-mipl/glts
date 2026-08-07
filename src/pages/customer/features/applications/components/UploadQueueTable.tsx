@@ -9,14 +9,13 @@ import {
   Chip,
   Stack,
   Button,
-  IconButton,
+  Tooltip,
 } from '@mui/material'
-import { ChevronRight } from 'lucide-react'
-import { usePublicBrandColors, getPrimaryButtonSx } from '@/shared/theme/publicBrand'
 import {
-  requiresFieldValidation,
-  useApplicationFlowPolicy,
-} from '../context/ApplicationFlowPolicyContext'
+  usePublicBrandColors,
+  getOutlinedButtonSx,
+  mergeButtonSx,
+} from '@/shared/theme/publicBrand'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 import { formatQueueRowGltsLabel } from '../utils/gltsReferenceIds'
 import type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
@@ -50,20 +49,25 @@ function documentProgressChip(
   )
 }
 
+function documentActionCopy(complete: number, total: number): { short: string; full: string } {
+  if (total === 0) return { short: 'Docs', full: 'Open documents' }
+  if (complete >= total) return { short: 'Review', full: 'Review documents' }
+  if (complete > 0) return { short: 'Update', full: 'Update documents' }
+  return { short: 'Upload', full: 'Upload documents' }
+}
+
 interface UploadQueueTableProps {
   rows: UploadQueueRow[]
   selectedId: string | null
   onSelect: (id: string) => void
-  onContinue?: () => void
   /** Review step — no row navigation or footer CTA */
   readOnly?: boolean
-  /** Submit step — row click selects for summary below (no drawer chevron) */
+  /** Submit step — row click selects for summary below (no drawer action) */
   selectionMode?: boolean
   /** One traveler — compact labels */
   singleListing?: boolean
   gltsApplicationId?: string
   gltsBatchId?: string
-  continueLabel?: string
   /** When set, each row shows an info dialog with full application summary */
   summaryOverview?: ApplicationReviewOverview
   /** Admin verify — includes employment / marine fields in the summary dialog */
@@ -75,28 +79,20 @@ export function UploadQueueTable({
   rows,
   selectedId,
   onSelect,
-  onContinue,
   readOnly = false,
   selectionMode = false,
   singleListing = false,
   gltsApplicationId,
   gltsBatchId,
-  continueLabel,
   summaryOverview,
   summaryDetail,
   summaryApplicationId,
 }: UploadQueueTableProps) {
   const colors = usePublicBrandColors()
-  const { policy } = useApplicationFlowPolicy()
-  const strict = requiresFieldValidation(policy)
   const verified = rows.filter(r => r.status === 'verified').length
   const needsReview = rows.filter(r => r.status === 'needs_review').length
   const processing = rows.filter(r => r.status === 'processing').length
   const processed = rows.filter(r => r.status !== 'processing').length
-  const readyRows = rows.filter(r => r.status !== 'processing')
-  const allDocsReady =
-    readyRows.length > 0 &&
-    readyRows.every(r => r.documentsTotal === 0 || r.documentsComplete >= r.documentsTotal)
 
   const idColumnLabel = singleListing ? 'GLTS no.' : 'Applicant no.'
   const showSummaryColumn = Boolean(summaryOverview)
@@ -109,7 +105,7 @@ export function UploadQueueTable({
     'Nationality',
     'Documents',
     ...(showSummaryColumn ? ['Summary'] : []),
-    ...(showNavigateColumn ? [''] : []),
+    ...(showNavigateColumn ? ['Action'] : []),
   ]
 
   return (
@@ -155,14 +151,14 @@ export function UploadQueueTable({
           <TableRow sx={{ bgcolor: colors.surface }}>
             {tableHeaders.map(h => (
               <TableCell
-                key={h || 'act'}
-                align={h === 'Summary' ? 'center' : 'inherit'}
+                key={h}
+                align={h === 'Summary' || h === 'Action' ? 'center' : 'inherit'}
                 sx={{
                   fontSize: '11px',
                   fontWeight: 700,
                   color: colors.textMuted,
                   py: 1.25,
-                  width: h === 'Summary' ? 72 : undefined,
+                  width: h === 'Summary' || h === 'Action' ? 72 : undefined,
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -175,6 +171,7 @@ export function UploadQueueTable({
           {rows.map(row => {
             const selected = selectedId === row.id
             const isProcessing = row.status === 'processing'
+            const docAction = documentActionCopy(row.documentsComplete, row.documentsTotal)
             return (
               <TableRow
                 key={row.id}
@@ -240,11 +237,38 @@ export function UploadQueueTable({
                   </TableCell>
                 ) : null}
                 {showNavigateColumn ? (
-                  <TableCell align="right" sx={{ width: 48 }}>
+                  <TableCell align="center" sx={{ width: 72, whiteSpace: 'nowrap' }}>
                     {!isProcessing ? (
-                      <IconButton size="small" aria-label="Open applicant documents">
-                        <ChevronRight size={16} />
-                      </IconButton>
+                      <Tooltip title={docAction.full}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          aria-label={docAction.full}
+                          onClick={e => {
+                            e.stopPropagation()
+                            onSelect(row.id)
+                          }}
+                          sx={mergeButtonSx(getOutlinedButtonSx(), {
+                            fontSize: 11,
+                            fontWeight: 700,
+                            minWidth: 0,
+                            px: 1,
+                            py: 0.25,
+                            height: 26,
+                            lineHeight: 1.2,
+                            color: colors.greenDark,
+                            borderColor: colors.greenBright,
+                            bgcolor: 'transparent',
+                            '&:hover': {
+                              borderColor: colors.greenDark,
+                              bgcolor: colors.greenMuted,
+                              color: colors.greenDark,
+                            },
+                          })}
+                        >
+                          {docAction.short}
+                        </Button>
+                      </Tooltip>
                     ) : null}
                   </TableCell>
                 ) : null}
@@ -257,29 +281,15 @@ export function UploadQueueTable({
 
       {!readOnly && !selectionMode && (
         <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-          justifyContent="space-between"
-          sx={{ px: 2.5, py: 2, bgcolor: colors.surface, gap: 1.5 }}
+          direction="row"
+          alignItems="center"
+          sx={{ px: 2.5, py: 1.75, bgcolor: colors.surface }}
         >
           <Typography sx={{ fontSize: '12px', color: colors.textSecondary }}>
             {singleListing
               ? `${processed === 1 ? '1 applicant ready' : 'Processing passport…'}`
               : `${verified} verified · ${needsReview} needs review · ${processing} processing`}
           </Typography>
-          {onContinue && (
-            <Button
-              variant="contained"
-              onClick={onContinue}
-              disabled={strict && (processed === 0 || !allDocsReady)}
-              sx={{ ...getPrimaryButtonSx(colors), fontSize: '13px', py: 1, px: 2.5 }}
-            >
-              {continueLabel ||
-                (singleListing
-                  ? 'Continue to submit →'
-                  : `Continue with ${processed} traveler${processed === 1 ? '' : 's'} →`)}
-            </Button>
-          )}
         </Stack>
       )}
     </Box>

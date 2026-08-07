@@ -43,17 +43,17 @@ function normalizePlan(
     stages[stage] = Math.max(0, Number(plan.stages[stage]) || 0)
   }
   return {
-    e2eHours: Math.max(0, Number(plan.e2eHours) || 0),
+    e2eHours: sumSlaStageHours(stages, module, submodule),
     stages,
   }
 }
 
-function planSumMismatch(
+function planHasHours(
   plan: SlaHoursPlan,
   module: SlaDomain,
   submodule: SlaSubmodule,
 ): boolean {
-  return sumSlaStageHours(plan.stages, module, submodule) !== plan.e2eHours
+  return sumSlaStageHours(plan.stages, module, submodule) > 0
 }
 
 function defaultName(module: SlaDomain, submodule: SlaSubmodule): string {
@@ -192,12 +192,10 @@ export const slaMasterService = {
   },
 
   validateForm(data: SlaMasterFormData): SlaMasterSaveError | null {
-    if (data.single.e2eHours <= 0) return 'empty_e2e'
-    if (planSumMismatch(data.single, data.domain, data.segment)) return 'invalid_single_sum'
+    if (!planHasHours(data.single, data.domain, data.segment)) return 'empty_e2e'
     for (const band of SLA_BULK_BANDS) {
       const plan = data.bulkBands[band] ?? emptySlaHoursPlan(data.domain, data.segment)
-      if (plan.e2eHours <= 0) return 'empty_e2e'
-      if (planSumMismatch(plan, data.domain, data.segment)) return 'invalid_bulk_sum'
+      if (!planHasHours(plan, data.domain, data.segment)) return 'empty_e2e'
     }
     return null
   },

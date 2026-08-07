@@ -64,12 +64,9 @@ function validatePlan(
   formData: SlaMasterFormData,
   next: Record<string, string>,
 ) {
-  if (plan.e2eHours <= 0) {
-    next[`${prefix}.e2eHours`] = 'E2E hours must be greater than 0'
-  }
   const sum = sumSlaStageHours(plan.stages, formData.domain, formData.segment)
-  if (sum !== plan.e2eHours) {
-    next[`${prefix}.sum`] = `Stage hours (${sum}h) must equal E2E (${plan.e2eHours}h)`
+  if (sum <= 0) {
+    next[`${prefix}.e2eHours`] = 'Enter hours for at least one tab'
   }
 }
 

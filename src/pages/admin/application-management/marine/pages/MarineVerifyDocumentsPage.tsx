@@ -26,6 +26,7 @@ import { applicationArrangedExpenseService } from '@/shared/services/application
 import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import { resolveMarineChecklistContext } from '../utils/marineChecklistContextUtils'
 import { isMarineReadOnlyWorkspace } from '../config/marineWorkspaceMode'
+import { ensureOriginalDocumentCollectionState } from '@/shared/utils/originalDocumentCollectionUtils'
 import {
   collectRejectedVerifyDocuments,
   isRejectedVerifyDocument,
@@ -76,6 +77,7 @@ export function MarineVerifyDocumentsPage() {
     updateTravelerDocForRow,
     updateTravelerDocumentWorkflow,
     updateGlobalDoc,
+    updateTravelerOriginalReceived,
     updateTravelerOriginalCollection,
     notifyCustomerOfDocumentRejection,
     saveDraft,
@@ -322,14 +324,23 @@ export function MarineVerifyDocumentsPage() {
           countryId={checklistContext.countryId}
           visaOfferingId={checklistContext.visaOfferingId}
           jurisdictionId={checklistContext.jurisdictionId}
-          onOriginalCollectionChange={collection => {
+          onOriginalDocumentReceivedChange={(documentId, received) => {
             if (!selectedRow) return
-            updateTravelerOriginalCollection(selectedRow.id, collection)
+            updateTravelerOriginalReceived(selectedRow.id, documentId, received)
           }}
-          onOriginalReceivedSubmit={() => {
+          onOriginalReceivedRemarksSave={remarks => {
+            if (!selectedRow) return
+            const docs = selectedRow.documents
+              .filter(doc => doc.originalDocument)
+              .map(doc => ({ documentId: doc.documentId, name: doc.name }))
+            const next = {
+              ...ensureOriginalDocumentCollectionState(selectedRow.originalDocumentCollection, docs),
+              receivedRemarks: remarks,
+            }
+            updateTravelerOriginalCollection(selectedRow.id, next)
             showToast({
-              title: 'Physical documents updated',
-              description: 'Received status and remarks saved.',
+              title: 'Remarks saved',
+              description: 'Physical document receipt remarks updated.',
               variant: 'success',
             })
           }}

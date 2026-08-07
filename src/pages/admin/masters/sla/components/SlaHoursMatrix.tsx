@@ -63,10 +63,6 @@ export function SlaHoursMatrix({ formData, errors, onChange }: SlaHoursMatrixPro
     theme.palette.mode === 'dark'
       ? alpha(theme.palette.common.white, 0.04)
       : alpha(theme.palette.common.black, 0.03)
-  const totalBg =
-    theme.palette.mode === 'dark'
-      ? alpha(theme.palette.primary.main, 0.12)
-      : alpha(theme.palette.primary.main, 0.06)
 
   const patchStage = (column: PlanColumnKey, stage: SlaStageKey, raw: string) => {
     const hours = parseHours(raw)
@@ -105,11 +101,12 @@ export function SlaHoursMatrix({ formData, errors, onChange }: SlaHoursMatrixPro
     <Stack spacing={1.25} sx={{ width: '100%' }}>
       <Stack spacing={0.25}>
         <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-          {SLA_DOMAIN_LABELS[formData.domain]} · {getSlaSubmoduleLabel(formData.domain, formData.segment)}
+          {SLA_DOMAIN_LABELS[formData.domain]} ·{' '}
+          {getSlaSubmoduleLabel(formData.domain, formData.segment)}
         </Typography>
         <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
           Rows are the listing tabs for this module/submodule. Change module or submodule to load
-          that screen&apos;s tabs. Total is the sum of each column.
+          that screen&apos;s tabs.
         </Typography>
       </Stack>
 
@@ -184,29 +181,6 @@ export function SlaHoursMatrix({ formData, errors, onChange }: SlaHoursMatrixPro
                 })}
               </TableRow>
             ))}
-
-            <TableRow sx={{ bgcolor: totalBg }}>
-              <TableCell sx={{ fontSize: 13, fontWeight: 700 }}>Total (hours)</TableCell>
-              {PLAN_COLUMNS.map((column) => {
-                const plan = getPlan(formData, column.key)
-                const prefix = errorPrefixFor(column.key)
-                const hasError = Boolean(errors[`${prefix}.sum`] || errors[`${prefix}.e2eHours`])
-                return (
-                  <TableCell
-                    key={column.key}
-                    align="center"
-                    sx={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      fontVariantNumeric: 'tabular-nums',
-                      color: hasError ? 'error.main' : 'text.primary',
-                    }}
-                  >
-                    {plan.e2eHours}h
-                  </TableCell>
-                )
-              })}
-            </TableRow>
           </TableBody>
         </Table>
       </Box>

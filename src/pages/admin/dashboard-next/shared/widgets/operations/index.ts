@@ -46,3 +46,7 @@ export type {
   OpsOrgSegmentWorkload,
   OpsOrgAlertRow,
 } from './opsOrgQueueTypes'
+export {
+  OPS_QUEUE_DISPLAY_LABELS,
+  OPS_QUEUE_MIX_DESCRIPTION,
+} from './opsQueueDisplayLabels'

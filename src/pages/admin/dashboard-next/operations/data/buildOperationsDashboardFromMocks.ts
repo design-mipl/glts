@@ -23,10 +23,13 @@ import {
   getSimpleDocumentWorkflowStatus,
   isSimpleDocumentRequirement,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import { listPhysicalOriginalsPendingTravelers } from '../../shared/utils/physicalOriginalsDeskUtils'
 import {
   APPLICATION_PIPELINE_STAGE_IDS,
+  APPLICATION_PIPELINE_STAGE_LABELS,
   type ApplicationPipelineStageId,
 } from '../../shared/config/applicationPipeline'
+import { OPS_QUEUE_DISPLAY_LABELS } from '../../shared/widgets/operations/opsQueueDisplayLabels'
 import { OPS_CHART_COLORS } from './operationsDashboardMock'
 import type {
   OperationsAlertRow,
@@ -49,13 +52,14 @@ const OPS_SEGMENTS: OpsSegmentKey[] = ['retail', 'corporate', 'marine', 'b2b']
 const GLTS_ARRANGE_SCAN_LIMIT = 60
 
 const QUEUE_LABEL: Record<OpsWorkQueueKind, string> = {
-  verification: 'Docs to verify',
-  recheck: 'Re-upload to review',
-  payment: 'Pending payment',
-  glts_arrange: 'Arrange Ticket/Insurance',
-  submission: 'Ready to submit',
-  collection: 'Collect / dispatch',
-  correction_watch: 'Waiting on customer',
+  verification: OPS_QUEUE_DISPLAY_LABELS.verification,
+  recheck: OPS_QUEUE_DISPLAY_LABELS.recheck,
+  payment: OPS_QUEUE_DISPLAY_LABELS.payment,
+  glts_arrange: OPS_QUEUE_DISPLAY_LABELS.arrange,
+  submission: OPS_QUEUE_DISPLAY_LABELS.submission,
+  collection: OPS_QUEUE_DISPLAY_LABELS.collection,
+  physical_originals: OPS_QUEUE_DISPLAY_LABELS.physicalOriginals,
+  correction_watch: OPS_QUEUE_DISPLAY_LABELS.correctionWatch,
   assignment: 'Needs assignment',
 }
 
@@ -299,12 +303,72 @@ function collectGltsArrangeRows(apps: MarineApplicationRow[]): OperationsWorkRow
   return rows
 }
 
+function collectPhysicalOriginalRows(apps: MarineApplicationRow[]): OperationsWorkRow[] {
+  const byId = new Map(apps.map(app => [app.id, app]))
+  const pending = listPhysicalOriginalsPendingTravelers(apps, GLTS_ARRANGE_SCAN_LIMIT)
+  const rows: OperationsWorkRow[] = []
+
+  for (const item of pending) {
+    const app = byId.get(item.applicationId)
+    if (!app) continue
+    const segment = toOpsSegment(app.customerSegment)
+    rows.push({
+      id: `physical-${app.id}-${item.travelerRowId}`,
+      glNumber: app.id,
+      applicant: item.travelerName || applicantLabel(app),
+      company: resolveApplicationCompanyName(app),
+      segment,
+      country: app.country,
+      visaType: app.visaType,
+      queue: 'physical_originals',
+      queueLabel: OPS_QUEUE_DISPLAY_LABELS.physicalOriginals,
+      priority: item.receivedCount === 0 ? 'High' : 'Medium',
+      waitingTime: formatWaitingFromDate(app.lastUpdated || app.submissionDate),
+      status: `${item.receivedCount}/${item.totalCount} received`,
+      assigneeKind: app.assignedUserId ? 'user' : 'unassigned',
+      assigneeLabel: app.assignedUserId ? 'Assigned ops' : 'Unassigned',
+      showGroundBadge: false,
+      passengerId: item.travelerRowId,
+      applicationHref: opsApplicationDetailPath(segment, app.id, {
+        workspace: 'verify',
+        passengerId: item.travelerRowId,
+      }),
+    })
+  }
+
+  return rows
+}
+
 function buildPipelineStages(apps: MarineApplicationRow[]) {
   const counts = Object.fromEntries(
     APPLICATION_PIPELINE_STAGE_IDS.map((id) => [id, 0]),
   ) as Record<ApplicationPipelineStageId, number>
+  const delayed = Object.fromEntries(
+    APPLICATION_PIPELINE_STAGE_IDS.map((id) => [id, 0]),
+  ) as Record<ApplicationPipelineStageId, number>
 
   for (const row of apps) {
+    const opsQueue = resolveAppQueue(row)
+
+    // Ops desk splits AM "Verification Pending" into first review vs re-upload.
+    // Keep Queue status counts aligned with the KPI strip / Queue mix.
+    if (opsQueue === 'verification') {
+      counts.verification_pending += 1
+      continue
+    }
+    if (opsQueue === 'recheck') {
+      delayed.verification_pending += 1
+      continue
+    }
+    if (opsQueue === 'correction_watch') {
+      // Waiting on customer — not an open verification queue on the ops desk.
+      continue
+    }
+    if (opsQueue === 'payment') {
+      counts.pending_payment += 1
+      continue
+    }
+
     const tab = resolveMarineApplicationQueueTab(row)
     if (tab && tab in counts) {
       counts[tab as ApplicationPipelineStageId] += 1
@@ -314,10 +378,45 @@ function buildPipelineStages(apps: MarineApplicationRow[]) {
   return APPLICATION_PIPELINE_STAGE_IDS.map((id) => ({
     id,
     count: counts[id],
-    averageAgeHours: counts[id] > 0 ? 8 : 0,
-    delayedCount: 0,
-    slaPercent: counts[id] > 0 ? 92 : 100,
+    averageAgeHours: counts[id] > 0 || delayed[id] > 0 ? 8 : 0,
+    delayedCount: delayed[id],
+    slaPercent: counts[id] > 0 || delayed[id] > 0 ? 92 : 100,
   }))
+}
+
+/** Raw Application Management listing-tab counts (same resolver as AM module tabs). */
+function countAppsByAmTab(
+  apps: MarineApplicationRow[],
+): Record<ApplicationPipelineStageId, number> {
+  const counts = Object.fromEntries(
+    APPLICATION_PIPELINE_STAGE_IDS.map((id) => [id, 0]),
+  ) as Record<ApplicationPipelineStageId, number>
+
+  for (const row of apps) {
+    const tab = resolveMarineApplicationQueueTab(row)
+    if (tab && tab in counts) {
+      counts[tab] += 1
+    }
+  }
+
+  return counts
+}
+
+function amTabKpi(
+  id: string,
+  tab: ApplicationPipelineStageId,
+  count: number,
+  delta: number,
+  deltaLabel: string,
+) {
+  return {
+    id,
+    label: APPLICATION_PIPELINE_STAGE_LABELS[tab],
+    value: count,
+    delta,
+    deltaLabel,
+    sparklineData: [count, count, count],
+  }
 }
 
 function countByQueue(rows: OperationsWorkRow[], queue: OpsWorkQueueKind): number {
@@ -408,6 +507,21 @@ function buildAlerts(rows: OperationsWorkRow[]): OperationsAlertRow[] {
       href: waiting.applicationHref,
     })
   }
+  const physicalCount = countByQueue(rows, 'physical_originals')
+  if (physicalCount > 0) {
+    const sample = rows.find((row) => row.queue === 'physical_originals')
+    alerts.push({
+      id: 'al-physical',
+      title: 'Physical documents pending',
+      description: sample
+        ? `${sample.applicant} · ${sample.status} · mark originals received`
+        : 'Cases awaiting physical original receipt',
+      severity: 'warning',
+      type: 'physical_originals_pending',
+      count: physicalCount,
+      href: sample?.applicationHref ?? opsApplicationListPath('marine', 'verification_pending'),
+    })
+  }
   return alerts
 }
 
@@ -423,6 +537,7 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
   }
 
   const arrangeRows = collectGltsArrangeRows(apps)
+  const physicalRows = collectPhysicalOriginalRows(apps)
 
   const assignmentRows: OperationsWorkRow[] = []
   for (const segment of OPS_SEGMENTS) {
@@ -447,7 +562,7 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
     .map(mapGroundCase)
     .filter((row): row is OperationsWorkRow => Boolean(row))
 
-  const queueRows = dedupeWorkRows([...appWorkRows, ...arrangeRows, ...groundRows])
+  const queueRows = dedupeWorkRows([...appWorkRows, ...arrangeRows, ...physicalRows, ...groundRows])
   const myWorkRows = queueRows.slice(0, 40)
   const assignmentDeskRows = dedupeWorkRows(assignmentRows).slice(0, 40)
 
@@ -457,10 +572,12 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
   const arrangeCount = countByQueue(queueRows, 'glts_arrange')
   const submissionCount = countByQueue(queueRows, 'submission')
   const collectionCount = countByQueue(queueRows, 'collection')
+  const physicalCount = countByQueue(queueRows, 'physical_originals')
   const unassignedCount = assignmentDeskRows.filter((row) => row.assigneeKind === 'unassigned').length
 
   const session = loadSession()
   const consultantName = session?.contactName || session?.email || 'Operations desk'
+  const amTabCounts = countAppsByAmTab(apps)
 
   const workloadBySegment = OPS_SEGMENTS.map((segment) => {
     const segmentRows = queueRows.filter((row) => row.segment === segment)
@@ -536,7 +653,7 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
       },
       {
         id: 'kpi-verification',
-        label: 'Verification pending',
+        label: OPS_QUEUE_DISPLAY_LABELS.verification,
         value: verifyCount,
         delta: 4.1,
         deltaLabel: 'Docs awaiting first review',
@@ -544,7 +661,7 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
       },
       {
         id: 'kpi-recheck',
-        label: 'Re-uploads ready',
+        label: OPS_QUEUE_DISPLAY_LABELS.recheck,
         value: recheckCount,
         delta: 8.5,
         deltaLabel: 'Ready for re-check',
@@ -552,7 +669,7 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
       },
       {
         id: 'kpi-payment',
-        label: 'Pending payment',
+        label: OPS_QUEUE_DISPLAY_LABELS.payment,
         value: paymentCount,
         delta: 2.4,
         deltaLabel: 'Mark paid / release',
@@ -560,11 +677,19 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
       },
       {
         id: 'kpi-arrange',
-        label: 'Arrange Ticket/Insurance',
+        label: OPS_QUEUE_DISPLAY_LABELS.arrange,
         value: arrangeCount,
         delta: arrangeCount > 0 ? 3.1 : 0,
         deltaLabel: 'Ticket / insurance to arrange',
         sparklineData: [arrangeCount, arrangeCount, arrangeCount],
+      },
+      {
+        id: 'kpi-physical-originals',
+        label: OPS_QUEUE_DISPLAY_LABELS.physicalOriginals,
+        value: physicalCount,
+        delta: physicalCount > 0 ? 2.6 : 0,
+        deltaLabel: 'Awaiting original receipt',
+        sparklineData: [physicalCount, physicalCount, physicalCount],
       },
       {
         id: 'kpi-assignment',
@@ -574,14 +699,41 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
         deltaLabel: 'Needs consultant assignment',
         sparklineData: [unassignedCount, unassignedCount, unassignedCount],
       },
-      {
-        id: 'kpi-submission',
-        label: 'Submission / collection',
-        value: submissionCount + collectionCount,
-        delta: -2.3,
-        deltaLabel: 'In flight with Ground',
-        sparklineData: [submissionCount + collectionCount, submissionCount + collectionCount],
-      },
+      amTabKpi(
+        'kpi-online-submission',
+        'online_submission_pending',
+        amTabCounts.online_submission_pending,
+        1.8,
+        'Application Management · Submission Pending',
+      ),
+      amTabKpi(
+        'kpi-vfs-submission',
+        'vfs_submission_pending',
+        amTabCounts.vfs_submission_pending,
+        3.2,
+        'Application Management · Embassy/VFS',
+      ),
+      amTabKpi(
+        'kpi-collection-pending',
+        'collection_pending',
+        amTabCounts.collection_pending,
+        2.1,
+        'Application Management · Collection Pending',
+      ),
+      amTabKpi(
+        'kpi-collected',
+        'collected',
+        amTabCounts.collected,
+        -1.4,
+        'Application Management · Collected',
+      ),
+      amTabKpi(
+        'kpi-dispatched',
+        'dispatched',
+        amTabCounts.dispatched,
+        4.6,
+        'Application Management · Dispatched',
+      ),
     ],
     alerts: buildAlerts([...queueRows, ...assignmentDeskRows]),
     notifications: buildAlerts([...queueRows, ...assignmentDeskRows])
@@ -617,6 +769,13 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
         href: opsApplicationListPath('marine', 'pending_payment'),
       },
       {
+        id: 'qa-physical',
+        title: 'Physical documents',
+        description: 'Verify · mark physical originals received',
+        badge: 'Originals',
+        href: opsApplicationListPath('marine', 'verification_pending'),
+      },
+      {
         id: 'qa-apps',
         title: 'Applications',
         description: 'Application Management listing',
@@ -642,12 +801,48 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
     queueRows,
     assignmentRows: assignmentDeskRows,
     queueMix: [
-      { key: 'verification', label: 'Verify', value: verifyCount, color: OPS_CHART_COLORS.navy },
-      { key: 'recheck', label: 'Re-review', value: recheckCount, color: OPS_CHART_COLORS.amber },
-      { key: 'payment', label: 'Payment', value: paymentCount, color: OPS_CHART_COLORS.coral },
-      { key: 'arrange', label: 'Arrange Ticket/Insurance', value: arrangeCount, color: OPS_CHART_COLORS.blue },
-      { key: 'submission', label: 'Submit', value: submissionCount, color: OPS_CHART_COLORS.teal },
-      { key: 'collection', label: 'Collect', value: collectionCount, color: OPS_CHART_COLORS.violet },
+      {
+        key: 'verification',
+        label: OPS_QUEUE_DISPLAY_LABELS.verification,
+        value: verifyCount,
+        color: OPS_CHART_COLORS.navy,
+      },
+      {
+        key: 'recheck',
+        label: OPS_QUEUE_DISPLAY_LABELS.recheck,
+        value: recheckCount,
+        color: OPS_CHART_COLORS.amber,
+      },
+      {
+        key: 'payment',
+        label: OPS_QUEUE_DISPLAY_LABELS.payment,
+        value: paymentCount,
+        color: OPS_CHART_COLORS.coral,
+      },
+      {
+        key: 'arrange',
+        label: OPS_QUEUE_DISPLAY_LABELS.arrange,
+        value: arrangeCount,
+        color: OPS_CHART_COLORS.blue,
+      },
+      {
+        key: 'submission',
+        label: OPS_QUEUE_DISPLAY_LABELS.submission,
+        value: submissionCount,
+        color: OPS_CHART_COLORS.teal,
+      },
+      {
+        key: 'collection',
+        label: OPS_QUEUE_DISPLAY_LABELS.collection,
+        value: collectionCount,
+        color: OPS_CHART_COLORS.violet,
+      },
+      {
+        key: 'physical_originals',
+        label: OPS_QUEUE_DISPLAY_LABELS.physicalOriginals,
+        value: physicalCount,
+        color: OPS_CHART_COLORS.amber,
+      },
     ],
     workloadBySegment,
     ageingBuckets,
@@ -656,7 +851,7 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
       id: `act-${row.id}`,
       primary: `${QUEUE_LABEL[row.queue]} · ${row.glNumber}`,
       secondary: `${row.applicant} · ${row.waitingTime}`,
-      badgeLabel: row.queue === 'recheck' ? 'Re-review' : row.showGroundBadge ? 'Ground' : 'Ops',
+      badgeLabel: row.queue === 'recheck' ? OPS_QUEUE_DISPLAY_LABELS.recheck : row.showGroundBadge ? 'Ground' : 'Ops',
       badgeColor: row.queue === 'recheck' ? 'warning' : row.showGroundBadge ? 'info' : 'primary',
     })),
     announcements: [

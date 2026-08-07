@@ -22,6 +22,7 @@ import type {
   LogisticsDispatchDetails,
   LogisticsFinalQcChecks,
   LogisticsRefundDetails,
+  LogisticsVisaOutcome,
 } from '@/shared/types/logisticsDispatch'
 import {
   isLogisticsStatus,
@@ -32,6 +33,7 @@ import {
   validateLogisticsDispatchDetails,
 } from '@/shared/utils/logisticsDispatchUtils'
 import { getMasterActor } from '@/shared/utils/masterActor'
+import { syncPassengerTimelineFromOperationalCase } from '@/shared/utils/operationalCaseProcessingTimeline'
 
 function nowIso() {
   return new Date().toISOString()
@@ -122,6 +124,7 @@ function cloneOperationalCase(record: OperationalCase): OperationalCase {
     finalQc: record.finalQc
       ? { ...record.finalQc, checks: { ...record.finalQc.checks } }
       : undefined,
+    visaOutcome: record.visaOutcome ? { ...record.visaOutcome } : undefined,
     dispatchDetails: record.dispatchDetails ? { ...record.dispatchDetails } : undefined,
     refundDetails: record.refundDetails ? { ...record.refundDetails } : undefined,
   }
@@ -141,6 +144,21 @@ function mutate(id: string, updater: (record: OperationalCase) => void): Operati
   updater(record)
   touch(record)
   return cloneOperationalCase(record)
+}
+
+function mutateAndSyncTimeline(
+  id: string,
+  updater: (record: OperationalCase) => void,
+): OperationalCase | undefined {
+  const updated = mutate(id, updater)
+  if (updated) {
+    try {
+      syncPassengerTimelineFromOperationalCase(updated)
+    } catch {
+      // Some mock ground-ops cases have no matching portal application.
+    }
+  }
+  return updated
 }
 
 
@@ -269,7 +287,7 @@ export const operationalCaseHandlingService = {
   },
 
   updateStatus(id: string, status: OperationalCaseStatus): OperationalCase | undefined {
-    return mutate(id, record => {
+    return mutateAndSyncTimeline(id, record => {
       record.status = status
       if (status === 'Completed') {
         record.progressPercent = 100
@@ -471,7 +489,7 @@ export const operationalCaseHandlingService = {
     const submissionReferenceNumber = details.submissionReferenceNumber.trim()
     if (!submissionDate || !submissionReferenceNumber) return undefined
 
-    return mutate(id, record => {
+    return mutateAndSyncTimeline(id, record => {
       if (!isOperationsDeskStatus(record.status)) return
 
       record.submissionDate = submissionDate
@@ -485,12 +503,41 @@ export const operationalCaseHandlingService = {
   },
 
   markCollected(id: string): OperationalCase | undefined {
-    return mutate(id, record => {
+    return mutateAndSyncTimeline(id, record => {
       if (record.status !== 'Document Submitted') return
       record.status = 'Collected'
       record.progressPercent = Math.max(record.progressPercent, 75)
-      record.nextAction = 'Enter dispatch details'
+      record.nextAction = 'Record visa outcome, then dispatch'
       appendTimeline(record, 'Passport/documents collected from Embassy/VFS', 'Tracking & Logistics')
+    })
+  },
+
+  setVisaOutcome(
+    id: string,
+    outcome: LogisticsVisaOutcome,
+    remarks = '',
+  ): OperationalCase | undefined {
+    return mutateAndSyncTimeline(id, record => {
+      if (record.status !== 'Collected') return
+      if (record.dispatchDetails?.dispatchedAt) return
+
+      record.visaOutcome = {
+        outcome,
+        remarks: remarks.trim(),
+        decidedBy: getMasterActor(),
+        decidedAt: nowIso(),
+      }
+
+      if (outcome === 'approved') {
+        record.nextAction = 'Enter dispatch details'
+        appendTimeline(record, 'Visa outcome · Approved', 'Tracking & Logistics')
+      } else if (outcome === 'rejected') {
+        record.nextAction = 'Record refund / close case'
+        appendTimeline(record, 'Visa outcome · Rejected', 'Tracking & Logistics')
+      } else {
+        record.nextAction = 'Record refund / close case'
+        appendTimeline(record, 'Visa outcome · Withdrawn', 'Tracking & Logistics')
+      }
     })
   },
 
@@ -519,8 +566,9 @@ export const operationalCaseHandlingService = {
     const validation = validateLogisticsDispatchDetails(details)
     if (!validation.valid) return undefined
 
-    return mutate(id, record => {
+    return mutateAndSyncTimeline(id, record => {
       if (record.status !== 'Collected') return
+      if (record.visaOutcome?.outcome !== 'approved') return
 
       const dispatchSnapshot: LogisticsDispatchDetails = {
         ...details,
@@ -541,8 +589,9 @@ export const operationalCaseHandlingService = {
   },
 
   markDispatched(id: string): OperationalCase | undefined {
-    return mutate(id, record => {
+    return mutateAndSyncTimeline(id, record => {
       if (record.status !== 'Collected') return
+      if (record.visaOutcome?.outcome !== 'approved') return
       record.status = 'Dispatched'
       record.progressPercent = Math.max(record.progressPercent, 90)
       record.nextAction = 'Confirm delivery / tracking'
@@ -552,7 +601,7 @@ export const operationalCaseHandlingService = {
 
   /** Ends IN TRANSIT — courier/handover confirmed delivered to client. */
   markDelivered(id: string): OperationalCase | undefined {
-    return mutate(id, record => {
+    return mutateAndSyncTimeline(id, record => {
       if (record.status !== 'Dispatched') return
       if (record.dispatchDetails) {
         record.dispatchDetails = {
@@ -597,7 +646,7 @@ export const operationalCaseHandlingService = {
   },
 
   markCompleted(id: string): OperationalCase | undefined {
-    return mutate(id, record => {
+    return mutateAndSyncTimeline(id, record => {
       record.status = 'Completed'
       record.progressPercent = 100
       appendTimeline(record, 'Marked Completed')

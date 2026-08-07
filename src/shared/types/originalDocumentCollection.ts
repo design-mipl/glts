@@ -29,7 +29,6 @@ export interface PickedUpFromCompanyDetails {
   contactNumber: string
   pickupDate: string
   pickupTime: string
-  pickupExecutive: string
   remarks: string
 }
 
@@ -48,7 +47,6 @@ export interface PickedUpAtAirportDetails {
   arrivalDate: string
   arrivalTime: string
   applicantContactNumber: string
-  pickupExecutive: string
   remarks: string
 }
 
@@ -57,7 +55,6 @@ export interface PickedUpFromCargoDetails {
   awbNumber: string
   pickupDate: string
   pickupTime: string
-  pickupExecutive: string
   remarks: string
 }
 

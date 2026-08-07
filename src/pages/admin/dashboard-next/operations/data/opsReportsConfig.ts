@@ -198,6 +198,8 @@ function utilizationFlag(pct: number): string {
 
 function custodyStatusForRow(row: OperationsWorkRow): string {
   if (row.queue === 'collection') return 'Embassy'
+  if (row.queue === 'physical_originals') return 'Physical originals'
+  if (row.queue === 'correction_watch') return 'Customer'
   if (row.queue === 'submission') return 'Courier'
   if (row.status.toLowerCase().includes('return')) return 'Returned'
   return 'Received'
@@ -206,6 +208,7 @@ function custodyStatusForRow(row: OperationsWorkRow): string {
 function bulletinCategoryForRow(row: OperationsWorkRow): (typeof BULLETIN_CATEGORIES)[number] {
   if (row.queue === 'submission') return 'Submissions'
   if (row.queue === 'collection') return 'Collections'
+  if (row.queue === 'physical_originals') return 'Physical documents'
   if (row.queue === 'assignment' && row.showGroundBadge) return 'Dispatch'
   if (
     row.priority.toLowerCase() === 'urgent' ||

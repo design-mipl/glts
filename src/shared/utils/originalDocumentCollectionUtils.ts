@@ -53,7 +53,6 @@ export const COLLECTION_DETAIL_FIELDS_BY_METHOD: Record<
     { key: 'contactNumber', label: 'Contact Number', type: 'tel', required: true },
     { key: 'pickupDate', label: 'Pickup Date', type: 'date', required: true },
     { key: 'pickupTime', label: 'Pickup Time', type: 'time', required: true },
-    { key: 'pickupExecutive', label: 'Pickup Executive', type: 'text', required: true },
     { key: 'remarks', label: 'Remarks', type: 'textarea' },
   ],
   delivered_to_office: [
@@ -70,7 +69,6 @@ export const COLLECTION_DETAIL_FIELDS_BY_METHOD: Record<
     { key: 'arrivalDate', label: 'Arrival Date', type: 'date', required: true },
     { key: 'arrivalTime', label: 'Arrival Time', type: 'time', required: true },
     { key: 'applicantContactNumber', label: 'Applicant Contact Number', type: 'tel', required: true },
-    { key: 'pickupExecutive', label: 'Pickup Executive', type: 'text', required: true },
     { key: 'remarks', label: 'Remarks', type: 'textarea' },
   ],
   picked_up_from_cargo: [
@@ -78,7 +76,6 @@ export const COLLECTION_DETAIL_FIELDS_BY_METHOD: Record<
     { key: 'awbNumber', label: 'AWB Number', type: 'text', required: true },
     { key: 'pickupDate', label: 'Pickup Date', type: 'date', required: true },
     { key: 'pickupTime', label: 'Pickup Time', type: 'time', required: true },
-    { key: 'pickupExecutive', label: 'Pickup Executive', type: 'text', required: true },
     { key: 'remarks', label: 'Remarks', type: 'textarea' },
   ],
   hand_carry_by_applicant: [
@@ -282,5 +279,5 @@ export function originalCollectionCollapsedHint(state: OriginalDocumentCollectio
   const { received, total } = countDocumentsReceived(state)
   const methodLabel = originalCollectionMethodLabel(state.method)
   if (total === 0) return 'No originals required'
-  return `${received} of ${total} originals received · ${methodLabel}`
+  return `${received} of ${total} originals selected · ${methodLabel}`
 }

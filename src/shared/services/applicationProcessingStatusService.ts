@@ -308,4 +308,86 @@ export const applicationProcessingStatusService = {
     syncListingRow(applicationId, nextStatusId, stageDates)
     return { ok: true, state: next }
   },
+
+  /**
+   * Ground Operations may jump milestones (submit → collect → dispatch → deliver).
+   * Advances the shared passenger timeline cursor forward only; never regresses.
+   */
+  syncGroundOpsMilestone(input: {
+    applicationId: string
+    travelerRowId: string
+    nextStatusId: string
+    stageDates?: ApplicationProcessingStageDates
+    note?: string
+    actor?: string
+    countryId?: string
+    countryName?: string
+    visaTypeLabel?: string
+    visaOfferingId?: string
+  }): ApplicationProcessingStatusState {
+    const actor = input.actor ?? DEFAULT_ACTOR
+    const at = nowIso()
+    let state = this.get(input.applicationId, input.travelerRowId)
+    if (!state) {
+      state = this.ensureState({
+        applicationId: input.applicationId,
+        travelerRowId: input.travelerRowId,
+        docsDone: true,
+        allVerified: true,
+        countryId: input.countryId,
+        countryName: input.countryName,
+        visaTypeLabel: input.visaTypeLabel,
+        visaOfferingId: input.visaOfferingId,
+        inferredStatusId: input.nextStatusId,
+      })
+    }
+
+    const workflowId = resolveWorkflowId({
+      storedWorkflowId: state.workflowId,
+      countryId: input.countryId,
+      countryName: input.countryName,
+      visaTypeLabel: input.visaTypeLabel,
+      visaOfferingId: input.visaOfferingId,
+    })
+    const steps = sortedWorkflowStatusIds(workflowId ?? state.workflowId)
+    const currentIndex = steps.indexOf(state.currentStatusId)
+    const nextIndex = steps.indexOf(input.nextStatusId)
+    const shouldAdvance =
+      nextIndex < 0
+        ? state.currentStatusId !== input.nextStatusId
+        : currentIndex < 0 || nextIndex > currentIndex
+
+    if (!shouldAdvance) {
+      if (input.stageDates) {
+        syncListingRow(input.applicationId, state.currentStatusId, input.stageDates)
+      }
+      return state
+    }
+
+    const next: ApplicationProcessingStatusState = {
+      ...state,
+      currentStatusId: input.nextStatusId,
+      workflowId: workflowId ?? state.workflowId,
+      heldFromStatusId: undefined,
+      history: [
+        ...state.history,
+        {
+          statusId: input.nextStatusId,
+          at,
+          by: actor,
+          action: 'advance',
+          note: input.note?.trim() || 'Synced from Ground Operations',
+        },
+      ],
+      updatedAt: at,
+      updatedBy: actor,
+    }
+
+    store.set(storeKey(input.applicationId, input.travelerRowId), next)
+    syncListingRow(input.applicationId, input.nextStatusId, {
+      ...(input.stageDates ?? {}),
+      [input.nextStatusId]: at,
+    })
+    return next
+  },
 }

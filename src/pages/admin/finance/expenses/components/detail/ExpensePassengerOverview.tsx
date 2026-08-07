@@ -237,7 +237,6 @@ export function ExpensePassengerOverview({
             <ContextGroup title="Passenger details">
               <MetaGrid>
                 <ContextMetaItem label="Passport" value={selectedRow.passportNo} mono />
-                <ContextMetaItem label="Sequence" value={String(selectedRow.sequenceNo)} mono />
                 <ContextMetaItem label="Phone number" value={phone} />
                 <ContextMetaItem label="Email address" value={email} />
                 <ContextMetaItem label="Company" value={companyName} />

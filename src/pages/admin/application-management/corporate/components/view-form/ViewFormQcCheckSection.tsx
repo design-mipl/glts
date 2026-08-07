@@ -21,7 +21,6 @@ import {
 } from '../../utils/verifyDocumentsUtils'
 import { resolveOriginalRequiredDocuments } from '@/shared/utils/originalDocumentCollectionUtils'
 import { PHYSICAL_DOCUMENT_LABEL } from '@/shared/constants/documentRequirementLabels'
-import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
 import type { CountryQcChecklistTemplate } from '@/shared/types/countryMaster'
 import type { QcCheckOutcome } from '../../config/qcCheckChecklistConfig'
 
@@ -56,8 +55,8 @@ interface ViewFormQcCheckSectionProps {
   onRejectedVerify: (entry: VerifyRejectedDocumentEntry) => void
   onRejectedReject: (entry: VerifyRejectedDocumentEntry) => void
   onRejectedReupload: (entry: VerifyRejectedDocumentEntry) => void
-  onOriginalCollectionChange?: (collection: OriginalDocumentCollectionState) => void
-  onOriginalReceivedSubmit?: (collection: OriginalDocumentCollectionState) => void
+  onOriginalDocumentReceivedChange?: (documentId: string, received: boolean) => void
+  onOriginalReceivedRemarksSave?: (remarks: string) => void
   readOnly?: boolean
 }
 
@@ -81,8 +80,8 @@ export function ViewFormQcCheckSection({
   onRejectedVerify,
   onRejectedReject,
   onRejectedReupload,
-  onOriginalCollectionChange,
-  onOriginalReceivedSubmit,
+  onOriginalDocumentReceivedChange,
+  onOriginalReceivedRemarksSave,
   readOnly = false,
   docsQcTemplate,
   docsQcChecked,
@@ -179,8 +178,8 @@ export function ViewFormQcCheckSection({
       countryId={countryId}
       visaOfferingId={visaOfferingId}
       readOnly={readOnly}
-      onCollectionChange={onOriginalCollectionChange}
-      onReceivedSubmit={onOriginalReceivedSubmit}
+      onDocumentReceivedChange={onOriginalDocumentReceivedChange}
+      onReceivedRemarksSave={onOriginalReceivedRemarksSave}
     />
   )
 

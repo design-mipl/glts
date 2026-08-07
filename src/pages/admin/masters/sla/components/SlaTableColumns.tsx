@@ -52,7 +52,7 @@ export function buildSlaColumns({ onOpenView, onOpenEdit }: ColumnHandlers): Col
     },
     {
       key: 'singleE2e',
-      label: 'Single E2E',
+      label: 'Single hours',
       widthSize: adminListingColumnWidthSize('sla'),
       sortable: false,
       filterable: false,
@@ -64,7 +64,7 @@ export function buildSlaColumns({ onOpenView, onOpenEdit }: ColumnHandlers): Col
     },
     {
       key: 'bulkE2e',
-      label: 'Bulk E2E',
+      label: 'Bulk hours',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: false,
       filterable: false,

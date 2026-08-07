@@ -624,9 +624,7 @@ function OperationalCaseDetailContent({
             </Stack>
           ) : null}
 
-          {activeTab === 'timeline' ? (
-            <OperationalTimeline events={record.timeline} />
-          ) : null}
+          {activeTab === 'timeline' ? <OperationalTimeline record={record} /> : null}
         </Box>
       </Stack>
     </Drawer>

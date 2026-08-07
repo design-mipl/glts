@@ -1,3 +1,29 @@
+export type LogisticsVisaOutcome = 'approved' | 'rejected' | 'withdrawn'
+
+export const LOGISTICS_VISA_OUTCOME_OPTIONS: {
+  value: LogisticsVisaOutcome
+  label: string
+}[] = [
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'withdrawn', label: 'Withdraw' },
+]
+
+export function getLogisticsVisaOutcomeLabel(value?: LogisticsVisaOutcome): string {
+  return LOGISTICS_VISA_OUTCOME_OPTIONS.find(option => option.value === value)?.label ?? '—'
+}
+
+export function isLogisticsVisaOutcomeDispatchable(value?: LogisticsVisaOutcome): boolean {
+  return value === 'approved'
+}
+
+export interface LogisticsVisaOutcomeRecord {
+  outcome: LogisticsVisaOutcome
+  remarks: string
+  decidedBy: string
+  decidedAt: string
+}
+
 export type LogisticsDeliveryMethod =
   | 'Courier'
   | 'Airport Assistance - Working Hours'

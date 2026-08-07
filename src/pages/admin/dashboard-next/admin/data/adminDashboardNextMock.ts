@@ -1,3 +1,4 @@
+import { OPS_QUEUE_DISPLAY_LABELS } from '../../shared/widgets/operations/opsQueueDisplayLabels'
 import {
   APPLICATION_PIPELINE_STAGE_IDS,
   type ApplicationPipelineStageId,
@@ -81,6 +82,14 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
       sparklineData: [110, 105, 100, 96, 92, 89, 86],
     },
     {
+      id: 'physical-documents-pending',
+      label: 'Physical documents pending',
+      value: 12,
+      delta: 1.8,
+      deltaLabel: 'Awaiting original receipt',
+      sparklineData: [8, 9, 10, 11, 11, 12, 12],
+    },
+    {
       id: 'team-utilization',
       label: 'Team Utilization %',
       value: '87%',
@@ -139,6 +148,13 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
       title: 'Documents Required',
       count: 28,
       oldestWaiting: '3d 4h',
+      priority: 'high',
+    },
+    {
+      id: 'ca-physical',
+      title: 'Physical documents pending',
+      count: 12,
+      oldestWaiting: '1d 6h',
       priority: 'high',
     },
     { id: 'ca3', title: 'Pending QC > 4 Hours', count: 9, oldestWaiting: '5h 10m', priority: 'high' },
@@ -256,6 +272,14 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
       count: 11,
     },
     {
+      id: 'oa-physical',
+      title: 'Physical documents pending',
+      description: 'Originals awaiting GLTS receipt confirmation',
+      severity: 'warning',
+      href: '/admin/application-management/marine?tab=verification_pending',
+      count: 12,
+    },
+    {
       id: 'oa-unassigned',
       title: 'Unassigned cases',
       description: 'Open Assignment Priority to assign user, vendor, or passenger',
@@ -274,12 +298,13 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
   ],
   opsQueueSnapshot: {
     queueMix: [
-      { key: 'verification', label: 'Verify', value: 68 },
-      { key: 'recheck', label: 'Re-review', value: 22 },
-      { key: 'payment', label: 'Payment', value: 19 },
-      { key: 'arrange', label: 'Arrange Ticket/Insurance', value: 11 },
-      { key: 'submission', label: 'Submit', value: 27 },
-      { key: 'collection', label: 'Collect', value: 16 },
+      { key: 'verification', label: OPS_QUEUE_DISPLAY_LABELS.verification, value: 68 },
+      { key: 'recheck', label: OPS_QUEUE_DISPLAY_LABELS.recheck, value: 22 },
+      { key: 'payment', label: OPS_QUEUE_DISPLAY_LABELS.payment, value: 19 },
+      { key: 'arrange', label: OPS_QUEUE_DISPLAY_LABELS.arrange, value: 11 },
+      { key: 'submission', label: OPS_QUEUE_DISPLAY_LABELS.submission, value: 27 },
+      { key: 'collection', label: OPS_QUEUE_DISPLAY_LABELS.collection, value: 16 },
+      { key: 'physical_originals', label: OPS_QUEUE_DISPLAY_LABELS.physicalOriginals, value: 12 },
     ],
     assigneeMix: [
       { key: 'user', label: 'Ops user', value: 112 },

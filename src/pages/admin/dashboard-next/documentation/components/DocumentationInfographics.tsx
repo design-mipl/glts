@@ -72,7 +72,7 @@ export interface DocumentationInfographicsProps {
   loading?: boolean
 }
 
-/** Overview infographics — desk mix · QC outcomes · ageing · top clients/countries · visibility. */
+/** Overview infographics — desk mix · QC Status · ageing · top clients/countries · visibility. */
 export function DocumentationInfographics({ data, loading }: DocumentationInfographicsProps) {
   const [ageingTab, setAgeingTab] = useState<'count' | 'share'>('count')
   const [clientTopN, setClientTopN] = useState<TopN>(5)
@@ -118,8 +118,7 @@ export function DocumentationInfographics({ data, loading }: DocumentationInfogr
 
       <Grid size={{ xs: 12, md: 6, lg: 4 }}>
         <ChartPanel
-          title="QC outcomes"
-          description="Pending · Verified & ready · Correction · Blocked"
+          title="QC Status"
         >
           <DonutChart
             data={data.qcOutcomeMix}
