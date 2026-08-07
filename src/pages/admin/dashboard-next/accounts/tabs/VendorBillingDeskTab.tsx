@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Stack, Typography } from '@mui/material'
+import { Stack } from '@mui/material'
 import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
 import { AccountsWorkListing } from '../components/AccountsWorkListing'
 import type { AccountsDashboardTabProps, AccountsVendorBillingRow } from '../types'
@@ -101,15 +101,8 @@ export function VendorBillingDeskTab({
     [onNavigate],
   )
 
-  const awaitingTotal = data.vendorBillingRows.reduce((sum, r) => sum + r.awaitingInvoiceCount, 0)
-
   return (
     <Stack spacing={1.5}>
-      <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, px: 0.25 }}>
-        Vendor billing — services mapped to vendors. Create bills and record payments here. (
-        {awaitingTotal} charges awaiting invoice)
-      </Typography>
-
       <AccountsWorkListing
         title="Vendor billing queue"
         description="Awaiting invoice · open bills · outstanding payables"

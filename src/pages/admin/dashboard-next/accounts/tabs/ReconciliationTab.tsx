@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Stack } from '@mui/material'
 import { Badge, RowActions, Tabs, type Column } from '@/design-system/UIComponents'
 import { AccountsWorkListing } from '../components/AccountsWorkListing'
 import type {
@@ -217,10 +217,6 @@ export function ReconciliationTab({
 
   return (
     <Stack spacing={1.5}>
-      <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, px: 0.25 }}>
-        Expense module — all application services, payment mode on detail, and passenger refunds.
-      </Typography>
-
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={deskTab}

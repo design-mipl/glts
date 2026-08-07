@@ -85,7 +85,7 @@ export interface OpsOrgInfographicsProps {
   dense?: boolean
 }
 
-/** Org queue mix · assignee mix · ageing — Ops Overview + Admin Operations. */
+/** Org queue mix · ground operation assignment · ageing — Ops Overview + Admin Operations. */
 export function OpsOrgInfographics({ data, loading, dense = false }: OpsOrgInfographicsProps) {
   const chart = useDashboardChartColors()
   const [mixView, setMixView] = useState<MixView>('all')
@@ -147,14 +147,13 @@ export function OpsOrgInfographics({ data, loading, dense = false }: OpsOrgInfog
 
       <Grid size={{ xs: 12, md: 6, lg: 4 }}>
         <ChartPanel
-          title="Assignee mix"
-          description="User · vendor · passenger · unassigned"
+          title="Ground operation assignment"
           action={
             <Box sx={{ width: { xs: '100%', sm: 140 }, flexShrink: 0 }}>
               <Select
                 size="sm"
                 fullWidth
-                aria-label="Filter assignee mix"
+                aria-label="Filter ground operation assignment"
                 value={mixView}
                 options={[...MIX_OPTIONS]}
                 onChange={(v) => setMixView(String(v) as MixView)}

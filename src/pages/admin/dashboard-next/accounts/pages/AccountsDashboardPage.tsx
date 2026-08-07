@@ -67,7 +67,7 @@ export function AccountsDashboardPage() {
     data.claimSheetRows.filter((r) => r.status === 'Pending review').length +
     data.vendorBillingRows.reduce((sum, r) => sum + r.awaitingInvoiceCount, 0) +
     data.invoiceExceptionRows.length +
-    data.paymentAllocationRows.filter((r) => r.allocationStatus !== 'Allocated').length
+    data.followUpRows.length
 
   const tabProps: AccountsDashboardTabProps = {
     data,
