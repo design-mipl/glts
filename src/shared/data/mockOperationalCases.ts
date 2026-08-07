@@ -5,7 +5,7 @@ import type {
   OperationalCaseStatus,
   TeamCapacity,
 } from '@/shared/types/operationalCaseHandling'
-import type { LogisticsDispatchDetails, LogisticsFinalQc, LogisticsRefundDetails } from '@/shared/types/logisticsDispatch'
+import type { LogisticsDispatchDetails, LogisticsFinalQc, LogisticsRefundDetails, LogisticsVisaOutcomeRecord } from '@/shared/types/logisticsDispatch'
 import {
   APPLICATION_FEE_DEFAULT_RATES,
   DEFAULT_APPLICATION_FEE_NAMES,
@@ -109,6 +109,7 @@ interface PassengerSeed {
   attachmentNames?: string[]
   timelineEvents?: Array<{ displayDate: string; label: string; actor?: string }>
   finalQc?: LogisticsFinalQc
+  visaOutcome?: LogisticsVisaOutcomeRecord
   dispatchDetails?: LogisticsDispatchDetails
   refundDetails?: LogisticsRefundDetails
 }
@@ -192,6 +193,7 @@ function buildPassengerCase(
       ],
     ),
     assignmentSourceId: batch.assignmentSourceId,
+    visaOutcome: passenger.visaOutcome,
     finalQc: passenger.finalQc,
     dispatchDetails: passenger.dispatchDetails,
     refundDetails: passenger.refundDetails,
@@ -202,6 +204,13 @@ function buildBatchCases(batch: BatchSeed, idPrefix: string): OperationalCase[] 
   return batch.passengers.map((passenger, index) =>
     buildPassengerCase(batch, passenger, index + 1, `${idPrefix}-${String(index + 1).padStart(2, '0')}`),
   )
+}
+
+const SAMPLE_VISA_APPROVED: LogisticsVisaOutcomeRecord = {
+  outcome: 'approved',
+  remarks: 'Visa sticker verified against application pack.',
+  decidedBy: 'Priya Sharma',
+  decidedAt: '2026-06-17T11:00:00.000Z',
 }
 
 const SAMPLE_FINAL_QC: LogisticsFinalQc = {
@@ -312,6 +321,7 @@ const BATCH_SEEDS: BatchSeed[] = [
         groundServices: { Courier: 650, 'VFS Support': 1800, Printing: 350 },
         progressPercent: 90,
         finalQc: SAMPLE_FINAL_QC,
+        visaOutcome: SAMPLE_VISA_APPROVED,
         dispatchDetails: {
           deliveryMethod: 'Courier',
           dispatchDateTime: '2026-06-18T14:30:00.000Z',
@@ -351,6 +361,7 @@ const BATCH_SEEDS: BatchSeed[] = [
           remarks: 'Final verification completed before hand delivery to client office.',
           verifiedAt: '2026-06-16T10:15:00.000Z',
         },
+        visaOutcome: SAMPLE_VISA_APPROVED,
         dispatchDetails: {
           deliveryMethod: 'Hand Delivery',
           dispatchDateTime: '2026-06-16T16:00:00.000Z',
@@ -1101,6 +1112,7 @@ const BATCH_SEEDS: BatchSeed[] = [
         groundServices: { Courier: 650, 'VFS Support': 1800 },
         progressPercent: 90,
         finalQc: SAMPLE_FINAL_QC,
+        visaOutcome: SAMPLE_VISA_APPROVED,
         dispatchDetails: {
           deliveryMethod: 'Courier',
           dispatchDateTime: '2026-06-19T11:00:00.000Z',
@@ -1200,6 +1212,7 @@ const BATCH_SEEDS: BatchSeed[] = [
         groundServices: { Courier: 650, 'Local Travel': 1200 },
         progressPercent: 90,
         finalQc: SAMPLE_FINAL_QC,
+        visaOutcome: SAMPLE_VISA_APPROVED,
         dispatchDetails: {
           deliveryMethod: 'Courier',
           dispatchDateTime: '2026-06-20T09:30:00.000Z',
@@ -1228,6 +1241,7 @@ const BATCH_SEEDS: BatchSeed[] = [
         groundServices: { Courier: 650 },
         progressPercent: 90,
         finalQc: SAMPLE_FINAL_QC,
+        visaOutcome: SAMPLE_VISA_APPROVED,
         dispatchDetails: {
           deliveryMethod: 'Courier',
           dispatchDateTime: '2026-06-21T15:00:00.000Z',

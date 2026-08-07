@@ -15,7 +15,7 @@ function kpiTone(
     return value === 0 || value === '0' ? 'positive' : 'negative'
   }
   if (id === 'critical-cases') return 'negative'
-  if (id === 'applications-delayed') return 'warning'
+  if (id === 'applications-delayed' || id === 'physical-documents-pending') return 'warning'
   if (id === 'applications-in-progress' || id === 'team-utilization') return 'info'
   if (id === 'completed-today' || id === 'sla-compliance' || id === 'total-applications') {
     return 'positive'

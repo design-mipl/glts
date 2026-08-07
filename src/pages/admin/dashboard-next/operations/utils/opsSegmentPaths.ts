@@ -84,7 +84,7 @@ export function opsApplicationDetailPath(
     return `${base}/view-form`
   }
   const params = new URLSearchParams()
-  if (options?.passengerId) params.set('passenger', options.passengerId)
+  if (options?.passengerId) params.set('applicant', options.passengerId)
   if (options?.docId) params.set('doc', options.docId)
   const qs = params.toString()
   return qs ? `${base}?${qs}` : base

@@ -5,7 +5,6 @@ import { BaseCard, Button, Tabs } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
-import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
 import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
 import {
   VerifyDocumentChecklistsPanel,
@@ -60,8 +59,8 @@ interface VerifyDocumentsPhaseContentProps {
   countryId?: string
   visaOfferingId?: string
   jurisdictionId?: string
-  onOriginalCollectionChange?: (collection: OriginalDocumentCollectionState) => void
-  onOriginalReceivedSubmit?: (collection: OriginalDocumentCollectionState) => void
+  onOriginalDocumentReceivedChange?: (documentId: string, received: boolean) => void
+  onOriginalReceivedRemarksSave?: (remarks: string) => void
   onSaveDraft: () => void
   onSubmit: () => void
   readOnly?: boolean
@@ -108,8 +107,8 @@ export function VerifyDocumentsPhaseContent({
   countryId,
   visaOfferingId,
   jurisdictionId,
-  onOriginalCollectionChange,
-  onOriginalReceivedSubmit,
+  onOriginalDocumentReceivedChange,
+  onOriginalReceivedRemarksSave,
   onSaveDraft,
   onSubmit,
   readOnly = false,
@@ -245,8 +244,8 @@ export function VerifyDocumentsPhaseContent({
       countryId={countryId}
       visaOfferingId={visaOfferingId}
       readOnly={readOnly}
-      onCollectionChange={onOriginalCollectionChange}
-      onReceivedSubmit={onOriginalReceivedSubmit}
+      onDocumentReceivedChange={onOriginalDocumentReceivedChange}
+      onReceivedRemarksSave={onOriginalReceivedRemarksSave}
     />
   )
 

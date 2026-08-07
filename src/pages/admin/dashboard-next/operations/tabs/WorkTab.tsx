@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Box, Stack } from '@mui/material'
 import { Tabs } from '@/design-system/UIComponents'
+import { OPS_QUEUE_DISPLAY_LABELS } from '../../shared/widgets/operations/opsQueueDisplayLabels'
 import { DASHBOARD_SPACING } from '../../shared/constants'
 import { OperationsWorkListing } from '../components/OperationsWorkListing'
 import type {
@@ -17,6 +18,7 @@ type WorkQueueTabId =
   | 'glts_arrange'
   | 'submission'
   | 'collection'
+  | 'physical_originals'
   | 'correction_watch'
 
 const WORK_QUEUE_TABS: Array<{
@@ -24,13 +26,18 @@ const WORK_QUEUE_TABS: Array<{
   label: string
   queues: OpsWorkQueueKind[]
 }> = [
-  { value: 'verification', label: 'Verify', queues: ['verification'] },
-  { value: 'recheck', label: 'Re-review', queues: ['recheck'] },
-  { value: 'payment', label: 'Payment', queues: ['payment'] },
-  { value: 'glts_arrange', label: 'Arrange Ticket/Insurance', queues: ['glts_arrange'] },
-  { value: 'submission', label: 'Submit', queues: ['submission'] },
-  { value: 'collection', label: 'Collect', queues: ['collection'] },
-  { value: 'correction_watch', label: 'Waiting', queues: ['correction_watch'] },
+  { value: 'verification', label: OPS_QUEUE_DISPLAY_LABELS.verification, queues: ['verification'] },
+  { value: 'recheck', label: OPS_QUEUE_DISPLAY_LABELS.recheck, queues: ['recheck'] },
+  { value: 'payment', label: OPS_QUEUE_DISPLAY_LABELS.payment, queues: ['payment'] },
+  { value: 'glts_arrange', label: OPS_QUEUE_DISPLAY_LABELS.arrange, queues: ['glts_arrange'] },
+  { value: 'submission', label: OPS_QUEUE_DISPLAY_LABELS.submission, queues: ['submission'] },
+  { value: 'collection', label: OPS_QUEUE_DISPLAY_LABELS.collection, queues: ['collection'] },
+  {
+    value: 'physical_originals',
+    label: OPS_QUEUE_DISPLAY_LABELS.physicalOriginals,
+    queues: ['physical_originals'],
+  },
+  { value: 'correction_watch', label: OPS_QUEUE_DISPLAY_LABELS.correctionWatch, queues: ['correction_watch'] },
 ]
 
 /** Personal desk only — team backlog lives on admin / lead dashboards. */

@@ -270,7 +270,7 @@ function LogisticsCaseDetailContent({
           <LogisticsRefundTab ref={refundRef} record={record} onUpdated={onUpdated} />
         ) : null}
 
-        {activeTab === 'timeline' ? <OperationalTimeline events={record.timeline} /> : null}
+        {activeTab === 'timeline' ? <OperationalTimeline record={record} /> : null}
       </Box>
     </Stack>
   )
@@ -298,7 +298,9 @@ export function LogisticsCaseDetailDrawer({
   const showDeliverAction =
     record.status === 'Dispatched' && !Boolean(record.dispatchDetails?.deliveredAt)
   const canEditDispatch =
-    record.status === 'Collected' && !Boolean(record.dispatchDetails?.dispatchedAt)
+    record.status === 'Collected' &&
+    !Boolean(record.dispatchDetails?.dispatchedAt) &&
+    record.visaOutcome?.outcome === 'approved'
 
   const footer = (() => {
     if (activeTab === 'overview') {
@@ -312,9 +314,10 @@ export function LogisticsCaseDetailDrawer({
               operationalCaseHandlingService.markCollected(record.id)
               onUpdated()
               onStatusChanged?.('Collected')
+              setActiveTab('dispatch')
               showToast({
                 title: 'Marked as collected',
-                description: 'Passport/documents collected from Embassy/VFS.',
+                description: 'Record Approved, Rejected, or Withdraw on the Dispatch tab.',
                 variant: 'success',
               })
             }}
@@ -352,13 +355,31 @@ export function LogisticsCaseDetailDrawer({
     }
 
     if (activeTab === 'dispatch') {
+      const outcome = record.visaOutcome?.outcome
+      const dispatchBlocked =
+        !canEditDispatch &&
+        record.status === 'Collected' &&
+        !Boolean(record.dispatchDetails?.dispatchedAt)
       return (
         <Button
           label="Save & dispatch"
           size="sm"
           fullWidth
           disabled={!canEditDispatch}
-          onClick={() => dispatchRef.current?.submit()}
+          onClick={() => {
+            if (dispatchBlocked) {
+              showToast({
+                title: 'Visa outcome required',
+                description:
+                  outcome === 'rejected' || outcome === 'withdrawn'
+                    ? 'Dispatch is locked for Reject / Withdraw. Use Refund if needed.'
+                    : 'Select Approved on this tab before saving dispatch.',
+                variant: 'error',
+              })
+              return
+            }
+            dispatchRef.current?.submit()
+          }}
         />
       )
     }

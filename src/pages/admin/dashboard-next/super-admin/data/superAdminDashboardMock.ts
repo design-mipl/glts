@@ -1,3 +1,4 @@
+import { OPS_QUEUE_DISPLAY_LABELS } from '../../shared/widgets/operations/opsQueueDisplayLabels'
 import {
   APPLICATION_PIPELINE_STAGE_IDS,
   type ApplicationPipelineStageId,
@@ -278,12 +279,12 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
   },
   opsQueueSnapshot: {
     queueMix: [
-      { key: 'verification', label: 'Verify', value: 68 },
-      { key: 'recheck', label: 'Re-review', value: 22 },
-      { key: 'payment', label: 'Payment', value: 19 },
-      { key: 'arrange', label: 'Arrange Ticket/Insurance', value: 11 },
-      { key: 'submission', label: 'Submit', value: 27 },
-      { key: 'collection', label: 'Collect', value: 16 },
+      { key: 'verification', label: OPS_QUEUE_DISPLAY_LABELS.verification, value: 68 },
+      { key: 'recheck', label: OPS_QUEUE_DISPLAY_LABELS.recheck, value: 22 },
+      { key: 'payment', label: OPS_QUEUE_DISPLAY_LABELS.payment, value: 19 },
+      { key: 'arrange', label: OPS_QUEUE_DISPLAY_LABELS.arrange, value: 11 },
+      { key: 'submission', label: OPS_QUEUE_DISPLAY_LABELS.submission, value: 27 },
+      { key: 'collection', label: OPS_QUEUE_DISPLAY_LABELS.collection, value: 16 },
     ],
     assigneeMix: [
       { key: 'user', label: 'Ops user', value: 112 },

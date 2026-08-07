@@ -1,10 +1,11 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Divider, Stack, Typography } from '@mui/material'
 import dayjs from 'dayjs'
 import {
   DatePicker,
   FormField,
   Input,
+  RadioGroup,
   Select,
   Textarea,
   useToast,
@@ -16,15 +17,18 @@ import type {
   LogisticsDeliveryMethod,
   LogisticsDispatchDetails,
   LogisticsPaymentMode,
+  LogisticsVisaOutcome,
 } from '@/shared/types/logisticsDispatch'
 import {
   assistanceTypeFromDeliveryMethod,
   createEmptyLogisticsDispatchDetails,
   HAND_DELIVERY_LOCATIONS,
   isAirportAssistanceDeliveryMethod,
+  isLogisticsVisaOutcomeDispatchable,
   LOGISTICS_COURIER_PARTNERS,
   LOGISTICS_DELIVERY_METHODS,
   LOGISTICS_PAYMENT_MODE_OPTIONS,
+  LOGISTICS_VISA_OUTCOME_OPTIONS,
 } from '@/shared/types/logisticsDispatch'
 import { operationalCaseHandlingService } from '@/shared/services/operationalCaseHandlingService'
 import {
@@ -75,8 +79,14 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
   const { showToast } = useToast()
   const isDispatched = Boolean(record.dispatchDetails?.dispatchedAt)
   const isViewOnly = isDispatched || record.status === 'Dispatched' || record.status === 'Completed'
-  const canEditDispatch = record.status === 'Collected' && !isViewOnly
+  const canEditOutcome = record.status === 'Collected' && !isViewOnly
+  const visaOutcome = record.visaOutcome?.outcome
+  const canDispatch = canEditOutcome && isLogisticsVisaOutcomeDispatchable(visaOutcome)
+  const canEditDispatch = canDispatch
   const fieldsDisabled = !canEditDispatch
+  const outcomeLocked = !canEditOutcome
+
+  const [outcomeDraft, setOutcomeDraft] = useState<LogisticsVisaOutcome | ''>(visaOutcome ?? '')
 
   const [dispatchForm, setDispatchForm] = useState<LogisticsDispatchDetails>(
     record.dispatchDetails ?? createEmptyLogisticsDispatchDetails(),
@@ -84,7 +94,8 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
 
   useEffect(() => {
     setDispatchForm(record.dispatchDetails ?? createEmptyLogisticsDispatchDetails())
-  }, [record.id, record.dispatchDetails])
+    setOutcomeDraft(record.visaOutcome?.outcome ?? '')
+  }, [record.id, record.dispatchDetails, record.visaOutcome])
 
   const deliveryMethod = dispatchForm.deliveryMethod
   const showPaymentSection =
@@ -130,8 +141,30 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
     setDispatchForm(current => ({ ...current, ...patch }))
   }
 
+  const handleSaveOutcome = (next: LogisticsVisaOutcome) => {
+    if (!canEditOutcome) return
+    setOutcomeDraft(next)
+    const updated = operationalCaseHandlingService.setVisaOutcome(record.id, next)
+    if (!updated) {
+      showToast({
+        title: 'Unable to save visa outcome',
+        description: 'Case must be collected and not yet dispatched.',
+        variant: 'error',
+      })
+      return
+    }
+    onUpdated()
+  }
+
   const handleDispatch = () => {
-    if (!canEditDispatch) return
+    if (!canEditDispatch) {
+      showToast({
+        title: 'Visa outcome required',
+        description: 'Select Approved before saving dispatch details.',
+        variant: 'error',
+      })
+      return
+    }
     const validation = validateLogisticsDispatchDetails(dispatchForm)
     if (!validation.valid) {
       showToast({
@@ -150,7 +183,7 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
     if (!updated) {
       showToast({
         title: 'Unable to dispatch',
-        description: 'Ensure the case is collected before dispatch.',
+        description: 'Select Approved and ensure the case is collected.',
         variant: 'error',
       })
       return
@@ -159,8 +192,8 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
     onUpdated()
     onDispatched?.()
     showToast({
-      title: 'Passport dispatched',
-      description: 'In transit — confirm delivery when the courier hands over.',
+      title: 'Approved',
+      description: 'Passport dispatched — in transit until delivery is confirmed.',
       variant: 'success',
     })
   }
@@ -177,11 +210,37 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
 
   return (
     <Stack spacing={1.25}>
-      <SectionHeading>Dispatch details</SectionHeading>
+      <SectionHeading>Visa outcome</SectionHeading>
 
       {record.status === 'Document Submitted' ? (
         <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-          Mark the case as collected from the Overview tab before entering dispatch details.
+          Mark the case as collected from the Overview tab before recording the visa outcome.
+        </Typography>
+      ) : null}
+
+      {record.status === 'Collected' || Boolean(record.visaOutcome) ? (
+        <RadioGroup
+          size="sm"
+          orientation="horizontal"
+          value={outcomeDraft}
+          onChange={value => handleSaveOutcome(String(value) as LogisticsVisaOutcome)}
+          options={LOGISTICS_VISA_OUTCOME_OPTIONS.map(option => ({
+            value: option.value,
+            label: option.label,
+            disabled: outcomeLocked,
+          }))}
+        />
+      ) : null}
+
+      <Divider />
+
+      <SectionHeading>Dispatch details</SectionHeading>
+
+      {canEditOutcome && !canDispatch ? (
+        <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+          {outcomeDraft
+            ? 'Dispatch is only available when the outcome is Approved.'
+            : 'Select Approved above to unlock dispatch fields.'}
         </Typography>
       ) : null}
 
@@ -194,6 +253,7 @@ export const LogisticsDispatchTab = forwardRef<LogisticsDispatchTabHandle, Logis
 
       {!canEditDispatch &&
       record.status !== 'Document Submitted' &&
+      record.status !== 'Collected' &&
       record.status !== 'Dispatched' &&
       isViewOnly ? (
         <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>

@@ -50,15 +50,15 @@ function ChartPanel({
   )
 }
 
-/** Performance — throughput, SLA, QC outcome productivity. */
+/** Performance — daily work, SLA, QC outcome productivity. */
 export function PerformanceTab({ data, loading }: DocumentationDashboardTabProps) {
   const brand = usePublicBrandColors()
   const [period, setPeriod] = useState<'week' | 'month'>('week')
 
   const trendPoints = data.processingTrend.map((p) => ({
     label: p.label,
-    processed: p.value,
-    completed: p.secondary ?? 0,
+    workedOn: p.value,
+    finished: p.secondary ?? 0,
   }))
 
   const qcBars = data.qcOutcomeMix.map((s) => ({
@@ -70,8 +70,8 @@ export function PerformanceTab({ data, loading }: DocumentationDashboardTabProps
     <Grid container spacing={DASHBOARD_SPACING.field}>
       <Grid size={{ xs: 12, lg: 8 }}>
         <ChartPanel
-          title="Throughput trend"
-          description="Processed vs completed on Docs desks"
+          title="Daily work"
+          description="Cases you worked on vs finished each day on Docs desks"
           action={
             <Box sx={{ width: { xs: '100%', sm: 140 }, flexShrink: 0 }}>
               <Select
@@ -92,8 +92,8 @@ export function PerformanceTab({ data, loading }: DocumentationDashboardTabProps
             showLegend
             loading={loading}
             lines={[
-              { key: 'processed', label: 'Processed', color: DOC_CHART_COLORS.navy },
-              { key: 'completed', label: 'Completed', color: DOC_CHART_COLORS.green },
+              { key: 'workedOn', label: 'Worked on', color: DOC_CHART_COLORS.navy },
+              { key: 'finished', label: 'Finished', color: DOC_CHART_COLORS.green },
             ]}
           />
         </ChartPanel>

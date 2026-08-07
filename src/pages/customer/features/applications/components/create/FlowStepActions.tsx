@@ -10,6 +10,7 @@ interface FlowStepActionsProps {
   continueDisabled?: boolean
   secondaryLabel?: string
   onSecondary?: () => void
+  secondaryDisabled?: boolean
 }
 
 export function FlowStepActions({
@@ -18,6 +19,7 @@ export function FlowStepActions({
   continueDisabled = false,
   secondaryLabel,
   onSecondary,
+  secondaryDisabled = false,
 }: FlowStepActionsProps) {
   const colors = usePublicBrandColors()
 
@@ -47,7 +49,12 @@ export function FlowStepActions({
     >
       <Stack direction="row" spacing={1}>
         {secondaryLabel && onSecondary && (
-          <Button variant="outlined" onClick={onSecondary} sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx)}>
+          <Button
+            variant="outlined"
+            onClick={onSecondary}
+            disabled={secondaryDisabled}
+            sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx)}
+          >
             {secondaryLabel}
           </Button>
         )}

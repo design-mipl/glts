@@ -1,12 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
 import {
   BaseCard,
-  Button,
   Checkbox,
-  FormField,
   RadioGroup,
-  Textarea,
 } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { PHYSICAL_DOCUMENT_COLLECTION_LABEL } from '@/shared/constants/documentRequirementLabels'
@@ -21,7 +18,6 @@ import {
   listReceivingOfficeOptions,
   ORIGINAL_COLLECTION_METHOD_OPTIONS,
   patchCollectionDetailField,
-  submitOriginalDocumentsReceived,
   toggleOriginalDocumentReceived,
 } from '@/shared/utils/originalDocumentCollectionUtils'
 import { CollectionDetailFields } from './CollectionDetailFields'
@@ -31,41 +27,24 @@ interface OriginalDocumentCollectionPanelProps {
   state: OriginalDocumentCollectionState
   onChange: (next: OriginalDocumentCollectionState) => void
   readOnly?: boolean
-  /** Show remarks + Received action below the document checklist. */
-  showReceivedAction?: boolean
-  onReceivedSubmit?: (next: OriginalDocumentCollectionState) => void
   /** Admin surfaces use BaseCard wrapper; customer drawer renders inside scroll area. */
   variant?: 'card' | 'plain' | 'embedded'
 }
 
+/** Customer-facing panel for planning how physical originals will be sent to GLTS. */
 export function OriginalDocumentCollectionPanel({
   documents: _documents,
   state,
   onChange,
   readOnly = false,
-  showReceivedAction,
-  onReceivedSubmit,
   variant = 'plain',
 }: OriginalDocumentCollectionPanelProps) {
   const colors = usePublicBrandColors()
   const receivingOfficeOptions = useMemo(() => listReceivingOfficeOptions(), [])
   const { received, total } = countDocumentsReceived(state)
-  const [remarksDraft, setRemarksDraft] = useState(state.receivedRemarks ?? '')
-  const showReceivedActionSection = showReceivedAction ?? !readOnly
-  const hasCheckedDocuments = state.receivedDocuments.some(item => item.received)
-
-  useEffect(() => {
-    setRemarksDraft(state.receivedRemarks ?? '')
-  }, [state.receivedRemarks])
 
   const handleToggleReceived = (documentId: string, receivedValue: boolean) => {
     onChange(toggleOriginalDocumentReceived(state, documentId, receivedValue))
-  }
-
-  const handleReceivedSubmit = () => {
-    const next = submitOriginalDocumentsReceived(state, remarksDraft)
-    onChange(next)
-    onReceivedSubmit?.(next)
   }
 
   const handleMethodChange = (method: string | number) => {
@@ -83,7 +62,7 @@ export function OriginalDocumentCollectionPanel({
     <Stack spacing={2}>
       <Stack spacing={1}>
         <Typography sx={{ fontSize: 14, fontWeight: 700, color: colors.navy }}>
-          Documents Received
+          Documents to send
         </Typography>
         <Typography sx={{ fontSize: 12, color: colors.textSecondary, lineHeight: 1.45 }}>
           Fetched from Country / Visa Type Document Checklist
@@ -106,37 +85,15 @@ export function OriginalDocumentCollectionPanel({
           ) : null}
         </Stack>
         <Typography sx={{ fontSize: 12, fontWeight: 600, color: colors.textSecondary, pt: 0.5, pl: 1.5 }}>
-          Documents Received: {received} / {total}
+          Documents selected: {received} / {total}
         </Typography>
-        {showReceivedActionSection && state.receivedDocuments.length > 0 ? (
-          <Stack spacing={1.25} sx={{ pt: 1, pl: 1.5, pr: 0.5 }}>
-            <FormField label="Remarks">
-              <Textarea
-                value={remarksDraft}
-                onChange={setRemarksDraft}
-                placeholder="Add remarks for received physical documents"
-                rows={2}
-                fullWidth
-                disabled={readOnly}
-              />
-            </FormField>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button
-                label="Received"
-                size="sm"
-                disabled={readOnly || !hasCheckedDocuments}
-                onClick={handleReceivedSubmit}
-              />
-            </Box>
-          </Stack>
-        ) : null}
       </Stack>
 
       <Divider />
 
       <Stack spacing={1}>
         <Typography sx={{ fontSize: 14, fontWeight: 700, color: colors.navy }}>
-          How will the physical documents be received?
+          How will you send the documents?
         </Typography>
         <RadioGroup
           size="sm"
@@ -155,7 +112,7 @@ export function OriginalDocumentCollectionPanel({
 
       <Stack spacing={1} key={state.method}>
         <Typography sx={{ fontSize: 14, fontWeight: 700, color: colors.navy }}>
-          Collection Details
+          Sending details
         </Typography>
         <CollectionDetailFields
           fields={detailFields}

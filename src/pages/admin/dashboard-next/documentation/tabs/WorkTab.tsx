@@ -14,19 +14,17 @@ const WORK_DESKS: Array<{ value: DocWorkDeskId; label: string; description: stri
   {
     value: 'submission_pending',
     label: 'Submission Pending',
-    description:
-      'Primary Docs queue — check/upload documents, QC, fill form, then Mark as submitted. Correction / blocked sends the case to Ops (Verification Pending).',
+    description: 'Check/upload, QC, fill form, then Mark as submitted. Corrections go to Ops.',
   },
   {
     value: 'pending_payment',
     label: 'Pending Payment',
-    description: 'Update embassy / VFS fee payment when required before submission.',
+    description: 'Update embassy / VFS fee payment when required.',
   },
   {
     value: 'waiting_on_ops',
     label: 'Waiting on Ops',
-    description:
-      'Cases Docs flagged as Correction required or Document missing / blocked. Returns to Submission Pending after Ops updates.',
+    description: 'Correction or blocked cases. Returns here after Ops updates.',
   },
 ]
 

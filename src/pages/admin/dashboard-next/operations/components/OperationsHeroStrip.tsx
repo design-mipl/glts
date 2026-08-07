@@ -2,12 +2,16 @@ import type { ReactNode } from 'react'
 import { Box } from '@mui/material'
 import {
   AlertTriangle,
+  Building2,
+  CheckCircle2,
   ClipboardCheck,
   ClipboardList,
   CreditCard,
   FileStack,
   Package,
   Plane,
+  Send,
+  Truck,
   UserPlus,
 } from 'lucide-react'
 import { ExecutiveGrid, HeroMetric, InsightStack } from '../../shared/dashboard-ui-kit'
@@ -17,6 +21,7 @@ import { kpiColumns } from '../../shared/utils/kpiColumns'
 import {
   opsApplicationListPath,
   opsAssignmentPath,
+  type OpsApplicationQueueTab,
 } from '../utils/opsSegmentPaths'
 
 const KPI_ICONS: Record<string, ReactNode> = {
@@ -26,22 +31,49 @@ const KPI_ICONS: Record<string, ReactNode> = {
   'kpi-recheck': <ClipboardCheck size={16} />,
   'kpi-payment': <CreditCard size={16} />,
   'kpi-arrange': <Plane size={16} />,
+  'kpi-physical-originals': <Package size={16} />,
   'kpi-assignment': <UserPlus size={16} />,
-  'kpi-submission': <Package size={16} />,
+  'kpi-online-submission': <Send size={16} />,
+  'kpi-vfs-submission': <Building2 size={16} />,
+  'kpi-collection-pending': <Package size={16} />,
+  'kpi-collected': <CheckCircle2 size={16} />,
+  'kpi-dispatched': <Truck size={16} />,
+}
+
+const KPI_AM_TAB: Partial<Record<string, OpsApplicationQueueTab>> = {
+  'kpi-payment': 'pending_payment',
+  'kpi-online-submission': 'online_submission_pending',
+  'kpi-vfs-submission': 'vfs_submission_pending',
+  'kpi-collection-pending': 'collection_pending',
+  'kpi-collected': 'collected',
+  'kpi-dispatched': 'dispatched',
+  'kpi-total-verification': 'verification_pending',
+  'kpi-verification': 'verification_pending',
+  'kpi-recheck': 'verification_pending',
+  'kpi-arrange': 'verification_pending',
 }
 
 function kpiTone(id: string, delta?: number): 'positive' | 'negative' | 'warning' | 'info' | 'neutral' {
-  if (id === 'kpi-payment' || id === 'kpi-recheck') return 'warning'
+  if (
+    id === 'kpi-payment' ||
+    id === 'kpi-recheck' ||
+    id === 'kpi-collection-pending' ||
+    id === 'kpi-physical-originals'
+  ) {
+    return 'warning'
+  }
   if (id === 'kpi-assignment') return 'negative'
   if (
     id === 'kpi-total-applications' ||
     id === 'kpi-total-verification' ||
     id === 'kpi-verification' ||
-    id === 'kpi-arrange'
+    id === 'kpi-arrange' ||
+    id === 'kpi-online-submission' ||
+    id === 'kpi-vfs-submission'
   ) {
     return 'info'
   }
-  if (id === 'kpi-submission') return 'neutral'
+  if (id === 'kpi-collected' || id === 'kpi-dispatched') return 'positive'
   if (delta != null && delta > 0) return 'warning'
   if (delta != null && delta < 0) return 'positive'
   return 'neutral'
@@ -49,22 +81,10 @@ function kpiTone(id: string, delta?: number): 'positive' | 'negative' | 'warning
 
 /** Hero KPI → live module (assignment-priority or application-management). */
 export function opsHeroKpiHref(kpiId: string): string {
-  switch (kpiId) {
-    case 'kpi-assignment':
-      return opsAssignmentPath('retail')
-    case 'kpi-payment':
-      return opsApplicationListPath('marine', 'pending_payment')
-    case 'kpi-submission':
-      return opsApplicationListPath('marine', 'online_submission_pending')
-    case 'kpi-total-applications':
-      return opsApplicationListPath('marine')
-    case 'kpi-total-verification':
-    case 'kpi-verification':
-    case 'kpi-recheck':
-    case 'kpi-arrange':
-    default:
-      return opsApplicationListPath('marine', 'verification_pending')
-  }
+  if (kpiId === 'kpi-assignment') return opsAssignmentPath('retail')
+  if (kpiId === 'kpi-total-applications') return opsApplicationListPath('marine')
+  const tab = KPI_AM_TAB[kpiId]
+  return tab ? opsApplicationListPath('marine', tab) : opsApplicationListPath('marine', 'verification_pending')
 }
 
 export interface OperationsHeroStripProps {

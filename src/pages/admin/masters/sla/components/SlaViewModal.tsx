@@ -53,10 +53,6 @@ export function SlaViewModal({ open, record, onClose, onEdit }: SlaViewModalProp
     theme.palette.mode === 'dark'
       ? alpha(theme.palette.common.white, 0.04)
       : alpha(theme.palette.common.black, 0.03)
-  const totalBg =
-    theme.palette.mode === 'dark'
-      ? alpha(theme.palette.primary.main, 0.12)
-      : alpha(theme.palette.primary.main, 0.06)
 
   const columns = [
     { key: 'single', label: 'Single', plan: record.single },
@@ -162,18 +158,6 @@ export function SlaViewModal({ open, record, onClose, onEdit }: SlaViewModalProp
                   ))}
                 </TableRow>
               ))}
-              <TableRow sx={{ bgcolor: totalBg }}>
-                <TableCell sx={{ fontSize: 13, fontWeight: 700 }}>Total</TableCell>
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.key}
-                    align="center"
-                    sx={{ fontSize: 13, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}
-                  >
-                    {column.plan.e2eHours}h
-                  </TableCell>
-                ))}
-              </TableRow>
             </TableBody>
           </Table>
         </Box>

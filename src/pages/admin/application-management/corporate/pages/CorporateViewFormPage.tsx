@@ -30,6 +30,7 @@ import { VerifyApplicationSummary } from '../components/verify/VerifyApplication
 import { VerifyPassengerWorkspace } from '../components/verify/VerifyPassengerWorkspace'
 import { buildFormAssistFieldSectionsForStep } from '../utils/formAssistFieldBuilder'
 import { resolveCorporateChecklistContext } from '../utils/CorporateChecklistContextUtils'
+import { ensureOriginalDocumentCollectionState } from '@/shared/utils/originalDocumentCollectionUtils'
 import { isCorporateReadOnlyWorkspace, resolveCorporateWorkspaceMode } from '../config/CorporateWorkspaceMode'
 import type { QcCheckOutcome } from '../config/qcCheckChecklistConfig'
 import {
@@ -97,6 +98,7 @@ export function CorporateViewFormPage() {
     globalDocuments,
     updateTravelerDocForRow,
     updateGlobalDoc,
+    updateTravelerOriginalReceived,
     updateTravelerOriginalCollection,
     returnToVerificationPending,
     notifyCustomerOfDocumentRejection,
@@ -663,15 +665,25 @@ export function CorporateViewFormPage() {
       onRejectedVerify={handleRejectedVerify}
       onRejectedReject={handleRejectedReject}
       onRejectedReupload={handleRejectedReupload}
-      onOriginalCollectionChange={collection => {
+      onOriginalDocumentReceivedChange={(documentId, received) => {
         if (!selectedRow) return
-        updateTravelerOriginalCollection(selectedRow.id, collection)
+        updateTravelerOriginalReceived(selectedRow.id, documentId, received)
         syncWorkspaceAfterDocumentChange()
       }}
-      onOriginalReceivedSubmit={() => {
+      onOriginalReceivedRemarksSave={remarks => {
+        if (!selectedRow) return
+        const docs = selectedRow.documents
+          .filter(doc => doc.originalDocument)
+          .map(doc => ({ documentId: doc.documentId, name: doc.name }))
+        const next = {
+          ...ensureOriginalDocumentCollectionState(selectedRow.originalDocumentCollection, docs),
+          receivedRemarks: remarks,
+        }
+        updateTravelerOriginalCollection(selectedRow.id, next)
+        syncWorkspaceAfterDocumentChange()
         showToast({
-          title: 'Physical documents updated',
-          description: 'Received status and remarks saved.',
+          title: 'Remarks saved',
+          description: 'Physical document receipt remarks updated.',
           variant: 'success',
         })
       }}

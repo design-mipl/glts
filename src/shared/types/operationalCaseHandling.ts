@@ -2,6 +2,7 @@ import type {
   LogisticsDispatchDetails,
   LogisticsFinalQc,
   LogisticsRefundDetails,
+  LogisticsVisaOutcomeRecord,
 } from '@/shared/types/logisticsDispatch'
 import type { FundTransferType } from '@/shared/types/fundAllocation'
 
@@ -173,6 +174,8 @@ export interface OperationalCase {
   attachmentNames: string[]
   timeline: OperationalTimelineEvent[]
   assignmentSourceId?: string
+  /** Visa decision recorded after passport collection (Approve / Reject / Withdraw). */
+  visaOutcome?: LogisticsVisaOutcomeRecord
   finalQc?: LogisticsFinalQc
   dispatchDetails?: LogisticsDispatchDetails
   /** Consulate refund recorded on logistics desk (feeds invoice composition). */

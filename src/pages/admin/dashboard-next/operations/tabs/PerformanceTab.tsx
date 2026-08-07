@@ -63,8 +63,8 @@ export function PerformanceTab({ data, loading }: OperationsDashboardTabProps) {
 
   const trendPoints = data.processingTrend.map((p) => ({
     label: p.label,
-    processed: p.value,
-    completed: p.secondary ?? 0,
+    workedOn: p.value,
+    finished: p.secondary ?? 0,
   }))
 
   const capacityBars = data.teamCapacity.map((row) => ({
@@ -77,8 +77,8 @@ export function PerformanceTab({ data, loading }: OperationsDashboardTabProps) {
     <Grid container spacing={DASHBOARD_SPACING.field}>
       <Grid size={{ xs: 12, lg: 8 }}>
         <ChartPanel
-          title="Throughput trend"
-          description="Processed vs completed"
+          title="Daily work"
+          description="Cases you worked on vs finished each day"
           action={
             <Box sx={{ width: { xs: '100%', sm: 140 }, flexShrink: 0 }}>
               <Select
@@ -99,8 +99,8 @@ export function PerformanceTab({ data, loading }: OperationsDashboardTabProps) {
             showLegend
             loading={loading}
             lines={[
-              { key: 'processed', label: 'Processed', color: OPS_CHART_COLORS.navy },
-              { key: 'completed', label: 'Completed', color: OPS_CHART_COLORS.green },
+              { key: 'workedOn', label: 'Worked on', color: OPS_CHART_COLORS.navy },
+              { key: 'finished', label: 'Finished', color: OPS_CHART_COLORS.green },
             ]}
           />
         </ChartPanel>

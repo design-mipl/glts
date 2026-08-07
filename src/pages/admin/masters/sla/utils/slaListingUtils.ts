@@ -43,7 +43,7 @@ export function downloadSlaCsv(rows: SlaMaster[]) {
     'Name',
     'Module',
     'Submodule',
-    'Single E2E',
+    'Single hours',
     'Bulk 0-10',
     'Bulk 11-20',
     'Bulk 21+',

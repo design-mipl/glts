@@ -815,6 +815,31 @@ export const applicationVerificationService = {
     return { ok: true as const, listingRow, detail }
   },
 
+  /**
+   * Resolve canonical upload-queue row id for a passenger so ground ops and
+   * application-management share the same processing-timeline cursor.
+   */
+  resolveTravelerRowId(
+    applicationId: string,
+    gltsApplicantId?: string,
+    passengerSequence?: number,
+  ): string | undefined {
+    const rows = resolveUploadQueueRows(applicationId)
+    if (rows.length === 0) return undefined
+    if (gltsApplicantId) {
+      const byApplicant = rows.find(row => row.gltsApplicantId === gltsApplicantId)
+      if (byApplicant) return byApplicant.id
+      const byKey = resolveTravelerRow(applicationId, gltsApplicantId)
+      if (byKey) return byKey.id
+    }
+    if (passengerSequence != null) {
+      const bySequence = rows.find(row => row.sequenceNo === passengerSequence)
+      if (bySequence) return bySequence.id
+    }
+    if (rows.length === 1) return rows[0].id
+    return undefined
+  },
+
   getMergedDetail(applicationId: string): ApplicationDetailViewModel {
     return customerPortalService.getApplicationDetail(applicationId, {
       ignoreAccessControl: true,
@@ -941,36 +966,15 @@ export const applicationVerificationService = {
     const record = getRecord(applicationId)
     const row = resolveTravelerRow(applicationId, travelerRowId)
     const canonicalTravelerRowId = row?.id ?? travelerRowId
-    let documentOverrides = [...record.documentOverrides]
 
-    for (const item of collection.receivedDocuments) {
-      const existing = findTravelerDocumentOverride(record, travelerRowId, item.documentId, row)
-      documentOverrides = removeTravelerDocumentOverrides(
-        documentOverrides,
-        travelerRowId,
-        item.documentId,
-        row,
-      )
-      if (item.received || existing) {
-        documentOverrides.push({
-          scope: 'traveler',
-          travelerRowId: canonicalTravelerRowId,
-          documentId: item.documentId,
-          status: existing?.status ?? 'uploaded',
-          comment: existing?.comment,
-          originalDocumentReceived: item.received,
-          updatedAt: new Date().toISOString(),
-        })
-      }
-    }
-
+    // Client send plan only — do not sync selected-to-send flags into ops receipt
+    // (`originalDocumentReceived` is owned by updateTravelerOriginalDocumentReceived).
     const next: ApplicationVerificationRecord = {
       ...record,
       originalDocumentCollections: {
         ...(record.originalDocumentCollections ?? {}),
         [canonicalTravelerRowId]: collection,
       },
-      documentOverrides,
     }
 
     saveRecord(next)

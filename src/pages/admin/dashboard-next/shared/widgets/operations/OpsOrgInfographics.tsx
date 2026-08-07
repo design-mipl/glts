@@ -6,6 +6,10 @@ import { useDashboardChartColors } from '@/shared/theme/dashboardChartColors'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import { DASHBOARD_SPACING } from '../../constants'
 import type { OpsOrgQueueSnapshot } from './opsOrgQueueTypes'
+import {
+  OPS_QUEUE_DISPLAY_LABELS,
+  OPS_QUEUE_MIX_DESCRIPTION,
+} from './opsQueueDisplayLabels'
 
 type MixView = 'all' | 'user' | 'vendor' | 'passenger' | 'unassigned'
 type WorkloadMetric = 'all' | 'verification' | 'payment' | 'arrange' | 'submission'
@@ -20,10 +24,10 @@ const MIX_OPTIONS = [
 
 const WORKLOAD_METRIC_OPTIONS = [
   { label: 'All queues', value: 'all' },
-  { label: 'Verification', value: 'verification' },
-  { label: 'Payment', value: 'payment' },
-  { label: 'Arrange Ticket/Insurance', value: 'arrange' },
-  { label: 'Submission', value: 'submission' },
+  { label: OPS_QUEUE_DISPLAY_LABELS.verification, value: 'verification' },
+  { label: OPS_QUEUE_DISPLAY_LABELS.payment, value: 'payment' },
+  { label: OPS_QUEUE_DISPLAY_LABELS.arrange, value: 'arrange' },
+  { label: OPS_QUEUE_DISPLAY_LABELS.submissionCollection, value: 'submission' },
 ] as const
 
 function ChartPanel({
@@ -89,17 +93,20 @@ export function OpsOrgInfographics({ data, loading, dense = false }: OpsOrgInfog
   const donutHeight = dense ? 180 : 240
   const barHeight = dense ? 170 : 220
 
-  const queueMix = withSliceColors(data.queueMix, [
-    chart.navy,
-    chart.green,
-    chart.amber,
-    chart.coral,
-    chart.blue,
-    chart.teal,
-    chart.violet,
-    chart.slate,
-  ])
-  const queueTotal = queueMix.reduce((sum, slice) => sum + slice.value, 0)
+  const queueMix = withSliceColors(
+    data.queueMix.filter((slice) => slice.value > 0),
+    [
+      chart.navy,
+      chart.green,
+      chart.amber,
+      chart.coral,
+      chart.blue,
+      chart.teal,
+      chart.violet,
+      chart.slate,
+    ],
+  )
+  const queueTotal = data.queueMix.reduce((sum, slice) => sum + slice.value, 0)
 
   const assigneeMixColored = withSliceColors(data.assigneeMix, [
     chart.navy,
@@ -126,7 +133,7 @@ export function OpsOrgInfographics({ data, loading, dense = false }: OpsOrgInfog
       <Grid size={{ xs: 12, md: 6, lg: 4 }}>
         <ChartPanel
           title="Queue mix"
-          description="Verification · re-check · payment · Arrange · submission"
+          description={OPS_QUEUE_MIX_DESCRIPTION}
         >
           <DonutChart
             data={queueMix}
@@ -263,10 +270,10 @@ export function OpsOrgWorkloadBySegment({
           showLegend
           loading={loading}
           bars={[
-            { key: 'verification', label: 'Verification', color: chart.navy },
-            { key: 'payment', label: 'Payment', color: chart.coral },
-            { key: 'arrange', label: 'Arrange Ticket/Insurance', color: chart.blue },
-            { key: 'submission', label: 'Submission', color: chart.teal },
+            { key: 'verification', label: OPS_QUEUE_DISPLAY_LABELS.verification, color: chart.navy },
+            { key: 'payment', label: OPS_QUEUE_DISPLAY_LABELS.payment, color: chart.coral },
+            { key: 'arrange', label: OPS_QUEUE_DISPLAY_LABELS.arrange, color: chart.blue },
+            { key: 'submission', label: OPS_QUEUE_DISPLAY_LABELS.submissionCollection, color: chart.teal },
           ]}
         />
       ) : (

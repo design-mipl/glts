@@ -23,6 +23,7 @@ export const KPI_ICONS: Record<string, ReactNode> = {
   'cases-over-7d': <Hourglass size={16} />,
   'sla-compliance': <Shield size={16} />,
   'applications-delayed': <Clock size={16} />,
+  'physical-documents-pending': <ClipboardList size={16} />,
   'team-utilization': <Users size={16} />,
   'revenue-today': <Wallet size={16} />,
 }

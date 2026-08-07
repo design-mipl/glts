@@ -84,7 +84,7 @@ export function OverviewTab({
         primaryVisualization={
           <ApplicationPipeline
             title="Queue status"
-            subtitle="Primary visualization — pipeline health across segments"
+            subtitle="Same open-queue counts as the KPI strip (Delayed = re-uploads ready)"
             stages={data.myPipelineStages}
             loading={loading}
             onRetry={onRetry}

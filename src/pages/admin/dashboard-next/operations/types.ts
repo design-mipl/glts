@@ -31,6 +31,7 @@ export type OpsWorkQueueKind =
   | 'glts_arrange'
   | 'submission'
   | 'collection'
+  | 'physical_originals'
   | 'correction_watch'
   | 'assignment'
 
@@ -43,6 +44,7 @@ export type OpsAlertType =
   | 'pending_payment'
   | 'glts_ticket_needed'
   | 'glts_insurance_needed'
+  | 'physical_originals_pending'
   | 'assignment_unassigned'
   | 'ground_handoff'
 
