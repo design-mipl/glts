@@ -1,12 +1,10 @@
-import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { Box, Grid, Stack, Typography } from '@mui/material'
-import { Anchor, Briefcase, Ship, Store, TrendingDown, TrendingUp } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
-import { BarChart, Button, LineChart, Tooltip } from '@/design-system/UIComponents'
+import { Badge, BarChart, Button, LineChart, type Column } from '@/design-system/UIComponents'
 import { DASHBOARD_SPACING } from '../../shared'
 import { useDashboardFiltersOptional } from '../../shared/dashboard-intelligence'
-import { ExecutiveGrid, SegmentCard } from '../../shared/dashboard-ui-kit'
+import { ExecutiveTable } from '../../shared/dashboard-ui-kit'
 import {
   SA_CHART_HEIGHT,
   SuperAdminPanel,
@@ -19,108 +17,85 @@ import type {
   SuperAdminSegmentCard,
 } from '../types'
 
-const SEGMENT_ICONS = {
-  marine: <Ship size={20} />,
-  corporate: <Briefcase size={20} />,
-  retail: <Store size={20} />,
-  b2b: <Anchor size={20} />,
-} as const
-
-function ComparisonSegmentCard({
-  segment,
-  loading,
-  onOpen,
-}: {
-  segment: SuperAdminSegmentCard
-  loading?: boolean
-  onOpen: () => void
-}) {
-  const growing = segment.growthPercent >= 0
-  const rows: Array<[string, string]> = [
-    ['Gross revenue', segment.revenue],
-    ['Net revenue', segment.netRevenue],
-    ['Active apps', String(segment.activeApplications)],
-    ['Approval', segment.approvalPercent],
-    ['Gross margin', segment.grossMarginPercent],
-    ['Growth', segment.growthLabel],
-  ]
-
-  return (
-    <Tooltip
-      content={`Open ${segment.label} segment dashboard`}
-      placement="top"
-    >
-      <Box
-        role="button"
-        tabIndex={0}
-        onClick={onOpen}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            onOpen()
-          }
-        }}
+const SEGMENT_COMPARISON_COLUMNS: Column<SuperAdminSegmentCard>[] = [
+  {
+    key: 'label',
+    label: 'Segment',
+    widthSize: 'md',
+    sortable: false,
+    filterable: false,
+    searchable: false,
+    hideable: false,
+    render: (_value, row) => (
+      <Stack direction="row" alignItems="center" spacing={0.75}>
+        <Typography variant="body2" fontWeight={700}>
+          {row.label}
+        </Typography>
+        {row.status === 'live' ? <Badge label="Live" color="success" /> : null}
+      </Stack>
+    ),
+  },
+  {
+    key: 'revenue',
+    label: 'Gross revenue',
+    widthSize: 'md',
+    sortable: false,
+    filterable: false,
+    searchable: false,
+  },
+  {
+    key: 'netRevenue',
+    label: 'Net revenue',
+    widthSize: 'md',
+    sortable: false,
+    filterable: false,
+    searchable: false,
+  },
+  {
+    key: 'activeApplications',
+    label: 'Active apps',
+    widthSize: 'sm',
+    sortable: false,
+    filterable: false,
+    searchable: false,
+  },
+  {
+    key: 'approvalPercent',
+    label: 'Approval',
+    widthSize: 'sm',
+    sortable: false,
+    filterable: false,
+    searchable: false,
+  },
+  {
+    key: 'grossMarginPercent',
+    label: 'Gross margin',
+    widthSize: 'sm',
+    sortable: false,
+    filterable: false,
+    searchable: false,
+  },
+  {
+    key: 'growthLabel',
+    label: 'Growth',
+    widthSize: 'sm',
+    sortable: false,
+    filterable: false,
+    searchable: false,
+    render: (_value, row) => (
+      <Typography
+        variant="body2"
+        fontWeight={700}
         sx={{
-          height: '100%',
-          cursor: 'pointer',
-          borderRadius: 2,
-          transition: 'transform 120ms ease',
-          '&:hover': { transform: 'translateY(-1px)' },
+          fontSize: 13,
+          color: row.growthPercent >= 0 ? 'success.main' : 'error.main',
         }}
       >
-        <SegmentCard
-          icon={SEGMENT_ICONS[segment.id] as ReactNode}
-          title={segment.label}
-          subtitle={segment.status === 'live' ? 'Live' : segment.label}
-          hoverable
-          loading={loading}
-        >
-          <Stack spacing={1.25}>
-            <Stack direction="row" alignItems="center" spacing={0.75}>
-              <Typography variant="h5" fontWeight={800} sx={{ letterSpacing: -0.4 }}>
-                {segment.revenue}
-              </Typography>
-              <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 0.35,
-                  color: growing ? 'success.main' : 'error.main',
-                }}
-              >
-                {growing ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                <Typography variant="caption" fontWeight={700} sx={{ fontSize: 11 }}>
-                  {segment.growthLabel}
-                </Typography>
-              </Box>
-            </Stack>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 0.75,
-              }}
-            >
-              {rows.map(([label, value]) => (
-                <Box key={label}>
-                  <Typography
-                    color="text.secondary"
-                    sx={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.2 }}
-                  >
-                    {label}
-                  </Typography>
-                  <Typography variant="body2" fontWeight={700} sx={{ fontSize: 12 }}>
-                    {value}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          </Stack>
-        </SegmentCard>
-      </Box>
-    </Tooltip>
-  )
-}
+        {row.growthLabel}
+      </Typography>
+    ),
+  },
+]
 
 /**
  * Business — vertical comparison + revenue growth only.
@@ -248,16 +223,19 @@ export function BusinessTab({
             No segment comparison data for the selected filters.
           </Typography>
         ) : (
-          <ExecutiveGrid columns={4} spacing={DASHBOARD_SPACING.field}>
-            {segments.map((segment) => (
-              <ComparisonSegmentCard
-                key={segment.id}
-                segment={segment}
-                loading={loading}
-                onOpen={() => openSegmentsWithFilter(segment.id)}
-              />
-            ))}
-          </ExecutiveGrid>
+          <ExecutiveTable
+            columns={SEGMENT_COMPARISON_COLUMNS}
+            data={segments}
+            rowKey="id"
+            pageSize={4}
+            loading={loading}
+            fullWidth
+            hideToolbar
+            hidePagination
+            showColumnSearch={false}
+            enableColumnSort={false}
+            onRowClick={(row) => openSegmentsWithFilter(row.id)}
+          />
         )}
       </SuperAdminSection>
 

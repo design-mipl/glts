@@ -41,6 +41,14 @@ export interface ExecutiveTableProps<T extends object> extends UiKitStateProps {
    */
   fullWidth?: boolean
   stickyHeader?: boolean
+  /** Hide search / filter / column-picker toolbar. */
+  hideToolbar?: boolean
+  /** Hide built-in pagination footer. */
+  hidePagination?: boolean
+  /** Per-column header search inputs. Default true. */
+  showColumnSearch?: boolean
+  /** Column header sort controls. Default true. */
+  enableColumnSort?: boolean
   sx?: SxProps<Theme>
 }
 
@@ -56,6 +64,10 @@ export function ExecutiveTable<T extends object>({
   onAction,
   fullWidth,
   stickyHeader = true,
+  hideToolbar = false,
+  hidePagination = false,
+  showColumnSearch = true,
+  enableColumnSort = true,
   sx,
   ...state
 }: ExecutiveTableProps<T>) {
@@ -79,6 +91,11 @@ export function ExecutiveTable<T extends object>({
           onRowClick={onRowClick}
           loading={state.loading}
           stickyHeader={stickyHeader}
+          hideToolbar={hideToolbar}
+          hidePagination={hidePagination}
+          showColumnSearch={showColumnSearch}
+          enableColumnSort={enableColumnSort}
+          embedded
           emptyState={{
             title: state.emptyTitle ?? 'No records found',
             description: state.emptyDescription ?? 'Adjust filters or check back later.',

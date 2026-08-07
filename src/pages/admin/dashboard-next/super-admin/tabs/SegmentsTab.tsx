@@ -5,7 +5,6 @@ import { alpha } from '@mui/material/styles'
 import {
   Anchor,
   Briefcase,
-  Network,
   Ship,
   Store,
 } from 'lucide-react'
@@ -17,11 +16,7 @@ import {
   DASHBOARD_SPACING,
 } from '../../shared'
 import { useDashboardFiltersOptional } from '../../shared/dashboard-intelligence'
-import {
-  ExecutiveGrid,
-  ExecutiveSection,
-  SegmentCard,
-} from '../../shared/dashboard-ui-kit'
+import { ExecutiveSection } from '../../shared/dashboard-ui-kit'
 import {
   SA_CHART_HEIGHT,
   SuperAdminPanel,
@@ -37,35 +32,26 @@ import {
 import type {
   SuperAdminDashboardTabProps,
   SuperAdminRankItem,
-  SuperAdminSegmentCard,
   SuperAdminVerticalPreview,
 } from '../types'
 
-type SegmentFocus = 'all' | 'marine' | 'corporate' | 'retail' | 'b2b'
+type SegmentFocus = 'marine' | 'corporate' | 'retail' | 'b2b'
 
 const SEGMENT_OPTIONS: Array<{
   id: SegmentFocus
   label: string
   icon: ReactNode
 }> = [
-  { id: 'all', label: 'All segments', icon: <Network size={14} /> },
   { id: 'marine', label: 'Marine', icon: <Ship size={14} /> },
   { id: 'corporate', label: 'Corporate', icon: <Briefcase size={14} /> },
   { id: 'retail', label: 'Retail', icon: <Store size={14} /> },
   { id: 'b2b', label: 'B2B', icon: <Anchor size={14} /> },
 ]
 
-const SEGMENT_ICONS = {
-  marine: <Ship size={20} />,
-  corporate: <Briefcase size={20} />,
-  retail: <Store size={20} />,
-  b2b: <Anchor size={20} />,
-} as const
-
 function normalizeSegment(value: string | undefined): SegmentFocus {
-  const v = (value ?? 'all').toLowerCase()
+  const v = (value ?? 'marine').toLowerCase()
   if (v === 'marine' || v === 'corporate' || v === 'retail' || v === 'b2b') return v
-  return 'all'
+  return 'marine'
 }
 
 function SegmentStatusChip({ status }: { status: 'live' | 'placeholder' }) {
@@ -87,49 +73,6 @@ function SegmentStatusChip({ status }: { status: 'live' | 'placeholder' }) {
     >
       Live
     </Box>
-  )
-}
-
-function SegmentMetrics({ segment }: { segment: SuperAdminSegmentCard }) {
-  const rows: Array<[string, string]> = [
-    ['Cost', segment.cost],
-    ['Gross margin', segment.grossMarginPercent],
-    ['Approval', segment.approvalPercent],
-    ['Avg TAT', segment.avgTat],
-    ['Outstanding', segment.outstanding],
-    ['Clients', segment.activeClients],
-    ['Pipeline', segment.pipelineValue],
-  ]
-  if (segment.repeatBusinessPercent) rows.push(['Repeat', segment.repeatBusinessPercent])
-  if (segment.winRate) rows.push(['Win rate', segment.winRate])
-
-  return (
-    <Stack spacing={1.25}>
-      <Typography variant="h5" fontWeight={800} sx={{ letterSpacing: -0.4 }}>
-        {segment.revenue}
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        {segment.applications} · {segment.growthLabel}
-      </Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.75 }}>
-        {rows.map(([label, value]) => (
-          <Box key={label}>
-            <Typography
-              color="text.secondary"
-              sx={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.2 }}
-            >
-              {label}
-            </Typography>
-            <Typography variant="body2" fontWeight={700} sx={{ fontSize: 12 }}>
-              {value}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-      <Typography variant="caption" color="text.secondary">
-        {segment.insight}
-      </Typography>
-    </Stack>
   )
 }
 
@@ -168,75 +111,6 @@ function SegmentSwitcher({
           />
         )
       })}
-    </Stack>
-  )
-}
-
-function AllSegmentsView({
-  data,
-  loading,
-  onSelectSegment,
-}: {
-  data: SuperAdminDashboardTabProps['data']
-  loading?: boolean
-  onSelectSegment: (id: SegmentFocus) => void
-}) {
-  return (
-    <Stack spacing={DASHBOARD_SPACING.section}>
-      <ExecutiveSection
-        title="Segment performance"
-      >
-        <ExecutiveGrid columns={4} spacing={DASHBOARD_SPACING.field}>
-          {data.segmentCards.map((segment) => (
-            <Box
-              key={segment.id}
-              onClick={() => onSelectSegment(segment.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  onSelectSegment(segment.id)
-                }
-              }}
-              role="button"
-              tabIndex={0}
-              sx={{
-                cursor: 'pointer',
-                height: '100%',
-                borderRadius: 2,
-                outline: 'none',
-                '&:focus-visible': {
-                  boxShadow: (t) => `0 0 0 2px ${t.palette.primary.main}`,
-                },
-              }}
-            >
-              <SegmentCard
-                icon={SEGMENT_ICONS[segment.id]}
-                title={segment.label}
-                hoverable
-              >
-                <Stack spacing={1}>
-                  <SegmentStatusChip status={segment.status} />
-                  <SegmentMetrics segment={segment} />
-                </Stack>
-              </SegmentCard>
-            </Box>
-          ))}
-        </ExecutiveGrid>
-      </ExecutiveSection>
-
-      <ExecutiveSection
-        title="Cross-segment risk — joining-date (Marine)"
-      >
-        <MarineTimeline
-          title="Joining date & crew risk"
-          rows={[...data.marineTimeline].sort((a, b) => {
-            const rank = (r: string) => (r === 'red' ? 0 : r === 'amber' ? 1 : 2)
-            return rank(a.ragStatus) - rank(b.ragStatus)
-          })}
-          loading={loading}
-          onViewAll={() => onSelectSegment('marine')}
-        />
-      </ExecutiveSection>
     </Stack>
   )
 }
@@ -356,26 +230,14 @@ function MarineSegmentView({
         />
       </ExecutiveSection>
 
-      <ExecutiveSection title="Queues & key accounts">
-        <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
-          <Grid size={{ xs: 12, md: 6 }}>
-            <SuperAdminRankChart
-              title="Pending crew visas"
-              items={data.pendingCrewVisas}
-              loading={loading}
-              valueLabel="Priority"
-              initialTopN="5"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <SuperAdminRankChart
-              title="Top Marine clients"
-              items={data.topMarineClients}
-              loading={loading}
-              valueLabel="Revenue"
-            />
-          </Grid>
-        </Grid>
+      <ExecutiveSection title="Queues">
+        <SuperAdminRankChart
+          title="Pending crew visas"
+          items={data.pendingCrewVisas}
+          loading={loading}
+          valueLabel="Priority"
+          initialTopN="5"
+        />
       </ExecutiveSection>
     </Stack>
   )
@@ -442,17 +304,18 @@ export function SegmentsTab(props: SuperAdminDashboardTabProps) {
   const { data, loading } = props
   const filterCtx = useDashboardFiltersOptional()
   const [searchParams, setSearchParams] = useSearchParams()
-  const active = normalizeSegment(filterCtx?.filters.segment ?? searchParams.get('segment') ?? 'all')
+  const active = normalizeSegment(filterCtx?.filters.segment ?? searchParams.get('segment') ?? 'marine')
   const appliedUrlSegment = useRef<string | null>(null)
 
   // Apply deep-link ?segment= once when URL changes externally (search / openSegments).
+  // "all" (or missing) maps to Marine — no cross-segment comparison view on this tab.
   useEffect(() => {
     const raw = searchParams.get('segment')
-    const key = raw ?? 'all'
+    const fromUrl = normalizeSegment(raw ?? 'marine')
+    const key = raw ?? 'marine'
     if (appliedUrlSegment.current === key) return
     appliedUrlSegment.current = key
     if (!filterCtx) return
-    const fromUrl = normalizeSegment(raw ?? 'all')
     if (fromUrl === normalizeSegment(filterCtx.filters.segment)) return
     filterCtx.setFilter('segment', fromUrl)
   }, [filterCtx, searchParams])
@@ -464,8 +327,7 @@ export function SegmentsTab(props: SuperAdminDashboardTabProps) {
       (prev) => {
         const params = new URLSearchParams(prev)
         if (!params.get('tab')) params.set('tab', 'segments')
-        if (next === 'all') params.delete('segment')
-        else params.set('segment', next)
+        params.set('segment', next)
         return params
       },
       { replace: true },
@@ -488,17 +350,11 @@ export function SegmentsTab(props: SuperAdminDashboardTabProps) {
               Viewing: {activeMeta.label}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {active === 'all'
-                ? 'Comparison across all four verticals'
-                : 'Deep-dive — change segment above or in the filter bar'}
+              Deep-dive — change segment above or in the filter bar
             </Typography>
           </Stack>
         </Stack>
       </SuperAdminSection>
-
-      {active === 'all' ? (
-        <AllSegmentsView data={data} loading={loading} onSelectSegment={setSegment} />
-      ) : null}
 
       {active === 'marine' ? <MarineSegmentView {...props} /> : null}
 

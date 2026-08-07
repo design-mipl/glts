@@ -40,9 +40,7 @@ export function WorkTab(props: AccountsDashboardTabProps) {
     props.data.visaSubmissionRows.filter((r) => r.invoiceReady === 'Yes').length +
     props.data.invoiceExceptionRows.length
 
-  const creditBadge =
-    props.data.paymentAllocationRows.filter((r) => r.allocationStatus !== 'Allocated').length +
-    props.data.followUpRows.length
+  const creditBadge = props.data.followUpRows.length
 
   const tabItems = useMemo(
     () => [
