@@ -3,18 +3,19 @@ import type {
   AdminUserPermissions,
   ModulePermissionPreset,
   ModulePermissionState,
-  SubmodulePermissionAction,
-  SubmodulePermissionState,
+  SubmodulePermissionTreeState,
+  TabPermissionAction,
+  TabPermissionState,
 } from '@/shared/types/adminPermission'
 
-const ALL_ACTIONS: SubmodulePermissionAction[] = ['create', 'view', 'update']
-const VIEW_ONLY_ACTIONS: SubmodulePermissionAction[] = ['view']
+const ALL_ACTIONS: TabPermissionAction[] = ['create', 'view', 'update']
+const VIEW_ONLY_ACTIONS: TabPermissionAction[] = ['view']
 
-function emptySubmoduleState(): SubmodulePermissionState {
+function emptyTabState(): TabPermissionState {
   return { create: false, view: false, update: false }
 }
 
-function submoduleStateFromActions(actions: SubmodulePermissionAction[]): SubmodulePermissionState {
+function tabStateFromActions(actions: TabPermissionAction[]): TabPermissionState {
   return {
     create: actions.includes('create'),
     view: actions.includes('view'),
@@ -26,12 +27,55 @@ function getModuleDef(moduleId: string) {
   return ADMIN_PERMISSION_MODULES.find((m) => m.id === moduleId)
 }
 
+function getSubmoduleDef(moduleId: string, submoduleId: string) {
+  return getModuleDef(moduleId)?.submodules.find((s) => s.id === submoduleId)
+}
+
+function createEmptySubmoduleState(moduleId: string, submoduleId: string): SubmodulePermissionTreeState {
+  const sub = getSubmoduleDef(moduleId, submoduleId)
+  const tabs: Record<string, TabPermissionState> = {}
+  for (const tab of sub?.tabs ?? []) {
+    tabs[tab.id] = emptyTabState()
+  }
+  return { tabs }
+}
+
+function applyActionsToSubmodule(
+  moduleId: string,
+  submoduleId: string,
+  actions: TabPermissionAction[],
+): SubmodulePermissionTreeState {
+  const sub = getSubmoduleDef(moduleId, submoduleId)
+  const tabs: Record<string, TabPermissionState> = {}
+  for (const tab of sub?.tabs ?? []) {
+    tabs[tab.id] = tabStateFromActions(actions)
+  }
+  return { tabs }
+}
+
+function tabHasAnyAccess(tab: TabPermissionState | undefined): boolean {
+  return Boolean(tab?.create || tab?.view || tab?.update)
+}
+
+function submoduleHasAnyAccess(state: SubmodulePermissionTreeState | undefined): boolean {
+  if (!state) return false
+  return Object.values(state.tabs).some(tabHasAnyAccess)
+}
+
+function isTabFullyGranted(tab: TabPermissionState | undefined): boolean {
+  return Boolean(tab?.create && tab?.view && tab?.update)
+}
+
+function isTabViewOnly(tab: TabPermissionState | undefined): boolean {
+  return Boolean(tab?.view && !tab?.create && !tab?.update)
+}
+
 export function createEmptyPermissions(): AdminUserPermissions {
   const permissions: AdminUserPermissions = {}
   for (const mod of ADMIN_PERMISSION_MODULES) {
-    const submodules: Record<string, SubmodulePermissionState> = {}
+    const submodules: Record<string, SubmodulePermissionTreeState> = {}
     for (const sub of mod.submodules) {
-      submodules[sub.id] = emptySubmoduleState()
+      submodules[sub.id] = createEmptySubmoduleState(mod.id, sub.id)
     }
     permissions[mod.id] = { preset: null, submodules }
   }
@@ -40,9 +84,9 @@ export function createEmptyPermissions(): AdminUserPermissions {
 
 export function createModuleState(moduleId: string): ModulePermissionState {
   const mod = getModuleDef(moduleId)
-  const submodules: Record<string, SubmodulePermissionState> = {}
+  const submodules: Record<string, SubmodulePermissionTreeState> = {}
   for (const sub of mod?.submodules ?? []) {
-    submodules[sub.id] = emptySubmoduleState()
+    submodules[sub.id] = createEmptySubmoduleState(moduleId, sub.id)
   }
   return { preset: null, submodules }
 }
@@ -56,9 +100,9 @@ export function applyModulePreset(
   if (!mod) return state
 
   const actions = preset === 'all' ? ALL_ACTIONS : VIEW_ONLY_ACTIONS
-  const submodules: Record<string, SubmodulePermissionState> = {}
+  const submodules: Record<string, SubmodulePermissionTreeState> = {}
   for (const sub of mod.submodules) {
-    submodules[sub.id] = submoduleStateFromActions(actions)
+    submodules[sub.id] = applyActionsToSubmodule(moduleId, sub.id, actions)
   }
   return { preset, submodules }
 }
@@ -80,8 +124,8 @@ export function isModuleAllPermissions(state: ModulePermissionState, moduleId: s
   const mod = getModuleDef(moduleId)
   if (!mod) return false
   return mod.submodules.every((sub) => {
-    const s = state.submodules[sub.id]
-    return s?.create && s?.view && s?.update
+    const subState = state.submodules[sub.id]
+    return sub.tabs.every((tab) => isTabFullyGranted(subState?.tabs[tab.id]))
   })
 }
 
@@ -90,8 +134,8 @@ export function isModuleViewOnly(state: ModulePermissionState, moduleId: string)
   const mod = getModuleDef(moduleId)
   if (!mod) return false
   return mod.submodules.every((sub) => {
-    const s = state.submodules[sub.id]
-    return s?.view && !s?.create && !s?.update
+    const subState = state.submodules[sub.id]
+    return sub.tabs.every((tab) => isTabViewOnly(subState?.tabs[tab.id]))
   })
 }
 
@@ -128,36 +172,43 @@ export function clearModulePreset(
   }
 }
 
-export function toggleSubmoduleAction(
+export function toggleTabAction(
   permissions: AdminUserPermissions,
   moduleId: string,
   submoduleId: string,
-  action: SubmodulePermissionAction,
+  tabId: string,
+  action: TabPermissionAction,
   checked: boolean,
 ): AdminUserPermissions {
   const current = permissions[moduleId] ?? createModuleState(moduleId)
-  const sub = current.submodules[submoduleId] ?? emptySubmoduleState()
+  const sub = current.submodules[submoduleId] ?? createEmptySubmoduleState(moduleId, submoduleId)
+  const tab = sub.tabs[tabId] ?? emptyTabState()
 
-  let nextSub: SubmodulePermissionState = { ...sub }
+  let nextTab: TabPermissionState = { ...tab }
 
   if (action === 'view') {
-    nextSub.view = checked
+    nextTab.view = checked
     if (!checked) {
-      nextSub.create = false
-      nextSub.update = false
+      nextTab.create = false
+      nextTab.update = false
     }
   } else if (action === 'create' || action === 'update') {
-    if (!sub.view && checked) {
-      nextSub.view = true
+    if (!tab.view && checked) {
+      nextTab.view = true
     }
-    nextSub[action] = checked
+    nextTab[action] = checked
   }
 
   const nextModule: ModulePermissionState = {
     preset: null,
     submodules: {
       ...current.submodules,
-      [submoduleId]: nextSub,
+      [submoduleId]: {
+        tabs: {
+          ...sub.tabs,
+          [tabId]: nextTab,
+        },
+      },
     },
   }
 
@@ -165,6 +216,19 @@ export function toggleSubmoduleAction(
     ...permissions,
     [moduleId]: syncModulePreset(nextModule, moduleId),
   }
+}
+
+/** @deprecated Use toggleTabAction */
+export function toggleSubmoduleAction(
+  permissions: AdminUserPermissions,
+  moduleId: string,
+  submoduleId: string,
+  action: TabPermissionAction,
+  checked: boolean,
+): AdminUserPermissions {
+  const sub = getSubmoduleDef(moduleId, submoduleId)
+  const tabId = sub?.tabs[0]?.id ?? 'listing'
+  return toggleTabAction(permissions, moduleId, submoduleId, tabId, action, checked)
 }
 
 export function superAdminFullPermissions(): AdminUserPermissions {
@@ -175,25 +239,45 @@ export function superAdminFullPermissions(): AdminUserPermissions {
   return permissions
 }
 
-export function isSubmoduleActionDisabled(
-  sub: SubmodulePermissionState,
-  action: SubmodulePermissionAction,
-): boolean {
+export function isTabActionDisabled(tab: TabPermissionState, action: TabPermissionAction): boolean {
   if (action === 'view') return false
-  return !sub.view
+  return !tab.view
 }
 
-export function countGrantedSubmoduleActions(state: SubmodulePermissionState): number {
+/** @deprecated Use isTabActionDisabled */
+export function isSubmoduleActionDisabled(
+  tab: TabPermissionState,
+  action: TabPermissionAction,
+): boolean {
+  return isTabActionDisabled(tab, action)
+}
+
+export function countGrantedTabActions(state: TabPermissionState): number {
   return [state.create, state.view, state.update].filter(Boolean).length
+}
+
+/** @deprecated Use countGrantedTabActions */
+export function countGrantedSubmoduleActions(state: TabPermissionState): number {
+  return countGrantedTabActions(state)
 }
 
 export function hasNoConfiguredPermissions(permissions: AdminUserPermissions): boolean {
   return !ADMIN_PERMISSION_MODULES.some((mod) => {
     const state = permissions[mod.id]
     if (!state) return false
-    return mod.submodules.some((sub) => {
-      const s = state.submodules[sub.id]
-      return s?.create || s?.view || s?.update
-    })
+    return mod.submodules.some((sub) => submoduleHasAnyAccess(state.submodules[sub.id]))
   })
+}
+
+export function getTabActionsLabel(tab: TabPermissionState | undefined): string[] {
+  if (!tab) return []
+  const actions: string[] = []
+  if (tab.create) actions.push('Create')
+  if (tab.view) actions.push('View')
+  if (tab.update) actions.push('Update')
+  return actions
+}
+
+export function submoduleHasGrantedAccess(state: SubmodulePermissionTreeState | undefined): boolean {
+  return submoduleHasAnyAccess(state)
 }

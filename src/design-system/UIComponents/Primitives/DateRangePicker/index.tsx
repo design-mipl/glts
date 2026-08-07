@@ -21,7 +21,11 @@ export interface DateRangePickerProps {
   helperText?: string
   size?: 'sm' | 'md'
   fullWidth?: boolean
-  /** `stacked` keeps start/end fields vertical — best for narrow filter popovers. */
+  /**
+   * `inline` (default) — start/end on one row.
+   * `stacked` — vertical; use in narrow filter popovers.
+   * `auto` — stacked until container ≥ 420px, then inline.
+   */
   layout?: 'auto' | 'inline' | 'stacked'
   sx?: SxProps<Theme>
 }
@@ -41,11 +45,15 @@ export default function DateRangePicker({
   helperText,
   size = 'sm',
   fullWidth = false,
-  layout = 'auto',
+  layout = 'inline',
   sx,
 }: DateRangePickerProps) {
   const startVal = value?.[0] ?? null
   const endVal = value?.[1] ?? null
+  const isStacked = layout === 'stacked'
+  const isInline = layout === 'inline'
+  const isAuto = layout === 'auto'
+  const stretchFields = fullWidth || isInline || isAuto
 
   const handleStartChange = (date: Date | null) => {
     onChange?.([date, endVal])
@@ -60,7 +68,7 @@ export default function DateRangePicker({
       spacing={1}
       sx={{
         width: fullWidth ? '100%' : undefined,
-        ...(layout === 'auto' ? { containerType: 'inline-size' } : undefined),
+        ...(isAuto ? { containerType: 'inline-size' } : undefined),
         ...sx,
       }}
     >
@@ -70,16 +78,19 @@ export default function DateRangePicker({
         </Typography>
       ) : null}
       <Stack
-        direction={layout === 'stacked' ? 'column' : layout === 'inline' ? 'row' : 'column'}
+        direction={isStacked ? 'column' : 'row'}
         spacing={1}
-        alignItems={layout === 'stacked' ? 'stretch' : layout === 'inline' ? 'flex-start' : 'stretch'}
+        alignItems={isStacked ? 'stretch' : 'center'}
+        flexWrap="nowrap"
         sx={{
           width: fullWidth ? '100%' : undefined,
-          ...(layout === 'auto'
+          ...(isAuto
             ? {
+                flexDirection: 'column',
+                alignItems: 'stretch',
                 '@container (min-width: 420px)': {
                   flexDirection: 'row',
-                  alignItems: 'flex-start',
+                  alignItems: 'center',
                 },
               }
             : undefined),
@@ -87,11 +98,10 @@ export default function DateRangePicker({
       >
         <Box
           sx={{
-            flex: fullWidth ? '1 1 auto' : undefined,
-            alignSelf: fullWidth ? 'stretch' : undefined,
+            flex: stretchFields ? '1 1 0' : undefined,
+            alignSelf: isStacked ? 'stretch' : undefined,
             minWidth: 0,
-            width: fullWidth ? '100%' : undefined,
-            display: fullWidth ? 'block' : undefined,
+            width: isStacked && fullWidth ? '100%' : undefined,
           }}
         >
           {startLabel ? (
@@ -107,7 +117,7 @@ export default function DateRangePicker({
             disabled={disabled}
             error={error}
             size={size}
-            fullWidth={fullWidth}
+            fullWidth={stretchFields}
             placeholder={startPlaceholder}
           />
         </Box>
@@ -115,19 +125,15 @@ export default function DateRangePicker({
           variant="body2"
           color="text.secondary"
           sx={{
-            display:
-              layout === 'stacked'
-                ? 'none'
-                : layout === 'inline'
-                  ? 'flex'
-                  : 'none',
+            display: isStacked ? 'none' : 'flex',
             alignItems: 'center',
             flexShrink: 0,
             fontSize: '12px',
             userSelect: 'none',
-            pt: startLabel || endLabel ? 3.25 : 0.75,
-            ...(layout === 'auto'
+            pt: startLabel || endLabel ? 2.5 : 0,
+            ...(isAuto
               ? {
+                  display: 'none',
                   '@container (min-width: 420px)': {
                     display: 'flex',
                   },
@@ -139,11 +145,10 @@ export default function DateRangePicker({
         </Typography>
         <Box
           sx={{
-            flex: fullWidth ? '1 1 auto' : undefined,
-            alignSelf: fullWidth ? 'stretch' : undefined,
+            flex: stretchFields ? '1 1 0' : undefined,
+            alignSelf: isStacked ? 'stretch' : undefined,
             minWidth: 0,
-            width: fullWidth ? '100%' : undefined,
-            display: fullWidth ? 'block' : undefined,
+            width: isStacked && fullWidth ? '100%' : undefined,
           }}
         >
           {endLabel ? (
@@ -159,7 +164,7 @@ export default function DateRangePicker({
             disabled={disabled}
             error={error}
             size={size}
-            fullWidth={fullWidth}
+            fullWidth={stretchFields}
             placeholder={endPlaceholder}
           />
         </Box>

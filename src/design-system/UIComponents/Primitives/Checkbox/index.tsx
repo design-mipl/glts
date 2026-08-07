@@ -56,6 +56,8 @@ export default function Checkbox({
         {
           borderRadius: '6px',
           transition: 'background-color 0.15s ease',
+          // Align glyph with headings / surrounding labels
+          pl: 0,
         },
       ]}
     />

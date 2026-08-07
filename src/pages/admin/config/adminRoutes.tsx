@@ -129,13 +129,12 @@ import {
   RetailAssignmentQueuePage,
   B2bAssignmentQueuePage,
 } from '../assignment-priority'
-import { ADMIN_ALL_DASHBOARDS, ADMIN_DASHBOARDS } from './adminDashboards'
+import { ADMIN_ALL_DASHBOARDS, ADMIN_HOME_HREF } from './adminDashboards'
 
 type AdminRouteKind = 'coming-soon' | 'dashboard' | 'operations' | 'profile' | 'tools'
 
 interface AdminRouteDefinition {
-  path?: string
-  index?: boolean
+  path: string
   title: string
   description: string
   eyebrow: string
@@ -171,13 +170,6 @@ const adminDashboardRoutes: AdminRouteDefinition[] = ADMIN_ALL_DASHBOARDS.filter
 }))
 
 const adminRoutes: AdminRouteDefinition[] = [
-  {
-    index: true,
-    title: ADMIN_DASHBOARDS[0].title,
-    description: ADMIN_DASHBOARDS[0].description,
-    eyebrow: 'Dashboard',
-    kind: 'dashboard',
-  },
   ...adminDashboardRoutes,
   {
     path: 'customer-accounts/corporate-admins',
@@ -248,8 +240,8 @@ function AdminFoundationPage({ route }: { route: AdminRouteDefinition }) {
         eyebrow={route.eyebrow}
         title={route.title}
         description={route.description}
-        returnHref="/admin"
-        returnLabel="Back to Admin dashboard"
+        returnHref={ADMIN_HOME_HREF}
+        returnLabel="Back to Super Admin dashboard"
       />
     </PermissionGuard>
   )
@@ -894,18 +886,15 @@ export function AdminRoutes() {
           </PermissionGuard>
         }
       />
-      {adminRoutes.map((route) =>
-        route.index ? (
-          <Route key="index" index element={<AdminFoundationPage route={route} />} />
-        ) : (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={<AdminFoundationPage route={route} />}
-          />
-        ),
-      )}
-      <Route path="*" element={<Navigate to="/admin" replace />} />
+      <Route index element={<Navigate to={ADMIN_HOME_HREF} replace />} />
+      {adminRoutes.map((route) => (
+        <Route
+          key={route.path}
+          path={route.path}
+          element={<AdminFoundationPage route={route} />}
+        />
+      ))}
+      <Route path="*" element={<Navigate to={ADMIN_HOME_HREF} replace />} />
     </Routes>
   )
 }

@@ -7,6 +7,7 @@ import { commercialAgreementService } from '@/shared/services/commercialAgreemen
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { AgreementDetailSummary } from '../components/AgreementDetailSummary'
 import { AgreementStatusUpdateDialog } from '../components/AgreementStatusUpdateDialog'
+import { AgreementMinutesTab } from '../components/detail/AgreementMinutesTab'
 import { canUpdateAgreementHoldOrTerminate } from '../config/agreementStatusConfig'
 import {
   ActivityTab,
@@ -125,6 +126,7 @@ export function AgreementDetailPage() {
                 { label: 'Billing Configuration', value: 'billing' },
                 { label: 'Tax Configuration', value: 'tax' },
                 { label: 'Documents', value: 'documents', badge: agreement.documents.length },
+                { label: 'Minutes', value: 'minutes', badge: agreement.minutes?.length || undefined },
                 { label: 'Activity Logs', value: 'activity', badge: agreement.activities.length || undefined },
               ]}
               value={activeTab}
@@ -139,7 +141,8 @@ export function AgreementDetailPage() {
             {activeTab === 'pricing' ? <PricingMatrixTab agreement={agreement} /> : null}
             {activeTab === 'billing' ? <BillingConfigurationTab agreement={agreement} /> : null}
             {activeTab === 'tax' ? <TaxConfigurationTab agreement={agreement} /> : null}
-            {activeTab === 'documents' ? <DocumentsTab agreement={agreement} /> : null}
+            {activeTab === 'documents' ? <DocumentsTab agreement={agreement} onReload={reload} /> : null}
+            {activeTab === 'minutes' ? <AgreementMinutesTab agreement={agreement} onReload={reload} /> : null}
             {activeTab === 'activity' ? <ActivityTab agreement={agreement} /> : null}
           </Box>
         </BaseCard>

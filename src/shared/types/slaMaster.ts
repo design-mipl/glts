@@ -150,7 +150,7 @@ export const SLA_STAGE_LABELS: Record<SlaStageKey, string> = {
   vendor_settled: 'Settled',
   desk_pending: 'Pending',
   desk_document_submitted: 'Documents submitted',
-  desk_moved_next_day: 'Moved to Next day',
+  desk_moved_next_day: 'Moved to next date',
   desk_collected: 'Collected',
   desk_dispatched: 'Dispatched',
   desk_completed: 'Completed',

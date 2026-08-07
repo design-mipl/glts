@@ -5,6 +5,7 @@ import type {
   AdminPortalUserBasicFormData,
   AdminPortalUserFormData,
   AdminPortalUserListFilters,
+  AdminPortalUserType,
 } from '@/shared/types/adminPortalUser'
 import type { AdminUserPermissions } from '@/shared/types/adminPermission'
 import type { MasterRecordStatus } from '@/shared/types/masterCommon'
@@ -73,6 +74,7 @@ export const adminPortalUserService = {
 
   getByEmail(email: string, excludeId?: string): AdminPortalUser | undefined {
     const normalized = email.trim().toLowerCase()
+    if (!normalized) return undefined
     return userStore.find(
       (row) =>
         row.email.toLowerCase() === normalized && (excludeId ? row.id !== excludeId : true),
@@ -103,9 +105,10 @@ export const adminPortalUserService = {
   createBasicProfile(
     data: AdminPortalUserBasicFormData,
   ): AdminPortalUser | { error: 'duplicate_email' } {
-    if (this.getByEmail(data.email)) {
+    if (data.email.trim() && this.getByEmail(data.email)) {
       return { error: 'duplicate_email' }
     }
+    const userType = data.userType as AdminPortalUserType
     const actor = getMasterActor()
     const timestamp = nowIso()
     const record: AdminPortalUser = {
@@ -117,13 +120,14 @@ export const adminPortalUserService = {
       teamId: data.teamId,
       departmentId: data.departmentId,
       designation: data.designation.trim(),
+      userType,
       roleTemplateId: data.roleTemplateId || null,
       profilePhotoUrl: data.profilePhotoUrl || null,
       status: data.status,
       lastLoginAt: null,
-      isSuperAdmin: false,
+      isSuperAdmin: userType === 'super_admin',
       passwordSetupType: 'auto_email_invite',
-      permissions: createEmptyPermissions(),
+      permissions: userType === 'super_admin' ? superAdminFullPermissions() : createEmptyPermissions(),
       createdBy: actor,
       updatedBy: actor,
       createdAt: timestamp,
@@ -147,9 +151,10 @@ export const adminPortalUserService = {
     const index = userStore.findIndex((row) => row.id === id)
     if (index < 0) return undefined
     const existing = userStore[index]
-    if (this.getByEmail(data.email, id)) {
+    if (data.email.trim() && this.getByEmail(data.email, id)) {
       return { error: 'duplicate_email' }
     }
+    const userType = data.userType as AdminPortalUserType
     const actor = getMasterActor()
     const timestamp = nowIso()
     const updated: AdminPortalUser = {
@@ -161,10 +166,14 @@ export const adminPortalUserService = {
       teamId: data.teamId,
       departmentId: data.departmentId,
       designation: data.designation.trim(),
+      userType,
       roleTemplateId: data.roleTemplateId || null,
       profilePhotoUrl: data.profilePhotoUrl || null,
       status: data.status,
+      isSuperAdmin: userType === 'super_admin',
       passwordSetupType: data.passwordSetupType,
+      permissions:
+        userType === 'super_admin' ? superAdminFullPermissions() : existing.permissions,
       updatedBy: actor,
       updatedAt: timestamp,
     }
@@ -212,9 +221,10 @@ export const adminPortalUserService = {
   create(
     data: AdminPortalUserFormData,
   ): AdminPortalUser | { error: 'duplicate_email' | 'super_admin_exists' } {
-    if (this.getByEmail(data.email)) {
+    if (data.email.trim() && this.getByEmail(data.email)) {
       return { error: 'duplicate_email' }
     }
+    const userType = data.userType as AdminPortalUserType
     const actor = getMasterActor()
     const timestamp = nowIso()
     const record: AdminPortalUser = {
@@ -226,13 +236,17 @@ export const adminPortalUserService = {
       teamId: data.teamId,
       departmentId: data.departmentId,
       designation: data.designation.trim(),
+      userType,
       roleTemplateId: data.roleTemplateId || null,
       profilePhotoUrl: data.profilePhotoUrl || null,
       status: data.status,
       lastLoginAt: null,
-      isSuperAdmin: false,
+      isSuperAdmin: userType === 'super_admin',
       passwordSetupType: data.passwordSetupType,
-      permissions: clonePermissions(data.permissions),
+      permissions:
+        userType === 'super_admin'
+          ? superAdminFullPermissions()
+          : clonePermissions(data.permissions),
       createdBy: actor,
       updatedBy: actor,
       createdAt: timestamp,
@@ -256,13 +270,15 @@ export const adminPortalUserService = {
     const index = userStore.findIndex((row) => row.id === id)
     if (index < 0) return undefined
     const existing = userStore[index]
-    if (this.getByEmail(data.email, id)) {
+    if (data.email.trim() && this.getByEmail(data.email, id)) {
       return { error: 'duplicate_email' }
     }
+    const userType = data.userType as AdminPortalUserType
     const actor = getMasterActor()
     const timestamp = nowIso()
+    const isSuperAdmin = userType === 'super_admin'
     const permissionsChanged =
-      !existing.isSuperAdmin && !permissionsEqual(existing.permissions, data.permissions)
+      !isSuperAdmin && !permissionsEqual(existing.permissions, data.permissions)
 
     const updated: AdminPortalUser = {
       ...existing,
@@ -273,11 +289,13 @@ export const adminPortalUserService = {
       teamId: data.teamId,
       departmentId: data.departmentId,
       designation: data.designation.trim(),
+      userType,
       roleTemplateId: data.roleTemplateId || null,
       profilePhotoUrl: data.profilePhotoUrl || null,
       status: data.status,
+      isSuperAdmin,
       passwordSetupType: data.passwordSetupType,
-      permissions: existing.isSuperAdmin
+      permissions: isSuperAdmin
         ? superAdminFullPermissions()
         : clonePermissions(data.permissions),
       updatedBy: actor,

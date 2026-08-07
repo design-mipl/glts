@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Badge, BaseCard, Button, ConfirmDialog, Modal, Tabs, useToast } from '@/design-system/UIComponents'
 import { useAdminSession } from '@/pages/admin/hooks/useAdminSession'
 import { AdminPageHeader } from '@/pages/admin/components/AdminPageHeader'
+import { ADMIN_HOME_HREF } from '@/pages/admin/config/adminDashboards'
 import { useAdminProfileWorkspace } from '../hooks/useAdminProfileWorkspace'
 import type { AdminProfileTabId } from '../types/adminProfileWorkspace'
 
@@ -86,7 +87,7 @@ export function AdminProfileWorkspace() {
         eyebrow="Account"
         title={workspace.account.displayName}
         description={`${workspace.account.team} · ${workspace.account.role}`}
-        breadcrumbs={[{ label: 'Dashboard', href: '/admin' }, { label: 'Your profile' }]}
+        breadcrumbs={[{ label: 'Dashboard', href: ADMIN_HOME_HREF }, { label: 'Your profile' }]}
         meta={<Badge label="Operations portal" color="info" />}
         actions={headerActions}
       />

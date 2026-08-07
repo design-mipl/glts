@@ -35,6 +35,16 @@ export interface AgreementActivity {
   detail: string
 }
 
+/** Meeting minutes / MoM files attached to an agreement (PDF, Word, or any format). */
+export interface AgreementMinute {
+  id: string
+  fileName: string
+  fileType: string
+  fileSizeKb: number
+  uploadedAt: string
+  uploadedBy: string
+}
+
 export interface AgreementEntity {
   id: string
   entityName: string
@@ -149,6 +159,8 @@ export interface CommercialAgreement {
   manualFinanceContacts?: AgreementFinanceContactPerson[]
   selectedFinanceContactIds?: string[]
   documents: AgreementOnboardingDocument[]
+  /** Meeting minutes / MoM uploads (detail Minutes tab). */
+  minutes?: AgreementMinute[]
   createdAt: string
   updatedAt: string
   readyForActivationAt?: string

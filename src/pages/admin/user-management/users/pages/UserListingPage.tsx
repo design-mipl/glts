@@ -55,8 +55,6 @@ export function UserListingPage() {
 
   const openDetail = (row: AdminPortalUser) => navigate(`/admin/user-management/users/${row.id}`)
   const openEdit = (row: AdminPortalUser) => navigate(`/admin/user-management/users/${row.id}/edit`)
-  const openConfigurePermissions = (row: AdminPortalUser) =>
-    navigate(`/admin/user-management/users/${row.id}/permissions`)
   const openCreate = () => navigate('/admin/user-management/users/new')
 
   const openStatusToggle = (row: AdminPortalUser) => {
@@ -75,7 +73,6 @@ export function UserListingPage() {
       buildUserColumns({
         onOpenDetail: openDetail,
         onOpenEdit: openEdit,
-        onConfigurePermissions: openConfigurePermissions,
         onToggleStatus: openStatusToggle,
         onResetPassword: handleResetPassword,
       }),
@@ -156,7 +153,7 @@ export function UserListingPage() {
           <AdminListingToolbar
             searchValue={listing.tableState.searchQuery}
             onSearch={listing.handleSearch}
-            searchPlaceholder="Search user name, email, or team…"
+            searchPlaceholder="Search user name, type, email, or team…"
             onExport={handleExport}
             columns={toolbarColumns}
             hiddenColumnKeys={listing.tableState.hiddenColumnKeys}

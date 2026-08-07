@@ -66,6 +66,7 @@ declare module '@mui/material/styles' {
       styleOverrides?: {
         root?: object | ((props: { theme: Theme }) => object);
         notchedOutline?: object | ((props: { theme: Theme }) => object);
+        sectionsContainer?: object | ((props: { theme: Theme }) => object);
       };
     };
     MuiPickersTextField?: {
@@ -338,6 +339,8 @@ export function generateTheme(mode: ThemeMode): Theme {
             fontSize: FORM_CONTROL.fontSize,
             borderRadius: FORM_CONTROL.borderRadius,
             backgroundColor: formControlFieldBackground(theme),
+            // Match Input/Select — MUI X defaults to `0 14px`
+            padding: `0 ${FORM_CONTROL.paddingX}`,
             '&:hover:not(.Mui-focused):not(.Mui-disabled) .MuiPickersOutlinedInput-notchedOutline': {
               borderColor: formControlBorderHover(theme),
             },
@@ -350,6 +353,9 @@ export function generateTheme(mode: ThemeMode): Theme {
               borderWidth: FORM_CONTROL.borderWidth,
             },
           }),
+          sectionsContainer: {
+            padding: 0,
+          },
         },
       },
 

@@ -119,7 +119,7 @@ export function AgreementListingPage() {
       <AdminListingShell
         stickyPageHeader={
           <AdminListingStickyHeader
-            title="Agreements"
+            title="Clients and Agreements"
             description="Corporate onboarding, finance configuration and commercial agreement management"
             actions={<Button label="Create agreement" startIcon={<Plus size={14} />} onClick={handleCreate} />}
           />

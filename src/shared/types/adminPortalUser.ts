@@ -3,6 +3,22 @@ import type { MasterAuditFields, MasterRecordStatus } from './masterCommon'
 
 export type PasswordSetupType = 'auto_email_invite' | 'manual_password'
 
+export type AdminPortalUserType = 'super_admin' | 'admin' | 'team_leader' | 'staff'
+
+export const ADMIN_PORTAL_USER_TYPE_OPTIONS: { value: AdminPortalUserType; label: string }[] = [
+  { value: 'super_admin', label: 'Super Admin' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'team_leader', label: 'Team Leader' },
+  { value: 'staff', label: 'Staff' },
+]
+
+export const ADMIN_PORTAL_USER_TYPE_LABEL: Record<AdminPortalUserType, string> = {
+  super_admin: 'Super Admin',
+  admin: 'Admin',
+  team_leader: 'Team Leader',
+  staff: 'Staff',
+}
+
 export type AdminPortalUserActivityType =
   | 'login'
   | 'user_update'
@@ -27,6 +43,7 @@ export interface AdminPortalUser extends MasterAuditFields {
   teamId: string
   departmentId: string
   designation: string
+  userType: AdminPortalUserType
   roleTemplateId: string | null
   profilePhotoUrl: string | null
   status: MasterRecordStatus
@@ -45,6 +62,7 @@ export interface AdminPortalUserBasicFormData {
   teamId: string
   departmentId: string
   designation: string
+  userType: AdminPortalUserType | ''
   roleTemplateId: string
   profilePhotoUrl: string
   status: MasterRecordStatus

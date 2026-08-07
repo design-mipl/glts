@@ -29,7 +29,7 @@ export const OPERATIONS_DESK_STATUS_TAB_ITEMS: {
 }[] = [
   { value: 'Pending', label: 'Pending' },
   { value: 'Document Submitted', label: 'Documents submitted' },
-  { value: 'Moved to Next Day', label: 'Moved to Next day' },
+  { value: 'Moved to Next Day', label: 'Moved to next date' },
   { value: 'Collected', label: 'Collected' },
   { value: 'Dispatched', label: 'Dispatched' },
   { value: 'Completed', label: 'Completed' },
@@ -406,7 +406,7 @@ export function getOperationsDeskEmptyState(tab: OperationsDeskStatusTab = 'Pend
       }
     case 'Moved to Next Day':
       return {
-        emptyTitle: 'No cases moved to next day',
+        emptyTitle: 'No cases moved to next date',
         emptyDescription: 'Cases manually moved to the next operational day appear here.',
       }
     case 'Document Submitted':

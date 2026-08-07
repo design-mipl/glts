@@ -1,22 +1,23 @@
 import { Box, Stack, Typography } from '@mui/material'
-import { Pencil, Power, PowerOff, Shield } from 'lucide-react'
+import { Pencil, Power, PowerOff } from 'lucide-react'
 import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
 import { masterStatusColor, masterStatusLabel } from '@/pages/admin/masters/config/masterStatusConfig'
 import { departmentService } from '@/shared/services/departmentService'
 import { teamService } from '@/shared/services/teamService'
-import type { AdminPortalUser } from '@/shared/types/adminPortalUser'
+import {
+  ADMIN_PORTAL_USER_TYPE_LABEL,
+  type AdminPortalUser,
+} from '@/shared/types/adminPortalUser'
 
 interface UserDetailSummaryProps {
   user: AdminPortalUser
   onEdit: () => void
-  onConfigurePermissions: () => void
   onToggleStatus: () => void
 }
 
 export function UserDetailSummary({
   user,
   onEdit,
-  onConfigurePermissions,
   onToggleStatus,
 }: UserDetailSummaryProps) {
   const departmentName = departmentService.getById(user.departmentId)?.name ?? '—'
@@ -33,17 +34,11 @@ export function UserDetailSummary({
                 {user.fullName}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {user.email} · {departmentName} · {teamName} · {user.designation}
+                {ADMIN_PORTAL_USER_TYPE_LABEL[user.userType]} · {user.email || '—'} ·{' '}
+                {departmentName} · {teamName} · {user.designation}
               </Typography>
             </Box>
             <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-              <Button
-                label="Configure permissions"
-                variant="outlined"
-                color="secondary"
-                startIcon={<Shield size={14} />}
-                onClick={onConfigurePermissions}
-              />
               <Button
                 label="Edit user"
                 variant="neutral"
@@ -64,7 +59,9 @@ export function UserDetailSummary({
               label={masterStatusLabel[user.status]}
               color={masterStatusColor[user.status]}
             />
-            {user.isSuperAdmin ? <Badge label="Super Admin" color="info" /> : null}
+            {user.isSuperAdmin || user.userType === 'super_admin' ? (
+              <Badge label="Super Admin" color="info" />
+            ) : null}
           </Stack>
         </Stack>
       </Box>

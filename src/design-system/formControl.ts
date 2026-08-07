@@ -217,9 +217,15 @@ export function autocompleteOutlinedFieldSx(theme: Theme, height: string) {
   }
 }
 
-/** Checkbox, toggle, and other control labels */
+/** Checkbox, toggle, radio, and other control labels */
 export function controlLabelSx(theme: Theme) {
   return {
+    // Flush with headings/labels — cancel control left padding that shifts the glyph
+    ml: 0,
+    pl: 0,
+    '& .MuiCheckbox-root, & .MuiRadio-root': {
+      paddingLeft: 0,
+    },
     '& .MuiFormControlLabel-label': {
       fontSize: FORM_CONTROL.fontSize,
       fontWeight: 500,
@@ -319,6 +325,8 @@ export function pickersOutlinedFieldSx(theme: Theme, height: string) {
       borderRadius: radius,
       backgroundColor: formControlFieldBackground(theme),
       transition: 'border-color 0.2s ease, background-color 0.2s ease',
+      // Override MUI X default `0 14px` to match Input/Select
+      padding: `0 ${FORM_CONTROL.paddingX}`,
     },
     '& .MuiPickersOutlinedInput-notchedOutline': {
       borderColor: borderDefault,
@@ -339,9 +347,10 @@ export function pickersOutlinedFieldSx(theme: Theme, height: string) {
         borderColor: theme.palette.error.main,
         borderWidth: FORM_CONTROL.borderWidth,
       },
-    '& .MuiPickersSectionList-root': {
+    // Sections inherit root padding — don't double it
+    '& .MuiPickersSectionList-root, & .MuiPickersInputBase-sectionsContainer': {
       fontSize: FORM_CONTROL.fontSize,
-      padding: `0 ${FORM_CONTROL.paddingX}`,
+      padding: 0,
     },
     '& .MuiFormHelperText-root': {
       fontSize: FORM_CONTROL.helperFontSize,

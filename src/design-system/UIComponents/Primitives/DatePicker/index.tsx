@@ -63,7 +63,8 @@ export default function DatePicker({
         fontSize: FORM_CONTROL.fontSize,
       },
       '& .MuiInputAdornment-root': {
-        marginRight: '4px',
+        marginRight: 0,
+        marginLeft: 0,
       },
     },
     ...(fullWidth ? [pickersFullWidthSx()] : []),
@@ -105,7 +106,7 @@ export default function DatePicker({
             },
             openPickerButton: {
               size: 'small',
-              sx: { color: 'text.secondary', mr: 0.5 },
+              sx: { color: 'text.secondary', p: 0.5, mr: -0.5 },
             },
             desktopPaper: {
               sx: {

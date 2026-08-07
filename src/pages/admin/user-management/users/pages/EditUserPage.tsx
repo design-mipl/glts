@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { EmptyState } from '@/design-system/UIComponents'
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
 import { AdminPortalUserFormPage } from './AdminUserFormPage'
@@ -31,4 +31,13 @@ export function EditUserPage() {
       cancelHref={`/admin/user-management/users/${user.id}`}
     />
   )
+}
+
+/** Legacy configure-permissions URL → combined edit page. */
+export function UserPermissionConfigurationPage() {
+  const { userId } = useParams<{ userId: string }>()
+  if (!userId) {
+    return <Navigate to="/admin/user-management/users" replace />
+  }
+  return <Navigate to={`/admin/user-management/users/${userId}/edit`} replace />
 }

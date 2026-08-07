@@ -7,9 +7,9 @@ import type { AdminUserPermissions } from '@/shared/types/adminPermission'
 import {
   isModuleAllPermissions,
   isModuleViewOnly,
-  isSubmoduleActionDisabled,
+  isTabActionDisabled,
   setModulePreset,
-  toggleSubmoduleAction,
+  toggleTabAction,
 } from '@/shared/utils/adminPermissionEngine'
 
 interface UserPermissionAccordionProps {
@@ -24,11 +24,16 @@ export function UserPermissionAccordion({
   readOnly = false,
 }: UserPermissionAccordionProps) {
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
-    masters: true,
+    application_management: true,
   })
+  const [expandedSubmodules, setExpandedSubmodules] = useState<Record<string, boolean>>({})
 
   const toggleExpanded = (moduleId: string) => {
     setExpandedModules((prev) => ({ ...prev, [moduleId]: !prev[moduleId] }))
+  }
+
+  const toggleSubmoduleExpanded = (key: string) => {
+    setExpandedSubmodules((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
   return (
@@ -74,7 +79,13 @@ export function UserPermissionAccordion({
 
             <Collapse in={expanded}>
               <Box sx={{ px: { xs: 1.5, sm: 2 }, py: 2 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 1 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  fontWeight={600}
+                  display="block"
+                  sx={{ mb: 1 }}
+                >
                   Module level
                 </Typography>
                 <Stack direction="row" spacing={2} sx={{ mb: 2, flexWrap: 'wrap' }}>
@@ -102,64 +113,161 @@ export function UserPermissionAccordion({
                   />
                 </Stack>
 
-                <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 1 }}>
-                  Submodules
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  fontWeight={600}
+                  display="block"
+                  sx={{ mb: 1 }}
+                >
+                  Submodules & tabs
                 </Typography>
-                <Stack spacing={1.5}>
+                <Stack spacing={1}>
                   {mod.submodules.map((sub) => {
-                    const subState = state.submodules[sub.id] ?? {
-                      create: false,
-                      view: false,
-                      update: false,
-                    }
+                    const subKey = `${mod.id}:${sub.id}`
+                    const subExpanded = expandedSubmodules[subKey] ?? true
+                    const subState = state.submodules[sub.id]
+                    const singleTab = sub.tabs.length === 1
+
                     return (
                       <Box
                         key={sub.id}
                         sx={{
-                          display: 'grid',
-                          gridTemplateColumns: { xs: '1fr', sm: '180px 1fr' },
-                          gap: 1,
-                          alignItems: 'center',
-                          py: 0.5,
-                          borderTop: 1,
+                          border: 1,
                           borderColor: 'divider',
+                          borderRadius: 1.5,
+                          overflow: 'hidden',
                         }}
                       >
-                        <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-                          {sub.label}
-                        </Typography>
-                        <Stack direction="row" spacing={1.5} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                          <Checkbox
-                            label="Create"
-                            checked={subState.create}
-                            disabled={readOnly || isSubmoduleActionDisabled(subState, 'create')}
-                            onChange={(checked) =>
-                              onChange(
-                                toggleSubmoduleAction(permissions, mod.id, sub.id, 'create', checked),
-                              )
-                            }
-                          />
-                          <Checkbox
-                            label="View"
-                            checked={subState.view}
-                            disabled={readOnly}
-                            onChange={(checked) =>
-                              onChange(
-                                toggleSubmoduleAction(permissions, mod.id, sub.id, 'view', checked),
-                              )
-                            }
-                          />
-                          <Checkbox
-                            label="Update/Edit"
-                            checked={subState.update}
-                            disabled={readOnly || isSubmoduleActionDisabled(subState, 'update')}
-                            onChange={(checked) =>
-                              onChange(
-                                toggleSubmoduleAction(permissions, mod.id, sub.id, 'update', checked),
-                              )
-                            }
-                          />
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={1}
+                          sx={{
+                            px: 1.5,
+                            py: 1,
+                            cursor: singleTab ? 'default' : 'pointer',
+                            bgcolor: 'action.hover',
+                          }}
+                          onClick={() => {
+                            if (!singleTab) toggleSubmoduleExpanded(subKey)
+                          }}
+                        >
+                          {!singleTab ? (
+                            <ChevronDown
+                              size={16}
+                              style={{
+                                transform: subExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                transition: 'transform 0.2s',
+                              }}
+                            />
+                          ) : null}
+                          <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+                            {sub.label}
+                          </Typography>
                         </Stack>
+
+                        <Collapse in={singleTab || subExpanded}>
+                          <Stack spacing={1} sx={{ px: 1.5, py: 1.25 }}>
+                            {sub.tabs.map((tab) => {
+                              const tabState = subState?.tabs[tab.id] ?? {
+                                create: false,
+                                view: false,
+                                update: false,
+                              }
+                              return (
+                                <Box
+                                  key={tab.id}
+                                  sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: {
+                                      xs: '1fr',
+                                      sm: singleTab ? '1fr' : 'minmax(140px, 220px) 1fr',
+                                    },
+                                    gap: 1,
+                                    alignItems: 'center',
+                                    py: 0.5,
+                                    borderTop: singleTab ? 0 : 1,
+                                    borderColor: 'divider',
+                                    '&:first-of-type': { borderTop: 0 },
+                                  }}
+                                >
+                                  {!singleTab ? (
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                      sx={{ fontSize: 12, pl: { sm: 0.5 } }}
+                                    >
+                                      {tab.label}
+                                    </Typography>
+                                  ) : null}
+                                  <Stack
+                                    direction="row"
+                                    spacing={1.5}
+                                    useFlexGap
+                                    sx={{ flexWrap: 'wrap' }}
+                                  >
+                                    <Checkbox
+                                      label="Create"
+                                      checked={tabState.create}
+                                      disabled={
+                                        readOnly || isTabActionDisabled(tabState, 'create')
+                                      }
+                                      onChange={(checked) =>
+                                        onChange(
+                                          toggleTabAction(
+                                            permissions,
+                                            mod.id,
+                                            sub.id,
+                                            tab.id,
+                                            'create',
+                                            checked,
+                                          ),
+                                        )
+                                      }
+                                    />
+                                    <Checkbox
+                                      label="View"
+                                      checked={tabState.view}
+                                      disabled={readOnly}
+                                      onChange={(checked) =>
+                                        onChange(
+                                          toggleTabAction(
+                                            permissions,
+                                            mod.id,
+                                            sub.id,
+                                            tab.id,
+                                            'view',
+                                            checked,
+                                          ),
+                                        )
+                                      }
+                                    />
+                                    <Checkbox
+                                      label="Update"
+                                      checked={tabState.update}
+                                      disabled={
+                                        readOnly || isTabActionDisabled(tabState, 'update')
+                                      }
+                                      onChange={(checked) =>
+                                        onChange(
+                                          toggleTabAction(
+                                            permissions,
+                                            mod.id,
+                                            sub.id,
+                                            tab.id,
+                                            'update',
+                                            checked,
+                                          ),
+                                        )
+                                      }
+                                    />
+                                  </Stack>
+                                </Box>
+                              )
+                            })}
+                          </Stack>
+                        </Collapse>
                       </Box>
                     )
                   })}

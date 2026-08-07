@@ -65,12 +65,15 @@ export const ADMIN_DASHBOARDS: LegacyDashboardDefinition[] = [
   },
 ]
 
+/** Default admin landing — Super Admin dashboard (next). */
+export const ADMIN_HOME_HREF = '/admin/dashboard-next/super-admin'
+
 /** Dashboard Next module submodules. */
 export const ADMIN_DASHBOARD_NEXT: DashboardNextDefinition[] = [
   {
     id: 'super-admin',
     label: 'Super Admin',
-    href: '/admin/dashboard-next/super-admin',
+    href: ADMIN_HOME_HREF,
     title: 'Super Admin dashboard (next)',
     description: 'Next-generation platform administration workspace.',
     status: 'live',
