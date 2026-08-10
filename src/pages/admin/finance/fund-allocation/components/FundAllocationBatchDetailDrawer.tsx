@@ -1,5 +1,4 @@
 import { Box, Divider, Stack, Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import { Drawer, Badge } from '@/design-system/UIComponents'
 import {
   getFundTransferTypeLabel,
@@ -13,14 +12,9 @@ import {
   fundAllocationStatusBadgeColor,
   fundAllocationStatusLabel,
 } from '../config/fundAllocationStatusConfig'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 const DETAIL_DRAWER_WIDTH = 560
-
-function formatDisplayDateTime(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim())
-  return parsed.isValid() ? parsed.format('DD MMM YYYY, HH:mm') : value
-}
 
 function MetaItem({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (

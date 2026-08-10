@@ -184,7 +184,7 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
   const detailsDescription = isAdmin
     ? 'Select the company / customer first, then choose billing entity and vessel from that account’s masters.'
     : isMarine
-      ? 'Select a vessel and billing entity from your master lists, and optionally add a PO number/CID number.'
+      ? 'Select a vessel and billing entity from your master lists, and optionally add a PO / CID / Compass No.'
       : isCorporate
         ? 'Select an entity from your master list to auto-fill corporate billing details.'
         : 'Select billing entity and vessel from your master lists, or leave optional fields blank.'
@@ -263,11 +263,11 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
           {isMarine && (
             <>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <FormField label="PO number/CID number" optional>
+                <FormField label="PO / CID / Compass No." optional>
                   <Input
                     fullWidth
                     size="sm"
-                    placeholder="e.g. PO-2026-0142 or CID-12345"
+                    placeholder="e.g. PO-2026-0142, CID-12345, or Compass No."
                     value={state.referencePo}
                     onChange={value => onUpdate({ referencePo: value })}
                   />
@@ -346,11 +346,11 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
           {!isCorporate && !isMarine && (
             <>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <FormField label="Reference PO" optional>
+                <FormField label="PO / CID / Compass No." optional>
                   <Input
                     fullWidth
                     size="sm"
-                    placeholder="e.g. PO-2026-0142"
+                    placeholder="e.g. PO-2026-0142, CID-12345, or Compass No."
                     value={state.referencePo}
                     onChange={value => onUpdate({ referencePo: value })}
                   />

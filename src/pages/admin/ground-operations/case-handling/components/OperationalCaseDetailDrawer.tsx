@@ -17,6 +17,7 @@ import { operationalCaseHandlingService } from '@/shared/services/operationalCas
 import { ApplicationTrackingUrlLink } from '@/shared/components/ApplicationTrackingUrlLink'
 import { resolveApplicationTrackingUrl } from '@/shared/services/countryMasterService'
 import { priorityBadgeColor, statusBadgeColor, formatJoiningDate, resolveOperationalCaseAssignmentFields } from '../utils/operationalCaseHandlingUtils'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { GroundServicesChecklist } from './GroundServicesChecklist'
 import { ApplicationFeePaidByField } from './ApplicationFeePaidByField'
 import { OnSiteFeeDocumentsSection } from './OnSiteFeeDocumentsSection'
@@ -206,12 +207,6 @@ function parseDateString(value: string | undefined): Date | null {
 function formatDateForStorage(date: Date | null): string {
   if (!date) return ''
   return dayjs(date).format('YYYY-MM-DD')
-}
-
-function formatDisplayDate(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY'], true)
-  return parsed.isValid() ? parsed.format('DD MMM YYYY') : value
 }
 
 function OperationalCaseDetailContent({

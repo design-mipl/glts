@@ -1,4 +1,5 @@
 import type { VesselMaster } from '@/shared/types/vesselMaster'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { vesselStatusLabel, vesselTypeLabel } from '../config/vesselTypeConfig'
 
 export function getVesselCellValue(row: VesselMaster, key: string): string {
@@ -21,12 +22,7 @@ export function matchesVesselSearch(row: VesselMaster, query: string): boolean {
 }
 
 export function formatVesselDate(iso: string): string {
-  if (!iso) return '--'
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  return formatDisplayDate(iso)
 }
 
 export function mapVesselRowsToGridItems(rows: VesselMaster[]) {

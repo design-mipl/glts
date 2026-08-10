@@ -60,6 +60,7 @@ export function matchesListingSearch(row: ApplicationListingRow, query: string):
   if (company.includes(s)) return true
   const vessel = resolveApplicationVesselName(row).toLowerCase()
   if (vessel !== '—' && vessel.includes(s)) return true
+  if (row.poReference?.toLowerCase().includes(s)) return true
 
   if (isBulkRow(row)) {
     return (

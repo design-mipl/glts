@@ -7,6 +7,7 @@ import {
   billingTypeLabel,
   workflowTypeLabel,
 } from '../config/agreementStatusConfig'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 export interface AgreementAdvancedFilterState {
   agreementType: string
@@ -93,7 +94,7 @@ export function getAgreementCellValue(record: CommercialAgreement, columnKey: st
     case 'status':
       return agreementStatusLabel[record.status]
     case 'updatedAt':
-      return new Date(record.updatedAt).toLocaleDateString()
+      return formatDisplayDateTime(record.updatedAt)
     default:
       return ''
   }

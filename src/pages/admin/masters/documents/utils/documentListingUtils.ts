@@ -1,4 +1,6 @@
 import type { DocumentMaster } from '@/shared/types/documentMaster'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
+
 import { richTextToPlainText } from '@/shared/utils/richTextUtils'
 import { documentStatusLabel } from '../config/documentStatusConfig'
 
@@ -25,12 +27,7 @@ export function matchesDocumentSearch(row: DocumentMaster, query: string): boole
 }
 
 export function formatDocumentDate(iso: string): string {
-  if (!iso) return '--'
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  return formatDisplayDate(iso)
 }
 
 export function mapDocumentRowsToGridItems(rows: DocumentMaster[]) {

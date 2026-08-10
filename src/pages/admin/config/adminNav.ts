@@ -72,6 +72,7 @@ export const adminNav: NavConfig[] = [
       { type: 'item', label: 'Billing & invoice', href: '/admin/finance/invoices' },
       { type: 'item', label: 'Vendor billing', href: '/admin/finance/vendor-billing' },
       { type: 'item', label: 'Fund allocation', href: '/admin/finance/fund-allocation' },
+      { type: 'item', label: 'Reconciliation', href: '/admin/finance/reconciliation' },
     ],
   },
   {

@@ -1,5 +1,4 @@
 import { Box, Stack, Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import { Badge, EmptyState } from '@/design-system/UIComponents'
 import {
   getFundTransferTypeLabel,
@@ -8,17 +7,12 @@ import {
 import { resolveCardLabel } from '@/shared/utils/cardMasterOptions'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { customerSegmentDisplayLabel } from '@/pages/admin/finance/fund-allocation/config/fundAllocationStatusConfig'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface FundUtilizationCardListProps {
   batches: FundAllocationBatchRow[]
   selectedId?: string | null
   onSelect: (batch: FundAllocationBatchRow) => void
-}
-
-function formatDisplayDateTime(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim())
-  return parsed.isValid() ? parsed.format('DD MMM YYYY, HH:mm') : value
 }
 
 function formatAmount(value: number | undefined): string {

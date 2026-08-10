@@ -1,4 +1,5 @@
 import { operationalCaseHandlingService } from '@/shared/services/operationalCaseHandlingService'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import type { OperationalCase } from '@/shared/types/operationalCaseHandling'
 import type { CourierTrackingData } from '../widgets/ground/GroundWidgets'
 
@@ -28,15 +29,7 @@ export function isLogisticsInTransitCase(record: OperationalCase): boolean {
 }
 
 function formatDispatchEta(dispatchDateTime: string | undefined): string {
-  if (!dispatchDateTime?.trim()) return '—'
-  const date = new Date(dispatchDateTime)
-  if (Number.isNaN(date.getTime())) return dispatchDateTime
-  return date.toLocaleString(undefined, {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return formatDisplayDateTime(dispatchDateTime)
 }
 
 export function mapOperationalCaseToInTransitRow(

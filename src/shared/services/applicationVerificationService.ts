@@ -1,6 +1,5 @@
 import {
   GLTS_BATCH_IDS,
-  MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID,
   mockBulkBatches,
   mockSingleApplications,
   type ApplicantDocumentItem,
@@ -9,6 +8,7 @@ import {
   type SingleApplicationRow,
   type UploadQueueRow,
 } from '@/pages/customer/features/applications/data/applicationFlowData'
+import { getGltsArrangedDocumentDemoSeed } from '@/pages/customer/features/applications/data/gltsArrangedDocumentDemoConfig'
 import { GLTS_APPLICATION_IDS } from '@/pages/customer/data/portalIds'
 import type { ApplicationOperationalStatus } from '@/pages/customer/features/applications/types/applicationListing.types'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
@@ -294,47 +294,26 @@ function getDemoVerificationSeeds(applicationId: string): VerificationDocumentOv
 }
 
 function getDemoWorkflowPatches(applicationId: string): VerificationDocumentWorkflowPatch[] | undefined {
+  const seed = getGltsArrangedDocumentDemoSeed(applicationId)
+  if (!seed) return undefined
+
   const updatedAt = new Date().toISOString()
+  const documentIds = seed.documentIds ?? (['travel-ticket', 'insurance'] as const)
+  const travelerIndices = seed.travelerIndices ?? [0]
 
-  if (applicationId === GLTS_BATCH_IDS.schengenCrew) {
-    return [
-      {
-        scope: 'traveler',
-        travelerRowId: 'q1',
-        documentId: 'travel-ticket',
-        handlingMode: 'arrange_by_glts',
-        updatedAt,
-      },
-      {
-        scope: 'traveler',
-        travelerRowId: 'q1',
-        documentId: 'insurance',
-        handlingMode: 'arrange_by_glts',
-        updatedAt,
-      },
-    ]
-  }
-
-  if (applicationId === MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID) {
-    return [
-      {
-        scope: 'traveler',
-        travelerRowId: `${MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID}-q1`,
-        documentId: 'travel-ticket',
-        handlingMode: 'arrange_by_glts',
-        updatedAt,
-      },
-      {
-        scope: 'traveler',
-        travelerRowId: `${MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID}-q1`,
-        documentId: 'insurance',
-        handlingMode: 'arrange_by_glts',
-        updatedAt,
-      },
-    ]
-  }
-
-  return undefined
+  return travelerIndices.flatMap(index => {
+    const sequenceNo = index + 1
+    // Matches UploadQueueRow.id for singles/generic bulk, and
+    // `${gltsApplicationId}-q${sequenceNo}` for schengen-crew mock queue rows.
+    const travelerRowId = `${applicationId}-q${sequenceNo}`
+    return documentIds.map(documentId => ({
+      scope: 'traveler' as const,
+      travelerRowId,
+      documentId,
+      handlingMode: 'arrange_by_glts' as const,
+      updatedAt,
+    }))
+  })
 }
 
 function travelerPatchMatchesRow(

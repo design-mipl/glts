@@ -3,6 +3,7 @@ import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import type { Vendor } from '@/shared/types/vendor'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { paymentTermsLabel } from '../config/paymentTermsConfig'
 import { vendorCategoryColor, vendorCategoryLabel } from '../config/vendorCategoryConfig'
 import { vendorStatusColor, vendorStatusLabel, vendorTypeLabel } from '../config/vendorStatusConfig'
@@ -100,7 +101,7 @@ export function buildVendorColumns({
       label: 'Last Updated',
       widthSize: 'md',
       sortable: true,
-      render: (_, row) => new Date(row.updatedAt).toLocaleDateString(),
+      render: (_, row) => formatDisplayDateTime(row.updatedAt),
     },
     {
       key: 'actions',

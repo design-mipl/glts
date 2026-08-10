@@ -1,5 +1,4 @@
 import { Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import { Check, Eye, X } from 'lucide-react'
 import { Badge, RowActions, type Column, type RowAction } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
@@ -10,6 +9,7 @@ import {
   getClaimSheetFundTransferLabel,
   isClaimSheetBankTransferKpis,
 } from '@/shared/types/groundOpsClaimSheet'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
   formatSettlementAmountLabel,
@@ -24,9 +24,7 @@ export interface FundAllocationClaimSheetTableColumnsParams {
 }
 
 function formatGeneratedAt(value: string): string {
-  if (!value.trim()) return '—'
-  const parsed = dayjs(value)
-  return parsed.isValid() ? parsed.format('DD MMM YYYY, HH:mm') : value
+  return formatDisplayDateTime(value)
 }
 
 function AmountCell({

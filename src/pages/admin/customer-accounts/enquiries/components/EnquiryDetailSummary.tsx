@@ -4,6 +4,7 @@ import { BaseCard, Badge, Button } from '@/design-system/UIComponents'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
 import { canConvertLeadToQuotation } from '@/shared/config/clientManagementPipelineConfig'
 import { enquiryStatusColor, enquiryStatusLabel } from '../config/enquiryStatusConfig'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 interface EnquiryDetailSummaryProps {
   enquiry: EnquiryRecord
@@ -12,9 +13,7 @@ interface EnquiryDetailSummaryProps {
 }
 
 export function EnquiryDetailSummary({ enquiry, onEdit, onConvert }: EnquiryDetailSummaryProps) {
-  const enquiryDate = enquiry.enquiryDate
-    ? new Date(enquiry.enquiryDate).toLocaleDateString()
-    : '--'
+  const enquiryDate = formatDisplayDate(enquiry.enquiryDate)
   const canConvert = canConvertLeadToQuotation(enquiry.status)
 
   return (

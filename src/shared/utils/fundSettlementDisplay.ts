@@ -1,3 +1,4 @@
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 
 export type SettlementAmountTone = 'reimburse' | 'return' | 'settled'
@@ -59,18 +60,12 @@ export function getSettlementAmountHint(
   return 'GLTS reimburses the executive'
 }
 
-/** Short day label for reconciliation rows, e.g. `23 Jul`. */
+/** Short day label for reconciliation rows. */
 export function formatSettlementDayLabel(dateKey: string): string {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return dateKey
-  const [y, m, d] = dateKey.split('-').map(Number)
-  const date = new Date(y, m - 1, d)
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  return formatDisplayDate(dateKey)
 }
 
-/** Longer header label, e.g. `24 Jul 2026`. */
+/** Longer header label for settlement drawer / summary headers. */
 export function formatSettlementHeaderDate(dateKey: string): string {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return dateKey
-  const [y, m, d] = dateKey.split('-').map(Number)
-  const date = new Date(y, m - 1, d)
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  return formatDisplayDate(dateKey)
 }

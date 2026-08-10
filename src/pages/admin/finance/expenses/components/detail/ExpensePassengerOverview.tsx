@@ -1,6 +1,5 @@
 import { useMemo, type ReactNode } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import {
   mockBulkBatches,
   mockSingleApplications,
@@ -17,12 +16,7 @@ import { operationalCaseHandlingService } from '@/shared/services/operationalCas
 import { operationalPassengerAssignmentService } from '@/shared/services/operationalPassengerAssignmentService'
 import type { ApplicationExpenseDetailView } from '@/shared/types/applicationExpenseManagement'
 import type { OperationalPassengerRow } from '@/shared/types/operationalPassengerAssignment'
-
-function formatDisplayDate(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY', 'DD MMM YYYY'], true)
-  return parsed.isValid() ? parsed.format('DD MMM YYYY') : value
-}
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 function SectionHeading({ children }: { children: string }) {
   return (

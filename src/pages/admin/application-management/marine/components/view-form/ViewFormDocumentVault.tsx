@@ -11,6 +11,7 @@ import {
   downloadVaultDocument,
   type DocumentVaultItem,
 } from '../../utils/applicationDocumentVaultUtils'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 interface ViewFormDocumentVaultProps {
   applicationId: string
@@ -63,7 +64,7 @@ function VaultRow({
         <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, wordBreak: 'break-all' }}>
           {item.fileName}
           {item.uploadedAt
-            ? ` · Uploaded ${new Date(item.uploadedAt).toLocaleDateString()}`
+            ? ` · Uploaded ${formatDisplayDate(item.uploadedAt)}`
             : item.travelerName
               ? ` · ${item.travelerName}`
               : ''}

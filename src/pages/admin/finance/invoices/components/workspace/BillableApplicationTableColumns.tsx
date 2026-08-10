@@ -18,6 +18,7 @@ import {
 import {
   getBillableCustomerSegmentLabel,
 } from '../../utils/billableApplicationSelectionUtils'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 function PaxNameCell({ row }: { row: ApplicationListingRow }) {
   if (row.recordType !== 'bulk') {
@@ -108,7 +109,7 @@ function buildColumns(): Column<ApplicationListingRow>[] {
       label: 'Online Submission Date',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      render: (_, row) => row.submissionDate?.trim() || '—',
+      render: (_, row) => formatDisplayDate(row.submissionDate),
     },
     {
       key: 'billingEntity',

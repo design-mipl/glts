@@ -18,6 +18,7 @@ import {
   workflowTypeColor,
   workflowTypeLabel,
 } from '../../../agreements/config/agreementStatusConfig'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function resolveAssignedTeamName(account: CorporateAccount) {
   return account.assignedTeamId ? teamService.getById(account.assignedTeamId)?.name ?? '—' : '—'
@@ -458,7 +459,7 @@ export function ActivityTab({ account }: { account: CorporateAccount }) {
         <Typography variant="body2" color="text.secondary">No activity yet.</Typography>
       ) : (
         account.activities.map((act) => (
-          <Typography key={act.id} variant="body2" color="text.secondary">{act.action} · {act.detail} · {new Date(act.timestamp).toLocaleString()}</Typography>
+          <Typography key={act.id} variant="body2" color="text.secondary">{act.action} · {act.detail} · {formatDisplayDateTime(act.timestamp)}</Typography>
         ))
       )}
     </Stack>

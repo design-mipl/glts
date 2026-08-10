@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { PublicWebsiteApp } from '@/pages/website/App'
+import { PublicWebsiteV2App } from '@/pages/website-v2/App'
 import { RetailPortalApp } from '@/pages/customer/RetailApp'
 import { B2BCustomerApp } from '@/pages/customer/BusinessApp'
 import { AdminPortalApp } from '@/pages/admin/App'
@@ -27,6 +28,12 @@ export function PageRouter() {
       <Route path="/admin">
         <Route index element={<AdminPortalApp />} />
         <Route path="*" element={<AdminPortalApp />} />
+      </Route>
+
+      {/* Public Website v2 — alternate marketing site (full page set under /v2) */}
+      <Route path="/v2">
+        <Route index element={<PublicWebsiteV2App />} />
+        <Route path="*" element={<PublicWebsiteV2App />} />
       </Route>
 
       {/* Public Website — everything else */}

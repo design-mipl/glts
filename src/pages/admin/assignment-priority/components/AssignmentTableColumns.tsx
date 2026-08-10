@@ -17,6 +17,7 @@ import {
 } from '../config/assignmentPriorityConfig'
 import { passengerStatusBadgeColor, passengerStatusLabel } from '../config/assignmentStatusConfig'
 import { formatSlaTimer, isSlaAtRisk } from '../utils/assignmentQueueListingUtils'
+import { formatDisplayDate, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import type { AssignmentAdminAction } from './AssignmentActionMenu'
 import { ASSIGN_USER_VENDOR_ACTION_LABEL } from '../config/assignmentActionConfig'
 import { AssignmentFundStatusCell } from './AssignmentFundStatusCell'
@@ -80,15 +81,6 @@ function buildRowActions(
   ]
 }
 
-function formatUpdated(iso: string): string {
-  return new Date(iso).toLocaleString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
 export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams): Column<OperationalPassengerRow>[] {
   return [
     {
@@ -146,6 +138,7 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
       label: 'Travel Date',
       widthSize: 'md',
       sortable: true,
+      render: (_, row) => formatDisplayDate(row.travelDate),
     },
     {
       key: 'assignedTeam',
@@ -164,6 +157,7 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
       label: 'Operational Date',
       widthSize: 'md',
       sortable: true,
+      render: (_, row) => formatDisplayDate(row.operationalDate),
     },
     {
       key: 'passengerStatus',
@@ -215,7 +209,7 @@ export function buildAssignmentTableColumns(params: AssignmentTableColumnsParams
       sortable: true,
       render: (_value, row: OperationalPassengerRow) => (
         <Typography variant="body2" color="text.secondary" noWrap>
-          {formatUpdated(row.lastUpdated)}
+          {formatDisplayDateTime(row.lastUpdated)}
         </Typography>
       ),
     },

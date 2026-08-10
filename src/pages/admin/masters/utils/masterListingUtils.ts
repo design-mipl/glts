@@ -1,8 +1,5 @@
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
+
 export function formatMasterDate(iso: string): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  return formatDisplayDate(iso)
 }

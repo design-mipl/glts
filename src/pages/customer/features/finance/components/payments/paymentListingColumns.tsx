@@ -5,6 +5,7 @@ import type { Toast } from '@/design-system/UIComponents'
 import { Badge } from '@/design-system/UIComponents'
 import type { CustomerPaymentRow } from '../../types/customerFinance.types'
 import { FinanceAmountCell } from '../shared/FinanceAmountCell'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 type ToastFn = (toast: Omit<Toast, 'id'>) => void
 
@@ -20,7 +21,7 @@ export function buildPaymentListingColumns({
   showToast,
 }: PaymentListingColumnsParams): Column<CustomerPaymentRow>[] {
   return [
-    { key: 'paymentDate', label: 'Payment Date', sortable: true, width: 120 },
+    { key: 'paymentDate', label: 'Payment Date', sortable: true, width: 120, render: (_, row) => formatDisplayDate(row.paymentDate) },
     {
       key: 'receiptNumber',
       label: 'Receipt Number',

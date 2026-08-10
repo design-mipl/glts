@@ -5,8 +5,6 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
-import dayjs from 'dayjs'
-import customParseFormat from 'dayjs/plugin/customParseFormat'
 import {
   Button,
   Drawer,
@@ -21,19 +19,10 @@ import { groundOpsClaimSheetService } from '@/shared/services/groundOpsClaimShee
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import type { OperationalCase } from '@/shared/types/operationalCaseHandling'
 import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { ClaimSheetDetailBody } from './ClaimSheetDetailBody'
 
-dayjs.extend(customParseFormat)
-
 const DRAWER_WIDTH = 640
-
-function formatDisplayDate(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY'], true)
-  if (parsed.isValid()) return parsed.format('DD MMM YYYY')
-  const fallback = dayjs(value.trim())
-  return fallback.isValid() ? fallback.format('DD MMM YYYY') : value
-}
 
 interface OtherExpenseDraft {
   id: string

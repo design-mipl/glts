@@ -1,4 +1,5 @@
 import type { Column } from '@/design-system/UIComponents'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import type { OperationsDashboardData, OperationsWorkRow, OpsSegmentKey } from '../types'
 
 export type OpsReportTypeId =
@@ -107,13 +108,6 @@ function addDays(d: Date, days: number): Date {
   const next = new Date(d)
   next.setDate(next.getDate() + days)
   return next
-}
-
-function formatDisplayDate(d: Date): string {
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const yyyy = d.getFullYear()
-  return `${dd}/${mm}/${yyyy}`
 }
 
 export function resolveOpsReportRange(

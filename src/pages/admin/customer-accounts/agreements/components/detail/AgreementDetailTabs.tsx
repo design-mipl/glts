@@ -4,6 +4,7 @@ import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import { deriveAdvanceRuleSummary } from '@/shared/utils/commercialAgreementValidation'
 import { formatAgreementDate } from '../../utils/agreementFormUtils'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import {
   agreementTypeLabel,
   billingTypeLabel,
@@ -245,7 +246,7 @@ export function ActivityTab({ agreement }: TabProps) {
               {act.action}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {act.detail} · {new Date(act.timestamp).toLocaleString()} · {act.actor}
+              {act.detail} · {formatDisplayDateTime(act.timestamp)} · {act.actor}
             </Typography>
           </Stack>
         ))

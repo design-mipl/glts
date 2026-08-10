@@ -9,6 +9,7 @@ import {
 } from '@/shared/types/applicationProcessingTimeline'
 import type { WorkflowMaster, WorkflowStatusStep } from '@/shared/types/workflowMaster'
 import { resolveApplicationWorkflow } from '@/shared/utils/countryWorkflowUtils'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 export interface BuildApplicationProcessingTimelineInput {
   stageDates?: ApplicationProcessingStageDates
@@ -43,13 +44,8 @@ export interface ProcessingStageDateSource {
 
 export function formatProcessingStageDate(iso?: string): string | undefined {
   if (!iso?.trim()) return undefined
-  const parsed = new Date(iso)
-  if (Number.isNaN(parsed.getTime())) return iso
-  return parsed.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  const formatted = formatDisplayDate(iso)
+  return formatted === '—' ? undefined : formatted
 }
 
 export function deriveProcessingStageDates(

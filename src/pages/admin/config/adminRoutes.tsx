@@ -96,6 +96,7 @@ import {
   VendorBillingListingPage,
 } from '../finance/vendor-billing'
 import { FundAllocationListingPage } from '../finance/fund-allocation'
+import { ReconciliationListingPage } from '../finance/reconciliation'
 import { TeamDetailPage, TeamListingPage } from '../user-management/teams'
 import {
   DepartmentDetailPage,
@@ -729,6 +730,14 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <FundAllocationListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="finance/reconciliation"
+        element={
+          <PermissionGuard>
+            <ReconciliationListingPage />
           </PermissionGuard>
         }
       />

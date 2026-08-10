@@ -1,5 +1,6 @@
 import type { BusinessSegment, CountryMaster } from '@/shared/types/countryMaster'
 import { countryMasterAdminService } from '@/shared/services/countryMasterAdminService'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import {
   COUNTRY_STATUS_LABELS,
   PROCESSING_TYPE_LABELS,
@@ -57,12 +58,7 @@ export function matchesCountrySearch(row: CountryMaster, query: string): boolean
 }
 
 export function formatCountryDate(iso: string): string {
-  if (!iso) return '--'
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  return formatDisplayDate(iso)
 }
 
 export function mapCountryRowsToGridItems(

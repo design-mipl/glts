@@ -1,11 +1,12 @@
 import { Badge, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { AppointmentSubmissionRow } from '../../data/operationsConsultantDashboardMock'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 export function buildAppointmentSubmissionColumns(): Column<AppointmentSubmissionRow>[] {
   return [
     { key: 'applicant', label: 'Applicant', widthSize: adminListingColumnWidthSize('name'), hideable: false },
-    { key: 'appointmentDate', label: 'Appointment Date', widthSize: adminListingColumnWidthSize('date') },
+    { key: 'appointmentDate', label: 'Appointment Date', widthSize: adminListingColumnWidthSize('date'), render: (_, row) => formatDisplayDate(row.appointmentDate) },
     { key: 'country', label: 'Country', widthSize: adminListingColumnWidthSize('country') },
     { key: 'vfsLocation', label: 'VFS Location', widthSize: adminListingColumnWidthSize('jurisdiction') },
     {

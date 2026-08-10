@@ -4,13 +4,10 @@ import { Button, useToast } from '@/design-system/UIComponents'
 import { BORDER_RADIUS, BORDER_WIDTH } from '@/design-system/tokens'
 import { publicShadows, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { PORTAL_USER_GUIDES, type PortalUserGuideFormat } from '../data/portalUserGuides'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 function formatGuideDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatDisplayDate(iso)
 }
 
 function GuideFormatIcon({ format }: { format: PortalUserGuideFormat }) {

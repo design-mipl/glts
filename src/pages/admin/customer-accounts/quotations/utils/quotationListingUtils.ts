@@ -1,5 +1,6 @@
 import type { QuotationRecord } from '@/shared/types/quotation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { getCurrentVersion } from '@/shared/utils/quotationValidation'
 import {
   quotationPipelineStatusLabel,
@@ -88,7 +89,7 @@ export function getQuotationCellValue(record: QuotationRecord, columnKey: string
     case 'validTill':
       return record.validTill || '—'
     case 'createdAt':
-      return new Date(record.createdAt).toLocaleDateString()
+      return formatDisplayDateTime(record.createdAt)
     default:
       return ''
   }
@@ -165,7 +166,7 @@ export function downloadQuotationCsv(rows: QuotationRecord[]) {
       String(r.pricingVersions.length),
       quotationSharedStatusLabel[r.sharedStatus],
       r.validTill,
-      new Date(r.createdAt).toLocaleDateString(),
+      formatDisplayDateTime(r.createdAt),
     ]
       .map((v) => `"${String(v).replace(/"/g, '""')}"`)
       .join(',')

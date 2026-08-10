@@ -20,6 +20,7 @@ import {
 } from '../../config/supportTicketStatusConfig'
 import type { SupportTicketsApi } from '../../hooks/useSupportTickets'
 import type { SupportConversationEntry, SupportTicket } from '../../types/supportTicket'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface SupportTicketConversationDrawerProps {
   open: boolean
@@ -29,12 +30,7 @@ interface SupportTicketConversationDrawerProps {
 }
 
 function formatMessageTime(iso: string) {
-  return new Date(iso).toLocaleString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return formatDisplayDateTime(iso)
 }
 
 function getCategoryLabel(categoryId: string) {

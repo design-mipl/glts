@@ -1,18 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import { EmptyState, Pagination } from '@/design-system/UIComponents'
 import type { FundBankWithdrawalEntry } from '@/shared/types/fundUtilization'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 const DEFAULT_PAGE_SIZE = 5
 const PAGE_SIZE_OPTIONS = [5, 10, 25]
-
-function formatDisplayDateTime(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim())
-  return parsed.isValid() ? parsed.format('DD MMM YYYY, HH:mm') : value
-}
 
 function HistoryRow({ entry }: { entry: FundBankWithdrawalEntry }) {
   return (

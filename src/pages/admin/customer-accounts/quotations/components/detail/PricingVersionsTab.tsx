@@ -6,6 +6,7 @@ import { Button, Modal } from '@/design-system/UIComponents'
 import { quotationService } from '@/shared/services/quotationService'
 import type { QuotationRecord } from '@/shared/types/quotation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { getCurrentVersion } from '@/shared/utils/quotationValidation'
 import { canConvertQuotationToAgreement } from '@/shared/utils/quotationPricingUtils'
 import { QuotationPricingMatrixTable } from '../QuotationPricingMatrixTable'
@@ -69,7 +70,7 @@ export function PricingVersionsTab({ quotation, onReload, onConvert }: PricingVe
                 <TableCell sx={{ fontSize: 13 }}>{version.pricingMatrix.length}</TableCell>
                 <TableCell sx={{ fontSize: 13 }}>{formatInr(version.totals.grandTotal)}</TableCell>
                 <TableCell sx={{ fontSize: 13 }}>{version.createdBy}</TableCell>
-                <TableCell sx={{ fontSize: 13 }}>{new Date(version.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell sx={{ fontSize: 13 }}>{formatDisplayDateTime(version.createdAt)}</TableCell>
                 <TableCell align="right">
                   <IconButton size="small" aria-label="View version" onClick={() => setViewVersionId(version.id)}>
                     <Eye size={14} />

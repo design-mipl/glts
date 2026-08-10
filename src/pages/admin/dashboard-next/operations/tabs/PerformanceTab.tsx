@@ -99,7 +99,7 @@ export function PerformanceTab({ data, loading }: OperationsDashboardTabProps) {
             showLegend
             loading={loading}
             lines={[
-              { key: 'workedOn', label: 'Worked on', color: OPS_CHART_COLORS.navy },
+              { key: 'workedOn', label: 'Under Process', color: OPS_CHART_COLORS.navy },
               { key: 'finished', label: 'Finished', color: OPS_CHART_COLORS.green },
             ]}
           />

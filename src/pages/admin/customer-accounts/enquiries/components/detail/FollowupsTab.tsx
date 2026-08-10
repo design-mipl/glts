@@ -1,6 +1,7 @@
 import { Stack, Typography } from '@mui/material'
 import { Badge, BaseCard, Button } from '@/design-system/UIComponents'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 interface FollowupsTabProps {
   enquiry: EnquiryRecord
@@ -20,7 +21,7 @@ export function FollowupsTab({ enquiry, onAdd, onMarkComplete }: FollowupsTabPro
             <Stack spacing={0.5}>
               <Typography variant="subtitle2">{entry.followupType.toUpperCase()}</Typography>
               <Typography variant="body2" color="text.secondary">
-                {new Date(entry.followupDate).toLocaleDateString()} {entry.followupTime}
+                {formatDisplayDate(entry.followupDate)} {entry.followupTime}
               </Typography>
               <Typography variant="body2">{entry.discussionSummary}</Typography>
             </Stack>

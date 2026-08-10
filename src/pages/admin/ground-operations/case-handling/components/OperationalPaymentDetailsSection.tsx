@@ -18,6 +18,7 @@ import {
   resolveOperationalCaseSubmissionSnapshot,
   type OperationalCaseSubmissionSnapshot,
 } from '@/shared/utils/operationalCaseSubmissionUtils'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 function parseDateString(value: string | undefined): Date | null {
   if (!value?.trim()) return null
@@ -28,12 +29,6 @@ function parseDateString(value: string | undefined): Date | null {
 function formatDateForStorage(date: Date | null): string {
   if (!date) return ''
   return dayjs(date).format('YYYY-MM-DD')
-}
-
-function formatDisplayDate(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY'], true)
-  return parsed.isValid() ? parsed.format('DD MMM YYYY') : value
 }
 
 function formatDisplayAmount(value: string | undefined): string {

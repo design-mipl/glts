@@ -1,4 +1,5 @@
 import type { EmptyStateProps } from '@/design-system/UIComponents'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { invoiceStatusBadgeColor } from '@/pages/admin/finance/invoices/config/invoiceStatusConfig'
 import { paymentStatusLabel } from '@/pages/admin/finance/invoices/config/invoiceStatusConfig'
 import type {
@@ -157,16 +158,7 @@ export function getSlaBadgeColor(row: OperationalPassengerRow): 'error' | 'warni
 
 export function formatTravelDateLabel(travelDate: string): string {
   if (!travelDate) return '✈️ —'
-  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(travelDate)
-    ? parseLocalDateString(travelDate)
-    : new Date(travelDate)
-  if (Number.isNaN(parsed.getTime())) return `✈️ ${travelDate}`
-  const formatted = parsed.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
-  return `✈️ ${formatted}`
+  return `✈️ ${formatDisplayDate(travelDate)}`
 }
 
 function matchesSlaFilter(row: OperationalPassengerRow, slaFilter: string): boolean {

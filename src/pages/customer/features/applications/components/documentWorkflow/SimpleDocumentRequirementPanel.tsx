@@ -165,6 +165,7 @@ export function SimpleDocumentRequirementPanel({
                           ...document.insurance,
                           fileName: file.name,
                           policyNumber: '',
+                          invoiceNumber: '',
                           insuranceProvider: '',
                           validFrom: '',
                           validTo: '',

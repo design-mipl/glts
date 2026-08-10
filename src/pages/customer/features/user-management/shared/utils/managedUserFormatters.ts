@@ -1,4 +1,5 @@
 import type { ManagedUserStatus } from '@/shared/types/managedUser'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 export const managedUserStatusLabel: Record<ManagedUserStatus, string> = {
   active: 'Active',
@@ -11,8 +12,5 @@ export const managedUserStatusTone: Record<ManagedUserStatus, 'success' | 'neutr
 }
 
 export function formatManagedUserDate(iso?: string): string {
-  if (!iso) return '--'
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return iso
-  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+  return formatDisplayDate(iso)
 }

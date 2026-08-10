@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import {
   Badge,
   Button,
@@ -36,6 +35,7 @@ import {
   type LogisticsRefundTabHandle,
 } from './LogisticsRefundTab'
 import { PassengerApplicationDocumentVault } from '@/shared/components/PassengerApplicationDocumentVault'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 const DETAIL_DRAWER_WIDTH = 560
 
@@ -104,12 +104,6 @@ function MetaGrid({ children }: { children: ReactNode }) {
       {children}
     </Box>
   )
-}
-
-function formatDisplayDate(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY'], true)
-  return parsed.isValid() ? parsed.format('DD MMM YYYY') : value
 }
 
 function LogisticsContextCard({ record }: { record: OperationalCase }) {

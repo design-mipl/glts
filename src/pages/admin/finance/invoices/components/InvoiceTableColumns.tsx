@@ -18,6 +18,7 @@ import {
   getListingInvoiceNumber,
 } from '../utils/invoiceListingUtils'
 import { buildInvoiceRowActions, type InvoiceRowActionHandlers } from '../utils/invoiceRowActions'
+import { formatDisplayDate, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 export function buildInvoiceColumns(handlers: InvoiceRowActionHandlers): Column<Invoice>[] {
   return [
@@ -157,19 +158,21 @@ export function buildInvoiceColumns(handlers: InvoiceRowActionHandlers): Column<
       label: 'Invoice Date',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
+      render: (_, row) => formatDisplayDate(row.invoiceDate),
     },
     {
       key: 'dueDate',
       label: 'Due Date',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
+      render: (_, row) => formatDisplayDate(row.dueDate),
     },
     {
       key: 'lastUpdated',
       label: 'Last Updated',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      render: (_, row) => new Date(row.lastUpdated).toLocaleDateString(),
+      render: (_, row) => formatDisplayDateTime(row.lastUpdated),
     },
     {
       key: 'actions',

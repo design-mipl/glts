@@ -5,6 +5,7 @@ import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { DocumentationApplicationRow } from '../../data/documentationDashboardMock'
 import { slaStatusColor, slaStatusLabel } from '../../utils/applyDocumentationDashboardFilters'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 function SlaAccentCell({ children, slaStatus }: { children: ReactNode; slaStatus: string }) {
   const theme = useTheme()
@@ -54,7 +55,7 @@ export function buildDocumentationApplicationsColumns({
         <Badge label={slaStatusLabel(row.slaStatus)} color={slaStatusColor(row.slaStatus)} size="sm" />
       ),
     },
-    { key: 'dueDate', label: 'Due Date', widthSize: adminListingColumnWidthSize('date') },
+    { key: 'dueDate', label: 'Due Date', widthSize: adminListingColumnWidthSize('date'), render: (_, row) => formatDisplayDate(row.dueDate) },
     {
       key: 'actions',
       label: '',

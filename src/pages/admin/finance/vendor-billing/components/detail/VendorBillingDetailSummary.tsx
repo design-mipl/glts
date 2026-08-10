@@ -6,6 +6,7 @@ import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { vendorCategoryLabel } from '@/pages/admin/masters/vendors/config/vendorCategoryConfig'
 import { vendorStatusColor, vendorStatusLabel } from '@/pages/admin/masters/vendors/config/vendorStatusConfig'
 import { paymentTermsLabel } from '@/pages/admin/masters/vendors/config/paymentTermsConfig'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 interface VendorBillingDetailSummaryProps {
   vendor: Vendor
@@ -49,7 +50,7 @@ export function VendorBillingDetailSummary({ vendor, summary }: VendorBillingDet
                 Last invoice date
               </Typography>
               <Typography variant="body2" fontWeight={600}>
-                {summary?.lastInvoiceDate ? new Date(summary.lastInvoiceDate).toLocaleDateString() : '—'}
+                {formatDisplayDate(summary?.lastInvoiceDate)}
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 4, md: 3 }}>
@@ -57,7 +58,7 @@ export function VendorBillingDetailSummary({ vendor, summary }: VendorBillingDet
                 Last payment date
               </Typography>
               <Typography variant="body2" fontWeight={600}>
-                {summary?.lastPaymentDate ? new Date(summary.lastPaymentDate).toLocaleDateString() : '—'}
+                {formatDisplayDate(summary?.lastPaymentDate)}
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>

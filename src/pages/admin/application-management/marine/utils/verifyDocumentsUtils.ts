@@ -3,6 +3,15 @@ import type {
   ApplicantDocumentStatus,
   UploadQueueRow,
 } from '@/pages/customer/features/applications/data/applicationFlowData'
+import {
+  mockBulkBatches,
+  mockSingleApplications,
+} from '@/pages/customer/features/applications/data/applicationFlowData'
+import { getSingleApplicationFlowExtras } from '@/pages/customer/features/applications/data/applicationFlowData'
+import {
+  resolveApplicationCompanyName,
+  resolveApplicationVesselName,
+} from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
 import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
 import { buildProcessingTimelineFromQueueRow } from '@/shared/utils/applicationProcessingTimeline'
 import { isApplicantDocumentSatisfied } from '@/shared/utils/applicantDocumentWorkflowUtils'
@@ -108,6 +117,10 @@ export interface VerifyOverviewData {
   jurisdiction?: string
   travelDate: string
   travelerCount: number
+  companyName?: string
+  vesselName?: string
+  poReference?: string
+  entityName?: string
 }
 
 export interface VerifyRejectedDocumentEntry {
@@ -302,12 +315,32 @@ export function buildOverviewFromDetail(
     visaType?: string
     travelDate?: string
     jurisdiction?: string
+    companyName?: string
+    vesselName?: string
+    poReference?: string
+    entityName?: string
   } | null,
 ): VerifyOverviewData {
   const readyRows = rows.filter(r => r.status !== 'processing')
   const firstRow = rows[0]
   const batchId = isBulk ? applicationId : undefined
   const rowAppId = firstRow?.gltsApplicationId?.trim() || undefined
+  const listing =
+    mockSingleApplications.find(row => row.id === applicationId) ??
+    mockBulkBatches.find(row => row.id === applicationId)
+  const extras = getSingleApplicationFlowExtras(applicationId)
+  const companyFromListing = listing ? resolveApplicationCompanyName(listing) : undefined
+  const vesselFromListing = listing ? resolveApplicationVesselName(listing) : undefined
+
+  const companyName = app?.companyName?.trim() || companyFromListing
+  const vesselName =
+    app?.vesselName?.trim() ||
+    (vesselFromListing && vesselFromListing !== '—' ? vesselFromListing : undefined) ||
+    extras?.vesselName?.trim() ||
+    undefined
+  const poReference = app?.poReference?.trim() || listing?.poReference?.trim() || undefined
+  const entityName = app?.entityName?.trim() || extras?.entityName?.trim() || undefined
+
   return {
     gltsApplicationId: isBulk
       ? rowAppId && rowAppId !== batchId
@@ -321,5 +354,9 @@ export function buildOverviewFromDetail(
     jurisdiction: app?.jurisdiction?.trim() || undefined,
     travelDate: app?.travelDate ?? '—',
     travelerCount: readyRows.length || rows.length,
+    companyName: companyName && companyName !== '—' ? companyName : undefined,
+    vesselName: vesselName && vesselName !== '—' ? vesselName : undefined,
+    poReference,
+    entityName,
   }
 }

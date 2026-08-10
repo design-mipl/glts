@@ -15,6 +15,7 @@ import {
   workflowTypeColor,
   workflowTypeLabel,
 } from '../config/agreementStatusConfig'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface ColumnHandlers {
   onOpenDetail: (row: CommercialAgreement) => void
@@ -110,7 +111,7 @@ export function buildAgreementColumns({
       label: 'Last Updated',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      render: (_, row) => new Date(row.updatedAt).toLocaleDateString(),
+      render: (_, row) => formatDisplayDateTime(row.updatedAt),
     },
     {
       key: 'actions',

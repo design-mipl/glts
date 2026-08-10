@@ -119,12 +119,12 @@ export function VerifyTravelerDetailPanel({
   const tabItems = useMemo(
     () => [
       { value: PASSENGER_TAB, label: 'Passenger' },
-      { value: TIMELINE_TAB, label: 'Timeline' },
       ...workTabs.map(tab => ({
         value: tab.value,
         label: tab.label,
         disabled: tab.disabled,
       })),
+      { value: TIMELINE_TAB, label: 'Timeline' },
     ],
     [workTabs],
   )
@@ -266,6 +266,26 @@ export function VerifyTravelerDetailPanel({
           )
         ) : null}
 
+        {activeWorkTab ? (
+          <Stack spacing={1.5} sx={{ flex: 1, height: 0, minHeight: 0, overflow: 'hidden' }}>
+            {workTabHint ? <Box sx={{ flexShrink: 0 }}>{workTabHint}</Box> : null}
+            <Box
+              sx={{
+                flex: 1,
+                height: 0,
+                minHeight: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                // Nested panes may scroll internally; auto also covers work-tab
+                // content that grows with the page (payment, form, etc.).
+                overflow: 'auto',
+              }}
+            >
+              {activeWorkTab.content}
+            </Box>
+          </Stack>
+        ) : null}
+
         {activeTab === TIMELINE_TAB ? (
           <Stack spacing={1.5} sx={{ flex: 1, height: 0, minHeight: 0 }}>
             <Box sx={{ flex: 1, height: 0, minHeight: 0, overflow: 'auto' }}>
@@ -285,26 +305,6 @@ export function VerifyTravelerDetailPanel({
                 onUpdated={processingStatus.onUpdated}
               />
             ) : null}
-          </Stack>
-        ) : null}
-
-        {activeWorkTab ? (
-          <Stack spacing={1.5} sx={{ flex: 1, height: 0, minHeight: 0, overflow: 'hidden' }}>
-            {workTabHint ? <Box sx={{ flexShrink: 0 }}>{workTabHint}</Box> : null}
-            <Box
-              sx={{
-                flex: 1,
-                height: 0,
-                minHeight: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                // Nested panes may scroll internally; auto also covers work-tab
-                // content that grows with the page (payment, form, etc.).
-                overflow: 'auto',
-              }}
-            >
-              {activeWorkTab.content}
-            </Box>
           </Stack>
         ) : null}
       </Box>

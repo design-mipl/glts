@@ -1,6 +1,5 @@
 import { type ReactNode } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import { Drawer, Badge } from '@/design-system/UIComponents'
 import { PassengerApplicationDocumentVault } from '@/shared/components/PassengerApplicationDocumentVault'
 import {
@@ -14,14 +13,9 @@ import {
   fundAllocationStatusBadgeColor,
   fundAllocationStatusLabel,
 } from '../config/fundAllocationStatusConfig'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 const DETAIL_DRAWER_WIDTH = 560
-
-function formatDisplayDate(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY', 'DD MMM YYYY'], true)
-  return parsed.isValid() ? parsed.format('DD MMM YYYY') : value
-}
 
 function SectionHeading({ children }: { children: string }) {
   return (

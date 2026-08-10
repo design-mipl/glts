@@ -10,6 +10,7 @@ import type {
   SimpleDocumentRequirementId,
   TravelTicketWorkflow,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
+import { resolveGltsArrangeFee } from '@/shared/utils/gltsArrangeFeeUtils'
 
 const CATEGORY_LABELS: Record<ApplicationArrangedExpenseCategory, string> = {
   travel_ticket: 'Travel ticket',
@@ -34,11 +35,29 @@ function buildExpenseId(applicationId: string, applicantId: string, documentId: 
 
 function workflowHasCommercialFields(
   workflow: TravelTicketWorkflow | InsuranceWorkflow | undefined,
+  documentId?: SimpleDocumentRequirementId,
 ): workflow is TravelTicketWorkflow | InsuranceWorkflow {
   if (!workflow) return false
-  const amount = parseArrangementAmount(workflow.arrangementAmount)
   const vendorId = workflow.vendorId?.trim()
-  return amount !== null && Boolean(vendorId)
+  if (!vendorId) return false
+
+  if (documentId === 'insurance') {
+    const insurance = workflow as InsuranceWorkflow
+    return Boolean(insurance.policyNumber?.trim() && insurance.invoiceNumber?.trim())
+  }
+
+  return parseArrangementAmount(workflow.arrangementAmount) !== null
+}
+
+function resolveWorkflowAmount(
+  documentId: SimpleDocumentRequirementId,
+  workflow: TravelTicketWorkflow | InsuranceWorkflow,
+): number | null {
+  const parsed = parseArrangementAmount(workflow.arrangementAmount)
+  if (parsed !== null) return parsed
+  if (documentId !== 'insurance') return null
+  const fee = resolveGltsArrangeFee('insurance')
+  return fee && fee.amount > 0 ? fee.amount : null
 }
 
 export function buildArrangedExpenseFromWorkflow(input: {
@@ -50,9 +69,16 @@ export function buildArrangedExpenseFromWorkflow(input: {
   companyName?: string
   existing?: ApplicationArrangedExpense
 }): ApplicationArrangedExpense | null {
-  const amount = parseArrangementAmount(input.workflow.arrangementAmount)
   const vendorId = input.workflow.vendorId?.trim()
-  if (amount === null || !vendorId) return null
+  if (!vendorId) return null
+
+  if (input.documentId === 'insurance') {
+    const insurance = input.workflow as InsuranceWorkflow
+    if (!insurance.policyNumber?.trim() || !insurance.invoiceNumber?.trim()) return null
+  }
+
+  const amount = resolveWorkflowAmount(input.documentId, input.workflow)
+  if (amount === null) return null
 
   const now = new Date().toISOString()
   const vendorName =
@@ -98,7 +124,7 @@ export function extractArrangedExpensesFromDetail(
       if (doc.documentId !== 'travel-ticket' && doc.documentId !== 'insurance') continue
 
       const workflow = doc.documentId === 'travel-ticket' ? doc.travelTicket : doc.insurance
-      if (!workflowHasCommercialFields(workflow)) continue
+      if (!workflowHasCommercialFields(workflow, doc.documentId)) continue
 
       const expenseId = buildExpenseId(applicationId, row.gltsApplicantId, doc.documentId)
       const built = buildArrangedExpenseFromWorkflow({

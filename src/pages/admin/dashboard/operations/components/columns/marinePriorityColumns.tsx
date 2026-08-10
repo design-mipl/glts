@@ -7,6 +7,7 @@ import {
   priorityColor,
   priorityLabel,
 } from '../../utils/applyOperationsConsultantFilters'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 function DaysRemainingCell({ days }: { days: number }) {
   return (
@@ -27,7 +28,7 @@ export function buildMarinePriorityColumns(): Column<MarinePriorityRow>[] {
     },
     { key: 'crewName', label: 'Crew Name', widthSize: adminListingColumnWidthSize('name') },
     { key: 'joiningPort', label: 'Joining Port', widthSize: adminListingColumnWidthSize('jurisdiction') },
-    { key: 'joiningDate', label: 'Joining Date', widthSize: adminListingColumnWidthSize('date') },
+    { key: 'joiningDate', label: 'Joining Date', widthSize: adminListingColumnWidthSize('date'), render: (_, row) => formatDisplayDate(row.joiningDate) },
     {
       key: 'daysRemaining',
       label: 'Days Remaining',

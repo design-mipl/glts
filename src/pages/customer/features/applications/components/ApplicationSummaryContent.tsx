@@ -3,6 +3,7 @@ import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 import type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
 import { formatQueueRowGltsLabel } from '../utils/gltsReferenceIds'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import type { ApplicationDetailViewModel } from '../types/applicationDetail.types'
 import {
   buildVerifyApplicantSummaryFields,
@@ -65,7 +66,7 @@ export function buildApplicationSummaryItems(
         ? `${overview.visaTypeLabel} · ${overview.purposeLabel}`
         : overview.visaTypeLabel,
     ],
-    ['Travel', overview.travelDate || '—'],
+    ['Travel', formatDisplayDate(overview.travelDate)],
     ['Passport location', overview.issuedPassportLocationLabel || '—'],
     ['Place of residence', overview.placeOfResidenceLabel || '—'],
     ['Jurisdiction', overview.jurisdiction || '—'],

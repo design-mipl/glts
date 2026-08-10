@@ -1,4 +1,5 @@
 import type { EntityMaster } from '@/shared/types/entityMaster'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { entityStatusLabel } from '../config/entityStatusConfig'
 
 export function getEntityCellValue(row: EntityMaster, key: string): string {
@@ -30,12 +31,7 @@ export function matchesEntitySearch(row: EntityMaster, query: string): boolean {
 }
 
 export function formatEntityDate(iso: string): string {
-  if (!iso) return '--'
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  return formatDisplayDate(iso)
 }
 
 export function mapEntityRowsToGridItems(rows: EntityMaster[]) {

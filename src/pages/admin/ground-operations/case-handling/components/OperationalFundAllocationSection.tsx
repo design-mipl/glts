@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import { Badge } from '@/design-system/UIComponents'
 import { buildPassengerId } from '@/pages/admin/assignment-priority/utils/deriveOperationalPassengerRows'
 import { cardMasterService } from '@/shared/services/cardMasterService'
@@ -9,12 +8,7 @@ import { getFundTransferTypeLabel } from '@/shared/types/fundAllocation'
 import type { OperationalCase, OperationalCaseFundAllocation } from '@/shared/types/operationalCaseHandling'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { resolveOperationalCaseAssignmentFields } from '../utils/operationalCaseHandlingUtils'
-
-function formatDisplayDateTime(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim())
-  return parsed.isValid() ? parsed.format('DD MMM YYYY, HH:mm') : value
-}
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function formatAmount(value: number | undefined): string {
   if (value == null || !Number.isFinite(value) || value <= 0) return '—'

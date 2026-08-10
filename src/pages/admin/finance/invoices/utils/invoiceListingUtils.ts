@@ -12,6 +12,7 @@ import {
   formatInvoiceOpenItemsLabel,
   getInvoiceOpenItemFlags,
 } from './invoiceDetailSideTabs'
+import { formatDisplayDate, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 /** Invoice number shown in listing — source invoice for credit notes. */
 export function getListingInvoiceNumber(record: Invoice): string {
@@ -151,11 +152,11 @@ export function getInvoiceCellValue(record: Invoice, columnKey: string): string 
     case 'paymentStatus':
       return paymentStatusLabel[record.paymentStatus]
     case 'invoiceDate':
-      return record.invoiceDate
+      return formatDisplayDate(record.invoiceDate)
     case 'dueDate':
-      return record.dueDate
+      return formatDisplayDate(record.dueDate)
     case 'lastUpdated':
-      return new Date(record.lastUpdated).toLocaleDateString()
+      return formatDisplayDateTime(record.lastUpdated)
     default:
       return ''
   }

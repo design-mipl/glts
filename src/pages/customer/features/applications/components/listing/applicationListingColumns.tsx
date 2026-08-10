@@ -26,6 +26,7 @@ import {
   resolveApplicationCreatorLabel,
   resolveApplicationCreatorRoleLabel,
 } from '../../utils/applicationCreatorUtils'
+import { formatDisplayDate, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 type ToastFn = (toast: Omit<Toast, 'id'>) => void
 
@@ -104,8 +105,8 @@ export function buildSingleApplicationColumns({
       ),
     },
     { key: 'visaType', label: 'Visa type', sortable: true, filterable: true, width: 140 },
-    { key: 'travelDate', label: 'Travel date', sortable: true, width: 110 },
-    { key: 'submissionDate', label: 'Submission date', sortable: true, width: 120 },
+    { key: 'travelDate', label: 'Travel date', sortable: true, width: 110, render: (_, row) => formatDisplayDate(row.travelDate) },
+    { key: 'submissionDate', label: 'Submission date', sortable: true, width: 120, render: (_, row) => formatDisplayDate(row.submissionDate) },
     {
       key: 'operationalStatus',
       label: 'Current status',
@@ -116,7 +117,7 @@ export function buildSingleApplicationColumns({
         <CustomerStatusChip label={row.operationalStatus} tone={getApplicationOperationalTone(row.operationalStatus)} />
       ),
     },
-    { key: 'lastUpdated', label: 'Last updated', sortable: true, width: 110 },
+    { key: 'lastUpdated', label: 'Last updated', sortable: true, width: 110, render: (_, row) => formatDisplayDateTime(row.lastUpdated) },
     {
       key: 'actions',
       label: '',
@@ -232,7 +233,7 @@ export function buildUnifiedApplicationColumns({
       ),
     },
     { key: 'visaType', label: 'Visa type', sortable: false, filterable: true, width: 130 },
-    { key: 'travelDate', label: 'Date of Travel', sortable: true, filterable: true, width: 120 },
+    { key: 'travelDate', label: 'Date of Travel', sortable: true, filterable: true, width: 120, render: (_, row) => formatDisplayDate(row.travelDate) },
     {
       key: 'processingStage',
       label: 'Processing stage',
@@ -245,7 +246,7 @@ export function buildUnifiedApplicationColumns({
         </Typography>
       ),
     },
-    { key: 'submissionDate', label: 'Submission Date', sortable: true, filterable: false, width: 130 },
+    { key: 'submissionDate', label: 'Submission Date', sortable: true, filterable: false, width: 130, render: (_, row) => formatDisplayDate(row.submissionDate) },
     {
       key: 'tentativeCollectionDate',
       label: 'Tentative Collection Date',
@@ -254,7 +255,7 @@ export function buildUnifiedApplicationColumns({
       width: 170,
       render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
         <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {row.tentativeCollectionDate?.trim() || '—'}
+          {formatDisplayDate(row.tentativeCollectionDate)}
         </Typography>
       ),
     },
@@ -283,10 +284,10 @@ export function buildUnifiedApplicationColumns({
   columns.push(
     {
       key: 'poReference',
-      label: 'PO / CID',
+      label: 'PO / CID / Compass No.',
       sortable: true,
       filterable: true,
-      width: 140,
+      width: 160,
       render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
         <Typography variant="body2" sx={{ fontSize: 13 }}>
           {row.poReference?.trim() || '—'}
@@ -392,7 +393,7 @@ export function buildBulkApplicationColumns({
         <CustomerStatusChip label={row.operationalStatus} tone={getApplicationOperationalTone(row.operationalStatus)} />
       ),
     },
-    { key: 'lastUpdated', label: 'Last updated', sortable: true, width: 110 },
+    { key: 'lastUpdated', label: 'Last updated', sortable: true, width: 110, render: (_, row) => formatDisplayDateTime(row.lastUpdated) },
     {
       key: 'actions',
       label: '',

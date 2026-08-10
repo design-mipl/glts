@@ -1,5 +1,6 @@
 import type { Vendor } from '@/shared/types/vendor'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { paymentTermsLabel } from '../config/paymentTermsConfig'
 import { vendorCategoryLabel } from '../config/vendorCategoryConfig'
 import { vendorStatusLabel, vendorTypeLabel } from '../config/vendorStatusConfig'
@@ -38,7 +39,7 @@ export function getVendorCellValue(record: Vendor, columnKey: string): string {
     case 'status':
       return vendorStatusLabel[record.status]
     case 'updatedAt':
-      return new Date(record.updatedAt).toLocaleDateString()
+      return formatDisplayDateTime(record.updatedAt)
     default:
       return ''
   }

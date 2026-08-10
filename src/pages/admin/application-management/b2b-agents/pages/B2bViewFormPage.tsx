@@ -15,6 +15,11 @@ import {
   useToast,
 } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
+import { getSingleApplicationFlowExtras } from '@/pages/customer/features/applications/data/applicationFlowData'
+import {
+  resolveApplicationCompanyName,
+  resolveApplicationVesselName,
+} from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { AdminWorkspaceShell } from '@/pages/admin/components/AdminWorkspaceShell'
 import { AdminStepperFormFooter } from '@/pages/admin/components/AdminStepperFormFooter'
@@ -142,9 +147,19 @@ export function B2bViewFormPage() {
   const overview = useMemo(
     () =>
       applicationId && detail
-        ? buildOverviewFromDetail(applicationId, isBulk, rows, detail.application)
+        ? buildOverviewFromDetail(applicationId, isBulk, rows, {
+            country: detail.application?.country ?? listingRow?.country,
+            countryFlag: detail.application?.countryFlag ?? listingRow?.countryFlag,
+            visaType: detail.application?.visaType ?? listingRow?.visaType,
+            travelDate: detail.application?.travelDate ?? listingRow?.travelDate,
+            jurisdiction: detail.application?.jurisdiction ?? listingRow?.jurisdiction,
+            companyName: listingRow ? resolveApplicationCompanyName(listingRow) : undefined,
+            vesselName: listingRow ? resolveApplicationVesselName(listingRow) : undefined,
+            poReference: listingRow?.poReference,
+            entityName: getSingleApplicationFlowExtras(applicationId)?.entityName,
+          })
         : null,
-    [applicationId, detail, isBulk, rows],
+    [applicationId, detail, isBulk, rows, listingRow],
   )
 
   const singleListing = !isBulk && rows.length <= 1

@@ -4,6 +4,7 @@ import { FileText } from 'lucide-react'
 import { BaseCard, Button, FileUpload, useToast } from '@/design-system/UIComponents'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface AgreementMinutesTabProps {
   agreement: CommercialAgreement
@@ -81,7 +82,7 @@ export function AgreementMinutesTab({ agreement, onReload }: AgreementMinutesTab
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {formatFileType(item.fileType, item.fileName)} · {item.fileSizeKb} KB ·{' '}
-                      {new Date(item.uploadedAt).toLocaleString()} · {item.uploadedBy}
+                      {formatDisplayDateTime(item.uploadedAt)} · {item.uploadedBy}
                     </Typography>
                   </Stack>
                 </Stack>

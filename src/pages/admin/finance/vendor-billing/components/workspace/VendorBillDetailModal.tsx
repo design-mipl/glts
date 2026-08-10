@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { Badge, IconButton, Modal, useToast } from '@/design-system/UIComponents'
 import type { VendorBillingBill } from '@/shared/types/vendorBilling'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { getVendorBillDisplayStatus } from '../../config/vendorBillingStatusConfig'
 
 interface VendorBillDetailModalProps {
@@ -97,8 +98,8 @@ export function VendorBillDetailModal({ open, bill, onClose }: VendorBillDetailM
       <Stack spacing={2}>
         <Grid container spacing={2}>
           <Field label="Vendor invoice number" value={bill.vendorInvoiceNumber} />
-          <Field label="Invoice date" value={new Date(bill.invoiceDate).toLocaleDateString()} />
-          <Field label="Due date" value={new Date(bill.dueDate).toLocaleDateString()} />
+          <Field label="Invoice date" value={formatDisplayDate(bill.invoiceDate)} />
+          <Field label="Due date" value={formatDisplayDate(bill.dueDate)} />
           <Field label="Invoice amount" value={formatInr(bill.invoiceAmount)} />
           <Field label="Paid amount" value={formatInr(bill.paidAmount)} />
           <Field label="Balance due" value={formatInr(balance)} />

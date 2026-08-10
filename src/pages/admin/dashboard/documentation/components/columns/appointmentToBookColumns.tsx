@@ -1,6 +1,7 @@
 import { Badge, Button, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { AppointmentToBookRow } from '../../data/documentationDashboardMock'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 export interface AppointmentToBookColumnHandlers {
   onBook: (row: AppointmentToBookRow) => void
@@ -14,7 +15,7 @@ export function buildAppointmentToBookColumns({
     { key: 'country', label: 'Country', widthSize: adminListingColumnWidthSize('country') },
     { key: 'visaType', label: 'Visa Type', widthSize: adminListingColumnWidthSize('service') },
     { key: 'appointmentType', label: 'Appointment Type', widthSize: adminListingColumnWidthSize('status') },
-    { key: 'preferredDate', label: 'Preferred Date', widthSize: adminListingColumnWidthSize('date') },
+    { key: 'preferredDate', label: 'Preferred Date', widthSize: adminListingColumnWidthSize('date'), render: (_, row) => formatDisplayDate(row.preferredDate) },
     {
       key: 'status',
       label: 'Status',

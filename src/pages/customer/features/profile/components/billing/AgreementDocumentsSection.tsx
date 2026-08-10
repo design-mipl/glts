@@ -14,6 +14,7 @@ import {
   previewAgreementDocument,
 } from '@/shared/utils/agreementDocumentFileUtils'
 import type { AgreementDocument } from '../../types/accountWorkspace'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 export interface AgreementDocumentsSectionProps {
   onboardingDocuments: AgreementDocument[]
@@ -114,7 +115,7 @@ function DocumentCardRow({ documents, colors }: { documents: AgreementDocument[]
                 ) : null}
                 {doc.uploadedAt ? (
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
-                    Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
+                    Uploaded {formatDisplayDate(doc.uploadedAt)}
                   </Typography>
                 ) : null}
               </Box>

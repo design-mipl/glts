@@ -1,6 +1,7 @@
 import { Badge, Button, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { AwaitingDocumentRow } from '../../data/operationsConsultantDashboardMock'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 export interface AwaitingDocumentColumnHandlers {
   onSendReminder: (row: AwaitingDocumentRow) => void
@@ -16,7 +17,7 @@ export function buildAwaitingDocumentColumns({
       label: 'Outstanding Documents',
       widthSize: adminListingColumnWidthSize('description'),
     },
-    { key: 'lastReminderSent', label: 'Last Reminder Sent', widthSize: adminListingColumnWidthSize('date') },
+    { key: 'lastReminderSent', label: 'Last Reminder Sent', widthSize: adminListingColumnWidthSize('date'), render: (_, row) => formatDisplayDate(row.lastReminderSent) },
     {
       key: 'reminderCount',
       label: 'Reminder Count',

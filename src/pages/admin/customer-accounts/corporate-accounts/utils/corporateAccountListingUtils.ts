@@ -1,6 +1,7 @@
 import type { CorporateAccount } from '@/shared/types/corporateAccount'
 import { corporateAccountService } from '@/shared/services/corporateAccountService'
 import { corporatePortalStatusLabel } from '../config/corporateAccountStatusConfig'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 export function matchesCorporateAccountSearch(record: CorporateAccount, query: string): boolean {
   const q = query.trim().toLowerCase()
@@ -31,7 +32,7 @@ export function getCorporateAccountCellValue(record: CorporateAccount, columnKey
     case 'portalStatus':
       return corporatePortalStatusLabel[record.portalStatus]
     case 'updatedAt':
-      return new Date(record.updatedAt).toLocaleDateString()
+      return formatDisplayDateTime(record.updatedAt)
     default:
       return ''
   }

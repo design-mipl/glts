@@ -5,7 +5,7 @@ import {
 } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { isBulkRow } from '@/pages/customer/features/applications/types/applicationListing.types'
-import { resolveApplicationCompanyName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { resolveApplicationCompanyName, resolveApplicationVesselName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
 import { resolveApplicationCreatorLabel } from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
 import { getListingCellValue } from '@/pages/customer/features/applications/utils/applicationListingUtils'
 import { mapApplicationRowsToGridItems } from '@/pages/customer/features/applications/utils/applicationListingGrid'
@@ -32,6 +32,8 @@ export function matchesB2bApplicationSearch(row: B2bApplicationRow, query: strin
   if (!s) return true
   if (row.id.toLowerCase().includes(s)) return true
   if (resolveApplicationCompanyName(row).toLowerCase().includes(s)) return true
+  if (resolveApplicationVesselName(row).toLowerCase().includes(s)) return true
+  if (row.poReference?.toLowerCase().includes(s)) return true
   if (resolveApplicationCreatorLabel(row.createdByEmail).toLowerCase().includes(s)) return true
   if (row.jurisdiction?.toLowerCase().includes(s)) return true
   if (isBulkRow(row)) {
@@ -157,6 +159,8 @@ export function exportB2bApplicationsToCsv(rows: B2bApplicationRow[]): string {
     'Type',
     'Pax name',
     'Company name',
+    'Vessel',
+    'PO / CID / Compass No.',
     'Country',
     'Visa type',
     'Jurisdiction',
@@ -171,6 +175,7 @@ export function exportB2bApplicationsToCsv(rows: B2bApplicationRow[]): string {
     const type = isBulkRow(row) ? 'Bulk' : 'Single'
     const applicant = isBulkRow(row) ? formatBulkApplicantListingLabel(row) : row.applicantName
     const companyName = resolveApplicationCompanyName(row)
+    const vesselName = resolveApplicationVesselName(row)
     const createdBy = getB2bApplicationCellValue(row, 'createdBy')
     return [
       row.createdAt,
@@ -178,6 +183,8 @@ export function exportB2bApplicationsToCsv(rows: B2bApplicationRow[]): string {
       type,
       applicant,
       companyName,
+      vesselName,
+      row.poReference?.trim() || '—',
       row.country,
       row.visaType,
       row.jurisdiction ?? '—',
