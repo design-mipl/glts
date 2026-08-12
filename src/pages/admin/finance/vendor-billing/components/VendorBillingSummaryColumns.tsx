@@ -3,15 +3,11 @@ import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { VendorBillingSummaryRow } from '@/shared/types/vendorBilling'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { vendorStatusColor, vendorStatusLabel } from '@/pages/admin/masters/vendors/config/vendorStatusConfig'
 
 interface Handlers {
   onOpenDetail: (row: VendorBillingSummaryRow) => void
-}
-
-function formatDate(value?: string) {
-  if (!value) return '—'
-  return new Date(value).toLocaleDateString()
 }
 
 export function buildVendorBillingSummaryColumns({ onOpenDetail }: Handlers): Column<VendorBillingSummaryRow>[] {
@@ -52,14 +48,14 @@ export function buildVendorBillingSummaryColumns({ onOpenDetail }: Handlers): Co
       label: 'Last Invoice Date',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      render: (_, row) => formatDate(row.lastInvoiceDate),
+      render: (_, row) => formatDisplayDate(row.lastInvoiceDate),
     },
     {
       key: 'lastPaymentDate',
       label: 'Last Payment Date',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      render: (_, row) => formatDate(row.lastPaymentDate),
+      render: (_, row) => formatDisplayDate(row.lastPaymentDate),
     },
     {
       key: 'status',

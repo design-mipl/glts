@@ -1,4 +1,5 @@
 import type { Column } from '@/design-system/UIComponents'
+import { formatDisplayDate, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { AGEING_BUCKET_LABELS, type AgeingBucketId } from '../../shared/config/ageingBuckets'
 import type { AccountsDashboardData } from '../types'
 
@@ -426,13 +427,6 @@ function addDays(d: Date, days: number): Date {
   const next = new Date(d)
   next.setDate(next.getDate() + days)
   return next
-}
-
-function formatDisplayDate(d: Date): string {
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const yyyy = d.getFullYear()
-  return `${dd}/${mm}/${yyyy}`
 }
 
 export function resolveAccountsReportRange(
@@ -881,13 +875,7 @@ export function buildAccountsReportRows(
       const blocked = Math.round((data.fundAllocationRows.length || 4) * 2.4)
       const approx = parseCurrencyLakhs(collections)
       const available = Math.max(0, approx - blocked - refunds / 10)
-      const asOf = new Date().toLocaleString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+      const asOf = formatDisplayDateTime(new Date())
       return [
         {
           id: 'cash-pos-1',

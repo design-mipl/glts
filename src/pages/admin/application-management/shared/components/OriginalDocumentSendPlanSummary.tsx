@@ -7,6 +7,7 @@ import {
   originalCollectionMethodLabel,
   type CollectionDetailFieldDef,
 } from '@/shared/utils/originalDocumentCollectionUtils'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 function MetaItem({ label, value }: { label: string; value: string }) {
   return (
@@ -64,14 +65,7 @@ function formatDetailValue(field: CollectionDetailFieldDef, raw: string): string
   }
 
   if (field.type === 'date') {
-    const parsed = Date.parse(value)
-    if (!Number.isNaN(parsed)) {
-      return new Intl.DateTimeFormat('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }).format(new Date(parsed))
-    }
+    return formatDisplayDate(value)
   }
 
   return value

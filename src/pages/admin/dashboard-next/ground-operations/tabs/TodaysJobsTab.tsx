@@ -7,7 +7,7 @@ import {
 import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
 import type { GroundOperationsDashboardTabProps } from '../types'
 
-/** Today's Jobs story — assignments detail (route timeline is executive primary viz). */
+/** Operations Desk tab — pending / moved / docs-submitted cases. */
 export function TodaysJobsTab({
   data,
   loading,
@@ -21,10 +21,12 @@ export function TodaysJobsTab({
     <Grid container spacing={DASHBOARD_SPACING.field}>
       <Grid size={{ xs: 12 }}>
         <TodaysJobs
+          title="Operations Desk cases"
+          subtitle="Open cases needing ground execution"
           rows={data.todaysJobs}
           loading={loading}
           onRetry={onRetry}
-          onRowClick={(row) => {
+          onRowClick={row => {
             drilldown?.openDrilldown({
               id: `ground-job-${row.id}`,
               title: row.jobRef,
@@ -44,6 +46,8 @@ export function TodaysJobsTab({
       </Grid>
       <Grid size={{ xs: 12 }}>
         <AppointmentSchedule
+          title="Scheduled operational dates"
+          subtitle="Pending and moved-to-next-day cases by operational date"
           rows={data.appointmentSchedule}
           loading={loading}
           onRetry={onRetry}

@@ -13,6 +13,7 @@ import {
 import { ActivityFeed, FileUpload } from '@/design-system/UIComponents'
 import type { Invoice } from '@/shared/types/invoice'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import {
   agreementEmbeddedTableHeadCellSx,
   agreementEmbeddedTableSx,
@@ -233,7 +234,7 @@ function AttachmentsTab({ invoice }: { invoice: Invoice }) {
                     : att.type === 'signed_copy'
                       ? 'Signed copy'
                       : 'Other'}{' '}
-                  · {new Date(att.uploadedAt).toLocaleDateString()}
+                  · {formatDisplayDate(att.uploadedAt)}
                 </Typography>
               </Box>
             </Stack>

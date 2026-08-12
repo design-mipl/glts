@@ -17,13 +17,14 @@ import {
   getApplicationOperationalTone,
   getApplicationTypeLabel,
 } from '@/pages/customer/features/applications/components/listing/applicationStatus'
-import { resolveApplicationCompanyName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { resolveApplicationCompanyName, resolveApplicationVesselName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
 import {
   resolveApplicationCreatorLabel,
   resolveApplicationCreatorRoleLabel,
 } from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import { isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
+import { formatDisplayDate, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { isMarineReadOnlyWorkspace, isMarinePendingPaymentWorkspace, opensMarineViewFormDirectly, resolveMarineWorkspaceMode } from '../config/marineWorkspaceMode'
 import { resolveMarineApplicationQueueTab } from '../config/marineApplicationListingTabs'
@@ -126,6 +127,7 @@ export function buildMarineApplicationColumns({
       widthSize: 'md',
       sortable: true,
       filterable: true,
+      render: (_, row) => formatDisplayDateTime(row.createdAt),
     },
     {
       key: 'id',
@@ -194,6 +196,30 @@ export function buildMarineApplicationColumns({
       ),
     },
     {
+      key: 'vesselName',
+      label: 'Vessel',
+      widthSize: 'md',
+      sortable: true,
+      filterable: true,
+      render: (_: unknown, row: MarineApplicationRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationVesselName(row)}
+        </Typography>
+      ),
+    },
+    {
+      key: 'poReference',
+      label: 'PO / CID / Compass No.',
+      widthSize: 'md',
+      sortable: true,
+      filterable: true,
+      render: (_: unknown, row: MarineApplicationRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {row.poReference?.trim() || '—'}
+        </Typography>
+      ),
+    },
+    {
       key: 'countryVisa',
       label: 'Country / Visa',
       widthSize: 'md',
@@ -228,6 +254,11 @@ export function buildMarineApplicationColumns({
       widthSize: 'md',
       sortable: true,
       filterable: true,
+      render: (value: string) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {formatDisplayDate(value)}
+        </Typography>
+      ),
     },
     {
       key: 'createdBy',
@@ -293,6 +324,7 @@ export function buildMarineApplicationColumns({
       widthSize: 'md',
       sortable: true,
       filterable: false,
+      render: (_, row) => formatDisplayDateTime(row.lastUpdated),
     },
     {
       key: 'actions',

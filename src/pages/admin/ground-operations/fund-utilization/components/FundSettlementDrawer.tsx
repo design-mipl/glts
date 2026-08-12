@@ -218,7 +218,7 @@ export function FundSettlementDrawer({
                 maxDate={parseDateKeyToLocalDate(todayKey)}
                 size="sm"
                 fullWidth
-                format="DD MMM YYYY"
+                format="DD/MM/YY"
               />
             </FormField>
 

@@ -5,13 +5,10 @@ import { CustomerStatusChip } from '@/pages/customer/features/shared/components/
 import { BORDER_RADIUS, BORDER_WIDTH } from '@/design-system/tokens'
 import { publicShadows, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { PORTAL_HELP_ARTICLES } from '../data/portalHelpArticles'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 function formatArticleDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatDisplayDate(iso)
 }
 
 export function HelpSupportArticlesSection() {

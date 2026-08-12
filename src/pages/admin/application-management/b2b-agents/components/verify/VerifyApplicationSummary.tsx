@@ -1,17 +1,11 @@
 import { Box, Divider, Stack, Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import { Badge, BaseCard } from '@/design-system/UIComponents'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import type { VerifyOverviewData } from '../../utils/verifyDocumentsUtils'
 
 interface VerifyApplicationSummaryProps {
   overview: VerifyOverviewData
   isBulk?: boolean
-}
-
-function formatTravelDate(value: string): string {
-  if (!value?.trim() || value === '—') return '—'
-  const parsed = dayjs(value)
-  return parsed.isValid() ? parsed.format('DD MMM YYYY') : value
 }
 
 function MetaChip({ label, value }: { label: string; value: string }) {
@@ -92,10 +86,14 @@ export function VerifyApplicationSummary({ overview, isBulk = false }: VerifyApp
             {overview.gltsBatchId && overview.gltsApplicationId ? (
               <MetaChip label="App" value={overview.gltsApplicationId} />
             ) : null}
+            <MetaChip label="Company" value={overview.companyName || '—'} />
+            <MetaChip label="Billing entity" value={overview.entityName || '—'} />
+            <MetaChip label="Vessel" value={overview.vesselName || '—'} />
+            <MetaChip label="PO / CID / Compass No." value={overview.poReference || '—'} />
             <MetaChip label="Country" value={countryLabel} />
             <MetaChip label="Visa" value={visaLabel} />
             <MetaChip label="Jurisdiction" value={overview.jurisdiction || '—'} />
-            <MetaChip label="Travel" value={formatTravelDate(overview.travelDate)} />
+            <MetaChip label="Travel" value={formatDisplayDate(overview.travelDate)} />
           </Stack>
         </Stack>
       </Box>

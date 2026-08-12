@@ -35,6 +35,7 @@ import {
   DocumentDetailPage,
   DocumentListingPage,
 } from '../masters/documents'
+import { BankMasterListingPage } from '../masters/bank-master'
 import { CardMasterListingPage } from '../masters/card-master'
 import { CountryGroupListingPage } from '../masters/country-groups'
 import { JurisdictionListingPage } from '../masters/jurisdiction'
@@ -96,6 +97,7 @@ import {
   VendorBillingListingPage,
 } from '../finance/vendor-billing'
 import { FundAllocationListingPage } from '../finance/fund-allocation'
+import { ReconciliationListingPage } from '../finance/reconciliation'
 import { TeamDetailPage, TeamListingPage } from '../user-management/teams'
 import {
   DepartmentDetailPage,
@@ -471,6 +473,14 @@ export function AdminRoutes() {
         }
       />
       <Route
+        path="masters/bank-master"
+        element={
+          <PermissionGuard>
+            <BankMasterListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
         path="masters/sac-codes"
         element={
           <PermissionGuard>
@@ -729,6 +739,14 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <FundAllocationListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="finance/reconciliation"
+        element={
+          <PermissionGuard>
+            <ReconciliationListingPage />
           </PermissionGuard>
         }
       />

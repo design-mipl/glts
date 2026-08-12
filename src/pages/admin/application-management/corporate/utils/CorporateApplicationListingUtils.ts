@@ -5,7 +5,7 @@ import {
 } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { isBulkRow } from '@/pages/customer/features/applications/types/applicationListing.types'
-import { resolveApplicationCompanyName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { resolveApplicationCompanyName, resolveApplicationVesselName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
 import { resolveApplicationCreatorLabel } from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
 import { getListingCellValue } from '@/pages/customer/features/applications/utils/applicationListingUtils'
 import { mapApplicationRowsToGridItems } from '@/pages/customer/features/applications/utils/applicationListingGrid'
@@ -32,6 +32,8 @@ export function matchesCorporateApplicationSearch(row: CorporateApplicationRow, 
   if (!s) return true
   if (row.id.toLowerCase().includes(s)) return true
   if (resolveApplicationCompanyName(row).toLowerCase().includes(s)) return true
+  if (resolveApplicationVesselName(row).toLowerCase().includes(s)) return true
+  if (row.poReference?.toLowerCase().includes(s)) return true
   if (resolveApplicationCreatorLabel(row.createdByEmail).toLowerCase().includes(s)) return true
   if (row.jurisdiction?.toLowerCase().includes(s)) return true
   if (isBulkRow(row)) {
@@ -157,6 +159,8 @@ export function exportCorporateApplicationsToCsv(rows: CorporateApplicationRow[]
     'Type',
     'Pax name',
     'Company name',
+    'Vessel',
+    'PO / CID / Compass No.',
     'Country',
     'Visa type',
     'Jurisdiction',
@@ -171,6 +175,7 @@ export function exportCorporateApplicationsToCsv(rows: CorporateApplicationRow[]
     const type = isBulkRow(row) ? 'Bulk' : 'Single'
     const applicant = isBulkRow(row) ? formatBulkApplicantListingLabel(row) : row.applicantName
     const companyName = resolveApplicationCompanyName(row)
+    const vesselName = resolveApplicationVesselName(row)
     const createdBy = getCorporateApplicationCellValue(row, 'createdBy')
     return [
       row.createdAt,
@@ -178,6 +183,8 @@ export function exportCorporateApplicationsToCsv(rows: CorporateApplicationRow[]
       type,
       applicant,
       companyName,
+      vesselName,
+      row.poReference?.trim() || '—',
       row.country,
       row.visaType,
       row.jurisdiction ?? '—',

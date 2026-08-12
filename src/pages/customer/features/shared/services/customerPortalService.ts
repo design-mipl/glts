@@ -6,15 +6,14 @@ import {
   applySingleApplicationDemoSeed,
   defaultChecklist,
   GLTS_BATCH_IDS,
-  MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID,
   mockBulkBatches,
   mockSingleApplications,
   mockUploadQueue,
-  type ApplicantDocumentItem,
   type BulkBatchRow,
   type SingleApplicationRow,
   type UploadQueueRow,
 } from '../../applications/data/applicationFlowData'
+import { applyGltsArrangedDocuments, shouldApplyGltsArrangedDocuments } from '../../applications/data/gltsArrangedDocumentDemoConfig'
 import { normalizeApplicationId } from '../../../data/portalIds'
 import type { ApplicationStatus } from '@/shared/types/application'
 import { computeListingKpis } from '../../applications/utils/applicationListingUtils'
@@ -626,18 +625,12 @@ function buildBulkDetail(
   }
 }
 
-function withGltsArrangedTicketAndInsurance(documents: ApplicantDocumentItem[]): ApplicantDocumentItem[] {
-  return documents.map(doc => {
-    if (doc.documentId !== 'travel-ticket' && doc.documentId !== 'insurance') return doc
-    return { ...doc, handlingMode: 'arrange_by_glts', status: 'missing' }
-  })
-}
-
 function singleRowToUploadQueue(row: SingleApplicationRow): UploadQueueRow {
-  let documents = checklistToApplicantDocuments(defaultChecklist(row.country))
-  if (row.id === MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID) {
-    documents = withGltsArrangedTicketAndInsurance(documents)
-  }
+  const documents = applyGltsArrangedDocuments(
+    checklistToApplicantDocuments(defaultChecklist(row.country)),
+    row.id,
+    0,
+  )
   const documentsComplete = documents.filter(doc => isApplicantDocumentSatisfied(doc)).length
   const documentsTotal = documents.length
   const base: UploadQueueRow = {
@@ -668,10 +661,11 @@ function singleRowToUploadQueue(row: SingleApplicationRow): UploadQueueRow {
 function bulkRowToUploadQueue(row: BulkBatchRow): UploadQueueRow[] {
   if (row.id === GLTS_BATCH_IDS.schengenCrew) {
     return mockUploadQueue.map((queueRow, index) => {
-      let documents = checklistToApplicantDocuments(defaultChecklist(row.country), index)
-      if (index === 0) {
-        documents = withGltsArrangedTicketAndInsurance(documents)
-      }
+      const documents = applyGltsArrangedDocuments(
+        checklistToApplicantDocuments(defaultChecklist(row.country), index),
+        row.id,
+        index,
+      )
       return {
         ...queueRow,
         gltsApplicationId: row.id,
@@ -695,8 +689,14 @@ function bulkRowToUploadQueue(row: BulkBatchRow): UploadQueueRow[] {
   const cap = Math.max(row.totalApplicants, 1)
   return Array.from({ length: cap }).map((_, index) => {
     const sequenceNo = index + 1
-    const docs = checklistToApplicantDocuments(defaultChecklist(row.country), index)
-    const complete = Math.min(docs.length, Math.max(0, docs.length - (index % 3)))
+    const docs = applyGltsArrangedDocuments(
+      checklistToApplicantDocuments(defaultChecklist(row.country), index),
+      row.id,
+      index,
+    )
+    const complete = shouldApplyGltsArrangedDocuments(row.id, index)
+      ? docs.filter(doc => isApplicantDocumentSatisfied(doc)).length
+      : Math.min(docs.length, Math.max(0, docs.length - (index % 3)))
     return {
       id: `${row.id}-q${sequenceNo}`,
       fileName: `${row.id}-${sequenceNo}.pdf`,

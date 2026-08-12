@@ -14,11 +14,11 @@ import type {
 
 export interface GroundOperationsDashboardFilters {
   date: string
-  branch: string
-  city: string
+  /** City team key: all | mumbai | delhi | chennai | marine */
+  team: string
   executive: string
-  assignmentStatus: string
-  appointmentStatus: string
+  /** Operational case status key or all */
+  caseStatus: string
   priority: string
   search: string
 }
@@ -58,6 +58,18 @@ export interface GroundFundCaseRow {
   status: string
 }
 
+export interface GroundClaimSheetRow {
+  id: string
+  claimNumber: string
+  generatedBy: string
+  team: string
+  status: string
+  caseCount: number
+  grandTotal: string
+  rejectionReason?: string
+  generatedAt: string
+}
+
 export interface GroundPassportJourneyData {
   stages: PassportJourneyStageData[]
   journeyStatus: string
@@ -92,6 +104,7 @@ export interface GroundOperationsDashboardData {
   expenseSummary: ExpenseSummaryData
   settlementRows: SettlementStatusRow[]
   fundCaseRows: GroundFundCaseRow[]
+  claimSheetRows: GroundClaimSheetRow[]
   activityFeed: RecentActivityItem[]
   activityNotifications: NotificationItem[]
   activityRoute: RouteTimelineEvent[]
@@ -107,4 +120,5 @@ export interface GroundOperationsDashboardTabProps {
   onOpenAppointment?: (rowId: string) => void
   onOpenPassport?: (rowId: string) => void
   onOpenFundCase?: (rowId: string) => void
+  onOpenClaimSheet?: (rowId: string) => void
 }

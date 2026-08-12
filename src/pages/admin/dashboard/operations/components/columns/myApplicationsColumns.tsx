@@ -10,6 +10,7 @@ import {
   slaStatusColor,
   slaStatusLabel,
 } from '../../utils/applyOperationsConsultantFilters'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 function SlaAccentCell({ children, slaStatus }: { children: ReactNode; slaStatus: string }) {
   const theme = useTheme()
@@ -71,7 +72,7 @@ export function buildMyApplicationsColumns({
         <Badge label={slaStatusLabel(row.slaStatus)} color={slaStatusColor(row.slaStatus)} size="sm" />
       ),
     },
-    { key: 'dueDate', label: 'Due Date', widthSize: adminListingColumnWidthSize('date') },
+    { key: 'dueDate', label: 'Due Date', widthSize: adminListingColumnWidthSize('date'), render: (_, row) => formatDisplayDate(row.dueDate) },
     {
       key: 'actions',
       label: '',

@@ -3,6 +3,7 @@ import { Box, Grid, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typ
 import { BaseCard } from '@/design-system/UIComponents'
 import { vendorBillingService } from '@/shared/services/vendorBillingService'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import {
   agreementEmbeddedTableHeadCellSx,
   agreementEmbeddedTableSx,
@@ -62,7 +63,7 @@ export function VendorBillingLedgerTab({ vendorId }: VendorBillingLedgerTabProps
           <TableBody>
             {ledger.entries.map(entry => (
               <TableRow key={entry.id}>
-                <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
+                <TableCell>{formatDisplayDate(entry.date)}</TableCell>
                 <TableCell sx={{ textTransform: 'capitalize' }}>{entry.type}</TableCell>
                 <TableCell>{entry.reference}</TableCell>
                 <TableCell>{entry.description}</TableCell>

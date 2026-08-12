@@ -1,5 +1,7 @@
-import { FormField, Input } from '@/design-system/UIComponents'
+import { useMemo } from 'react'
+import { FormField, Input, Select } from '@/design-system/UIComponents'
 import type { VendorFormData } from '@/shared/types/vendor'
+import { listBankNameSelectOptions } from '@/shared/utils/bankMasterOptions'
 
 interface VendorBankFieldsProps {
   data: VendorFormData
@@ -9,6 +11,15 @@ interface VendorBankFieldsProps {
 export function VendorBankFields({ data, onChange }: VendorBankFieldsProps) {
   const patchBank = (partial: Partial<VendorFormData['bank']>) =>
     onChange({ ...data, bank: { ...data.bank, ...partial } })
+
+  const bankNameOptions = useMemo(() => {
+    const fromMaster = listBankNameSelectOptions()
+    const current = data.bank.bankName.trim()
+    if (current && !fromMaster.some(option => option.value === current)) {
+      return [{ value: current, label: current }, ...fromMaster]
+    }
+    return fromMaster
+  }, [data.bank.bankName])
 
   return (
     <>
@@ -22,11 +33,12 @@ export function VendorBankFields({ data, onChange }: VendorBankFieldsProps) {
         />
       </FormField>
       <FormField label="Bank name">
-        <Input
+        <Select
           size="sm"
           value={data.bank.bankName}
-          onChange={v => patchBank({ bankName: v })}
-          placeholder="Bank name"
+          onChange={v => patchBank({ bankName: String(v) })}
+          options={bankNameOptions}
+          placeholder="Select bank from bank master"
           fullWidth
         />
       </FormField>

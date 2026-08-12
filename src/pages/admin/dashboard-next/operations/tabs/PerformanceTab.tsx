@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Box, Grid, Stack, Typography, alpha } from '@mui/material'
-import { BarChart, LineChart, Select } from '@/design-system/UIComponents'
+import { LineChart, PieChart, Select } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import { ProgressSummary, DASHBOARD_SPACING } from '../../shared'
@@ -67,11 +67,20 @@ export function PerformanceTab({ data, loading }: OperationsDashboardTabProps) {
     finished: p.secondary ?? 0,
   }))
 
-  const capacityBars = data.teamCapacity.map((row) => ({
-    team: row.department,
-    open: row.openCases,
-    done: row.completedToday,
-  }))
+  const capacityPie = [
+    {
+      key: 'open',
+      label: 'Open',
+      value: data.teamCapacity.reduce((sum, row) => sum + row.openCases, 0),
+      color: OPS_CHART_COLORS.amber,
+    },
+    {
+      key: 'done',
+      label: 'Done today',
+      value: data.teamCapacity.reduce((sum, row) => sum + row.completedToday, 0),
+      color: OPS_CHART_COLORS.teal,
+    },
+  ]
 
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
@@ -99,7 +108,7 @@ export function PerformanceTab({ data, loading }: OperationsDashboardTabProps) {
             showLegend
             loading={loading}
             lines={[
-              { key: 'workedOn', label: 'Worked on', color: OPS_CHART_COLORS.navy },
+              { key: 'workedOn', label: 'Under Process', color: OPS_CHART_COLORS.navy },
               { key: 'finished', label: 'Finished', color: OPS_CHART_COLORS.green },
             ]}
           />
@@ -205,17 +214,11 @@ export function PerformanceTab({ data, loading }: OperationsDashboardTabProps) {
 
       <Grid size={{ xs: 12, md: 6 }}>
         <ChartPanel title="Capacity" description="Open cases vs done today">
-          <BarChart
-            data={capacityBars}
-            xKey="team"
+          <PieChart
+            data={capacityPie}
             height={220}
-            barSize={22}
             showLegend
             loading={loading}
-            bars={[
-              { key: 'open', label: 'Open', color: OPS_CHART_COLORS.amber },
-              { key: 'done', label: 'Done today', color: OPS_CHART_COLORS.teal },
-            ]}
           />
         </ChartPanel>
       </Grid>

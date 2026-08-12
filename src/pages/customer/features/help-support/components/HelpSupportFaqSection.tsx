@@ -7,13 +7,10 @@ import { BORDER_RADIUS } from '@/design-system/tokens'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { PORTAL_FAQ_CATEGORIES } from '../data/portalFaqCategories'
 import { PORTAL_FAQS, type PortalFaqItem, type PortalFaqSortOption } from '../data/portalFaqs'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 function formatFaqDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatDisplayDate(iso)
 }
 
 function sortFaqs(items: PortalFaqItem[], sortBy: PortalFaqSortOption): PortalFaqItem[] {

@@ -11,6 +11,7 @@ import {
 } from '@mui/material'
 import { Badge, Button } from '@/design-system/UIComponents'
 import type { Invoice } from '@/shared/types/invoice'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
   agreementEmbeddedTableHeadCellSx,
@@ -139,7 +140,7 @@ export function InvoiceDetailRefundTab({
                   ) : null}
                 </TableCell>
                 <TableCell sx={{ fontSize: 13, verticalAlign: 'top' }}>
-                  {row.recordedAt ? new Date(row.recordedAt).toLocaleString() : '—'}
+                  {row.recordedAt ? formatDisplayDateTime(row.recordedAt) : '—'}
                   {row.recordedBy ? (
                     <Typography variant="caption" color="text.secondary" display="block">
                       {row.recordedBy}

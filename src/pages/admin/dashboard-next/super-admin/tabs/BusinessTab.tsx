@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Box, Grid, Stack, Typography } from '@mui/material'
 import { useSearchParams } from 'react-router-dom'
-import { Badge, BarChart, Button, LineChart, type Column } from '@/design-system/UIComponents'
+import { BarChart, Button, LineChart, type Column } from '@/design-system/UIComponents'
 import { DASHBOARD_SPACING } from '../../shared'
 import { useDashboardFiltersOptional } from '../../shared/dashboard-intelligence'
 import { ExecutiveTable } from '../../shared/dashboard-ui-kit'
@@ -27,12 +27,9 @@ const SEGMENT_COMPARISON_COLUMNS: Column<SuperAdminSegmentCard>[] = [
     searchable: false,
     hideable: false,
     render: (_value, row) => (
-      <Stack direction="row" alignItems="center" spacing={0.75}>
-        <Typography variant="body2" fontWeight={700}>
-          {row.label}
-        </Typography>
-        {row.status === 'live' ? <Badge label="Live" color="success" /> : null}
-      </Stack>
+      <Typography variant="body2" fontWeight={700}>
+        {row.label}
+      </Typography>
     ),
   },
   {
@@ -189,15 +186,6 @@ export function BusinessTab({
         primary: s.label,
         value: s.approvalRate,
         progress: s.approvalRate,
-      })),
-    [segments],
-  )
-
-  const tatBars = useMemo(
-    () =>
-      segments.map((s) => ({
-        segment: s.label,
-        tat: s.avgTatDays,
       })),
     [segments],
   )
@@ -367,56 +355,40 @@ export function BusinessTab({
         title="Revenue & demand growth"
         description="Monthly trends by segment"
       >
-      <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
-        <Grid size={{ xs: 12, md: 6 }}>
-          <SuperAdminPanel
-            title="Average turnaround time"
-            description="Processing TAT by segment (days)"
-            onClick={() => openSegmentsWithFilter()}
-          >
-            <BarChart
-              data={tatBars}
-              xKey="segment"
-              height={SA_CHART_HEIGHT}
-              barSize={28}
-              showLegend={false}
-              loading={loading}
-              bars={[{ key: 'tat', label: 'Avg TAT (days)' }]}
-            />
-          </SuperAdminPanel>
+        <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SuperAdminPanel
+              title="Revenue growth trend"
+              description="Monthly gross (invoiced) revenue by segment (₹L)"
+              onClick={() => openSegmentsWithFilter()}
+            >
+              <LineChart
+                data={data.segmentRevenueTrend as unknown as Record<string, unknown>[]}
+                xKey="label"
+                height={SA_CHART_HEIGHT}
+                showLegend
+                loading={loading}
+                lines={[...segmentSeries]}
+              />
+            </SuperAdminPanel>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SuperAdminPanel
+              title="Monthly application trend"
+              description="Demand and workload by segment"
+              onClick={() => openSegmentsWithFilter()}
+            >
+              <LineChart
+                data={data.segmentApplicationTrend as unknown as Record<string, unknown>[]}
+                xKey="label"
+                height={SA_CHART_HEIGHT}
+                showLegend
+                loading={loading}
+                lines={[...segmentSeries]}
+              />
+            </SuperAdminPanel>
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <SuperAdminPanel
-            title="Revenue growth trend"
-            description="Monthly gross (invoiced) revenue by segment (₹L)"
-            onClick={() => openSegmentsWithFilter()}
-          >
-            <LineChart
-              data={data.segmentRevenueTrend as unknown as Record<string, unknown>[]}
-              xKey="label"
-              height={SA_CHART_HEIGHT}
-              showLegend
-              loading={loading}
-              lines={[...segmentSeries]}
-            />
-          </SuperAdminPanel>
-        </Grid>
-      </Grid>
-
-      <SuperAdminPanel
-        title="Monthly application trend"
-        description="Demand and workload by segment"
-        onClick={() => openSegmentsWithFilter()}
-      >
-        <LineChart
-          data={data.segmentApplicationTrend as unknown as Record<string, unknown>[]}
-          xKey="label"
-          height={SA_CHART_HEIGHT + 40}
-          showLegend
-          loading={loading}
-          lines={[...segmentSeries]}
-        />
-      </SuperAdminPanel>
       </SuperAdminSection>
     </Stack>
   )

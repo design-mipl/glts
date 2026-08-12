@@ -170,7 +170,10 @@ export const GLTS_BATCH_IDS = {
   japanGroup: 'GLTS-BAT-2026-038',
 } as const
 
-/** Marine single-application demo — applicant chose GLTS to arrange ticket and insurance. */
+/**
+ * Marine single-application demo — applicant chose GLTS to arrange ticket and insurance.
+ * Additional GLTS-arrange demos (all segments) live in `gltsArrangedDocumentDemoConfig.ts`.
+ */
 export const MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID = 'GLTS-APP-2026-744' as const
 
 function singleRow(
@@ -225,6 +228,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdByEmail: 'priya@glts.com',
     createdByRole: 'booker',
     customerSegment: 'marine',
+    poReference: 'COMPASS-OM-2026-847',
     processingStageDates: {
       ready: '2026-02-01T09:00:00.000Z',
       submitted: '2026-02-10T11:30:00.000Z',
@@ -271,6 +275,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdByEmail: 'ops@harborlinecrew.com',
     createdByRole: 'admin',
     customerSegment: 'marine',
+    poReference: 'PO-HLC-2026-881',
   }),
   singleRow({
     id: GLTS_APPLICATION_IDS.japan,
@@ -434,6 +439,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdByEmail: 'operations@bluewavemarine.com',
     createdByRole: 'admin',
     customerSegment: 'marine',
+    poReference: 'CID-BW-2026-744',
   }),
   singleRow({
     id: 'GLTS-APP-2026-739',
@@ -681,6 +687,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'marine',
     assignedTeamId: 'team-marine',
     assignedUserId: 'user-marine-2',
+    poReference: 'CID-OM-2026-868',
   }),
   singleRow({
     id: 'GLTS-APP-2026-861',
@@ -802,6 +809,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'corporate',
     assignedTeamId: 'team-corporate',
     assignedUserId: 'user-corporate-1',
+    poReference: 'PO-HT-2026-829',
   }),
   singleRow({
     id: 'GLTS-APP-2026-824',
@@ -840,6 +848,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'b2bAgents',
     assignedTeamId: 'team-b2b-agent',
     assignedUserId: 'user-b2b-1',
+    poReference: 'COMPASS-VP-2026-818',
   }),
   singleRow({
     id: 'GLTS-APP-2026-812',

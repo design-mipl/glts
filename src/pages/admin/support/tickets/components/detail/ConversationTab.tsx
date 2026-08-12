@@ -3,6 +3,7 @@ import { Box, Stack, Typography } from '@mui/material'
 import { Headphones, Send, User } from 'lucide-react'
 import { Button, FormField, Textarea } from '@/design-system/UIComponents'
 import type { SupportConversationEntry, SupportTicket } from '@/shared/types/supportTicket'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface ConversationTabProps {
   ticket: SupportTicket
@@ -11,12 +12,7 @@ interface ConversationTabProps {
 }
 
 function formatMessageTime(iso: string) {
-  return new Date(iso).toLocaleString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return formatDisplayDateTime(iso)
 }
 
 function ConversationItem({ entry }: { entry: SupportConversationEntry }) {

@@ -6,6 +6,7 @@ import { corporateAccountService } from '@/shared/services/corporateAccountServi
 import type { CorporateAccount } from '@/shared/types/corporateAccount'
 import { workflowTypeColor, workflowTypeLabel } from '../../agreements/config/agreementStatusConfig'
 import { corporatePortalStatusColor, corporatePortalStatusLabel } from '../config/corporateAccountStatusConfig'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface ColumnHandlers {
   onOpenDetail: (row: CorporateAccount) => void
@@ -82,7 +83,7 @@ export function buildCorporateAccountColumns({
       label: 'Last Updated',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      render: (_, row) => new Date(row.updatedAt).toLocaleDateString(),
+      render: (_, row) => formatDisplayDateTime(row.updatedAt),
     },
     {
       key: 'actions',

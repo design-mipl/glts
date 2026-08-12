@@ -7,6 +7,7 @@ import { ApplicationTrackingUrlLink } from '@/shared/components/ApplicationTrack
 import { resolveApplicationTrackingUrl, resolveOfferingVfsServiceRates } from '@/shared/services/countryMasterService'
 import type { FormAssistSubmissionDraft } from '@/shared/services/applicationFormAssistService'
 import { resolveCardLabel } from '@/shared/utils/cardMasterOptions'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { mapCountryVfsRatesToChargeLines } from '@/shared/utils/countryVfsServiceRateUtils'
 import {
   PAYMENT_MODE_OPTIONS,
@@ -67,12 +68,6 @@ function labelForOption(
   value: string,
 ): string {
   return options.find(option => option.value === value)?.label ?? (value?.trim() ? value : '—')
-}
-
-function formatDisplayDate(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY'], true)
-  return parsed.isValid() ? parsed.format('DD MMM YYYY') : value
 }
 
 function PhysicalSubmissionDatesPanel({

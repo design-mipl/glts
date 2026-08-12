@@ -4,6 +4,7 @@ import type {
   LogisticsFinalQcChecks,
 } from '@/shared/types/logisticsDispatch'
 import { isAirportAssistanceDeliveryMethod, LOGISTICS_FINAL_QC_CHECKLIST } from '@/shared/types/logisticsDispatch'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 export function isLogisticsFinalQcComplete(checks: LogisticsFinalQcChecks): boolean {
   return LOGISTICS_FINAL_QC_CHECKLIST.every(item => checks[item.key])
@@ -75,16 +76,7 @@ export function validateLogisticsDispatchDetails(
 }
 
 export function formatLogisticsDateTime(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return value
-  return parsed.toLocaleString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return formatDisplayDateTime(value)
 }
 
 export function toDateTimeLocalValue(isoOrLocal: string | undefined): string {

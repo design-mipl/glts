@@ -52,8 +52,8 @@ export function ApplicationReviewDetailPanel({
   const tabItems = useMemo(
     () => [
       { value: PASSENGER_TAB, label: 'Passenger' },
-      { value: TIMELINE_TAB, label: 'Timeline' },
       { value: DOCUMENTS_TAB, label: 'Documents' },
+      { value: TIMELINE_TAB, label: 'Timeline' },
     ],
     [],
   )
@@ -155,11 +155,11 @@ export function ApplicationReviewDetailPanel({
           )
         ) : null}
 
+        {activeTab === DOCUMENTS_TAB ? documentsContent : null}
+
         {activeTab === TIMELINE_TAB ? (
           <ApplicationProcessingTimeline steps={timelineSteps} orientation="vertical" />
         ) : null}
-
-        {activeTab === DOCUMENTS_TAB ? documentsContent : null}
       </Box>
     </Box>
   )

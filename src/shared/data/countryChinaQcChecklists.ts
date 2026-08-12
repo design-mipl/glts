@@ -195,7 +195,7 @@ const CHINA_G_TYPE_MUMBAI_DOCS_SECTIONS = [
 
 export function buildChinaGTypeMumbaiOpsQcChecklist(): CountryQcChecklistTemplate {
   return buildChecklistTemplate(
-    'OPS Team – Document Verification Checklist',
+    'OPS TEAM – Document QC Checklist',
     'Final validation before the file reaches the Submission Team.',
     CHINA_G_TYPE_MUMBAI_OPS_SECTIONS,
   )
@@ -314,7 +314,7 @@ export function buildChinaMTypeDelhiDocsQcChecklist(): CountryQcChecklistTemplat
 
 export function buildChinaMTypeDelhiOpsQcChecklist(): CountryQcChecklistTemplate {
   return buildChecklistTemplate(
-    'OPS Team – Document Verification Checklist',
+    'OPS TEAM – Document QC Checklist',
     'Final validation before the file reaches the Submission Team.',
     CHINA_M_TYPE_DELHI_OPS_SECTIONS,
   )
@@ -330,7 +330,7 @@ export function buildChinaGTypeDelhiDocsQcChecklist(): CountryQcChecklistTemplat
 
 export function buildChinaGTypeDelhiOpsQcChecklist(): CountryQcChecklistTemplate {
   return buildChecklistTemplate(
-    'OPS Team – Document Verification Checklist',
+    'OPS TEAM – Document QC Checklist',
     'Final validation before the file reaches the Submission Team.',
     CHINA_G_TYPE_DELHI_OPS_SECTIONS,
   )

@@ -570,6 +570,12 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
   const recheckCount = countByQueue(queueRows, 'recheck')
   const paymentCount = countByQueue(queueRows, 'payment')
   const arrangeCount = countByQueue(queueRows, 'glts_arrange')
+  const ticketCount = queueRows.filter(
+    (row) => row.queue === 'glts_arrange' && row.serviceType === 'ticket',
+  ).length
+  const insuranceCount = queueRows.filter(
+    (row) => row.queue === 'glts_arrange' && row.serviceType === 'insurance',
+  ).length
   const submissionCount = countByQueue(queueRows, 'submission')
   const collectionCount = countByQueue(queueRows, 'collection')
   const physicalCount = countByQueue(queueRows, 'physical_originals')
@@ -599,7 +605,7 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
   const assigneeMix = [
     {
       key: 'user',
-      label: 'Ops user',
+      label: 'user',
       value: assigneeMixSource.filter((row) => row.assigneeKind === 'user').length,
       color: OPS_CHART_COLORS.navy,
     },
@@ -641,7 +647,7 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
       },
       {
         id: 'kpi-total-verification',
-        label: 'Total verification',
+        label: 'Pending OPS QC',
         value: verifyCount + recheckCount,
         delta: 6.2,
         deltaLabel: 'Pending + re-upload queue',
@@ -676,28 +682,20 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
         sparklineData: [paymentCount, paymentCount, paymentCount],
       },
       {
-        id: 'kpi-arrange',
-        label: OPS_QUEUE_DISPLAY_LABELS.arrange,
-        value: arrangeCount,
-        delta: arrangeCount > 0 ? 3.1 : 0,
-        deltaLabel: 'Ticket / insurance to arrange',
-        sparklineData: [arrangeCount, arrangeCount, arrangeCount],
+        id: 'kpi-pending-ticket',
+        label: 'Pending ticket',
+        value: ticketCount,
+        delta: ticketCount > 0 ? 3.1 : 0,
+        deltaLabel: 'Ticket to arrange',
+        sparklineData: [ticketCount, ticketCount, ticketCount],
       },
       {
-        id: 'kpi-physical-originals',
-        label: OPS_QUEUE_DISPLAY_LABELS.physicalOriginals,
-        value: physicalCount,
-        delta: physicalCount > 0 ? 2.6 : 0,
-        deltaLabel: 'Awaiting original receipt',
-        sparklineData: [physicalCount, physicalCount, physicalCount],
-      },
-      {
-        id: 'kpi-assignment',
-        label: 'Unassigned',
-        value: unassignedCount,
-        delta: 5.8,
-        deltaLabel: 'Needs consultant assignment',
-        sparklineData: [unassignedCount, unassignedCount, unassignedCount],
+        id: 'kpi-pending-insurance',
+        label: 'Pending insurance',
+        value: insuranceCount,
+        delta: insuranceCount > 0 ? 2.7 : 0,
+        deltaLabel: 'Insurance to arrange',
+        sparklineData: [insuranceCount, insuranceCount, insuranceCount],
       },
       amTabKpi(
         'kpi-online-submission',
@@ -734,6 +732,22 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
         4.6,
         'Application Management · Dispatched',
       ),
+      {
+        id: 'kpi-physical-originals',
+        label: OPS_QUEUE_DISPLAY_LABELS.physicalOriginals,
+        value: physicalCount,
+        delta: physicalCount > 0 ? 2.6 : 0,
+        deltaLabel: 'Awaiting original receipt',
+        sparklineData: [physicalCount, physicalCount, physicalCount],
+      },
+      {
+        id: 'kpi-assignment',
+        label: 'Ground OPs Unassigned',
+        value: unassignedCount,
+        delta: 5.8,
+        deltaLabel: 'Needs consultant assignment',
+        sparklineData: [unassignedCount, unassignedCount, unassignedCount],
+      },
     ],
     alerts: buildAlerts([...queueRows, ...assignmentDeskRows]),
     notifications: buildAlerts([...queueRows, ...assignmentDeskRows])

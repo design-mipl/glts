@@ -1,4 +1,5 @@
 import type { Column } from '@/design-system/UIComponents'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import type { OperationsDashboardData, OperationsWorkRow, OpsSegmentKey } from '../types'
 
 export type OpsReportTypeId =
@@ -33,7 +34,7 @@ export const OPS_REPORT_META: readonly OpsReportMeta[] = [
   {
     id: 'crew_change_risk',
     label: 'Crew Change Risk Board',
-    source: 'Portal — marine case module; sign-on date field to be confirmed with Metaphi.',
+    source: 'Portal — marine case module; joining date field to be confirmed with Metaphi.',
   },
   {
     id: 'sla_breach',
@@ -107,13 +108,6 @@ function addDays(d: Date, days: number): Date {
   const next = new Date(d)
   next.setDate(next.getDate() + days)
   return next
-}
-
-function formatDisplayDate(d: Date): string {
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const yyyy = d.getFullYear()
-  return `${dd}/${mm}/${yyyy}`
 }
 
 export function resolveOpsReportRange(
@@ -237,7 +231,8 @@ export function getOpsReportColumns(reportType: OpsReportTypeId): Column<OpsRepo
         textColumn('nationality', 'Nationality', 'md'),
         textColumn('visaType', 'Visa Type', 'md'),
         textColumn('currentStatus', 'Current Status', 'md'),
-        textColumn('daysRemaining', 'Days Remaining', 'sm'),
+        textColumn('joiningDate', 'Joining Date', 'md'),
+        textColumn('daysRemaining', 'Days Left', 'sm'),
         textColumn('ragStatus', 'RAG Status', 'sm'),
       ]
     case 'sla_breach':
@@ -349,6 +344,12 @@ export function buildOpsReportRows(
       return source.slice(0, 25).map((row, index) => {
         const hours = parseWaitingHours(row.waitingTime)
         const daysRemaining = Math.max(0, Math.round(14 - hours / 24 + (index % 4)))
+        const joining = new Date()
+        joining.setDate(joining.getDate() + daysRemaining)
+        const joiningDate = joining.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+        })
         return {
           id: `crew-${row.id}`,
           vessel: row.company || '—',
@@ -357,6 +358,7 @@ export function buildOpsReportRows(
           nationality: row.country,
           visaType: row.visaType,
           currentStatus: row.status || row.queueLabel,
+          joiningDate,
           daysRemaining: String(daysRemaining),
           ragStatus: ragFromDaysRemaining(daysRemaining),
         }

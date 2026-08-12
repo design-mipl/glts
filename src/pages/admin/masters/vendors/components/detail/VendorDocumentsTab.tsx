@@ -9,6 +9,7 @@ import {
   agreementEmbeddedTableSx,
 } from '@/pages/admin/customer-accounts/agreements/components/agreementFormLayout'
 import { vendorDocumentTypeLabel } from '../../config/vendorDocumentTypes'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { VendorDocumentUploadModal } from '../VendorDocumentUploadModal'
 
 interface VendorDocumentsTabProps {
@@ -64,7 +65,7 @@ export function VendorDocumentsTab({ vendor, onUpdated }: VendorDocumentsTabProp
                 <TableRow key={doc.id}>
                   <TableCell>{doc.documentName}</TableCell>
                   <TableCell>{vendorDocumentTypeLabel[doc.documentType]}</TableCell>
-                  <TableCell>{doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : '—'}</TableCell>
+                  <TableCell>{formatDisplayDate(doc.uploadedAt)}</TableCell>
                   <TableCell>{doc.uploadedBy ?? '—'}</TableCell>
                   <TableCell align="center">
                     <Stack direction="row" spacing={0.5} justifyContent="center">

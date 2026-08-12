@@ -1,6 +1,7 @@
 import { Stack, Typography } from '@mui/material'
 import { BaseCard, Button } from '@/design-system/UIComponents'
 import type { EnquiryRecord } from '@/shared/types/enquiry'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 export function AssignmentOwnershipTab({
   enquiry,
@@ -29,7 +30,7 @@ export function AssignmentOwnershipTab({
         <BaseCard key={`${history.changedAt}-${index}`} sx={{ p: 2 }}>
           <Typography variant="subtitle2">Ownership change</Typography>
           <Typography variant="body2" color="text.secondary">
-            {new Date(history.changedAt).toLocaleString()} by {history.changedBy}
+            {formatDisplayDateTime(history.changedAt)} by {history.changedBy}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {history.fromTeam ?? '--'} / {history.fromUser ?? '--'} {'->'} {history.toTeam ?? '--'} / {history.toUser ?? '--'}

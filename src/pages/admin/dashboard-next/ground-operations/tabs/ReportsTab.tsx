@@ -1,35 +1,46 @@
 import { ReportCenter } from '../../shared'
 import type { GroundOperationsDashboardTabProps } from '../types'
 
-/** Reports placeholder — Enterprise Report Center deferred. */
+/** Reports — export live Ground Ops pulse metrics. */
 export function ReportsTab({ data, loading, onRetry }: GroundOperationsDashboardTabProps) {
   return (
     <ReportCenter
       placeholder
       recentReports={[
         {
-          id: 'go-daily',
-          name: "Today's job pack",
+          id: 'go-desk',
+          name: 'Operations Desk queue',
           category: 'Operational',
-          generatedAt: 'Today 06:30',
+          generatedAt: 'Live',
         },
         {
-          id: 'go-route',
-          name: 'Route utilization',
+          id: 'go-logistics',
+          name: 'Logistics in-transit board',
           category: 'Operational',
-          generatedAt: 'Yesterday',
+          generatedAt: 'Live',
         },
         {
-          id: 'go-settle',
-          name: 'Settlement summary',
-          category: 'Executive',
-          generatedAt: 'This week',
+          id: 'go-claims',
+          name: 'Claim sheet Finance status',
+          category: 'Finance',
+          generatedAt: 'Live',
+        },
+        {
+          id: 'go-funds',
+          name: 'Fund utilization settlement',
+          category: 'Finance',
+          generatedAt: 'Live',
         },
       ]}
       loading={loading}
       onRetry={onRetry}
       exportTitle="Ground Operations dashboard export"
-      exportPayload={data.quickStats}
+      exportPayload={{
+        quickStats: data.quickStats,
+        claimSheets: data.claimSheetRows,
+        fundBatches: data.fundCaseRows,
+        inTransit: data.passportRows,
+      }}
     />
   )
 }

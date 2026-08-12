@@ -14,8 +14,9 @@ export interface MarineTimelineRow {
   vessel: string
   crew: string
   joiningPort: string
-  signOn: string
-  /** Days remaining until sign-on — drives RAG bands. */
+  /** Passenger joining date (YYYY-MM-DD or display date). */
+  joiningDate: string
+  /** Days left until joining date — drives RAG bands. */
   daysRemaining?: number
   visaStatus: string
   priority: string
@@ -94,11 +95,12 @@ export function MarineTimeline({
         searchable: true,
       },
       {
-        key: 'signOn',
-        label: 'Sign On',
+        key: 'joiningDate',
+        label: 'Joining Date',
         widthSize: 'md',
         sortable: true,
         filterable: true,
+        searchable: true,
       },
       {
         key: 'daysRemaining',
@@ -143,7 +145,7 @@ export function MarineTimeline({
       onViewAll={onViewAll}
       viewAllLabel="View all"
       emptyTitle="No active crew changes"
-      emptyDescription="No vessel sign-ons match the current global filters."
+      emptyDescription="No vessel joining dates match the current global filters."
     />
   )
 }

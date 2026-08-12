@@ -14,6 +14,7 @@ import {
 } from '../../config/supportTicketStatusConfig'
 import type { SupportTicketsApi } from '../../hooks/useSupportTickets'
 import type { SupportTicket } from '../../types/supportTicket'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface SupportHistorySectionProps {
   ticketsApi: SupportTicketsApi
@@ -21,13 +22,7 @@ interface SupportHistorySectionProps {
 }
 
 function formatTicketDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return formatDisplayDateTime(iso)
 }
 
 function getCategoryLabel(categoryId: string) {

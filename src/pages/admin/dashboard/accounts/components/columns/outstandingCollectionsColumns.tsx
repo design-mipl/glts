@@ -2,6 +2,7 @@ import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { OutstandingCollectionRow } from '../../data/accountsDashboardMock'
 import { collectionStatusColor } from '../../utils/applyAccountsDashboardFilters'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 export interface OutstandingCollectionsColumnHandlers {
   onFollowUp: (row: OutstandingCollectionRow) => void
@@ -16,7 +17,7 @@ export function buildOutstandingCollectionsColumns({
     { key: 'company', label: 'Company', widthSize: adminListingColumnWidthSize('company') },
     { key: 'invoice', label: 'Invoice', widthSize: adminListingColumnWidthSize('code') },
     { key: 'outstandingAmount', label: 'Outstanding Amount', widthSize: adminListingColumnWidthSize('code') },
-    { key: 'followUpDate', label: 'Follow-up Date', widthSize: adminListingColumnWidthSize('date') },
+    { key: 'followUpDate', label: 'Follow-up Date', widthSize: adminListingColumnWidthSize('date'), render: (_, row) => formatDisplayDate(row.followUpDate) },
     {
       key: 'collectionStatus',
       label: 'Collection Status',

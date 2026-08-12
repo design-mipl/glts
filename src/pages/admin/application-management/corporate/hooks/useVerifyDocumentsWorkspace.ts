@@ -18,6 +18,11 @@ import {
   buildOverviewFromDetail,
   buildVerifyTimeline,
 } from '../utils/verifyDocumentsUtils'
+import {
+  resolveApplicationCompanyName,
+  resolveApplicationVesselName,
+} from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { getSingleApplicationFlowExtras } from '@/pages/customer/features/applications/data/applicationFlowData'
 
 export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
   const [searchParams] = useSearchParams()
@@ -57,7 +62,19 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
   const overview = useMemo(
     () =>
       applicationId
-        ? buildOverviewFromDetail(applicationId, isBulk, rows, detail?.application)
+        ? buildOverviewFromDetail(applicationId, isBulk, rows, {
+            country: detail?.application?.country ?? listingRow?.country,
+            countryFlag: detail?.application?.countryFlag ?? listingRow?.countryFlag,
+            visaType: detail?.application?.visaType ?? listingRow?.visaType,
+            travelDate: detail?.application?.travelDate ?? listingRow?.travelDate,
+            jurisdiction: detail?.application?.jurisdiction ?? listingRow?.jurisdiction,
+            companyName: listingRow ? resolveApplicationCompanyName(listingRow) : undefined,
+            vesselName: listingRow ? resolveApplicationVesselName(listingRow) : undefined,
+            poReference: listingRow?.poReference,
+            entityName: applicationId
+              ? getSingleApplicationFlowExtras(applicationId)?.entityName
+              : undefined,
+          })
         : {
             countryName: '—',
             countryFlag: '',
@@ -65,7 +82,7 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
             travelDate: '—',
             travelerCount: 0,
           },
-    [applicationId, isBulk, rows, detail?.application],
+    [applicationId, isBulk, rows, detail?.application, listingRow],
   )
 
   const selectableRows = useMemo(() => {

@@ -51,7 +51,7 @@ export const SUPER_ADMIN_RECOMMENDATIONS: ExecutiveRecommendation[] = [
   {
     id: 'rec-2',
     title: 'Clear Pacific Pearl joining risk',
-    description: 'Embassy lag threatens sign-on in 4 days for 18 crew.',
+    description: 'Embassy lag threatens joining date in 4 days for 18 crew.',
     actionLabel: 'Open marine',
     owner: 'Operations Head',
     priority: 'critical',
@@ -83,7 +83,7 @@ export const SUPER_ADMIN_MANAGEMENT_ALERTS: ManagementAlertRecord[] = [
   {
     id: 'ma-2',
     title: 'MV Pacific Pearl joining risk',
-    description: 'Sign-on in 4 days with embassy lag.',
+    description: 'Joining date in 4 days with embassy lag.',
     severity: 'critical',
     businessImpact: 'Marine delivery & client SLA',
     affectedSegment: 'Marine',
@@ -169,7 +169,7 @@ export const SUPER_ADMIN_FORECASTS: PredictivePanelModel[] = [
     deltaLabel: '+8% vs MTD run-rate',
     notes: [
       'Derived from current pipeline + approval history',
-      'Assumes Marine sign-ons clear on schedule',
+      'Assumes Marine joining dates clear on schedule',
     ],
   },
   {

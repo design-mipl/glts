@@ -10,6 +10,9 @@ export interface ApplicationReviewOverview {
   placeOfResidenceLabel?: string
   jurisdiction?: string
   companyName?: string
+  vesselName?: string
+  poReference?: string
+  entityName?: string
   gltsApplicationId?: string
   gltsBatchId?: string
 }
@@ -25,6 +28,9 @@ export function toApplicationReviewOverview(source: {
   placeOfResidenceLabel?: string
   jurisdiction?: string
   companyName?: string
+  vesselName?: string
+  poReference?: string
+  entityName?: string
   gltsApplicationId?: string
   gltsBatchId?: string
 }): ApplicationReviewOverview {
@@ -38,6 +44,9 @@ export function toApplicationReviewOverview(source: {
     placeOfResidenceLabel: source.placeOfResidenceLabel,
     jurisdiction: source.jurisdiction,
     companyName: source.companyName,
+    vesselName: source.vesselName,
+    poReference: source.poReference,
+    entityName: source.entityName,
     gltsApplicationId: source.gltsApplicationId,
     gltsBatchId: source.gltsBatchId,
   }
@@ -58,6 +67,9 @@ export function buildApplicationReviewOverviewFromFlowState(
     placeOfResidenceLabel: state.placeOfResidence || undefined,
     jurisdiction: state.jurisdiction,
     companyName: state.companyName || undefined,
+    vesselName: state.vesselName || undefined,
+    poReference: state.referencePo || undefined,
+    entityName: state.entityName || undefined,
     gltsApplicationId: (overrides?.gltsApplicationId ?? state.gltsApplicationId) || undefined,
     gltsBatchId: (overrides?.gltsBatchId ?? state.gltsBatchId) || undefined,
   }

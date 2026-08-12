@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import { Badge } from '@/design-system/UIComponents'
 import { cardMasterService } from '@/shared/services/cardMasterService'
 import { fundAllocationService } from '@/shared/services/fundAllocationService'
@@ -12,12 +11,7 @@ import {
   assignmentFundDisplayLabel,
   resolveAssignmentFundDisplayState,
 } from '../utils/assignmentFundDisplayUtils'
-
-function formatDisplayDateTime(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim())
-  return parsed.isValid() ? parsed.format('DD MMM YYYY, HH:mm') : value
-}
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 function formatAmount(value: number | undefined): string {
   if (value == null || !Number.isFinite(value) || value <= 0) return '—'

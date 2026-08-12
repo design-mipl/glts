@@ -1,13 +1,14 @@
 import { Badge, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { SubmissionPendingRow } from '../../data/documentationDashboardMock'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 export function buildSubmissionPendingColumns(): Column<SubmissionPendingRow>[] {
   return [
     { key: 'applicant', label: 'Applicant', widthSize: adminListingColumnWidthSize('name'), hideable: false },
     { key: 'country', label: 'Country', widthSize: adminListingColumnWidthSize('country') },
     { key: 'embassy', label: 'Embassy', widthSize: adminListingColumnWidthSize('jurisdiction') },
-    { key: 'submissionDate', label: 'Submission Date', widthSize: adminListingColumnWidthSize('date') },
+    { key: 'submissionDate', label: 'Submission Date', widthSize: adminListingColumnWidthSize('date'), render: (_, row) => formatDisplayDate(row.submissionDate) },
     {
       key: 'submissionStatus',
       label: 'Submission Status',

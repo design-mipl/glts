@@ -2,13 +2,14 @@ import { Badge, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { VendorPaymentRow } from '../../data/accountsDashboardMock'
 import { paymentStatusColor } from '../../utils/applyAccountsDashboardFilters'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 export function buildVendorPaymentColumns(): Column<VendorPaymentRow>[] {
   return [
     { key: 'vendor', label: 'Vendor', widthSize: adminListingColumnWidthSize('company') },
     { key: 'service', label: 'Service', widthSize: adminListingColumnWidthSize('service') },
     { key: 'amount', label: 'Amount', widthSize: adminListingColumnWidthSize('code') },
-    { key: 'dueDate', label: 'Due Date', widthSize: adminListingColumnWidthSize('date') },
+    { key: 'dueDate', label: 'Due Date', widthSize: adminListingColumnWidthSize('date'), render: (_, row) => formatDisplayDate(row.dueDate) },
     {
       key: 'paymentStatus',
       label: 'Payment Status',

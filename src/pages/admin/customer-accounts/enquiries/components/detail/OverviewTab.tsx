@@ -9,6 +9,7 @@ import {
   formatEnquiryInquirySource,
 } from '../../config/enquiryFormConfig'
 import { getVisaRequirementItems, purposeOfVisitTableTextSx } from '@/shared/utils/enquiryVisaRequirementUtils'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 function Field({ label, value }: { label: string; value?: string | number | boolean }) {
   return (
@@ -142,7 +143,7 @@ export function OverviewTab({ enquiry, onUploadAttachment }: OverviewTabProps) {
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Version {item.version} · {item.fileType.toUpperCase()} · {item.fileSizeKb} KB ·{' '}
-                      {new Date(item.uploadedAt).toLocaleDateString()}
+                      {formatDisplayDate(item.uploadedAt)}
                     </Typography>
                   </Stack>
                   <Button label="Download" size="sm" variant="outlined" />

@@ -196,7 +196,7 @@ function buildTemplate(
 }
 
 const DEFAULT_OPS_TEMPLATE = buildTemplate(
-  'OPS Team – Document Verification Checklist',
+  'OPS TEAM – Document QC Checklist',
   'Final validation before the file reaches the Submission Team.',
   OPS_SECTIONS,
 )

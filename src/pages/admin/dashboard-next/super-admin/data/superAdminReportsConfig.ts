@@ -1,4 +1,5 @@
 import type { Column } from '@/design-system/UIComponents'
+import { formatDisplayDate, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { AGEING_BUCKET_LABELS, type AgeingBucketId } from '../../shared/config/ageingBuckets'
 import {
   APPLICATION_PIPELINE_STAGE_LABELS,
@@ -182,7 +183,7 @@ export const SUPER_ADMIN_REPORT_META: readonly SuperAdminReportMeta[] = [
     id: 'crew_change_risk',
     label: 'Crew Change Risk Board',
     category: 'Operational Reports',
-    source: 'Ops — marine cases nearing sign-on dates.',
+    source: 'Ops — marine cases nearing joining dates.',
   },
   {
     id: 'sla_breach',
@@ -410,13 +411,6 @@ function addDays(d: Date, days: number): Date {
   return next
 }
 
-function formatDisplayDate(d: Date): string {
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const yyyy = d.getFullYear()
-  return `${dd}/${mm}/${yyyy}`
-}
-
 export function resolveSuperAdminReportRange(
   period: SuperAdminReportPeriodId,
   customRange: [Date | null, Date | null],
@@ -622,7 +616,8 @@ export function getSuperAdminReportColumns(
         textColumn('nationality', 'Nationality', 'md'),
         textColumn('visaType', 'Visa Type', 'md'),
         textColumn('currentStatus', 'Current Status', 'md'),
-        textColumn('daysRemaining', 'Days Remaining', 'sm'),
+        textColumn('joiningDate', 'Joining Date', 'md'),
+        textColumn('daysRemaining', 'Days Left', 'sm'),
         textColumn('ragStatus', 'RAG Status', 'sm'),
       ]
     case 'sla_breach':
@@ -930,13 +925,7 @@ export function buildSuperAdminReportRows(
     }
 
     case 'cash_position': {
-      const asOf = new Date().toLocaleString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+      const asOf = formatDisplayDateTime(new Date())
       return [
         {
           id: 'cash-1',
@@ -1190,6 +1179,7 @@ export function buildSuperAdminReportRows(
       return data.pendingCrewVisas.slice(0, 15).map((item, index) => {
         const daysRemaining = Math.max(0, 14 - (index % 12))
         const rag = daysRemaining < 7 ? 'Red' : daysRemaining <= 10 ? 'Amber' : 'Green'
+        const timeline = data.marineTimeline[index % Math.max(1, data.marineTimeline.length)]
         return {
           id: `crew-${item.id}`,
           vessel: item.primary,
@@ -1198,6 +1188,7 @@ export function buildSuperAdminReportRows(
           nationality: item.secondary?.split('·')[0]?.trim() ?? '—',
           visaType: 'C1/D',
           currentStatus: String(item.value ?? 'Pending'),
+          joiningDate: timeline?.joiningDate ?? '—',
           daysRemaining: String(daysRemaining),
           ragStatus: rag,
         }
@@ -1294,7 +1285,7 @@ export function buildSuperAdminReportRows(
     case 'avg_tat_by_country':
       return data.processingTimeByCountry.slice(0, 12).map((point, index) => {
         const meanTat = point.value
-        const slaCommitment = data.executiveSummary.averageTat.targetDays || 12
+        const slaCommitment = 5
         const embassyBenchmark = slaCommitment + 2
         const fourWeekAvg = meanTat * (0.9 + (index % 5) * 0.05)
         const variancePct = fourWeekAvg ? ((meanTat - fourWeekAvg) / fourWeekAvg) * 100 : 0

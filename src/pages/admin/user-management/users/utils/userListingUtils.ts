@@ -5,6 +5,7 @@ import {
   type AdminPortalUser,
 } from '@/shared/types/adminPortalUser'
 import { formatMasterDate } from '@/pages/admin/masters/utils/masterListingUtils'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { masterStatusLabel } from '@/pages/admin/masters/config/masterStatusConfig'
 
 export function getUserCellValue(row: AdminPortalUser, key: string): string {
@@ -95,14 +96,7 @@ export function getActivityLogCellValue(
 }
 
 export function formatUserDateTime(iso: string): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return formatDisplayDateTime(iso)
 }
 
 export function formatUserTime(iso: string): string {

@@ -10,7 +10,7 @@ export const RAG_STATUS_LABELS: Record<RagStatusId, string> = {
 }
 
 /**
- * Visa / crew sign-on RAG bands:
+ * Visa / crew joining-date RAG bands (days left until joining):
  * Green > 10 days · Amber 7–10 days · Red < 7 days.
  */
 export function ragFromDaysRemaining(days: number): RagStatusId {

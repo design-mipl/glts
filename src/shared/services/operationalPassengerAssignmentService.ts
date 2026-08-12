@@ -12,6 +12,7 @@ import type {
 } from '@/shared/types/operationalPassengerAssignment'
 import type { CityTeam } from '@/shared/types/operationalCaseHandling'
 import { getMasterActor } from '@/shared/utils/masterActor'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 export type { OperationalPassengerRow }
 
@@ -27,10 +28,6 @@ function todayIsoDate() {
   const month = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
-}
-
-function formatDisplayDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
 }
 
 function addDays(dateStr: string, days: number): string {

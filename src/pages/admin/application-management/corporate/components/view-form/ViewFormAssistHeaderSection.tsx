@@ -8,6 +8,7 @@ import {
 } from '@/pages/admin/components/adminRecordPageTitle'
 import { toApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
 import { resolveApplicationReferenceDisplay } from '@/pages/customer/features/applications/utils/gltsReferenceIds'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import type { VerifyOverviewData } from '../../utils/verifyDocumentsUtils'
 
 interface ViewFormAssistHeaderSectionProps {
@@ -99,10 +100,14 @@ export function ViewFormAssistHeaderSection({
             ) : null}
             <Grid container spacing={1.5} columns={{ xs: 2, md: 5 }}>
               {[
+                ['Company', reviewOverview.companyName?.trim() || '—'],
+                ['Billing entity', reviewOverview.entityName?.trim() || '—'],
+                ['Vessel', reviewOverview.vesselName?.trim() || '—'],
+                ['PO / CID / Compass No.', reviewOverview.poReference?.trim() || '—'],
                 ['Country', `${reviewOverview.countryFlag} ${reviewOverview.countryName}`],
                 ['Visa', visaLabel],
                 ['Jurisdiction', reviewOverview.jurisdiction || '—'],
-                ['Travel', reviewOverview.travelDate || '—'],
+                ['Travel', formatDisplayDate(reviewOverview.travelDate)],
                 ['Travelers', String(overview.travelerCount)],
               ].map(([label, value]) => (
                 <Grid size={1} key={label} sx={{ minWidth: 0 }}>

@@ -33,15 +33,11 @@ import {
   validateLogisticsDispatchDetails,
 } from '@/shared/utils/logisticsDispatchUtils'
 import { getMasterActor } from '@/shared/utils/masterActor'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { syncPassengerTimelineFromOperationalCase } from '@/shared/utils/operationalCaseProcessingTimeline'
 
 function nowIso() {
   return new Date().toISOString()
-}
-
-function formatDisplayDate(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
 }
 
 function nextTimelineId(caseId: string, timeline: OperationalTimelineEvent[]): string {

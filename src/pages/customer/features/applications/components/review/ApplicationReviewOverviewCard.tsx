@@ -4,6 +4,7 @@ import { BORDER_RADIUS, BORDER_WIDTH } from '@/design-system/tokens'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import type { ApplicationReviewOverview } from '../../utils/applicationReviewOverview'
 import { resolveApplicationReferenceDisplay } from '../../utils/gltsReferenceIds'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 export interface ApplicationReviewOverviewCardProps {
   overview: ApplicationReviewOverview
@@ -65,9 +66,10 @@ export function ApplicationReviewOverviewCard({
       ) : null}
       <Grid container spacing={1.5} columns={{ xs: 2, md: 5 }}>
         {[
-          ...(overview.companyName?.trim()
-            ? ([['Company', overview.companyName.trim()]] as const)
-            : []),
+          ['Company', overview.companyName?.trim() || '—'],
+          ['Billing entity', overview.entityName?.trim() || '—'],
+          ['Vessel', overview.vesselName?.trim() || '—'],
+          ['PO / CID / Compass No.', overview.poReference?.trim() || '—'],
           ['Country', `${overview.countryFlag} ${overview.countryName}`],
           ['Visa', visaLabel],
           ...(overview.issuedPassportLocationLabel
@@ -77,7 +79,7 @@ export function ApplicationReviewOverviewCard({
             ? ([['Place of residence', overview.placeOfResidenceLabel]] as const)
             : []),
           ['Jurisdiction', overview.jurisdiction || '—'],
-          ['Travel', overview.travelDate || '—'],
+          ['Travel', formatDisplayDate(overview.travelDate)],
           ['Travelers', String(travelerCount)],
         ].map(([label, value]) => (
           <Grid size={1} key={label} sx={{ minWidth: 0 }}>

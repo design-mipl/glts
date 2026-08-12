@@ -31,6 +31,7 @@ import {
   resolveCardLabel,
 } from '@/shared/utils/cardMasterOptions'
 import { mapCountryVfsRatesToChargeLines } from '@/shared/utils/countryVfsServiceRateUtils'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import {
   PAYMENT_MODE_OPTIONS,
   RECEIPT_STATUS_OPTIONS,
@@ -57,12 +58,6 @@ function parseDateString(value: string | undefined): Date | null {
 function formatDateForStorage(date: Date | null): string {
   if (!date) return ''
   return dayjs(date).format('YYYY-MM-DD')
-}
-
-function formatDisplayDate(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY'], true)
-  return parsed.isValid() ? parsed.format('DD MMM YYYY') : value
 }
 
 function labelForOption(options: Array<{ value: string; label: string }>, value: string): string {

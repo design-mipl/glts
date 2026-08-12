@@ -7,6 +7,7 @@ import type {
   OperationsDeskFilters,
   OperationsDeskGroupBy,
 } from '@/shared/types/operationalCaseHandling'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import {
   APPLICATION_FEE_DEFAULT_RATES,
   CITY_TEAMS,
@@ -364,11 +365,7 @@ export function statusBadgeColor(status: OperationalCaseStatus): 'neutral' | 'in
 }
 
 export function formatJoiningDate(isoDate: string): string {
-  return new Date(isoDate).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatDisplayDate(isoDate)
 }
 
 export const DATE_FILTER_OPTIONS: { value: OperationalDateFilterPreset; label: string }[] = [

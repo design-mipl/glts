@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Box, Divider, Stack, Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import { Badge, Drawer, Tabs } from '@/design-system/UIComponents'
 import type { OperationalPassengerRow } from '@/shared/types/operationalPassengerAssignment'
 import {
@@ -30,6 +29,7 @@ import type { AssignmentSegmentConfig } from '../config/assignmentSegmentConfig'
 import { AssignmentOperationalAttachments } from './AssignmentOperationalAttachments'
 import { AssignmentFundAllocationSection } from './AssignmentFundAllocationSection'
 import { AssignmentFundStatusBadge } from './AssignmentFundStatusBadge'
+import { formatDisplayDate, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 const DETAIL_DRAWER_WIDTH = 560
 
@@ -45,12 +45,6 @@ interface AssignmentPassengerDetailDrawerProps {
   record: OperationalPassengerRow | null
   segmentConfig: AssignmentSegmentConfig
   onClose: () => void
-}
-
-function formatDisplayDate(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY', 'DD MMM YYYY'], true)
-  return parsed.isValid() ? parsed.format('DD MMM YYYY') : value
 }
 
 function SectionHeading({ children }: { children: string }) {
@@ -402,7 +396,7 @@ function AssignmentDetailContent({
                         {entry.assignedUser || '—'} · {entry.assignedTeam || 'Unassigned'}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {new Date(entry.occurredAt).toLocaleString('en-GB')} · Allocated by{' '}
+                        {formatDisplayDateTime(entry.occurredAt)} · Allocated by{' '}
                         {entry.assignedBy || '—'}
                       </Typography>
                       {entry.notes ? (
@@ -423,7 +417,7 @@ function AssignmentDetailContent({
               <MetaGrid>
                 <ContextMetaItem
                   label="SLA due"
-                  value={new Date(record.slaDueAt).toLocaleString('en-GB')}
+                  value={formatDisplayDateTime(record.slaDueAt)}
                 />
                 <ContextMetaItem
                   label="Operational date"
@@ -432,7 +426,7 @@ function AssignmentDetailContent({
                 <ContextMetaItem label="Time remaining" value={formatSlaTimer(record)} />
                 <ContextMetaItem
                   label="Last updated"
-                  value={new Date(record.lastUpdated).toLocaleString('en-GB')}
+                  value={formatDisplayDateTime(record.lastUpdated)}
                 />
               </MetaGrid>
             </Stack>

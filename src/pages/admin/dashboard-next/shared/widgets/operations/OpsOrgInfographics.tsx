@@ -16,7 +16,7 @@ type WorkloadMetric = 'all' | 'verification' | 'payment' | 'arrange' | 'submissi
 
 const MIX_OPTIONS = [
   { label: 'All assignees', value: 'all' },
-  { label: 'Ops user', value: 'user' },
+  { label: 'user', value: 'user' },
   { label: 'Vendor', value: 'vendor' },
   { label: 'Passenger', value: 'passenger' },
   { label: 'Unassigned', value: 'unassigned' },

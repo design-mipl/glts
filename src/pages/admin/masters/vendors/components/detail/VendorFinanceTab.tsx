@@ -3,6 +3,7 @@ import { Box, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/mate
 import { BaseCard } from '@/design-system/UIComponents'
 import type { Vendor } from '@/shared/types/vendor'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import {
   agreementEmbeddedTableHeadCellSx,
   agreementEmbeddedTableSx,
@@ -69,9 +70,9 @@ export function VendorFinanceTab({ vendor }: { vendor: Vendor }) {
                 {vendor.bills.map((bill) => (
                   <TableRow key={bill.id}>
                     <TableCell>{bill.invoiceNumber}</TableCell>
-                    <TableCell>{new Date(bill.invoiceDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDisplayDate(bill.invoiceDate)}</TableCell>
                     <TableCell align="right">{formatInr(bill.invoiceAmount)}</TableCell>
-                    <TableCell>{new Date(bill.dueDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDisplayDate(bill.dueDate)}</TableCell>
                     <TableCell>
                       <Badge label={vendorBillStatusLabel[bill.status]} color={vendorBillStatusColor[bill.status]} size="sm" />
                     </TableCell>
@@ -108,7 +109,7 @@ export function VendorFinanceTab({ vendor }: { vendor: Vendor }) {
                 {vendor.payments.map((payment) => (
                   <TableRow key={payment.id}>
                     <TableCell>{payment.paymentReference}</TableCell>
-                    <TableCell>{new Date(payment.paymentDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDisplayDate(payment.paymentDate)}</TableCell>
                     <TableCell align="right">{formatInr(payment.amount)}</TableCell>
                     <TableCell>{payment.remarks}</TableCell>
                   </TableRow>

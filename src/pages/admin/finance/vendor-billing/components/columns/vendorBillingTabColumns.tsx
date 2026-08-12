@@ -4,14 +4,11 @@ import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import { isVendorBillEditable } from '@/shared/services/vendorBillingService'
 import type { VendorBillingBill, VendorBillingPayment, VendorCharge } from '@/shared/types/vendorBilling'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import {
   getVendorBillDisplayStatus,
   getVendorPaymentDisplayStatus,
 } from '../../config/vendorBillingStatusConfig'
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString()
-}
 
 export function buildAwaitingInvoiceColumns(): Column<VendorCharge>[] {
   return [
@@ -52,7 +49,7 @@ export function buildAwaitingInvoiceColumns(): Column<VendorCharge>[] {
       label: 'Completed',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      render: (_, row) => formatDate(row.completedAt),
+      render: (_, row) => formatDisplayDate(row.completedAt),
     },
     {
       key: 'billingStatus',
@@ -83,14 +80,14 @@ export function buildVendorBillColumns(handlers: VendorBillColumnHandlers): Colu
       label: 'Invoice Date',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      render: (_, row) => formatDate(row.invoiceDate),
+      render: (_, row) => formatDisplayDate(row.invoiceDate),
     },
     {
       key: 'dueDate',
       label: 'Due Date',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      render: (_, row) => formatDate(row.dueDate),
+      render: (_, row) => formatDisplayDate(row.dueDate),
     },
     {
       key: 'invoiceAmount',
@@ -168,7 +165,7 @@ export function buildVendorPaymentColumns(): Column<VendorBillingPayment>[] {
       label: 'Payment Date',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      render: (_, row) => formatDate(row.paymentDate),
+      render: (_, row) => formatDisplayDate(row.paymentDate),
     },
     {
       key: 'amount',

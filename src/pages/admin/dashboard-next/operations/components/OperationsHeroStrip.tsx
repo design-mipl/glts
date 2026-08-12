@@ -11,6 +11,7 @@ import {
   Package,
   Plane,
   Send,
+  Shield,
   Truck,
   UserPlus,
 } from 'lucide-react'
@@ -30,7 +31,8 @@ const KPI_ICONS: Record<string, ReactNode> = {
   'kpi-verification': <ClipboardList size={16} />,
   'kpi-recheck': <ClipboardCheck size={16} />,
   'kpi-payment': <CreditCard size={16} />,
-  'kpi-arrange': <Plane size={16} />,
+  'kpi-pending-ticket': <Plane size={16} />,
+  'kpi-pending-insurance': <Shield size={16} />,
   'kpi-physical-originals': <Package size={16} />,
   'kpi-assignment': <UserPlus size={16} />,
   'kpi-online-submission': <Send size={16} />,
@@ -50,7 +52,8 @@ const KPI_AM_TAB: Partial<Record<string, OpsApplicationQueueTab>> = {
   'kpi-total-verification': 'verification_pending',
   'kpi-verification': 'verification_pending',
   'kpi-recheck': 'verification_pending',
-  'kpi-arrange': 'verification_pending',
+  'kpi-pending-ticket': 'verification_pending',
+  'kpi-pending-insurance': 'verification_pending',
 }
 
 function kpiTone(id: string, delta?: number): 'positive' | 'negative' | 'warning' | 'info' | 'neutral' {
@@ -67,7 +70,8 @@ function kpiTone(id: string, delta?: number): 'positive' | 'negative' | 'warning
     id === 'kpi-total-applications' ||
     id === 'kpi-total-verification' ||
     id === 'kpi-verification' ||
-    id === 'kpi-arrange' ||
+    id === 'kpi-pending-ticket' ||
+    id === 'kpi-pending-insurance' ||
     id === 'kpi-online-submission' ||
     id === 'kpi-vfs-submission'
   ) {

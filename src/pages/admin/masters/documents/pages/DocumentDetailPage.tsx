@@ -12,6 +12,7 @@ import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { documentMasterService } from '@/shared/services/documentMasterService'
 import type { DocumentMasterStatus } from '@/shared/types/documentMaster'
 import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { DocumentDeleteDialog } from '../components/DocumentDeleteDialog'
 import { DocumentDetailSummary } from '../components/DocumentDetailSummary'
 import { DocumentFormModal } from '../components/DocumentFormModal'
@@ -174,8 +175,8 @@ export function DocumentDetailPage() {
                 Activity
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Created on {new Date(document.createdAt).toLocaleDateString()}. Last updated on{' '}
-                {new Date(document.updatedAt).toLocaleDateString()}.
+                Created on {formatDisplayDateTime(document.createdAt)}. Last updated on{' '}
+                {formatDisplayDateTime(document.updatedAt)}.
               </Typography>
             </Stack>
           </BaseCard>

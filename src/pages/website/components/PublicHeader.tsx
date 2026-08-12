@@ -16,6 +16,7 @@ import { Menu, X, ShieldCheck, Search, User, ArrowRight } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Button as DsButton } from '@/design-system/UIComponents'
+import { WebsiteAbToggle } from '@/shared/website/WebsiteAbToggle'
 import { useScrolledHeader } from '../hooks/useScrolledHeader'
 import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, publicShadows, usePublicBrandColors } from '../theme/publicSiteTokens'
@@ -240,6 +241,8 @@ export function PublicHeader() {
             spacing={{ xs: 0.75, md: 1.25 }}
             sx={{ flexShrink: 0, zIndex: 2, ml: 'auto' }}
           >
+            <WebsiteAbToggle />
+
             <DsButton
               href="/sign-in"
               variant="soft"
@@ -370,6 +373,7 @@ export function PublicHeader() {
         <Divider sx={{ mx: 2.5, my: 2 }} />
 
         <Stack spacing={1.5} sx={{ px: 2.5, pb: 3 }}>
+          <WebsiteAbToggle fullWidth onNavigate={() => setDrawerOpen(false)} />
           <Button
             component="a"
             href="/sign-in"

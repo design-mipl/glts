@@ -7,6 +7,7 @@ import type { InvoiceListingRow } from '../../types/customerFinance.types'
 import { FinanceStatusBadges } from '../shared/FinanceStatusBadges'
 import { FinanceAmountCell } from '../shared/FinanceAmountCell'
 import { getCustomerInvoiceTypeLabel } from '../../utils/customerInvoiceTypeLabels'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 type ToastFn = (toast: Omit<Toast, 'id'>) => void
 
@@ -61,8 +62,8 @@ export function buildInvoiceListingColumns({
       sortable: true,
       width: 90,
     },
-    { key: 'invoiceDate', label: 'Invoice Date', sortable: true, width: 110 },
-    { key: 'dueDate', label: 'Due Date', sortable: true, width: 110 },
+    { key: 'invoiceDate', label: 'Invoice Date', sortable: true, width: 110, render: (_, row) => formatDisplayDate(row.invoice.invoiceDate) },
+    { key: 'dueDate', label: 'Due Date', sortable: true, width: 110, render: (_, row) => formatDisplayDate(row.invoice.dueDate) },
     {
       key: 'totalAmount',
       label: 'Total Amount',

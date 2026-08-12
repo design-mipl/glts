@@ -397,9 +397,14 @@ export function CorporateVerifyDocumentsPage() {
               gltsUploadDocument.documentId === 'travel-ticket'
                 ? payload.travelTicket
                 : payload.insurance
-            const hasArrangement = Boolean(
-              workflow?.arrangementAmount?.trim() && workflow?.vendorId?.trim(),
-            )
+            const hasArrangement =
+              gltsUploadDocument.documentId === 'insurance'
+                ? Boolean(
+                    payload.insurance?.vendorId?.trim() &&
+                      payload.insurance?.policyNumber?.trim() &&
+                      payload.insurance?.invoiceNumber?.trim(),
+                  )
+                : Boolean(workflow?.arrangementAmount?.trim() && workflow?.vendorId?.trim())
             if (hasArrangement) {
               applicationArrangedExpenseService.upsertFromGltsDocumentUpload({
                 applicationId,

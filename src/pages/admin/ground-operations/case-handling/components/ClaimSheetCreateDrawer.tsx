@@ -1,14 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Box,
-  Checkbox,
+  Checkbox as MuiCheckbox,
+  Divider,
   Stack,
   Typography,
+  alpha,
 } from '@mui/material'
-import dayjs from 'dayjs'
-import customParseFormat from 'dayjs/plugin/customParseFormat'
 import {
   Button,
+  Checkbox,
   Drawer,
   FormField,
   Input,
@@ -21,45 +22,38 @@ import { groundOpsClaimSheetService } from '@/shared/services/groundOpsClaimShee
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import type { OperationalCase } from '@/shared/types/operationalCaseHandling'
 import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
+import {
+  claimSheetExpenseDraftsFromSheet,
+  createEmptyClaimSheetExpenseDrafts,
+  selectedClaimSheetExpensesFromDrafts,
+  type ClaimSheetExpenseDraft,
+} from '../config/claimSheetExpenseOptions'
 import { ClaimSheetDetailBody } from './ClaimSheetDetailBody'
 
-dayjs.extend(customParseFormat)
-
 const DRAWER_WIDTH = 640
-
-function formatDisplayDate(value: string | undefined): string {
-  if (!value?.trim()) return '—'
-  const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY'], true)
-  if (parsed.isValid()) return parsed.format('DD MMM YYYY')
-  const fallback = dayjs(value.trim())
-  return fallback.isValid() ? fallback.format('DD MMM YYYY') : value
-}
-
-interface OtherExpenseDraft {
-  id: string
-  description: string
-  amount: string
-}
 
 interface ClaimSheetCreateDrawerProps {
   open: boolean
   onClose: () => void
   onCreated: (sheet: GroundOpsClaimSheet) => void
+  /** When set, drawer edits and resubmits this rejected claim sheet. */
+  editSheet?: GroundOpsClaimSheet | null
 }
 
-function newOtherExpenseDraft(): OtherExpenseDraft {
-  return {
-    id: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    description: '',
-    amount: '',
-  }
-}
-
-export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetCreateDrawerProps) {
+export function ClaimSheetCreateDrawer({
+  open,
+  onClose,
+  onCreated,
+  editSheet = null,
+}: ClaimSheetCreateDrawerProps) {
   const { showToast } = useToast()
+  const isEdit = Boolean(editSheet)
   const [step, setStep] = useState<'select' | 'expenses' | 'review'>('select')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [otherExpenses, setOtherExpenses] = useState<OtherExpenseDraft[]>([newOtherExpenseDraft()])
+  const [expenseDrafts, setExpenseDrafts] = useState<ClaimSheetExpenseDraft[]>(
+    createEmptyClaimSheetExpenseDrafts(),
+  )
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [preview, setPreview] = useState<GroundOpsClaimSheet | null>(null)
@@ -69,10 +63,29 @@ export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetC
     return groundOpsClaimSheetService.listCompletedCasesEligible()
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+    if (editSheet) {
+      setStep('select')
+      setSelectedIds(editSheet.cases.map(row => row.caseId))
+      setExpenseDrafts(claimSheetExpenseDraftsFromSheet(editSheet.otherExpenses))
+      setNotes(editSheet.notes)
+      setPreview(null)
+      setSubmitting(false)
+      return
+    }
+    setStep('select')
+    setSelectedIds([])
+    setExpenseDrafts(createEmptyClaimSheetExpenseDrafts())
+    setNotes('')
+    setPreview(null)
+    setSubmitting(false)
+  }, [open, editSheet])
+
   const reset = () => {
     setStep('select')
     setSelectedIds([])
-    setOtherExpenses([newOtherExpenseDraft()])
+    setExpenseDrafts(createEmptyClaimSheetExpenseDrafts())
     setNotes('')
     setPreview(null)
     setSubmitting(false)
@@ -89,17 +102,51 @@ export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetC
     )
   }
 
+  const patchExpense = (
+    id: ClaimSheetExpenseDraft['id'],
+    patch: Partial<Pick<ClaimSheetExpenseDraft, 'selected' | 'amount'>>,
+  ) => {
+    setExpenseDrafts(prev =>
+      prev.map(row => {
+        if (row.id !== id) return row
+        const next = { ...row, ...patch }
+        if (patch.selected === false) next.amount = ''
+        return next
+      }),
+    )
+  }
+
   const handleBuildPreview = () => {
+    const input = {
+      caseIds: selectedIds,
+      otherExpenses: selectedClaimSheetExpensesFromDrafts(expenseDrafts),
+      notes,
+      generatedBy: getCurrentUser()?.name?.trim() || 'Ground Ops',
+    }
+
     try {
-      const sheet = groundOpsClaimSheetService.create({
-        caseIds: selectedIds,
-        otherExpenses: otherExpenses.map(row => ({
-          description: row.description,
-          amount: Number.parseFloat(row.amount.replace(/,/g, '')) || 0,
-        })),
-        notes,
-        generatedBy: getCurrentUser()?.name?.trim() || 'Ground Ops',
-      })
+      if (editSheet) {
+        const result = groundOpsClaimSheetService.resubmit(editSheet.id, input)
+        if (!result.ok || !result.sheet) {
+          showToast({
+            title: 'Could not resubmit claim sheet',
+            description: result.error ?? 'Please try again.',
+            variant: 'error',
+          })
+          return
+        }
+        setPreview(result.sheet)
+        setStep('review')
+        onCreated(result.sheet)
+        showToast({
+          title: 'Claim sheet resubmitted',
+          description: `${result.sheet.claimNumber} sent back to Finance for review.`,
+          variant: 'success',
+        })
+        return
+      }
+
+      const sheet = groundOpsClaimSheetService.create(input)
       setPreview(sheet)
       setStep('review')
       onCreated(sheet)
@@ -110,7 +157,7 @@ export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetC
       })
     } catch (error) {
       showToast({
-        title: 'Could not generate claim sheet',
+        title: isEdit ? 'Could not resubmit claim sheet' : 'Could not generate claim sheet',
         description: error instanceof Error ? error.message : 'Please try again.',
         variant: 'error',
       })
@@ -132,7 +179,7 @@ export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetC
       <Stack direction="row" justifyContent="space-between" spacing={1}>
         <Button label="Back" variant="neutral" onClick={() => setStep('select')} />
         <Button
-          label="Generate & submit"
+          label={isEdit ? 'Update & resubmit' : 'Generate & submit'}
           variant="contained"
           loading={submitting}
           onClick={() => {
@@ -152,12 +199,16 @@ export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetC
     <Drawer
       open={open}
       onClose={handleClose}
-      title="Claim sheet"
+      title={isEdit ? `Edit ${editSheet?.claimNumber ?? 'claim sheet'}` : 'Claim sheet'}
       subtitle={
         step === 'select'
-          ? 'Select cases from document submission onward'
+          ? isEdit
+            ? 'Update cases after Finance rejection, then continue'
+            : 'Select cases from document submission onward'
           : step === 'expenses'
-            ? 'Add other expenses, then generate'
+            ? isEdit
+              ? 'Select expenses and amounts, then resubmit'
+              : 'Select expenses and amounts, then generate'
             : preview
               ? preview.claimNumber
               : 'Review'
@@ -166,6 +217,26 @@ export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetC
       footer={footer}
       bodyVariant="default"
     >
+      {step === 'select' && isEdit && editSheet?.rejectionReason ? (
+        <Box
+          sx={{
+            mb: 1.5,
+            p: 1.25,
+            borderRadius: 1.25,
+            border: 1,
+            borderColor: 'error.light',
+            bgcolor: theme => alpha(theme.palette.error.main, 0.08),
+          }}
+        >
+          <Typography variant="caption" fontWeight={700} color="error.main" sx={{ fontSize: 11 }}>
+            Finance rejection reason
+          </Typography>
+          <Typography variant="body2" sx={{ fontSize: 13, mt: 0.25 }}>
+            {editSheet.rejectionReason}
+          </Typography>
+        </Box>
+      ) : null}
+
       {step === 'select' ? (
         <Stack spacing={1}>
           {eligibleCases.length === 0 ? (
@@ -194,7 +265,7 @@ export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetC
                   }}
                 >
                   <Stack direction="row" spacing={1} alignItems="flex-start">
-                    <Checkbox
+                    <MuiCheckbox
                       size="small"
                       checked={selected}
                       onClick={event => event.stopPropagation()}
@@ -259,65 +330,47 @@ export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetC
 
       {step === 'expenses' ? (
         <Stack spacing={2}>
-          <AdminOverlayFormSection title="Other expenses" importance="primary">
-            <Stack spacing={1.25}>
-              {otherExpenses.map((row, index) => (
-                <Box
-                  key={row.id}
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', sm: '1.6fr 0.8fr auto' },
-                    gap: 1,
-                    alignItems: 'end',
-                  }}
-                >
-                  <FormField label={index === 0 ? 'Description' : undefined}>
-                    <Input
-                      value={row.description}
-                      onChange={value =>
-                        setOtherExpenses(prev =>
-                          prev.map(item =>
-                            item.id === row.id ? { ...item, description: value } : item,
-                          ),
-                        )
-                      }
-                      placeholder="e.g. Local transport"
+          <AdminOverlayFormSection title="Expenses" importance="primary">
+            <Box
+              sx={{
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1.25,
+                overflow: 'hidden',
+              }}
+            >
+              <Stack divider={<Divider />}>
+                {expenseDrafts.map(row => (
+                  <Stack
+                    key={row.id}
+                    direction="row"
+                    alignItems="center"
+                    spacing={1}
+                    sx={{ px: 1.25, py: 1 }}
+                  >
+                    <Checkbox
+                      checked={row.selected}
                       size="sm"
-                      fullWidth
+                      onChange={checked => patchExpense(row.id, { selected: checked })}
                     />
-                  </FormField>
-                  <FormField label={index === 0 ? 'Amount' : undefined}>
-                    <Input
-                      value={row.amount}
-                      onChange={value =>
-                        setOtherExpenses(prev =>
-                          prev.map(item => (item.id === row.id ? { ...item, amount: value } : item)),
-                        )
-                      }
-                      placeholder="0"
-                      size="sm"
-                      fullWidth
-                    />
-                  </FormField>
-                  <Button
-                    label="Remove"
-                    variant="text"
-                    size="sm"
-                    disabled={otherExpenses.length === 1}
-                    onClick={() =>
-                      setOtherExpenses(prev => prev.filter(item => item.id !== row.id))
-                    }
-                  />
-                </Box>
-              ))}
-              <Button
-                label="Add expense line"
-                variant="neutral"
-                size="sm"
-                onClick={() => setOtherExpenses(prev => [...prev, newOtherExpenseDraft()])}
-                sx={{ alignSelf: 'flex-start' }}
-              />
-            </Stack>
+                    <Typography variant="body2" sx={{ flex: 1, fontSize: 13 }}>
+                      {row.label}
+                    </Typography>
+                    {row.selected ? (
+                      <Box sx={{ width: 120 }}>
+                        <Input
+                          size="sm"
+                          type="number"
+                          value={row.amount}
+                          placeholder="Amount"
+                          onChange={value => patchExpense(row.id, { amount: value })}
+                        />
+                      </Box>
+                    ) : null}
+                  </Stack>
+                ))}
+              </Stack>
+            </Box>
           </AdminOverlayFormSection>
 
           <FormField label="Notes">
@@ -330,8 +383,8 @@ export function ClaimSheetCreateDrawer({ open, onClose, onCreated }: ClaimSheetC
           </FormField>
 
           <Typography variant="caption" color="text.secondary">
-            {selectedIds.length} case(s) selected. Settlement KPIs and service proofs will be
-            frozen on submit.
+            {selectedIds.length} case(s) selected. Tick expenses and enter amounts before submit.
+            Settlement KPIs and service proofs will be frozen on submit.
           </Typography>
         </Stack>
       ) : null}

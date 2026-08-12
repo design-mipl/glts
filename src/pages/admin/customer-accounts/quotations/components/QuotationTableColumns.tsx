@@ -4,6 +4,7 @@ import { Badge, RowActions } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { QuotationRecord } from '@/shared/types/quotation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { getCurrentVersion } from '@/shared/utils/quotationValidation'
 import { canConvertQuotationToAgreement } from '@/shared/utils/quotationPricingUtils'
 import {
@@ -134,7 +135,7 @@ export function buildQuotationColumns({
       label: 'Created Date',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
-      render: (_, row) => new Date(row.createdAt).toLocaleDateString(),
+      render: (_, row) => formatDisplayDateTime(row.createdAt),
     },
     {
       key: 'actions',

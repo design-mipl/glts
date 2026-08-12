@@ -7,6 +7,7 @@ import {
   onboardingDocumentStatusColor,
   onboardingDocumentStatusLabel,
 } from '../config/agreementStatusConfig'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 interface AgreementOnboardingDocumentCardProps {
   document: AgreementOnboardingDocument
@@ -73,7 +74,7 @@ export function AgreementOnboardingDocumentCard({
           <Typography variant="caption" color="text.secondary" noWrap>
             {document.fileName}
             {document.uploadedAt
-              ? ` · Uploaded ${new Date(document.uploadedAt).toLocaleDateString()}`
+              ? ` · Uploaded ${formatDisplayDate(document.uploadedAt)}`
               : ''}
           </Typography>
         ) : null}

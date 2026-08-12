@@ -5,6 +5,7 @@ import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { ApplicationExpenseListingRow } from '@/shared/types/applicationExpenseManagement'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { rollupPaymentStatusLabel } from '@/shared/utils/applicationExpenseManagementUtils'
 import { expenseRollupPaymentColor } from '../config/expenseStatusConfig'
 import { EXPENSE_LISTING_BASE_PATH } from '../config/expenseListingTabs'
@@ -84,6 +85,7 @@ export function buildExpenseApplicationColumns(
       label: 'Submission Date',
       widthSize: adminListingColumnWidthSize('date'),
       sortable: true,
+      render: (_, row) => formatDisplayDate(row.submissionDate),
     },
     {
       key: 'totalExpense',

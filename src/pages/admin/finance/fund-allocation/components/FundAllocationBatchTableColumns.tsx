@@ -1,9 +1,9 @@
 import { Box, Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import { Eye } from 'lucide-react'
 import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { FundAllocationBatchRow } from '@/shared/types/fundAllocation'
+import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
   customerSegmentBadgeColor,
@@ -29,9 +29,7 @@ const stackedLineSecondarySx = {
 } as const
 
 function formatAllocatedAt(value: string): string {
-  if (!value.trim()) return '—'
-  const parsed = dayjs(value)
-  return parsed.isValid() ? parsed.format('DD MMM YYYY, HH:mm') : value
+  return formatDisplayDateTime(value)
 }
 
 function ApplicationCell({ row }: { row: FundAllocationBatchRow }) {

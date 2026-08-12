@@ -29,6 +29,7 @@ import {
 import { FundAllocationDetailDrawer } from '../components/FundAllocationDetailDrawer'
 import { FundAllocationBatchDetailDrawer } from '../components/FundAllocationBatchDetailDrawer'
 import { FundAllocationClaimSheetDetailDrawer } from '../components/FundAllocationClaimSheetDetailDrawer'
+import { FundAllocationClaimSheetRejectModal } from '../components/FundAllocationClaimSheetRejectModal'
 import { FundAllocationKpiRow } from '../components/FundAllocationKpiRow'
 import {
   buildFundAllocationTableColumns,
@@ -67,10 +68,8 @@ export function FundAllocationListingPage() {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [actionModalRecord, setActionModalRecord] = useState<FundAllocationPassengerRow | null>(null)
   const [bulkModalRecords, setBulkModalRecords] = useState<FundAllocationPassengerRow[]>([])
-  const [claimReviewConfirm, setClaimReviewConfirm] = useState<{
-    action: 'approve' | 'reject'
-    sheet: GroundOpsClaimSheet
-  } | null>(null)
+  const [claimApproveSheet, setClaimApproveSheet] = useState<GroundOpsClaimSheet | null>(null)
+  const [claimRejectSheet, setClaimRejectSheet] = useState<GroundOpsClaimSheet | null>(null)
 
   const {
     listingTab,
@@ -252,42 +251,64 @@ export function FundAllocationListingPage() {
         selectClaimSheet(row)
         return
       }
-      setClaimReviewConfirm({ action, sheet: row })
+      if (action === 'approve') {
+        setClaimApproveSheet(row)
+        return
+      }
+      setClaimRejectSheet(row)
     },
     [selectClaimSheet],
   )
 
-  const handleConfirmClaimReview = useCallback(() => {
-    if (!claimReviewConfirm) return
+  const handleConfirmClaimApprove = useCallback(() => {
+    if (!claimApproveSheet) return
 
-    const { action, sheet } = claimReviewConfirm
-    const result =
-      action === 'approve'
-        ? groundOpsClaimSheetService.approve(sheet.id)
-        : groundOpsClaimSheetService.reject(sheet.id)
-
+    const result = groundOpsClaimSheetService.approve(claimApproveSheet.id)
     if (!result.ok || !result.sheet) {
       showToast({
-        title: action === 'approve' ? 'Could not approve' : 'Could not reject',
+        title: 'Could not approve',
         description: result.error,
         variant: 'error',
       })
-      setClaimReviewConfirm(null)
+      setClaimApproveSheet(null)
       return
     }
 
     showToast({
-      title: action === 'approve' ? 'Claim sheet approved' : 'Claim sheet rejected',
-      description:
-        action === 'approve'
-          ? `${result.sheet.claimNumber} is approved for settlement.`
-          : `${result.sheet.claimNumber} was rejected.`,
-      variant: action === 'approve' ? 'success' : 'warning',
+      title: 'Claim sheet approved',
+      description: `${result.sheet.claimNumber} is approved for settlement.`,
+      variant: 'success',
     })
-    setClaimReviewConfirm(null)
+    setClaimApproveSheet(null)
     closeDetail()
     refresh()
-  }, [claimReviewConfirm, closeDetail, refresh, showToast])
+  }, [claimApproveSheet, closeDetail, refresh, showToast])
+
+  const handleConfirmClaimReject = useCallback(
+    (reason: string) => {
+      if (!claimRejectSheet) return
+
+      const result = groundOpsClaimSheetService.reject(claimRejectSheet.id, reason)
+      if (!result.ok || !result.sheet) {
+        showToast({
+          title: 'Could not reject',
+          description: result.error,
+          variant: 'error',
+        })
+        return
+      }
+
+      showToast({
+        title: 'Claim sheet rejected',
+        description: `${result.sheet.claimNumber} was rejected. Ground Operations can revise and resubmit.`,
+        variant: 'warning',
+      })
+      setClaimRejectSheet(null)
+      closeDetail()
+      refresh()
+    },
+    [claimRejectSheet, closeDetail, refresh, showToast],
+  )
 
   const passengerColumns = useMemo(
     () =>
@@ -635,30 +656,23 @@ export function FundAllocationListingPage() {
       />
 
       <ConfirmDialog
-        open={claimReviewConfirm?.action === 'approve'}
-        onClose={() => setClaimReviewConfirm(null)}
+        open={Boolean(claimApproveSheet)}
+        onClose={() => setClaimApproveSheet(null)}
         title="Approve claim sheet"
         description={
-          claimReviewConfirm
-            ? `Approve ${claimReviewConfirm.sheet.claimNumber}? Finance will mark this claim as approved.`
+          claimApproveSheet
+            ? `Approve ${claimApproveSheet.claimNumber}? Finance will mark this claim as approved.`
             : undefined
         }
         confirmLabel="Approve"
-        onConfirm={handleConfirmClaimReview}
+        onConfirm={handleConfirmClaimApprove}
       />
 
-      <ConfirmDialog
-        open={claimReviewConfirm?.action === 'reject'}
-        onClose={() => setClaimReviewConfirm(null)}
-        title="Reject claim sheet"
-        description={
-          claimReviewConfirm
-            ? `Reject ${claimReviewConfirm.sheet.claimNumber}? Ground Operations will need to revise and resubmit.`
-            : undefined
-        }
-        confirmLabel="Reject"
-        variant="destructive"
-        onConfirm={handleConfirmClaimReview}
+      <FundAllocationClaimSheetRejectModal
+        open={Boolean(claimRejectSheet)}
+        sheet={claimRejectSheet}
+        onClose={() => setClaimRejectSheet(null)}
+        onConfirm={handleConfirmClaimReject}
       />
 
       <FundAllocationActionModal

@@ -17,6 +17,7 @@ import {
   getOperationsDeskEmptyState,
   type OperationsDeskStatusTab,
 } from '../utils/operationalCaseHandlingUtils'
+import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
 
 export function OperationalCaseHandlingPage() {
   const theme = useTheme()
@@ -24,6 +25,7 @@ export function OperationalCaseHandlingPage() {
   const [claimCreateOpen, setClaimCreateOpen] = useState(false)
   const [claimListOpen, setClaimListOpen] = useState(false)
   const [claimRefreshKey, setClaimRefreshKey] = useState(0)
+  const [editClaimSheet, setEditClaimSheet] = useState<GroundOpsClaimSheet | null>(null)
 
   const {
     deskFilters,
@@ -167,8 +169,12 @@ export function OperationalCaseHandlingPage() {
       />
 
       <ClaimSheetCreateDrawer
-        open={claimCreateOpen}
-        onClose={() => setClaimCreateOpen(false)}
+        open={claimCreateOpen || Boolean(editClaimSheet)}
+        editSheet={editClaimSheet}
+        onClose={() => {
+          setClaimCreateOpen(false)
+          setEditClaimSheet(null)
+        }}
         onCreated={() => setClaimRefreshKey(key => key + 1)}
       />
 
@@ -176,6 +182,10 @@ export function OperationalCaseHandlingPage() {
         open={claimListOpen}
         refreshKey={claimRefreshKey}
         onClose={() => setClaimListOpen(false)}
+        onEditRejected={sheet => {
+          setClaimListOpen(false)
+          setEditClaimSheet(sheet)
+        }}
       />
     </>
   )

@@ -18,8 +18,13 @@ import type {
   CreateGroundOpsClaimSheetInput,
   GroundOpsClaimSheet,
   GroundOpsClaimSheetStatus,
+  ResubmitGroundOpsClaimSheetInput,
 } from '@/shared/types/groundOpsClaimSheet'
-import { canFinanceReviewClaimSheet, CLAIM_SHEET_STATUS_LABEL } from '@/shared/types/groundOpsClaimSheet'
+import {
+  canFinanceReviewClaimSheet,
+  canGroundOpsEditClaimSheet,
+  CLAIM_SHEET_STATUS_LABEL,
+} from '@/shared/types/groundOpsClaimSheet'
 
 function nowIso() {
   return new Date().toISOString()
@@ -210,6 +215,76 @@ function buildCaseSnapshot(record: OperationalCase): ClaimSheetCaseSnapshot {
   }
 }
 
+function buildClaimSheetPayload(input: CreateGroundOpsClaimSheetInput): {
+  fundTransferType: FundTransferType | ''
+  kpis: FundBankSettlementSummary
+  cases: ClaimSheetCaseSnapshot[]
+  otherExpenses: ClaimSheetOtherExpense[]
+  caseExpensesTotal: number
+  otherExpensesTotal: number
+  grandTotal: number
+  proofDocuments: ClaimSheetProofDocument[]
+} {
+  const caseIds = [...new Set(input.caseIds.map(id => id.trim()).filter(Boolean))]
+  if (caseIds.length === 0) {
+    throw new Error('Select at least one eligible case.')
+  }
+
+  const records: OperationalCase[] = []
+  const cases: ClaimSheetCaseSnapshot[] = []
+  for (const caseId of caseIds) {
+    const record = operationalCaseHandlingService.getById(caseId)
+    if (!record) {
+      throw new Error(`Case not found: ${caseId}`)
+    }
+    if (!isLogisticsStatus(record.status)) {
+      throw new Error(
+        `${record.operationalId} is not eligible for claim (must be Document Submitted or later).`,
+      )
+    }
+    records.push(record)
+    cases.push(buildCaseSnapshot(record))
+  }
+
+  const otherExpenses: ClaimSheetOtherExpense[] = input.otherExpenses
+    .map((row, index) => ({
+      id: `other-${Date.now()}-${index}`,
+      description: row.description.trim(),
+      amount: Math.round((Number(row.amount) || 0) * 100) / 100,
+      proofFileName: row.proofFileName?.trim() || undefined,
+    }))
+    .filter(row => row.description.length > 0 && row.amount > 0)
+
+  const caseExpensesTotal =
+    Math.round(cases.reduce((sum, c) => sum + c.caseExpenseTotal, 0) * 100) / 100
+  const otherExpensesTotal =
+    Math.round(otherExpenses.reduce((sum, e) => sum + e.amount, 0) * 100) / 100
+  const fundTransferType = resolveClaimFundTransferType(records)
+
+  const proofDocuments: ClaimSheetProofDocument[] = [
+    ...cases.flatMap(c => c.proofDocuments),
+    ...otherExpenses
+      .filter(e => e.proofFileName)
+      .map((e, index) => ({
+        id: `claim-other-${index}`,
+        label: e.description,
+        fileName: e.proofFileName!,
+        source: 'claim_other' as const,
+      })),
+  ]
+
+  return {
+    fundTransferType,
+    kpis: computeClaimSheetKpis(records, fundTransferType, caseExpensesTotal, otherExpensesTotal),
+    cases,
+    otherExpenses,
+    caseExpensesTotal,
+    otherExpensesTotal,
+    grandTotal: Math.round((caseExpensesTotal + otherExpensesTotal) * 100) / 100,
+    proofDocuments,
+  }
+}
+
 let claimStore: GroundOpsClaimSheet[] = SEED_GROUND_OPS_CLAIM_SHEETS.map(cloneSheet)
 
 export const groundOpsClaimSheetService = {
@@ -228,52 +303,7 @@ export const groundOpsClaimSheetService = {
   },
 
   create(input: CreateGroundOpsClaimSheetInput): GroundOpsClaimSheet {
-    const caseIds = [...new Set(input.caseIds.map(id => id.trim()).filter(Boolean))]
-    if (caseIds.length === 0) {
-      throw new Error('Select at least one eligible case.')
-    }
-
-    const records: OperationalCase[] = []
-    const cases: ClaimSheetCaseSnapshot[] = []
-    for (const caseId of caseIds) {
-      const record = operationalCaseHandlingService.getById(caseId)
-      if (!record) {
-        throw new Error(`Case not found: ${caseId}`)
-      }
-      if (!isLogisticsStatus(record.status)) {
-        throw new Error(
-          `${record.operationalId} is not eligible for claim (must be Document Submitted or later).`,
-        )
-      }
-      records.push(record)
-      cases.push(buildCaseSnapshot(record))
-    }
-
-    const otherExpenses: ClaimSheetOtherExpense[] = input.otherExpenses
-      .map((row, index) => ({
-        id: `other-${Date.now()}-${index}`,
-        description: row.description.trim(),
-        amount: Math.round((Number(row.amount) || 0) * 100) / 100,
-        proofFileName: row.proofFileName?.trim() || undefined,
-      }))
-      .filter(row => row.description.length > 0 && row.amount > 0)
-
-    const caseExpensesTotal = Math.round(cases.reduce((sum, c) => sum + c.caseExpenseTotal, 0) * 100) / 100
-    const otherExpensesTotal = Math.round(otherExpenses.reduce((sum, e) => sum + e.amount, 0) * 100) / 100
-    const fundTransferType = resolveClaimFundTransferType(records)
-
-    const proofDocuments: ClaimSheetProofDocument[] = [
-      ...cases.flatMap(c => c.proofDocuments),
-      ...otherExpenses
-        .filter(e => e.proofFileName)
-        .map((e, index) => ({
-          id: `claim-other-${index}`,
-          label: e.description,
-          fileName: e.proofFileName!,
-          source: 'claim_other' as const,
-        })),
-    ]
-
+    const built = buildClaimSheetPayload(input)
     const currentUser = getCurrentUser()
     const sheet: GroundOpsClaimSheet = {
       id: generateClaimId(),
@@ -281,20 +311,58 @@ export const groundOpsClaimSheetService = {
       status: 'submitted',
       generatedBy: input.generatedBy.trim() || currentUser?.name?.trim() || 'Ground Ops',
       generatedAt: nowIso(),
-      team: input.team?.trim() || cases[0]?.companyName || 'Ground Operations',
-      fundTransferType,
-      kpis: computeClaimSheetKpis(records, fundTransferType, caseExpensesTotal, otherExpensesTotal),
-      cases,
-      otherExpenses,
-      caseExpensesTotal,
-      otherExpensesTotal,
-      grandTotal: Math.round((caseExpensesTotal + otherExpensesTotal) * 100) / 100,
-      proofDocuments,
+      team: input.team?.trim() || built.cases[0]?.companyName || 'Ground Operations',
+      ...built,
       notes: input.notes?.trim() ?? '',
     }
 
     claimStore = [sheet, ...claimStore]
     return cloneSheet(sheet)
+  },
+
+  /**
+   * Rebuild and resubmit a rejected claim sheet (same claim number).
+   * Clears prior Finance review fields and returns status to submitted.
+   */
+  resubmit(
+    id: string,
+    input: ResubmitGroundOpsClaimSheetInput,
+  ): { ok: boolean; sheet?: GroundOpsClaimSheet; error?: string } {
+    const index = claimStore.findIndex(sheet => sheet.id === id)
+    if (index < 0) return { ok: false, error: 'Claim sheet not found.' }
+
+    const existing = claimStore[index]
+    if (!canGroundOpsEditClaimSheet(existing.status)) {
+      return {
+        ok: false,
+        error: `Only rejected claim sheets can be edited (current: ${CLAIM_SHEET_STATUS_LABEL[existing.status].toLowerCase()}).`,
+      }
+    }
+
+    try {
+      const built = buildClaimSheetPayload(input)
+      const currentUser = getCurrentUser()
+      const updated: GroundOpsClaimSheet = {
+        ...existing,
+        status: 'submitted',
+        generatedBy: input.generatedBy.trim() || currentUser?.name?.trim() || existing.generatedBy,
+        generatedAt: nowIso(),
+        team: input.team?.trim() || built.cases[0]?.companyName || existing.team,
+        ...built,
+        notes: input.notes?.trim() ?? '',
+        reviewedAt: undefined,
+        reviewedBy: undefined,
+        rejectionReason: undefined,
+      }
+
+      claimStore = [...claimStore.slice(0, index), updated, ...claimStore.slice(index + 1)]
+      return { ok: true, sheet: cloneSheet(updated) }
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : 'Could not resubmit claim sheet.',
+      }
+    }
   },
 
   /** Stub download helpers — UI can toast success until real export is wired. */
@@ -314,9 +382,13 @@ export const groundOpsClaimSheetService = {
 
   reject(
     id: string,
-    reason?: string,
+    reason: string,
   ): { ok: boolean; sheet?: GroundOpsClaimSheet; error?: string } {
-    return this.updateReviewStatus(id, 'rejected', reason)
+    const trimmed = reason.trim()
+    if (!trimmed) {
+      return { ok: false, error: 'Rejection reason is required.' }
+    }
+    return this.updateReviewStatus(id, 'rejected', trimmed)
   },
 
   updateReviewStatus(
@@ -335,14 +407,17 @@ export const groundOpsClaimSheetService = {
       }
     }
 
+    if (status === 'rejected' && !reason?.trim()) {
+      return { ok: false, error: 'Rejection reason is required.' }
+    }
+
     const currentUser = getCurrentUser()
     const updated: GroundOpsClaimSheet = {
       ...existing,
       status,
       reviewedAt: nowIso(),
       reviewedBy: currentUser?.name?.trim() || 'Finance',
-      rejectionReason:
-        status === 'rejected' ? reason?.trim() || undefined : undefined,
+      rejectionReason: status === 'rejected' ? reason?.trim() : undefined,
     }
 
     claimStore = [...claimStore.slice(0, index), updated, ...claimStore.slice(index + 1)]

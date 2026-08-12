@@ -5,6 +5,7 @@ import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { PendingCollectionRow } from '../../data/accountsDashboardMock'
 import { ageingBucketColor, collectionStatusColor } from '../../utils/applyAccountsDashboardFilters'
+import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 function OverdueAccentCell({ children, isOverdue }: { children: ReactNode; isOverdue: boolean }) {
   const theme = useTheme()
@@ -37,8 +38,8 @@ export function buildPendingCollectionsColumns({
     },
     { key: 'company', label: 'Company', widthSize: adminListingColumnWidthSize('company') },
     { key: 'customer', label: 'Customer', widthSize: adminListingColumnWidthSize('name') },
-    { key: 'invoiceDate', label: 'Invoice Date', widthSize: adminListingColumnWidthSize('date') },
-    { key: 'dueDate', label: 'Due Date', widthSize: adminListingColumnWidthSize('date') },
+    { key: 'invoiceDate', label: 'Invoice Date', widthSize: adminListingColumnWidthSize('date'), render: (_, row) => formatDisplayDate(row.invoiceDate) },
+    { key: 'dueDate', label: 'Due Date', widthSize: adminListingColumnWidthSize('date'), render: (_, row) => formatDisplayDate(row.dueDate) },
     { key: 'outstandingAmount', label: 'Outstanding Amount', widthSize: adminListingColumnWidthSize('code') },
     {
       key: 'ageingBucket',
@@ -48,7 +49,7 @@ export function buildPendingCollectionsColumns({
         <Badge label={row.ageingBucket} color={ageingBucketColor(row.ageingBucket)} size="sm" />
       ),
     },
-    { key: 'followUpDate', label: 'Follow-up Date', widthSize: adminListingColumnWidthSize('date') },
+    { key: 'followUpDate', label: 'Follow-up Date', widthSize: adminListingColumnWidthSize('date'), render: (_, row) => formatDisplayDate(row.followUpDate) },
     { key: 'assignedExecutive', label: 'Assigned Executive', widthSize: adminListingColumnWidthSize('assignee') },
     {
       key: 'status',
