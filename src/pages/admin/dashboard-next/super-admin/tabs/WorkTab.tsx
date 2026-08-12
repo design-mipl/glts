@@ -117,7 +117,9 @@ function buildDeskRows(
         .map((row) => ({
           id: row.id,
           primary: `${row.vessel} · ${row.crew} crew`,
-          secondary: `Sign-on ${row.signOn} · ${row.joiningPort} · ${row.visaStatus}`,
+          secondary: `Joining date ${row.joiningDate}${
+            typeof row.daysRemaining === 'number' ? ` · ${row.daysRemaining} days left` : ''
+          } · ${row.joiningPort} · ${row.visaStatus}`,
           category: 'Joining-date',
           status: row.priority,
           value: row.ragStatus.toUpperCase(),

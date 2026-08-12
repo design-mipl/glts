@@ -198,9 +198,9 @@ export interface SuperAdminExecutiveSummary {
     critical: number
     warning: number
   }
-  averageTat: {
-    days: number
-    targetDays: number
+  visaCount: {
+    count: number
+    target?: number
     delta?: number
     deltaLabel?: string
   }

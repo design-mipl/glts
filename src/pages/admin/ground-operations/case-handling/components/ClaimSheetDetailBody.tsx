@@ -159,7 +159,7 @@ export function ClaimSheetDetailBody({
       {sheet.otherExpenses.length > 0 ? (
         <Stack spacing={1}>
           <Typography variant="body2" fontWeight={600} sx={{ fontSize: 12 }}>
-            Other expenses
+            Expenses
           </Typography>
           {sheet.otherExpenses.map(expense => (
             <Stack key={expense.id} direction="row" justifyContent="space-between" spacing={1}>
@@ -173,7 +173,7 @@ export function ClaimSheetDetailBody({
           ))}
           <Stack direction="row" justifyContent="space-between">
             <Typography variant="body2" fontWeight={700} sx={{ fontSize: 12 }}>
-              Other expenses total
+              Expenses total
             </Typography>
             <Typography variant="body2" fontWeight={700} sx={{ fontSize: 12 }}>
               {formatInr(sheet.otherExpensesTotal)}

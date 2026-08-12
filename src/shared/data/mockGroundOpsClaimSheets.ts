@@ -454,7 +454,7 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
     otherExpenses: [
       {
         id: 'gcs-seed-4-o1',
-        description: 'Parking at VFS (team)',
+        description: 'Parking Expenses',
         amount: 120,
       },
     ],
@@ -478,6 +478,9 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
       },
     ],
     notes: 'UPI claim rejected — missing GST invoice for express courier upgrade.',
+    reviewedAt: '2026-06-06T09:40:00.000Z',
+    reviewedBy: 'Finance Desk',
+    rejectionReason: 'Missing GST invoice for express courier upgrade.',
   },
   {
     id: 'gcs-seed-5',

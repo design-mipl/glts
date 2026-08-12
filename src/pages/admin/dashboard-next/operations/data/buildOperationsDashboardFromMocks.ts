@@ -605,7 +605,7 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
   const assigneeMix = [
     {
       key: 'user',
-      label: 'Ops user',
+      label: 'user',
       value: assigneeMixSource.filter((row) => row.assigneeKind === 'user').length,
       color: OPS_CHART_COLORS.navy,
     },

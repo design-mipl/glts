@@ -3,7 +3,7 @@
  * Work tab, and workload charts. Keep in sync across Operations surfaces.
  */
 export const OPS_QUEUE_DISPLAY_LABELS = {
-  verification: 'Pending Docs QC',
+  verification: 'Verify',
   recheck: 'Review Re-uploads',
   payment: 'Pending payment',
   arrange: 'Arrange Ticket/Insurance',
@@ -17,4 +17,4 @@ export const OPS_QUEUE_DISPLAY_LABELS = {
 } as const
 
 export const OPS_QUEUE_MIX_DESCRIPTION =
-  'Pending Docs QC · Review Re-uploads · Pending payment · Arrange · Ready for Submission · Ready for Collection'
+  'Verify · Review Re-uploads · Pending payment · Arrange · Ready for Submission · Ready for Collection'

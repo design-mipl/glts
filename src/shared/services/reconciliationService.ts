@@ -19,10 +19,6 @@ interface ReconciliationSubmission {
   status: ReconciliationStatus
   reconciledAt: string
   reconciledBy: string
-  /** Tab-specific mirrors written on submit */
-  policyNumber?: string
-  trackingNumber?: string
-  acEntryNo?: string
 }
 
 type SubmissionStore = Record<string, ReconciliationSubmission>
@@ -226,21 +222,9 @@ function buildExpenseItem(
   const itemId = `exp:${expense.id}:${tab}`
   const submission = submissions[itemId]
 
-  const policyNumber =
-    submission?.policyNumber ||
-    (tab === 'insurance' ? demoPolicyNumber(expense.id) : '')
-  const trackingNumber =
-    submission?.trackingNumber ||
-    (tab === 'courier' ? demoTrackingNumber(expense.id) : '')
-  const acEntryNo = submission?.acEntryNo || submission?.referenceNumber || ''
-
-  let referenceNumber = submission?.referenceNumber || ''
-  if (!referenceNumber) {
-    if (tab === 'insurance') referenceNumber = policyNumber
-    else if (tab === 'courier') referenceNumber = trackingNumber
-    else if (tab === 'mode_of_payment') referenceNumber = ''
-    else referenceNumber = ''
-  }
+  const policyNumber = tab === 'insurance' ? demoPolicyNumber(expense.id) : ''
+  const trackingNumber = tab === 'courier' ? demoTrackingNumber(expense.id) : ''
+  const referenceNumber = submission?.referenceNumber || ''
 
   return {
     id: itemId,
@@ -274,7 +258,7 @@ function buildExpenseItem(
     foreignCurrencyAmount: expense.paymentMode === 'card' ? Math.round(cost * 0.011 * 100) / 100 : 0,
     staffName: expense.paidByUser || expense.createdBy || '—',
     acPersonName: submission?.reconciledBy ?? '',
-    acEntryNo,
+    acEntryNo: '',
     claimNumber: '',
     claimTeam: '',
     claimCasesCount: 0,
@@ -324,7 +308,7 @@ function buildClaimSheetItems(sheet: GroundOpsClaimSheet, submissions: Submissio
         foreignCurrencyAmount: 0,
         staffName: sheet.generatedBy,
         acPersonName: submission?.reconciledBy ?? '',
-        acEntryNo: submission?.acEntryNo || submission?.referenceNumber || '',
+        acEntryNo: '',
         claimNumber: sheet.claimNumber,
         claimTeam: sheet.team,
         claimCasesCount: 0,
@@ -372,7 +356,7 @@ function buildClaimSheetItems(sheet: GroundOpsClaimSheet, submissions: Submissio
       foreignCurrencyAmount: 0,
       staffName: sheet.generatedBy,
       acPersonName: submission?.reconciledBy ?? '',
-      acEntryNo: submission?.acEntryNo || submission?.referenceNumber || '',
+      acEntryNo: '',
       claimNumber: sheet.claimNumber,
       claimTeam: sheet.team,
       claimCasesCount: sheet.cases.length,
@@ -465,33 +449,62 @@ export const reconciliationService = {
   submitReference(input: SubmitReconciliationInput): { ok: true; item: ReconciliationItem } | { ok: false; error: string } {
     const existing = this.getById(input.id)
     if (!existing) return { ok: false, error: 'Reconciliation item not found.' }
+    if (existing.status === 'submitted') {
+      return { ok: false, error: 'This record is already reconciled.' }
+    }
 
     const referenceNumber = input.referenceNumber.trim()
-    if (!referenceNumber) return { ok: false, error: 'Reference number is required.' }
+    if (!referenceNumber) return { ok: false, error: 'Book entry number is required.' }
 
     const user = getCurrentUser()
     const reconciledBy = user?.name?.trim() || 'Accounts user'
     const reconciledAt = new Date().toISOString()
     const store = readSubmissions()
 
-    const submission: ReconciliationSubmission = {
+    store[input.id] = {
       referenceNumber,
       status: 'submitted',
       reconciledAt,
       reconciledBy,
     }
-
-    if (existing.tab === 'insurance') submission.policyNumber = referenceNumber
-    if (existing.tab === 'courier') submission.trackingNumber = referenceNumber
-    if (existing.tab === 'mode_of_payment' || existing.tab === 'approved_claim_sheet') {
-      submission.acEntryNo = referenceNumber
-    }
-
-    store[input.id] = submission
     writeSubmissions(store)
 
     const updated = this.getById(input.id)
     if (!updated) return { ok: false, error: 'Could not refresh reconciliation item.' }
     return { ok: true, item: updated }
+  },
+
+  submitMany(
+    ids: string[],
+    referenceNumber: string,
+  ): { ok: true; submitted: number } | { ok: false; error: string } {
+    const bookEntry = referenceNumber.trim()
+    if (!bookEntry) return { ok: false, error: 'Book entry number is required.' }
+    if (ids.length === 0) return { ok: false, error: 'Select at least one pending record.' }
+
+    const user = getCurrentUser()
+    const reconciledBy = user?.name?.trim() || 'Accounts user'
+    const reconciledAt = new Date().toISOString()
+    const store = readSubmissions()
+    let submitted = 0
+
+    for (const id of ids) {
+      const existing = this.getById(id)
+      if (!existing || existing.status === 'submitted') continue
+      store[id] = {
+        referenceNumber: bookEntry,
+        status: 'submitted',
+        reconciledAt,
+        reconciledBy,
+      }
+      submitted += 1
+    }
+
+    if (submitted === 0) {
+      return { ok: false, error: 'No pending records were selected to reconcile.' }
+    }
+
+    writeSubmissions(store)
+    return { ok: true, submitted }
   },
 }

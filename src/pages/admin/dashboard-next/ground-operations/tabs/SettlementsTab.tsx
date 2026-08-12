@@ -46,6 +46,8 @@ export function SettlementsTab({
     <Grid container spacing={DASHBOARD_SPACING.field}>
       <Grid size={{ xs: 12, md: 5 }}>
         <SettlementStatus
+          title="Settlement snapshot"
+          subtitle="Allocated fund batches · settle from Fund utilization"
           rows={data.settlementRows}
           loading={loading}
           onRetry={onRetry}
@@ -54,7 +56,7 @@ export function SettlementsTab({
       </Grid>
       <Grid size={{ xs: 12, md: 7 }}>
         <DashboardTable
-          title="Fund cases"
+          title="Fund utilization batches"
           subtitle="Allocation · spend · settlement"
           columns={columns}
           data={data.fundCaseRows}

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Box, alpha, useTheme } from '@mui/material'
-import { Pagination, useToast } from '@/design-system/UIComponents'
+import { Box, Stack, alpha, useTheme } from '@mui/material'
+import { BulkActions, Pagination, type BulkAction, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   AdminListingGrid,
@@ -13,6 +13,7 @@ import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
 import { reconciliationService } from '@/shared/services/reconciliationService'
 import type { ReconciliationFilters, ReconciliationItem, ReconciliationTab } from '@/shared/types/reconciliation'
 import { ReconciliationAdvancedFilterFields } from '../components/ReconciliationAdvancedFilters'
+import { ReconciliationBulkModal } from '../components/ReconciliationBulkModal'
 import { ReconciliationDetailDrawer } from '../components/ReconciliationDetailDrawer'
 import { ReconciliationKpiRow } from '../components/ReconciliationKpiRow'
 import {
@@ -40,6 +41,7 @@ export function ReconciliationListingPage() {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [filters, setFilters] = useState<ReconciliationFilters>(EMPTY_RECONCILIATION_FILTERS)
   const [selectedItem, setSelectedItem] = useState<ReconciliationItem | null>(null)
+  const [bulkItems, setBulkItems] = useState<ReconciliationItem[] | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
   const tabRows = useMemo(
@@ -75,6 +77,32 @@ export function ReconciliationListingPage() {
     [listing.paginatedRows],
   )
 
+  const selectedRows = useMemo(
+    () => listing.filterSourceRows.filter(row => listing.tableState.selectedRows.includes(row.id)),
+    [listing.filterSourceRows, listing.tableState.selectedRows],
+  )
+
+  const bulkActions = useMemo<BulkAction[]>(
+    () => [
+      {
+        label: 'Reconcile',
+        onClick: rows => {
+          const pending = (rows as ReconciliationItem[]).filter(row => row.status === 'pending')
+          if (pending.length === 0) {
+            showToast({
+              title: 'Nothing to reconcile',
+              description: 'Selected rows are already submitted. Choose pending records.',
+              variant: 'warning',
+            })
+            return
+          }
+          setBulkItems(pending)
+        },
+      },
+    ],
+    [showToast],
+  )
+
   const handleExport = useCallback(() => {
     downloadReconciliationCsv(listing.filterSourceRows, activeTab)
     showToast({
@@ -89,12 +117,40 @@ export function ReconciliationListingPage() {
       setActiveTab(tab)
       setViewMode('table')
       setSelectedItem(null)
-      listing.setTableState(state => ({ ...state, page: 0 }))
+      setBulkItems(null)
+      listing.setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
       if (tab !== 'mode_of_payment' && filters.paymentMode) {
         setFilters(current => ({ ...current, paymentMode: '' }))
       }
     },
     [filters.paymentMode, listing, setActiveTab],
+  )
+
+  const handleBulkConfirm = useCallback(
+    (referenceNumber: string) => {
+      if (!bulkItems?.length) return
+      const result = reconciliationService.submitMany(
+        bulkItems.map(item => item.id),
+        referenceNumber,
+      )
+      if (!result.ok) {
+        showToast({
+          title: 'Could not reconcile',
+          description: result.error,
+          variant: 'error',
+        })
+        return
+      }
+      showToast({
+        title: 'Bulk reconciliation submitted',
+        description: `${result.submitted} record${result.submitted === 1 ? '' : 's'} updated.`,
+        variant: 'success',
+      })
+      setBulkItems(null)
+      listing.setTableState(state => ({ ...state, selectedRows: [] }))
+      setRefreshKey(key => key + 1)
+    },
+    [bulkItems, listing, showToast],
   )
 
   const footerBg =
@@ -126,7 +182,7 @@ export function ReconciliationListingPage() {
           <AdminListingToolbar
             searchValue={listing.tableState.searchQuery}
             onSearch={listing.handleSearch}
-            searchPlaceholder="Search ref, passenger, client, vendor, or reference…"
+            searchPlaceholder="Search ref, passenger, client, vendor, or book entry…"
             onExport={handleExport}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
@@ -140,11 +196,11 @@ export function ReconciliationListingPage() {
               value: filters,
               onApply: next => {
                 setFilters(next)
-                listing.setTableState(state => ({ ...state, page: 0 }))
+                listing.setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
               },
               onClear: () => {
                 setFilters(EMPTY_RECONCILIATION_FILTERS)
-                listing.setTableState(state => ({ ...state, page: 0 }))
+                listing.setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
               },
               hasActive: value => hasReconciliationFiltersActive(value, activeTab),
               width: 360,
@@ -156,21 +212,34 @@ export function ReconciliationListingPage() {
         }
         listingContent={
           viewMode === 'table' ? (
-            <AdminListingTable
-              columns={columns}
-              data={listing.paginatedRows}
-              filterSourceData={listing.filterSourceRows}
-              rowKey="id"
-              state={listing.tableState}
-              onStateChange={listing.setTableState}
-              columnFilters={listing.columnFilters}
-              onColumnFiltersChange={listing.setColumnFilters}
-              getCellValue={getReconciliationCellValue}
-              onRowClick={row => setSelectedItem(row)}
-              stickyHeader
-              emptyTitle={emptyState.title}
-              emptyDescription={emptyState.description}
-            />
+            <Stack spacing={0}>
+              {listing.tableState.selectedRows.length > 0 ? (
+                <BulkActions
+                  selectedRows={selectedRows}
+                  actions={bulkActions}
+                  onAction={(action, rows) => action.onClick(rows)}
+                  onDeselectAll={() =>
+                    listing.setTableState(state => ({ ...state, selectedRows: [] }))
+                  }
+                />
+              ) : null}
+              <AdminListingTable
+                columns={columns}
+                data={listing.paginatedRows}
+                filterSourceData={listing.filterSourceRows}
+                rowKey="id"
+                state={listing.tableState}
+                onStateChange={listing.setTableState}
+                columnFilters={listing.columnFilters}
+                onColumnFiltersChange={listing.setColumnFilters}
+                getCellValue={getReconciliationCellValue}
+                onRowClick={row => setSelectedItem(row)}
+                bulkActions={bulkActions}
+                stickyHeader
+                emptyTitle={emptyState.title}
+                emptyDescription={emptyState.description}
+              />
+            </Stack>
           ) : (
             <AdminListingGrid
               items={gridItems}
@@ -200,7 +269,17 @@ export function ReconciliationListingPage() {
         open={Boolean(selectedItem)}
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
-        onSubmitted={() => setRefreshKey(key => key + 1)}
+        onSubmitted={() => {
+          listing.setTableState(state => ({ ...state, selectedRows: [] }))
+          setRefreshKey(key => key + 1)
+        }}
+      />
+
+      <ReconciliationBulkModal
+        open={Boolean(bulkItems?.length)}
+        items={bulkItems ?? []}
+        onClose={() => setBulkItems(null)}
+        onConfirm={handleBulkConfirm}
       />
     </>
   )

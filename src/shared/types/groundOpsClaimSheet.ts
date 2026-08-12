@@ -80,6 +80,8 @@ export interface CreateGroundOpsClaimSheetInput {
   team?: string
 }
 
+export type ResubmitGroundOpsClaimSheetInput = CreateGroundOpsClaimSheetInput
+
 export const CLAIM_SHEET_STATUS_LABEL: Record<GroundOpsClaimSheetStatus, string> = {
   submitted: 'Submitted',
   under_review: 'Under review',
@@ -91,6 +93,30 @@ export const CLAIM_SHEET_STATUS_LABEL: Record<GroundOpsClaimSheetStatus, string>
 /** Statuses Finance can still approve or reject. */
 export function canFinanceReviewClaimSheet(status: GroundOpsClaimSheetStatus): boolean {
   return status === 'submitted' || status === 'under_review'
+}
+
+/** Ground Ops may edit and resubmit only after Finance rejection. */
+export function canGroundOpsEditClaimSheet(status: GroundOpsClaimSheetStatus): boolean {
+  return status === 'rejected'
+}
+
+export function getClaimSheetStatusBadgeColor(
+  status: GroundOpsClaimSheetStatus,
+): 'info' | 'warning' | 'success' | 'error' | 'neutral' {
+  switch (status) {
+    case 'submitted':
+      return 'info'
+    case 'under_review':
+      return 'warning'
+    case 'approved':
+      return 'success'
+    case 'rejected':
+      return 'error'
+    case 'settled':
+      return 'neutral'
+    default:
+      return 'neutral'
+  }
 }
 
 /** Bank transfer claims show the full bank-float KPI set. */

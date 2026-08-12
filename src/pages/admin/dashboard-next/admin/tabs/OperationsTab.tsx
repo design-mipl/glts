@@ -17,7 +17,7 @@ import type { AdminDashboardTabProps } from '../types'
 /**
  * Operations story (org-level, dense composition):
  * pulse → alerts | workload → queue mix trio → IN TRANSIT →
- * throughput | marine.
+ * throughput → joining-date risk.
  */
 export function OperationsTab({
   data,
@@ -35,6 +35,11 @@ export function OperationsTab({
   const openLogistics = () => onNavigate('/admin/ground-operations/logistics')
   const openMarine = () => onNavigate('/admin/application-management/marine')
   const openAssignment = () => onNavigate('/admin/assignment-priority/retail')
+
+  const joiningRiskRows = [...data.marineTimeline].sort((a, b) => {
+    const rank = (r: string) => (r === 'red' ? 0 : r === 'amber' ? 1 : 2)
+    return rank(a.ragStatus) - rank(b.ragStatus)
+  })
 
   const signalParts = [
     inTransitCount > 0 ? `${inTransitCount} in transit` : null,
@@ -142,39 +147,31 @@ export function OperationsTab({
         viewAllLabel="Open logistics"
       />
 
-      <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
-        <Grid size={{ xs: 12, lg: 7 }}>
-          <Box
-            sx={{
-              ...executiveCardLevel2Sx(colors),
-              p: 2,
-              height: '100%',
-              minWidth: 0,
-              '& > *': { height: '100%' },
-            }}
-          >
-            <ProcessingTrend
-              title="Throughput trend"
-              subtitle="Processed vs completed"
-              points={data.processingTrend}
-              loading={loading}
-              onRetry={onRetry}
-              secondaryLabel="Completed"
-            />
-          </Box>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 5 }}>
-          <MarineTimeline
-            title="Active crew changes"
-            subtitle="Marine sign-ons · RAG by days remaining"
-            rows={data.marineTimeline}
-            loading={loading}
-            onRetry={onRetry}
-            onViewAll={openMarine}
-            onRowClick={() => openMarine()}
-          />
-        </Grid>
-      </Grid>
+      <Box
+        sx={{
+          ...executiveCardLevel2Sx(colors),
+          p: 2,
+          minWidth: 0,
+        }}
+      >
+        <ProcessingTrend
+          title="Throughput trend"
+          subtitle="Processed vs completed"
+          points={data.processingTrend}
+          loading={loading}
+          onRetry={onRetry}
+          secondaryLabel="Completed"
+        />
+      </Box>
+
+      <MarineTimeline
+        title="Joining date & crew risk"
+        rows={joiningRiskRows}
+        loading={loading}
+        onRetry={onRetry}
+        onViewAll={openMarine}
+        onRowClick={() => openMarine()}
+      />
     </Stack>
   )
 }

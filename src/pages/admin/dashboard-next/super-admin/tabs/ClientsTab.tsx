@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { Grid, Stack } from '@mui/material'
 import { DonutChart } from '@/design-system/UIComponents'
 import { DASHBOARD_SPACING } from '../../shared'
-import { SuperAdminWorkListing } from '../components/SuperAdminWorkListing'
 import {
   SA_CHART_HEIGHT,
   SuperAdminPanel,
@@ -12,54 +11,48 @@ import {
   useSuperAdminChartColors,
   useSuperAdminChartSeries,
 } from '../components/SuperAdminChrome'
-import type { SuperAdminDashboardTabProps, SuperAdminWorkRow } from '../types'
+import type { SuperAdminDashboardTabProps } from '../types'
+
+/** Always show the four business segments, even when a slice count is 0. */
+const PORTFOLIO_SEGMENTS = ['Marine', 'Corporate', 'Retail', 'B2B'] as const
 
 /**
- * Clients — account intelligence (health, risk, margin, dormant, top accounts).
+ * Clients — portfolio → growth → risk → margin.
  */
-export function ClientsTab({
-  data,
-  loading,
-  onNavigate,
-  onOpenClient,
-}: SuperAdminDashboardTabProps) {
+export function ClientsTab({ data, loading }: SuperAdminDashboardTabProps) {
   const chart = useSuperAdminChartColors()
   const series = useSuperAdminChartSeries()
 
-  const accountRows: SuperAdminWorkRow[] = useMemo(
-    () =>
-      data.clientRows.map((row) => ({
-        id: row.id,
-        primary: row.client,
-        secondary: `${row.segment} · ${row.applications} apps · Rev ${row.revenue}`,
-        category: row.segment,
-        status: row.status,
-        value: row.outstanding,
-        priority: row.status.toLowerCase().includes('risk') ? 'High' : 'Medium',
-      })),
-    [data.clientRows],
-  )
-
   const segmentSlices = useMemo(() => {
     const counts = new Map<string, number>()
+    for (const label of PORTFOLIO_SEGMENTS) counts.set(label, 0)
     for (const row of data.clientRows) {
-      counts.set(row.segment, (counts.get(row.segment) ?? 0) + 1)
+      const match = PORTFOLIO_SEGMENTS.find(
+        (label) => label.toLowerCase() === row.segment.toLowerCase(),
+      )
+      const key = match ?? row.segment
+      counts.set(key, (counts.get(key) ?? 0) + 1)
     }
     return colorSlices(
-      Array.from(counts.entries()).map(([label, value]) => ({
-        key: label.toLowerCase(),
-        label,
-        value,
-      })),
+      Array.from(counts.entries())
+        .filter(([, value]) => value > 0)
+        .map(([label, value]) => ({
+          key: label.toLowerCase(),
+          label,
+          value,
+        })),
       series,
     )
   }, [data.clientRows, series])
 
   return (
     <Stack spacing={DASHBOARD_SPACING.section}>
-      <SuperAdminSection title="Portfolio snapshot">
+      <SuperAdminSection
+        title="Portfolio"
+        description="Segment mix and largest accounts by revenue"
+      >
         <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
-          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+          <Grid size={{ xs: 12, md: 5, lg: 4 }}>
             <SuperAdminPanel title="Accounts by segment">
               <DonutChart
                 data={
@@ -74,18 +67,35 @@ export function ClientsTab({
               />
             </SuperAdminPanel>
           </Grid>
-          <Grid size={{ xs: 12, md: 6, lg: 8 }}>
+          <Grid size={{ xs: 12, md: 7, lg: 8 }}>
             <SuperAdminRankChart
-              title="Client health scores"
-              items={data.clientHealth}
+              title="Top accounts by revenue"
+              items={data.topRevenueClients}
               loading={loading}
-              valueLabel="Score"
+              valueLabel="Revenue"
+              initialTopN="5"
             />
           </Grid>
         </Grid>
       </SuperAdminSection>
 
-      <SuperAdminSection title="Risk & margin">
+      <SuperAdminSection
+        title="Growth"
+        description="Accounts with the strongest period-over-period lift"
+      >
+        <SuperAdminRankChart
+          title="Top growth opportunities"
+          items={data.fastestGrowingClients}
+          loading={loading}
+          valueLabel="Growth"
+          initialTopN="5"
+        />
+      </SuperAdminSection>
+
+      <SuperAdminSection
+        title="Risk"
+        description="Accounts that need credit, collections, or reactivation attention"
+      >
         <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
           <Grid size={{ xs: 12, md: 6 }}>
             <SuperAdminRankChart
@@ -105,6 +115,14 @@ export function ClientsTab({
               initialTopN="5"
             />
           </Grid>
+        </Grid>
+      </SuperAdminSection>
+
+      <SuperAdminSection
+        title="Margin"
+        description="Gross margin leaders and accounts that may need repricing"
+      >
+        <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
           <Grid size={{ xs: 12, md: 6 }}>
             <SuperAdminRankChart
               title="High margin clients"
@@ -124,45 +142,6 @@ export function ClientsTab({
             />
           </Grid>
         </Grid>
-      </SuperAdminSection>
-
-      <SuperAdminSection title="Top accounts">
-        <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
-          <Grid size={{ xs: 12, md: 6 }}>
-            <SuperAdminRankChart
-              title="Top accounts by revenue"
-              items={data.topRevenueClients}
-              loading={loading}
-              valueLabel="Revenue"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <SuperAdminRankChart
-              title="Top growth opportunities"
-              items={data.fastestGrowingClients}
-              loading={loading}
-              valueLabel="Growth"
-            />
-          </Grid>
-        </Grid>
-      </SuperAdminSection>
-
-      <SuperAdminSection
-        title="Key accounts"
-        actionLabel="Open clients"
-        onAction={() => onNavigate('/admin/customer-accounts/corporate-accounts')}
-      >
-        <SuperAdminWorkListing
-          title="Key accounts"
-          rows={accountRows}
-          loading={loading}
-          openLabel="Open"
-          onOpen={(row) => onOpenClient?.(row.id)}
-          onViewAll={() => onNavigate('/admin/customer-accounts/corporate-accounts')}
-          viewAllLabel="Open clients"
-          emptyTitle="No key accounts"
-          emptyDescription="Accounts will appear here when loaded."
-        />
       </SuperAdminSection>
     </Stack>
   )

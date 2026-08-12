@@ -3,9 +3,9 @@ import { Box } from '@mui/material'
 import {
   AlertTriangle,
   Briefcase,
-  CalendarDays,
   CheckCircle2,
-  Clock3,
+  ClipboardList,
+  Package,
   Wallet,
 } from 'lucide-react'
 import { ExecutiveGrid, HeroMetric, InsightStack } from '../../shared/dashboard-ui-kit'
@@ -15,18 +15,22 @@ import { DASHBOARD_SPACING } from '../../shared/constants'
 import { kpiColumns } from '../../shared/utils/kpiColumns'
 
 const KPI_ICONS: Record<string, ReactNode> = {
-  'assigned-today': <Briefcase size={16} />,
-  completed: <CheckCircle2 size={16} />,
-  pending: <Clock3 size={16} />,
-  overdue: <AlertTriangle size={16} />,
-  'appointments-today': <CalendarDays size={16} />,
-  'funds-to-settle': <Wallet size={16} />,
+  pending: <Briefcase size={16} />,
+  'moved-next': <AlertTriangle size={16} />,
+  'docs-submitted': <CheckCircle2 size={16} />,
+  'in-transit': <Package size={16} />,
+  'claims-action': <ClipboardList size={16} />,
+  'funds-allocated': <Wallet size={16} />,
 }
 
-function kpiTone(id: string, delta?: number): 'positive' | 'negative' | 'warning' | 'info' | 'neutral' {
-  if (id === 'overdue') return 'negative'
-  if (id === 'pending' || id === 'funds-to-settle') return 'warning'
-  if (id === 'completed') return 'positive'
+function kpiTone(
+  id: string,
+  delta?: number,
+): 'positive' | 'negative' | 'warning' | 'info' | 'neutral' {
+  if (id === 'moved-next' || id === 'claims-action') return 'warning'
+  if (id === 'pending') return 'info'
+  if (id === 'docs-submitted' || id === 'in-transit') return 'info'
+  if (id === 'funds-allocated') return 'neutral'
   if (delta != null && delta > 0) return 'info'
   if (delta != null && delta < 0) return 'positive'
   return 'neutral'
@@ -59,14 +63,14 @@ export function GroundHeroStrip({ items, loading }: GroundHeroStripProps) {
   return (
     <InsightStack spacing={DASHBOARD_SPACING.dense}>
       <ExecutiveGrid columns={kpiColumns(items.length)} spacing={1}>
-        {items.map((kpi) => (
+        {items.map(kpi => (
           <Box
             key={kpi.id}
             role={drilldown ? 'button' : undefined}
             tabIndex={drilldown ? 0 : undefined}
             aria-label={`${kpi.label}: ${kpi.value}`}
             onClick={() => openKpi(kpi)}
-            onKeyDown={(event) => {
+            onKeyDown={event => {
               if (!drilldown) return
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault()
@@ -79,7 +83,7 @@ export function GroundHeroStrip({ items, loading }: GroundHeroStripProps) {
               outline: 'none',
               '&:focus-visible': {
                 borderRadius: 2,
-                boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
+                boxShadow: theme => `0 0 0 2px ${theme.palette.primary.main}`,
               },
             }}
           >

@@ -5,6 +5,7 @@ import { ClaimSheetDetailBody } from '@/pages/admin/ground-operations/case-handl
 import { groundOpsClaimSheetService } from '@/shared/services/groundOpsClaimSheetService'
 import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
 import { canFinanceReviewClaimSheet } from '@/shared/types/groundOpsClaimSheet'
+import { FundAllocationClaimSheetRejectModal } from './FundAllocationClaimSheetRejectModal'
 
 interface FundAllocationClaimSheetDetailDrawerProps {
   open: boolean
@@ -13,8 +14,6 @@ interface FundAllocationClaimSheetDetailDrawerProps {
   onReviewed?: () => void
 }
 
-type ReviewConfirm = 'approve' | 'reject' | null
-
 export function FundAllocationClaimSheetDetailDrawer({
   open,
   sheet,
@@ -22,42 +21,60 @@ export function FundAllocationClaimSheetDetailDrawer({
   onReviewed,
 }: FundAllocationClaimSheetDetailDrawerProps) {
   const { showToast } = useToast()
-  const [confirmAction, setConfirmAction] = useState<ReviewConfirm>(null)
+  const [approveOpen, setApproveOpen] = useState(false)
+  const [rejectOpen, setRejectOpen] = useState(false)
 
   const canReview = sheet ? canFinanceReviewClaimSheet(sheet.status) : false
 
   const handleClose = () => {
-    setConfirmAction(null)
+    setApproveOpen(false)
+    setRejectOpen(false)
     onClose()
   }
 
-  const handleConfirmReview = () => {
-    if (!sheet || !confirmAction) return
+  const handleApprove = () => {
+    if (!sheet) return
 
-    const result =
-      confirmAction === 'approve'
-        ? groundOpsClaimSheetService.approve(sheet.id)
-        : groundOpsClaimSheetService.reject(sheet.id)
-
+    const result = groundOpsClaimSheetService.approve(sheet.id)
     if (!result.ok || !result.sheet) {
       showToast({
-        title: confirmAction === 'approve' ? 'Could not approve' : 'Could not reject',
+        title: 'Could not approve',
         description: result.error,
         variant: 'error',
       })
-      setConfirmAction(null)
+      setApproveOpen(false)
       return
     }
 
     showToast({
-      title: confirmAction === 'approve' ? 'Claim sheet approved' : 'Claim sheet rejected',
-      description:
-        confirmAction === 'approve'
-          ? `${result.sheet.claimNumber} is approved for settlement.`
-          : `${result.sheet.claimNumber} was rejected.`,
-      variant: confirmAction === 'approve' ? 'success' : 'warning',
+      title: 'Claim sheet approved',
+      description: `${result.sheet.claimNumber} is approved for settlement.`,
+      variant: 'success',
     })
-    setConfirmAction(null)
+    setApproveOpen(false)
+    onReviewed?.()
+    onClose()
+  }
+
+  const handleReject = (reason: string) => {
+    if (!sheet) return
+
+    const result = groundOpsClaimSheetService.reject(sheet.id, reason)
+    if (!result.ok || !result.sheet) {
+      showToast({
+        title: 'Could not reject',
+        description: result.error,
+        variant: 'error',
+      })
+      return
+    }
+
+    showToast({
+      title: 'Claim sheet rejected',
+      description: `${result.sheet.claimNumber} was rejected. Ground Operations can revise and resubmit.`,
+      variant: 'warning',
+    })
+    setRejectOpen(false)
     onReviewed?.()
     onClose()
   }
@@ -80,12 +97,12 @@ export function FundAllocationClaimSheetDetailDrawer({
                   label="Reject"
                   variant="outlined"
                   color="error"
-                  onClick={() => setConfirmAction('reject')}
+                  onClick={() => setRejectOpen(true)}
                 />
                 <Button
                   label="Approve"
                   variant="contained"
-                  onClick={() => setConfirmAction('approve')}
+                  onClick={() => setApproveOpen(true)}
                 />
               </Stack>
             ) : null}
@@ -114,8 +131,8 @@ export function FundAllocationClaimSheetDetailDrawer({
       </Drawer>
 
       <ConfirmDialog
-        open={confirmAction === 'approve'}
-        onClose={() => setConfirmAction(null)}
+        open={approveOpen}
+        onClose={() => setApproveOpen(false)}
         title="Approve claim sheet"
         description={
           sheet
@@ -123,21 +140,14 @@ export function FundAllocationClaimSheetDetailDrawer({
             : undefined
         }
         confirmLabel="Approve"
-        onConfirm={handleConfirmReview}
+        onConfirm={handleApprove}
       />
 
-      <ConfirmDialog
-        open={confirmAction === 'reject'}
-        onClose={() => setConfirmAction(null)}
-        title="Reject claim sheet"
-        description={
-          sheet
-            ? `Reject ${sheet.claimNumber}? Ground Operations will need to revise and resubmit.`
-            : undefined
-        }
-        confirmLabel="Reject"
-        variant="destructive"
-        onConfirm={handleConfirmReview}
+      <FundAllocationClaimSheetRejectModal
+        open={rejectOpen}
+        sheet={sheet}
+        onClose={() => setRejectOpen(false)}
+        onConfirm={handleReject}
       />
     </>
   )

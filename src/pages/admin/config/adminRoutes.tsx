@@ -35,6 +35,7 @@ import {
   DocumentDetailPage,
   DocumentListingPage,
 } from '../masters/documents'
+import { BankMasterListingPage } from '../masters/bank-master'
 import { CardMasterListingPage } from '../masters/card-master'
 import { CountryGroupListingPage } from '../masters/country-groups'
 import { JurisdictionListingPage } from '../masters/jurisdiction'
@@ -468,6 +469,14 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <CardMasterListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/bank-master"
+        element={
+          <PermissionGuard>
+            <BankMasterListingPage />
           </PermissionGuard>
         }
       />

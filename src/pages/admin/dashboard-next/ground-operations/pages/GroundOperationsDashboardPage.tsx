@@ -2,11 +2,10 @@ import { useCallback, useMemo } from 'react'
 import { Stack } from '@mui/material'
 import {
   Briefcase,
+  ClipboardList,
   FileSpreadsheet,
   LayoutDashboard,
-  MapPinned,
   Package,
-  Receipt,
   Wallet,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -18,22 +17,18 @@ import {
   RouteTimeline,
 } from '../../shared'
 import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intelligence'
-import { GROUND_OPERATIONS_DASHBOARD_MOCK } from '../data/groundOperationsDashboardMock'
+import { DEFAULT_GROUND_OPS_DASHBOARD_FILTERS } from '../config/groundOperationsDashboardFilters'
+import { buildGroundOperationsDashboardFromServices } from '../data/buildGroundOperationsDashboardFromServices'
 import { buildGroundSearchItems } from '../data/groundSearchItems'
 import { useGroundOperationsDashboardNext } from '../hooks/useGroundOperationsDashboardNext'
-import {
-  buildCourierTrackingFromInTransitRow,
-  listLogisticsInTransitRows,
-} from '../../shared/utils/mapLogisticsInTransitRows'
 import { GroundExecutiveRow } from '../components/GroundExecutiveRow'
 import { GroundHeroStrip } from '../components/GroundHeroStrip'
 import {
+  ClaimSheetsTab,
   CourierTab,
-  ExpensesTab,
   GROUND_ACTION_ICONS,
   OverviewTab,
   ReportsTab,
-  RoutesTab,
   SettlementsTab,
   TodaysJobsTab,
 } from '../tabs'
@@ -42,27 +37,9 @@ import type { GroundOperationsDashboardTabProps } from '../types'
 export function GroundOperationsDashboardPage() {
   const navigate = useNavigate()
   const dashboard = useGroundOperationsDashboardNext()
-  const data = dashboard.data ?? (() => {
-    const fallback = structuredClone(GROUND_OPERATIONS_DASHBOARD_MOCK)
-    const inTransit = listLogisticsInTransitRows()
-    if (inTransit.length === 0) return fallback
-    return {
-      ...fallback,
-      passportRows: inTransit.map((row) => ({
-        id: row.id,
-        applicationNumber: row.applicationNumber,
-        applicant: row.applicant,
-        currentLocation: row.currentLocation,
-        courier: row.courier,
-        trackingNumber: row.trackingNumber,
-        trackingUrl: row.trackingUrl,
-        deliveryMethod: row.deliveryMethod,
-        eta: row.eta,
-        status: row.status,
-      })),
-      courierTracking: buildCourierTrackingFromInTransitRow(inTransit[0]),
-    }
-  })()
+  const data =
+    dashboard.data ??
+    buildGroundOperationsDashboardFromServices({ ...DEFAULT_GROUND_OPS_DASHBOARD_FILTERS })
   const loading = dashboard.isLoading
   const setFilters = dashboard.setFilters
 
@@ -72,16 +49,18 @@ export function GroundOperationsDashboardPage() {
 
   const onFiltersChange = useCallback(
     (filters: DashboardIntelligenceFilters) => {
-      setFilters((prev) => ({
+      setFilters(prev => ({
         ...prev,
         date:
           filters.datePreset === 'custom' ||
           filters.datePreset === 'date' ||
           filters.datePreset === 'range'
             ? prev.date
-            : filters.datePreset,
-        branch: filters.branch,
-        assignmentStatus: filters.status === 'all' ? prev.assignmentStatus : filters.status,
+            : filters.datePreset === 'all'
+              ? 'all'
+              : filters.datePreset || prev.date,
+        team: filters.branch === 'all' ? 'all' : filters.branch || prev.team,
+        caseStatus: filters.status === 'all' ? 'all' : filters.status || prev.caseStatus,
         search: filters.search,
       }))
     },
@@ -98,36 +77,32 @@ export function GroundOperationsDashboardPage() {
   const searchItems = useMemo(
     () =>
       buildGroundSearchItems({
-        onNavigate: (href) => navigate(href),
+        onNavigate: href => navigate(href),
         onOpenTab: openTab,
       }),
     [navigate, openTab],
   )
 
-  const pendingSettlements = data.fundCaseRows.filter((row) =>
-    /pending|review/i.test(row.status),
-  ).length
-
-  const inTransitCount = data.passportRows.filter((row) =>
-    /in\s*transit/i.test(row.status),
-  ).length
+  const rejectedClaims = data.claimSheetRows.filter(row => /rejected/i.test(row.status)).length
+  const inTransitCount = data.passportRows.filter(row => /in\s*transit/i.test(row.status)).length
 
   const tabProps: GroundOperationsDashboardTabProps = {
     data,
     loading,
     onRetry: dashboard.retry,
-    onNavigate: (href) => navigate(href),
+    onNavigate: href => navigate(href),
     onOpenJob: openDesk,
     onOpenAppointment: openDesk,
     onOpenPassport: openLogistics,
     onOpenFundCase: openFunds,
+    onOpenClaimSheet: openDesk,
   }
 
   return (
     <DashboardWorkspace
       workspaceId="ground-operations"
       title="Ground Operations dashboard"
-      subtitle={`Field workspace for ${data.executiveName} — assignments, routes, logistics, and settlements.`}
+      subtitle={`Live pulse for ${data.executiveName} — Operations Desk, logistics, claim sheets, and fund utilization.`}
       loading={loading}
       error={dashboard.isError}
       onRetry={dashboard.retry}
@@ -151,17 +126,22 @@ export function GroundOperationsDashboardPage() {
                       id: n.id,
                       title: n.title,
                       description: [n.body, n.createdAt].filter(Boolean).join(' · '),
-                      severity: index === 0 ? 'critical' : index === 1 ? 'warning' : 'info',
+                      severity:
+                        /reject/i.test(n.title)
+                          ? 'critical'
+                          : index === 0
+                            ? 'warning'
+                            : 'info',
                     }))}
                     loading={loading}
                     maxItems={4}
-                    onShowMore={() => openTab('todays-jobs')}
+                    onShowMore={() => openTab('operations-desk')}
                   />
                 }
                 primaryVisualization={
                   <RouteTimeline
-                    title="Today's route timeline"
-                    subtitle="Primary visualization — stops and field cadence"
+                    title="Desk activity timeline"
+                    subtitle="Recent Operations Desk and logistics events"
                     events={data.routeTimeline}
                     loading={loading}
                     onRetry={dashboard.retry}
@@ -173,7 +153,7 @@ export function GroundOperationsDashboardPage() {
                     variant="tiles"
                     columns={2}
                     loading={loading}
-                    items={data.quickActions.map((action) => ({
+                    items={data.quickActions.map(action => ({
                       id: action.id,
                       title: action.title,
                       description: action.description,
@@ -189,38 +169,32 @@ export function GroundOperationsDashboardPage() {
           ),
         },
         {
-          id: 'todays-jobs',
-          label: "Today's Jobs",
+          id: 'operations-desk',
+          label: 'Operations Desk',
           icon: <Briefcase size={16} />,
           badge: data.todaysJobs.length,
           content: <TodaysJobsTab {...tabProps} />,
         },
         {
-          id: 'routes',
-          label: 'Routes',
-          icon: <MapPinned size={16} />,
-          badge: data.routeTimeline.length,
-          content: <RoutesTab {...tabProps} />,
-        },
-        {
-          id: 'expenses',
-          label: 'Expenses',
-          icon: <Receipt size={16} />,
-          content: <ExpensesTab {...tabProps} />,
-        },
-        {
-          id: 'settlements',
-          label: 'Settlements',
-          icon: <Wallet size={16} />,
-          badge: pendingSettlements || data.settlementRows.length,
-          content: <SettlementsTab {...tabProps} />,
-        },
-        {
-          id: 'courier',
-          label: 'Courier',
+          id: 'logistics',
+          label: 'Logistics',
           icon: <Package size={16} />,
           badge: inTransitCount || data.passportRows.length,
           content: <CourierTab {...tabProps} />,
+        },
+        {
+          id: 'claim-sheets',
+          label: 'Claim sheets',
+          icon: <ClipboardList size={16} />,
+          badge: rejectedClaims || data.claimSheetRows.length,
+          content: <ClaimSheetsTab {...tabProps} />,
+        },
+        {
+          id: 'funds',
+          label: 'Fund utilization',
+          icon: <Wallet size={16} />,
+          badge: data.fundCaseRows.length,
+          content: <SettlementsTab {...tabProps} />,
         },
         {
           id: 'reports',

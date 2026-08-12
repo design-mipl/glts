@@ -148,7 +148,7 @@ function applyMarineFilters(
   if (filters.search.trim()) {
     const q = filters.search.trim().toLowerCase()
     next = next.filter((row) =>
-      [row.vessel, row.joiningPort, row.visaStatus, row.signOn, row.crew]
+      [row.vessel, row.joiningPort, row.visaStatus, row.joiningDate, row.crew]
         .join(' ')
         .toLowerCase()
         .includes(q),

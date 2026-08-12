@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef } from 'react'
-import { Box, Grid, Stack, Typography } from '@mui/material'
+import { Box, Grid, Stack } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import {
   Anchor,
@@ -52,28 +52,6 @@ function normalizeSegment(value: string | undefined): SegmentFocus {
   const v = (value ?? 'marine').toLowerCase()
   if (v === 'marine' || v === 'corporate' || v === 'retail' || v === 'b2b') return v
   return 'marine'
-}
-
-function SegmentStatusChip({ status }: { status: 'live' | 'placeholder' }) {
-  if (status !== 'live') return null
-  return (
-    <Box
-      component="span"
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        px: 1,
-        py: 0.25,
-        borderRadius: '999px',
-        fontSize: 11,
-        fontWeight: 700,
-        bgcolor: (t) => alpha(t.palette.success.main, 0.12),
-        color: 'success.dark',
-      }}
-    >
-      Live
-    </Box>
-  )
 }
 
 function SegmentSwitcher({
@@ -195,10 +173,7 @@ function MarineSegmentView({
 }: SuperAdminDashboardTabProps) {
   return (
     <Stack spacing={DASHBOARD_SPACING.section}>
-      <ExecutiveSection
-        title="Commercial KPIs"
-        action={<SegmentStatusChip status="live" />}
-      >
+      <ExecutiveSection title="Commercial KPIs">
         <MetricComparison
           title="Marine commercial KPIs"
           metrics={data.marineMetrics}
@@ -334,26 +309,13 @@ export function SegmentsTab(props: SuperAdminDashboardTabProps) {
     )
   }
 
-  const activeMeta = SEGMENT_OPTIONS.find((o) => o.id === active) ?? SEGMENT_OPTIONS[0]
-
   return (
     <Stack spacing={DASHBOARD_SPACING.section}>
       <SuperAdminSection
         title="Business segments"
         description="One workspace for Marine, Corporate, Retail, and B2B"
       >
-        <Stack spacing={1.5}>
-          <SegmentSwitcher active={active} onChange={setSegment} />
-          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-            {activeMeta.icon}
-            <Typography variant="body2" fontWeight={700}>
-              Viewing: {activeMeta.label}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Deep-dive — change segment above or in the filter bar
-            </Typography>
-          </Stack>
-        </Stack>
+        <SegmentSwitcher active={active} onChange={setSegment} />
       </SuperAdminSection>
 
       {active === 'marine' ? <MarineSegmentView {...props} /> : null}

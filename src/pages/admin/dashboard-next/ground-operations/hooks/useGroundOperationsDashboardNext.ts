@@ -3,24 +3,38 @@ import { useDashboardQuery } from '../../shared/hooks/useDashboardQuery'
 import type { DashboardFilterConfig } from '../../shared/types'
 import {
   DEFAULT_GROUND_OPS_DASHBOARD_FILTERS,
-  GROUND_OPS_APPOINTMENT_STATUS_OPTIONS,
-  GROUND_OPS_ASSIGNMENT_STATUS_OPTIONS,
-  GROUND_OPS_JURISDICTION_OPTIONS,
-  GROUND_OPS_CITY_OPTIONS,
+  GROUND_OPS_CASE_STATUS_OPTIONS,
   GROUND_OPS_DATE_OPTIONS,
   GROUND_OPS_EXECUTIVE_OPTIONS,
   GROUND_OPS_PRIORITY_OPTIONS,
-} from '../data/groundOperationsDashboardMock'
+  GROUND_OPS_TEAM_OPTIONS,
+} from '../config/groundOperationsDashboardFilters'
 import { fetchGroundOperationsDashboard } from '../services/groundOperationsDashboardService'
 import type { GroundOperationsDashboardFilters } from '../types'
+import { operationalCaseHandlingService } from '@/shared/services/operationalCaseHandlingService'
 
 export function useGroundOperationsDashboardNext() {
-  const [filters, setFilters] = useState<GroundOperationsDashboardFilters>(
-    DEFAULT_GROUND_OPS_DASHBOARD_FILTERS,
-  )
+  const [filters, setFilters] = useState<GroundOperationsDashboardFilters>({
+    ...DEFAULT_GROUND_OPS_DASHBOARD_FILTERS,
+  })
 
   const load = useCallback(() => fetchGroundOperationsDashboard(filters), [filters])
   const query = useDashboardQuery({ load })
+
+  const executiveOptions = useMemo(() => {
+    const names = [
+      ...new Set(
+        operationalCaseHandlingService
+          .list()
+          .map(row => row.assignedExecutive.trim())
+          .filter(Boolean),
+      ),
+    ].sort((a, b) => a.localeCompare(b))
+    return [
+      ...GROUND_OPS_EXECUTIVE_OPTIONS,
+      ...names.map(name => ({ label: name, value: name })),
+    ]
+  }, [query.data])
 
   const filterConfigs: DashboardFilterConfig[] = useMemo(
     () => [
@@ -29,56 +43,42 @@ export function useGroundOperationsDashboardNext() {
         label: 'Date',
         options: GROUND_OPS_DATE_OPTIONS,
         value: filters.date,
-        onChange: (value) => setFilters((prev) => ({ ...prev, date: value })),
+        onChange: value => setFilters(prev => ({ ...prev, date: value })),
       },
       {
-        id: 'branch',
-        label: 'Jurisdiction',
-        options: GROUND_OPS_JURISDICTION_OPTIONS,
-        value: filters.branch,
-        onChange: (value) => setFilters((prev) => ({ ...prev, branch: value })),
-      },
-      {
-        id: 'city',
-        label: 'City',
-        options: GROUND_OPS_CITY_OPTIONS,
-        value: filters.city,
-        onChange: (value) => setFilters((prev) => ({ ...prev, city: value })),
+        id: 'team',
+        label: 'Team',
+        options: GROUND_OPS_TEAM_OPTIONS,
+        value: filters.team,
+        onChange: value => setFilters(prev => ({ ...prev, team: value })),
       },
       {
         id: 'executive',
         label: 'Executive',
-        options: GROUND_OPS_EXECUTIVE_OPTIONS,
+        options: executiveOptions,
         value: filters.executive,
-        onChange: (value) => setFilters((prev) => ({ ...prev, executive: value })),
+        onChange: value => setFilters(prev => ({ ...prev, executive: value })),
       },
       {
-        id: 'assignmentStatus',
-        label: 'Assignment status',
-        options: GROUND_OPS_ASSIGNMENT_STATUS_OPTIONS,
-        value: filters.assignmentStatus,
-        onChange: (value) => setFilters((prev) => ({ ...prev, assignmentStatus: value })),
-      },
-      {
-        id: 'appointmentStatus',
-        label: 'Appointment status',
-        options: GROUND_OPS_APPOINTMENT_STATUS_OPTIONS,
-        value: filters.appointmentStatus,
-        onChange: (value) => setFilters((prev) => ({ ...prev, appointmentStatus: value })),
+        id: 'caseStatus',
+        label: 'Case status',
+        options: GROUND_OPS_CASE_STATUS_OPTIONS,
+        value: filters.caseStatus,
+        onChange: value => setFilters(prev => ({ ...prev, caseStatus: value })),
       },
       {
         id: 'priority',
         label: 'Priority',
         options: GROUND_OPS_PRIORITY_OPTIONS,
         value: filters.priority,
-        onChange: (value) => setFilters((prev) => ({ ...prev, priority: value })),
+        onChange: value => setFilters(prev => ({ ...prev, priority: value })),
       },
     ],
-    [filters],
+    [executiveOptions, filters],
   )
 
   const setSearch = useCallback((search: string) => {
-    setFilters((prev) => ({ ...prev, search }))
+    setFilters(prev => ({ ...prev, search }))
   }, [])
 
   return {

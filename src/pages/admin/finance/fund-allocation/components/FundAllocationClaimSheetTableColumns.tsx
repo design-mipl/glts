@@ -2,11 +2,12 @@ import { Typography } from '@mui/material'
 import { Check, Eye, X } from 'lucide-react'
 import { Badge, RowActions, type Column, type RowAction } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
-import type { GroundOpsClaimSheet, GroundOpsClaimSheetStatus } from '@/shared/types/groundOpsClaimSheet'
+import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
 import {
   canFinanceReviewClaimSheet,
   CLAIM_SHEET_STATUS_LABEL,
   getClaimSheetFundTransferLabel,
+  getClaimSheetStatusBadgeColor,
   isClaimSheetBankTransferKpis,
 } from '@/shared/types/groundOpsClaimSheet'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
@@ -46,25 +47,6 @@ function AmountCell({
       {value}
     </Typography>
   )
-}
-
-function claimSheetStatusBadgeColor(
-  status: GroundOpsClaimSheetStatus,
-): 'info' | 'warning' | 'success' | 'error' | 'neutral' {
-  switch (status) {
-    case 'submitted':
-      return 'info'
-    case 'under_review':
-      return 'warning'
-    case 'approved':
-      return 'success'
-    case 'rejected':
-      return 'error'
-    case 'settled':
-      return 'neutral'
-    default:
-      return 'neutral'
-  }
 }
 
 export function buildFundAllocationClaimSheetTableColumns(
@@ -127,7 +109,7 @@ export function buildFundAllocationClaimSheetTableColumns(
       render: (_value, row) => (
         <Badge
           label={CLAIM_SHEET_STATUS_LABEL[row.status]}
-          color={claimSheetStatusBadgeColor(row.status)}
+          color={getClaimSheetStatusBadgeColor(row.status)}
         />
       ),
     },

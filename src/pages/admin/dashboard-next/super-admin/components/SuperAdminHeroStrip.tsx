@@ -3,7 +3,6 @@ import { Box, Stack, Typography } from '@mui/material'
 import {
   AlertTriangle,
   CheckCircle2,
-  Clock,
   FileText,
   HandCoins,
   HeartPulse,
@@ -12,6 +11,7 @@ import {
   Lock,
   Percent,
   Send,
+  Stamp,
   Wallet,
 } from 'lucide-react'
 import { SparkLine } from '@/design-system/UIComponents'
@@ -264,16 +264,23 @@ export function SuperAdminHeroStrip({
 
         <Box sx={{ minWidth: 0, height: '100%' }}>
           <ExecutiveKpiCard
-            title="Average TAT"
-            tooltip="Average processing time from receipt to issue versus target."
-            value={`${summary.averageTat.days} Days`}
-            icon={<Clock size={16} />}
+            title="Visa Count"
+            tooltip="Total visas processed for the selected period versus target."
+            value={summary.visaCount.count.toLocaleString()}
+            icon={<Stamp size={16} />}
             tone={
-              summary.averageTat.days <= summary.averageTat.targetDays ? 'positive' : 'warning'
+              summary.visaCount.target == null ||
+              summary.visaCount.count >= summary.visaCount.target
+                ? 'positive'
+                : 'warning'
             }
-            delta={summary.averageTat.delta}
-            deltaLabel={summary.averageTat.deltaLabel}
-            supportingLines={[`Target ${summary.averageTat.targetDays} Days`]}
+            delta={summary.visaCount.delta}
+            deltaLabel={summary.visaCount.deltaLabel}
+            supportingLines={
+              summary.visaCount.target != null
+                ? [`Target ${summary.visaCount.target.toLocaleString()}`]
+                : undefined
+            }
             loading={loading}
             onClick={() => onOpenTab?.('operations')}
           />

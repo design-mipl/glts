@@ -31,12 +31,12 @@ const WORK_QUEUE_TABS: Array<{
   { value: 'payment', label: OPS_QUEUE_DISPLAY_LABELS.payment, queues: ['payment'] },
   { value: 'glts_arrange', label: OPS_QUEUE_DISPLAY_LABELS.arrange, queues: ['glts_arrange'] },
   { value: 'submission', label: OPS_QUEUE_DISPLAY_LABELS.submission, queues: ['submission'] },
-  { value: 'collection', label: OPS_QUEUE_DISPLAY_LABELS.collection, queues: ['collection'] },
   {
     value: 'physical_originals',
     label: OPS_QUEUE_DISPLAY_LABELS.physicalOriginals,
     queues: ['physical_originals'],
   },
+  { value: 'collection', label: OPS_QUEUE_DISPLAY_LABELS.collection, queues: ['collection'] },
   { value: 'correction_watch', label: OPS_QUEUE_DISPLAY_LABELS.correctionWatch, queues: ['correction_watch'] },
 ]
 

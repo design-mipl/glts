@@ -52,7 +52,8 @@ export function matchesReconciliationSearch(row: ReconciliationItem, query: stri
     row.chargesName,
     row.claimNumber,
     row.referenceNumber,
-    row.acEntryNo,
+    row.reconciledBy,
+    row.acPersonName,
     row.paymentMode,
     row.staffName,
   ]
@@ -106,7 +107,8 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'Case total',
       'Claim total',
       'Status',
-      'Settlement reference',
+      'Book entry number',
+      'User',
     ],
     insurance: [
       'RefNo',
@@ -124,6 +126,8 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'Markup',
       'Total',
       'Status',
+      'Book entry number',
+      'User',
     ],
     ticket: [
       'RefNo',
@@ -140,6 +144,8 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'Total',
       'Locations of Ticket bookings',
       'Status',
+      'Book entry number',
+      'User',
     ],
     courier: [
       'RefNo',
@@ -158,6 +164,8 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'Total',
       'Locations of Courier',
       'Status',
+      'Book entry number',
+      'User',
     ],
     mode_of_payment: [
       'GLTS No',
@@ -171,14 +179,15 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'Amount in INR',
       'Foreign Currency Amount',
       'Staff Name',
-      'AC Person Name',
-      'AC Entry No',
       'Status',
+      'Book entry number',
+      'User',
     ],
   }
 
   const headers = headersByTab[tab]
   const lines = rows.map(row => {
+    const user = row.reconciledBy || row.acPersonName || ''
     switch (tab) {
       case 'approved_claim_sheet':
         return [
@@ -193,6 +202,7 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
           row.claimGrandTotal,
           row.status,
           row.referenceNumber,
+          user,
         ]
       case 'insurance':
         return [
@@ -211,6 +221,8 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
           row.markup,
           row.total,
           row.status,
+          row.referenceNumber,
+          user,
         ]
       case 'ticket':
         return [
@@ -228,6 +240,8 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
           row.total,
           `${row.locationFrom} → ${row.locationTo}`,
           row.status,
+          row.referenceNumber,
+          user,
         ]
       case 'courier':
         return [
@@ -247,6 +261,8 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
           row.total,
           `${row.locationFrom} → ${row.locationTo}`,
           row.status,
+          row.referenceNumber,
+          user,
         ]
       case 'mode_of_payment':
         return [
@@ -261,9 +277,9 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
           row.amountInr,
           row.foreignCurrencyAmount,
           row.staffName,
-          row.acPersonName,
-          row.acEntryNo || row.referenceNumber,
           row.status,
+          row.referenceNumber,
+          user,
         ]
       default:
         return []

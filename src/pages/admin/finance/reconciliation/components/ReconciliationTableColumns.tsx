@@ -57,6 +57,45 @@ function routeLabel(row: ReconciliationItem): string {
   return `${row.locationFrom || '—'} → ${row.locationTo || '—'}`
 }
 
+function settlementRefColumn(): Column<ReconciliationItem> {
+  return {
+    key: 'referenceNumber',
+    label: 'Book entry number',
+    widthSize: adminListingColumnWidthSize('code'),
+    sortable: true,
+    searchable: true,
+    render: (value: string) => value || '—',
+  }
+}
+
+function userColumn(): Column<ReconciliationItem> {
+  return {
+    key: 'reconciledBy',
+    label: 'User',
+    widthSize: adminListingColumnWidthSize('name'),
+    sortable: true,
+    searchable: true,
+    render: (_: unknown, row) => row.reconciledBy || row.acPersonName || '—',
+  }
+}
+
+function trailingMetaColumns(
+  onOpen: (row: ReconciliationItem) => void,
+): Column<ReconciliationItem>[] {
+  return [
+    {
+      key: 'status',
+      label: 'Status',
+      widthSize: adminListingColumnWidthSize('status'),
+      sortable: true,
+      render: (_, row) => statusRender(row),
+    },
+    settlementRefColumn(),
+    userColumn(),
+    actionsColumn(onOpen),
+  ]
+}
+
 export function buildReconciliationColumns(
   tab: ReconciliationTab,
   handlers: ReconciliationColumnHandlers,
@@ -112,22 +151,7 @@ export function buildReconciliationColumns(
         align: 'right',
         render: (_, row) => moneyRender(row.claimGrandTotal),
       },
-      {
-        key: 'status',
-        label: 'Status',
-        widthSize: adminListingColumnWidthSize('status'),
-        sortable: true,
-        render: (_, row) => statusRender(row),
-      },
-      {
-        key: 'referenceNumber',
-        label: 'Settlement ref',
-        widthSize: adminListingColumnWidthSize('code'),
-        sortable: true,
-        searchable: true,
-        render: (value: string) => value || '—',
-      },
-      actionsColumn(onOpen),
+      ...trailingMetaColumns(onOpen),
     ]
   }
 
@@ -171,8 +195,7 @@ export function buildReconciliationColumns(
       { key: 'cost', label: 'Cost', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.cost) },
       { key: 'markup', label: 'Markup', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.markup) },
       { key: 'total', label: 'Total', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.total) },
-      { key: 'status', label: 'Status', widthSize: adminListingColumnWidthSize('status'), sortable: true, render: (_, row) => statusRender(row) },
-      actionsColumn(onOpen),
+      ...trailingMetaColumns(onOpen),
     ]
   }
 
@@ -225,8 +248,7 @@ export function buildReconciliationColumns(
           </Typography>
         ),
       },
-      { key: 'status', label: 'Status', widthSize: adminListingColumnWidthSize('status'), sortable: true, render: (_, row) => statusRender(row) },
-      actionsColumn(onOpen),
+      ...trailingMetaColumns(onOpen),
     ]
   }
 
@@ -281,8 +303,7 @@ export function buildReconciliationColumns(
           </Typography>
         ),
       },
-      { key: 'status', label: 'Status', widthSize: adminListingColumnWidthSize('status'), sortable: true, render: (_, row) => statusRender(row) },
-      actionsColumn(onOpen),
+      ...trailingMetaColumns(onOpen),
     ]
   }
 
@@ -345,23 +366,7 @@ export function buildReconciliationColumns(
         ),
     },
     { key: 'staffName', label: 'Staff Name who made the payments', widthSize: adminListingColumnWidthSize('name'), sortable: true },
-    {
-      key: 'acPersonName',
-      label: 'AC Person Name',
-      widthSize: adminListingColumnWidthSize('name'),
-      sortable: true,
-      render: (value: string) => value || '—',
-    },
-    {
-      key: 'acEntryNo',
-      label: 'AC Entry No',
-      widthSize: adminListingColumnWidthSize('code'),
-      sortable: true,
-      searchable: true,
-      render: (_, row) => row.acEntryNo || row.referenceNumber || '—',
-    },
-    { key: 'status', label: 'Status', widthSize: adminListingColumnWidthSize('status'), sortable: true, render: (_, row) => statusRender(row) },
-    actionsColumn(onOpen),
+    ...trailingMetaColumns(onOpen),
   ]
 }
 
