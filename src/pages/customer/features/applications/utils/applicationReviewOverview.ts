@@ -20,6 +20,10 @@ export interface ApplicationReviewOverview {
   entityName?: string
   gltsApplicationId?: string
   gltsBatchId?: string
+  consultantName?: string
+  consultantTeamName?: string
+  priority?: string
+  isVip?: boolean
 }
 
 /** Map admin verify overview (or any compatible shape) into queue-table summary popover data. */
@@ -41,6 +45,10 @@ export function toApplicationReviewOverview(source: {
   entityName?: string
   gltsApplicationId?: string
   gltsBatchId?: string
+  consultantName?: string
+  consultantTeamName?: string
+  priority?: string
+  isVip?: boolean
 }): ApplicationReviewOverview {
   const legacy = splitLegacyPoReference(source.poReference)
   return {
@@ -61,6 +69,10 @@ export function toApplicationReviewOverview(source: {
     entityName: source.entityName,
     gltsApplicationId: source.gltsApplicationId,
     gltsBatchId: source.gltsBatchId,
+    consultantName: source.consultantName?.trim() || undefined,
+    consultantTeamName: source.consultantTeamName?.trim() || undefined,
+    priority: source.priority?.trim() || undefined,
+    isVip: source.isVip,
   }
 }
 

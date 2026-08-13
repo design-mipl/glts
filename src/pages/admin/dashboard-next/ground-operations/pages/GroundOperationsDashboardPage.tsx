@@ -1,34 +1,23 @@
 import { useCallback, useMemo } from 'react'
-import { Stack } from '@mui/material'
 import {
   Briefcase,
   ClipboardList,
-  FileSpreadsheet,
   LayoutDashboard,
   Package,
   Wallet,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import {
-  AlertCenter,
-  DASHBOARD_SPACING,
-  DashboardWorkspace,
-  QuickActions,
-  RouteTimeline,
-} from '../../shared'
+import { DashboardWorkspace } from '../../shared'
 import type { DashboardIntelligenceFilters } from '../../shared/dashboard-intelligence'
 import { DEFAULT_GROUND_OPS_DASHBOARD_FILTERS } from '../config/groundOperationsDashboardFilters'
 import { buildGroundOperationsDashboardFromServices } from '../data/buildGroundOperationsDashboardFromServices'
 import { buildGroundSearchItems } from '../data/groundSearchItems'
 import { useGroundOperationsDashboardNext } from '../hooks/useGroundOperationsDashboardNext'
-import { GroundExecutiveRow } from '../components/GroundExecutiveRow'
 import { GroundHeroStrip } from '../components/GroundHeroStrip'
 import {
   ClaimSheetsTab,
   CourierTab,
-  GROUND_ACTION_ICONS,
   OverviewTab,
-  ReportsTab,
   SettlementsTab,
   TodaysJobsTab,
 } from '../tabs'
@@ -116,57 +105,7 @@ export function GroundOperationsDashboardPage() {
           id: 'overview',
           label: 'Overview',
           icon: <LayoutDashboard size={16} />,
-          content: (
-            <Stack spacing={DASHBOARD_SPACING.field}>
-              <GroundExecutiveRow
-                alerts={
-                  <AlertCenter
-                    title="Field alerts"
-                    alerts={data.notifications.map((n, index) => ({
-                      id: n.id,
-                      title: n.title,
-                      description: [n.body, n.createdAt].filter(Boolean).join(' · '),
-                      severity:
-                        /reject/i.test(n.title)
-                          ? 'critical'
-                          : index === 0
-                            ? 'warning'
-                            : 'info',
-                    }))}
-                    loading={loading}
-                    maxItems={4}
-                    onShowMore={() => openTab('operations-desk')}
-                  />
-                }
-                primaryVisualization={
-                  <RouteTimeline
-                    title="Desk activity timeline"
-                    subtitle="Recent Operations Desk and logistics events"
-                    events={data.routeTimeline}
-                    loading={loading}
-                    onRetry={dashboard.retry}
-                  />
-                }
-                quickActions={
-                  <QuickActions
-                    title="Quick actions"
-                    variant="tiles"
-                    columns={2}
-                    loading={loading}
-                    items={data.quickActions.map(action => ({
-                      id: action.id,
-                      title: action.title,
-                      description: action.description,
-                      badge: action.badge,
-                      icon: GROUND_ACTION_ICONS[action.id],
-                      onClick: () => navigate(action.href),
-                    }))}
-                  />
-                }
-              />
-              <OverviewTab {...tabProps} />
-            </Stack>
-          ),
+          content: <OverviewTab {...tabProps} />,
         },
         {
           id: 'operations-desk',
@@ -195,12 +134,6 @@ export function GroundOperationsDashboardPage() {
           icon: <Wallet size={16} />,
           badge: data.fundCaseRows.length,
           content: <SettlementsTab {...tabProps} />,
-        },
-        {
-          id: 'reports',
-          label: 'Reports',
-          icon: <FileSpreadsheet size={16} />,
-          content: <ReportsTab {...tabProps} />,
         },
       ]}
     />

@@ -2,17 +2,18 @@ import type { Column } from '@/design-system/UIComponents'
 import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import type { DocumentationDashboardData } from '../types'
 
+/**
+ * Documentation report catalog — listed in Reports dropdown.
+ * Preview/export data is not wired yet (Coming soon).
+ */
 export type DocReportTypeId =
-  | 'daily_digest'
-  | 'submission_pending_ageing'
-  | 'qc_outcomes'
-  | 'waiting_on_ops'
-  | 'pending_payment'
-  | 'marked_submitted'
-  | 'top_countries'
-  | 'top_clients'
+  | 'daily_bulletin'
   | 'sla_breach'
-  | 'inactivity'
+  | 'pipeline_by_stage'
+  | 'avg_tat_by_country'
+  | 'passport_custody'
+  | 'mum_delhi_courier_charges'
+  | 'insurance_report'
 
 export type DocReportPeriodId = 'day' | 'week' | 'month' | 'custom'
 
@@ -30,64 +31,46 @@ export interface DocReportMeta {
 
 export const DOC_REPORT_META: readonly DocReportMeta[] = [
   {
-    id: 'daily_digest',
-    label: 'Daily documentation digest',
+    id: 'daily_bulletin',
+    label: 'Daily documentation bulletin',
     category: 'Operational',
-    source: 'Portal — Submission Pending / Payment / Waiting on Ops snapshot.',
-  },
-  {
-    id: 'submission_pending_ageing',
-    label: 'Submission Pending ageing',
-    category: 'Operational',
-    source: 'Portal — Docs primary queue SLA timers.',
-  },
-  {
-    id: 'qc_outcomes',
-    label: 'QC outcomes',
-    category: 'Quality',
-    source: 'Portal — Verified & ready · Correction · Blocked · Pending QC.',
-  },
-  {
-    id: 'waiting_on_ops',
-    label: 'Waiting on Ops',
-    category: 'Quality',
-    source: 'Portal — cases Docs sent to Verification Pending.',
-  },
-  {
-    id: 'pending_payment',
-    label: 'Pending Payment',
-    category: 'Operational',
-    source: 'Portal — AM Pending Payment tab assigned to Docs.',
-  },
-  {
-    id: 'marked_submitted',
-    label: 'Ready to mark submitted',
-    category: 'Operational',
-    source: 'Portal — Verified applications awaiting Mark as submitted.',
-  },
-  {
-    id: 'top_countries',
-    label: 'Top countries',
-    category: 'Analytics',
-    source: 'Portal — Docs queue aggregated by country.',
-  },
-  {
-    id: 'top_clients',
-    label: 'Top clients',
-    category: 'Analytics',
-    source: 'Portal — Docs queue aggregated by client.',
+    source: 'To be updated — Docs desk bulletin compiled daily.',
   },
   {
     id: 'sla_breach',
-    label: 'Documentation SLA breach',
+    label: 'SLA breach report',
     category: 'SLA',
-    source: 'Portal — per-case SLA on Submission Pending.',
+    source: 'Portal — Docs SLA clocks per case.',
   },
   {
-    id: 'inactivity',
-    label: 'Executive inactivity soft alerts',
-    category: 'Workforce',
-    source: 'Portal — activity audit; soft alert after 60 minutes idle.',
+    id: 'pipeline_by_stage',
+    label: 'Pipeline by stage / vertical',
+    category: 'Analytics',
+    source: 'Portal — AM stages × Retail / Corporate / Marine / B2B.',
+  },
+  {
+    id: 'avg_tat_by_country',
+    label: 'Average turnaround time by country',
+    category: 'Analytics',
+    source: 'Portal — received-to-complete timestamps by destination.',
+  },
+  {
+    id: 'passport_custody',
+    label: 'Passport custody log',
+    category: 'Logistics',
+    source: 'Portal — custody movements (Ground / Ops handoff).',
+  },
+  {
+    id: 'mum_delhi_courier_charges',
+    label: 'GLTS Mum – GLTS Delhi courier charges',
+    category: 'Finance',
+    source: 'TBD with Karthikey — inter-branch courier cost schedule.',
+  },
+  {
+    id: 'insurance_report',
+    label: 'Insurance Report',
+    category: 'Operational',
+    source: 'Portal — GLTS arrange-insurance bookings and status.',
   },
 ] as const
 
@@ -159,159 +142,15 @@ export function getDocReportSource(id: DocReportTypeId): string {
   return DOC_REPORT_META.find((meta) => meta.id === id)?.source ?? ''
 }
 
-function textColumn(
-  key: string,
-  label: string,
-  widthSize: 'sm' | 'md' | 'lg' | 'xl' = 'md',
-): Column<DocReportPreviewRow> {
-  return {
-    key,
-    label,
-    widthSize,
-    sortable: false,
-    filterable: false,
-    searchable: false,
-  }
+/** Placeholder — report previews are Coming soon. */
+export function getDocReportColumns(_reportType: DocReportTypeId): Column<DocReportPreviewRow>[] {
+  return []
 }
 
-export function getDocReportColumns(reportType: DocReportTypeId): Column<DocReportPreviewRow>[] {
-  switch (reportType) {
-    case 'daily_digest':
-      return [
-        textColumn('metric', 'Metric', 'lg'),
-        textColumn('count', 'Count', 'sm'),
-        textColumn('detail', 'Detail', 'xl'),
-      ]
-    case 'submission_pending_ageing':
-    case 'waiting_on_ops':
-    case 'pending_payment':
-    case 'marked_submitted':
-    case 'sla_breach':
-      return [
-        textColumn('glNumber', 'GL Number', 'md'),
-        textColumn('applicant', 'Applicant', 'lg'),
-        textColumn('client', 'Client', 'lg'),
-        textColumn('country', 'Country', 'md'),
-        textColumn('nextAction', 'Next action', 'lg'),
-        textColumn('qcOutcome', 'QC outcome', 'lg'),
-        textColumn('slaTimer', 'SLA', 'sm'),
-      ]
-    case 'qc_outcomes':
-      return [
-        textColumn('outcome', 'QC outcome', 'lg'),
-        textColumn('count', 'Count', 'sm'),
-      ]
-    case 'top_countries':
-    case 'top_clients':
-      return [textColumn('name', 'Name', 'lg'), textColumn('count', 'Applications', 'sm')]
-    case 'inactivity':
-      return [
-        textColumn('executive', 'Executive', 'md'),
-        textColumn('minutesIdle', 'Minutes idle', 'sm'),
-        textColumn('lastAction', 'Last action', 'lg'),
-        textColumn('alertSent', 'Supervisor alert', 'sm'),
-      ]
-    default:
-      return []
-  }
-}
-
-function mapWorkRows(
-  rows: DocumentationDashboardData['submissionPendingRows'],
-): DocReportPreviewRow[] {
-  return rows.map((row) => ({
-    id: row.id,
-    glNumber: row.glNumber,
-    applicant: row.applicant,
-    client: row.company,
-    country: row.country,
-    nextAction: row.nextAction,
-    qcOutcome: row.qcOutcomeLabel,
-    slaTimer: row.slaTimer,
-  }))
-}
-
+/** Placeholder — report previews are Coming soon. */
 export function buildDocReportRows(
-  reportType: DocReportTypeId,
-  data: DocumentationDashboardData,
+  _reportType: DocReportTypeId,
+  _data: DocumentationDashboardData,
 ): DocReportPreviewRow[] {
-  switch (reportType) {
-    case 'daily_digest':
-      return [
-        {
-          id: 'dd1',
-          metric: 'Submission Pending',
-          count: String(data.submissionPendingRows.length),
-          detail: 'Docs primary queue',
-        },
-        {
-          id: 'dd2',
-          metric: 'Pending Payment',
-          count: String(data.pendingPaymentRows.length),
-          detail: 'Fee updates',
-        },
-        {
-          id: 'dd3',
-          metric: 'Waiting on Ops',
-          count: String(data.waitingOnOpsRows.length),
-          detail: 'Correction / blocked',
-        },
-        {
-          id: 'dd4',
-          metric: 'Activity today',
-          count: String(data.activityRows.length),
-          detail: 'Audit trail',
-        },
-      ]
-    case 'submission_pending_ageing':
-      return mapWorkRows(data.submissionPendingRows)
-    case 'qc_outcomes':
-      return data.qcOutcomeMix.map((s) => ({
-        id: s.key,
-        outcome: s.label,
-        count: String(s.value),
-      }))
-    case 'waiting_on_ops':
-      return mapWorkRows(data.waitingOnOpsRows)
-    case 'pending_payment':
-      return mapWorkRows(data.pendingPaymentRows)
-    case 'marked_submitted':
-      return mapWorkRows(
-        data.submissionPendingRows.filter((r) =>
-          r.nextAction.toLowerCase().includes('mark as submitted'),
-        ),
-      )
-    case 'top_countries':
-      return data.topCountries.map((r, i) => ({
-        id: `c-${i}`,
-        name: r.name,
-        count: String(r.value),
-        share: `${r.sharePercent}%`,
-      }))
-    case 'top_clients':
-      return data.topClients.map((r, i) => ({
-        id: `cl-${i}`,
-        name: r.name,
-        count: String(r.value),
-        share: `${r.sharePercent}%`,
-      }))
-    case 'sla_breach':
-      return mapWorkRows(
-        data.submissionPendingRows.filter((r) => r.slaStatus === 'breached' || r.slaStatus === 'at_risk'),
-      )
-    case 'inactivity':
-      return [
-        {
-          id: 'ina1',
-          executive: data.executiveName,
-          minutesIdle: String(data.minutesSinceLastActivity ?? 0),
-          lastAction: data.activityRows[0]
-            ? `${data.activityRows[0].action} · ${data.activityRows[0].application}`
-            : '—',
-          alertSent: data.showInactivityWarning ? 'Yes' : 'No',
-        },
-      ]
-    default:
-      return []
-  }
+  return []
 }

@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { Box, Grid, Stack } from '@mui/material'
 import { Building2, ClipboardList, HandCoins, LayoutDashboard, Users } from 'lucide-react'
 import { RecentActivity, DASHBOARD_SPACING } from '../../shared'
+import { SubmissionByJurisdiction } from '../../shared/widgets/operations/ApplicationMarketInfographics'
 import { SuperAdminSection } from '../components/SuperAdminChrome'
 import { BusinessHealthSummary } from '../components/BusinessHealthSummary'
 import { OperationalHealthSnapshot } from '../components/OperationalHealthSnapshot'
@@ -108,6 +109,13 @@ export function OverviewTab({
             />
           </Grid>
         </Grid>
+      </SuperAdminSection>
+
+      <SuperAdminSection
+        title="Submissions by jurisdiction"
+        description="Network volume by VFS / consulate desk"
+      >
+        <SubmissionByJurisdiction data={data.submissionByJurisdiction} loading={loading} />
       </SuperAdminSection>
 
       <SuperAdminSection

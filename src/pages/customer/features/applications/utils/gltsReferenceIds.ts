@@ -15,19 +15,20 @@ function nextSequence(): number {
   }
 }
 
-/** Parent GLTS application reference — allocated when the create flow starts. */
+/** Parent GLTS application reference — allocated when the create flow starts. e.g. GL-12345 */
 export function createGltsApplicationId(): string {
-  return `GLTS-APP-2026-${nextSequence()}`
+  return `GL-${nextSequence()}`
 }
 
 /** Bulk wrapper under a GLTS application — allocated when 2+ travelers are uploaded. */
 export function createGltsBatchId(): string {
-  return `GLTS-BAT-2026-${String(nextSequence()).padStart(3, '0')}`
+  return createGltsApplicationId()
 }
 
-/** Per-traveler applicant reference within an application / batch. */
-export function createGltsApplicantId(sequenceNo: number): string {
-  return `GLTS-APL-${String(sequenceNo).padStart(3, '0')}`
+/** Per-traveler applicant reference within a bulk application. e.g. GL-12345/1 */
+export function createGltsApplicantId(applicationId: string, sequenceNo: number): string {
+  const base = applicationId.trim() || createGltsApplicationId()
+  return `${base}/${sequenceNo}`
 }
 
 export function ensureFlowGltsApplicationId(state: ApplicationFlowState): string {
@@ -39,7 +40,7 @@ export function resolveFlowBatchId(
   travelerCount: number,
 ): string | undefined {
   if (travelerCount <= 1) return undefined
-  return state.gltsBatchId || createGltsBatchId()
+  return state.gltsBatchId || state.gltsApplicationId || createGltsBatchId()
 }
 
 export function assignApplicantReferences(
@@ -52,7 +53,7 @@ export function assignApplicantReferences(
       ...row,
       gltsApplicationId,
       sequenceNo,
-      gltsApplicantId: row.gltsApplicantId || createGltsApplicantId(sequenceNo),
+      gltsApplicantId: row.gltsApplicantId || createGltsApplicantId(gltsApplicationId, sequenceNo),
     }
   })
 }
@@ -66,7 +67,7 @@ export function createEmptyUploadQueueRow(
     id: `empty-${gltsApplicationId}-${sequenceNo}-${Date.now()}`,
     fileName: '',
     gltsApplicationId,
-    gltsApplicantId: createGltsApplicantId(sequenceNo),
+    gltsApplicantId: createGltsApplicantId(gltsApplicationId, sequenceNo),
     sequenceNo,
     travelerName: '—',
     passportNo: '—',
@@ -101,6 +102,8 @@ export function formatQueueRowGltsLabel(
 ): string {
   if (singleListing && gltsApplicationId) return gltsApplicationId
   if (row.gltsApplicantId) return row.gltsApplicantId
-  if (row.sequenceNo) return createGltsApplicantId(row.sequenceNo)
+  if (gltsApplicationId && row.sequenceNo) {
+    return createGltsApplicantId(gltsApplicationId, row.sequenceNo)
+  }
   return '—'
 }

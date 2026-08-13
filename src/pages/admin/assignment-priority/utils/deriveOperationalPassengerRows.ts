@@ -27,7 +27,7 @@ function buildPassengerId(applicationId: string, applicantId: string): string {
 }
 
 function defaultApplicantId(applicationId: string): string {
-  return `${applicationId}-APL-001`
+  return `${applicationId}/1`
 }
 
 function invoiceContextForApplication(applicationId: string): {
@@ -214,7 +214,7 @@ function deriveFromBulk(
 
   const rows: OperationalPassengerRow[] = []
   for (let i = 0; i < app.totalApplicants; i += 1) {
-    const applicantId = `${app.id}-APL-${String(i + 1).padStart(3, '0')}`
+    const applicantId = `${app.id}/${i + 1}`
     const name =
       i === 0 && app.primaryApplicantName
         ? app.primaryApplicantName

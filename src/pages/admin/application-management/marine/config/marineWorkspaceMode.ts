@@ -1,5 +1,6 @@
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import {
+  isMarineApplicationInQueueTab,
   resolveMarineApplicationQueueTab,
   type MarineApplicationQueueTab,
 } from './marineApplicationListingTabs'
@@ -17,8 +18,24 @@ const READONLY_QUEUE_TABS = new Set<MarineApplicationQueueTab>([
   'dispatched',
 ])
 
-export function resolveMarineWorkspaceMode(row: MarineApplicationRow): MarineWorkspaceMode {
-  const tab = resolveMarineApplicationQueueTab(row)
+function parseQueueTabFromListingHref(fromListing?: string): MarineApplicationQueueTab | null {
+  if (!fromListing?.includes('?')) return null
+  const query = fromListing.slice(fromListing.indexOf('?') + 1)
+  const tab = new URLSearchParams(query).get('tab')
+  if (!tab || tab === 'all') return null
+  return tab as MarineApplicationQueueTab
+}
+
+export function resolveMarineWorkspaceMode(
+  row: MarineApplicationRow,
+  fromListing?: string,
+): MarineWorkspaceMode {
+  const preferred = parseQueueTabFromListingHref(fromListing)
+  const tab =
+    preferred && isMarineApplicationInQueueTab(row, preferred)
+      ? preferred
+      : resolveMarineApplicationQueueTab(row)
+
   if (tab === 'draft') {
     return 'readonly'
   }
@@ -37,18 +54,28 @@ export function resolveMarineWorkspaceMode(row: MarineApplicationRow): MarineWor
   return 'verification'
 }
 
-export function isMarineReadOnlyWorkspace(row: MarineApplicationRow): boolean {
-  return resolveMarineWorkspaceMode(row) === 'readonly'
+export function isMarineReadOnlyWorkspace(row: MarineApplicationRow, fromListing?: string): boolean {
+  return resolveMarineWorkspaceMode(row, fromListing) === 'readonly'
 }
 
-export function isMarinePendingPaymentWorkspace(row: MarineApplicationRow): boolean {
-  return resolveMarineWorkspaceMode(row) === 'pending_payment'
+export function isMarinePendingPaymentWorkspace(
+  row: MarineApplicationRow,
+  fromListing?: string,
+): boolean {
+  return resolveMarineWorkspaceMode(row, fromListing) === 'pending_payment'
 }
 
 /** Listing should open view-form directly (skip verify) for these modes. */
-export function opensMarineViewFormDirectly(row: MarineApplicationRow): boolean {
+export function opensMarineViewFormDirectly(
+  row: MarineApplicationRow,
+  fromListing?: string,
+): boolean {
   const tab = resolveMarineApplicationQueueTab(row)
   if (tab === 'draft') return false
-  const mode = resolveMarineWorkspaceMode(row)
+  const preferred = parseQueueTabFromListingHref(fromListing)
+  if (preferred === 'pending_payment' && isMarineApplicationInQueueTab(row, 'pending_payment')) {
+    return true
+  }
+  const mode = resolveMarineWorkspaceMode(row, fromListing)
   return mode === 'readonly' || mode === 'pending_payment'
 }

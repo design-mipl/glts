@@ -5,6 +5,7 @@ import {
 } from '../../shared/config/applicationPipeline'
 import { PASSPORT_JOURNEY_STAGE_IDS } from '../../shared/config/passportJourney'
 import { buildTeamProductivityByChannel } from '../../shared/widgets/operations/teamProductivityData'
+import { ADMIN_CHART_COLORS } from './adminChartColors'
 import type { AdminDashboardNextData } from '../types'
 
 const PIPELINE_COUNTS: Record<ApplicationPipelineStageId, {
@@ -312,19 +313,147 @@ export const ADMIN_DASHBOARD_NEXT_MOCK: AdminDashboardNextData = {
       { key: 'passenger', label: 'Passenger', value: 9 },
       { key: 'unassigned', label: 'Unassigned', value: 14 },
     ],
-    ageingBuckets: [
-      { bucket: '0–4h', count: 48 },
-      { bucket: '4–24h', count: 61 },
-      { bucket: '1–3d', count: 34 },
-      { bucket: '3d+', count: 20 },
+    ageingByQueue: [
+      {
+        key: 'draft',
+        label: 'Draft',
+        counts: { '0–4h': 2, '4–24h': 1, '1–3d': 0, '3d+': 0 },
+      },
+      {
+        key: 'verification_pending',
+        label: 'Verification Pending',
+        counts: { '0–4h': 18, '4–24h': 24, '1–3d': 8, '3d+': 2 },
+      },
+      {
+        key: 'online_submission_pending',
+        label: 'Submission Pending',
+        counts: { '0–4h': 12, '4–24h': 3, '1–3d': 0, '3d+': 0 },
+      },
+      {
+        key: 'pending_payment',
+        label: 'Pending Payment',
+        counts: { '0–4h': 5, '4–24h': 8, '1–3d': 2, '3d+': 1 },
+      },
+      {
+        key: 'vfs_submission_pending',
+        label: 'Embassy/VFS Submission Pending',
+        counts: { '0–4h': 4, '4–24h': 6, '1–3d': 3, '3d+': 1 },
+      },
+      {
+        key: 'collection_pending',
+        label: 'Collection Pending',
+        counts: { '0–4h': 3, '4–24h': 4, '1–3d': 2, '3d+': 0 },
+      },
+      {
+        key: 'collected',
+        label: 'Collected',
+        counts: { '0–4h': 2, '4–24h': 3, '1–3d': 1, '3d+': 0 },
+      },
+      {
+        key: 'dispatched',
+        label: 'Dispatched',
+        counts: { '0–4h': 1, '4–24h': 2, '1–3d': 1, '3d+': 0 },
+      },
     ],
     workloadBySegment: [
-      { segment: 'Retail', verification: 42, payment: 8, arrange: 4, submission: 11 },
-      { segment: 'Corporate', verification: 28, payment: 6, arrange: 3, submission: 9 },
-      { segment: 'Marine', verification: 36, payment: 4, arrange: 3, submission: 5 },
-      { segment: 'B2B', verification: 18, payment: 3, arrange: 1, submission: 4 },
+      {
+        segment: 'Retail',
+        draft: 2,
+        verification_pending: 18,
+        online_submission_pending: 8,
+        pending_payment: 6,
+        vfs_submission_pending: 5,
+        collection_pending: 4,
+        collected: 3,
+        dispatched: 2,
+      },
+      {
+        segment: 'Corporate',
+        draft: 1,
+        verification_pending: 12,
+        online_submission_pending: 6,
+        pending_payment: 5,
+        vfs_submission_pending: 4,
+        collection_pending: 3,
+        collected: 2,
+        dispatched: 2,
+      },
+      {
+        segment: 'Marine',
+        draft: 3,
+        verification_pending: 16,
+        online_submission_pending: 5,
+        pending_payment: 4,
+        vfs_submission_pending: 3,
+        collection_pending: 4,
+        collected: 2,
+        dispatched: 1,
+      },
+      {
+        segment: 'B2B',
+        draft: 1,
+        verification_pending: 8,
+        online_submission_pending: 3,
+        pending_payment: 3,
+        vfs_submission_pending: 2,
+        collection_pending: 2,
+        collected: 1,
+        dispatched: 1,
+      },
     ],
   },
+  topClients: [
+    { name: 'Maersk Crewing', value: 86, sharePercent: 18 },
+    { name: 'Tata Consultancy', value: 72, sharePercent: 15 },
+    { name: 'Reliance Retail', value: 64, sharePercent: 13 },
+    { name: 'Oceanic Manning', value: 48, sharePercent: 10 },
+    { name: 'Infosys Travel Desk', value: 41, sharePercent: 9 },
+    { name: 'Individual / Retail', value: 38, sharePercent: 8 },
+    { name: 'Gulf Agency Co.', value: 29, sharePercent: 6 },
+  ],
+  topCountries: [
+    { name: 'UAE', value: 112, sharePercent: 24 },
+    { name: 'Schengen', value: 96, sharePercent: 20 },
+    { name: 'UK', value: 68, sharePercent: 14 },
+    { name: 'USA', value: 54, sharePercent: 11 },
+    { name: 'Singapore', value: 42, sharePercent: 9 },
+    { name: 'Saudi Arabia', value: 36, sharePercent: 8 },
+    { name: 'Other', value: 28, sharePercent: 6 },
+  ],
+  submissionByJurisdiction: [
+    { name: 'VFS Dubai', value: 48, sharePercent: 22 },
+    { name: 'VFS Mumbai', value: 41, sharePercent: 19 },
+    { name: 'UKVI Gurgaon', value: 33, sharePercent: 15 },
+    { name: 'Schengen TLS Delhi', value: 28, sharePercent: 13 },
+    { name: 'US Consulate Mumbai', value: 22, sharePercent: 10 },
+    { name: 'VFS Chennai', value: 18, sharePercent: 8 },
+  ],
+  visibilityFunnel: [
+    {
+      key: 'vfs',
+      label: 'Embassy/VFS',
+      value: 27,
+      color: ADMIN_CHART_COLORS.blue,
+    },
+    {
+      key: 'collection',
+      label: 'Collection',
+      value: 16,
+      color: ADMIN_CHART_COLORS.amber,
+    },
+    {
+      key: 'collected',
+      label: 'Collected',
+      value: 11,
+      color: ADMIN_CHART_COLORS.teal,
+    },
+    {
+      key: 'dispatched',
+      label: 'Dispatched',
+      value: 54,
+      color: ADMIN_CHART_COLORS.green,
+    },
+  ],
   recentActivity: [
     {
       id: 'ra-1',

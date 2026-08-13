@@ -5,10 +5,13 @@ import type { ApplicationCustomerSegment } from '@/pages/customer/features/appli
 import { isBulkRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { resolveApplicationCompanyName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
 import {
+  isMarineApplicationInQueueTab,
+  resolveMarineApplicationQueueTab,
+} from '@/pages/admin/application-management/marine/config/marineApplicationListingTabs'
+import {
   filterMarineRowsByTab,
   getAllMarineListingRows,
 } from '@/pages/admin/application-management/marine/utils/marineApplicationListingUtils'
-import { resolveMarineApplicationQueueTab } from '@/pages/admin/application-management/marine/config/marineApplicationListingTabs'
 import { filterRowsByListingTab } from '@/pages/admin/assignment-priority/utils/assignmentQueueListingUtils'
 import { buildPassengerId } from '@/pages/admin/assignment-priority/utils/deriveOperationalPassengerRows'
 import { loadSession } from '@/shared/auth/session'
@@ -30,7 +33,16 @@ import {
   type ApplicationPipelineStageId,
 } from '../../shared/config/applicationPipeline'
 import { OPS_QUEUE_DISPLAY_LABELS } from '../../shared/widgets/operations/opsQueueDisplayLabels'
+import {
+  OPS_QUEUE_AGEING_ROWS,
+  emptyOpsQueueAgeingCounts,
+  emptyOpsSegmentWorkloadCounts,
+  type OpsOrgAgeingQueueRow,
+  type OpsOrgSegmentWorkload,
+  type OpsQueueAgeingBucketId,
+} from '../../shared/widgets/operations/opsOrgQueueTypes'
 import { OPS_CHART_COLORS } from './operationsDashboardMock'
+import { buildSubmissionByJurisdiction } from '../../shared/utils/buildSubmissionByJurisdiction'
 import type {
   OperationsAlertRow,
   OperationsDashboardData,
@@ -84,7 +96,7 @@ function formatWaitingFromDate(value?: string): string {
   return rem > 0 ? `${days}d ${rem}h` : `${days}d`
 }
 
-function ageingBucket(waitingLabel: string): string {
+function ageingBucket(waitingLabel: string): OpsQueueAgeingBucketId {
   if (waitingLabel === '—') return '0–4h'
   const dayMatch = waitingLabel.match(/^(\d+)d/)
   if (dayMatch) {
@@ -97,6 +109,104 @@ function ageingBucket(waitingLabel: string): string {
   if (hours < 4) return '0–4h'
   if (hours < 24) return '4–24h'
   return '1–3d'
+}
+
+/** Ageing matrix rows = Application Management listing tabs (dual-tab membership included). */
+function buildAgeingByQueue(apps: MarineApplicationRow[]): OpsOrgAgeingQueueRow[] {
+  return OPS_QUEUE_AGEING_ROWS.map((meta) => {
+    const counts = emptyOpsQueueAgeingCounts()
+    for (const row of apps) {
+      if (!isMarineApplicationInQueueTab(row, meta.key)) continue
+      const waiting = formatWaitingFromDate(row.lastUpdated || row.submissionDate || row.createdAt)
+      counts[ageingBucket(waiting)] += 1
+    }
+    return {
+      key: meta.key,
+      label: meta.label,
+      counts,
+    }
+  })
+}
+
+/** Workload by segment = AM listing tabs × Retail / Corporate / Marine / B2B. */
+function buildWorkloadBySegment(apps: MarineApplicationRow[]): OpsOrgSegmentWorkload[] {
+  return OPS_SEGMENTS.map((segment) => {
+    const segmentApps = apps.filter((row) => toOpsSegment(row.customerSegment) === segment)
+    const counts = emptyOpsSegmentWorkloadCounts()
+    for (const stageId of APPLICATION_PIPELINE_STAGE_IDS) {
+      counts[stageId] = segmentApps.filter((row) =>
+        isMarineApplicationInQueueTab(row, stageId),
+      ).length
+    }
+    return {
+      segment: segment === 'b2b' ? 'B2B' : segment[0].toUpperCase() + segment.slice(1),
+      ...counts,
+    }
+  })
+}
+
+function toShareRanking(
+  counts: Map<string, number>,
+  limit = 10,
+): Array<{ name: string; value: number; sharePercent: number }> {
+  const rows = [...counts.entries()]
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, limit)
+  const total = rows.reduce((sum, r) => sum + r.value, 0) || 1
+  return rows.map((r) => ({
+    ...r,
+    sharePercent: Math.round((r.value / total) * 100),
+  }))
+}
+
+function buildTopClients(apps: MarineApplicationRow[]) {
+  const clientMap = new Map<string, number>()
+  for (const row of apps) {
+    const name = resolveApplicationCompanyName(row) || 'Individual'
+    clientMap.set(name, (clientMap.get(name) ?? 0) + 1)
+  }
+  return toShareRanking(clientMap)
+}
+
+function buildTopCountries(apps: MarineApplicationRow[]) {
+  const countryMap = new Map<string, number>()
+  for (const row of apps) {
+    const name = row.country?.trim() || 'Unknown'
+    countryMap.set(name, (countryMap.get(name) ?? 0) + 1)
+  }
+  return toShareRanking(countryMap)
+}
+
+function buildVisibilityFunnel(apps: MarineApplicationRow[]) {
+  const countTab = (stageId: ApplicationPipelineStageId) =>
+    apps.filter((row) => isMarineApplicationInQueueTab(row, stageId)).length
+  return [
+    {
+      key: 'vfs',
+      label: 'Embassy/VFS',
+      value: countTab('vfs_submission_pending'),
+      color: OPS_CHART_COLORS.blue,
+    },
+    {
+      key: 'collection',
+      label: 'Collection',
+      value: countTab('collection_pending'),
+      color: OPS_CHART_COLORS.amber,
+    },
+    {
+      key: 'collected',
+      label: 'Collected',
+      value: countTab('collected'),
+      color: OPS_CHART_COLORS.teal,
+    },
+    {
+      key: 'dispatched',
+      label: 'Dispatched',
+      value: countTab('dispatched'),
+      color: OPS_CHART_COLORS.green,
+    },
+  ]
 }
 
 function applicantLabel(row: MarineApplicationRow): string {
@@ -585,21 +695,13 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
   const consultantName = session?.contactName || session?.email || 'Operations desk'
   const amTabCounts = countAppsByAmTab(apps)
 
-  const workloadBySegment = OPS_SEGMENTS.map((segment) => {
-    const segmentRows = queueRows.filter((row) => row.segment === segment)
-    return {
-      segment: segment === 'b2b' ? 'B2B' : segment[0].toUpperCase() + segment.slice(1),
-      verification: countByQueue(segmentRows, 'verification') + countByQueue(segmentRows, 'recheck'),
-      payment: countByQueue(segmentRows, 'payment'),
-      arrange: countByQueue(segmentRows, 'glts_arrange'),
-      submission: countByQueue(segmentRows, 'submission'),
-    }
-  })
+  const workloadBySegment = buildWorkloadBySegment(apps)
 
-  const ageingBuckets = ['0–4h', '4–24h', '1–3d', '3d+'].map((bucket) => ({
-    bucket,
-    count: queueRows.filter((row) => ageingBucket(row.waitingTime) === bucket).length,
-  }))
+  const ageingByQueue = buildAgeingByQueue(apps)
+  const topClients = buildTopClients(apps)
+  const topCountries = buildTopCountries(apps)
+  const submissionByJurisdiction = buildSubmissionByJurisdiction(apps)
+  const visibilityFunnel = buildVisibilityFunnel(apps)
 
   const assigneeMixSource = [...queueRows, ...assignmentDeskRows]
   const assigneeMix = [
@@ -859,8 +961,12 @@ export function buildOperationsDashboardFromMocks(): OperationsDashboardData {
       },
     ],
     workloadBySegment,
-    ageingBuckets,
+    ageingByQueue,
     assigneeMix,
+    topClients,
+    topCountries,
+    submissionByJurisdiction,
+    visibilityFunnel,
     myRecentActivity: queueRows.slice(0, 6).map((row) => ({
       id: `act-${row.id}`,
       primary: `${QUEUE_LABEL[row.queue]} · ${row.glNumber}`,

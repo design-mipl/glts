@@ -38,7 +38,7 @@ export function ApplicantBasicDetailsForm({
               size="sm"
               value={details.crewId}
               onChange={value => onChange({ crewId: value })}
-              placeholder="e.g. GLTS-APL-001"
+              placeholder="e.g. GL-12345/1"
             />
           </FormField>
         </Grid>

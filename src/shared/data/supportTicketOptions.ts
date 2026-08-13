@@ -47,10 +47,10 @@ export const SUPPORT_ASSIGNEE_OPTIONS = [
 
 export const MOCK_RELATED_APPLICATIONS = [
   { value: '', label: 'None' },
-  { value: 'GLTS-APP-2026-847', label: 'GLTS-APP-2026-847 — Schengen Business Visa' },
-  { value: 'GLTS-APP-2026-901', label: 'GLTS-APP-2026-901 — Japan Business Visa' },
-  { value: 'GLTS-APP-2026-712', label: 'GLTS-APP-2026-712 — UAE Visit Visa' },
-  { value: 'GLTS-MAR-1025', label: 'GLTS-MAR-1025 — Marine Crew Batch' },
+  { value: 'GL-847', label: 'GL-847 — Schengen Business Visa' },
+  { value: 'GL-901', label: 'GL-901 — Japan Business Visa' },
+  { value: 'GL-712', label: 'GL-712 — UAE Visit Visa' },
+  { value: 'GL-1025', label: 'GL-1025 — Marine Crew Batch' },
 ]
 
 export const MOCK_RELATED_INVOICES = [

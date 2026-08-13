@@ -1,5 +1,6 @@
 import type { MarineApplicationRow as B2bApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import {
+  isB2bApplicationInQueueTab,
   resolveB2bApplicationQueueTab,
   type B2bApplicationQueueTab,
 } from './B2bApplicationListingTabs'
@@ -17,8 +18,24 @@ const READONLY_QUEUE_TABS = new Set<B2bApplicationQueueTab>([
   'dispatched',
 ])
 
-export function resolveB2bWorkspaceMode(row: B2bApplicationRow): B2bWorkspaceMode {
-  const tab = resolveB2bApplicationQueueTab(row)
+function parseQueueTabFromListingHref(fromListing?: string): B2bApplicationQueueTab | null {
+  if (!fromListing?.includes('?')) return null
+  const query = fromListing.slice(fromListing.indexOf('?') + 1)
+  const tab = new URLSearchParams(query).get('tab')
+  if (!tab || tab === 'all') return null
+  return tab as B2bApplicationQueueTab
+}
+
+export function resolveB2bWorkspaceMode(
+  row: B2bApplicationRow,
+  fromListing?: string,
+): B2bWorkspaceMode {
+  const preferred = parseQueueTabFromListingHref(fromListing)
+  const tab =
+    preferred && isB2bApplicationInQueueTab(row, preferred)
+      ? preferred
+      : resolveB2bApplicationQueueTab(row)
+
   if (tab === 'draft') {
     return 'readonly'
   }
@@ -37,18 +54,28 @@ export function resolveB2bWorkspaceMode(row: B2bApplicationRow): B2bWorkspaceMod
   return 'verification'
 }
 
-export function isB2bReadOnlyWorkspace(row: B2bApplicationRow): boolean {
-  return resolveB2bWorkspaceMode(row) === 'readonly'
+export function isB2bReadOnlyWorkspace(row: B2bApplicationRow, fromListing?: string): boolean {
+  return resolveB2bWorkspaceMode(row, fromListing) === 'readonly'
 }
 
-export function isB2bPendingPaymentWorkspace(row: B2bApplicationRow): boolean {
-  return resolveB2bWorkspaceMode(row) === 'pending_payment'
+export function isB2bPendingPaymentWorkspace(
+  row: B2bApplicationRow,
+  fromListing?: string,
+): boolean {
+  return resolveB2bWorkspaceMode(row, fromListing) === 'pending_payment'
 }
 
 /** Listing should open view-form directly (skip verify) for these modes. */
-export function opensB2bViewFormDirectly(row: B2bApplicationRow): boolean {
+export function opensB2bViewFormDirectly(
+  row: B2bApplicationRow,
+  fromListing?: string,
+): boolean {
   const tab = resolveB2bApplicationQueueTab(row)
   if (tab === 'draft') return false
-  const mode = resolveB2bWorkspaceMode(row)
+  const preferred = parseQueueTabFromListingHref(fromListing)
+  if (preferred === 'pending_payment' && isB2bApplicationInQueueTab(row, 'pending_payment')) {
+    return true
+  }
+  const mode = resolveB2bWorkspaceMode(row, fromListing)
   return mode === 'readonly' || mode === 'pending_payment'
 }

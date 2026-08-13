@@ -143,7 +143,7 @@ function bulkOverAllocatedCrewPassenger(
 export const SEED_FUND_ALLOCATION_OVERLAYS: Record<string, FundAllocationOverlay> = {
   // —— Pending allocation (fund requested from Assignment & Priority) ——
 
-  [buildPassengerId('GLTS-APP-2026-790', 'GLTS-APP-2026-790-APL-001')]: pendingRequest({
+  [buildPassengerId('GL-790', 'GL-790/1')]: pendingRequest({
     requestedAt: '2026-02-18T08:30:00.000Z',
     totalAmount: 6050,
     selectedServices: [
@@ -166,7 +166,7 @@ export const SEED_FUND_ALLOCATION_OVERLAYS: Record<string, FundAllocationOverlay
     lastUpdated: '2026-02-18T08:30:00.000Z',
   }),
 
-  [buildPassengerId('GLTS-APP-2026-744', 'GLTS-APP-2026-744-APL-001')]: pendingRequest({
+  [buildPassengerId('GL-744', 'GL-744/1')]: pendingRequest({
     requestedAt: '2026-02-19T09:15:00.000Z',
     totalAmount: 2850,
     selectedServices: [
@@ -189,7 +189,7 @@ export const SEED_FUND_ALLOCATION_OVERLAYS: Record<string, FundAllocationOverlay
     lastUpdated: '2026-02-19T09:15:00.000Z',
   }),
 
-  [buildPassengerId('GLTS-APP-2026-802', 'GLTS-APP-2026-802-APL-001')]: pendingRequest({
+  [buildPassengerId('GL-802', 'GL-802/1')]: pendingRequest({
     requestedAt: '2026-02-17T11:00:00.000Z',
     totalAmount: 4050,
     selectedServices: [
@@ -226,29 +226,29 @@ export const SEED_FUND_ALLOCATION_OVERLAYS: Record<string, FundAllocationOverlay
     lastUpdated: '2026-02-17T11:00:00.000Z',
   }),
 
-  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GLTS-APL-002')]: bulkOverAllocatedCrewPassenger(
+  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GL-041/2')]: bulkOverAllocatedCrewPassenger(
     'vfs-seed-041-2',
     'Sarah Miles',
   ),
 
-  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GLTS-APL-003')]: bulkOverAllocatedCrewPassenger(
+  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GL-041/3')]: bulkOverAllocatedCrewPassenger(
     'vfs-seed-041-3',
     'Hiroshi Tanaka',
   ),
 
-  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GLTS-APL-004')]: bulkOverAllocatedCrewPassenger(
+  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GL-041/4')]: bulkOverAllocatedCrewPassenger(
     'vfs-seed-041-4',
     'Priya Sharma',
   ),
 
-  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GLTS-APL-005')]: bulkOverAllocatedCrewPassenger(
+  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GL-041/5')]: bulkOverAllocatedCrewPassenger(
     'vfs-seed-041-5',
     'Mike Chen',
   ),
 
   // —— Allocated (completed fund allocation) ——
 
-  [buildPassengerId('GLTS-APP-2026-778', 'GLTS-APP-2026-778-APL-001')]: overlay({
+  [buildPassengerId('GL-778', 'GL-778/1')]: overlay({
     allocationStatus: 'allocated',
     allocationBatchId: ALLOC_BATCH_778_SINGLE,
     fundRequested: true,
@@ -270,7 +270,7 @@ export const SEED_FUND_ALLOCATION_OVERLAYS: Record<string, FundAllocationOverlay
     lastUpdated: '2026-02-12T10:30:00.000Z',
   }),
 
-  [buildPassengerId('GLTS-APP-2026-847', 'GLTS-APP-2026-847-APL-001')]: overlay({
+  [buildPassengerId('GL-847', 'GL-847/1')]: overlay({
     allocationStatus: 'allocated',
     allocationBatchId: ALLOC_BATCH_847_SINGLE,
     fundRequested: true,
@@ -309,7 +309,7 @@ export const SEED_FUND_ALLOCATION_OVERLAYS: Record<string, FundAllocationOverlay
     lastUpdated: '2026-02-12T11:00:00.000Z',
   }),
 
-  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GLTS-APL-001')]: overlay({
+  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GL-041/1')]: overlay({
     allocationStatus: 'allocated',
     allocationBatchId: ALLOC_BATCH_041_BRENDAN,
     fundRequested: true,
@@ -331,22 +331,22 @@ export const SEED_FUND_ALLOCATION_OVERLAYS: Record<string, FundAllocationOverlay
     lastUpdated: '2026-02-14T14:15:00.000Z',
   }),
 
-  [buildPassengerId('GLTS-MAR-1025', 'GLTS-APL-M1025-01')]: marineBulkAllocatedPassenger(
+  [buildPassengerId('GL-1025', 'GL-1025/1')]: marineBulkAllocatedPassenger(
     'vfs-seed-mar-1',
     'Rajesh Kumar',
   ),
 
-  [buildPassengerId('GLTS-MAR-1025', 'GLTS-APL-M1025-02')]: marineBulkAllocatedPassenger(
+  [buildPassengerId('GL-1025', 'GL-1025/2')]: marineBulkAllocatedPassenger(
     'vfs-seed-mar-2',
     'Vikram Singh',
   ),
 
-  [buildPassengerId('GLTS-MAR-1025', 'GLTS-APL-M1025-03')]: marineBulkAllocatedPassenger(
+  [buildPassengerId('GL-1025', 'GL-1025/3')]: marineBulkAllocatedPassenger(
     'vfs-seed-mar-3',
     'Anil Mehta',
   ),
 
-  [buildPassengerId('GLTS-APP-2026-731', 'GLTS-APP-2026-731-APL-001')]: overlay({
+  [buildPassengerId('GL-731', 'GL-731/1')]: overlay({
     allocationStatus: 'allocated',
     allocationBatchId: ALLOC_BATCH_731_SINGLE,
     fundRequested: true,
@@ -385,7 +385,7 @@ export const SEED_FUND_ALLOCATION_OVERLAYS: Record<string, FundAllocationOverlay
     lastUpdated: '2026-02-15T09:30:00.000Z',
   }),
 
-  [buildPassengerId('GLTS-APP-2026-726', 'GLTS-APP-2026-726-APL-001')]: overlay({
+  [buildPassengerId('GL-726', 'GL-726/1')]: overlay({
     allocationStatus: 'allocated',
     allocationBatchId: ALLOC_BATCH_726_SINGLE,
     fundRequested: true,

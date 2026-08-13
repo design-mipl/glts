@@ -104,7 +104,7 @@ function buildSingleQueueRow(state: ApplicationFlowState): UploadQueueRow {
     id: `${state.gltsApplicationId || 'single'}-q1`,
     fileName: 'passport.pdf',
     gltsApplicationId: state.gltsApplicationId,
-    gltsApplicantId: `${state.gltsApplicationId || 'single'}-APL-001`,
+    gltsApplicantId: `${state.gltsApplicationId || 'GL-0'}/1`,
     sequenceNo: 1,
     travelerName: state.applicantName || '—',
     passportNo: state.passportNumber || '—',

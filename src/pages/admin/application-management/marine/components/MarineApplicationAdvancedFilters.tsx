@@ -6,14 +6,22 @@ import type {
 } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { PROCESSING_STAGE_OPTIONS } from '@/pages/customer/features/applications/components/listing/applicationStatus'
 
-/** Admin-visible statuses — same labels as customer portal, excluding Draft. */
+/** Admin-visible statuses — queue Status from Ops/Docs QC handoffs. */
 const ADMIN_STATUS_OPTIONS = [
   'Pending Documents',
   'Verification Pending',
-  'Document Rejected',
+  'Ops · Correction Required',
+  'Ops · Document Missing',
+  'Docs · Correction Required',
+  'Docs · Document Missing / Blocked',
+  'Submission Pending',
+  'Form Pending',
+  'Pending Payment',
+  'Embassy/VFS Submission Pending',
   'Under Review',
   'Submitted',
   'Correction Required',
+  'Document Rejected',
   'Passport Ready',
   'Completed',
   'Rejected',

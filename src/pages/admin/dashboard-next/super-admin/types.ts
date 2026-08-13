@@ -16,6 +16,7 @@ import type { MarineTimelineRow } from '../shared/widgets/operations/MarineTimel
 import type { TeamCapacityRow } from '../shared/widgets/operations/TeamCapacity'
 import type { TeamProductivityByChannel } from '../shared/widgets/operations/TeamProductivityInfographic'
 import type { OpsOrgQueueSnapshot } from '../shared/widgets/operations/opsOrgQueueTypes'
+import type { ApplicationMarketRankingPoint } from '../shared/widgets/operations/ApplicationMarketInfographics'
 import type { RevenueSnapshotData } from '../shared/widgets/finance/RevenueSnapshot'
 import type { CollectionSummaryData } from '../shared/widgets/finance/CollectionSummary'
 import type { AgeingBucketValue } from '../shared/widgets/finance/AgeingAnalysis'
@@ -389,6 +390,8 @@ export interface SuperAdminDashboardData {
   operationsToday: SuperAdminOperationsToday
   /** Org queue mix · assignee · ageing · workload — Ops / Admin Operations infographics. */
   opsQueueSnapshot: OpsOrgQueueSnapshot
+  /** Submissions grouped by VFS / consulate jurisdiction. */
+  submissionByJurisdiction: ApplicationMarketRankingPoint[]
   processingTimeByCountry: NamedMetricPoint[]
   cashPosition: SuperAdminCashPosition
   /** Mock EBITDA / DSO / GP / credit exposure until Finance APIs. */

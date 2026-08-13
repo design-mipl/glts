@@ -351,6 +351,7 @@ export function VerifyDocumentsPhaseContent({
             }}
           >
             <VerifyFinalVerificationChecklist
+              applicationId={applicationId}
               countryId={countryId}
               visaOfferingId={visaOfferingId}
               jurisdictionId={jurisdictionId}

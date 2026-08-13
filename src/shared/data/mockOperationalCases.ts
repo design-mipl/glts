@@ -140,7 +140,7 @@ function buildPassengerCase(
   const estimated = sumEstimated(applicationFees)
   const actual = sumActual([applicationFees], expenses)
   const operationalId = formatOperationalId(batch.applicationId, sequence)
-  const gltsApplicantId = `GLTS-APL-${batch.applicationId.slice(-4)}-${String(sequence).padStart(2, '0')}`
+  const gltsApplicantId = `${batch.applicationId}/${sequence}`
 
   return {
     id: caseKey,
@@ -1324,7 +1324,7 @@ const BATCH_SEEDS: BatchSeed[] = [
     ],
   },
   {
-    applicationId: 'GLTS-APP-2026-790',
+    applicationId: 'GL-790',
     companyName: 'Apex Marine Logistics',
     vesselName: 'MV Pacific Horizon',
     country: 'Japan',

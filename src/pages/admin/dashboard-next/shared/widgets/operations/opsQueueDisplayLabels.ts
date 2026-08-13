@@ -15,6 +15,3 @@ export const OPS_QUEUE_DISPLAY_LABELS = {
   submissionCollection: 'Submission / collection',
   correctionWatch: 'Corrections pending',
 } as const
-
-export const OPS_QUEUE_MIX_DESCRIPTION =
-  'Verify · Review Re-uploads · Pending payment · Arrange · Ready for Submission · Ready for Collection'

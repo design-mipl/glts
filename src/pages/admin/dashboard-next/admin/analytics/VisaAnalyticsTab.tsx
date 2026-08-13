@@ -182,6 +182,11 @@ export function VisaAnalyticsOverviewSnapshot({
     value: row.value,
   }))
 
+  const byJurisdiction = sliceTopN(data.submissionByJurisdiction, volumeTopN).map((row) => ({
+    name: row.label,
+    value: row.value,
+  }))
+
   const revenueKpi =
     data.revenueKpis.find((k) => k.id === 'rev-mtd') ?? data.revenueKpis[0]
 
@@ -271,47 +276,76 @@ export function VisaAnalyticsOverviewSnapshot({
           </Grid>
 
           <Grid size={{ xs: 12, lg: 7 }}>
-            <Box
-              sx={{
-                p: 1.5,
-                borderRadius: '10px',
-                border: '1px solid',
-                borderColor: 'divider',
-                height: '100%',
-                minHeight: 220,
-              }}
-            >
-              <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                alignItems={{ xs: 'stretch', sm: 'flex-start' }}
-                justifyContent="space-between"
-                spacing={1}
-                sx={{ mb: 1 }}
+            <Stack spacing={1.25} sx={{ height: '100%' }}>
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: '10px',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  minHeight: 200,
+                }}
               >
-                <Box sx={{ minWidth: 0 }}>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  alignItems={{ xs: 'stretch', sm: 'flex-start' }}
+                  justifyContent="space-between"
+                  spacing={1}
+                  sx={{ mb: 1 }}
+                >
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
+                      Volume concentrate
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+                      Top destination countries by applications
+                    </Typography>
+                  </Box>
+                  <TopNSelect
+                    value={volumeTopN}
+                    onChange={setVolumeTopN}
+                    ariaLabel="Volume concentrate ranking limit"
+                  />
+                </Stack>
+                <BarChart
+                  data={topCountries}
+                  xKey="name"
+                  bars={[{ key: 'value', label: 'Applications' }]}
+                  orientation="horizontal"
+                  height={160}
+                  barSize={14}
+                  showLegend={false}
+                />
+              </Box>
+
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: '10px',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  minHeight: 200,
+                }}
+              >
+                <Box sx={{ mb: 1 }}>
                   <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
-                    Volume concentrate
+                    Submission by jurisdiction
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-                    Top destination countries by applications
+                    Applications by VFS / consulate desk
                   </Typography>
                 </Box>
-                <TopNSelect
-                  value={volumeTopN}
-                  onChange={setVolumeTopN}
-                  ariaLabel="Volume concentrate ranking limit"
+                <BarChart
+                  data={byJurisdiction}
+                  xKey="name"
+                  bars={[{ key: 'value', label: 'Submitted' }]}
+                  orientation="horizontal"
+                  height={160}
+                  barSize={14}
+                  showLegend={false}
                 />
-              </Stack>
-              <BarChart
-                data={topCountries}
-                xKey="name"
-                bars={[{ key: 'value', label: 'Applications' }]}
-                orientation="horizontal"
-                height={180}
-                barSize={14}
-                showLegend={false}
-              />
-            </Box>
+              </Box>
+            </Stack>
           </Grid>
         </Grid>
       </Box>

@@ -1,4 +1,18 @@
-import { APPLICATION_PIPELINE_STAGE_IDS } from '../../shared/config/applicationPipeline'
+import {
+  APPLICATION_PIPELINE_STAGE_IDS,
+} from '../../shared/config/applicationPipeline'
+import {
+  OPS_QUEUE_AGEING_ROWS,
+  emptyOpsQueueAgeingCounts,
+  emptyOpsSegmentWorkloadCounts,
+  type OpsOrgAgeingQueueRow,
+  type OpsOrgSegmentWorkload,
+  type OpsQueueAgeingBucketId,
+} from '../../shared/widgets/operations/opsOrgQueueTypes'
+import { isMarineApplicationInQueueTab } from '@/pages/admin/application-management/marine/config/marineApplicationListingTabs'
+import { getAllMarineListingRows } from '@/pages/admin/application-management/marine/utils/marineApplicationListingUtils'
+import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
+import type { ApplicationCustomerSegment } from '@/pages/customer/features/applications/types/applicationListing.types'
 import type { DashboardKpiItem } from '../../shared/types'
 import type {
   DocApplicationChannel,
@@ -13,6 +27,7 @@ import type {
   DocumentationWorkRow,
 } from '../types'
 import { DOC_CHART_COLORS } from './documentationChartColors'
+import { buildSubmissionByJurisdiction } from '../../shared/utils/buildSubmissionByJurisdiction'
 import { MOCK_DOCUMENTATION_EXECUTIVE_NAME } from '@/pages/admin/dashboard/documentation/data/documentationDashboardMock'
 import {
   computeShowInactivityWarning,
@@ -243,6 +258,73 @@ export const DOC_PENDING_PAYMENT_ROWS: DocumentationWorkRow[] = [
   },
 ]
 
+/** Arrange Insurance — GLTS travel insurance still pending booking. */
+export const DOC_ARRANGE_INSURANCE_ROWS: DocumentationWorkRow[] = [
+  {
+    id: 'ai1',
+    glNumber: 'GL-2026-01422',
+    applicant: 'Rahul Mehta',
+    company: 'Individual',
+    country: 'United Kingdom',
+    visaType: 'Visit',
+    nextAction: 'Arrange travel insurance (GLTS)',
+    qcOutcome: 'ready',
+    qcOutcomeLabel: QC_LABEL.ready,
+    waitingOn: 'Me',
+    priority: 'high',
+    slaStatus: 'at_risk',
+    slaTimer: '3h 40m',
+    dueDate: '31 Jul 2026',
+    dueDateSort: 20260731,
+    channel: 'retail',
+    executive: MOCK_DOCUMENTATION_EXECUTIVE_NAME,
+    applicationHref: href('GL-2026-01422'),
+    desk: 'arrange_insurance',
+  },
+  {
+    id: 'ai2',
+    glNumber: 'GL-2026-01388',
+    applicant: 'Nordic Marine Ltd',
+    company: 'Nordic Marine Ltd',
+    country: 'United Arab Emirates',
+    visaType: 'Crew Transit',
+    nextAction: 'Confirm insurance certificate upload',
+    qcOutcome: 'pending_qc',
+    qcOutcomeLabel: QC_LABEL.pending_qc,
+    waitingOn: 'Me',
+    priority: 'medium',
+    slaStatus: 'on_track',
+    slaTimer: '6h 20m',
+    dueDate: '01 Aug 2026',
+    dueDateSort: 20260801,
+    channel: 'marine',
+    executive: MOCK_DOCUMENTATION_EXECUTIVE_NAME,
+    applicationHref: href('GL-2026-01388'),
+    desk: 'arrange_insurance',
+  },
+  {
+    id: 'ai3',
+    glNumber: 'GL-2026-01355',
+    applicant: 'BrightCorp India',
+    company: 'BrightCorp India',
+    country: 'Singapore',
+    visaType: 'Business',
+    nextAction: 'Book GLTS insurance for traveler',
+    qcOutcome: 'ready',
+    qcOutcomeLabel: QC_LABEL.ready,
+    waitingOn: 'Me',
+    priority: 'medium',
+    slaStatus: 'on_track',
+    slaTimer: '10h 00m',
+    dueDate: '02 Aug 2026',
+    dueDateSort: 20260802,
+    channel: 'corporate',
+    executive: MOCK_DOCUMENTATION_EXECUTIVE_NAME,
+    applicationHref: href('GL-2026-01355'),
+    desk: 'arrange_insurance',
+  },
+]
+
 /** Waiting on Ops — Docs flagged correction / blocked; lives in Verification Pending until Ops returns. */
 export const DOC_WAITING_ON_OPS_ROWS: DocumentationWorkRow[] = [
   {
@@ -374,11 +456,9 @@ const VISIBILITY_KPI = {
 
 export const DOC_KPI_TARGETS: Record<string, DocKpiTarget> = {
   submission_pending: { kind: 'work', desk: 'submission_pending' },
+  form_pending: { kind: 'work', desk: 'submission_pending' },
   pending_payment: { kind: 'work', desk: 'pending_payment' },
-  qc_ready: { kind: 'work', desk: 'submission_pending' },
-  waiting_on_ops: { kind: 'work', desk: 'waiting_on_ops' },
-  sla_at_risk: { kind: 'work', desk: 'submission_pending' },
-  vfs_submitted: { kind: 'am', tab: 'vfs_submission_pending' },
+  vfs_submission_pending: { kind: 'am', tab: 'vfs_submission_pending' },
   collection_pending: { kind: 'am', tab: 'collection_pending' },
   collected: { kind: 'am', tab: 'collected' },
   dispatched: { kind: 'am', tab: 'dispatched' },
@@ -403,13 +483,13 @@ function filterRows(
 function buildHeroKpis(
   submission: DocumentationWorkRow[],
   payment: DocumentationWorkRow[],
-  waiting: DocumentationWorkRow[],
+  _waiting: DocumentationWorkRow[],
   filters: DocumentationDashboardFilters,
 ) {
   const factor = getDocumentationFilterScaleFactor(filters)
   const scale = (n: number) => (factor === 1 ? n : Math.max(0, Math.round(n * factor)))
 
-  const ready = submission.filter((r) => r.qcOutcome === 'ready').length
+  const formPending = submission.filter((r) => r.qcOutcome === 'ready').length
   const pendingQc = submission.filter((r) => r.qcOutcome === 'pending_qc').length
 
   return [
@@ -418,36 +498,45 @@ function buildHeroKpis(
       label: 'Submission Pending',
       value: scale(submission.length),
       delta: pendingQc,
-      deltaLabel: `${pendingQc} awaiting QC`,
+      deltaLabel: pendingQc > 0 ? `${pendingQc} Docs QC` : 'Docs queue',
+    },
+    {
+      id: 'form_pending',
+      label: 'Form Pending',
+      value: scale(formPending),
+      delta: formPending,
+      deltaLabel: 'Form / portal submit',
     },
     {
       id: 'pending_payment',
       label: 'Pending Payment',
       value: scale(payment.length),
       delta: payment.length,
-      deltaLabel: 'Fee updates',
+      deltaLabel: 'Fees open',
     },
     {
-      id: 'qc_ready',
-      label: 'Verified & ready',
-      value: scale(ready),
-      delta: ready,
-      deltaLabel: 'Form / mark submitted',
+      id: 'vfs_submission_pending',
+      label: 'Embassy/VFS Submission Pending',
+      value: scale(VISIBILITY_KPI.vfs_submitted),
+      deltaLabel: 'View in AM',
     },
     {
-      id: 'waiting_on_ops',
-      label: 'Waiting on Ops',
-      value: scale(waiting.length),
-      delta: waiting.length,
-      deltaLabel: 'Correction / blocked',
+      id: 'collection_pending',
+      label: 'Collection Pending',
+      value: scale(VISIBILITY_KPI.collection_pending),
+      deltaLabel: 'View in AM',
     },
     {
-      id: 'sla_at_risk',
-      label: 'SLA at risk',
-      value: scale(
-        submission.filter((r) => r.slaStatus === 'at_risk' || r.slaStatus === 'breached').length,
-      ),
-      deltaLabel: 'Needs attention',
+      id: 'collected',
+      label: 'Collected',
+      value: scale(VISIBILITY_KPI.collected),
+      deltaLabel: 'View in AM',
+    },
+    {
+      id: 'dispatched',
+      label: 'Dispatched',
+      value: scale(VISIBILITY_KPI.dispatched),
+      deltaLabel: 'View in AM',
     },
   ]
 }
@@ -457,14 +546,14 @@ function buildVisibilityStats(filters: DocumentationDashboardFilters): Dashboard
   const scale = (n: number) => (factor === 1 ? n : Math.max(0, Math.round(n * factor)))
   return [
     {
-      id: 'vfs_submitted',
-      label: 'Embassy/VFS',
+      id: 'vfs_submission_pending',
+      label: 'Embassy/VFS Submission Pending',
       value: scale(VISIBILITY_KPI.vfs_submitted),
       deltaLabel: 'View in AM',
     },
     {
       id: 'collection_pending',
-      label: 'Collection pending',
+      label: 'Collection Pending',
       value: scale(VISIBILITY_KPI.collection_pending),
       deltaLabel: 'View in AM',
     },
@@ -532,6 +621,32 @@ function buildToAction(
   ].filter((item) => item.count > 0) as DocumentationToActionItem[]
 }
 
+function formatWaitingFromDate(value?: string): string {
+  if (!value?.trim()) return '—'
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return value
+  const hours = Math.max(0, Math.floor((Date.now() - parsed.getTime()) / 3_600_000))
+  if (hours < 24) return `${Math.max(hours, 1)}h`
+  const days = Math.floor(hours / 24)
+  const rem = hours % 24
+  return rem > 0 ? `${days}d ${rem}h` : `${days}d`
+}
+
+function ageingBucket(waitingLabel: string): OpsQueueAgeingBucketId {
+  if (waitingLabel === '—') return '0–4h'
+  const dayMatch = waitingLabel.match(/^(\d+)d/)
+  if (dayMatch) {
+    const days = Number(dayMatch[1])
+    if (days >= 3) return '3d+'
+    return '1–3d'
+  }
+  const hourMatch = waitingLabel.match(/^(\d+)h/)
+  const hours = hourMatch ? Number(hourMatch[1]) : 0
+  if (hours < 4) return '0–4h'
+  if (hours < 24) return '4–24h'
+  return '1–3d'
+}
+
 function buildInfographics(
   submission: DocumentationWorkRow[],
   payment: DocumentationWorkRow[],
@@ -554,7 +669,7 @@ function buildInfographics(
     },
     {
       key: 'waiting_on_ops',
-      label: 'Waiting on Ops',
+      label: 'Review Reupload',
       value: waiting.length,
       color: DOC_CHART_COLORS.coral,
     },
@@ -596,10 +711,10 @@ function buildInfographics(
   ].filter((s) => s.value > 0)
 
   const ageingBuckets = [
-    { bucket: '< 2h', count: 2 },
-    { bucket: '2–4h', count: 3 },
-    { bucket: '4–24h', count: 4 },
-    { bucket: '> 24h', count: 2 },
+    { bucket: '0–4h', count: 2 },
+    { bucket: '4–24h', count: 3 },
+    { bucket: '1–3d', count: 4 },
+    { bucket: '3d+', count: 2 },
   ]
 
   const countryMap = new Map<string, number>()
@@ -694,25 +809,78 @@ function buildInfographics(
     { label: 'Sun', value: 1, secondary: 1 },
   ]
 
-  const segments: Array<{ id: DocApplicationChannel; label: string }> = [
-    { id: 'retail', label: 'Retail' },
-    { id: 'corporate', label: 'Corporate' },
-    { id: 'marine', label: 'Marine' },
-    { id: 'b2b', label: 'B2B agent' },
+  const segments: Array<{
+    id: DocApplicationChannel
+    label: string
+    customerSegment: ApplicationCustomerSegment
+  }> = [
+    { id: 'retail', label: 'Retail', customerSegment: 'retail' },
+    { id: 'corporate', label: 'Corporate', customerSegment: 'corporate' },
+    { id: 'marine', label: 'Marine', customerSegment: 'marine' },
+    { id: 'b2b', label: 'B2B', customerSegment: 'b2bAgents' },
   ]
-  const workloadBySegment = segments.map(({ id, label }) => ({
-    segment: label,
-    submissionPending: submission.filter((r) => r.channel === id).length,
-    pendingPayment: payment.filter((r) => r.channel === id).length,
-    waitingOnOps: waiting.filter((r) => r.channel === id).length,
-  }))
+
+  const appsById = new Map(
+    getAllMarineListingRows(
+      marineApplicationAdminService.listMarineApplications().singles,
+      marineApplicationAdminService.listMarineApplications().bulks,
+    ).map((row) => [row.id, row]),
+  )
+  for (const segment of segments) {
+    const { singles, bulks } = marineApplicationAdminService.listAllSubmittedBySegment(
+      segment.customerSegment,
+    )
+    for (const row of getAllMarineListingRows(singles, bulks)) {
+      appsById.set(row.id, row)
+    }
+  }
+  const apps = [...appsById.values()]
+
+  const workloadBySegment: OpsOrgSegmentWorkload[] = segments.map(({ label, customerSegment }) => {
+    const segmentApps = apps.filter((row) => row.customerSegment === customerSegment)
+    const counts = emptyOpsSegmentWorkloadCounts()
+    for (const stageId of APPLICATION_PIPELINE_STAGE_IDS) {
+      counts[stageId] = segmentApps.filter((row) =>
+        isMarineApplicationInQueueTab(row, stageId),
+      ).length
+    }
+    return { segment: label, ...counts }
+  })
+
+  const ageingByQueue: OpsOrgAgeingQueueRow[] = OPS_QUEUE_AGEING_ROWS.map((meta) => {
+    const counts = emptyOpsQueueAgeingCounts()
+    for (const row of apps) {
+      if (!isMarineApplicationInQueueTab(row, meta.key)) continue
+      const waiting = formatWaitingFromDate(row.lastUpdated || row.submissionDate || row.createdAt)
+      counts[ageingBucket(waiting)] += 1
+    }
+    return {
+      key: meta.key,
+      label: meta.label,
+      counts,
+    }
+  })
+
+  const ageingBucketTotals = emptyOpsQueueAgeingCounts()
+  for (const row of ageingByQueue) {
+    for (const bucket of Object.keys(ageingBucketTotals) as OpsQueueAgeingBucketId[]) {
+      ageingBucketTotals[bucket] += row.counts[bucket] ?? 0
+    }
+  }
+  const liveAgeingBuckets = (Object.entries(ageingBucketTotals) as Array<
+    [OpsQueueAgeingBucketId, number]
+  >).map(([bucket, count]) => ({ bucket, count }))
+
+  const submissionByJurisdiction = buildSubmissionByJurisdiction(apps)
 
   return {
     deskMix,
     qcOutcomeMix,
-    ageingBuckets,
+    ageingBuckets: liveAgeingBuckets.some((b) => b.count > 0) ? liveAgeingBuckets : ageingBuckets,
+    ageingByQueue,
     topCountries,
     topClients,
+    submissionByJurisdiction,
     visibilityFunnel,
     processingTrend,
     workloadBySegment,
@@ -775,6 +943,7 @@ function buildBaseMock(executiveName: string): DocumentationDashboardData {
   const filters = DEFAULT_DOCUMENTATION_DASHBOARD_FILTERS
   const submissionPendingRows = filterRows(DOC_SUBMISSION_PENDING_ROWS, filters, executiveName)
   const pendingPaymentRows = filterRows(DOC_PENDING_PAYMENT_ROWS, filters, executiveName)
+  const arrangeInsuranceRows = filterRows(DOC_ARRANGE_INSURANCE_ROWS, filters, executiveName)
   const waitingOnOpsRows = filterRows(DOC_WAITING_ON_OPS_ROWS, filters, executiveName)
   const activityRows = DOC_ACTIVITY_TODAY.filter((r) => r.executive === executiveName)
   const charts = buildInfographics(submissionPendingRows, pendingPaymentRows, waitingOnOpsRows)
@@ -800,6 +969,29 @@ function buildBaseMock(executiveName: string): DocumentationDashboardData {
       value: '1.4 days',
       subtitle: 'This week',
       accent: 'info' as const,
+    },
+  ]
+
+  const metricComparison = [
+    {
+      label: 'Completed today',
+      value: '7',
+      delta: 2,
+    },
+    {
+      label: 'Avg cycle time',
+      value: '1.4d',
+      delta: -0.2,
+    },
+    {
+      label: 'QC completed',
+      value: '4',
+      delta: 1,
+    },
+    {
+      label: 'Personal SLA',
+      value: '93%',
+      delta: 1,
     },
   ]
 
@@ -845,22 +1037,19 @@ function buildBaseMock(executiveName: string): DocumentationDashboardData {
     ...charts,
     submissionPendingRows,
     pendingPaymentRows,
+    arrangeInsuranceRows,
     waitingOnOpsRows,
     recentActivity: mapActivity(activityRows),
     activityRows,
     performanceMetrics,
-    metricComparison: performanceMetrics.map((m) => ({
-      label: m.label,
-      value: m.value,
-      delta: m.id === 'avg_processing' ? undefined : 6.2,
-    })),
+    metricComparison,
     personalSla: [
       { id: 'doc-sla-day', label: 'Today SLA', value: 93, helperText: 'Target 95%' },
       { id: 'doc-sla-week', label: 'Week SLA', value: 91, helperText: 'Target 95%' },
     ],
     stageSla: [
       { id: 'sla-qc', label: 'QC (< 4h)', value: 80, helperText: 'Escalate past 4h' },
-      { id: 'sla-ops', label: 'Waiting on Ops', value: 60, helperText: 'Correction / blocked' },
+      { id: 'sla-ops', label: 'Review Reupload', value: 60, helperText: 'Correction / blocked' },
       { id: 'sla-submit', label: 'Mark submitted', value: 92, helperText: 'After form + payment' },
     ],
     showInactivityWarning: computeShowInactivityWarning(activityRows),
@@ -879,6 +1068,7 @@ export function applyDocumentationDashboardFilters(
 ): DocumentationDashboardData {
   const submissionPendingRows = filterRows(DOC_SUBMISSION_PENDING_ROWS, filters, executiveName)
   const pendingPaymentRows = filterRows(DOC_PENDING_PAYMENT_ROWS, filters, executiveName)
+  const arrangeInsuranceRows = filterRows(DOC_ARRANGE_INSURANCE_ROWS, filters, executiveName)
   const waitingOnOpsRows = filterRows(DOC_WAITING_ON_OPS_ROWS, filters, executiveName)
   const activityRows = DOC_ACTIVITY_TODAY.filter((r) => r.executive === executiveName)
   const charts = buildInfographics(submissionPendingRows, pendingPaymentRows, waitingOnOpsRows)
@@ -905,6 +1095,7 @@ export function applyDocumentationDashboardFilters(
     ...charts,
     submissionPendingRows,
     pendingPaymentRows,
+    arrangeInsuranceRows,
     waitingOnOpsRows,
     recentActivity: mapActivity(activityRows),
     activityRows,
@@ -926,6 +1117,9 @@ export function applyDocumentationDashboardFilters(
     pendingPaymentRows: next.pendingPaymentRows.filter((r) =>
       match(r.glNumber, r.applicant, r.company, r.country),
     ),
+    arrangeInsuranceRows: next.arrangeInsuranceRows.filter((r) =>
+      match(r.glNumber, r.applicant, r.company, r.country),
+    ),
     waitingOnOpsRows: next.waitingOnOpsRows.filter((r) =>
       match(r.glNumber, r.applicant, r.company, r.country),
     ),
@@ -933,7 +1127,12 @@ export function applyDocumentationDashboardFilters(
 }
 
 export function resolveDocWorkDesk(value: string | null): DocWorkDeskId {
-  const allowed: DocWorkDeskId[] = ['submission_pending', 'pending_payment', 'waiting_on_ops']
+  const allowed: DocWorkDeskId[] = [
+    'submission_pending',
+    'pending_payment',
+    'arrange_insurance',
+    'waiting_on_ops',
+  ]
   if (value && (allowed as string[]).includes(value)) return value as DocWorkDeskId
   return 'submission_pending'
 }

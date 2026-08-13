@@ -123,6 +123,7 @@ export function AdminDashboardPage() {
               <OverviewTab
                 {...tabProps}
                 onOpenVisaAnalytics={() => openTab('analytics')}
+                onOpenTab={openTab}
               />
             </Stack>
           ),

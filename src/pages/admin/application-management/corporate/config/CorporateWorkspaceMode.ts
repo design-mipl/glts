@@ -1,5 +1,6 @@
 import type { MarineApplicationRow as CorporateApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import {
+  isCorporateApplicationInQueueTab,
   resolveCorporateApplicationQueueTab,
   type CorporateApplicationQueueTab,
 } from './CorporateApplicationListingTabs'
@@ -17,8 +18,24 @@ const READONLY_QUEUE_TABS = new Set<CorporateApplicationQueueTab>([
   'dispatched',
 ])
 
-export function resolveCorporateWorkspaceMode(row: CorporateApplicationRow): CorporateWorkspaceMode {
-  const tab = resolveCorporateApplicationQueueTab(row)
+function parseQueueTabFromListingHref(fromListing?: string): CorporateApplicationQueueTab | null {
+  if (!fromListing?.includes('?')) return null
+  const query = fromListing.slice(fromListing.indexOf('?') + 1)
+  const tab = new URLSearchParams(query).get('tab')
+  if (!tab || tab === 'all') return null
+  return tab as CorporateApplicationQueueTab
+}
+
+export function resolveCorporateWorkspaceMode(
+  row: CorporateApplicationRow,
+  fromListing?: string,
+): CorporateWorkspaceMode {
+  const preferred = parseQueueTabFromListingHref(fromListing)
+  const tab =
+    preferred && isCorporateApplicationInQueueTab(row, preferred)
+      ? preferred
+      : resolveCorporateApplicationQueueTab(row)
+
   if (tab === 'draft') {
     return 'readonly'
   }
@@ -37,18 +54,28 @@ export function resolveCorporateWorkspaceMode(row: CorporateApplicationRow): Cor
   return 'verification'
 }
 
-export function isCorporateReadOnlyWorkspace(row: CorporateApplicationRow): boolean {
-  return resolveCorporateWorkspaceMode(row) === 'readonly'
+export function isCorporateReadOnlyWorkspace(row: CorporateApplicationRow, fromListing?: string): boolean {
+  return resolveCorporateWorkspaceMode(row, fromListing) === 'readonly'
 }
 
-export function isCorporatePendingPaymentWorkspace(row: CorporateApplicationRow): boolean {
-  return resolveCorporateWorkspaceMode(row) === 'pending_payment'
+export function isCorporatePendingPaymentWorkspace(
+  row: CorporateApplicationRow,
+  fromListing?: string,
+): boolean {
+  return resolveCorporateWorkspaceMode(row, fromListing) === 'pending_payment'
 }
 
 /** Listing should open view-form directly (skip verify) for these modes. */
-export function opensCorporateViewFormDirectly(row: CorporateApplicationRow): boolean {
+export function opensCorporateViewFormDirectly(
+  row: CorporateApplicationRow,
+  fromListing?: string,
+): boolean {
   const tab = resolveCorporateApplicationQueueTab(row)
   if (tab === 'draft') return false
-  const mode = resolveCorporateWorkspaceMode(row)
+  const preferred = parseQueueTabFromListingHref(fromListing)
+  if (preferred === 'pending_payment' && isCorporateApplicationInQueueTab(row, 'pending_payment')) {
+    return true
+  }
+  const mode = resolveCorporateWorkspaceMode(row, fromListing)
   return mode === 'readonly' || mode === 'pending_payment'
 }

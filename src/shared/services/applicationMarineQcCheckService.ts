@@ -3,6 +3,7 @@ import {
   countEnabledQcChecklistItems,
   getExecutableQcChecklistSections,
 } from '@/shared/utils/countryQcChecklistUtils'
+import { applyDocsQcOutcomeToListing } from '@/shared/utils/applicationQueueStatus'
 
 export type MarineDocsQcOutcome = 'ready' | 'correction' | 'blocked' | ''
 
@@ -220,6 +221,9 @@ export const applicationMarineQcCheckService = {
     if (!this.canSubmit(template, record)) return null
     const next = withSubmitTimestamp(record)
     this.saveRecord(next)
+    if (next.outcome === 'ready' || next.outcome === 'correction' || next.outcome === 'blocked') {
+      applyDocsQcOutcomeToListing(applicationId, next.outcome)
+    }
     return next
   },
 }

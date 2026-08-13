@@ -1,6 +1,7 @@
 import {
   mockBulkBatches,
   mockSingleApplications,
+  type ApplicationPriority,
   type BulkBatchRow,
   type SingleApplicationRow,
 } from '@/pages/customer/features/applications/data/applicationFlowData'
@@ -17,6 +18,7 @@ import { applicationReferenceFieldsFromFlow } from '@/pages/customer/features/ap
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import { loadSession } from '@/shared/auth/session'
+import { applicationCaseActivityService } from '@/shared/services/applicationCaseActivityService'
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
 import { teamService } from '@/shared/services/teamService'
 
@@ -200,6 +202,7 @@ export const marineApplicationAdminService = {
     applicationId: string,
     teamId: string,
     userId: string,
+    options?: { priority?: ApplicationPriority; isVip?: boolean },
   ): MarineApplicationRow | undefined {
     const team = teamService.getById(teamId)
     const user = adminPortalUserService.getById(userId)
@@ -208,14 +211,31 @@ export const marineApplicationAdminService = {
     }
 
     const lastUpdated = new Date().toISOString().slice(0, 10)
+    const assignmentPatch = {
+      assignedTeamId: teamId,
+      assignedUserId: userId,
+      ...(options?.priority ? { priority: options.priority } : {}),
+      ...(options?.isVip !== undefined ? { isVip: options.isVip } : {}),
+      lastUpdated,
+    }
     const singleIndex = mockSingleApplications.findIndex(row => row.id === applicationId)
     if (singleIndex >= 0) {
       mockSingleApplications[singleIndex] = {
         ...mockSingleApplications[singleIndex],
-        assignedTeamId: teamId,
-        assignedUserId: userId,
-        lastUpdated,
+        ...assignmentPatch,
       }
+      const bits = [
+        user.fullName,
+        team.name,
+        options?.priority,
+        options?.isVip ? 'VIP' : undefined,
+      ].filter(Boolean)
+      applicationCaseActivityService.addActivity(applicationId, {
+        action: 'Consultant assigned',
+        detail: bits.join(' · '),
+        module: 'assignment',
+        actor: user.fullName,
+      })
       return mockSingleApplications[singleIndex]
     }
 
@@ -223,10 +243,20 @@ export const marineApplicationAdminService = {
     if (bulkIndex >= 0) {
       mockBulkBatches[bulkIndex] = {
         ...mockBulkBatches[bulkIndex],
-        assignedTeamId: teamId,
-        assignedUserId: userId,
-        lastUpdated,
+        ...assignmentPatch,
       }
+      const bits = [
+        user.fullName,
+        team.name,
+        options?.priority,
+        options?.isVip ? 'VIP' : undefined,
+      ].filter(Boolean)
+      applicationCaseActivityService.addActivity(applicationId, {
+        action: 'Consultant assigned',
+        detail: bits.join(' · '),
+        module: 'assignment',
+        actor: user.fullName,
+      })
       return mockBulkBatches[bulkIndex]
     }
 

@@ -253,17 +253,42 @@ export function applyAdminDashboardFilters(
         ...slice,
         value: scaleInt(slice.value, factor),
       })),
-      ageingBuckets: data.opsQueueSnapshot.ageingBuckets.map((bucket) => ({
+      ageingByQueue: data.opsQueueSnapshot.ageingByQueue.map((bucket) => ({
         ...bucket,
-        count: scaleInt(bucket.count, factor),
+        counts: {
+          '0–4h': scaleInt(bucket.counts['0–4h'], factor),
+          '4–24h': scaleInt(bucket.counts['4–24h'], factor),
+          '1–3d': scaleInt(bucket.counts['1–3d'], factor),
+          '3d+': scaleInt(bucket.counts['3d+'], factor),
+        },
       })),
       workloadBySegment: data.opsQueueSnapshot.workloadBySegment.map((row) => ({
         ...row,
-        verification: scaleInt(row.verification, factor),
-        payment: scaleInt(row.payment, factor),
-        arrange: scaleInt(row.arrange, factor),
-        submission: scaleInt(row.submission, factor),
+        draft: scaleInt(row.draft, factor),
+        verification_pending: scaleInt(row.verification_pending, factor),
+        online_submission_pending: scaleInt(row.online_submission_pending, factor),
+        pending_payment: scaleInt(row.pending_payment, factor),
+        vfs_submission_pending: scaleInt(row.vfs_submission_pending, factor),
+        collection_pending: scaleInt(row.collection_pending, factor),
+        collected: scaleInt(row.collected, factor),
+        dispatched: scaleInt(row.dispatched, factor),
       })),
     },
+    topClients: data.topClients.map((row) => ({
+      ...row,
+      value: scaleInt(row.value, factor),
+    })),
+    topCountries: data.topCountries.map((row) => ({
+      ...row,
+      value: scaleInt(row.value, factor),
+    })),
+    submissionByJurisdiction: data.submissionByJurisdiction.map((row) => ({
+      ...row,
+      value: scaleInt(row.value, factor),
+    })),
+    visibilityFunnel: data.visibilityFunnel.map((slice) => ({
+      ...slice,
+      value: scaleInt(slice.value, factor),
+    })),
   }
 }

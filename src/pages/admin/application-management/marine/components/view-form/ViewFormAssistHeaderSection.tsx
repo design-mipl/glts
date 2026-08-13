@@ -9,6 +9,7 @@ import {
 import { buildApplicationOverviewMetaRows } from '@/pages/customer/features/applications/utils/applicationOverviewMetaRows'
 import { toApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
 import { resolveApplicationReferenceDisplay } from '@/pages/customer/features/applications/utils/gltsReferenceIds'
+import { ApplicationVipStar } from '../../../shared/components/ApplicationVipStar'
 import type { VerifyOverviewData } from '../../utils/verifyDocumentsUtils'
 
 interface ViewFormAssistHeaderSectionProps {
@@ -42,15 +43,18 @@ export function ViewFormAssistHeaderSection({
             spacing={1.5}
           >
             <Box sx={{ minWidth: 0, flexShrink: { sm: 1 } }}>
-              <Typography
-                variant={ADMIN_RECORD_PAGE_TITLE_VARIANT}
-                component="h1"
-                fontWeight={700}
-                color="text.primary"
-                sx={ADMIN_RECORD_PAGE_TITLE_SX}
-              >
-                {title}
-              </Typography>
+              <Stack direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap">
+                <Typography
+                  variant={ADMIN_RECORD_PAGE_TITLE_VARIANT}
+                  component="h1"
+                  fontWeight={700}
+                  color="text.primary"
+                  sx={ADMIN_RECORD_PAGE_TITLE_SX}
+                >
+                  {title}
+                </Typography>
+                {overview.isVip ? <ApplicationVipStar size={18} /> : null}
+              </Stack>
               {description ? (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75, maxWidth: 720 }}>
                   {description}
@@ -98,6 +102,7 @@ export function ViewFormAssistHeaderSection({
             <Grid container spacing={1.5} columns={{ xs: 2, md: 5 }}>
               {buildApplicationOverviewMetaRows(reviewOverview, {
                 travelerCount: overview.travelerCount,
+                includeConsultantAssignment: true,
               }).map(([label, value]) => (
                 <Grid size={1} key={label} sx={{ minWidth: 0 }}>
                   <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>{label}</Typography>

@@ -5,6 +5,14 @@ export type ApplicationOperationalStatus =
   | 'Verification Pending'
   | 'Document Rejected'
   | 'Correction Required'
+  | 'Ops · Correction Required'
+  | 'Ops · Document Missing'
+  | 'Docs · Correction Required'
+  | 'Docs · Document Missing / Blocked'
+  | 'Submission Pending'
+  | 'Form Pending'
+  | 'Pending Payment'
+  | 'Embassy/VFS Submission Pending'
   | 'Submitted'
   | 'Appointment Booked'
   | 'Passport Ready'
@@ -47,6 +55,14 @@ export const SUBMITTED_OPERATIONAL_STATUSES: ApplicationOperationalStatus[] = [
   'Verification Pending',
   'Document Rejected',
   'Correction Required',
+  'Ops · Correction Required',
+  'Ops · Document Missing',
+  'Docs · Correction Required',
+  'Docs · Document Missing / Blocked',
+  'Submission Pending',
+  'Form Pending',
+  'Pending Payment',
+  'Embassy/VFS Submission Pending',
   'Appointment Booked',
   'Passport Ready',
   'Completed',

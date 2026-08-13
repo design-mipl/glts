@@ -23,6 +23,8 @@ export interface AdminWorkspaceShellProps {
   headerActions?: ReactNode
   /** Left nav heading — defaults to "Sections". */
   navTitle?: string
+  /** Left nav column width at `lg+` — defaults to 280. */
+  navWidth?: number
   sections: AdminWorkspaceSectionNavItem[]
   activeSectionId?: string
   onSectionClick: (sectionId: string) => void
@@ -40,6 +42,7 @@ export function AdminWorkspaceShell({
   description,
   headerActions,
   navTitle = 'Sections',
+  navWidth = 280,
   sections,
   activeSectionId,
   onSectionClick,
@@ -98,7 +101,7 @@ export function AdminWorkspaceShell({
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', lg: '280px minmax(0, 1fr)' },
+              gridTemplateColumns: { xs: '1fr', lg: `${navWidth}px minmax(0, 1fr)` },
               alignItems: 'stretch',
               minHeight: { xs: 280, md: 360 },
             }}

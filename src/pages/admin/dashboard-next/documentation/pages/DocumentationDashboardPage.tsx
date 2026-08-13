@@ -100,6 +100,7 @@ export function DocumentationDashboardPage() {
   const workBadge =
     data.submissionPendingRows.length +
     data.pendingPaymentRows.length +
+    data.arrangeInsuranceRows.length +
     data.waitingOnOpsRows.length
 
   const tabProps: DocumentationDashboardTabProps = {
@@ -116,7 +117,7 @@ export function DocumentationDashboardPage() {
     <DashboardWorkspace
       workspaceId="documentation"
       title="Documentation dashboard"
-      subtitle={`Submission Pending workbench for ${data.executiveName} — QC, forms, payment, mark submitted.`}
+      subtitle={`Documentation workbench for ${data.executiveName} — Submission Pending, Form Pending, Pending Payment.`}
       loading={loading}
       error={dashboard.isError}
       onRetry={dashboard.retry}
@@ -155,7 +156,6 @@ export function DocumentationDashboardPage() {
           id: 'reports',
           label: 'Reports',
           icon: <FileSpreadsheet size={16} />,
-          hidden: true,
           content: <ReportsTab {...tabProps} />,
         },
       ]}

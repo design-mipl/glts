@@ -10,6 +10,7 @@ Keep this folder for extended reference docs only.
 - [Product UI Architecture & UX Standards](./PRODUCT_UI_ARCHITECTURE_UX_STANDARDS.md) — deeper surface-level UX guidance.
 - [Admin Module Implementation Guide](./ADMIN_MODULE_IMPLEMENTATION_GUIDE.md) — step-by-step admin recipes (listing, detail, dashboard, forms) mapped to template showcase and component library.
 - [Client Management E2E Flow](./CLIENT_MANAGEMENT_E2E_FLOW.md) — Lead → Quotation → Agreement → Client Account flowcharts (Mermaid; view outside Cursor).
+- [Application Management — Status & Queue Flow](./project-document/application-management.md) — Ops/Docs QC outcomes, dual queue (Submission Pending + Pending Payment), Embassy/VFS handoff.
 
 ## Cross-doc UI rule highlights
 

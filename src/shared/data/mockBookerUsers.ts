@@ -36,7 +36,7 @@ export const SEED_BOOKER_USERS: BookerUser[] = [
       { id: 'bkr-login-1', timestamp: ts(0), device: 'Chrome on Windows', location: 'Mumbai, IN', status: 'success' },
     ],
     applicationActivity: [
-      { id: 'bkr-app-1', applicationId: 'GLTS-APP-2026-847', title: 'Schengen Business Visa', action: 'Created application', timestamp: ts(15) },
+      { id: 'bkr-app-1', applicationId: 'GL-847', title: 'Schengen Business Visa', action: 'Created application', timestamp: ts(15) },
     ],
   },
   {
@@ -70,8 +70,8 @@ export const SEED_BOOKER_USERS: BookerUser[] = [
       { id: 'bkr-login-2', timestamp: ts(1), device: 'Firefox on macOS', location: 'Singapore, SG', status: 'success' },
     ],
     applicationActivity: [
-      { id: 'bkr-app-2', applicationId: 'GLTS-APP-2026-901', title: 'Japan Business Visa', action: 'Created application', timestamp: ts(10) },
-      { id: 'bkr-app-3', applicationId: 'GLTS-APP-2026-712', title: 'UAE Visit Visa', action: 'Uploaded documents', timestamp: ts(5) },
+      { id: 'bkr-app-2', applicationId: 'GL-901', title: 'Japan Business Visa', action: 'Created application', timestamp: ts(10) },
+      { id: 'bkr-app-3', applicationId: 'GL-712', title: 'UAE Visit Visa', action: 'Uploaded documents', timestamp: ts(5) },
     ],
   },
   {
@@ -107,7 +107,7 @@ export const SEED_BOOKER_USERS: BookerUser[] = [
       { id: 'bkr-login-3', timestamp: ts(0), device: 'Chrome on Windows', location: 'Mumbai, IN', status: 'success' },
     ],
     applicationActivity: [
-      { id: 'bkr-app-4', applicationId: 'GLTS-APP-2026-847', title: 'Schengen Business Visa', action: 'Created application', timestamp: ts(8) },
+      { id: 'bkr-app-4', applicationId: 'GL-847', title: 'Schengen Business Visa', action: 'Created application', timestamp: ts(8) },
     ],
   },
   {

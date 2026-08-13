@@ -23,6 +23,10 @@ import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicati
 import { buildProcessingTimelineFromQueueRow } from '@/shared/utils/applicationProcessingTimeline'
 import { isApplicantDocumentSatisfied } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import type { BadgeProps } from '@/design-system/UIComponents/Display/Badge'
+import {
+  resolveApplicationConsultantName,
+  resolveApplicationConsultantTeamName,
+} from '../../shared/utils/applicationConsultantUtils'
 
 export type VerifyDocumentBadgeLabel = 'Pending' | 'Rejected' | 'Verified'
 
@@ -131,6 +135,10 @@ export interface VerifyOverviewData {
   compassNo?: string
   joiningPort?: string
   entityName?: string
+  consultantName?: string
+  consultantTeamName?: string
+  priority?: string
+  isVip?: boolean
 }
 
 export interface VerifyRejectedDocumentEntry {
@@ -398,5 +406,17 @@ export function buildOverviewFromDetail(
     compassNo: compassNo && compassNo !== '—' ? compassNo : undefined,
     joiningPort: joiningPort && joiningPort !== '—' ? joiningPort : undefined,
     entityName: entityName && entityName !== '—' ? entityName : undefined,
+    consultantName: (() => {
+      if (!listing?.assignedUserId) return undefined
+      const name = resolveApplicationConsultantName(listing)
+      return name !== '—' ? name : undefined
+    })(),
+    consultantTeamName: (() => {
+      if (!listing?.assignedTeamId) return undefined
+      const name = resolveApplicationConsultantTeamName(listing)
+      return name !== '—' ? name : undefined
+    })(),
+    priority: listing?.priority,
+    isVip: listing?.isVip,
   }
 }
