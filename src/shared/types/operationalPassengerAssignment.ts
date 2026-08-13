@@ -76,6 +76,7 @@ export interface OperationalPassengerRow {
   gltsApplicationId: string
   sequenceNo: number
   passengerName: string
+  passengerRank: string
   passportNo: string
   passengerPhone: string
   passengerEmail: string

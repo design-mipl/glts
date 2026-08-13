@@ -23,14 +23,13 @@ export interface TravelTicketWorkflow {
 export interface InsuranceWorkflow {
   fileName?: string
   policyNumber?: string
-  /** Vendor / GLTS invoice reference for the arranged policy. */
+  /** @deprecated No longer collected in the insurance upload popup. */
   invoiceNumber?: string
   insuranceProvider?: string
   validFrom?: string
   validTo?: string
   /**
    * GLTS arrangement cost (INR).
-   * Kept for expense sync / fee catalog; not collected in the insurance upload popup.
    */
   arrangementAmount?: string
   vendorId?: string
@@ -242,8 +241,7 @@ export function formatWorkflowSummary(doc: ApplicantDocumentItem): string | null
   const w = doc.insurance
   if (w?.fileName?.trim()) parts.push(w.fileName.trim())
   if (w?.policyNumber?.trim()) parts.push(`Policy: ${w.policyNumber.trim()}`)
-  if (w?.invoiceNumber?.trim()) parts.push(`Invoice: ${w.invoiceNumber.trim()}`)
-  if (w?.vendorName?.trim()) parts.push(`Vendor: ${w.vendorName.trim()}`)
+  appendCommercialDetails(parts, w)
   if (w?.insuranceProvider?.trim()) parts.push(w.insuranceProvider.trim())
   const from = insuranceValidFrom(w)
   const to = insuranceValidTo(w)

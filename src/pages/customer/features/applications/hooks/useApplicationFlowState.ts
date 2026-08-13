@@ -21,6 +21,8 @@ export interface ApplicationFlowState {
   purposeLabel: string
   travelDate: string
   referencePo: string
+  poCidNo: string
+  compassNo: string
   billingAddress: string
   expectedReturnDate: string
   /** Selected passport issuing state — maps to visa jurisdiction via applicable states. */
@@ -81,6 +83,8 @@ const defaultState: ApplicationFlowState = {
   purposeLabel: '',
   travelDate: '',
   referencePo: '',
+  poCidNo: '',
+  compassNo: '',
   billingAddress: '',
   expectedReturnDate: '',
   issuedPassportState: '',

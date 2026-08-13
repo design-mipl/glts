@@ -13,6 +13,7 @@ import {
   createGltsBatchId,
   ensureFlowGltsApplicationId,
 } from '@/pages/customer/features/applications/utils/gltsReferenceIds'
+import { applicationReferenceFieldsFromFlow } from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import { loadSession } from '@/shared/auth/session'
@@ -83,7 +84,13 @@ function buildSubmittedSingleRow(
     createdByEmail: creator.createdByEmail,
     createdByRole: creator.createdByRole,
     customerSegment,
-    poReference: state.referencePo || undefined,
+    ...applicationReferenceFieldsFromFlow({
+      poCidNo: state.poCidNo,
+      compassNo: state.compassNo,
+      referencePo: state.referencePo,
+      joiningPort: state.joiningPort,
+      entityName: state.entityName,
+    }),
   }
 }
 
@@ -129,7 +136,13 @@ function buildSubmittedBulkRow(
     createdByEmail: creator.createdByEmail,
     createdByRole: creator.createdByRole,
     customerSegment,
-    poReference: state.referencePo || undefined,
+    ...applicationReferenceFieldsFromFlow({
+      poCidNo: state.poCidNo,
+      compassNo: state.compassNo,
+      referencePo: state.referencePo,
+      joiningPort: state.joiningPort,
+      entityName: state.entityName,
+    }),
   }
 }
 

@@ -1,4 +1,5 @@
 import type { ApplicationFlowState } from '../hooks/useApplicationFlowState'
+import { splitLegacyPoReference } from './applicationReferenceUtils'
 
 export interface ApplicationReviewOverview {
   countryName: string
@@ -11,7 +12,11 @@ export interface ApplicationReviewOverview {
   jurisdiction?: string
   companyName?: string
   vesselName?: string
+  /** @deprecated Legacy combined reference — prefer poCidNo / compassNo */
   poReference?: string
+  poCidNo?: string
+  compassNo?: string
+  joiningPort?: string
   entityName?: string
   gltsApplicationId?: string
   gltsBatchId?: string
@@ -30,10 +35,14 @@ export function toApplicationReviewOverview(source: {
   companyName?: string
   vesselName?: string
   poReference?: string
+  poCidNo?: string
+  compassNo?: string
+  joiningPort?: string
   entityName?: string
   gltsApplicationId?: string
   gltsBatchId?: string
 }): ApplicationReviewOverview {
+  const legacy = splitLegacyPoReference(source.poReference)
   return {
     countryName: source.countryName,
     countryFlag: source.countryFlag,
@@ -46,6 +55,9 @@ export function toApplicationReviewOverview(source: {
     companyName: source.companyName,
     vesselName: source.vesselName,
     poReference: source.poReference,
+    poCidNo: source.poCidNo?.trim() || legacy.poCidNo || undefined,
+    compassNo: source.compassNo?.trim() || legacy.compassNo || undefined,
+    joiningPort: source.joiningPort?.trim() || undefined,
     entityName: source.entityName,
     gltsApplicationId: source.gltsApplicationId,
     gltsBatchId: source.gltsBatchId,
@@ -56,6 +68,10 @@ export function buildApplicationReviewOverviewFromFlowState(
   state: ApplicationFlowState,
   overrides?: Partial<Pick<ApplicationReviewOverview, 'gltsApplicationId' | 'gltsBatchId'>>,
 ): ApplicationReviewOverview {
+  const legacy = splitLegacyPoReference(state.referencePo)
+  const poCidNo = state.poCidNo.trim() || legacy.poCidNo
+  const compassNo = state.compassNo.trim() || legacy.compassNo
+
   return {
     countryName: state.countryName,
     countryFlag: state.countryFlag,
@@ -68,7 +84,10 @@ export function buildApplicationReviewOverviewFromFlowState(
     jurisdiction: state.jurisdiction,
     companyName: state.companyName || undefined,
     vesselName: state.vesselName || undefined,
-    poReference: state.referencePo || undefined,
+    poReference: poCidNo || state.referencePo || undefined,
+    poCidNo: poCidNo || undefined,
+    compassNo: compassNo || undefined,
+    joiningPort: state.joiningPort.trim() || undefined,
     entityName: state.entityName || undefined,
     gltsApplicationId: (overrides?.gltsApplicationId ?? state.gltsApplicationId) || undefined,
     gltsBatchId: (overrides?.gltsBatchId ?? state.gltsBatchId) || undefined,

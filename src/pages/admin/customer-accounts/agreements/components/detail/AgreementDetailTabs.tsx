@@ -15,7 +15,6 @@ import {
   deriveFinanceContactPersons,
   getSelectedFinanceContactPersons,
 } from '@/shared/utils/agreementFinanceContacts'
-import { useToast } from '@/design-system/UIComponents'
 import { AgreementBillingConfigSection } from '../workspace/AgreementBillingConfigSection'
 import { AgreementFinanceContactsPanel } from '../workspace/AgreementFinanceContactsPanel'
 import { AgreementOnboardingDocumentsSection } from '../workspace/AgreementOnboardingDocumentsSection'
@@ -195,28 +194,8 @@ export function TaxConfigurationTab({ agreement }: TabProps) {
   return <AgreementTaxConfigSection data={formData} errors={{}} onChange={() => {}} readOnly />
 }
 
-export function DocumentsTab({
-  agreement,
-  onReload,
-}: TabProps & { onReload: () => void }) {
-  const { showToast } = useToast()
+export function DocumentsTab({ agreement }: TabProps) {
   const formData = commercialAgreementService.agreementToFormData(agreement)
-
-  const handleDocumentStatusChange = (
-    documentKey: string,
-    status: 'pending' | 'uploaded' | 'verified' | 'rejected',
-  ) => {
-    const updated = commercialAgreementService.updateDocumentStatus(agreement.id, documentKey, status)
-    if (!updated) {
-      showToast({ title: 'Unable to update document', variant: 'error' })
-      return
-    }
-    showToast({
-      title: status === 'verified' ? 'Document verified' : status === 'rejected' ? 'Document rejected' : 'Document updated',
-      variant: status === 'rejected' ? 'warning' : 'success',
-    })
-    onReload()
-  }
 
   return (
     <AgreementOnboardingDocumentsSection
@@ -226,8 +205,6 @@ export function DocumentsTab({
       onClearError={() => {}}
       readOnly
       showFinanceContacts={false}
-      allowVerification
-      onDocumentStatusChange={handleDocumentStatusChange}
     />
   )
 }

@@ -1,3 +1,4 @@
+import type { CSSProperties, ReactNode } from 'react'
 import { Skeleton } from '@mui/material'
 import {
   BarChart as RechartsBarChart,
@@ -10,6 +11,12 @@ export interface BarConfig {
   key: string
   label: string
   color?: string
+}
+
+export interface BarTooltipExtra {
+  key: string
+  label: string
+  format?: (value: unknown) => string
 }
 
 export interface BarChartProps {
@@ -25,6 +32,8 @@ export interface BarChartProps {
   loading?: boolean
   formatX?: (value: any) => string
   formatY?: (value: any) => string
+  /** Extra row fields shown in the hover tooltip (not plotted as bars). */
+  tooltipExtras?: BarTooltipExtra[]
   /** Split long category labels onto two lines (space near mid). Best with horizontal bars. */
   wrapCategoryLabels?: boolean
   barSize?: number
@@ -92,6 +101,89 @@ function TwoLineCategoryTick({
   )
 }
 
+function BarChartTooltip({
+  active,
+  label,
+  payload,
+  extras,
+  contentStyle,
+  labelColor,
+  itemColor,
+  formatY,
+}: {
+  active?: boolean
+  label?: string | number
+  payload?: Array<{
+    dataKey?: string | number
+    name?: string
+    value?: unknown
+    color?: string
+    payload?: Record<string, unknown>
+  }>
+  extras?: BarTooltipExtra[]
+  contentStyle: CSSProperties
+  labelColor: string
+  itemColor: string
+  formatY?: (value: any) => string
+}): ReactNode {
+  if (!active || !payload?.length) return null
+
+  const row = payload[0]?.payload
+
+  return (
+    <div style={contentStyle}>
+      <div style={{ color: labelColor, fontSize: 11, marginBottom: 4 }}>{label}</div>
+      {payload.map((entry) => {
+        const raw = entry.value
+        const display =
+          formatY && typeof raw === 'number' ? formatY(raw) : String(raw ?? '')
+        return (
+          <div
+            key={String(entry.dataKey)}
+            style={{
+              color: itemColor,
+              fontSize: 12,
+              display: 'flex',
+              gap: 8,
+              alignItems: 'baseline',
+            }}
+          >
+            <span>{entry.name}</span>
+            <span style={{ marginLeft: 'auto', fontWeight: 600 }}>{display}</span>
+          </div>
+        )
+      })}
+      {extras?.map((extra) => {
+        if (!row || row[extra.key] == null || row[extra.key] === '') return null
+        const raw = row[extra.key]
+        const display = extra.format
+          ? extra.format(raw)
+          : formatY && typeof raw === 'number'
+            ? formatY(raw)
+            : String(raw)
+        return (
+          <div
+            key={extra.key}
+            style={{
+              color: itemColor,
+              fontSize: 12,
+              display: 'flex',
+              gap: 8,
+              alignItems: 'baseline',
+              marginTop: 4,
+              paddingTop: 4,
+              borderTop: `1px solid ${labelColor}22`,
+            }}
+          >
+            <span>{extra.label}</span>
+            <span style={{ marginLeft: 'auto', fontWeight: 600 }}>{display}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function BarChart({
   data,
   bars,
@@ -105,12 +197,14 @@ export default function BarChart({
   loading = false,
   formatX,
   formatY,
+  tooltipExtras,
   wrapCategoryLabels = false,
   barSize = 32,
 }: BarChartProps) {
   const ct = useChartTheme()
   const h = ct.isMobile ? Math.round(height * 0.75) : height
   const isHorizontal = orientation === 'horizontal'
+  const hasTooltipExtras = Boolean(tooltipExtras && tooltipExtras.length > 0)
 
   if (loading) return <Skeleton variant="rectangular" width="100%" height={h} sx={{ borderRadius: 1 }} />
 
@@ -171,16 +265,51 @@ export default function BarChart({
               textAnchor={wrapCategoryLabels ? 'middle' : 'end'}
               height={wrapCategoryLabels ? 48 : 56}
             />
-            <YAxis tick={ct.axisStyle} tickLine={false} axisLine={false} width={ct.isMobile ? 30 : 42} tickFormatter={formatY} />
+            <YAxis
+              tick={ct.axisStyle}
+              tickLine={false}
+              axisLine={false}
+              width={formatY ? (ct.isMobile ? 44 : 56) : ct.isMobile ? 30 : 42}
+              tickFormatter={formatY}
+            />
           </>
         )}
         {showTooltip && (
-          <Tooltip
-            contentStyle={ct.tooltipStyle}
-            labelStyle={{ color: ct.theme.palette.text.secondary, fontSize: 11, marginBottom: 4 }}
-            itemStyle={{ color: ct.theme.palette.text.primary, fontSize: 12 }}
-            cursor={{ fill: ct.theme.palette.action.hover }}
-          />
+          hasTooltipExtras ? (
+            <Tooltip
+              cursor={{ fill: ct.theme.palette.action.hover }}
+              content={({ active, label, payload }) => (
+                <BarChartTooltip
+                  active={active}
+                  label={label}
+                  payload={payload as Array<{
+                    dataKey?: string | number
+                    name?: string
+                    value?: unknown
+                    color?: string
+                    payload?: Record<string, unknown>
+                  }>}
+                  extras={tooltipExtras}
+                  contentStyle={ct.tooltipStyle}
+                  labelColor={ct.theme.palette.text.secondary}
+                  itemColor={ct.theme.palette.text.primary}
+                  formatY={formatY}
+                />
+              )}
+            />
+          ) : (
+            <Tooltip
+              contentStyle={ct.tooltipStyle}
+              labelStyle={{ color: ct.theme.palette.text.secondary, fontSize: 11, marginBottom: 4 }}
+              itemStyle={{ color: ct.theme.palette.text.primary, fontSize: 12 }}
+              cursor={{ fill: ct.theme.palette.action.hover }}
+              formatter={
+                formatY
+                  ? ((value: number | string) => formatY(value)) as never
+                  : undefined
+              }
+            />
+          )
         )}
         {showLegend && bars.length > 1 && <Legend {...ct.legendProps} />}
         {bars.map((bar, i) => {
@@ -208,7 +337,8 @@ export default function BarChart({
                 : null}
             </Bar>
           )
-        })}      </RechartsBarChart>
+        })}
+      </RechartsBarChart>
     </ResponsiveContainer>
   )
 }

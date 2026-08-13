@@ -203,6 +203,7 @@ function PassengerContextCard({
       <ContextCardSection>
         <ContextGroup title="Passenger details">
           <MetaGrid>
+            <ContextMetaItem label="Rank" value={record.passengerRank} />
             <ContextMetaItem label="Passport" value={record.passportNo} mono />
             <ContextMetaItem label="Sequence" value={String(record.sequenceNo)} mono />
             <ContextMetaItem label="Phone number" value={record.passengerPhone} />

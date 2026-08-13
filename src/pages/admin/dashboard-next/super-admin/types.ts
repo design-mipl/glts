@@ -2,6 +2,8 @@ import type {
   DashboardAlertItem,
   DashboardKpiItem,
   DashboardProgressItem,
+  FinanceDashboardWorkspaceData,
+  DashboardFinanceRiskCallouts,
 } from '../shared/types'
 import type { MetricComparisonItem } from '../shared/widgets/common/MetricComparison'
 import type { RecentActivityItem } from '../shared/widgets/common/RecentActivity'
@@ -28,6 +30,16 @@ import type {
   ManagementAlertRecord,
   PredictivePanelModel,
 } from '../shared/dashboard-intelligence'
+import type { SuperAdminAnalyticsData } from './types/analyticsTypes'
+
+export type {
+  SuperAdminAnalyticsData,
+  AnalyticsPeriodMonths,
+  AnalyticsMetricHeadline,
+  AnalyticsTrendChart,
+  AnalyticsStackedChart,
+  AnalyticsLeadSourceRow,
+} from './types/analyticsTypes'
 
 export interface SuperAdminDashboardFilters {
   date: string
@@ -76,6 +88,19 @@ export interface SuperAdminRankItem {
   value?: string | number
   progress?: number
   tone?: 'neutral' | 'positive' | 'negative' | 'warning' | 'info'
+  /** Destination scope key (uae, schengen, uk, us) when row is country-specific. */
+  destinationCountry?: string
+}
+
+/** Client margin intelligence — margin % and MTD revenue. */
+export interface SuperAdminClientMarginItem {
+  id: string
+  client: string
+  segment: string
+  marginPercent: number
+  revenueMtdL: number
+  applicationsMtd?: number
+  detail?: string
 }
 
 export interface SuperAdminSegmentCard {
@@ -254,10 +279,97 @@ export interface SuperAdminFinanceKpis {
   creditExposure: string
 }
 
+/** Finance tab — five-card executive KPI strip. */
+export type SuperAdminFinanceKpiStrip = import('../shared/types').DashboardFinanceKpiStrip
+
+export interface SuperAdminSegmentCommercialKpis {
+  revenue: SuperAdminPeriodHero
+  grossMarginPercent: string
+  grossMarginDelta?: number
+  totalApplications: string | number
+  totalApplicationsDelta?: number
+  approvalPercent: string
+  approvalDelta?: number
+  outstanding: string
+  outstandingDelta?: number
+  collections: string
+  collectionsDelta?: number
+  activeClients: string | number
+  activeClientsDelta?: number
+  pipelineValue: string
+  pipelineDelta?: number
+  /**
+   * Share of applications from returning customers (retail) or
+   * from existing active accounts (marine / corporate / B2B).
+   */
+  repeatRatePercent: string
+  repeatRateDelta?: number
+  /** Numerator for supporting line (e.g. 142 of 410 apps). */
+  repeatApplications?: number
+  /** Denominator for supporting line (defaults to totalApplications). */
+  repeatEligibleApplications?: number
+}
+
+/**
+ * Client-acquisition funnel stage counts (cohort that reached each stage).
+ * Drop-off / conversion are derived in `computeAcquisitionFunnel`.
+ */
+export interface SuperAdminAcquisitionFunnelStage {
+  id: string
+  label: string
+  count: number
+  /** Optional deep-link into customer-accounts listing. */
+  href?: string
+}
+
+export interface SuperAdminAcquisitionFunnel {
+  /** What “entry” means in the conversion formula (e.g. Leads created). */
+  entryLabel: string
+  /** What “success” means (e.g. Accounts activated / Quotes converted). */
+  exitLabel: string
+  /** Period caption shown with the headline rate (e.g. MTD). */
+  periodLabel?: string
+  stages: SuperAdminAcquisitionFunnelStage[]
+}
+
+/** Country / destination mix — volume, revenue, GP, and rejection for metric toggle. */
+export interface SuperAdminDestinationMixItem {
+  id: string
+  label: string
+  /** Filter key aligned with dashboard country filter (uae, schengen, uk, us). */
+  countryKey?: string | null
+  /** Application / case volume. */
+  volume: number
+  /** Gross revenue in ₹ lakhs. */
+  revenueL: number
+  /** Gross profit in ₹ lakhs (pie “margin” mode uses this, not margin %). */
+  grossProfitL: number
+  /** Gross margin % — tooltip / legend only (not used as pie size). */
+  marginPct: number
+  /** Embassy / VFS rejection rate (refusals ÷ decided). Used in Rejection bar mode. */
+  rejectionPct: number
+  /** Embassy / VFS approval rate (approved ÷ decided). */
+  approvalPct: number
+  rejectedCount: number
+  decidedCount: number
+  /** Net revenue in ₹ lakhs after rejection refunds and failed-case costs. */
+  netRevenueL: number
+  /** Approved / successfully completed applications (denominator — not total volume). */
+  successfulApplications: number
+  /** Net revenue ÷ successful applications, in ₹ (rupees). */
+  netRevenuePerSuccessfulApp: number
+}
+
+export type SuperAdminDestinationMetric = 'volume' | 'revenue' | 'margin' | 'rejection'
+
 export interface SuperAdminVerticalPreview {
-  kpis: MetricComparisonItem[]
+  /** Segment commercial KPI strip (revenue period + margin / apps / AR). */
+  commercialKpis: SuperAdminSegmentCommercialKpis
+  /** Lead → quote → (agreement → account) acquisition funnel. */
+  acquisitionFunnel: SuperAdminAcquisitionFunnel
   byEntity: SuperAdminRankItem[]
-  byCountry: SuperAdminRankItem[]
+  /** Destination / country mix with volume · revenue · GP. */
+  byDestination: SuperAdminDestinationMixItem[]
   pending: SuperAdminRankItem[]
   topClients: SuperAdminRankItem[]
   notes: string[]
@@ -281,6 +393,11 @@ export interface SuperAdminDashboardData {
   cashPosition: SuperAdminCashPosition
   /** Mock EBITDA / DSO / GP / credit exposure until Finance APIs. */
   financeKpis: SuperAdminFinanceKpis
+  /** Finance tab KPI strip — available funds · net revenue · margin · overdue · DSO. */
+  financeKpiStrip: SuperAdminFinanceKpiStrip
+  /** Secondary finance risk callouts — credit exposure · SLA cash at risk. */
+  financeRiskCallouts: DashboardFinanceRiskCallouts
+  financeWorkspace: FinanceDashboardWorkspaceData
   marginByVertical: SuperAdminRankItem[]
   quickStats: DashboardKpiItem[]
   metricComparison: MetricComparisonItem[]
@@ -302,7 +419,8 @@ export interface SuperAdminDashboardData {
   marineTimeline: MarineTimelineRow[]
   passportJourney: SuperAdminPassportJourneyData
   marineByCompany: SuperAdminRankItem[]
-  marineByCountry: SuperAdminRankItem[]
+  /** Marine destination / country mix (volume · revenue · GP). */
+  marineByDestination: SuperAdminDestinationMixItem[]
   pendingCrewVisas: SuperAdminRankItem[]
   topMarineClients: SuperAdminRankItem[]
   corporatePreview: SuperAdminVerticalPreview
@@ -324,6 +442,8 @@ export interface SuperAdminDashboardData {
   dormantClients: SuperAdminRankItem[]
   highMarginClients: SuperAdminRankItem[]
   lowMarginClients: SuperAdminRankItem[]
+  highMarginClientIntelligence: SuperAdminClientMarginItem[]
+  lowMarginClientIntelligence: SuperAdminClientMarginItem[]
   highRiskClients: SuperAdminRankItem[]
   clientActivity: RecentActivityItem[]
   visaDistribution: DistributionSlice[]
@@ -331,9 +451,13 @@ export interface SuperAdminDashboardData {
   staffLeaderboard: SuperAdminRankItem[]
   staffProductivity: DashboardProgressItem[]
   salesPlaceholder: SuperAdminSalesPlaceholder
-  marineMetrics: MetricComparisonItem[]
+  marineCommercialKpis: SuperAdminSegmentCommercialKpis
+  /** Marine Lead → Account acquisition funnel (customer-accounts). */
+  marineAcquisitionFunnel: SuperAdminAcquisitionFunnel
   recentReports: RecentReportItem[]
   reportNotifications: NotificationItem[]
+  /** Analytics tab — trend intelligence (revenue quality, retention, ops, sales). */
+  analytics: SuperAdminAnalyticsData
 }
 
 export interface SuperAdminWorkRow {

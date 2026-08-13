@@ -3,6 +3,7 @@ import {
   ClipboardList,
   FileSpreadsheet,
   Gauge,
+  HandCoins,
   LayoutDashboard,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -12,7 +13,8 @@ import { useAccountsDashboardNext } from '../hooks/useAccountsDashboardNext'
 import { ACCOUNTS_DASHBOARD_MOCK } from '../data/accountsDashboardMock'
 import { buildAccountsSearchItems } from '../data/accountsSearchItems'
 import { AccountsHeroStrip } from '../components/AccountsHeroStrip'
-import { OverviewTab, PerformanceTab, ReportsTab, WorkTab } from '../tabs'
+import { OverviewTab, PerformanceTab, ReportsTab, WorkTab, FinanceTab } from '../tabs'
+import { countReconciliationWorkBadge } from '../utils/accountsReconciliationDeskUtils'
 import type { AccountsDashboardTabProps } from '../types'
 
 export function AccountsDashboardPage() {
@@ -63,6 +65,7 @@ export function AccountsDashboardPage() {
 
   const workBadge =
     data.expenseDailyRows.length +
+    countReconciliationWorkBadge(data) +
     data.fundAllocationRows.filter((r) => r.allocationStatus === 'Pending').length +
     data.claimSheetRows.filter((r) => r.status === 'Pending review').length +
     data.vendorBillingRows.reduce((sum, r) => sum + r.awaitingInvoiceCount, 0) +
@@ -92,13 +95,29 @@ export function AccountsDashboardPage() {
       onFiltersChange={onFiltersChange}
       searchItems={searchItems}
       defaultTab="overview"
-      hero={<AccountsHeroStrip items={data.quickStats} loading={loading} />}
+      hero={
+        <AccountsHeroStrip
+          data={data}
+          loading={loading}
+          onOpenPerformance={() => openTab('performance')}
+          onOpenInvoices={openInvoices}
+          onOpenWork={() => openTab('work')}
+          onOpenReconciliation={() => navigate('/admin/finance/reconciliation')}
+          onOpenFinance={() => openTab('finance')}
+        />
+      }
       tabs={[
         {
           id: 'overview',
           label: 'Overview',
           icon: <LayoutDashboard size={16} />,
           content: <OverviewTab {...tabProps} />,
+        },
+        {
+          id: 'finance',
+          label: 'Finance',
+          icon: <HandCoins size={16} />,
+          content: <FinanceTab {...tabProps} />,
         },
         {
           id: 'work',

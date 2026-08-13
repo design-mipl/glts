@@ -1,3 +1,11 @@
+export { ExecutiveKpiCard } from './ExecutiveKpiCard'
+export type {
+  ExecutiveKpiCardProps,
+  ExecutiveKpiPeriodKey,
+  ExecutiveKpiPeriodOption,
+  ExecutiveKpiTone,
+} from './ExecutiveKpiCard'
+
 export { BusinessWidgetFrame } from './BusinessWidgetFrame'
 export type { BusinessWidgetFrameProps } from './BusinessWidgetFrame'
 

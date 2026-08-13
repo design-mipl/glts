@@ -46,6 +46,7 @@ export function buildVerifyApplicantSummaryFields(
     ctx,
     ['personal', 'passport', 'travel'],
     [
+      'rank',
       'traveler',
       'passportNo',
       'nationality',
@@ -64,16 +65,18 @@ export function buildVerifyApplicantSummaryFields(
 
   const Corporate = pickFields(
     ctx,
-    ['employment', 'address'],
+    ['employment', 'details', 'address'],
     [
       'crewId',
       'cdcNumber',
       'employmentOccupation',
       'lastContractSignDate',
+      'poCidNo',
+      'compassNo',
+      'joiningPort',
+      'billingEntity',
       'vesselName',
       'imoNumber',
-      'joiningPort',
-      'entityName',
       'location',
       'billingAddress',
     ],

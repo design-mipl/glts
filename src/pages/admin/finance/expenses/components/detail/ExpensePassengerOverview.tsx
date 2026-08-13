@@ -230,6 +230,7 @@ export function ExpensePassengerOverview({
           <ContextCardSection>
             <ContextGroup title="Passenger details">
               <MetaGrid>
+                <ContextMetaItem label="Rank" value={basicDetails.rank} />
                 <ContextMetaItem label="Passport" value={selectedRow.passportNo} mono />
                 <ContextMetaItem label="Phone number" value={phone} />
                 <ContextMetaItem label="Email address" value={email} />

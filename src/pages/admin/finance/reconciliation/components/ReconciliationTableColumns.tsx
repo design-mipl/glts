@@ -4,7 +4,7 @@ import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { ReconciliationItem, ReconciliationTab } from '@/shared/types/reconciliation'
 import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import { getExpensePaymentModeLabel } from '@/pages/admin/finance/expenses/config/expenseDetailFormConfig'
-import { getReconciliationStatusLabel } from '../config/reconciliationListingConfig'
+import { getReconciliationStatusBadgeColor, getReconciliationStatusLabel } from '../config/reconciliationListingConfig'
 import { formatReconciliationMoney } from '../utils/reconciliationListingUtils'
 
 export interface ReconciliationColumnHandlers {
@@ -23,7 +23,7 @@ function statusRender(row: ReconciliationItem) {
   return (
     <Badge
       label={getReconciliationStatusLabel(row.status)}
-      color={row.status === 'submitted' ? 'success' : 'warning'}
+      color={getReconciliationStatusBadgeColor(row.status)}
       size="sm"
     />
   )
@@ -43,7 +43,7 @@ function actionsColumn(onOpen: (row: ReconciliationItem) => void): Column<Reconc
         row={row}
         actions={[
           {
-            label: row.status === 'submitted' ? 'View' : 'Reconcile',
+            label: row.status === 'pending' ? 'Reconcile' : 'View',
             onClick: () => onOpen(row),
           },
         ]}
@@ -377,6 +377,10 @@ export function mapReconciliationRowsToGridItems(rows: ReconciliationItem[]) {
     subtitle: row.client || row.chargesName,
     meta: row.refNo,
     status: getReconciliationStatusLabel(row.status),
-    statusColor: (row.status === 'submitted' ? 'success' : 'warning') as 'success' | 'warning',
+    statusColor: (row.status === 'submitted'
+      ? 'success'
+      : row.status === 'rejected'
+        ? 'default'
+        : 'warning') as 'success' | 'warning' | 'default',
   }))
 }

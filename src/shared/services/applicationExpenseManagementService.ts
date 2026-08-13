@@ -146,7 +146,7 @@ function buildPassengersFromDetail(applicationId: string): ApplicationExpensePas
     passengerName: row.travelerName,
     passportNumber: row.passportNo,
     cdcNumber: row.basicDetails?.cdcNumber?.trim() || '—',
-    rank: row.additionalDetails?.employmentOccupation?.trim() || '—',
+    rank: row.basicDetails?.rank?.trim() || row.additionalDetails?.employmentOccupation?.trim() || '—',
     status: row.status === 'verified' ? 'Verified' : row.status === 'needs_review' ? 'Needs Review' : 'Processing',
     individualExpenseTotal: 0,
   }))

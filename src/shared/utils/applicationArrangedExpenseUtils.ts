@@ -43,7 +43,7 @@ function workflowHasCommercialFields(
 
   if (documentId === 'insurance') {
     const insurance = workflow as InsuranceWorkflow
-    return Boolean(insurance.policyNumber?.trim() && insurance.invoiceNumber?.trim())
+    return Boolean(insurance.policyNumber?.trim() && parseArrangementAmount(insurance.arrangementAmount) !== null)
   }
 
   return parseArrangementAmount(workflow.arrangementAmount) !== null
@@ -74,7 +74,7 @@ export function buildArrangedExpenseFromWorkflow(input: {
 
   if (input.documentId === 'insurance') {
     const insurance = input.workflow as InsuranceWorkflow
-    if (!insurance.policyNumber?.trim() || !insurance.invoiceNumber?.trim()) return null
+    if (!insurance.policyNumber?.trim()) return null
   }
 
   const amount = resolveWorkflowAmount(input.documentId, input.workflow)

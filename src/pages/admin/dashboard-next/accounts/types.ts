@@ -2,6 +2,13 @@ import type {
   DashboardAlertItem,
   DashboardKpiItem,
   DashboardProgressItem,
+  DashboardSegmentComparisonRow,
+  DashboardSegmentTrendPoint,
+  DashboardFinanceKpiStrip,
+  DashboardFinanceRiskCallouts,
+  DashboardClientIntelligenceData,
+  DashboardCommercialHeroData,
+  FinanceDashboardWorkspaceData,
 } from '../shared/types'
 import type { MetricComparisonItem } from '../shared/widgets/common/MetricComparison'
 import type { RecentActivityItem } from '../shared/widgets/common/RecentActivity'
@@ -137,6 +144,8 @@ export interface AccountsExpenseDailyRow {
     | 'courier'
     | 'ticketing'
     | 'cash'
+    | 'claim_sheet_cash'
+    | 'consulate_bank'
     | 'invoiced_uninvoiced'
   packLabel: string
   reference: string
@@ -184,7 +193,7 @@ export interface AccountsClaimSheetRow {
   groundOpsUser: string
   casesCount: number
   amount: string
-  status: 'Pending review' | 'Approved' | 'Rejected'
+  status: 'Pending review' | 'Approved' | 'Rejected' | 'Reconciled'
   submittedDate: string
   branch: string
 }
@@ -290,6 +299,14 @@ export interface AccountsDashboardData {
   topClients: AccountsTopRevenueRow[]
   topCountries: AccountsTopRevenueRow[]
   revenueBySegment: AccountsTopRevenueRow[]
+  segmentComparison: DashboardSegmentComparisonRow[]
+  segmentRevenueTrend: DashboardSegmentTrendPoint[]
+  segmentApplicationTrend: DashboardSegmentTrendPoint[]
+  financeKpiStrip: DashboardFinanceKpiStrip
+  financeRiskCallouts: DashboardFinanceRiskCallouts
+  financeWorkspace: FinanceDashboardWorkspaceData
+  clientIntelligence: DashboardClientIntelligenceData
+  commercialHero: DashboardCommercialHeroData
   purchaseVsRevenue: AccountsPurchaseVsRevenue
   dailyReports: AccountsDailyReportCard[]
   recentReports: RecentReportItem[]

@@ -1,5 +1,6 @@
 export interface ApplicantBasicDetails {
   crewId: string
+  rank: string
   applicantName: string
   passportNumber: string
   nationality: string
@@ -19,6 +20,7 @@ export const BASIC_DETAIL_REQUIRED_KEYS = [
 export function emptyApplicantBasicDetails(): ApplicantBasicDetails {
   return {
     crewId: '',
+    rank: '',
     applicantName: '',
     passportNumber: '',
     nationality: '',

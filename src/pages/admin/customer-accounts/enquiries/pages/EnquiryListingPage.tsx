@@ -19,12 +19,16 @@ import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
 import { getCurrentListingHref, navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { enquiryService } from '@/shared/services/enquiryService'
 import type { EnquiryFollowupOutcome, EnquiryRecord, EnquiryStatus } from '@/shared/types/enquiry'
-import { AddFollowupModal, type FollowupModalValue } from '../components/AddFollowupModal'
+import { AddFollowupModal } from '../components/AddFollowupModal'
 import { AssignmentModal, type AssignmentModalValue } from '../components/AssignmentModal'
 import { EnquiryKpiRow } from '../components/EnquiryKpiRow'
 import { StatusUpdateModal } from '../components/StatusUpdateModal'
 import { buildEnquiryColumns } from '../components/EnquiryTableColumns'
 import { getEnquiryActor } from '../utils/enquiryActor'
+import {
+  createInitialFollowupValue,
+  validateFollowupValue,
+} from '../utils/enquiryFollowupUtils'
 import {
   downloadEnquiryCsv,
   filterEnquiryRowsByTab,
@@ -54,18 +58,6 @@ const initialAssignment: AssignmentModalValue = {
   assignmentNotes: '',
 }
 
-const initialFollowup: FollowupModalValue = {
-  followupType: 'call',
-  followupDate: '',
-  followupTime: '10:00',
-  discussionSummary: '',
-  nextAction: '',
-  assignedUser: '',
-  reminderRequired: true,
-  followupStatus: 'scheduled',
-  outcome: '',
-}
-
 export function EnquiryListingPage() {
   const theme = useTheme()
   const { showToast } = useToast()
@@ -90,7 +82,7 @@ export function EnquiryListingPage() {
   const [statusValue, setStatusValue] = useState('contacted')
   const [statusReason, setStatusReason] = useState('')
   const [assignmentValue, setAssignmentValue] = useState<AssignmentModalValue>(initialAssignment)
-  const [followupValue, setFollowupValue] = useState<FollowupModalValue>(initialFollowup)
+  const [followupValue, setFollowupValue] = useState(() => createInitialFollowupValue())
 
   const loadRows = async () => {
     setLoading(true)
@@ -126,10 +118,11 @@ export function EnquiryListingPage() {
 
   const openFollowup = (record: EnquiryRecord) => {
     setActiveEnquiryId(record.id)
-    setFollowupValue({
-      ...initialFollowup,
-      assignedUser: record.assignment.assignedUser ?? '',
-    })
+    setFollowupValue(
+      createInitialFollowupValue({
+        assignedUser: record.assignment.assignedUser ?? '',
+      }),
+    )
     setFollowupModalOpen(true)
   }
 
@@ -344,6 +337,11 @@ export function EnquiryListingPage() {
         onChange={setFollowupValue}
         onSubmit={async () => {
           if (!activeEnquiryId) return
+          const validationError = validateFollowupValue(followupValue)
+          if (validationError) {
+            showToast({ title: validationError, variant: 'error' })
+            return
+          }
           await enquiryService.addFollowup(
             activeEnquiryId,
             {
@@ -358,7 +356,7 @@ export function EnquiryListingPage() {
             getEnquiryActor(),
           )
           setFollowupModalOpen(false)
-          setFollowupValue(initialFollowup)
+          setFollowupValue(createInitialFollowupValue())
           showToast({ title: 'Follow-up scheduled', variant: 'success' })
           await loadRows()
         }}

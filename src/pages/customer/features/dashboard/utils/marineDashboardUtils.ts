@@ -21,7 +21,7 @@ function mapOperationalToApplicationStatus(label: string): ApplicationStatus {
 
 function resolveMarineRank(row: SingleApplicationRow): string {
   const seed = getSingleApplicationDemoSeed(row.id)
-  return seed?.additionalDetails.employmentOccupation ?? row.visaType.split('·')[0]?.trim() ?? '—'
+  return seed?.basicDetails.rank ?? seed?.additionalDetails.employmentOccupation ?? row.visaType.split('·')[0]?.trim() ?? '—'
 }
 
 function resolveMarineVessel(row: SingleApplicationRow): string {

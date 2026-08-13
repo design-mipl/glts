@@ -13,7 +13,17 @@ import { SUBMITTED_OPERATIONAL_STATUSES } from '../types/applicationListing.type
 import type { ApplicationListingRow } from '../types/applicationListing.types'
 import { isBulkRow } from '../types/applicationListing.types'
 import { getApplicationTypeLabel } from '../components/listing/applicationStatus'
-import { resolveApplicationCompanyName, resolveApplicationVesselName } from './applicationCompanyUtils'
+import {
+  resolveApplicationCompanyName,
+  resolveApplicationRank,
+  resolveApplicationVesselName,
+} from './applicationCompanyUtils'
+import {
+  resolveApplicationBillingEntity,
+  resolveApplicationCompassNo,
+  resolveApplicationJoiningPort,
+  resolveApplicationPoCidNo,
+} from './applicationReferenceUtils'
 import { resolveApplicationCreatorLabel, getApplicationCreatorOptions } from './applicationCreatorUtils'
 
 export function getAllListingRows(singles: SingleApplicationRow[], bulks: BulkBatchRow[]): ApplicationListingRow[] {
@@ -60,7 +70,13 @@ export function matchesListingSearch(row: ApplicationListingRow, query: string):
   if (company.includes(s)) return true
   const vessel = resolveApplicationVesselName(row).toLowerCase()
   if (vessel !== '—' && vessel.includes(s)) return true
+  const rank = resolveApplicationRank(row).toLowerCase()
+  if (rank !== '—' && rank.includes(s)) return true
   if (row.poReference?.toLowerCase().includes(s)) return true
+  if (resolveApplicationPoCidNo(row).toLowerCase().includes(s)) return true
+  if (resolveApplicationCompassNo(row).toLowerCase().includes(s)) return true
+  if (resolveApplicationJoiningPort(row).toLowerCase().includes(s)) return true
+  if (resolveApplicationBillingEntity(row).toLowerCase().includes(s)) return true
 
   if (isBulkRow(row)) {
     return (
@@ -105,6 +121,10 @@ export function getListingCellValue(row: ApplicationListingRow, key: string): st
   if (key === 'createdBy') return resolveApplicationCreatorLabel(row.createdByEmail)
   if (key === 'createdByEmail') return row.createdByEmail
   if (key === 'poReference') return row.poReference?.trim() || '—'
+  if (key === 'poCidNo') return resolveApplicationPoCidNo(row)
+  if (key === 'compassNo') return resolveApplicationCompassNo(row)
+  if (key === 'joiningPort') return resolveApplicationJoiningPort(row)
+  if (key === 'billingEntityName') return resolveApplicationBillingEntity(row)
   if (key === 'tentativeCollectionDate') return row.tentativeCollectionDate?.trim() || '—'
   if (key === 'travelerCount') {
     return isBulkRow(row) ? String(row.totalApplicants) : '1'
@@ -114,6 +134,7 @@ export function getListingCellValue(row: ApplicationListingRow, key: string): st
   }
   if (key === 'companyName') return resolveApplicationCompanyName(row)
   if (key === 'vesselName') return resolveApplicationVesselName(row)
+  if (key === 'rank') return resolveApplicationRank(row)
   if (key === 'jurisdiction') return row.jurisdiction?.trim() || '—'
   if (isBulkRow(row)) {
     if (key === 'totalApplicants') return String(row.totalApplicants)

@@ -23,6 +23,7 @@ import type {
 import {
   canFinanceReviewClaimSheet,
   canGroundOpsEditClaimSheet,
+  canRejectClaimSheetFromReconciliation,
   CLAIM_SHEET_STATUS_LABEL,
 } from '@/shared/types/groundOpsClaimSheet'
 
@@ -389,6 +390,43 @@ export const groundOpsClaimSheetService = {
       return { ok: false, error: 'Rejection reason is required.' }
     }
     return this.updateReviewStatus(id, 'rejected', trimmed)
+  },
+
+  /**
+   * Accounts cannot reconcile an already-approved claim sheet.
+   * Sends it back to Ground Ops as rejected (same listing outcome as pre-approval reject).
+   */
+  rejectFromReconciliation(
+    id: string,
+    reason: string,
+  ): { ok: boolean; sheet?: GroundOpsClaimSheet; error?: string } {
+    const trimmed = reason.trim()
+    if (!trimmed) {
+      return { ok: false, error: 'Rejection reason is required.' }
+    }
+
+    const index = claimStore.findIndex(sheet => sheet.id === id)
+    if (index < 0) return { ok: false, error: 'Claim sheet not found.' }
+
+    const existing = claimStore[index]
+    if (!canRejectClaimSheetFromReconciliation(existing.status)) {
+      return {
+        ok: false,
+        error: `Cannot reject from reconciliation while claim is ${CLAIM_SHEET_STATUS_LABEL[existing.status].toLowerCase()}.`,
+      }
+    }
+
+    const currentUser = getCurrentUser()
+    const updated: GroundOpsClaimSheet = {
+      ...existing,
+      status: 'rejected',
+      reviewedAt: nowIso(),
+      reviewedBy: currentUser?.name?.trim() || 'Accounts',
+      rejectionReason: trimmed,
+    }
+
+    claimStore = [...claimStore.slice(0, index), updated, ...claimStore.slice(index + 1)]
+    return { ok: true, sheet: cloneSheet(updated) }
   },
 
   updateReviewStatus(

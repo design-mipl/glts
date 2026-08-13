@@ -9,6 +9,7 @@ Keep this folder for extended reference docs only.
 - [Developer Onboarding](./DEVELOPER_ONBOARDING.md) — architecture, routing, ownership, component inventory.
 - [Product UI Architecture & UX Standards](./PRODUCT_UI_ARCHITECTURE_UX_STANDARDS.md) — deeper surface-level UX guidance.
 - [Admin Module Implementation Guide](./ADMIN_MODULE_IMPLEMENTATION_GUIDE.md) — step-by-step admin recipes (listing, detail, dashboard, forms) mapped to template showcase and component library.
+- [Client Management E2E Flow](./CLIENT_MANAGEMENT_E2E_FLOW.md) — Lead → Quotation → Agreement → Client Account flowcharts (Mermaid; view outside Cursor).
 
 ## Cross-doc UI rule highlights
 

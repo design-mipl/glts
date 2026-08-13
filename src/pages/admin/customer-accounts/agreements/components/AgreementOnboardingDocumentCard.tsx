@@ -1,6 +1,6 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { CheckCircle2, Download, Eye, RotateCcw, Upload, XCircle } from 'lucide-react'
+import { Download, Eye, RotateCcw, Upload } from 'lucide-react'
 import { Badge, Button } from '@/design-system/UIComponents'
 import type { AgreementOnboardingDocument } from '@/shared/types/commercialAgreement'
 import {
@@ -15,8 +15,6 @@ interface AgreementOnboardingDocumentCardProps {
   onPreview: () => void
   onReplace: () => void
   onDownload: () => void
-  onVerify?: () => void
-  onReject?: () => void
   readOnly?: boolean
 }
 
@@ -26,17 +24,10 @@ export function AgreementOnboardingDocumentCard({
   onPreview,
   onReplace,
   onDownload,
-  onVerify,
-  onReject,
   readOnly = false,
 }: AgreementOnboardingDocumentCardProps) {
   const theme = useTheme()
   const uploaded = document.status === 'uploaded' || document.status === 'verified'
-  const canVerify = Boolean(onVerify) && document.status === 'uploaded' && Boolean(document.fileName)
-  const canReject =
-    Boolean(onReject) &&
-    (document.status === 'uploaded' || document.status === 'verified') &&
-    Boolean(document.fileName)
 
   return (
     <Box
@@ -91,25 +82,6 @@ export function AgreementOnboardingDocumentCard({
         ) : null}
         <Button label="Preview" variant="outlined" size="sm" startIcon={<Eye size={14} />} onClick={onPreview} disabled={!uploaded} />
         <Button label="Download" variant="outlined" size="sm" startIcon={<Download size={14} />} onClick={onDownload} disabled={!uploaded} />
-        {canVerify ? (
-          <Button
-            label="Verify"
-            variant="contained"
-            size="sm"
-            startIcon={<CheckCircle2 size={14} />}
-            onClick={onVerify}
-          />
-        ) : null}
-        {canReject ? (
-          <Button
-            label="Reject"
-            variant="outlined"
-            color="error"
-            size="sm"
-            startIcon={<XCircle size={14} />}
-            onClick={onReject}
-          />
-        ) : null}
       </Stack>
     </Box>
   )

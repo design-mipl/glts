@@ -6,9 +6,9 @@ import {
   ADMIN_RECORD_PAGE_TITLE_SX,
   ADMIN_RECORD_PAGE_TITLE_VARIANT,
 } from '@/pages/admin/components/adminRecordPageTitle'
+import { buildApplicationOverviewMetaRows } from '@/pages/customer/features/applications/utils/applicationOverviewMetaRows'
 import { toApplicationReviewOverview } from '@/pages/customer/features/applications/utils/applicationReviewOverview'
 import { resolveApplicationReferenceDisplay } from '@/pages/customer/features/applications/utils/gltsReferenceIds'
-import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import type { VerifyOverviewData } from '../../utils/verifyDocumentsUtils'
 
 interface ViewFormAssistHeaderSectionProps {
@@ -26,9 +26,6 @@ export function ViewFormAssistHeaderSection({
 }: ViewFormAssistHeaderSectionProps) {
   const { shellPaddingX } = ADMIN_FULL_PAGE_FORM_LAYOUT
   const reviewOverview = toApplicationReviewOverview(overview)
-  const visaLabel = reviewOverview.purposeLabel
-    ? `${reviewOverview.visaTypeLabel} · ${reviewOverview.purposeLabel}`
-    : reviewOverview.visaTypeLabel
   const { primaryId, batchId } = resolveApplicationReferenceDisplay(
     reviewOverview.gltsApplicationId,
     reviewOverview.gltsBatchId,
@@ -99,17 +96,9 @@ export function ViewFormAssistHeaderSection({
               </Stack>
             ) : null}
             <Grid container spacing={1.5} columns={{ xs: 2, md: 5 }}>
-              {[
-                ['Company', reviewOverview.companyName?.trim() || '—'],
-                ['Billing entity', reviewOverview.entityName?.trim() || '—'],
-                ['Vessel', reviewOverview.vesselName?.trim() || '—'],
-                ['PO / CID / Compass No.', reviewOverview.poReference?.trim() || '—'],
-                ['Country', `${reviewOverview.countryFlag} ${reviewOverview.countryName}`],
-                ['Visa', visaLabel],
-                ['Jurisdiction', reviewOverview.jurisdiction || '—'],
-                ['Travel', formatDisplayDate(reviewOverview.travelDate)],
-                ['Travelers', String(overview.travelerCount)],
-              ].map(([label, value]) => (
+              {buildApplicationOverviewMetaRows(reviewOverview, {
+                travelerCount: overview.travelerCount,
+              }).map(([label, value]) => (
                 <Grid size={1} key={label} sx={{ minWidth: 0 }}>
                   <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>{label}</Typography>
                   <Typography sx={{ fontSize: 13, fontWeight: 600, wordBreak: 'break-word' }}>

@@ -8,7 +8,6 @@ import {
   HeartPulse,
   Inbox,
   IndianRupee,
-  Lock,
   Percent,
   Send,
   Stamp,
@@ -177,22 +176,6 @@ export function SuperAdminHeroStrip({
 
         <Box sx={{ minWidth: 0, height: '100%' }}>
           <ExecutiveKpiCard
-            title="Cash Blocked"
-            tooltip="Embassy / VFS fees paid and not yet recovered through client billing."
-            value={data.blockedCash.amount}
-            icon={<Lock size={16} />}
-            tone="warning"
-            supportingLines={[
-              `${data.blockedCash.applicationCount} applications`,
-              data.blockedCash.expectedReleaseLabel,
-            ]}
-            loading={loading}
-            onClick={() => onOpenTab?.('work')}
-          />
-        </Box>
-
-        <Box sx={{ minWidth: 0, height: '100%' }}>
-          <ExecutiveKpiCard
             title="Business Health"
             tooltip="Composite network health score (0–100) across revenue, delivery, and risk."
             value={`${summary.businessHealth.score} /100`}
@@ -288,7 +271,7 @@ export function SuperAdminHeroStrip({
 
         <Box sx={{ minWidth: 0, height: '100%' }}>
           <ExecutiveKpiCard
-            title="Today's Applications"
+            title="Applications"
             tooltip="Applications received today versus yesterday."
             value={summary.receivedToday.count}
             icon={<Inbox size={16} />}
@@ -302,7 +285,7 @@ export function SuperAdminHeroStrip({
 
         <Box sx={{ minWidth: 0, height: '100%' }}>
           <ExecutiveKpiCard
-            title="Today's Submissions"
+            title="Submissions"
             tooltip="Applications submitted to embassy / VFS today versus yesterday."
             value={summary.submittedToday.count}
             icon={<Send size={16} />}

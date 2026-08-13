@@ -9,16 +9,18 @@ import type {
   ReconciliationPeriodPreset,
   ReconciliationStatus,
   ReconciliationTab,
+  RejectReconciliationInput,
   SubmitReconciliationInput,
 } from '@/shared/types/reconciliation'
 
 const STORAGE_KEY = 'glts:finance-reconciliation-submissions'
 
 interface ReconciliationSubmission {
-  referenceNumber: string
+  referenceNumber?: string
   status: ReconciliationStatus
   reconciledAt: string
   reconciledBy: string
+  rejectionReason?: string
 }
 
 type SubmissionStore = Record<string, ReconciliationSubmission>
@@ -267,6 +269,7 @@ function buildExpenseItem(
     referenceNumber,
     reconciledAt: submission?.reconciledAt,
     reconciledBy: submission?.reconciledBy,
+    rejectionReason: submission?.rejectionReason,
   }
 }
 
@@ -317,6 +320,7 @@ function buildClaimSheetItems(sheet: GroundOpsClaimSheet, submissions: Submissio
         referenceNumber: submission?.referenceNumber ?? '',
         reconciledAt: submission?.reconciledAt,
         reconciledBy: submission?.reconciledBy,
+        rejectionReason: submission?.rejectionReason ?? sheet.rejectionReason,
       },
     ]
   }
@@ -365,6 +369,7 @@ function buildClaimSheetItems(sheet: GroundOpsClaimSheet, submissions: Submissio
       referenceNumber: submission?.referenceNumber ?? '',
       reconciledAt: submission?.reconciledAt,
       reconciledBy: submission?.reconciledBy,
+      rejectionReason: submission?.rejectionReason ?? sheet.rejectionReason,
     }
   })
 }
@@ -452,6 +457,9 @@ export const reconciliationService = {
     if (existing.status === 'submitted') {
       return { ok: false, error: 'This record is already reconciled.' }
     }
+    if (existing.status === 'rejected') {
+      return { ok: false, error: 'This record was rejected and cannot be reconciled.' }
+    }
 
     const referenceNumber = input.referenceNumber.trim()
     if (!referenceNumber) return { ok: false, error: 'Book entry number is required.' }
@@ -490,7 +498,7 @@ export const reconciliationService = {
 
     for (const id of ids) {
       const existing = this.getById(id)
-      if (!existing || existing.status === 'submitted') continue
+      if (!existing || existing.status !== 'pending') continue
       store[id] = {
         referenceNumber: bookEntry,
         status: 'submitted',
@@ -506,5 +514,61 @@ export const reconciliationService = {
 
     writeSubmissions(store)
     return { ok: true, submitted }
+  },
+
+  reject(
+    input: RejectReconciliationInput,
+  ): { ok: true; rejected: number } | { ok: false; error: string } {
+    const reason = input.reason.trim()
+    if (!reason) return { ok: false, error: 'Rejection reason is required.' }
+
+    const existing = this.getById(input.id)
+    if (!existing) return { ok: false, error: 'Reconciliation item not found.' }
+    if (existing.status === 'submitted') {
+      return { ok: false, error: 'Submitted records cannot be rejected.' }
+    }
+    if (existing.status === 'rejected') {
+      return { ok: false, error: 'This record is already rejected.' }
+    }
+
+    const user = getCurrentUser()
+    const reconciledBy = user?.name?.trim() || 'Accounts user'
+    const reconciledAt = new Date().toISOString()
+    const store = readSubmissions()
+
+    const relatedIds =
+      existing.sourceKind === 'claim_sheet'
+        ? listProjectedItems()
+            .filter(item => item.sourceKind === 'claim_sheet' && item.sourceId === existing.sourceId)
+            .map(item => item.id)
+        : listProjectedItems()
+            .filter(item => item.sourceKind === 'expense' && item.sourceId === existing.sourceId)
+            .map(item => item.id)
+
+    const idsToReject = relatedIds.length > 0 ? relatedIds : [existing.id]
+
+    if (existing.sourceKind === 'claim_sheet') {
+      const result = groundOpsClaimSheetService.rejectFromReconciliation(existing.sourceId, reason)
+      if (!result.ok) {
+        return { ok: false, error: result.error || 'Could not reject claim sheet.' }
+      }
+    } else {
+      const result = applicationExpenseManagementService.reject(existing.sourceId, reason)
+      if (!result.ok) {
+        return { ok: false, error: result.error || 'Could not reject expense.' }
+      }
+    }
+
+    for (const id of idsToReject) {
+      store[id] = {
+        status: 'rejected',
+        reconciledAt,
+        reconciledBy,
+        rejectionReason: reason,
+      }
+    }
+    writeSubmissions(store)
+
+    return { ok: true, rejected: idsToReject.length }
   },
 }

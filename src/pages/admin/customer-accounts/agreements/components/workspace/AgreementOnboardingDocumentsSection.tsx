@@ -3,7 +3,6 @@ import { commercialAgreementService } from '@/shared/services/commercialAgreemen
 import type {
   AgreementFinanceContactPerson,
   CommercialAgreementFormData,
-  OnboardingDocumentStatus,
 } from '@/shared/types/commercialAgreement'
 import { splitAgreementDocuments } from '@/shared/utils/agreementDocumentUtils'
 import { deriveFinanceContactPersons, syncFinanceContactsFromSources } from '@/shared/utils/agreementFinanceContacts'
@@ -19,9 +18,6 @@ interface AgreementOnboardingDocumentsSectionProps {
   readOnly?: boolean
   /** When false, hides finance contacts (e.g. detail Documents tab — shown on Overview). */
   showFinanceContacts?: boolean
-  /** Enable Verify / Reject actions on uploaded documents. */
-  allowVerification?: boolean
-  onDocumentStatusChange?: (documentKey: string, status: OnboardingDocumentStatus) => void
 }
 
 const AGREEMENT_TYPE_OPTIONS = [
@@ -36,8 +32,6 @@ export function AgreementOnboardingDocumentsSection({
   onClearError,
   readOnly = false,
   showFinanceContacts = true,
-  allowVerification = false,
-  onDocumentStatusChange,
 }: AgreementOnboardingDocumentsSectionProps) {
   const syncedData = syncFinanceContactsFromSources(data)
   const contacts = deriveFinanceContactPersons(data)
@@ -88,8 +82,6 @@ export function AgreementOnboardingDocumentsSection({
     data,
     onChange,
     readOnly,
-    allowVerification,
-    onStatusChange: onDocumentStatusChange,
   }
 
   return (

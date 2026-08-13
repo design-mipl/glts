@@ -22,7 +22,6 @@ import type { AgreementHoldTerminateStatus } from '@/shared/types/commercialAgre
 import {
   buildAgreementDocumentsFromMaster,
   mergeAgreementDocumentsWithExisting,
-  normalizeDocumentKey,
 } from '@/shared/utils/agreementDocumentUtils'
 import {
   syncFinanceContactsFromSources,
@@ -441,43 +440,6 @@ export const commercialAgreementService = {
   validateForActivation,
   /** @deprecated Use validateForActivation */
   validateForApproval: validateForActivation,
-
-  updateDocumentStatus(
-    agreementId: string,
-    documentKey: string,
-    status: CommercialAgreement['documents'][0]['status'],
-    fileName?: string,
-  ): CommercialAgreement | undefined {
-    const store = getStore()
-    const idx = store.findIndex((r) => r.id === agreementId)
-    if (idx < 0) return undefined
-    const agreement = store[idx]
-    const normalizedKey = normalizeDocumentKey(documentKey)
-    const target = agreement.documents.find((d) => normalizeDocumentKey(d.documentKey) === normalizedKey)
-    if (!target) return undefined
-    const documents = agreement.documents.map((d) =>
-      normalizeDocumentKey(d.documentKey) === normalizedKey
-        ? {
-            ...d,
-            status,
-            fileName: fileName ?? d.fileName,
-            uploadedAt: status === 'uploaded' ? nowIso() : d.uploadedAt,
-          }
-        : d,
-    )
-    const statusLabel =
-      status === 'verified' ? 'Document verified' : status === 'rejected' ? 'Document rejected' : 'Document updated'
-    const updated: CommercialAgreement = {
-      ...agreement,
-      documents,
-      updatedAt: nowIso(),
-      activities: [makeActivity(statusLabel, target.name), ...agreement.activities],
-    }
-    const next = [...store]
-    next[idx] = updated
-    persist(next)
-    return updated
-  },
 
   addMinutes(
     agreementId: string,

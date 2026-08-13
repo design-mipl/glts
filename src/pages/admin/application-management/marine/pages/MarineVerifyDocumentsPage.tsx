@@ -402,7 +402,7 @@ export function MarineVerifyDocumentsPage() {
                 ? Boolean(
                     payload.insurance?.vendorId?.trim() &&
                       payload.insurance?.policyNumber?.trim() &&
-                      payload.insurance?.invoiceNumber?.trim(),
+                      payload.insurance?.arrangementAmount?.trim(),
                   )
                 : Boolean(workflow?.arrangementAmount?.trim() && workflow?.vendorId?.trim())
             if (hasArrangement) {

@@ -21,7 +21,6 @@ import {
   type SimpleDocumentRequirementId,
   type TravelTicketWorkflow,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
-import { gltsArrangeFeeAmountString } from '@/shared/utils/gltsArrangeFeeUtils'
 import {
   isValidGltsArrangementAmount,
   listGltsDocumentUploadVendors,
@@ -50,10 +49,7 @@ function hasExistingArrangement(document: ApplicantDocumentItem): boolean {
   if (document.documentId === 'insurance') {
     const w = document.insurance
     return Boolean(
-      w?.policyNumber?.trim() ||
-        w?.invoiceNumber?.trim() ||
-        w?.vendorId?.trim() ||
-        w?.arrangementAmount?.trim(),
+      w?.policyNumber?.trim() || w?.vendorId?.trim() || w?.arrangementAmount?.trim(),
     )
   }
   return false
@@ -82,7 +78,6 @@ export function GltsDocumentUploadDrawer({
   const [includeArrangement, setIncludeArrangement] = useState(false)
   const [arrangementAmount, setArrangementAmount] = useState('')
   const [policyNumber, setPolicyNumber] = useState('')
-  const [invoiceNumber, setInvoiceNumber] = useState('')
   const [vendorId, setVendorId] = useState('')
   const [remarks, setRemarks] = useState('')
 
@@ -102,7 +97,6 @@ export function GltsDocumentUploadDrawer({
       const w = { ...emptyTravelTicketWorkflow(), ...document.travelTicket }
       setArrangementAmount(w.arrangementAmount?.trim() ?? '')
       setPolicyNumber('')
-      setInvoiceNumber('')
       setVendorId(w.vendorId?.trim() ?? '')
       setRemarks(w.remarks?.trim() || w.notes?.trim() || '')
       return
@@ -112,7 +106,6 @@ export function GltsDocumentUploadDrawer({
       const w = { ...emptyInsuranceWorkflow(), ...document.insurance }
       setArrangementAmount(w.arrangementAmount?.trim() ?? '')
       setPolicyNumber(w.policyNumber?.trim() ?? '')
-      setInvoiceNumber(w.invoiceNumber?.trim() ?? '')
       setVendorId(w.vendorId?.trim() ?? '')
       setRemarks(w.remarks?.trim() || w.notes?.trim() || '')
       return
@@ -120,7 +113,6 @@ export function GltsDocumentUploadDrawer({
 
     setArrangementAmount('')
     setPolicyNumber('')
-    setInvoiceNumber('')
     setVendorId('')
     setRemarks('')
   }, [open, document])
@@ -142,13 +134,10 @@ export function GltsDocumentUploadDrawer({
       ? `Re-upload ${document.name}`
       : `Upload ${document.name}`
 
-  const amountValid =
-    !includeArrangement || isInsurance || isValidGltsArrangementAmount(arrangementAmount)
+  const amountValid = !includeArrangement || isValidGltsArrangementAmount(arrangementAmount)
   const policyValid = !includeArrangement || !isInsurance || Boolean(policyNumber.trim())
-  const invoiceValid = !includeArrangement || !isInsurance || Boolean(invoiceNumber.trim())
   const vendorValid = !includeArrangement || Boolean(vendorId.trim())
-  const canSave =
-    Boolean(fileName.trim()) && amountValid && policyValid && invoiceValid && vendorValid
+  const canSave = Boolean(fileName.trim()) && amountValid && policyValid && vendorValid
 
   const handleVendorChange = (nextVendorId: string | number) => {
     setVendorId(String(nextVendorId))
@@ -177,9 +166,7 @@ export function GltsDocumentUploadDrawer({
         },
       })
     } else if (docId === 'insurance') {
-      const existingAmount = document.insurance?.arrangementAmount?.trim() ?? ''
-      const feeAmount = gltsArrangeFeeAmountString('insurance')
-      const amount = includeArrangement ? existingAmount || feeAmount : ''
+      const amount = includeArrangement ? arrangementAmount.trim() : ''
       onSave({
         fileName: trimmedFile,
         insurance: {
@@ -187,7 +174,6 @@ export function GltsDocumentUploadDrawer({
           ...document.insurance,
           fileName: trimmedFile,
           policyNumber: includeArrangement ? policyNumber.trim() : '',
-          invoiceNumber: includeArrangement ? invoiceNumber.trim() : '',
           arrangementAmount: amount,
           vendorId: vendor,
           vendorName,
@@ -234,7 +220,7 @@ export function GltsDocumentUploadDrawer({
             <Checkbox
               label={
                 isInsurance
-                  ? 'Include GLTS arrangement (policy, invoice & vendor)'
+                  ? 'Include GLTS arrangement (policy, actual amount & vendor)'
                   : 'Include GLTS arrangement (amount & vendor)'
               }
               checked={includeArrangement}
@@ -252,52 +238,38 @@ export function GltsDocumentUploadDrawer({
           <Stack spacing={1.5}>
             <Grid container spacing={1.5}>
               {isInsurance ? (
-                <>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <FormField label="Policy number" required>
-                      <Input
-                        fullWidth
-                        size="sm"
-                        value={policyNumber}
-                        onChange={setPolicyNumber}
-                        placeholder="Enter policy number"
-                      />
-                    </FormField>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <FormField label="Invoice number" required>
-                      <Input
-                        fullWidth
-                        size="sm"
-                        value={invoiceNumber}
-                        onChange={setInvoiceNumber}
-                        placeholder="Enter invoice number"
-                      />
-                    </FormField>
-                  </Grid>
-                </>
-              ) : (
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField
-                    label="Amount (INR)"
-                    required
-                    helperText={
-                      arrangementAmount && !amountValid
-                        ? 'Enter a valid amount greater than 0'
-                        : undefined
-                    }
-                  >
+                  <FormField label="Policy number" required>
                     <Input
                       fullWidth
                       size="sm"
-                      value={arrangementAmount}
-                      onChange={value => setArrangementAmount(normalizeAmountInput(value))}
-                      placeholder="0.00"
+                      value={policyNumber}
+                      onChange={setPolicyNumber}
+                      placeholder="Enter policy number"
                     />
                   </FormField>
                 </Grid>
-              )}
-              <Grid size={{ xs: 12, sm: isInsurance ? 12 : 6 }}>
+              ) : null}
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField
+                  label={isInsurance ? 'Actual amount' : 'Amount (INR)'}
+                  required
+                  helperText={
+                    arrangementAmount && !amountValid
+                      ? 'Enter a valid amount greater than 0'
+                      : undefined
+                  }
+                >
+                  <Input
+                    fullWidth
+                    size="sm"
+                    value={arrangementAmount}
+                    onChange={value => setArrangementAmount(normalizeAmountInput(value))}
+                    placeholder="0.00"
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <FormField label="Vendor" required>
                   <Select
                     fullWidth

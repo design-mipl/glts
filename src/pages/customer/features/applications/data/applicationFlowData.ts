@@ -45,6 +45,10 @@ export interface SingleApplicationRow {
   customerSegment: ApplicationCustomerSegment
   appointmentDate?: string
   poReference?: string
+  poCidNo?: string
+  compassNo?: string
+  joiningPort?: string
+  billingEntityName?: string
   processingStageDates?: ApplicationProcessingStageDates
   assignedTeamId?: string
   assignedUserId?: string
@@ -80,6 +84,10 @@ export interface BulkBatchRow {
   customerSegment: ApplicationCustomerSegment
   appointmentDate?: string
   poReference?: string
+  poCidNo?: string
+  compassNo?: string
+  joiningPort?: string
+  billingEntityName?: string
   processingStageDates?: ApplicationProcessingStageDates
   assignedTeamId?: string
   assignedUserId?: string
@@ -228,7 +236,10 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdByEmail: 'priya@glts.com',
     createdByRole: 'booker',
     customerSegment: 'marine',
+    compassNo: 'COMPASS-OM-2026-847',
     poReference: 'COMPASS-OM-2026-847',
+    billingEntityName: 'Oceanic Marine Ltd',
+    joiningPort: 'Rotterdam',
     processingStageDates: {
       ready: '2026-02-01T09:00:00.000Z',
       submitted: '2026-02-10T11:30:00.000Z',
@@ -275,6 +286,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdByEmail: 'ops@harborlinecrew.com',
     createdByRole: 'admin',
     customerSegment: 'marine',
+    poCidNo: 'PO-HLC-2026-881',
     poReference: 'PO-HLC-2026-881',
   }),
   singleRow({
@@ -394,7 +406,10 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     processingStage: 'Appointment booked',
     operationalStatus: 'Appointment Booked',
     appointmentDate: '2026-03-12',
+    poCidNo: 'PO-AMX-2026-014',
     poReference: 'PO-AMX-2026-014',
+    billingEntityName: 'Seafarer Solutions',
+    joiningPort: 'Yokohama',
     createdByEmail: 'priya@glts.com',
     createdByRole: 'booker',
     customerSegment: 'marine',
@@ -439,7 +454,10 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdByEmail: 'operations@bluewavemarine.com',
     createdByRole: 'admin',
     customerSegment: 'marine',
+    poCidNo: 'CID-BW-2026-744',
     poReference: 'CID-BW-2026-744',
+    billingEntityName: 'BlueWave Marine Agency',
+    joiningPort: 'Marseille',
   }),
   singleRow({
     id: 'GLTS-APP-2026-739',
@@ -661,6 +679,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     processingStage: 'Appointment booked',
     operationalStatus: 'Appointment Booked',
     appointmentDate: '2026-04-02',
+    poCidNo: 'PO-AMU-2026-088',
     poReference: 'PO-AMU-2026-088',
     createdByEmail: 'ops@atlanticmanning.uk',
     createdByRole: 'booker',
@@ -687,6 +706,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'marine',
     assignedTeamId: 'team-marine',
     assignedUserId: 'user-marine-2',
+    poCidNo: 'CID-OM-2026-868',
     poReference: 'CID-OM-2026-868',
   }),
   singleRow({
@@ -809,6 +829,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'corporate',
     assignedTeamId: 'team-corporate',
     assignedUserId: 'user-corporate-1',
+    poCidNo: 'PO-HT-2026-829',
     poReference: 'PO-HT-2026-829',
   }),
   singleRow({
@@ -848,6 +869,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'b2bAgents',
     assignedTeamId: 'team-b2b-agent',
     assignedUserId: 'user-b2b-1',
+    compassNo: 'COMPASS-VP-2026-818',
     poReference: 'COMPASS-VP-2026-818',
   }),
   singleRow({
@@ -867,6 +889,63 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdByEmail: 'desk@eurolink.travel',
     createdByRole: 'booker',
     customerSegment: 'b2bAgents',
+  }),
+  // —— Submission Pending (single) seed ——
+  singleRow({
+    id: 'GLTS-APP-2026-808',
+    applicantName: 'Ravi Menon',
+    passportNumber: 'IN7742119',
+    companyName: 'Oceanic Marine Ltd',
+    vesselName: 'MV Oceanic Star',
+    country: 'Singapore',
+    countryFlag: '🇸🇬',
+    visaType: 'Crew · Standard',
+    jurisdiction: 'Mumbai',
+    travelDate: '2026-06-20',
+    submissionDate: '2026-03-05',
+    createdAt: '2026-02-22',
+    lastUpdated: '2026-03-06',
+    processingStage: 'Submitted',
+    operationalStatus: 'Submitted',
+    createdByEmail: 'priya@glts.com',
+    createdByRole: 'booker',
+    customerSegment: 'marine',
+    assignedTeamId: 'team-marine',
+    assignedUserId: 'user-marine-1',
+    compassNo: 'COMPASS-OM-2026-808',
+    poReference: 'COMPASS-OM-2026-808',
+    billingEntityName: 'Oceanic Marine Ltd',
+    joiningPort: 'Singapore',
+    processingStageDates: {
+      ready: '2026-02-22T09:00:00.000Z',
+      submitted: '2026-03-05T14:20:00.000Z',
+    },
+  }),
+  singleRow({
+    id: 'GLTS-APP-2026-805',
+    applicantName: 'Elena Rossi',
+    passportNumber: 'IT5519382',
+    companyName: 'Voyage Partners Agency',
+    country: 'Italy',
+    countryFlag: '🇮🇹',
+    visaType: 'Tourist · Type C',
+    travelDate: '2026-07-08',
+    submissionDate: '2026-03-04',
+    createdAt: '2026-02-20',
+    lastUpdated: '2026-03-05',
+    processingStage: 'Submitted',
+    operationalStatus: 'Submitted',
+    createdByEmail: 'arun.krishnan@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'b2bAgents',
+    assignedTeamId: 'team-b2b-agent',
+    assignedUserId: 'user-b2b-1',
+    compassNo: 'COMPASS-VP-2026-805',
+    poReference: 'COMPASS-VP-2026-805',
+    processingStageDates: {
+      ready: '2026-02-20T10:00:00.000Z',
+      submitted: '2026-03-04T11:45:00.000Z',
+    },
   }),
 ]
 
@@ -1207,6 +1286,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     processingStage: 'Appointment booked',
     operationalStatus: 'Appointment Booked',
     appointmentDate: '2026-04-05',
+    poCidNo: 'PO-AMU-2026-091',
     poReference: 'PO-AMU-2026-091',
     createdByEmail: 'ops@atlanticmanning.uk',
     createdByRole: 'booker',
@@ -1643,6 +1723,8 @@ export interface SingleApplicationFlowExtras {
   vesselName: string
   imoNumber: string
   joiningPort: string
+  poCidNo?: string
+  compassNo?: string
   issuedPassportState?: string
   placeOfResidence?: string
   jurisdiction?: string
@@ -1674,6 +1756,7 @@ const priyaSharmaSeed: SingleApplicationDemoSeed = {
   ),
   basicDetails: {
     crewId: 'GLTS-APL-847-001',
+    rank: 'Third Officer',
     applicantName: 'Priya Sharma',
     passportNumber: 'Z1234567',
     nationality: 'IND',
@@ -1719,6 +1802,7 @@ const priyaSharmaSeed: SingleApplicationDemoSeed = {
     vesselName: 'MV Oceanic Star',
     imoNumber: '9434567',
     joiningPort: 'Rotterdam',
+    compassNo: 'COMPASS-OM-2026-847',
     jurisdiction: 'Mumbai',
   },
 }
@@ -1739,6 +1823,7 @@ const oliverGrantSeed: SingleApplicationDemoSeed = {
   ),
   basicDetails: {
     crewId: 'GLTS-APL-790-001',
+    rank: 'Chief Engineer',
     applicantName: 'Oliver Grant',
     passportNumber: 'XK9283746',
     nationality: 'GBR',
@@ -1804,6 +1889,7 @@ const mateoAlvarezSeed: SingleApplicationDemoSeed = {
   ),
   basicDetails: {
     crewId: 'GLTS-APL-744-001',
+    rank: 'Second Engineer',
     applicantName: 'Mateo Alvarez',
     passportNumber: 'NQ5528931',
     nationality: 'ESP',
@@ -1869,6 +1955,7 @@ const ashaNairSeed: SingleApplicationDemoSeed = {
   ),
   basicDetails: {
     crewId: 'GLTS-APL-739-001',
+    rank: 'Deck Cadet',
     applicantName: 'Asha Nair',
     passportNumber: 'IN3387214',
     nationality: 'IND',

@@ -1,101 +1,266 @@
-import type { ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Box } from '@mui/material'
 import {
   Banknote,
-  FileWarning,
+  FileText,
   HandCoins,
   IndianRupee,
+  Landmark,
+  Percent,
   Scale,
+  Send,
   Wallet,
 } from 'lucide-react'
-import { ExecutiveGrid, HeroMetric, InsightStack } from '../../shared/dashboard-ui-kit'
-import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
-import type { DashboardKpiItem } from '../../shared/types'
+import { InsightStack } from '../../shared/dashboard-ui-kit'
 import { DASHBOARD_SPACING } from '../../shared/constants'
-import { kpiColumns } from '../../shared/utils/kpiColumns'
+import {
+  ExecutiveKpiCard,
+  type ExecutiveKpiPeriodKey,
+} from '../../shared/widgets/common/ExecutiveKpiCard'
+import type { DashboardRevenuePeriod } from '../../shared/types'
+import type { AccountsDashboardData } from '../types'
+import { buildAccountsHeroKpiModel } from '../utils/accountsHeroKpiUtils'
 
-const KPI_ICONS: Record<string, ReactNode> = {
-  'today-revenue': <IndianRupee size={16} />,
-  outstanding: <Wallet size={16} />,
-  'pending-collections': <HandCoins size={16} />,
-  'pending-recon': <Scale size={16} />,
-  'overdue-ar': <FileWarning size={16} />,
-  'collected-mtd': <Banknote size={16} />,
-}
+const PERIOD_OPTIONS: Array<{ value: ExecutiveKpiPeriodKey; label: string }> = [
+  { value: 'today', label: 'Today' },
+  { value: 'mtd', label: 'MTD' },
+  { value: 'ytd', label: 'YTD' },
+]
 
-function kpiTone(id: string, delta?: number): 'positive' | 'negative' | 'warning' | 'info' | 'neutral' {
-  if (id === 'overdue-ar' || id === 'outstanding') return 'warning'
-  if (id === 'pending-collections' || id === 'pending-recon') return 'warning'
-  if (id === 'collected-mtd' || id === 'today-revenue') return 'positive'
-  if (delta != null && delta > 0) return 'info'
-  if (delta != null && delta < 0) return 'positive'
-  return 'neutral'
+function PeriodValueCard({
+  title,
+  tooltip,
+  icon,
+  period,
+  periodKey,
+  onPeriodChange,
+  loading,
+  onClick,
+  extraSupportingLines,
+}: {
+  title: string
+  tooltip: string
+  icon: ReactNode
+  period: DashboardRevenuePeriod
+  periodKey: ExecutiveKpiPeriodKey
+  onPeriodChange: (next: ExecutiveKpiPeriodKey) => void
+  loading?: boolean
+  onClick?: () => void
+  extraSupportingLines?: string[]
+}) {
+  const periodLabel = PERIOD_OPTIONS.find((o) => o.value === periodKey)?.label
+  const supportingLines = [
+    ...(extraSupportingLines ?? []),
+    ...(period.targetLabel ? [period.targetLabel] : []),
+  ]
+
+  return (
+    <ExecutiveKpiCard
+      title={title}
+      value={period.value}
+      tooltip={tooltip}
+      icon={icon}
+      tone="info"
+      delta={period.delta}
+      deltaLabel={period.deltaLabel}
+      supportingLines={supportingLines.length > 0 ? supportingLines : undefined}
+      periodLabel={periodLabel}
+      periodOptions={PERIOD_OPTIONS}
+      periodKey={periodKey}
+      onPeriodChange={onPeriodChange}
+      loading={loading}
+      onClick={onClick}
+    />
+  )
 }
 
 export interface AccountsHeroStripProps {
-  items: DashboardKpiItem[]
+  data: AccountsDashboardData
   loading?: boolean
+  onOpenPerformance?: () => void
+  onOpenInvoices?: () => void
+  onOpenWork?: () => void
+  onOpenReconciliation?: () => void
+  onOpenFinance?: () => void
 }
 
-/** Accounts hero KPIs — dense HeroMetric + drilldown. */
-export function AccountsHeroStrip({ items, loading }: AccountsHeroStripProps) {
-  const drilldown = useDrilldownOptional()
+/** Accounts top KPIs — 10-card executive finance strip. */
+export function AccountsHeroStrip({
+  data,
+  loading,
+  onOpenPerformance,
+  onOpenInvoices,
+  onOpenWork,
+  onOpenReconciliation,
+  onOpenFinance,
+}: AccountsHeroStripProps) {
+  const [revenuePeriod, setRevenuePeriod] = useState<ExecutiveKpiPeriodKey>('mtd')
+  const [collectionsPeriod, setCollectionsPeriod] = useState<ExecutiveKpiPeriodKey>('mtd')
 
-  const openKpi = (kpi: DashboardKpiItem) => {
-    drilldown?.openDrilldown({
-      id: `accounts-kpi-${kpi.id}`,
-      title: kpi.label,
-      subtitle: 'Accounts hero KPI',
-      entityType: 'kpi',
-      entityId: kpi.id,
-      meta: {
-        value: kpi.value,
-        delta: kpi.delta,
-        comparison: kpi.deltaLabel,
-      },
-    })
-  }
+  const model = useMemo(() => buildAccountsHeroKpiModel(data), [data])
+  const hero = model.commercialHero
+
+  const revenue = hero.revenueHero[revenuePeriod]
+  const collections = hero.collectionsHero[collectionsPeriod]
+  const invoicedCountPeriod = hero.invoicedCountHero?.[revenuePeriod]
+  const invoicedCount = invoicedCountPeriod?.value ?? model.totalInvoicedCount
+
+  const netRevenueLines = [
+    hero.netRevenue.serviceFees && hero.netRevenue.inwardOutward
+      ? `Service fees ${hero.netRevenue.serviceFees} · I/W ${hero.netRevenue.inwardOutward}`
+      : null,
+    `Gross margin ${hero.netRevenue.marginPercent}`,
+  ].filter((line): line is string => line != null)
+
+  const gridSx = {
+    display: 'grid',
+    gap: DASHBOARD_SPACING.field,
+    alignItems: 'stretch',
+    gridTemplateColumns: {
+      xs: 'repeat(2, minmax(0, 1fr))',
+      md: 'repeat(3, minmax(0, 1fr))',
+      lg: 'repeat(5, minmax(0, 1fr))',
+    },
+  } as const
 
   return (
     <InsightStack spacing={DASHBOARD_SPACING.dense}>
-      <ExecutiveGrid columns={kpiColumns(items.length)} spacing={1}>
-        {items.map((kpi) => (
-          <Box
-            key={kpi.id}
-            role={drilldown ? 'button' : undefined}
-            tabIndex={drilldown ? 0 : undefined}
-            aria-label={`${kpi.label}: ${kpi.value}`}
-            onClick={() => openKpi(kpi)}
-            onKeyDown={(event) => {
-              if (!drilldown) return
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                openKpi(kpi)
-              }
-            }}
-            sx={{
-              cursor: drilldown ? 'pointer' : 'default',
-              minWidth: 0,
-              outline: 'none',
-              '&:focus-visible': {
-                borderRadius: 2,
-                boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}`,
-              },
-            }}
-          >
-            <HeroMetric
-              label={kpi.label}
-              value={kpi.value}
-              delta={kpi.delta}
-              deltaLabel={kpi.deltaLabel}
-              icon={KPI_ICONS[kpi.id] ?? kpi.icon}
-              tone={kpiTone(kpi.id, kpi.delta)}
-              loading={loading}
-              animate
-            />
-          </Box>
-        ))}
-      </ExecutiveGrid>
+      <Box role="group" aria-label="Accounts finance KPIs" sx={gridSx}>
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <PeriodValueCard
+            title="Gross Revenue"
+            tooltip="Total invoiced value for the selected period — amount and invoice count."
+            icon={<IndianRupee size={16} />}
+            period={revenue}
+            periodKey={revenuePeriod}
+            onPeriodChange={setRevenuePeriod}
+            loading={loading}
+            onClick={onOpenPerformance}
+            extraSupportingLines={[`${Number(invoicedCount).toLocaleString('en-IN')} invoices`]}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Net Revenue"
+            tooltip="GLTS earnings — service fees and inward/outward (I/W) pass-through."
+            value={hero.netRevenue.value}
+            icon={<Percent size={16} />}
+            tone="positive"
+            delta={hero.netRevenue.delta}
+            deltaLabel={hero.netRevenue.deltaLabel}
+            supportingLines={netRevenueLines}
+            loading={loading}
+            onClick={onOpenPerformance}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Client submissions due"
+            tooltip="Invoice submissions to clients still due or awaiting data."
+            value={model.submissionsDueCount}
+            icon={<Send size={16} />}
+            tone="warning"
+            supportingLines={['Submissions to clients to be done']}
+            loading={loading}
+            onClick={onOpenWork}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Invoices submitted"
+            tooltip="Total client invoice submissions completed in the period."
+            value={model.invoicesSubmittedCount}
+            icon={<FileText size={16} />}
+            tone="info"
+            supportingLines={[`${model.invoicesSubmittedAmount} submitted MTD`]}
+            loading={loading}
+            onClick={onOpenInvoices}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Outstanding"
+            tooltip="Open receivables balance and overdue invoice count."
+            value={hero.outstanding.amount}
+            icon={<Wallet size={16} />}
+            tone="warning"
+            delta={hero.outstanding.delta}
+            deltaLabel={hero.outstanding.deltaLabel}
+            supportingLines={[`${hero.outstanding.overdueInvoiceCount} overdue invoices`]}
+            loading={loading}
+            onClick={onOpenInvoices}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <PeriodValueCard
+            title="Collections"
+            tooltip="Collections received for the selected period versus target."
+            icon={<HandCoins size={16} />}
+            period={collections}
+            periodKey={collectionsPeriod}
+            onPeriodChange={setCollectionsPeriod}
+            loading={loading}
+            onClick={onOpenPerformance}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Pending collections"
+            tooltip="Invoices open for collection — count and outstanding amount."
+            value={model.pendingCollectionsCount}
+            icon={<Banknote size={16} />}
+            tone="warning"
+            supportingLines={[`${model.pendingCollectionsAmount} open AR`]}
+            loading={loading}
+            onClick={onOpenInvoices}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Cash blocked"
+            tooltip="Embassy/VFS and pass-through cash blocked awaiting client invoice."
+            value={model.cashBlockedAmount}
+            icon={<Landmark size={16} />}
+            tone="warning"
+            supportingLines={[`${model.cashBlockedApps} applications blocked`]}
+            loading={loading}
+            onClick={onOpenFinance}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Invoices pending"
+            tooltip="Cases and unbilled expenses awaiting invoice generation."
+            value={model.invoicesPendingCount}
+            icon={<FileText size={16} />}
+            tone="warning"
+            supportingLines={[`${model.invoicesPendingAmount} to invoice`]}
+            loading={loading}
+            onClick={onOpenWork}
+          />
+        </Box>
+
+        <Box sx={{ minWidth: 0, height: '100%' }}>
+          <ExecutiveKpiCard
+            title="Reconciliation pending"
+            tooltip="Insurance, tickets, couriers, and credit-card reconciliations open."
+            value={model.reconciliationPendingCount}
+            icon={<Scale size={16} />}
+            tone="warning"
+            supportingLines={['Insurance · tickets · couriers · cards']}
+            loading={loading}
+            onClick={onOpenReconciliation}
+          />
+        </Box>
+      </Box>
     </InsightStack>
   )
 }

@@ -2,9 +2,9 @@ import { Card, Grid, Stack, Typography } from '@mui/material'
 import { BaseCard } from '@/design-system/UIComponents'
 import { BORDER_RADIUS, BORDER_WIDTH } from '@/design-system/tokens'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { buildApplicationOverviewMetaRows } from '../../utils/applicationOverviewMetaRows'
 import type { ApplicationReviewOverview } from '../../utils/applicationReviewOverview'
 import { resolveApplicationReferenceDisplay } from '../../utils/gltsReferenceIds'
-import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
 export interface ApplicationReviewOverviewCardProps {
   overview: ApplicationReviewOverview
@@ -19,9 +19,6 @@ export function ApplicationReviewOverviewCard({
   variant = 'customer',
 }: ApplicationReviewOverviewCardProps) {
   const colors = usePublicBrandColors()
-  const visaLabel = overview.purposeLabel
-    ? `${overview.visaTypeLabel} · ${overview.purposeLabel}`
-    : overview.visaTypeLabel
   const { primaryId, batchId } = resolveApplicationReferenceDisplay(
     overview.gltsApplicationId,
     overview.gltsBatchId,
@@ -65,23 +62,7 @@ export function ApplicationReviewOverviewCard({
         </Stack>
       ) : null}
       <Grid container spacing={1.5} columns={{ xs: 2, md: 5 }}>
-        {[
-          ['Company', overview.companyName?.trim() || '—'],
-          ['Billing entity', overview.entityName?.trim() || '—'],
-          ['Vessel', overview.vesselName?.trim() || '—'],
-          ['PO / CID / Compass No.', overview.poReference?.trim() || '—'],
-          ['Country', `${overview.countryFlag} ${overview.countryName}`],
-          ['Visa', visaLabel],
-          ...(overview.issuedPassportLocationLabel
-            ? ([['Passport state', overview.issuedPassportLocationLabel]] as const)
-            : []),
-          ...(overview.placeOfResidenceLabel
-            ? ([['Place of residence', overview.placeOfResidenceLabel]] as const)
-            : []),
-          ['Jurisdiction', overview.jurisdiction || '—'],
-          ['Travel', formatDisplayDate(overview.travelDate)],
-          ['Travelers', String(travelerCount)],
-        ].map(([label, value]) => (
+        {buildApplicationOverviewMetaRows(overview, { travelerCount }).map(([label, value]) => (
           <Grid size={1} key={label} sx={{ minWidth: 0 }}>
             <Typography
               sx={{

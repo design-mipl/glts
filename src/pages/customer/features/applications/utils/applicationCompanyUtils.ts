@@ -1,8 +1,9 @@
 import { bookerManagementService } from '@/shared/services/bookerManagementService'
 import { GLTS_APPLICATION_IDS } from '../../../data/portalIds'
-import { GLTS_BATCH_IDS, getSingleApplicationDemoSeed } from '../data/applicationFlowData'
+import { GLTS_BATCH_IDS, getSingleApplicationDemoSeed, mockUploadQueue } from '../data/applicationFlowData'
 import type { ApplicationListingRow } from '../types/applicationListing.types'
 import { isBulkRow } from '../types/applicationListing.types'
+import { resolvePassengerRank } from './applicantBasicDetailsUtils'
 
 function segmentFallbackCompany(segment: ApplicationListingRow['customerSegment']): string {
   if (segment === 'marine') return 'Apex Marine Logistics'
@@ -41,6 +42,29 @@ export function resolveApplicationVesselName(row: ApplicationListingRow): string
   } else if (row.id === GLTS_BATCH_IDS.schengenCrew) {
     const seedVessel = getSingleApplicationDemoSeed(GLTS_APPLICATION_IDS.schengen)?.flowExtras.vesselName?.trim()
     if (seedVessel) return seedVessel
+  }
+
+  return '—'
+}
+
+/** Crew rank for marine applications — from demo seed or upload queue travelers. */
+export function resolveApplicationRank(row: ApplicationListingRow): string {
+  if (!isBulkRow(row)) {
+    const seedRank = getSingleApplicationDemoSeed(row.id)?.basicDetails.rank?.trim()
+    if (seedRank) return seedRank
+    return '—'
+  }
+
+  const queueRows = mockUploadQueue.filter(q => q.gltsApplicationId === row.id)
+  if (queueRows.length > 0) {
+    const ranks = [...new Set(queueRows.map(q => resolvePassengerRank(q)).filter(Boolean))]
+    if (ranks.length === 1) return ranks[0]
+    if (ranks.length > 1) return 'Multiple'
+  }
+
+  if (row.id === GLTS_BATCH_IDS.schengenCrew) {
+    const seedRank = getSingleApplicationDemoSeed(GLTS_APPLICATION_IDS.schengen)?.basicDetails.rank?.trim()
+    if (seedRank) return seedRank
   }
 
   return '—'

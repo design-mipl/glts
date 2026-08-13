@@ -33,7 +33,7 @@ const FORM_ASSIST_STEP_SECTIONS: Record<string, FormAssistFieldSectionDefinition
     {
       id: 'identity',
       title: 'Applicant identity',
-      fieldIds: ['traveler', 'nationality', 'dateOfBirth'],
+      fieldIds: ['rank', 'traveler', 'nationality', 'dateOfBirth'],
     },
     {
       id: 'contact',
@@ -65,23 +65,25 @@ const FORM_ASSIST_STEP_SECTIONS: Record<string, FormAssistFieldSectionDefinition
       fieldIds: ['visa', 'issuedPassportState', 'placeOfResidence', 'jurisdiction'],
     },
   ],
+  details: [
+    {
+      id: 'additional-details',
+      title: 'Additional details',
+      fieldIds: ['poCidNo', 'compassNo', 'joiningPort', 'billingEntity', 'vesselName', 'imoNumber'],
+    },
+  ],
   employment: [
     {
       id: 'employment-record',
       title: 'Employment record',
       fieldIds: ['crewId', 'cdcNumber', 'employmentOccupation', 'lastContractSignDate'],
     },
-    {
-      id: 'vessel-assignment',
-      title: 'Vessel & port',
-      fieldIds: ['vesselName', 'imoNumber', 'joiningPort'],
-    },
   ],
   address: [
     {
       id: 'organization',
       title: 'Organization',
-      fieldIds: ['entityName', 'location'],
+      fieldIds: ['location'],
     },
     {
       id: 'billing',
@@ -100,6 +102,7 @@ export const GENERIC_FORM_ASSIST_STEPS: FormAssistStepDefinition[] = [
   { id: 'personal', label: 'Personal details' },
   { id: 'passport', label: 'Passport details' },
   { id: 'travel', label: 'Travel details' },
+  { id: 'details', label: 'Additional details' },
   { id: 'employment', label: 'Employment / Corporate details' },
   { id: 'address', label: 'Address details' },
   { id: 'review', label: 'Review' },
@@ -110,6 +113,7 @@ const FORM_ASSIST_COPY_STEP_IDS = new Set([
   'personal',
   'passport',
   'travel',
+  'details',
   'employment',
   'address',
 ])
@@ -135,6 +139,8 @@ export interface FormAssistContext {
     vesselName?: string
     imoNumber?: string
     joiningPort?: string
+    poCidNo?: string
+    compassNo?: string
     issuedPassportState?: string
     placeOfResidence?: string
     jurisdiction?: string
@@ -195,6 +201,7 @@ export function buildFormAssistFieldsForStep(
   switch (stepId) {
     case 'personal':
       return [
+        field('rank', 'Rank', basic.rank),
         field('traveler', 'Traveler', basic.applicantName || row.travelerName),
         field('nationality', 'Nationality', basic.nationality || row.nationality),
         field('dateOfBirth', 'Date of birth', basic.dateOfBirth),
@@ -228,19 +235,24 @@ export function buildFormAssistFieldsForStep(
           app?.jurisdiction ?? extras.jurisdiction ?? '',
         ),
       ]
+    case 'details':
+      return [
+        field('poCidNo', 'PO / CID no.', extras.poCidNo ?? ''),
+        field('compassNo', 'Compass No.', extras.compassNo ?? ''),
+        field('joiningPort', 'Joining port', extras.joiningPort ?? ''),
+        field('billingEntity', 'Billing entity', extras.entityName ?? ''),
+        field('vesselName', 'Vessel', extras.vesselName ?? ''),
+        field('imoNumber', 'IMO number', extras.imoNumber ?? ''),
+      ]
     case 'employment':
       return [
         field('crewId', 'Applicant no.', basic.crewId || row.gltsApplicantId),
         field('cdcNumber', 'CDC number', basic.cdcNumber),
         field('employmentOccupation', 'Occupation', additional.employmentOccupation),
         field('lastContractSignDate', 'Last Contract Sign Date', additional.lastContractSignDate),
-        field('vesselName', 'Vessel name', extras.vesselName ?? ''),
-        field('imoNumber', 'IMO number', extras.imoNumber ?? ''),
-        field('joiningPort', 'Joining port', extras.joiningPort ?? ''),
       ]
     case 'address':
       return [
-        field('entityName', 'Entity', extras.entityName ?? ''),
         field('location', 'Location', extras.location ?? ''),
         field('billingAddress', 'Billing address', extras.billingAddress ?? ''),
       ]
@@ -273,6 +285,8 @@ export function resolveFormAssistFlowExtras(applicationId: string): SingleApplic
     vesselName: '',
     imoNumber: '',
     joiningPort: '',
+    poCidNo: '',
+    compassNo: '',
     issuedPassportState: '',
     placeOfResidence: '',
     jurisdiction: '',
@@ -288,7 +302,9 @@ export function resolveFormAssistFlowExtras(applicationId: string): SingleApplic
     billingAddress: flowState.billingAddress || fromSeed.billingAddress,
     vesselName: flowState.vesselName || fromSeed.vesselName,
     imoNumber: flowState.imoNumber || fromSeed.imoNumber,
-    joiningPort: flowState.portOfRegistry || fromSeed.joiningPort,
+    joiningPort: flowState.joiningPort || fromSeed.joiningPort,
+    poCidNo: flowState.poCidNo || fromSeed.poCidNo,
+    compassNo: flowState.compassNo || fromSeed.compassNo,
     issuedPassportState: flowState.issuedPassportState || fromSeed.issuedPassportState,
     placeOfResidence: flowState.placeOfResidence || fromSeed.placeOfResidence,
     jurisdiction: flowState.jurisdiction || fromSeed.jurisdiction,
