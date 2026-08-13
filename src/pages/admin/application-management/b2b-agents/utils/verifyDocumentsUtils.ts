@@ -12,6 +12,13 @@ import {
   resolveApplicationCompanyName,
   resolveApplicationVesselName,
 } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import {
+  resolveApplicationBillingEntity,
+  resolveApplicationCompassNo,
+  resolveApplicationJoiningPort,
+  resolveApplicationPoCidNo,
+  splitLegacyPoReference,
+} from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
 import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
 import { buildProcessingTimelineFromQueueRow } from '@/shared/utils/applicationProcessingTimeline'
 import { isApplicantDocumentSatisfied } from '@/shared/utils/applicantDocumentWorkflowUtils'
@@ -120,6 +127,9 @@ export interface VerifyOverviewData {
   companyName?: string
   vesselName?: string
   poReference?: string
+  poCidNo?: string
+  compassNo?: string
+  joiningPort?: string
   entityName?: string
 }
 
@@ -318,6 +328,10 @@ export function buildOverviewFromDetail(
     companyName?: string
     vesselName?: string
     poReference?: string
+    poCidNo?: string
+    compassNo?: string
+    joiningPort?: string
+    billingEntityName?: string
     entityName?: string
   } | null,
 ): VerifyOverviewData {
@@ -339,7 +353,30 @@ export function buildOverviewFromDetail(
     extras?.vesselName?.trim() ||
     undefined
   const poReference = app?.poReference?.trim() || listing?.poReference?.trim() || undefined
-  const entityName = app?.entityName?.trim() || extras?.entityName?.trim() || undefined
+  const legacy = splitLegacyPoReference(poReference)
+  const poCidNo =
+    app?.poCidNo?.trim() ||
+    listing?.poCidNo?.trim() ||
+    (listing ? resolveApplicationPoCidNo(listing) : legacy.poCidNo) ||
+    undefined
+  const compassNo =
+    app?.compassNo?.trim() ||
+    listing?.compassNo?.trim() ||
+    (listing ? resolveApplicationCompassNo(listing) : legacy.compassNo) ||
+    undefined
+  const joiningPort =
+    app?.joiningPort?.trim() ||
+    listing?.joiningPort?.trim() ||
+    (listing ? resolveApplicationJoiningPort(listing) : undefined) ||
+    extras?.joiningPort?.trim() ||
+    undefined
+  const entityName =
+    app?.entityName?.trim() ||
+    app?.billingEntityName?.trim() ||
+    listing?.billingEntityName?.trim() ||
+    (listing ? resolveApplicationBillingEntity(listing) : undefined) ||
+    extras?.entityName?.trim() ||
+    undefined
 
   return {
     gltsApplicationId: isBulk
@@ -357,6 +394,9 @@ export function buildOverviewFromDetail(
     companyName: companyName && companyName !== '—' ? companyName : undefined,
     vesselName: vesselName && vesselName !== '—' ? vesselName : undefined,
     poReference,
-    entityName,
+    poCidNo: poCidNo && poCidNo !== '—' ? poCidNo : undefined,
+    compassNo: compassNo && compassNo !== '—' ? compassNo : undefined,
+    joiningPort: joiningPort && joiningPort !== '—' ? joiningPort : undefined,
+    entityName: entityName && entityName !== '—' ? entityName : undefined,
   }
 }

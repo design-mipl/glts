@@ -18,11 +18,7 @@ import {
   buildOverviewFromDetail,
   buildVerifyTimeline,
 } from '../utils/verifyDocumentsUtils'
-import {
-  resolveApplicationCompanyName,
-  resolveApplicationVesselName,
-} from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
-import { getSingleApplicationFlowExtras } from '@/pages/customer/features/applications/data/applicationFlowData'
+import { buildApplicationOverviewOverrides } from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
 
 export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
   const [searchParams] = useSearchParams()
@@ -68,12 +64,7 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
             visaType: detail?.application?.visaType ?? listingRow?.visaType,
             travelDate: detail?.application?.travelDate ?? listingRow?.travelDate,
             jurisdiction: detail?.application?.jurisdiction ?? listingRow?.jurisdiction,
-            companyName: listingRow ? resolveApplicationCompanyName(listingRow) : undefined,
-            vesselName: listingRow ? resolveApplicationVesselName(listingRow) : undefined,
-            poReference: listingRow?.poReference,
-            entityName: applicationId
-              ? getSingleApplicationFlowExtras(applicationId)?.entityName
-              : undefined,
+            ...buildApplicationOverviewOverrides(listingRow, applicationId),
           })
         : {
             countryName: '—',

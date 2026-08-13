@@ -63,12 +63,10 @@ export function buildCompletedDocsQcCheckedState(
   return checked
 }
 
-export function isMarineDocsQcCheckComplete(
+function areAllQcChecklistItemsChecked(
   template: CountryQcChecklistTemplate,
   record: MarineDocsQcCheckRecord,
 ): boolean {
-  if (record.outcome !== 'ready') return false
-
   const sections = getExecutableQcChecklistSections(template)
   for (const section of sections) {
     for (const item of section.items) {
@@ -76,10 +74,34 @@ export function isMarineDocsQcCheckComplete(
     }
   }
 
-  const totalItems = countEnabledQcChecklistItems(template)
-  if (totalItems === 0) return false
+  return countEnabledQcChecklistItems(template) > 0
+}
 
-  return true
+/** Ready-for-submission path: all checklist items confirmed + Verified & ready. */
+export function isMarineDocsQcCheckComplete(
+  template: CountryQcChecklistTemplate,
+  record: MarineDocsQcCheckRecord,
+): boolean {
+  if (record.outcome !== 'ready') return false
+  return areAllQcChecklistItemsChecked(template, record)
+}
+
+/**
+ * Any QC outcome can be submitted:
+ * - ready → checklist must be fully confirmed
+ * - correction / blocked → outcome alone is enough (sends back to Ops)
+ */
+export function canSubmitMarineDocsQc(
+  template: CountryQcChecklistTemplate,
+  record: MarineDocsQcCheckRecord,
+): boolean {
+  if (record.outcome === 'correction' || record.outcome === 'blocked') return true
+  return isMarineDocsQcCheckComplete(template, record)
+}
+
+/** Form view unlocks only after a successful Verified & ready QC submit. */
+export function isMarineDocsQcReadySubmitted(record: MarineDocsQcCheckRecord): boolean {
+  return Boolean(record.submittedAt) && record.outcome === 'ready'
 }
 
 function withCompletionTimestamp(
@@ -177,8 +199,16 @@ export const applicationMarineQcCheckService = {
     return isMarineDocsQcCheckComplete(template, record)
   },
 
+  canSubmit(template: CountryQcChecklistTemplate, record: MarineDocsQcCheckRecord): boolean {
+    return canSubmitMarineDocsQc(template, record)
+  },
+
   isSubmitted(record: MarineDocsQcCheckRecord): boolean {
     return Boolean(record.submittedAt)
+  },
+
+  isReadySubmitted(record: MarineDocsQcCheckRecord): boolean {
+    return isMarineDocsQcReadySubmitted(record)
   },
 
   submit(
@@ -187,7 +217,7 @@ export const applicationMarineQcCheckService = {
     template: CountryQcChecklistTemplate,
   ): MarineDocsQcCheckRecord | null {
     const record = this.getRecord(applicationId, travelerRowId)
-    if (!this.isComplete(template, record)) return null
+    if (!this.canSubmit(template, record)) return null
     const next = withSubmitTimestamp(record)
     this.saveRecord(next)
     return next

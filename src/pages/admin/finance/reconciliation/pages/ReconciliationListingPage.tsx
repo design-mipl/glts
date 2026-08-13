@@ -172,6 +172,7 @@ export function ReconciliationListingPage() {
             total={kpis.total}
             pending={kpis.pending}
             submitted={kpis.submitted}
+            rejected={kpis.rejected}
             totalAmount={kpis.totalAmount}
           />
         }

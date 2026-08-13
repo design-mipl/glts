@@ -2,6 +2,7 @@ import { Box, Grid, Typography } from '@mui/material'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 import type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
+import { resolveApplicantBasicDetails } from '../utils/applicantBasicDetailsUtils'
 import { formatQueueRowGltsLabel } from '../utils/gltsReferenceIds'
 import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 import type { ApplicationDetailViewModel } from '../types/applicationDetail.types'
@@ -57,6 +58,7 @@ export function buildApplicationSummaryItems(
 
   return [
     ...gltsFields.map(f => [f.label, f.value] as [string, string]),
+    ['Rank', resolveApplicantBasicDetails(row).rank || '—'],
     ['Name', row.travelerName],
     ['Passport', row.passportNo],
     ['Country', `${overview.countryFlag} ${overview.countryName}`.trim()],

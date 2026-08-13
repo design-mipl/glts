@@ -17,7 +17,13 @@ import {
   getApplicationOperationalTone,
   getApplicationTypeLabel,
 } from '@/pages/customer/features/applications/components/listing/applicationStatus'
-import { resolveApplicationCompanyName, resolveApplicationVesselName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { resolveApplicationCompanyName, resolveApplicationRank, resolveApplicationVesselName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import {
+  resolveApplicationBillingEntity,
+  resolveApplicationCompassNo,
+  resolveApplicationJoiningPort,
+  resolveApplicationPoCidNo,
+} from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
 import {
   resolveApplicationCreatorLabel,
   resolveApplicationCreatorRoleLabel,
@@ -184,6 +190,18 @@ export function buildMarineApplicationColumns({
       },
     },
     {
+      key: 'rank',
+      label: 'Rank',
+      widthSize: 'sm',
+      sortable: false,
+      filterable: false,
+      render: (_: unknown, row: MarineApplicationRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationRank(row)}
+        </Typography>
+      ),
+    },
+    {
       key: 'companyName',
       label: 'Company name',
       widthSize: 'lg',
@@ -208,14 +226,50 @@ export function buildMarineApplicationColumns({
       ),
     },
     {
-      key: 'poReference',
-      label: 'PO / CID / Compass No.',
+      key: 'billingEntityName',
+      label: 'Billing entity',
       widthSize: 'md',
-      sortable: true,
-      filterable: true,
+      sortable: false,
+      filterable: false,
       render: (_: unknown, row: MarineApplicationRow) => (
         <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {row.poReference?.trim() || '—'}
+          {resolveApplicationBillingEntity(row)}
+        </Typography>
+      ),
+    },
+    {
+      key: 'poCidNo',
+      label: 'PO / CID no.',
+      widthSize: 'sm',
+      sortable: false,
+      filterable: false,
+      render: (_: unknown, row: MarineApplicationRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationPoCidNo(row)}
+        </Typography>
+      ),
+    },
+    {
+      key: 'compassNo',
+      label: 'Compass No.',
+      widthSize: 'sm',
+      sortable: false,
+      filterable: false,
+      render: (_: unknown, row: MarineApplicationRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationCompassNo(row)}
+        </Typography>
+      ),
+    },
+    {
+      key: 'joiningPort',
+      label: 'Joining port',
+      widthSize: 'sm',
+      sortable: false,
+      filterable: false,
+      render: (_: unknown, row: MarineApplicationRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationJoiningPort(row)}
         </Typography>
       ),
     },

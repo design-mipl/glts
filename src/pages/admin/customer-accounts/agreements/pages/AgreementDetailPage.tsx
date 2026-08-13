@@ -141,7 +141,7 @@ export function AgreementDetailPage() {
             {activeTab === 'pricing' ? <PricingMatrixTab agreement={agreement} /> : null}
             {activeTab === 'billing' ? <BillingConfigurationTab agreement={agreement} /> : null}
             {activeTab === 'tax' ? <TaxConfigurationTab agreement={agreement} /> : null}
-            {activeTab === 'documents' ? <DocumentsTab agreement={agreement} onReload={reload} /> : null}
+            {activeTab === 'documents' ? <DocumentsTab agreement={agreement} /> : null}
             {activeTab === 'minutes' ? <AgreementMinutesTab agreement={agreement} onReload={reload} /> : null}
             {activeTab === 'activity' ? <ActivityTab agreement={agreement} /> : null}
           </Box>

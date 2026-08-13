@@ -14,42 +14,14 @@ import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageF
 import { ADMIN_MODAL_FORM_LAYOUT } from '@/pages/admin/components/adminOverlayFormLayout'
 import { AssignmentSearchableSelect } from './AssignmentSearchableSelect'
 import { getEnquiryAssignmentUserOptions } from '../utils/enquiryAssignmentOptions'
+import {
+  FOLLOWUP_OUTCOME_OPTIONS,
+  FOLLOWUP_STATUS_OPTIONS,
+  FOLLOWUP_TYPE_OPTIONS,
+  type FollowupModalValue,
+} from '../utils/enquiryFollowupUtils'
 
-export interface FollowupModalValue {
-  followupType: string
-  followupDate: string
-  followupTime: string
-  discussionSummary: string
-  nextAction: string
-  assignedUser: string
-  reminderRequired: boolean
-  followupStatus: string
-  outcome: string
-}
-
-const FOLLOWUP_TYPE_OPTIONS = [
-  { label: 'Call', value: 'call' },
-  { label: 'Email', value: 'email' },
-  { label: 'Meeting', value: 'meeting' },
-  { label: 'WhatsApp', value: 'whatsapp' },
-  { label: 'Internal', value: 'internal' },
-]
-
-const FOLLOWUP_STATUS_OPTIONS = [
-  { label: 'Scheduled', value: 'scheduled' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Missed', value: 'missed' },
-  { label: 'Rescheduled', value: 'rescheduled' },
-]
-
-const FOLLOWUP_OUTCOME_OPTIONS = [
-  { label: 'Interested', value: 'interested' },
-  { label: 'Quotation Sent', value: 'quotation_sent' },
-  { label: 'Follow-up Required', value: 'follow_up_required' },
-  { label: 'No Response', value: 'no_response' },
-  { label: 'Change in Plans', value: 'change_in_plans' },
-  { label: 'Not Interested', value: 'not_interested' },
-]
+export type { FollowupModalValue }
 
 interface AddFollowupModalProps {
   open: boolean
@@ -104,7 +76,7 @@ export function AddFollowupModal({ open, value, onClose, onChange, onSubmit }: A
               <Select
                 value={value.followupType}
                 onChange={(next) => patch({ followupType: String(next) })}
-                options={FOLLOWUP_TYPE_OPTIONS}
+                options={[...FOLLOWUP_TYPE_OPTIONS]}
                 placeholder="Select follow-up type"
                 fullWidth
               />
@@ -113,7 +85,7 @@ export function AddFollowupModal({ open, value, onClose, onChange, onSubmit }: A
               <Select
                 value={value.followupStatus}
                 onChange={(next) => patch({ followupStatus: String(next) })}
-                options={FOLLOWUP_STATUS_OPTIONS}
+                options={[...FOLLOWUP_STATUS_OPTIONS]}
                 placeholder="Select follow-up status"
                 fullWidth
               />
@@ -179,7 +151,7 @@ export function AddFollowupModal({ open, value, onClose, onChange, onSubmit }: A
               <Select
                 value={value.outcome}
                 onChange={(next) => patch({ outcome: String(next) })}
-                options={FOLLOWUP_OUTCOME_OPTIONS}
+                options={[...FOLLOWUP_OUTCOME_OPTIONS]}
                 placeholder="Select outcome"
                 fullWidth
               />

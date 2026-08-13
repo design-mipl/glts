@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef } from 'react'
-import { Box, Grid, Stack } from '@mui/material'
+import { Box, Divider, Grid, Stack } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import {
   Anchor,
@@ -9,28 +9,32 @@ import {
   Store,
 } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
-import { Button, DonutChart } from '@/design-system/UIComponents'
+import { Button, Select } from '@/design-system/UIComponents'
 import {
   MarineTimeline,
-  MetricComparison,
   DASHBOARD_SPACING,
 } from '../../shared'
 import { useDashboardFiltersOptional } from '../../shared/dashboard-intelligence'
 import { ExecutiveSection } from '../../shared/dashboard-ui-kit'
+import { SegmentCommercialKpiStrip } from '../components/SegmentCommercialKpiStrip'
+import { SegmentAcquisitionFunnel } from '../components/SegmentAcquisitionFunnel'
+import { SegmentDestinationIntelligenceSection } from '../components/SegmentDestinationIntelligenceTable'
+import { SegmentNetRevenuePerSuccessfulApp } from '../components/SegmentNetRevenuePerSuccessfulApp'
+import { SegmentDestinationMixChart } from '../components/SegmentDestinationMixChart'
 import {
-  SA_CHART_HEIGHT,
-  SuperAdminPanel,
   SuperAdminRankChart,
   SuperAdminSection,
-  TopNSelect,
-  colorSlices,
-  sliceTopN,
-  useSuperAdminChartColors,
-  useSuperAdminChartSeries,
-  useTopN,
 } from '../components/SuperAdminChrome'
+import { SUPER_ADMIN_COUNTRY_OPTIONS } from '../data/superAdminDashboardMock'
+import {
+  applyMarineSegmentCountryScope,
+  applyVerticalPreviewCountryScope,
+  normalizeSegmentCountry,
+  type SegmentCountryKey,
+} from '../utils/applySegmentCountryScope'
 import type {
   SuperAdminDashboardTabProps,
+  SuperAdminDestinationMixItem,
   SuperAdminRankItem,
   SuperAdminVerticalPreview,
 } from '../types'
@@ -93,39 +97,40 @@ function SegmentSwitcher({
   )
 }
 
+function SegmentDestinationFilter({
+  value,
+  onChange,
+}: {
+  value: SegmentCountryKey
+  onChange: (next: SegmentCountryKey) => void
+}) {
+  return (
+    <Box sx={{ width: { xs: '100%', sm: 160 }, flexShrink: 0 }}>
+      <Select
+        size="sm"
+        fullWidth
+        aria-label="Destination country scope"
+        value={value}
+        options={[...SUPER_ADMIN_COUNTRY_OPTIONS]}
+        onChange={(next) => onChange(normalizeSegmentCountry(String(next)))}
+      />
+    </Box>
+  )
+}
+
 function MixCharts({
   entityTitle,
   entityItems,
-  countryTitle,
-  countryItems,
+  destinationTitle = 'By destination',
+  destinationItems,
   loading,
 }: {
   entityTitle: string
   entityItems: SuperAdminRankItem[]
-  countryTitle: string
-  countryItems: SuperAdminRankItem[]
+  destinationTitle?: string
+  destinationItems: SuperAdminDestinationMixItem[]
   loading?: boolean
 }) {
-  const chartColors = useSuperAdminChartColors()
-  const series = useSuperAdminChartSeries()
-  const countryTop = useTopN('10')
-
-  const countrySlices = useMemo(() => {
-    const sorted = [...countryItems].sort(
-      (a, b) => (Number(b.value) || b.progress || 0) - (Number(a.value) || a.progress || 0),
-    )
-    return colorSlices(
-      sliceTopN(sorted, countryTop.topN).map((item) => ({
-        key: item.id,
-        label: item.primary,
-        value: Number(item.value) || item.progress || 0,
-      })),
-      series,
-    )
-  }, [countryItems, countryTop.topN, series])
-
-  const countryTotal = countrySlices.reduce((sum, s) => sum + s.value, 0)
-
   return (
     <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
       <Grid size={{ xs: 12, md: 6 }}>
@@ -138,28 +143,11 @@ function MixCharts({
         />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
-        <SuperAdminPanel
-          title={countryTitle}
-          action={
-            <TopNSelect
-              value={countryTop.topN}
-              onChange={countryTop.setTopN}
-              ariaLabel={`${countryTitle} top N`}
-            />
-          }
-        >
-          <DonutChart
-            data={
-              countrySlices.length > 0
-                ? countrySlices
-                : [{ key: 'none', label: 'None', value: 1, color: chartColors.slate }]
-            }
-            height={SA_CHART_HEIGHT}
-            loading={loading}
-            centerLabel="mix"
-            centerValue={String(countryTotal)}
-          />
-        </SuperAdminPanel>
+        <SegmentDestinationMixChart
+          title={destinationTitle}
+          items={destinationItems}
+          loading={loading}
+        />
       </Grid>
     </Grid>
   )
@@ -170,24 +158,39 @@ function MarineSegmentView({
   loading,
   onRetry,
   onNavigate,
-}: SuperAdminDashboardTabProps) {
+  country,
+}: SuperAdminDashboardTabProps & { country: SegmentCountryKey }) {
+  const scoped = useMemo(
+    () => applyMarineSegmentCountryScope(data, country),
+    [data, country],
+  )
+
   return (
-    <Stack spacing={DASHBOARD_SPACING.section}>
+    <Stack spacing={DASHBOARD_SPACING.section} divider={<Divider flexItem />}>
       <ExecutiveSection title="Commercial KPIs">
-        <MetricComparison
-          title="Marine commercial KPIs"
-          metrics={data.marineMetrics}
+        <SegmentCommercialKpiStrip
+          data={scoped.marineCommercialKpis}
           loading={loading}
-          onRetry={onRetry}
+        />
+      </ExecutiveSection>
+
+      <ExecutiveSection
+        title="Acquisition funnel"
+        subtitle="Lead → quotation → agreement → client account"
+      >
+        <SegmentAcquisitionFunnel
+          data={scoped.marineAcquisitionFunnel}
+          loading={loading}
+          onNavigate={onNavigate}
         />
       </ExecutiveSection>
 
       <ExecutiveSection title="Applications mix">
         <MixCharts
           entityTitle="By shipping company"
-          entityItems={data.marineByCompany}
-          countryTitle="By country"
-          countryItems={data.marineByCountry}
+          entityItems={scoped.marineByCompany}
+          destinationTitle="By destination"
+          destinationItems={scoped.marineByDestination}
           loading={loading}
         />
       </ExecutiveSection>
@@ -195,7 +198,7 @@ function MarineSegmentView({
       <ExecutiveSection title="Joining-date risk">
         <MarineTimeline
           title="Joining date & crew risk"
-          rows={[...data.marineTimeline].sort((a, b) => {
+          rows={[...scoped.marineTimeline].sort((a, b) => {
             const rank = (r: string) => (r === 'red' ? 0 : r === 'amber' ? 1 : 2)
             return rank(a.ragStatus) - rank(b.ragStatus)
           })}
@@ -208,7 +211,7 @@ function MarineSegmentView({
       <ExecutiveSection title="Queues">
         <SuperAdminRankChart
           title="Pending crew visas"
-          items={data.pendingCrewVisas}
+          items={scoped.pendingCrewVisas}
           loading={loading}
           valueLabel="Priority"
           initialTopN="5"
@@ -219,57 +222,110 @@ function MarineSegmentView({
 }
 
 function PreviewSegmentView({
-  vertical,
   preview,
   loading,
   pendingTitle,
   clientsTitle,
   entityChartTitle,
+  funnelSubtitle,
+  onNavigate,
+  country,
+  showTopClients = true,
+  showQueues = true,
+  showDestinationAnalytics = false,
+  repeatLabel = 'Repeat accounts',
+  repeatTooltip = 'Share of applications from existing active client accounts.',
 }: {
-  vertical: string
   preview: SuperAdminVerticalPreview
   loading?: boolean
   pendingTitle: string
   clientsTitle: string
   entityChartTitle: string
+  funnelSubtitle: string
+  onNavigate?: (href: string) => void
+  country: SegmentCountryKey
+  /** Hide when destination revenue is already in the mix pie (Retail). */
+  showTopClients?: boolean
+  /** Hide queues / pending chart section (Retail). */
+  showQueues?: boolean
+  /** Destination intelligence table + revenue per successful application (Retail). */
+  showDestinationAnalytics?: boolean
+  repeatLabel?: string
+  repeatTooltip?: string
 }) {
+  const scoped = useMemo(
+    () => applyVerticalPreviewCountryScope(preview, country),
+    [preview, country],
+  )
+
   return (
-    <Stack spacing={DASHBOARD_SPACING.section}>
+    <Stack spacing={DASHBOARD_SPACING.section} divider={<Divider flexItem />}>
       <ExecutiveSection title="Commercial KPIs">
-        <MetricComparison title={`${vertical} KPIs`} metrics={preview.kpis} loading={loading} />
+        <SegmentCommercialKpiStrip
+          data={scoped.commercialKpis}
+          loading={loading}
+          repeatLabel={repeatLabel}
+          repeatTooltip={repeatTooltip}
+        />
+      </ExecutiveSection>
+
+      <ExecutiveSection title="Acquisition funnel" subtitle={funnelSubtitle}>
+        <SegmentAcquisitionFunnel
+          data={scoped.acquisitionFunnel}
+          loading={loading}
+          onNavigate={onNavigate}
+        />
       </ExecutiveSection>
 
       <ExecutiveSection title="Applications mix">
         <MixCharts
           entityTitle={entityChartTitle}
-          entityItems={preview.byEntity}
-          countryTitle="By country / destination"
-          countryItems={preview.byCountry}
+          entityItems={scoped.byEntity}
+          destinationTitle="By destination"
+          destinationItems={scoped.byDestination}
           loading={loading}
         />
       </ExecutiveSection>
 
-      <ExecutiveSection title="Queues & accounts">
-        <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
-          <Grid size={{ xs: 12, md: 6 }}>
-            <SuperAdminRankChart
-              title={pendingTitle}
-              items={preview.pending}
-              loading={loading}
-              valueLabel="Priority"
-              initialTopN="5"
-            />
+      {showDestinationAnalytics ? (
+        <>
+          <SegmentDestinationIntelligenceSection
+            items={scoped.byDestination}
+            loading={loading}
+          />
+
+          <SegmentNetRevenuePerSuccessfulApp
+            items={scoped.byDestination}
+            loading={loading}
+          />
+        </>
+      ) : null}
+
+      {showQueues ? (
+        <ExecutiveSection title={showTopClients ? 'Queues & accounts' : 'Queues'}>
+          <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+            <Grid size={{ xs: 12, md: showTopClients ? 6 : 12 }}>
+              <SuperAdminRankChart
+                title={pendingTitle}
+                items={scoped.pending}
+                loading={loading}
+                valueLabel="Priority"
+                initialTopN="5"
+              />
+            </Grid>
+            {showTopClients ? (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <SuperAdminRankChart
+                  title={clientsTitle}
+                  items={scoped.topClients}
+                  loading={loading}
+                  valueLabel="Revenue"
+                />
+              </Grid>
+            ) : null}
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <SuperAdminRankChart
-              title={clientsTitle}
-              items={preview.topClients}
-              loading={loading}
-              valueLabel="Revenue"
-            />
-          </Grid>
-        </Grid>
-      </ExecutiveSection>
+        </ExecutiveSection>
+      ) : null}
     </Stack>
   )
 }
@@ -280,7 +336,12 @@ export function SegmentsTab(props: SuperAdminDashboardTabProps) {
   const filterCtx = useDashboardFiltersOptional()
   const [searchParams, setSearchParams] = useSearchParams()
   const active = normalizeSegment(filterCtx?.filters.segment ?? searchParams.get('segment') ?? 'marine')
+  const country = normalizeSegmentCountry(filterCtx?.filters.country)
   const appliedUrlSegment = useRef<string | null>(null)
+
+  const setCountry = (next: SegmentCountryKey) => {
+    filterCtx?.setFilter('country', next)
+  }
 
   // Apply deep-link ?segment= once when URL changes externally (search / openSegments).
   // "all" (or missing) maps to Marine — no cross-segment comparison view on this tab.
@@ -310,46 +371,60 @@ export function SegmentsTab(props: SuperAdminDashboardTabProps) {
   }
 
   return (
-    <Stack spacing={DASHBOARD_SPACING.section}>
+    <Stack spacing={DASHBOARD_SPACING.section} divider={<Divider flexItem />}>
       <SuperAdminSection
         title="Business segments"
         description="One workspace for Marine, Corporate, Retail, and B2B"
+        action={
+          <SegmentDestinationFilter value={country} onChange={setCountry} />
+        }
       >
         <SegmentSwitcher active={active} onChange={setSegment} />
       </SuperAdminSection>
 
-      {active === 'marine' ? <MarineSegmentView {...props} /> : null}
+      {active === 'marine' ? <MarineSegmentView {...props} country={country} /> : null}
 
       {active === 'corporate' ? (
         <PreviewSegmentView
-          vertical="Corporate"
           preview={data.corporatePreview}
           loading={loading}
+          country={country}
           pendingTitle="Pending business visas"
           clientsTitle="Top corporate clients"
           entityChartTitle="By company"
+          funnelSubtitle="Lead → quotation → agreement → client account"
+          onNavigate={props.onNavigate}
         />
       ) : null}
 
       {active === 'retail' ? (
         <PreviewSegmentView
-          vertical="Retail"
           preview={data.retailPreview}
           loading={loading}
+          country={country}
           pendingTitle="Payment status & ratings"
           clientsTitle="Destination revenue"
           entityChartTitle="Channel mix"
+          funnelSubtitle="Lead → quotation → shared → converted"
+          onNavigate={props.onNavigate}
+          showTopClients={false}
+          showQueues={false}
+          showDestinationAnalytics
+          repeatLabel="Repeat customers"
+          repeatTooltip="Share of applications from applicants who used GLTS before."
         />
       ) : null}
 
       {active === 'b2b' ? (
         <PreviewSegmentView
-          vertical="B2B"
           preview={data.b2bPreview}
           loading={loading}
+          country={country}
           pendingTitle="Partner signals · outstanding"
           clientsTitle="Most active agencies"
           entityChartTitle="By travel partner"
+          funnelSubtitle="Lead → quotation → agreement → client account"
+          onNavigate={props.onNavigate}
         />
       ) : null}
     </Stack>

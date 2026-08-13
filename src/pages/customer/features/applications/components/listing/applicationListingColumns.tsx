@@ -20,8 +20,16 @@ import {
   getApplicationTypeTone,
 } from './applicationStatus'
 import {
+  resolveApplicationCompanyName,
+  resolveApplicationRank,
   resolveApplicationVesselName,
 } from '../../utils/applicationCompanyUtils'
+import {
+  resolveApplicationBillingEntity,
+  resolveApplicationCompassNo,
+  resolveApplicationJoiningPort,
+  resolveApplicationPoCidNo,
+} from '../../utils/applicationReferenceUtils'
 import {
   resolveApplicationCreatorLabel,
   resolveApplicationCreatorRoleLabel,
@@ -90,6 +98,18 @@ export function buildSingleApplicationColumns({
       render: (value: string) => (
         <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
           {value}
+        </Typography>
+      ),
+    },
+    {
+      key: 'rank',
+      label: 'Rank',
+      sortable: false,
+      filterable: false,
+      width: 130,
+      render: (_: unknown, row: SingleApplicationRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationRank(row)}
         </Typography>
       ),
     },
@@ -210,6 +230,66 @@ export function buildUnifiedApplicationColumns({
       },
     },
     {
+      key: 'rank',
+      label: 'Rank',
+      sortable: false,
+      filterable: false,
+      width: 130,
+      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationRank(row)}
+        </Typography>
+      ),
+    },
+    {
+      key: 'billingEntityName',
+      label: 'Billing entity',
+      sortable: false,
+      filterable: false,
+      width: 150,
+      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationBillingEntity(row)}
+        </Typography>
+      ),
+    },
+    {
+      key: 'poCidNo',
+      label: 'PO / CID no.',
+      sortable: false,
+      filterable: false,
+      width: 130,
+      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationPoCidNo(row)}
+        </Typography>
+      ),
+    },
+    {
+      key: 'compassNo',
+      label: 'Compass No.',
+      sortable: false,
+      filterable: false,
+      width: 130,
+      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationCompassNo(row)}
+        </Typography>
+      ),
+    },
+    {
+      key: 'joiningPort',
+      label: 'Joining port',
+      sortable: false,
+      filterable: false,
+      width: 120,
+      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationJoiningPort(row)}
+        </Typography>
+      ),
+    },
+    {
       key: 'vesselName',
       label: 'Vessel name',
       sortable: true,
@@ -282,18 +362,6 @@ export function buildUnifiedApplicationColumns({
   }
 
   columns.push(
-    {
-      key: 'poReference',
-      label: 'PO / CID / Compass No.',
-      sortable: true,
-      filterable: true,
-      width: 160,
-      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {row.poReference?.trim() || '—'}
-        </Typography>
-      ),
-    },
     {
       key: 'operationalStatus',
       label: 'Visa status',

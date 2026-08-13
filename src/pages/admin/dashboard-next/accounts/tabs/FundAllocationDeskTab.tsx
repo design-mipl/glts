@@ -14,6 +14,7 @@ function statusColor(status: string): 'success' | 'warning' | 'error' | 'info' |
   const s = status.toLowerCase()
   if (s.includes('allocat') && !s.includes('pending')) return 'success'
   if (s.includes('approved')) return 'success'
+  if (s.includes('reconcil')) return 'info'
   if (s.includes('pending')) return 'warning'
   if (s.includes('reject')) return 'error'
   return 'info'

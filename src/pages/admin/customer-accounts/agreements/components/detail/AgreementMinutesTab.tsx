@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Stack, Typography } from '@mui/material'
-import { FileText } from 'lucide-react'
-import { BaseCard, Button, FileUpload, useToast } from '@/design-system/UIComponents'
+import { Download, FileText, Trash2 } from 'lucide-react'
+import { BaseCard, FileUpload, IconButton, useToast } from '@/design-system/UIComponents'
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
@@ -86,10 +86,12 @@ export function AgreementMinutesTab({ agreement, onReload }: AgreementMinutesTab
                     </Typography>
                   </Stack>
                 </Stack>
-                <Stack direction="row" spacing={1} flexShrink={0}>
-                  <Button
-                    label="Download"
-                    variant="outlined"
+                <Stack direction="row" spacing={0.5} flexShrink={0}>
+                  <IconButton
+                    icon={<Download size={14} />}
+                    tooltip="Download"
+                    variant="soft"
+                    color="primary"
                     size="sm"
                     onClick={() =>
                       showToast({
@@ -99,9 +101,10 @@ export function AgreementMinutesTab({ agreement, onReload }: AgreementMinutesTab
                       })
                     }
                   />
-                  <Button
-                    label="Delete"
-                    variant="outlined"
+                  <IconButton
+                    icon={<Trash2 size={14} />}
+                    tooltip="Delete"
+                    variant="soft"
                     color="error"
                     size="sm"
                     onClick={() => {

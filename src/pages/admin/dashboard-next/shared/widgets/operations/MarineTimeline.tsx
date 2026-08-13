@@ -21,6 +21,8 @@ export interface MarineTimelineRow {
   visaStatus: string
   priority: string
   ragStatus: RagStatusId
+  /** Destination filter key (uae, schengen, uk, us) for segment country scope. */
+  destinationCountry?: string
 }
 
 export interface MarineTimelineProps {

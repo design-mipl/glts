@@ -53,6 +53,9 @@ export interface FlowDraftLikeState {
   flagCountry?: string
   portOfRegistry?: string
   referencePo?: string
+  poCidNo?: string
+  compassNo?: string
+  joiningPort?: string
   billingAddress?: string
   globalDocumentUploads: Record<string, { fileName: string; uploadedAt: string }>
   uploadQueueRows: UploadQueueRow[]

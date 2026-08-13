@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Box, CircularProgress } from '@mui/material'
+import { Box, CircularProgress, Stack } from '@mui/material'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Tabs, BaseCard, EmptyState, useToast } from '@/design-system/UIComponents'
+import { Tabs, BaseCard, Button, EmptyState, useToast } from '@/design-system/UIComponents'
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { enquiryService } from '@/shared/services/enquiryService'
 import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 import type { EnquiryFollowupOutcome } from '@/shared/types/enquiry'
-import { AddFollowupModal, type FollowupModalValue } from '../components/AddFollowupModal'
+import { AddFollowupModal } from '../components/AddFollowupModal'
 import { AssignmentModal, type AssignmentModalValue } from '../components/AssignmentModal'
 import { ConvertToQuotationDialog } from '../components/ConvertToQuotationDialog'
 import { EnquiryDetailSummary } from '../components/EnquiryDetailSummary'
@@ -17,6 +17,10 @@ import { InternalNotesTab } from '../components/detail/InternalNotesTab'
 import { OverviewTab } from '../components/detail/OverviewTab'
 import { useEnquiryDetailState } from '../hooks/useEnquiryDetailState'
 import { getEnquiryActor } from '../utils/enquiryActor'
+import {
+  createInitialFollowupValue,
+  validateFollowupValue,
+} from '../utils/enquiryFollowupUtils'
 
 const ENQUIRY_LISTING_PATH = '/admin/customer-accounts/enquiries'
 
@@ -27,18 +31,6 @@ const initialAssignment: AssignmentModalValue = {
   priority: 'medium',
   slaTarget: '',
   assignmentNotes: '',
-}
-
-const initialFollowup: FollowupModalValue = {
-  followupType: 'call',
-  followupDate: '',
-  followupTime: '10:00',
-  discussionSummary: '',
-  nextAction: '',
-  assignedUser: '',
-  reminderRequired: true,
-  followupStatus: 'scheduled',
-  outcome: '',
 }
 
 export function EnquiryDetailPage() {
@@ -55,7 +47,7 @@ export function EnquiryDetailPage() {
   const [convertModalOpen, setConvertModalOpen] = useState(false)
 
   const [assignmentValue, setAssignmentValue] = useState(initialAssignment)
-  const [followupValue, setFollowupValue] = useState(initialFollowup)
+  const [followupValue, setFollowupValue] = useState(() => createInitialFollowupValue())
   const [internalNotes, setInternalNotes] = useState('')
 
   const tabs = useMemo(
@@ -91,6 +83,15 @@ export function EnquiryDetailPage() {
     )
   }
 
+  const openFollowupModal = () => {
+    setFollowupValue(
+      createInitialFollowupValue({
+        assignedUser: enquiry.assignment.assignedUser ?? '',
+      }),
+    )
+    setFollowupModalOpen(true)
+  }
+
   return (
     <>
       <AdminDetailShell
@@ -108,7 +109,20 @@ export function EnquiryDetailPage() {
         }
       >
         <BaseCard sx={{ p: 0, overflow: 'hidden' }}>
-          <Tabs items={tabs} value={activeTab} onChange={setActiveTab} variant="underline" size="sm" />
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            spacing={1}
+            sx={{ pr: 2 }}
+          >
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Tabs items={tabs} value={activeTab} onChange={setActiveTab} variant="underline" size="sm" />
+            </Box>
+            {activeTab === 'followups' ? (
+              <Button label="Add Follow-up" size="sm" onClick={openFollowupModal} sx={{ flexShrink: 0 }} />
+            ) : null}
+          </Stack>
           <Box sx={{ p: 2 }}>
             {activeTab === 'overview' ? (
               <OverviewTab
@@ -127,7 +141,7 @@ export function EnquiryDetailPage() {
             {activeTab === 'followups' ? (
               <FollowupsTab
                 enquiry={enquiry}
-                onAdd={() => setFollowupModalOpen(true)}
+                onAdd={openFollowupModal}
                 onMarkComplete={async (followupId) => {
                   await enquiryService.completeFollowup(enquiry.id, followupId, getEnquiryActor())
                   await reload()
@@ -197,6 +211,11 @@ export function EnquiryDetailPage() {
         onClose={() => setFollowupModalOpen(false)}
         onChange={setFollowupValue}
         onSubmit={async () => {
+          const validationError = validateFollowupValue(followupValue)
+          if (validationError) {
+            showToast({ title: validationError, variant: 'error' })
+            return
+          }
           await enquiryService.addFollowup(
             enquiry.id,
             {
@@ -211,7 +230,7 @@ export function EnquiryDetailPage() {
             getEnquiryActor(),
           )
           setFollowupModalOpen(false)
-          setFollowupValue(initialFollowup)
+          setFollowupValue(createInitialFollowupValue())
           showToast({ title: 'Follow-up scheduled', variant: 'success' })
           await reload()
         }}

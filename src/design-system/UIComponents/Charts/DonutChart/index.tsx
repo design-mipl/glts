@@ -16,6 +16,8 @@ export interface DonutChartProps {
   data: DonutSlice[]
   height?: number
   showLegend?: boolean
+  /** `bottom` = horizontal wrap (typically ~2 lines); `auto` uses chart theme. */
+  legendPlacement?: 'auto' | 'bottom'
   showTooltip?: boolean
   loading?: boolean
   centerValue?: string
@@ -80,6 +82,7 @@ export default function DonutChart({
   data,
   height = 300,
   showLegend = true,
+  legendPlacement = 'auto',
   showTooltip = true,
   loading = false,
   centerValue,
@@ -90,6 +93,22 @@ export default function DonutChart({
   const h = ct.isMobile ? Math.round(height * 0.75) : height
   const outerRadius = Math.round((h / 2) * 0.8)
   const innerRadius = Math.round(outerRadius * 0.55)
+
+  const legendProps =
+    legendPlacement === 'bottom'
+      ? {
+          layout: 'horizontal' as const,
+          verticalAlign: 'bottom' as const,
+          align: 'center' as const,
+          wrapperStyle: {
+            ...ct.legendProps.wrapperStyle,
+            width: '100%',
+            paddingLeft: 0,
+            paddingTop: 8,
+            lineHeight: '18px',
+          },
+        }
+      : ct.legendProps
 
   if (loading) return <Skeleton variant="rectangular" width="100%" height={h} sx={{ borderRadius: 1 }} />
 
@@ -104,7 +123,7 @@ export default function DonutChart({
             formatter={formatTooltip as any}
           />
         )}
-        {showLegend && <Legend {...ct.legendProps} />}
+        {showLegend && <Legend {...legendProps} />}
         <Pie
           data={data}
           dataKey="value"

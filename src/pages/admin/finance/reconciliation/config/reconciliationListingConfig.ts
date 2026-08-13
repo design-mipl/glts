@@ -25,6 +25,26 @@ export function getReconciliationReferenceLabel(_tab?: ReconciliationTab): strin
   return 'Book entry number'
 }
 
-export function getReconciliationStatusLabel(status: 'pending' | 'submitted'): string {
-  return status === 'submitted' ? 'Submitted' : 'Pending'
+export function getReconciliationStatusLabel(status: 'pending' | 'submitted' | 'rejected'): string {
+  switch (status) {
+    case 'submitted':
+      return 'Submitted'
+    case 'rejected':
+      return 'Rejected'
+    default:
+      return 'Pending'
+  }
+}
+
+export function getReconciliationStatusBadgeColor(
+  status: 'pending' | 'submitted' | 'rejected',
+): 'success' | 'warning' | 'error' {
+  switch (status) {
+    case 'submitted':
+      return 'success'
+    case 'rejected':
+      return 'error'
+    default:
+      return 'warning'
+  }
 }

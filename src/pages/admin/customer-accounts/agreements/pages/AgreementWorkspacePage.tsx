@@ -264,7 +264,6 @@ export function AgreementWorkspacePage({
             errors={errors}
             onChange={setFormData}
             onClearError={clearFieldError}
-            allowVerification
           />
         )
       case 'review':

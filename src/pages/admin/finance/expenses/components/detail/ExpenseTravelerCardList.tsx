@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { alpha, Box, Chip, Stack, Typography, useTheme } from '@mui/material'
-import { ensureRowBasicDetails } from '@/pages/customer/features/applications/utils/applicantBasicDetailsUtils'
+import { ensureRowBasicDetails, resolvePassengerRank } from '@/pages/customer/features/applications/utils/applicantBasicDetailsUtils'
 import { formatQueueRowGltsLabel } from '@/pages/customer/features/applications/utils/gltsReferenceIds'
 import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { VerifyOverviewData } from '@/pages/admin/application-management/marine/utils/verifyDocumentsUtils'
@@ -165,7 +165,7 @@ export function ExpenseTravelerCardList({
           const expenseTotal = expenseByPassengerId.get(row.gltsApplicantId) ?? 0
           const rank =
             rankByPassengerId.get(row.gltsApplicantId) ||
-            row.additionalDetails?.employmentOccupation?.trim() ||
+            resolvePassengerRank(row) ||
             ''
           const passport = basic.basicDetails?.passportNumber?.trim() || row.passportNo
           const cdc = basic.basicDetails?.cdcNumber?.trim() || ''

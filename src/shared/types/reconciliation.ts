@@ -15,7 +15,7 @@ export type ReconciliationPeriodPreset =
   | 'ytd'
   | 'custom'
 
-export type ReconciliationStatus = 'pending' | 'submitted'
+export type ReconciliationStatus = 'pending' | 'submitted' | 'rejected'
 
 export type ReconciliationSourceKind = 'expense' | 'claim_sheet'
 
@@ -80,16 +80,19 @@ export interface ReconciliationItem {
   claimGrandTotal: number
   claimReviewedAt: string
 
-  /**
-   * Primary editable reconciliation reference.
-   * Label varies by tab (policy / AWB / AC entry / settlement ref).
-   */
+  /** Book entry number entered on successful reconcile. */
   referenceNumber: string
   reconciledAt?: string
   reconciledBy?: string
+  rejectionReason?: string
 }
 
 export interface SubmitReconciliationInput {
   id: string
   referenceNumber: string
+}
+
+export interface RejectReconciliationInput {
+  id: string
+  reason: string
 }

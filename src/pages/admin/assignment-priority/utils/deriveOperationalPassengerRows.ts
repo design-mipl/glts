@@ -112,6 +112,27 @@ function resolvePassengerContact(
   }
 }
 
+function resolvePassengerRankFromApplication(
+  app: SingleApplicationRow | BulkBatchRow,
+  applicantId: string,
+): string {
+  const seed = getSingleApplicationDemoSeed(app.id)
+  const seedRank = seed?.basicDetails.rank?.trim()
+  if (seedRank) return seedRank
+
+  const queueRow = mockUploadQueue.find(
+    q => q.gltsApplicationId === app.id && q.gltsApplicantId === applicantId,
+  )
+  if (queueRow) {
+    const rank = queueRow.basicDetails?.rank?.trim()
+    if (rank) return rank
+    const legacy = queueRow.additionalDetails?.employmentOccupation?.trim()
+    if (legacy) return legacy
+  }
+
+  return seed?.additionalDetails.employmentOccupation?.trim() || '—'
+}
+
 function baseFromApplication(
   app: SingleApplicationRow | BulkBatchRow,
   applicantId: string,
@@ -127,6 +148,7 @@ function baseFromApplication(
     gltsApplicationId: app.id,
     sequenceNo,
     passengerName,
+    passengerRank: resolvePassengerRankFromApplication(app, applicantId),
     passportNo,
     passengerPhone: contact.passengerPhone,
     passengerEmail: contact.passengerEmail,

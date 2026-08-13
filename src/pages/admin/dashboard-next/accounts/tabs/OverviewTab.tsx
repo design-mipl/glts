@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Grid, Stack } from '@mui/material'
 import {
-  AlertTriangle,
   CreditCard,
   FileText,
   HandCoins,
@@ -10,20 +9,22 @@ import {
   Wallet,
 } from 'lucide-react'
 import { Button } from '@/design-system/UIComponents'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
+import { ExecutiveSectionHeader } from '@/pages/admin/dashboard/components'
 import {
   AlertCenter,
-  CollectionSummary,
+  ClientSegmentMixChart,
+  DashboardRankChart,
   RecentActivity,
   DASHBOARD_SPACING,
+  SegmentComparisonSection,
+  SegmentGrowthTrendSection,
+  SegmentRevenueCollectionsSection,
 } from '../../shared'
-import { AccountsExecutiveRow } from '../components/AccountsExecutiveRow'
-import {
-  AccountsCollectionsTrend,
-  AccountsInfographics,
-} from '../components/AccountsInfographics'
+import { AccountsInfographics } from '../components/AccountsInfographics'
+import { AccountsWorkloadPanel } from '../components/AccountsWorkloadPanel'
 import type { AccountsDashboardTabProps } from '../types'
+import { getAccountsWorkloadCounts } from '../utils/accountsWorkloadUtils'
+import { buildAccountsFinanceRiskAlerts } from '../utils/accountsFinancePulseUtils'
 
 export const ACCOUNTS_ACTION_ICONS: Record<string, ReactNode> = {
   'qa-invoices': <FileText size={18} />,
@@ -34,7 +35,10 @@ export const ACCOUNTS_ACTION_ICONS: Record<string, ReactNode> = {
   'qa-accounts-legacy': <LayoutDashboard size={18} />,
 }
 
-/** Overview — signal · executive row · multi-color infographics · trend + activity. */
+/**
+ * Overview — restructured bands (content preserved):
+ * 1. Act now · 2. Desk snapshot · 3. Commercial · 4. Portfolio · 5. Activity
+ */
 export function OverviewTab({
   data,
   loading,
@@ -42,47 +46,73 @@ export function OverviewTab({
   onNavigate,
   onOpenTab,
 }: AccountsDashboardTabProps) {
-  const colors = usePublicBrandColors()
+  const workload = getAccountsWorkloadCounts(data)
+  const financeRiskAlerts = buildAccountsFinanceRiskAlerts(data)
 
-  const pendingFunds = data.fundAllocationRows.filter((r) => r.allocationStatus === 'Pending').length
-  const pendingClaims = data.claimSheetRows.filter((r) => r.status === 'Pending review').length
-  const awaitingVendor = data.vendorBillingRows.reduce((sum, r) => sum + r.awaitingInvoiceCount, 0)
-  const overdueCount = data.collectionRows.filter((r) =>
-    r.status.toLowerCase().includes('overdue'),
-  ).length
   const exceptionCount = data.invoiceExceptionRows.filter((r) =>
     ['draft', 'pending', 'awaiting'].some((s) => r.status.toLowerCase().includes(s)),
   ).length
 
-  const signalParts = [
-    pendingFunds > 0 ? `${pendingFunds} fund requests` : null,
-    pendingClaims > 0 ? `${pendingClaims} claim sheets` : null,
-    awaitingVendor > 0 ? `${awaitingVendor} vendor charges` : null,
-    overdueCount > 0 ? `${overdueCount} overdue AR` : null,
-    exceptionCount > 0 ? `${exceptionCount} invoice exceptions` : null,
-  ].filter(Boolean)
-
   const moduleAlerts = [
+    ...financeRiskAlerts.map((alert) => ({
+      ...alert,
+      onClick:
+        alert.id === 'alert-blocked-cash' || alert.id === 'alert-available-funds'
+          ? () => onOpenTab?.('finance')
+          : alert.id === 'alert-sla-cash'
+            ? () => onNavigate('/admin/assignment-priority')
+            : alert.id === 'alert-credit-exposure'
+              ? () => onNavigate('/admin/customer-accounts/agreements')
+              : () => onNavigate('/admin/finance/invoices'),
+    })),
     {
-      id: 'alert-funds',
-      title: 'Pending fund allocation',
-      description: `${pendingFunds} Ops requests from Assignment Priority`,
-      severity: pendingFunds > 0 ? ('warning' as const) : ('info' as const),
-      onClick: () => onNavigate('/admin/finance/fund-allocation?tab=pending_allocation'),
+      id: 'alert-reconciliations',
+      title: 'Pending reconciliations',
+      description: `${workload.pendingReconciliations} insurance · tickets · couriers · credit cards`,
+      severity: workload.pendingReconciliations > 0 ? ('warning' as const) : ('info' as const),
+      onClick: () => onNavigate('/admin/finance/reconciliation'),
+    },
+    {
+      id: 'alert-claim-recon',
+      title: 'Claim sheet reconciliation',
+      description: `${workload.pendingClaimRecon} approved sheets await book entry`,
+      severity: workload.pendingClaimRecon > 0 ? ('warning' as const) : ('info' as const),
+      onClick: () => onNavigate('/admin/finance/reconciliation?tab=approved_claim_sheet'),
     },
     {
       id: 'alert-claims',
       title: 'Claim sheets pending review',
-      description: `${pendingClaims} Ground Ops sheets await approve / reject`,
-      severity: pendingClaims > 0 ? ('critical' as const) : ('info' as const),
+      description: `${workload.pendingClaimApprovals} Ground Ops sheets await approve / reject`,
+      severity: workload.pendingClaimApprovals > 0 ? ('critical' as const) : ('info' as const),
       onClick: () => onNavigate('/admin/finance/fund-allocation?tab=claim_sheets'),
     },
     {
       id: 'alert-vendor',
-      title: 'Vendor charges awaiting invoice',
-      description: `${awaitingVendor} charges across vendor billing`,
-      severity: awaitingVendor > 0 ? ('warning' as const) : ('info' as const),
+      title: 'Vendor invoices awaiting',
+      description: `${workload.awaitingVendor} charges across vendor billing`,
+      severity: workload.awaitingVendor > 0 ? ('warning' as const) : ('info' as const),
       onClick: () => onNavigate('/admin/finance/vendor-billing'),
+    },
+    {
+      id: 'alert-invoices-generate',
+      title: 'Invoices pending to be generated',
+      description: `${workload.invoicesToGenerate} visa cases ready to invoice`,
+      severity: workload.invoicesToGenerate > 0 ? ('warning' as const) : ('info' as const),
+      onClick: () => onOpenTab?.('work'),
+    },
+    {
+      id: 'alert-client-submissions',
+      title: 'Pending client submissions',
+      description: `${workload.pendingClientSubmissions} invoice submissions due or awaiting data`,
+      severity: workload.pendingClientSubmissions > 0 ? ('warning' as const) : ('info' as const),
+      onClick: () => onOpenTab?.('work'),
+    },
+    {
+      id: 'alert-funds',
+      title: 'Pending fund allocation',
+      description: `${workload.pendingFunds} Ops requests from Assignment Priority`,
+      severity: workload.pendingFunds > 0 ? ('warning' as const) : ('info' as const),
+      onClick: () => onNavigate('/admin/finance/fund-allocation?tab=pending_allocation'),
     },
     {
       id: 'alert-exceptions',
@@ -101,96 +131,102 @@ export function OverviewTab({
   ]
 
   return (
-    <Stack spacing={DASHBOARD_SPACING.field}>
-      {signalParts.length > 0 ? (
-        <Box
-          sx={{
-            ...executiveCardLevel2Sx(colors),
-            px: 2,
-            py: 1.5,
-            display: 'flex',
-            alignItems: { xs: 'stretch', sm: 'center' },
-            justifyContent: 'space-between',
-            gap: 1.5,
-            flexDirection: { xs: 'column', sm: 'row' },
-          }}
-        >
-          <Stack direction="row" spacing={1.25} alignItems="center" minWidth={0}>
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '8px',
-                display: 'grid',
-                placeItems: 'center',
-                bgcolor: 'error.main',
-                color: 'error.contrastText',
-                flexShrink: 0,
-                opacity: 0.9,
-              }}
-            >
-              <AlertTriangle size={16} />
-            </Box>
-            <Box minWidth={0}>
-              <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
-                {signalParts.join(' · ')}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-                Open Work desks for expenses, funds, vendor billing, invoicing, and credit control.
-              </Typography>
-            </Box>
-          </Stack>
+    <Stack spacing={DASHBOARD_SPACING.section}>
+      {/* 1. Act now */}
+      <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Box sx={{ height: '100%', minWidth: 0, '& > *': { height: '100%' } }}>
+            <AlertCenter
+              title="Needs attention"
+              subtitle="Cash risk · overdue · credit · desks · submissions"
+              alerts={moduleAlerts}
+              loading={loading}
+              maxItems={6}
+              onShowMore={() => onOpenTab?.('work')}
+            />
+          </Box>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Box sx={{ height: '100%', minWidth: 0, '& > *': { height: '100%' } }}>
+            <AccountsWorkloadPanel data={data} loading={loading} />
+          </Box>
+        </Grid>
+      </Grid>
+
+      {/* 2. Desk snapshot */}
+      <AccountsInfographics data={data} loading={loading} />
+
+      {/* 3. Commercial */}
+      <SegmentComparisonSection
+        rows={data.segmentComparison}
+        loading={loading}
+        action={
           <Button
-            label="Open Work"
+            label="Open Performance"
             variant="outlined"
             size="sm"
-            onClick={() => onOpenTab?.('work')}
-          />
-        </Box>
-      ) : null}
-
-      <AccountsExecutiveRow
-        primaryVisualization={
-          <CollectionSummary
-            title="Collections funnel"
-            subtitle="Primary visualization — outstanding vs collected"
-            data={data.collectionSummary}
-            loading={loading}
-            onRetry={onRetry}
-          />
-        }
-        alerts={
-          <AlertCenter
-            title="Financial alerts"
-            subtitle="Funds · claim sheets · vendor · invoices · AR"
-            alerts={moduleAlerts}
-            loading={loading}
-            maxItems={5}
-            onShowMore={() => onOpenTab?.('work')}
+            onClick={() => onOpenTab?.('performance')}
           />
         }
       />
 
-      <AccountsInfographics data={data} loading={loading} />
+      <SegmentRevenueCollectionsSection
+        rows={data.segmentComparison}
+        loading={loading}
+        onChartClick={() => onOpenTab?.('performance')}
+      />
 
-      <Stack
-        direction={{ xs: 'column', lg: 'row' }}
-        spacing={DASHBOARD_SPACING.field}
-        alignItems="stretch"
-      >
-        <Box flex={1.2} minWidth={0}>
-          <AccountsCollectionsTrend data={data} loading={loading} />
-        </Box>
-        <Box flex={1} minWidth={0} sx={{ '& > *': { height: '100%' } }}>
-          <RecentActivity
-            title="Recent activity"
-            items={data.recentActivity}
-            loading={loading}
-            onRetry={onRetry}
-            maxItems={6}
+      <SegmentGrowthTrendSection
+        revenueTrend={data.segmentRevenueTrend}
+        applicationTrend={data.segmentApplicationTrend}
+        loading={loading}
+        onChartClick={() => onOpenTab?.('performance')}
+      />
+
+      {/* 4. Portfolio */}
+      <Stack spacing={DASHBOARD_SPACING.field}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          alignItems={{ xs: 'stretch', sm: 'flex-start' }}
+          justifyContent="space-between"
+          spacing={1}
+        >
+          <ExecutiveSectionHeader
+            title="Portfolio snapshot"
+            description="Segment mix and top accounts — open Finance for full client intelligence"
           />
-        </Box>
+          <Button
+            label="Open Finance"
+            variant="outlined"
+            size="sm"
+            startIcon={<HandCoins size={14} />}
+            onClick={() => onOpenTab?.('finance')}
+          />
+        </Stack>
+        <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
+          <Grid size={{ xs: 12, md: 5, lg: 4 }}>
+            <ClientSegmentMixChart rows={data.clientIntelligence.clientRows} loading={loading} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 7, lg: 8 }}>
+            <DashboardRankChart
+              title="Top accounts by revenue"
+              items={data.clientIntelligence.topRevenueClients}
+              loading={loading}
+              valueLabel="Revenue"
+              initialTopN="5"
+            />
+          </Grid>
+        </Grid>
       </Stack>
+
+      {/* 5. Activity */}
+      <RecentActivity
+        title="Recent activity"
+        items={data.recentActivity}
+        loading={loading}
+        onRetry={onRetry}
+        maxItems={6}
+      />
     </Stack>
   )
 }

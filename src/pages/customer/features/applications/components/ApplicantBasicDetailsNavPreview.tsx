@@ -63,6 +63,11 @@ export function ApplicantBasicDetailsNavPreview({ details }: ApplicantBasicDetai
           Crew ID · {details.crewId}
         </Typography>
       ) : null}
+      {details.rank.trim() ? (
+        <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.25, pl: 2.75 }}>
+          Rank · {details.rank}
+        </Typography>
+      ) : null}
     </Box>
   )
 }

@@ -90,9 +90,17 @@ export const CLAIM_SHEET_STATUS_LABEL: Record<GroundOpsClaimSheetStatus, string>
   settled: 'Settled',
 }
 
-/** Statuses Finance can still approve or reject. */
+/** Statuses Finance can still approve or reject (pre-approval review). */
 export function canFinanceReviewClaimSheet(status: GroundOpsClaimSheetStatus): boolean {
   return status === 'submitted' || status === 'under_review'
+}
+
+/**
+ * Approved (or settled) claim sheets can be rejected from Reconciliation
+ * when Accounts cannot book / match the settlement.
+ */
+export function canRejectClaimSheetFromReconciliation(status: GroundOpsClaimSheetStatus): boolean {
+  return status === 'approved' || status === 'settled'
 }
 
 /** Ground Ops may edit and resubmit only after Finance rejection. */

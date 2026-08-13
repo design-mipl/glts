@@ -106,6 +106,9 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
         flagCountry: '',
         portOfRegistry: '',
         joiningPort: '',
+        poCidNo: '',
+        compassNo: '',
+        referencePo: '',
       })
       return
     }
@@ -126,6 +129,9 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
       flagCountry: '',
       portOfRegistry: '',
       joiningPort: '',
+      poCidNo: '',
+      compassNo: '',
+      referencePo: '',
     })
   }
 
@@ -162,6 +168,9 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
         flagCountry: '',
         portOfRegistry: '',
         joiningPort: '',
+        poCidNo: '',
+        compassNo: '',
+        referencePo: '',
       })
       return
     }
@@ -184,7 +193,7 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
   const detailsDescription = isAdmin
     ? 'Select the company / customer first, then choose billing entity and vessel from that account’s masters.'
     : isMarine
-      ? 'Select a vessel and billing entity from your master lists, and optionally add a PO / CID / Compass No.'
+      ? 'Select a vessel and billing entity from your master lists, and optionally add PO / CID no., Compass No., and joining port.'
       : isCorporate
         ? 'Select an entity from your master list to auto-fill corporate billing details.'
         : 'Select billing entity and vessel from your master lists, or leave optional fields blank.'
@@ -263,13 +272,35 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
           {isMarine && (
             <>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <FormField label="PO / CID / Compass No." optional>
+                <FormField label="PO / CID no." optional>
                   <Input
                     fullWidth
                     size="sm"
-                    placeholder="e.g. PO-2026-0142, CID-12345, or Compass No."
-                    value={state.referencePo}
-                    onChange={value => onUpdate({ referencePo: value })}
+                    placeholder="e.g. PO-2026-0142 or CID-12345"
+                    value={state.poCidNo}
+                    onChange={value => onUpdate({ poCidNo: value })}
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Compass No." optional>
+                  <Input
+                    fullWidth
+                    size="sm"
+                    placeholder="e.g. COMPASS-2026-001"
+                    value={state.compassNo}
+                    onChange={value => onUpdate({ compassNo: value })}
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Joining port" optional>
+                  <Input
+                    fullWidth
+                    size="sm"
+                    placeholder="e.g. Rotterdam"
+                    value={state.joiningPort}
+                    onChange={value => onUpdate({ joiningPort: value })}
                   />
                 </FormField>
               </Grid>
@@ -346,13 +377,35 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
           {!isCorporate && !isMarine && (
             <>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <FormField label="PO / CID / Compass No." optional>
+                <FormField label="PO / CID no." optional>
                   <Input
                     fullWidth
                     size="sm"
-                    placeholder="e.g. PO-2026-0142, CID-12345, or Compass No."
-                    value={state.referencePo}
-                    onChange={value => onUpdate({ referencePo: value })}
+                    placeholder="e.g. PO-2026-0142 or CID-12345"
+                    value={state.poCidNo}
+                    onChange={value => onUpdate({ poCidNo: value })}
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Compass No." optional>
+                  <Input
+                    fullWidth
+                    size="sm"
+                    placeholder="e.g. COMPASS-2026-001"
+                    value={state.compassNo}
+                    onChange={value => onUpdate({ compassNo: value })}
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Joining port" optional>
+                  <Input
+                    fullWidth
+                    size="sm"
+                    placeholder="e.g. Rotterdam"
+                    value={state.joiningPort}
+                    onChange={value => onUpdate({ joiningPort: value })}
                   />
                 </FormField>
               </Grid>

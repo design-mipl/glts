@@ -233,6 +233,7 @@ export function matchesAssignmentSearch(row: OperationalPassengerRow, query: str
   if (!q) return true
   return [
     row.passengerName,
+    row.passengerRank,
     row.gltsApplicationId,
     row.gltsApplicantId,
     row.companyName,

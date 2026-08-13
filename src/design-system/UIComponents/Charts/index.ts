@@ -5,7 +5,7 @@ export { default as AreaChart } from './AreaChart'
 export type { AreaChartProps, AreaConfig } from './AreaChart'
 
 export { default as BarChart } from './BarChart'
-export type { BarChartProps, BarConfig } from './BarChart'
+export type { BarChartProps, BarConfig, BarTooltipExtra } from './BarChart'
 
 export { default as PieChart } from './PieChart'
 export type { PieChartProps, PieSlice } from './PieChart'

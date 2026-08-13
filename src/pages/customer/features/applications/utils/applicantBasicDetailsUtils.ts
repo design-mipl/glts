@@ -33,10 +33,15 @@ export function resolveApplicantBasicDetails(row: UploadQueueRow): ApplicantBasi
     ...emptyApplicantBasicDetails(),
     ...stored,
     crewId: stored.crewId || row.gltsApplicantId || '',
+    rank: stored.rank || row.additionalDetails?.employmentOccupation?.trim() || '',
     applicantName: stored.applicantName || (row.travelerName === PLACEHOLDER ? '' : row.travelerName),
     passportNumber: stored.passportNumber || (row.passportNo === PLACEHOLDER ? '' : row.passportNo),
     nationality: stored.nationality || (row.nationality === PLACEHOLDER ? '' : row.nationality),
   }
+}
+
+export function resolvePassengerRank(row: UploadQueueRow): string {
+  return resolveApplicantBasicDetails(row).rank.trim()
 }
 
 export function syncBasicDetailsFromPassport(

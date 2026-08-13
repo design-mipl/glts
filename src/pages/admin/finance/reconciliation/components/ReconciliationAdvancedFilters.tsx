@@ -57,6 +57,7 @@ export function ReconciliationAdvancedFilterFields({
             { value: '', label: 'All statuses' },
             { value: 'pending', label: 'Pending' },
             { value: 'submitted', label: 'Submitted' },
+            { value: 'rejected', label: 'Rejected' },
           ]}
           placeholder="Status"
           size="sm"

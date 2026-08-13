@@ -32,7 +32,8 @@ export function canCreateCreditNote(invoice: Invoice): boolean {
   if (invoice.invoiceType === 'credit_note') return false
   if (invoice.invoiceStatus === 'draft' || invoice.invoiceStatus === 'cancelled') return false
   if (isGstFiled(invoice)) return true
-  return hasClientPayment(invoice)
+  if (hasClientPayment(invoice)) return true
+  return invoice.invoiceStatus === 'shared'
 }
 
 /** Extra expenses on the same case — not a correction path. */

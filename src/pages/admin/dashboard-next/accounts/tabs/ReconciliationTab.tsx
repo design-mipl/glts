@@ -32,7 +32,7 @@ function getRefundCell(row: AccountsExpenseRefundRow, key: string): string {
 }
 
 /** Expenses desk — daily packs by payment mode + refunds (expense module). */
-export function ReconciliationTab({
+export function ExpensesDeskTab({
   data,
   loading,
   onNavigate,
@@ -268,3 +268,6 @@ export function ReconciliationTab({
     </Stack>
   )
 }
+
+/** @deprecated Use ExpensesDeskTab */
+export const ReconciliationTab = ExpensesDeskTab

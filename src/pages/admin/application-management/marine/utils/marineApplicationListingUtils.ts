@@ -5,7 +5,13 @@ import {
 } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { isBulkRow } from '@/pages/customer/features/applications/types/applicationListing.types'
-import { resolveApplicationCompanyName, resolveApplicationVesselName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { resolveApplicationCompanyName, resolveApplicationRank, resolveApplicationVesselName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import {
+  resolveApplicationBillingEntity,
+  resolveApplicationCompassNo,
+  resolveApplicationJoiningPort,
+  resolveApplicationPoCidNo,
+} from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
 import { resolveApplicationCreatorLabel } from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
 import { getListingCellValue } from '@/pages/customer/features/applications/utils/applicationListingUtils'
 import { mapApplicationRowsToGridItems } from '@/pages/customer/features/applications/utils/applicationListingGrid'
@@ -33,7 +39,13 @@ export function matchesMarineApplicationSearch(row: MarineApplicationRow, query:
   if (row.id.toLowerCase().includes(s)) return true
   if (resolveApplicationCompanyName(row).toLowerCase().includes(s)) return true
   if (resolveApplicationVesselName(row).toLowerCase().includes(s)) return true
+  const rank = resolveApplicationRank(row).toLowerCase()
+  if (rank !== '—' && rank.includes(s)) return true
   if (row.poReference?.toLowerCase().includes(s)) return true
+  if (resolveApplicationPoCidNo(row).toLowerCase().includes(s)) return true
+  if (resolveApplicationCompassNo(row).toLowerCase().includes(s)) return true
+  if (resolveApplicationJoiningPort(row).toLowerCase().includes(s)) return true
+  if (resolveApplicationBillingEntity(row).toLowerCase().includes(s)) return true
   if (resolveApplicationCreatorLabel(row.createdByEmail).toLowerCase().includes(s)) return true
   if (row.jurisdiction?.toLowerCase().includes(s)) return true
   if (isBulkRow(row)) {
@@ -160,7 +172,10 @@ export function exportMarineApplicationsToCsv(rows: MarineApplicationRow[]): str
     'Pax name',
     'Company name',
     'Vessel',
-    'PO / CID / Compass No.',
+    'Billing entity',
+    'PO / CID no.',
+    'Compass No.',
+    'Joining port',
     'Country',
     'Visa type',
     'Jurisdiction',
@@ -184,7 +199,10 @@ export function exportMarineApplicationsToCsv(rows: MarineApplicationRow[]): str
       applicant,
       companyName,
       vesselName,
-      row.poReference?.trim() || '—',
+      resolveApplicationBillingEntity(row),
+      resolveApplicationPoCidNo(row),
+      resolveApplicationCompassNo(row),
+      resolveApplicationJoiningPort(row),
       row.country,
       row.visaType,
       row.jurisdiction ?? '—',

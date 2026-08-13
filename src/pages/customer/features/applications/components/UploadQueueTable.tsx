@@ -18,6 +18,8 @@ import {
 } from '@/shared/theme/publicBrand'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 import { formatQueueRowGltsLabel } from '../utils/gltsReferenceIds'
+import { resolvePassengerRank } from '../utils/applicantBasicDetailsUtils'
+import { useApplicationFlowPolicy } from '../context/ApplicationFlowPolicyContext'
 import type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
 import type { ApplicationDetailViewModel } from '../types/applicationDetail.types'
 import { ApplicationSummaryPopover } from './ApplicationSummaryPopover'
@@ -89,6 +91,8 @@ export function UploadQueueTable({
   summaryApplicationId,
 }: UploadQueueTableProps) {
   const colors = usePublicBrandColors()
+  const { customerSegment } = useApplicationFlowPolicy()
+  const showRank = customerSegment === 'marine'
   const verified = rows.filter(r => r.status === 'verified').length
   const needsReview = rows.filter(r => r.status === 'needs_review').length
   const processing = rows.filter(r => r.status === 'processing').length
@@ -100,6 +104,7 @@ export function UploadQueueTable({
   const tableHeaders = [
     idColumnLabel,
     'Traveler',
+    ...(showRank ? ['Rank'] : []),
     'Passport no.',
     'Expiry',
     'Nationality',
@@ -206,6 +211,11 @@ export function UploadQueueTable({
                     row.travelerName
                   )}
                 </TableCell>
+                {showRank ? (
+                  <TableCell sx={{ fontSize: '12px' }}>
+                    {isProcessing ? '—' : resolvePassengerRank(row) || '—'}
+                  </TableCell>
+                ) : null}
                 <TableCell sx={{ fontSize: '12px', fontFamily: 'monospace' }}>{row.passportNo}</TableCell>
                 <TableCell sx={{ fontSize: '12px' }}>{row.expiry}</TableCell>
                 <TableCell>

@@ -15,11 +15,7 @@ import {
   useToast,
 } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem, ApplicantDocumentStatus } from '@/pages/customer/features/applications/data/applicationFlowData'
-import { getSingleApplicationFlowExtras } from '@/pages/customer/features/applications/data/applicationFlowData'
-import {
-  resolveApplicationCompanyName,
-  resolveApplicationVesselName,
-} from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { buildApplicationOverviewOverrides } from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
 import { AdminDetailShell } from '@/pages/admin/components/AdminDetailShell'
 import { AdminWorkspaceShell } from '@/pages/admin/components/AdminWorkspaceShell'
 import { AdminStepperFormFooter } from '@/pages/admin/components/AdminStepperFormFooter'
@@ -42,6 +38,10 @@ import {
   resolveDocsQcTemplate,
   resolveFormViewTabEnabled,
   FORM_VIEW_QC_LOCKED_MESSAGE,
+  DOCS_QC_SUBMIT_HINT,
+  getDocsQcSubmittedHint,
+  getDocsQcSubmitSuccessMessage,
+  getDocsQcSubmitBlockedMessage,
 } from '../utils/B2bDocsQcCheckUtils'
 import {
   applicationMarineQcCheckService,
@@ -153,10 +153,7 @@ export function B2bViewFormPage() {
             visaType: detail.application?.visaType ?? listingRow?.visaType,
             travelDate: detail.application?.travelDate ?? listingRow?.travelDate,
             jurisdiction: detail.application?.jurisdiction ?? listingRow?.jurisdiction,
-            companyName: listingRow ? resolveApplicationCompanyName(listingRow) : undefined,
-            vesselName: listingRow ? resolveApplicationVesselName(listingRow) : undefined,
-            poReference: listingRow?.poReference,
-            entityName: getSingleApplicationFlowExtras(applicationId)?.entityName,
+            ...buildApplicationOverviewOverrides(listingRow, applicationId),
           })
         : null,
     [applicationId, detail, isBulk, rows, listingRow],
@@ -244,7 +241,7 @@ export function B2bViewFormPage() {
   )
   const formInteractionDisabled = !formViewUnlocked
   const docsQcReadyForSubmit = useMemo(
-    () => (docsQcRecord ? applicationMarineQcCheckService.isComplete(docsQcTemplate, docsQcRecord) : false),
+    () => (docsQcRecord ? applicationMarineQcCheckService.canSubmit(docsQcTemplate, docsQcRecord) : false),
     [docsQcRecord, docsQcTemplate],
   )
   const docsQcSubmitted = useMemo(
@@ -286,16 +283,14 @@ export function B2bViewFormPage() {
     const next = applicationMarineQcCheckService.submit(applicationId, selectedRow.id, docsQcTemplate)
     if (!next) {
       showToast({
-        title: 'Complete checklist first',
-        description: 'Confirm all QC checklist items and set outcome to Verified & ready for submission.',
+        ...getDocsQcSubmitBlockedMessage(),
         variant: 'warning',
       })
       return
     }
     setDocsQcRecord(next)
     showToast({
-      title: 'QC check submitted',
-      description: 'Form view is now unlocked for this traveler.',
+      ...getDocsQcSubmitSuccessMessage(next.outcome),
       variant: 'success',
     })
   }, [applicationId, selectedRow, readOnly, docsQcTemplate, showToast])
@@ -658,8 +653,8 @@ export function B2bViewFormPage() {
       docsQcSubmitDisabled={docsQcSubmitted || !docsQcReadyForSubmit}
       docsQcSubmitHint={
         docsQcSubmitted
-          ? 'QC already submitted. You can proceed in Form view.'
-          : 'Submit QC after confirming every checklist item and selecting Verified & ready for submission.'
+          ? getDocsQcSubmittedHint(docsQcRecord?.outcome ?? '')
+          : DOCS_QC_SUBMIT_HINT
       }
       onDocsQcSubmit={handleSubmitDocsQc}
       readOnly={readOnly}

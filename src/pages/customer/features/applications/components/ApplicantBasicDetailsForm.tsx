@@ -17,8 +17,9 @@ export function ApplicantBasicDetailsForm({
   onChange,
 }: ApplicantBasicDetailsFormProps) {
   const colors = usePublicBrandColors()
-  const { policy } = useApplicationFlowPolicy()
+  const { policy, customerSegment } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
+  const showRank = customerSegment === 'marine'
   const crewFromReference = Boolean(row.gltsApplicantId?.trim())
 
   return (
@@ -41,6 +42,19 @@ export function ApplicantBasicDetailsForm({
             />
           </FormField>
         </Grid>
+        {showRank ? (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Rank">
+              <Input
+                fullWidth
+                size="sm"
+                value={details.rank}
+                onChange={value => onChange({ rank: value })}
+                placeholder="e.g. Third Officer"
+              />
+            </FormField>
+          </Grid>
+        ) : null}
         <Grid size={{ xs: 12, sm: 6 }}>
           <FormField label="Applicant name" required={strict}>
             <Input

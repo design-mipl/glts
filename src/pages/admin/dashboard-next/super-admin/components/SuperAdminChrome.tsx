@@ -23,9 +23,10 @@ export const SA_TOP_N_OPTIONS = [
   { label: 'Top 10', value: '10' },
   { label: 'Top 15', value: '15' },
   { label: 'Top 20', value: '20' },
+  { label: 'Top 25', value: '25' },
 ] as const
 
-export type SuperAdminTopN = '5' | '10' | '15' | '20'
+export type SuperAdminTopN = '5' | '10' | '15' | '20' | '25'
 
 export function sliceTopN<T>(rows: T[], topN: SuperAdminTopN): T[] {
   return rows.slice(0, Number(topN))
@@ -100,7 +101,13 @@ export function SuperAdminRankChart({
   initialTopN = '10',
 }: {
   title: string
-  items: Array<{ id: string; primary: string; value?: string | number; progress?: number }>
+  items: Array<{
+    id: string
+    primary: string
+    value?: string | number
+    progress?: number
+    secondary?: string
+  }>
   loading?: boolean
   valueLabel?: string
   initialTopN?: SuperAdminTopN
@@ -111,6 +118,8 @@ export function SuperAdminRankChart({
     return sliceTopN(sorted, topN).map((item) => ({
       name: truncateLabel(item.primary),
       value: rankNumericValue(item),
+      status: typeof item.value === 'string' ? item.value : undefined,
+      reason: item.secondary?.trim() || undefined,
     }))
   }, [items, topN])
 
@@ -130,6 +139,10 @@ export function SuperAdminRankChart({
         showLegend={false}
         loading={loading}
         bars={[{ key: 'value', label: valueLabel }]}
+        tooltipExtras={[
+          { key: 'status', label: 'Status', format: (v) => String(v) },
+          { key: 'reason', label: 'Reason', format: (v) => String(v) },
+        ]}
       />
     </SuperAdminPanel>
   )
@@ -142,6 +155,7 @@ export function SuperAdminRankChart({
 export function SuperAdminSection({
   title,
   description: _description,
+  count,
   action,
   actionLabel,
   onAction,
@@ -150,6 +164,7 @@ export function SuperAdminSection({
 }: {
   title: string
   description?: string
+  count?: number
   action?: ReactNode
   actionLabel?: string
   onAction?: () => void
@@ -161,6 +176,7 @@ export function SuperAdminSection({
   const header = (
     <ExecutiveSectionHeader
       title={title}
+      count={count}
       action={action}
       actionLabel={actionLabel}
       onAction={onAction}

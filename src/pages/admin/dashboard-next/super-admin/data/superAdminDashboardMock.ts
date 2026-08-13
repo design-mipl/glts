@@ -5,8 +5,172 @@ import {
 } from '../../shared/config/applicationPipeline'
 import { PASSPORT_JOURNEY_STAGE_IDS } from '../../shared/config/passportJourney'
 import { AGEING_BUCKET_IDS } from '../../shared/config/ageingBuckets'
+import {
+  FINANCE_DASHBOARD_WORKSPACE_MOCK,
+  FINANCE_KPI_STRIP_MOCK,
+  FINANCE_RISK_CALLOUTS_MOCK,
+} from '../../shared/data/financeDashboardWorkspaceMock'
 import { buildTeamProductivityByChannel } from '../../shared/widgets/operations/teamProductivityData'
-import type { SuperAdminDashboardData, SuperAdminDashboardFilters } from '../types'
+import type {
+  SuperAdminAcquisitionFunnel,
+  SuperAdminDashboardData,
+  SuperAdminDashboardFilters,
+  SuperAdminDestinationMixItem,
+  SuperAdminClientRow,
+} from '../types'
+import { destinationLabelToCountryKey } from '../utils/applySegmentCountryScope'
+import { buildClientMarginItems, type ClientMarginSeed } from '../utils/buildClientMarginItems'
+import { SUPER_ADMIN_ANALYTICS_MOCK } from './superAdminAnalyticsMock'
+
+/** Build destination mix rows (volume + revenue + GP + rejection). */
+function destinationMix(
+  rows: Array<{
+    id: string
+    label: string
+    volume: number
+    revenueL: number
+    marginPct: number
+    rejectionPct: number
+    approvalPct?: number
+    /** Optional override — net revenue per successful app in ₹. */
+    netRevenuePerSuccessfulApp?: number
+    successfulApplications?: number
+  }>,
+): SuperAdminDestinationMixItem[] {
+  return rows.map((row) => {
+    const decidedCount = Math.max(1, Math.round(row.volume * 0.88))
+    const rejectedCount = Math.round((decidedCount * row.rejectionPct) / 100)
+    const approvalPct =
+      row.approvalPct ?? Math.round(Math.max(0, 100 - row.rejectionPct) * 10) / 10
+    const successfulApplications =
+      row.successfulApplications ??
+      Math.max(1, Math.round(decidedCount * (approvalPct / 100)))
+
+    const rejectionDragL = row.revenueL * (row.rejectionPct / 100) * 0.42
+    const refundDragL = row.revenueL * 0.018
+    const computedNetRevenueL = Math.max(0.1, row.revenueL - rejectionDragL - refundDragL)
+
+    const netRevenuePerSuccessfulApp =
+      row.netRevenuePerSuccessfulApp ??
+      Math.round((computedNetRevenueL * 100_000) / successfulApplications)
+
+    const netRevenueL =
+      Math.round(((netRevenuePerSuccessfulApp * successfulApplications) / 100_000) * 10) / 10
+
+    return {
+      id: row.id,
+      label: row.label,
+      countryKey: destinationLabelToCountryKey(row.label),
+      volume: row.volume,
+      revenueL: row.revenueL,
+      marginPct: row.marginPct,
+      grossProfitL: Math.round(row.revenueL * (row.marginPct / 100) * 10) / 10,
+      rejectionPct: row.rejectionPct,
+      approvalPct,
+      rejectedCount,
+      decidedCount,
+      netRevenueL,
+      successfulApplications,
+      netRevenuePerSuccessfulApp,
+    }
+  })
+}
+
+/** Commercial path: Lead → Quote → Agreement → Client Account. */
+function commercialAcquisitionFunnel(
+  counts: [number, number, number, number, number, number],
+  workflowQuery: string,
+): SuperAdminAcquisitionFunnel {
+  const [leads, qualified, quotes, agreements, ready, activated] = counts
+  const q = encodeURIComponent(workflowQuery)
+  return {
+    entryLabel: 'Leads created',
+    exitLabel: 'Accounts activated',
+    periodLabel: 'MTD',
+    stages: [
+      {
+        id: 'leads',
+        label: 'Leads created',
+        count: leads,
+        href: `/admin/customer-accounts/enquiries?customerType=${q}`,
+      },
+      {
+        id: 'qualified',
+        label: 'Qualified',
+        count: qualified,
+        href: `/admin/customer-accounts/enquiries?customerType=${q}&status=qualified`,
+      },
+      {
+        id: 'quotations',
+        label: 'Quotations created',
+        count: quotes,
+        href: `/admin/customer-accounts/quotations?workflowType=${q}`,
+      },
+      {
+        id: 'agreements',
+        label: 'Agreements created',
+        count: agreements,
+        href: `/admin/customer-accounts/agreements?workflowType=${q}`,
+      },
+      {
+        id: 'ready',
+        label: 'Ready for activation',
+        count: ready,
+        href: `/admin/customer-accounts/agreements?workflowType=${q}&status=ready_for_activation`,
+      },
+      {
+        id: 'activated',
+        label: 'Accounts activated',
+        count: activated,
+        href: `/admin/customer-accounts/corporate-accounts?workflowType=${q}`,
+      },
+    ],
+  }
+}
+
+/** Retail path: Lead → Quote → Shared → Converted (no agreement/account). */
+function retailAcquisitionFunnel(
+  counts: [number, number, number, number, number],
+): SuperAdminAcquisitionFunnel {
+  const [leads, qualified, quotes, shared, converted] = counts
+  return {
+    entryLabel: 'Leads created',
+    exitLabel: 'Quotes converted',
+    periodLabel: 'MTD',
+    stages: [
+      {
+        id: 'leads',
+        label: 'Leads created',
+        count: leads,
+        href: '/admin/customer-accounts/enquiries?customerType=retail',
+      },
+      {
+        id: 'qualified',
+        label: 'Qualified',
+        count: qualified,
+        href: '/admin/customer-accounts/enquiries?customerType=retail&status=qualified',
+      },
+      {
+        id: 'quotations',
+        label: 'Quotations created',
+        count: quotes,
+        href: '/admin/customer-accounts/quotations?workflowType=retail',
+      },
+      {
+        id: 'shared',
+        label: 'Quotations shared',
+        count: shared,
+        href: '/admin/customer-accounts/quotations?workflowType=retail&sharedStatus=shared',
+      },
+      {
+        id: 'converted',
+        label: 'Quotes converted',
+        count: converted,
+        href: '/admin/customer-accounts/quotations?workflowType=retail&status=converted',
+      },
+    ],
+  }
+}
 
 export const SUPER_ADMIN_DATE_OPTIONS = [
   { label: 'Today', value: 'today' },
@@ -342,6 +506,9 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
     workingCapitalExposure: '₹4.16Cr',
     creditExposure: '₹2.84Cr',
   },
+  financeKpiStrip: structuredClone(FINANCE_KPI_STRIP_MOCK),
+  financeRiskCallouts: structuredClone(FINANCE_RISK_CALLOUTS_MOCK),
+  financeWorkspace: structuredClone(FINANCE_DASHBOARD_WORKSPACE_MOCK),
   marginByVertical: [
     { id: 'mv-marine', primary: 'Marine', value: '16.2%', progress: 81, secondary: 'Rev ₹38.1L · Cost ₹31.9L', tone: 'warning' },
     { id: 'mv-corp', primary: 'Corporate', value: '21.4%', progress: 96, secondary: 'Rev ₹78.4L · Cost ₹61.6L', tone: 'positive' },
@@ -719,6 +886,7 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       visaStatus: 'Embassy lag',
       priority: 'Critical',
       ragStatus: 'red',
+      destinationCountry: 'schengen',
     },
     {
       id: 'sm-2',
@@ -730,6 +898,7 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       visaStatus: 'QC pending',
       priority: 'High',
       ragStatus: 'amber',
+      destinationCountry: 'schengen',
     },
     {
       id: 'sm-4',
@@ -741,6 +910,7 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       visaStatus: 'VFS submission',
       priority: 'High',
       ragStatus: 'amber',
+      destinationCountry: 'uae',
     },
     {
       id: 'sm-3',
@@ -752,6 +922,7 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       visaStatus: 'Verified',
       priority: 'Medium',
       ragStatus: 'green',
+      destinationCountry: 'uk',
     },
   ],
   passportJourney: {
@@ -762,39 +933,55 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
     stages: passportStages(2),
   },
   marineByCompany: [
-    { id: 'mc-1', primary: 'Nordic Marine Ltd', value: 42, progress: 100, secondary: 'Active crew visas' },
-    { id: 'mc-2', primary: 'Pacific Crewing', value: 28, progress: 67, secondary: 'Active crew visas' },
-    { id: 'mc-3', primary: 'Gulf Ship Management', value: 18, progress: 43, secondary: 'Active crew visas' },
-    { id: 'mc-4', primary: 'Apex Shipping', value: 16, progress: 38, secondary: 'Active' },
-    { id: 'mc-5', primary: 'Oceanic Crew Services', value: 14, progress: 33 },
-    { id: 'mc-6', primary: 'BlueWater Manning', value: 12, progress: 29 },
-    { id: 'mc-7', primary: 'Eastern Seafarers', value: 11, progress: 26 },
-    { id: 'mc-8', primary: 'Horizon Marine HR', value: 9, progress: 21 },
+    { id: 'mc-1', primary: 'Nordic Marine Ltd', value: 42, progress: 100, secondary: 'Active crew visas', destinationCountry: 'schengen' },
+    { id: 'mc-2', primary: 'Pacific Crewing', value: 28, progress: 67, secondary: 'Active crew visas', destinationCountry: 'uk' },
+    { id: 'mc-3', primary: 'Gulf Ship Management', value: 18, progress: 43, secondary: 'Active crew visas', destinationCountry: 'uae' },
+    { id: 'mc-4', primary: 'Apex Shipping', value: 16, progress: 38, secondary: 'Active', destinationCountry: 'uae' },
+    { id: 'mc-5', primary: 'Oceanic Crew Services', value: 14, progress: 33, destinationCountry: 'schengen' },
+    { id: 'mc-6', primary: 'BlueWater Manning', value: 12, progress: 29, destinationCountry: 'uk' },
+    { id: 'mc-7', primary: 'Eastern Seafarers', value: 11, progress: 26, destinationCountry: 'us' },
+    { id: 'mc-8', primary: 'Horizon Marine HR', value: 9, progress: 21, destinationCountry: 'schengen' },
     { id: 'mc-9', primary: 'Coral Fleet Ops', value: 8, progress: 19 },
     { id: 'mc-10', primary: 'Atlas Crewing', value: 7, progress: 17 },
     { id: 'mc-11', primary: 'Neptune Staffing', value: 6, progress: 14 },
     { id: 'mc-12', primary: 'Harbor Line Crew', value: 5, progress: 12 },
+    { id: 'mc-13', primary: 'SilverWave Manning', value: 5, progress: 12 },
+    { id: 'mc-14', primary: 'Baycrest Crewing', value: 4, progress: 10 },
+    { id: 'mc-15', primary: 'Polar Star HR', value: 4, progress: 10 },
+    { id: 'mc-16', primary: 'Indigo Fleet Services', value: 4, progress: 9 },
+    { id: 'mc-17', primary: 'Mariner Link', value: 3, progress: 8 },
+    { id: 'mc-18', primary: 'Crestline Shipping HR', value: 3, progress: 7 },
+    { id: 'mc-19', primary: 'AnchorPoint Crew', value: 3, progress: 7 },
+    { id: 'mc-20', primary: 'DeepBlue Staffing', value: 2, progress: 6 },
+    { id: 'mc-21', primary: 'SouthSea Manning', value: 2, progress: 5 },
+    { id: 'mc-22', primary: 'Portside Crew Co', value: 2, progress: 5 },
+    { id: 'mc-23', primary: 'Lumen Marine HR', value: 2, progress: 4 },
+    { id: 'mc-24', primary: 'Tideworks Crewing', value: 1, progress: 3 },
+    { id: 'mc-25', primary: 'NorthCape Seafarers', value: 1, progress: 2 },
   ],
-  marineByCountry: [
-    { id: 'mco-1', primary: 'UAE', value: 34, progress: 100 },
-    { id: 'mco-2', primary: 'Singapore', value: 22, progress: 65 },
-    { id: 'mco-3', primary: 'Schengen', value: 18, progress: 53 },
-    { id: 'mco-4', primary: 'UK', value: 14, progress: 41 },
-    { id: 'mco-5', primary: 'USA', value: 12, progress: 35 },
-    { id: 'mco-6', primary: 'Qatar', value: 10, progress: 29 },
-    { id: 'mco-7', primary: 'Saudi Arabia', value: 9, progress: 26 },
-    { id: 'mco-8', primary: 'Australia', value: 7, progress: 21 },
-    { id: 'mco-9', primary: 'Japan', value: 6, progress: 18 },
-    { id: 'mco-10', primary: 'South Korea', value: 5, progress: 15 },
-    { id: 'mco-11', primary: 'Brazil', value: 4, progress: 12 },
-    { id: 'mco-12', primary: 'Other', value: 3, progress: 9 },
-  ],
+  marineByDestination: destinationMix([
+    { id: 'mco-1', label: 'UAE', volume: 34, revenueL: 12.4, marginPct: 15.2, rejectionPct: 11.8 },
+    { id: 'mco-2', label: 'Singapore', volume: 22, revenueL: 8.1, marginPct: 17.4, rejectionPct: 8.4 },
+    { id: 'mco-3', label: 'Schengen', volume: 18, revenueL: 6.6, marginPct: 14.8, rejectionPct: 14.2 },
+    { id: 'mco-4', label: 'UK', volume: 14, revenueL: 5.2, marginPct: 16.1, rejectionPct: 9.6 },
+    { id: 'mco-5', label: 'USA', volume: 12, revenueL: 4.8, marginPct: 13.9, rejectionPct: 12.5 },
+    { id: 'mco-6', label: 'Qatar', volume: 10, revenueL: 3.6, marginPct: 18.2, rejectionPct: 7.1 },
+    { id: 'mco-7', label: 'Saudi Arabia', volume: 9, revenueL: 3.1, marginPct: 15.6, rejectionPct: 10.2 },
+    { id: 'mco-8', label: 'Australia', volume: 7, revenueL: 2.4, marginPct: 16.8, rejectionPct: 8.9 },
+    { id: 'mco-9', label: 'Japan', volume: 6, revenueL: 2.1, marginPct: 14.2, rejectionPct: 6.4 },
+    { id: 'mco-10', label: 'South Korea', volume: 5, revenueL: 1.7, marginPct: 15.0, rejectionPct: 7.8 },
+    { id: 'mco-11', label: 'Brazil', volume: 4, revenueL: 1.3, marginPct: 12.8, rejectionPct: 13.1 },
+    { id: 'mco-12', label: 'Canada', volume: 4, revenueL: 1.4, marginPct: 16.4, rejectionPct: 9.0 },
+    { id: 'mco-13', label: 'Malaysia', volume: 3, revenueL: 0.9, marginPct: 17.1, rejectionPct: 5.5 },
+    { id: 'mco-14', label: 'Indonesia', volume: 3, revenueL: 0.8, marginPct: 13.5, rejectionPct: 11.0 },
+    { id: 'mco-15', label: 'Other', volume: 3, revenueL: 0.7, marginPct: 12.0, rejectionPct: 10.8 },
+  ]),
   pendingCrewVisas: [
-    { id: 'pcv-1', primary: 'MV Pacific Pearl · 18 crew', value: 'Embassy', progress: 35, secondary: 'Joining date 26 Jul', tone: 'negative' },
-    { id: 'pcv-2', primary: 'MV Nordic Star · 12 crew', value: 'QC', progress: 55, secondary: 'Joining date 28 Jul', tone: 'warning' },
-    { id: 'pcv-3', primary: 'MV Gulf Horizon · 6 crew', value: 'Docs', progress: 70, secondary: 'Joining date 02 Aug', tone: 'info' },
-    { id: 'pcv-4', primary: 'MV Arabian Queen · 9 crew', value: 'Embassy', progress: 40, secondary: 'Joining date 04 Aug', tone: 'warning' },
-    { id: 'pcv-5', primary: 'MV Coral Wave · 5 crew', value: 'Docs', progress: 62, secondary: 'Joining date 06 Aug', tone: 'info' },
+    { id: 'pcv-1', primary: 'MV Pacific Pearl · 18 crew', value: 'Embassy', progress: 35, secondary: 'Joining date 26 Jul', tone: 'negative', destinationCountry: 'schengen' },
+    { id: 'pcv-2', primary: 'MV Nordic Star · 12 crew', value: 'QC', progress: 55, secondary: 'Joining date 28 Jul', tone: 'warning', destinationCountry: 'schengen' },
+    { id: 'pcv-3', primary: 'MV Gulf Horizon · 6 crew', value: 'Docs', progress: 70, secondary: 'Joining date 02 Aug', tone: 'info', destinationCountry: 'uk' },
+    { id: 'pcv-4', primary: 'MV Arabian Queen · 9 crew', value: 'Embassy', progress: 40, secondary: 'Joining date 04 Aug', tone: 'warning', destinationCountry: 'uae' },
+    { id: 'pcv-5', primary: 'MV Coral Wave · 5 crew', value: 'Docs', progress: 62, secondary: 'Joining date 06 Aug', tone: 'info', destinationCountry: 'uae' },
   ],
   topMarineClients: [
     { id: 'tmc-1', primary: 'Nordic Marine Ltd', value: '₹38.1L', progress: 100, secondary: 'At risk AR' },
@@ -807,12 +994,53 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
     { id: 'tmc-8', primary: 'Horizon Marine HR', value: '₹5.4L', progress: 14 },
   ],
   corporatePreview: {
-    kpis: [
-      { label: 'Corporate revenue MTD', value: '₹78.4L', delta: 6.1 },
-      { label: 'Approval rate', value: '93%', delta: 0.8 },
-      { label: 'Pending business visas', value: '47', delta: -4.0 },
-      { label: 'Active clients', value: '64', delta: 2.0 },
-    ],
+    commercialKpis: {
+      revenue: {
+        today: {
+          label: 'Today',
+          value: '₹2.6L',
+          delta: 3.4,
+          deltaLabel: 'vs yesterday',
+          targetLabel: '102% of daily target',
+        },
+        mtd: {
+          label: 'MTD',
+          value: '₹78.4L',
+          delta: 6.1,
+          deltaLabel: 'vs prior month',
+          targetLabel: '94% of MTD target',
+        },
+        ytd: {
+          label: 'YTD',
+          value: '₹5.9Cr',
+          delta: 8.8,
+          deltaLabel: 'vs prior year',
+          targetLabel: '89% of annual target',
+        },
+      },
+      grossMarginPercent: '21.4%',
+      grossMarginDelta: 0.9,
+      totalApplications: 312,
+      totalApplicationsDelta: 4.2,
+      approvalPercent: '93%',
+      approvalDelta: 0.8,
+      outstanding: '₹48.6L',
+      outstandingDelta: -1.4,
+      collections: '₹58.2L',
+      collectionsDelta: 2.8,
+      activeClients: 64,
+      activeClientsDelta: 2.0,
+      pipelineValue: '₹56.0L',
+      pipelineDelta: 3.1,
+      repeatRatePercent: '68%',
+      repeatRateDelta: 1.8,
+      repeatApplications: 212,
+      repeatEligibleApplications: 312,
+    },
+    acquisitionFunnel: commercialAcquisitionFunnel(
+      [186, 142, 98, 64, 52, 41],
+      'corporate',
+    ),
     byEntity: [
       { id: 'ce-1', primary: 'BrightCorp India', value: 148, progress: 100 },
       { id: 'ce-2', primary: 'Horizon Logistics', value: 72, progress: 49 },
@@ -825,16 +1053,16 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       { id: 'ce-9', primary: 'Atlas Corporate', value: 24, progress: 16 },
       { id: 'ce-10', primary: 'Delta Systems', value: 18, progress: 12 },
     ],
-    byCountry: [
-      { id: 'cc-1', primary: 'Schengen', value: 38, progress: 100 },
-      { id: 'cc-2', primary: 'UK', value: 24, progress: 63 },
-      { id: 'cc-3', primary: 'USA', value: 18, progress: 47 },
-      { id: 'cc-4', primary: 'UAE', value: 15, progress: 39 },
-      { id: 'cc-5', primary: 'Singapore', value: 12, progress: 32 },
-      { id: 'cc-6', primary: 'Canada', value: 10, progress: 26 },
-      { id: 'cc-7', primary: 'Australia', value: 8, progress: 21 },
-      { id: 'cc-8', primary: 'Japan', value: 6, progress: 16 },
-    ],
+    byDestination: destinationMix([
+      { id: 'cc-1', label: 'Schengen', volume: 38, revenueL: 22.4, marginPct: 22.8, rejectionPct: 13.6 },
+      { id: 'cc-2', label: 'UK', volume: 24, revenueL: 16.2, marginPct: 21.1, rejectionPct: 8.9 },
+      { id: 'cc-3', label: 'USA', volume: 18, revenueL: 14.8, marginPct: 19.6, rejectionPct: 11.2 },
+      { id: 'cc-4', label: 'UAE', volume: 15, revenueL: 9.4, marginPct: 23.4, rejectionPct: 6.8 },
+      { id: 'cc-5', label: 'Singapore', volume: 12, revenueL: 7.1, marginPct: 24.0, rejectionPct: 5.4 },
+      { id: 'cc-6', label: 'Canada', volume: 10, revenueL: 5.6, marginPct: 20.2, rejectionPct: 7.6 },
+      { id: 'cc-7', label: 'Australia', volume: 8, revenueL: 4.2, marginPct: 21.5, rejectionPct: 9.1 },
+      { id: 'cc-8', label: 'Japan', volume: 6, revenueL: 3.1, marginPct: 18.9, rejectionPct: 4.8 },
+    ]),
     pending: [
       { id: 'cp-1', primary: 'BrightCorp · 12 business visas', value: 'Embassy', progress: 40, tone: 'warning' },
       { id: 'cp-2', primary: 'Horizon · 8 business visas', value: 'Docs', progress: 55, tone: 'info' },
@@ -852,12 +1080,50 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
     notes: [],
   },
   retailPreview: {
-    kpis: [
-      { label: 'Walk-in apps MTD', value: '186', delta: 3.2 },
-      { label: 'Online apps MTD', value: '224', delta: 5.1 },
-      { label: 'Conversion rate', value: '28%', delta: 1.4 },
-      { label: 'Not converted', value: '72%', delta: -1.4 },
-    ],
+    commercialKpis: {
+      revenue: {
+        today: {
+          label: 'Today',
+          value: '₹1.9L',
+          delta: 2.1,
+          deltaLabel: 'vs yesterday',
+          targetLabel: '96% of daily target',
+        },
+        mtd: {
+          label: 'MTD',
+          value: '₹56.2L',
+          delta: 4.6,
+          deltaLabel: 'vs prior month',
+          targetLabel: '88% of MTD target',
+        },
+        ytd: {
+          label: 'YTD',
+          value: '₹4.1Cr',
+          delta: 7.2,
+          deltaLabel: 'vs prior year',
+          targetLabel: '84% of annual target',
+        },
+      },
+      grossMarginPercent: '19.1%',
+      grossMarginDelta: 0.6,
+      totalApplications: 410,
+      totalApplicationsDelta: 5.1,
+      approvalPercent: '91%',
+      approvalDelta: 1.1,
+      outstanding: '₹22.4L',
+      outstandingDelta: -0.8,
+      collections: '₹41.6L',
+      collectionsDelta: 3.4,
+      activeClients: 286,
+      activeClientsDelta: 4.0,
+      pipelineValue: '₹18.8L',
+      pipelineDelta: 2.2,
+      repeatRatePercent: '34%',
+      repeatRateDelta: 2.1,
+      repeatApplications: 140,
+      repeatEligibleApplications: 410,
+    },
+    acquisitionFunnel: retailAcquisitionFunnel([410, 286, 224, 168, 118]),
     byEntity: [
       { id: 're-1', primary: 'Website / app', value: 224, progress: 100, secondary: 'Online' },
       { id: 're-2', primary: 'Mumbai jurisdiction', value: 142, progress: 63, secondary: 'Walk-in heavy' },
@@ -868,36 +1134,72 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       { id: 're-7', primary: 'Partner counters', value: 36, progress: 16 },
       { id: 're-8', primary: 'Kochi jurisdiction', value: 28, progress: 13 },
     ],
-    byCountry: [
-      { id: 'rc-1', primary: 'UAE', value: 40, progress: 100 },
-      { id: 'rc-2', primary: 'Schengen', value: 28, progress: 70 },
-      { id: 'rc-3', primary: 'Singapore', value: 22, progress: 55 },
-      { id: 'rc-4', primary: 'Thailand', value: 18, progress: 45 },
-      { id: 'rc-5', primary: 'UK', value: 14, progress: 35 },
-      { id: 'rc-6', primary: 'USA', value: 12, progress: 30 },
-      { id: 'rc-7', primary: 'Malaysia', value: 9, progress: 23 },
-      { id: 'rc-8', primary: 'Other', value: 7, progress: 18 },
-    ],
+    byDestination: destinationMix([
+      { id: 'rc-1', label: 'UAE', volume: 1240, revenueL: 12.4, marginPct: 19.4, rejectionPct: 5, approvalPct: 95, netRevenuePerSuccessfulApp: 949 },
+      { id: 'rc-2', label: 'Schengen', volume: 580, revenueL: 20.3, marginPct: 18.8, rejectionPct: 3, approvalPct: 97, netRevenuePerSuccessfulApp: 3391 },
+      { id: 'rc-3', label: 'Singapore', volume: 22, revenueL: 9.1, marginPct: 21.2, rejectionPct: 6.1 },
+      { id: 'rc-4', label: 'Thailand', volume: 18, revenueL: 6.4, marginPct: 17.6, rejectionPct: 9.8 },
+      { id: 'rc-5', label: 'UK', volume: 320, revenueL: 9.6, marginPct: 18.1, rejectionPct: 9, approvalPct: 91, netRevenuePerSuccessfulApp: 2850 },
+      { id: 'rc-6', label: 'USA', volume: 12, revenueL: 5.2, marginPct: 16.9, rejectionPct: 12.0 },
+      { id: 'rc-7', label: 'Malaysia', volume: 9, revenueL: 2.8, marginPct: 20.4, rejectionPct: 5.9 },
+      { id: 'rc-8', label: 'Other', volume: 7, revenueL: 2.1, marginPct: 15.5, rejectionPct: 11.4 },
+    ]),
     pending: [
       { id: 'rp-1', primary: 'Payment pending', value: '34 apps', progress: 34, tone: 'warning' },
       { id: 'rp-2', primary: 'Doc rework', value: '18 apps', progress: 18, tone: 'warning' },
       { id: 'rp-3', primary: 'Avg customer rating', value: '4.4 / 5', progress: 88, tone: 'positive' },
     ],
-    topClients: [
-      { id: 'rtc-1', primary: 'Top destination · UAE', value: '₹18.2L', progress: 100 },
-      { id: 'rtc-2', primary: 'Top destination · Schengen', value: '₹12.6L', progress: 69 },
-      { id: 'rtc-3', primary: 'Top destination · Singapore', value: '₹9.1L', progress: 50 },
-      { id: 'rtc-4', primary: 'Top destination · Thailand', value: '₹6.4L', progress: 35 },
-    ],
+    topClients: [],
     notes: [],
   },
   b2bPreview: {
-    kpis: [
-      { label: 'Partner revenue MTD', value: '₹24.8L', delta: 2.2 },
-      { label: 'Active agencies', value: '22', delta: 1.0 },
-      { label: 'Outstanding by partners', value: '₹9.4L', delta: -0.5 },
-      { label: 'Partner health (avg)', value: '76', delta: 2.0 },
-    ],
+    commercialKpis: {
+      revenue: {
+        today: {
+          label: 'Today',
+          value: '₹0.9L',
+          delta: 1.8,
+          deltaLabel: 'vs yesterday',
+          targetLabel: '91% of daily target',
+        },
+        mtd: {
+          label: 'MTD',
+          value: '₹24.8L',
+          delta: 2.2,
+          deltaLabel: 'vs prior month',
+          targetLabel: '86% of MTD target',
+        },
+        ytd: {
+          label: 'YTD',
+          value: '₹1.9Cr',
+          delta: 5.4,
+          deltaLabel: 'vs prior year',
+          targetLabel: '81% of annual target',
+        },
+      },
+      grossMarginPercent: '12.8%',
+      grossMarginDelta: -0.4,
+      totalApplications: 118,
+      totalApplicationsDelta: 1.6,
+      approvalPercent: '87%',
+      approvalDelta: 0.5,
+      outstanding: '₹9.4L',
+      outstandingDelta: -0.5,
+      collections: '₹18.2L',
+      collectionsDelta: 1.9,
+      activeClients: 22,
+      activeClientsDelta: 1.0,
+      pipelineValue: '₹14.6L',
+      pipelineDelta: 2.4,
+      repeatRatePercent: '72%',
+      repeatRateDelta: 0.9,
+      repeatApplications: 85,
+      repeatEligibleApplications: 118,
+    },
+    acquisitionFunnel: commercialAcquisitionFunnel(
+      [74, 58, 42, 28, 22, 16],
+      'b2b_agent',
+    ),
     byEntity: [
       { id: 'be-1', primary: 'Skyline Travels', value: 28, progress: 100 },
       { id: 'be-2', primary: 'Orient Holidays', value: 24, progress: 86 },
@@ -908,15 +1210,15 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       { id: 'be-7', primary: 'Metro Travel Co', value: 10, progress: 36 },
       { id: 'be-8', primary: 'Sunrise Bookings', value: 8, progress: 29 },
     ],
-    byCountry: [
-      { id: 'bc-1', primary: 'UAE', value: 36, progress: 100 },
-      { id: 'bc-2', primary: 'Thailand', value: 22, progress: 61 },
-      { id: 'bc-3', primary: 'Singapore', value: 18, progress: 50 },
-      { id: 'bc-4', primary: 'Schengen', value: 15, progress: 42 },
-      { id: 'bc-5', primary: 'Malaysia', value: 12, progress: 33 },
-      { id: 'bc-6', primary: 'UK', value: 9, progress: 25 },
-      { id: 'bc-7', primary: 'USA', value: 7, progress: 19 },
-    ],
+    byDestination: destinationMix([
+      { id: 'bc-1', label: 'UAE', volume: 36, revenueL: 8.6, marginPct: 13.2, rejectionPct: 9.4 },
+      { id: 'bc-2', label: 'Thailand', volume: 22, revenueL: 4.8, marginPct: 11.8, rejectionPct: 11.6 },
+      { id: 'bc-3', label: 'Singapore', volume: 18, revenueL: 4.1, marginPct: 14.6, rejectionPct: 7.2 },
+      { id: 'bc-4', label: 'Schengen', volume: 15, revenueL: 3.6, marginPct: 12.4, rejectionPct: 14.8 },
+      { id: 'bc-5', label: 'Malaysia', volume: 12, revenueL: 2.4, marginPct: 13.8, rejectionPct: 8.0 },
+      { id: 'bc-6', label: 'UK', volume: 9, revenueL: 2.1, marginPct: 12.9, rejectionPct: 10.1 },
+      { id: 'bc-7', label: 'USA', volume: 7, revenueL: 1.8, marginPct: 11.2, rejectionPct: 12.4 },
+    ]),
     pending: [
       { id: 'bp-1', primary: 'Skyline Travels outstanding', value: '₹3.2L', progress: 32, tone: 'warning' },
       { id: 'bp-2', primary: 'Orient credit watch', value: '92% limit', progress: 48, tone: 'warning' },
@@ -1240,6 +1542,8 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
     { id: 'lm-4', primary: 'Skyline Travels', value: '10% margin', progress: 40 },
     { id: 'lm-5', primary: 'Gulf Ship Management', value: '12% margin', progress: 48 },
   ],
+  highMarginClientIntelligence: [],
+  lowMarginClientIntelligence: [],
   highRiskClients: [
     {
       id: 'hr-1',
@@ -1314,12 +1618,53 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
     conversion: '22%',
     notes: [],
   },
-  marineMetrics: [
-    { label: 'Marine revenue MTD', value: '₹38.1L', delta: 9.4 },
-    { label: 'Approval rate', value: '89%', delta: 1.6 },
-    { label: 'Collections', value: '₹24.0L', delta: 3.2 },
-    { label: 'Outstanding', value: '₹14.1L', delta: -2.1 },
-  ],
+  marineCommercialKpis: {
+    revenue: {
+      today: {
+        label: 'Today',
+        value: '₹1.4L',
+        delta: 5.2,
+        deltaLabel: 'vs yesterday',
+        targetLabel: '110% of daily target',
+      },
+      mtd: {
+        label: 'MTD',
+        value: '₹38.1L',
+        delta: 9.4,
+        deltaLabel: 'vs prior month',
+        targetLabel: '92% of MTD target',
+      },
+      ytd: {
+        label: 'YTD',
+        value: '₹2.8Cr',
+        delta: 10.1,
+        deltaLabel: 'vs prior year',
+        targetLabel: '88% of annual target',
+      },
+    },
+    grossMarginPercent: '16.2%',
+    grossMarginDelta: 0.7,
+    totalApplications: 96,
+    totalApplicationsDelta: 3.8,
+    approvalPercent: '89%',
+    approvalDelta: 1.6,
+    outstanding: '₹14.1L',
+    outstandingDelta: -2.1,
+    collections: '₹24.0L',
+    collectionsDelta: 3.2,
+    activeClients: 18,
+    activeClientsDelta: 1.0,
+    pipelineValue: '₹22.4L',
+    pipelineDelta: 4.5,
+    repeatRatePercent: '61%',
+    repeatRateDelta: 1.4,
+    repeatApplications: 59,
+    repeatEligibleApplications: 96,
+  },
+  marineAcquisitionFunnel: commercialAcquisitionFunnel(
+    [120, 88, 64, 42, 34, 28],
+    'marine',
+  ),
   recentReports: [
     {
       id: 'rep-1',
@@ -1361,7 +1706,91 @@ export const SUPER_ADMIN_DASHBOARD_MOCK: SuperAdminDashboardData = {
       createdAt: 'Today',
     },
   ],
+  analytics: SUPER_ADMIN_ANALYTICS_MOCK,
 }
+
+const HIGH_MARGIN_CLIENT_SEEDS: ClientMarginSeed[] = [
+  { id: 'hm-1', client: 'Horizon Logistics', marginPercent: 24 },
+  { id: 'hm-2', client: 'BrightCorp India', marginPercent: 21 },
+  {
+    id: 'hm-3',
+    client: 'Select retail lanes',
+    segment: 'Retail',
+    marginPercent: 19,
+    revenueMtdL: 28.4,
+    applicationsMtd: 186,
+  },
+  {
+    id: 'hm-4',
+    client: 'Summit Tech',
+    segment: 'Corporate',
+    marginPercent: 18,
+    revenueMtdL: 16.8,
+    applicationsMtd: 64,
+  },
+  {
+    id: 'hm-5',
+    client: 'Voyage Hub',
+    segment: 'B2B',
+    marginPercent: 17,
+    revenueMtdL: 12.6,
+    applicationsMtd: 52,
+  },
+  {
+    id: 'hm-6',
+    client: 'Orient Holidays',
+    segment: 'Retail',
+    marginPercent: 16,
+    revenueMtdL: 9.8,
+    applicationsMtd: 38,
+  },
+]
+
+const LOW_MARGIN_CLIENT_SEEDS: ClientMarginSeed[] = [
+  {
+    id: 'lm-1',
+    client: 'Nordic Marine Ltd',
+    marginPercent: 11,
+    detail: 'Embassy cost spike',
+  },
+  {
+    id: 'lm-2',
+    client: 'Retail network',
+    marginPercent: 9,
+    detail: 'Transit-heavy lanes',
+  },
+  {
+    id: 'lm-3',
+    client: 'Skyline Travels',
+    marginPercent: 10,
+    detail: 'Schengen + UK mix',
+  },
+  {
+    id: 'lm-4',
+    client: 'Gulf Ship Management',
+    segment: 'Marine',
+    marginPercent: 12,
+    revenueMtdL: 14.2,
+    applicationsMtd: 54,
+  },
+  {
+    id: 'lm-5',
+    client: 'Pacific Crewing',
+    segment: 'Marine',
+    marginPercent: 13,
+    revenueMtdL: 4.2,
+    applicationsMtd: 12,
+  },
+]
+
+SUPER_ADMIN_DASHBOARD_MOCK.highMarginClientIntelligence = buildClientMarginItems(
+  SUPER_ADMIN_DASHBOARD_MOCK.clientRows,
+  HIGH_MARGIN_CLIENT_SEEDS,
+)
+SUPER_ADMIN_DASHBOARD_MOCK.lowMarginClientIntelligence = buildClientMarginItems(
+  SUPER_ADMIN_DASHBOARD_MOCK.clientRows,
+  LOW_MARGIN_CLIENT_SEEDS,
+)
 
 export function applySuperAdminDashboardFilters(
   data: SuperAdminDashboardData,

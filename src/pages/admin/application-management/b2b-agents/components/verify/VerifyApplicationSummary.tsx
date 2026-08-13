@@ -89,7 +89,9 @@ export function VerifyApplicationSummary({ overview, isBulk = false }: VerifyApp
             <MetaChip label="Company" value={overview.companyName || '—'} />
             <MetaChip label="Billing entity" value={overview.entityName || '—'} />
             <MetaChip label="Vessel" value={overview.vesselName || '—'} />
-            <MetaChip label="PO / CID / Compass No." value={overview.poReference || '—'} />
+            <MetaChip label="PO / CID no." value={overview.poCidNo || '—'} />
+            <MetaChip label="Compass No." value={overview.compassNo || '—'} />
+            <MetaChip label="Joining port" value={overview.joiningPort || '—'} />
             <MetaChip label="Country" value={countryLabel} />
             <MetaChip label="Visa" value={visaLabel} />
             <MetaChip label="Jurisdiction" value={overview.jurisdiction || '—'} />

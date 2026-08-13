@@ -65,11 +65,13 @@ export function matchesReconciliationSearch(row: ReconciliationItem, query: stri
 export function computeReconciliationKpis(rows: ReconciliationItem[]) {
   const pending = rows.filter(row => row.status === 'pending').length
   const submitted = rows.filter(row => row.status === 'submitted').length
+  const rejected = rows.filter(row => row.status === 'rejected').length
   const totalAmount = rows.reduce((sum, row) => sum + (row.total || row.amountInr || 0), 0)
   return {
     total: rows.length,
     pending,
     submitted,
+    rejected,
     totalAmount,
   }
 }

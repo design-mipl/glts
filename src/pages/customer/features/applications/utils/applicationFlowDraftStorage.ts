@@ -31,6 +31,9 @@ export function parseApplicationFlowDraft(parsed: unknown): FlowDraftLikeState |
     flagCountry: typeof draft.flagCountry === 'string' ? draft.flagCountry : undefined,
     portOfRegistry: typeof draft.portOfRegistry === 'string' ? draft.portOfRegistry : undefined,
     referencePo: typeof draft.referencePo === 'string' ? draft.referencePo : undefined,
+    poCidNo: typeof draft.poCidNo === 'string' ? draft.poCidNo : undefined,
+    compassNo: typeof draft.compassNo === 'string' ? draft.compassNo : undefined,
+    joiningPort: typeof draft.joiningPort === 'string' ? draft.joiningPort : undefined,
     billingAddress: typeof draft.billingAddress === 'string' ? draft.billingAddress : undefined,
     globalDocumentUploads:
       draft.globalDocumentUploads && typeof draft.globalDocumentUploads === 'object'

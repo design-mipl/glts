@@ -13,6 +13,13 @@ export function buildAccountsSearchItems(options: {
       onSelect: () => options.onOpenTab('overview'),
     },
     {
+      id: 'acc-tab-finance',
+      title: 'Finance',
+      subtitle: 'Cash · P&L · collections · verticals · forecast',
+      category: 'section',
+      onSelect: () => options.onOpenTab('finance'),
+    },
+    {
       id: 'acc-tab-work',
       title: 'Work',
       subtitle: 'Expenses · funds · vendor · invoicing · credit control',
