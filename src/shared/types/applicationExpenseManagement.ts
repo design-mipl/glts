@@ -1,6 +1,6 @@
 import type { ApplicationCustomerSegment } from '@/pages/customer/features/applications/types/applicationListing.types'
 
-export const GLTS_MAR_1025_APPLICATION_ID = 'GLTS-MAR-1025' as const
+export const GLTS_MAR_1025_APPLICATION_ID = 'GL-1025' as const
 
 export type ApplicationExpenseSource =
   | 'application_service'

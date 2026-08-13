@@ -8,6 +8,8 @@ import type { ApplicationDetailViewModel } from '@/pages/customer/features/appli
 import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
 import { ApplicationProcessingTimeline } from '@/pages/customer/features/applications/components/ApplicationProcessingTimeline'
+import { ApplicationActivityTab } from '../../../shared/components/ApplicationActivityTab'
+import { ApplicationLogisticsTab } from '../../../shared/components/ApplicationLogisticsTab'
 import { getTravelerDocProgress, type VerifyOverviewData } from '../../utils/verifyDocumentsUtils'
 import { UpdateProcessingStatusModal } from './UpdateProcessingStatusModal'
 
@@ -85,6 +87,8 @@ function processingStatusBadgeColor(
 
 const PASSENGER_TAB = 'passenger'
 const TIMELINE_TAB = 'timeline'
+const ACTIVITY_TAB = 'activity'
+const LOGISTICS_TAB = 'logistics'
 
 export function VerifyTravelerDetailPanel({
   selectedRow,
@@ -110,6 +114,8 @@ export function VerifyTravelerDetailPanel({
     const stillValid =
       activeTab === PASSENGER_TAB ||
       activeTab === TIMELINE_TAB ||
+      activeTab === ACTIVITY_TAB ||
+      activeTab === LOGISTICS_TAB ||
       workTabs.some(tab => tab.value === activeTab && !tab.disabled)
     if (!stillValid) {
       setActiveTab(firstWorkTab ?? PASSENGER_TAB)
@@ -125,6 +131,8 @@ export function VerifyTravelerDetailPanel({
         disabled: tab.disabled,
       })),
       { value: TIMELINE_TAB, label: 'Timeline' },
+      { value: ACTIVITY_TAB, label: 'Activity' },
+      { value: LOGISTICS_TAB, label: 'Logistics' },
     ],
     [workTabs],
   )
@@ -306,6 +314,21 @@ export function VerifyTravelerDetailPanel({
               />
             ) : null}
           </Stack>
+        ) : null}
+
+        {activeTab === ACTIVITY_TAB && applicationId ? (
+          <Box sx={{ flex: 1, height: 0, minHeight: 0, overflow: 'hidden', display: 'flex' }}>
+            <ApplicationActivityTab
+              applicationId={applicationId}
+              travelerName={selectedRow.travelerName}
+            />
+          </Box>
+        ) : null}
+
+        {activeTab === LOGISTICS_TAB && applicationId ? (
+          <Box sx={{ flex: 1, height: 0, minHeight: 0, overflow: 'hidden', display: 'flex' }}>
+            <ApplicationLogisticsTab applicationId={applicationId} />
+          </Box>
         ) : null}
       </Box>
     </BaseCard>

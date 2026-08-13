@@ -28,6 +28,10 @@ import type {
   OpsOrgAlertRow,
   OpsOrgQueueSnapshot,
 } from '../shared/widgets/operations/opsOrgQueueTypes'
+import type {
+  ApplicationMarketRankingPoint,
+  ApplicationMarketSlice,
+} from '../shared/widgets/operations/ApplicationMarketInfographics'
 
 /** Admin dashboard filters — same contract as page global intelligence filters. */
 export type AdminDashboardNextFilters = DashboardIntelligenceFilters
@@ -65,6 +69,11 @@ export interface AdminDashboardNextData {
   opsQueueSnapshot: OpsOrgQueueSnapshot
   opsAlerts: OpsOrgAlertRow[]
   unassignedCount: number
+  /** Market rankings — same widgets as Ops / Documentation Overview. */
+  topClients: ApplicationMarketRankingPoint[]
+  topCountries: ApplicationMarketRankingPoint[]
+  submissionByJurisdiction: ApplicationMarketRankingPoint[]
+  visibilityFunnel: ApplicationMarketSlice[]
   recentActivity: RecentActivityItem[]
   quickActions: AdminQuickActionDefinition[]
   teamCapacity: TeamCapacityRow[]

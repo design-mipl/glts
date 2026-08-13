@@ -7,6 +7,8 @@ import type { MetricComparisonItem } from '../shared/widgets/common/MetricCompar
 import type { RecentActivityItem } from '../shared/widgets/common/RecentActivity'
 import type { NotificationItem } from '../shared/widgets/common/NotificationPanel'
 import type { ApplicationPipelineStageData } from '../shared/widgets/operations/ApplicationPipeline'
+import type { OpsOrgAgeingQueueRow, OpsOrgSegmentWorkload } from '../shared/widgets/operations/opsOrgQueueTypes'
+import type { ApplicationMarketRankingPoint } from '../shared/widgets/operations/ApplicationMarketInfographics'
 
 export type DocApplicationChannel = 'retail' | 'corporate' | 'marine' | 'b2b'
 export type DocSlaStatus = 'on_track' | 'at_risk' | 'breached'
@@ -17,10 +19,14 @@ export type DocAlertPriority = 'critical' | 'high' | 'medium'
 export type DocQcOutcome = 'pending_qc' | 'ready' | 'correction' | 'blocked'
 
 /**
- * Work desks — Docs owns Submission Pending + Pending Payment.
+ * Work desks — Docs owns Submission Pending + Pending Payment + Arrange Insurance.
  * Waiting on Ops = cases Docs sent back (correction / blocked).
  */
-export type DocWorkDeskId = 'submission_pending' | 'pending_payment' | 'waiting_on_ops'
+export type DocWorkDeskId =
+  | 'submission_pending'
+  | 'pending_payment'
+  | 'arrange_insurance'
+  | 'waiting_on_ops'
 
 /** KPI click target — Work desk or Application Management listing tab. */
 export type DocKpiTarget =
@@ -108,13 +114,10 @@ export interface DocTrendPoint {
   secondary?: number
 }
 
-/** Workload stacked by channel — Submission Pending · Pending Payment · Waiting on Ops. */
-export interface DocSegmentWorkloadPoint {
-  segment: string
-  submissionPending: number
-  pendingPayment: number
-  waitingOnOps: number
-}
+import type { OpsOrgSegmentWorkload } from '../../shared/widgets/operations/opsOrgQueueTypes'
+
+/** @deprecated Use OpsOrgSegmentWorkload — AM listing tabs by channel. */
+export type DocSegmentWorkloadPoint = OpsOrgSegmentWorkload
 
 export interface DocumentationDashboardData {
   executiveName: string
@@ -129,14 +132,21 @@ export interface DocumentationDashboardData {
   toActionToday: DocumentationToActionItem[]
   deskMix: DocChartSlice[]
   qcOutcomeMix: DocChartSlice[]
+  /** @deprecated Prefer {@link ageingByQueue} — flat ageing kept for reports. */
   ageingBuckets: DocAgeingPoint[]
+  /** Same Queue ageing matrix as Ops (AM tabs × wait buckets). */
+  ageingByQueue: OpsOrgAgeingQueueRow[]
   topCountries: DocRankingPoint[]
   topClients: DocRankingPoint[]
+  /** Submissions grouped by VFS / consulate jurisdiction. */
+  submissionByJurisdiction: ApplicationMarketRankingPoint[]
   visibilityFunnel: DocChartSlice[]
   processingTrend: DocTrendPoint[]
-  workloadBySegment: DocSegmentWorkloadPoint[]
+  /** Application Management queues by Retail · Corporate · Marine · B2B. */
+  workloadBySegment: OpsOrgSegmentWorkload[]
   submissionPendingRows: DocumentationWorkRow[]
   pendingPaymentRows: DocumentationWorkRow[]
+  arrangeInsuranceRows: DocumentationWorkRow[]
   waitingOnOpsRows: DocumentationWorkRow[]
   recentActivity: RecentActivityItem[]
   activityRows: DocumentationActivityRow[]

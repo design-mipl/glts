@@ -17,6 +17,10 @@ import { getListingCellValue } from '@/pages/customer/features/applications/util
 import { mapApplicationRowsToGridItems } from '@/pages/customer/features/applications/utils/applicationListingGrid'
 import type { MarineApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import {
+  resolveApplicationConsultantName,
+  resolveApplicationPriorityLabel,
+} from '../../shared/utils/applicationConsultantUtils'
+import {
   isMarineApplicationInQueueTab,
   type MarineApplicationListingTab,
 } from '../config/marineApplicationListingTabs'
@@ -47,6 +51,7 @@ export function matchesMarineApplicationSearch(row: MarineApplicationRow, query:
   if (resolveApplicationJoiningPort(row).toLowerCase().includes(s)) return true
   if (resolveApplicationBillingEntity(row).toLowerCase().includes(s)) return true
   if (resolveApplicationCreatorLabel(row.createdByEmail).toLowerCase().includes(s)) return true
+  if (resolveApplicationConsultantName(row).toLowerCase().includes(s)) return true
   if (row.jurisdiction?.toLowerCase().includes(s)) return true
   if (isBulkRow(row)) {
     const paxLabel = formatBulkApplicantListingLabel(row).toLowerCase()
@@ -73,6 +78,12 @@ export function getMarineApplicationCellValue(row: MarineApplicationRow, key: st
   if (key === 'applicationType') {
     return getListingCellValue(row as ApplicationListingRow, 'applicationType')
   }
+  if (key === 'consultant') {
+    return resolveApplicationConsultantName(row)
+  }
+  if (key === 'priority') {
+    return resolveApplicationPriorityLabel(row)
+  }
   return getListingCellValue(row as ApplicationListingRow, key)
 }
 
@@ -83,7 +94,11 @@ export function computeMarineListingKpis(rows: MarineApplicationRow[]) {
   const pendingCorrections = rows.filter(
     row =>
       row.operationalStatus === 'Correction Required' ||
-      row.operationalStatus === 'Document Rejected',
+      row.operationalStatus === 'Document Rejected' ||
+      row.operationalStatus === 'Ops · Correction Required' ||
+      row.operationalStatus === 'Ops · Document Missing' ||
+      row.operationalStatus === 'Docs · Correction Required' ||
+      row.operationalStatus === 'Docs · Document Missing / Blocked',
   ).length
   const dispatched = rows.filter(row => isMarineApplicationInQueueTab(row, 'dispatched')).length
 
@@ -120,19 +135,19 @@ export function getMarineApplicationEmptyState(
       return {
         emptyTitle: 'No applications pending submission',
         emptyDescription:
-          'Form submission and QC completed; application is ready for Embassy/VFS submission.',
+          'After Ops verifies, applications appear here for Docs form QC (and also under Pending Payment).',
       }
     case 'pending_payment':
       return {
         emptyTitle: 'No applications pending payment',
         emptyDescription:
-          'Applications awaiting embassy, VFS, or portal payment before submission continues appear here.',
+          'After Ops verifies, applications appear here so Ops or Docs can record payment (also under Submission Pending).',
       }
     case 'vfs_submission_pending':
       return {
         emptyTitle: 'No applications pending Embassy/VFS submission',
         emptyDescription:
-          'Online submission completed, but Embassy/VFS submission is pending.',
+          'Applications move here after the form is completely submitted.',
       }
     case 'collection_pending':
       return {

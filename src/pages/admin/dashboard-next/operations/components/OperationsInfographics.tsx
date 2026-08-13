@@ -1,6 +1,6 @@
 /**
  * Compatibility re-exports — org infographics live in shared widgets.
- * Ops Overview and Admin Operations both consume OpsOrgInfographics.
+ * Ops Overview and Admin Overview both consume OpsOrgInfographics.
  */
 export {
   OpsOrgInfographics as OperationsInfographics,

@@ -39,8 +39,8 @@ export const SEED_ADMIN_USERS: AdminUser[] = [
       { id: 'adm-login-2', timestamp: ts(3), device: 'Safari on iPhone', location: 'Mumbai, IN', status: 'success' },
     ],
     applicationActivity: [
-      { id: 'adm-app-1', applicationId: 'GLTS-APP-2026-847', title: 'Schengen Business Visa', action: 'Created application', timestamp: ts(12) },
-      { id: 'adm-app-2', applicationId: 'GLTS-APP-2026-901', title: 'Japan Business Visa', action: 'Reviewed documents', timestamp: ts(8) },
+      { id: 'adm-app-1', applicationId: 'GL-847', title: 'Schengen Business Visa', action: 'Created application', timestamp: ts(12) },
+      { id: 'adm-app-2', applicationId: 'GL-901', title: 'Japan Business Visa', action: 'Reviewed documents', timestamp: ts(8) },
     ],
   },
   {
@@ -70,7 +70,7 @@ export const SEED_ADMIN_USERS: AdminUser[] = [
       { id: 'adm-login-3', timestamp: ts(1), device: 'Edge on Windows', location: 'Chennai, IN', status: 'success' },
     ],
     applicationActivity: [
-      { id: 'adm-app-3', applicationId: 'GLTS-APP-2026-712', title: 'UAE Visit Visa', action: 'Created application', timestamp: ts(20) },
+      { id: 'adm-app-3', applicationId: 'GL-712', title: 'UAE Visit Visa', action: 'Created application', timestamp: ts(20) },
     ],
   },
   {

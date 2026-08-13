@@ -41,13 +41,6 @@ export function buildGroundSearchItems(options: {
       onSelect: () => options.onOpenTab('funds'),
     },
     {
-      id: 'go-tab-reports',
-      title: 'Reports',
-      subtitle: 'Export · summaries',
-      category: 'section',
-      onSelect: () => options.onOpenTab('reports'),
-    },
-    {
       id: 'go-desk',
       title: 'Open Operations Desk',
       subtitle: 'Case handling workspace',

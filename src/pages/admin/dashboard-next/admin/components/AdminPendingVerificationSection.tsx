@@ -8,6 +8,7 @@ import { ExecutiveSectionHeader } from '@/pages/admin/dashboard/components'
 import { AdminListingTable } from '@/pages/admin/components/listing'
 import { MarineApplicationAssignTeamModal } from '@/pages/admin/application-management/marine/components/MarineApplicationAssignTeamModal'
 import { buildMarineApplicationColumns } from '@/pages/admin/application-management/marine/components/MarineApplicationTableColumns'
+import type { ApplicationConsultantAssignmentPayload } from '@/pages/admin/application-management/shared/utils/applicationConsultantUtils'
 import {
   filterMarineRowsByTab,
   getAllMarineListingRows,
@@ -93,25 +94,29 @@ export function AdminPendingVerificationSection({
     setTableState((prev) => ({ ...prev, pageSize: next, page: 0 }))
   }
 
-  const handleAssignTeamSubmit = (teamId: string, userId: string) => {
+  const handleAssignTeamSubmit = (payload: ApplicationConsultantAssignmentPayload) => {
     if (!assignTarget) return
-    const updated = marineApplicationAdminService.assignTeam(assignTarget.id, teamId, userId)
+    const { teamId, userId, priority, isVip } = payload
+    const updated = marineApplicationAdminService.assignTeam(assignTarget.id, teamId, userId, {
+      priority,
+      isVip,
+    })
     if (!updated) {
       showToast({
         title: 'Assignment failed',
-        description: 'Could not assign the selected team and user.',
+        description: 'Could not assign the selected team and consultant.',
         variant: 'error',
       })
       return
     }
 
     const teamName = teamService.getById(teamId)?.name ?? 'Team'
-    const userName = adminPortalUserService.getById(userId)?.fullName ?? 'User'
+    const userName = adminPortalUserService.getById(userId)?.fullName ?? 'Consultant'
     setAssignTarget(null)
     setRefreshKey((key) => key + 1)
     showToast({
-      title: 'Team assigned',
-      description: `${assignTarget.id} assigned to ${teamName} · ${userName}`,
+      title: 'Consultant assigned',
+      description: `${assignTarget.id} → ${userName} · ${teamName} · ${priority}${isVip ? ' · VIP' : ''}`,
       variant: 'success',
     })
   }

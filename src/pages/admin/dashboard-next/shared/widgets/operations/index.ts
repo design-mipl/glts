@@ -34,19 +34,38 @@ export type {
 } from './TeamProductivityInfographic'
 export { buildTeamProductivityByChannel } from './teamProductivityData'
 
-export { OpsOrgInfographics, OpsOrgWorkloadBySegment } from './OpsOrgInfographics'
+export { OpsOrgInfographics, OpsOrgWorkloadBySegment, OpsOrgQueueAgeing } from './OpsOrgInfographics'
 export type {
   OpsOrgInfographicsProps,
   OpsOrgWorkloadBySegmentProps,
+  OpsOrgQueueAgeingProps,
 } from './OpsOrgInfographics'
+export {
+  ApplicationMarketInfographics,
+  PostSubmissionVisibility,
+  SubmissionByJurisdiction,
+} from './ApplicationMarketInfographics'
+export type {
+  ApplicationMarketInfographicsProps,
+  ApplicationMarketRankingPoint,
+  ApplicationMarketSlice,
+  PostSubmissionVisibilityProps,
+  SubmissionByJurisdictionProps,
+} from './ApplicationMarketInfographics'
 export type {
   OpsOrgQueueSnapshot,
   OpsOrgChartSlice,
   OpsOrgAgeingBucket,
+  OpsOrgAgeingQueueRow,
   OpsOrgSegmentWorkload,
   OpsOrgAlertRow,
+  OpsQueueAgeingBucketId,
+  OpsQueueAgeingRowKey,
+} from './opsOrgQueueTypes'
+export {
+  OPS_QUEUE_AGEING_BUCKETS,
+  OPS_QUEUE_AGEING_ROWS,
 } from './opsOrgQueueTypes'
 export {
   OPS_QUEUE_DISPLAY_LABELS,
-  OPS_QUEUE_MIX_DESCRIPTION,
 } from './opsQueueDisplayLabels'

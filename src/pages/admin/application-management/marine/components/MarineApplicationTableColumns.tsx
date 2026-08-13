@@ -14,7 +14,7 @@ import {
   type SingleApplicationRow,
 } from '@/pages/customer/features/applications/data/applicationFlowData'
 import {
-  getApplicationOperationalTone,
+  getApplicationOperationalBadgeColor,
   getApplicationTypeLabel,
 } from '@/pages/customer/features/applications/components/listing/applicationStatus'
 import { resolveApplicationCompanyName, resolveApplicationRank, resolveApplicationVesselName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
@@ -35,19 +35,17 @@ import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { isMarineReadOnlyWorkspace, isMarinePendingPaymentWorkspace, opensMarineViewFormDirectly, resolveMarineWorkspaceMode } from '../config/marineWorkspaceMode'
 import { resolveMarineApplicationQueueTab } from '../config/marineApplicationListingTabs'
 import { ApplicationSlaCell } from '../../shared/components/ApplicationSlaCell'
+import { ApplicationVipStar } from '../../shared/components/ApplicationVipStar'
+import {
+  applicationPriorityBadgeColor,
+  applicationPriorityLabel,
+} from '../../shared/config/applicationConsultantConfig'
+import {
+  resolveApplicationConsultantName,
+  resolveApplicationConsultantTeamName,
+} from '../../shared/utils/applicationConsultantUtils'
 
 type ToastFn = (toast: Omit<Toast, 'id'>) => void
-
-function operationalStatusBadgeColor(
-  status: string,
-): 'success' | 'warning' | 'info' | 'error' | 'neutral' {
-  const tone = getApplicationOperationalTone(status)
-  if (tone === 'success') return 'success'
-  if (tone === 'warning') return 'warning'
-  if (tone === 'critical') return 'error'
-  if (tone === 'info') return 'info'
-  return 'neutral'
-}
 
 function buildRowActions(
   navigate: NavigateFunction,
@@ -58,10 +56,10 @@ function buildRowActions(
 ) {
   const detailPath = `/admin/application-management/marine/${row.id}`
   const submitted = isCustomerSubmitted(row)
-  const readOnlyWorkspace = submitted && isMarineReadOnlyWorkspace(row)
-  const pendingPaymentWorkspace = submitted && isMarinePendingPaymentWorkspace(row)
-  const openViewFormDirectly = submitted && opensMarineViewFormDirectly(row)
-  const workspaceMode = submitted ? resolveMarineWorkspaceMode(row) : null
+  const readOnlyWorkspace = submitted && isMarineReadOnlyWorkspace(row, fromListing)
+  const pendingPaymentWorkspace = submitted && isMarinePendingPaymentWorkspace(row, fromListing)
+  const openViewFormDirectly = submitted && opensMarineViewFormDirectly(row, fromListing)
+  const workspaceMode = submitted ? resolveMarineWorkspaceMode(row, fromListing) : null
   const isSubmissionPending = workspaceMode === 'online_submission'
 
   const primaryAction = !submitted
@@ -106,7 +104,7 @@ function buildRowActions(
         }),
     },
     {
-      label: 'Assign Team',
+      label: 'Assign consultant',
       icon: <UserCog size={16} />,
       onClick: () => onAssignTeam(row),
     },
@@ -167,24 +165,31 @@ export function buildMarineApplicationColumns({
       sortable: false,
       filterable: false,
       render: (_: unknown, row: MarineApplicationRow) => {
+        const vipStar = row.isVip ? <ApplicationVipStar /> : null
         if (row.recordType !== 'bulk') {
           return (
-            <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-              {(row as SingleApplicationRow).applicantName}
-            </Typography>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+              {vipStar}
+              <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+                {(row as SingleApplicationRow).applicantName}
+              </Typography>
+            </Box>
           )
         }
 
         const passengerNames = resolveBulkApplicantNames(row as BulkBatchRow)
         return (
           <Tooltip placement="top-start" maxWidth={320} content={passengerNames.join(', ')}>
-            <Typography
-              variant="body2"
-              fontWeight={600}
-              sx={{ fontSize: 13, cursor: 'default', display: 'inline-block', maxWidth: '100%' }}
-            >
-              {formatBulkApplicantListingLabel(row as BulkBatchRow)}
-            </Typography>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, minWidth: 0, maxWidth: '100%' }}>
+              {vipStar}
+              <Typography
+                variant="body2"
+                fontWeight={600}
+                sx={{ fontSize: 13, cursor: 'default', display: 'inline-block', maxWidth: '100%' }}
+              >
+                {formatBulkApplicantListingLabel(row as BulkBatchRow)}
+              </Typography>
+            </Box>
           </Tooltip>
         )
       },
@@ -332,15 +337,51 @@ export function buildMarineApplicationColumns({
       ),
     },
     {
+      key: 'consultant',
+      label: 'Consultant',
+      widthSize: 'md',
+      sortable: true,
+      filterable: true,
+      render: (_: unknown, row: MarineApplicationRow) => (
+        <Box>
+          <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+            {resolveApplicationConsultantName(row)}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+            {resolveApplicationConsultantTeamName(row)}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      key: 'priority',
+      label: 'Priority',
+      widthSize: 'sm',
+      sortable: true,
+      filterable: true,
+      render: (_: unknown, row: MarineApplicationRow) =>
+        row.priority ? (
+          <Badge
+            label={applicationPriorityLabel[row.priority]}
+            color={applicationPriorityBadgeColor(row.priority)}
+            size="sm"
+          />
+        ) : (
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+            —
+          </Typography>
+        ),
+    },
+    {
       key: 'operationalStatus',
       label: 'Status',
-      widthSize: 'lg',
+      widthSize: 'xxl',
       sortable: true,
       filterable: true,
       render: (_: unknown, row: MarineApplicationRow) => (
         <Badge
           label={row.operationalStatus}
-          color={operationalStatusBadgeColor(row.operationalStatus)}
+          color={getApplicationOperationalBadgeColor(row.operationalStatus)}
           size="sm"
         />
       ),

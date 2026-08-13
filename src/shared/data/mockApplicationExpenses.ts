@@ -8,11 +8,11 @@ const CREATED = '2026-06-12T09:00:00.000Z'
 const UPDATED = '2026-06-13T10:30:00.000Z'
 
 export const GLTS_MAR_1025_CREW = [
-  { id: 'GLTS-APL-M1025-01', name: 'Rajesh Kumar', passport: 'IN8829103', cdc: 'MUM-CDC-4412', rank: 'Chief Officer' },
-  { id: 'GLTS-APL-M1025-02', name: 'Vikram Singh', passport: 'IN7738291', cdc: 'MUM-CDC-3388', rank: 'Second Engineer' },
-  { id: 'GLTS-APL-M1025-03', name: 'Anil Mehta', passport: 'IN6647182', cdc: 'MUM-CDC-2299', rank: 'AB Seaman' },
-  { id: 'GLTS-APL-M1025-04', name: 'Suresh Nair', passport: 'IN5596073', cdc: 'MUM-CDC-1188', rank: 'Oiler' },
-  { id: 'GLTS-APL-M1025-05', name: 'Deepak Pillai', passport: 'IN4485964', cdc: 'MUM-CDC-0077', rank: 'Cook' },
+  { id: 'GL-1025/1', name: 'Rajesh Kumar', passport: 'IN8829103', cdc: 'MUM-CDC-4412', rank: 'Chief Officer' },
+  { id: 'GL-1025/2', name: 'Vikram Singh', passport: 'IN7738291', cdc: 'MUM-CDC-3388', rank: 'Second Engineer' },
+  { id: 'GL-1025/3', name: 'Anil Mehta', passport: 'IN6647182', cdc: 'MUM-CDC-2299', rank: 'AB Seaman' },
+  { id: 'GL-1025/4', name: 'Suresh Nair', passport: 'IN5596073', cdc: 'MUM-CDC-1188', rank: 'Oiler' },
+  { id: 'GL-1025/5', name: 'Deepak Pillai', passport: 'IN4485964', cdc: 'MUM-CDC-0077', rank: 'Cook' },
 ] as const
 
 export function buildGltsMar1025SeedExpenses(): ApplicationExpenseRecord[] {
@@ -391,7 +391,7 @@ export function buildSchengenBulkSeedExpenses(): ApplicationExpenseRecord[] {
 /** Single marine application with GLTS-arranged ticket and insurance */
 export function buildMateoAlvarezSeedExpenses(): ApplicationExpenseRecord[] {
   const appId = MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID
-  const applicantId = 'GLTS-APL-744-001'
+  const applicantId = 'GL-744/1'
   return [
     {
       id: 'aem-app-744-001',
@@ -533,7 +533,7 @@ export function buildMateoAlvarezSeedExpenses(): ApplicationExpenseRecord[] {
 
 /** Single marine application — embassy processing stage */
 export function buildAshaNairSeedExpenses(): ApplicationExpenseRecord[] {
-  const appId = 'GLTS-APP-2026-739'
+  const appId = 'GL-739'
   return [
     {
       id: 'aem-app-739-000',
@@ -663,7 +663,7 @@ export function buildAshaNairSeedExpenses(): ApplicationExpenseRecord[] {
 /** Priya Sharma — Oceanic Marine / France sticker (demo cross-module expense mapping). */
 export function buildPriyaSharmaSeedExpenses(): ApplicationExpenseRecord[] {
   const appId = GLTS_APPLICATION_IDS.schengen
-  const applicantId = `${appId}-APL-001`
+  const applicantId = `${appId}/1`
 
   return [
     {

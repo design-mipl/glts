@@ -48,9 +48,9 @@ export const DOCS_QC_SUBMIT_HINT =
 
 export function getDocsQcSubmittedHint(outcome: MarineDocsQcCheckRecord['outcome']): string {
   if (outcome === 'correction' || outcome === 'blocked') {
-    return 'QC submitted and flagged for Ops. Form view stays locked until Verified & ready.'
+    return 'QC submitted — returned to Verification Pending (Docs mark). Form view stays locked until Verified & ready.'
   }
-  return 'QC already submitted. You can proceed in Form view.'
+  return 'QC already submitted. You can proceed in Form view (Form Pending).'
 }
 
 export function getDocsQcSubmitSuccessMessage(outcome: MarineDocsQcCheckRecord['outcome']): {
@@ -60,12 +60,13 @@ export function getDocsQcSubmitSuccessMessage(outcome: MarineDocsQcCheckRecord['
   if (outcome === 'correction' || outcome === 'blocked') {
     return {
       title: 'QC check submitted',
-      description: 'Flagged for Ops follow-up. Form view stays locked until Verified & ready.',
+      description:
+        'Sent back to Verification Pending with a Docs status mark for Ops follow-up.',
     }
   }
   return {
     title: 'QC check submitted',
-    description: 'Form view is now unlocked for this traveler.',
+    description: 'Status set to Form Pending. Form view is unlocked for this traveler.',
   }
 }
 

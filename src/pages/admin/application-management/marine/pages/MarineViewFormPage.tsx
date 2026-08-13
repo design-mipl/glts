@@ -197,13 +197,13 @@ export function MarineViewFormPage() {
   )
 
   const readOnly = useMemo(
-    () => Boolean(listingRow && isMarineReadOnlyWorkspace(listingRow)),
-    [listingRow],
+    () => Boolean(listingRow && isMarineReadOnlyWorkspace(listingRow, listingPath)),
+    [listingRow, listingPath],
   )
 
   const workspaceMode = useMemo(
-    () => (listingRow ? resolveMarineWorkspaceMode(listingRow) : 'verification'),
-    [listingRow],
+    () => (listingRow ? resolveMarineWorkspaceMode(listingRow, listingPath) : 'verification'),
+    [listingRow, listingPath],
   )
   const isPendingPayment = workspaceMode === 'pending_payment'
 
@@ -226,14 +226,14 @@ export function MarineViewFormPage() {
       setDocsQcRecord(null)
       return
     }
-    const mode = resolveMarineWorkspaceMode(listingRow)
+    const mode = resolveMarineWorkspaceMode(listingRow, listingPath)
     const record = applicationMarineQcCheckService.ensureRecord(
       applicationId,
       selectedRow.id,
       mode === 'readonly' ? { seedCompleted: true, template: docsQcTemplate } : undefined,
     )
     setDocsQcRecord(record)
-  }, [applicationId, selectedRow?.id, listingRow, docsQcTemplate])
+  }, [applicationId, selectedRow?.id, listingRow, listingPath, docsQcTemplate])
 
   const formViewUnlocked = useMemo(
     () => resolveFormViewTabEnabled(listingRow, docsQcRecord),
@@ -715,6 +715,7 @@ export function MarineViewFormPage() {
         title=""
         showTitleCard={false}
         navTitle="Steps"
+        navWidth={220}
         sections={sectionNav}
         activeSectionId={currentStep!.id}
         onSectionClick={goToStep}

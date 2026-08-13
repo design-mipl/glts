@@ -1,15 +1,22 @@
 import { useState } from 'react'
-import { Box, Grid, Stack, Typography } from '@mui/material'
-import { BarChart, LineChart, Select } from '@/design-system/UIComponents'
+import { Box, Grid, Stack, Typography, alpha } from '@mui/material'
+import { LineChart, PieChart, Select } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { executiveCardLevel2Sx } from '@/pages/admin/dashboard/components/executiveDashboardTokens'
 import { ProgressSummary, DASHBOARD_SPACING } from '../../shared'
-import { DOC_CHART_COLORS, DOC_CHART_SERIES } from '../data/documentationChartColors'
+import { DOC_CHART_COLORS } from '../data/documentationChartColors'
 import type { DocumentationDashboardTabProps } from '../types'
 
 const PERIOD_OPTIONS = [
   { label: 'This week', value: 'week' },
   { label: 'This month', value: 'month' },
+] as const
+
+const PRODUCTIVITY_ACCENTS = [
+  DOC_CHART_COLORS.green,
+  DOC_CHART_COLORS.blue,
+  DOC_CHART_COLORS.amber,
+  DOC_CHART_COLORS.navy,
 ] as const
 
 function ChartPanel({
@@ -50,7 +57,7 @@ function ChartPanel({
   )
 }
 
-/** Performance — daily work, SLA, QC outcome productivity. */
+/** Performance — same composition as Operations: daily work · SLA · productivity · capacity. */
 export function PerformanceTab({ data, loading }: DocumentationDashboardTabProps) {
   const brand = usePublicBrandColors()
   const [period, setPeriod] = useState<'week' | 'month'>('week')
@@ -61,17 +68,38 @@ export function PerformanceTab({ data, loading }: DocumentationDashboardTabProps
     finished: p.secondary ?? 0,
   }))
 
-  const qcBars = data.qcOutcomeMix.map((s) => ({
-    outcome: s.label,
-    value: s.value,
-  }))
+  const openCases =
+    data.submissionPendingRows.length +
+    data.pendingPaymentRows.length +
+    data.arrangeInsuranceRows.length +
+    data.waitingOnOpsRows.length
+
+  const completedTodayRaw = data.metricComparison.find((m) =>
+    m.label.toLowerCase().includes('completed'),
+  )?.value
+  const completedToday = Number.parseInt(String(completedTodayRaw ?? '0'), 10) || 0
+
+  const capacityPie = [
+    {
+      key: 'open',
+      label: 'Open',
+      value: openCases,
+      color: DOC_CHART_COLORS.amber,
+    },
+    {
+      key: 'done',
+      label: 'Done today',
+      value: Math.max(completedToday, 1),
+      color: DOC_CHART_COLORS.teal,
+    },
+  ]
 
   return (
     <Grid container spacing={DASHBOARD_SPACING.field}>
       <Grid size={{ xs: 12, lg: 8 }}>
         <ChartPanel
           title="Daily work"
-          description="Cases you worked on vs finished each day on Docs desks"
+          description="Cases you worked on vs finished each day"
           action={
             <Box sx={{ width: { xs: '100%', sm: 140 }, flexShrink: 0 }}>
               <Select
@@ -92,7 +120,7 @@ export function PerformanceTab({ data, loading }: DocumentationDashboardTabProps
             showLegend
             loading={loading}
             lines={[
-              { key: 'workedOn', label: 'Worked on', color: DOC_CHART_COLORS.navy },
+              { key: 'workedOn', label: 'Under Process', color: DOC_CHART_COLORS.navy },
               { key: 'finished', label: 'Finished', color: DOC_CHART_COLORS.green },
             ]}
           />
@@ -109,70 +137,85 @@ export function PerformanceTab({ data, loading }: DocumentationDashboardTabProps
             color="text.secondary"
             sx={{ fontSize: 12, display: 'block', mb: 1.5 }}
           >
-            Daily and weekly compliance vs 95% target
+            Daily and weekly compliance
           </Typography>
           <ProgressSummary items={data.personalSla} loading={loading} />
         </Box>
       </Grid>
 
       <Grid size={{ xs: 12, md: 6 }}>
-        <ChartPanel title="QC outcome mix" description="Current queue outcomes">
-          <BarChart
-            data={qcBars}
-            xKey="outcome"
-            height={220}
-            barSize={18}
-            showLegend={false}
-            loading={loading}
-            bars={[{ key: 'value', label: 'Count', color: DOC_CHART_COLORS.teal }]}
-          />
-        </ChartPanel>
-      </Grid>
-
-      <Grid size={{ xs: 12, md: 6 }}>
         <Box sx={{ ...executiveCardLevel2Sx(brand), p: 2, height: '100%' }}>
           <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 14 }}>
-            Stage SLA clocks
+            Personal productivity
           </Typography>
           <Typography
             variant="caption"
             color="text.secondary"
             sx={{ fontSize: 12, display: 'block', mb: 1.5 }}
           >
-            QC · Waiting on Ops · Mark submitted
-          </Typography>
-          <ProgressSummary items={data.stageSla} loading={loading} />
-        </Box>
-      </Grid>
-
-      <Grid size={{ xs: 12 }}>
-        <Box sx={{ ...executiveCardLevel2Sx(brand), p: 2 }}>
-          <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 14, mb: 1.5 }}>
-            Personal productivity
+            Completed · cycle time · QC · SLA
           </Typography>
           <Grid container spacing={1.25}>
-            {data.performanceMetrics.map((metric, index) => {
-              const accent = DOC_CHART_SERIES[index % DOC_CHART_SERIES.length]
+            {data.metricComparison.map((metric, index) => {
+              const accent = PRODUCTIVITY_ACCENTS[index % PRODUCTIVITY_ACCENTS.length]
+              const delta = metric.delta
+              const deltaUp = delta != null && delta > 0
+              const deltaDown = delta != null && delta < 0
               return (
-                <Grid key={metric.id} size={{ xs: 12, sm: 4 }}>
+                <Grid key={metric.label} size={{ xs: 6 }}>
                   <Box
                     sx={{
+                      height: '100%',
                       p: 1.5,
                       borderRadius: '10px',
                       border: '1px solid',
-                      borderColor: 'divider',
-                      borderLeft: `3px solid ${accent}`,
+                      borderColor: brand.border,
+                      borderLeft: `2px solid ${alpha(accent, 0.55)}`,
+                      bgcolor: alpha(accent, 0.04),
                     }}
                   >
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                      sx={{ fontSize: 12, display: 'block' }}
+                    >
                       {metric.label}
                     </Typography>
-                    <Typography variant="h6" fontWeight={700} sx={{ fontSize: 20, lineHeight: 1.2 }}>
-                      {metric.value}
+                    <Typography
+                      sx={{
+                        mt: 0.5,
+                        fontSize: 20,
+                        fontWeight: 700,
+                        letterSpacing: '-0.02em',
+                        lineHeight: 1.15,
+                        color: 'text.primary',
+                      }}
+                    >
+                      {loading ? '—' : metric.value}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
-                      {metric.subtitle}
-                    </Typography>
+                    {delta != null ? (
+                      <Typography
+                        sx={{
+                          mt: 0.35,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: deltaUp
+                            ? alpha(DOC_CHART_COLORS.green, 0.9)
+                            : deltaDown
+                              ? alpha(DOC_CHART_COLORS.coral, 0.85)
+                              : 'text.secondary',
+                        }}
+                      >
+                        {delta > 0 ? '+' : ''}
+                        {delta}
+                        {typeof metric.value === 'string' && metric.value.includes('%')
+                          ? ' pts'
+                          : typeof metric.value === 'string' && metric.value.includes('h')
+                            ? 'h'
+                            : ''}
+                      </Typography>
+                    ) : null}
                   </Box>
                 </Grid>
               )
@@ -181,28 +224,11 @@ export function PerformanceTab({ data, loading }: DocumentationDashboardTabProps
         </Box>
       </Grid>
 
-      {data.showInactivityWarning ? (
-        <Grid size={{ xs: 12 }}>
-          <Box
-            sx={{
-              ...executiveCardLevel2Sx(brand),
-              px: 2,
-              py: 1.5,
-              borderColor: 'warning.main',
-            }}
-          >
-            <Stack spacing={0.5}>
-              <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: 13 }}>
-                Inactivity soft alert
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-                No activity for {data.minutesSinceLastActivity ?? 60}+ minutes during business hours.
-                Supervisor notified.
-              </Typography>
-            </Stack>
-          </Box>
-        </Grid>
-      ) : null}
+      <Grid size={{ xs: 12, md: 6 }}>
+        <ChartPanel title="Capacity" description="Open cases vs done today">
+          <PieChart data={capacityPie} height={220} showLegend loading={loading} />
+        </ChartPanel>
+      </Grid>
     </Grid>
   )
 }

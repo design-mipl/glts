@@ -36,35 +36,35 @@ export const GLTS_ARRANGED_DOCUMENT_DEMO_SEEDS: readonly GltsArrangedDocumentDem
     documentIds: BOTH,
   },
   {
-    applicationId: 'GLTS-APP-2026-889',
+    applicationId: 'GL-889',
     documentIds: BOTH,
   },
   {
-    applicationId: 'GLTS-APP-2026-891',
+    applicationId: 'GL-891',
     documentIds: BOTH,
   },
   {
-    applicationId: 'GLTS-APP-2026-868',
+    applicationId: 'GL-868',
     documentIds: BOTH,
   },
   {
-    applicationId: 'GLTS-APP-2026-739',
+    applicationId: 'GL-739',
     documentIds: BOTH,
   },
   {
-    applicationId: 'GLTS-APP-2026-881',
+    applicationId: 'GL-881',
     documentIds: TICKET_ONLY,
   },
   {
-    applicationId: 'GLTS-APP-2026-884',
+    applicationId: 'GL-884',
     documentIds: TICKET_ONLY,
   },
   {
-    applicationId: 'GLTS-APP-2026-887',
+    applicationId: 'GL-887',
     documentIds: INSURANCE_ONLY,
   },
   {
-    applicationId: 'GLTS-APP-2026-872',
+    applicationId: 'GL-872',
     documentIds: INSURANCE_ONLY,
   },
   // —— Marine bulk ——
@@ -74,42 +74,42 @@ export const GLTS_ARRANGED_DOCUMENT_DEMO_SEEDS: readonly GltsArrangedDocumentDem
     travelerIndices: [0, 1],
   },
   {
-    applicationId: 'GLTS-BAT-2026-044',
+    applicationId: 'GL-044',
     documentIds: BOTH,
     travelerIndices: [0, 1],
   },
   {
-    applicationId: 'GLTS-BAT-2026-046',
+    applicationId: 'GL-046',
     documentIds: TICKET_ONLY,
     travelerIndices: [0],
   },
   // —— Corporate singles ——
   {
-    applicationId: 'GLTS-APP-2026-829',
+    applicationId: 'GL-829',
     documentIds: BOTH,
   },
   {
-    applicationId: 'GLTS-APP-2026-824',
+    applicationId: 'GL-824',
     documentIds: TICKET_ONLY,
   },
   // —— Corporate bulk ——
   {
-    applicationId: 'GLTS-BAT-2026-028',
+    applicationId: 'GL-028',
     documentIds: BOTH,
     travelerIndices: [0],
   },
   // —— B2B singles ——
   {
-    applicationId: 'GLTS-APP-2026-802',
+    applicationId: 'GL-802',
     documentIds: INSURANCE_ONLY,
   },
   {
-    applicationId: 'GLTS-APP-2026-818',
+    applicationId: 'GL-818',
     documentIds: BOTH,
   },
   // —— B2B bulk ——
   {
-    applicationId: 'GLTS-BAT-2026-024',
+    applicationId: 'GL-024',
     documentIds: TICKET_ONLY,
     travelerIndices: [0],
   },

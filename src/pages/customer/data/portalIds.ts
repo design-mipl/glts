@@ -1,9 +1,9 @@
 /** Canonical GLTS identifiers for customer portal mock data and UI copy */
 
 export const GLTS_APPLICATION_IDS = {
-  schengen: 'GLTS-APP-2026-847',
-  japan: 'GLTS-APP-2026-901',
-  uae: 'GLTS-APP-2026-712',
+  schengen: 'GL-847',
+  japan: 'GL-901',
+  uae: 'GL-712',
 } as const
 
 export const GLTS_BOOKER_IDS = {
@@ -28,8 +28,8 @@ export const GLTS_NOTIFICATION_IDS = {
 } as const
 
 export const GLTS_APPLICANT_IDS = {
-  priya: 'GLTS-APL-001',
-  jamie: 'GLTS-APL-002',
+  priya: 'GL-847/1',
+  jamie: 'GL-847/2',
 } as const
 
 export const GLTS_INVOICE_ID = 'GLTS-INV-8821'
@@ -61,6 +61,9 @@ export const GLTS_USER_IDS = GLTS_ADMIN_IDS
 
 /** Legacy IDs migrated in session / deep links */
 export const LEGACY_APPLICATION_ID_MAP: Record<string, string> = {
+  'GLTS-APP-2026-847': GLTS_APPLICATION_IDS.schengen,
+  'GLTS-APP-2026-901': GLTS_APPLICATION_IDS.japan,
+  'GLTS-APP-2026-712': GLTS_APPLICATION_IDS.uae,
   'GLT-2026-847': GLTS_APPLICATION_IDS.schengen,
   'GLT-2026-901': GLTS_APPLICATION_IDS.japan,
   'GLT-2026-712': GLTS_APPLICATION_IDS.uae,

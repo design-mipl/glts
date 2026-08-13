@@ -15,6 +15,7 @@ import {
   OpsOrgWorkloadBySegment,
   DASHBOARD_SPACING,
 } from '../../shared'
+import { SubmissionByJurisdiction } from '../../shared/widgets/operations/ApplicationMarketInfographics'
 import { HeroMetric } from '../../shared/dashboard-ui-kit'
 import { SuperAdminPulseBanner } from '../components/SuperAdminChrome'
 import type { SuperAdminDashboardTabProps } from '../types'
@@ -148,6 +149,12 @@ export function OperationsTab({
       <OpsOrgInfographics data={snapshot} loading={loading} dense />
 
       <OpsOrgWorkloadBySegment data={snapshot} loading={loading} dense />
+
+      <SubmissionByJurisdiction
+        data={data.submissionByJurisdiction}
+        loading={loading}
+        dense
+      />
     </Stack>
   )
 }

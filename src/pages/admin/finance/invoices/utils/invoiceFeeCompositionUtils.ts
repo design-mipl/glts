@@ -320,7 +320,7 @@ export function listBulkBatchApplicants(
         id: `${batch.id}-q${sequenceNo}`,
         fileName: `${batch.id}-${sequenceNo}.pdf`,
         gltsApplicationId: batch.id,
-        gltsApplicantId: `${batch.id}-APL-${String(sequenceNo).padStart(3, '0')}`,
+        gltsApplicantId: `${batch.id}/${sequenceNo}`,
         sequenceNo,
         travelerName: `Crew Member ${sequenceNo}`,
         passportNo: `P${batch.id.slice(-3)}${String(sequenceNo).padStart(4, '0')}`,
@@ -367,7 +367,7 @@ function buildSingleCard(
   agreement?: CommercialAgreement | null,
 ): SingleApplicationFeeCard {
   const expenses = listClientBillableExpenses(row.id)
-  const passengerId = `${row.id}-APL-001`
+  const passengerId = `${row.id}/1`
   const passengerScoped = buildExpenseServiceLinesForPassenger(expenses, passengerId, true)
   // Single applications: include all client-billable lines (even if mapped only by name / application).
   const expenseLines =

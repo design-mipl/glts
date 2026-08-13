@@ -214,7 +214,7 @@ function getDemoVerificationSeeds(applicationId: string): VerificationDocumentOv
   }
 
   // Marine Verification Pending — Marco Silva: both Ops + Document team rejected cards.
-  if (applicationId === 'GLTS-APP-2026-881') {
+  if (applicationId === 'GL-881') {
     const travelerRowId = `${applicationId}-q1`
     return [
       {
@@ -257,7 +257,7 @@ function getDemoVerificationSeeds(applicationId: string): VerificationDocumentOv
   }
 
   // Marine Verification Pending — Jonas Berg: Document Rejected queue with Document team handoff.
-  if (applicationId === 'GLTS-APP-2026-887') {
+  if (applicationId === 'GL-887') {
     const travelerRowId = `${applicationId}-q1`
     return [
       {

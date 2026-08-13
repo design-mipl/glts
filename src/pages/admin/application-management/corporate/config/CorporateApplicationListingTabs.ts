@@ -1,18 +1,15 @@
 import type { MarineApplicationRow as CorporateApplicationRow } from '@/shared/services/marineApplicationAdminService'
-import { isApplicationVfsSubmissionPending } from '@/shared/utils/applicationProcessingQueueUtils'
+import {
+  isApplicationInManagementQueueTab,
+  resolveApplicationManagementPrimaryQueue,
+  type ApplicationManagementQueueTab,
+} from '@/shared/utils/applicationQueueStatus'
 
 export type CorporateApplicationListingTab =
   | 'all'
-  | 'draft'
-  | 'verification_pending'
-  | 'online_submission_pending'
-  | 'pending_payment'
-  | 'vfs_submission_pending'
-  | 'collection_pending'
-  | 'collected'
-  | 'dispatched'
+  | ApplicationManagementQueueTab
 
-export type CorporateApplicationQueueTab = Exclude<CorporateApplicationListingTab, 'all'>
+export type CorporateApplicationQueueTab = ApplicationManagementQueueTab
 
 export const CORPORATE_APPLICATION_LISTING_TABS: ReadonlyArray<{
   value: CorporateApplicationListingTab
@@ -29,59 +26,15 @@ export const CORPORATE_APPLICATION_LISTING_TABS: ReadonlyArray<{
   { value: 'dispatched', label: 'Dispatched' },
 ]
 
-const VERIFICATION_PENDING_STATUSES = new Set([
-  'Submitted',
-  'Under Review',
-  'Verification Pending',
-  'Document Rejected',
-  'Pending Documents',
-  'Correction Required',
-])
-
 export function resolveCorporateApplicationQueueTab(
   row: CorporateApplicationRow,
 ): CorporateApplicationQueueTab | null {
-  if (row.operationalStatus === 'Draft') {
-    return 'draft'
-  }
-
-  if (row.operationalStatus === 'Completed' || row.processingStage === 'Delivered') {
-    return 'dispatched'
-  }
-
-  if (row.processingStage === 'Dispatch' || row.operationalStatus === 'Passport Ready') {
-    return 'collected'
-  }
-
-  if (row.processingStage === 'Embassy processing') {
-    return 'collection_pending'
-  }
-
-  if (isApplicationVfsSubmissionPending(row)) {
-    return 'vfs_submission_pending'
-  }
-
-  if (row.processingStage === 'Payment pending') {
-    return 'pending_payment'
-  }
-
-  if (row.processingStage === 'Submitted') {
-    return 'online_submission_pending'
-  }
-
-  if (
-    row.processingStage === 'Ready for submission' ||
-    VERIFICATION_PENDING_STATUSES.has(row.operationalStatus)
-  ) {
-    return 'verification_pending'
-  }
-
-  return null
+  return resolveApplicationManagementPrimaryQueue(row)
 }
 
 export function isCorporateApplicationInQueueTab(
   row: CorporateApplicationRow,
   tab: CorporateApplicationQueueTab,
 ): boolean {
-  return resolveCorporateApplicationQueueTab(row) === tab
+  return isApplicationInManagementQueueTab(row, tab)
 }

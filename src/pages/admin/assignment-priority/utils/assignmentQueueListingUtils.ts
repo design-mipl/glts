@@ -174,15 +174,19 @@ export function formatSlaTimer(row: OperationalPassengerRow): string {
   if (row.passengerStatus === 'Completed') return '—'
   const due = new Date(row.slaDueAt).getTime()
   const diff = due - Date.now()
-  if (diff <= 0) {
-    const overdue = Math.abs(diff)
-    const hours = Math.floor(overdue / (60 * 60 * 1000))
-    const mins = Math.floor((overdue % (60 * 60 * 1000)) / (60 * 1000))
-    return `-${hours}h ${mins}m`
+  const overdue = diff <= 0
+  const absMs = Math.abs(diff)
+  const totalHours = Math.floor(absMs / (60 * 60 * 1000))
+  const mins = Math.floor((absMs % (60 * 60 * 1000)) / (60 * 1000))
+  const prefix = overdue ? '-' : ''
+
+  if (totalHours >= 24) {
+    const days = Math.floor(totalHours / 24)
+    const hours = totalHours % 24
+    return `${prefix}${days}d ${hours}h`
   }
-  const hours = Math.floor(diff / (60 * 60 * 1000))
-  const mins = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000))
-  return `${hours}h ${mins}m`
+
+  return `${prefix}${totalHours}h ${mins}m`
 }
 
 export function filterRowsByListingTab(

@@ -33,7 +33,7 @@ function overlay(
 
 /** Seed overlays keyed by operational passenger id (`applicationId:applicantId`). */
 export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPassengerOverlay> = {
-  [buildPassengerId(GLTS_APPLICATION_IDS.schengen, `${GLTS_APPLICATION_IDS.schengen}-APL-001`)]: overlay({
+  [buildPassengerId(GLTS_APPLICATION_IDS.schengen, `${GLTS_APPLICATION_IDS.schengen}/1`)]: overlay({
     priority: 'High',
     assigneeType: 'vendor',
     assignedVendor: 'VFS Global Partner Desk',
@@ -74,7 +74,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: ['embassy-checklist.pdf'],
     lastUpdated: '2026-02-18T08:15:00.000Z',
   }),
-  [buildPassengerId('GLTS-APP-2026-790', 'GLTS-APP-2026-790-APL-001')]: overlay({
+  [buildPassengerId('GL-790', 'GL-790/1')]: overlay({
     priority: 'Urgent',
     assignedTeam: 'Delhi Team',
     assignedUser: 'Arun Krishnan',
@@ -104,7 +104,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-15T10:00:00.000Z',
   }),
-  [buildPassengerId('GLTS-APP-2026-744', 'GLTS-APP-2026-744-APL-001')]: overlay({
+  [buildPassengerId('GL-744', 'GL-744/1')]: overlay({
     priority: 'Medium',
     assignedTeam: 'Mumbai Team',
     assignedUser: 'Sneha Patel',
@@ -135,7 +135,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-19T09:15:00.000Z',
   }),
-  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GLTS-APL-001')]: overlay({
+  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GL-041/1')]: overlay({
     priority: 'High',
     assignedTeam: 'Delhi Team',
     assignedUser: 'Karan Mehta',
@@ -166,7 +166,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: ['vfs-reschedule-note.pdf'],
     lastUpdated: '2026-02-18T06:00:00.000Z',
   }),
-  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GLTS-APL-002')]: overlay({
+  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GL-041/2')]: overlay({
     priority: 'Medium',
     assignedTeam: 'Delhi Team',
     assignedUser: 'Karan Mehta',
@@ -190,7 +190,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-19T14:00:00.000Z',
   }),
-  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GLTS-APL-003')]: overlay({
+  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GL-041/3')]: overlay({
     priority: 'Medium',
     assignedTeam: 'Delhi Team',
     assignedUser: 'Karan Mehta',
@@ -214,7 +214,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-19T14:00:00.000Z',
   }),
-  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GLTS-APL-004')]: overlay({
+  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GL-041/4')]: overlay({
     priority: 'Medium',
     assignedTeam: 'Delhi Team',
     assignedUser: 'Karan Mehta',
@@ -238,7 +238,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-19T14:00:00.000Z',
   }),
-  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GLTS-APL-005')]: overlay({
+  [buildPassengerId(GLTS_BATCH_IDS.schengenCrew, 'GL-041/5')]: overlay({
     priority: 'Medium',
     assignedTeam: 'Delhi Team',
     assignedUser: 'Karan Mehta',
@@ -262,7 +262,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-19T14:00:00.000Z',
   }),
-  [buildPassengerId(GLTS_APPLICATION_IDS.japan, `${GLTS_APPLICATION_IDS.japan}-APL-001`)]: overlay({
+  [buildPassengerId(GLTS_APPLICATION_IDS.japan, `${GLTS_APPLICATION_IDS.japan}/1`)]: overlay({
     priority: 'Low',
     assignedTeam: 'Chennai Team',
     assignedUser: 'Sneha Patel',
@@ -277,7 +277,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-17T14:00:00.000Z',
   }),
-  [buildPassengerId('GLTS-APP-2026-802', 'GLTS-APP-2026-802-APL-001')]: overlay({
+  [buildPassengerId('GL-802', 'GL-802/1')]: overlay({
     priority: 'High',
     assignedTeam: 'Mumbai Team',
     assignedUser: 'Arun Krishnan',
@@ -300,7 +300,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-17T11:00:00.000Z',
   }),
-  [buildPassengerId('GLTS-APP-2026-778', 'GLTS-APP-2026-778-APL-001')]: overlay({
+  [buildPassengerId('GL-778', 'GL-778/1')]: overlay({
     priority: 'Medium',
     assignedTeam: 'Mumbai Team',
     assignedUser: 'Sneha Patel',
@@ -323,7 +323,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-12T10:30:00.000Z',
   }),
-  [buildPassengerId('GLTS-MAR-1025', 'GLTS-APL-M1025-01')]: overlay({
+  [buildPassengerId('GL-1025', 'GL-1025/1')]: overlay({
     priority: 'High',
     assignedTeam: 'Marine Team',
     assignedUser: 'Anita Desai',
@@ -347,7 +347,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-16T10:00:00.000Z',
   }),
-  [buildPassengerId('GLTS-MAR-1025', 'GLTS-APL-M1025-02')]: overlay({
+  [buildPassengerId('GL-1025', 'GL-1025/2')]: overlay({
     priority: 'High',
     assignedTeam: 'Marine Team',
     assignedUser: 'Anita Desai',
@@ -371,7 +371,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-16T10:00:00.000Z',
   }),
-  [buildPassengerId('GLTS-MAR-1025', 'GLTS-APL-M1025-03')]: overlay({
+  [buildPassengerId('GL-1025', 'GL-1025/3')]: overlay({
     priority: 'High',
     assignedTeam: 'Marine Team',
     assignedUser: 'Anita Desai',
@@ -395,7 +395,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-16T10:00:00.000Z',
   }),
-  [buildPassengerId('GLTS-APP-2026-731', 'GLTS-APP-2026-731-APL-001')]: overlay({
+  [buildPassengerId('GL-731', 'GL-731/1')]: overlay({
     priority: 'Medium',
     assignedTeam: 'Chennai Team',
     assignedUser: 'Anita Desai',
@@ -418,7 +418,7 @@ export const SEED_OPERATIONAL_PASSENGER_OVERLAYS: Record<string, OperationalPass
     attachmentNames: [],
     lastUpdated: '2026-02-15T09:30:00.000Z',
   }),
-  [buildPassengerId('GLTS-APP-2026-726', 'GLTS-APP-2026-726-APL-001')]: overlay({
+  [buildPassengerId('GL-726', 'GL-726/1')]: overlay({
     priority: 'Low',
     assignedTeam: 'Delhi Team',
     assignedUser: 'Karan Mehta',

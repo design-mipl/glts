@@ -22,9 +22,14 @@ const WORK_DESKS: Array<{ value: DocWorkDeskId; label: string; description: stri
     description: 'Update embassy / VFS fee payment when required.',
   },
   {
+    value: 'arrange_insurance',
+    label: 'Arrange Insurance',
+    description: 'Book or confirm GLTS travel insurance, then continue submission.',
+  },
+  {
     value: 'waiting_on_ops',
-    label: 'Waiting on Ops',
-    description: 'Correction or blocked cases. Returns here after Ops updates.',
+    label: 'Review Reupload',
+    description: 'Review re-uploaded documents after Ops/client correction.',
   },
 ]
 
@@ -32,7 +37,7 @@ export interface WorkTabProps extends DocumentationDashboardTabProps {
   initialDesk?: DocWorkDeskId
 }
 
-/** Work — Submission Pending · Pending Payment · Waiting on Ops. */
+/** Work — Submission Pending · Pending Payment · Arrange Insurance · Review Reupload. */
 export function WorkTab({
   data,
   loading,
@@ -46,6 +51,7 @@ export function WorkTab({
     () => ({
       submission_pending: data.submissionPendingRows,
       pending_payment: data.pendingPaymentRows,
+      arrange_insurance: data.arrangeInsuranceRows,
       waiting_on_ops: data.waitingOnOpsRows,
     }),
     [data],
@@ -97,8 +103,10 @@ export function WorkTab({
         emptyTitle={`No cases in ${active.label}`}
         emptyDescription={
           desk === 'waiting_on_ops'
-            ? 'Cases you flag as correction or blocked will appear here until Ops returns them.'
-            : 'New applications in this queue will appear here.'
+            ? 'Re-uploaded cases ready for Docs review will appear here.'
+            : desk === 'arrange_insurance'
+              ? 'Cases needing GLTS travel insurance will appear here.'
+              : 'New applications in this queue will appear here.'
         }
       />
     </Stack>

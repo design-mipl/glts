@@ -32,6 +32,7 @@ import {
 } from '@/shared/utils/cardMasterOptions'
 import { mapCountryVfsRatesToChargeLines } from '@/shared/utils/countryVfsServiceRateUtils'
 import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
+import { applyPaymentCompleteToListing } from '@/shared/utils/applicationQueueStatus'
 import {
   PAYMENT_MODE_OPTIONS,
   RECEIPT_STATUS_OPTIONS,
@@ -221,6 +222,10 @@ export function PendingPaymentSubmissionSection({
       paymentEntries,
       ...syncLegacyPaymentFieldsFromEntries({ ...submission, paymentEntries }),
     })
+    const catalog = submission.vfsServiceCharges ?? []
+    const paidIds = new Set(paymentEntries.flatMap((entry) => entry.serviceIds))
+    const allPaid = catalog.length > 0 && catalog.every((service) => paidIds.has(service.id))
+    applyPaymentCompleteToListing(applicationId, allPaid)
   }
 
   const handleSavePayment = () => {

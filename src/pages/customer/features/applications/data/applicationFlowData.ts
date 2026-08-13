@@ -19,6 +19,9 @@ export type ApplicationFlowMode = ApplicationSubmitKind
 
 export type QueueRowStatus = 'verified' | 'needs_review' | 'processing' | 'error'
 
+/** Application Management consultant priority (independent of Assignment & Priority queues). */
+export type ApplicationPriority = 'Urgent' | 'High' | 'Medium' | 'Low'
+
 export interface SingleApplicationRow {
   id: string
   recordType: Extract<ApplicationRecordType, 'single'>
@@ -52,6 +55,15 @@ export interface SingleApplicationRow {
   processingStageDates?: ApplicationProcessingStageDates
   assignedTeamId?: string
   assignedUserId?: string
+  /** Application Management consultant priority */
+  priority?: ApplicationPriority
+  /** Green Star VIP passenger / application tag */
+  isVip?: boolean
+  /**
+   * When true, row leaves the Pending Payment dual-queue tab.
+   * Set after Ops verify when payment work is finished (Ops or Docs).
+   */
+  paymentComplete?: boolean
 }
 
 export interface BulkBatchRow {
@@ -91,6 +103,15 @@ export interface BulkBatchRow {
   processingStageDates?: ApplicationProcessingStageDates
   assignedTeamId?: string
   assignedUserId?: string
+  /** Application Management consultant priority */
+  priority?: ApplicationPriority
+  /** Green Star VIP passenger / application tag */
+  isVip?: boolean
+  /**
+   * When true, row leaves the Pending Payment dual-queue tab.
+   * Set after Ops verify when payment work is finished (Ops or Docs).
+   */
+  paymentComplete?: boolean
 }
 
 export interface ExtractedField {
@@ -174,15 +195,15 @@ export interface ChecklistItem {
 }
 
 export const GLTS_BATCH_IDS = {
-  schengenCrew: 'GLTS-BAT-2026-041',
-  japanGroup: 'GLTS-BAT-2026-038',
+  schengenCrew: 'GL-041',
+  japanGroup: 'GL-038',
 } as const
 
 /**
  * Marine single-application demo — applicant chose GLTS to arrange ticket and insurance.
  * Additional GLTS-arrange demos (all segments) live in `gltsArrangedDocumentDemoConfig.ts`.
  */
-export const MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID = 'GLTS-APP-2026-744' as const
+export const MARINE_GLTS_ARRANGED_DEMO_APPLICATION_ID = 'GL-744' as const
 
 function singleRow(
   partial: Omit<SingleApplicationRow, 'recordType' | 'status' | 'statusTone'> & {
@@ -248,7 +269,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     },
   }),
   singleRow({
-    id: 'GLTS-APP-2026-880',
+    id: 'GL-880',
     applicantName: 'Draft Crew Member',
     passportNumber: 'IN9921044',
     companyName: 'Oceanic Marine Ltd',
@@ -268,7 +289,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'marine',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-881',
+    id: 'GL-881',
     applicantName: 'Marco Silva',
     passportNumber: 'BR4412098',
     companyName: 'Harbor Line Crewing',
@@ -282,7 +303,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdAt: '2026-02-12',
     lastUpdated: '2026-02-20',
     processingStage: 'Ready for submission',
-    operationalStatus: 'Document Rejected',
+    operationalStatus: 'Ops · Document Missing',
     createdByEmail: 'ops@harborlinecrew.com',
     createdByRole: 'admin',
     customerSegment: 'marine',
@@ -337,7 +358,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     },
   }),
   singleRow({
-    id: 'GLTS-APP-2026-820',
+    id: 'GL-820',
     applicantName: 'Anita Desai',
     passportNumber: 'K5529103',
     country: 'UK',
@@ -354,7 +375,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'retail',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-815',
+    id: 'GL-815',
     applicantName: 'Carlos Mendez',
     passportNumber: 'PA8831200',
     companyName: 'Global Freight Co',
@@ -372,7 +393,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'corporate',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-802',
+    id: 'GL-802',
     applicantName: 'Mei Lin',
     passportNumber: 'EH2291044',
     country: 'Singapore',
@@ -389,7 +410,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'b2bAgents',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-790',
+    id: 'GL-790',
     applicantName: 'Oliver Grant',
     passportNumber: 'XK9283746',
     companyName: 'Apex Marine Logistics',
@@ -415,7 +436,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'marine',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-778',
+    id: 'GL-778',
     applicantName: 'Sofia Petrov',
     passportNumber: 'TR3528471',
     companyName: 'Apex Marine Logistics',
@@ -436,7 +457,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'marine',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-744',
+    id: 'GL-744',
     applicantName: 'Mateo Alvarez',
     passportNumber: 'NQ5528931',
     companyName: 'BlueWave Marine Agency',
@@ -460,7 +481,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     joiningPort: 'Marseille',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-739',
+    id: 'GL-739',
     applicantName: 'Asha Nair',
     passportNumber: 'IN3387214',
     companyName: 'Neptune Crew Services',
@@ -480,7 +501,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'marine',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-731',
+    id: 'GL-731',
     applicantName: 'Kenji Sato',
     passportNumber: 'JP7742019',
     companyName: 'Apex Marine Logistics',
@@ -501,7 +522,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'marine',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-726',
+    id: 'GL-726',
     applicantName: 'Liam O Connor',
     passportNumber: 'IE2298810',
     companyName: 'Oceanic Marine Ltd',
@@ -521,7 +542,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'marine',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-765',
+    id: 'GL-765',
     applicantName: 'David Okonkwo',
     passportNumber: 'A10482931',
     country: 'UK',
@@ -538,7 +559,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'b2bAgents',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-751',
+    id: 'GL-751',
     applicantName: 'Yuki Tanaka',
     passportNumber: 'TR8829100',
     country: 'Japan',
@@ -556,7 +577,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
   }),
   // —— Marine queue seed expansion ——
   singleRow({
-    id: 'GLTS-APP-2026-892',
+    id: 'GL-892',
     applicantName: 'Nikolai Volkov',
     passportNumber: 'RU5512033',
     companyName: 'Baltic Manning Agency',
@@ -576,7 +597,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'marine',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-891',
+    id: 'GL-891',
     applicantName: 'Diego Fernandez',
     passportNumber: 'ES2291847',
     companyName: 'Iberia Crew Services',
@@ -590,15 +611,17 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdAt: '2026-02-20',
     lastUpdated: '2026-03-01',
     processingStage: 'Ready for submission',
-    operationalStatus: 'Correction Required',
+    operationalStatus: 'Ops · Correction Required',
     createdByEmail: 'ops@iberiacrew.com',
     createdByRole: 'admin',
     customerSegment: 'marine',
     assignedTeamId: 'team-marine',
     assignedUserId: 'user-marine-1',
+    priority: 'High',
+    isVip: true,
   }),
   singleRow({
-    id: 'GLTS-APP-2026-889',
+    id: 'GL-889',
     applicantName: 'Farah Al-Hassan',
     passportNumber: 'AE7748192',
     companyName: 'Gulf Marine Manning',
@@ -618,7 +641,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'marine',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-887',
+    id: 'GL-887',
     applicantName: 'Jonas Berg',
     passportNumber: 'NO4419022',
     companyName: 'Nordic Seafarers AS',
@@ -632,15 +655,16 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdAt: '2026-02-16',
     lastUpdated: '2026-02-27',
     processingStage: 'Ready for submission',
-    operationalStatus: 'Document Rejected',
+    operationalStatus: 'Verification Pending',
     createdByEmail: 'priya@glts.com',
     createdByRole: 'booker',
     customerSegment: 'marine',
     assignedTeamId: 'team-marine',
     assignedUserId: 'user-marine-2',
+    priority: 'Urgent',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-884',
+    id: 'GL-884',
     applicantName: 'Chen Wei',
     passportNumber: 'CN8821034',
     companyName: 'Pacific Rim Crewing',
@@ -654,15 +678,113 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdAt: '2026-02-18',
     lastUpdated: '2026-03-03',
     processingStage: 'Payment pending',
-    operationalStatus: 'Submitted',
+    operationalStatus: 'Submission Pending',
+    paymentComplete: false,
     createdByEmail: 'crewdesk@pacificrimcrew.com',
     createdByRole: 'admin',
     customerSegment: 'marine',
     assignedTeamId: 'team-marine',
     assignedUserId: 'user-marine-1',
+    priority: 'High',
+    isVip: true,
+  }),
+  // Dual queue — Docs QC verified; form not submitted yet (Form Pending)
+  singleRow({
+    id: 'GL-883',
+    applicantName: 'Sofia Alvarez',
+    passportNumber: 'PH2291840',
+    companyName: 'Pacific Rim Crewing',
+    vesselName: 'MV Jade Fortune',
+    country: 'China',
+    countryFlag: '🇨🇳',
+    visaType: 'M Type Visa',
+    jurisdiction: 'Mumbai',
+    travelDate: '2026-07-20',
+    submissionDate: '2026-03-02',
+    createdAt: '2026-02-19',
+    lastUpdated: '2026-03-04',
+    processingStage: 'Submitted',
+    operationalStatus: 'Form Pending',
+    paymentComplete: false,
+    createdByEmail: 'crewdesk@pacificrimcrew.com',
+    createdByRole: 'admin',
+    customerSegment: 'marine',
+    assignedTeamId: 'team-marine',
+    assignedUserId: 'user-marine-1',
+    priority: 'Medium',
+  }),
+  // Dual queue — payment done, still on Submission Pending for Docs form work
+  singleRow({
+    id: 'GL-882',
+    applicantName: 'Tomáš Novák',
+    passportNumber: 'CZ4419028',
+    companyName: 'Nordic Seafarers AS',
+    vesselName: 'MV Nordic Light',
+    country: 'Norway',
+    countryFlag: '🇳🇴',
+    visaType: 'Crew · Multi-entry',
+    jurisdiction: 'Chennai',
+    travelDate: '2026-06-28',
+    submissionDate: '2026-02-26',
+    createdAt: '2026-02-17',
+    lastUpdated: '2026-03-05',
+    processingStage: 'Submitted',
+    operationalStatus: 'Submission Pending',
+    paymentComplete: true,
+    createdByEmail: 'priya@glts.com',
+    createdByRole: 'booker',
+    customerSegment: 'marine',
+    assignedTeamId: 'team-marine',
+    assignedUserId: 'user-marine-2',
+  }),
+  // Docs bounce — back to Verification Pending
+  singleRow({
+    id: 'GL-879',
+    applicantName: 'Ananya Iyer',
+    passportNumber: 'IN7721045',
+    companyName: 'Oceanic Marine Ltd',
+    vesselName: 'MV Oceanic Star',
+    country: 'France',
+    countryFlag: '🇫🇷',
+    visaType: 'Crew · Type C',
+    jurisdiction: 'Mumbai',
+    travelDate: '2026-06-12',
+    submissionDate: '2026-02-25',
+    createdAt: '2026-02-15',
+    lastUpdated: '2026-03-06',
+    processingStage: 'Ready for submission',
+    operationalStatus: 'Docs · Document Missing / Blocked',
+    createdByEmail: 'priya@glts.com',
+    createdByRole: 'booker',
+    customerSegment: 'marine',
+    assignedTeamId: 'team-marine',
+    assignedUserId: 'user-marine-1',
+    priority: 'High',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-872',
+    id: 'GL-878',
+    applicantName: 'Kwame Mensah',
+    passportNumber: 'GH3392011',
+    companyName: 'Gulf Marine Manning',
+    vesselName: 'MV Desert Pearl',
+    country: 'UAE',
+    countryFlag: '🇦🇪',
+    visaType: 'Crew · Short stay',
+    jurisdiction: 'Delhi',
+    travelDate: '2026-06-01',
+    submissionDate: '2026-02-20',
+    createdAt: '2026-02-11',
+    lastUpdated: '2026-03-05',
+    processingStage: 'Ready for submission',
+    operationalStatus: 'Docs · Correction Required',
+    createdByEmail: 'desk@gulfmarinemanning.com',
+    createdByRole: 'booker',
+    customerSegment: 'marine',
+    assignedTeamId: 'team-marine',
+    assignedUserId: 'user-marine-2',
+  }),
+  singleRow({
+    id: 'GL-872',
     applicantName: 'Amelia Clarke',
     passportNumber: 'GB3392018',
     companyName: 'Atlantic Manning UK',
@@ -677,8 +799,9 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdAt: '2026-01-30',
     lastUpdated: '2026-02-20',
     processingStage: 'Appointment booked',
-    operationalStatus: 'Appointment Booked',
+    operationalStatus: 'Embassy/VFS Submission Pending',
     appointmentDate: '2026-04-02',
+    paymentComplete: true,
     poCidNo: 'PO-AMU-2026-088',
     poReference: 'PO-AMU-2026-088',
     createdByEmail: 'ops@atlanticmanning.uk',
@@ -686,7 +809,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'marine',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-868',
+    id: 'GL-868',
     applicantName: 'Hassan Rahman',
     passportNumber: 'BD1102847',
     companyName: 'Oceanic Marine Ltd',
@@ -710,7 +833,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     poReference: 'CID-OM-2026-868',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-861',
+    id: 'GL-861',
     applicantName: 'Yuki Nakamura',
     passportNumber: 'JP5520199',
     companyName: 'Neptune Crew Services',
@@ -731,7 +854,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'marine',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-855',
+    id: 'GL-855',
     applicantName: 'Tom Hughes',
     passportNumber: 'AU7712045',
     companyName: 'Apex Marine Logistics',
@@ -753,7 +876,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     assignedUserId: 'user-marine-1',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-849',
+    id: 'GL-849',
     applicantName: 'Ibrahim Diallo',
     passportNumber: 'SN3382011',
     companyName: 'BlueWave Marine Agency',
@@ -774,7 +897,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
   }),
   // —— Retail / corporate / B2B seed expansion ——
   singleRow({
-    id: 'GLTS-APP-2026-838',
+    id: 'GL-838',
     applicantName: 'Sarah Mitchell',
     passportNumber: 'US4491823',
     country: 'France',
@@ -793,7 +916,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     assignedUserId: 'user-retail-1',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-834',
+    id: 'GL-834',
     applicantName: 'Priya Malhotra',
     passportNumber: 'IN6620188',
     country: 'UK',
@@ -811,7 +934,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'retail',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-829',
+    id: 'GL-829',
     applicantName: 'Elena Rossi',
     passportNumber: 'IT2291840',
     companyName: 'Horizon Tech Pvt Ltd',
@@ -829,11 +952,13 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'corporate',
     assignedTeamId: 'team-corporate',
     assignedUserId: 'user-corporate-1',
+    priority: 'High',
+    isVip: true,
     poCidNo: 'PO-HT-2026-829',
     poReference: 'PO-HT-2026-829',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-824',
+    id: 'GL-824',
     applicantName: 'Daniel Kim',
     passportNumber: 'KR7712033',
     companyName: 'Summit Consulting Group',
@@ -845,13 +970,72 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdAt: '2026-02-10',
     lastUpdated: '2026-02-24',
     processingStage: 'Submitted',
-    operationalStatus: 'Submitted',
+    operationalStatus: 'Submission Pending',
+    paymentComplete: false,
+    createdByEmail: 'traveldesk@summitconsulting.com',
+    createdByRole: 'admin',
+    customerSegment: 'corporate',
+  }),
+  // Corporate — Docs bounce back to Verification Pending
+  singleRow({
+    id: 'GL-823',
+    applicantName: 'Helen Park',
+    passportNumber: 'KR8821044',
+    companyName: 'Summit Consulting Group',
+    country: 'Singapore',
+    countryFlag: '🇸🇬',
+    visaType: 'Business · Short stay',
+    travelDate: '2026-07-04',
+    submissionDate: '2026-02-22',
+    createdAt: '2026-02-12',
+    lastUpdated: '2026-03-01',
+    processingStage: 'Ready for submission',
+    operationalStatus: 'Docs · Correction Required',
+    createdByEmail: 'traveldesk@summitconsulting.com',
+    createdByRole: 'admin',
+    customerSegment: 'corporate',
+  }),
+  // Corporate — Form Pending (dual queue)
+  singleRow({
+    id: 'GL-822',
+    applicantName: 'Marcus Lee',
+    passportNumber: 'SG4418299',
+    companyName: 'Summit Consulting Group',
+    country: 'Singapore',
+    countryFlag: '🇸🇬',
+    visaType: 'Business · Short stay',
+    travelDate: '2026-07-10',
+    submissionDate: '2026-02-24',
+    createdAt: '2026-02-14',
+    lastUpdated: '2026-03-02',
+    processingStage: 'Submitted',
+    operationalStatus: 'Form Pending',
+    paymentComplete: false,
+    createdByEmail: 'traveldesk@summitconsulting.com',
+    createdByRole: 'admin',
+    customerSegment: 'corporate',
+  }),
+  // Corporate — Ops bounce
+  singleRow({
+    id: 'GL-821',
+    applicantName: 'Priya Nair',
+    passportNumber: 'IN5512039',
+    companyName: 'Summit Consulting Group',
+    country: 'Singapore',
+    countryFlag: '🇸🇬',
+    visaType: 'Business · Short stay',
+    travelDate: '2026-07-15',
+    submissionDate: '2026-02-26',
+    createdAt: '2026-02-16',
+    lastUpdated: '2026-03-03',
+    processingStage: 'Ready for submission',
+    operationalStatus: 'Ops · Document Missing',
     createdByEmail: 'traveldesk@summitconsulting.com',
     createdByRole: 'admin',
     customerSegment: 'corporate',
   }),
   singleRow({
-    id: 'GLTS-APP-2026-818',
+    id: 'GL-818',
     applicantName: 'Aisha Khan',
     passportNumber: 'PK4418290',
     companyName: 'Voyage Partners Agency',
@@ -863,17 +1047,85 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdAt: '2026-02-05',
     lastUpdated: '2026-02-21',
     processingStage: 'Ready for submission',
-    operationalStatus: 'Correction Required',
+    operationalStatus: 'Docs · Correction Required',
     createdByEmail: 'arun.krishnan@glts.com',
     createdByRole: 'admin',
     customerSegment: 'b2bAgents',
     assignedTeamId: 'team-b2b-agent',
     assignedUserId: 'user-b2b-1',
+    priority: 'Medium',
+    isVip: true,
     compassNo: 'COMPASS-VP-2026-818',
     poReference: 'COMPASS-VP-2026-818',
   }),
+  // B2B — Ops verified dual queue
   singleRow({
-    id: 'GLTS-APP-2026-812',
+    id: 'GL-817',
+    applicantName: 'Omar Farouk',
+    passportNumber: 'EG2291845',
+    companyName: 'Voyage Partners Agency',
+    country: 'UAE',
+    countryFlag: '🇦🇪',
+    visaType: 'e-Visa · 30d',
+    travelDate: '2026-05-18',
+    submissionDate: '2026-02-18',
+    createdAt: '2026-02-08',
+    lastUpdated: '2026-02-28',
+    processingStage: 'Payment pending',
+    operationalStatus: 'Submission Pending',
+    paymentComplete: false,
+    createdByEmail: 'arun.krishnan@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'b2bAgents',
+    assignedTeamId: 'team-b2b-agent',
+    assignedUserId: 'user-b2b-1',
+  }),
+  // B2B — Embassy/VFS after complete submit
+  singleRow({
+    id: 'GL-816',
+    applicantName: 'Noura Al-Saud',
+    passportNumber: 'SA7712030',
+    companyName: 'Voyage Partners Agency',
+    country: 'UAE',
+    countryFlag: '🇦🇪',
+    visaType: 'e-Visa · 30d',
+    travelDate: '2026-04-28',
+    submissionDate: '2026-02-01',
+    tentativeCollectionDate: '2026-04-15',
+    createdAt: '2026-01-20',
+    lastUpdated: '2026-02-25',
+    processingStage: 'Appointment booked',
+    operationalStatus: 'Embassy/VFS Submission Pending',
+    paymentComplete: true,
+    createdByEmail: 'arun.krishnan@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'b2bAgents',
+    assignedTeamId: 'team-b2b-agent',
+    assignedUserId: 'user-b2b-1',
+  }),
+  // B2B — Ops bounce
+  singleRow({
+    id: 'GL-814',
+    applicantName: 'Fatima Zahra',
+    passportNumber: 'MA4418292',
+    companyName: 'Voyage Partners Agency',
+    country: 'UAE',
+    countryFlag: '🇦🇪',
+    visaType: 'e-Visa · 30d',
+    travelDate: '2026-05-25',
+    submissionDate: '2026-02-19',
+    createdAt: '2026-02-09',
+    lastUpdated: '2026-02-27',
+    processingStage: 'Ready for submission',
+    operationalStatus: 'Ops · Correction Required',
+    createdByEmail: 'arun.krishnan@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'b2bAgents',
+    assignedTeamId: 'team-b2b-agent',
+    assignedUserId: 'user-b2b-1',
+  }),
+  singleRow({
+    id: 'GL-812',
     applicantName: 'Lucas Moreau',
     passportNumber: 'FR8821044',
     companyName: 'Eurolink Travel Agents',
@@ -892,7 +1144,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
   }),
   // —— Submission Pending (single) seed ——
   singleRow({
-    id: 'GLTS-APP-2026-808',
+    id: 'GL-808',
     applicantName: 'Ravi Menon',
     passportNumber: 'IN7742119',
     companyName: 'Oceanic Marine Ltd',
@@ -922,7 +1174,7 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     },
   }),
   singleRow({
-    id: 'GLTS-APP-2026-805',
+    id: 'GL-805',
     applicantName: 'Elena Rossi',
     passportNumber: 'IT5519382',
     companyName: 'Voyage Partners Agency',
@@ -999,7 +1251,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     customerSegment: 'retail',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-035',
+    id: 'GL-035',
     companyName: 'Global Freight Co',
     primaryApplicantName: 'Carlos Mendez',
     country: 'UAE',
@@ -1021,7 +1273,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     customerSegment: 'b2bAgents',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-032',
+    id: 'GL-032',
     companyName: 'Harbor Logistics',
     primaryApplicantName: 'Anita Desai',
     country: 'UK',
@@ -1043,7 +1295,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     customerSegment: 'retail',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-029',
+    id: 'GL-029',
     companyName: 'Seafarer Solutions',
     vesselName: 'MV Pacific Horizon',
     primaryApplicantName: 'Andreas Klein',
@@ -1061,14 +1313,15 @@ export const mockBulkBatches: BulkBatchRow[] = [
     createdAt: '2026-01-20',
     lastUpdated: '2026-02-16',
     processingStage: 'Appointment booked',
-    operationalStatus: 'Appointment Booked',
+    operationalStatus: 'Embassy/VFS Submission Pending',
     appointmentDate: '2026-03-20',
+    paymentComplete: true,
     createdByEmail: 'arun.krishnan@glts.com',
     createdByRole: 'admin',
     customerSegment: 'marine',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-021',
+    id: 'GL-021',
     companyName: 'Harborline Crewing Co',
     vesselName: 'MV Atlantic Crest',
     primaryApplicantName: 'Luca Bergstrom',
@@ -1086,13 +1339,69 @@ export const mockBulkBatches: BulkBatchRow[] = [
     createdAt: '2026-02-04',
     lastUpdated: '2026-02-18',
     processingStage: 'Payment pending',
-    operationalStatus: 'Under Review',
+    operationalStatus: 'Submission Pending',
+    paymentComplete: false,
     createdByEmail: 'ops@harborlinecrew.com',
     createdByRole: 'admin',
     customerSegment: 'marine',
   }),
+  // Bulk — Docs bounce (Verification Pending)
   bulkRow({
-    id: 'GLTS-BAT-2026-018',
+    id: 'GL-022',
+    companyName: 'Iberia Crew Services',
+    vesselName: 'MV Iberian Wave',
+    primaryApplicantName: 'Carlos Ruiz',
+    country: 'Spain',
+    countryFlag: '🇪🇸',
+    visaType: 'Crew · Transit',
+    jurisdiction: 'Mumbai',
+    totalApplicants: 8,
+    verifiedApplicants: 6,
+    pendingCorrections: 2,
+    processed: 6,
+    errors: 0,
+    travelDate: '2026-06-20',
+    submissionDate: '2026-02-20',
+    createdAt: '2026-02-10',
+    lastUpdated: '2026-03-04',
+    processingStage: 'Ready for submission',
+    operationalStatus: 'Docs · Document Missing / Blocked',
+    createdByEmail: 'ops@iberiacrew.com',
+    createdByRole: 'admin',
+    customerSegment: 'marine',
+    assignedTeamId: 'team-marine',
+    assignedUserId: 'user-marine-1',
+  }),
+  // Bulk — Form Pending dual queue
+  bulkRow({
+    id: 'GL-023',
+    companyName: 'Pacific Rim Crewing',
+    vesselName: 'MV Jade Fortune',
+    primaryApplicantName: 'Li Wei',
+    country: 'China',
+    countryFlag: '🇨🇳',
+    visaType: 'M Type Visa',
+    jurisdiction: 'Delhi',
+    totalApplicants: 12,
+    verifiedApplicants: 12,
+    pendingCorrections: 0,
+    processed: 12,
+    errors: 0,
+    travelDate: '2026-07-15',
+    submissionDate: '2026-03-01',
+    createdAt: '2026-02-18',
+    lastUpdated: '2026-03-05',
+    processingStage: 'Submitted',
+    operationalStatus: 'Form Pending',
+    paymentComplete: false,
+    createdByEmail: 'crewdesk@pacificrimcrew.com',
+    createdByRole: 'admin',
+    customerSegment: 'marine',
+    assignedTeamId: 'team-marine',
+    assignedUserId: 'user-marine-1',
+  }),
+  bulkRow({
+    id: 'GL-018',
     companyName: 'NorthSea Manning',
     vesselName: 'MV Eastern Pearl',
     primaryApplicantName: 'Erik Johansson',
@@ -1117,7 +1426,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     customerSegment: 'marine',
   }),
   bulkRow({
-    id: 'GLTS-MAR-1025',
+    id: 'GL-1025',
     companyName: 'Oceanic Crew Management Pvt Ltd',
     vesselName: 'MV Green Horizon',
     primaryApplicantName: 'Rajesh Kumar',
@@ -1143,7 +1452,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     assignedUserId: 'user-marine-2',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-025',
+    id: 'GL-025',
     companyName: 'Asia Connect Ltd',
     primaryApplicantName: 'Mei Lin',
     country: 'Singapore',
@@ -1166,7 +1475,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   }),
   // —— Marine bulk queue seed expansion ——
   bulkRow({
-    id: 'GLTS-BAT-2026-048',
+    id: 'GL-048',
     companyName: 'Baltic Manning Agency',
     vesselName: 'MV Baltic Star',
     primaryApplicantName: 'Nikolai Volkov',
@@ -1190,7 +1499,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     customerSegment: 'marine',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-046',
+    id: 'GL-046',
     companyName: 'Iberia Crew Services',
     vesselName: 'MV Iberian Wave',
     primaryApplicantName: 'Diego Fernandez',
@@ -1216,7 +1525,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     assignedUserId: 'user-marine-1',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-044',
+    id: 'GL-044',
     companyName: 'Nordic Seafarers AS',
     vesselName: 'MV Nordic Light',
     primaryApplicantName: 'Jonas Berg',
@@ -1242,7 +1551,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     assignedUserId: 'user-marine-2',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-042',
+    id: 'GL-042',
     companyName: 'Pacific Rim Crewing',
     vesselName: 'MV Jade Fortune',
     primaryApplicantName: 'Chen Wei',
@@ -1266,7 +1575,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     customerSegment: 'marine',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-039',
+    id: 'GL-039',
     companyName: 'Atlantic Manning UK',
     vesselName: 'MV Channel Rover',
     primaryApplicantName: 'Amelia Clarke',
@@ -1293,7 +1602,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     customerSegment: 'marine',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-036',
+    id: 'GL-036',
     companyName: 'Gulf Marine Manning',
     vesselName: 'MV Desert Pearl',
     primaryApplicantName: 'Farah Al-Hassan',
@@ -1319,7 +1628,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     assignedUserId: 'user-marine-1',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-033',
+    id: 'GL-033',
     companyName: 'Neptune Crew Services',
     vesselName: 'MV Eastern Pearl',
     primaryApplicantName: 'Yuki Nakamura',
@@ -1344,7 +1653,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     customerSegment: 'marine',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-027',
+    id: 'GL-027',
     companyName: 'Apex Marine Logistics',
     vesselName: 'MV Pacific Horizon',
     primaryApplicantName: 'Tom Hughes',
@@ -1371,7 +1680,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
   }),
   // —— Retail / corporate / B2B bulk seed expansion ——
   bulkRow({
-    id: 'GLTS-BAT-2026-031',
+    id: 'GL-031',
     companyName: 'Pacific Tours Inc',
     primaryApplicantName: 'Sarah Mitchell',
     country: 'France',
@@ -1393,7 +1702,7 @@ export const mockBulkBatches: BulkBatchRow[] = [
     customerSegment: 'retail',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-028',
+    id: 'GL-028',
     companyName: 'Horizon Tech Pvt Ltd',
     primaryApplicantName: 'Elena Rossi',
     country: 'Germany',
@@ -1415,9 +1724,10 @@ export const mockBulkBatches: BulkBatchRow[] = [
     customerSegment: 'corporate',
     assignedTeamId: 'team-corporate',
     assignedUserId: 'user-corporate-1',
+    priority: 'Low',
   }),
   bulkRow({
-    id: 'GLTS-BAT-2026-024',
+    id: 'GL-024',
     companyName: 'Voyage Partners Agency',
     primaryApplicantName: 'Aisha Khan',
     country: 'UAE',
@@ -1461,7 +1771,7 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
     id: 'q1',
     fileName: 'IMG_8821.heic',
     gltsApplicationId: GLTS_BATCH_IDS.schengenCrew,
-    gltsApplicantId: 'GLTS-APL-001',
+    gltsApplicantId: 'GL-041/1',
     sequenceNo: 1,
     travelerName: 'BRENDAN RYAN',
     passportNo: 'PA6831172',
@@ -1475,7 +1785,7 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
     id: 'q2',
     fileName: 'passport_scan.jpg',
     gltsApplicationId: GLTS_BATCH_IDS.schengenCrew,
-    gltsApplicantId: 'GLTS-APL-002',
+    gltsApplicantId: 'GL-041/2',
     sequenceNo: 2,
     travelerName: 'SARAH MILES',
     passportNo: 'XK9283746',
@@ -1489,7 +1799,7 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
     id: 'q3',
     fileName: 'crew_03.pdf',
     gltsApplicationId: GLTS_BATCH_IDS.schengenCrew,
-    gltsApplicantId: 'GLTS-APL-003',
+    gltsApplicantId: 'GL-041/3',
     sequenceNo: 3,
     travelerName: 'HIROSHI TANAKA',
     passportNo: 'TR3528471',
@@ -1504,7 +1814,7 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
     id: 'q4',
     fileName: 'IMG_9012.heic',
     gltsApplicationId: GLTS_BATCH_IDS.schengenCrew,
-    gltsApplicantId: 'GLTS-APL-004',
+    gltsApplicantId: 'GL-041/4',
     sequenceNo: 4,
     travelerName: 'PRIYA SHARMA',
     passportNo: 'Z1234567',
@@ -1518,7 +1828,7 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
     id: 'q5',
     fileName: 'crew_04.pdf',
     gltsApplicationId: GLTS_BATCH_IDS.schengenCrew,
-    gltsApplicantId: 'GLTS-APL-005',
+    gltsApplicantId: 'GL-041/5',
     sequenceNo: 5,
     travelerName: 'MIKE CHEN',
     passportNo: 'EJ4419283',
@@ -1531,8 +1841,8 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
   {
     id: 'q-mar-1',
     fileName: 'crew_green_01.pdf',
-    gltsApplicationId: 'GLTS-MAR-1025',
-    gltsApplicantId: 'GLTS-APL-M1025-01',
+    gltsApplicationId: 'GL-1025',
+    gltsApplicantId: 'GL-1025/1',
     sequenceNo: 1,
     travelerName: 'RAJESH KUMAR',
     passportNo: 'IN8829103',
@@ -1545,8 +1855,8 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
   {
     id: 'q-mar-2',
     fileName: 'crew_green_02.pdf',
-    gltsApplicationId: 'GLTS-MAR-1025',
-    gltsApplicantId: 'GLTS-APL-M1025-02',
+    gltsApplicationId: 'GL-1025',
+    gltsApplicantId: 'GL-1025/2',
     sequenceNo: 2,
     travelerName: 'VIKRAM SINGH',
     passportNo: 'IN7738291',
@@ -1559,8 +1869,8 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
   {
     id: 'q-mar-3',
     fileName: 'crew_green_03.pdf',
-    gltsApplicationId: 'GLTS-MAR-1025',
-    gltsApplicantId: 'GLTS-APL-M1025-03',
+    gltsApplicationId: 'GL-1025',
+    gltsApplicantId: 'GL-1025/3',
     sequenceNo: 3,
     travelerName: 'ANIL MEHTA',
     passportNo: 'IN6647182',
@@ -1573,8 +1883,8 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
   {
     id: 'q-mar-4',
     fileName: 'crew_green_04.pdf',
-    gltsApplicationId: 'GLTS-MAR-1025',
-    gltsApplicantId: 'GLTS-APL-M1025-04',
+    gltsApplicationId: 'GL-1025',
+    gltsApplicantId: 'GL-1025/4',
     sequenceNo: 4,
     travelerName: 'SURESH NAIR',
     passportNo: 'IN5596073',
@@ -1587,8 +1897,8 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
   {
     id: 'q-mar-5',
     fileName: 'crew_green_05.pdf',
-    gltsApplicationId: 'GLTS-MAR-1025',
-    gltsApplicantId: 'GLTS-APL-M1025-05',
+    gltsApplicationId: 'GL-1025',
+    gltsApplicantId: 'GL-1025/5',
     sequenceNo: 5,
     travelerName: 'DEEPAK PILLAI',
     passportNo: 'IN4485964',
@@ -1602,7 +1912,7 @@ const rawMockUploadQueue: Omit<UploadQueueRow, 'documents' | 'documentsComplete'
     id: 'q6',
     fileName: 'scan_pending.heic',
     gltsApplicationId: GLTS_BATCH_IDS.schengenCrew,
-    gltsApplicantId: 'GLTS-APL-006',
+    gltsApplicantId: 'GL-041/6',
     sequenceNo: 6,
     travelerName: '—',
     passportNo: '—',
@@ -1755,7 +2065,7 @@ const priyaSharmaSeed: SingleApplicationDemoSeed = {
     'F',
   ),
   basicDetails: {
-    crewId: 'GLTS-APL-847-001',
+    crewId: 'GL-847/1',
     rank: 'Third Officer',
     applicantName: 'Priya Sharma',
     passportNumber: 'Z1234567',
@@ -1822,7 +2132,7 @@ const oliverGrantSeed: SingleApplicationDemoSeed = {
     'M',
   ),
   basicDetails: {
-    crewId: 'GLTS-APL-790-001',
+    crewId: 'GL-790/1',
     rank: 'Chief Engineer',
     applicantName: 'Oliver Grant',
     passportNumber: 'XK9283746',
@@ -1888,7 +2198,7 @@ const mateoAlvarezSeed: SingleApplicationDemoSeed = {
     'M',
   ),
   basicDetails: {
-    crewId: 'GLTS-APL-744-001',
+    crewId: 'GL-744/1',
     rank: 'Second Engineer',
     applicantName: 'Mateo Alvarez',
     passportNumber: 'NQ5528931',
@@ -1954,7 +2264,7 @@ const ashaNairSeed: SingleApplicationDemoSeed = {
     'F',
   ),
   basicDetails: {
-    crewId: 'GLTS-APL-739-001',
+    crewId: 'GL-739/1',
     rank: 'Deck Cadet',
     applicantName: 'Asha Nair',
     passportNumber: 'IN3387214',
@@ -2008,9 +2318,9 @@ const ashaNairSeed: SingleApplicationDemoSeed = {
 /** Rich demo applicant data for single-application admin/customer flows (View Form, verify, etc.). */
 export const SINGLE_APPLICATION_DEMO_SEEDS: Record<string, SingleApplicationDemoSeed> = {
   [GLTS_APPLICATION_IDS.schengen]: priyaSharmaSeed,
-  'GLTS-APP-2026-790': oliverGrantSeed,
-  'GLTS-APP-2026-744': mateoAlvarezSeed,
-  'GLTS-APP-2026-739': ashaNairSeed,
+  'GL-790': oliverGrantSeed,
+  'GL-744': mateoAlvarezSeed,
+  'GL-739': ashaNairSeed,
 }
 
 export function getSingleApplicationDemoSeed(applicationId: string): SingleApplicationDemoSeed | undefined {

@@ -10,6 +10,14 @@ import type { NotificationItem } from '../shared/widgets/common/NotificationPane
 import type { ApplicationPipelineStageData } from '../shared/widgets/operations/ApplicationPipeline'
 import type { TrendPoint } from '../shared/widgets/analytics/AnalyticsWidgets'
 import type { TeamCapacityRow } from '../shared/widgets/operations/TeamCapacity'
+import type {
+  OpsOrgAgeingQueueRow,
+  OpsOrgSegmentWorkload,
+} from '../shared/widgets/operations/opsOrgQueueTypes'
+import type {
+  ApplicationMarketRankingPoint,
+  ApplicationMarketSlice,
+} from '../shared/widgets/operations/ApplicationMarketInfographics'
 import type { OpsSegmentKey } from './utils/opsSegmentPaths'
 
 export type { OpsSegmentKey }
@@ -86,18 +94,9 @@ export interface OpsChartSlice {
   color: string
 }
 
-export interface OpsSegmentWorkloadPoint {
-  segment: string
-  verification: number
-  payment: number
-  arrange: number
-  submission: number
-}
+export type { OpsOrgAgeingQueueRow as OpsAgeingQueueRow }
 
-export interface OpsAgeingPoint {
-  bucket: string
-  count: number
-}
+export type OpsSegmentWorkloadPoint = OpsOrgSegmentWorkload
 
 export interface OperationsQuickActionDefinition {
   id: string
@@ -130,8 +129,12 @@ export interface OperationsDashboardData {
   assignmentRows: OperationsWorkRow[]
   queueMix: OpsChartSlice[]
   workloadBySegment: OpsSegmentWorkloadPoint[]
-  ageingBuckets: OpsAgeingPoint[]
+  ageingByQueue: OpsOrgAgeingQueueRow[]
   assigneeMix: OpsChartSlice[]
+  topClients: ApplicationMarketRankingPoint[]
+  topCountries: ApplicationMarketRankingPoint[]
+  submissionByJurisdiction: ApplicationMarketRankingPoint[]
+  visibilityFunnel: ApplicationMarketSlice[]
   myRecentActivity: RecentActivityItem[]
   announcements: AnnouncementItem[]
   processingTrend: TrendPoint[]

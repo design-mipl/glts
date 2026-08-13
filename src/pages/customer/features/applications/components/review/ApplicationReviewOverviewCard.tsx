@@ -62,7 +62,10 @@ export function ApplicationReviewOverviewCard({
         </Stack>
       ) : null}
       <Grid container spacing={1.5} columns={{ xs: 2, md: 5 }}>
-        {buildApplicationOverviewMetaRows(overview, { travelerCount }).map(([label, value]) => (
+        {buildApplicationOverviewMetaRows(overview, {
+          travelerCount,
+          includeConsultantAssignment: variant === 'admin',
+        }).map(([label, value]) => (
           <Grid size={1} key={label} sx={{ minWidth: 0 }}>
             <Typography
               sx={{

@@ -128,30 +128,30 @@ const VND_006 = 'vnd-006'
 const VND_008 = 'vnd-008'
 
 export const SEED_VENDOR_CHARGES: VendorCharge[] = [
-  charge('vc-001', VND_001, 'GLTS-MAR-1025', 'VFS Submission', 'vfs_booking_service', 2200, 3, {
+  charge('vc-001', VND_001, 'GL-1025', 'VFS Submission', 'vfs_booking_service', 2200, 3, {
     applicantName: 'Rajesh Kumar',
     companyName: 'Oceanic Shipping Ltd',
   }),
-  charge('vc-002', VND_001, 'GLTS-MAR-1042', 'Marine Visa Processing', 'visa_processing_fee', 6500, 5, {
+  charge('vc-002', VND_001, 'GL-1042', 'Marine Visa Processing', 'visa_processing_fee', 6500, 5, {
     applicantName: 'Anil Sharma',
     companyName: 'Blue Horizon Marine',
   }),
-  charge('vc-003', VND_001, 'GLTS-MAR-1055', 'VFS Submission', 'vfs_booking_service', 2200, 8, {
+  charge('vc-003', VND_001, 'GL-1055', 'VFS Submission', 'vfs_booking_service', 2200, 8, {
     applicantName: 'Vikram Patel',
     companyName: 'Seafarer Crew Services',
   }),
-  charge('vc-004', VND_002, 'GLTS-MAR-1025', 'Travel Insurance', 'travel_insurance', 2800, 4, {
+  charge('vc-004', VND_002, 'GL-1025', 'Travel Insurance', 'travel_insurance', 2800, 4, {
     applicantName: 'Rajesh Kumar',
     companyName: 'Oceanic Shipping Ltd',
   }),
   charge('vc-005', VND_002, 'GLTS-CORP-2201', 'Corporate Travel Insurance', 'travel_insurance', 4200, 6, {
     companyName: 'Global Tech Solutions',
   }),
-  charge('vc-006', VND_003, 'GLTS-MAR-1033', 'Document Courier', 'courier_service', 1200, 2, {
+  charge('vc-006', VND_003, 'GL-1033', 'Document Courier', 'courier_service', 1200, 2, {
     applicantName: 'Sunil Menon',
     companyName: 'Pacific Fleet Management',
   }),
-  charge('vc-007', VND_003, 'GLTS-MAR-1048', 'Passport Courier', 'courier_service', 650, 7, {
+  charge('vc-007', VND_003, 'GL-1048', 'Passport Courier', 'courier_service', 650, 7, {
     applicantName: 'Deepak Singh',
     companyName: 'Atlantic Marine Crew',
   }),
@@ -161,37 +161,37 @@ export const SEED_VENDOR_CHARGES: VendorCharge[] = [
   charge('vc-009', VND_004, 'GLTS-CORP-2195', 'Embassy Handoff', 'embassy_fee', 9000, 12, {
     companyName: 'Gulf Connect Ltd',
   }),
-  charge('vc-010', VND_005, 'GLTS-MAR-1060', 'Certified Translation', 'documentation_service', 2200, 3, {
+  charge('vc-010', VND_005, 'GL-1060', 'Certified Translation', 'documentation_service', 2200, 3, {
     applicantName: 'Meera Iyer',
     companyName: 'Coastal Shipping Co',
   }),
-  charge('vc-011', VND_005, 'GLTS-MAR-1062', 'Arabic Translation', 'documentation_service', 1800, 6, {
+  charge('vc-011', VND_005, 'GL-1062', 'Arabic Translation', 'documentation_service', 1800, 6, {
     applicantName: 'Arun Nambiar',
     companyName: 'Southern Marine Lines',
   }),
-  charge('vc-012', VND_006, 'GLTS-MAR-1025', 'Port Transfer', 'ground_operation_service', 3200, 4, {
+  charge('vc-012', VND_006, 'GL-1025', 'Port Transfer', 'ground_operation_service', 3200, 4, {
     applicantName: 'Rajesh Kumar',
     companyName: 'Oceanic Shipping Ltd',
   }),
-  charge('vc-013', VND_006, 'GLTS-MAR-1038', 'CDC Coordination', 'ground_operation_service', 2400, 9, {
+  charge('vc-013', VND_006, 'GL-1038', 'CDC Coordination', 'ground_operation_service', 2400, 9, {
     applicantName: 'Harish Reddy',
     companyName: 'Eastern Fleet Services',
   }),
-  charge('vc-014', VND_008, 'GLTS-MAR-1070', 'Marine Air Ticket', 'flight_ticket', 18500, 2, {
+  charge('vc-014', VND_008, 'GL-1070', 'Marine Air Ticket', 'flight_ticket', 18500, 2, {
     applicantName: 'Karan Mehta',
     companyName: 'Starline Shipping',
   }),
-  charge('vc-015', VND_008, 'GLTS-MAR-1072', 'Crew Air Ticket', 'flight_ticket', 16200, 5, {
+  charge('vc-015', VND_008, 'GL-1072', 'Crew Air Ticket', 'flight_ticket', 16200, 5, {
     applicantName: 'Rohit Jain',
     companyName: 'Maritime Crew Solutions',
   }),
-  charge('vc-016', VND_001, 'GLTS-MAR-0998', 'VFS Submission', 'vfs_booking_service', 2200, 50, {
+  charge('vc-016', VND_001, 'GL-0998', 'VFS Submission', 'vfs_booking_service', 2200, 50, {
     applicantName: 'Legacy Applicant',
     companyName: 'Oceanic Shipping Ltd',
     billingStatus: 'billed',
     vendorBillId: 'vb-bill-001',
   }),
-  charge('vc-017', VND_001, 'GLTS-MAR-0999', 'Marine Visa Processing', 'visa_processing_fee', 6500, 48, {
+  charge('vc-017', VND_001, 'GL-0999', 'Marine Visa Processing', 'visa_processing_fee', 6500, 48, {
     applicantName: 'Legacy Applicant 2',
     companyName: 'Blue Horizon Marine',
     billingStatus: 'billed',

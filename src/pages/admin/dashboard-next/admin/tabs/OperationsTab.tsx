@@ -1,4 +1,4 @@
-import { Box, Grid, Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import { Truck, UserPlus } from 'lucide-react'
 import { Button } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
@@ -7,17 +7,16 @@ import {
   AlertCenter,
   InTransitCourierListing,
   MarineTimeline,
-  OpsOrgInfographics,
-  OpsOrgWorkloadBySegment,
   ProcessingTrend,
   DASHBOARD_SPACING,
 } from '../../shared'
 import type { AdminDashboardTabProps } from '../types'
 
 /**
- * Operations story (org-level, dense composition):
- * pulse → alerts | workload → queue mix trio → IN TRANSIT →
- * throughput → joining-date risk.
+ * Operations story (delivery & field focus):
+ * pulse → ops alerts → IN TRANSIT → throughput → joining-date risk.
+ *
+ * Queue ageing · market · workload live on Overview (shared with Ops / Docs).
  */
 export function OperationsTab({
   data,
@@ -106,34 +105,21 @@ export function OperationsTab({
         </Box>
       ) : null}
 
-      <Grid container spacing={DASHBOARD_SPACING.field} alignItems="stretch">
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Box sx={{ height: '100%', minWidth: 0, '& > *': { height: '100%' } }}>
-            <AlertCenter
-              title="Ops alerts"
-              subtitle="Re-check · payment · arrange · assignment · ground"
-              alerts={data.opsAlerts.map((alert) => ({
-                id: alert.id,
-                title: alert.title,
-                description: alert.description,
-                severity: alert.severity,
-                count: alert.count,
-                onClick: () => onNavigate(alert.href),
-              }))}
-              loading={loading}
-              maxItems={4}
-              onShowMore={openAssignment}
-            />
-          </Box>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Box sx={{ height: '100%', minWidth: 0, '& > *': { height: '100%' } }}>
-            <OpsOrgWorkloadBySegment data={data.opsQueueSnapshot} loading={loading} dense />
-          </Box>
-        </Grid>
-      </Grid>
-
-      <OpsOrgInfographics data={data.opsQueueSnapshot} loading={loading} dense />
+      <AlertCenter
+        title="Ops alerts"
+        subtitle="Re-check · payment · arrange · assignment · ground"
+        alerts={data.opsAlerts.map((alert) => ({
+          id: alert.id,
+          title: alert.title,
+          description: alert.description,
+          severity: alert.severity,
+          count: alert.count,
+          onClick: () => onNavigate(alert.href),
+        }))}
+        loading={loading}
+        maxItems={6}
+        onShowMore={openAssignment}
+      />
 
       <InTransitCourierListing
         title="IN TRANSIT"

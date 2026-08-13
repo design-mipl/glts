@@ -197,13 +197,13 @@ export function B2bViewFormPage() {
   )
 
   const readOnly = useMemo(
-    () => Boolean(listingRow && isB2bReadOnlyWorkspace(listingRow)),
-    [listingRow],
+    () => Boolean(listingRow && isB2bReadOnlyWorkspace(listingRow, listingPath)),
+    [listingRow, listingPath],
   )
 
   const workspaceMode = useMemo(
-    () => (listingRow ? resolveB2bWorkspaceMode(listingRow) : 'verification'),
-    [listingRow],
+    () => (listingRow ? resolveB2bWorkspaceMode(listingRow, listingPath) : 'verification'),
+    [listingRow, listingPath],
   )
   const isPendingPayment = workspaceMode === 'pending_payment'
 
@@ -226,14 +226,14 @@ export function B2bViewFormPage() {
       setDocsQcRecord(null)
       return
     }
-    const mode = resolveB2bWorkspaceMode(listingRow)
+    const mode = resolveB2bWorkspaceMode(listingRow, listingPath)
     const record = applicationMarineQcCheckService.ensureRecord(
       applicationId,
       selectedRow.id,
       mode === 'readonly' ? { seedCompleted: true, template: docsQcTemplate } : undefined,
     )
     setDocsQcRecord(record)
-  }, [applicationId, selectedRow?.id, listingRow, docsQcTemplate])
+  }, [applicationId, selectedRow?.id, listingRow, listingPath, docsQcTemplate])
 
   const formViewUnlocked = useMemo(
     () => resolveFormViewTabEnabled(listingRow, docsQcRecord),
@@ -715,6 +715,7 @@ export function B2bViewFormPage() {
         title=""
         showTitleCard={false}
         navTitle="Steps"
+        navWidth={220}
         sections={sectionNav}
         activeSectionId={currentStep!.id}
         onSectionClick={goToStep}

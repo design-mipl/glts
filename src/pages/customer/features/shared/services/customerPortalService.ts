@@ -59,7 +59,7 @@ import { resolveCustomerPortalAgreement, resolvePortalAgreementId } from '@/shar
 import type { ApplicationCustomerSegment } from '../../applications/types/applicationListing.types'
 import type { ApplicationDetailViewModel, FlowDraftLikeState } from '../../applications/types/applicationDetail.types'
 
-const GLTS_MAR_1025_APPLICATION_ID = 'GLTS-MAR-1025'
+const GLTS_MAR_1025_APPLICATION_ID = 'GL-1025'
 
 const CUSTOMER_DRAFTS_STORAGE_KEY = 'glts:customer-application-drafts'
 
@@ -355,7 +355,7 @@ export const customerPortalService = {
     refs?: { applicationId?: string; batchId?: string },
   ) {
     if (mode === 'single') {
-      return refs?.applicationId || 'GLTS-APP-2026-847'
+      return refs?.applicationId || 'GL-847'
     }
     return refs?.batchId || refs?.applicationId || GLTS_BATCH_IDS.schengenCrew
   },
@@ -637,7 +637,7 @@ function singleRowToUploadQueue(row: SingleApplicationRow): UploadQueueRow {
     id: `${row.id}-q1`,
     fileName: `${row.id}.pdf`,
     gltsApplicationId: row.id,
-    gltsApplicantId: `${row.id}-APL-001`,
+    gltsApplicantId: `${row.id}/1`,
     sequenceNo: 1,
     travelerName: row.applicantName,
     passportNo: row.passportNumber,
@@ -701,7 +701,7 @@ function bulkRowToUploadQueue(row: BulkBatchRow): UploadQueueRow[] {
       id: `${row.id}-q${sequenceNo}`,
       fileName: `${row.id}-${sequenceNo}.pdf`,
       gltsApplicationId: row.id,
-      gltsApplicantId: `${row.id}-APL-${String(sequenceNo).padStart(3, '0')}`,
+      gltsApplicantId: `${row.id}/${sequenceNo}`,
       sequenceNo,
       travelerName: `Traveler ${sequenceNo}`,
       passportNo: `P${row.id.slice(-3)}${String(sequenceNo).padStart(4, '0')}`,

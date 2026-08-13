@@ -1,9 +1,5 @@
-import {
-  mockBulkBatches,
-  mockSingleApplications,
-} from '@/pages/customer/features/applications/data/applicationFlowData'
-import type { ApplicationOperationalStatus } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { cardMasterService } from '@/shared/services/cardMasterService'
+import { applyFormCompletelySubmittedToListing } from '@/shared/utils/applicationQueueStatus'
 
 const FORM_ASSIST_STORAGE_KEY = 'glts:application-form-assist'
 
@@ -294,21 +290,8 @@ function saveRecord(record: FormAssistRecord) {
 }
 
 function syncListingAfterExternalSubmit(applicationId: string) {
-  const patch = {
-    operationalStatus: 'Submitted' as ApplicationOperationalStatus,
-    processingStage: 'Submitted',
-    status: 'Submitted',
-    lastUpdated: new Date().toISOString().slice(0, 10),
-  }
-  const single = mockSingleApplications.find(r => r.id === applicationId)
-  if (single) {
-    Object.assign(single, patch)
-    return
-  }
-  const bulk = mockBulkBatches.find(r => r.id === applicationId)
-  if (bulk) {
-    Object.assign(bulk, patch)
-  }
+  // Completely submitted → Embassy/VFS Submission Pending (leaves dual queue).
+  applyFormCompletelySubmittedToListing(applicationId)
 }
 
 export function isFormAssistExternallySubmitted(

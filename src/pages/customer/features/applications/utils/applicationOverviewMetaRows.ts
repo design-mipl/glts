@@ -4,7 +4,7 @@ import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 /** Shared overview meta rows for application summary cards (customer + admin). */
 export function buildApplicationOverviewMetaRows(
   overview: ApplicationReviewOverview,
-  extras?: { travelerCount?: number },
+  extras?: { travelerCount?: number; includeConsultantAssignment?: boolean },
 ): Array<[string, string]> {
   const visaLabel = overview.purposeLabel
     ? `${overview.visaTypeLabel} · ${overview.purposeLabel}`
@@ -35,6 +35,22 @@ export function buildApplicationOverviewMetaRows(
 
   if (extras?.travelerCount !== undefined) {
     rows.push(['Travelers', String(extras.travelerCount)])
+  }
+
+  const showAssignment =
+    extras?.includeConsultantAssignment ||
+    Boolean(overview.consultantName || overview.consultantTeamName || overview.priority || overview.isVip)
+
+  if (showAssignment) {
+    const consultant =
+      overview.consultantName && overview.consultantTeamName
+        ? `${overview.consultantName} · ${overview.consultantTeamName}`
+        : overview.consultantName || overview.consultantTeamName || '—'
+    rows.push(['Consultant', consultant])
+    rows.push(['Priority', overview.priority?.trim() || '—'])
+    if (overview.isVip) {
+      rows.push(['VIP', 'Green Star'])
+    }
   }
 
   return rows

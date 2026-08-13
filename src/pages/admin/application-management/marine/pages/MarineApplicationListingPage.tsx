@@ -37,6 +37,7 @@ import {
 } from '../components/MarineApplicationAdvancedFilters'
 import { MarineApplicationAssignTeamModal } from '../components/MarineApplicationAssignTeamModal'
 import { buildMarineApplicationColumns } from '../components/MarineApplicationTableColumns'
+import type { ApplicationConsultantAssignmentPayload } from '../../shared/utils/applicationConsultantUtils'
 import {
   MARINE_APPLICATION_LISTING_TABS,
   type MarineApplicationListingTab,
@@ -103,25 +104,29 @@ export function MarineApplicationListingPage() {
   }, [])
 
   const handleAssignTeamSubmit = useCallback(
-    (teamId: string, userId: string) => {
+    (payload: ApplicationConsultantAssignmentPayload) => {
       if (!assignTarget) return
-      const updated = marineApplicationAdminService.assignTeam(assignTarget.id, teamId, userId)
+      const { teamId, userId, priority, isVip } = payload
+      const updated = marineApplicationAdminService.assignTeam(assignTarget.id, teamId, userId, {
+        priority,
+        isVip,
+      })
       if (!updated) {
         showToast({
           title: 'Assignment failed',
-          description: 'Could not assign the selected team and user.',
+          description: 'Could not assign the selected team and consultant.',
           variant: 'error',
         })
         return
       }
 
       const teamName = teamService.getById(teamId)?.name ?? 'Team'
-      const userName = adminPortalUserService.getById(userId)?.fullName ?? 'User'
+      const userName = adminPortalUserService.getById(userId)?.fullName ?? 'Consultant'
       setAssignTarget(null)
       setRefreshKey(key => key + 1)
       showToast({
-        title: 'Team assigned',
-        description: `${assignTarget.id} assigned to ${teamName} · ${userName}`,
+        title: 'Consultant assigned',
+        description: `${assignTarget.id} → ${userName} · ${teamName} · ${priority}${isVip ? ' · VIP' : ''}`,
         variant: 'success',
       })
     },

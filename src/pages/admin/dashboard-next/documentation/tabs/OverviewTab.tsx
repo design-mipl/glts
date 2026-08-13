@@ -11,12 +11,15 @@ import {
 } from '../../shared'
 import { applicationPipelineStageHref } from '../../shared/config/applicationPipeline'
 import { DocumentationExecutiveRow } from '../components/DocumentationExecutiveRow'
-import { DocumentationInfographics, DocumentationWorkloadBySegment } from '../components/DocumentationInfographics'
-import { DocumentationVisibilityStrip } from '../components/DocumentationVisibilityStrip'
+import {
+  DocumentationInfographics,
+  DocumentationWorkloadBySegment,
+} from '../components/DocumentationInfographics'
+import { PostSubmissionVisibility } from '../../shared/widgets/operations/ApplicationMarketInfographics'
 import { getAlertWorkDesk } from '../data/documentationDashboardMock'
 import type { DocumentationDashboardTabProps } from '../types'
 
-/** Overview — signal · visibility · pipeline + alerts · infographics · to-action. */
+/** Overview — signal · pipeline + alerts · infographics · workload · activity. */
 export function OverviewTab({
   data,
   loading,
@@ -24,7 +27,6 @@ export function OverviewTab({
   onNavigate,
   onOpenTab,
   onOpenWorkDesk,
-  onKpiClick,
 }: DocumentationDashboardTabProps) {
   const colors = usePublicBrandColors()
 
@@ -34,9 +36,9 @@ export function OverviewTab({
   const breached = data.submissionPendingRows.filter((r) => r.slaStatus === 'breached').length
 
   const signalParts = [
-    pendingQc > 0 ? `${pendingQc} pending QC` : null,
-    waitingOps > 0 ? `${waitingOps} waiting on Ops` : null,
-    paymentDue > 0 ? `${paymentDue} pending payment` : null,
+    pendingQc > 0 ? `${pendingQc} Docs QC` : null,
+    waitingOps > 0 ? `${waitingOps} Review Reupload` : null,
+    paymentDue > 0 ? `${paymentDue} Pending Payment` : null,
     breached > 0 ? `${breached} SLA breached` : null,
   ].filter(Boolean)
 
@@ -76,7 +78,7 @@ export function OverviewTab({
                 {signalParts.join(' · ')}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-                Open Work for Submission Pending, Pending Payment, or Waiting on Ops.
+                Open Work for Submission Pending, Pending Payment, Arrange Insurance, or Review Reupload.
               </Typography>
             </Box>
           </Stack>
@@ -88,12 +90,6 @@ export function OverviewTab({
           />
         </Box>
       ) : null}
-
-      <DocumentationVisibilityStrip
-        items={data.visibilityStats}
-        loading={loading}
-        onItemClick={onKpiClick}
-      />
 
       <DocumentationExecutiveRow
         primaryVisualization={
@@ -124,13 +120,18 @@ export function OverviewTab({
 
       <DocumentationInfographics data={data} loading={loading} />
 
+      <DocumentationWorkloadBySegment
+        data={{ workloadBySegment: data.workloadBySegment }}
+        loading={loading}
+      />
+
       <Stack
         direction={{ xs: 'column', lg: 'row' }}
         spacing={DASHBOARD_SPACING.field}
         alignItems="stretch"
       >
-        <Box flex={1.2} minWidth={0}>
-          <DocumentationWorkloadBySegment data={data} loading={loading} />
+        <Box flex={1.2} minWidth={0} sx={{ '& > *': { height: '100%' } }}>
+          <PostSubmissionVisibility data={data.visibilityFunnel} loading={loading} />
         </Box>
         <Box flex={1} minWidth={0} sx={{ '& > *': { height: '100%' } }}>
           <RecentActivity

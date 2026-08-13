@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
 import { Box } from '@mui/material'
 import {
-  AlertTriangle,
-  ClipboardCheck,
   ClipboardList,
+  FileText,
+  Package,
+  PackageCheck,
   Receipt,
   Send,
+  Truck,
 } from 'lucide-react'
 import { ExecutiveGrid, HeroMetric, InsightStack } from '../../shared/dashboard-ui-kit'
 import { useDrilldownOptional } from '../../shared/dashboard-intelligence'
@@ -15,16 +17,19 @@ import { kpiColumns } from '../../shared/utils/kpiColumns'
 
 const KPI_ICONS: Record<string, ReactNode> = {
   submission_pending: <Send size={16} />,
+  form_pending: <FileText size={16} />,
   pending_payment: <Receipt size={16} />,
-  qc_ready: <ClipboardCheck size={16} />,
-  waiting_on_ops: <ClipboardList size={16} />,
-  sla_at_risk: <AlertTriangle size={16} />,
+  vfs_submission_pending: <ClipboardList size={16} />,
+  collection_pending: <Package size={16} />,
+  collected: <PackageCheck size={16} />,
+  dispatched: <Truck size={16} />,
 }
 
 function kpiTone(id: string): 'positive' | 'negative' | 'warning' | 'info' | 'neutral' {
-  if (id === 'waiting_on_ops' || id === 'sla_at_risk' || id === 'submission_pending') return 'warning'
-  if (id === 'qc_ready') return 'positive'
-  if (id === 'pending_payment') return 'info'
+  if (id === 'submission_pending' || id === 'form_pending') return 'warning'
+  if (id === 'pending_payment' || id === 'collection_pending') return 'info'
+  if (id === 'collected' || id === 'dispatched') return 'positive'
+  if (id === 'vfs_submission_pending') return 'info'
   return 'neutral'
 }
 
@@ -34,7 +39,7 @@ export interface DocumentationHeroStripProps {
   onKpiClick?: (kpiId: string) => void
 }
 
-/** Docs hero KPIs — work queues only (post-submit visibility lives on Overview). */
+/** Docs hero KPIs — AM portal queue/status labels (desk + post-submit visibility). */
 export function DocumentationHeroStrip({
   items,
   loading,
