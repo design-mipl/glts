@@ -131,9 +131,6 @@ export function OverviewTab({
 
       <OperationsWorkloadBySegment
         data={{
-          queueMix: data.queueMix,
-          assigneeMix: data.assigneeMix,
-          ageingByQueue: data.ageingByQueue,
           workloadBySegment: data.workloadBySegment,
         }}
         loading={loading}

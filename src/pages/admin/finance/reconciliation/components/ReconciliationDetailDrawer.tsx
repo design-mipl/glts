@@ -150,7 +150,7 @@ export function ReconciliationDetailDrawer({
                 />
                 <Button
                   label="Submit"
-                  variant="primary"
+                  variant="contained"
                   onClick={handleSubmit}
                   disabled={submitting || rejecting || !referenceNumber.trim()}
                 />

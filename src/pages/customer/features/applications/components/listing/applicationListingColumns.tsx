@@ -20,7 +20,6 @@ import {
   getApplicationTypeTone,
 } from './applicationStatus'
 import {
-  resolveApplicationCompanyName,
   resolveApplicationRank,
   resolveApplicationVesselName,
 } from '../../utils/applicationCompanyUtils'

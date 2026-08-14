@@ -127,7 +127,7 @@ export function ReconciliationDeskTab({
         filterable: false,
         searchable: false,
         width: 56,
-        render: (_value, row) => (
+        render: (_value, _row) => (
           <RowActions
             actions={[
               {

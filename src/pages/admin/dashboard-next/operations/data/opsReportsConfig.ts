@@ -90,7 +90,7 @@ const VERTICAL_LABEL: Record<OpsSegmentKey, string> = {
   b2b: 'B2B',
 }
 
-const BULLETIN_CATEGORIES = ['Submissions', 'Collections', 'Delays', 'Dispatch'] as const
+const BULLETIN_CATEGORIES = ['Submissions', 'Collections', 'Delays', 'Dispatch', 'Physical documents'] as const
 
 function startOfDay(d: Date): Date {
   const next = new Date(d)

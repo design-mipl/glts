@@ -42,7 +42,7 @@ export function ReconciliationBulkModal({
           <Button label="Cancel" variant="neutral" onClick={onClose} />
           <Button
             label="Submit"
-            variant="primary"
+            variant="contained"
             onClick={() => onConfirm(referenceNumber)}
             disabled={pendingItems.length === 0 || !referenceNumber.trim()}
           />

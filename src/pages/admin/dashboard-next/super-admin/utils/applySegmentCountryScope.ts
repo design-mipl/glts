@@ -89,7 +89,7 @@ function scopeCommercialKpis(
     }
   }
 
-  const ytdMultiplier = kpis.revenue.ytd.value.includes('Cr') ? 9.2 : 8
+  const ytdMultiplier = String(kpis.revenue.ytd.value).includes('Cr') ? 9.2 : 8
 
   return {
     ...kpis,

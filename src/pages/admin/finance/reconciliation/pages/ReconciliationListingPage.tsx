@@ -204,7 +204,7 @@ export function ReconciliationListingPage() {
                 listing.setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
               },
               hasActive: value => hasReconciliationFiltersActive(value, activeTab),
-              width: 360,
+              width: 'wide',
               children: (draft, patch) => (
                 <ReconciliationAdvancedFilterFields draft={draft} patch={patch} tab={activeTab} />
               ),

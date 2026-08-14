@@ -114,8 +114,6 @@ export interface DocTrendPoint {
   secondary?: number
 }
 
-import type { OpsOrgSegmentWorkload } from '../../shared/widgets/operations/opsOrgQueueTypes'
-
 /** @deprecated Use OpsOrgSegmentWorkload — AM listing tabs by channel. */
 export type DocSegmentWorkloadPoint = OpsOrgSegmentWorkload
 

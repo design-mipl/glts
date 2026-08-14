@@ -9,6 +9,7 @@ import {
   mockBulkBatches,
   mockSingleApplications,
   mockUploadQueue,
+  type ApplicantDocumentItem,
   type BulkBatchRow,
   type SingleApplicationRow,
   type UploadQueueRow,

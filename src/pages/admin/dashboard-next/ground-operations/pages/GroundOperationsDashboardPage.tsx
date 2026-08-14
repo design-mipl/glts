@@ -45,9 +45,7 @@ export function GroundOperationsDashboardPage() {
           filters.datePreset === 'date' ||
           filters.datePreset === 'range'
             ? prev.date
-            : filters.datePreset === 'all'
-              ? 'all'
-              : filters.datePreset || prev.date,
+            : filters.datePreset || prev.date,
         team: filters.branch === 'all' ? 'all' : filters.branch || prev.team,
         caseStatus: filters.status === 'all' ? 'all' : filters.status || prev.caseStatus,
         search: filters.search,

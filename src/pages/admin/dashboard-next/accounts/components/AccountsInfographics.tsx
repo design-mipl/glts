@@ -97,13 +97,13 @@ export function AccountsInfographics({ data, loading }: AccountsInfographicsProp
             loading={loading}
             centerLabel="sheets"
             centerValue={String(claimTotals.count)}
-            formatTooltip={(value, _name, item) => {
+            formatTooltip={((value: any, _name: any, item: any) => {
               const slice = item?.payload as { count?: number; amountLabel?: string } | undefined
               if (slice?.count != null && slice.amountLabel) {
                 return [`${slice.count} · ${slice.amountLabel}`, '']
               }
               return [String(value), '']
-            }}
+            }) as unknown as (value: any) => string}
           />
         </ChartPanel>
       </Grid>

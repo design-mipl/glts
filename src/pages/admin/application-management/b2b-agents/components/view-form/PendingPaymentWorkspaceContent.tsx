@@ -64,6 +64,7 @@ export function PendingPaymentWorkspaceContent({
           <Divider />
           <Box sx={{ px: 0.5, pt: 0.5 }}>
             <PendingPaymentSubmissionSection
+              applicationId={applicationId}
               submission={submission}
               country={country}
               visaType={visaType}

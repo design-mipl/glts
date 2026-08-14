@@ -282,7 +282,7 @@ export default function BarChart({
                 <BarChartTooltip
                   active={active}
                   label={label}
-                  payload={payload as Array<{
+                  payload={payload as unknown as Array<{
                     dataKey?: string | number
                     name?: string
                     value?: unknown

@@ -14,8 +14,8 @@ export function hasReconciliationFiltersActive(
   filters: ReconciliationFilters,
   tab: ReconciliationTab,
 ): boolean {
-  if (filters.period !== 'ytd') return true
   if (filters.period === 'custom' && (filters.customFrom || filters.customTo)) return true
+  if (filters.period !== 'ytd') return true
   if (filters.status) return true
   if (tab === 'mode_of_payment' && filters.paymentMode) return true
   return false
@@ -29,9 +29,9 @@ export function getReconciliationPeriodLabel(filters: ReconciliationFilters): st
   return option?.label ?? 'Period'
 }
 
-export function getReconciliationCellValue(row: ReconciliationItem, key: string): string | number {
+export function getReconciliationCellValue(row: ReconciliationItem, key: string): string {
   const value = row[key as keyof ReconciliationItem]
-  if (typeof value === 'number') return value
+  if (typeof value === 'number') return String(value)
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'
   return value == null ? '' : String(value)
 }

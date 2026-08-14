@@ -122,6 +122,7 @@ function FileUploadRow({
 }
 
 export interface PendingPaymentSubmissionSectionProps {
+  applicationId: string
   submission: FormAssistSubmissionDraft
   country: string
   visaType: string
@@ -132,6 +133,7 @@ export interface PendingPaymentSubmissionSectionProps {
 }
 
 export function PendingPaymentSubmissionSection({
+  applicationId,
   submission,
   country,
   countryId,
