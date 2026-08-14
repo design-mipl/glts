@@ -856,4 +856,217 @@ export const SEED_GROUND_OPS_CLAIM_SHEETS: GroundOpsClaimSheet[] = [
     ],
     notes: 'Cash transfer — Chennai seafarer claim.',
   },
+  (() => {
+    const now = new Date()
+    const y = now.getFullYear()
+    const m = String(now.getMonth() + 1).padStart(2, '0')
+    const d = String(now.getDate()).padStart(2, '0')
+    const today = `${y}-${m}-${d}`
+    const generatedAt = new Date(now)
+    generatedAt.setHours(8, 20, 0, 0)
+    const reviewedAt = new Date(now)
+    reviewedAt.setHours(10, 15, 0, 0)
+
+    return {
+      id: 'gcs-seed-today-1',
+      claimNumber: 'CS-2026-TODAY-01',
+      status: 'approved' as const,
+      generatedBy: 'Priya Sharma',
+      generatedAt: generatedAt.toISOString(),
+      team: 'Mumbai Team',
+      fundTransferType: 'card' as const,
+      kpis: nonBankKpis({
+        allocatedAmount: 9200,
+        expensesIncurred: 8750,
+        settlementAmount: -450,
+      }),
+      cases: [
+        {
+          caseId: 'op-case-today-01',
+          operationalId: 'GLTS-M-2026-TODAY-01',
+          passengerName: 'Rajesh Kumar',
+          applicationId: 'GL-1025',
+          companyName: 'Oceanic Manning Pvt Ltd',
+          country: 'UAE',
+          visaType: 'Visit Visa',
+          services: [
+            { serviceName: 'VFS Support', amount: 2200, receiptFileName: 'today-vfs-rajesh.pdf' },
+            { serviceName: 'Courier', amount: 650, receiptFileName: 'today-courier-rajesh.pdf' },
+            { serviceName: 'Local Travel', amount: 900 },
+          ],
+          additionalExpenses: [
+            {
+              serviceName: 'Photo booth charges',
+              amount: 350,
+              receiptFileName: 'today-photo-rajesh.pdf',
+            },
+          ],
+          dispatchCharge: 0,
+          caseExpenseTotal: 4100,
+          proofDocuments: [
+            {
+              id: 'gcs-seed-today-1-p1',
+              label: 'VFS Support receipt',
+              fileName: 'today-vfs-rajesh.pdf',
+              source: 'service' as const,
+              caseId: 'op-case-today-01',
+            },
+            {
+              id: 'gcs-seed-today-1-p2',
+              label: 'Courier receipt',
+              fileName: 'today-courier-rajesh.pdf',
+              source: 'service' as const,
+              caseId: 'op-case-today-01',
+            },
+          ],
+        },
+        {
+          caseId: 'op-case-today-02',
+          operationalId: 'GLTS-M-2026-TODAY-02',
+          passengerName: 'Vikram Singh',
+          applicationId: 'GL-1025',
+          companyName: 'Oceanic Manning Pvt Ltd',
+          country: 'UAE',
+          visaType: 'Visit Visa',
+          services: [
+            { serviceName: 'Biometrics Coordination', amount: 2500, receiptFileName: 'today-bio-vikram.pdf' },
+            { serviceName: 'Printing', amount: 400 },
+            { serviceName: 'Local Travel', amount: 850 },
+          ],
+          additionalExpenses: [
+            {
+              serviceName: 'Same-day queue facilitation',
+              amount: 900,
+              receiptFileName: 'today-queue-vikram.pdf',
+            },
+          ],
+          dispatchCharge: 0,
+          caseExpenseTotal: 4650,
+          proofDocuments: [
+            {
+              id: 'gcs-seed-today-1-p3',
+              label: 'Biometrics Coordination receipt',
+              fileName: 'today-bio-vikram.pdf',
+              source: 'service' as const,
+              caseId: 'op-case-today-02',
+            },
+          ],
+        },
+      ],
+      otherExpenses: [],
+      caseExpensesTotal: 8750,
+      otherExpensesTotal: 0,
+      grandTotal: 8750,
+      proofDocuments: [
+        {
+          id: 'gcs-seed-today-1-p1',
+          label: 'VFS Support receipt',
+          fileName: 'today-vfs-rajesh.pdf',
+          source: 'service' as const,
+          caseId: 'op-case-today-01',
+        },
+        {
+          id: 'gcs-seed-today-1-p3',
+          label: 'Biometrics Coordination receipt',
+          fileName: 'today-bio-vikram.pdf',
+          source: 'service' as const,
+          caseId: 'op-case-today-02',
+        },
+      ],
+      notes: `Same-day Mumbai Team claim for GL-1025 crew — approved ${today}.`,
+      reviewedAt: reviewedAt.toISOString(),
+      reviewedBy: 'Finance Desk',
+    }
+  })(),
+  (() => {
+    const now = new Date()
+    const generatedAt = new Date(now)
+    generatedAt.setHours(9, 5, 0, 0)
+    const reviewedAt = new Date(now)
+    reviewedAt.setHours(11, 50, 0, 0)
+
+    return {
+      id: 'gcs-seed-today-2',
+      claimNumber: 'CS-2026-TODAY-02',
+      status: 'approved' as const,
+      generatedBy: 'Sneha Patel',
+      generatedAt: generatedAt.toISOString(),
+      team: 'Chennai Team',
+      fundTransferType: 'bank_transfer' as const,
+      kpis: bankKpis({
+        allocatedAmount: 15000,
+        totalWithdrawn: 6200,
+        availableInBank: 8800,
+        inHandCash: 2100,
+        expensesIncurred: 5400,
+        bankAllocationCount: 2,
+        settlementDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`,
+        priorBankDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(Math.max(1, now.getDate() - 1)).padStart(2, '0')}`,
+      }),
+      cases: [
+        {
+          caseId: 'op-case-today-03',
+          operationalId: 'GLTS-M-2026-TODAY-03',
+          passengerName: 'Asha Nair',
+          applicationId: 'GL-739',
+          companyName: 'Bayline Crew Services',
+          country: 'Italy',
+          visaType: 'Schengen Seafarer',
+          services: [
+            { serviceName: 'VFS Support', amount: 1800, receiptFileName: 'today-vfs-asha.pdf' },
+            { serviceName: 'Courier', amount: 700, receiptFileName: 'today-courier-asha.pdf' },
+            { serviceName: 'Local Travel', amount: 1100 },
+          ],
+          additionalExpenses: [
+            {
+              serviceName: 'Notary attestation',
+              amount: 1800,
+              receiptFileName: 'today-notary-asha.pdf',
+            },
+          ],
+          dispatchCharge: 0,
+          caseExpenseTotal: 5400,
+          proofDocuments: [
+            {
+              id: 'gcs-seed-today-2-p1',
+              label: 'VFS Support receipt',
+              fileName: 'today-vfs-asha.pdf',
+              source: 'service' as const,
+              caseId: 'op-case-today-03',
+            },
+            {
+              id: 'gcs-seed-today-2-p2',
+              label: 'Notary attestation receipt',
+              fileName: 'today-notary-asha.pdf',
+              source: 'additional_expense' as const,
+              caseId: 'op-case-today-03',
+            },
+          ],
+        },
+      ],
+      otherExpenses: [],
+      caseExpensesTotal: 5400,
+      otherExpensesTotal: 0,
+      grandTotal: 5400,
+      proofDocuments: [
+        {
+          id: 'gcs-seed-today-2-p1',
+          label: 'VFS Support receipt',
+          fileName: 'today-vfs-asha.pdf',
+          source: 'service' as const,
+          caseId: 'op-case-today-03',
+        },
+        {
+          id: 'gcs-seed-today-2-p2',
+          label: 'Notary attestation receipt',
+          fileName: 'today-notary-asha.pdf',
+          source: 'additional_expense' as const,
+          caseId: 'op-case-today-03',
+        },
+      ],
+      notes: 'Same-day Chennai Team bank claim — Asha Nair embassy window.',
+      reviewedAt: reviewedAt.toISOString(),
+      reviewedBy: 'Accounts Lead',
+    }
+  })(),
 ]

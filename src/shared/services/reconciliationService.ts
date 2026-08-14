@@ -25,6 +25,21 @@ interface ReconciliationSubmission {
 
 type SubmissionStore = Record<string, ReconciliationSubmission>
 
+interface ApplicationEnrichment {
+  companyName: string
+  visaCountry: string
+  consultant: string
+  passengerNames: string[]
+}
+
+/** Session cache — rebuild only after mutations or explicit invalidate. */
+let projectedItemsCache: ReconciliationItem[] | null = null
+let upstreamSynced = false
+
+function invalidateProjectedCache() {
+  projectedItemsCache = null
+}
+
 const TICKET_TYPES = new Set([
   'flight_ticket',
   'train_ticket',
@@ -178,28 +193,23 @@ function expenseTab(expense: ApplicationExpenseRecord): ReconciliationTab | null
   return null
 }
 
-function resolvePassengerName(applicationId: string, expense: ApplicationExpenseRecord): string {
+function resolvePassengerName(expense: ApplicationExpenseRecord, passengerNames: string[]): string {
   if (expense.passengerMapping.displayLabel && expense.passengerMapping.scope !== 'application') {
     if (expense.passengerMapping.scope === 'passenger' || expense.passengerMapping.scope === 'multiple_passengers') {
-      const names = applicationExpenseManagementService.getPassengerNames(applicationId)
       const ids = expense.passengerMapping.passengerIds
       if (ids?.length) {
-        const matched = names.filter((_, index) => {
-          // Passenger summaries don't expose ids reliably for all apps; prefer display label.
-          return Boolean(ids[index] || ids[0])
-        })
         if (expense.passengerMapping.displayLabel !== 'Application') {
           return expense.passengerMapping.displayLabel
         }
+        const matched = passengerNames.filter((_, index) => Boolean(ids[index] || ids[0]))
         if (matched.length) return matched.join(', ')
       }
       if (expense.passengerMapping.displayLabel) return expense.passengerMapping.displayLabel
     }
     return expense.passengerMapping.displayLabel
   }
-  const names = applicationExpenseManagementService.getPassengerNames(applicationId)
-  if (names.length === 1) return names[0]
-  if (names.length > 1) return `${names[0]} +${names.length - 1}`
+  if (passengerNames.length === 1) return passengerNames[0]
+  if (passengerNames.length > 1) return `${passengerNames[0]} +${passengerNames.length - 1}`
   return expense.passengerMapping.displayLabel || '—'
 }
 
@@ -207,8 +217,8 @@ function buildExpenseItem(
   expense: ApplicationExpenseRecord,
   tab: ReconciliationTab,
   submissions: SubmissionStore,
+  enrichment: ApplicationEnrichment | undefined,
 ): ReconciliationItem {
-  const detail = applicationExpenseManagementService.getApplicationDetail(expense.applicationId)
   const cost = typeof expense.costAmount === 'number' ? expense.costAmount : 0
   const total = expense.amount
   const markup = computeMarkup(cost, total)
@@ -227,6 +237,7 @@ function buildExpenseItem(
   const policyNumber = tab === 'insurance' ? demoPolicyNumber(expense.id) : ''
   const trackingNumber = tab === 'courier' ? demoTrackingNumber(expense.id) : ''
   const referenceNumber = submission?.referenceNumber || ''
+  const passengerNames = enrichment?.passengerNames ?? []
 
   return {
     id: itemId,
@@ -236,11 +247,11 @@ function buildExpenseItem(
     status: submission?.status ?? 'pending',
     refNo: expense.applicationId,
     gltsCreationDate: creationDate,
-    passengerName: resolvePassengerName(expense.applicationId, expense),
-    client: detail?.companyName ?? '—',
+    passengerName: resolvePassengerName(expense, passengerNames),
+    client: enrichment?.companyName ?? '—',
     bookedBy: expense.createdBy || expense.paidByUser || '—',
-    consultant: detail?.assignedUser ?? detail?.assignedTeam ?? '—',
-    visaCountry: detail?.visaCountry ?? '—',
+    consultant: enrichment?.consultant ?? '—',
+    visaCountry: enrichment?.visaCountry ?? '—',
     vendor: expense.vendorStaffPartner ?? expense.serviceSourceLabel ?? '—',
     bookingDate,
     cost,
@@ -374,23 +385,58 @@ function buildClaimSheetItems(sheet: GroundOpsClaimSheet, submissions: Submissio
   })
 }
 
-function inPeriod(dateKey: string, filters: ReconciliationFilters): boolean {
+function inPeriod(dateKey: string, range: { from: Date; to: Date }): boolean {
   if (!dateKey) return false
-  const range = resolveReconciliationDateRange(filters.period, filters.customFrom, filters.customTo)
   const rowDate = parseLocalDateString(dateKey)
   return rowDate >= range.from && rowDate <= range.to
 }
 
-function listProjectedItems(): ReconciliationItem[] {
+function ensureUpstreamSynced() {
+  if (upstreamSynced) return
   applicationExpenseManagementService.syncAllSubmitted()
+  upstreamSynced = true
+}
+
+function getApplicationEnrichment(
+  applicationId: string,
+  cache: Map<string, ApplicationEnrichment | undefined>,
+): ApplicationEnrichment | undefined {
+  if (cache.has(applicationId)) return cache.get(applicationId)
+  const detail = applicationExpenseManagementService.getApplicationDetail(applicationId)
+  const enrichment = detail
+    ? {
+        companyName: detail.companyName,
+        visaCountry: detail.visaCountry,
+        consultant: detail.assignedUser ?? detail.assignedTeam ?? '—',
+        passengerNames: detail.passengers.map(p => p.passengerName),
+      }
+    : undefined
+  cache.set(applicationId, enrichment)
+  return enrichment
+}
+
+function listProjectedItems(): ReconciliationItem[] {
+  if (projectedItemsCache) return projectedItemsCache
+
+  ensureUpstreamSynced()
   const submissions = readSubmissions()
+  const enrichmentCache = new Map<string, ApplicationEnrichment | undefined>()
 
   const allExpenseIds = new Set<string>()
   const allExpenses: ApplicationExpenseRecord[] = []
+  // Only marine currently returns listing rows; keep the loop for future segments.
   for (const segment of ['marine', 'retail', 'corporate', 'b2bAgents'] as const) {
     const apps = applicationExpenseManagementService.listApplications(segment)
     for (const app of apps) {
       const detail = applicationExpenseManagementService.getApplicationDetail(app.applicationId)
+      if (detail) {
+        enrichmentCache.set(app.applicationId, {
+          companyName: detail.companyName,
+          visaCountry: detail.visaCountry,
+          consultant: detail.assignedUser ?? detail.assignedTeam ?? '—',
+          passengerNames: detail.passengers.map(p => p.passengerName),
+        })
+      }
       for (const expense of detail?.expenses ?? []) {
         if (allExpenseIds.has(expense.id)) continue
         allExpenseIds.add(expense.id)
@@ -402,11 +448,12 @@ function listProjectedItems(): ReconciliationItem[] {
   const items: ReconciliationItem[] = []
 
   for (const expense of allExpenses) {
+    const enrichment = getApplicationEnrichment(expense.applicationId, enrichmentCache)
     const typedTab = expenseTab(expense)
     if (typedTab) {
-      items.push(buildExpenseItem(expense, typedTab, submissions))
+      items.push(buildExpenseItem(expense, typedTab, submissions, enrichment))
     }
-    items.push(buildExpenseItem(expense, 'mode_of_payment', submissions))
+    items.push(buildExpenseItem(expense, 'mode_of_payment', submissions, enrichment))
   }
 
   for (const sheet of groundOpsClaimSheetService.list()) {
@@ -414,11 +461,13 @@ function listProjectedItems(): ReconciliationItem[] {
     items.push(...buildClaimSheetItems(sheet, submissions))
   }
 
+  projectedItemsCache = items
   return items
 }
 
 export const reconciliationService = {
   list(tab: ReconciliationTab, filters: ReconciliationFilters = { period: 'today' }): ReconciliationItem[] {
+    const range = resolveReconciliationDateRange(filters.period, filters.customFrom, filters.customTo)
     return listProjectedItems()
       .filter(item => item.tab === tab)
       .filter(item => {
@@ -428,7 +477,7 @@ export const reconciliationService = {
             : tab === 'mode_of_payment'
               ? item.paymentDate || item.gltsCreationDate
               : item.bookingDate || item.gltsCreationDate
-        return inPeriod(dateKey, filters)
+        return inPeriod(dateKey, range)
       })
       .filter(item => {
         if (tab === 'mode_of_payment' && filters.paymentMode) {
@@ -476,6 +525,7 @@ export const reconciliationService = {
       reconciledBy,
     }
     writeSubmissions(store)
+    invalidateProjectedCache()
 
     const updated = this.getById(input.id)
     if (!updated) return { ok: false, error: 'Could not refresh reconciliation item.' }
@@ -494,10 +544,11 @@ export const reconciliationService = {
     const reconciledBy = user?.name?.trim() || 'Accounts user'
     const reconciledAt = new Date().toISOString()
     const store = readSubmissions()
+    const byId = new Map(listProjectedItems().map(item => [item.id, item]))
     let submitted = 0
 
     for (const id of ids) {
-      const existing = this.getById(id)
+      const existing = byId.get(id)
       if (!existing || existing.status !== 'pending') continue
       store[id] = {
         referenceNumber: bookEntry,
@@ -513,6 +564,7 @@ export const reconciliationService = {
     }
 
     writeSubmissions(store)
+    invalidateProjectedCache()
     return { ok: true, submitted }
   },
 
@@ -535,13 +587,14 @@ export const reconciliationService = {
     const reconciledBy = user?.name?.trim() || 'Accounts user'
     const reconciledAt = new Date().toISOString()
     const store = readSubmissions()
+    const projected = listProjectedItems()
 
     const relatedIds =
       existing.sourceKind === 'claim_sheet'
-        ? listProjectedItems()
+        ? projected
             .filter(item => item.sourceKind === 'claim_sheet' && item.sourceId === existing.sourceId)
             .map(item => item.id)
-        : listProjectedItems()
+        : projected
             .filter(item => item.sourceKind === 'expense' && item.sourceId === existing.sourceId)
             .map(item => item.id)
 
@@ -568,6 +621,7 @@ export const reconciliationService = {
       }
     }
     writeSubmissions(store)
+    invalidateProjectedCache()
 
     return { ok: true, rejected: idsToReject.length }
   },

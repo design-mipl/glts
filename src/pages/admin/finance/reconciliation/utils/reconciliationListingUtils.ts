@@ -3,7 +3,7 @@ import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { RECONCILIATION_PERIOD_OPTIONS } from '../config/reconciliationListingConfig'
 
 export const EMPTY_RECONCILIATION_FILTERS: ReconciliationFilters = {
-  period: 'ytd',
+  period: 'today',
   customFrom: '',
   customTo: '',
   paymentMode: '',
@@ -15,7 +15,7 @@ export function hasReconciliationFiltersActive(
   tab: ReconciliationTab,
 ): boolean {
   if (filters.period === 'custom' && (filters.customFrom || filters.customTo)) return true
-  if (filters.period !== 'ytd') return true
+  if (filters.period !== 'today') return true
   if (filters.status) return true
   if (tab === 'mode_of_payment' && filters.paymentMode) return true
   return false
