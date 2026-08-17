@@ -15,6 +15,16 @@ export const MARINE_DOCUMENT_OWNER_TAB_ORDER: DocumentOwnerType[] = [
   'shipping_agent',
 ]
 
+/** Stable owner order for requirement preview cards across all segments. */
+export const DOCUMENT_OWNER_PREVIEW_ORDER: DocumentOwnerType[] = [
+  'seafarer',
+  'applicant',
+  'company',
+  'shipping_agent',
+  'inviting_company',
+  'inviting_family_friend',
+]
+
 const SEGMENT_OWNER_TYPES: Record<BusinessSegment, DocumentOwnerType[]> = {
   marine: ['seafarer', 'company', 'shipping_agent'],
   corporate: ['applicant', 'company', 'inviting_company'],
@@ -34,8 +44,12 @@ export function getDocumentOwnerTypeLabel(ownerType: DocumentOwnerType | undefin
   return DOCUMENT_OWNER_TYPE_LABELS[ownerType]
 }
 
+export function getDocumentOwnerTypesForSegment(segment: BusinessSegment): DocumentOwnerType[] {
+  return SEGMENT_OWNER_TYPES[segment]
+}
+
 export function getDocumentOwnerTypeOptions(segment: BusinessSegment) {
-  return SEGMENT_OWNER_TYPES[segment].map((value) => ({
+  return getDocumentOwnerTypesForSegment(segment).map((value) => ({
     value,
     label: DOCUMENT_OWNER_TYPE_LABELS[value],
   }))

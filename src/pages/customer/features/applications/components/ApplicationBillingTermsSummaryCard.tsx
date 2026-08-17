@@ -9,7 +9,6 @@ import {
 import type {
   ApplicationBillingTermsAdvance,
   ApplicationBillingTermsCredit,
-  ApplicationBillingTermsMixed,
   ApplicationBillingTermsTone,
   ApplicationBillingTermsViewModel,
 } from '@/shared/utils/mapApplicationBillingTermsSummary'
@@ -76,18 +75,6 @@ function AdvanceContent({ model }: { model: ApplicationBillingTermsAdvance }) {
   )
 }
 
-function MixedContent({ model }: { model: ApplicationBillingTermsMixed }) {
-  return (
-    <>
-      <CustomerInfoGrid columns={2} items={model.fields} />
-      <Stack spacing={1.5} sx={{ mt: 1.5 }}>
-        <ServiceChipList title="Advance applicable services" services={model.advanceApplicableServices} />
-        <ServiceChipList title="Credit applicable services" services={model.creditApplicableServices} />
-      </Stack>
-    </>
-  )
-}
-
 export interface ApplicationBillingTermsSummaryCardProps {
   model: ApplicationBillingTermsViewModel
 }
@@ -105,7 +92,6 @@ export function ApplicationBillingTermsSummaryCard({ model }: ApplicationBilling
     >
       {model.billingType === 'credit' && <CreditContent model={model} />}
       {model.billingType === 'advance' && <AdvanceContent model={model} />}
-      {model.billingType === 'mixed' && <MixedContent model={model} />}
     </CustomerCard>
   )
 }

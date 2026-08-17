@@ -68,7 +68,7 @@ export const SEED_QUOTATION_REFERENCES: QuotationReference[] = [
     companyName: 'Skyline Corporate Services',
     gstNumber: '29AABCS5678G1Z2',
     workflowType: 'corporate',
-    billingType: 'mixed',
+    billingType: 'credit',
     contactPersonName: 'Anita Rao',
     createdAt: daysAgo(8),
     company: {

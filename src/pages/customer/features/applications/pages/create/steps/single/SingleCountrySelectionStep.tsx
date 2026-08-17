@@ -14,6 +14,8 @@ import { CustomerCountryCard } from '../../../../components/CustomerCountryCard'
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import { FlowStepActions } from '../../../../components/create/FlowStepActions'
 import { getAccountMappedCountries } from '../../../../data/singleApplicationFlowData'
+import { useApplicationFlowPolicy } from '../../../../context/ApplicationFlowPolicyContext'
+import { resolveApplicationFlowSegment } from '../../../../utils/resolveApplicationFlowSegment'
 import { useFavoriteCountries } from '../../../../hooks/useFavoriteCountries'
 import {
   orderCountriesForDisplay,
@@ -80,8 +82,10 @@ export function SingleCountrySelectionStep({ state, onUpdate, onContinue }: Sing
   const [query, setQuery] = useState('')
   const [sortMode, setSortMode] = useState<CountrySortMode>('default')
   const { favoriteIds, isFavorite, toggleFavorite } = useFavoriteCountries()
+  const { policy, customerSegment } = useApplicationFlowPolicy()
+  const flowSegment = resolveApplicationFlowSegment(policy, customerSegment)
 
-  const accountCountries = useMemo(() => getAccountMappedCountries(), [])
+  const accountCountries = useMemo(() => getAccountMappedCountries(flowSegment), [flowSegment])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()

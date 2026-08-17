@@ -33,7 +33,7 @@ import {
   ensureFlowGltsApplicationId,
   resolveFlowBatchId,
 } from '../../../utils/gltsReferenceIds'
-import { REQUIRED_GLOBAL_CHECKLIST_DOCUMENTS } from '../../../utils/globalDocumentChecklist'
+import { resolveGlobalChecklistDocuments } from '../../../utils/globalDocumentChecklist'
 
 interface BulkApplicationUploadPageProps {
   state: ApplicationFlowState
@@ -152,7 +152,15 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
 
   const gltsApplicationId = state.gltsApplicationId || undefined
   const gltsBatchId = state.gltsBatchId || undefined
-  const globalChecklistDocs = useMemo(() => REQUIRED_GLOBAL_CHECKLIST_DOCUMENTS, [])
+  const globalChecklistDocs = useMemo(
+    () =>
+      resolveGlobalChecklistDocuments({
+        countryId: state.countryId,
+        visaOfferingId: state.visaOfferingId,
+        jurisdictionId: state.jurisdictionId,
+      }),
+    [state.countryId, state.jurisdictionId, state.visaOfferingId],
+  )
 
   const drawerRow = useMemo(
     () => rows.find(r => r.id === drawerRowId) ?? null,
@@ -500,7 +508,9 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
               <Stack spacing={0.75}>
                 {globalChecklistDocs.length === 0 ? (
                   <Typography sx={{ fontSize: 12, color: colors.textMuted }}>
-                    Select country and visa to load global documents.
+                    {canBuildChecklist
+                      ? 'No common documents are mapped for this country and visa.'
+                      : 'Select country and visa to load global documents.'}
                   </Typography>
                 ) : (
                   globalChecklistDocs.map(doc => (

@@ -1,6 +1,6 @@
 import {
   DOCUMENT_OWNER_TYPE_LABELS,
-  MARINE_DOCUMENT_OWNER_TAB_ORDER,
+  DOCUMENT_OWNER_PREVIEW_ORDER,
 } from '@/shared/constants/documentOwnerType'
 import { documentMasterService } from '@/shared/services/documentMasterService'
 import type {
@@ -58,15 +58,6 @@ function documentRuleToRow(rule: CountryJurisdictionDocumentRule): RequirementDo
   )
 }
 
-function jurisdictionDocumentsForOwner(
-  jurisdiction: CountryVisaJurisdiction,
-  ownerType: DocumentOwnerType,
-): CountryJurisdictionDocumentRule[] {
-  return jurisdiction.documents
-    .filter((rule) => rule.ownerType === ownerType && rule.group !== 'optional')
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-}
-
 export function resolveJurisdictionForState(
   visaType: CountryVisaType | undefined,
   stateName: string,
@@ -119,22 +110,43 @@ export function getApplicableStatesForVisaType(visaType: CountryVisaType | undef
   return [...states].sort((a, b) => a.localeCompare(b))
 }
 
-export function buildRequirementPreviewCardsFromJurisdiction(
-  jurisdiction: CountryVisaJurisdiction,
-): RequirementPreviewCard[] {
+function buildOwnerRequirementCards(rules: CountryJurisdictionDocumentRule[]): RequirementPreviewCard[] {
   const cards: RequirementPreviewCard[] = []
+  const visible = rules.filter((rule) => rule.group !== 'optional')
 
-  for (const ownerType of MARINE_DOCUMENT_OWNER_TAB_ORDER) {
-    const rules = jurisdictionDocumentsForOwner(jurisdiction, ownerType)
-    if (!rules.length) continue
+  for (const ownerType of DOCUMENT_OWNER_PREVIEW_ORDER) {
+    const ownerRules = visible
+      .filter((rule) => rule.ownerType === ownerType)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+    if (!ownerRules.length) continue
     cards.push({
       id: ownerType,
       title: DOCUMENT_OWNER_TYPE_LABELS[ownerType],
       ownerType,
       variant: OWNER_VARIANT[ownerType],
-      documents: rules.map(documentRuleToRow),
+      documents: ownerRules.map(documentRuleToRow),
     })
   }
+
+  const unowned = visible
+    .filter((rule) => !rule.ownerType)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+  if (unowned.length) {
+    cards.push({
+      id: 'documents',
+      title: 'Documents',
+      variant: 'embassy',
+      documents: unowned.map(documentRuleToRow),
+    })
+  }
+
+  return cards
+}
+
+export function buildRequirementPreviewCardsFromJurisdiction(
+  jurisdiction: CountryVisaJurisdiction,
+): RequirementPreviewCard[] {
+  const cards = buildOwnerRequirementCards(jurisdiction.documents)
 
   const gltsScope = jurisdiction.gltsScope?.trim()
   if (gltsScope && richTextToPlainText(gltsScope).length > 0) {
@@ -152,19 +164,7 @@ export function buildRequirementPreviewCardsFromJurisdiction(
 export function buildRequirementPreviewCardsFromVisaType(
   visaType: CountryVisaType,
 ): RequirementPreviewCard[] {
-  const rules = (visaType.documents ?? [])
-    .filter((rule) => rule.group !== 'optional')
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-
-  const cards: RequirementPreviewCard[] = []
-  if (rules.length) {
-    cards.push({
-      id: 'visa-type-documents',
-      title: 'Documents',
-      variant: 'embassy',
-      documents: rules.map(documentRuleToRow),
-    })
-  }
+  const cards = buildOwnerRequirementCards(visaType.documents ?? [])
 
   const gltsScope = visaType.gltsScope?.trim()
   if (gltsScope && richTextToPlainText(gltsScope).length > 0) {

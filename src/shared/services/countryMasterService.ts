@@ -4,9 +4,11 @@ import {
   resolveOfferingDocumentChecklistItems,
 } from '@/shared/data/countryMasterDefaults'
 import { getDefaultQcChecklistTemplate, applyQcChecklistKindMetadata } from '@/shared/data/countryQcChecklistDefaults'
+import { documentMasterService } from '@/shared/services/documentMasterService'
 import type { Country } from '@/shared/types/visa'
 import type {
   BusinessSegment,
+  CountryJurisdictionDocumentRule,
   CountryMaster,
   CountryVisaType,
   CountryVisaJurisdiction,
@@ -19,7 +21,6 @@ import type {
   DocumentWorkspaceItem,
   PassportIssueLocation,
   PortalChecklistItem,
-  RequirementDocumentRow,
   RequirementPreviewCard,
 } from '@/shared/types/countryMaster'
 import {
@@ -244,87 +245,6 @@ export function patchStateFromVisaOffering(offering: CountryVisaOffering): {
   }
 }
 
-function previewDoc(
-  documentId: string,
-  mandatory: boolean,
-  extra?: Partial<RequirementDocumentRow>,
-): RequirementDocumentRow {
-  return enrichRequirementDocumentRow(
-    {
-      id: documentId,
-      name: '',
-      mandatory,
-      ...extra,
-    },
-    documentId,
-  )
-}
-
-function defaultRequirementPreviewCards(isCrew: boolean): RequirementPreviewCard[] {
-  const crewDocs: RequirementDocumentRow[] = [
-    previewDoc('passport', true, { hasSample: true }),
-    previewDoc('cdc', true, { hasSample: true }),
-    previewDoc('photo', true),
-    previewDoc('aadhaar-card', false, { remarks: 'If applicable' }),
-    previewDoc('passport-scan-copy', true),
-    previewDoc('cdc-scan-copy', true),
-  ]
-
-  return [
-    {
-      id: 'crew',
-      title: 'Documents required from crew',
-      variant: 'crew',
-      documents: isCrew
-        ? crewDocs
-        : [
-            previewDoc('passport', true, { hasSample: true }),
-            previewDoc('photo', true),
-            previewDoc('bank', true, { remarks: 'Last 3 months' }),
-          ],
-    },
-    {
-      id: 'shipping',
-      title: 'Documents required from shipping company',
-      variant: 'shipping',
-      arrangedBy: 'Shipping company',
-      documents: [
-        previewDoc('company-covering-letter', true, { hasSample: true }),
-        previewDoc('employment-certificate', true),
-        previewDoc('company-explanation-letter', true),
-        previewDoc('certificate-of-incorporation', false),
-        previewDoc('company-declaration', true),
-      ],
-    },
-    {
-      id: 'embassy',
-      title: 'Document requirement from embassy',
-      variant: 'embassy',
-      alertNote: 'Embassy formatting rules apply. Confirm LOI validity before upload.',
-      documents: [
-        previewDoc('invitation', true, { hasSample: true }),
-        previewDoc('loi', isCrew),
-        previewDoc('foreign-business-license', false),
-        previewDoc('inviter-id-proof', false),
-        previewDoc('embassy-instructions', true, { remarks: 'Follow embassy PDF' }),
-      ],
-    },
-    {
-      id: 'glts',
-      title: 'Scope of work — GLTS',
-      variant: 'glts',
-      scopeItems: [
-        'Visa application filing',
-        'Compliance verification',
-        'Appointment handling',
-        'Submission handling',
-        'Passport collection',
-        'Tracking & updates',
-      ],
-    },
-  ]
-}
-
 export function getVisaTypeForOffering(
   countryId: string,
   offeringId: string,
@@ -487,17 +407,6 @@ export function getTravelDateFeasibilityForOffering(
   })
 }
 
-function visaTypeUsesJurisdictionDocuments(visaType: CountryVisaType | undefined): boolean {
-  return Boolean(
-    visaType?.jurisdictions?.some(
-      (jurisdiction) =>
-        jurisdiction.status === 'active' &&
-        jurisdiction.applicableStates.length > 0 &&
-        jurisdiction.documents.length > 0,
-    ),
-  )
-}
-
 function enrichPreviewCards(cards: RequirementPreviewCard[]): RequirementPreviewCard[] {
   return cards.map((card) => ({
     ...card,
@@ -511,7 +420,6 @@ export function getRequirementPreviewCards(
   jurisdictionId?: string,
 ): RequirementPreviewCard[] {
   const visaType = getVisaTypeForOffering(countryId, offeringId)
-  const jurisdictionDriven = visaTypeUsesJurisdictionDocuments(visaType)
 
   if (jurisdictionId) {
     const jurisdiction = getJurisdictionForOffering(countryId, offeringId, jurisdictionId)
@@ -521,20 +429,99 @@ export function getRequirementPreviewCards(
     }
   }
 
-  if (visaType && !shouldShowJurisdictionNodes(visaType)) {
+  if (visaType && shouldShowJurisdictionNodes(visaType)) {
+    const fallback =
+      visaType.jurisdictions?.find(
+        (entry) => entry.status === 'active' && entry.documents.length > 0,
+      ) ?? visaType.jurisdictions?.find((entry) => entry.status === 'active')
+    if (fallback) {
+      const cards = buildRequirementPreviewCardsFromJurisdiction(fallback)
+      if (cards.length) return cards
+    }
+  }
+
+  if (visaType) {
     const visaTypeCards = buildRequirementPreviewCardsFromVisaType(visaType)
     if (visaTypeCards.length) return visaTypeCards
   }
 
-  if (jurisdictionDriven) return []
-
   const offering = getVisaOfferingById(countryId, offeringId)
-  if (!offering) return []
-  if (offering.requirementPreviewCards?.length) {
+  if (offering?.requirementPreviewCards?.length) {
     return enrichPreviewCards(offering.requirementPreviewCards)
   }
-  const isCrew = offering.workflowProfile === 'crew'
-  return defaultRequirementPreviewCards(isCrew)
+
+  return []
+}
+
+export function getOfferingDocumentRules(
+  countryId: string,
+  offeringId: string,
+  jurisdictionId?: string,
+): CountryJurisdictionDocumentRule[] {
+  const visaType = getVisaTypeForOffering(countryId, offeringId)
+  if (!visaType) return []
+
+  let rules: CountryJurisdictionDocumentRule[] = []
+  if (shouldShowJurisdictionNodes(visaType)) {
+    const selected =
+      (jurisdictionId
+        ? visaType.jurisdictions?.find((j) => j.id === jurisdictionId && j.status === 'active')
+        : undefined) ?? visaType.jurisdictions?.find((j) => j.status === 'active')
+    rules = selected?.documents ?? []
+  } else {
+    rules = visaType.documents ?? []
+  }
+
+  return [...rules]
+    .filter((rule) => rule.group !== 'optional')
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+}
+
+export function getCommonDocumentIds(
+  countryId: string,
+  offeringId: string,
+  jurisdictionId?: string,
+): Set<string> {
+  return new Set(
+    getOfferingDocumentRules(countryId, offeringId, jurisdictionId)
+      .filter((rule) => rule.commonDocument)
+      .map((rule) => rule.documentId),
+  )
+}
+
+export function getCommonDocumentChecklistItems(
+  countryId: string,
+  offeringId: string,
+  jurisdictionId?: string,
+): Array<{ documentId: string; name: string; required: boolean }> {
+  const seen = new Set<string>()
+  const items: Array<{ documentId: string; name: string; required: boolean }> = []
+
+  for (const rule of getOfferingDocumentRules(countryId, offeringId, jurisdictionId)) {
+    if (!rule.commonDocument || seen.has(rule.documentId)) continue
+    seen.add(rule.documentId)
+    const master = documentMasterService.getById(rule.documentId)
+    items.push({
+      documentId: rule.documentId,
+      name: master?.documentType ?? rule.documentId,
+      required: rule.mandatory,
+    })
+  }
+
+  return items
+}
+
+export function resolveJurisdictionIdByName(
+  countryId: string,
+  offeringId: string,
+  jurisdictionName?: string,
+): string | undefined {
+  const normalized = jurisdictionName?.trim().toLowerCase()
+  if (!normalized) return undefined
+  const visaType = getVisaTypeForOffering(countryId, offeringId)
+  return visaType?.jurisdictions?.find(
+    (jurisdiction) => jurisdiction.name.trim().toLowerCase() === normalized,
+  )?.id
 }
 
 export function getDocumentWorkspaceItems(
@@ -553,7 +540,10 @@ export function getDocumentWorkspaceItems(
     segment?.commonDocuments ?? [],
     jurisdictionId,
   )
-  const documentMappings = checklistToDocumentMappings(checklist)
+  const commonIds = getCommonDocumentIds(countryId, offeringId, jurisdictionId)
+  const documentMappings = checklistToDocumentMappings(checklist).filter(
+    (doc) => !commonIds.has(doc.documentId),
+  )
 
   const isCrew = offering.workflowProfile === 'crew'
   const isChina = countryId === '13'

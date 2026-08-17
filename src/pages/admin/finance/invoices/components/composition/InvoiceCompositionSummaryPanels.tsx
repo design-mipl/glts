@@ -122,18 +122,6 @@ export function InvoiceCompositionBillingPanel({
     )
   }
 
-  if (billingType === 'mixed') {
-    return (
-      <Grid container spacing={1.5}>
-        <SummaryRow label="Advance Balance" value={formatInr(snapshot.advanceBalance ?? 0)} />
-        <SummaryRow label="Advance Adjusted" value={formatInr(snapshot.advanceUtilized ?? 0)} />
-        <SummaryRow label="Remaining Credit Period" value={`${snapshot.creditPeriodDays ?? agreement?.billingConfig.creditPeriodDays ?? 30} days`} />
-        <SummaryRow label="Outstanding Amount" value={formatInr(snapshot.outstandingAmount ?? 0)} />
-        <SummaryRow label="Balance Payable" value={formatInr(snapshot.outstandingAmount ?? 0)} />
-      </Grid>
-    )
-  }
-
   return (
     <Grid container spacing={1.5}>
       <SummaryRow label="Credit Period" value={`${snapshot.creditPeriodDays ?? agreement?.billingConfig.creditPeriodDays ?? 30} days`} />

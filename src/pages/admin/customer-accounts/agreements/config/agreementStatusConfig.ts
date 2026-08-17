@@ -74,7 +74,6 @@ export const workflowTypeLabel: Record<AgreementWorkflowType, string> = {
   marine: 'Marine',
   corporate: 'Corporate',
   b2b_agent: 'B2B Agent',
-  mixed: 'Mixed',
   retail: 'Retail',
 }
 
@@ -85,7 +84,6 @@ export const workflowTypeColor: Record<
   marine: 'info',
   corporate: 'success',
   b2b_agent: 'warning',
-  mixed: 'neutral',
   retail: 'error',
 }
 
@@ -94,13 +92,11 @@ export const AGREEMENT_WORKFLOW_OPTIONS: { value: AgreementWorkflowType; label: 
   { value: 'marine', label: 'Marine' },
   { value: 'corporate', label: 'Corporate' },
   { value: 'b2b_agent', label: 'B2B Agent' },
-  { value: 'mixed', label: 'Mixed' },
 ]
 
 export const billingTypeLabel: Record<AgreementBillingType, string> = {
   credit: 'Credit',
   advance: 'Advance',
-  mixed: 'Mixed',
 }
 
 export const billingTypeColor: Record<
@@ -109,7 +105,6 @@ export const billingTypeColor: Record<
 > = {
   credit: 'info',
   advance: 'success',
-  mixed: 'warning',
 }
 
 export const onboardingDocumentStatusLabel = {

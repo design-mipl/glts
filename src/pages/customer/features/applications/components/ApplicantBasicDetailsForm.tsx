@@ -19,7 +19,7 @@ export function ApplicantBasicDetailsForm({
   const colors = usePublicBrandColors()
   const { policy, customerSegment } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
-  const showRank = customerSegment === 'marine'
+  const isMarine = customerSegment === 'marine'
   const crewFromReference = Boolean(row.gltsApplicantId?.trim())
 
   return (
@@ -28,21 +28,23 @@ export function ApplicantBasicDetailsForm({
         Some fields auto-fill from passport OCR when the passport is verified.
       </Typography>
       <Grid container spacing={1.5}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FormField
-            label="Crew ID"
-            helperText={crewFromReference ? 'Linked to applicant reference' : undefined}
-          >
-            <Input
-              fullWidth
-              size="sm"
-              value={details.crewId}
-              onChange={value => onChange({ crewId: value })}
-              placeholder="e.g. GL-12345/1"
-            />
-          </FormField>
-        </Grid>
-        {showRank ? (
+        {isMarine ? (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField
+              label="Crew ID"
+              helperText={crewFromReference ? 'Linked to applicant reference' : undefined}
+            >
+              <Input
+                fullWidth
+                size="sm"
+                value={details.crewId}
+                onChange={value => onChange({ crewId: value })}
+                placeholder="e.g. GL-12345/1"
+              />
+            </FormField>
+          </Grid>
+        ) : null}
+        {isMarine ? (
           <Grid size={{ xs: 12, sm: 6 }}>
             <FormField label="Rank">
               <Input

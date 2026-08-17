@@ -9,14 +9,6 @@ export const CORPORATE_ACCOUNT_WORKFLOW_OPTIONS: { value: AgreementWorkflowType;
 ]
 
 export function workflowConfigFromAgreementType(workflowType: AgreementWorkflowType): CorporateWorkflowConfig {
-  if (workflowType === 'mixed') {
-    return {
-      marineWorkflowEnabled: true,
-      bulkUploadEnabled: false,
-      retailWorkflowEnabled: true,
-      corporateWorkflowEnabled: true,
-    }
-  }
   return workflowConfigFromType(workflowType)
 }
 

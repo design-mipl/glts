@@ -9,9 +9,19 @@ import type {
 
 const SEED_DOCUMENT_OWNER_TYPES: Partial<Record<string, DocumentOwnerType>> = {
   passport: 'applicant',
-  'travel-ticket': 'company',
+  photo: 'applicant',
+  bank: 'applicant',
   insurance: 'applicant',
+  'aadhaar-card': 'applicant',
+  'travel-ticket': 'applicant',
+  invitation: 'inviting_company',
+  'company-covering-letter': 'company',
+  'employment-certificate': 'company',
+  'employment-contract': 'company',
+  'company-bank-statement': 'company',
 }
+
+const SEED_ORIGINAL_DOCUMENT_IDS = new Set(['passport', 'photo'])
 
 export const DEFAULT_JURISDICTION_PROCESSING_RULES: CountryJurisdictionProcessingRules = {
   biometricsRequired: false,
@@ -37,14 +47,14 @@ export function checklistToJurisdictionDocuments(
   group: JurisdictionDocumentGroup = 'common',
 ): CountryJurisdictionDocumentRule[] {
   return items.map((item, index) => ({
-    id: generateDocumentRuleId(),
+    id: `mapped-${group}-${item.documentId}-${index}`,
     documentId: item.documentId,
     group,
     mandatory: item.mandatory,
     ocrEnabled: item.documentId === 'passport',
     multipleUpload: false,
-    commonDocument: group === 'common',
-    originalDocument: false,
+    commonDocument: false,
+    originalDocument: item.originalDocument ?? SEED_ORIGINAL_DOCUMENT_IDS.has(item.documentId),
     ownerType: SEED_DOCUMENT_OWNER_TYPES[item.documentId],
     description: item.description,
     acceptedFormats: item.documentId === 'photo' ? ['JPG', 'PNG'] : ['PDF', 'JPG', 'PNG'],

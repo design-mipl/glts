@@ -5,12 +5,9 @@ export type ApplicationBillingTermsTone = 'success' | 'warning' | 'info' | 'crit
 const BILLING_TYPE_LABEL: Record<AgreementBillingType, string> = {
   credit: 'Credit',
   advance: 'Advance',
-  mixed: 'Mixed',
 }
 
 const DEFAULT_ADVANCE_SERVICES = ['Visa Processing', 'Appointment Booking']
-const DEFAULT_MIXED_ADVANCE_SERVICES = ['Visa Processing']
-const DEFAULT_MIXED_CREDIT_SERVICES = ['Courier', 'Additional Services']
 
 export interface ApplicationBillingTermsField {
   label: string
@@ -36,17 +33,9 @@ export interface ApplicationBillingTermsAdvance extends ApplicationBillingTermsB
   applicableServices: string[]
 }
 
-export interface ApplicationBillingTermsMixed extends ApplicationBillingTermsBase {
-  billingType: 'mixed'
-  fields: ApplicationBillingTermsField[]
-  advanceApplicableServices: string[]
-  creditApplicableServices: string[]
-}
-
 export type ApplicationBillingTermsViewModel =
   | ApplicationBillingTermsCredit
   | ApplicationBillingTermsAdvance
-  | ApplicationBillingTermsMixed
 
 function formatCreditLimit(amount: number): string {
   if (amount <= 0) return '—'
@@ -62,16 +51,6 @@ function servicesByRule(
     .filter(r => r.billingRule === rule)
     .map(r => r.servicePresetName)
   return fromRules.length > 0 ? fromRules : fallback
-}
-
-function formatAdvanceRequired(agreement: CommercialAgreement): string {
-  const { advanceType, advancePercentage, fixedAdvanceAmount } = agreement.billingConfig
-  if (advanceType === 'full') return 'Full advance'
-  if (advanceType === 'fixed' && fixedAdvanceAmount > 0) {
-    return `INR ${fixedAdvanceAmount.toLocaleString('en-IN')} fixed`
-  }
-  if (advancePercentage > 0) return `${advancePercentage}%`
-  return 'As per agreement'
 }
 
 export function mapApplicationBillingTermsSummary(
@@ -95,27 +74,12 @@ export function mapApplicationBillingTermsSummary(
     }
   }
 
-  if (billingType === 'advance') {
-    return {
-      billingType: 'advance',
-      billingTypeLabel,
-      tone: 'warning',
-      fields: [{ label: 'Billing type', value: billingTypeLabel }],
-      infoText: 'Advance payment may be required before processing continues.',
-      applicableServices: servicesByRule(agreement, 'advance', DEFAULT_ADVANCE_SERVICES),
-    }
-  }
-
   return {
-    billingType: 'mixed',
+    billingType: 'advance',
     billingTypeLabel,
-    tone: 'info',
-    fields: [
-      { label: 'Billing type', value: billingTypeLabel },
-      { label: 'Advance required', value: formatAdvanceRequired(agreement) },
-      { label: 'Remaining credit period', value: `${creditPeriodDays} days` },
-    ],
-    advanceApplicableServices: servicesByRule(agreement, 'advance', DEFAULT_MIXED_ADVANCE_SERVICES),
-    creditApplicableServices: servicesByRule(agreement, 'credit', DEFAULT_MIXED_CREDIT_SERVICES),
+    tone: 'warning',
+    fields: [{ label: 'Billing type', value: billingTypeLabel }],
+    infoText: 'Advance payment may be required before processing continues.',
+    applicableServices: servicesByRule(agreement, 'advance', DEFAULT_ADVANCE_SERVICES),
   }
 }

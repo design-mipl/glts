@@ -18,8 +18,6 @@ export function workflowToSegment(workflow: AgreementWorkflowType): BusinessSegm
       return 'b2bAgents'
     case 'retail':
       return 'retail'
-    case 'mixed':
-      return undefined
     default:
       return undefined
   }
@@ -87,8 +85,6 @@ export function workflowTypeDisplayLabel(workflow: AgreementWorkflowType): strin
       return 'B2B Agent'
     case 'retail':
       return 'Retail'
-    case 'mixed':
-      return 'Mixed'
     default:
       return 'Corporate'
   }

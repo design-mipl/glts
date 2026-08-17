@@ -43,28 +43,6 @@ export function computeInvoiceBillingAdjustment(
     }
   }
 
-  if (billingType === 'mixed') {
-    const advanceAdjusted = roundMoney(Math.min(invoiceTotal, advanceBalance))
-    const remainder = roundMoney(Math.max(0, invoiceTotal - advanceAdjusted))
-    const creditApplied = remainder
-    return {
-      totals: {
-        advanceAvailable: advanceBalance,
-        advanceAdjusted,
-        creditApplied,
-        balancePayable: creditApplied,
-      },
-      snapshot: {
-        billingType: 'mixed',
-        advanceBalance,
-        advanceUtilized: advanceAdjusted,
-        remainingAdvance: roundMoney(advanceBalance - advanceAdjusted),
-        creditPeriodDays: config?.creditPeriodDays,
-        outstandingAmount: creditApplied,
-      },
-    }
-  }
-
   const creditApplied = invoiceTotal
   return {
     totals: {

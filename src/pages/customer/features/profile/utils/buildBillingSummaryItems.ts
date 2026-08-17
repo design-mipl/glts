@@ -29,21 +29,6 @@ export function buildBillingSummaryItems(
     ]
   }
 
-  if (billingType === 'mixed' && billingConfig.billingType === 'mixed') {
-    const { mixed } = billingConfig
-    return [
-      ...(summary.advancePercentage
-        ? [{ label: 'Advance percentage', value: summary.advancePercentage }]
-        : []),
-      { label: 'Credit period (days)', value: summary.creditPeriodDays },
-      { label: 'Credit limit', value: summary.creditLimit },
-      { label: 'Grace period (days)', value: summary.gracePeriodDays },
-      { label: 'Advance balance', value: mixed.advanceBalance },
-      { label: 'Outstanding', value: mixed.outstanding },
-      { label: 'Remaining credit', value: mixed.remainingCredit },
-    ]
-  }
-
   return [
     { label: 'Credit period (days)', value: summary.creditPeriodDays },
     { label: 'Credit limit', value: summary.creditLimit },

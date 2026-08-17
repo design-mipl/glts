@@ -2,9 +2,9 @@ import type { CommercialVisaPricingRule, QuotationServiceLine } from './quotatio
 
 export type AgreementType = 'agreemented' | 'non_agreemented'
 
-export type AgreementWorkflowType = 'marine' | 'corporate' | 'b2b_agent' | 'mixed' | 'retail'
+export type AgreementWorkflowType = 'marine' | 'corporate' | 'b2b_agent' | 'retail'
 
-export type AgreementBillingType = 'credit' | 'advance' | 'mixed'
+export type AgreementBillingType = 'credit' | 'advance'
 
 export type AgreementStatus =
   | 'draft'

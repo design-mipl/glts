@@ -140,7 +140,7 @@ export function deriveAdvanceRuleSummary(
     }
     return `${billingConfig.advancePercentage}% advance`
   }
-  return `${billingConfig.advancePercentage}% advance + credit`
+  return '—'
 }
 
 function validateCompanyFields(data: CommercialAgreementFormData, errors: Record<string, string>) {
@@ -230,10 +230,6 @@ export function validateBilling(data: CommercialAgreementFormData): Record<strin
   if (data.billingType === 'credit') {
     if (!data.billingConfig.creditPeriodDays) errors.creditPeriodDays = AGREEMENT_FIELD_MESSAGES.creditPeriod
     if (!data.billingConfig.creditLimit) errors.creditLimit = AGREEMENT_FIELD_MESSAGES.creditLimit
-  }
-  if (data.billingType === 'mixed') {
-    if (!data.billingConfig.advancePercentage) errors.advancePercentage = 'Advance percentage is required'
-    if (!data.billingConfig.creditPeriodDays) errors.creditPeriodDays = AGREEMENT_FIELD_MESSAGES.creditPeriod
   }
   return errors
 }

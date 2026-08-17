@@ -120,10 +120,9 @@ export function AgreementBillingConfigFields({
         <Select
           value={data.billingType}
           onChange={(v) => onChange({ ...data, billingType: v as CommercialAgreementFormData['billingType'] })}
-          options={[
+            options={[
             { value: 'credit', label: 'Credit' },
             { value: 'advance', label: 'Advance' },
-            { value: 'mixed', label: 'Mixed' },
           ]}
           fullWidth
         />

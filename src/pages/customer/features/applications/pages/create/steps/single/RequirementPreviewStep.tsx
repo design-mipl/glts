@@ -70,10 +70,10 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
 
   const jurisdictionId = resolvedJurisdiction?.id ?? state.jurisdictionId
 
-  const cards = useMemo(() => {
-    if (requiresJurisdiction && !jurisdictionId) return []
-    return getRequirementPreviewCards(state.countryId, state.visaOfferingId, jurisdictionId || undefined)
-  }, [requiresJurisdiction, jurisdictionId, state.countryId, state.visaOfferingId])
+  const cards = useMemo(
+    () => getRequirementPreviewCards(state.countryId, state.visaOfferingId, jurisdictionId || undefined),
+    [jurisdictionId, state.countryId, state.visaOfferingId],
+  )
 
   const travelDateBounds = useMemo(
     () => getTravelDateInputBounds(getVisaApplicationWindow(state.countryId)),

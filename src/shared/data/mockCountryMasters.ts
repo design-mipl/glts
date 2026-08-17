@@ -10,6 +10,19 @@ import {
   chinaMarineMTypeDelhiJurisdiction,
   japanMarineCrewVisaJurisdictions,
 } from '@/shared/data/countryMarineMockConfig'
+import {
+  b2bBusinessApplicationDocuments,
+  b2bTouristApplicationDocuments,
+  buildB2bBusinessEvisaDocuments,
+  buildB2bBusinessJurisdictions,
+  buildB2bTouristEvisaDocuments,
+  buildB2bTouristJurisdictions,
+  buildCorporateBusinessJurisdictions,
+  buildCorporateEvisaDocuments,
+  buildCorporateWorkJurisdictions,
+  corporateApplicationDocuments,
+  corporateWorkApplicationDocuments,
+} from '@/shared/data/countryCorporateB2bMockConfig'
 import { getAllCountries } from '@/shared/services/visaService'
 import {
   defaultRulesForSegment,
@@ -108,19 +121,20 @@ function eVisaType(
     countryName: string
     gltsScopeLines?: string[]
     applicationDocuments?: CountryDocumentChecklistItem[]
+    documents?: CountryVisaType['documents']
     status?: CountryVisaType['status']
     prioritySupport?: boolean
   },
 ): CountryVisaType {
   const applicationDocuments = partial.applicationDocuments ?? stdApplicationDocuments
-  const { countryName: _countryName, gltsScopeLines, ...rest } = partial
+  const { countryName: _countryName, gltsScopeLines, documents, ...rest } = partial
   return visaType({
     ...rest,
     applicationDocuments,
     visaMode: 'e_visa',
     jurisdictionEnabled: false,
     jurisdictions: [],
-    documents: checklistToJurisdictionDocuments(applicationDocuments),
+    documents: documents ?? checklistToJurisdictionDocuments(applicationDocuments),
     gltsScope: eVisaGltsScopeBullets(gltsScopeLines ?? [...DEFAULT_E_VISA_GLTS_SCOPE_LINES]),
   })
 }
@@ -136,6 +150,148 @@ function segment(
     commonDocuments: partial.commonDocuments ?? stdCommonDocuments,
     ...partial,
   }
+}
+
+function corporateBusinessSegment(idPrefix: string, countryName: string): CountrySegmentConfig {
+  return segment({
+    segment: 'corporate',
+    enabled: true,
+    workflowId: 'workflow-online-to-offline',
+    visaTypes: [
+      visaType({
+        id: `${idPrefix}-business-corp`,
+        name: 'Business Visa',
+        visaCategory: 'Business',
+        processingTime: '10–14 business days',
+        entryType: 'Multiple entry',
+        validity: '1 year',
+        stayDuration: '90 days per visit',
+        purposeId: 'business_meeting',
+        purposeLabel: 'Corporate travel',
+        applicationDocuments: corporateApplicationDocuments,
+        jurisdictionEnabled: true,
+        jurisdictions: buildCorporateBusinessJurisdictions(countryName, idPrefix),
+      }),
+    ],
+  })
+}
+
+function b2bAgentSegment(idPrefix: string, countryName: string): CountrySegmentConfig {
+  return segment({
+    segment: 'b2bAgents',
+    enabled: true,
+    workflowId: 'workflow-online-to-offline',
+    visaTypes: [
+      visaType({
+        id: `${idPrefix}-agent-tourist`,
+        name: 'Agent Tourist Visa',
+        visaCategory: 'Tourism',
+        processingTime: '8–12 business days',
+        entryType: 'Single entry',
+        validity: '30 days',
+        stayDuration: '30 days',
+        purposeId: 'tourism',
+        purposeLabel: 'Agent retail filing',
+        applicationDocuments: b2bTouristApplicationDocuments,
+        jurisdictionEnabled: true,
+        jurisdictions: buildB2bTouristJurisdictions(countryName, `${idPrefix}-tourist`),
+      }),
+      visaType({
+        id: `${idPrefix}-agent-business`,
+        name: 'Agent Business Visa',
+        visaCategory: 'Business',
+        processingTime: '10–14 business days',
+        entryType: 'Single / multiple',
+        validity: '90 days',
+        stayDuration: 'As per invitation',
+        purposeId: 'business_meeting',
+        purposeLabel: 'Agent corporate filing',
+        applicationDocuments: b2bBusinessApplicationDocuments,
+        jurisdictionEnabled: true,
+        jurisdictions: buildB2bBusinessJurisdictions(countryName, `${idPrefix}-business`),
+      }),
+    ],
+  })
+}
+
+function corporateEvisaSegment(
+  idPrefix: string,
+  countryName: string,
+  pricing = 3800,
+): CountrySegmentConfig {
+  return segment({
+    segment: 'corporate',
+    enabled: true,
+    workflowId: 'workflow-online-only',
+    visaTypes: [
+      eVisaType({
+        id: `${idPrefix}-evisa-business-corp`,
+        name: 'Business e-Visa',
+        visaCategory: 'Business',
+        pricing,
+        processingTime: '4–6 business days',
+        entryType: 'Single / multiple',
+        validity: '90 days',
+        stayDuration: 'As per invitation',
+        purposeId: 'business_meeting',
+        purposeLabel: 'Corporate travel',
+        countryName,
+        applicationDocuments: corporateApplicationDocuments,
+        documents: buildCorporateEvisaDocuments(idPrefix),
+        gltsScopeLines: [
+          'Business e-Visa application preparation and portal filing',
+          'Invitation letter and corporate document review',
+          'Compliance check before online submission',
+          'Status updates and approval notification',
+        ],
+      }),
+    ],
+  })
+}
+
+function b2bEvisaSegment(
+  idPrefix: string,
+  countryName: string,
+  touristPrice: number,
+  businessPrice: number,
+): CountrySegmentConfig {
+  return segment({
+    segment: 'b2bAgents',
+    enabled: true,
+    workflowId: 'workflow-online-only',
+    visaTypes: [
+      eVisaType({
+        id: `${idPrefix}-evisa-tourist-agent`,
+        name: 'Agent Tourist e-Visa',
+        visaCategory: 'Tourism',
+        pricing: touristPrice,
+        processingTime: '3–5 business days',
+        entryType: 'Single entry',
+        validity: '90 days',
+        stayDuration: '30 days',
+        purposeId: 'tourism',
+        purposeLabel: 'Agent retail filing',
+        countryName,
+        applicationDocuments: b2bTouristApplicationDocuments,
+        documents: buildB2bTouristEvisaDocuments(`${idPrefix}-tourist`),
+      }),
+      eVisaType({
+        id: `${idPrefix}-evisa-business-agent`,
+        name: 'Agent Business e-Visa',
+        visaCategory: 'Business',
+        pricing: businessPrice,
+        processingTime: '4–6 business days',
+        entryType: 'Single / multiple',
+        validity: '90 days',
+        stayDuration: 'As per invitation',
+        purposeId: 'business_meeting',
+        purposeLabel: 'Agent corporate filing',
+        countryName,
+        applicationDocuments: b2bBusinessApplicationDocuments,
+        documents: buildB2bBusinessEvisaDocuments(`${idPrefix}-business`),
+      }),
+    ],
+  })
 }
 
 const CHINA_NAME = 'China'
@@ -201,7 +357,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
         }),
       ],
     }),
-    segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
+    corporateEvisaSegment('jp', 'Japan', 3800),
     segment({
       segment: 'marine',
       enabled: true,
@@ -222,7 +378,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
         }),
       ],
     }),
-    segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
+    b2bEvisaSegment('jp', 'Japan', 3200, 3800),
   ],
   '14': [
     segment({
@@ -285,8 +441,8 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
         }),
       ],
     }),
-    segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
-    segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
+    corporateBusinessSegment('fr', 'France'),
+    b2bAgentSegment('fr', 'France'),
   ],
   '13': [
     segment({
@@ -339,9 +495,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           stayDuration: '90 days per visit',
           purposeId: 'business_meeting',
           purposeLabel: 'Corporate travel',
-          jurisdictions: [
-            singleJurisdictionForVisa('delhi', 'Delhi', CHINA_NAME, stdApplicationDocuments),
-          ],
+          applicationDocuments: corporateApplicationDocuments,
+          jurisdictionEnabled: true,
+          jurisdictions: buildCorporateBusinessJurisdictions(CHINA_NAME, 'cn-corp'),
         }),
         visaType({
           id: 'cn-work',
@@ -353,9 +509,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           stayDuration: 'Employment contract',
           purposeId: 'employment',
           purposeLabel: 'Employment',
-          jurisdictions: [
-            singleJurisdictionForVisa('delhi', 'Delhi', CHINA_NAME, stdApplicationDocuments),
-          ],
+          applicationDocuments: corporateWorkApplicationDocuments,
+          jurisdictionEnabled: true,
+          jurisdictions: buildCorporateWorkJurisdictions(CHINA_NAME, 'cn'),
         }),
       ],
     }),
@@ -410,9 +566,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           stayDuration: '30 days',
           purposeId: 'tourism',
           purposeLabel: 'Agent retail filing',
-          jurisdictions: [
-            singleJurisdictionForVisa('delhi', 'Delhi', CHINA_NAME, stdApplicationDocuments),
-          ],
+          applicationDocuments: b2bTouristApplicationDocuments,
+          jurisdictionEnabled: true,
+          jurisdictions: buildB2bTouristJurisdictions(CHINA_NAME, 'cn-agent-tourist'),
         }),
         visaType({
           id: 'cn-agent-business',
@@ -424,9 +580,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           stayDuration: 'As per invitation',
           purposeId: 'business_meeting',
           purposeLabel: 'Agent corporate filing',
-          jurisdictions: [
-            singleJurisdictionForVisa('mumbai', 'Mumbai', CHINA_NAME, stdApplicationDocuments),
-          ],
+          applicationDocuments: b2bBusinessApplicationDocuments,
+          jurisdictionEnabled: true,
+          jurisdictions: buildB2bBusinessJurisdictions(CHINA_NAME, 'cn-agent-business'),
         }),
       ],
     }),
@@ -465,9 +621,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
         }),
       ],
     }),
-    segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
+    corporateEvisaSegment('sg', 'Singapore', 2600),
     segment({ segment: 'marine', enabled: false, visaTypes: [] }),
-    segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
+    b2bEvisaSegment('sg', 'Singapore', 2100, 2600),
   ],
   '10': [
     segment({
@@ -509,9 +665,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
         }),
       ],
     }),
-    segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
+    corporateEvisaSegment('ke', 'Kenya', 4200),
     segment({ segment: 'marine', enabled: false, visaTypes: [] }),
-    segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
+    b2bEvisaSegment('ke', 'Kenya', 3500, 4200),
   ],
   '15': [
     segment({
@@ -553,9 +709,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
         }),
       ],
     }),
-    segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
+    corporateEvisaSegment('au', 'Australia', 7200),
     segment({ segment: 'marine', enabled: false, visaTypes: [] }),
-    segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
+    b2bEvisaSegment('au', 'Australia', 6400, 7200),
   ],
   '16': [
     segment({
@@ -591,9 +747,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
         }),
       ],
     }),
-    segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
+    corporateEvisaSegment('tw', 'Taiwan', 4800),
     segment({ segment: 'marine', enabled: false, visaTypes: [] }),
-    segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
+    b2bEvisaSegment('tw', 'Taiwan', 4100, 4800),
   ],
 }
 
@@ -619,9 +775,9 @@ const DEFAULT_SEGMENTS: CountrySegmentConfig[] = [
       }),
     ],
   }),
-  segment({ segment: 'corporate', enabled: false, visaTypes: [] }),
+  corporateBusinessSegment('default', 'Default'),
   segment({ segment: 'marine', enabled: false, visaTypes: [] }),
-  segment({ segment: 'b2bAgents', enabled: false, visaTypes: [] }),
+  b2bAgentSegment('default', 'Default'),
 ]
 
 function buildDraftCountry(): CountryMaster {

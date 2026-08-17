@@ -1,11 +1,9 @@
-import { Box, IconButton, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material'
-import { Plus, Trash2 } from 'lucide-react'
-import { Button, FormField, Input, Select } from '@/design-system/UIComponents'
+import { Box, Stack, Typography } from '@mui/material'
+import { FormField, Input, Select } from '@/design-system/UIComponents'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
-import { getServiceOptions } from '../../utils/agreementMasterOptions'
 import { advanceTypeLabel, processingBlockRuleLabel } from '../../config/agreementStatusConfig'
 import { formatAgreementDate } from '../../utils/agreementFormUtils'
-import { agreementEmbeddedTableHeadCellSx, agreementEmbeddedTableSx, agreementFieldError } from '../agreementFormLayout'
+import { agreementFieldError } from '../agreementFormLayout'
 
 interface AgreementBillingConfigSectionProps {
   data: CommercialAgreementFormData
@@ -22,19 +20,6 @@ export function AgreementBillingConfigSection({
 }: AgreementBillingConfigSectionProps) {
   const updateBilling = (patch: Partial<CommercialAgreementFormData['billingConfig']>) => {
     onChange({ ...data, billingConfig: { ...data.billingConfig, ...patch } })
-  }
-
-  const serviceOptions = getServiceOptions(data.workflowType)
-
-  const addServiceRule = () => {
-    const first = serviceOptions[0]
-    if (!first) return
-    updateBilling({
-      serviceWiseBillingRules: [
-        ...data.billingConfig.serviceWiseBillingRules,
-        { servicePresetId: first.value, servicePresetName: first.label, billingRule: 'advance' },
-      ],
-    })
   }
 
   if (readOnly) {
@@ -77,7 +62,6 @@ export function AgreementBillingConfigSection({
           options={[
             { value: 'advance', label: 'Advance' },
             { value: 'credit', label: 'Credit' },
-            { value: 'mixed', label: 'Mixed' },
           ]}
           placeholder="Select billing type"
           fullWidth
@@ -162,106 +146,6 @@ export function AgreementBillingConfigSection({
               fullWidth
             />
           </FormField>
-        </>
-      ) : null}
-
-      {data.billingType === 'mixed' ? (
-        <>
-          <FormField label="Advance percentage" required {...agreementFieldError(errors, 'advancePercentage')}>
-            <Input
-              type="number"
-              value={String(data.billingConfig.advancePercentage)}
-              onChange={(v) => updateBilling({ advancePercentage: Number(v) || 0 })}
-              placeholder="Enter advance percentage"
-              fullWidth
-            />
-          </FormField>
-          <FormField label="Remaining credit period (days)" required {...agreementFieldError(errors, 'creditPeriodDays')}>
-            <Input
-              type="number"
-              value={String(data.billingConfig.creditPeriodDays)}
-              onChange={(v) => updateBilling({ creditPeriodDays: Number(v) || 0 })}
-              placeholder="Enter credit period for remaining balance"
-              fullWidth
-            />
-          </FormField>
-          <Box sx={{ gridColumn: '1 / -1' }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-              <Typography variant="body2" fontWeight={600}>
-                Service-wise billing rules
-              </Typography>
-              <Button label="Add rule" size="sm" startIcon={<Plus size={14} />} onClick={addServiceRule} />
-            </Stack>
-            <Box sx={agreementEmbeddedTableSx}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={agreementEmbeddedTableHeadCellSx}>Service</TableCell>
-                    <TableCell sx={agreementEmbeddedTableHeadCellSx}>Billing rule</TableCell>
-                    <TableCell align="right" sx={agreementEmbeddedTableHeadCellSx}>
-                      Actions
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {data.billingConfig.serviceWiseBillingRules.map((rule, index) => (
-                    <TableRow key={`${rule.servicePresetId}-${index}`}>
-                      <TableCell sx={{ fontSize: 13 }}>
-                        <Select
-                          value={rule.servicePresetId}
-                          onChange={(v) => {
-                            const servicePresetId = String(v)
-                            const service = serviceOptions.find((s) => s.value === servicePresetId)
-                            const next = [...data.billingConfig.serviceWiseBillingRules]
-                            next[index] = {
-                              ...rule,
-                              servicePresetId,
-                              servicePresetName: service?.label ?? '',
-                            }
-                            updateBilling({ serviceWiseBillingRules: next })
-                          }}
-                          options={serviceOptions.map((s) => ({ value: s.value, label: s.label }))}
-                          placeholder={serviceOptions.length === 0 ? 'No services for this workflow' : 'Select service'}
-                          clearable
-                          fullWidth
-                          size="sm"
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontSize: 13 }}>
-                        <Select
-                          value={rule.billingRule}
-                          onChange={(v) => {
-                            const next = [...data.billingConfig.serviceWiseBillingRules]
-                            next[index] = { ...rule, billingRule: v as 'advance' | 'credit' }
-                            updateBilling({ serviceWiseBillingRules: next })
-                          }}
-                          options={[
-                            { value: 'advance', label: 'Advance' },
-                            { value: 'credit', label: 'Credit' },
-                          ]}
-                          fullWidth
-                          size="sm"
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          size="small"
-                          aria-label="Remove billing rule"
-                          onClick={() =>
-                            updateBilling({
-                              serviceWiseBillingRules: data.billingConfig.serviceWiseBillingRules.filter((_, i) => i !== index),
-                            })
-                          }
-                        >
-                          <Trash2 size={14} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Box>
-          </Box>
         </>
       ) : null}
     </Box>

@@ -17,7 +17,6 @@ const agreementStatusLabel: Record<string, string> = {
 const billingTypeLabel: Record<BillingType, string> = {
   credit: 'Credit',
   advance: 'Advance',
-  mixed: 'Mixed',
 }
 
 export interface AgreementSummarySectionProps {

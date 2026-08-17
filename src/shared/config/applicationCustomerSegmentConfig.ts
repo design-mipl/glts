@@ -1,4 +1,5 @@
 import type { ApplicationCustomerSegment } from '@/pages/customer/features/applications/types/applicationListing.types'
+import type { CustomerType } from '@/shared/auth/session'
 
 export interface ApplicationCustomerSegmentOption {
   value: ApplicationCustomerSegment
@@ -22,4 +23,14 @@ export const APPLICATION_CUSTOMER_SEGMENTS: ApplicationCustomerSegment[] =
 
 export function getApplicationCustomerSegmentLabel(segment: ApplicationCustomerSegment): string {
   return APPLICATION_CUSTOMER_SEGMENT_LABELS[segment]
+}
+
+/** Map signed-in customer portal type to application / Country Master segment. */
+export function mapCustomerTypeToApplicationSegment(
+  customerType?: CustomerType,
+): ApplicationCustomerSegment {
+  if (customerType === 'marine') return 'marine'
+  if (customerType === 'b2b_agent') return 'b2bAgents'
+  if (customerType === 'corporate') return 'corporate'
+  return 'retail'
 }

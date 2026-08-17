@@ -57,6 +57,7 @@ import type { CustomerType } from '@/shared/auth/session'
 import { mapApplicationBillingTermsSummary } from '@/shared/utils/mapApplicationBillingTermsSummary'
 import type { ApplicationBillingTermsViewModel } from '@/shared/utils/mapApplicationBillingTermsSummary'
 import { resolveCustomerPortalAgreement, resolvePortalAgreementId } from '@/shared/utils/resolveCustomerPortalAgreement'
+import { mapCustomerTypeToApplicationSegment } from '@/shared/config/applicationCustomerSegmentConfig'
 import type { ApplicationCustomerSegment } from '../../applications/types/applicationListing.types'
 import type { ApplicationDetailViewModel, FlowDraftLikeState } from '../../applications/types/applicationDetail.types'
 
@@ -65,10 +66,7 @@ const GLTS_MAR_1025_APPLICATION_ID = 'GL-1025'
 const CUSTOMER_DRAFTS_STORAGE_KEY = 'glts:customer-application-drafts'
 
 function mapSessionToApplicationSegment(customerType?: CustomerType): ApplicationCustomerSegment {
-  if (customerType === 'marine') return 'marine'
-  if (customerType === 'b2b_agent') return 'b2bAgents'
-  if (customerType === 'corporate') return 'corporate'
-  return 'retail'
+  return mapCustomerTypeToApplicationSegment(customerType)
 }
 
 interface SaveDraftPayload {
@@ -246,7 +244,7 @@ export const customerPortalService = {
     const detail = this.getApplicationDetail(applicationId)
     return {
       ...detail,
-      application: detail.application ?? mockApplications[0],
+      application: detail.application ?? this.getApplications()[0] ?? mockApplications[0],
     }
   },
 
@@ -330,9 +328,7 @@ export const customerPortalService = {
         creditTerms:
           billing.billingConfig.billingType === 'credit'
             ? billing.billingConfig.credit.creditPeriod
-            : billing.billingConfig.billingType === 'mixed'
-              ? billing.billingConfig.mixed.creditLimit
-              : billing.billingConfig.advance.advanceRule,
+            : billing.billingConfig.advance.advanceRule,
         sla: `${billing.agreement.workflowType} workflow`,
         invoiceRules: billing.financeContacts.invoiceSubmissionEmail,
       },

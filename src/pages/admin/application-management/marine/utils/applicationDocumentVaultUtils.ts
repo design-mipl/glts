@@ -7,7 +7,7 @@ import {
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import type { FormAssistSubmissionDraft } from '@/shared/services/applicationFormAssistService'
-import { REQUIRED_GLOBAL_CHECKLIST_DOCUMENTS } from '@/pages/customer/features/applications/utils/globalDocumentChecklist'
+import { resolveGlobalChecklistDocuments } from '@/pages/customer/features/applications/utils/globalDocumentChecklist'
 
 export type DocumentVaultCategory =
   | 'traveler'
@@ -153,7 +153,12 @@ export function buildApplicationDocumentVaultItems(input: {
     })
   }
 
-  for (const globalDoc of REQUIRED_GLOBAL_CHECKLIST_DOCUMENTS) {
+  const globalDocs = resolveGlobalChecklistDocuments({
+    countryLabel: detail.application?.country,
+    visaTypeLabel: detail.application?.visaType,
+    jurisdictionName: detail.application?.jurisdiction,
+  })
+  for (const globalDoc of globalDocs) {
     const upload = detail.globalDocumentUploads[globalDoc.documentId]
     const id = `global-${globalDoc.documentId}`
     if (seen.has(id)) continue

@@ -76,9 +76,6 @@ export function enrichBillingAgreementFromCommercialAgreement(
             ? `INR ${agreement.billingConfig.creditLimit.toLocaleString('en-IN')}`
             : billing.billingSummary.creditLimit,
         gracePeriodDays: String(agreement.billingConfig.gracePeriodDays || billing.billingSummary.gracePeriodDays),
-        ...(agreement.billingType === 'mixed'
-          ? { advancePercentage: `${agreement.billingConfig.advancePercentage}%` }
-          : {}),
       }
     : billing.billingSummary
 

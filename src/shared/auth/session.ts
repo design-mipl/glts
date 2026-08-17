@@ -36,6 +36,8 @@ export function inferUserRole(email: string): CustomerPortalRole {
   if (
     e.startsWith('admin@') ||
     e.startsWith('owner@') ||
+    e.startsWith('corporate@') ||
+    e.startsWith('agent@') ||
     e.includes('corporate.admin')
   ) {
     return 'super_admin'
