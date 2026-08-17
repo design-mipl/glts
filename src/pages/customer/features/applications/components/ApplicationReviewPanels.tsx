@@ -40,6 +40,7 @@ function resolvePreviewDocument(
   selectedRow: UploadQueueRow | null,
   applicationId: string | undefined,
   globalDocumentUploads: Record<string, { fileName: string; uploadedAt: string }>,
+  overview: ApplicationReviewOverview,
 ): ApplicantDocumentItem | null {
   if (!target) return null
 
@@ -49,8 +50,12 @@ function resolvePreviewDocument(
     return selectedRow.documents.find(doc => doc.documentId === documentId) ?? null
   }
 
-  if (target.scope === 'global' && applicationId) {
-    const globalDocs = buildGlobalDocumentsForVerification(applicationId, globalDocumentUploads)
+  if (target.scope === 'global') {
+    const globalDocs = buildGlobalDocumentsForVerification(applicationId ?? '', globalDocumentUploads, {
+      countryLabel: overview.countryName,
+      visaTypeLabel: overview.visaTypeLabel,
+      jurisdictionName: overview.jurisdiction,
+    })
     return globalDocs.find(doc => doc.documentId === documentId) ?? null
   }
 
@@ -137,12 +142,26 @@ export function ApplicationReviewPanels({
     return enrichChecklistWithCorrections(base, corrections, selectedRow.travelerName)
   }, [selectedRow, corrections])
   const globalChecklist = useMemo(() => {
-    const globalDocs = applicationId
-      ? buildGlobalDocumentsForVerification(applicationId, globalDocumentUploads)
-      : undefined
+    const checklistContext = {
+      countryLabel: overview.countryName,
+      visaTypeLabel: overview.visaTypeLabel,
+      jurisdictionName: overview.jurisdiction,
+    }
+    const globalDocs = buildGlobalDocumentsForVerification(
+      applicationId ?? '',
+      globalDocumentUploads,
+      checklistContext,
+    )
     const base = buildGlobalChecklistItems(globalDocumentUploads, globalDocs)
     return enrichGlobalChecklistWithCorrections(base, corrections)
-  }, [applicationId, globalDocumentUploads, corrections])
+  }, [
+    applicationId,
+    corrections,
+    globalDocumentUploads,
+    overview.countryName,
+    overview.jurisdiction,
+    overview.visaTypeLabel,
+  ])
   const resolvedTimeline = useMemo(
     () => timelineSteps ?? buildSubmitTimeline(selectedRow, overview),
     [timelineSteps, selectedRow, overview],
@@ -164,8 +183,9 @@ export function ApplicationReviewPanels({
     return hasDigital || hasOriginal || globalChecklist.length > 0
   }, [selectedRow, checklist, globalChecklist])
   const previewDocument = useMemo(
-    () => resolvePreviewDocument(previewTarget, selectedRow, applicationId, globalDocumentUploads),
-    [previewTarget, selectedRow, applicationId, globalDocumentUploads],
+    () =>
+      resolvePreviewDocument(previewTarget, selectedRow, applicationId, globalDocumentUploads, overview),
+    [previewTarget, selectedRow, applicationId, globalDocumentUploads, overview],
   )
   const previewGlobalFileName = useMemo(() => {
     if (!previewTarget || previewTarget.scope !== 'global') return undefined

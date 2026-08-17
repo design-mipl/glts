@@ -163,9 +163,20 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
   const globalDocuments = useMemo(
     () =>
       applicationId
-        ? buildGlobalDocumentsForVerification(applicationId, detail?.globalDocumentUploads ?? {})
+        ? buildGlobalDocumentsForVerification(applicationId, detail?.globalDocumentUploads ?? {}, {
+            countryLabel: detail?.application?.country,
+            visaTypeLabel: detail?.application?.visaType,
+            jurisdictionName: detail?.application?.jurisdiction,
+          })
         : [],
-    [applicationId, detail?.globalDocumentUploads, workspace],
+    [
+      applicationId,
+      detail?.application?.country,
+      detail?.application?.jurisdiction,
+      detail?.application?.visaType,
+      detail?.globalDocumentUploads,
+      workspace,
+    ],
   )
 
   const updateTravelerDoc = useCallback(

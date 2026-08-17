@@ -89,7 +89,7 @@ export function CountrySelectionStep({ state, onUpdate, onContinue }: CountrySel
   const flowSegment = resolveApplicationFlowSegment(policy, customerSegment)
 
   const filtered = useMemo(() => {
-    const all = listPortalCountries({ portalDisplaySegment: flowSegment })
+    const all = listPortalCountries({ segment: flowSegment, portalDisplaySegment: flowSegment })
     const q = query.trim().toLowerCase()
     if (!q) return all
     return all.filter(

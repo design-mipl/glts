@@ -165,14 +165,14 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
     companyId: 'CMP-1006',
     companyName: 'BlueWave Corporate Mobility',
     agreementId: 'AGR-006',
-    workflowType: 'mixed',
+    workflowType: 'corporate',
     accountType: 'corporate',
     branch: 'Pune',
     portalStatus: 'draft',
     workflowConfig: {
-      marineWorkflowEnabled: true,
+      marineWorkflowEnabled: false,
       bulkUploadEnabled: false,
-      retailWorkflowEnabled: true,
+      retailWorkflowEnabled: false,
       corporateWorkflowEnabled: true,
     },
     superAdmin: {
@@ -500,14 +500,14 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
     companyId: 'CMP-1010',
     companyName: 'Nexus Global Mobility',
     agreementId: 'AGR-010',
-    workflowType: 'mixed',
+    workflowType: 'corporate',
     accountType: 'corporate',
     branch: 'Ahmedabad',
     portalStatus: 'draft',
     workflowConfig: {
-      marineWorkflowEnabled: true,
+      marineWorkflowEnabled: false,
       bulkUploadEnabled: false,
-      retailWorkflowEnabled: true,
+      retailWorkflowEnabled: false,
       corporateWorkflowEnabled: true,
     },
     superAdmin: {
@@ -666,7 +666,7 @@ export const SEED_CORPORATE_ACCOUNTS: CorporateAccount[] = [
 
 const STORAGE_KEY = 'glts:corporate-accounts'
 /** Bump when `SEED_CORPORATE_ACCOUNTS` changes so dev browsers reload mock data. */
-const SEED_VERSION = 2
+const SEED_VERSION = 3
 
 let memoryStore: CorporateAccount[] | null = null
 

@@ -25,7 +25,6 @@ export function applicabilityForWorkflow(workflow: AgreementWorkflowType): Maste
     corporate: ['corporate', 'b2b'],
     b2b_agent: ['b2b', 'corporate'],
     retail: ['retail'],
-    mixed: ['marine', 'corporate', 'b2b', 'retail'],
   }
   return map[workflow] ?? ['marine', 'corporate', 'b2b', 'retail']
 }

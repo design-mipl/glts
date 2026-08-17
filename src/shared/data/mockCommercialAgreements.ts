@@ -294,7 +294,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     customerSourceMode: 'new',
     agreementType: 'agreemented',
     workflowType: 'corporate',
-    billingType: 'mixed',
+    billingType: 'credit',
     status: 'draft',
     startDate: '',
     endDate: '',
@@ -453,8 +453,8 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     customerSourceMode: 'quotation',
     referenceQuotationId: 'QT-003',
     agreementType: 'agreemented',
-    workflowType: 'mixed',
-    billingType: 'mixed',
+    workflowType: 'corporate',
+    billingType: 'credit',
     status: 'terminated',
     startDate: daysAgoDate(22),
     endDate: daysFromNow(343),
@@ -530,7 +530,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       invoiceSubmissionEmail: 'billing@bluewavecorp.com',
       paymentFollowUpContact: 'payables@bluewavecorp.com',
     },
-    documents: seededDocs('agreemented', 'mixed', { fileSuffix: 'bluewave', uploadedDaysAgo: 9 }),
+    documents: seededDocs('agreemented', 'corporate', { fileSuffix: 'bluewave', uploadedDaysAgo: 9 }),
     createdAt: daysAgo(30),
     updatedAt: daysAgo(6),
     statusRemarks: 'Credit rule mismatch with submitted annexure.',
@@ -697,7 +697,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     customerSourceMode: 'existing',
     agreementType: 'agreemented',
     workflowType: 'marine',
-    billingType: 'mixed',
+    billingType: 'credit',
     status: 'active',
     startDate: daysAgoDate(120),
     endDate: daysFromNow(245),
@@ -954,8 +954,8 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     companyName: 'Nexus Global Mobility',
     customerSourceMode: 'existing',
     agreementType: 'agreemented',
-    workflowType: 'mixed',
-    billingType: 'mixed',
+    workflowType: 'corporate',
+    billingType: 'credit',
     status: 'ready_for_activation',
     startDate: daysAgoDate(14),
     endDate: daysFromNow(351),
@@ -1019,7 +1019,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       invoiceSubmissionEmail: 'invoices@nexusglobal.com',
       paymentFollowUpContact: 'finance@nexusglobal.com',
     },
-    documents: seededDocs('agreemented', 'mixed', { fileSuffix: 'nexus', uploadedDaysAgo: 5 }),
+    documents: seededDocs('agreemented', 'corporate', { fileSuffix: 'nexus', uploadedDaysAgo: 5 }),
     createdAt: daysAgo(16),
     updatedAt: daysAgo(4),
     readyForActivationAt: daysAgo(5),
@@ -1223,7 +1223,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     customerSourceMode: 'new',
     agreementType: 'agreemented',
     workflowType: 'corporate',
-    billingType: 'mixed',
+    billingType: 'credit',
     status: 'ready_for_activation',
     startDate: daysAgoDate(5),
     endDate: daysFromNow(360),
@@ -1629,7 +1629,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
     companyName: 'Voyage Partners Agency',
     customerSourceMode: 'existing',
     agreementType: 'agreemented',
-    workflowType: 'mixed',
+    workflowType: 'b2b_agent',
     billingType: 'credit',
     status: 'active',
     startDate: daysAgoDate(35),
@@ -1682,7 +1682,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
       invoiceSubmissionEmail: 'invoices@voyagepartners.com',
       paymentFollowUpContact: 'finance@voyagepartners.com',
     },
-    documents: seededDocs('agreemented', 'mixed', { fileSuffix: 'voyage-partners', uploadedDaysAgo: 3 }),
+    documents: seededDocs('agreemented', 'b2b_agent', { fileSuffix: 'voyage-partners', uploadedDaysAgo: 3 }),
     createdAt: daysAgo(35),
     updatedAt: daysAgo(1),
     activatedAt: daysAgo(30),
@@ -1692,7 +1692,7 @@ export const SEED_COMMERCIAL_AGREEMENTS: CommercialAgreement[] = [
 
 const STORAGE_KEY = 'glts:commercial-agreements'
 /** Bump when `SEED_COMMERCIAL_AGREEMENTS` changes so dev browsers reload mock data. */
-const SEED_VERSION = 7
+const SEED_VERSION = 8
 
 let memoryStore: CommercialAgreement[] | null = null
 

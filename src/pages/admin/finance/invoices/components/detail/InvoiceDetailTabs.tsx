@@ -183,7 +183,7 @@ function AdvanceCreditTab({ invoice }: { invoice: Invoice }) {
       <TotalsRow label="Credit applied" value={formatInr(totals.creditApplied)} />
       <Divider />
       <TotalsRow label="Balance payable" value={formatInr(totals.balancePayable)} emphasis />
-      {billingAdjustment.billingType === 'credit' || billingAdjustment.billingType === 'mixed' ? (
+      {billingAdjustment.billingType === 'credit' ? (
         <>
           <TotalsRow label="Credit limit" value={formatInr(billingAdjustment.creditLimit ?? 0)} />
           <TotalsRow label="Credit used" value={formatInr(billingAdjustment.creditUsed ?? 0)} />

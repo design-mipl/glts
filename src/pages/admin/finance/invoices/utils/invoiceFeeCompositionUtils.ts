@@ -1074,7 +1074,6 @@ export function buildRevisedWorkspaceFromCreditNote(
 
 export function billingTypeLabel(type: CommercialAgreement['billingType'] | undefined): string {
   if (type === 'advance') return 'Advance'
-  if (type === 'mixed') return 'Mixed'
   return 'Credit'
 }
 

@@ -14,7 +14,6 @@ const WORKFLOW_LABEL: Record<AgreementWorkflowType, string> = {
   marine: 'Marine',
   corporate: 'Corporate',
   b2b_agent: 'B2B Agent',
-  mixed: 'Mixed',
   retail: 'Retail',
 }
 

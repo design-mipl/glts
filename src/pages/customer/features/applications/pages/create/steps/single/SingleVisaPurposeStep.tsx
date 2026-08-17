@@ -14,6 +14,7 @@ import {
   getVisaOfferings,
   patchStateFromVisaOffering,
 } from '@/shared/services/countryMasterService'
+import { SEGMENT_LABELS } from '@/shared/data/countryMasterDefaults'
 import { resolveApplicationFlowSegment } from '../../../../utils/resolveApplicationFlowSegment'
 
 interface SingleVisaPurposeStepProps {
@@ -35,6 +36,7 @@ export function SingleVisaPurposeStep({
   const isWebsite = isWebsiteFlowPolicy(policy)
   const flowSegment = resolveApplicationFlowSegment(policy, customerSegment)
   const options = getVisaOfferings(state.countryId, true, flowSegment)
+  const segmentLabel = SEGMENT_LABELS[flowSegment]
 
   return (
     <Box sx={{ maxWidth: '100%', mx: 'auto', width: '100%' }}>
@@ -52,14 +54,14 @@ export function SingleVisaPurposeStep({
       <Typography sx={{ fontSize: 13, color: colors.textSecondary, mb: 2.5 }}>
         {isWebsite
           ? 'Select the visa type for this destination. Requirements in the next step depend on this selection.'
-          : 'Select the marine visa category for this destination. Requirements in the next step depend on this selection.'}
+          : `Select the ${segmentLabel.toLowerCase()} visa type for this destination. Requirements in the next step depend on this selection.`}
       </Typography>
 
       {options.length === 0 ? (
         <Typography sx={{ fontSize: 13, color: colors.textMuted, mb: 2 }}>
           {isWebsite
             ? `No visa types are configured for ${state.countryName} yet. Choose another destination or contact GLTS support.`
-            : `No marine visa types are configured for ${state.countryName} yet. Choose another destination or contact GLTS operations to enable marine filing for this country.`}
+            : `No ${segmentLabel.toLowerCase()} visa types are configured for ${state.countryName} yet. Choose another destination or contact GLTS operations to enable ${segmentLabel.toLowerCase()} filing for this country.`}
         </Typography>
       ) : null}
 

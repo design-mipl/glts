@@ -28,10 +28,13 @@ import { FaqPage } from '../features/help-support/pages/HelpSupportHubPage'
 import { ContactSupportPage } from '../features/help-support/pages/ContactSupportPage'
 import { CustomerSegmentPortalProvider } from './CustomerSegmentPortalContext'
 import type { CustomerSegmentPortalConfig } from './segmentTypes'
+import { ApplicationFlowPolicyProvider } from '../features/applications/context/ApplicationFlowPolicyContext'
+import { mapCustomerTypeToApplicationSegment } from '@/shared/config/applicationCustomerSegmentConfig'
 
 export function CustomerPortalRoutes({ config }: { config?: CustomerSegmentPortalConfig }) {
   const showVesselMaster = config?.showVesselMaster ?? false
   const showCrewUpload = config?.showCrewUpload ?? false
+  const customerSegment = mapCustomerTypeToApplicationSegment(config?.customerType)
 
   const routes = (
     <Routes>
@@ -88,7 +91,18 @@ export function CustomerPortalRoutes({ config }: { config?: CustomerSegmentPorta
     </Routes>
   )
 
-  if (!config) return routes
+  const scopedRoutes = (
+    <ApplicationFlowPolicyProvider
+      policy="customer"
+      listingPath=""
+      breadcrumbItems={[]}
+      customerSegment={customerSegment}
+    >
+      {routes}
+    </ApplicationFlowPolicyProvider>
+  )
 
-  return <CustomerSegmentPortalProvider config={config}>{routes}</CustomerSegmentPortalProvider>
+  if (!config) return scopedRoutes
+
+  return <CustomerSegmentPortalProvider config={config}>{scopedRoutes}</CustomerSegmentPortalProvider>
 }

@@ -191,7 +191,7 @@ export const mockBillingAgreementData: BillingAgreementData = {
   agreement: {
     status: 'active',
     agreementType: 'Agreemented',
-    billingType: 'mixed',
+    billingType: 'credit',
     workflowType: 'Corporate',
     startDate: '01 Apr 2023',
     endDate: '31 Mar 2026',
@@ -210,15 +210,15 @@ export const mockBillingAgreementData: BillingAgreementData = {
     creditPeriodDays: '45',
     creditLimit: 'INR 25,00,000',
     gracePeriodDays: '7',
-    advancePercentage: '50%',
   },
   billingConfig: {
-    billingType: 'mixed',
-    mixed: {
-      advanceBalance: 'INR 12,50,000',
+    billingType: 'credit',
+    credit: {
       creditLimit: 'INR 25,00,000',
-      outstanding: 'INR 4,82,150',
-      remainingCredit: 'INR 20,17,850',
+      creditUsed: 'INR 4,82,150',
+      availableCredit: 'INR 20,17,850',
+      creditPeriod: '45 days',
+      gracePeriod: '7 days',
     },
   },
   pricingGroups: [],

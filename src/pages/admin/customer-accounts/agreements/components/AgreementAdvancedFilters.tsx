@@ -36,7 +36,6 @@ export function AgreementAdvancedFilterFields({ draft, patch }: AgreementAdvance
             { value: 'all', label: 'All billing types' },
             { value: 'advance', label: 'Advance' },
             { value: 'credit', label: 'Credit' },
-            { value: 'mixed', label: 'Mixed' },
           ]}
           placeholder="Billing type"
           size="sm"

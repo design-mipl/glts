@@ -67,7 +67,7 @@ export interface InvoiceTotals {
 }
 
 export interface InvoiceBillingAdjustmentSnapshot {
-  billingType: 'credit' | 'advance' | 'mixed'
+  billingType: 'credit' | 'advance'
   creditLimit?: number
   creditUsed?: number
   creditAvailable?: number

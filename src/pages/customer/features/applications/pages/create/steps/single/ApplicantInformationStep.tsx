@@ -7,6 +7,7 @@ import {
 } from '@/shared/services/countryMasterService'
 import { getTravelDateInputBounds } from '@/shared/utils/jurisdictionRequirementPreview'
 import { TravelDateFieldWithFeasibility } from '../../../../components/create/TravelDateFieldWithFeasibility'
+import { useApplicationFlowPolicy } from '../../../../context/ApplicationFlowPolicyContext'
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import { FlowStepActions } from '../../../../components/create/FlowStepActions'
 
@@ -36,7 +37,8 @@ export function ApplicantInformationStep({
   onSaveDraft,
 }: ApplicantInformationStepProps) {
   const colors = usePublicBrandColors()
-  const isMarine = state.visaType === 'crew' || state.purpose === 'crew_joining'
+  const { customerSegment } = useApplicationFlowPolicy()
+  const isMarine = customerSegment === 'marine'
 
   const travelFeasibilityConfig = useMemo(
     () =>

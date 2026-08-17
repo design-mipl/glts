@@ -233,6 +233,7 @@ const CHINA_G_TYPE_COMPANY: DocSpec[] = [
   {
     id: 'company-covering-letter',
     docId: 'company-covering-letter',
+    commonDocument: true,
     description:
       'Official company letter confirming employment, travel purpose, visa requirement, and expense responsibility.',
     sample: SAMPLES.companyCoveringLetter,
@@ -243,25 +244,28 @@ const CHINA_G_TYPE_FOREIGN_AGENT: DocSpec[] = [
   {
     id: 'invitation',
     docId: 'invitation',
+    commonDocument: true,
     description: 'Official invitation issued by the overseas company inviting the applicant for travel.',
     sample: SAMPLES.invitationLetter,
   },
   {
     id: 'loi',
     docId: 'loi',
+    commonDocument: true,
     description:
       'Formal letter of invitation from the host company or foreign agent specifying visit purpose and arrangements.',
     sample: SAMPLES.letterOfInvitation,
-    commonDocument: true,
   },
   {
     id: 'foreign-business-license',
     docId: 'foreign-business-license',
+    commonDocument: true,
     description: 'Business license or operating permit of the foreign host company or shipping agent.',
   },
   {
     id: 'inviter-id-proof',
     docId: 'inviter-id-proof',
+    commonDocument: true,
     description: 'Identity document of the overseas inviter or authorized company representative.',
   },
 ]
@@ -275,6 +279,7 @@ const CHINA_M_TYPE_EXTRA_COMPANY: DocSpec[] = [
   {
     id: 'company-establishment-proof',
     docId: 'certificate-of-incorporation',
+    commonDocument: true,
     description: 'Company registration certificate confirming legal incorporation of the employing organization.',
   },
   {
@@ -285,6 +290,7 @@ const CHINA_M_TYPE_EXTRA_COMPANY: DocSpec[] = [
   {
     id: 'business-activity-declaration',
     docId: 'company-explanation-letter',
+    commonDocument: true,
     description: 'Company declaration of business activity and travel purpose supporting China M type visa filing.',
   },
 ]
@@ -349,6 +355,7 @@ const JAPAN_CREW_COMPANY: DocSpec[] = [
   {
     id: 'company-covering-letter',
     docId: 'company-covering-letter',
+    commonDocument: true,
     description:
       'Official company letter confirming employment, travel purpose, visa requirement, and expense responsibility.',
     sample: SAMPLES.companyCoveringLetter,
@@ -356,6 +363,7 @@ const JAPAN_CREW_COMPANY: DocSpec[] = [
   {
     id: 'certificate-of-incorporation',
     docId: 'certificate-of-incorporation',
+    commonDocument: true,
     description: 'Company registration certificate confirming legal incorporation of the employing organization.',
   },
   {
@@ -374,12 +382,14 @@ const JAPAN_CREW_FOREIGN_AGENT: DocSpec[] = [
   {
     id: 'invitation',
     docId: 'invitation',
+    commonDocument: true,
     description: 'Official invitation issued by the overseas company inviting the applicant for travel.',
     sample: SAMPLES.invitationLetter,
   },
   {
     id: 'schedule-of-stay',
     docId: 'schedule-of-stay',
+    commonDocument: true,
     description:
       'Planned itinerary or schedule of stay detailing dates, cities, and accommodation during the Japan visit.',
     sample: SAMPLES.scheduleOfStay,
@@ -387,6 +397,7 @@ const JAPAN_CREW_FOREIGN_AGENT: DocSpec[] = [
   {
     id: 'letter-of-guarantee',
     docId: 'letter-of-guarantee',
+    commonDocument: true,
     description:
       'Guarantee letter from host or sponsor accepting responsibility for applicant conduct and expenses in Japan.',
     sample: SAMPLES.letterOfGuarantee,
@@ -394,6 +405,7 @@ const JAPAN_CREW_FOREIGN_AGENT: DocSpec[] = [
   {
     id: 'foreign-company-registration',
     docId: 'foreign-company-registration',
+    commonDocument: true,
     description: 'Registration or incorporation proof of the overseas inviting or sponsoring company.',
   },
 ]
@@ -412,21 +424,25 @@ const JAPAN_CREW_KOLKATA_EXTRA_COMPANY: DocSpec[] = [
   {
     id: 'company-income-tax-return',
     docId: 'company-income-tax-return',
+    commonDocument: true,
     description: 'Corporate income tax return filed by the sponsoring company for Kolkata jurisdiction review.',
   },
   {
     id: 'company-bank-statement',
     docId: 'company-bank-statement',
+    commonDocument: true,
     description: 'Corporate bank statement demonstrating employer financial standing for Japan crew visa.',
   },
   {
     id: 'company-balance-certificate',
     docId: 'company-balance-certificate',
+    commonDocument: true,
     description: 'Bank-issued certificate confirming corporate account balance for sponsor verification.',
   },
   {
     id: 'company-explanation-letter',
     docId: 'company-explanation-letter',
+    commonDocument: true,
     description:
       'Employer letter clarifying travel purpose, itinerary, or supporting facts requested by the consulate.',
   },

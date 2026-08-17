@@ -13,26 +13,17 @@ interface RequirementPreviewCarouselProps {
   requiresJurisdictionSelection?: boolean
 }
 
-const PLACEHOLDER_TAB_LABELS = ['Seafarer', 'Company', 'Shipping Agent', 'GLTS']
+function tabLabel(card: RequirementPreviewCard): string {
+  if (card.title) return card.title
+  if (card.ownerType) return DOCUMENT_OWNER_TYPE_LABELS[card.ownerType as DocumentOwnerType]
+  if (card.variant === 'glts' || card.id === 'glts') return 'GLTS'
+  return 'Documents'
+}
 
 const skeletonPulse = keyframes`
   0%, 100% { opacity: 0.35; }
   50% { opacity: 0.65; }
 `
-
-function tabLabel(card: RequirementPreviewCard): string {
-  if (card.ownerType) {
-    return DOCUMENT_OWNER_TYPE_LABELS[card.ownerType as DocumentOwnerType]
-  }
-  if (card.variant === 'glts') return 'GLTS'
-  const labels: Record<RequirementPreviewCard['variant'], string> = {
-    crew: 'Seafarer',
-    shipping: 'Company',
-    embassy: 'Shipping Agent',
-    glts: 'GLTS',
-  }
-  return labels[card.variant] ?? card.title
-}
 
 export function RequirementPreviewCarousel({
   cards,
@@ -161,36 +152,6 @@ function RequirementPreviewEmptyState({
 }) {
   return (
     <RequirementPreviewSectionShell colors={colors}>
-      <Stack
-        direction="row"
-        spacing={2}
-        flexWrap="wrap"
-        useFlexGap
-        sx={{
-          mb: 1.5,
-          pb: 1,
-          borderBottom: `1px solid ${colors.border}`,
-          opacity: 0.55,
-          pointerEvents: 'none',
-          userSelect: 'none',
-        }}
-      >
-        {PLACEHOLDER_TAB_LABELS.map((label, index) => (
-          <Typography
-            key={label}
-            sx={{
-              fontSize: 13,
-              fontWeight: index === 0 ? 700 : 500,
-              color: index === 0 ? colors.navy : colors.textMuted,
-              borderBottom: index === 0 ? `2px solid ${colors.navy}` : '2px solid transparent',
-              pb: 0.75,
-            }}
-          >
-            {label}
-          </Typography>
-        ))}
-      </Stack>
-
       <RequirementPreviewContentShell colors={colors} minHeight={280} dashed>
         <Stack alignItems="center" textAlign="center" spacing={1.25} sx={{ py: 2.5, px: 1 }}>
           <Box
@@ -211,8 +172,8 @@ function RequirementPreviewEmptyState({
           </Typography>
           <Typography sx={{ fontSize: 12, color: colors.textSecondary, maxWidth: 300, lineHeight: 1.5 }}>
             {requiresJurisdictionSelection
-              ? 'Choose issued passport state and place of residence on the left. Jurisdiction follows place of residence when provided.'
-              : 'Document requirements for this visa type will appear here once configured in country master.'}
+              ? 'Owner tabs come from Country Master documents on the resolved jurisdiction. Choose passport state and residence on the left when this visa uses embassy or VFS jurisdictions.'
+              : 'Owner tabs come from Country Master documents mapped on this visa type. Nothing is shown until documents are mapped.'}
           </Typography>
           {requiresJurisdictionSelection ? (
             <Stack

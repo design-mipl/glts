@@ -14,9 +14,17 @@ export const mockDocuments = [
 ]
 
 export const mockGlobalDocumentUploads = {
-  loi: {
-    fileName: 'LOI_GLTS_Company.pdf',
+  'company-covering-letter': {
+    fileName: 'Company_Covering_Letter.pdf',
     uploadedAt: '2026-05-10T08:00:00.000Z',
+  },
+  invitation: {
+    fileName: 'Invitation_Letter.pdf',
+    uploadedAt: '2026-05-10T08:05:00.000Z',
+  },
+  loi: {
+    fileName: 'Letter_of_Invitation_LOI.pdf',
+    uploadedAt: '2026-05-10T08:10:00.000Z',
   },
 }
 

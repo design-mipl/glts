@@ -87,12 +87,7 @@ export function ProfileAccountWorkspace() {
     ],
   )
 
-  const billingTypeLabel =
-    billing.agreement.billingType === 'credit'
-      ? 'Credit'
-      : billing.agreement.billingType === 'advance'
-        ? 'Advance'
-        : 'Mixed'
+  const billingTypeLabel = billing.agreement.billingType === 'advance' ? 'Advance' : 'Credit'
 
   const headerStatus = useMemo(
     () => (

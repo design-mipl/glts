@@ -6,10 +6,7 @@ import type { PricingGroup, PricingModel, PricingRow } from '../types/accountWor
 const SKIP_COUNTRY = new Set(['all', '—', '-'])
 
 function toPricingModel(billingType: AgreementBillingType): PricingModel {
-  if (billingType === 'credit' || billingType === 'advance' || billingType === 'mixed') {
-    return billingType
-  }
-  return 'credit'
+  return billingType
 }
 
 function formatFee(amount: number): string {

@@ -1,5 +1,6 @@
 import type { PortalVisaOption } from '@/shared/services/visaService'
 import type { Country } from '@/shared/types/visa'
+import type { BusinessSegment } from '@/shared/types/countryMaster'
 import {
   ACCOUNT_MAPPED_COUNTRY_IDS,
   countryMasterToPortalCountry,
@@ -41,8 +42,12 @@ export interface RequirementDocumentRow {
   hasSample?: boolean
 }
 
-export function getAccountMappedCountries(): Country[] {
-  return listPortalCountries({ accountMappedOnly: true })
+export function getAccountMappedCountries(segment?: BusinessSegment): Country[] {
+  return listPortalCountries({
+    accountMappedOnly: true,
+    segment,
+    portalDisplaySegment: segment,
+  })
 }
 
 export function getRecentlyUsedCountries(): Country[] {
@@ -57,8 +62,8 @@ export function getTrendingAccountCountries(): Country[] {
     .map((master) => countryMasterToPortalCountry(master))
 }
 
-export function getVisaPurposeOptions(countryId: string): VisaPurposeOption[] {
-  return getVisaOfferings(countryId, true, 'marine').map(o => ({
+export function getVisaPurposeOptions(countryId: string, segment?: BusinessSegment): VisaPurposeOption[] {
+  return getVisaOfferings(countryId, true, segment).map(o => ({
     id: o.id,
     visaType: o.visaTypeId,
     visaTypeLabel: o.visaTypeLabel,
@@ -76,8 +81,8 @@ export {
   getChecklistItemsForOffering,
 }
 
-export function getPopularVisaTypesForCountry(country: Country): string {
-  return getVisaOfferings(country.id, true, 'marine')
+export function getPopularVisaTypesForCountry(country: Country, segment?: BusinessSegment): string {
+  return getVisaOfferings(country.id, true, segment)
     .slice(0, 2)
     .map(o => o.visaTypeLabel)
     .join(' · ')

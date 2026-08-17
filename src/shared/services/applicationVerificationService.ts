@@ -12,7 +12,7 @@ import { getGltsArrangedDocumentDemoSeed } from '@/pages/customer/features/appli
 import { GLTS_APPLICATION_IDS } from '@/pages/customer/data/portalIds'
 import type { ApplicationOperationalStatus } from '@/pages/customer/features/applications/types/applicationListing.types'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
-import { REQUIRED_GLOBAL_CHECKLIST_DOCUMENTS } from '@/pages/customer/features/applications/utils/globalDocumentChecklist'
+import { resolveGlobalChecklistDocuments } from '@/pages/customer/features/applications/utils/globalDocumentChecklist'
 import { withDocumentProgress } from '@/pages/customer/features/applications/utils/uploadQueueDocuments'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import {
@@ -695,9 +695,11 @@ export function mergeVerificationIntoDetail(
           status: 'Open',
         }
       }
-      const globalDoc = REQUIRED_GLOBAL_CHECKLIST_DOCUMENTS.find(
-        doc => doc.documentId === override.documentId,
-      )
+      const globalDoc = resolveGlobalChecklistDocuments({
+        countryLabel: detail.application?.country,
+        visaTypeLabel: detail.application?.visaType,
+        jurisdictionName: detail.application?.jurisdiction,
+      }).find(doc => doc.documentId === override.documentId)
       return {
         id: `ovr-global-${override.documentId}-${index}`,
         field: globalDoc ? `${globalDoc.name} · Global` : `${override.documentId} · Global`,
@@ -1198,9 +1200,26 @@ export function adminDocumentBadgeStatus(
 export function buildGlobalDocumentsForVerification(
   applicationId: string,
   globalUploads: Record<string, { fileName: string; uploadedAt: string }>,
+  context?: {
+    countryId?: string
+    visaOfferingId?: string
+    jurisdictionId?: string
+    countryLabel?: string
+    visaTypeLabel?: string
+    jurisdictionName?: string
+  },
 ): ApplicantDocumentItem[] {
   const record = getRecord(applicationId)
-  return REQUIRED_GLOBAL_CHECKLIST_DOCUMENTS.map(doc => {
+  const listing = findListingRow(applicationId)
+  const globalDocs = resolveGlobalChecklistDocuments({
+    countryId: context?.countryId,
+    visaOfferingId: context?.visaOfferingId,
+    jurisdictionId: context?.jurisdictionId,
+    countryLabel: context?.countryLabel ?? listing?.country,
+    visaTypeLabel: context?.visaTypeLabel ?? listing?.visaType,
+    jurisdictionName: context?.jurisdictionName ?? listing?.jurisdiction,
+  })
+  return globalDocs.map(doc => {
     const uploaded = globalUploads[doc.documentId]
     let status: ApplicantDocumentStatus = uploaded ? 'uploaded' : 'missing'
     const override = record.documentOverrides.find(

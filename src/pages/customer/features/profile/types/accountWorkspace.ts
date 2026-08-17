@@ -3,8 +3,8 @@ import type { CommercialVisaPricingRule, QuotationServiceLine } from '@/shared/t
 
 export type DocumentStatus = 'verified' | 'pending' | 'expired' | 'missing'
 export type AgreementStatus = 'active' | 'expiring' | 'expired' | 'pending'
-export type PricingModel = 'credit' | 'advance' | 'mixed'
-export type BillingType = 'credit' | 'advance' | 'mixed'
+export type PricingModel = 'credit' | 'advance'
+export type BillingType = 'credit' | 'advance'
 
 export interface CompanyOverview {
   companyName: string
@@ -81,13 +81,6 @@ export interface AdvanceBillingConfig {
   advanceRule: string
 }
 
-export interface MixedBillingConfig {
-  advanceBalance: string
-  creditLimit: string
-  outstanding: string
-  remainingCredit: string
-}
-
 export interface AgreementDocument {
   id: string
   label: string
@@ -118,7 +111,6 @@ export interface BillingSummary {
   creditPeriodDays: string
   creditLimit: string
   gracePeriodDays: string
-  advancePercentage?: string
 }
 
 export interface AdvanceAdjustmentPreview {
@@ -157,7 +149,6 @@ export interface BillingAgreementData {
   billingConfig:
     | { billingType: 'credit'; credit: CreditBillingConfig }
     | { billingType: 'advance'; advance: AdvanceBillingConfig }
-    | { billingType: 'mixed'; mixed: MixedBillingConfig }
   pricingGroups: PricingGroup[]
   /** Structured commercial pricing from agreement / quotation (source of truth for portal display). */
   commercialVisaPricing: CommercialVisaPricingRule[]
