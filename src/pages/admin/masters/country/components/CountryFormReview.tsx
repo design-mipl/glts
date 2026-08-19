@@ -1,7 +1,6 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import type { CountryMasterFormData } from '@/shared/types/countryMaster'
-import { PROCESSING_TYPE_LABELS } from '../config/countryProcessingConfig'
 import { SEGMENT_LABELS } from '../config/countrySegmentConfig'
 import { formatPassportIssueLocationsSummary } from './CountryPassportIssueLocationsEditor'
 
@@ -51,7 +50,6 @@ export function CountryFormReview({ data }: CountryFormReviewProps) {
       <Stack spacing={1}>
         <ReviewRow label="Country" value={`${data.name} (${data.code})`} />
         <ReviewRow label="Region" value={data.region} />
-        <ReviewRow label="Processing" value={PROCESSING_TYPE_LABELS[data.processingType]} />
         <ReviewRow label="Application tracking URL" value={data.applicationTrackingUrl} />
         <ReviewRow
           label="Passport locations"

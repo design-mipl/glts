@@ -2028,6 +2028,10 @@ function passportFieldsForApplicant(
 
 export interface SingleApplicationFlowExtras {
   entityName: string
+  department?: string
+  costCode?: string
+  note1?: string
+  note2?: string
   location: string
   billingAddress: string
   vesselName: string
@@ -2067,6 +2071,7 @@ const priyaSharmaSeed: SingleApplicationDemoSeed = {
   basicDetails: {
     crewId: 'GL-847/1',
     rank: 'Third Officer',
+    designation: '',
     applicantName: 'Priya Sharma',
     passportNumber: 'Z1234567',
     nationality: 'IND',
@@ -2134,6 +2139,7 @@ const oliverGrantSeed: SingleApplicationDemoSeed = {
   basicDetails: {
     crewId: 'GL-790/1',
     rank: 'Chief Engineer',
+    designation: '',
     applicantName: 'Oliver Grant',
     passportNumber: 'XK9283746',
     nationality: 'GBR',
@@ -2200,6 +2206,7 @@ const mateoAlvarezSeed: SingleApplicationDemoSeed = {
   basicDetails: {
     crewId: 'GL-744/1',
     rank: 'Second Engineer',
+    designation: '',
     applicantName: 'Mateo Alvarez',
     passportNumber: 'NQ5528931',
     nationality: 'ESP',
@@ -2266,6 +2273,7 @@ const ashaNairSeed: SingleApplicationDemoSeed = {
   basicDetails: {
     crewId: 'GL-739/1',
     rank: 'Deck Cadet',
+    designation: '',
     applicantName: 'Asha Nair',
     passportNumber: 'IN3387214',
     nationality: 'IND',

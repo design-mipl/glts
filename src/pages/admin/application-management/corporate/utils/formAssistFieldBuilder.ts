@@ -33,7 +33,7 @@ const FORM_ASSIST_STEP_SECTIONS: Record<string, FormAssistFieldSectionDefinition
     {
       id: 'identity',
       title: 'Applicant identity',
-      fieldIds: ['rank', 'traveler', 'nationality', 'dateOfBirth'],
+      fieldIds: ['designation', 'traveler', 'nationality', 'dateOfBirth'],
     },
     {
       id: 'contact',
@@ -69,14 +69,14 @@ const FORM_ASSIST_STEP_SECTIONS: Record<string, FormAssistFieldSectionDefinition
     {
       id: 'additional-details',
       title: 'Additional details',
-      fieldIds: ['poCidNo', 'compassNo', 'joiningPort', 'billingEntity', 'vesselName', 'imoNumber'],
+      fieldIds: ['billingEntity'],
     },
   ],
   employment: [
     {
       id: 'employment-record',
       title: 'Employment record',
-      fieldIds: ['crewId', 'cdcNumber', 'employmentOccupation', 'lastContractSignDate'],
+      fieldIds: ['crewId', 'employmentOccupation', 'lastContractSignDate'],
     },
   ],
   address: [
@@ -201,7 +201,7 @@ export function buildFormAssistFieldsForStep(
   switch (stepId) {
     case 'personal':
       return [
-        field('rank', 'Rank', basic.rank),
+        field('designation', 'Designation', basic.designation || additional.employmentOccupation),
         field('traveler', 'Traveler', basic.applicantName || row.travelerName),
         field('nationality', 'Nationality', basic.nationality || row.nationality),
         field('dateOfBirth', 'Date of birth', basic.dateOfBirth),
@@ -237,17 +237,11 @@ export function buildFormAssistFieldsForStep(
       ]
     case 'details':
       return [
-        field('poCidNo', 'PO / CID no.', extras.poCidNo ?? ''),
-        field('compassNo', 'Compass No.', extras.compassNo ?? ''),
-        field('joiningPort', 'Joining port', extras.joiningPort ?? ''),
         field('billingEntity', 'Billing entity', extras.entityName ?? ''),
-        field('vesselName', 'Vessel', extras.vesselName ?? ''),
-        field('imoNumber', 'IMO number', extras.imoNumber ?? ''),
       ]
     case 'employment':
       return [
         field('crewId', 'Applicant no.', basic.crewId || row.gltsApplicantId),
-        field('cdcNumber', 'CDC number', basic.cdcNumber),
         field('employmentOccupation', 'Occupation', additional.employmentOccupation),
         field('lastContractSignDate', 'Last Contract Sign Date', additional.lastContractSignDate),
       ]

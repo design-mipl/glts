@@ -11,6 +11,7 @@ import type {
   WorkflowProfile,
 } from '@/shared/types/countryMaster'
 import { shouldShowJurisdictionNodes } from '@/shared/utils/jurisdictionRequirementPreview'
+import { resolveVisaTypePricingFromConsulateRates } from '@/shared/utils/countryVfsServiceRateUtils'
 
 const COMMON_DOCUMENT_IDS = new Set(['passport', 'photo'])
 
@@ -367,7 +368,7 @@ export function visaTypeToOffering(
     purposeLabel: visaType.purposeLabel ?? visaType.visaCategory,
     processingTimeline: visaType.processingTime,
     entryType: visaType.entryType,
-    approxCost: visaType.pricing,
+    approxCost: resolveVisaTypePricingFromConsulateRates(visaType),
     requirementSummary:
       visaType.requirementSummary ??
       mappings

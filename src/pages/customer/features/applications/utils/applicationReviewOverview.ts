@@ -18,6 +18,10 @@ export interface ApplicationReviewOverview {
   compassNo?: string
   joiningPort?: string
   entityName?: string
+  department?: string
+  costCode?: string
+  note1?: string
+  note2?: string
   gltsApplicationId?: string
   gltsBatchId?: string
   consultantName?: string
@@ -43,6 +47,10 @@ export function toApplicationReviewOverview(source: {
   compassNo?: string
   joiningPort?: string
   entityName?: string
+  department?: string
+  costCode?: string
+  note1?: string
+  note2?: string
   gltsApplicationId?: string
   gltsBatchId?: string
   consultantName?: string
@@ -67,6 +75,10 @@ export function toApplicationReviewOverview(source: {
     compassNo: source.compassNo?.trim() || legacy.compassNo || undefined,
     joiningPort: source.joiningPort?.trim() || undefined,
     entityName: source.entityName,
+    department: source.department?.trim() || undefined,
+    costCode: source.costCode?.trim() || undefined,
+    note1: source.note1?.trim() || undefined,
+    note2: source.note2?.trim() || undefined,
     gltsApplicationId: source.gltsApplicationId,
     gltsBatchId: source.gltsBatchId,
     consultantName: source.consultantName?.trim() || undefined,
@@ -101,6 +113,10 @@ export function buildApplicationReviewOverviewFromFlowState(
     compassNo: compassNo || undefined,
     joiningPort: state.joiningPort.trim() || undefined,
     entityName: state.entityName || undefined,
+    department: state.department.trim() || undefined,
+    costCode: state.costCode.trim() || undefined,
+    note1: state.note1.trim() || undefined,
+    note2: state.note2.trim() || undefined,
     gltsApplicationId: (overrides?.gltsApplicationId ?? state.gltsApplicationId) || undefined,
     gltsBatchId: (overrides?.gltsBatchId ?? state.gltsBatchId) || undefined,
   }

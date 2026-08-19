@@ -1,10 +1,17 @@
 import { Stack } from '@mui/material'
+import { useMemo } from 'react'
 import { FormField, Input, MultiSelect, Select } from '@/design-system/UIComponents'
 import { AdminFormSectionsLayout } from '@/pages/admin/components/AdminFormSectionsLayout'
 import type { AdminFullPageFormSection } from '@/pages/admin/components/AdminFullPageFormShell'
+import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
+import { jurisdictionMasterService } from '@/shared/services/jurisdictionMasterService'
 import type { BusinessSegment, CountryMasterFormData } from '@/shared/types/countryMaster'
 import { INDIAN_STATE_SELECT_OPTIONS } from '../../../config/indianStates'
 import { COUNTRY_WORKSPACE_LAYOUT } from '../../../config/countryWorkspaceLayout'
+import {
+  buildJurisdictionMasterSelectOptions,
+  resolveJurisdictionMasterId,
+} from '../../../utils/countryReferenceOptions'
 import { parseJurisdictionProcessingDays } from '../../../utils/jurisdictionProcessingTime'
 import { CountryVisaConfigurationTabs } from '../CountryVisaConfigurationTabs'
 import { useCountryWorkspaceMode } from '../countryWorkspaceModeContext'
@@ -32,6 +39,18 @@ export function JurisdictionPanel({
   const segConfig = formData.segments.find((s) => s.segment === segment)
   const visaType = segConfig?.visaTypes.find((v) => v.id === visaTypeId)
   const jurisdiction = visaType?.jurisdictions?.find((j) => j.id === jurisdictionId)
+  const selectedJurisdictionMasterId = jurisdiction ? resolveJurisdictionMasterId(jurisdiction) : ''
+  const jurisdictionOptions = useMemo(() => {
+    const excludeIds = (visaType?.jurisdictions ?? [])
+      .filter((entry) => entry.id !== jurisdictionId)
+      .map((entry) => resolveJurisdictionMasterId(entry))
+      .filter(Boolean)
+
+    return buildJurisdictionMasterSelectOptions({
+      excludeIds,
+      currentId: selectedJurisdictionMasterId,
+    })
+  }, [visaType?.jurisdictions, jurisdictionId, selectedJurisdictionMasterId])
 
   if (!jurisdiction) return null
 
@@ -66,9 +85,24 @@ export function JurisdictionPanel({
       columns: 2,
       children: (
         <>
-          <FormField label="Jurisdiction Name">
-            <Input value={jurisdiction.name} onChange={(v) => patchJurisdiction({ name: v })} size="sm" readonly={readOnly} />
-          </FormField>
+          <AdminFullPageFormFieldSpan>
+            <FormField label="Jurisdiction Name" required>
+              <Select
+                value={selectedJurisdictionMasterId}
+                onChange={(value) => {
+                  const master = jurisdictionMasterService.getById(String(value))
+                  if (!master) return
+                  patchJurisdiction({ jurisdictionMasterId: master.id, name: master.name })
+                }}
+                options={jurisdictionOptions}
+                placeholder="Select jurisdiction"
+                searchable
+                size="sm"
+                fullWidth
+                disabled={readOnly}
+              />
+            </FormField>
+          </AdminFullPageFormFieldSpan>
           <FormField label="Embassy / VFS">
             <Input value={jurisdiction.embassyOrVfs} onChange={(v) => patchJurisdiction({ embassyOrVfs: v })} size="sm" readonly={readOnly} />
           </FormField>

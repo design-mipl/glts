@@ -1,5 +1,5 @@
-import { Box, Grid, Stack, Typography, Avatar, LinearProgress } from '@mui/material'
-import { FileText, Upload, CheckCircle2, ArrowRight, Plus, Bell, Plane, AlertTriangle, Ship } from 'lucide-react'
+import { Box, Grid, Stack, Typography } from '@mui/material'
+import { FileText, CheckCircle2, ArrowRight, Plus, Bell, Plane, AlertTriangle, Ship } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
@@ -49,24 +49,6 @@ export function DashboardPage() {
   const isMarinePortal = dashboard.isMarinePortal
   const variant = isBusiness ? getBusinessDashboardVariant(customerType ?? session?.customerType) : null
   const colors = usePublicBrandColors()
-
-  const quickActions =
-    variant?.quickActions.map(action => ({
-      label: action.label,
-      path: action.pathSuffix,
-      icon:
-        action.pathSuffix.includes('crew') || action.pathSuffix.includes('vessel')
-          ? Ship
-          : action.pathSuffix.includes('document')
-            ? Upload
-            : action.pathSuffix.includes('track')
-              ? CheckCircle2
-              : FileText,
-    })) ?? [
-      { label: 'Create application', icon: FileText, path: '/applications/new' },
-      { label: 'Upload documents', icon: Upload, path: '/documents' },
-      { label: 'Track application', icon: CheckCircle2, path: '/tracking' },
-    ]
 
   return (
     <Box>
@@ -130,105 +112,48 @@ export function DashboardPage() {
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Stack spacing={2}>
-            <CustomerCard
-              title={isMarinePortal ? 'Recent crew applications' : 'Recent applications'}
-              subtitle={
-                isMarinePortal
-                  ? 'Passenger, vessel, rank, and travel date for your latest crew work'
-                  : 'Most recent visa work across single and bulk requests'
-              }
-              icon={isMarinePortal ? Ship : FileText}
-              action={
-                <Button variant="text" endIcon={<ArrowRight size={14} />} onClick={() => navigate(`${base}/applications`)}>
-                  View all
-                </Button>
-              }
-            >
-              {applications.length === 0 ? (
-                <CustomerEmptyState
-                  title="No applications yet"
-                  description="Start a visa application and it will appear here for tracking."
-                  actionLabel="Create application"
-                  onAction={() => navigateToCreateApplication(navigate, base)}
-                />
-              ) : (
-                <Stack spacing={1.25}>
-                  {applications.map(app => (
-                    <CustomerActionPanel
-                      key={app.id}
-                      title={applicationPanelTitle(app, isMarinePortal)}
-                      description={applicationPanelDescription(app, isMarinePortal)}
-                      progress={app.progress}
-                      action={
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <CustomerStatusChip label={app.statusLabel} tone={getCustomerStatusTone(app.statusLabel)} />
-                          <Button variant="outlined" onClick={() => navigate(`${base}/applications/${app.id}`)}>
-                            Track
-                          </Button>
-                        </Stack>
-                      }
-                    />
-                  ))}
-                </Stack>
-              )}
-            </CustomerCard>
-
-            <CustomerCard
-              title={isMarinePortal ? 'Active crew' : 'Active journeys'}
-              subtitle={
-                isMarinePortal
-                  ? 'Quick follow-up by passenger, vessel, and travel date'
-                  : 'A card-led view for quick B2B follow-up'
-              }
-              icon={isMarinePortal ? Ship : Plane}
-            >
-              <Grid container spacing={1.5}>
+          <CustomerCard
+            title={isMarinePortal ? 'Recent crew applications' : 'Recent applications'}
+            subtitle={
+              isMarinePortal
+                ? 'Passenger, vessel, rank, and travel date for your latest crew work'
+                : 'Most recent visa work across single and bulk requests'
+            }
+            icon={isMarinePortal ? Ship : FileText}
+            action={
+              <Button variant="text" endIcon={<ArrowRight size={14} />} onClick={() => navigate(`${base}/applications`)}>
+                View all
+              </Button>
+            }
+          >
+            {applications.length === 0 ? (
+              <CustomerEmptyState
+                title="No applications yet"
+                description="Start a visa application and it will appear here for tracking."
+                actionLabel="Create application"
+                onAction={() => navigateToCreateApplication(navigate, base)}
+              />
+            ) : (
+              <Stack spacing={1.25}>
                 {applications.map(app => (
-                  <Grid size={{ xs: 12, md: 4 }} key={app.id}>
-                    <Box
-                      onClick={() => navigate(`${base}/applications/${app.id}`)}
-                      sx={{
-                        p: 2,
-                        border: `1px solid ${colors.border}`,
-                        borderRadius: '14px',
-                        bgcolor: colors.surface,
-                        cursor: 'pointer',
-                        height: '100%',
-                        '&:hover': { borderColor: colors.greenBright },
-                      }}
-                    >
-                      {isMarinePortal ? (
-                        <>
-                          <Ship size={22} color={colors.greenDark} />
-                          <Typography sx={{ mt: 1, fontSize: 14, fontWeight: 800, color: colors.navy }}>
-                            {app.passengerName ?? 'Applicant'}
-                          </Typography>
-                          <Typography sx={{ fontSize: 12, color: colors.textSecondary, fontWeight: 600 }}>
-                            {app.vesselName ?? '—'}
-                          </Typography>
-                          <Typography sx={{ fontSize: 12, color: colors.textMuted }}>
-                            {app.rank ?? '—'} · Travel {app.travelDate}
-                          </Typography>
-                        </>
-                      ) : (
-                        <>
-                          <Typography sx={{ fontSize: 28, lineHeight: 1 }}>{app.countryFlag}</Typography>
-                          <Typography sx={{ mt: 1, fontSize: 14, fontWeight: 800, color: colors.navy }}>{app.country}</Typography>
-                          <Typography sx={{ fontSize: 12, color: colors.textMuted }}>{app.id}</Typography>
-                        </>
-                      )}
-                      <LinearProgress variant="determinate" value={app.progress ?? 0} sx={{ mt: 1.5, height: 6, borderRadius: 99 }} />
-                      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1.25 }}>
+                  <CustomerActionPanel
+                    key={app.id}
+                    title={applicationPanelTitle(app, isMarinePortal)}
+                    description={applicationPanelDescription(app, isMarinePortal)}
+                    progress={app.progress}
+                    action={
+                      <Stack direction="row" spacing={1} alignItems="center">
                         <CustomerStatusChip label={app.statusLabel} tone={getCustomerStatusTone(app.statusLabel)} />
-                        <Typography sx={{ fontSize: 11, color: colors.textMuted }}>ETA {app.eta}</Typography>
+                        <Button variant="outlined" onClick={() => navigate(`${base}/applications/${app.id}`)}>
+                          Track
+                        </Button>
                       </Stack>
-                    </Box>
-                  </Grid>
+                    }
+                  />
                 ))}
-              </Grid>
-            </CustomerCard>
-          </Stack>
+              </Stack>
+            )}
+          </CustomerCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 4 }}>
@@ -253,27 +178,6 @@ export function DashboardPage() {
                       </Button>
                     }
                   />
-                ))}
-              </Stack>
-            </CustomerCard>
-
-            <CustomerCard title="Quick actions" icon={CheckCircle2}>
-              <Stack spacing={1}>
-                {quickActions.map(({ label, icon: Icon, path }) => (
-                  <Button
-                    key={label}
-                    variant="outlined"
-                    fullWidth
-                    startIcon={<Icon size={16} />}
-                    onClick={() =>
-                      path === '/applications/new'
-                        ? navigateToCreateApplication(navigate, base)
-                        : navigate(`${base}${path}`)
-                    }
-                    sx={{ justifyContent: 'flex-start' }}
-                  >
-                    {label}
-                  </Button>
                 ))}
               </Stack>
             </CustomerCard>
@@ -305,23 +209,6 @@ export function DashboardPage() {
                     <Typography sx={{ fontSize: 11, color: colors.textMuted }}>{n.time}</Typography>
                   </Box>
                 ))}
-              </Stack>
-            </CustomerCard>
-
-            <CustomerCard tone="info">
-              <Stack direction="row" spacing={1.25} alignItems="center">
-                <Avatar sx={{ width: 36, height: 36, bgcolor: colors.navy, fontSize: 12, fontWeight: 900 }}>
-                  {contactName
-                    .split(' ')
-                    .map(w => w[0])
-                    .join('')
-                    .slice(0, 2)
-                    .toUpperCase()}
-                </Avatar>
-                <Box>
-                  <Typography sx={{ fontSize: 13, fontWeight: 800, color: colors.navy }}>{contactName}</Typography>
-                  <Typography sx={{ fontSize: 12, color: colors.textMuted }}>{session?.email ?? 'Signed-in customer'}</Typography>
-                </Box>
               </Stack>
             </CustomerCard>
           </Stack>

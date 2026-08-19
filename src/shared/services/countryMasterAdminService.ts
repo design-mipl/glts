@@ -16,6 +16,8 @@ import {
   syncVisaOfferingsFromSegments,
 } from '@/shared/data/countryMasterDefaults'
 import { getCountryConfigSummary } from '@/shared/utils/countryConfigValidation'
+import { resolveVisaTypeProcessingTimelineFromJurisdictions } from '@/shared/utils/countryProcessingTimelineUtils'
+import { resolveVisaTypePricingFromConsulateRates } from '@/shared/utils/countryVfsServiceRateUtils'
 import type {
   BusinessSegment,
   CountryConfigSummary,
@@ -55,11 +57,20 @@ function withSyncedOfferings(
   master: Omit<CountryMaster, 'visaOfferings' | 'updatedAt'> & { updatedAt?: string },
 ): CountryMaster {
   const updatedAt = master.updatedAt ?? nowIso()
+  const segments = master.segments.map((segment) => ({
+    ...segment,
+    visaTypes: segment.visaTypes.map((visaType) => ({
+      ...visaType,
+      pricing: resolveVisaTypePricingFromConsulateRates(visaType),
+      processingTime: resolveVisaTypeProcessingTimelineFromJurisdictions(visaType).timeline,
+    })),
+  }))
   return {
     ...master,
+    segments,
     updatedAt,
     visaOfferings: enrichVisaOfferingsApproxCost(
-      syncVisaOfferingsFromSegments(master.segments),
+      syncVisaOfferingsFromSegments(segments),
       master.price,
     ),
   }

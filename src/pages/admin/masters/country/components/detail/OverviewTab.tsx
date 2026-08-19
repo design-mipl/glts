@@ -1,9 +1,6 @@
 import { Box, Grid, Typography } from '@mui/material'
 import type { BusinessSegment, CountryMaster } from '@/shared/types/countryMaster'
-import {
-  COUNTRY_STATUS_LABELS,
-  PROCESSING_TYPE_LABELS,
-} from '../../config/countryProcessingConfig'
+import { COUNTRY_STATUS_LABELS } from '../../config/countryProcessingConfig'
 import { SEGMENT_LABELS } from '../../config/countrySegmentConfig'
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
@@ -34,9 +31,6 @@ export function OverviewTab({ country, segment }: OverviewTabProps) {
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
         <ReadOnlyField label="Country code" value={country.code} />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <ReadOnlyField label="Processing type" value={PROCESSING_TYPE_LABELS[country.processingType]} />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
         <ReadOnlyField label="Status" value={COUNTRY_STATUS_LABELS[country.status]} />

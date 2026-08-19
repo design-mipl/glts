@@ -1,5 +1,5 @@
 import type { FormAssistVfsServiceChargeLine } from '@/shared/services/applicationFormAssistService'
-import type { CountryVfsServiceRate } from '@/shared/types/countryMaster'
+import type { CountryVisaType, CountryVfsServiceRate } from '@/shared/types/countryMaster'
 
 /** Fixed service name for the optional consulate urgent surcharge row. */
 export const URGENT_CHARGE_SERVICE_NAME = 'Urgent Charge'
@@ -55,4 +55,26 @@ export function mapCountryVfsRatesToChargeLines(
 
 export function formatVfsGstLabel(gstIncluded: boolean | undefined): string {
   return gstIncluded ? 'GST incl.' : 'GST excl.'
+}
+
+export function sumStandardVfsServiceRateAmounts(
+  rates: CountryVfsServiceRate[] | undefined,
+): number {
+  const { standardRates } = splitVfsServiceRates(rates ?? [])
+  return standardRates.reduce((sum, rate) => sum + (Number(rate.amount) || 0), 0)
+}
+
+/** Visa-type list price: sum of standard Consulate Rates (excludes Urgent Charge). */
+export function resolveVisaTypePricingFromConsulateRates(
+  visaType: Pick<CountryVisaType, 'jurisdictionEnabled' | 'vfsServiceRates' | 'jurisdictions'>,
+): number {
+  if (visaType.jurisdictionEnabled === true) {
+    const totals = (visaType.jurisdictions ?? [])
+      .filter((jurisdiction) => jurisdiction.status === 'active')
+      .map((jurisdiction) => sumStandardVfsServiceRateAmounts(jurisdiction.vfsServiceRates))
+    if (totals.length === 0) return 0
+    return Math.min(...totals)
+  }
+
+  return sumStandardVfsServiceRateAmounts(visaType.vfsServiceRates)
 }

@@ -14,6 +14,8 @@ export interface FormSectionProps {
   description?: string
   children: ReactNode
   columns?: 1 | 2 | 3
+  /** Breakpoint where multi-column field grids begin; `xs` = always (default `md`). */
+  fieldColumnsFrom?: 'xs' | 'sm' | 'md'
   divider?: boolean
   collapsible?: boolean
   defaultCollapsed?: boolean
@@ -25,12 +27,19 @@ export default function FormSection({
   description,
   children,
   columns = 2,
+  fieldColumnsFrom = 'md',
   divider = false,
   collapsible = false,
   defaultCollapsed = false,
   sx,
 }: FormSectionProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed)
+  const fieldColumns =
+    columns === 1
+      ? '1fr'
+      : columns === 3
+        ? 'repeat(3, minmax(0, 1fr))'
+        : 'repeat(2, minmax(0, 1fr))'
 
   return (
     <Box
@@ -95,10 +104,15 @@ export default function FormSection({
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              md: columns === 1 ? '1fr' : `repeat(${columns}, minmax(0, 1fr))`,
-            },
+            gridTemplateColumns:
+              columns === 1
+                ? '1fr'
+                : fieldColumnsFrom === 'xs'
+                  ? fieldColumns
+                  : {
+                      xs: '1fr',
+                      [fieldColumnsFrom]: fieldColumns,
+                    },
             gap: 3,
           }}
         >

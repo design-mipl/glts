@@ -5,13 +5,8 @@ import {
 } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { isBulkRow } from '@/pages/customer/features/applications/types/applicationListing.types'
-import { resolveApplicationCompanyName, resolveApplicationVesselName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
-import {
-  resolveApplicationBillingEntity,
-  resolveApplicationCompassNo,
-  resolveApplicationJoiningPort,
-  resolveApplicationPoCidNo,
-} from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
+import { resolveApplicationCompanyName, resolveApplicationDesignation } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { resolveApplicationBillingEntity } from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
 import { resolveApplicationCreatorLabel } from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
 import { getListingCellValue } from '@/pages/customer/features/applications/utils/applicationListingUtils'
 import { mapApplicationRowsToGridItems } from '@/pages/customer/features/applications/utils/applicationListingGrid'
@@ -42,11 +37,8 @@ export function matchesCorporateApplicationSearch(row: CorporateApplicationRow, 
   if (!s) return true
   if (row.id.toLowerCase().includes(s)) return true
   if (resolveApplicationCompanyName(row).toLowerCase().includes(s)) return true
-  if (resolveApplicationVesselName(row).toLowerCase().includes(s)) return true
-  if (row.poReference?.toLowerCase().includes(s)) return true
-  if (resolveApplicationPoCidNo(row).toLowerCase().includes(s)) return true
-  if (resolveApplicationCompassNo(row).toLowerCase().includes(s)) return true
-  if (resolveApplicationJoiningPort(row).toLowerCase().includes(s)) return true
+  const designation = resolveApplicationDesignation(row).toLowerCase()
+  if (designation !== '—' && designation.includes(s)) return true
   if (resolveApplicationBillingEntity(row).toLowerCase().includes(s)) return true
   if (resolveApplicationCreatorLabel(row.createdByEmail).toLowerCase().includes(s)) return true
   if (row.jurisdiction?.toLowerCase().includes(s)) return true
@@ -182,12 +174,9 @@ export function exportCorporateApplicationsToCsv(rows: CorporateApplicationRow[]
     'GLTS reference',
     'Type',
     'Pax name',
+    'Designation',
     'Company name',
-    'Vessel',
     'Billing entity',
-    'PO / CID no.',
-    'Compass No.',
-    'Joining port',
     'Country',
     'Visa type',
     'Jurisdiction',
@@ -202,19 +191,15 @@ export function exportCorporateApplicationsToCsv(rows: CorporateApplicationRow[]
     const type = isBulkRow(row) ? 'Bulk' : 'Single'
     const applicant = isBulkRow(row) ? formatBulkApplicantListingLabel(row) : row.applicantName
     const companyName = resolveApplicationCompanyName(row)
-    const vesselName = resolveApplicationVesselName(row)
     const createdBy = getCorporateApplicationCellValue(row, 'createdBy')
     return [
       row.createdAt,
       row.id,
       type,
       applicant,
+      resolveApplicationDesignation(row),
       companyName,
-      vesselName,
       resolveApplicationBillingEntity(row),
-      resolveApplicationPoCidNo(row),
-      resolveApplicationCompassNo(row),
-      resolveApplicationJoiningPort(row),
       row.country,
       row.visaType,
       row.jurisdiction ?? '—',

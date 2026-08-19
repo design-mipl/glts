@@ -33,3 +33,15 @@ export function parseBusinessSegmentFromPath(pathname: string): CustomerType | n
 export function isMarineCustomer(customerType?: CustomerType): boolean {
   return customerType === 'marine'
 }
+
+/** Display label for the signed-in customer portal (avatar menu, profile chrome). */
+export function getCustomerPortalLabel(
+  customerType?: CustomerType,
+  options?: { isBusiness?: boolean },
+): string {
+  if (customerType === 'marine') return 'Marine Portal'
+  if (customerType === 'corporate') return 'Corporate Portal'
+  if (customerType === 'b2b_agent') return 'B2B Agent Portal'
+  if (options?.isBusiness) return 'Business Portal'
+  return 'Retail Portal'
+}

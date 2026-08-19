@@ -21,7 +21,6 @@ export const QC_CHECK_CHECKLIST_SECTIONS: QcCheckChecklistSection[] = [
     items: [
       { id: 'form-filled-per-checklist', label: 'Form filled correctly as per checklist' },
       { id: 'passport-details-verified', label: 'Passport Details Verified' },
-      { id: 'cdc-number-validity-verified', label: 'CDC Number and Validity Verified' },
       { id: 'jurisdiction-verified', label: 'Jurisdiction Verified' },
     ],
   },
@@ -33,7 +32,6 @@ export const QC_CHECK_CHECKLIST_SECTIONS: QcCheckChecklistSection[] = [
       { id: 'loi-date', label: 'Proper Date' },
       { id: 'loi-subject', label: 'Proper Subject Line' },
       { id: 'loi-applicant-name', label: 'Applicant Name as per Passport' },
-      { id: 'loi-cdc-details', label: 'CDC Details Verified' },
       { id: 'loi-vessel-name', label: 'Vessel Name Verified' },
       { id: 'loi-expense-bearer', label: 'Expense Bearer Mentioned' },
       { id: 'loi-issue-date', label: 'LOI Issue Date Verified' },
@@ -47,7 +45,6 @@ export const QC_CHECK_CHECKLIST_SECTIONS: QcCheckChecklistSection[] = [
       { id: 'covering-date', label: 'Proper Date' },
       { id: 'covering-subject', label: 'Proper Subject Line' },
       { id: 'covering-applicant-name', label: 'Applicant Name as per Passport' },
-      { id: 'covering-cdc-details', label: 'CDC Details Verified' },
       { id: 'covering-vessel-name', label: 'Vessel Name Verified' },
       { id: 'covering-expense-bearer', label: 'Expense Bearer Mentioned' },
       { id: 'covering-issue-date', label: 'Covering Letter Issue Date Verified' },

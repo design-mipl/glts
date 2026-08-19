@@ -34,7 +34,7 @@ interface DestinationImageCardProps {
   country: Country
   href?: string
   imageWidth?: number
-  /** Homepage: show name + cities only; reveal ETA, price, and CTA on hover. */
+  /** Homepage: show country name only; reveal ETA, price, and CTA on hover. */
   revealDetailsOnHover?: boolean
 }
 
@@ -174,7 +174,7 @@ export function DestinationImageCard({
             color: '#fff',
             textShadow: '0 2px 8px rgba(0, 0, 0, 0.45)',
             lineHeight: 1.2,
-            mb: 0.5,
+            mb: revealDetailsOnHover ? 0 : 1.25,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -182,28 +182,6 @@ export function DestinationImageCard({
         >
           {country.name}
         </Typography>
-
-        {country.cities ? (
-          <Typography
-            sx={{
-              fontSize: '12px',
-              fontWeight: 500,
-              color: 'rgba(255, 255, 255, 0.72)',
-              textShadow: '0 1px 6px rgba(0, 0, 0, 0.45)',
-              lineHeight: 1.35,
-              mb: revealDetailsOnHover ? 0 : 1.25,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              minHeight: revealDetailsOnHover ? undefined : '2.7em',
-            }}
-          >
-            {country.cities}
-          </Typography>
-        ) : (
-          !revealDetailsOnHover && <Box sx={{ minHeight: '2.7em', mb: 1.25 }} />
-        )}
 
         <Box
           className="destination-card-details-panel"

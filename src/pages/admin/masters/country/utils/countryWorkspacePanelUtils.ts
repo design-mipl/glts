@@ -1,7 +1,6 @@
 import type { BusinessSegment, CountryMaster } from '@/shared/types/countryMaster'
 import { formatConfigNodePath } from '@/shared/utils/countryConfigValidation'
 import { SEGMENT_LABELS } from '../config/countrySegmentConfig'
-import { PROCESSING_TYPE_LABELS } from '../config/countryProcessingConfig'
 
 export type WorkspacePanelKind =
   | 'overview'
@@ -48,7 +47,6 @@ export function getWorkspacePanelMeta(
       metaTags: [
         country.code,
         country.region,
-        PROCESSING_TYPE_LABELS[country.processingType],
         country.status,
       ],
     }

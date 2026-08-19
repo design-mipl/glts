@@ -100,6 +100,10 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
         companyName: '',
         entityId: '',
         entityName: '',
+        department: '',
+        costCode: '',
+        note1: '',
+        note2: '',
         contactPerson: '',
         location: '',
         billingAddress: '',
@@ -123,6 +127,10 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
       companyName: account.companyName,
       entityId: '',
       entityName: '',
+      department: '',
+      costCode: '',
+      note1: '',
+      note2: '',
       contactPerson: '',
       location: '',
       billingAddress: '',
@@ -144,6 +152,10 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
       onUpdate({
         entityId: '',
         entityName: '',
+        department: '',
+        costCode: '',
+        note1: '',
+        note2: '',
         contactPerson: '',
         location: '',
         billingAddress: '',
@@ -199,9 +211,9 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
     : isMarine
       ? 'Select a vessel and billing entity from your master lists, and optionally add PO / CID no., Compass No., and joining port.'
       : isCorporate
-        ? 'Select an entity from your master list to auto-fill corporate billing details.'
+        ? 'Select a billing entity from your master list and add department, cost code, and notes for billing allocation.'
         : isB2b
-          ? 'Select an entity from your master list to auto-fill client billing details.'
+          ? 'Select a billing entity from your master list and add department, cost code, and notes for client billing.'
           : 'Confirm travel and billing details, then continue to submit.'
 
   return (
@@ -245,21 +257,65 @@ export function DetailsStep({ state, onUpdate, onContinue }: DetailsStepProps) {
           {showEntityDetails && (
             <>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <FormField label="Entity">
+                <FormField label="Billing entity">
                   <Select
                     fullWidth
                     placeholder={
                       entityVesselDisabled
                         ? 'Select a company first'
-                        : 'Select entity from master'
+                        : 'Select billing entity from master'
                     }
                     value={state.entityId}
                     onChange={v => handleEntitySelect(String(v))}
                     disabled={entityVesselDisabled}
                     options={[
-                      { value: '', label: 'Select entity' },
+                      { value: '', label: 'Select billing entity' },
                       ...activeEntities.map(e => ({ value: e.id, label: e.entityName })),
                     ]}
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Department" optional>
+                  <Input
+                    fullWidth
+                    size="sm"
+                    placeholder="e.g. Finance, Travel Desk"
+                    value={state.department}
+                    onChange={value => onUpdate({ department: value })}
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Cost code" optional>
+                  <Input
+                    fullWidth
+                    size="sm"
+                    placeholder="e.g. CC-2026-014"
+                    value={state.costCode}
+                    onChange={value => onUpdate({ costCode: value })}
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Note 1" optional>
+                  <Input
+                    fullWidth
+                    size="sm"
+                    placeholder="Optional billing note"
+                    value={state.note1}
+                    onChange={value => onUpdate({ note1: value })}
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Note 2" optional>
+                  <Input
+                    fullWidth
+                    size="sm"
+                    placeholder="Optional billing note"
+                    value={state.note2}
+                    onChange={value => onUpdate({ note2: value })}
                   />
                 </FormField>
               </Grid>

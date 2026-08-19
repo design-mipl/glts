@@ -15,7 +15,9 @@ import { isBulkRow } from '../types/applicationListing.types'
 import { getApplicationTypeLabel } from '../components/listing/applicationStatus'
 import {
   resolveApplicationCompanyName,
+  resolveApplicationDesignation,
   resolveApplicationRank,
+  resolveApplicationTravelerRole,
   resolveApplicationVesselName,
 } from './applicationCompanyUtils'
 import {
@@ -25,6 +27,10 @@ import {
   resolveApplicationPoCidNo,
 } from './applicationReferenceUtils'
 import { resolveApplicationCreatorLabel, getApplicationCreatorOptions } from './applicationCreatorUtils'
+import {
+  showsMarineReferenceFields,
+  usesDesignationLabel,
+} from '@/shared/utils/applicationSegmentListingPolicy'
 
 export function getAllListingRows(singles: SingleApplicationRow[], bulks: BulkBatchRow[]): ApplicationListingRow[] {
   return [...singles, ...bulks]
@@ -69,9 +75,11 @@ export function matchesListingSearch(row: ApplicationListingRow, query: string):
   const company = resolveApplicationCompanyName(row).toLowerCase()
   if (company.includes(s)) return true
   const vessel = resolveApplicationVesselName(row).toLowerCase()
-  if (vessel !== '—' && vessel.includes(s)) return true
+  if (showsMarineReferenceFields(row.customerSegment) && vessel !== '—' && vessel.includes(s)) return true
   const rank = resolveApplicationRank(row).toLowerCase()
-  if (rank !== '—' && rank.includes(s)) return true
+  if (row.customerSegment === 'marine' && rank !== '—' && rank.includes(s)) return true
+  const designation = resolveApplicationDesignation(row).toLowerCase()
+  if (usesDesignationLabel(row.customerSegment) && designation !== '—' && designation.includes(s)) return true
   if (row.poReference?.toLowerCase().includes(s)) return true
   if (resolveApplicationPoCidNo(row).toLowerCase().includes(s)) return true
   if (resolveApplicationCompassNo(row).toLowerCase().includes(s)) return true
@@ -135,6 +143,8 @@ export function getListingCellValue(row: ApplicationListingRow, key: string): st
   if (key === 'companyName') return resolveApplicationCompanyName(row)
   if (key === 'vesselName') return resolveApplicationVesselName(row)
   if (key === 'rank') return resolveApplicationRank(row)
+  if (key === 'designation') return resolveApplicationDesignation(row)
+  if (key === 'travelerRole') return resolveApplicationTravelerRole(row)
   if (key === 'jurisdiction') return row.jurisdiction?.trim() || '—'
   if (isBulkRow(row)) {
     if (key === 'totalApplicants') return String(row.totalApplicants)

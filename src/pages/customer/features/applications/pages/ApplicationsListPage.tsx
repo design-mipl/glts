@@ -14,6 +14,7 @@ import { mapApplicationRowsToGridItems } from '../utils/applicationListingGrid'
 import { useApplicationListingWorkspace } from '../hooks/useApplicationListingWorkspace'
 import { ApplicationListingHeader } from '../components/listing/ApplicationListingHeader'
 import { buildUnifiedApplicationColumns } from '../components/listing/applicationListingColumns'
+import { useApplicationFlowPolicy } from '../context/ApplicationFlowPolicyContext'
 import type { ApplicationListingTab } from '../types/applicationListing.types'
 import type { ApplicationListingRow } from '../types/applicationListing.types'
 import type { BulkBatchRow, SingleApplicationRow } from '../data/applicationFlowData'
@@ -50,6 +51,7 @@ function getEmptyState(
 export function ApplicationsListPage() {
   const navigate = useNavigate()
   const { base, isSuperAdmin, isAdmin } = useCustomerPortalBase()
+  const { customerSegment } = useApplicationFlowPolicy()
   const showCreatedBy = isSuperAdmin || isAdmin
   const { showToast } = useToast()
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
@@ -60,8 +62,8 @@ export function ApplicationsListPage() {
   const { listing, activeTab, setActiveTab } = workspace
 
   const columnParams = useMemo(
-    () => ({ base, navigate, showToast, showCreatedBy }),
-    [base, navigate, showToast, showCreatedBy],
+    () => ({ base, navigate, showToast, showCreatedBy, customerSegment }),
+    [base, navigate, showToast, showCreatedBy, customerSegment],
   )
 
   const columns = useMemo(
