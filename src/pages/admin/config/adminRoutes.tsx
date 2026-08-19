@@ -1,136 +1,102 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { LazyRouteBoundary } from '@/shared/routing/lazyRoute'
 import { AdminModulePlaceholder } from '../components/AdminModulePlaceholder'
 import { PermissionGuard } from '../components/PermissionGuard'
 import {
-  CreateEnquiryPage,
-  EditEnquiryPage,
-  EnquiryDetailPage,
-  EnquiryListingPage,
-} from '../customer-accounts/enquiries'
-import {
+  AccountsDashboardNextPage,
+  AccountsDashboardPage,
+  AdminDashboardNextPage,
+  AdminProfilePage,
   AgreementDetailPage,
   AgreementListingPage,
-  CreateAgreementPage,
-  EditAgreementPage,
-} from '../customer-accounts/agreements'
-import {
-  CorporateAccountDetailPage,
-  CorporateAccountListingPage,
-  CreateCorporateAccountPage,
-  EditCorporateAccountPage,
-} from '../customer-accounts/corporate-accounts'
-import {
-  CreateQuotationPage,
-  EditQuotationPage,
-  QuotationDetailPage,
-  QuotationListingPage,
-  QuotationPdfPreviewPage,
-} from '../customer-accounts/quotations'
-import {
-  CountryConfigWorkspacePage,
-  CountryListingPage,
-  EditCountryConfigWorkspacePage,
-} from '../masters/country'
-import {
-  DocumentDetailPage,
-  DocumentListingPage,
-} from '../masters/documents'
-import { BankMasterListingPage } from '../masters/bank-master'
-import { CardMasterListingPage } from '../masters/card-master'
-import { CountryGroupListingPage } from '../masters/country-groups'
-import { JurisdictionListingPage } from '../masters/jurisdiction'
-import { SacCodeListingPage } from '../masters/sac-codes'
-import { ServiceListingPage } from '../masters/services'
-import { TaxConfigurationPage } from '../masters/tax'
-import { WorkflowListingPage } from '../masters/workflows'
-import { SlaListingPage } from '../masters/sla'
-import { OperationsDashboardPage } from '../operations/dashboard/pages/OperationsDashboardPage'
-import {
-  AccountsDashboardPage,
-  DocumentationDashboardPage,
-  OperationsConsultantDashboardPage,
-} from '../dashboard'
-import {
-  SuperAdminDashboardNextPage,
-  AdminDashboardPage as AdminDashboardNextPage,
-  OperationsDashboardNextPage,
-  DocumentationDashboardNextPage,
-  AccountsDashboardNextPage,
-  GroundOperationsDashboardNextPage,
-} from '../dashboard-next'
-import { AdminProfilePage } from '../profile/AdminProfilePage'
-import {
-  MarineApplicationListingPage,
-  MarineCreateApplicationPage,
-  MarineVerifyDocumentsPage,
-  MarineViewFormPage,
-} from '../application-management/marine'
-import {
-  CorporateApplicationListingPage,
-  CorporateCreateApplicationPage,
-  CorporateVerifyDocumentsPage,
-  CorporateViewFormPage,
-} from '../application-management/corporate'
-import {
+  ApplicationExpenseDetailPage,
   B2bApplicationListingPage,
+  B2bAssignmentQueuePage,
   B2bCreateApplicationPage,
   B2bVerifyDocumentsPage,
   B2bViewFormPage,
-} from '../application-management/b2b-agents'
-import { InvoiceFinanceRoutes } from '../finance/invoices/InvoiceFinanceRoutes'
-import {
+  BankMasterListingPage,
   BillingReportsPage,
+  CardMasterListingPage,
+  ComponentLibrary,
+  CorporateAccountDetailPage,
+  CorporateAccountListingPage,
+  CorporateApplicationListingPage,
+  CorporateAssignmentQueuePage,
+  CorporateCreateApplicationPage,
+  CorporateVerifyDocumentsPage,
+  CorporateViewFormPage,
+  CountryConfigWorkspacePage,
+  CountryGroupListingPage,
+  CountryListingPage,
+  CreateAgreementPage,
+  CreateCorporateAccountPage,
+  CreateEnquiryPage,
+  CreateQuotationPage,
+  CreateUserPage,
+  CreateVendorPage,
   CreditNoteCompositionPage,
-  GenerateInvoiceCompositionPage,
-  GenerateInvoiceStepperPage,
-  InvoiceDetailPage,
-  InvoiceListingPage,
-} from '../finance/invoices'
-import { ExpenseFinanceRoutes } from '../finance/expenses/ExpenseFinanceRoutes'
-import {
-  ApplicationExpenseDetailPage,
-  ExpenseListingPage,
-} from '../finance/expenses'
-import { VendorBillingRoutes } from '../finance/vendor-billing/VendorBillingRoutes'
-import {
-  VendorBillingDetailPage,
-  VendorBillingListingPage,
-} from '../finance/vendor-billing'
-import { FundAllocationListingPage } from '../finance/fund-allocation'
-import { ReconciliationListingPage } from '../finance/reconciliation'
-import { TeamDetailPage, TeamListingPage } from '../user-management/teams'
-import {
   DepartmentDetailPage,
   DepartmentListingPage,
-} from '../user-management/departments'
-import {
-  CreateUserPage,
+  DocumentationDashboardNextPage,
+  DocumentationDashboardPage,
+  DocumentDetailPage,
+  DocumentListingPage,
+  EditAgreementPage,
+  EditCorporateAccountPage,
+  EditCountryConfigWorkspacePage,
+  EditEnquiryPage,
+  EditQuotationPage,
   EditUserPage,
+  EditVendorPage,
+  EnquiryDetailPage,
+  EnquiryListingPage,
+  ExpenseFinanceRoutes,
+  ExpenseListingPage,
+  FundAllocationListingPage,
+  FundUtilizationListingPage,
+  GenerateInvoiceCompositionPage,
+  GenerateInvoiceStepperPage,
+  GroundOperationsDashboardNextPage,
+  InvoiceDetailPage,
+  InvoiceFinanceRoutes,
+  InvoiceListingPage,
+  JurisdictionListingPage,
+  LogisticsListingPage,
+  MarineApplicationListingPage,
+  MarineAssignmentQueuePage,
+  MarineCreateApplicationPage,
+  MarineVerifyDocumentsPage,
+  MarineViewFormPage,
+  OperationalCaseHandlingPage,
+  OperationsConsultantDashboardPage,
+  OperationsDashboardNextPage,
+  OperationsDashboardPage,
+  QuotationDetailPage,
+  QuotationListingPage,
+  QuotationPdfPreviewPage,
+  ReconciliationListingPage,
+  RetailAssignmentQueuePage,
+  SacCodeListingPage,
+  ServiceListingPage,
+  SlaListingPage,
+  SuperAdminDashboardNextPage,
+  SupportTicketDetailPage,
+  SupportTicketListingPage,
+  TaxConfigurationPage,
+  TeamDetailPage,
+  TeamListingPage,
+  TemplateShowcaseRoutes,
   UserDetailPage,
   UserListingPage,
   UserPermissionConfigurationPage,
-} from '../user-management/users'
-import ComponentLibrary from '../_tools/ComponentLibrary'
-import TemplateShowcaseRoutes from '../_tools/TemplateShowcase'
-import { OperationalCaseHandlingPage } from '../ground-operations/case-handling'
-import { FundUtilizationListingPage } from '../ground-operations/fund-utilization'
-import { LogisticsListingPage } from '../ground-operations/logistics'
-import {
-  CreateVendorPage,
-  EditVendorPage,
+  VendorBillingDetailPage,
+  VendorBillingListingPage,
+  VendorBillingRoutes,
   VendorDetailPage,
   VendorListingPage,
-} from '../masters/vendors'
-import {
-  SupportTicketDetailPage,
-  SupportTicketListingPage,
-} from '../support/tickets'
-import {
-  MarineAssignmentQueuePage,
-  CorporateAssignmentQueuePage,
-  RetailAssignmentQueuePage,
-  B2bAssignmentQueuePage,
-} from '../assignment-priority'
+  WorkflowListingPage,
+} from './adminRoutePages'
 import { ADMIN_ALL_DASHBOARDS, ADMIN_HOME_HREF } from './adminDashboards'
 
 type AdminRouteKind = 'coming-soon' | 'dashboard' | 'operations' | 'profile' | 'tools'
@@ -251,6 +217,7 @@ function AdminFoundationPage({ route }: { route: AdminRouteDefinition }) {
 
 export function AdminRoutes() {
   return (
+    <LazyRouteBoundary label="Loading module…">
     <Routes>
       <Route
         path="customer-accounts/enquiries"
@@ -914,5 +881,6 @@ export function AdminRoutes() {
       ))}
       <Route path="*" element={<Navigate to={ADMIN_HOME_HREF} replace />} />
     </Routes>
+    </LazyRouteBoundary>
   )
 }

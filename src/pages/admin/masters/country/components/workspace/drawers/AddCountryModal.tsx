@@ -5,6 +5,7 @@ import { ADMIN_MODAL_FORM_LAYOUT } from '@/pages/admin/components/adminOverlayFo
 import { countryMasterAdminService } from '@/shared/services/countryMasterAdminService'
 import type { CountryMasterStatus } from '@/shared/types/countryMaster'
 import { COUNTRY_STATUS_OPTIONS } from '../../../config/countryProcessingConfig'
+import { buildCountryRegionSelectOptions } from '../../../utils/countryReferenceOptions'
 
 interface AddCountryModalProps {
   open: boolean
@@ -86,7 +87,13 @@ export function AddCountryModal({ open, onClose, onCreated }: AddCountryModalPro
           <Input value={code} onChange={setCode} placeholder="e.g. CN" size="sm" />
         </FormField>
         <FormField label="Region" required>
-          <Input value={region} onChange={setRegion} placeholder="e.g. Asia" size="sm" />
+          <Select
+            value={region}
+            onChange={(v) => setRegion(String(v))}
+            placeholder="Select region"
+            options={buildCountryRegionSelectOptions(region)}
+            size="sm"
+          />
         </FormField>
         <FormField label="Status">
           <Select

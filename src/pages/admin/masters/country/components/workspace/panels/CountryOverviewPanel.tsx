@@ -15,13 +15,13 @@ import type {
 } from '@/shared/types/countryMaster'
 import {
   COUNTRY_STATUS_OPTIONS,
-  PROCESSING_TYPE_OPTIONS,
   VISA_APPLICATION_WINDOW_UNIT_OPTIONS,
   VISA_APPLICATION_WINDOW_VALUE_OPTIONS,
 } from '../../../config/countryProcessingConfig'
 import { COUNTRY_WORKSPACE_LAYOUT } from '../../../config/countryWorkspaceLayout'
 import {
   buildCountryReferenceSelectOptions,
+  buildCountryRegionSelectOptions,
   resolveCountryReferenceByCode,
 } from '../../../utils/countryReferenceOptions'
 import { CountryFormImageField } from '../../CountryFormImageField'
@@ -61,6 +61,11 @@ export function CountryOverviewPanel({
   const countryNameOptions = useMemo(
     () => buildCountryReferenceSelectOptions({ name: formData.name, code: formData.code }),
     [formData.name, formData.code],
+  )
+
+  const regionOptions = useMemo(
+    () => buildCountryRegionSelectOptions(formData.region),
+    [formData.region],
   )
 
   const handleCountrySelect = (code: string | number) => {
@@ -118,13 +123,11 @@ export function CountryOverviewPanel({
             <Input value={formData.code} size="sm" readonly />
           </FormField>
           <FormField label="Region">
-            <Input value={formData.region} onChange={(v) => patch({ region: v })} size="sm" readonly={readOnly} />
-          </FormField>
-          <FormField label="Processing Type">
             <Select
-              value={formData.processingType}
-              onChange={(v) => patch({ processingType: v as CountryMasterFormData['processingType'] })}
-              options={PROCESSING_TYPE_OPTIONS}
+              value={formData.region}
+              onChange={(v) => patch({ region: String(v) })}
+              placeholder="Select region"
+              options={regionOptions}
               size="sm"
               disabled={readOnly}
             />

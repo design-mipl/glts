@@ -13,6 +13,10 @@ export function buildApplicationOverviewMetaRows(
   const rows: Array<[string, string]> = [
     ['Company', overview.companyName?.trim() || '—'],
     ['Billing entity', overview.entityName?.trim() || '—'],
+    ['Department', overview.department?.trim() || '—'],
+    ['Cost code', overview.costCode?.trim() || '—'],
+    ['Note 1', overview.note1?.trim() || '—'],
+    ['Note 2', overview.note2?.trim() || '—'],
     ['Vessel', overview.vesselName?.trim() || '—'],
     ['PO / CID no.', overview.poCidNo?.trim() || '—'],
     ['Compass No.', overview.compassNo?.trim() || '—'],

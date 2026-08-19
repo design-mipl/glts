@@ -17,12 +17,9 @@ import {
   getApplicationOperationalBadgeColor,
   getApplicationTypeLabel,
 } from '@/pages/customer/features/applications/components/listing/applicationStatus'
-import { resolveApplicationCompanyName, resolveApplicationVesselName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { resolveApplicationCompanyName, resolveApplicationDesignation } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
 import {
   resolveApplicationBillingEntity,
-  resolveApplicationCompassNo,
-  resolveApplicationJoiningPort,
-  resolveApplicationPoCidNo,
 } from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
 import {
   resolveApplicationCreatorLabel,
@@ -195,6 +192,18 @@ export function buildCorporateApplicationColumns({
       },
     },
     {
+      key: 'designation',
+      label: 'Designation',
+      widthSize: 'sm',
+      sortable: false,
+      filterable: false,
+      render: (_: unknown, row: CorporateApplicationRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }}>
+          {resolveApplicationDesignation(row)}
+        </Typography>
+      ),
+    },
+    {
       key: 'companyName',
       label: 'Company name',
       widthSize: 'lg',
@@ -207,18 +216,6 @@ export function buildCorporateApplicationColumns({
       ),
     },
     {
-      key: 'vesselName',
-      label: 'Vessel',
-      widthSize: 'md',
-      sortable: true,
-      filterable: true,
-      render: (_: unknown, row: CorporateApplicationRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationVesselName(row)}
-        </Typography>
-      ),
-    },
-    {
       key: 'billingEntityName',
       label: 'Billing entity',
       widthSize: 'md',
@@ -227,42 +224,6 @@ export function buildCorporateApplicationColumns({
       render: (_: unknown, row: CorporateApplicationRow) => (
         <Typography variant="body2" sx={{ fontSize: 13 }}>
           {resolveApplicationBillingEntity(row)}
-        </Typography>
-      ),
-    },
-    {
-      key: 'poCidNo',
-      label: 'PO / CID no.',
-      widthSize: 'sm',
-      sortable: false,
-      filterable: false,
-      render: (_: unknown, row: CorporateApplicationRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationPoCidNo(row)}
-        </Typography>
-      ),
-    },
-    {
-      key: 'compassNo',
-      label: 'Compass No.',
-      widthSize: 'sm',
-      sortable: false,
-      filterable: false,
-      render: (_: unknown, row: CorporateApplicationRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationCompassNo(row)}
-        </Typography>
-      ),
-    },
-    {
-      key: 'joiningPort',
-      label: 'Joining port',
-      widthSize: 'sm',
-      sortable: false,
-      filterable: false,
-      render: (_: unknown, row: CorporateApplicationRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationJoiningPort(row)}
         </Typography>
       ),
     },

@@ -106,9 +106,6 @@ export function SingleVisaPurposeStep({
                     </Stack>
                   ) : null}
                 </Stack>
-                <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 1.25, lineHeight: 1.4 }}>
-                  {opt.requirementSummary}
-                </Typography>
               </Card>
             </Grid>
           )

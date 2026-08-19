@@ -170,6 +170,8 @@ export interface CountryVisaJurisdiction {
   priorityLevel: JurisdictionPriorityLevel
   status: VisaTypeStatus
   applicableStates: string[]
+  /** Link to Jurisdiction Master record. */
+  jurisdictionMasterId?: string
   processingRules: CountryJurisdictionProcessingRules
   documents: CountryJurisdictionDocumentRule[]
   /** GLTS service scope and responsibilities for this jurisdiction. */
@@ -205,6 +207,7 @@ export interface CountryVisaType {
   docsQcChecklist?: CountryQcChecklistTemplate
   /** VFS service rates when jurisdiction is disabled. */
   vfsServiceRates?: CountryVfsServiceRate[]
+  /** Derived from Consulate Rates (standard rows, excluding Urgent Charge). */
   pricing?: number
   jurisdictions: CountryVisaJurisdiction[]
   /** Visa-type / application-specific documents (in addition to segment common documents). */

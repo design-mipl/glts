@@ -1,6 +1,7 @@
 export interface ApplicantBasicDetails {
   crewId: string
   rank: string
+  designation: string
   applicantName: string
   passportNumber: string
   nationality: string
@@ -21,6 +22,7 @@ export function emptyApplicantBasicDetails(): ApplicantBasicDetails {
   return {
     crewId: '',
     rank: '',
+    designation: '',
     applicantName: '',
     passportNumber: '',
     nationality: '',

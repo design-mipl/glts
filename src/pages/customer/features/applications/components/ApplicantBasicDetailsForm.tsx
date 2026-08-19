@@ -2,6 +2,7 @@ import { Box, Grid, Typography } from '@mui/material'
 import { FormField, Input } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { requiresFieldValidation, useApplicationFlowPolicy } from '../context/ApplicationFlowPolicyContext'
+import { usesDesignationLabel } from '@/shared/utils/applicationSegmentListingPolicy'
 import type { ApplicantBasicDetails } from '../config/applicantBasicDetailsConfig'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 
@@ -20,6 +21,7 @@ export function ApplicantBasicDetailsForm({
   const { policy, customerSegment } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
   const isMarine = customerSegment === 'marine'
+  const showDesignation = usesDesignationLabel(customerSegment)
   const crewFromReference = Boolean(row.gltsApplicantId?.trim())
 
   return (
@@ -53,6 +55,19 @@ export function ApplicantBasicDetailsForm({
                 value={details.rank}
                 onChange={value => onChange({ rank: value })}
                 placeholder="e.g. Third Officer"
+              />
+            </FormField>
+          </Grid>
+        ) : null}
+        {showDesignation ? (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Designation">
+              <Input
+                fullWidth
+                size="sm"
+                value={details.designation}
+                onChange={value => onChange({ designation: value })}
+                placeholder="e.g. Senior Manager"
               />
             </FormField>
           </Grid>
@@ -98,16 +113,18 @@ export function ApplicantBasicDetailsForm({
             />
           </FormField>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FormField label="CDC number">
-            <Input
-              fullWidth
-              size="sm"
-              value={details.cdcNumber}
-              onChange={value => onChange({ cdcNumber: value })}
-            />
-          </FormField>
-        </Grid>
+        {isMarine ? (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="CDC number">
+              <Input
+                fullWidth
+                size="sm"
+                value={details.cdcNumber}
+                onChange={value => onChange({ cdcNumber: value })}
+              />
+            </FormField>
+          </Grid>
+        ) : null}
         <Grid size={{ xs: 12, sm: 6 }}>
           <FormField label="Phone number">
             <Input

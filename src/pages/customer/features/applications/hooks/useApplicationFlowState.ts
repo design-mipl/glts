@@ -50,6 +50,11 @@ export interface ApplicationFlowState {
   companyName: string
   entityId: string
   entityName: string
+  /** Corporate / B2B billing allocation — free text per application. */
+  department: string
+  costCode: string
+  note1: string
+  note2: string
   contactPerson: string
   location: string
   vesselId: string
@@ -105,6 +110,10 @@ const defaultState: ApplicationFlowState = {
   companyName: '',
   entityId: '',
   entityName: '',
+  department: '',
+  costCode: '',
+  note1: '',
+  note2: '',
   contactPerson: '',
   location: '',
   vesselId: '',

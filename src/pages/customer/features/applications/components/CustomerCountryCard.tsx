@@ -152,16 +152,6 @@ export function CustomerCountryCard({
         >
           {country.name}
         </Typography>
-        <Typography
-          sx={{
-            fontSize: '12px',
-            color: colors.textSecondary,
-            lineHeight: 1.35,
-            mt: 0.25,
-          }}
-        >
-          {country.cities}
-        </Typography>
       </Box>
 
       <Box

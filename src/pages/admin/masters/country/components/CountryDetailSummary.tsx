@@ -4,11 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Badge, BaseCard, Button, Select } from '@/design-system/UIComponents'
 import { countryMasterAdminService } from '@/shared/services/countryMasterAdminService'
 import type { BusinessSegment, CountryMaster } from '@/shared/types/countryMaster'
-import {
-  COUNTRY_STATUS_COLORS,
-  COUNTRY_STATUS_LABELS,
-  PROCESSING_TYPE_LABELS,
-} from '../config/countryProcessingConfig'
+import { COUNTRY_STATUS_COLORS, COUNTRY_STATUS_LABELS } from '../config/countryProcessingConfig'
 import { SEGMENT_LABELS } from '../config/countrySegmentConfig'
 import { formatCountryDate } from '../utils/countryListingUtils'
 import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
@@ -69,7 +65,6 @@ export function CountryDetailSummary({
               label={COUNTRY_STATUS_LABELS[country.status]}
               color={COUNTRY_STATUS_COLORS[country.status]}
             />
-            <Badge label={PROCESSING_TYPE_LABELS[country.processingType]} color="info" />
             <Badge label={SEGMENT_LABELS[activeSegment]} color="neutral" />
             {!segmentEnabled ? (
               <Badge label="Segment not enabled" color="warning" />

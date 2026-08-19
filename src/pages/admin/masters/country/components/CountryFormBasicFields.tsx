@@ -1,10 +1,8 @@
 import { FormField, Input, Select, Textarea, Toggle } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import type { CountryMasterFormData } from '@/shared/types/countryMaster'
-import {
-  PROCESSING_TYPE_OPTIONS,
-  VISA_CATEGORY_OPTIONS,
-} from '../config/countryProcessingConfig'
+import { VISA_CATEGORY_OPTIONS } from '../config/countryProcessingConfig'
+import { buildCountryRegionSelectOptions } from '../utils/countryReferenceOptions'
 import { CountryFormImageField } from './CountryFormImageField'
 import { CountryPassportIssueLocationsEditor } from './CountryPassportIssueLocationsEditor'
 
@@ -148,21 +146,11 @@ export function CountryFormBasicFields({
         />
       </AdminFullPageFormFieldSpan>
       <FormField label="Region">
-        <Input
-          value={data.region}
-          onChange={(value) => patch({ region: value })}
-          placeholder="Asia"
-          fullWidth
-        />
-      </FormField>
-      <FormField label="Processing type">
         <Select
-          value={data.processingType}
-          onChange={(value) =>
-            patch({ processingType: value as CountryMasterFormData['processingType'] })
-          }
-          placeholder="Select processing type"
-          options={PROCESSING_TYPE_OPTIONS}
+          value={data.region}
+          onChange={(value) => patch({ region: String(value) })}
+          placeholder="Select region"
+          options={buildCountryRegionSelectOptions(data.region)}
           fullWidth
         />
       </FormField>

@@ -12,16 +12,13 @@ export function useCountries() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        setCountries(getAllCountries())
-      } catch {
-        setError('Failed to load countries')
-      } finally {
-        setLoading(false)
-      }
-    }, 300)
-    return () => clearTimeout(timer)
+    try {
+      setCountries(getAllCountries())
+    } catch {
+      setError('Failed to load countries')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   return {

@@ -20,6 +20,7 @@ import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { PORTAL_MOBILE_NAV_BREAKPOINT, PORTAL_TOPBAR_HEIGHT } from '@/shared/theme/portalChromeLayout'
 import { useCustomerLogout } from '../hooks/useCustomerLogout'
 import { useCustomerPortalBase } from '../hooks/useCustomerPortalBase'
+import { getCustomerPortalLabel } from '@/shared/auth/customerSegment'
 
 interface CustomerTopbarProps {
   onMenuClick?: () => void
@@ -28,7 +29,7 @@ interface CustomerTopbarProps {
 export function CustomerTopbar({ onMenuClick }: CustomerTopbarProps) {
   const theme = useTheme()
   const navigate = useNavigate()
-  const { base, contactName, isBusiness } = useCustomerPortalBase()
+  const { base, contactName, isBusiness, customerType } = useCustomerPortalBase()
   const { isDark, setMode } = useFoundationTheme()
   const colors = usePublicBrandColors()
   const isLight = theme.palette.mode === 'light'
@@ -140,7 +141,9 @@ export function CustomerTopbar({ onMenuClick }: CustomerTopbarProps) {
         >
           <Box sx={{ px: 2, py: 1.25 }}>
             <Typography sx={{ fontSize: 13, fontWeight: 800, color: 'text.primary' }}>{contactName}</Typography>
-            <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>Customer portal</Typography>
+            <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {getCustomerPortalLabel(customerType, { isBusiness })}
+            </Typography>
           </Box>
           <Divider />
           <MenuItem

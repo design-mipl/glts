@@ -44,6 +44,10 @@ export interface FlowDraftLikeState {
   jurisdictionId?: string
   entityId?: string
   entityName?: string
+  department?: string
+  costCode?: string
+  note1?: string
+  note2?: string
   contactPerson?: string
   location?: string
   vesselId?: string

@@ -10,13 +10,18 @@ import {
 } from '@/design-system/UIComponents'
 import { AdminFormSectionsLayout } from '@/pages/admin/components/AdminFormSectionsLayout'
 import { AdminOverlayFormSection } from '@/pages/admin/components/AdminOverlayFormSection'
-import type { AdminFullPageFormSection } from '@/pages/admin/components/AdminFullPageFormShell'
+import {
+  AdminFullPageFormFieldSpan,
+  type AdminFullPageFormSection,
+} from '@/pages/admin/components/AdminFullPageFormShell'
 import type {
   BusinessSegment,
   CountryMasterFormData,
   VisaMode,
   VisaTypeStatus,
 } from '@/shared/types/countryMaster'
+import { resolveVisaTypePricingFromConsulateRates } from '@/shared/utils/countryVfsServiceRateUtils'
+import { resolveVisaTypeProcessingTimelineFromJurisdictions } from '@/shared/utils/countryProcessingTimelineUtils'
 import {
   getActiveWorkflowSelectOptions,
   getWorkflowDisplayName,
@@ -66,6 +71,8 @@ export function VisaTypePanel({
   }, [segConfig?.workflowId, segmentWorkflowLabel])
 
   if (!visaType || !segConfig) return null
+
+  const processingTimeline = resolveVisaTypeProcessingTimelineFromJurisdictions(visaType)
 
   const patchVisa = (partial: Partial<typeof visaType>) => {
     onChange({
@@ -183,22 +190,25 @@ export function VisaTypePanel({
               disabled={readOnly}
             />
           </FormField>
-          <FormField
-            label="Workflow"
-            helperText="Leave as segment default, or override for this visa type. Change anytime."
-          >
-            <Select
-              value={visaType.workflowId ?? ''}
-              onChange={(v) => {
-                const next = String(v)
-                patchVisa({ workflowId: next ? next : null })
-              }}
-              options={workflowOptions}
-              placeholder="Select workflow"
-              size="sm"
-              disabled={readOnly}
-            />
-          </FormField>
+          <AdminFullPageFormFieldSpan>
+            <FormField
+              label="Workflow"
+              helperText="Leave as segment default, or override for this visa type. Change anytime."
+            >
+              <Select
+                value={visaType.workflowId ?? ''}
+                onChange={(v) => {
+                  const next = String(v)
+                  patchVisa({ workflowId: next ? next : null })
+                }}
+                options={workflowOptions}
+                placeholder="Select workflow"
+                size="sm"
+                disabled={readOnly}
+                fullWidth
+              />
+            </FormField>
+          </AdminFullPageFormFieldSpan>
         </>
       ),
     },
@@ -215,14 +225,34 @@ export function VisaTypePanel({
           <FormField label="Validity">
             <Input value={visaType.validity} onChange={(v) => patchVisa({ validity: v })} size="sm" readonly={readOnly} />
           </FormField>
-          <FormField label="Pricing (INR)">
+          <FormField
+            label="Pricing (INR)"
+            helperText={
+              visaType.jurisdictionEnabled
+                ? 'Lowest Consulate Rates total across active jurisdictions, excluding Urgent Charge.'
+                : 'Sum of Consulate Rates, excluding Urgent Charge.'
+            }
+          >
             <Input
               type="number"
-              value={String(visaType.pricing ?? 0)}
-              onChange={(v) => patchVisa({ pricing: Number(v) || 0 })}
+              value={String(resolveVisaTypePricingFromConsulateRates(visaType))}
               size="sm"
-              disabled={readOnly}
+              readonly
             />
+          </FormField>
+          <FormField
+            label="Processing timeline"
+            helperText={
+              visaType.jurisdictionEnabled &&
+              processingTimeline.lowestFromName &&
+              processingTimeline.highestFromName
+                ? `Lowest: ${processingTimeline.lowestFromName} (${processingTimeline.lowerDays} days) • Highest: ${processingTimeline.highestFromName} (${processingTimeline.highestDays} days)`
+                : processingTimeline.lowerDays != null && processingTimeline.highestDays != null
+                  ? `Range: ${processingTimeline.lowerDays}-${processingTimeline.highestDays} business days`
+                  : 'TBD'
+            }
+          >
+            <Input value={processingTimeline.timeline} size="sm" readonly />
           </FormField>
         </>
       ),

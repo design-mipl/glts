@@ -19,10 +19,7 @@ import {
   getApplicationTypeLabel,
   getApplicationTypeTone,
 } from './applicationStatus'
-import {
-  resolveApplicationRank,
-  resolveApplicationVesselName,
-} from '../../utils/applicationCompanyUtils'
+import { resolveApplicationCompanyName, resolveApplicationTravelerRole, resolveApplicationTravelerRoleLabel, resolveApplicationVesselName } from '../../utils/applicationCompanyUtils'
 import {
   resolveApplicationBillingEntity,
   resolveApplicationCompassNo,
@@ -33,6 +30,13 @@ import {
   resolveApplicationCreatorLabel,
   resolveApplicationCreatorRoleLabel,
 } from '../../utils/applicationCreatorUtils'
+import type { ApplicationCustomerSegment } from '../../types/applicationListing.types'
+import {
+  getTravelerRoleColumnKey,
+  showsMarineReferenceFields,
+  showsTravelerRoleColumn,
+  usesDesignationLabel,
+} from '@/shared/utils/applicationSegmentListingPolicy'
 import { formatDisplayDate, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 type ToastFn = (toast: Omit<Toast, 'id'>) => void
@@ -69,6 +73,7 @@ export interface ApplicationListingColumnsParams {
   navigate: NavigateFunction
   showToast: ToastFn
   showCreatedBy?: boolean
+  customerSegment?: ApplicationCustomerSegment
 }
 
 export function buildSingleApplicationColumns({
@@ -97,18 +102,6 @@ export function buildSingleApplicationColumns({
       render: (value: string) => (
         <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
           {value}
-        </Typography>
-      ),
-    },
-    {
-      key: 'rank',
-      label: 'Rank',
-      sortable: false,
-      filterable: false,
-      width: 130,
-      render: (_: unknown, row: SingleApplicationRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationRank(row)}
         </Typography>
       ),
     },
@@ -159,7 +152,11 @@ export function buildUnifiedApplicationColumns({
   navigate,
   showToast,
   showCreatedBy = true,
+  customerSegment = 'retail',
 }: ApplicationListingColumnsParams): Column<SingleApplicationRow | BulkBatchRow>[] {
+  const roleColumnKey = getTravelerRoleColumnKey(customerSegment)
+  const roleColumnLabel = resolveApplicationTravelerRoleLabel(customerSegment)
+
   const columns: Column<SingleApplicationRow | BulkBatchRow>[] = [
     {
       key: 'id',
@@ -228,18 +225,24 @@ export function buildUnifiedApplicationColumns({
         )
       },
     },
-    {
-      key: 'rank',
-      label: 'Rank',
+  ]
+
+  if (showsTravelerRoleColumn(customerSegment) && roleColumnKey) {
+    columns.push({
+      key: roleColumnKey,
+      label: roleColumnLabel,
       sortable: false,
       filterable: false,
       width: 130,
       render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
         <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationRank(row)}
+          {resolveApplicationTravelerRole(row, customerSegment)}
         </Typography>
       ),
-    },
+    })
+  }
+
+  columns.push(
     {
       key: 'billingEntityName',
       label: 'Billing entity',
@@ -252,54 +255,77 @@ export function buildUnifiedApplicationColumns({
         </Typography>
       ),
     },
-    {
-      key: 'poCidNo',
-      label: 'PO / CID no.',
-      sortable: false,
-      filterable: false,
-      width: 130,
-      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationPoCidNo(row)}
-        </Typography>
-      ),
-    },
-    {
-      key: 'compassNo',
-      label: 'Compass No.',
-      sortable: false,
-      filterable: false,
-      width: 130,
-      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationCompassNo(row)}
-        </Typography>
-      ),
-    },
-    {
-      key: 'joiningPort',
-      label: 'Joining port',
-      sortable: false,
-      filterable: false,
-      width: 120,
-      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationJoiningPort(row)}
-        </Typography>
-      ),
-    },
-    {
-      key: 'vesselName',
-      label: 'Vessel name',
+  )
+
+  if (showsMarineReferenceFields(customerSegment)) {
+    columns.push(
+      {
+        key: 'poCidNo',
+        label: 'PO / CID no.',
+        sortable: false,
+        filterable: false,
+        width: 130,
+        render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+          <Typography variant="body2" sx={{ fontSize: 13 }}>
+            {resolveApplicationPoCidNo(row)}
+          </Typography>
+        ),
+      },
+      {
+        key: 'compassNo',
+        label: 'Compass No.',
+        sortable: false,
+        filterable: false,
+        width: 130,
+        render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+          <Typography variant="body2" sx={{ fontSize: 13 }}>
+            {resolveApplicationCompassNo(row)}
+          </Typography>
+        ),
+      },
+      {
+        key: 'joiningPort',
+        label: 'Joining port',
+        sortable: false,
+        filterable: false,
+        width: 120,
+        render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+          <Typography variant="body2" sx={{ fontSize: 13 }}>
+            {resolveApplicationJoiningPort(row)}
+          </Typography>
+        ),
+      },
+      {
+        key: 'vesselName',
+        label: 'Vessel name',
+        sortable: true,
+        filterable: true,
+        width: 160,
+        render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+          <Typography variant="body2" sx={{ fontSize: 13 }}>
+            {resolveApplicationVesselName(row)}
+          </Typography>
+        ),
+      },
+    )
+  }
+
+  if (usesDesignationLabel(customerSegment)) {
+    columns.push({
+      key: 'companyName',
+      label: 'Company name',
       sortable: true,
       filterable: true,
       width: 160,
       render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationVesselName(row)}
+        <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+          {resolveApplicationCompanyName(row)}
         </Typography>
       ),
-    },
+    })
+  }
+
+  columns.push(
     {
       key: 'country',
       label: 'Country',
@@ -338,7 +364,7 @@ export function buildUnifiedApplicationColumns({
         </Typography>
       ),
     },
-  ]
+  )
 
   if (showCreatedBy) {
     columns.push({

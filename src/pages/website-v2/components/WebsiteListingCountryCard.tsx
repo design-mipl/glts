@@ -121,18 +121,6 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
           >
             {country.name}
           </Typography>
-          {country.cities ? (
-            <Typography
-              sx={{
-                fontSize: '12.5px',
-                color: colors.textSecondary,
-                lineHeight: 1.4,
-                mt: 0.4,
-              }}
-            >
-              {country.cities}
-            </Typography>
-          ) : null}
         </Box>
 
         <Box

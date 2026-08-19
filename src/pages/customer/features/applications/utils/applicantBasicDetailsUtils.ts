@@ -33,7 +33,9 @@ export function resolveApplicantBasicDetails(row: UploadQueueRow): ApplicantBasi
     ...emptyApplicantBasicDetails(),
     ...stored,
     crewId: stored.crewId || row.gltsApplicantId || '',
-    rank: stored.rank || row.additionalDetails?.employmentOccupation?.trim() || '',
+    rank: stored.rank || '',
+    designation:
+      stored.designation || row.additionalDetails?.employmentOccupation?.trim() || '',
     applicantName: stored.applicantName || (row.travelerName === PLACEHOLDER ? '' : row.travelerName),
     passportNumber: stored.passportNumber || (row.passportNo === PLACEHOLDER ? '' : row.passportNo),
     nationality: stored.nationality || (row.nationality === PLACEHOLDER ? '' : row.nationality),
@@ -42,6 +44,10 @@ export function resolveApplicantBasicDetails(row: UploadQueueRow): ApplicantBasi
 
 export function resolvePassengerRank(row: UploadQueueRow): string {
   return resolveApplicantBasicDetails(row).rank.trim()
+}
+
+export function resolvePassengerDesignation(row: UploadQueueRow): string {
+  return resolveApplicantBasicDetails(row).designation.trim()
 }
 
 export function syncBasicDetailsFromPassport(

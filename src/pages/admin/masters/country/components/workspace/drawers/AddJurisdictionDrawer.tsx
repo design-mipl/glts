@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Stack } from '@mui/material'
 import {
   FormField,
@@ -12,8 +12,13 @@ import {
 import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { ADMIN_MODAL_FORM_LAYOUT } from '@/pages/admin/components/adminOverlayFormLayout'
 import { countryMasterAdminService } from '@/shared/services/countryMasterAdminService'
+import { jurisdictionMasterService } from '@/shared/services/jurisdictionMasterService'
 import type { BusinessSegment, VisaTypeStatus } from '@/shared/types/countryMaster'
 import { INDIAN_STATE_SELECT_OPTIONS } from '../../../config/indianStates'
+import {
+  buildJurisdictionMasterSelectOptions,
+  resolveJurisdictionMasterId,
+} from '../../../utils/countryReferenceOptions'
 
 interface AddJurisdictionDrawerProps {
   open: boolean
@@ -34,15 +39,30 @@ export function AddJurisdictionDrawer({
 }: AddJurisdictionDrawerProps) {
   const { showToast } = useToast()
   const [loading, setLoading] = useState(false)
-  const [name, setName] = useState('')
+  const [jurisdictionMasterId, setJurisdictionMasterId] = useState('')
   const [embassyOrVfs, setEmbassyOrVfs] = useState('')
   const [processingTime, setProcessingTime] = useState('10')
   const [status, setStatus] = useState<VisaTypeStatus>('active')
   const [applicableStates, setApplicableStates] = useState<string[]>([])
 
+  const jurisdictionOptions = useMemo(() => {
+    if (!open || !segment || !visaTypeId) return []
+
+    const country = countryMasterAdminService.getById(countryId)
+    const visaType = country?.segments
+      .find((entry) => entry.segment === segment)
+      ?.visaTypes.find((entry) => entry.id === visaTypeId)
+
+    const excludeIds = (visaType?.jurisdictions ?? [])
+      .map((jurisdiction) => resolveJurisdictionMasterId(jurisdiction))
+      .filter(Boolean)
+
+    return buildJurisdictionMasterSelectOptions({ excludeIds })
+  }, [open, countryId, segment, visaTypeId])
+
   useEffect(() => {
     if (open) {
-      setName('')
+      setJurisdictionMasterId('')
       setEmbassyOrVfs('')
       setProcessingTime('10')
       setStatus('active')
@@ -56,14 +76,17 @@ export function AddJurisdictionDrawer({
   }
 
   const handleSave = () => {
-    if (!segment || !visaTypeId || !name.trim()) {
-      showToast({ title: 'Jurisdiction name is required', variant: 'error' })
+    const master = jurisdictionMasterService.getById(jurisdictionMasterId)
+    if (!segment || !visaTypeId || !master) {
+      showToast({ title: 'Jurisdiction is required', variant: 'error' })
       return
     }
+
     setLoading(true)
     const before = countryMasterAdminService.getById(countryId)
     countryMasterAdminService.addJurisdiction(countryId, segment, visaTypeId, {
-      name: name.trim(),
+      name: master.name,
+      jurisdictionMasterId: master.id,
       embassyOrVfs,
       submissionCenter: '',
       processingTime,
@@ -81,7 +104,7 @@ export function AddJurisdictionDrawer({
     )
     setLoading(false)
     showToast({ title: 'Jurisdiction added', variant: 'success' })
-    onSaved(newJur?.id ?? name.trim().toLowerCase())
+    onSaved(newJur?.id ?? master.id)
     onClose()
   }
 
@@ -97,15 +120,28 @@ export function AddJurisdictionDrawer({
       }
     >
       <Stack spacing={1}>
-        <FormSection title="Jurisdiction details" columns={ADMIN_MODAL_FORM_LAYOUT.fieldColumns} sx={{ mb: 2 }}>
+        <FormSection
+          title="Jurisdiction details"
+          columns={ADMIN_MODAL_FORM_LAYOUT.fieldColumns}
+          fieldColumnsFrom="sm"
+          sx={{ mb: 2 }}
+        >
           <FormField label="Jurisdiction Name" required>
-            <Input value={name} onChange={setName} size="sm" />
+            <Select
+              value={jurisdictionMasterId}
+              onChange={(value) => setJurisdictionMasterId(String(value))}
+              options={jurisdictionOptions}
+              placeholder="Select jurisdiction"
+              searchable
+              size="sm"
+              fullWidth
+            />
           </FormField>
           <FormField label="Embassy / VFS">
-            <Input value={embassyOrVfs} onChange={setEmbassyOrVfs} size="sm" />
+            <Input value={embassyOrVfs} onChange={setEmbassyOrVfs} size="sm" fullWidth />
           </FormField>
           <FormField label="Processing Time (days)">
-            <Input type="number" value={processingTime} onChange={setProcessingTime} size="sm" />
+            <Input type="number" value={processingTime} onChange={setProcessingTime} size="sm" fullWidth />
           </FormField>
           <FormField label="Status">
             <Select
@@ -116,6 +152,7 @@ export function AddJurisdictionDrawer({
                 { value: 'inactive', label: 'Inactive' },
               ]}
               size="sm"
+              fullWidth
             />
           </FormField>
         </FormSection>

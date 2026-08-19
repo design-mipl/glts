@@ -1,9 +1,13 @@
 import { bookerManagementService } from '@/shared/services/bookerManagementService'
 import { GLTS_APPLICATION_IDS } from '../../../data/portalIds'
 import { GLTS_BATCH_IDS, getSingleApplicationDemoSeed, mockUploadQueue } from '../data/applicationFlowData'
-import type { ApplicationListingRow } from '../types/applicationListing.types'
+import type { ApplicationCustomerSegment, ApplicationListingRow } from '../types/applicationListing.types'
 import { isBulkRow } from '../types/applicationListing.types'
-import { resolvePassengerRank } from './applicantBasicDetailsUtils'
+import { resolvePassengerDesignation, resolvePassengerRank } from './applicantBasicDetailsUtils'
+import {
+  getTravelerRoleColumnKey,
+  getTravelerRoleColumnLabel,
+} from '@/shared/utils/applicationSegmentListingPolicy'
 
 function segmentFallbackCompany(segment: ApplicationListingRow['customerSegment']): string {
   if (segment === 'marine') return 'Apex Marine Logistics'
@@ -68,4 +72,41 @@ export function resolveApplicationRank(row: ApplicationListingRow): string {
   }
 
   return '—'
+}
+
+/** Corporate / B2B designation — from demo seed or upload queue travelers. */
+export function resolveApplicationDesignation(row: ApplicationListingRow): string {
+  if (!isBulkRow(row)) {
+    const seed = getSingleApplicationDemoSeed(row.id)
+    const fromBasic = seed?.basicDetails.designation?.trim()
+    if (fromBasic) return fromBasic
+    const fromOccupation = seed?.additionalDetails?.employmentOccupation?.trim()
+    if (fromOccupation) return fromOccupation
+    return '—'
+  }
+
+  const queueRows = mockUploadQueue.filter(q => q.gltsApplicationId === row.id)
+  if (queueRows.length > 0) {
+    const designations = [
+      ...new Set(queueRows.map(q => resolvePassengerDesignation(q)).filter(Boolean)),
+    ]
+    if (designations.length === 1) return designations[0]
+    if (designations.length > 1) return 'Multiple'
+  }
+
+  return '—'
+}
+
+export function resolveApplicationTravelerRole(
+  row: ApplicationListingRow,
+  segment: ApplicationCustomerSegment = row.customerSegment,
+): string {
+  const key = getTravelerRoleColumnKey(segment)
+  if (key === 'rank') return resolveApplicationRank(row)
+  if (key === 'designation') return resolveApplicationDesignation(row)
+  return '—'
+}
+
+export function resolveApplicationTravelerRoleLabel(segment: ApplicationCustomerSegment): string {
+  return getTravelerRoleColumnLabel(segment)
 }
