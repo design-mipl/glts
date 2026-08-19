@@ -88,6 +88,8 @@ export interface AgreementServiceWiseBillingRule {
 export interface AgreementBillingConfig {
   creditBillingEnabled: boolean
   billingCycle: 'monthly' | 'quarterly' | 'custom'
+  /** Calendar day of the month invoices are generated (1–31). */
+  billingDay: number
   creditPeriodDays: number
   creditLimit: number
   gracePeriodDays: number

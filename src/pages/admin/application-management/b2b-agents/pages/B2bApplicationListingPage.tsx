@@ -213,7 +213,7 @@ export function B2bApplicationListingPage() {
         <AdminListingToolbar
           searchValue={listing.tableState.searchQuery}
           onSearch={listing.handleSearch}
-          searchPlaceholder="Search by GLTS reference, applicant, company, jurisdiction, passport no."
+          searchPlaceholder="Search by GLTS reference, applicant, company, documents, jurisdiction, passport no."
           onExport={handleExport}
           viewMode={viewMode}
           onViewModeChange={setViewMode}

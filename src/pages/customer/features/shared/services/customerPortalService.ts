@@ -4,7 +4,6 @@ import { buildMarineDashboardApplications } from '../../dashboard/utils/marineDa
 import { mockApplicants, mockCorrections, mockDocuments, mockGlobalDocumentUploads } from '../../applications/data/applicationDetailData'
 import {
   applySingleApplicationDemoSeed,
-  defaultChecklist,
   GLTS_BATCH_IDS,
   mockBulkBatches,
   mockSingleApplications,
@@ -15,13 +14,16 @@ import {
   type UploadQueueRow,
 } from '../../applications/data/applicationFlowData'
 import { applyGltsArrangedDocuments, shouldApplyGltsArrangedDocuments } from '../../applications/data/gltsArrangedDocumentDemoConfig'
+import { resolveDocumentChecklistContext } from '../../applications/utils/applicationDocumentContextUtils'
+import {
+  getSavedDraftListingRows,
+} from '@/shared/services/applicationListingDraftStorage'
 import { normalizeApplicationId } from '../../../data/portalIds'
 import type { ApplicationStatus } from '@/shared/types/application'
 import { computeListingKpis } from '../../applications/utils/applicationListingUtils'
 import {
   canViewApplication,
   filterApplicationsBySession,
-  getSessionCreatorMeta,
 } from '../../applications/utils/applicationAccessUtils'
 import { mergeVerificationIntoDetail } from '@/shared/services/applicationVerificationService'
 import {
@@ -32,8 +34,8 @@ import {
 import { isApplicantDocumentSatisfied } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import { readApplicationFlowDraftFromSession } from '../../applications/utils/applicationFlowDraftStorage'
 import {
-  checklistToApplicantDocuments,
   normalizeUploadQueueRows,
+  resolveExpectedApplicantDocuments,
   type ApplicantDocumentChecklistContext,
 } from '../../applications/utils/uploadQueueDocuments'
 import { emptyOriginalDocumentCollectionState } from '@/shared/utils/originalDocumentCollectionUtils'
@@ -53,30 +55,13 @@ import {
 } from '../../profile/data/personalAccount.mock'
 import { mockVisaRules } from '../../profile/data/profileData'
 import { loadSession } from '@/shared/auth/session'
-import type { CustomerType } from '@/shared/auth/session'
 import { mapApplicationBillingTermsSummary } from '@/shared/utils/mapApplicationBillingTermsSummary'
 import type { ApplicationBillingTermsViewModel } from '@/shared/utils/mapApplicationBillingTermsSummary'
 import { resolveCustomerPortalAgreement, resolvePortalAgreementId } from '@/shared/utils/resolveCustomerPortalAgreement'
-import { mapCustomerTypeToApplicationSegment } from '@/shared/config/applicationCustomerSegmentConfig'
 import type { ApplicationCustomerSegment } from '../../applications/types/applicationListing.types'
 import type { ApplicationDetailViewModel, FlowDraftLikeState } from '../../applications/types/applicationDetail.types'
 
 const GLTS_MAR_1025_APPLICATION_ID = 'GL-1025'
-
-const CUSTOMER_DRAFTS_STORAGE_KEY = 'glts:customer-application-drafts'
-
-function mapSessionToApplicationSegment(customerType?: CustomerType): ApplicationCustomerSegment {
-  return mapCustomerTypeToApplicationSegment(customerType)
-}
-
-interface SaveDraftPayload {
-  applicationId: string
-  countryName: string
-  countryFlag?: string
-  visaTypeLabel: string
-  travelDate?: string
-  rows: UploadQueueRow[]
-}
 
 interface GetApplicationDetailOptions {
   ignoreAccessControl?: boolean
@@ -119,7 +104,7 @@ export const customerPortalService = {
 
   getSingleApplications(): SingleApplicationRow[] {
     const session = loadSession()
-    return filterApplicationsBySession([...getSavedDraftRows(), ...mockSingleApplications], session).map(
+    return filterApplicationsBySession([...getSavedDraftListingRows(), ...mockSingleApplications], session).map(
       row =>
         row.operationalStatus === 'Document Rejected'
           ? {
@@ -180,7 +165,7 @@ export const customerPortalService = {
       return resolvedId ? mergeVerificationIntoDetail(detail, resolvedId, { forCustomer: !ignoreAccessControl }) : detail
     }
 
-    const allSingles = [...getSavedDraftRows(), ...mockSingleApplications]
+    const allSingles = [...getSavedDraftListingRows(), ...mockSingleApplications]
     const allBulks = mockBulkBatches
     const restrictedSingle = resolvedId ? allSingles.find(row => row.id === resolvedId) : undefined
     const restrictedBulk = resolvedId ? allBulks.find(row => row.id === resolvedId) : undefined
@@ -346,52 +331,6 @@ export const customerPortalService = {
   getUploadQueue(): UploadQueueRow[] {
     return mockUploadQueue
   },
-
-  submitApplication(
-    mode: 'single' | 'bulk',
-    refs?: { applicationId?: string; batchId?: string },
-  ) {
-    if (mode === 'single') {
-      return refs?.applicationId || 'GL-847'
-    }
-    return refs?.batchId || refs?.applicationId || GLTS_BATCH_IDS.schengenCrew
-  },
-
-  saveApplicationDraft(payload: SaveDraftPayload): string {
-    const now = new Date().toISOString().slice(0, 10)
-    const readyRows = payload.rows.filter(r => r.status !== 'processing')
-    const primary = readyRows[0]
-    const fallbackName = readyRows.length > 1 ? `${readyRows.length} travelers` : 'Applicant pending'
-
-    const session = loadSession()
-    const creator = getSessionCreatorMeta(session)
-    const draftRow: SingleApplicationRow = {
-      id: payload.applicationId,
-      recordType: 'single',
-      applicantName:
-        primary && primary.travelerName !== '—' ? primary.travelerName : fallbackName,
-      passportNumber:
-        primary && primary.passportNo !== '—' ? primary.passportNo : '—',
-      country: payload.countryName || '—',
-      countryFlag: payload.countryFlag,
-      visaType: payload.visaTypeLabel || '—',
-      travelDate: payload.travelDate || '—',
-      submissionDate: '',
-      createdAt: now,
-      lastUpdated: now,
-      processingStage: 'Ready for submission',
-      operationalStatus: 'Draft',
-      status: 'Draft',
-      statusTone: 'draft',
-      createdByEmail: creator.createdByEmail,
-      createdByRole: creator.createdByRole,
-      customerSegment: mapSessionToApplicationSegment(session?.customerType),
-    }
-
-    const existing = getSavedDraftRows().filter(row => row.id !== draftRow.id)
-    writeSavedDraftRows([draftRow, ...existing])
-    return draftRow.id
-  },
 }
 
 function mapOperationalToApplicationStatus(label: string): ApplicationStatus {
@@ -427,28 +366,27 @@ function bulkBatchToCustomerApplication(
 function documentChecklistContext(
   countryLabel: string,
   flowState: FlowDraftLikeState | null,
+  customerSegment?: ApplicationCustomerSegment,
 ): Omit<ApplicantDocumentChecklistContext, 'seedIndex' | 'passportFields'> {
-  return {
-    countryLabel: flowState?.countryName?.trim() || countryLabel,
-    countryId: flowState?.countryId,
-    visaOfferingId: flowState?.visaOfferingId,
-    jurisdictionId: flowState?.jurisdictionId,
-  }
+  return resolveDocumentChecklistContext({
+    country: countryLabel,
+    flowState,
+    customerSegment,
+  })
 }
 
 function resolveApplicationChecklistContext(
   country: string,
   visaType: string,
   flowState: FlowDraftLikeState | null,
+  customerSegment?: ApplicationCustomerSegment,
 ): Omit<ApplicantDocumentChecklistContext, 'seedIndex' | 'passportFields'> {
-  const base = documentChecklistContext(country, flowState)
-  if (country === 'China' && visaType === 'M Type Visa') {
-    return { ...base, countryId: '13', visaOfferingId: 'cn-m-type' }
-  }
-  if (country === 'China' && visaType === 'G Type Visa') {
-    return { ...base, countryId: '13', visaOfferingId: 'cn-g-type' }
-  }
-  return base
+  return resolveDocumentChecklistContext({
+    country,
+    visaType,
+    flowState,
+    customerSegment,
+  })
 }
 
 function demoMarineOriginalCollection(documents: ApplicantDocumentItem[]) {
@@ -557,7 +495,7 @@ function buildSingleDetail(
     jurisdiction: row.jurisdiction ?? flowState?.jurisdiction,
   }
   const draftRows = pickFlowRows(flowState, row.id)
-  const checklistCtx = documentChecklistContext(row.country, flowState)
+  const checklistCtx = documentChecklistContext(row.country, flowState, row.customerSegment)
   const uploadQueueRows = normalizeUploadQueueRows(
     draftRows.length > 0
       ? draftRows.map((queueRow, index) =>
@@ -596,7 +534,12 @@ function buildBulkDetail(
 ): ApplicationDetailViewModel {
   const application = bulkBatchToCustomerApplication(row, flowState)
   const draftRows = pickFlowRows(flowState, row.id, row)
-  const checklistCtx = resolveApplicationChecklistContext(row.country, row.visaType, flowState)
+  const checklistCtx = resolveApplicationChecklistContext(
+    row.country,
+    row.visaType,
+    flowState,
+    row.customerSegment,
+  )
   const uploadQueueRows = attachDemoOriginalCollections(
     normalizeUploadQueueRows(
       (draftRows.length > 0 ? draftRows : bulkRowToUploadQueue(row)).map((queueRow) =>
@@ -623,8 +566,13 @@ function buildBulkDetail(
 }
 
 function singleRowToUploadQueue(row: SingleApplicationRow): UploadQueueRow {
+  const checklistCtx = resolveDocumentChecklistContext({
+    country: row.country,
+    visaType: row.visaType,
+    customerSegment: row.customerSegment,
+  })
   const documents = applyGltsArrangedDocuments(
-    checklistToApplicantDocuments(defaultChecklist(row.country)),
+    resolveExpectedApplicantDocuments({ ...checklistCtx, seedIndex: 0, passportFields: [] }),
     row.id,
     0,
   )
@@ -656,10 +604,20 @@ function singleRowToUploadQueue(row: SingleApplicationRow): UploadQueueRow {
 }
 
 function bulkRowToUploadQueue(row: BulkBatchRow): UploadQueueRow[] {
+  const checklistCtx = resolveDocumentChecklistContext({
+    country: row.country,
+    visaType: row.visaType,
+    customerSegment: row.customerSegment,
+  })
+
   if (row.id === GLTS_BATCH_IDS.schengenCrew) {
     return mockUploadQueue.map((queueRow, index) => {
       const documents = applyGltsArrangedDocuments(
-        checklistToApplicantDocuments(defaultChecklist(row.country), index),
+        resolveExpectedApplicantDocuments({
+          ...checklistCtx,
+          seedIndex: index,
+          passportFields: [],
+        }),
         row.id,
         index,
       )
@@ -687,7 +645,11 @@ function bulkRowToUploadQueue(row: BulkBatchRow): UploadQueueRow[] {
   return Array.from({ length: cap }).map((_, index) => {
     const sequenceNo = index + 1
     const docs = applyGltsArrangedDocuments(
-      checklistToApplicantDocuments(defaultChecklist(row.country), index),
+      resolveExpectedApplicantDocuments({
+        ...checklistCtx,
+        seedIndex: index,
+        passportFields: [],
+      }),
       row.id,
       index,
     )
@@ -774,23 +736,4 @@ function pickFlowRows(
 
 function getSavedFlowState(): FlowDraftLikeState | null {
   return readApplicationFlowDraftFromSession()
-}
-
-function getSavedDraftRows(): SingleApplicationRow[] {
-  try {
-    const raw = sessionStorage.getItem(CUSTOMER_DRAFTS_STORAGE_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? (parsed as SingleApplicationRow[]) : []
-  } catch {
-    return []
-  }
-}
-
-function writeSavedDraftRows(rows: SingleApplicationRow[]) {
-  try {
-    sessionStorage.setItem(CUSTOMER_DRAFTS_STORAGE_KEY, JSON.stringify(rows))
-  } catch {
-    // ignore storage failures in mock service mode
-  }
 }

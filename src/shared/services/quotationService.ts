@@ -657,6 +657,7 @@ export const quotationService = {
       billingConfig: {
         creditBillingEnabled: true,
         billingCycle: 'monthly',
+        billingDay: 1,
         creditPeriodDays: 30,
         creditLimit: 0,
         gracePeriodDays: 0,

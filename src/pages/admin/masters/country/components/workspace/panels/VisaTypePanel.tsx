@@ -229,8 +229,8 @@ export function VisaTypePanel({
             label="Pricing (INR)"
             helperText={
               visaType.jurisdictionEnabled
-                ? 'Lowest Consulate Rates total across active jurisdictions, excluding Urgent Charge.'
-                : 'Sum of Consulate Rates, excluding Urgent Charge.'
+                ? 'Lowest total across active jurisdictions.'
+                : 'Sum of Consulate Rates.'
             }
           >
             <Input
@@ -246,9 +246,9 @@ export function VisaTypePanel({
               visaType.jurisdictionEnabled &&
               processingTimeline.lowestFromName &&
               processingTimeline.highestFromName
-                ? `Lowest: ${processingTimeline.lowestFromName} (${processingTimeline.lowerDays} days) • Highest: ${processingTimeline.highestFromName} (${processingTimeline.highestDays} days)`
+                ? `${processingTimeline.lowestFromName} (${processingTimeline.lowerDays}d) – ${processingTimeline.highestFromName} (${processingTimeline.highestDays}d)`
                 : processingTimeline.lowerDays != null && processingTimeline.highestDays != null
-                  ? `Range: ${processingTimeline.lowerDays}-${processingTimeline.highestDays} business days`
+                  ? `${processingTimeline.lowerDays}–${processingTimeline.highestDays} business days`
                   : 'TBD'
             }
           >

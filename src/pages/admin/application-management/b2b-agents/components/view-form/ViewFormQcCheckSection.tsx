@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Box, Grid, Stack } from '@mui/material'
-import { Tabs } from '@/design-system/UIComponents'
+import { Tabs, Button } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import type { UploadQueueRow } from '@/pages/customer/features/applications/data/applicationFlowData'
@@ -58,6 +58,9 @@ interface ViewFormQcCheckSectionProps {
   onOriginalDocumentReceivedChange?: (documentId: string, received: boolean) => void
   onOriginalReceivedRemarksSave?: (remarks: string) => void
   readOnly?: boolean
+  documentsNotRequired?: boolean
+  onSkipForm?: () => void
+  skipFormDisabled?: boolean
 }
 
 export function ViewFormQcCheckSection({
@@ -92,6 +95,9 @@ export function ViewFormQcCheckSection({
   docsQcSubmitLabel,
   docsQcSubmitHint,
   docsQcSubmitDisabled,
+  documentsNotRequired = false,
+  onSkipForm,
+  skipFormDisabled,
 }: ViewFormQcCheckSectionProps) {
   const [activeTab, setActiveTab] = useState<QcDocumentTab>('checklist')
 
@@ -301,6 +307,17 @@ export function ViewFormQcCheckSection({
               onSubmit={onDocsQcSubmit}
               readOnly={readOnly}
             />
+            {documentsNotRequired && onSkipForm ? (
+              <Box sx={{ mt: 1.5 }}>
+                <Button
+                  label="Skip form"
+                  variant="outlined"
+                  color="primary"
+                  onClick={onSkipForm}
+                  disabled={skipFormDisabled}
+                />
+              </Box>
+            ) : null}
           </Box>
         </Grid>
       </Grid>

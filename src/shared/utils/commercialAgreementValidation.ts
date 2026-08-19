@@ -39,6 +39,7 @@ export const AGREEMENT_FIELD_MESSAGES = {
   agreementExpiryDate: 'Agreement expiry date is required',
   agreementExpiryAfterStart: 'Agreement expiry date must be on or after start date',
   billingType: 'Billing type is required',
+  billingDay: 'Billing day is required',
   advanceType: 'Advance type is required',
   creditPeriod: 'Credit period is required',
   creditLimit: 'Credit limit is required',
@@ -64,6 +65,7 @@ export function createDefaultBillingConfig(): CommercialAgreementFormData['billi
   return {
     creditBillingEnabled: true,
     billingCycle: 'monthly',
+    billingDay: 1,
     creditPeriodDays: 30,
     creditLimit: 0,
     gracePeriodDays: 7,
@@ -223,6 +225,7 @@ export function validatePricing(data: CommercialAgreementFormData): Record<strin
 export function validateBilling(data: CommercialAgreementFormData): Record<string, string> {
   const errors: Record<string, string> = {}
   if (!data.billingType) errors.billingType = AGREEMENT_FIELD_MESSAGES.billingType
+  if (!data.billingConfig.billingDay) errors.billingDay = AGREEMENT_FIELD_MESSAGES.billingDay
 
   if (data.billingType === 'advance') {
     if (!data.billingConfig.advanceType) errors.advanceType = AGREEMENT_FIELD_MESSAGES.advanceType
@@ -478,6 +481,7 @@ export function normalizeLegacyAgreement(record: CommercialAgreement): Commercia
     billingConfig: {
       ...createDefaultBillingConfig(),
       ...record.billingConfig,
+      billingDay: record.billingConfig?.billingDay ?? 1,
       gracePeriodDays: record.billingConfig?.gracePeriodDays ?? 7,
       advanceType: record.billingConfig?.advanceType ?? 'percentage',
       advancePercentage: record.billingConfig?.advancePercentage ?? 100,

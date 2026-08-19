@@ -1,17 +1,15 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Box, Typography, Grid, Card, Stack, Button } from '@mui/material'
 import { ArrowLeft, ArrowRight, Upload } from 'lucide-react'
 import { FileUpload } from '@/design-system/UIComponents'
 import { usePublicBrandColors, getPrimaryButtonSx } from '@/shared/theme/publicBrand'
 import { ExtractedFieldsReview } from '../../../components/ExtractedFieldsReview'
 import { PassportPreviewCard } from '../../../components/PassportPreviewCard'
-import {
-  defaultChecklist,
-  singleExtractedFields,
-} from '../../../data/applicationFlowData'
+import { singleExtractedFields } from '../../../data/applicationFlowData'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import { CustomerDocumentChecklist } from '@/pages/customer/features/shared/components/CustomerPrimitives'
+import { buildGlobalChecklistItems, resolveGlobalChecklistDocuments } from '../../../utils/globalDocumentChecklist'
 
 interface SingleApplicationUploadPageProps {
   state: ApplicationFlowState
@@ -23,7 +21,14 @@ export function SingleApplicationUploadPage({ state, onBack, onContinue }: Singl
   const colors = usePublicBrandColors()
   const [uploaded, setUploaded] = useState(false)
   const previewRow = customerPortalService.getUploadQueue()[3]
-  const checklist = defaultChecklist(state.countryName)
+  const checklist = useMemo(() => {
+    const docs = resolveGlobalChecklistDocuments({
+      countryId: state.countryId,
+      visaOfferingId: state.visaOfferingId,
+      jurisdictionId: state.jurisdictionId,
+    })
+    return buildGlobalChecklistItems(state.globalDocumentUploads, undefined, docs)
+  }, [state.countryId, state.globalDocumentUploads, state.jurisdictionId, state.visaOfferingId])
 
   return (
     <Box sx={{ maxWidth: 1100, mx: 'auto', width: '100%' }}>

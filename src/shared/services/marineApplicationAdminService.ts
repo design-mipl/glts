@@ -16,6 +16,8 @@ import {
 } from '@/pages/customer/features/applications/utils/gltsReferenceIds'
 import { applicationReferenceFieldsFromFlow } from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
+import { persistCustomerDraftListingRow } from '@/shared/services/applicationListingDraftStorage'
+import { resolveDocumentRequirementForSubmit } from '@/shared/utils/applicationDocumentRequirement'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
 import { loadSession } from '@/shared/auth/session'
 import { applicationCaseActivityService } from '@/shared/services/applicationCaseActivityService'
@@ -40,6 +42,17 @@ function flowPlaceholder(value: string | undefined, fallback: string): string {
   const trimmed = value?.trim()
   if (!trimmed || trimmed === '—') return fallback
   return trimmed
+}
+
+function documentRequirementPatch(
+  state: ApplicationFlowState,
+  customerSegment: ApplicationCustomerSegment,
+): { documentRequirement?: ReturnType<typeof resolveDocumentRequirementForSubmit> } {
+  const documentRequirement = resolveDocumentRequirementForSubmit(
+    state.documentRequirement,
+    customerSegment,
+  )
+  return documentRequirement ? { documentRequirement } : {}
 }
 
 function buildSubmittedSingleRow(
@@ -93,6 +106,7 @@ function buildSubmittedSingleRow(
       joiningPort: state.joiningPort,
       entityName: state.entityName,
     }),
+    ...documentRequirementPatch(state, customerSegment),
   }
 }
 
@@ -145,6 +159,41 @@ function buildSubmittedBulkRow(
       joiningPort: state.joiningPort,
       entityName: state.entityName,
     }),
+    ...documentRequirementPatch(state, customerSegment),
+  }
+}
+
+function buildDraftSingleRow(
+  state: ApplicationFlowState,
+  applicationId: string,
+  now: string,
+  creator: ReturnType<typeof getSessionCreatorMeta>,
+  customerSegment: ApplicationCustomerSegment = 'marine',
+): SingleApplicationRow {
+  return {
+    ...buildSubmittedSingleRow(state, applicationId, now, creator, customerSegment),
+    submissionDate: '',
+    operationalStatus: 'Draft',
+    status: 'Draft',
+    statusTone: statusToneFromOperational('Draft'),
+    processingStage: 'Ready for submission',
+  }
+}
+
+function buildDraftBulkRow(
+  state: ApplicationFlowState,
+  batchId: string,
+  now: string,
+  creator: ReturnType<typeof getSessionCreatorMeta>,
+  customerSegment: ApplicationCustomerSegment = 'marine',
+): BulkBatchRow {
+  return {
+    ...buildSubmittedBulkRow(state, batchId, now, creator, customerSegment),
+    submissionDate: '',
+    operationalStatus: 'Draft',
+    status: 'Draft',
+    statusTone: statusToneFromOperational('Draft'),
+    processingStage: 'Ready for submission',
   }
 }
 
@@ -291,6 +340,38 @@ export const marineApplicationAdminService = {
     } else {
       mockSingleApplications.unshift(row)
     }
+    return { id: applicationId, kind: 'single' }
+  },
+
+  saveDraftFromFlow(
+    state: ApplicationFlowState,
+    customerSegment: ApplicationCustomerSegment = 'marine',
+  ): { id: string; kind: 'single' | 'bulk' } {
+    const now = new Date().toISOString().slice(0, 10)
+    const creator = getSessionCreatorMeta(loadSession())
+    const kind = deriveApplicationSubmitKind(state.uploadQueueRows)
+    const applicationId = ensureFlowGltsApplicationId(state)
+
+    if (kind === 'bulk') {
+      const batchId = state.gltsBatchId || createGltsBatchId()
+      const existingIndex = mockBulkBatches.findIndex(r => r.id === batchId)
+      const row = buildDraftBulkRow(state, batchId, now, creator, customerSegment)
+      if (existingIndex >= 0) {
+        mockBulkBatches[existingIndex] = row
+      } else {
+        mockBulkBatches.unshift(row)
+      }
+      return { id: batchId, kind: 'bulk' }
+    }
+
+    const existingIndex = mockSingleApplications.findIndex(r => r.id === applicationId)
+    const row = buildDraftSingleRow(state, applicationId, now, creator, customerSegment)
+    if (existingIndex >= 0) {
+      mockSingleApplications[existingIndex] = row
+    } else {
+      mockSingleApplications.unshift(row)
+    }
+    persistCustomerDraftListingRow(row)
     return { id: applicationId, kind: 'single' }
   },
 }

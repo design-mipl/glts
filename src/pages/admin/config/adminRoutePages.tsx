@@ -232,27 +232,27 @@ export const InvoiceFinanceRoutes = lazyNamed(
   'InvoiceFinanceRoutes',
 )
 export const BillingReportsPage = lazyNamed(
-  () => import('../finance/invoices'),
+  () => import('../finance/invoices/pages/BillingReportsPage'),
   'BillingReportsPage',
 )
 export const CreditNoteCompositionPage = lazyNamed(
-  () => import('../finance/invoices'),
+  () => import('../finance/invoices/pages/CreditNoteCompositionPage'),
   'CreditNoteCompositionPage',
 )
 export const GenerateInvoiceCompositionPage = lazyNamed(
-  () => import('../finance/invoices'),
+  () => import('../finance/invoices/pages/GenerateInvoiceCompositionPage'),
   'GenerateInvoiceCompositionPage',
 )
 export const GenerateInvoiceStepperPage = lazyNamed(
-  () => import('../finance/invoices'),
+  () => import('../finance/invoices/pages/GenerateInvoiceStepperPage'),
   'GenerateInvoiceStepperPage',
 )
 export const InvoiceDetailPage = lazyNamed(
-  () => import('../finance/invoices'),
+  () => import('../finance/invoices/pages/InvoiceDetailPage'),
   'InvoiceDetailPage',
 )
 export const InvoiceListingPage = lazyNamed(
-  () => import('../finance/invoices'),
+  () => import('../finance/invoices/pages/InvoiceListingPage'),
   'InvoiceListingPage',
 )
 
@@ -261,11 +261,11 @@ export const ExpenseFinanceRoutes = lazyNamed(
   'ExpenseFinanceRoutes',
 )
 export const ApplicationExpenseDetailPage = lazyNamed(
-  () => import('../finance/expenses'),
+  () => import('../finance/expenses/pages/ApplicationExpenseDetailPage'),
   'ApplicationExpenseDetailPage',
 )
 export const ExpenseListingPage = lazyNamed(
-  () => import('../finance/expenses'),
+  () => import('../finance/expenses/pages/ExpenseListingPage'),
   'ExpenseListingPage',
 )
 
@@ -274,20 +274,20 @@ export const VendorBillingRoutes = lazyNamed(
   'VendorBillingRoutes',
 )
 export const VendorBillingDetailPage = lazyNamed(
-  () => import('../finance/vendor-billing'),
+  () => import('../finance/vendor-billing/pages/VendorBillingDetailPage'),
   'VendorBillingDetailPage',
 )
 export const VendorBillingListingPage = lazyNamed(
-  () => import('../finance/vendor-billing'),
+  () => import('../finance/vendor-billing/pages/VendorBillingListingPage'),
   'VendorBillingListingPage',
 )
 
 export const FundAllocationListingPage = lazyNamed(
-  () => import('../finance/fund-allocation'),
+  () => import('../finance/fund-allocation/pages/FundAllocationListingPage'),
   'FundAllocationListingPage',
 )
 export const ReconciliationListingPage = lazyNamed(
-  () => import('../finance/reconciliation'),
+  () => import('../finance/reconciliation/pages/ReconciliationListingPage'),
   'ReconciliationListingPage',
 )
 

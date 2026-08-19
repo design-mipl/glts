@@ -207,6 +207,7 @@ export function CountryConfigWorkspace({ countryId, mode }: CountryConfigWorkspa
           <CountryOverviewPanel
             countryId={countryId}
             formData={formData}
+            segments={formData.segments}
             onChange={handleFormChange}
             onSelectSegment={(seg) => selectNode(seg)}
           />

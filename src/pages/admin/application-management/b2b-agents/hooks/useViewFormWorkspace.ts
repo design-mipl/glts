@@ -213,9 +213,13 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
     refreshAssistRecord()
   }, [applicationId, selectedRow, refreshAssistRecord])
 
-  const markAsSubmitted = useCallback(() => {
+  const markAsSubmitted = useCallback((options?: { skipValidation?: boolean }) => {
     if (!applicationId || !selectedRow) return { ok: false as const, errors: ['Missing application'] }
-    const result = applicationFormAssistService.markAsSubmitted(applicationId, selectedRow.id)
+    const result = applicationFormAssistService.markAsSubmitted(
+      applicationId,
+      selectedRow.id,
+      options,
+    )
     refreshAssistRecord()
     reload()
     return result

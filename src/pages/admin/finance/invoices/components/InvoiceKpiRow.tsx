@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Grid, Stack, Typography, useTheme } from '@mui/material'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -76,7 +77,7 @@ function computeTotalBilled(invoices: Invoice[]): number {
     .reduce((sum, i) => sum + i.totals.finalAmount, 0)
 }
 
-export function InvoiceKpiRow({ invoices }: InvoiceKpiRowProps) {
+export const InvoiceKpiRow = memo(function InvoiceKpiRow({ invoices }: InvoiceKpiRowProps) {
   const theme = useTheme()
   const total = invoices.length
   const draft = invoices.filter(i => i.invoiceStatus === 'draft').length
@@ -119,4 +120,4 @@ export function InvoiceKpiRow({ invoices }: InvoiceKpiRowProps) {
       </Grid>
     </Stack>
   )
-}
+})

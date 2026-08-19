@@ -385,9 +385,9 @@ export const applicationFormAssistService = {
     return errors
   },
 
-  markAsSubmitted(applicationId: string, travelerRowId: string) {
+  markAsSubmitted(applicationId: string, travelerRowId: string, options?: { skipValidation?: boolean }) {
     const current = getRecord(applicationId, travelerRowId)
-    const errors = this.validateSubmission(current.submission)
+    const errors = options?.skipValidation ? [] : this.validateSubmission(current.submission)
     if (errors.length > 0) {
       return { ok: false as const, errors, record: current }
     }

@@ -29,6 +29,7 @@ export function FundUtilizationListingPage() {
     setTableState,
     paginatedBatches,
     total,
+    isLoading,
     selectedRecord,
     selectRecord,
     closeDetail,
@@ -99,6 +100,7 @@ export function FundUtilizationListingPage() {
         listingContent={
           <FundUtilizationCardList
             batches={paginatedBatches}
+            loading={isLoading}
             selectedId={selectedRecord?.id}
             onSelect={selectRecord}
           />

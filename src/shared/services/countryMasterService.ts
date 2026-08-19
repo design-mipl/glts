@@ -209,19 +209,19 @@ export function countryMasterToPortalCountry(
     flags: master.flag,
     trending: master.trending,
     trendingPercent: master.trendingPercent,
-    visaCategory: resolvePortalVisaCategory(master),
+    visaCategory: resolvePortalVisaCategory(master, options),
     validity: resolvePortalValidityLabel(master, options),
     documentsNeeded: [],
     heroPhotoId: master.heroPhotoId,
     fastMinutes: resolvePortalFastMinutes(master),
     cities: master.cities,
-    portalProcessingLabel: resolvePortalProcessingLabel(master),
+    portalProcessingLabel: resolvePortalProcessingLabel(master, options),
   }
 }
 
 export function listPortalCountries(options: ListCountryMastersOptions = {}): Country[] {
-  const { segment, portalDisplaySegment, ...listOptions } = options
-  const displaySegment = portalDisplaySegment ?? segment
+  const { portalDisplaySegment, ...listOptions } = options
+  const displaySegment = portalDisplaySegment ?? listOptions.segment
   return listCountryMasters(listOptions).map((master) =>
     countryMasterToPortalCountry(master, { segment: displaySegment }),
   )

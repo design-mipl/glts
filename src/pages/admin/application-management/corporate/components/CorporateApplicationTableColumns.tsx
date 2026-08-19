@@ -17,7 +17,7 @@ import {
   getApplicationOperationalBadgeColor,
   getApplicationTypeLabel,
 } from '@/pages/customer/features/applications/components/listing/applicationStatus'
-import { resolveApplicationCompanyName, resolveApplicationDesignation } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { resolveApplicationCompanyName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
 import {
   resolveApplicationBillingEntity,
 } from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
@@ -190,18 +190,6 @@ export function buildCorporateApplicationColumns({
           </Tooltip>
         )
       },
-    },
-    {
-      key: 'designation',
-      label: 'Designation',
-      widthSize: 'sm',
-      sortable: false,
-      filterable: false,
-      render: (_: unknown, row: CorporateApplicationRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationDesignation(row)}
-        </Typography>
-      ),
     },
     {
       key: 'companyName',

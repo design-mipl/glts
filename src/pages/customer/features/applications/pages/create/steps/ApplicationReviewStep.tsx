@@ -7,7 +7,8 @@ import { usePublicBrandColors, getPrimaryButtonSx } from '@/shared/theme/publicB
 import type { ApplicationFlowMode } from '../../../data/applicationFlowData'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
-import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
+import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
+import { useApplicationFlowPolicy } from '../../../context/ApplicationFlowPolicyContext'
 
 interface ApplicationReviewStepProps {
   mode: ApplicationFlowMode
@@ -21,27 +22,21 @@ export function ApplicationReviewStep({ mode, state, onBack, onSubmitted }: Appl
   const navigate = useNavigate()
   const { base } = useCustomerPortalBase()
   const { showToast } = useToast()
+  const { customerSegment } = useApplicationFlowPolicy()
   const refId = useMemo(
-    () =>
-      customerPortalService.submitApplication(mode, {
-        applicationId: state.gltsApplicationId,
-        batchId: state.gltsBatchId,
-      }),
-    [mode, state.gltsApplicationId, state.gltsBatchId],
+    () => state.gltsBatchId || state.gltsApplicationId || 'Pending',
+    [state.gltsApplicationId, state.gltsBatchId],
   )
 
   const handleSubmit = () => {
-    customerPortalService.submitApplication(mode, {
-      applicationId: state.gltsApplicationId,
-      batchId: state.gltsBatchId,
-    })
+    const { id } = marineApplicationAdminService.createAndSubmitFromFlow(state, customerSegment)
     onSubmitted()
     showToast({
       title: mode === 'single' ? 'Application submitted' : 'Batch submitted',
-      description: `${refId} is ready for GLTS review.`,
+      description: `${id} is ready for GLTS review.`,
       variant: 'success',
     })
-    navigate(`${base}/applications/${refId}`)
+    navigate(`${base}/applications/${id}`)
   }
 
   return (
