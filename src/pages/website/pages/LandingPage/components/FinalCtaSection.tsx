@@ -86,7 +86,7 @@ export function FinalCtaSection() {
                 alignSelf: { xs: 'stretch', sm: 'flex-start' },
               }}
             >
-              Start Visa Assistance
+              Check Visa Requirements
             </Button>
             <Button
               variant="outlined"
@@ -105,7 +105,7 @@ export function FinalCtaSection() {
                 },
               }}
             >
-              Book Consultation
+              Talk to a Visa Expert
             </Button>
           </Stack>
         </Stack>

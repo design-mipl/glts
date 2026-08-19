@@ -49,6 +49,10 @@ const EASE = 'ease-in-out'
 const SERVICE_ICONS: Record<string, LucideIcon> = {
   'travel-insurance': ShieldCheck,
   'travel-insurance-support': ShieldCheck,
+  'ticket-for-visa': PlaneTakeoff,
+  'hotel-booking-for-visa': Building2,
+  'passport-assistance': FileText,
+  'appointment-assistance': ClipboardList,
   'student-visa-guidance': GraduationCap,
   'senior-citizen-assistance': HeartHandshake,
   'guided-document-preparation': ClipboardList,
@@ -424,8 +428,8 @@ function NavArrow({
 export function AdditionalServicesSection({
   id = 'additional-services',
   sectionLabel = 'Additional Services',
-  heading = 'Everything You Need Beyond Your Visa',
-  description = 'Additional travel assistance to make your journey smooth, secure and stress-free.',
+  heading = 'A Few More Things We Can Help With',
+  description = 'Optional travel assistance for the documents and bookings commonly needed with visa applications.',
   services = additionalServicesSlider,
 }: AdditionalServicesSectionProps) {
   const colors = usePublicBrandColors()

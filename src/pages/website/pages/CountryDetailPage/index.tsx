@@ -1,12 +1,11 @@
-import { Box, Typography, Grid, Chip, Button, Breadcrumbs, Link, Card } from '@mui/material'
-import { useParams } from 'react-router-dom'
-import { useState } from 'react'
+import { Box, Typography, Grid, Chip, Button, Breadcrumbs, Link, Card, Stack } from '@mui/material'
+import { useLocation, useParams } from 'react-router-dom'
+import { useMemo, useState } from 'react'
 import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
 import { getCountryById, getCountryHeroImageUrl } from '@/shared/services/visaService'
 import { PricingCard } from './components/PricingCard'
 import { TabsNavigation } from './components/TabsNavigation'
 import { RequirementsSection } from './components/RequirementsSection'
-import { OftenAppliedWithSection } from './components/OftenAppliedWithSection'
 import { ComingSoonPage } from '@/shared/components/ComingSoonPage'
 import { PublicContainer } from '../../components/PublicContainer'
 import { publicLayout, publicFonts, usePublicBrandColors, getMarketingPrimaryButtonSx } from '@/shared/theme/publicBrand'
@@ -19,12 +18,43 @@ const timelineSteps = [
   { step: 4, title: 'Collection', desc: 'Courier or pickup', icon: '✈️' },
 ]
 
+const visaCategoryOptions = [
+  { value: 'tourist', label: 'Tourist Visa' },
+  { value: 'business', label: 'Business Visa' },
+  { value: 'student', label: 'Student Visa' },
+  { value: 'transit', label: 'Transit Visa' },
+  { value: 'family', label: 'Visit & Family' },
+  { value: 'group', label: 'Group Applications' },
+  { value: 'other', label: 'Other Visa Types' },
+] as const
+
+type VisaCategoryValue = (typeof visaCategoryOptions)[number]['value']
+
+function resolveVisaCategory(value: string | null): VisaCategoryValue {
+  return visaCategoryOptions.some(option => option.value === value)
+    ? (value as VisaCategoryValue)
+    : 'tourist'
+}
+
 export function CountryDetailPage() {
   const colors = usePublicBrandColors()
   const { countryId } = useParams<{ countryId: string }>()
+  const { search } = useLocation()
   const country = countryId ? getCountryById(countryId) : undefined
   const [activeTab, setActiveTab] = useState(0)
   const [heroImgError, setHeroImgError] = useState(false)
+  const [selectedVisaCategory, setSelectedVisaCategory] = useState<VisaCategoryValue>(() =>
+    resolveVisaCategory(new URLSearchParams(search).get('visaType')),
+  )
+  const selectedVisaCategoryLabel =
+    visaCategoryOptions.find(option => option.value === selectedVisaCategory)?.label ?? 'Tourist Visa'
+  const applyHref = useMemo(() => {
+    const params = new URLSearchParams(search)
+    params.delete('search')
+    if (countryId) params.set('country', countryId)
+    params.set('visaType', selectedVisaCategory)
+    return `/apply/new?${params.toString()}`
+  }, [countryId, search, selectedVisaCategory])
 
   if (!country) {
     return <ComingSoonPage title="Country not found" returnLink={{ text: 'Browse destinations', href: '/countries' }} />
@@ -190,10 +220,9 @@ export function CountryDetailPage() {
               {/* Quick stats row */}
               <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                 {[
-                  { label: 'Processing', value: '12–18 days' },
-                  { label: 'Stay', value: '90 days' },
-                  { label: 'Entries', value: 'Multiple' },
-                  { label: 'Validity', value: '180 days' },
+                  { label: 'Processing Days', value: country.processingTime || 'TBD' },
+                  { label: 'Stay', value: country.visaTypes[0]?.duration || 'As per visa type' },
+                  { label: 'Validity', value: country.validity || 'As per embassy' },
                 ].map(({ label, value }) => (
                   <Box key={label}>
                     <Typography sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, mb: 0.25 }}>
@@ -211,14 +240,60 @@ export function CountryDetailPage() {
 
       <PublicContainer sx={{ py: { xs: 4, md: 6 } }}>
         <Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 3 }}>
-          <PricingCard country={country} />
+          <PricingCard
+            country={country}
+            selectedVisaCategoryLabel={selectedVisaCategoryLabel}
+            applyHref={applyHref}
+          />
         </Box>
         <Grid container spacing={4}>
-          <Grid size={{ xs: 12, lg: 8 }}>
+            <Grid size={{ xs: 12, lg: 8 }}>
+        <Box
+          sx={{
+            mb: 3,
+            p: { xs: 2, md: 2.5 },
+            borderRadius: '16px',
+            bgcolor: colors.white,
+            border: `1px solid ${colors.border}`,
+          }}
+        >
+          <Typography sx={{ fontSize: '12px', fontWeight: 700, color: colors.textMuted, mb: 1.5 }}>
+            SELECTED VISA CATEGORY
+          </Typography>
+          <Stack direction="row" flexWrap="wrap" gap={1} useFlexGap>
+            {visaCategoryOptions.map(option => {
+              const selected = option.value === selectedVisaCategory
+              return (
+                <Chip
+                  key={option.value}
+                  label={option.label}
+                  clickable
+                  onClick={() => setSelectedVisaCategory(option.value)}
+                  sx={{
+                    height: 32,
+                    fontWeight: selected ? 800 : 600,
+                    bgcolor: selected ? colors.greenBright : colors.surfaceAlt,
+                    color: selected ? colors.white : colors.navy,
+                    border: `1px solid ${selected ? colors.greenBright : colors.border}`,
+                    '&:hover': {
+                      bgcolor: selected ? colors.greenDark : colors.greenMuted,
+                    },
+                  }}
+                />
+              )
+            })}
+          </Stack>
+        </Box>
+
         <TabsNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         <Box sx={{ mt: 3 }}>
-          {activeTab === 0 && <RequirementsSection country={country} />}
+          {activeTab === 0 && (
+            <RequirementsSection
+              country={country}
+              selectedVisaCategoryLabel={selectedVisaCategoryLabel}
+            />
+          )}
 
           {activeTab === 1 && (
             <Box>
@@ -261,7 +336,9 @@ export function CountryDetailPage() {
           )}
 
           {activeTab === 2 && (
-            <Typography sx={{ color: '#6B7280' }}>Pricing details coming soon.</Typography>
+            <Typography sx={{ color: '#6B7280' }}>
+              Review the fee estimate card for Embassy Fee, GreenLight Fee and indicative total.
+            </Typography>
           )}
           {activeTab === 3 && (
             <Typography sx={{ color: '#6B7280' }}>FAQs coming soon.</Typography>
@@ -309,17 +386,15 @@ export function CountryDetailPage() {
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Clock size={13} color={colors.greenBright} />
-                  <Typography sx={{ fontSize: '13px', color: colors.greenBright, fontWeight: 600 }}>
-                    Next slot · Mar 14 · 3 slots left
+                  <Clock size={13} color="#9CA3AF" />
+                  <Typography sx={{ fontSize: '13px', color: '#6B7280', fontWeight: 600 }}>
+                    Appointment timing confirmed during application review
                   </Typography>
                 </Box>
               </Card>
             </Grid>
           </Grid>
         </Box>
-
-        <OftenAppliedWithSection country={country} />
 
         {/* CTA Banner */}
         <Box
@@ -346,7 +421,7 @@ export function CountryDetailPage() {
           <Button
             variant="contained"
             size="large"
-            href={`/apply/new?country=${country.id}`}
+            href={applyHref}
             sx={{ ...getMarketingPrimaryButtonSx(colors), px: 5, py: 1.75 }}
           >
             Start Application
@@ -355,7 +430,11 @@ export function CountryDetailPage() {
           </Grid>
           <Grid size={{ xs: 12, lg: 4 }} sx={{ display: { xs: 'none', lg: 'block' } }}>
             <Box sx={{ position: 'sticky', top: 96 }}>
-              <PricingCard country={country} />
+              <PricingCard
+                country={country}
+                selectedVisaCategoryLabel={selectedVisaCategoryLabel}
+                applyHref={applyHref}
+              />
             </Box>
           </Grid>
         </Grid>

@@ -11,7 +11,6 @@ import { howItWorksSteps } from '../landingWorkflowContent'
 import { landingSectionPy } from '../landingPageSpacing'
 import { howItWorksMapPinImage } from '../../../assets/landingPageImages'
 
-const AUTO_MS = 3000
 const TRANSITION_MS = 600
 const STEP_COUNT = howItWorksSteps.length
 const MAP_PIN_SIZE = 22
@@ -20,10 +19,8 @@ export function HowItWorks() {
   const colors = usePublicBrandColors()
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const [activeIndex, setActiveIndex] = useState(0)
-  const [paused, setPaused] = useState(false)
   const [entered, setEntered] = useState(false)
   const sectionRef = useRef<HTMLDivElement>(null)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const goTo = useCallback((index: number) => {
     setActiveIndex(((index % STEP_COUNT) + STEP_COUNT) % STEP_COUNT)
@@ -42,24 +39,6 @@ export function HowItWorks() {
     return () => observer.disconnect()
   }, [])
 
-  useEffect(() => {
-    if (reducedMotion || paused || !entered) {
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-        timerRef.current = null
-      }
-      return
-    }
-
-    timerRef.current = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % STEP_COUNT)
-    }, AUTO_MS)
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [paused, reducedMotion, entered])
-
   const activeStep = howItWorksSteps[activeIndex]
   const progressPct = STEP_COUNT <= 1 ? 100 : (activeIndex / (STEP_COUNT - 1)) * 100
 
@@ -75,7 +54,7 @@ export function HowItWorks() {
     >
       <PublicContainer variant="hero">
         <Box
-          onMouseLeave={() => setPaused(false)}
+          onMouseLeave={() => goTo(0)}
           sx={{
             display: 'grid',
             gridTemplateColumns: {
@@ -220,13 +199,12 @@ export function HowItWorks() {
                       component="button"
                       type="button"
                       onMouseEnter={() => {
-                        setPaused(true)
                         goTo(index)
                       }}
                       onFocus={() => {
-                        setPaused(true)
                         goTo(index)
                       }}
+                      onBlur={() => goTo(0)}
                       onClick={() => goTo(index)}
                       aria-pressed={isActive}
                       aria-label={`Step ${step.number}: ${step.title}`}
@@ -323,7 +301,6 @@ export function HowItWorks() {
 
           {/* Right — dynamic image card, top-aligned with header */}
           <Box
-            onMouseEnter={() => setPaused(true)}
             sx={{
               position: 'relative',
               width: '100%',

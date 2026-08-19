@@ -5,89 +5,83 @@ import { testimonialPortraits } from '../../assets/testimonialPortraits'
 export const landingTestimonials: TestimonialItem[] = [
   {
     quote:
-      'GreenLight handled my Canada visitor visa flawlessly. The team guided me through every document and kept me updated throughout the process.',
+      'GreenLight made the document checklist clear and reviewed every upload before my visitor visa was submitted.',
     name: 'Priya Sharma',
-    service: 'Canada Visitor Visa',
+    service: 'Visitor Visa',
     initials: 'PS',
     avatarBg: 'linear-gradient(135deg, #73C064 0%, #4A8F3F 100%)',
     avatarSrc: testimonialPortraits.priyaSharma,
-    rating: 4.5,
   },
   {
     quote:
-      'We rotated 312 crew across 14 ports last quarter without a single missed sailing. Their marine travel desk is an extension of our operations team.',
-    name: 'Hiroshi Kondo',
-    service: 'Marine Crew Travel Services',
-    initials: 'HK',
+      'The portal helped us track our family application in one place while the team kept checking the details.',
+    name: 'Neha Kapoor',
+    service: 'Family Application',
+    initials: 'NK',
     avatarBg: 'linear-gradient(135deg, #0A2540 0%, #1E4D6B 100%)',
     avatarSrc: testimonialPortraits.hiroshiKondo,
-    rating: 4.5,
   },
   {
     quote:
-      'After a refusal, their specialists rebuilt my case file and coached me through the reapplication. Schengen approved on the second attempt.',
-    name: 'Amara Okafor',
-    service: 'Visa Refusal Support',
-    initials: 'AO',
+      'I had a previous refusal, so the expert review gave me a clearer view of what needed correction before reapplying.',
+    name: 'Arjun Mehta',
+    service: 'Reapplication Support',
+    initials: 'AM',
     avatarBg: 'linear-gradient(135deg, #5A9A4E 0%, #73C064 100%)',
     avatarSrc: testimonialPortraits.amaraOkafor,
-    rating: 4.5,
   },
   {
     quote:
-      'Our university placed 48 exchange students across Europe. GreenLight handled bulk documentation and embassy coordination flawlessly.',
-    name: 'Dr. Elena Vasquez',
-    service: 'Student Visa Program',
-    initials: 'EV',
+      'The requirements were easy to understand, and I could see what was still pending before my student visa submission.',
+    name: 'Riya Nair',
+    service: 'Student Visa',
+    initials: 'RN',
     avatarBg: 'linear-gradient(135deg, #123B5C 0%, #0A2540 100%)',
     avatarSrc: testimonialPortraits.elenaVasquez,
-    rating: 4.5,
   },
   {
     quote:
-      'From document checklist to courier tracking, everything was transparent. Business visa to Singapore processed ahead of my conference deadline.',
+      'From checklist to status updates, the process felt transparent for my business trip application.',
     name: 'Rajesh Mehta',
-    service: 'Singapore Business Visa',
+    service: 'Business Visa',
     initials: 'RM',
     avatarBg: 'linear-gradient(135deg, #4A8F3F 0%, #73C064 100%)',
     avatarSrc: testimonialPortraits.rajeshMehta,
-    rating: 4.5,
   },
   {
     quote:
-      'Family of four, four different visa types, one coordinator. They made a complex Japan trip feel effortless from start to finish.',
+      'The team explained the appointment process and helped me keep the supporting documents organized.',
     name: 'Sarah & James Chen',
-    service: 'Family Travel Package',
+    service: 'Tourist Visa',
     initials: 'SC',
     avatarBg: 'linear-gradient(135deg, #1E4D6B 0%, #73C064 100%)',
     avatarSrc: testimonialPortraits.sarahChen,
-    rating: 4.5,
   },
 ]
 
 export const landingFaqs: FAQItem[] = [
   {
-    q: 'How do you handle urgent business travel visa requests?',
-    a: 'Corporate accounts receive priority review, dedicated escalation paths, and timeline estimates before submission so travel coordinators can plan around meeting dates.',
+    q: 'How do I know which documents are required?',
+    a: 'Select your destination and visa category to see the available requirements. A GreenLight specialist reviews your uploaded documents before submission.',
   },
   {
-    q: 'Can we manage employee visas across multiple destinations?',
-    a: 'Yes. Corporate portals support multi-country business visa workflows, centralized document storage, and live status for authorized team members.',
+    q: 'Can I complete the application online?',
+    a: 'You can complete the application and upload documents online. Some destinations may still require appointments, biometrics or offline submission steps.',
   },
   {
-    q: 'Do you support group visa applications for corporate delegations?',
-    a: 'Yes. We coordinate bulk business travel filings, shared documentation standards, and embassy submissions for teams attending conferences, site visits, and client engagements.',
+    q: 'Does GreenLight review my application before submission?',
+    a: 'Yes. Visa specialists review the application and supporting documents to identify missing, unclear or inconsistent information early.',
   },
   {
-    q: 'How does compliance documentation work for corporate accounts?',
-    a: 'Invitation letters, employment records, and embassy-specific requirements are reviewed before filing. Compliance trails are maintained for audit and internal reporting.',
+    q: 'Are the fees final when I browse a destination?',
+    a: 'Visible destination prices are indicative or starting values where shown. Embassy fee, GreenLight fee and final total are confirmed after visa type selection.',
   },
   {
-    q: 'Can our travel management team track all active applications?',
-    a: 'Yes. Travel coordinators and stakeholders receive live application status, milestone updates, and visibility across active corporate cases from one workspace.',
+    q: 'Can families or groups apply together?',
+    a: 'Yes. Family and group applications can be coordinated together while each applicant still receives the document checks required for their profile.',
   },
   {
-    q: 'What account support is available for corporate retainer clients?',
-    a: 'Retainer plans may include a dedicated account manager, priority processing, documentation management, monthly reporting, and escalation handling.',
+    q: 'Can approval be guaranteed?',
+    a: 'Final visa decisions are made by the relevant embassy or immigration authority. GreenLight supports eligibility checks, document readiness and accurate submission.',
   },
 ]

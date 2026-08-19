@@ -5,6 +5,7 @@ import { HowItWorks } from './components/HowItWorks'
 import { WhyGreenLightWorksSection } from './components/WhyGreenLightWorksSection'
 import { VisaServicesSection } from './components/VisaServicesSection'
 import { DestinationsMapSection } from './components/DestinationsMapSection'
+import { SpecializedSolutionsSection } from './components/SpecializedSolutionsSection'
 import { VisaMasterSection } from './components/VisaMasterSection'
 import { AdditionalServicesSection } from './components/AdditionalServicesSection'
 import { TestimonialSection } from '../../components/TestimonialSection'
@@ -29,6 +30,7 @@ export function LandingPage() {
       <RetailAdvantageSection />
       <WhyGreenLightWorksSection />
       <VisaMasterSection />
+      <SpecializedSolutionsSection />
       <AdditionalServicesSection />
       <TestimonialSection testimonials={landingTestimonials} markerIcon="plane" />
       <FinalCtaSection />

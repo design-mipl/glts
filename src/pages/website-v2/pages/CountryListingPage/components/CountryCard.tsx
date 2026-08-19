@@ -3,8 +3,10 @@ import { DestinationListingCard } from '../../../components/DestinationListingCa
 
 interface CountryCardProps {
   country: Country
+  applicationContextQuery?: string
 }
 
-export function CountryCard({ country }: CountryCardProps) {
-  return <DestinationListingCard country={country} />
+export function CountryCard({ country, applicationContextQuery = '' }: CountryCardProps) {
+  const href = applicationContextQuery ? `/v2/countries/${country.id}${applicationContextQuery}` : undefined
+  return <DestinationListingCard country={country} href={href} />
 }

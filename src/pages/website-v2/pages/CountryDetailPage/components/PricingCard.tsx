@@ -1,4 +1,5 @@
-import { Card, Typography, Button, Divider, Stack } from '@mui/material'
+import { Box, Card, Typography, Button, Divider, Stack, Chip } from '@mui/material'
+import { Info } from 'lucide-react'
 import type { Country } from '@/shared/types/visa'
 import {
   publicLayout,
@@ -11,10 +12,19 @@ import {
 
 interface PricingCardProps {
   country: Country
+  selectedVisaCategoryLabel: string
+  applyHref: string
 }
 
-export function PricingCard({ country }: PricingCardProps) {
+export function PricingCard({ country, selectedVisaCategoryLabel, applyHref }: PricingCardProps) {
   const colors = usePublicBrandColors()
+  const indicativeTotal = `Starting from ₹${country.price.toLocaleString('en-IN')}`
+  const feeRows = [
+    { label: 'Embassy Fee', value: 'Confirmed after visa type selection' },
+    { label: 'GreenLight Fee', value: 'Confirmed after visa type selection' },
+    { label: 'Total', value: indicativeTotal, highlight: true },
+  ]
+
   return (
     <Card
       sx={{
@@ -34,34 +44,74 @@ export function PricingCard({ country }: PricingCardProps) {
           letterSpacing: '0.5px',
         }}
       >
-        Visa fee
+        Fee estimate
       </Typography>
+
+      <Chip
+        label={selectedVisaCategoryLabel}
+        size="small"
+        sx={{
+          mt: 1.25,
+          fontWeight: 800,
+          bgcolor: colors.greenMuted,
+          color: colors.greenDark,
+          border: `1px solid rgba(115, 192, 100, 0.28)`,
+        }}
+      />
+
       <Typography
         sx={{
           fontFamily: publicFonts.heading,
           fontWeight: 800,
-          fontSize: { xs: '36px', md: '42px' },
+          fontSize: { xs: '28px', md: '32px' },
           color: colors.navy,
-          my: 1,
+          mt: 2,
+          mb: 1,
         }}
       >
-        ₹{country.price.toLocaleString('en-IN')}
+        {indicativeTotal}
       </Typography>
-      <Typography sx={{ color: colors.textSecondary, fontSize: '15px', mb: 3 }}>
-        per applicant · all-inclusive
+      <Typography sx={{ color: colors.textSecondary, fontSize: '14px', mb: 3, lineHeight: 1.55 }}>
+        Indicative total for {country.name}. Final embassy and GreenLight fee split is confirmed
+        before submission.
       </Typography>
 
       <Divider sx={{ mb: 3, borderColor: colors.border }} />
 
-      <Stack spacing={1.5} sx={{ mb: 4 }}>
-        {[
-          `Processing: ${country.processingTime}`,
-          `Approval rate: ${country.rating}%`,
-          'Document review included',
-          'Status tracking included',
-        ].map(item => (
-          <Typography key={item} sx={{ color: colors.text, fontSize: '15px', fontWeight: 500 }}>
-            ✓ {item}
+      <Stack spacing={1.75} sx={{ mb: 4 }}>
+        {feeRows.map(row => (
+          <Box
+            key={row.label}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 2,
+              alignItems: 'flex-start',
+            }}
+          >
+            <Typography sx={{ color: colors.textSecondary, fontSize: '14px', fontWeight: 600 }}>
+              {row.label}
+            </Typography>
+            <Typography
+              sx={{
+                color: row.highlight ? colors.navy : colors.text,
+                fontSize: row.highlight ? '15px' : '13px',
+                fontWeight: row.highlight ? 800 : 600,
+                textAlign: 'right',
+                maxWidth: 170,
+                lineHeight: 1.45,
+              }}
+            >
+              {row.value}
+            </Typography>
+          </Box>
+        ))}
+      </Stack>
+
+      <Stack spacing={1.25} sx={{ mb: 4 }}>
+        {[`Processing Time: ${country.processingTime}`, 'Document review included', 'Status tracking included'].map(item => (
+          <Typography key={item} sx={{ color: colors.text, fontSize: '14px', fontWeight: 500 }}>
+            {item}
           </Typography>
         ))}
       </Stack>
@@ -70,23 +120,18 @@ export function PricingCard({ country }: PricingCardProps) {
         fullWidth
         variant="contained"
         size="large"
-        href={`/v2/apply/new?country=${country.id}`}
+        href={applyHref}
         sx={{ ...getMarketingPrimaryButtonSx(colors), py: 1.5, fontSize: '15px' }}
       >
-        {country.fastMinutes ? `Get visa in ${country.fastMinutes} min` : 'Get started'}
+        Start Application
       </Button>
 
-      <Typography
-        sx={{
-          color: colors.textMuted,
-          display: 'block',
-          textAlign: 'center',
-          mt: 2,
-          fontSize: publicTypography.caption,
-        }}
-      >
-        No payment until approval
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75, mt: 2 }}>
+        <Info size={14} color={colors.textMuted} style={{ marginTop: 2, flexShrink: 0 }} />
+        <Typography sx={{ color: colors.textMuted, fontSize: publicTypography.caption, lineHeight: 1.45 }}>
+          Final pricing depends on destination rules, selected visa category and applicant profile.
+        </Typography>
+      </Box>
     </Card>
   )
 }

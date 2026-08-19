@@ -7,7 +7,7 @@ import { landingTrustFloatOverlap } from '../landingPageSpacing'
 const metrics = [
   { value: '25+', label: 'Years Experience' },
   { value: '450K+', label: 'Visas Processed' },
-  { value: '190+', label: 'Countries Covered' },
+  { value: '100+', label: 'Countries Covered' },
 ]
 
 export function TrustIndicatorsSection() {

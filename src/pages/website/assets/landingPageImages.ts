@@ -156,10 +156,15 @@ export const visaServiceShowcaseImages = {
     fallback: '/images/visa-services/transit.png',
     alt: 'Traveler walking through a modern airport terminal during transit',
   },
-  project: {
-    src: '/images/visa-services/project.png',
-    fallback: '/images/visa-services/project.png',
-    alt: 'Project team at a wind farm site for project visa travel',
+  family: {
+    src: '/images/visa-services/tourist.png',
+    fallback: '/images/visa-services/tourist.png',
+    alt: 'Family preparing travel documents for a visit visa',
+  },
+  other: {
+    src: '/images/visa-services/business.png',
+    fallback: '/images/visa-services/business.png',
+    alt: 'Visa specialist reviewing a country-specific application',
   },
 } as const
 
@@ -269,24 +274,65 @@ export const additionalServicesGrid = [
   },
 ] as const
 
-/** All 9 services for the expanding horizontal Additional Services slider. */
+/** Retail-safe services for the expanding horizontal Additional Services slider. */
 export const additionalServicesSlider = [
   {
-    id: additionalServicesFeatured.id,
-    title: additionalServicesFeatured.title,
-    description: 'Comprehensive coverage for your trip with best plans.',
-    ctaLabel: 'Get Insured',
-    href: additionalServicesFeatured.href,
+    id: 'travel-insurance',
+    title: 'Travel Insurance',
+    description: 'Travel protection options aligned to your itinerary and visa journey.',
+    ctaLabel: 'View Options',
+    href: '/countries',
     image: additionalServicesFeatured.image,
   },
-  ...additionalServicesGrid.map((service) => ({
-    id: service.id,
-    title: service.title,
-    description: service.description,
-    ctaLabel: 'Learn More',
-    href: service.href,
-    image: service.image,
-  })),
+  {
+    id: 'ticket-for-visa',
+    title: 'Ticket for Visa',
+    description: 'Flight reservation support for visa documentation where required.',
+    ctaLabel: 'Check Details',
+    href: '/countries',
+    image: {
+      src: '/images/additional-services/travel-documentation.png',
+      fallback: '/images/additional-services/travel-documentation.png',
+      alt: 'Flight itinerary and travel documents prepared for a visa application',
+    },
+  },
+  {
+    id: 'hotel-booking-for-visa',
+    title: 'Hotel Booking for Visa',
+    description: 'Accommodation booking support for embassy-ready application files.',
+    ctaLabel: 'Check Details',
+    href: '/countries',
+    image: {
+      src: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&h=800&q=90',
+      fallback:
+        'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&h=800&q=90',
+      alt: 'Hotel accommodation prepared for visa documentation',
+    },
+  },
+  {
+    id: 'passport-assistance',
+    title: 'Passport Assistance',
+    description: 'Support for passport readiness checks before visa submission.',
+    ctaLabel: 'Check Details',
+    href: '/countries',
+    image: {
+      src: '/images/additional-services/guided-document-preparation.png',
+      fallback: '/images/additional-services/guided-document-preparation.png',
+      alt: 'Passport and document checklist reviewed before visa submission',
+    },
+  },
+  {
+    id: 'appointment-assistance',
+    title: 'Appointment Assistance',
+    description: 'Guidance for visa appointments, biometrics and submission scheduling.',
+    ctaLabel: 'Check Details',
+    href: '/countries',
+    image: {
+      src: '/images/additional-services/senior-citizen-assistance.png',
+      fallback: '/images/additional-services/senior-citizen-assistance.png',
+      alt: 'Traveler receiving guided appointment assistance',
+    },
+  },
 ] as const
 
 /** @deprecated Prefer `additionalServicesSlider`. */
