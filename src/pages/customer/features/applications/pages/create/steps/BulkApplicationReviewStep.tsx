@@ -16,9 +16,10 @@ import { useToast } from '@/design-system/UIComponents'
 import { usePublicBrandColors, getPrimaryButtonSx } from '@/shared/theme/publicBrand'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
-import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
+import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
+import { useApplicationFlowPolicy } from '../../../context/ApplicationFlowPolicyContext'
 import { CustomerDocumentChecklist } from '@/pages/customer/features/shared/components/CustomerPrimitives'
-import { defaultChecklist } from '../../../data/applicationFlowData'
+import { buildGlobalChecklistItems, resolveGlobalChecklistDocuments } from '../../../utils/globalDocumentChecklist'
 import { getTravelDateFeasibilityForOffering, offeringRequiresJurisdictionSelection } from '@/shared/services/countryMasterService'
 import { getRequirementPreviewCards } from '../../../data/singleApplicationFlowData'
 import { TravelDateFeasibilityCard } from '../../../components/create/TravelDateFeasibilityCard'
@@ -39,13 +40,21 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
   const navigate = useNavigate()
   const { base } = useCustomerPortalBase()
   const { showToast } = useToast()
+  const { customerSegment } = useApplicationFlowPolicy()
   const [declared, setDeclared] = useState(false)
 
   const rows = state.uploadQueueRows
   const readyRows = useMemo(() => queueReadyRows(rows), [rows])
   const isSingleListing = readyRows.length === 1
 
-  const checklist = defaultChecklist(state.countryName)
+  const checklist = useMemo(() => {
+    const docs = resolveGlobalChecklistDocuments({
+      countryId: state.countryId,
+      visaOfferingId: state.visaOfferingId,
+      jurisdictionId: state.jurisdictionId,
+    })
+    return buildGlobalChecklistItems(state.globalDocumentUploads, undefined, docs)
+  }, [state.countryId, state.globalDocumentUploads, state.jurisdictionId, state.visaOfferingId])
   const missingCount = checklist.filter(i => i.status === 'missing').length
   const requirementCards = useMemo(
     () => getRequirementPreviewCards(state.countryId, state.visaOfferingId, state.jurisdictionId),
@@ -68,13 +77,9 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
   const docsComplete = readyRows.reduce((n, r) => n + r.documentsComplete, 0)
   const docsTotal = readyRows.reduce((n, r) => n + r.documentsTotal, 0)
 
-  const submitMode = isSingleListing ? 'single' : 'bulk'
-
   const handleSubmit = () => {
-    const refId = customerPortalService.submitApplication(submitMode, {
-      applicationId: state.gltsApplicationId,
-      batchId: state.gltsBatchId,
-    })
+    const { id: refId, kind } = marineApplicationAdminService.createAndSubmitFromFlow(state, customerSegment)
+    const isSingleListing = kind === 'single'
     onSubmitted()
     showToast({
       title: isSingleListing ? 'Application submitted' : 'Batch submitted',
@@ -87,10 +92,11 @@ export function BulkApplicationReviewStep({ state, onBack, onSubmitted }: BulkAp
   }
 
   const handleDraft = () => {
+    marineApplicationAdminService.saveDraftFromFlow(state, customerSegment)
     showToast({
       title: 'Draft saved',
       description: 'Resume from Application Management → Draft applications.',
-      variant: 'info',
+      variant: 'success',
     })
     navigate(`${base}/applications`)
   }

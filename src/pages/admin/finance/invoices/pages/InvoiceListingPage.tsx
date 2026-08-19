@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Box, alpha, useTheme } from '@mui/material'
 import { Plus } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -62,26 +62,25 @@ export function InvoiceListingPage() {
     },
     [listingReturnHref, navigate],
   )
-  const [shareTarget, setShareTarget] = useState<Invoice>()
-  const [shareOpen, setShareOpen] = useState(false)
+  type ModalState =
+    | { type: 'none' }
+    | { type: 'share'; target: Invoice }
+    | { type: 'submit'; target: Invoice }
+    | { type: 'delete'; target: Invoice }
+    | { type: 'reminder'; target: Invoice }
+    | { type: 'cancel'; target: Invoice }
+    | { type: 'revised_prompt'; target: Invoice }
+    | { type: 'payment'; target: Invoice }
+
+  const [modal, setModal] = useState<ModalState>({ type: 'none' })
+  const closeModal = useCallback(() => setModal({ type: 'none' }), [])
+
   const [shareValue, setShareValue] = useState<ShareInvoiceModalValue>({
     email: '',
     paymentTerms: 'Net 30',
     dueDate: '',
     message: '',
   })
-  const [submitTarget, setSubmitTarget] = useState<Invoice>()
-  const [submitOpen, setSubmitOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<Invoice>()
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [reminderTarget, setReminderTarget] = useState<Invoice>()
-  const [reminderOpen, setReminderOpen] = useState(false)
-  const [cancelTarget, setCancelTarget] = useState<Invoice>()
-  const [cancelOpen, setCancelOpen] = useState(false)
-  const [revisedPromptOpen, setRevisedPromptOpen] = useState(false)
-  const [revisedSource, setRevisedSource] = useState<Invoice>()
-  const [paymentTarget, setPaymentTarget] = useState<Invoice>()
-  const [paymentOpen, setPaymentOpen] = useState(false)
   const [paymentValue, setPaymentValue] = useState<RecordPaymentModalValue>({
     amount: '',
     date: new Date().toISOString().slice(0, 10),
@@ -101,17 +100,30 @@ export function InvoiceListingPage() {
     loadRows()
   }, [loadRows])
 
+  const loadRowsRef = useRef(loadRows)
+  loadRowsRef.current = loadRows
+  const goFromListingRef = useRef(goFromListing)
+  goFromListingRef.current = goFromListing
+  const showToastRef = useRef(showToast)
+  showToastRef.current = showToast
+
+  const stableLoadRows = useCallback(() => loadRowsRef.current(), [])
+  const stableGoFromListing = useCallback(
+    (to: string, options?: Parameters<typeof navigateFromListing>[3]) => goFromListingRef.current(to, options),
+    [],
+  )
+
   const openRevisedInvoiceFlow = useCallback(
     (row: Invoice) => {
       const originId = row.invoiceType === 'credit_note' ? row.sourceInvoiceId ?? row.id : row.id
       const existing = invoiceService.findReplacementInvoice(originId)
       if (existing) {
-        showToast({
+        showToastRef.current({
           title: 'Revised invoice already exists',
           description: existing.invoiceId,
           variant: 'info',
         })
-        goFromListing(
+        stableGoFromListing(
           existing.invoiceStatus === 'draft'
             ? `${GENERATE_DRAFT_PATH}?draftId=${existing.id}&step=1`
             : `${LISTING_PATH}/${existing.id}`,
@@ -124,18 +136,18 @@ export function InvoiceListingPage() {
           : undefined
       const draft = invoiceService.createRevisedInvoiceDraft(row.id, workspace)
       if (!draft) {
-        showToast({ title: 'Unable to create revised invoice', variant: 'error' })
+        showToastRef.current({ title: 'Unable to create revised invoice', variant: 'error' })
         return
       }
-      showToast({
+      showToastRef.current({
         title: 'Revised invoice draft created',
         description: draft.invoiceId,
         variant: 'success',
       })
-      loadRows()
-      goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${draft.id}&step=1`)
+      stableLoadRows()
+      stableGoFromListing(`${GENERATE_DRAFT_PATH}?draftId=${draft.id}&step=1`)
     },
-    [goFromListing, showToast, loadRows],
+    [stableGoFromListing, stableLoadRows],
   )
 
   const tabFilteredRows = useMemo(() => filterInvoicesByTab(rows, activeTab), [rows, activeTab])
@@ -152,29 +164,26 @@ export function InvoiceListingPage() {
   const columns = useMemo(
     () =>
       buildInvoiceColumns({
-        onOpenDetail: row => goFromListing(`${LISTING_PATH}/${row.id}`),
+        onOpenDetail: row => stableGoFromListing(`${LISTING_PATH}/${row.id}`),
         onEditDraft: row =>
-          goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${row.id}&step=1`),
+          stableGoFromListing(`${GENERATE_DRAFT_PATH}?draftId=${row.id}&step=1`),
         onSubmitDraft: row => {
-          setSubmitTarget(row)
-          setSubmitOpen(true)
+          setModal({ type: 'submit', target: row })
         },
         onDeleteDraft: row => {
-          setDeleteTarget(row)
-          setDeleteOpen(true)
+          setModal({ type: 'delete', target: row })
         },
         onShare: row => {
-          setShareTarget(row)
           setShareValue({
             email: row.sharedToEmail ?? '',
             paymentTerms: row.paymentTerms ?? 'Net 30',
             dueDate: row.dueDate,
             message: '',
           })
-          setShareOpen(true)
+          setModal({ type: 'share', target: row })
         },
         onDownload: row => {
-          showToast({ title: 'Download started', description: `${row.invoiceId}.pdf`, variant: 'success' })
+          showToastRef.current({ title: 'Download started', description: `${row.invoiceId}.pdf`, variant: 'success' })
         },
         onRecordPayment: row => {
           const collected = row.payments.reduce((sum, p) => sum + p.amount, 0)
@@ -189,7 +198,6 @@ export function InvoiceListingPage() {
               ? Math.round(((invoiceAmount * tdsPct) / 100) * 100) / 100
               : 0
           const netAmount = Math.max(0, Math.round((invoiceAmount - tdsAmount) * 100) / 100)
-          setPaymentTarget(row)
           setPaymentValue({
             amount: invoiceAmount > 0 ? String(invoiceAmount) : '',
             date: new Date().toISOString().slice(0, 10),
@@ -198,36 +206,34 @@ export function InvoiceListingPage() {
             tdsAmount: tdsAmount > 0 ? String(tdsAmount) : '',
             netAmount: netAmount > 0 ? String(netAmount) : '',
           })
-          setPaymentOpen(true)
+          setModal({ type: 'payment', target: row })
         },
         onSecondaryInvoice: row => {
           const secondary = invoiceService.createSecondaryInvoice(row.id)
           if (!secondary) {
-            showToast({ title: 'Unable to create secondary invoice', variant: 'error' })
+            showToastRef.current({ title: 'Unable to create secondary invoice', variant: 'error' })
             return
           }
-          showToast({
+          showToastRef.current({
             title: 'Secondary invoice created',
             description: `${secondary.invoiceId} linked to ${row.invoiceId}`,
             variant: 'success',
           })
-          loadRows()
-          goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${secondary.id}&step=1`)
+          stableLoadRows()
+          stableGoFromListing(`${GENERATE_DRAFT_PATH}?draftId=${secondary.id}&step=1`)
         },
-        onCreditNote: row => goFromListing(`${LISTING_PATH}/${row.id}/credit-note`),
+        onCreditNote: row => stableGoFromListing(`${LISTING_PATH}/${row.id}/credit-note`),
         onModify: row =>
-          goFromListing(`${GENERATE_DRAFT_PATH}?draftId=${row.id}&step=1`),
+          stableGoFromListing(`${GENERATE_DRAFT_PATH}?draftId=${row.id}&step=1`),
         onCancel: row => {
-          setCancelTarget(row)
-          setCancelOpen(true)
+          setModal({ type: 'cancel', target: row })
         },
         onCreateRevisedInvoice: row => openRevisedInvoiceFlow(row),
         onSendReminder: row => {
-          setReminderTarget(row)
-          setReminderOpen(true)
+          setModal({ type: 'reminder', target: row })
         },
       }),
-    [goFromListing, showToast, loadRows, openRevisedInvoiceFlow],
+    [stableGoFromListing, stableLoadRows, openRevisedInvoiceFlow],
   )
 
   const toolbarColumns = useMemo(
@@ -235,7 +241,7 @@ export function InvoiceListingPage() {
     [columns],
   )
 
-  const handleGenerate = useCallback(() => goFromListing(`${LISTING_PATH}/generate`), [goFromListing])
+  const handleGenerate = useCallback(() => stableGoFromListing(`${LISTING_PATH}/generate`), [stableGoFromListing])
 
   const emptyState = useMemo(() => {
     const base = getInvoiceEmptyState(activeTab, Boolean(listing.tableState.searchQuery))
@@ -261,12 +267,19 @@ export function InvoiceListingPage() {
     [listing, setActiveTab],
   )
 
+  const shareTarget = modal.type === 'share' ? modal.target : undefined
+  const submitTarget = modal.type === 'submit' ? modal.target : undefined
+  const deleteTarget = modal.type === 'delete' ? modal.target : undefined
+  const reminderTarget = modal.type === 'reminder' ? modal.target : undefined
+  const cancelTarget = modal.type === 'cancel' ? modal.target : undefined
+  const revisedSource = modal.type === 'revised_prompt' ? modal.target : undefined
+  const paymentTarget = modal.type === 'payment' ? modal.target : undefined
+
   const handleShareConfirm = () => {
     if (!shareTarget) return
     invoiceService.share(shareTarget.id, shareValue)
     showToast({ title: 'Invoice shared', description: `Sent to ${shareValue.email}`, variant: 'success' })
-    setShareOpen(false)
-    setShareTarget(undefined)
+    closeModal()
     loadRows()
   }
 
@@ -278,8 +291,7 @@ export function InvoiceListingPage() {
       return
     }
     showToast({ title: 'Invoice submitted', description: updated.invoiceId, variant: 'success' })
-    setSubmitOpen(false)
-    setSubmitTarget(undefined)
+    closeModal()
     loadRows()
   }
 
@@ -287,8 +299,7 @@ export function InvoiceListingPage() {
     if (!deleteTarget) return
     invoiceService.deleteDraft(deleteTarget.id)
     showToast({ title: 'Draft deleted', variant: 'info' })
-    setDeleteOpen(false)
-    setDeleteTarget(undefined)
+    closeModal()
     loadRows()
   }
 
@@ -300,8 +311,7 @@ export function InvoiceListingPage() {
       return
     }
     showToast({ title: 'Reminder sent', description: reminderTarget.invoiceId, variant: 'success' })
-    setReminderOpen(false)
-    setReminderTarget(undefined)
+    closeModal()
     loadRows()
   }
 
@@ -345,8 +355,7 @@ export function InvoiceListingPage() {
       description: updated.invoiceId,
       variant: 'success',
     })
-    setPaymentOpen(false)
-    setPaymentTarget(undefined)
+    closeModal()
     loadRows()
   }
 
@@ -404,7 +413,7 @@ export function InvoiceListingPage() {
               columnFilters={listing.columnFilters}
               onColumnFiltersChange={listing.setColumnFilters}
               getCellValue={getInvoiceCellValue}
-              onRowClick={row => goFromListing(`${LISTING_PATH}/${row.id}`)}
+              onRowClick={row => stableGoFromListing(`${LISTING_PATH}/${row.id}`)}
               loading={loading}
               stickyHeader
               emptyTitle={emptyState.emptyTitle}
@@ -412,7 +421,7 @@ export function InvoiceListingPage() {
               emptyAction={emptyState.emptyAction}
             />
           ) : (
-            <AdminListingGrid items={gridItems} onItemClick={id => goFromListing(`${LISTING_PATH}/${id}`)} />
+            <AdminListingGrid items={gridItems} loading={loading} onItemClick={id => stableGoFromListing(`${LISTING_PATH}/${id}`)} />
           )
         }
         footer={
@@ -429,8 +438,8 @@ export function InvoiceListingPage() {
       />
 
       <ShareInvoiceModal
-        open={shareOpen}
-        onClose={() => setShareOpen(false)}
+        open={modal.type === 'share'}
+        onClose={closeModal}
         value={shareValue}
         onChange={setShareValue}
         onSubmit={handleShareConfirm}
@@ -438,8 +447,8 @@ export function InvoiceListingPage() {
       />
 
       <ConfirmDialog
-        open={submitOpen}
-        onClose={() => setSubmitOpen(false)}
+        open={modal.type === 'submit'}
+        onClose={closeModal}
         title="Submit invoice"
         description={`Submit invoice ${submitTarget?.invoiceId}? This will lock billing items and make the invoice visible to the customer.`}
         confirmLabel="Submit invoice"
@@ -447,8 +456,8 @@ export function InvoiceListingPage() {
       />
 
       <ConfirmDialog
-        open={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
+        open={modal.type === 'delete'}
+        onClose={closeModal}
         title="Delete draft"
         description={`Delete draft ${deleteTarget?.invoiceId}? This cannot be undone.`}
         confirmLabel="Delete draft"
@@ -457,8 +466,8 @@ export function InvoiceListingPage() {
       />
 
       <ConfirmDialog
-        open={reminderOpen}
-        onClose={() => setReminderOpen(false)}
+        open={modal.type === 'reminder'}
+        onClose={closeModal}
         title="Send payment reminder"
         description={`Send a payment reminder for overdue invoice ${reminderTarget?.invoiceId}?`}
         confirmLabel="Send reminder"
@@ -466,11 +475,8 @@ export function InvoiceListingPage() {
       />
 
       <ConfirmDialog
-        open={cancelOpen}
-        onClose={() => {
-          setCancelOpen(false)
-          setCancelTarget(undefined)
-        }}
+        open={modal.type === 'cancel'}
+        onClose={closeModal}
         title="Cancel invoice"
         description={`Cancel invoice ${cancelTarget?.invoiceId}? Applications remain billable.`}
         confirmLabel="Cancel invoice"
@@ -483,20 +489,14 @@ export function InvoiceListingPage() {
             return
           }
           showToast({ title: 'Invoice cancelled', description: updated.invoiceId, variant: 'info' })
-          setCancelOpen(false)
-          setRevisedSource(updated)
-          setCancelTarget(undefined)
           loadRows()
-          setRevisedPromptOpen(true)
+          setModal({ type: 'revised_prompt', target: updated })
         }}
       />
 
       <ConfirmDialog
-        open={revisedPromptOpen}
-        onClose={() => {
-          setRevisedPromptOpen(false)
-          setRevisedSource(undefined)
-        }}
+        open={modal.type === 'revised_prompt'}
+        onClose={closeModal}
         title="Create revised invoice?"
         description={
           revisedSource
@@ -508,15 +508,14 @@ export function InvoiceListingPage() {
         onConfirm={() => {
           if (!revisedSource) return
           const source = revisedSource
-          setRevisedPromptOpen(false)
-          setRevisedSource(undefined)
+          closeModal()
           openRevisedInvoiceFlow(source)
         }}
       />
 
       <RecordPaymentModal
-        open={paymentOpen}
-        onClose={() => setPaymentOpen(false)}
+        open={modal.type === 'payment'}
+        onClose={closeModal}
         value={paymentValue}
         onChange={setPaymentValue}
         onSubmit={handleRecordPaymentConfirm}

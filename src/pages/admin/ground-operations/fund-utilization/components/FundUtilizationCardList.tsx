@@ -1,5 +1,6 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { Badge, EmptyState } from '@/design-system/UIComponents'
+import { AdminListingLoadingState } from '@/pages/admin/components/listing'
 import {
   getFundTransferTypeLabel,
   type FundAllocationBatchRow,
@@ -11,6 +12,7 @@ import { formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 
 interface FundUtilizationCardListProps {
   batches: FundAllocationBatchRow[]
+  loading?: boolean
   selectedId?: string | null
   onSelect: (batch: FundAllocationBatchRow) => void
 }
@@ -158,9 +160,14 @@ function FundUtilizationCard({
 
 export function FundUtilizationCardList({
   batches,
+  loading = false,
   selectedId,
   onSelect,
 }: FundUtilizationCardListProps) {
+  if (loading) {
+    return <AdminListingLoadingState label="Loading allocated funds" />
+  }
+
   if (batches.length === 0) {
     return (
       <Box sx={{ p: 2 }}>

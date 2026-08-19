@@ -128,6 +128,7 @@ export function VendorBillingListingPage() {
         ) : (
           <AdminListingGrid
             items={gridItems}
+            loading={loading}
             onItemClick={id => navigate(`${VENDOR_BILLING_BASE_PATH}/${id}`)}
           />
         )

@@ -117,6 +117,12 @@ export function applyAdvancedFilters(
     if (filters.processingStage && row.processingStage !== filters.processingStage) return false
     if (filters.applicationType && row.recordType !== filters.applicationType) return false
     if (filters.createdBy && row.createdByEmail.toLowerCase() !== filters.createdBy.toLowerCase()) return false
+    if (filters.documentRequirement === 'not_required' && row.documentRequirement !== 'not_required') {
+      return false
+    }
+    if (filters.documentRequirement === 'required' && row.documentRequirement === 'not_required') {
+      return false
+    }
     return true
   })
 }

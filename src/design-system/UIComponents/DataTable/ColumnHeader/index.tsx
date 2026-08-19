@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, memo } from 'react'
 import type { MouseEvent } from 'react'
 import { Box, Typography, IconButton, InputBase, Tooltip, Badge } from '@mui/material'
 import { ArrowUpDown, ArrowUp, ArrowDown, Filter, X } from 'lucide-react'
@@ -19,7 +19,7 @@ export interface ColumnHeaderProps {
   onFilterClick?: (event: MouseEvent<HTMLElement>) => void
 }
 
-export default function ColumnHeader({
+function ColumnHeaderInner({
   column,
   sortKey,
   sortDirection,
@@ -155,3 +155,6 @@ export default function ColumnHeader({
     </Box>
   )
 }
+
+const ColumnHeader = memo(ColumnHeaderInner)
+export default ColumnHeader

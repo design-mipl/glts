@@ -1,4 +1,4 @@
-import { useState, Fragment, useMemo } from 'react'
+import { useState, Fragment, useMemo, useCallback, memo } from 'react'
 import {
   Box, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Checkbox, IconButton, Skeleton,
@@ -100,7 +100,7 @@ function getStickyEdgeShadow(side: 'start' | 'end', isDark: boolean) {
     : `4px 0 4px -2px ${shadowColor}`
 }
 
-function SkeletonRows({ count, cols }: { count: number; cols: number }) {
+const SkeletonRows = memo(function SkeletonRows({ count, cols }: { count: number; cols: number }) {
   return (
     <>
       {[...Array(count)].map((_, i) => (
@@ -114,7 +114,186 @@ function SkeletonRows({ count, cols }: { count: number; cols: number }) {
       ))}
     </>
   )
+})
+
+interface MemoizedTableRowProps {
+  row: any
+  rowId: string
+  rowIndex: number
+  columns: Column[]
+  isSelected: boolean
+  isExpanded: boolean
+  isDark: boolean
+  theme: Theme
+  compactCellSx: Record<string, any>
+  stickyEndRight: number
+  onRowClick?: (row: any) => void
+  onCellEdit?: (rowId: string, columnKey: string, value: any) => void
+  renderExpanded?: (row: any) => React.ReactNode
+  bulkActions?: BulkAction[]
+  onRowSelect: (rowId: string, checked: boolean) => void
+  onToggleExpand: (rowId: string) => void
+  editingCell: { rowId: string; columnKey: string } | null
+  onEditCell: (cell: { rowId: string; columnKey: string } | null) => void
+  selectedBg: string
+  evenRowBg: string
+  hoverBg: string
 }
+
+const MemoizedTableRow = memo(function MemoizedTableRow({
+  row,
+  rowId,
+  rowIndex,
+  columns,
+  isSelected,
+  isExpanded,
+  isDark,
+  theme,
+  compactCellSx,
+  stickyEndRight,
+  onRowClick,
+  onCellEdit,
+  renderExpanded,
+  bulkActions,
+  onRowSelect,
+  onToggleExpand,
+  editingCell,
+  onEditCell,
+  selectedBg,
+  evenRowBg,
+  hoverBg,
+}: MemoizedTableRowProps) {
+  const isEven = rowIndex % 2 === 1
+  const rowBg = isSelected ? selectedBg : isEven ? evenRowBg : undefined
+
+  return (
+    <Fragment>
+      <TableRow
+        onClick={onRowClick ? () => onRowClick(row) : undefined}
+        sx={{
+          bgcolor: rowBg,
+          cursor: onRowClick ? 'pointer' : 'default',
+          '&:hover': { bgcolor: isSelected ? selectedBg : hoverBg },
+        }}
+      >
+        {bulkActions && (
+          <TableCell padding="checkbox">
+            <Checkbox
+              size="small"
+              checked={isSelected}
+              onClick={(e) => { e.stopPropagation(); onRowSelect(rowId, !isSelected) }}
+            />
+          </TableCell>
+        )}
+
+        {columns.map((col) => {
+          const cellValue = row[col.key]
+          const isEditing = editingCell?.rowId === rowId && editingCell?.columnKey === col.key
+          const stickyEnd = isStickyEndColumn(col)
+          const stickyStart = isStickyStartColumn(col)
+          const stickyCellBg = getStickyCellBg(isSelected, isEven, theme, isDark)
+          const columnWidthSx = getDataTableColumnWidthSx(col, stickyEnd)
+
+          const cellContent = isEditing ? (
+            <InlineEdit
+              value={cellValue}
+              column={col}
+              onSave={(val) => {
+                onCellEdit?.(rowId, col.key, val)
+                onEditCell(null)
+              }}
+              onCancel={() => onEditCell(null)}
+            />
+          ) : col.render
+            ? col.render(cellValue, row)
+            : col.formatValue
+              ? col.formatValue(cellValue)
+              : (cellValue == null ? '' : String(cellValue))
+
+          return (
+            <TableCell
+              key={col.key}
+              sx={{
+                ...compactCellSx,
+                fontSize: 'inherit',
+                lineHeight: '20px',
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+                ...columnWidthSx,
+                position: stickyEnd || stickyStart ? 'sticky' : undefined,
+                left: stickyStart ? 0 : undefined,
+                right: stickyEnd ? stickyEndRight : undefined,
+                zIndex: stickyEnd ? 3 : stickyStart ? 2 : undefined,
+                bgcolor: stickyEnd || stickyStart ? stickyCellBg : undefined,
+                boxShadow: stickyEnd
+                  ? getStickyEdgeShadow('end', isDark)
+                  : stickyStart
+                    ? getStickyEdgeShadow('start', isDark)
+                    : undefined,
+                display: getHideDisplay(col.hideBelow),
+                textAlign: col.align,
+                whiteSpace: 'nowrap',
+                overflow: stickyEnd ? 'visible' : 'hidden',
+                textOverflow: stickyEnd ? undefined : 'ellipsis',
+                cursor: col.editable ? 'text' : undefined,
+                isolation: stickyEnd || stickyStart ? 'isolate' : undefined,
+              }}
+              onClick={col.editable ? (e) => { e.stopPropagation(); onEditCell({ rowId, columnKey: col.key }) } : undefined}
+            >
+              {stickyEnd ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                  {cellContent}
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    minWidth: 0,
+                    maxWidth: '100%',
+                  }}
+                >
+                  {cellContent}
+                </Box>
+              )}
+            </TableCell>
+          )
+        })}
+
+        {renderExpanded && (
+          <TableCell
+            sx={{
+              py: 0.5,
+              px: 1,
+              width: EXPAND_COLUMN_WIDTH,
+              minWidth: EXPAND_COLUMN_WIDTH,
+              maxWidth: EXPAND_COLUMN_WIDTH,
+              position: 'sticky',
+              right: 0,
+              zIndex: 3,
+              bgcolor: getStickyCellBg(isSelected, isEven, theme, isDark),
+              boxShadow: getStickyEdgeShadow('end', isDark),
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <IconButton size="small" onClick={() => onToggleExpand(rowId)}>
+              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </IconButton>
+          </TableCell>
+        )}
+      </TableRow>
+
+      {renderExpanded && (
+        <ExpandedRow key={`${rowId}-expanded`} colSpan={columns.length + (bulkActions ? 1 : 0) + 1} open={isExpanded}>
+          {renderExpanded(row)}
+        </ExpandedRow>
+      )}
+    </Fragment>
+  )
+})
 
 export default function DataTable({
   columns,
@@ -188,47 +367,47 @@ export default function DataTable({
     [visibleTableColumns, bulkActions, renderExpanded],
   )
 
-  // State handlers
-  const handleSort = (key: string) => {
+  // Stable state handlers wrapped in useCallback to avoid re-renders
+  const handleRowSelect = useCallback((rowId: string, checked: boolean) => {
+    const next = checked
+      ? [...state.selectedRows, rowId]
+      : state.selectedRows.filter(id => id !== rowId)
+    onStateChange({ ...state, selectedRows: next })
+  }, [state, onStateChange])
+
+  const handleSelectAll = useCallback((checked: boolean) => {
+    onStateChange({ ...state, selectedRows: checked ? data.map(r => String(r[rowKey])) : [] })
+  }, [state, onStateChange, data, rowKey])
+
+  const handleToggleExpand = useCallback((rowId: string) => {
+    const isOpen = state.expandedRows.includes(rowId)
+    onStateChange({
+      ...state,
+      expandedRows: isOpen ? state.expandedRows.filter(id => id !== rowId) : [...state.expandedRows, rowId],
+    })
+  }, [state, onStateChange])
+
+  const handleSort = useCallback((key: string) => {
     let dir = state.sortDirection
     if (state.sortKey !== key) dir = 'asc'
     else if (dir === 'asc') dir = 'desc'
     else if (dir === 'desc') dir = null
     else dir = 'asc'
     onStateChange({ ...state, sortKey: dir === null ? null : key, sortDirection: dir })
-  }
+  }, [state, onStateChange])
 
-  const handleColumnSearch = (key: string, value: string) => {
+  const handleColumnSearch = useCallback((key: string, value: string) => {
     onStateChange({ ...state, page: 0, columnSearch: { ...state.columnSearch, [key]: value } })
-  }
+  }, [state, onStateChange])
 
-  const handleGlobalSearch = (value: string) => {
+  const handleGlobalSearch = useCallback((value: string) => {
     onStateChange({ ...state, page: 0, searchQuery: value })
-  }
-
-  const handleRowSelect = (rowId: string, checked: boolean) => {
-    const next = checked
-      ? [...state.selectedRows, rowId]
-      : state.selectedRows.filter(id => id !== rowId)
-    onStateChange({ ...state, selectedRows: next })
-  }
-
-  const handleSelectAll = (checked: boolean) => {
-    onStateChange({ ...state, selectedRows: checked ? data.map(r => String(r[rowKey])) : [] })
-  }
-
-  const handleToggleExpand = (rowId: string) => {
-    const isOpen = state.expandedRows.includes(rowId)
-    onStateChange({
-      ...state,
-      expandedRows: isOpen ? state.expandedRows.filter(id => id !== rowId) : [...state.expandedRows, rowId],
-    })
-  }
+  }, [state, onStateChange])
 
   const selectedData = data.filter(r => state.selectedRows.includes(String(r[rowKey])))
 
-  // ── Mobile card view ──────────────────────────────────────────────
-  const mobileView = (
+  // ── Mobile card view (only computed when isMobile) ──────────────
+  if (isMobile) return (
     <Box>
       <TableToolbar
         title={title}
@@ -346,7 +525,7 @@ export default function DataTable({
     ? { py: '8px', px: '8px', height: '34px', verticalAlign: 'middle' as const }
     : { py: '12px', px: '12px', verticalAlign: 'top' as const }
 
-  const tableView = (
+  return (
     <Box>
       {!hideToolbar && (
         <TableToolbar
@@ -506,141 +685,31 @@ export default function DataTable({
             )}
             {!loading && data.map((row, rowIndex) => {
               const rowId = String(row[rowKey])
-              const isSelected = state.selectedRows.includes(rowId)
-              const isExpanded = state.expandedRows.includes(rowId)
-              const isEven = rowIndex % 2 === 1
-              const rowBg = isSelected ? selectedBg : isEven ? evenRowBg : undefined
-
               return (
-                <Fragment key={rowId}>
-                  <TableRow
-                    onClick={onRowClick ? () => onRowClick(row) : undefined}
-                    sx={{
-                      bgcolor: rowBg,
-                      cursor: onRowClick ? 'pointer' : 'default',
-                      '&:hover': { bgcolor: isSelected ? selectedBg : hoverBg },
-                    }}
-                  >
-                    {/* Checkbox */}
-                    {bulkActions && (
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          size="small"
-                          checked={isSelected}
-                          onClick={(e) => { e.stopPropagation(); handleRowSelect(rowId, !isSelected) }}
-                        />
-                      </TableCell>
-                    )}
-
-                    {/* Data cells */}
-                    {visibleTableColumns.map((col) => {
-                      const cellValue = row[col.key]
-                      const isEditing = editingCell?.rowId === rowId && editingCell?.columnKey === col.key
-                      const stickyEnd = isStickyEndColumn(col)
-                      const stickyStart = isStickyStartColumn(col)
-                      const stickyCellBg = getStickyCellBg(isSelected, isEven, theme, isDark)
-                      const columnWidthSx = getDataTableColumnWidthSx(col, stickyEnd)
-
-                      const cellContent = isEditing ? (
-                        <InlineEdit
-                          value={cellValue}
-                          column={col}
-                          onSave={(val) => {
-                            onCellEdit?.(rowId, col.key, val)
-                            setEditingCell(null)
-                          }}
-                          onCancel={() => setEditingCell(null)}
-                        />
-                      ) : col.render
-                        ? col.render(cellValue, row)
-                        : col.formatValue
-                          ? col.formatValue(cellValue)
-                          : (cellValue == null ? '' : String(cellValue))
-
-                      return (
-                        <TableCell
-                          key={col.key}
-                          sx={{
-                            ...compactCellSx,
-                            fontSize: 'inherit',
-                            lineHeight: '20px',
-                            borderBottom: '1px solid',
-                            borderColor: 'divider',
-                            ...columnWidthSx,
-                            position: stickyEnd || stickyStart ? 'sticky' : undefined,
-                            left: stickyStart ? 0 : undefined,
-                            right: stickyEnd ? stickyEndRight : undefined,
-                            zIndex: stickyEnd ? 3 : stickyStart ? 2 : undefined,
-                            bgcolor: stickyEnd || stickyStart ? stickyCellBg : undefined,
-                            boxShadow: stickyEnd
-                              ? getStickyEdgeShadow('end', isDark)
-                              : stickyStart
-                                ? getStickyEdgeShadow('start', isDark)
-                                : undefined,
-                            display: getHideDisplay(col.hideBelow),
-                            textAlign: col.align,
-                            whiteSpace: stickyEnd ? 'nowrap' : 'nowrap',
-                            overflow: stickyEnd ? 'visible' : 'hidden',
-                            textOverflow: stickyEnd ? undefined : 'ellipsis',
-                            cursor: col.editable ? 'text' : undefined,
-                            isolation: stickyEnd || stickyStart ? 'isolate' : undefined,
-                          }}
-                          onClick={col.editable ? (e) => { e.stopPropagation(); setEditingCell({ rowId, columnKey: col.key }) } : undefined}
-                        >
-                          {stickyEnd ? (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                              {cellContent}
-                            </Box>
-                          ) : (
-                            <Box
-                              sx={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                minWidth: 0,
-                                maxWidth: '100%',
-                              }}
-                            >
-                              {cellContent}
-                            </Box>
-                          )}
-                        </TableCell>
-                      )
-                    })}
-
-                    {/* Expand button */}
-                    {renderExpanded && (
-                      <TableCell
-                        sx={{
-                          py: 0.5,
-                          px: 1,
-                          width: EXPAND_COLUMN_WIDTH,
-                          minWidth: EXPAND_COLUMN_WIDTH,
-                          maxWidth: EXPAND_COLUMN_WIDTH,
-                          position: 'sticky',
-                          right: 0,
-                          zIndex: 3,
-                          bgcolor: getStickyCellBg(isSelected, isEven, theme, isDark),
-                          boxShadow: getStickyEdgeShadow('end', isDark),
-                          borderBottom: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <IconButton size="small" onClick={() => handleToggleExpand(rowId)}>
-                          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                        </IconButton>
-                      </TableCell>
-                    )}
-                  </TableRow>
-
-                  {/* Expanded content */}
-                  {renderExpanded && (
-                    <ExpandedRow key={`${rowId}-expanded`} colSpan={totalCols} open={isExpanded}>
-                      {renderExpanded(row)}
-                    </ExpandedRow>
-                  )}
-                </Fragment>
+                <MemoizedTableRow
+                  key={rowId}
+                  row={row}
+                  rowId={rowId}
+                  rowIndex={rowIndex}
+                  columns={visibleTableColumns}
+                  isSelected={state.selectedRows.includes(rowId)}
+                  isExpanded={state.expandedRows.includes(rowId)}
+                  isDark={isDark}
+                  theme={theme}
+                  compactCellSx={compactCellSx}
+                  stickyEndRight={stickyEndRight}
+                  onRowClick={onRowClick}
+                  onCellEdit={onCellEdit}
+                  renderExpanded={renderExpanded}
+                  bulkActions={bulkActions}
+                  onRowSelect={handleRowSelect}
+                  onToggleExpand={handleToggleExpand}
+                  editingCell={editingCell}
+                  onEditCell={setEditingCell}
+                  selectedBg={selectedBg}
+                  evenRowBg={evenRowBg}
+                  hoverBg={hoverBg}
+                />
               )
             })}
           </TableBody>
@@ -659,6 +728,4 @@ export default function DataTable({
       )}
     </Box>
   )
-
-  return isMobile ? mobileView : tableView
 }

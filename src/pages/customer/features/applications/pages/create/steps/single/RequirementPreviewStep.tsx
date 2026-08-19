@@ -1,6 +1,12 @@
 import { useEffect, useMemo } from 'react'
 import { Box, Typography, Stack, Card, Grid, Divider } from '@mui/material'
+import { FormField, Select } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import {
+  isAdminFlowPolicy,
+  requiresFieldValidation,
+  useApplicationFlowPolicy,
+} from '../../../../context/ApplicationFlowPolicyContext'
 import {
   getApplicableStatesForOffering,
   getRequirementPreviewCards,
@@ -12,10 +18,6 @@ import {
 } from '@/shared/services/countryMasterService'
 import { DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS } from '@/shared/constants/travelDateFeasibility'
 import { getTravelDateInputBounds, resolveJurisdictionMappingState } from '@/shared/utils/jurisdictionRequirementPreview'
-import {
-  requiresFieldValidation,
-  useApplicationFlowPolicy,
-} from '../../../../context/ApplicationFlowPolicyContext'
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import { FlowStepActions } from '../../../../components/create/FlowStepActions'
 import { ApplicationFlowContextChips } from '../../../../components/create/ApplicationFlowContextChips'
@@ -32,8 +34,9 @@ interface RequirementPreviewStepProps {
 
 export function RequirementPreviewStep({ state, onUpdate, onContinue }: RequirementPreviewStepProps) {
   const colors = usePublicBrandColors()
-  const { policy } = useApplicationFlowPolicy()
+  const { policy, customerSegment } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
+  const showApplicationType = isAdminFlowPolicy(policy) && customerSegment === 'b2bAgents'
 
   const requiresJurisdiction = useMemo(
     () => offeringRequiresJurisdictionSelection(state.countryId, state.visaOfferingId),
@@ -257,6 +260,27 @@ export function RequirementPreviewStep({ state, onUpdate, onContinue }: Requirem
             </Typography>
             <Divider sx={{ mb: 1.5, borderColor: colors.border }} />
             <Stack spacing={2}>
+              {showApplicationType ? (
+                <FormField
+                  label="Application Type"
+                  helperText="Choose this before documents. Document Not Required lets you continue without files; verification still uses the checklist."
+                >
+                  <Select
+                    fullWidth
+                    value={state.documentRequirement === 'not_required' ? 'not_required' : 'required'}
+                    onChange={v =>
+                      onUpdate({
+                        documentRequirement:
+                          String(v) === 'not_required' ? 'not_required' : 'required',
+                      })
+                    }
+                    options={[
+                      { value: 'required', label: 'Document Required' },
+                      { value: 'not_required', label: 'Document Not Required' },
+                    ]}
+                  />
+                </FormField>
+              ) : null}
               {requiresJurisdiction ? (
                 <Grid container spacing={1.5}>
                   <Grid size={{ xs: 12, sm: 6 }}>

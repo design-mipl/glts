@@ -1,6 +1,7 @@
 import { Select } from '@/design-system/UIComponents'
 import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
 import type {
+  ApplicationDocumentRequirementFilter,
   ApplicationListingFilterState,
   ApplicationRecordType,
 } from '@/pages/customer/features/applications/types/applicationListing.types'
@@ -62,6 +63,24 @@ export function B2bApplicationAdvancedFilterFields({
             { value: 'bulk', label: 'Bulk' },
           ]}
           placeholder="All types"
+          size="sm"
+          clearable
+          fullWidth
+        />
+      </ListingFilterField>
+      <ListingFilterField label="Documents">
+        <Select
+          value={draft.documentRequirement ?? ''}
+          onChange={(v) =>
+            patch({
+              documentRequirement: (v ? String(v) : '') as ApplicationDocumentRequirementFilter,
+            })
+          }
+          options={[
+            { value: 'required', label: 'Docs required' },
+            { value: 'not_required', label: 'Docs not required' },
+          ]}
+          placeholder="All document types"
           size="sm"
           clearable
           fullWidth
@@ -133,6 +152,7 @@ export function hasB2bApplicationFiltersActive(filters: ApplicationListingFilter
       filters.status ||
       filters.processingStage ||
       filters.applicationType ||
-      filters.createdBy,
+      filters.createdBy ||
+      filters.documentRequirement,
   )
 }

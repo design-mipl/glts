@@ -8,6 +8,7 @@ import type { ApplicantAdditionalDetails } from '../config/applicantAdditionalDe
 import type { ApplicantBasicDetails } from '../config/applicantBasicDetailsConfig'
 import type { OriginalDocumentCollectionState } from '@/shared/types/originalDocumentCollection'
 import type { CustomerPortalRole } from '@/shared/auth/session'
+import type { ApplicationDocumentRequirement } from '@/shared/utils/applicationDocumentRequirement'
 import { statusToneFromOperational } from '../components/listing/applicationStatus'
 import { GLTS_APPLICATION_IDS } from '../../../data/portalIds'
 
@@ -64,6 +65,8 @@ export interface SingleApplicationRow {
    * Set after Ops verify when payment work is finished (Ops or Docs).
    */
   paymentComplete?: boolean
+  /** Admin B2B create: skip required document fill. Default required. */
+  documentRequirement?: ApplicationDocumentRequirement
 }
 
 export interface BulkBatchRow {
@@ -112,6 +115,8 @@ export interface BulkBatchRow {
    * Set after Ops verify when payment work is finished (Ops or Docs).
    */
   paymentComplete?: boolean
+  /** Admin B2B create: skip required document fill. Default required. */
+  documentRequirement?: ApplicationDocumentRequirement
 }
 
 export interface ExtractedField {
@@ -1142,6 +1147,69 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     createdByRole: 'booker',
     customerSegment: 'b2bAgents',
   }),
+  // B2B — Document Not Required (admin create)
+  singleRow({
+    id: 'GL-811',
+    applicantName: 'Hassan Malik',
+    passportNumber: 'PK8821044',
+    companyName: 'Voyage Partners Agency',
+    country: 'UAE',
+    countryFlag: '🇦🇪',
+    visaType: 'e-Visa · 30d',
+    travelDate: '2026-07-22',
+    submissionDate: '2026-03-12',
+    createdAt: '2026-03-04',
+    lastUpdated: '2026-03-13',
+    processingStage: 'Ready for submission',
+    operationalStatus: 'Verification Pending',
+    createdByEmail: 'arun.krishnan@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'b2bAgents',
+    assignedTeamId: 'team-b2b-agent',
+    assignedUserId: 'user-b2b-1',
+    documentRequirement: 'not_required',
+  }),
+  singleRow({
+    id: 'GL-810',
+    applicantName: 'Leila Haddad',
+    passportNumber: 'LB4419203',
+    companyName: 'Eurolink Travel Agents',
+    country: 'France',
+    countryFlag: '🇫🇷',
+    visaType: 'Tourist · Type C',
+    travelDate: '2026-08-14',
+    submissionDate: '2026-03-10',
+    createdAt: '2026-03-02',
+    lastUpdated: '2026-03-14',
+    processingStage: 'Payment pending',
+    operationalStatus: 'Submission Pending',
+    paymentComplete: false,
+    createdByEmail: 'arun.krishnan@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'b2bAgents',
+    assignedTeamId: 'team-b2b-agent',
+    assignedUserId: 'user-b2b-1',
+    documentRequirement: 'not_required',
+  }),
+  singleRow({
+    id: 'GL-809',
+    applicantName: 'Chen Wei',
+    passportNumber: 'CN2291840',
+    companyName: 'Voyage Partners Agency',
+    country: 'Singapore',
+    countryFlag: '🇸🇬',
+    visaType: 'Business · Short stay',
+    travelDate: '2026-09-01',
+    submissionDate: '',
+    createdAt: '2026-03-16',
+    lastUpdated: '2026-03-16',
+    processingStage: 'Ready for submission',
+    operationalStatus: 'Draft',
+    createdByEmail: 'arun.krishnan@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'b2bAgents',
+    documentRequirement: 'not_required',
+  }),
   // —— Submission Pending (single) seed ——
   singleRow({
     id: 'GL-808',
@@ -1750,6 +1818,31 @@ export const mockBulkBatches: BulkBatchRow[] = [
     customerSegment: 'b2bAgents',
     assignedTeamId: 'team-b2b-agent',
     assignedUserId: 'user-b2b-1',
+  }),
+  bulkRow({
+    id: 'GL-038',
+    companyName: 'Eurolink Travel Agents',
+    primaryApplicantName: 'Leila Haddad',
+    country: 'France',
+    countryFlag: '🇫🇷',
+    visaType: 'Tourist · Group',
+    totalApplicants: 6,
+    verifiedApplicants: 0,
+    pendingCorrections: 0,
+    processed: 6,
+    errors: 0,
+    travelDate: '2026-08-20',
+    submissionDate: '2026-03-11',
+    createdAt: '2026-03-03',
+    lastUpdated: '2026-03-12',
+    processingStage: 'Ready for submission',
+    operationalStatus: 'Verification Pending',
+    createdByEmail: 'arun.krishnan@glts.com',
+    createdByRole: 'admin',
+    customerSegment: 'b2bAgents',
+    assignedTeamId: 'team-b2b-agent',
+    assignedUserId: 'user-b2b-1',
+    documentRequirement: 'not_required',
   }),
 ]
 

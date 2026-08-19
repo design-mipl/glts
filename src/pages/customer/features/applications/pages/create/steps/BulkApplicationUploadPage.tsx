@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Box, Typography, Card, Stack, Chip, Button, Grid, IconButton } from '@mui/material'
 import { FolderArchive, Eye, Upload, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { FileUpload } from '@/design-system/UIComponents'
+import { FileUpload, useToast } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { UploadQueueTable } from '../../../components/UploadQueueTable'
 import { ApplicantDocumentDrawer } from '../../../components/ApplicantDocumentDrawer'
@@ -14,8 +14,7 @@ import { emptyApplicantBasicDetails } from '../../../config/applicantBasicDetail
 import { ensureRowBasicDetails } from '../../../utils/applicantBasicDetailsUtils'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
 import type { UploadQueueRow } from '../../../data/applicationFlowData'
-import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
-import { useToast } from '@/design-system/UIComponents'
+import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
 import {
   countDocumentProgress,
@@ -23,6 +22,7 @@ import {
 } from '../../../utils/uploadQueueDocuments'
 import {
   requiresFieldValidation,
+  isAdminFlowPolicy,
   isWebsiteFlowPolicy,
   useApplicationFlowPolicy,
 } from '../../../context/ApplicationFlowPolicyContext'
@@ -137,9 +137,12 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { base } = useCustomerPortalBase()
-  const { policy, listingPath } = useApplicationFlowPolicy()
+  const { policy, listingPath, customerSegment } = useApplicationFlowPolicy()
   const strict = requiresFieldValidation(policy)
+  const isAdmin = isAdminFlowPolicy(policy)
   const isWebsite = isWebsiteFlowPolicy(policy)
+  const documentsOptional =
+    isAdmin && customerSegment === 'b2bAgents' && state.documentRequirement === 'not_required'
   const draftListingPath = listingPath || (isWebsite ? '/countries' : `${base}/applications`)
   const [drawerRowId, setDrawerRowId] = useState<string | null>(null)
   const [pendingGlobalDocId, setPendingGlobalDocId] = useState<string | null>(null)
@@ -364,15 +367,7 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
   }
 
   const handleSaveDraft = () => {
-    const applicationId = ensureFlowGltsApplicationId(state)
-    customerPortalService.saveApplicationDraft({
-      applicationId,
-      countryName: state.countryName,
-      countryFlag: state.countryFlag,
-      visaTypeLabel: state.visaTypeLabel,
-      travelDate: state.travelDate,
-      rows,
-    })
+    marineApplicationAdminService.saveDraftFromFlow(state, customerSegment)
     showToast({
       title: 'Draft saved',
       description: isWebsite
@@ -452,8 +447,22 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
         Upload passport
       </Typography>
       <Typography sx={{ fontSize: 13, color: colors.textSecondary, mb: 1 }}>
-        Add one passport scan per traveler. Upload a folder or ZIP to create multiple listings at once.
+        {documentsOptional
+          ? 'Documents are optional for this application. You can add applicants without files and continue.'
+          : 'Add one passport scan per traveler. Upload a folder or ZIP to create multiple listings at once.'}
       </Typography>
+
+      {isAdmin && customerSegment === 'b2bAgents' && (
+        <Chip
+          label={
+            documentsOptional
+              ? 'Application type: Document Not Required'
+              : 'Application type: Document Required'
+          }
+          size="small"
+          sx={{ mb: 2, fontWeight: 600, fontSize: 12 }}
+        />
+      )}
 
       {gltsApplicationId && (
         <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 2 }}>

@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Grid, Typography } from '@mui/material'
 import { BaseCard } from '@/design-system/UIComponents'
 import { formatReconciliationMoney } from '../utils/reconciliationListingUtils'
@@ -27,7 +28,7 @@ function KpiCard({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function ReconciliationKpiRow({
+export const ReconciliationKpiRow = memo(function ReconciliationKpiRow({
   total,
   pending,
   submitted,
@@ -53,4 +54,4 @@ export function ReconciliationKpiRow({
       </Grid>
     </Grid>
   )
-}
+})

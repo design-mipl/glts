@@ -17,7 +17,7 @@ import {
   getApplicationOperationalBadgeColor,
   getApplicationTypeLabel,
 } from '@/pages/customer/features/applications/components/listing/applicationStatus'
-import { resolveApplicationCompanyName, resolveApplicationDesignation } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { resolveApplicationCompanyName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
 import {
   resolveApplicationBillingEntity,
 } from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
@@ -25,8 +25,11 @@ import {
   resolveApplicationCreatorLabel,
   resolveApplicationCreatorRoleLabel,
 } from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
-import type { MarineApplicationRow as B2bApplicationRow } from '@/shared/services/marineApplicationAdminService'
-import { isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
+import {
+  documentRequirementBadgeColor,
+  resolveDocumentRequirementLabel,
+} from '@/shared/utils/applicationDocumentRequirement'
+import { isCustomerSubmitted, type MarineApplicationRow as B2bApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import { formatDisplayDate, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { isB2bReadOnlyWorkspace, isB2bPendingPaymentWorkspace, opensB2bViewFormDirectly, resolveB2bWorkspaceMode } from '../config/B2bWorkspaceMode'
@@ -156,6 +159,20 @@ export function buildB2bApplicationColumns({
       ),
     },
     {
+      key: 'documentRequirement',
+      label: 'Documents',
+      widthSize: 'md',
+      sortable: true,
+      filterable: true,
+      render: (_: unknown, row: B2bApplicationRow) => (
+        <Badge
+          label={resolveDocumentRequirementLabel(row)}
+          color={documentRequirementBadgeColor(row)}
+          size="sm"
+        />
+      ),
+    },
+    {
       key: 'applicantName',
       label: 'Pax name',
       widthSize: 'md',
@@ -190,18 +207,6 @@ export function buildB2bApplicationColumns({
           </Tooltip>
         )
       },
-    },
-    {
-      key: 'designation',
-      label: 'Designation',
-      widthSize: 'sm',
-      sortable: false,
-      filterable: false,
-      render: (_: unknown, row: B2bApplicationRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationDesignation(row)}
-        </Typography>
-      ),
     },
     {
       key: 'companyName',

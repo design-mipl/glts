@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Grid, Typography } from '@mui/material'
 import { BaseCard } from '@/design-system/UIComponents'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
@@ -22,7 +23,7 @@ function KpiCard({ label, value }: { label: string; value: string }) {
   )
 }
 
-export function FundAllocationKpiRow({
+export const FundAllocationKpiRow = memo(function FundAllocationKpiRow({
   totalPassengers,
   pendingAllocation,
   allocatedPassengers,
@@ -47,4 +48,4 @@ export function FundAllocationKpiRow({
       </Grid>
     </Grid>
   )
-}
+})

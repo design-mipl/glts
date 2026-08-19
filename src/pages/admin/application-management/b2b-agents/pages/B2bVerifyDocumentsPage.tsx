@@ -32,6 +32,7 @@ import {
   isRejectedVerifyDocument,
   type VerifyRejectedDocumentEntry,
 } from '../utils/verifyDocumentsUtils'
+import { isDocumentNotRequiredApplication } from '@/shared/utils/applicationDocumentRequirement'
 import { applicationVerificationService } from '@/shared/services/applicationVerificationService'
 
 export function B2bVerifyDocumentsPage() {
@@ -324,6 +325,7 @@ export function B2bVerifyDocumentsPage() {
           countryId={checklistContext.countryId}
           visaOfferingId={checklistContext.visaOfferingId}
           jurisdictionId={checklistContext.jurisdictionId}
+          documentsNotRequired={isDocumentNotRequiredApplication(listingRow)}
           onOriginalDocumentReceivedChange={(documentId, received) => {
             if (!selectedRow) return
             updateTravelerOriginalReceived(selectedRow.id, documentId, received)

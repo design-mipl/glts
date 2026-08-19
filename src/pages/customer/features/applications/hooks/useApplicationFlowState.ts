@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import type { ApplicationDocumentRequirement } from '@/shared/utils/applicationDocumentRequirement'
 import type { UploadQueueRow } from '../data/applicationFlowData'
 import { singleExtractedFields } from '../data/applicationFlowData'
 
@@ -75,6 +76,11 @@ export interface ApplicationFlowState {
   gltsBatchId: string
   globalDocumentUploads: Record<string, GlobalDocumentUploadMeta>
   uploadQueueRows: UploadQueueRow[]
+  /**
+   * Admin B2B create only. Documents stay in the flow but are optional when
+   * `not_required`. Post-submit queues then require checklists only.
+   */
+  documentRequirement: ApplicationDocumentRequirement
 }
 
 const defaultState: ApplicationFlowState = {
@@ -132,6 +138,7 @@ const defaultState: ApplicationFlowState = {
   gltsBatchId: '',
   globalDocumentUploads: {},
   uploadQueueRows: [],
+  documentRequirement: 'required',
 }
 
 function seedApplicantFromExtracted(): Partial<ApplicationFlowState> {
@@ -174,6 +181,8 @@ function loadStored(storageKey: string): ApplicationFlowState {
           ? (parsed.globalDocumentUploads as Record<string, GlobalDocumentUploadMeta>)
           : {},
       uploadQueueRows: Array.isArray(parsed.uploadQueueRows) ? parsed.uploadQueueRows : [],
+      documentRequirement:
+        parsed.documentRequirement === 'not_required' ? 'not_required' : 'required',
     }
   } catch {
     return defaultState

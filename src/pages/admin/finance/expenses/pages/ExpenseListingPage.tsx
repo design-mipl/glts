@@ -40,12 +40,17 @@ export function ExpenseListingPage() {
   const [activeTab, setActiveTab] = useListingTabParam(EXPENSE_TAB_VALUES, 'marine')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const listingReturnHref = getCurrentListingHref(location)
+  const [synced, setSynced] = useState(false)
 
   useEffect(() => {
-    applicationExpenseManagementService.syncAllSubmitted()
+    const id = requestIdleCallback(() => {
+      applicationExpenseManagementService.syncAllSubmitted()
+      setSynced(true)
+    })
+    return () => cancelIdleCallback(id)
   }, [])
 
-  const tabRows = useMemo(() => loadExpenseListingRows(activeTab), [activeTab])
+  const tabRows = useMemo(() => (synced ? loadExpenseListingRows(activeTab) : []), [activeTab, synced])
 
   const listing = useCustomerListing({
     rows: tabRows,
@@ -144,12 +149,14 @@ export function ExpenseListingPage() {
               )
             }
             stickyHeader
+            loading={!synced}
             emptyTitle={emptyState.title}
             emptyDescription={emptyState.description}
           />
         ) : (
           <AdminListingGrid
             items={gridItems}
+            loading={!synced}
             onItemClick={id =>
               navigateFromListing(navigate, `${EXPENSE_LISTING_BASE_PATH}/${id}`, listingReturnHref)
             }

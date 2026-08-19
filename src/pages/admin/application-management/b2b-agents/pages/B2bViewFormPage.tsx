@@ -47,6 +47,7 @@ import {
   applicationMarineQcCheckService,
   type MarineDocsQcCheckRecord as B2bDocsQcCheckRecord,
 } from '@/shared/services/applicationMarineQcCheckService'
+import { isDocumentNotRequiredApplication } from '@/shared/utils/applicationDocumentRequirement'
 import { applicationVerificationService } from '@/shared/services/applicationVerificationService'
 import {
   buildOverviewFromDetail,
@@ -206,6 +207,7 @@ export function B2bViewFormPage() {
     [listingRow, listingPath],
   )
   const isPendingPayment = workspaceMode === 'pending_payment'
+  const documentsNotRequired = isDocumentNotRequiredApplication(listingRow)
 
   const formLocked = readOnly || externallySubmitted
 
@@ -396,6 +398,24 @@ export function B2bViewFormPage() {
     showToast({
       title: 'Marked as submitted',
       description: 'Status updated to Submitted.',
+      variant: 'success',
+    })
+    navigate(listingPath)
+  }
+
+  const handleSkipForm = () => {
+    const result = markAsSubmitted({ skipValidation: true })
+    if (!result.ok) {
+      showToast({
+        title: 'Cannot skip form',
+        description: result.errors.join(' · '),
+        variant: 'error',
+      })
+      return
+    }
+    showToast({
+      title: 'Form skipped',
+      description: 'Application moved to the next stage without embassy form fill.',
       variant: 'success',
     })
     navigate(listingPath)
@@ -604,15 +624,25 @@ export function B2bViewFormPage() {
             />
           ) : null}
         </Stack>
-        <Button
-          label="Next passenger"
-          variant="contained"
-          color="primary"
-          endIcon={<ChevronRight size={14} />}
-          onClick={goNextPassenger}
-          disabled={selectedIndex < 0 || selectedIndex >= filteredRows.length - 1}
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
-        />
+          <Button
+            label="Next passenger"
+            variant="contained"
+            color="primary"
+            endIcon={<ChevronRight size={14} />}
+            onClick={goNextPassenger}
+            disabled={selectedIndex < 0 || selectedIndex >= filteredRows.length - 1}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          />
+          {documentsNotRequired && !isPendingPayment && !readOnly ? (
+            <Button
+              label="Skip form"
+              variant="outlined"
+              color="primary"
+              onClick={handleSkipForm}
+              disabled={!formViewUnlocked || externallySubmitted}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            />
+          ) : null}
       </Stack>
     </BaseCard>
   )
@@ -658,6 +688,11 @@ export function B2bViewFormPage() {
       }
       onDocsQcSubmit={handleSubmitDocsQc}
       readOnly={readOnly}
+      documentsNotRequired={documentsNotRequired}
+      onSkipForm={
+        documentsNotRequired && !readOnly && !isPendingPayment ? handleSkipForm : undefined
+      }
+      skipFormDisabled={!formViewUnlocked || externallySubmitted}
       onPreview={handlePreview}
       onTravelerVerify={document => openVerifyDialog('traveler', document, selectedRow?.id)}
       onTravelerReject={document =>
@@ -741,8 +776,14 @@ export function B2bViewFormPage() {
             onBack={() => setActiveStep(Math.max(0, activeStepIndex - 1))}
             onNext={formInteractionDisabled ? undefined : requestStepContinue}
             nextLabel="Continue"
-            onSubmit={formLocked || formInteractionDisabled ? undefined : handleMarkSubmitted}
-            submitLabel="Mark as submitted"
+            onSubmit={
+              formLocked || formInteractionDisabled
+                ? undefined
+                : documentsNotRequired
+                  ? handleSkipForm
+                  : handleMarkSubmitted
+            }
+            submitLabel={documentsNotRequired ? 'Skip form & continue' : 'Mark as submitted'}
             disabled={(externallySubmitted && !readOnly) || formInteractionDisabled}
             submissionLocked={formLocked}
           />
@@ -811,7 +852,13 @@ export function B2bViewFormPage() {
             workTabHint={
               !isPendingPayment && !formViewUnlocked ? (
                 <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.45 }}>
-                  {FORM_VIEW_QC_LOCKED_MESSAGE}
+                  {documentsNotRequired
+                    ? 'Complete the QC checklist and mark Verified & ready. Form fill is optional — you can skip it after QC.'
+                    : FORM_VIEW_QC_LOCKED_MESSAGE}
+                </Typography>
+              ) : documentsNotRequired && formViewUnlocked && !isPendingPayment ? (
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.45 }}>
+                  Documents were not required. QC checklist is required; embassy form can be skipped.
                 </Typography>
               ) : null
             }

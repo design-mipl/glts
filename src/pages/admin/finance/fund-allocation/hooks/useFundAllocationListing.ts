@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { TableState } from '@/design-system/UIComponents'
 import { applyColumnFilters, INITIAL_TABLE_STATE, sortRows } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
@@ -44,16 +44,24 @@ export function useFundAllocationListing() {
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null)
   const [selectedClaimSheetId, setSelectedClaimSheetId] = useState<string | null>(null)
   const [searchValue, setSearchValue] = useState('')
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const id = requestIdleCallback(() => setReady(true))
+    return () => cancelIdleCallback(id)
+  }, [])
 
   const allRows = useMemo(() => {
+    if (!ready) return [] as FundAllocationPassengerRow[]
     void refreshKey
     return fundAllocationService.list()
-  }, [refreshKey])
+  }, [refreshKey, ready])
 
   const allClaimSheets = useMemo(() => {
+    if (!ready) return [] as GroundOpsClaimSheet[]
     void refreshKey
     return groundOpsClaimSheetService.list()
-  }, [refreshKey])
+  }, [refreshKey, ready])
 
   const tabFilteredRows = useMemo(
     () => filterRowsByListingTab(allRows, listingTab),
@@ -249,5 +257,6 @@ export function useFundAllocationListing() {
     closeDetail,
     refresh,
     mutateAndRefresh,
+    isLoading: !ready,
   }
 }
