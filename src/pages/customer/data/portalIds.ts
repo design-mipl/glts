@@ -4,6 +4,18 @@ export const GLTS_APPLICATION_IDS = {
   schengen: 'GL-847',
   japan: 'GL-901',
   uae: 'GL-712',
+  /** Corporate — jurisdiction-enabled Business Visa (UK, Delhi). */
+  corporateBusinessJurisdiction: 'GL-960',
+  /** Corporate — Business e-Visa (USA). */
+  corporateBusinessEvisa: 'GL-961',
+  /** Marine — jurisdiction-enabled Crew Visa (Philippines, Mumbai). */
+  marineCrewJurisdiction: 'GL-962',
+  /** Marine — Crew Transit e-Visa (Netherlands). */
+  marineCrewTransit: 'GL-963',
+  /** B2B Agents — jurisdiction-enabled Agent Tourist Visa (India, Delhi). */
+  b2bAgentTouristJurisdiction: 'GL-964',
+  /** B2B Agents — Agent Business e-Visa (South Korea). */
+  b2bAgentBusinessEvisa: 'GL-965',
 } as const
 
 export const GLTS_BOOKER_IDS = {

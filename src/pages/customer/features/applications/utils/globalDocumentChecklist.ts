@@ -23,6 +23,16 @@ export interface ResolveGlobalChecklistInput {
   jurisdictionName?: string
 }
 
+/**
+ * Fallback shown when country/visa-offering resolution fails (e.g. listing rows carry
+ * formatted display labels like "Business · Short stay" that don't match country master
+ * visa offering names like "Agent Business e-Visa"). Keeps the global document section
+ * populated instead of silently going empty.
+ */
+const FALLBACK_GLOBAL_CHECKLIST_DOCUMENTS: GlobalChecklistDocument[] = [
+  { documentId: 'loi', name: 'LOI (Letter of Intent)', required: true },
+]
+
 export function resolveGlobalChecklistDocuments(
   input: ResolveGlobalChecklistInput = {},
 ): GlobalChecklistDocument[] {
@@ -33,13 +43,14 @@ export function resolveGlobalChecklistDocuments(
         ? resolveOfferingIdsByLabels(input.countryLabel, input.visaTypeLabel)
         : undefined
 
-  if (!ids) return []
+  if (!ids) return FALLBACK_GLOBAL_CHECKLIST_DOCUMENTS
 
   const jurisdictionId =
     input.jurisdictionId ||
     resolveJurisdictionIdByName(ids.countryId, ids.visaOfferingId, input.jurisdictionName)
 
-  return getCommonDocumentChecklistItems(ids.countryId, ids.visaOfferingId, jurisdictionId)
+  const resolved = getCommonDocumentChecklistItems(ids.countryId, ids.visaOfferingId, jurisdictionId)
+  return resolved.length > 0 ? resolved : FALLBACK_GLOBAL_CHECKLIST_DOCUMENTS
 }
 
 function mapDocumentToChecklistItem(doc: ApplicantDocumentItem): CustomerChecklistItem {

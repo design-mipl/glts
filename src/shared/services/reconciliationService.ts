@@ -397,63 +397,40 @@ function ensureUpstreamSynced() {
   upstreamSynced = true
 }
 
-function getApplicationEnrichment(
-  applicationId: string,
-  cache: Map<string, ApplicationEnrichment | undefined>,
-): ApplicationEnrichment | undefined {
-  if (cache.has(applicationId)) return cache.get(applicationId)
-  const detail = applicationExpenseManagementService.getApplicationDetail(applicationId)
-  const enrichment = detail
-    ? {
-        companyName: detail.companyName,
-        visaCountry: detail.visaCountry,
-        consultant: detail.assignedUser ?? detail.assignedTeam ?? '—',
-        passengerNames: detail.passengers.map(p => p.passengerName),
-      }
-    : undefined
-  cache.set(applicationId, enrichment)
-  return enrichment
-}
-
 function listProjectedItems(): ReconciliationItem[] {
   if (projectedItemsCache) return projectedItemsCache
 
   ensureUpstreamSynced()
   const submissions = readSubmissions()
-  const enrichmentCache = new Map<string, ApplicationEnrichment | undefined>()
 
   const allExpenseIds = new Set<string>()
-  const allExpenses: ApplicationExpenseRecord[] = []
   // Only marine currently returns listing rows; keep the loop for future segments.
+  const items: ReconciliationItem[] = []
+
   for (const segment of ['marine', 'retail', 'corporate', 'b2bAgents'] as const) {
     const apps = applicationExpenseManagementService.listApplications(segment)
     for (const app of apps) {
       const detail = applicationExpenseManagementService.getApplicationDetail(app.applicationId)
-      if (detail) {
-        enrichmentCache.set(app.applicationId, {
-          companyName: detail.companyName,
-          visaCountry: detail.visaCountry,
-          consultant: detail.assignedUser ?? detail.assignedTeam ?? '—',
-          passengerNames: detail.passengers.map(p => p.passengerName),
-        })
+      if (!detail) continue
+
+      const enrichment: ApplicationEnrichment = {
+        companyName: detail.companyName,
+        visaCountry: detail.visaCountry,
+        consultant: detail.assignedUser ?? detail.assignedTeam ?? '—',
+        passengerNames: detail.passengers.map(p => p.passengerName),
       }
-      for (const expense of detail?.expenses ?? []) {
+
+      for (const expense of detail.expenses) {
         if (allExpenseIds.has(expense.id)) continue
         allExpenseIds.add(expense.id)
-        allExpenses.push(expense)
+
+        const typedTab = expenseTab(expense)
+        if (typedTab) {
+          items.push(buildExpenseItem(expense, typedTab, submissions, enrichment))
+        }
+        items.push(buildExpenseItem(expense, 'mode_of_payment', submissions, enrichment))
       }
     }
-  }
-
-  const items: ReconciliationItem[] = []
-
-  for (const expense of allExpenses) {
-    const enrichment = getApplicationEnrichment(expense.applicationId, enrichmentCache)
-    const typedTab = expenseTab(expense)
-    if (typedTab) {
-      items.push(buildExpenseItem(expense, typedTab, submissions, enrichment))
-    }
-    items.push(buildExpenseItem(expense, 'mode_of_payment', submissions, enrichment))
   }
 
   for (const sheet of groundOpsClaimSheetService.list()) {

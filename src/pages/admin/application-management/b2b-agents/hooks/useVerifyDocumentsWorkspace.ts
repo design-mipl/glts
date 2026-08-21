@@ -164,9 +164,9 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
     () =>
       applicationId
         ? buildGlobalDocumentsForVerification(applicationId, detail?.globalDocumentUploads ?? {}, {
-            countryLabel: detail?.application?.country,
-            visaTypeLabel: detail?.application?.visaType,
-            jurisdictionName: detail?.application?.jurisdiction,
+            countryLabel: detail?.application?.country ?? listingRow?.country,
+            visaTypeLabel: detail?.application?.visaType ?? listingRow?.visaType,
+            jurisdictionName: detail?.application?.jurisdiction ?? listingRow?.jurisdiction,
           })
         : [],
     [
@@ -175,6 +175,7 @@ export function useVerifyDocumentsWorkspace(applicationId: string | undefined) {
       detail?.application?.jurisdiction,
       detail?.application?.visaType,
       detail?.globalDocumentUploads,
+      listingRow,
       workspace,
     ],
   )
