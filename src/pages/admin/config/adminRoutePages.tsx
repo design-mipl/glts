@@ -17,6 +17,11 @@ export const EnquiryListingPage = lazyNamed(
   'EnquiryListingPage',
 )
 
+export const OrderListingPage = lazyNamed(() => import('../order-management/orders'), 'OrderListingPage')
+export const CreateOrderPage = lazyNamed(() => import('../order-management/orders'), 'CreateOrderPage')
+export const EditOrderPage = lazyNamed(() => import('../order-management/orders'), 'EditOrderPage')
+export const OrderDetailPage = lazyNamed(() => import('../order-management/orders'), 'OrderDetailPage')
+
 export const AgreementDetailPage = lazyNamed(
   () => import('../customer-accounts/agreements'),
   'AgreementDetailPage',

@@ -742,6 +742,7 @@ export function B2bViewFormPage() {
         selectedRow={selectedRow}
         detail={detail}
         submission={submission}
+        listingRow={listingRow}
       />
 
       <AdminWorkspaceShell

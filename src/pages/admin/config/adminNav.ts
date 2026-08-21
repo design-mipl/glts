@@ -7,6 +7,7 @@ import {
   HandCoins,
   Headphones,
   LayoutDashboard,
+  ShoppingCart,
   Shield,
   SlidersHorizontal,
   Wrench,
@@ -74,6 +75,12 @@ export const adminNav: NavConfig[] = [
       { type: 'item', label: 'Fund allocation', href: '/admin/finance/fund-allocation' },
       { type: 'item', label: 'Reconciliation', href: '/admin/finance/reconciliation' },
     ],
+  },
+  {
+    type: 'item',
+    label: 'Order Management',
+    icon: createElement(ShoppingCart, iconProps),
+    href: '/admin/order-management/orders',
   },
   {
     type: 'item',

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
 import { BulkActions, Pagination, type BulkAction, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
@@ -43,16 +43,10 @@ export function ReconciliationListingPage() {
   const [selectedItem, setSelectedItem] = useState<ReconciliationItem | null>(null)
   const [bulkItems, setBulkItems] = useState<ReconciliationItem[] | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    const id = requestIdleCallback(() => setReady(true))
-    return () => cancelIdleCallback(id)
-  }, [])
 
   const tabRows = useMemo(
-    () => (ready ? reconciliationService.list(activeTab, filters) : []),
-    [activeTab, filters, refreshKey, ready],
+    () => reconciliationService.list(activeTab, filters),
+    [activeTab, filters, refreshKey],
   )
 
   const listing = useCustomerListing({
@@ -243,7 +237,6 @@ export function ReconciliationListingPage() {
                 onRowClick={row => setSelectedItem(row)}
                 bulkActions={bulkActions}
                 stickyHeader
-                loading={!ready}
                 emptyTitle={emptyState.title}
                 emptyDescription={emptyState.description}
               />
@@ -251,7 +244,6 @@ export function ReconciliationListingPage() {
           ) : (
             <AdminListingGrid
               items={gridItems}
-              loading={!ready}
               onItemClick={id => {
                 const row = listing.paginatedRows.find(item => item.id === id)
                 if (row) setSelectedItem(row)

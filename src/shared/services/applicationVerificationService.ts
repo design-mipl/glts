@@ -74,18 +74,23 @@ export interface ApplicationVerificationRecord {
 
 type VerificationStore = Record<string, ApplicationVerificationRecord>
 
+/** localStorage read + JSON.parse is surprisingly hot (called per app in admin sync loops) — cache until the next write. */
+let storeCache: VerificationStore | null = null
+
 function readStore(): VerificationStore {
+  if (storeCache) return storeCache
   try {
     const raw = localStorage.getItem(VERIFICATION_STORAGE_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw) as VerificationStore
-    return parsed && typeof parsed === 'object' ? parsed : {}
+    storeCache = raw ? (JSON.parse(raw) as VerificationStore) : {}
+    if (!storeCache || typeof storeCache !== 'object') storeCache = {}
   } catch {
-    return {}
+    storeCache = {}
   }
+  return storeCache
 }
 
 function writeStore(store: VerificationStore) {
+  storeCache = store
   try {
     localStorage.setItem(VERIFICATION_STORAGE_KEY, JSON.stringify(store))
   } catch {
@@ -285,6 +290,210 @@ function getDemoVerificationSeeds(applicationId: string): VerificationDocumentOv
         status: 'rejected',
         customerVisible: true,
         comment: 'Passport bio page is cropped. Re-upload a full clear scan — visible in the customer portal.',
+        updatedAt,
+      },
+    ]
+  }
+
+  // Marine — Kwame Mensah: Docs bounce, pre-Ops-confirm (Documents team just flagged it).
+  if (applicationId === 'GL-878') {
+    const travelerRowId = `${applicationId}-q1`
+    return [
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'cdc',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'CDC expiry date not visible, please provide valid copy. Flagged by Documents team in Submission Pending.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'vessel-letter',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'Vessel letter is missing the manning agent stamp. Internal only until Ops confirms the rejection.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'stcw-certificate',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'Document illegible, please re-upload a clear scan of the STCW certificate.',
+        updatedAt,
+      },
+    ]
+  }
+
+  // Marine — Diego Fernandez: Ops confirmed the Docs bounce, customer notified.
+  if (applicationId === 'GL-891') {
+    const travelerRowId = `${applicationId}-q1`
+    return [
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'cdc',
+        status: 'rejected',
+        customerVisible: true,
+        comment: 'CDC expiry date not visible, please provide a valid copy.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'personal-details-form',
+        status: 'rejected',
+        customerVisible: true,
+        comment: 'Personal details form is unsigned. Please sign and re-upload.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'travel-ticket',
+        status: 'rejected',
+        customerVisible: true,
+        comment: 'Flight reservation name does not match the passport. Please re-upload with matching details.',
+        updatedAt,
+      },
+    ]
+  }
+
+  // Corporate — Helen Park: Docs bounce, pre-Ops-confirm (Documents team just flagged it).
+  if (applicationId === 'GL-823') {
+    const travelerRowId = `${applicationId}-q1`
+    return [
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'bank-balance-certificate',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'Balance certificate is more than 30 days old. Flagged by Documents team in Submission Pending.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'employment-certificate',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'Employment certificate does not confirm current role and tenure. Internal only until Ops confirms.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'invitation',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'Document illegible, please re-upload the host company invitation letter.',
+        updatedAt,
+      },
+    ]
+  }
+
+  // Corporate — Priya Nair: Ops confirmed the Docs bounce, customer notified.
+  if (applicationId === 'GL-821') {
+    const travelerRowId = `${applicationId}-q1`
+    return [
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'bank-balance-certificate',
+        status: 'rejected',
+        customerVisible: true,
+        comment: 'Balance certificate is more than 30 days old. Please provide an updated certificate.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'company-covering-letter',
+        status: 'rejected',
+        customerVisible: true,
+        comment: 'Covering letter is missing the employer letterhead and signature. Please re-upload.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'invitation',
+        status: 'rejected',
+        customerVisible: true,
+        comment: 'Document illegible, please re-upload the host company invitation letter.',
+        updatedAt,
+      },
+    ]
+  }
+
+  // B2B Agents — Aisha Khan: Docs bounce, pre-Ops-confirm (Documents team just flagged it).
+  if (applicationId === 'GL-818') {
+    const travelerRowId = `${applicationId}-q1`
+    return [
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'bank',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'Bank statement does not cover the last 3 months. Flagged by Documents team in Submission Pending.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'company-covering-letter',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'Covering letter is missing the employer letterhead. Internal only until Ops confirms the rejection.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'invitation',
+        status: 'rejected',
+        customerVisible: false,
+        comment: 'Document illegible, please re-upload the host company invitation letter.',
+        updatedAt,
+      },
+    ]
+  }
+
+  // B2B Agents — Hassan Malik: Ops confirmed the Docs bounce, customer notified.
+  if (applicationId === 'GL-811') {
+    const travelerRowId = `${applicationId}-q1`
+    return [
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'bank',
+        status: 'rejected',
+        customerVisible: true,
+        comment: 'Bank statement does not cover the last 3 months. Please upload updated statements.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'travel-ticket',
+        status: 'rejected',
+        customerVisible: true,
+        comment: 'Flight reservation dates do not match the visa application. Please re-upload.',
+        updatedAt,
+      },
+      {
+        scope: 'traveler',
+        travelerRowId,
+        documentId: 'invitation',
+        status: 'rejected',
+        customerVisible: true,
+        comment: 'Document illegible, please re-upload the host company invitation letter.',
         updatedAt,
       },
     ]
