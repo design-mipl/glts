@@ -1,6 +1,12 @@
 import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import { groundOpsClaimSheetService } from '@/shared/services/groundOpsClaimSheetService'
 import { getCurrentUser } from '@/shared/services/authService'
+import { computeExpenseIwAmount } from '@/pages/admin/finance/expenses/config/expenseDetailFormConfig'
+import {
+  mapToReconciliationPaymentMode,
+  reconciliationRequiresBookEntry,
+  type ReconciliationPaymentMode,
+} from '@/pages/admin/finance/reconciliation/config/reconciliationListingConfig'
 import type { ApplicationExpenseRecord } from '@/shared/types/applicationExpenseManagement'
 import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
 import type {
@@ -141,10 +147,17 @@ function writeSubmissions(store: SubmissionStore) {
   }
 }
 
-function computeMarkup(costAmount: number, totalAmount: number): number {
-  const cost = Number.isFinite(costAmount) ? Math.max(0, costAmount) : 0
-  const total = Number.isFinite(totalAmount) ? Math.max(0, totalAmount) : 0
-  return Math.max(0, Math.round((total - cost) * 100) / 100)
+function isGroundOpsExpense(expense: ApplicationExpenseRecord): boolean {
+  return (
+    expense.expenseType === 'ground_operation_service' ||
+    expense.expenseSource === 'ground_operations' ||
+    expense.createdFrom === 'ground_operations'
+  )
+}
+
+function demoCardUsed(id: string): string {
+  const cards = ['HDFC **** 4412', 'ICICI **** 8821', 'Axis **** 1190']
+  return cards[hashSeed(id) % cards.length]
 }
 
 function hashSeed(input: string): number {
@@ -155,6 +168,12 @@ function hashSeed(input: string): number {
   return h
 }
 
+function expenseTab(expense: ApplicationExpenseRecord): ReconciliationTab | null {
+  if (INSURANCE_TYPES.has(expense.expenseType)) return 'insurance'
+  if (TICKET_TYPES.has(expense.expenseType)) return 'ticket'
+  if (expense.expenseType === 'courier_service') return 'courier'
+  return null
+}
 function demoPolicyNumber(id: string): string {
   const n = hashSeed(id) % 900000 + 100000
   return `POL-${n}`
@@ -179,18 +198,6 @@ function demoRoute(id: string, kind: 'ticket' | 'courier'): { from: string; to: 
           { from: 'Embassy collection', to: 'Client HQ' },
         ]
   return routes[hashSeed(id) % routes.length]
-}
-
-function demoCardUsed(id: string): string {
-  const cards = ['HDFC **** 4412', 'ICICI **** 8821', 'Axis **** 1190']
-  return cards[hashSeed(id) % cards.length]
-}
-
-function expenseTab(expense: ApplicationExpenseRecord): ReconciliationTab | null {
-  if (INSURANCE_TYPES.has(expense.expenseType)) return 'insurance'
-  if (TICKET_TYPES.has(expense.expenseType)) return 'ticket'
-  if (expense.expenseType === 'courier_service') return 'courier'
-  return null
 }
 
 function resolvePassengerName(expense: ApplicationExpenseRecord, passengerNames: string[]): string {
@@ -221,7 +228,7 @@ function buildExpenseItem(
 ): ReconciliationItem {
   const cost = typeof expense.costAmount === 'number' ? expense.costAmount : 0
   const total = expense.amount
-  const markup = computeMarkup(cost, total)
+  const markup = computeExpenseIwAmount(cost, total)
   const bookingDate = toDateKey(expense.expenseDate) || toDateKey(expense.createdDate)
   const creationDate = toDateKey(expense.createdDate) || bookingDate
   const route =
@@ -238,6 +245,13 @@ function buildExpenseItem(
   const trackingNumber = tab === 'courier' ? demoTrackingNumber(expense.id) : ''
   const referenceNumber = submission?.referenceNumber || ''
   const passengerNames = enrichment?.passengerNames ?? []
+  const rawPaymentMode = expense.paymentMode ?? ''
+  const reconciliationPaymentMode =
+    tab === 'mode_of_payment' ? mapToReconciliationPaymentMode(rawPaymentMode) : null
+  const paymentMode =
+    tab === 'mode_of_payment' && reconciliationPaymentMode
+      ? reconciliationPaymentMode
+      : rawPaymentMode
 
   return {
     id: itemId,
@@ -265,10 +279,16 @@ function buildExpenseItem(
     courierBookedBy: expense.paidByUser || expense.createdBy || '—',
     chargesName: expense.expenseTypeLabel || expense.expenseName,
     paymentDate: bookingDate,
-    paymentMode: expense.paymentMode ?? '',
-    cardUsed: expense.paymentMode === 'card' || expense.paymentMode === 'card_cash' ? demoCardUsed(expense.id) : '',
+    paymentMode,
+    cardUsed:
+      paymentMode === 'credit_card' || rawPaymentMode === 'card' || rawPaymentMode === 'card_cash'
+        ? demoCardUsed(expense.id)
+        : '',
     amountInr: cost > 0 ? cost : total,
-    foreignCurrencyAmount: expense.paymentMode === 'card' ? Math.round(cost * 0.011 * 100) / 100 : 0,
+    foreignCurrencyAmount:
+      paymentMode === 'credit_card' || rawPaymentMode === 'card'
+        ? Math.round(cost * 0.011 * 100) / 100
+        : 0,
     staffName: expense.paidByUser || expense.createdBy || '—',
     acPersonName: submission?.reconciledBy ?? '',
     acEntryNo: '',
@@ -385,6 +405,141 @@ function buildClaimSheetItems(sheet: GroundOpsClaimSheet, submissions: Submissio
   })
 }
 
+function buildClaimSheetPaymentItem(
+  sheet: GroundOpsClaimSheet,
+  submissions: SubmissionStore,
+  itemId: string,
+  partial: {
+    refNo: string
+    passengerName: string
+    client: string
+    visaCountry: string
+    chargesName: string
+    amount: number
+    paymentMode: ReconciliationPaymentMode
+  },
+): ReconciliationItem {
+  const reviewedAt = toDateKey(sheet.reviewedAt) || toDateKey(sheet.generatedAt)
+  const submission = submissions[itemId]
+
+  return {
+    id: itemId,
+    sourceKind: 'claim_sheet',
+    sourceId: sheet.id,
+    tab: 'mode_of_payment',
+    status: submission?.status ?? 'pending',
+    refNo: partial.refNo,
+    gltsCreationDate: toDateKey(sheet.generatedAt),
+    passengerName: partial.passengerName,
+    client: partial.client,
+    bookedBy: sheet.generatedBy,
+    consultant: '—',
+    visaCountry: partial.visaCountry,
+    vendor: 'Ground Operations',
+    bookingDate: reviewedAt,
+    cost: partial.amount,
+    markup: 0,
+    total: partial.amount,
+    policyNumber: '',
+    vendorInvoiceNumber: '',
+    locationFrom: '',
+    locationTo: '',
+    trackingNumber: '',
+    courierBookedBy: '',
+    chargesName: partial.chargesName,
+    paymentDate: reviewedAt,
+    paymentMode: partial.paymentMode,
+    cardUsed: partial.paymentMode === 'credit_card' ? demoCardUsed(itemId) : '',
+    amountInr: partial.amount,
+    foreignCurrencyAmount: 0,
+    staffName: sheet.generatedBy,
+    acPersonName: submission?.reconciledBy ?? '',
+    acEntryNo: '',
+    claimNumber: sheet.claimNumber,
+    claimTeam: sheet.team,
+    claimCasesCount: sheet.cases.length,
+    claimGrandTotal: sheet.grandTotal,
+    claimReviewedAt: reviewedAt,
+    referenceNumber: submission?.referenceNumber ?? '',
+    reconciledAt: submission?.reconciledAt,
+    reconciledBy: submission?.reconciledBy,
+    rejectionReason: submission?.rejectionReason,
+  }
+}
+
+function buildClaimSheetPaymentItems(
+  sheet: GroundOpsClaimSheet,
+  submissions: SubmissionStore,
+): ReconciliationItem[] {
+  const paymentMode = mapToReconciliationPaymentMode(sheet.fundTransferType)
+  if (!paymentMode) return []
+
+  const items: ReconciliationItem[] = []
+
+  for (const caseRow of sheet.cases) {
+    caseRow.services.forEach((service, serviceIndex) => {
+      if (service.amount <= 0) return
+      items.push(
+        buildClaimSheetPaymentItem(
+          sheet,
+          submissions,
+          `claim-pay:${sheet.id}:${caseRow.caseId}:svc:${serviceIndex}`,
+          {
+            refNo: caseRow.applicationId || sheet.claimNumber,
+            passengerName: caseRow.passengerName,
+            client: caseRow.companyName,
+            visaCountry: caseRow.country,
+            chargesName: service.serviceName,
+            amount: service.amount,
+            paymentMode,
+          },
+        ),
+      )
+    })
+
+    caseRow.additionalExpenses.forEach((expense, expenseIndex) => {
+      if (expense.amount <= 0) return
+      items.push(
+        buildClaimSheetPaymentItem(
+          sheet,
+          submissions,
+          `claim-pay:${sheet.id}:${caseRow.caseId}:add:${expenseIndex}`,
+          {
+            refNo: caseRow.applicationId || sheet.claimNumber,
+            passengerName: caseRow.passengerName,
+            client: caseRow.companyName,
+            visaCountry: caseRow.country,
+            chargesName: expense.serviceName,
+            amount: expense.amount,
+            paymentMode,
+          },
+        ),
+      )
+    })
+  }
+
+  sheet.otherExpenses.forEach((other, otherIndex) => {
+    if (other.amount <= 0) return
+    items.push(
+      buildClaimSheetPaymentItem(sheet, submissions, `claim-pay:${sheet.id}:other:${otherIndex}`, {
+        refNo: sheet.claimNumber,
+        passengerName: '—',
+        client: sheet.team,
+        visaCountry: '—',
+        chargesName: other.description,
+        amount: other.amount,
+        paymentMode,
+      }),
+    )
+  })
+
+  return items
+}
+
+function isAllowedModeOfPaymentItem(item: ReconciliationItem): boolean {
+  return item.paymentMode === 'credit_card' || item.paymentMode === 'bank' || item.paymentMode === 'dd'
+}
+
 function inPeriod(dateKey: string, range: { from: Date; to: Date }): boolean {
   if (!dateKey) return false
   const rowDate = parseLocalDateString(dateKey)
@@ -428,7 +583,9 @@ function listProjectedItems(): ReconciliationItem[] {
         if (typedTab) {
           items.push(buildExpenseItem(expense, typedTab, submissions, enrichment))
         }
-        items.push(buildExpenseItem(expense, 'mode_of_payment', submissions, enrichment))
+        if (!isGroundOpsExpense(expense) && mapToReconciliationPaymentMode(expense.paymentMode)) {
+          items.push(buildExpenseItem(expense, 'mode_of_payment', submissions, enrichment))
+        }
       }
     }
   }
@@ -436,10 +593,47 @@ function listProjectedItems(): ReconciliationItem[] {
   for (const sheet of groundOpsClaimSheetService.list()) {
     if (sheet.status !== 'approved' && sheet.status !== 'settled') continue
     items.push(...buildClaimSheetItems(sheet, submissions))
+    items.push(...buildClaimSheetPaymentItems(sheet, submissions))
   }
 
   projectedItemsCache = items
   return items
+}
+
+function persistExpenseAmounts(
+  existing: ReconciliationItem,
+  input: { cost?: number; total?: number; vendorInvoiceNumber?: string },
+): { ok: true } | { ok: false; error: string } {
+  if (existing.sourceKind !== 'expense') return { ok: true }
+  if (existing.tab !== 'insurance' && existing.tab !== 'ticket') return { ok: true }
+
+  const hasAmountUpdate =
+    typeof input.cost === 'number' ||
+    typeof input.total === 'number' ||
+    typeof input.vendorInvoiceNumber === 'string'
+  if (!hasAmountUpdate) return { ok: true }
+
+  const expense = applicationExpenseManagementService.getExpenseById(existing.sourceId)
+  if (!expense) return { ok: false, error: 'Linked expense was not found.' }
+
+  const cost = typeof input.cost === 'number' ? Math.max(0, input.cost) : expense.costAmount
+  const total = typeof input.total === 'number' ? Math.max(0, input.total) : expense.amount
+  const gstAmount = expense.gstIncluded && expense.amount > 0
+    ? Math.round((expense.gstAmount * total) / expense.amount * 100) / 100
+    : expense.gstAmount
+  const netPayableAmount = Math.max(0, Math.round((total + gstAmount) * 100) / 100)
+
+  const updated = applicationExpenseManagementService.updateExpense(existing.sourceId, {
+    costAmount: cost,
+    amount: total,
+    gstAmount,
+    netPayableAmount,
+    vendorInvoiceNumber: input.vendorInvoiceNumber ?? expense.vendorInvoiceNumber,
+  })
+
+  if (!updated) return { ok: false, error: 'Could not update expense amounts.' }
+  invalidateProjectedCache()
+  return { ok: true }
 }
 
 export const reconciliationService = {
@@ -447,6 +641,7 @@ export const reconciliationService = {
     const range = resolveReconciliationDateRange(filters.period, filters.customFrom, filters.customTo)
     return listProjectedItems()
       .filter(item => item.tab === tab)
+      .filter(item => (tab === 'mode_of_payment' ? isAllowedModeOfPaymentItem(item) : true))
       .filter(item => {
         const dateKey =
           tab === 'approved_claim_sheet'
@@ -488,7 +683,16 @@ export const reconciliationService = {
     }
 
     const referenceNumber = input.referenceNumber.trim()
-    if (!referenceNumber) return { ok: false, error: 'Book entry number is required.' }
+    if (reconciliationRequiresBookEntry(existing.tab) && !referenceNumber) {
+      return { ok: false, error: 'Book entry number is required.' }
+    }
+
+    const persist = persistExpenseAmounts(existing, {
+      cost: input.cost,
+      total: input.total,
+      vendorInvoiceNumber: input.vendorInvoiceNumber,
+    })
+    if (!persist.ok) return persist
 
     const user = getCurrentUser()
     const reconciledBy = user?.name?.trim() || 'Accounts user'
@@ -496,7 +700,7 @@ export const reconciliationService = {
     const store = readSubmissions()
 
     store[input.id] = {
-      referenceNumber,
+      referenceNumber: referenceNumber || undefined,
       status: 'submitted',
       reconciledAt,
       reconciledBy,
@@ -514,21 +718,27 @@ export const reconciliationService = {
     referenceNumber: string,
   ): { ok: true; submitted: number } | { ok: false; error: string } {
     const bookEntry = referenceNumber.trim()
-    if (!bookEntry) return { ok: false, error: 'Book entry number is required.' }
+    const byId = new Map(listProjectedItems().map(item => [item.id, item]))
+    const requiresBookEntry = ids.some(id => {
+      const existing = byId.get(id)
+      return existing && reconciliationRequiresBookEntry(existing.tab)
+    })
+    if (requiresBookEntry && !bookEntry) {
+      return { ok: false, error: 'Book entry number is required.' }
+    }
     if (ids.length === 0) return { ok: false, error: 'Select at least one pending record.' }
 
     const user = getCurrentUser()
     const reconciledBy = user?.name?.trim() || 'Accounts user'
     const reconciledAt = new Date().toISOString()
     const store = readSubmissions()
-    const byId = new Map(listProjectedItems().map(item => [item.id, item]))
     let submitted = 0
 
     for (const id of ids) {
       const existing = byId.get(id)
       if (!existing || existing.status !== 'pending') continue
       store[id] = {
-        referenceNumber: bookEntry,
+        referenceNumber: bookEntry || undefined,
         status: 'submitted',
         reconciledAt,
         reconciledBy,

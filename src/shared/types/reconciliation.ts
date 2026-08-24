@@ -90,6 +90,9 @@ export interface ReconciliationItem {
 export interface SubmitReconciliationInput {
   id: string
   referenceNumber: string
+  cost?: number
+  total?: number
+  vendorInvoiceNumber?: string
 }
 
 export interface RejectReconciliationInput {
