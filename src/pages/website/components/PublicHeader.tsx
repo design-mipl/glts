@@ -2,7 +2,6 @@ import {
   Box,
   Button,
   Stack,
-  Typography,
   useMediaQuery,
   IconButton,
   Drawer,
@@ -12,7 +11,7 @@ import {
   InputBase,
 } from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
-import { Menu, X, ShieldCheck, Search, User, ArrowRight } from 'lucide-react'
+import { Menu, X, Search, User, ArrowRight } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Button as DsButton } from '@/design-system/UIComponents'
@@ -27,9 +26,9 @@ const NAV_HEIGHT = 72
 const navLinks = [
   { label: 'Home', href: '/' },
   { label: 'Destinations', href: '/countries' },
-  { label: 'Retail', href: '/retail-visas' },
   { label: 'Marine', href: '/marine-crew' },
   { label: 'Corporate', href: '/corporate' },
+  { label: 'Travel Agents', href: '/#specialist-visa-services' },
   { label: 'Services', href: '/services' },
   { label: 'About Us', href: '/about' },
 ]
@@ -179,32 +178,6 @@ export function PublicHeader() {
               />
             </Box>
 
-            {isWide && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.75,
-                  pl: 1.5,
-                  ml: 0.5,
-                  borderLeft: `1px solid ${colors.border}`,
-                }}
-              >
-                <ShieldCheck size={15} color={colors.greenBright} strokeWidth={2.5} />
-                <Typography
-                  sx={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    color: colors.textSecondary,
-                    letterSpacing: '0.02em',
-                    lineHeight: 1.2,
-                    maxWidth: 120,
-                  }}
-                >
-                  On-time visas, guaranteed
-                </Typography>
-              </Box>
-            )}
           </Stack>
 
           {/* ——— Center: navigation ——— */}
@@ -298,23 +271,6 @@ export function PublicHeader() {
         </Box>
 
         <Box sx={{ px: 2.5, py: 2 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              p: 1.5,
-              borderRadius: '12px',
-              bgcolor: colors.greenMuted,
-              mb: 2,
-            }}
-          >
-            <ShieldCheck size={18} color={colors.greenBright} />
-            <Typography sx={{ fontSize: '13px', fontWeight: 600, color: colors.navy }}>
-              Visas on time, guaranteed
-            </Typography>
-          </Box>
-
           <Box
             component="form"
             onSubmit={e => {

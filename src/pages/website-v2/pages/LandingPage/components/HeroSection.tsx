@@ -15,7 +15,6 @@ import {
   BadgeCheck,
   FileCheck2,
   Globe2,
-  Headphones,
   MapPin,
   Search,
   Stamp,
@@ -34,7 +33,7 @@ import {
   getMarketingPrimaryButtonSx,
   brandPrimaryGreenRgb,
 } from '@/shared/theme/publicBrand'
-import { landingHeroTravelImage } from '../../../assets/landingPageImages'
+import { retailHeroImage } from '../../../assets/retailHeroImage'
 import { getAllCountries } from '@/shared/services/visaService'
 
 const fadeUp = keyframes`
@@ -52,10 +51,9 @@ const trustMetrics: {
   label: string
   icon: LucideIcon
 }[] = [
-  { value: '98%', label: 'Approval Rate', icon: BadgeCheck },
+  { value: '98%*', label: 'Approval Rate', icon: BadgeCheck },
   { value: '100,000+', label: 'Visas Processed', icon: FileCheck2 },
-  { value: '190+', label: 'Countries', icon: Globe2 },
-  { value: '24/7', label: 'Expert Support', icon: Headphones },
+  { value: '100+', label: 'Countries', icon: Globe2 },
 ]
 
 const VISA_TYPES = [
@@ -63,7 +61,9 @@ const VISA_TYPES = [
   { value: 'business', label: 'Business Visa' },
   { value: 'student', label: 'Student Visa' },
   { value: 'transit', label: 'Transit Visa' },
-  { value: 'project', label: 'Project Visa' },
+  { value: 'family', label: 'Family Applications' },
+  { value: 'group', label: 'Group Applications' },
+  { value: 'other', label: 'Other Visas' },
 ] as const
 
 const POPULAR_DESTINATION_CODES = ['AE', 'US', 'GB', 'SG', 'CA', 'AU', 'DE', 'FR', 'JP', 'TH'] as const
@@ -270,7 +270,7 @@ export function HeroSection() {
       >
         <Box
           component="img"
-          src={landingHeroTravelImage.src}
+          src={retailHeroImage.src}
           alt=""
           sx={{
             position: 'absolute',
@@ -386,8 +386,21 @@ export function HeroSection() {
                 Visas Done Right
                 <Box component="span" sx={{ color: colors.greenBright }}>
                   {' '}
-                  — Before They Go Wrong.
+                  — Before They Go Wrong
                 </Box>
+              </Typography>
+
+              <Typography
+                sx={{
+                  fontFamily: publicFonts.heading,
+                  fontSize: { xs: '18px', md: '20px' },
+                  fontWeight: 700,
+                  color: HERO_TEXT,
+                  mb: 1.25,
+                  lineHeight: 1.35,
+                }}
+              >
+                Expert-verified. Tech-enabled.
               </Typography>
 
               <Typography
@@ -398,8 +411,8 @@ export function HeroSection() {
                   maxWidth: 460,
                 }}
               >
-                Fast, reliable, and stress-free visa assistance — expert-reviewed applications with
-                real-time tracking so every trip starts with confidence.
+                Check requirements, apply securely, upload documents and track your application —
+                with GreenLight experts reviewing your application at every critical step.
               </Typography>
             </Box>
 
@@ -407,7 +420,7 @@ export function HeroSection() {
               <Button
                 variant="contained"
                 endIcon={<ArrowRight size={18} strokeWidth={2.25} />}
-                onClick={() => navigate('/v2/apply/new')}
+                onClick={() => navigate('/v2/countries')}
                 sx={{
                   ...getMarketingPrimaryButtonSx(colors),
                   borderRadius: '12px',
@@ -417,7 +430,7 @@ export function HeroSection() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                Start Application
+                Check Visa Requirements
               </Button>
               <Button
                 variant="outlined"
@@ -447,7 +460,7 @@ export function HeroSection() {
             <Box
               sx={{
                 display: 'grid',
-                gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(4, minmax(0, 1fr))' },
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' },
                 gap: { xs: 2.25, sm: 2.5, md: 2.75 },
                 width: '100%',
                 maxWidth: { md: 680 },
@@ -508,6 +521,17 @@ export function HeroSection() {
                 )
               })}
             </Box>
+
+            <Typography
+              sx={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: HERO_TEXT_SECONDARY,
+                lineHeight: 1.45,
+              }}
+            >
+              Registered agent support available for China, South Korea, and Brazil.
+            </Typography>
           </Stack>
         </Box>
       </PublicContainer>

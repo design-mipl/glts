@@ -7,7 +7,7 @@ import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteToke
 const metrics = [
   { icon: Award, value: '25+', label: 'Years Experience' },
   { icon: FileCheck, value: '450K+', label: 'Visas Processed' },
-  { icon: Globe2, value: '190+', label: 'Countries Covered' },
+  { icon: Globe2, value: '100+', label: 'Countries Covered' },
 ]
 
 export function FloatingTrustMetricsBar() {

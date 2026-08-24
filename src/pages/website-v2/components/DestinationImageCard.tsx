@@ -23,18 +23,18 @@ const GRADIENT_HOVER =
 const GRADIENT_COMPACT =
   'linear-gradient(to top, rgba(0, 20, 40, 0.88) 0%, rgba(0, 20, 40, 0.45) 38%, transparent 72%)'
 
-function formatEtaLabel(processingTime: string): string {
+function formatProcessingTimeLabel(processingTime: string): string {
   const trimmed = processingTime.trim()
-  if (!trimmed) return 'ETA: —'
+  if (!trimmed) return 'Processing Time: —'
   const normalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
-  return `ETA: ${normalized}`
+  return `Processing Time: ${normalized}`
 }
 
 interface DestinationImageCardProps {
   country: Country
   href?: string
   imageWidth?: number
-  /** Homepage: show country name only; reveal ETA, price, and CTA on hover. */
+  /** Homepage: show country name only; reveal processing time, price, and CTA on hover. */
   revealDetailsOnHover?: boolean
 }
 
@@ -47,6 +47,7 @@ export function DestinationImageCard({
   const colors = usePublicBrandColors()
   const [imgError, setImgError] = useState(false)
   const link = href ?? `/v2/countries/${country.id}`
+  const visaLabel = country.portalProcessingLabel ?? country.visaCategory
 
   return (
     <Box
@@ -202,7 +203,18 @@ export function DestinationImageCard({
                   lineHeight: 1.3,
                 }}
               >
-                {formatEtaLabel(country.processingTime)}
+                {formatProcessingTimeLabel(country.processingTime)}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  color: 'rgba(255, 255, 255, 0.82)',
+                  textShadow: '0 1px 6px rgba(0, 0, 0, 0.45)',
+                  lineHeight: 1.3,
+                }}
+              >
+                Visa category: {visaLabel}
               </Typography>
               <Typography
                 sx={{

@@ -1,11 +1,11 @@
 import { Box, Typography } from '@mui/material'
 import {
-  Zap,
+  Activity,
   BadgeCheck,
-  ShieldCheck,
-  CircleDollarSign,
+  FileCheck2,
   Headphones,
-  TrendingUp,
+  ListChecks,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
@@ -23,34 +23,37 @@ const FEATURES: {
   icon: LucideIcon
 }[] = [
   {
-    title: 'Fast Processing',
-    description: 'Applications reviewed and submitted with precision — without unnecessary delays.',
-    icon: Zap,
+    title: 'Expert Document Review',
+    description:
+      'Your documents are reviewed before submission to help identify missing or inconsistent information.',
+    icon: FileCheck2,
   },
   {
-    title: 'Expert Guidance',
-    description: 'Visa specialists guide every step so your file meets embassy standards.',
-    icon: BadgeCheck,
+    title: 'Clear, Transparent Process',
+    description: 'Know what documents you need, what happens next and what you are paying for.',
+    icon: ListChecks,
   },
   {
-    title: 'Secure & Reliable',
-    description: 'Your documents stay protected with secure handling and compliance checks.',
+    title: 'Secure Document Handling',
+    description: 'Your passport and supporting documents are managed through a secure digital workflow.',
     icon: ShieldCheck,
   },
   {
-    title: 'No Hidden Fees',
-    description: 'Transparent pricing with clear deliverables — no surprises along the way.',
-    icon: CircleDollarSign,
+    title: 'Real-Time Tracking',
+    description: 'Track your application and stay informed throughout the process.',
+    icon: Activity,
   },
   {
-    title: '24/7 Support',
-    description: 'Get help whenever you need it with responsive support around the clock.',
+    title: 'Human Support',
+    description:
+      'Technology simplifies the process. Our visa specialists are available when you need personal assistance.',
     icon: Headphones,
   },
   {
-    title: 'High Success Rate',
-    description: 'Structured reviews that improve approval confidence before submission.',
-    icon: TrendingUp,
+    title: 'Visa Expertise',
+    description:
+      'Specialist knowledge across destinations, visa categories and complex application requirements.',
+    icon: BadgeCheck,
   },
 ]
 
@@ -177,7 +180,7 @@ export function WhyGreenLightWorksSection() {
                 mb: 1.75,
               }}
             >
-              Your Journey, Our Priority
+              More Than Visa Processing. Expert Guidance.
             </Typography>
 
             <Typography
@@ -189,9 +192,8 @@ export function WhyGreenLightWorksSection() {
                 mb: landingSectionHeaderMb,
               }}
             >
-              GreenLight combines expert visa specialists, secure document handling, and modern
-              tracking technology — so every application is accurate, compliant, and customer-first
-              from start to approval.
+              We combine experienced visa specialists with a secure digital process to make your
+              application clearer, more accurate and easier to track.
             </Typography>
 
             <Box

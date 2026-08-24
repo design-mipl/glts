@@ -14,6 +14,7 @@ import taiwanFlag from '@/assets/flags/taiwan.png'
 import unitedArabEmiratesFlag from '@/assets/flags/united arab emirates.png'
 import unitedKingdomFlag from '@/assets/flags/united kingdom.png'
 import unitedStatesFlag from '@/assets/flags/united states.png'
+import indiaFlag from '@/assets/flags/india.png'
 
 const COUNTRY_FLAG_IMAGES_BY_CODE: Partial<Record<string, string>> = {
   AE: unitedArabEmiratesFlag,
@@ -32,6 +33,7 @@ const COUNTRY_FLAG_IMAGES_BY_CODE: Partial<Record<string, string>> = {
   SG: singaporeFlag,
   TW: taiwanFlag,
   US: unitedStatesFlag,
+  IN: indiaFlag
 }
 
 export function getLocalCountryFlagImageUrl(code: string): string | undefined {

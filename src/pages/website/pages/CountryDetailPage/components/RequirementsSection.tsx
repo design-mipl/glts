@@ -8,6 +8,7 @@ import {
   Building2,
   CheckCircle2,
   Circle,
+  Info,
 } from 'lucide-react'
 import type { Country } from '@/shared/types/visa'
 import {
@@ -87,6 +88,23 @@ const iconConfig: Record<
 
 interface RequirementsSectionProps {
   country: Country
+  selectedVisaCategoryLabel: string
+}
+
+function orderDocumentNames(documents: string[]) {
+  return documents
+    .map((name, index) => ({ name, index }))
+    .sort((a, b) => {
+      const priority = (value: string) => {
+        const lower = value.toLowerCase()
+        if (lower.includes('passport')) return 0
+        if (lower.includes('photo')) return 1
+        return 2
+      }
+      const diff = priority(a.name) - priority(b.name)
+      return diff || a.index - b.index
+    })
+    .map(item => item.name)
 }
 
 function RequirementRow({ req }: { req: RequirementItem }) {
@@ -187,10 +205,11 @@ function RequirementRow({ req }: { req: RequirementItem }) {
   )
 }
 
-export function RequirementsSection({ country }: RequirementsSectionProps) {
+export function RequirementsSection({ country, selectedVisaCategoryLabel }: RequirementsSectionProps) {
   const colors = usePublicBrandColors()
   const required = mockRequirements.filter(r => r.mandatory)
   const optional = mockRequirements.filter(r => !r.mandatory)
+  const orderedDocuments = orderDocumentNames(country.documentsNeeded)
 
   return (
     <Box>
@@ -223,6 +242,24 @@ export function RequirementsSection({ country }: RequirementsSectionProps) {
           >
             Prepare these before you apply for your {country.name} visa.
           </Typography>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1.25 }}>
+            <Chip
+              label={selectedVisaCategoryLabel}
+              size="small"
+              sx={{
+                fontWeight: 800,
+                bgcolor: colors.greenMuted,
+                color: colors.greenDark,
+                border: `1px solid rgba(115, 192, 100, 0.28)`,
+              }}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, minWidth: 0 }}>
+              <Info size={14} color={colors.textMuted} />
+              <Typography sx={{ fontSize: '12px', color: colors.textMuted, lineHeight: 1.45 }}>
+                Requirements are explained after visa type selection.
+              </Typography>
+            </Box>
+          </Stack>
         </Box>
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
           <Chip
@@ -250,7 +287,7 @@ export function RequirementsSection({ country }: RequirementsSectionProps) {
         </Stack>
       </Stack>
 
-      {country.documentsNeeded.length > 0 && (
+      {orderedDocuments.length > 0 && (
         <Box
           sx={{
             mb: 3,
@@ -273,7 +310,7 @@ export function RequirementsSection({ country }: RequirementsSectionProps) {
             Quick checklist
           </Typography>
           <Stack direction="row" flexWrap="wrap" gap={1} useFlexGap>
-            {country.documentsNeeded.map(doc => (
+            {orderedDocuments.map(doc => (
               <Chip
                 key={doc}
                 icon={<Circle size={6} fill={colors.greenBright} color={colors.greenBright} />}
