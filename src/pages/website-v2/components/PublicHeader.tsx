@@ -24,13 +24,13 @@ import { PublicContainer } from './PublicContainer'
 const NAV_HEIGHT = 72
 
 const navLinks = [
-  { label: 'Home', href: '/v2' },
-  { label: 'Destinations', href: '/v2/countries' },
-  { label: 'Marine', href: '/v2/marine-crew' },
-  { label: 'Corporate', href: '/v2/corporate' },
-  { label: 'Travel Agents', href: '/v2#specialist-visa-services' },
-  { label: 'Services', href: '/v2/services' },
-  { label: 'About Us', href: '/v2/about' },
+  { label: 'Home', href: '/' },
+  { label: 'Destinations', href: '/countries' },
+  { label: 'Marine', href: '/marine-crew' },
+  { label: 'Corporate', href: '/corporate' },
+  { label: 'Travel Agents', href: '/#specialist-visa-services' },
+  { label: 'Services', href: '/services' },
+  { label: 'About Us', href: '/about' },
 ]
 
 function NavLink({
@@ -92,23 +92,23 @@ export function PublicHeader() {
   const isWide = useMediaQuery(theme.breakpoints.up('desktop'))
   const isTablet = useMediaQuery(theme.breakpoints.up('lg'))
   const showCenterNav = isTablet
-  const isHome = pathname === '/v2' || pathname === '/v2/'
+  const isHome = pathname === '/'
   /** Homepage at top: nav blends into the hero (no white bar / gap). */
   const heroOverlay = isHome && !scrolled
 
   const isActive = (href: string) => {
-    const pathOnly = href.split('#')[0] || '/v2'
-    if (pathOnly === '/v2' || pathOnly === '/v2/') {
+    const pathOnly = href.split('#')[0] || '/'
+    if (pathOnly === '/') {
       // Hash-only home anchors (e.g. Visa Master) should not mark Home active.
       if (href.includes('#')) return false
-      return pathname === '/v2' || pathname === '/v2/'
+      return pathname === '/'
     }
     return pathname === pathOnly || pathname.startsWith(`${pathOnly}/`)
   }
 
   const handleSearchSubmit = () => {
     const q = searchQuery.trim()
-    navigate(q ? `/v2/countries?search=${encodeURIComponent(q)}` : '/v2/countries')
+    navigate(q ? `/countries?search=${encodeURIComponent(q)}` : '/countries')
     setSearchQuery('')
   }
 
@@ -157,7 +157,7 @@ export function PublicHeader() {
           >
             <Box
               component="a"
-              href="/v2"
+              href="/"
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -350,7 +350,7 @@ export function PublicHeader() {
           </Button>
           <Button
             component="a"
-            href="/v2/countries"
+            href="/countries"
             fullWidth
             variant="contained"
             endIcon={<ArrowRight size={18} />}

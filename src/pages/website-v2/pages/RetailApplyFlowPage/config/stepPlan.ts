@@ -15,14 +15,15 @@ export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinitio
   // Name + Build profile per traveller.
   steps.push({ id: 'travelProfile', phase: 'traveller', label: 'Travel profile' })
 
-  if (journey.hasEligibilityGate) {
-    steps.push({ id: 'eligibility', phase: 'traveller', label: 'Eligibility check' })
-  }
+  // Trip sponsor — after profiles are ready.
+  steps.push({ id: 'sponsor', phase: 'sponsor', label: 'Sponsor' })
 
-  steps.push({ id: 'requirements', phase: 'traveller', label: 'What you need' })
-
-  // Photo + passport capture/review (incl. OCR + contact) for each traveller.
+  // Photo + passport immediately after sponsor.
   steps.push({ id: 'passport', phase: 'documents', label: 'Essential documents' })
+
+  if (journey.hasEligibilityGate) {
+    steps.push({ id: 'eligibility', phase: 'documents', label: 'Eligibility check' })
+  }
 
   for (const question of journey.conditionalQuestions) {
     steps.push({ id: `question:${question.id}`, phase: 'documents', label: question.title })
@@ -50,12 +51,21 @@ export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinitio
   return steps
 }
 
-export const RETAIL_PHASE_ORDER = ['purpose', 'traveller', 'documents', 'extras', 'pay'] as const
+/** Top stepper phases — aligned to the retail apply journey. */
+export const RETAIL_PHASE_ORDER = [
+  'purpose',
+  'traveller',
+  'sponsor',
+  'documents',
+  'extras',
+  'pay',
+] as const
 
 export const RETAIL_PHASE_LABEL: Record<(typeof RETAIL_PHASE_ORDER)[number], string> = {
   purpose: 'Purpose',
   traveller: 'Travel profile',
+  sponsor: 'Sponsor',
   documents: 'Documents',
   extras: 'Extras',
-  pay: 'Pay',
+  pay: 'Payment',
 }

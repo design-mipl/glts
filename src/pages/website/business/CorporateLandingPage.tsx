@@ -430,7 +430,7 @@ export function CorporateLandingPage() {
             <Button
               variant="outlined"
               size="large"
-              href="/"
+              href="/v1"
               sx={{
                 borderColor: '#E5E7EB',
                 color: '#374151',

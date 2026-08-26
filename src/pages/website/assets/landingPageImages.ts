@@ -173,7 +173,7 @@ export const additionalServicesFeatured = {
   id: 'travel-insurance',
   title: 'Travel Insurance',
   description: 'Comprehensive travel protection for every journey.',
-  href: '/countries',
+  href: '/v1/countries',
   image: {
     src: '/images/additional-services/travel-insurance.png?v=2',
     fallback: '/images/additional-services/travel-insurance.png?v=2',
@@ -187,7 +187,7 @@ export const additionalServicesGrid = [
     id: 'student-visa-guidance',
     title: 'Student Visa Guidance',
     description: 'Expert support for study-abroad applications.',
-    href: '/countries',
+    href: '/v1/countries',
     image: {
       src: '/images/additional-services/student-visa-guidance.png',
       fallback: '/images/additional-services/student-visa-guidance.png',
@@ -198,7 +198,7 @@ export const additionalServicesGrid = [
     id: 'senior-citizen-assistance',
     title: 'Senior Citizen Assistance',
     description: 'Patient, guided help for senior travelers.',
-    href: '/countries',
+    href: '/v1/countries',
     image: {
       src: '/images/additional-services/senior-citizen-assistance.png',
       fallback: '/images/additional-services/senior-citizen-assistance.png',
@@ -209,7 +209,7 @@ export const additionalServicesGrid = [
     id: 'guided-document-preparation',
     title: 'Guided Document Preparation',
     description: 'Step-by-step checklist and file review.',
-    href: '/countries',
+    href: '/v1/countries',
     image: {
       src: '/images/additional-services/guided-document-preparation.png',
       fallback: '/images/additional-services/guided-document-preparation.png',
@@ -220,7 +220,7 @@ export const additionalServicesGrid = [
     id: 'travel-documentation',
     title: 'Travel Documentation',
     description: 'Itineraries, letters, and embassy-ready paperwork.',
-    href: '/countries',
+    href: '/v1/countries',
     image: {
       src: '/images/additional-services/travel-documentation.png',
       fallback: '/images/additional-services/travel-documentation.png',
@@ -231,7 +231,7 @@ export const additionalServicesGrid = [
     id: 'hotels',
     title: 'Hotels',
     description: 'Confirmed stays that meet visa requirements.',
-    href: '/countries',
+    href: '/v1/countries',
     image: {
       src: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&h=800&q=90',
       fallback:
@@ -243,7 +243,7 @@ export const additionalServicesGrid = [
     id: 'airport-transfers',
     title: 'Airport Transfers',
     description: 'Reliable pickups from arrival to destination.',
-    href: '/countries',
+    href: '/v1/countries',
     image: {
       src: '/images/additional-services/airport-transfers.png',
       fallback: '/images/additional-services/airport-transfers.png',
@@ -254,7 +254,7 @@ export const additionalServicesGrid = [
     id: 'forex',
     title: 'Forex',
     description: 'Competitive rates and travel-fund support.',
-    href: '/countries',
+    href: '/v1/countries',
     image: {
       src: '/images/additional-services/forex.png',
       fallback: '/images/additional-services/forex.png',
@@ -265,7 +265,7 @@ export const additionalServicesGrid = [
     id: 'holidays',
     title: 'Holidays',
     description: 'Curated holiday packages beyond your visa.',
-    href: '/countries',
+    href: '/v1/countries',
     image: {
       src: '/images/additional-services/holidays.png',
       fallback: '/images/additional-services/holidays.png',
@@ -281,7 +281,7 @@ export const additionalServicesSlider = [
     title: 'Travel Insurance',
     description: 'Travel protection options aligned to your itinerary and visa journey.',
     ctaLabel: 'View Options',
-    href: '/countries',
+    href: '/v1/countries',
     image: additionalServicesFeatured.image,
   },
   {
@@ -289,7 +289,7 @@ export const additionalServicesSlider = [
     title: 'Ticket for Visa',
     description: 'Flight reservation support for visa documentation where required.',
     ctaLabel: 'Check Details',
-    href: '/countries',
+    href: '/v1/countries',
     image: {
       src: '/images/additional-services/travel-documentation.png',
       fallback: '/images/additional-services/travel-documentation.png',
@@ -301,7 +301,7 @@ export const additionalServicesSlider = [
     title: 'Hotel Booking for Visa',
     description: 'Accommodation booking support for embassy-ready application files.',
     ctaLabel: 'Check Details',
-    href: '/countries',
+    href: '/v1/countries',
     image: {
       src: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&h=800&q=90',
       fallback:
@@ -314,7 +314,7 @@ export const additionalServicesSlider = [
     title: 'Passport Assistance',
     description: 'Support for passport readiness checks before visa submission.',
     ctaLabel: 'Check Details',
-    href: '/countries',
+    href: '/v1/countries',
     image: {
       src: '/images/additional-services/guided-document-preparation.png',
       fallback: '/images/additional-services/guided-document-preparation.png',
@@ -326,7 +326,7 @@ export const additionalServicesSlider = [
     title: 'Appointment Assistance',
     description: 'Guidance for visa appointments, biometrics and submission scheduling.',
     ctaLabel: 'Check Details',
-    href: '/countries',
+    href: '/v1/countries',
     image: {
       src: '/images/additional-services/senior-citizen-assistance.png',
       fallback: '/images/additional-services/senior-citizen-assistance.png',

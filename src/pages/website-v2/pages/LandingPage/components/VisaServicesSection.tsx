@@ -16,7 +16,7 @@ const visaServices = [
     title: 'Tourist Visa',
     description: 'For holidays, leisure and short-term travel',
     image: visaServiceShowcaseImages.tourist,
-    href: '/v2/countries',
+    href: '/countries',
     objectPosition: 'center center',
   },
   {
@@ -24,7 +24,7 @@ const visaServices = [
     title: 'Business Visa',
     description: 'For meetings, conferences and business visits',
     image: visaServiceShowcaseImages.business,
-    href: '/v2/countries',
+    href: '/countries',
     objectPosition: 'center 35%',
   },
   {
@@ -32,7 +32,7 @@ const visaServices = [
     title: 'Student Visa',
     description: 'For overseas study and academic travel',
     image: visaServiceShowcaseImages.student,
-    href: '/v2/countries',
+    href: '/countries',
     objectPosition: 'center 32%',
   },
   {
@@ -40,7 +40,7 @@ const visaServices = [
     title: 'Transit Visa',
     description: 'For layovers and onward travel through another country',
     image: visaServiceShowcaseImages.transit,
-    href: '/v2/countries',
+    href: '/countries',
     objectPosition: 'center 40%',
   },
   {
@@ -48,7 +48,7 @@ const visaServices = [
     title: 'Visit & Family',
     description: 'For visiting friends, relatives and family members',
     image: visaServiceShowcaseImages.family,
-    href: '/v2/countries',
+    href: '/countries',
     objectPosition: 'center center',
   },
   {
@@ -56,7 +56,7 @@ const visaServices = [
     title: 'Other Visa Types',
     description: 'For special cases that need country-specific guidance',
     image: visaServiceShowcaseImages.other,
-    href: '/v2/countries',
+    href: '/countries',
     objectPosition: 'center 35%',
   },
 ] as const

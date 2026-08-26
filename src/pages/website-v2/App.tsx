@@ -14,29 +14,29 @@ import {
 } from './websiteRoutePages'
 
 /**
- * Alternate public website (Website 2). Mounted at `/v2/*` beside the current site.
- * In-site links must use `/v2/...` (see `siteBase.ts` / `w2()`).
+ * Main public website (website-v2). Mounted at `/*`.
+ * In-site links use root paths (`/countries`, `/apply/new`, …) — see `siteBase.ts` / `w2()`.
  */
 export function PublicWebsiteV2App() {
   return (
     <LazyRouteBoundary label="Loading page…">
       <Routes>
-        <Route path="apply/new" element={<WebsiteApplicationFlowPage />} />
+        <Route path="/apply/new" element={<WebsiteApplicationFlowPage />} />
         <Route
-          path="*"
+          path="/*"
           element={
             <PublicLayout>
               <Routes>
-                <Route index element={<LandingPage />} />
-                <Route path="countries" element={<CountryListingPage />} />
-                <Route path="countries/:countryId" element={<CountryDetailPage />} />
-                <Route path="retail-visas" element={<Navigate to="/v2" replace />} />
-                <Route path="marine-crew" element={<MarineCrewVisaPage />} />
-                <Route path="corporate" element={<CorporateBusinessVisaPage />} />
-                <Route path="services" element={<ServicesPage />} />
-                <Route path="about" element={<AboutPage />} />
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/countries" element={<CountryListingPage />} />
+                <Route path="/countries/:countryId" element={<CountryDetailPage />} />
+                <Route path="/retail-visas" element={<Navigate to="/" replace />} />
+                <Route path="/marine-crew" element={<MarineCrewVisaPage />} />
+                <Route path="/corporate" element={<CorporateBusinessVisaPage />} />
+                <Route path="/services" element={<ServicesPage />} />
+                <Route path="/about" element={<AboutPage />} />
                 <Route
-                  path="track"
+                  path="/track"
                   element={
                     <ComingSoonPage
                       title="Track Application"
@@ -44,7 +44,7 @@ export function PublicWebsiteV2App() {
                     />
                   }
                 />
-                <Route path="pricing" element={<ComingSoonPage title="Pricing" />} />
+                <Route path="/pricing" element={<ComingSoonPage title="Pricing" />} />
               </Routes>
             </PublicLayout>
           }

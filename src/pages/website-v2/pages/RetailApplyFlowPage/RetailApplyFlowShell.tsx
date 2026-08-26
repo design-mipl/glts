@@ -4,16 +4,18 @@ import { BORDER_RADIUS } from '@/design-system/tokens'
 import { resolveJurisdictionOptions } from '@/shared/services/retailJourneyResolver'
 import { useAppNavigate } from '@/shared/hooks/useAppNavigate'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { getCountryTrustProfile } from '../../config/countryTrustBadges'
 import { useRetailDraft } from './hooks/useRetailDraft'
 import { useRetailStepPlan } from './hooks/useRetailStepPlan'
 import { PhaseNav } from './components/PhaseNav'
 import { StepTransition } from './components/StepTransition'
 import { IneligibleScreen } from './components/IneligibleScreen'
+import { ApplyIntroTransition } from './components/ApplyIntroTransition'
 import { VisaStep } from './components/steps/VisaStep'
 import { EligibilityStep } from './components/steps/EligibilityStep'
 import { TravelProfileStep } from './components/steps/TravelProfileStep'
+import { SponsorStep } from './components/steps/SponsorStep'
 import { PassportStep } from './components/steps/PassportStep'
-import { RequirementsStep } from './components/steps/RequirementsStep'
 import { JurisdictionStep } from './components/steps/JurisdictionStep'
 import { ConditionalQuestionStep } from './components/steps/ConditionalQuestionStep'
 import { ChecklistStep } from './components/steps/ChecklistStep'
@@ -37,7 +39,7 @@ import {
 import type { OriginalDocumentCollectionMethod } from '@/shared/types/originalDocumentCollection'
 import { getCountryMasterById } from '@/shared/services/countryMasterService'
 
-const LISTING_HREF = '/v2/countries'
+const LISTING_HREF = '/countries'
 
 const VISA_ONLY_STEPS: RetailStepDefinition[] = [{ id: 'visa', phase: 'purpose', label: 'Visa type' }]
 
@@ -56,6 +58,8 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
   const [direction, setDirection] = useState<1 | -1>(1)
 
   const countryId = initialCountryId
+  const trustProfile = getCountryTrustProfile(countryId)
+  const [showTrustIntro, setShowTrustIntro] = useState(() => Boolean(trustProfile))
   const { draft, patchDraft } = useRetailDraft(countryId, visaOfferingId)
   const { journey, steps: resolvedSteps } = useRetailStepPlan(countryId, visaOfferingId, draft)
 
@@ -75,14 +79,18 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
     hasRestoredStepRef.current = true
 
     if (draft.lastStepId) {
-      const restoredId =
-        draft.lastStepId === 'photo' ||
-        draft.lastStepId === 'confirm' ||
-        draft.lastStepId === 'traveller'
-          ? 'passport'
-          : draft.lastStepId
+      let restoredId = draft.lastStepId
+      if (restoredId === 'photo' || restoredId === 'confirm' || restoredId === 'traveller') {
+        restoredId = 'passport'
+      } else if (restoredId === 'requirements') {
+        restoredId = 'checklist'
+      }
       const restoredIndex = steps.findIndex((step) => step.id === restoredId)
-      if (restoredIndex !== -1) setCurrentStepIndex(restoredIndex)
+      if (restoredIndex !== -1) {
+        setCurrentStepIndex(restoredIndex)
+        // Mid-flow resume — skip the registered-agent intro.
+        if (restoredIndex > 0) setShowTrustIntro(false)
+      }
     }
   }, [steps, draft.lastStepId])
 
@@ -125,6 +133,8 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
     [currentPhaseIndex],
   )
 
+  const countryMaster = useMemo(() => getCountryMasterById(countryId), [countryId])
+
   if (draft.eligibilityStatus === 'ineligible') {
     const rule = journey?.eligibility[0]
     const selectedOption = rule?.options.find((option) => option.id === draft.eligibilityAnswerId)
@@ -136,8 +146,6 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
       />
     )
   }
-
-  const countryMaster = useMemo(() => getCountryMasterById(countryId), [countryId])
 
   function updateApplicant(id: string, patch: Partial<RetailApplicantParty>) {
     patchDraft((prev) => ({
@@ -165,8 +173,19 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
   function removeTraveller(id: string) {
     patchDraft((prev) => {
       if (prev.applicants.length <= 1) return {}
-      return { applicants: prev.applicants.filter((applicant) => applicant.id !== id) }
+      const applicants = prev.applicants.filter((applicant) => applicant.id !== id)
+      const sponsor =
+        prev.sponsor?.mode === 'traveller' && prev.sponsor.applicantId === id
+          ? undefined
+          : prev.sponsor
+      return { applicants, sponsor }
     })
+  }
+
+  function goToTravelProfile() {
+    const targetIndex = steps.findIndex((step) => step.id === 'travelProfile')
+    if (targetIndex === -1) return
+    goToStep(targetIndex, targetIndex > currentStepIndex ? 1 : -1)
   }
 
   function renderTravelProfileStep() {
@@ -189,8 +208,6 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         countryName={countryMaster?.name}
         applicants={draft.applicants}
         onUpdateApplicant={updateApplicant}
-        onAddTraveller={addTraveller}
-        onRemoveTraveller={removeTraveller}
         onBack={goBack}
         onContinue={goNext}
       />
@@ -226,6 +243,17 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         )
       case 'travelProfile':
         return renderTravelProfileStep()
+      case 'sponsor':
+        return (
+          <SponsorStep
+            applicants={draft.applicants}
+            sponsor={draft.sponsor}
+            onChange={(sponsor) => patchDraft({ sponsor })}
+            onGoToTravelProfile={goToTravelProfile}
+            onBack={goBack}
+            onContinue={goNext}
+          />
+        )
       case 'traveller':
       case 'passport':
       case 'photo':
@@ -250,10 +278,6 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
           />
         )
       }
-      case 'requirements':
-        return (
-          <RequirementsStep cards={journey?.requirementPreviewCards ?? []} onBack={goBack} onContinue={goNext} />
-        )
       case 'jurisdiction':
         return (
           <JurisdictionStep
@@ -269,12 +293,19 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
           />
         )
       case 'checklist':
+      case 'requirements':
         return (
           <ChecklistStep
             documents={journey?.documents ?? []}
+            applicants={draft.applicants}
             uploads={draft.documentUploads}
-            onUpload={(documentId, image) =>
-              patchDraft((prev) => ({ documentUploads: { ...prev.documentUploads, [documentId]: image } }))
+            onUpload={(documentId, image, applicantId) =>
+              patchDraft((prev) => ({
+                documentUploads: {
+                  ...prev.documentUploads,
+                  [`${applicantId}__${documentId}`]: image,
+                },
+              }))
             }
             onBack={goBack}
             onContinue={goNext}
@@ -345,6 +376,7 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
           <PaymentStep
             journey={journey}
             draft={draft}
+            onChange={(patch) => patchDraft(patch)}
             onBack={goBack}
             onPay={() => {
               patchDraft({ paymentComplete: true })
@@ -358,6 +390,17 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
       default:
         return null
     }
+  }
+
+  if (showTrustIntro && trustProfile) {
+    return (
+      <ApplyIntroTransition
+        profile={trustProfile}
+        flagEmoji={countryMaster?.flag}
+        countryCode={trustProfile.countryCode}
+        onComplete={() => setShowTrustIntro(false)}
+      />
+    )
   }
 
   return (

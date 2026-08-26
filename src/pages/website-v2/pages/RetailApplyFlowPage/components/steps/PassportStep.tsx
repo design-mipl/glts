@@ -1,22 +1,20 @@
 import { useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
-import { Check, Plus, Trash2, Upload } from 'lucide-react'
+import { Check, Upload } from 'lucide-react'
 import { BORDER_RADIUS } from '@/design-system/tokens'
-import { Button, IconButton } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { StepShell } from '../StepShell'
 import { PhotoCaptureFlow } from '../capture/PhotoCaptureFlow'
 import { PassportCaptureFlow } from '../capture/PassportCaptureFlow'
+import { displayNameUpper, initialsFromName } from '../../config/travelProfileQuestions'
 import type { RetailApplicantParty, RetailCapturedImage } from '../../types'
 
-const AVATAR_TONES = ['#E11D48', '#0D9488', '#B45309', '#4F46E5', '#0891B2'] as const
+const AVATAR_TONES = ['#D4A0A0', '#0D9488', '#B45309', '#4F46E5', '#0891B2'] as const
 
 interface PassportStepProps {
   countryName?: string
   applicants: RetailApplicantParty[]
   onUpdateApplicant: (id: string, patch: Partial<RetailApplicantParty>) => void
-  onAddTraveller: () => void
-  onRemoveTraveller: (id: string) => void
   onBack: () => void
   onContinue: () => void
 }
@@ -25,20 +23,16 @@ type ActiveCapture =
   | { kind: 'photo'; applicantId: string }
   | { kind: 'passport'; applicantId: string }
 
-function initialsFor(applicant: RetailApplicantParty, index: number): string {
+function cardTitle(applicant: RetailApplicantParty, index: number): string {
   const name = applicant.details.fullName.trim()
-  if (name) {
-    const parts = name.split(/\s+/).filter(Boolean)
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
-    return name.slice(0, 2).toUpperCase()
-  }
-  return index === 0 ? 'T1' : `T${index + 1}`
+  if (name) return displayNameUpper(name)
+  return index === 0 ? 'TRAVELLER 1' : displayNameUpper(applicant.label)
 }
 
-function displayName(applicant: RetailApplicantParty, index: number): string {
+function cardInitials(applicant: RetailApplicantParty, index: number): string {
   const name = applicant.details.fullName.trim()
-  if (name) return name
-  return index === 0 ? 'Traveller 1' : applicant.label
+  if (name) return initialsFromName(name)
+  return index === 0 ? 'T1' : `T${index + 1}`
 }
 
 function docsUploadedCount(applicant: RetailApplicantParty): { done: number; total: number } {
@@ -145,8 +139,6 @@ export function PassportStep({
   countryName,
   applicants,
   onUpdateApplicant,
-  onAddTraveller,
-  onRemoveTraveller,
   onBack,
   onContinue,
 }: PassportStepProps) {
@@ -172,28 +164,19 @@ export function PassportStep({
         continueLabel="Continue"
         continueDisabled={!allReady}
         contentMaxWidth={980}
-        footerEndAction={
-          <Button
-            label="Add travelers"
-            variant="soft"
-            color="primary"
-            startIcon={<Plus size={16} />}
-            onClick={onAddTraveller}
-          />
-        }
       >
         <Box
           sx={{
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              sm: applicants.length === 1 ? 'minmax(0, 220px)' : 'repeat(2, minmax(0, 220px))',
+              sm: applicants.length === 1 ? 'minmax(0, 210px)' : 'repeat(2, minmax(0, 210px))',
               md:
                 applicants.length === 1
-                  ? 'minmax(0, 220px)'
+                  ? 'minmax(0, 210px)'
                   : applicants.length === 2
-                    ? 'repeat(2, minmax(0, 220px))'
-                    : 'repeat(3, minmax(0, 220px))',
+                    ? 'repeat(2, minmax(0, 210px))'
+                    : 'repeat(3, minmax(0, 210px))',
             },
             gap: 2,
             justifyContent: 'center',
@@ -208,69 +191,59 @@ export function PassportStep({
                 key={applicant.id}
                 sx={{
                   border: `1px solid ${colors.border}`,
-                  borderRadius: BORDER_RADIUS.xl,
+                  borderRadius: 4,
                   bgcolor: colors.white,
-                  p: 2,
-                  maxWidth: 220,
+                  p: 1.75,
+                  maxWidth: 210,
                   width: '100%',
                   mx: 'auto',
-                  boxShadow: '0 4px 14px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
+                  minHeight: 210,
+                  boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
                   position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
                 }}
               >
-                <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ mb: 1 }}>
-                  <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0 }}>
-                    <Box
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.25, minWidth: 0 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      bgcolor: tone,
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {cardInitials(applicant, index)}
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
                       sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: BORDER_RADIUS.xl,
-                        bgcolor: tone,
-                        color: '#fff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 12,
-                        fontWeight: 800,
-                        flexShrink: 0,
+                        fontWeight: 700,
+                        fontSize: 13,
+                        color: colors.navy,
+                        letterSpacing: '0.04em',
+                        lineHeight: 1.3,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      {initialsFor(applicant, index)}
-                    </Box>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography
-                        sx={{
-                          fontWeight: 800,
-                          fontSize: 16,
-                          color: colors.navy,
-                          lineHeight: 1.35,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {displayName(applicant, index)}
-                      </Typography>
-                      <Typography sx={{ fontSize: 12, color: colors.textMuted, mt: 0.25 }}>
-                        {done}/{total} docs uploaded
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  {index > 0 ? (
-                    <IconButton
-                      size="sm"
-                      variant="soft"
-                      color="error"
-                      tooltip={`Remove ${displayName(applicant, index)}`}
-                      icon={<Trash2 size={14} />}
-                      onClick={() => onRemoveTraveller(applicant.id)}
-                    />
-                  ) : (
-                    <Box sx={{ width: 34 }} />
-                  )}
+                      {cardTitle(applicant, index)}
+                    </Typography>
+                    <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.25 }}>
+                      {done}/{total} docs uploaded
+                    </Typography>
+                  </Box>
                 </Stack>
 
-                <Stack spacing={1.25} sx={{ mt: 5.5 }}>
+                <Stack spacing={1.25} sx={{ mt: 'auto', pt: 1.25 }}>
                   <DocActionButton
                     label="Photo"
                     uploaded={Boolean(applicant.photo)}

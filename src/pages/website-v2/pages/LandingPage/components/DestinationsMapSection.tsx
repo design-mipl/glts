@@ -622,7 +622,7 @@ export function DestinationsMapSection() {
 
   const handleMarkerClick = (countryId: string) => {
     if (dragDistanceRef.current > 6) return
-    navigate(`/v2/countries/${countryId}`)
+    navigate(`/countries/${countryId}`)
   }
 
   return (
@@ -924,7 +924,7 @@ export function DestinationsMapSection() {
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: { xs: 2, md: 3 } }}>
           <Button
-            onClick={() => navigate('/v2/countries')}
+            onClick={() => navigate('/countries')}
             endIcon={<ArrowRight size={16} />}
             sx={{
               textTransform: 'none',

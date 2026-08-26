@@ -36,7 +36,7 @@ export const serviceCategories: {
       'Real-time application tracking',
     ],
     ctaLabel: 'View Retail Services',
-    href: '/retail-visas',
+    href: '/v1/retail-visas',
     image: servicesCategoryImages.retail,
   },
   {
@@ -52,7 +52,7 @@ export const serviceCategories: {
       'Priority processing options',
     ],
     ctaLabel: 'View Corporate Services',
-    href: '/corporate',
+    href: '/v1/corporate',
     image: servicesCategoryImages.corporate,
   },
   {
@@ -68,7 +68,7 @@ export const serviceCategories: {
       'Port-of-call coordination',
     ],
     ctaLabel: 'View Marine Services',
-    href: '/marine-crew',
+    href: '/v1/marine-crew',
     image: servicesCategoryImages.marine,
   },
 ]
@@ -80,7 +80,7 @@ export const servicesAdditional = {
     description:
       'Itineraries, transit letters, and embassy-ready paperwork that keep travelers moving without documentation gaps.',
     ctaLabel: 'Learn More',
-    href: '/track',
+    href: '/v1/track',
     image: servicesAdditionalImages.travelTransit,
   },
   cards: [
@@ -89,7 +89,7 @@ export const servicesAdditional = {
       title: 'Compliance Record Management',
       description: 'Centralized visa records and audit-ready documentation trails.',
       ctaLabel: 'Learn More',
-      href: '/track',
+      href: '/v1/track',
       image: servicesAdditionalImages.compliance,
     },
     {
@@ -97,7 +97,7 @@ export const servicesAdditional = {
       title: 'Travel Insurance Support',
       description: 'Travel protection assistance tailored to trip type and duration.',
       ctaLabel: 'Learn More',
-      href: '/track',
+      href: '/v1/track',
       image: servicesAdditionalImages.insurance,
     },
     {
@@ -105,7 +105,7 @@ export const servicesAdditional = {
       title: 'Forex Support',
       description: 'Foreign exchange assistance for travel funds and assignments.',
       ctaLabel: 'Learn More',
-      href: '/track',
+      href: '/v1/track',
       image: servicesAdditionalImages.forex,
     },
   ],
@@ -115,7 +115,7 @@ export const servicesFinalCta = {
   heading: 'Need Help Choosing the Right Service?',
   description:
     'Our visa specialists will help you select the right solution based on your travel needs.',
-  primaryButton: { label: 'Contact Us', href: '/track' },
-  secondaryButton: { label: 'Request Consultation', href: '/track' },
+  primaryButton: { label: 'Contact Us', href: '/v1/track' },
+  secondaryButton: { label: 'Request Consultation', href: '/v1/track' },
   image: servicesFinalCtaImage,
 } as const

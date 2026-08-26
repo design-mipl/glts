@@ -3,11 +3,11 @@ import { Navigate, useSearchParams } from 'react-router-dom'
 import { getCountryMasterById, getVisaOfferings } from '@/shared/services/countryMasterService'
 import { RetailApplyFlowShell } from './RetailApplyFlowShell'
 
-const COUNTRIES_HREF = '/v2/countries'
+const COUNTRIES_HREF = '/countries'
 
 /**
  * Retail apply starts only after a country is chosen on the country page.
- * Cold `/v2/apply/new` (no country) redirects to destinations.
+ * Cold `/apply/new` (no country) redirects to destinations.
  */
 export function RetailApplyFlowPage() {
   const [searchParams] = useSearchParams()

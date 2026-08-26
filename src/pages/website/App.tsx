@@ -14,26 +14,30 @@ import {
   WebsiteApplicationFlowPage,
 } from './websiteRoutePages'
 
+/**
+ * Legacy public website (Site A). Mounted at `/v1/*`.
+ * In-site links must use `/v1/...` (see `siteBase.ts` / `w1()`).
+ */
 export function PublicWebsiteApp() {
   return (
     <LazyRouteBoundary label="Loading page…">
       <Routes>
-        <Route path="/apply/new" element={<WebsiteApplicationFlowPage />} />
+        <Route path="apply/new" element={<WebsiteApplicationFlowPage />} />
         <Route
-          path="/*"
+          path="*"
           element={
             <PublicLayout>
               <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/countries" element={<CountryListingPage />} />
-                <Route path="/countries/:countryId" element={<CountryDetailPage />} />
-                <Route path="/retail-visas" element={<RetailVisaServicesPage />} />
-                <Route path="/marine-crew" element={<MarineCrewVisaPage />} />
-                <Route path="/corporate" element={<CorporateBusinessVisaPage />} />
-                <Route path="/services" element={<ServicesPage />} />
-                <Route path="/about" element={<AboutPage />} />
+                <Route index element={<LandingPage />} />
+                <Route path="countries" element={<CountryListingPage />} />
+                <Route path="countries/:countryId" element={<CountryDetailPage />} />
+                <Route path="retail-visas" element={<RetailVisaServicesPage />} />
+                <Route path="marine-crew" element={<MarineCrewVisaPage />} />
+                <Route path="corporate" element={<CorporateBusinessVisaPage />} />
+                <Route path="services" element={<ServicesPage />} />
+                <Route path="about" element={<AboutPage />} />
                 <Route
-                  path="/track"
+                  path="track"
                   element={
                     <ComingSoonPage
                       title="Track Application"
@@ -41,7 +45,7 @@ export function PublicWebsiteApp() {
                     />
                   }
                 />
-                <Route path="/pricing" element={<ComingSoonPage title="Pricing" />} />
+                <Route path="pricing" element={<ComingSoonPage title="Pricing" />} />
               </Routes>
             </PublicLayout>
           }

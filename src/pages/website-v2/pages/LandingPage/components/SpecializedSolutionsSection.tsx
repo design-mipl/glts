@@ -18,7 +18,7 @@ const solutions = [
     description:
       'Apply for tourist, business, visit, student and other visa categories with expert guidance and digital tracking.',
     ctaLabel: 'Explore Retail',
-    href: '/v2',
+    href: '/',
     image: travelSolutionImages.retail,
   },
   {
@@ -28,7 +28,7 @@ const solutions = [
     summary: 'Specialist visa support for seafarers and crew',
     description: 'Dedicated visa expertise for shipping companies, seafarers and marine professionals.',
     ctaLabel: 'Explore Marine',
-    href: '/v2/marine-crew',
+    href: '/marine-crew',
     image: travelSolutionImages.marine,
   },
   {
@@ -39,7 +39,7 @@ const solutions = [
     description:
       'Simplify employee and business visa applications across destinations with dedicated support and centralized management.',
     ctaLabel: 'Explore Corporate',
-    href: '/v2/corporate',
+    href: '/corporate',
     image: travelSolutionImages.corporate,
   },
   {
@@ -49,7 +49,7 @@ const solutions = [
     summary: 'Your visa processing partner',
     description: 'Reliable visa processing support for travel agents, DMCs and other travel partners.',
     ctaLabel: 'Partner With GreenLight',
-    href: '/v2#final-cta',
+    href: '/#final-cta',
     image: travelSolutionImages.corporate,
   },
 ] as const

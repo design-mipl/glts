@@ -86,7 +86,7 @@ export function ExploreSection() {
           <Button
             variant="outlined"
             endIcon={<ArrowRight size={16} />}
-            onClick={() => navigate('/v2/countries')}
+            onClick={() => navigate('/countries')}
             sx={{
               textTransform: 'none',
               borderRadius: '10px',

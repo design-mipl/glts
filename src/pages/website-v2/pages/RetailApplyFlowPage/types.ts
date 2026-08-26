@@ -1,12 +1,13 @@
 import type { OriginalDocumentCollectionMethod } from '@/shared/types/originalDocumentCollection'
 import type { ExtractedField } from '@/pages/customer/features/applications/data/applicationFlowData'
 
-export type RetailPhaseId = 'purpose' | 'traveller' | 'documents' | 'extras' | 'pay'
+export type RetailPhaseId = 'purpose' | 'traveller' | 'sponsor' | 'documents' | 'extras' | 'pay'
 
 export type RetailStepId =
   | 'visa'
   | 'traveller'
   | 'travelProfile'
+  | 'sponsor'
   | 'eligibility'
   | 'photo'
   | 'passport'
@@ -24,6 +25,12 @@ export type RetailStepId =
   | 'review'
   | 'payment'
   | 'success'
+
+/** Who funds the trip — chosen after travel profiles are built. */
+export type RetailSponsorSelection =
+  | { mode: 'traveller'; applicantId: string }
+  | { mode: 'self_paying' }
+  | { mode: 'someone_else'; name: string }
 
 export interface RetailStepDefinition {
   id: RetailStepId
@@ -83,6 +90,10 @@ export function createRetailApplicantParty(
 
 export type ExtraServiceChoice = 'self_provided' | 'glts_arranged' | 'skip'
 
+export type RetailProcessingTier = 'standard' | 'priority' | 'concierge'
+
+export type RetailPaymentMethod = 'upi' | 'card' | 'netbanking'
+
 export interface RetailExtraSelection {
   choice: ExtraServiceChoice
   serviceId?: string
@@ -103,6 +114,8 @@ export interface RetailFlowDraft {
   applicants: RetailApplicantParty[]
   eligibilityAnswerId?: string
   eligibilityStatus?: 'eligible' | 'ineligible'
+  /** Trip sponsor — traveller, everyone self-paying, or an external person. */
+  sponsor?: RetailSponsorSelection
   /** @deprecated Prefer `applicants[0].photo` */
   photo?: RetailCapturedImage
   /** @deprecated Prefer `applicants[0].passport` */
@@ -116,6 +129,8 @@ export interface RetailFlowDraft {
   collectionDetails: Record<string, string>
   insurance: RetailExtraSelection
   flightTicket: RetailExtraSelection
+  processingTier?: RetailProcessingTier
+  paymentMethod?: RetailPaymentMethod
   paymentComplete: boolean
 }
 

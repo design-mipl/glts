@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { LazyRouteBoundary, lazyNamed } from '@/shared/routing/lazyRoute'
 
 const AuthApp = lazyNamed(() => import('@/pages/auth/AuthApp'), 'AuthApp')
@@ -7,6 +7,14 @@ const B2BCustomerApp = lazyNamed(() => import('@/pages/customer/BusinessApp'), '
 const AdminPortalApp = lazyNamed(() => import('@/pages/admin/App'), 'AdminPortalApp')
 const PublicWebsiteApp = lazyNamed(() => import('@/pages/website/App'), 'PublicWebsiteApp')
 const PublicWebsiteV2App = lazyNamed(() => import('@/pages/website-v2/App'), 'PublicWebsiteV2App')
+
+/** Preserve deep links from the former `/v2/*` mount. */
+function RedirectV2ToMain() {
+  const location = useLocation()
+  const rest = location.pathname.replace(/^\/v2\/?/, '/') || '/'
+  const normalized = rest === '//' ? '/' : rest
+  return <Navigate to={`${normalized}${location.search}${location.hash}`} replace />
+}
 
 export function PageRouter() {
   return (
@@ -33,14 +41,18 @@ export function PageRouter() {
           <Route path="*" element={<AdminPortalApp />} />
         </Route>
 
-        {/* Public Website v2 — alternate marketing site (full page set under /v2) */}
-        <Route path="/v2">
-          <Route index element={<PublicWebsiteV2App />} />
-          <Route path="*" element={<PublicWebsiteV2App />} />
+        {/* Legacy public website — Site A under /v1 */}
+        <Route path="/v1">
+          <Route index element={<PublicWebsiteApp />} />
+          <Route path="*" element={<PublicWebsiteApp />} />
         </Route>
 
-        {/* Public Website — everything else */}
-        <Route path="/*" element={<PublicWebsiteApp />} />
+        {/* Former website-v2 prefix → main site */}
+        <Route path="/v2" element={<RedirectV2ToMain />} />
+        <Route path="/v2/*" element={<RedirectV2ToMain />} />
+
+        {/* Public Website (website-v2) — main marketing site */}
+        <Route path="/*" element={<PublicWebsiteV2App />} />
       </Routes>
     </LazyRouteBoundary>
   )

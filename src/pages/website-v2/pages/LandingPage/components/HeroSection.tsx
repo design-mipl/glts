@@ -104,10 +104,10 @@ function HeroSearchBar() {
       const params = new URLSearchParams()
       if (visaType) params.set('visaType', visaType)
       const query = params.toString()
-      navigate(`/v2/countries/${destination}${query ? `?${query}` : ''}`)
+      navigate(`/countries/${destination}${query ? `?${query}` : ''}`)
       return
     }
-    navigate(visaType ? `/v2/countries?visaType=${encodeURIComponent(visaType)}` : '/v2/countries')
+    navigate(visaType ? `/countries?visaType=${encodeURIComponent(visaType)}` : '/countries')
   }
 
   return (
@@ -421,7 +421,7 @@ export function HeroSection() {
               <Button
                 variant="contained"
                 endIcon={<ArrowRight size={18} strokeWidth={2.25} />}
-                onClick={() => navigate('/v2/countries')}
+                onClick={() => navigate('/countries')}
                 sx={{
                   ...getMarketingPrimaryButtonSx(colors),
                   borderRadius: '12px',
@@ -435,7 +435,7 @@ export function HeroSection() {
               </Button>
               <Button
                 variant="outlined"
-                onClick={() => navigate('/v2/countries')}
+                onClick={() => navigate('/countries')}
                 sx={{
                   borderRadius: '12px',
                   px: 3,

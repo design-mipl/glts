@@ -21,7 +21,7 @@ export const howItWorksSteps: HowItWorksStep[] = [
       'Select your destination and visa type to understand eligibility, documents, fees and estimated processing timelines.',
     icon: ClipboardCheck,
     image: {
-      src: '/images/how-it-works/step-01-check-requirements.png',
+      src: '/v1/images/how-it-works/step-01-check-requirements.png',
       alt: 'Visa consultant reviewing documents with a traveler',
       // Keep the consultation (both people + document desk) in the landscape crop.
       objectPosition: 'center 40%',
@@ -35,7 +35,7 @@ export const howItWorksSteps: HowItWorksStep[] = [
     description: 'Complete your application and securely upload your supporting documents.',
     icon: Laptop,
     image: {
-      src: '/images/how-it-works/step-02-apply-online.png',
+      src: '/v1/images/how-it-works/step-02-apply-online.png',
       alt: 'Traveler filling an online visa application on a laptop with passport beside it',
       objectPosition: 'center 48%',
     },
@@ -49,7 +49,7 @@ export const howItWorksSteps: HowItWorksStep[] = [
       'Our visa specialists review your documents and application before submission, helping identify issues early.',
     icon: FileSearch,
     image: {
-      src: '/images/how-it-works/step-03-document-verification.png',
+      src: '/v1/images/how-it-works/step-03-document-verification.png',
       alt: 'Visa officer reviewing passport and application documents',
       objectPosition: 'center 28%',
     },
@@ -63,7 +63,7 @@ export const howItWorksSteps: HowItWorksStep[] = [
       'Your application is reviewed & submitted as per country requirements - online/offline.',
     icon: Send,
     image: {
-      src: '/images/how-it-works/step-03-document-verification.png',
+      src: '/v1/images/how-it-works/step-03-document-verification.png',
       alt: 'Visa officer reviewing passport and application documents',
       objectPosition: 'center 28%',
     },
@@ -76,7 +76,7 @@ export const howItWorksSteps: HowItWorksStep[] = [
     description: 'Follow updates through the process and receive your visa once the decision is complete.',
     icon: Plane,
     image: {
-      src: '/images/how-it-works/step-04-receive-visa.png',
+      src: '/v1/images/how-it-works/step-04-receive-visa.png',
       alt: 'Happy traveler holding passport at the airport',
       objectPosition: 'center 30%',
     },

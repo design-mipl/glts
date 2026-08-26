@@ -7,6 +7,6 @@ interface CountryCardProps {
 }
 
 export function CountryCard({ country, applicationContextQuery = '' }: CountryCardProps) {
-  const href = applicationContextQuery ? `/countries/${country.id}${applicationContextQuery}` : undefined
+  const href = applicationContextQuery ? `/v1/countries/${country.id}${applicationContextQuery}` : undefined
   return <DestinationListingCard country={country} href={href} />
 }
