@@ -138,19 +138,6 @@ export const OperationsDashboardPage = lazyNamed(
   'OperationsDashboardPage',
 )
 
-export const AccountsDashboardPage = lazyNamed(
-  () => import('../dashboard'),
-  'AccountsDashboardPage',
-)
-export const DocumentationDashboardPage = lazyNamed(
-  () => import('../dashboard'),
-  'DocumentationDashboardPage',
-)
-export const OperationsConsultantDashboardPage = lazyNamed(
-  () => import('../dashboard'),
-  'OperationsConsultantDashboardPage',
-)
-
 export const SuperAdminDashboardNextPage = lazyNamed(
   () => import('../dashboard-next'),
   'SuperAdminDashboardNextPage',

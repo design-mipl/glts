@@ -483,7 +483,7 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
       )}
 
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, md: 7 }}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Card sx={{ p: 2, borderRadius: '12px', border: `1px solid ${colors.border}`, height: '100%' }}>
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
               <FolderArchive size={18} color={colors.greenBright} />
@@ -507,27 +507,34 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
             />
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, md: 5 }}>
+        <Grid size={{ xs: 12, md: 7 }}>
           <Card sx={{ p: 2, borderRadius: '12px', border: `1px solid ${colors.border}`, height: '100%' }}>
             <Typography sx={{ fontWeight: 800, fontSize: 14, color: colors.navy, mb: 1 }}>
               Common Document Checklist
             </Typography>
 
             <Box sx={{ mb: 1.5 }}>
-              <Stack spacing={0.75}>
-                {globalChecklistDocs.length === 0 ? (
-                  <Typography sx={{ fontSize: 12, color: colors.textMuted }}>
-                    {canBuildChecklist
-                      ? 'No common documents are mapped for this country and visa.'
-                      : 'Select country and visa to load global documents.'}
-                  </Typography>
-                ) : (
-                  globalChecklistDocs.map(doc => (
+              {globalChecklistDocs.length === 0 ? (
+                <Typography sx={{ fontSize: 12, color: colors.textMuted }}>
+                  {canBuildChecklist
+                    ? 'No common documents are mapped for this country and visa.'
+                    : 'Select country and visa to load global documents.'}
+                </Typography>
+              ) : (
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    gap: 0.75,
+                  }}
+                >
+                  {globalChecklistDocs.map(doc => (
                     <Stack
                       key={`global-${doc.documentId}`}
                       spacing={1}
                       sx={{
                         p: 1.25,
+                        height: '100%',
                         borderRadius: '10px',
                         border: `1px solid ${colors.border}`,
                         bgcolor: colors.surfaceAlt,
@@ -616,9 +623,9 @@ export function BulkApplicationUploadPage({ state, onUpdate, onContinue }: BulkA
                         </Button>
                       </Stack>
                     </Stack>
-                  ))
-                )}
-              </Stack>
+                  ))}
+                </Box>
+              )}
             </Box>
 
           </Card>

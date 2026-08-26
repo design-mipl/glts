@@ -101,9 +101,10 @@ function HeroSearchBar() {
 
   const handleSearch = () => {
     if (destination) {
-      const params = new URLSearchParams({ country: destination })
+      const params = new URLSearchParams()
       if (visaType) params.set('visaType', visaType)
-      navigate(`/v2/apply/new?${params.toString()}`)
+      const query = params.toString()
+      navigate(`/v2/countries/${destination}${query ? `?${query}` : ''}`)
       return
     }
     navigate(visaType ? `/v2/countries?visaType=${encodeURIComponent(visaType)}` : '/v2/countries')

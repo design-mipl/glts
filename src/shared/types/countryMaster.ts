@@ -187,6 +187,8 @@ export interface CountryVisaJurisdiction {
 export interface CountryVisaType {
   id: string
   name: string
+  /** Optional summary of this visa type for admin and customer surfaces. */
+  description?: string
   visaCategory: string
   visaMode?: VisaMode
   processingTime: string

@@ -858,6 +858,94 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
     marineSegment('tw', 'Taiwan'),
     b2bEvisaSegment('tw', 'Taiwan', 4100, 4800),
   ],
+  '31': [
+    segment({
+      segment: 'retail',
+      enabled: true,
+      workflowId: 'workflow-online-only',
+      visaTypes: [
+        eVisaType({
+          id: 'vn-evisa-tourist',
+          name: 'e-Visa · Tourist',
+          visaCategory: 'Tourism',
+          pricing: 2400,
+          processingTime: '3–5 business days',
+          entryType: 'Single entry',
+          validity: '90 days',
+          stayDuration: '90 days',
+          purposeId: 'tourism',
+          purposeLabel: 'Tourism',
+          countryName: 'Vietnam',
+          gltsScopeLines: [
+            'Online e-Visa application completion and submission',
+            'Passport and photo validation against Vietnam e-Visa portal rules',
+            'Payment coordination for government e-Visa fee',
+            'Approval tracking and e-Visa delivery to applicant',
+          ],
+        }),
+        eVisaType({
+          id: 'vn-evisa-business',
+          name: 'e-Visa · Business',
+          visaCategory: 'Business',
+          pricing: 2900,
+          processingTime: '4–6 business days',
+          entryType: 'Single entry',
+          validity: '90 days',
+          stayDuration: 'As per invitation',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Business meeting',
+          countryName: 'Vietnam',
+        }),
+      ],
+    }),
+    corporateEvisaSegment('vn', 'Vietnam', 2900),
+    marineSegment('vn', 'Vietnam'),
+    b2bEvisaSegment('vn', 'Vietnam', 2400, 2900),
+  ],
+  '32': [
+    segment({
+      segment: 'retail',
+      enabled: true,
+      workflowId: 'workflow-online-only',
+      visaTypes: [
+        eVisaType({
+          id: 'tr-evisa-tourist',
+          name: 'e-Visa · Tourist',
+          visaCategory: 'Tourism',
+          pricing: 3100,
+          processingTime: '1–2 business days',
+          entryType: 'Multiple entry',
+          validity: '180 days',
+          stayDuration: '90 days',
+          purposeId: 'tourism',
+          purposeLabel: 'Tourism',
+          countryName: 'Turkey',
+          gltsScopeLines: [
+            'Eligibility check against Turkey e-Visa nationality and purpose rules',
+            'Online e-Visa application completion and submission',
+            'Passport and photo validation against Turkey e-Visa portal rules',
+            'Approval tracking and e-Visa delivery to applicant',
+          ],
+        }),
+        eVisaType({
+          id: 'tr-evisa-business',
+          name: 'e-Visa · Business',
+          visaCategory: 'Business',
+          pricing: 3600,
+          processingTime: '2–3 business days',
+          entryType: 'Multiple entry',
+          validity: '180 days',
+          stayDuration: 'As per invitation',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Business meeting',
+          countryName: 'Turkey',
+        }),
+      ],
+    }),
+    corporateEvisaSegment('tr', 'Turkey', 3600),
+    marineSegment('tr', 'Turkey'),
+    b2bEvisaSegment('tr', 'Turkey', 3100, 3600),
+  ],
 }
 
 const DEFAULT_SEGMENTS: CountrySegmentConfig[] = [
@@ -974,9 +1062,42 @@ function primaryRetailVisaType(segments: CountrySegmentConfig[]) {
   return retail?.visaTypes.find((visaType) => visaType.status === 'active')
 }
 
+/**
+ * Overlay catalog processing / validity / stay / price onto the primary
+ * retail visa type (first entry) so country-detail hero stats match the
+ * destination catalog for every country — default and custom segments alike
+ * (e.g. UK 15 days / 6 months, Japan 7 days / 90 days).
+ */
+function enrichPrimaryRetailFromCatalog(
+  segments: CountrySegmentConfig[],
+  c: ReturnType<typeof getAllCountries>[0],
+): CountrySegmentConfig[] {
+  const catalogStay =
+    c.visaTypes.find((visaType) => visaType.duration?.trim())?.duration?.trim() || c.validity
+
+  return segments.map((entry) => {
+    if (entry.segment !== 'retail') return entry
+    return {
+      ...entry,
+      visaTypes: entry.visaTypes.map((visaType, index) => {
+        if (index !== 0) return visaType
+        return {
+          ...visaType,
+          processingTime: c.processingTime,
+          validity: c.validity,
+          stayDuration: catalogStay,
+          pricing: visaType.pricing ?? c.price,
+        }
+      }),
+    }
+  })
+}
+
 function buildMasterFromCountry(c: ReturnType<typeof getAllCountries>[0]): CountryMaster {
   const segments = ensureAllSegments(
-    normalizeCountrySegments(SEGMENTS_BY_COUNTRY[c.id] ?? DEFAULT_SEGMENTS),
+    normalizeCountrySegments(
+      enrichPrimaryRetailFromCatalog(SEGMENTS_BY_COUNTRY[c.id] ?? DEFAULT_SEGMENTS, c),
+    ),
   )
   const now = new Date().toISOString()
   const visaOfferings = enrichVisaOfferingsApproxCost(syncVisaOfferingsFromSegments(segments), c.price)
@@ -1005,13 +1126,13 @@ function buildMasterFromCountry(c: ReturnType<typeof getAllCountries>[0]): Count
     internalNotes: '',
     cities: c.cities,
     heroPhotoId: c.heroPhotoId,
-    processingTime: retailVisa?.processingTime ?? c.processingTime,
+    processingTime: c.processingTime,
     price: retailVisa?.pricing ?? c.price,
     rating: c.rating,
     trending: c.trending,
     trendingPercent: c.trendingPercent,
     visaCategory: retailVisa?.visaCategory ?? c.visaCategory,
-    validity: retailVisa?.validity ?? c.validity,
+    validity: c.validity,
     fastMinutes: c.fastMinutes,
     passportIssueLocations: buildDefaultPassportIssueLocations(c.name),
     segments,

@@ -350,7 +350,7 @@ export function PublicHeader() {
           </Button>
           <Button
             component="a"
-            href="/v2/apply/new"
+            href="/v2/countries"
             fullWidth
             variant="contained"
             endIcon={<ArrowRight size={18} />}

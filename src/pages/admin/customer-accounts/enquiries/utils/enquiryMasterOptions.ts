@@ -10,6 +10,8 @@ function customerTypeToSegment(customerType: EnquiryCustomerType): BusinessSegme
       return 'corporate'
     case 'marine':
       return 'marine'
+    case 'b2b':
+      return 'b2bAgents'
     default:
       return undefined
   }

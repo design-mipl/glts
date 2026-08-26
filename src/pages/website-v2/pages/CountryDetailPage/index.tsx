@@ -1,15 +1,22 @@
-import { Box, Typography, Grid, Chip, Button, Breadcrumbs, Link, Card, Stack } from '@mui/material'
+import { Box, Typography, Grid, Chip, Card, Stack, Button } from '@mui/material'
 import { useLocation, useParams } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
-import { getCountryById, getCountryHeroImageUrl } from '@/shared/services/visaService'
+import { getCountryHeroImageUrl } from '@/shared/services/visaService'
+import {
+  countryMasterToPortalCountry,
+  getCountryMasterById,
+  getVisaOfferings,
+} from '@/shared/services/countryMasterService'
+import type { CountryVisaType } from '@/shared/types/countryMaster'
 import { PricingCard } from './components/PricingCard'
 import { TabsNavigation } from './components/TabsNavigation'
 import { RequirementsSection } from './components/RequirementsSection'
 import { ComingSoonPage } from '@/shared/components/ComingSoonPage'
 import { PublicContainer } from '../../components/PublicContainer'
-import { publicLayout, publicFonts, usePublicBrandColors, getMarketingPrimaryButtonSx } from '@/shared/theme/publicBrand'
-import { ChevronRight, Clock, MapPin } from 'lucide-react'
+import { publicFonts, usePublicBrandColors, getMarketingPrimaryButtonSx } from '@/shared/theme/publicBrand'
+import { BORDER_RADIUS } from '@/design-system/tokens'
+import { Clock, MapPin } from 'lucide-react'
 
 const timelineSteps = [
   { step: 1, title: 'Submit', desc: 'Documents reviewed in 4h', icon: '📄' },
@@ -36,11 +43,35 @@ function resolveVisaCategory(value: string | null): VisaCategoryValue {
     : 'tourist'
 }
 
+/** Match a retail visa type on country master to the selected category chip. */
+function resolveRetailVisaType(
+  visaTypes: CountryVisaType[],
+  category: VisaCategoryValue,
+): CountryVisaType | undefined {
+  const active = visaTypes.filter((visaType) => visaType.status === 'active')
+  if (active.length === 0) return undefined
+
+  const matched = active.find((visaType) => {
+    const haystack = [
+      visaType.visaCategory,
+      visaType.purposeLabel,
+      visaType.purposeId,
+      visaType.name,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+    return haystack.includes(category)
+  })
+
+  return matched ?? active[0]
+}
+
 export function CountryDetailPage() {
   const colors = usePublicBrandColors()
   const { countryId } = useParams<{ countryId: string }>()
   const { search } = useLocation()
-  const country = countryId ? getCountryById(countryId) : undefined
+  const master = countryId ? getCountryMasterById(countryId) : undefined
   const [activeTab, setActiveTab] = useState(0)
   const [heroImgError, setHeroImgError] = useState(false)
   const [selectedVisaCategory, setSelectedVisaCategory] = useState<VisaCategoryValue>(() =>
@@ -48,47 +79,94 @@ export function CountryDetailPage() {
   )
   const selectedVisaCategoryLabel =
     visaCategoryOptions.find(option => option.value === selectedVisaCategory)?.label ?? 'Tourist Visa'
+
+  const retailVisaTypes = useMemo(() => {
+    if (!master) return [] as CountryVisaType[]
+    const retail = master.segments.find((segment) => segment.segment === 'retail' && segment.enabled)
+    return retail?.visaTypes ?? []
+  }, [master])
+
+  const selectedVisaType = useMemo(
+    () => resolveRetailVisaType(retailVisaTypes, selectedVisaCategory),
+    [retailVisaTypes, selectedVisaCategory],
+  )
+
+  const country = useMemo(() => {
+    if (!master) return undefined
+    const portal = countryMasterToPortalCountry(master, { segment: 'retail' })
+    return {
+      ...portal,
+      processingTime: selectedVisaType?.processingTime || master.processingTime || portal.processingTime,
+      validity: selectedVisaType?.validity || master.validity || portal.validity,
+      price: selectedVisaType?.pricing ?? master.price ?? portal.price,
+      visaCategory: selectedVisaType?.visaCategory || master.visaCategory || portal.visaCategory,
+      visaTypes: selectedVisaType
+        ? [
+            {
+              id: selectedVisaType.id,
+              name: selectedVisaType.name,
+              duration: selectedVisaType.stayDuration,
+              entryType: selectedVisaType.entryType as 'Single' | 'Multiple' | 'Double',
+              validity: selectedVisaType.validity,
+              processingTime: selectedVisaType.processingTime,
+              price: selectedVisaType.pricing ?? master.price,
+            },
+          ]
+        : portal.visaTypes,
+    }
+  }, [master, selectedVisaType])
+
+  const heroStats = useMemo(
+    () => [
+      {
+        label: 'Processing Days',
+        value: selectedVisaType?.processingTime || master?.processingTime || 'TBD',
+      },
+      {
+        label: 'Stay',
+        value: selectedVisaType?.stayDuration || 'As per visa type',
+      },
+      {
+        label: 'Validity',
+        value: selectedVisaType?.validity || master?.validity || 'As per embassy',
+      },
+    ],
+    [master, selectedVisaType],
+  )
+
   const applyHref = useMemo(() => {
     const params = new URLSearchParams(search)
     params.delete('search')
     if (countryId) params.set('country', countryId)
     params.set('visaType', selectedVisaCategory)
-    return `/v2/apply/new?${params.toString()}`
-  }, [countryId, search, selectedVisaCategory])
 
-  if (!country) {
+    if (countryId && selectedVisaType) {
+      const offering =
+        getVisaOfferings(countryId, true, 'retail').find(
+          (entry) => entry.id === selectedVisaType.id || entry.visaTypeLabel === selectedVisaType.name,
+        ) ?? getVisaOfferings(countryId, true, 'retail')[0]
+      if (offering) params.set('visa', offering.id)
+    }
+
+    return `/v2/apply/new?${params.toString()}`
+  }, [countryId, search, selectedVisaCategory, selectedVisaType])
+
+  if (!master || !country) {
     return <ComingSoonPage title="Country not found" returnLink={{ text: 'Browse destinations', href: '/v2/countries' }} />
   }
 
   return (
     <Box>
-      {/* Breadcrumb */}
-      <Box sx={{ backgroundColor: colors.surface, borderBottom: `1px solid ${colors.border}`, py: 2 }}>
-        <PublicContainer>
-          <Breadcrumbs separator={<ChevronRight size={12} color="#9CA3AF" />}>
-            <Link href="/v2" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: colors.greenBright } }}>
-              Home
-            </Link>
-            <Link href="/v2/countries" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: colors.greenBright } }}>
-              Destinations
-            </Link>
-            <Link href="/v2/countries" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: colors.greenBright } }}>
-              Europe
-            </Link>
-            <Typography sx={{ fontSize: '13px', color: '#001F3F', fontWeight: 600 }}>
-              {country.name}
-            </Typography>
-          </Breadcrumbs>
-        </PublicContainer>
-      </Box>
-
       <Box
         sx={{
           position: 'relative',
           minHeight: { xs: 320, md: 400 },
           display: 'flex',
-          alignItems: 'flex-end',
+          alignItems: 'center',
           overflow: 'hidden',
+          mx: { xs: 2, sm: 3, md: 4, lg: 5 },
+          mt: { xs: 2, sm: 3, md: 4 },
+          borderRadius: BORDER_RADIUS.xl,
         }}
       >
         {heroImgError ? (
@@ -117,14 +195,13 @@ export function CountryDetailPage() {
           sx={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to top, rgba(0,31,63,0.85) 0%, rgba(0,31,63,0.4) 50%, transparent 100%)',
+            background: 'linear-gradient(to top, rgba(0,31,63,0.82) 0%, rgba(0,31,63,0.62) 45%, rgba(0,31,63,0.48) 100%)',
           }}
         />
         <PublicContainer variant="hero" sx={{ position: 'relative', py: { xs: 6, md: 8 }, width: '100%' }}>
-          <Grid container spacing={4} alignItems="flex-end">
-            <Grid size={{ xs: 12, md: 7 }}>
+          <Box sx={{ maxWidth: 720, mx: 'auto', textAlign: 'center' }}>
               {/* Trend badge */}
-              {country.trending && (
+              {master.trending && (
                 <Box
                   sx={{
                     display: 'inline-flex',
@@ -157,74 +234,24 @@ export function CountryDetailPage() {
                     fontFamily: publicFonts.heading,
                   }}
                 >
-                  {country.name} Visa for Indians
+                  {master.name} Visa for Indians
                 </Typography>
-                {country.fastMinutes && (
+                {master.fastMinutes && (
                   <Typography sx={{ color: colors.green, fontWeight: 700, fontSize: '18px' }}>
-                    in {country.fastMinutes} minutes
+                    in {master.fastMinutes} minutes
                   </Typography>
                 )}
-                {country.id === 'schengen' && (
+                {master.id === 'schengen' && (
                   <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', mt: 0.75 }}>
                     26 countries · 1 application · up to 90 days in any 180-day window
                   </Typography>
                 )}
               </Box>
 
-              {/* Meta chips */}
-              <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap', alignItems: 'center' }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    backgroundColor: 'rgba(255,255,255,0.1)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: '999px',
-                    px: 2,
-                    py: 0.75,
-                  }}
-                >
-                  {/* Greenlight Score */}
-                  <Box
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      backgroundColor: colors.greenBright,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 800,
-                      fontSize: '12px',
-                      color: '#fff',
-                    }}
-                  >
-                    {country.rating}
-                  </Box>
-                  <Typography sx={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>
-                    Greenlight Score
-                  </Typography>
-                </Box>
-
-                <Chip
-                  label={`⏱ ${country.processingTime}`}
-                  sx={{ backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', fontWeight: 600 }}
-                />
-                <Chip
-                  label={`${country.rating}% approval`}
-                  sx={{ backgroundColor: '#D1FAE5', color: '#065F46', fontWeight: 700 }}
-                />
-              </Box>
-
-              {/* Quick stats row */}
-              <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                {[
-                  { label: 'Processing Days', value: country.processingTime || 'TBD' },
-                  { label: 'Stay', value: country.visaTypes[0]?.duration || 'As per visa type' },
-                  { label: 'Validity', value: country.validity || 'As per embassy' },
-                ].map(({ label, value }) => (
-                  <Box key={label}>
+              {/* Visa facts from country master + selected retail type */}
+              <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap', mb: 3.5, justifyContent: 'center' }}>
+                {heroStats.map(({ label, value }) => (
+                  <Box key={label} sx={{ textAlign: 'center' }}>
                     <Typography sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, mb: 0.25 }}>
                       {label}
                     </Typography>
@@ -232,9 +259,23 @@ export function CountryDetailPage() {
                   </Box>
                 ))}
               </Box>
-            </Grid>
 
-          </Grid>
+              <Button
+                variant="contained"
+                size="large"
+                href={applyHref}
+                sx={{
+                  ...getMarketingPrimaryButtonSx(colors),
+                  px: { xs: 5, md: 6 },
+                  py: 1.5,
+                  minWidth: { xs: 220, md: 260 },
+                  fontSize: '15px',
+                  fontWeight: 700,
+                }}
+              >
+                Start Application
+              </Button>
+          </Box>
         </PublicContainer>
       </Box>
 
@@ -394,38 +435,6 @@ export function CountryDetailPage() {
               </Card>
             </Grid>
           </Grid>
-        </Box>
-
-        {/* CTA Banner */}
-        <Box
-          sx={{
-            mt: 6,
-            p: { xs: 3, md: 4 },
-            background: 'linear-gradient(135deg, #001F3F 0%, #003366 100%)',
-            borderRadius: publicLayout.cardRadius,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 3,
-          }}
-        >
-          <Box>
-            <Typography sx={{ fontWeight: 800, color: '#fff', fontSize: { xs: '20px', md: '24px' }, mb: 0.75 }}>
-              Ready to apply for {country.name}?
-            </Typography>
-            <Typography sx={{ color: 'rgba(255,255,255,0.65)', fontSize: '14px' }}>
-              Expert team · Full document review · Real-time tracking
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            size="large"
-            href={applyHref}
-            sx={{ ...getMarketingPrimaryButtonSx(colors), px: 5, py: 1.75 }}
-          >
-            Start Application
-          </Button>
         </Box>
           </Grid>
           <Grid size={{ xs: 12, lg: 4 }} sx={{ display: { xs: 'none', lg: 'block' } }}>

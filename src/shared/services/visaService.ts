@@ -417,6 +417,42 @@ const COUNTRIES: Country[] = [
     fastMinutes: 720,
     cities: 'Rome · Milan · Florence',
   }),
+  country({
+    id: '31',
+    name: 'Vietnam',
+    code: 'VN',
+    region: 'Asia',
+    processingTime: '3-5 days',
+    price: 2400,
+    rating: 91,
+    flags: '🇻🇳',
+    trending: true,
+    trendingPercent: 10,
+    visaCategory: 'e-Visa',
+    validity: '90 days',
+    documentsNeeded: ['Photo', 'Passport'],
+    heroPhotoId: 'photo-1528127269322-539801943592',
+    fastMinutes: 180,
+    cities: 'Hanoi · Ho Chi Minh City · Da Nang',
+  }),
+  country({
+    id: '32',
+    name: 'Turkey',
+    code: 'TR',
+    region: 'Europe',
+    processingTime: '1-2 days',
+    price: 3100,
+    rating: 90,
+    flags: '🇹🇷',
+    trending: true,
+    trendingPercent: 8,
+    visaCategory: 'e-Visa',
+    validity: '180 days',
+    documentsNeeded: ['Photo', 'Passport'],
+    heroPhotoId: 'photo-1524231757912-21f4fe3a7200',
+    fastMinutes: 120,
+    cities: 'Istanbul · Antalya · Cappadocia',
+  }),
 ]
 
 /** Portal application flow — visa options vary by destination */
@@ -498,6 +534,14 @@ const VISA_TYPES_BY_COUNTRY: Record<string, PortalVisaOption[]> = {
   '23': [
     visaOpt('ca-visitor', 'Visitor', 'Tourism & short business'),
     visaOpt('ca-transit', 'Transit', 'Airport connection'),
+  ],
+  '31': [
+    visaOpt('vn-tourist', 'e-Visa · Tourist', 'Single entry · 90 days'),
+    visaOpt('vn-business', 'e-Visa · Business', 'Meetings & site visits'),
+  ],
+  '32': [
+    visaOpt('tr-tourist', 'e-Visa · Tourist', 'Multiple entry · 180 days'),
+    visaOpt('tr-business', 'e-Visa · Business', 'Meetings & conferences'),
   ],
 }
 

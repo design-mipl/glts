@@ -23,6 +23,8 @@ const STORAGE_KEY = 'glts:finance-reconciliation-submissions'
 
 interface ReconciliationSubmission {
   referenceNumber?: string
+  /** Courier AWB entered on reconcile (overrides demo tracking). */
+  trackingNumber?: string
   status: ReconciliationStatus
   reconciledAt: string
   reconciledBy: string
@@ -242,7 +244,10 @@ function buildExpenseItem(
   const submission = submissions[itemId]
 
   const policyNumber = tab === 'insurance' ? demoPolicyNumber(expense.id) : ''
-  const trackingNumber = tab === 'courier' ? demoTrackingNumber(expense.id) : ''
+  const trackingNumber =
+    tab === 'courier'
+      ? submission?.trackingNumber?.trim() || demoTrackingNumber(expense.id)
+      : ''
   const referenceNumber = submission?.referenceNumber || ''
   const passengerNames = enrichment?.passengerNames ?? []
   const rawPaymentMode = expense.paymentMode ?? ''
@@ -605,7 +610,9 @@ function persistExpenseAmounts(
   input: { cost?: number; total?: number; vendorInvoiceNumber?: string },
 ): { ok: true } | { ok: false; error: string } {
   if (existing.sourceKind !== 'expense') return { ok: true }
-  if (existing.tab !== 'insurance' && existing.tab !== 'ticket') return { ok: true }
+  if (existing.tab !== 'insurance' && existing.tab !== 'ticket' && existing.tab !== 'courier') {
+    return { ok: true }
+  }
 
   const hasAmountUpdate =
     typeof input.cost === 'number' ||
@@ -616,7 +623,12 @@ function persistExpenseAmounts(
   const expense = applicationExpenseManagementService.getExpenseById(existing.sourceId)
   if (!expense) return { ok: false, error: 'Linked expense was not found.' }
 
-  const cost = typeof input.cost === 'number' ? Math.max(0, input.cost) : expense.costAmount
+  const cost =
+    existing.tab === 'courier'
+      ? expense.costAmount
+      : typeof input.cost === 'number'
+        ? Math.max(0, input.cost)
+        : expense.costAmount
   const total = typeof input.total === 'number' ? Math.max(0, input.total) : expense.amount
   const gstAmount = expense.gstIncluded && expense.amount > 0
     ? Math.round((expense.gstAmount * total) / expense.amount * 100) / 100
@@ -628,7 +640,10 @@ function persistExpenseAmounts(
     amount: total,
     gstAmount,
     netPayableAmount,
-    vendorInvoiceNumber: input.vendorInvoiceNumber ?? expense.vendorInvoiceNumber,
+    vendorInvoiceNumber:
+      existing.tab === 'courier'
+        ? expense.vendorInvoiceNumber
+        : (input.vendorInvoiceNumber ?? expense.vendorInvoiceNumber),
   })
 
   if (!updated) return { ok: false, error: 'Could not update expense amounts.' }
@@ -687,6 +702,12 @@ export const reconciliationService = {
       return { ok: false, error: 'Book entry number is required.' }
     }
 
+    const trackingNumber =
+      existing.tab === 'courier' ? (input.trackingNumber ?? '').trim() : undefined
+    if (existing.tab === 'courier' && !trackingNumber) {
+      return { ok: false, error: 'AWB number is required.' }
+    }
+
     const persist = persistExpenseAmounts(existing, {
       cost: input.cost,
       total: input.total,
@@ -701,6 +722,7 @@ export const reconciliationService = {
 
     store[input.id] = {
       referenceNumber: referenceNumber || undefined,
+      trackingNumber,
       status: 'submitted',
       reconciledAt,
       reconciledBy,

@@ -1,9 +1,9 @@
 import type { DocumentationDashboardData, DocumentationDashboardFilters } from '../types'
 import {
   DOCUMENTATION_DASHBOARD_MOCK,
+  MOCK_DOCUMENTATION_EXECUTIVE_NAME,
   applyDocumentationDashboardFilters,
 } from '../data/documentationDashboardMock'
-import { MOCK_DOCUMENTATION_EXECUTIVE_NAME } from '@/pages/admin/dashboard/documentation/data/documentationDashboardMock'
 
 const LOAD_DELAY_MS = 300
 

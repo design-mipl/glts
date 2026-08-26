@@ -55,6 +55,7 @@ export function ReconciliationDetailDrawer({
   const [costAmount, setCostAmount] = useState('')
   const [totalAmount, setTotalAmount] = useState('')
   const [invoiceNumber, setInvoiceNumber] = useState('')
+  const [trackingNumber, setTrackingNumber] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
   const [rejecting, setRejecting] = useState(false)
@@ -74,6 +75,7 @@ export function ReconciliationDetailDrawer({
       setCostAmount('')
       setTotalAmount('')
       setInvoiceNumber('')
+      setTrackingNumber('')
       setRejectOpen(false)
       return
     }
@@ -81,6 +83,7 @@ export function ReconciliationDetailDrawer({
     setCostAmount(item.cost > 0 ? String(item.cost) : '')
     setTotalAmount(item.total > 0 ? String(item.total) : '')
     setInvoiceNumber(item.vendorInvoiceNumber || '')
+    setTrackingNumber(item.trackingNumber || '')
     setRejectOpen(false)
   }, [item])
 
@@ -107,6 +110,7 @@ export function ReconciliationDetailDrawer({
       cost: parseAmount(costAmount),
       total: parseAmount(totalAmount),
       vendorInvoiceNumber: invoiceNumber.trim(),
+      trackingNumber: trackingNumber.trim(),
     })
     setSubmitting(false)
 
@@ -121,7 +125,10 @@ export function ReconciliationDetailDrawer({
 
     showToast({
       title: 'Reconciliation submitted',
-      description: `${referenceLabel} saved for ${item.claimNumber || item.refNo}.`,
+      description:
+        item.tab === 'courier'
+          ? `AWB and amount saved for ${item.claimNumber || item.refNo}.`
+          : `${referenceLabel} saved for ${item.claimNumber || item.refNo}.`,
       variant: 'success',
     })
     onSubmitted?.()
@@ -178,7 +185,12 @@ export function ReconciliationDetailDrawer({
                   label="Submit"
                   variant="contained"
                   onClick={handleSubmit}
-                  disabled={submitting || rejecting || (requiresBookEntry && !referenceNumber.trim())}
+                  disabled={
+                    submitting ||
+                    rejecting ||
+                    (requiresBookEntry && !referenceNumber.trim()) ||
+                    (item.tab === 'courier' && !trackingNumber.trim())
+                  }
                 />
               </>
             ) : null}
@@ -314,16 +326,6 @@ export function ReconciliationDetailDrawer({
                   </Grid>
                 </>
               ) : null}
-              {item.tab === 'courier' ? (
-                <>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Field label="AWB Number" value={item.trackingNumber} />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Field label="Amount" value={formatReconciliationMoney(item.total)} />
-                  </Grid>
-                </>
-              ) : null}
               {(item.tab === 'ticket' || item.tab === 'courier') &&
               (item.locationFrom || item.locationTo) ? (
                 <Grid size={{ xs: 12 }}>
@@ -354,6 +356,35 @@ export function ReconciliationDetailDrawer({
               </Grid>
             </Grid>
           )}
+
+          {item.tab === 'courier' && (isPending || isSubmitted) ? (
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="AWB Number" required={isPending}>
+                  <Input
+                    value={trackingNumber}
+                    onChange={setTrackingNumber}
+                    placeholder="Enter AWB number"
+                    size="sm"
+                    disabled={!isPending}
+                    fullWidth
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Amount" helperText="Courier charge in INR">
+                  <Input
+                    value={totalAmount}
+                    onChange={setTotalAmount}
+                    placeholder="Enter amount in INR"
+                    size="sm"
+                    disabled={!isPending}
+                    fullWidth
+                  />
+                </FormField>
+              </Grid>
+            </Grid>
+          ) : null}
 
           {(isPending || isSubmitted) && requiresBookEntry ? (
             <FormField label={referenceLabel} required={isPending}>

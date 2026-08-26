@@ -29,7 +29,7 @@ export function PricingCard({ country, selectedVisaCategoryLabel, applyHref }: P
     <Card
       sx={{
         p: 4,
-        border: `2px solid ${colors.greenBright}`,
+        border: `1px solid ${colors.greenBright}`,
         borderRadius: publicLayout.cardRadius,
         boxShadow: publicShadows.float,
         bgcolor: '#fff',
