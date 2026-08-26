@@ -5,7 +5,7 @@ import {
 import { WebsiteApplicationFlowLayout } from '../../components/WebsiteApplicationFlowLayout'
 import { RetailApplyFlowPage } from '../RetailApplyFlowPage'
 
-const WEBSITE_APPLY_LISTING_PATH = '/v2/countries'
+const WEBSITE_APPLY_LISTING_PATH = '/countries'
 
 export function WebsiteApplicationFlowPage() {
   return (

@@ -2,6 +2,7 @@ import { Box } from '@mui/material'
 import {
   CreditCard,
   FileText,
+  HandCoins,
   Plane,
   Sparkles,
   UserRound,
@@ -21,12 +22,13 @@ interface PhaseNavProps {
 const PHASE_ICON: Record<RetailPhaseId, LucideIcon> = {
   purpose: Plane,
   traveller: UserRound,
+  sponsor: HandCoins,
   documents: FileText,
   extras: Sparkles,
   pay: CreditCard,
 }
 
-/** Primary journey chrome — Purpose | Travel profile | Documents | Extras | Pay. */
+/** Primary journey chrome — Purpose | Travel profile | Sponsor | Documents | Extras | Payment. */
 export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseNavProps) {
   const colors = usePublicBrandColors()
 
@@ -38,8 +40,8 @@ export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseN
         display: 'flex',
         alignItems: 'center',
         width: '100%',
-        gap: { xs: 0.5, sm: 1 },
-        px: { xs: 1, sm: 1.25 },
+        gap: { xs: 0.35, sm: 0.75 },
+        px: { xs: 0.75, sm: 1.25 },
         py: { xs: 1, sm: 1.25 },
         border: `1px solid ${colors.border}`,
         borderRadius: BORDER_RADIUS.lg,
@@ -71,13 +73,13 @@ export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseN
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 0.75,
-              px: { xs: 1, sm: 1.5 },
+              gap: { xs: 0.35, sm: 0.75 },
+              px: { xs: 0.5, sm: 1.25 },
               py: 0.85,
               bgcolor: isActive ? colors.greenBright : 'transparent',
               color: isActive ? colors.onBrandFilled : colors.textSecondary,
               fontFamily: 'inherit',
-              fontSize: { xs: '12px', sm: '13px' },
+              fontSize: { xs: '11px', sm: '13px' },
               fontWeight: isActive ? 700 : 600,
               letterSpacing: '0.01em',
               textAlign: 'center',
@@ -98,6 +100,7 @@ export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseN
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
+                display: { xs: phase === currentPhase ? 'inline' : 'none', sm: 'inline' },
               }}
             >
               {RETAIL_PHASE_LABEL[phase]}

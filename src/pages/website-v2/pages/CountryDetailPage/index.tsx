@@ -14,6 +14,8 @@ import { TabsNavigation } from './components/TabsNavigation'
 import { RequirementsSection } from './components/RequirementsSection'
 import { ComingSoonPage } from '@/shared/components/ComingSoonPage'
 import { PublicContainer } from '../../components/PublicContainer'
+import { CountryTrustBadgeStrip } from '../../components/CountryTrustBadgeStrip'
+import { hasCountryTrustProfile } from '../../config/countryTrustBadges'
 import { publicFonts, usePublicBrandColors, getMarketingPrimaryButtonSx } from '@/shared/theme/publicBrand'
 import { BORDER_RADIUS } from '@/design-system/tokens'
 import { Clock, MapPin } from 'lucide-react'
@@ -134,11 +136,11 @@ export function CountryDetailPage() {
       if (offering) params.set('visa', offering.id)
     }
 
-    return `/v2/apply/new?${params.toString()}`
+    return `/apply/new?${params.toString()}`
   }, [countryId, search, selectedVisaCategory, selectedVisaType])
 
   if (!master || !country) {
-    return <ComingSoonPage title="Country not found" returnLink={{ text: 'Browse destinations', href: '/v2/countries' }} />
+    return <ComingSoonPage title="Country not found" returnLink={{ text: 'Browse destinations', href: '/countries' }} />
   }
 
   return (
@@ -233,6 +235,12 @@ export function CountryDetailPage() {
                   </Typography>
                 )}
               </Box>
+
+              {hasCountryTrustProfile(master.id) ? (
+                <Box sx={{ mb: 3 }}>
+                  <CountryTrustBadgeStrip countryId={master.id} variant="onDark" />
+                </Box>
+              ) : null}
 
               {/* Visa facts from country master + selected retail type */}
               <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap', mb: 3.5, justifyContent: 'center' }}>

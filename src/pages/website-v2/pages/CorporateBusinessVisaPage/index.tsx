@@ -81,8 +81,8 @@ export function CorporateBusinessVisaPage() {
         variant="corporate"
         heading="Simplify Corporate Visa Management"
         description="Dedicated account management, priority processing, and end-to-end visa support for your employees and business travelers."
-        primaryButton={{ label: 'Speak with Our Corporate Team', href: '/v2/track' }}
-        secondaryButton={{ label: 'Schedule a Consultation', href: '/v2/track' }}
+        primaryButton={{ label: 'Speak with Our Corporate Team', href: '/track' }}
+        secondaryButton={{ label: 'Schedule a Consultation', href: '/track' }}
       />
 
       <FAQSection faqs={corporateFaqs} />

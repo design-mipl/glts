@@ -368,7 +368,7 @@ export function VisaMasterSection() {
               <Box sx={{ pt: 0.75 }}>
                 <Button
                   variant="contained"
-                  href="/v2/countries"
+                  href="/countries"
                   endIcon={<ArrowRight size={16} />}
                   sx={{ ...getMarketingPrimaryButtonSx(colors), px: 3.5 }}
                 >

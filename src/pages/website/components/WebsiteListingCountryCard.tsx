@@ -16,7 +16,7 @@ interface WebsiteListingCountryCardProps {
 export function WebsiteListingCountryCard({ country, href }: WebsiteListingCountryCardProps) {
   const colors = usePublicBrandColors()
   const [imgError, setImgError] = useState(false)
-  const link = href ?? `/countries/${country.id}`
+  const link = href ?? `/v1/countries/${country.id}`
   const processingTime = formatEtaShort(country.processingTime)
   const visaLabel = country.portalProcessingLabel ?? country.visaCategory
 

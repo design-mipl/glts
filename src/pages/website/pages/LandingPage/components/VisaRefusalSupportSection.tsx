@@ -89,7 +89,7 @@ export function VisaRefusalSupportSection() {
 
           <Button
             variant="contained"
-            href="/track"
+            href="/v1/track"
             endIcon={<ArrowRight size={16} />}
             sx={{
               ...getMarketingPrimaryButtonSx(colors),

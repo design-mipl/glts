@@ -27,7 +27,7 @@ interface VisaCategoryCardsSectionProps {
   items: VisaCategoryCardItem[]
 }
 
-function VisaCategoryCard({ title, description, image, href = '/v2/countries' }: VisaCategoryCardItem) {
+function VisaCategoryCard({ title, description, image, href = '/countries' }: VisaCategoryCardItem) {
   const colors = usePublicBrandColors()
   const [imgSrc, setImgSrc] = useState(image.src)
 

@@ -78,7 +78,7 @@ export function FinalCtaSection() {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: 1 }}>
             <Button
               variant="contained"
-              href="/countries"
+              href="/v1/countries"
               endIcon={<ArrowRight size={18} />}
               sx={{
                 ...getMarketingPrimaryButtonSx(colors),
@@ -90,7 +90,7 @@ export function FinalCtaSection() {
             </Button>
             <Button
               variant="outlined"
-              href="/track"
+              href="/v1/track"
               endIcon={<CalendarDays size={16} />}
               sx={{
                 ...getOutlinedButtonSx(),

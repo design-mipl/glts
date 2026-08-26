@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Box, Typography, Chip, Stack, Divider } from '@mui/material'
 import {
   FileText,
@@ -9,6 +10,7 @@ import {
   CheckCircle2,
   Circle,
   Info,
+  CircleHelp,
 } from 'lucide-react'
 import type { Country } from '@/shared/types/visa'
 import {
@@ -18,6 +20,8 @@ import {
   publicFonts,
   usePublicBrandColors,
 } from '@/shared/theme/publicBrand'
+import { WhyWeAskSheet } from '@/pages/website-v2/components/WhyWeAskSheet'
+import { resolveDocumentWhyContent, type DocumentWhyContent } from '@/pages/website-v2/config/documentWhyContent'
 
 type ReqType = 'document' | 'photo' | 'financial' | 'insurance' | 'travel' | 'accommodation'
 
@@ -107,7 +111,13 @@ function orderDocumentNames(documents: string[]) {
     .map(item => item.name)
 }
 
-function RequirementRow({ req }: { req: RequirementItem }) {
+function RequirementRow({
+  req,
+  onWhyAsk,
+}: {
+  req: RequirementItem
+  onWhyAsk: (content: DocumentWhyContent) => void
+}) {
   const colors = usePublicBrandColors()
   const { Icon, bg, color } = iconConfig[req.type]
 
@@ -200,6 +210,35 @@ function RequirementRow({ req }: { req: RequirementItem }) {
         >
           {req.description}
         </Typography>
+        <Box
+          component="button"
+          type="button"
+          onClick={() =>
+            onWhyAsk(
+              resolveDocumentWhyContent({
+                name: req.name,
+                description: req.description,
+              }),
+            )
+          }
+          sx={{
+            mt: 1,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.55,
+            border: 'none',
+            background: 'none',
+            p: 0,
+            cursor: 'pointer',
+            color: colors.greenDark,
+            fontSize: '13px',
+            fontWeight: 700,
+            fontFamily: 'inherit',
+          }}
+        >
+          <CircleHelp size={14} />
+          Why we ask
+        </Box>
       </Box>
     </Box>
   )
@@ -210,6 +249,7 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
   const required = mockRequirements.filter(r => r.mandatory)
   const optional = mockRequirements.filter(r => !r.mandatory)
   const orderedDocuments = orderDocumentNames(country.documentsNeeded)
+  const [whyContent, setWhyContent] = useState<DocumentWhyContent | null>(null)
 
   return (
     <Box>
@@ -240,7 +280,7 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
               lineHeight: 1.55,
             }}
           >
-            Prepare these before you apply for your {country.name} visa.
+            Prepare these before you apply for your {country.name} visa. Every item explains why the consulate wants it.
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1.25 }}>
             <Chip
@@ -359,7 +399,7 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
         {required.map((req, i) => (
           <Box key={req.id}>
             {i > 0 && <Divider />}
-            <RequirementRow req={req} />
+            <RequirementRow req={req} onWhyAsk={setWhyContent} />
           </Box>
         ))}
 
@@ -381,7 +421,7 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
             {optional.map((req, i) => (
               <Box key={req.id}>
                 {i > 0 && <Divider />}
-                <RequirementRow req={req} />
+                <RequirementRow req={req} onWhyAsk={setWhyContent} />
               </Box>
             ))}
           </>
@@ -398,6 +438,8 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
       >
         Document rules can vary by embassy. We verify your upload before submission.
       </Typography>
+
+      <WhyWeAskSheet open={Boolean(whyContent)} content={whyContent} onClose={() => setWhyContent(null)} />
     </Box>
   )
 }

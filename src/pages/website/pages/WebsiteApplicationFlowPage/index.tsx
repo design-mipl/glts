@@ -6,7 +6,7 @@ import {
 } from '@/pages/customer/features/applications/context/ApplicationFlowPolicyContext'
 import { WebsiteApplicationFlowLayout } from '../../components/WebsiteApplicationFlowLayout'
 
-const WEBSITE_APPLY_LISTING_PATH = '/countries'
+const WEBSITE_APPLY_LISTING_PATH = '/v1/countries'
 
 export function WebsiteApplicationFlowPage() {
   const [searchParams] = useSearchParams()
@@ -19,8 +19,8 @@ export function WebsiteApplicationFlowPage() {
         listingPath={WEBSITE_APPLY_LISTING_PATH}
         storageKey={WEBSITE_APPLICATION_FLOW_STORAGE_KEY}
         breadcrumbItems={[
-          { label: 'Home', href: '/' },
-          { label: 'Destinations', href: '/countries' },
+          { label: 'Home', href: '/v1' },
+          { label: 'Destinations', href: '/v1/countries' },
           { label: 'Apply' },
         ]}
       >

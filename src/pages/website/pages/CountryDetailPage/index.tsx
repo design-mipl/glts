@@ -53,11 +53,11 @@ export function CountryDetailPage() {
     params.delete('search')
     if (countryId) params.set('country', countryId)
     params.set('visaType', selectedVisaCategory)
-    return `/apply/new?${params.toString()}`
+    return `/v1/apply/new?${params.toString()}`
   }, [countryId, search, selectedVisaCategory])
 
   if (!country) {
-    return <ComingSoonPage title="Country not found" returnLink={{ text: 'Browse destinations', href: '/countries' }} />
+    return <ComingSoonPage title="Country not found" returnLink={{ text: 'Browse destinations', href: '/v1/countries' }} />
   }
 
   return (
@@ -66,13 +66,13 @@ export function CountryDetailPage() {
       <Box sx={{ backgroundColor: colors.surface, borderBottom: `1px solid ${colors.border}`, py: 2 }}>
         <PublicContainer>
           <Breadcrumbs separator={<ChevronRight size={12} color="#9CA3AF" />}>
-            <Link href="/" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: colors.greenBright } }}>
+            <Link href="/v1" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: colors.greenBright } }}>
               Home
             </Link>
-            <Link href="/countries" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: colors.greenBright } }}>
+            <Link href="/v1/countries" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: colors.greenBright } }}>
               Destinations
             </Link>
-            <Link href="/countries" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: colors.greenBright } }}>
+            <Link href="/v1/countries" sx={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px', '&:hover': { color: colors.greenBright } }}>
               Europe
             </Link>
             <Typography sx={{ fontSize: '13px', color: '#001F3F', fontWeight: 600 }}>

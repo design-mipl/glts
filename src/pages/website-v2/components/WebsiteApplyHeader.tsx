@@ -41,7 +41,7 @@ export function WebsiteApplyHeader() {
       >
         <Box
           component="a"
-          href="/v2"
+          href="/"
           sx={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}
         >
           <Box component="img" src={GREENLIGHT_LOGO_SRC} alt="Greenlight" sx={{ height: 36 }} />

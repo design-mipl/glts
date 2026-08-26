@@ -218,7 +218,7 @@ export const marineAdditionalServices = [
     description:
       'Complete documentation support including travel itineraries, transit permits, invitation letters, and embassy-ready paperwork.',
     ctaLabel: 'Get Started',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/marine-additional-services/travel-transit-documentation.png',
       fallback: '/images/marine-additional-services/travel-transit-documentation.png',
@@ -231,7 +231,7 @@ export const marineAdditionalServices = [
     description:
       'Secure management of crew documentation, compliance records, certifications, and renewal tracking.',
     ctaLabel: 'Learn More',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/marine-additional-services/compliance-record-management.png',
       fallback: '/images/marine-additional-services/compliance-record-management.png',
@@ -244,7 +244,7 @@ export const marineAdditionalServices = [
     description:
       'Comprehensive travel insurance solutions for crew members and offshore professionals.',
     ctaLabel: 'Learn More',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/marine-additional-services/travel-insurance-support.png',
       fallback: '/images/marine-additional-services/travel-insurance-support.png',
@@ -257,7 +257,7 @@ export const marineAdditionalServices = [
     description:
       'Foreign currency exchange assistance with competitive rates for international travel.',
     ctaLabel: 'Learn More',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/marine-additional-services/forex-support.png',
       fallback: '/images/marine-additional-services/forex-support.png',
@@ -270,7 +270,7 @@ export const marineAdditionalServices = [
     description:
       'Round-the-clock support for itinerary changes, emergencies, and travel coordination.',
     ctaLabel: 'Learn More',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/marine-additional-services/travel-assistance-24x7.png',
       fallback: '/images/marine-additional-services/travel-assistance-24x7.png',
@@ -381,6 +381,6 @@ export const marineTestimonials: TestimonialItem[] = [
 ]
 
 export const marineHeroCtas = {
-  primary: { label: 'Talk to a Marine Visa Specialist', href: '/v2/track' },
-  secondary: { label: 'Request a Consultation', href: '/v2/track' },
+  primary: { label: 'Talk to a Marine Visa Specialist', href: '/track' },
+  secondary: { label: 'Request a Consultation', href: '/track' },
 } as const

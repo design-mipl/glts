@@ -46,7 +46,7 @@ export function DestinationImageCard({
 }: DestinationImageCardProps) {
   const colors = usePublicBrandColors()
   const [imgError, setImgError] = useState(false)
-  const link = href ?? `/v2/countries/${country.id}`
+  const link = href ?? `/countries/${country.id}`
   const visaLabel = country.portalProcessingLabel ?? country.visaCategory
 
   return (

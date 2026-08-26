@@ -6,15 +6,15 @@ import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteToke
 
 const footerSections: Record<string, { label: string; href: string }[]> = {
   Product: [
-    { label: 'Retail Visa Services', href: '/v2' },
-    { label: 'Marine Visa Services', href: '/v2/marine-crew' },
-    { label: 'Corporate Visa Services', href: '/v2/corporate' },
-    { label: 'Travel Partners', href: '/v2#specialist-visa-services' },
-    { label: 'Destinations', href: '/v2/countries' },
+    { label: 'Retail Visa Services', href: '/' },
+    { label: 'Marine Visa Services', href: '/marine-crew' },
+    { label: 'Corporate Visa Services', href: '/corporate' },
+    { label: 'Travel Partners', href: '/#specialist-visa-services' },
+    { label: 'Destinations', href: '/countries' },
   ],
   Company: [
-    { label: 'About Us', href: '/v2/about' },
-    { label: 'Contact Us', href: '/v2/track' },
+    { label: 'About Us', href: '/about' },
+    { label: 'Contact Us', href: '/track' },
     { label: 'Blog / Visa Updates', href: '#' },
   ],
   Legal: [
@@ -26,9 +26,9 @@ const footerSections: Record<string, { label: string; href: string }[]> = {
   ],
   Support: [
     { label: 'Portal Access', href: '/sign-in' },
-    { label: 'Track Application', href: '/v2/track' },
+    { label: 'Track Application', href: '/track' },
     { label: 'Help Centre', href: '#' },
-    { label: 'Contact Support', href: '/v2/track' },
+    { label: 'Contact Support', href: '/track' },
   ],
 }
 

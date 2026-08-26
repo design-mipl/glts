@@ -17,6 +17,7 @@ export function WebsiteAbToggle({ fullWidth = false, onNavigate }: WebsiteAbTogg
   const colors = usePublicBrandColors()
   const navigate = useNavigate()
   const location = useLocation()
+  // B = main website-v2 at `/`; A = legacy site at `/v1`
   const onSiteB = isWebsiteV2Path(location.pathname)
 
   const handleChange = (checked: boolean) => {

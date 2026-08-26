@@ -16,8 +16,8 @@ import {
   brandPrimaryGreenRgb,
 } from '@/shared/theme/publicBrand'
 const VISA_MASTER_IMAGE = {
-  src: '/images/visa-master/passport.png',
-  fallback: '/images/visa-master/passport.png',
+  src: '/v1/images/visa-master/passport.png',
+  fallback: '/v1/images/visa-master/passport.png',
   alt: 'Navy passport on a desk with a city skyline at dusk',
 } as const
 
@@ -368,7 +368,7 @@ export function VisaMasterSection() {
               <Box sx={{ pt: 0.75 }}>
                 <Button
                   variant="contained"
-                  href="/countries"
+                  href="/v1/countries"
                   endIcon={<ArrowRight size={16} />}
                   sx={{ ...getMarketingPrimaryButtonSx(colors), px: 3.5 }}
                 >
