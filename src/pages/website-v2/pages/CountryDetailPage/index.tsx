@@ -99,20 +99,6 @@ export function CountryDetailPage() {
       processingTime: selectedVisaType?.processingTime || master.processingTime || portal.processingTime,
       validity: selectedVisaType?.validity || master.validity || portal.validity,
       price: selectedVisaType?.pricing ?? master.price ?? portal.price,
-      visaCategory: selectedVisaType?.visaCategory || master.visaCategory || portal.visaCategory,
-      visaTypes: selectedVisaType
-        ? [
-            {
-              id: selectedVisaType.id,
-              name: selectedVisaType.name,
-              duration: selectedVisaType.stayDuration,
-              entryType: selectedVisaType.entryType as 'Single' | 'Multiple' | 'Double',
-              validity: selectedVisaType.validity,
-              processingTime: selectedVisaType.processingTime,
-              price: selectedVisaType.pricing ?? master.price,
-            },
-          ]
-        : portal.visaTypes,
     }
   }, [master, selectedVisaType])
 
