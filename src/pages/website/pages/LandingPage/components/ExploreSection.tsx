@@ -79,7 +79,7 @@ export function ExploreSection() {
               Where Are You Travelling?
             </Typography>
             <Typography sx={{ fontSize: '15px', color: colors.textSecondary, maxWidth: 520 }}>
-              Explore popular destinations and estimated travel costs.
+              Check visa fees and processing times by destination.
             </Typography>
           </Box>
 

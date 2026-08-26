@@ -2,12 +2,12 @@ import { useCallback, useMemo, useState } from 'react'
 import { useAdminSession } from '@/pages/admin/hooks/useAdminSession'
 import { useDashboardQuery } from '../../shared/hooks/useDashboardQuery'
 import type { DashboardFilterConfig } from '../../shared/types'
-import { MOCK_DOCUMENTATION_EXECUTIVE_NAME } from '@/pages/admin/dashboard/documentation/data/documentationDashboardMock'
 import {
   DEFAULT_DOCUMENTATION_DASHBOARD_FILTERS,
   DOC_APPLICATION_TYPE_OPTIONS,
   DOC_COUNTRY_OPTIONS,
   DOC_DATE_OPTIONS,
+  MOCK_DOCUMENTATION_EXECUTIVE_NAME,
 } from '../data/documentationDashboardMock'
 import { fetchDocumentationDashboard } from '../services/documentationDashboardService'
 import type { DocumentationDashboardFilters } from '../types'

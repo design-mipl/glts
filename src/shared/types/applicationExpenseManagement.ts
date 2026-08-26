@@ -283,4 +283,5 @@ export interface UpsertApplicationExpenseInput {
   paidByDepartment?: string
   billTo?: ApplicationExpenseBillTo
   internalRemarks?: string
+  vendorInvoiceNumber?: string
 }

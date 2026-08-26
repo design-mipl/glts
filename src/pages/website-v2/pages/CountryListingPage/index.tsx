@@ -1,12 +1,12 @@
 import { Box, CircularProgress } from '@mui/material'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useCountries } from '@/shared/hooks/useCountries'
-import { FilterSidebar } from './components/FilterSidebar'
+import { FilterSidebar, getDefaultDestinationPlanningFilters } from './components/FilterSidebar'
 import { SearchAndSort } from './components/SearchAndSort'
 import { CountryGrid } from './components/CountryGrid'
 import { DestinationsHeroSection } from './components/DestinationsHeroSection'
 import { PublicContainer } from '../../components/PublicContainer'
-import { defaultExploreFilters } from '../../utils/applyExploreFilters'
 import { usePublicBrandColors } from '../../theme/publicSiteTokens'
 import { landingSectionPy } from '../LandingPage/landingPageSpacing'
 
@@ -16,12 +16,32 @@ const FILTER_SIDEBAR_WIDTH_PX = 288
 export function CountryListingPage() {
   const colors = usePublicBrandColors()
   const { countries, loading } = useCountries()
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedRegions, setSelectedRegions] = useState<string[]>([])
-  const [selectedVisaTypes, setSelectedVisaTypes] = useState<string[]>([])
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 20000])
-  const [sortBy, setSortBy] = useState('rating')
-  const [exploreFilters, setExploreFilters] = useState(defaultExploreFilters)
+  const { search } = useLocation()
+  const [searchTerm, setSearchTerm] = useState(() => new URLSearchParams(search).get('search') ?? '')
+  const [planningFilters, setPlanningFilters] = useState(getDefaultDestinationPlanningFilters)
+
+  const applicationContextQuery = useMemo(() => {
+    const params = new URLSearchParams(search)
+    params.delete('search')
+
+    if (planningFilters.travelDate) params.set('travelDate', planningFilters.travelDate)
+    else params.delete('travelDate')
+
+    if (planningFilters.tripLength) params.set('tripLength', planningFilters.tripLength)
+    else params.delete('tripLength')
+
+    params.delete('context')
+    planningFilters.concerns.forEach(value => params.append('context', value))
+
+    if (planningFilters.applicantGroup !== 'just-me') {
+      params.set('applicantGroup', planningFilters.applicantGroup)
+    } else {
+      params.delete('applicantGroup')
+    }
+
+    const query = params.toString()
+    return query ? `?${query}` : ''
+  }, [planningFilters, search])
 
   if (loading) {
     return (
@@ -52,14 +72,8 @@ export function CountryListingPage() {
               }}
             >
               <FilterSidebar
-                filters={{ regions: selectedRegions, priceRange, visaTypes: selectedVisaTypes }}
-                exploreFilters={exploreFilters}
-                onFiltersChange={({ regions, priceRange: pr, visaTypes }) => {
-                  setSelectedRegions(regions)
-                  setPriceRange(pr)
-                  setSelectedVisaTypes(visaTypes)
-                }}
-                onExploreFiltersChange={setExploreFilters}
+                filters={planningFilters}
+                onFiltersChange={setPlanningFilters}
               />
             </Box>
 
@@ -67,17 +81,11 @@ export function CountryListingPage() {
               <SearchAndSort
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
-                sortBy={sortBy}
-                onSortChange={setSortBy}
               />
               <CountryGrid
                 countries={countries}
                 searchTerm={searchTerm}
-                selectedRegions={selectedRegions}
-                selectedVisaTypes={selectedVisaTypes}
-                priceRange={priceRange}
-                sortBy={sortBy}
-                exploreFilters={exploreFilters}
+                applicationContextQuery={applicationContextQuery}
               />
             </Box>
           </Box>

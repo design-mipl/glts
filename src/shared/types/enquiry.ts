@@ -1,6 +1,6 @@
 import type { ClientManagementPipelineStatus } from './clientManagementPipeline'
 
-export type EnquiryCustomerType = 'retail' | 'corporate' | 'marine'
+export type EnquiryCustomerType = 'retail' | 'corporate' | 'marine' | 'b2b'
 
 export type EnquiryPriority = 'low' | 'medium' | 'high' | 'critical'
 

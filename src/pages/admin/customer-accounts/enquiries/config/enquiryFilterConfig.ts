@@ -3,6 +3,7 @@ export const enquiryCustomerTypeOptions = [
   { label: 'Retail', value: 'retail' },
   { label: 'Corporate', value: 'corporate' },
   { label: 'Marine', value: 'marine' },
+  { label: 'B2B', value: 'b2b' },
 ]
 
 export const enquirySourceOptions = [

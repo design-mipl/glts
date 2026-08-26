@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Divider, Grid, Stack, Typography } from '@mui/material'
 import { Badge, Button, Drawer, FormField, Input, useToast } from '@/design-system/UIComponents'
-import { getExpensePaymentModeLabel } from '@/pages/admin/finance/expenses/config/expenseDetailFormConfig'
+import { computeExpenseIwAmount } from '@/pages/admin/finance/expenses/config/expenseDetailFormConfig'
 import { ClaimSheetDetailBody } from '@/pages/admin/ground-operations/case-handling/components/ClaimSheetDetailBody'
 import { getCurrentUser } from '@/shared/services/authService'
 import { groundOpsClaimSheetService } from '@/shared/services/groundOpsClaimSheetService'
 import { reconciliationService } from '@/shared/services/reconciliationService'
 import type { ReconciliationItem } from '@/shared/types/reconciliation'
 import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
+import { formatInr } from '@/shared/utils/invoiceCalculations'
 import {
   getReconciliationReferenceLabel,
+  getReconciliationPaymentModeLabel,
   getReconciliationStatusBadgeColor,
   getReconciliationStatusLabel,
+  reconciliationRequiresBookEntry,
 } from '../config/reconciliationListingConfig'
 import { formatReconciliationMoney } from '../utils/reconciliationListingUtils'
 import { ReconciliationRejectModal } from './ReconciliationRejectModal'
@@ -21,6 +24,11 @@ interface ReconciliationDetailDrawerProps {
   item: ReconciliationItem | null
   onClose: () => void
   onSubmitted?: () => void
+}
+
+function parseAmount(raw: string): number {
+  const n = Number.parseFloat(raw.replace(/,/g, ''))
+  return Number.isFinite(n) ? n : 0
 }
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -44,12 +52,17 @@ export function ReconciliationDetailDrawer({
 }: ReconciliationDetailDrawerProps) {
   const { showToast } = useToast()
   const [referenceNumber, setReferenceNumber] = useState('')
+  const [costAmount, setCostAmount] = useState('')
+  const [totalAmount, setTotalAmount] = useState('')
+  const [invoiceNumber, setInvoiceNumber] = useState('')
+  const [trackingNumber, setTrackingNumber] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
   const [rejecting, setRejecting] = useState(false)
 
   const currentUserName = useMemo(() => getCurrentUser()?.name?.trim() || 'Accounts user', [])
-  const referenceLabel = getReconciliationReferenceLabel()
+  const referenceLabel = getReconciliationReferenceLabel(item?.tab)
+  const requiresBookEntry = reconciliationRequiresBookEntry(item?.tab)
 
   const claimSheet = useMemo(() => {
     if (!item || item.tab !== 'approved_claim_sheet') return null
@@ -59,12 +72,25 @@ export function ReconciliationDetailDrawer({
   useEffect(() => {
     if (!item) {
       setReferenceNumber('')
+      setCostAmount('')
+      setTotalAmount('')
+      setInvoiceNumber('')
+      setTrackingNumber('')
       setRejectOpen(false)
       return
     }
     setReferenceNumber(item.status === 'submitted' ? item.referenceNumber || '' : '')
+    setCostAmount(item.cost > 0 ? String(item.cost) : '')
+    setTotalAmount(item.total > 0 ? String(item.total) : '')
+    setInvoiceNumber(item.vendorInvoiceNumber || '')
+    setTrackingNumber(item.trackingNumber || '')
     setRejectOpen(false)
   }, [item])
+
+  const iwAmount = useMemo(
+    () => computeExpenseIwAmount(parseAmount(costAmount), parseAmount(totalAmount)),
+    [costAmount, totalAmount],
+  )
 
   if (!item) return null
 
@@ -81,6 +107,10 @@ export function ReconciliationDetailDrawer({
     const result = reconciliationService.submitReference({
       id: item.id,
       referenceNumber,
+      cost: parseAmount(costAmount),
+      total: parseAmount(totalAmount),
+      vendorInvoiceNumber: invoiceNumber.trim(),
+      trackingNumber: trackingNumber.trim(),
     })
     setSubmitting(false)
 
@@ -95,7 +125,10 @@ export function ReconciliationDetailDrawer({
 
     showToast({
       title: 'Reconciliation submitted',
-      description: `${referenceLabel} saved for ${item.claimNumber || item.refNo}.`,
+      description:
+        item.tab === 'courier'
+          ? `AWB and amount saved for ${item.claimNumber || item.refNo}.`
+          : `${referenceLabel} saved for ${item.claimNumber || item.refNo}.`,
       variant: 'success',
     })
     onSubmitted?.()
@@ -152,7 +185,12 @@ export function ReconciliationDetailDrawer({
                   label="Submit"
                   variant="contained"
                   onClick={handleSubmit}
-                  disabled={submitting || rejecting || !referenceNumber.trim()}
+                  disabled={
+                    submitting ||
+                    rejecting ||
+                    (requiresBookEntry && !referenceNumber.trim()) ||
+                    (item.tab === 'courier' && !trackingNumber.trim())
+                  }
                 />
               </>
             ) : null}
@@ -217,12 +255,12 @@ export function ReconciliationDetailDrawer({
               {item.tab === 'mode_of_payment' ? (
                 <>
                   <Grid size={{ xs: 12, sm: 6 }}>
-                    <Field label="Charges name" value={item.chargesName} />
+                    <Field label="Service" value={item.chargesName} />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Field
                       label="Mode of payment"
-                      value={getExpensePaymentModeLabel(item.paymentMode)}
+                      value={getReconciliationPaymentModeLabel(item.paymentMode)}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6 }}>
@@ -233,20 +271,60 @@ export function ReconciliationDetailDrawer({
                   </Grid>
                 </>
               ) : null}
+              {item.tab === 'insurance' || item.tab === 'ticket' ? (
+                <>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormField label="Cost" helperText="Vendor / actual outlay">
+                      <Input
+                        value={costAmount}
+                        onChange={setCostAmount}
+                        placeholder="Enter cost in INR"
+                        size="sm"
+                        disabled={!isPending}
+                        fullWidth
+                      />
+                    </FormField>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormField label="IW" helperText="Markup (Total − Cost)">
+                      <Input value={formatInr(iwAmount)} disabled size="sm" fullWidth />
+                    </FormField>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormField
+                      label="Total"
+                      helperText="From agreement / Country Master — can be updated"
+                    >
+                      <Input
+                        value={totalAmount}
+                        onChange={setTotalAmount}
+                        placeholder="Enter total amount in INR"
+                        size="sm"
+                        disabled={!isPending}
+                        fullWidth
+                      />
+                    </FormField>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormField label="Invoice No.">
+                      <Input
+                        value={invoiceNumber}
+                        onChange={setInvoiceNumber}
+                        placeholder="Enter invoice number"
+                        size="sm"
+                        disabled={!isPending}
+                        fullWidth
+                      />
+                    </FormField>
+                  </Grid>
+                </>
+              ) : null}
               {item.tab === 'insurance' ? (
                 <>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Field label="Policy number" value={item.policyNumber} />
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Field label="Vendor invoice" value={item.vendorInvoiceNumber} />
-                  </Grid>
                 </>
-              ) : null}
-              {item.tab === 'courier' ? (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Field label="Tracking no (AWB)" value={item.trackingNumber} />
-                </Grid>
               ) : null}
               {(item.tab === 'ticket' || item.tab === 'courier') &&
               (item.locationFrom || item.locationTo) ? (
@@ -263,21 +341,52 @@ export function ReconciliationDetailDrawer({
                   value={formatDisplayDate(item.bookingDate || item.paymentDate)}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Field
-                  label="Amount"
-                  value={formatReconciliationMoney(
-                    item.total || item.amountInr || item.claimGrandTotal,
-                  )}
-                />
-              </Grid>
+              {item.tab !== 'insurance' && item.tab !== 'ticket' && item.tab !== 'courier' ? (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Field
+                    label="Amount"
+                    value={formatReconciliationMoney(
+                      item.total || item.amountInr || item.claimGrandTotal,
+                    )}
+                  />
+                </Grid>
+              ) : null}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Field label="User" value={userDisplay} />
               </Grid>
             </Grid>
           )}
 
-          {isPending || isSubmitted ? (
+          {item.tab === 'courier' && (isPending || isSubmitted) ? (
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="AWB Number" required={isPending}>
+                  <Input
+                    value={trackingNumber}
+                    onChange={setTrackingNumber}
+                    placeholder="Enter AWB number"
+                    size="sm"
+                    disabled={!isPending}
+                    fullWidth
+                  />
+                </FormField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField label="Amount" helperText="Courier charge in INR">
+                  <Input
+                    value={totalAmount}
+                    onChange={setTotalAmount}
+                    placeholder="Enter amount in INR"
+                    size="sm"
+                    disabled={!isPending}
+                    fullWidth
+                  />
+                </FormField>
+              </Grid>
+            </Grid>
+          ) : null}
+
+          {(isPending || isSubmitted) && requiresBookEntry ? (
             <FormField label={referenceLabel} required={isPending}>
               <Input
                 value={referenceNumber}

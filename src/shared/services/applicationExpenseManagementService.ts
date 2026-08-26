@@ -540,6 +540,7 @@ export const applicationExpenseManagementService = {
       billTo: input.billTo ?? existing.billTo ?? 'client',
       internalRemarks: input.internalRemarks ?? existing.internalRemarks,
       expenseDate: input.expenseDate ?? existing.expenseDate,
+      vendorInvoiceNumber: input.vendorInvoiceNumber ?? existing.vendorInvoiceNumber,
       updatedAt: new Date().toISOString(),
     }
     upsertMany([updated])

@@ -28,13 +28,14 @@ import type {
 } from '../types'
 import { DOC_CHART_COLORS } from './documentationChartColors'
 import { buildSubmissionByJurisdiction } from '../../shared/utils/buildSubmissionByJurisdiction'
-import { MOCK_DOCUMENTATION_EXECUTIVE_NAME } from '@/pages/admin/dashboard/documentation/data/documentationDashboardMock'
 import {
   computeShowInactivityWarning,
   getDocumentationFilterScaleFactor,
   getMinutesSinceLastActivity,
   isBusinessHours,
 } from '../utils/applyDocumentationDashboardFilters'
+
+export const MOCK_DOCUMENTATION_EXECUTIVE_NAME = 'Neha Kulkarni'
 
 export const DOC_DATE_OPTIONS = [
   { label: 'Today', value: 'today' },

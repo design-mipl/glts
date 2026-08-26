@@ -17,7 +17,7 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
   const colors = usePublicBrandColors()
   const [imgError, setImgError] = useState(false)
   const link = href ?? `/v2/countries/${country.id}`
-  const eta = formatEtaShort(country.processingTime)
+  const processingTime = formatEtaShort(country.processingTime)
   const visaLabel = country.portalProcessingLabel ?? country.visaCategory
 
   return (
@@ -144,10 +144,10 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
                 mb: 0.25,
               }}
             >
-              ETA
+              PROCESSING TIME
             </Typography>
             <Typography sx={{ fontSize: '15px', fontWeight: 800, color: colors.navy }}>
-              {eta}
+              {processingTime}
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'right' }}>
@@ -177,7 +177,7 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
             lineHeight: 1.4,
           }}
         >
-          {visaLabel} · Valid till {country.validity}
+          Visa category: {visaLabel}
         </Typography>
       </BaseCard>
     </Box>

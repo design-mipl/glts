@@ -1,8 +1,7 @@
 import { Input, Select } from '@/design-system/UIComponents'
 import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
-import { EXPENSE_PAYMENT_MODE_OPTIONS } from '@/pages/admin/finance/expenses/config/expenseDetailFormConfig'
 import type { ReconciliationFilters, ReconciliationPeriodPreset, ReconciliationStatus, ReconciliationTab } from '@/shared/types/reconciliation'
-import { RECONCILIATION_PERIOD_OPTIONS } from '../config/reconciliationListingConfig'
+import { RECONCILIATION_PAYMENT_MODE_OPTIONS, RECONCILIATION_PERIOD_OPTIONS } from '../config/reconciliationListingConfig'
 
 export interface ReconciliationAdvancedFilterFieldsProps {
   draft: ReconciliationFilters
@@ -71,7 +70,7 @@ export function ReconciliationAdvancedFilterFields({
             onChange={value => patch({ paymentMode: String(value) })}
             options={[
               { value: '', label: 'All modes' },
-              ...EXPENSE_PAYMENT_MODE_OPTIONS.map(option => ({
+              ...RECONCILIATION_PAYMENT_MODE_OPTIONS.map(option => ({
                 value: option.value,
                 label: option.label,
               })),

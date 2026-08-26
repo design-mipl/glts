@@ -90,6 +90,11 @@ export interface ReconciliationItem {
 export interface SubmitReconciliationInput {
   id: string
   referenceNumber: string
+  cost?: number
+  total?: number
+  vendorInvoiceNumber?: string
+  /** Courier reports — AWB / tracking number entered in the drawer. */
+  trackingNumber?: string
 }
 
 export interface RejectReconciliationInput {

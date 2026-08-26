@@ -1,4 +1,4 @@
-import { ClipboardCheck, Laptop, FileSearch, Plane } from 'lucide-react'
+import { ClipboardCheck, Laptop, FileSearch, Send, Plane } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export type HowItWorksStep = {
@@ -17,7 +17,8 @@ export const howItWorksSteps: HowItWorksStep[] = [
     id: 'check-requirements',
     number: '01',
     title: 'Check Requirements',
-    description: 'Confirm your visa type, eligibility, and required documents.',
+    description:
+      'Select your destination and visa type to understand eligibility, documents, fees and estimated processing timelines.',
     icon: ClipboardCheck,
     image: {
       src: '/images/how-it-works/step-01-check-requirements.png',
@@ -31,7 +32,7 @@ export const howItWorksSteps: HowItWorksStep[] = [
     id: 'apply-online',
     number: '02',
     title: 'Apply Online',
-    description: 'Complete and submit your visa application securely online.',
+    description: 'Complete your application and securely upload your supporting documents.',
     icon: Laptop,
     image: {
       src: '/images/how-it-works/step-02-apply-online.png',
@@ -41,10 +42,11 @@ export const howItWorksSteps: HowItWorksStep[] = [
     overlay: ['Online Application', 'Secure Upload', 'Quick Submission'],
   },
   {
-    id: 'document-verification',
+    id: 'expert-review',
     number: '03',
-    title: 'Document Verification',
-    description: 'Our experts verify your documents for accuracy and compliance.',
+    title: 'Expert Review',
+    description:
+      'Our visa specialists review your documents and application before submission, helping identify issues early.',
     icon: FileSearch,
     image: {
       src: '/images/how-it-works/step-03-document-verification.png',
@@ -54,17 +56,31 @@ export const howItWorksSteps: HowItWorksStep[] = [
     overlay: ['Expert Review', 'Compliance Check', 'Embassy Ready'],
   },
   {
-    id: 'receive-visa',
+    id: 'submission',
     number: '04',
-    title: 'Receive Visa',
-    description: 'Track your application and receive your approved visa.',
+    title: 'Submission',
+    description:
+      'Your application is reviewed & submitted as per country requirements - online/offline.',
+    icon: Send,
+    image: {
+      src: '/images/how-it-works/step-03-document-verification.png',
+      alt: 'Visa officer reviewing passport and application documents',
+      objectPosition: 'center 28%',
+    },
+    overlay: ['Embassy Rules', 'Online or Offline', 'Submission Ready'],
+  },
+  {
+    id: 'track-receive-visa',
+    number: '05',
+    title: 'Track your application & receive your Visa',
+    description: 'Follow updates through the process and receive your visa once the decision is complete.',
     icon: Plane,
     image: {
       src: '/images/how-it-works/step-04-receive-visa.png',
       alt: 'Happy traveler holding passport at the airport',
       objectPosition: 'center 30%',
     },
-    overlay: ['Visa Approved', 'Ready to Travel', 'Track Anytime'],
+    overlay: ['Live Status', 'Decision Updates', 'Visa Received'],
   },
 ]
 

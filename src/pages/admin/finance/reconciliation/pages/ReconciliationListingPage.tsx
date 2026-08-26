@@ -279,6 +279,7 @@ export function ReconciliationListingPage() {
       <ReconciliationBulkModal
         open={Boolean(bulkItems?.length)}
         items={bulkItems ?? []}
+        tab={activeTab}
         onClose={() => setBulkItems(null)}
         onConfirm={handleBulkConfirm}
       />

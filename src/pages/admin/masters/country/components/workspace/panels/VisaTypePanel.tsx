@@ -6,6 +6,7 @@ import {
   FormField,
   Input,
   Select,
+  Textarea,
   Toggle,
 } from '@/design-system/UIComponents'
 import { AdminFormSectionsLayout } from '@/pages/admin/components/AdminFormSectionsLayout'
@@ -190,6 +191,16 @@ export function VisaTypePanel({
               disabled={readOnly}
             />
           </FormField>
+          <AdminFullPageFormFieldSpan>
+            <FormField label="Description" helperText="Optional summary for this visa type.">
+              <Textarea
+                value={visaType.description ?? ''}
+                onChange={(v) => patchVisa({ description: v })}
+                minRows={2}
+                readonly={readOnly}
+              />
+            </FormField>
+          </AdminFullPageFormFieldSpan>
           <AdminFullPageFormFieldSpan>
             <FormField
               label="Workflow"

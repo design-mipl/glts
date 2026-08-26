@@ -19,7 +19,7 @@ import { retailServiceImages } from '../../assets/retailServiceImages'
 export const RETAIL_PAGE_PATH = '/v2'
 
 export const retailHeroCtas = {
-  primary: { label: 'Apply Online', href: '/v2/apply/new' },
+  primary: { label: 'Apply Online', href: '/v2/countries' },
   secondary: { label: 'Talk to an Expert', href: '/v2/track' },
 } as const
 
@@ -154,7 +154,7 @@ export const retailAdvantages: {
 export const retailFinalCta = {
   heading: 'Ready to Start Your Visa Application?',
   description: 'Apply online in a few simple steps or speak with our visa experts.',
-  primaryButton: { label: 'Apply Online', href: '/v2/apply/new' },
+  primaryButton: { label: 'Apply Online', href: '/v2/countries' },
   secondaryButton: { label: 'Talk to an Expert', href: '/v2/track' },
   trustPoints: ['Secure Process', 'Expert Support', 'Real-time Updates'] as const,
   image: {

@@ -50,12 +50,14 @@ export const enquiryCustomerTypeOptions = [
   { label: 'Retail', value: 'retail' },
   { label: 'Corporate', value: 'corporate' },
   { label: 'Marine', value: 'marine' },
+  { label: 'B2B', value: 'b2b' },
 ]
 
 export const enquiryCustomerTypeColor: Record<EnquiryCustomerType, BadgeColor> = {
   retail: 'info',
   corporate: 'success',
   marine: 'warning',
+  b2b: 'neutral',
 }
 
 export const enquiryInquirySourceColor: Record<EnquirySource, BadgeColor> = {

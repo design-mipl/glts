@@ -4,7 +4,6 @@ import { AdminModulePlaceholder } from '../components/AdminModulePlaceholder'
 import { PermissionGuard } from '../components/PermissionGuard'
 import {
   AccountsDashboardNextPage,
-  AccountsDashboardPage,
   AdminDashboardNextPage,
   AdminProfilePage,
   AgreementDetailPage,
@@ -39,7 +38,6 @@ import {
   DepartmentDetailPage,
   DepartmentListingPage,
   DocumentationDashboardNextPage,
-  DocumentationDashboardPage,
   DocumentDetailPage,
   DocumentListingPage,
   EditAgreementPage,
@@ -71,7 +69,6 @@ import {
   CreateOrderPage,
   EditOrderPage,
   OperationalCaseHandlingPage,
-  OperationsConsultantDashboardPage,
   OperationsDashboardNextPage,
   OperationsDashboardPage,
   OrderDetailPage,
@@ -131,13 +128,12 @@ function LegacyVendorRedirect() {
 }
 
 const adminDashboardRoutes: AdminRouteDefinition[] = ADMIN_ALL_DASHBOARDS.filter(
-  (dashboard) =>
-    dashboard.status === 'coming-soon' && !dashboard.href.startsWith('/admin/dashboard-next'),
+  (dashboard) => dashboard.status === 'coming-soon',
 ).map((dashboard) => ({
   path: dashboard.href.replace('/admin/', ''),
   title: dashboard.title,
   description: dashboard.description,
-  eyebrow: dashboard.href.startsWith('/admin/dashboard-next') ? 'Dashboard Next' : 'Dashboard',
+  eyebrow: 'Dashboard',
   kind: 'coming-soon' as const,
 }))
 
@@ -835,30 +831,13 @@ export function AdminRoutes() {
           </PermissionGuard>
         }
       />
-      <Route
-        path="dashboard/operations"
-        element={
-          <PermissionGuard>
-            <OperationsConsultantDashboardPage />
-          </PermissionGuard>
-        }
-      />
+      {/* Legacy dashboard URLs → Dashboard Next */}
+      <Route path="dashboard/operations" element={<Navigate to="/admin/dashboard-next/operations" replace />} />
       <Route
         path="dashboard/documentation"
-        element={
-          <PermissionGuard>
-            <DocumentationDashboardPage />
-          </PermissionGuard>
-        }
+        element={<Navigate to="/admin/dashboard-next/documentation" replace />}
       />
-      <Route
-        path="dashboard/accounts"
-        element={
-          <PermissionGuard>
-            <AccountsDashboardPage />
-          </PermissionGuard>
-        }
-      />
+      <Route path="dashboard/accounts" element={<Navigate to="/admin/dashboard-next/accounts" replace />} />
       <Route
         path="dashboard-next/super-admin"
         element={

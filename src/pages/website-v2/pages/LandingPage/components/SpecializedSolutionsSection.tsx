@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Box, Typography, Stack } from '@mui/material'
-import { Anchor, Building2, User, ArrowRight, type LucideIcon } from 'lucide-react'
+import { Anchor, Building2, Handshake, User, ArrowRight, type LucideIcon } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
 import { publicFonts, usePublicBrandColors, brandPrimaryGreenRgb } from '../../../theme/publicSiteTokens'
@@ -11,28 +11,46 @@ import {
 
 const solutions = [
   {
+    id: 'retail',
+    icon: User,
+    title: 'Retail',
+    summary: 'Visa services for individuals and families',
+    description:
+      'Apply for tourist, business, visit, student and other visa categories with expert guidance and digital tracking.',
+    ctaLabel: 'Explore Retail',
+    href: '/v2',
+    image: travelSolutionImages.retail,
+  },
+  {
     id: 'marine',
     icon: Anchor,
-    title: 'Marine Crew Travel',
-    description: 'Crew visa handling for vessels, offshore teams, and port-of-call deployments.',
+    title: 'Marine',
+    summary: 'Specialist visa support for seafarers and crew',
+    description: 'Dedicated visa expertise for shipping companies, seafarers and marine professionals.',
+    ctaLabel: 'Explore Marine',
     href: '/v2/marine-crew',
     image: travelSolutionImages.marine,
   },
   {
     id: 'corporate',
     icon: Building2,
-    title: 'Corporate Travel Management',
-    description: 'Business visa ops with compliance dashboards, bulk filing, and account support.',
+    title: 'Corporate',
+    summary: 'Visa management for businesses',
+    description:
+      'Simplify employee and business visa applications across destinations with dedicated support and centralized management.',
+    ctaLabel: 'Explore Corporate',
     href: '/v2/corporate',
     image: travelSolutionImages.corporate,
   },
   {
-    id: 'retail',
-    icon: User,
-    title: 'B2B Travelers',
-    description: 'Individual visa assistance for tourists, students, families, and professionals.',
-    href: '/v2',
-    image: travelSolutionImages.retail,
+    id: 'travel-partners',
+    icon: Handshake,
+    title: 'Travel Partners',
+    summary: 'Your visa processing partner',
+    description: 'Reliable visa processing support for travel agents, DMCs and other travel partners.',
+    ctaLabel: 'Partner With GreenLight',
+    href: '/v2#final-cta',
+    image: travelSolutionImages.corporate,
   },
 ] as const
 
@@ -41,15 +59,19 @@ const TRANSITION_MS = '300ms'
 const TRANSITION_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
 function SolutionCard({
-  icon: _icon,
+  icon: Icon,
   title,
+  summary,
   description,
+  ctaLabel,
   href,
   image,
 }: {
   icon: LucideIcon
   title: string
+  summary: string
   description: string
+  ctaLabel: string
   href: string
   image: { src: string; fallback: string; alt: string }
 }) {
@@ -127,6 +149,20 @@ function SolutionCard({
         }}
       >
         <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 1 }}>
+          <Box
+            sx={{
+              width: 34,
+              height: 34,
+              borderRadius: '10px',
+              bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Icon size={18} color={colors.greenBright} strokeWidth={2.1} />
+          </Box>
           <Typography
             sx={{
               fontFamily: publicFonts.heading,
@@ -142,6 +178,19 @@ function SolutionCard({
 
         <Typography
           sx={{
+            fontFamily: publicFonts.heading,
+            fontSize: '16px',
+            fontWeight: 800,
+            color: colors.navy,
+            lineHeight: 1.35,
+            mb: 0.75,
+          }}
+        >
+          {summary}
+        </Typography>
+
+        <Typography
+          sx={{
             fontSize: '14px',
             color: colors.textSecondary,
             lineHeight: 1.65,
@@ -153,7 +202,7 @@ function SolutionCard({
         </Typography>
 
         <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: colors.greenBright }}>
-          <Typography sx={{ fontSize: '13px', fontWeight: 700 }}>Learn More</Typography>
+          <Typography sx={{ fontSize: '13px', fontWeight: 700 }}>{ctaLabel}</Typography>
           <ArrowRight size={15} strokeWidth={2.5} />
         </Stack>
       </Box>
@@ -167,9 +216,11 @@ export function SpecializedSolutionsSection() {
   return (
     <Box
       component="section"
+      id="specialist-visa-services"
       sx={{
         bgcolor: colors.white,
         py: landingSectionPy,
+        scrollMarginTop: 88,
       }}
     >
       <PublicContainer variant="hero">
@@ -184,7 +235,7 @@ export function SpecializedSolutionsSection() {
               mb: 1.5,
             }}
           >
-            Specialized Solutions
+            Specialist Visa Services
           </Typography>
 
           <Typography
@@ -199,7 +250,7 @@ export function SpecializedSolutionsSection() {
               mb: 1.25,
             }}
           >
-            Travel Solutions
+            Visa Expertise Across Every Business Need
           </Typography>
 
           <Typography
@@ -209,8 +260,8 @@ export function SpecializedSolutionsSection() {
               lineHeight: 1.65,
             }}
           >
-            Purpose-built workflows for marine crews, corporate teams, and retail travelers — each
-            linking to a dedicated experience.
+            Whether you're travelling independently, managing employees, supporting crew or serving
+            your own clients, GreenLight has a specialist visa solution.
           </Typography>
         </Box>
 
@@ -219,7 +270,8 @@ export function SpecializedSolutionsSection() {
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              md: 'repeat(3, minmax(0, 1fr))',
+              md: 'repeat(2, minmax(0, 1fr))',
+              lg: 'repeat(4, minmax(0, 1fr))',
             },
             gap: { xs: 2, md: 2.5 },
             alignItems: 'stretch',

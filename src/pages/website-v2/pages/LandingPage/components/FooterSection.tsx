@@ -1,4 +1,4 @@
-import { Box, Typography, Link, Divider, Stack, Grid, Chip } from '@mui/material'
+import { Box, Typography, Link, Divider, Stack, Grid } from '@mui/material'
 import { FooterWorldMapWatermark } from '../../../components/FooterWorldMapWatermark'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { GREENLIGHT_LOGO_DARK_SRC } from '@/components/brand/GreenlightLogo'
@@ -6,28 +6,29 @@ import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteToke
 
 const footerSections: Record<string, { label: string; href: string }[]> = {
   Product: [
-    { label: 'Retail Services', href: '/v2' },
-    { label: 'Marine crew', href: '/v2/marine-crew' },
-    { label: 'Corporate setup', href: '/v2/corporate' },
+    { label: 'Retail Visa Services', href: '/v2' },
+    { label: 'Marine Visa Services', href: '/v2/marine-crew' },
+    { label: 'Corporate Visa Services', href: '/v2/corporate' },
+    { label: 'Travel Partners', href: '/v2#specialist-visa-services' },
     { label: 'Destinations', href: '/v2/countries' },
   ],
   Company: [
-    { label: 'About', href: '/v2/about' },
-    { label: 'Careers', href: '#' },
-    { label: 'Press', href: '#' },
-    { label: 'Blog', href: '#' },
+    { label: 'About Us', href: '/v2/about' },
+    { label: 'Contact Us', href: '/v2/track' },
+    { label: 'Blog / Visa Updates', href: '#' },
   ],
   Legal: [
     { label: 'Privacy Policy', href: '#' },
     { label: 'Terms & Conditions', href: '#' },
+    { label: 'Refund & Cancellation Policy', href: '#' },
     { label: 'Security', href: '#' },
     { label: 'Compliance', href: '#' },
   ],
   Support: [
     { label: 'Portal Access', href: '/sign-in' },
-    { label: 'Track application', href: '/v2/track' },
-    { label: 'Help center', href: '#' },
-    { label: 'Contact us', href: '/v2/track' },
+    { label: 'Track Application', href: '/v2/track' },
+    { label: 'Help Centre', href: '#' },
+    { label: 'Contact Support', href: '/v2/track' },
   ],
 }
 
@@ -64,25 +65,9 @@ export function FooterSection() {
                 fontFamily: publicFonts.body,
               }}
             >
-              The global visa operating system for travelers, marine crews, and enterprise travel
-              teams.
+              Tech-enabled visa assistance with expert review for travelers, families, businesses,
+              marine teams and travel partners.
             </Typography>
-            <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-              {['ISO 27001', 'GDPR', 'SOC 2'].map(badge => (
-                <Chip
-                  key={badge}
-                  label={badge}
-                  sx={{
-                    bgcolor: 'rgba(255,255,255,0.08)',
-                    color: 'rgba(255,255,255,0.75)',
-                    fontWeight: 600,
-                    fontSize: '12px',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    height: 32,
-                  }}
-                />
-              ))}
-            </Stack>
           </Grid>
 
           {Object.entries(footerSections).map(([section, links]) => (
@@ -132,11 +117,16 @@ export function FooterSection() {
           spacing={3}
         >
           <Typography sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '14px' }}>
-            © 2025 Greenlight Travel Solutions. All rights reserved.
+            © 2026 GreenLight Travel Solutions Pvt. Ltd. All rights reserved.
           </Typography>
-          <Typography sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>
-            Enterprise visa infrastructure
-          </Typography>
+          <Stack spacing={0.75}>
+            <Typography sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px' }}>
+              GreenLight Visa Solutions is a brand of GreenLight Travel Solutions Pvt. Ltd.
+            </Typography>
+            <Typography sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>
+              * Based on applications meeting eligibility criteria.
+            </Typography>
+          </Stack>
         </Stack>
       </PublicContainer>
     </Box>

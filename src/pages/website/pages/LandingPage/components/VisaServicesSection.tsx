@@ -14,7 +14,7 @@ const visaServices = [
   {
     id: 'tourist',
     title: 'Tourist Visa',
-    description: 'For travel, leisure and vacation',
+    description: 'For holidays, leisure and short-term travel',
     image: visaServiceShowcaseImages.tourist,
     href: '/countries',
     objectPosition: 'center center',
@@ -22,7 +22,7 @@ const visaServices = [
   {
     id: 'business',
     title: 'Business Visa',
-    description: 'For business meetings, conferences and events',
+    description: 'For meetings, conferences and business visits',
     image: visaServiceShowcaseImages.business,
     href: '/countries',
     objectPosition: 'center 35%',
@@ -30,7 +30,7 @@ const visaServices = [
   {
     id: 'student',
     title: 'Student Visa',
-    description: 'For studying abroad at top universities',
+    description: 'For overseas study and academic travel',
     image: visaServiceShowcaseImages.student,
     href: '/countries',
     objectPosition: 'center 32%',
@@ -38,16 +38,24 @@ const visaServices = [
   {
     id: 'transit',
     title: 'Transit Visa',
-    description: 'For short layovers and transit through a country',
+    description: 'For layovers and onward travel through another country',
     image: visaServiceShowcaseImages.transit,
     href: '/countries',
     objectPosition: 'center 40%',
   },
   {
-    id: 'project',
-    title: 'Project Visa',
-    description: 'For project assignments and on-site work',
-    image: visaServiceShowcaseImages.project,
+    id: 'family',
+    title: 'Visit & Family',
+    description: 'For visiting friends, relatives and family members',
+    image: visaServiceShowcaseImages.family,
+    href: '/countries',
+    objectPosition: 'center center',
+  },
+  {
+    id: 'other',
+    title: 'Other Visa Types',
+    description: 'For special cases that need country-specific guidance',
+    image: visaServiceShowcaseImages.other,
     href: '/countries',
     objectPosition: 'center 35%',
   },
@@ -291,7 +299,7 @@ export function VisaServicesSection() {
           sx={{
             display: { xs: 'flex', lg: 'grid' },
             gridTemplateColumns: {
-              lg: 'repeat(5, minmax(0, 1fr))',
+              lg: 'repeat(6, minmax(0, 1fr))',
             },
             gap: { xs: 2.5, sm: 2.75, md: 3 },
             overflowX: { xs: 'auto', lg: 'visible' },
