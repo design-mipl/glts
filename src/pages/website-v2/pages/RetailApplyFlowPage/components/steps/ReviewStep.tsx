@@ -37,8 +37,13 @@ export function ReviewStep({ journey, draft, onBack, onContinue }: ReviewStepPro
           <Typography sx={{ fontSize: '13px', fontWeight: 700, color: colors.navy, mb: 0.5 }}>Trip</Typography>
           <SummaryRow label="Destination" value={journey.country.name} />
           <SummaryRow label="Visa type" value={journey.visaType.name} />
-          <SummaryRow label="Traveller" value={draft.traveller.fullName || '—'} />
-          <SummaryRow label="Passport number" value={draft.traveller.passportNumber || '—'} />
+          {draft.applicants.map((applicant, index) => (
+            <SummaryRow
+              key={applicant.id}
+              label={index === 0 ? 'Traveller' : `Traveller ${index + 1}`}
+              value={`${applicant.details.fullName || '—'} · ${applicant.details.passportNumber || 'passport pending'}`}
+            />
+          ))}
         </Box>
         <Box>
           <Typography sx={{ fontSize: '13px', fontWeight: 700, color: colors.navy, mb: 0.5 }}>Documents</Typography>
