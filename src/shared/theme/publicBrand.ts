@@ -7,6 +7,9 @@ export type PublicBrandMode = 'light' | 'dark'
 /** RGB components for primary brand green (`#73C064`) — use in `rgba(${brandPrimaryGreenRgb}, α)`. */
 export const brandPrimaryGreenRgb = '115, 192, 100' as const
 
+/** RGB components for brand gold (`#FEC107`) — use in `rgba(${brandGoldRgb}, α)`. */
+export const brandGoldRgb = '254, 193, 7' as const
+
 export interface PublicBrandColors {
   navy: string
   navyMid: string
@@ -15,6 +18,11 @@ export interface PublicBrandColors {
   greenBright: string
   greenDark: string
   greenMuted: string
+  /** Visa Solutions retail-flow accent. */
+  gold: string
+  goldBright: string
+  goldDark: string
+  goldMuted: string
   criticalMuted: string
   criticalBorder: string
   checklistMuted: string
@@ -41,6 +49,10 @@ export const publicLightColors: PublicBrandColors = {
   greenBright: '#73C064',
   greenDark: '#5A9A4E',
   greenMuted: 'rgba(115, 192, 100, 0.12)',
+  gold: '#FEC107',
+  goldBright: '#FEC107',
+  goldDark: '#FFA000',
+  goldMuted: 'rgba(254, 193, 7, 0.12)',
   criticalMuted: '#FEF2F2',
   criticalBorder: '#FECACA',
   checklistMuted: '#F2F5F9',
@@ -65,6 +77,10 @@ export const publicDarkColors: PublicBrandColors = {
   greenBright: '#8FD67F',
   greenDark: '#5A9A4E',
   greenMuted: 'rgba(115, 192, 100, 0.14)',
+  gold: '#FEC107',
+  goldBright: '#FFD54F',
+  goldDark: '#FFA000',
+  goldMuted: 'rgba(254, 193, 7, 0.14)',
   criticalMuted: '#2D1818',
   criticalBorder: '#5C2E2E',
   checklistMuted: '#151D2B',
