@@ -1,18 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
-import {
-  Camera,
-  CircleHelp,
-  FileText,
-  IdCard,
-  IndianRupee,
-  Upload,
-  UserRound,
-} from 'lucide-react'
-import { brandPrimaryGreenRgb, usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { retailFlowColors, retailFlowLayout } from '@/pages/website-v2/theme/retailFlowTokens'
+import { Camera, FileText, IdCard, IndianRupee, UserRound } from 'lucide-react'
+import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { retailFlowLayout } from '@/pages/website-v2/theme/retailFlowTokens'
 import { WhyWeAskSheet } from '@/pages/website-v2/components/WhyWeAskSheet'
 import { resolveDocumentWhyContent, type DocumentWhyContent } from '@/pages/website-v2/config/documentWhyContent'
+import { DocumentChecklistRow } from '@/pages/website-v2/components/documentChecklist/DocumentChecklistRow'
 import {
   displayNameUpper,
   initialsFromName,
@@ -131,6 +124,7 @@ export function ChecklistStep({
     <>
       <StepShell
         title="We work in parallel. You don't wait, your visa doesn't wait."
+        mobileTitle="We work in parallel. You don't wait."
         helperText="The moment you checkout, we start drafting required forms and your slot is confirmed. Upload the documents any time in the next 5 days."
         onBack={onBack}
         onContinue={onContinue}
@@ -300,132 +294,26 @@ export function ChecklistStep({
                       </Box>
 
                       <Stack spacing={0} sx={{ px: { xs: 1, sm: 1.25 }, py: 1 }}>
-                        {docs.map((doc) => {
-                          const completed = isDocComplete(doc, activeApplicant, uploads)
-                          const Icon = docIcon(doc)
-
-                          return (
-                            <Stack
-                              key={doc.documentId}
-                              direction="row"
-                              alignItems="center"
-                              spacing={1.25}
-                              sx={{
-                                px: 1.25,
-                                py: 1.35,
-                                borderRadius: retailFlowLayout.controlRadius,
-                                '&:hover': { bgcolor: colors.surfaceAlt },
-                              }}
-                            >
-                              <Box
-                                sx={{
-                                  width: 34,
-                                  height: 34,
-                                  borderRadius: '50%',
-                                  border: `1px solid ${colors.border}`,
-                                  color: colors.textSecondary,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  flexShrink: 0,
-                                  bgcolor: colors.white,
-                                }}
-                              >
-                                <Icon size={15} strokeWidth={1.75} />
-                              </Box>
-
-                              <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <Stack direction="row" alignItems="center" spacing={0.75}>
-                                  <Typography sx={{ fontSize: 14, fontWeight: 600, color: colors.navy }}>
-                                    {doc.name}
-                                    {!doc.mandatory ? ' (optional)' : ''}
-                                  </Typography>
-                                  <Box
-                                    component="button"
-                                    type="button"
-                                    aria-label={`Why we ask about ${doc.name}`}
-                                    onClick={() =>
-                                      setWhyContent(
-                                        resolveDocumentWhyContent({
-                                          documentId: doc.documentId,
-                                          name: doc.name,
-                                          description: doc.description,
-                                        }),
-                                      )
-                                    }
-                                    sx={{
-                                      appearance: 'none',
-                                      border: 'none',
-                                      background: 'none',
-                                      p: 0,
-                                      m: 0,
-                                      cursor: 'pointer',
-                                      color: colors.textMuted,
-                                      display: 'inline-flex',
-                                      '&:hover': { color: colors.greenDark },
-                                    }}
-                                  >
-                                    <CircleHelp size={14} />
-                                  </Box>
-                                </Stack>
-                                {doc.description ? (
-                                  <Typography sx={{ fontSize: 12, color: colors.textMuted, mt: 0.25 }}>
-                                    {doc.description}
-                                  </Typography>
-                                ) : null}
-                              </Box>
-
-                              {completed ? (
-                                <Box
-                                  sx={{
-                                    flexShrink: 0,
-                                    px: 1.1,
-                                    py: 0.4,
-                                    borderRadius: 999,
-                                    bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
-                                    color: retailFlowColors.green,
-                                    fontSize: 10.5,
-                                    fontWeight: 700,
-                                    letterSpacing: '0.04em',
-                                    textTransform: 'uppercase',
-                                  }}
-                                >
-                                  Completed
-                                </Box>
-                              ) : (
-                                <Box
-                                  component="label"
-                                  sx={{
-                                    fontSize: 12,
-                                    fontWeight: 700,
-                                    color: colors.greenDark,
-                                    bgcolor: colors.greenMuted,
-                                    border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.15)`,
-                                    borderRadius: '8px',
-                                    px: 1.35,
-                                    py: 0.65,
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 0.5,
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <Upload size={12} /> Upload
-                                  <input
-                                    type="file"
-                                    accept="image/*,.pdf"
-                                    hidden
-                                    onChange={(event) => {
-                                      const file = event.target.files?.[0]
-                                      if (file) handleFile(doc.documentId, file, activeApplicant.id)
-                                    }}
-                                  />
-                                </Box>
-                              )}
-                            </Stack>
-                          )
-                        })}
+                        {docs.map((doc) => (
+                          <DocumentChecklistRow
+                            key={doc.documentId}
+                            icon={docIcon(doc)}
+                            name={doc.name}
+                            description={doc.description}
+                            completed={isDocComplete(doc, activeApplicant, uploads)}
+                            optional={!doc.mandatory}
+                            onInfoClick={() =>
+                              setWhyContent(
+                                resolveDocumentWhyContent({
+                                  documentId: doc.documentId,
+                                  name: doc.name,
+                                  description: doc.description,
+                                }),
+                              )
+                            }
+                            onFileSelect={(file) => handleFile(doc.documentId, file, activeApplicant.id)}
+                          />
+                        ))}
                       </Stack>
                     </Box>
                   )

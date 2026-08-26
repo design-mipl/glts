@@ -11,6 +11,8 @@ import { overlayFooterButtonSx } from '@/design-system/UIComponents/Feedback/ove
 
 interface StepShellProps {
   title: string
+  /** Shorter headline swapped in below the `md` breakpoint (428px) — use when `title` wraps awkwardly on small phones. */
+  mobileTitle?: string
   helperText?: string
   children: ReactNode
   onBack?: () => void
@@ -29,6 +31,7 @@ interface StepShellProps {
 /** Retail step content chrome — centered body, actions pinned to card bottom. */
 export function StepShell({
   title,
+  mobileTitle,
   helperText,
   children,
   onBack,
@@ -76,9 +79,46 @@ export function StepShell({
             mb: helperText ? 0.5 : 2.5,
           }}
         >
-          <Typography sx={{ fontWeight: 800, fontSize: { xs: 22, md: 26 }, color: colors.navy, m: 0 }}>
-            {title}
-          </Typography>
+          {mobileTitle ? (
+            <>
+              <Typography
+                sx={{
+                  display: { xs: 'block', md: 'none' },
+                  fontWeight: 900,
+                  letterSpacing: '-0.02em',
+                  fontSize: 26,
+                  color: colors.navy,
+                  m: 0,
+                }}
+              >
+                {mobileTitle}
+              </Typography>
+              <Typography
+                sx={{
+                  display: { xs: 'none', md: 'block' },
+                  fontWeight: 900,
+                  letterSpacing: '-0.02em',
+                  fontSize: 32,
+                  color: colors.navy,
+                  m: 0,
+                }}
+              >
+                {title}
+              </Typography>
+            </>
+          ) : (
+            <Typography
+              sx={{
+                fontWeight: 900,
+                letterSpacing: '-0.02em',
+                fontSize: { xs: 26, md: 32 },
+                color: colors.navy,
+                m: 0,
+              }}
+            >
+              {title}
+            </Typography>
+          )}
           {titleAccessory}
         </Box>
         {helperText ? (
