@@ -26,11 +26,31 @@ export type RetailStepId =
   | 'payment'
   | 'success'
 
-/** Who funds the trip — chosen after travel profiles are built. */
+/**
+ * Per-traveller sponsor (B10).
+ * Binary: Individual (self-funded) or Someone else + basic details.
+ */
+export type RetailTravellerSponsor =
+  | { mode: 'individual' }
+  | {
+      mode: 'someone_else'
+      name: string
+      relationship: string
+      /** Phone or email — inventory Step 8.6 “contact”. */
+      contact: string
+    }
+
+/**
+ * @deprecated Application-level sponsor — migrated to `applicants[].sponsor` in normalizeDraft.
+ * Kept so sessionStorage drafts don’t crash mid-read.
+ */
 export type RetailSponsorSelection =
   | { mode: 'traveller'; applicantId: string }
   | { mode: 'self_paying' }
   | { mode: 'someone_else'; name: string }
+
+/** Document upload id for sponsor bank statement (keyed via checklistUploadKey). */
+export const SPONSOR_BANK_STATEMENT_DOC_ID = 'sponsor_bank_statement' as const
 
 export interface RetailStepDefinition {
   id: RetailStepId
@@ -70,6 +90,8 @@ export interface RetailApplicantParty {
   profileComplete?: boolean
   /** Answers collected inside Build profile (questions land here as they are added). */
   profileAnswers?: Record<string, string>
+  /** Who's paying for this traveller's trip (B10 — per traveller). */
+  sponsor?: RetailTravellerSponsor
   photo?: RetailCapturedImage
   passport?: RetailCapturedImage
   /** Passport back / address page. */
@@ -114,7 +136,10 @@ export interface RetailFlowDraft {
   applicants: RetailApplicantParty[]
   eligibilityAnswerId?: string
   eligibilityStatus?: 'eligible' | 'ineligible'
-  /** Trip sponsor — traveller, everyone self-paying, or an external person. */
+  /**
+   * @deprecated Prefer `applicants[].sponsor` (per-traveller).
+   * Still read once during draft normalize for in-progress sessionStorage drafts.
+   */
   sponsor?: RetailSponsorSelection
   /** @deprecated Prefer `applicants[0].photo` */
   photo?: RetailCapturedImage

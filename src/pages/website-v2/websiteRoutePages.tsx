@@ -23,3 +23,7 @@ export const WebsiteApplicationFlowPage = lazyNamed(
   () => import('./pages/WebsiteApplicationFlowPage'),
   'WebsiteApplicationFlowPage',
 )
+export const ApplicationTrackingPage = lazyNamed(
+  () => import('./pages/ApplicationTrackingPage'),
+  'ApplicationTrackingPage',
+)

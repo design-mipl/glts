@@ -84,7 +84,32 @@ export function DestinationsHeroSection({ destinationCount }: DestinationsHeroSe
         >
           {destinationCount} destinations
         </Typography>
-        <Typography sx={{ fontSize: publicTypography.body, color: colors.textSecondary }}>
+        <Typography
+          sx={{
+            fontFamily: publicFonts.body,
+            fontSize: { xs: '14px', md: '15px' },
+            fontWeight: 500,
+            color: colors.textSecondary,
+            letterSpacing: '0.01em',
+            lineHeight: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Box
+            aria-hidden
+            component="span"
+            sx={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              bgcolor: colors.greenBright,
+              boxShadow: '0 0 0 2px rgba(115, 192, 100, 0.28)',
+              flexShrink: 0,
+            }}
+          />
           Sorted by your nationality · Indian passport · Travel from Mar 2026
         </Typography>
       </PublicContainer>

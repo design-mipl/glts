@@ -16,7 +16,17 @@ Since V2 is specifically the retail/customer-facing redesign, **the working assu
 
 Exact values above are sampled directly from the provided logo files (not estimated) — safe to use as final tokens, though worth cross-checking against any existing brand guideline doc if one exists, in case the source-of-truth hex differs slightly from the rendered PNGs.
 
+## Visual Language Rules — Locked
 
+Settled decisions for the live-status / upload surface family. **Not open questions** — check here before styling any new component in this family.
+
+- **LiveStatusPanel:** No color-blob ambient glow. Technical grid via SVG-native `<mask>` (not CSS `mask-image`), fading top-right → bottom-left. Small **green** live dot top-right (not gold). Gold is reserved for the single headline number/date only. Readiness ring + “% ready” use **green** (progress), not gold.
+- **StatusStepper:** Dark-filled circles + custom check path (completed); **muted amber tint** bg + dark amber clock (current — not solid gold fill); dashed outline only (pending). Solid dark connectors through completed steps. Status pills = light tint bg + dark same-family text. Timestamps use `tabular-nums`.
+- **TravellerUploadStatusRow:** Real SVG confidence ring (`stroke-dasharray`), percentage centered with flexbox. Avatar colors from semantic state only (green / amber / red / gray) — never random. Needs-attention row = **3px solid left border only**, white/default background — never a red fill tint.
+- **ChecklistStep:** Full-width header + passenger tabs (dark filled rounded rectangle + avatar + Build-profile line when selected; light grey when not). Body is flex ~65/35 (not CSS Grid): left = category-grouped `DocumentChecklistRow` list; right = `BulkUploadDropzone` (scoped to active traveller) + `LiveStatusPanel` readiness variant (left-aligned; live completion % ring + minutes left). White container background. No Overview strip.
+- **Gold vs green:** Gold appears **once per card** — the headline number/date only (e.g. “94%”, “Aug 29”). Green owns progress, confidence, live pulse, and completed trust signals.
+
+---
 
 **Purpose:** This is the working spec that translates the Application Creation Flow (19-step engine) into concrete screens and components. Each entry defines what the screen must do, what precedent we have for it, where GLTS V1 currently falls short, and the proposed V2 direction. This document is what a design system and — later — Claude Code would build against.
 

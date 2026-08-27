@@ -56,6 +56,9 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
   const [visaOfferingId, setVisaOfferingId] = useState(initialVisaOfferingId)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [direction, setDirection] = useState<1 | -1>(1)
+  /** Fingerprint of resolved docs when review was last acknowledged — detects downstream requirement changes. */
+  const [reviewRequirementsBaseline, setReviewRequirementsBaseline] = useState<string | null>(null)
+  const [showRequirementsUpdated, setShowRequirementsUpdated] = useState(false)
 
   const countryId = initialCountryId
   const trustProfile = getCountryTrustProfile(countryId)
@@ -93,6 +96,26 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
       }
     }
   }, [steps, draft.lastStepId])
+
+  const requirementsFingerprint = useMemo(() => {
+    if (!journey) return ''
+    return journey.documents
+      .map((doc) => `${doc.documentId}:${doc.mandatory ? '1' : '0'}`)
+      .sort()
+      .join('|')
+  }, [journey])
+
+  useEffect(() => {
+    if (steps[currentStepIndex]?.id !== 'review') return
+    if (!requirementsFingerprint) return
+    if (reviewRequirementsBaseline === null) {
+      setReviewRequirementsBaseline(requirementsFingerprint)
+      return
+    }
+    if (requirementsFingerprint !== reviewRequirementsBaseline) {
+      setShowRequirementsUpdated(true)
+    }
+  }, [currentStepIndex, steps, requirementsFingerprint, reviewRequirementsBaseline])
 
   function goToStep(index: number, dir: 1 | -1) {
     setDirection(dir)
@@ -174,11 +197,11 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
     patchDraft((prev) => {
       if (prev.applicants.length <= 1) return {}
       const applicants = prev.applicants.filter((applicant) => applicant.id !== id)
-      const sponsor =
-        prev.sponsor?.mode === 'traveller' && prev.sponsor.applicantId === id
-          ? undefined
-          : prev.sponsor
-      return { applicants, sponsor }
+      // Drop sponsor bank-statement uploads keyed to the removed traveller.
+      const documentUploads = Object.fromEntries(
+        Object.entries(prev.documentUploads).filter(([key]) => !key.startsWith(`${id}__`)),
+      )
+      return { applicants, documentUploads }
     })
   }
 
@@ -247,8 +270,18 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         return (
           <SponsorStep
             applicants={draft.applicants}
-            sponsor={draft.sponsor}
-            onChange={(sponsor) => patchDraft({ sponsor })}
+            uploads={draft.documentUploads}
+            onUpdateSponsor={(applicantId, sponsor) =>
+              updateApplicant(applicantId, { sponsor })
+            }
+            onUpload={(applicantId, image) =>
+              patchDraft((prev) => ({
+                documentUploads: {
+                  ...prev.documentUploads,
+                  [`${applicantId}__sponsor_bank_statement`]: image,
+                },
+              }))
+            }
             onGoToTravelProfile={goToTravelProfile}
             onBack={goBack}
             onContinue={goNext}
@@ -324,34 +357,43 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
             onContinue={goNext}
           />
         )
-      case 'collectionDetails':
-        if (!draft.collectionMethod) return null
+      case 'collectionDetails': {
+        const method = draft.collectionMethod ?? 'picked_up_from_company'
         return (
           <CollectionDetailsStep
-            method={draft.collectionMethod}
+            method={method}
             values={draft.collectionDetails}
+            onSelectMethod={(next) =>
+              patchDraft({ collectionMethod: next, collectionDetails: {} })
+            }
             onChange={(key, value) =>
-              patchDraft((prev) => ({ collectionDetails: { ...prev.collectionDetails, [key]: value } }))
+              patchDraft((prev) => ({
+                collectionMethod: prev.collectionMethod ?? method,
+                collectionDetails: { ...prev.collectionDetails, [key]: value },
+              }))
             }
             onBack={goBack}
             onContinue={goNext}
           />
         )
-      case 'collectionConfirmation':
-        if (!draft.collectionMethod) return null
+      }
+      case 'collectionConfirmation': {
+        const method = draft.collectionMethod ?? 'picked_up_from_company'
         return (
           <CollectionConfirmationStep
-            method={draft.collectionMethod}
+            method={method}
             values={draft.collectionDetails}
             onBack={goBack}
             onContinue={goNext}
           />
         )
+      }
       case 'insurance':
         return (
           <InsuranceStep
             services={journey?.insuranceServices ?? []}
             selection={draft.insurance}
+            travelDate={draft.travelDate}
             onChange={(selection) => patchDraft({ insurance: selection })}
             onBack={goBack}
             onContinue={goNext}
@@ -362,6 +404,7 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
           <FlightTicketStep
             services={journey?.flightTicketServices ?? []}
             selection={draft.flightTicket}
+            travelDate={draft.travelDate}
             onChange={(selection) => patchDraft({ flightTicket: selection })}
             onBack={goBack}
             onContinue={goNext}
@@ -369,7 +412,24 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         )
       case 'review':
         if (!journey) return null
-        return <ReviewStep journey={journey} draft={draft} onBack={goBack} onContinue={goNext} />
+        return (
+          <ReviewStep
+            journey={journey}
+            draft={draft}
+            onBack={goBack}
+            onContinue={goNext}
+            requirementsUpdated={showRequirementsUpdated}
+            onDismissRequirementsUpdated={() => {
+              setShowRequirementsUpdated(false)
+              setReviewRequirementsBaseline(requirementsFingerprint)
+            }}
+            onEditStep={(stepId) => {
+              const targetIndex = steps.findIndex((step) => step.id === stepId)
+              if (targetIndex === -1) return
+              goToStep(targetIndex, targetIndex > currentStepIndex ? 1 : -1)
+            }}
+          />
+        )
       case 'payment':
         if (!journey) return null
         return (

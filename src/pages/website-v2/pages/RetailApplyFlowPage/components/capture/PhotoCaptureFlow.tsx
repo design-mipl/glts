@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Box, Typography } from '@mui/material'
 import { Camera } from 'lucide-react'
 import { BORDER_RADIUS } from '@/design-system/tokens'
@@ -14,6 +14,12 @@ interface PhotoCaptureFlowProps {
   onConfirm: (image: RetailCapturedImage) => void
   onClose: () => void
 }
+
+const PHOTO_TIPS = [
+  'Face fully visible, eyes open, neutral expression',
+  'Plain light background, no shadows across the face',
+  'Colour photo only, under 5MB',
+] as const
 
 function readFileAsImage(file: File): Promise<RetailCapturedImage> {
   return new Promise((resolve, reject) => {
@@ -106,32 +112,20 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
           </Box>
         }
       >
-        <Box
-          sx={{
-            position: 'relative',
-            width: 'min(100%, 360px)',
-            aspectRatio: '1 / 1.15',
-            bgcolor: 'transparent',
-            borderRadius: BORDER_RADIUS.xl,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            p: 2.5,
-          }}
-        >
-          <CornerGuides />
+        <CaptureFrame>
           <Box
             component="img"
             src={draft.dataUrl}
             alt="Photo preview"
             sx={{
-              width: '78%',
-              height: '78%',
+              width: '100%',
+              height: '100%',
               objectFit: 'cover',
               borderRadius: BORDER_RADIUS.md,
             }}
           />
-        </Box>
+        </CaptureFrame>
+        <TipList tips={PHOTO_TIPS} muted={colors.textMuted} />
       </CaptureFlowShell>
     )
   }
@@ -144,20 +138,7 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
       header={<CaptureHeadline lead="Look ahead," accent="straight at the camera" />}
       footer={<CaptureModeBar mode={mode} onChange={setMode} />}
     >
-      <Box
-        sx={{
-          position: 'relative',
-          width: 'min(88vw, 400px)',
-          aspectRatio: '1',
-          borderRadius: '50%',
-          overflow: 'hidden',
-          border: `2px solid rgba(115, 192, 100, 0.45)`,
-          bgcolor: colors.surfaceAlt,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <CaptureFrame>
         {mode === 'live' && status === 'live' ? (
           <Box
             component="video"
@@ -165,20 +146,28 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
             muted
             playsInline
             autoPlay
-            sx={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transform: 'scaleX(-1)',
+              borderRadius: BORDER_RADIUS.md,
+            }}
           />
         ) : (
           <Box sx={{ textAlign: 'center', px: 3 }}>
-            <Camera size={28} color={colors.textMuted} />
-            <Typography sx={{ mt: 1, fontSize: 13, color: colors.textMuted }}>
+            <Camera size={28} color="rgba(255,255,255,0.55)" />
+            <Typography sx={{ mt: 1, fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>
               {status === 'starting' && 'Starting camera…'}
               {status === 'denied' && 'Camera denied — upload from device instead.'}
               {status === 'unavailable' && 'Camera unavailable — upload from device instead.'}
-              {(status === 'idle' || mode === 'upload') && 'Position your face in the circle'}
+              {(status === 'idle' || mode === 'upload') && 'Position your face in the frame'}
             </Typography>
           </Box>
         )}
-      </Box>
+      </CaptureFrame>
+
+      <TipList tips={PHOTO_TIPS} muted={colors.textMuted} />
 
       {mode === 'live' && status === 'live' ? (
         <Button
@@ -187,7 +176,7 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
           color="primary"
           startIcon={<Camera size={16} />}
           onClick={handleCapture}
-          sx={{ mt: 3, minWidth: 180 }}
+          sx={{ mt: 2.5, minWidth: 180 }}
         />
       ) : null}
 
@@ -211,48 +200,80 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
   )
 }
 
-function CornerGuides() {
-  const arm = 18
-  const thick = 2
-  const color = 'rgba(15, 23, 42, 0.85)'
-  const corner = (top: boolean, left: boolean) => (
+function CaptureFrame({ children }: { children: ReactNode }) {
+  return (
     <Box
       sx={{
-        position: 'absolute',
-        top: top ? 14 : 'auto',
-        bottom: top ? 'auto' : 28,
-        left: left ? 28 : 'auto',
-        right: left ? 'auto' : 28,
-        width: arm,
-        height: arm,
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          [top ? 'top' : 'bottom']: 0,
-          [left ? 'left' : 'right']: 0,
-          width: arm,
-          height: thick,
-          bgcolor: color,
-        },
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          [top ? 'top' : 'bottom']: 0,
-          [left ? 'left' : 'right']: 0,
-          width: thick,
-          height: arm,
-          bgcolor: color,
-        },
+        position: 'relative',
+        width: 'min(100%, 360px)',
+        aspectRatio: '1 / 1.15',
+        bgcolor: '#0B1220',
+        borderRadius: BORDER_RADIUS.xl,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 2.25,
+        boxSizing: 'border-box',
+        overflow: 'hidden',
       }}
-    />
+    >
+      <Box
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          inset: 14,
+          borderRadius: BORDER_RADIUS.lg,
+          border: '2px solid rgba(255, 255, 255, 0.92)',
+          pointerEvents: 'none',
+          zIndex: 2,
+        }}
+      />
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          borderRadius: BORDER_RADIUS.md,
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
   )
+}
+
+function TipList({ tips, muted }: { tips: readonly string[]; muted: string }) {
   return (
-    <>
-      {corner(true, true)}
-      {corner(true, false)}
-      {corner(false, true)}
-      {corner(false, false)}
-    </>
+    <Box
+      component="ul"
+      sx={{
+        mt: 2.5,
+        mb: 0,
+        pl: 2.25,
+        maxWidth: 360,
+        textAlign: 'left',
+        listStyleType: 'disc',
+      }}
+    >
+      {tips.map((tip) => (
+        <Typography
+          key={tip}
+          component="li"
+          sx={{
+            fontSize: 12.5,
+            lineHeight: 1.45,
+            color: muted,
+            mb: 0.5,
+            '&:last-child': { mb: 0 },
+          }}
+        >
+          {tip}
+        </Typography>
+      ))}
+    </Box>
   )
 }
 

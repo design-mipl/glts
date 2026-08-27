@@ -15,10 +15,12 @@ interface WebsiteListingCountryCardProps {
 
 export function WebsiteListingCountryCard({ country, href }: WebsiteListingCountryCardProps) {
   const colors = usePublicBrandColors()
-  const [imgError, setImgError] = useState(false)
+  const imageUrl = getCountryHeroImageUrl(country)
+  const [imgError, setImgError] = useState(!imageUrl)
   const link = href ?? `/countries/${country.id}`
   const processingTime = formatEtaShort(country.processingTime)
   const visaLabel = country.portalProcessingLabel ?? country.visaCategory
+  const showFallback = imgError || !imageUrl
 
   return (
     <Box
@@ -57,7 +59,7 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
               bgcolor: colors.surfaceAlt,
             }}
           >
-            {imgError ? (
+            {showFallback ? (
               <Box
                 sx={{
                   width: '100%',
@@ -73,7 +75,7 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
             ) : (
               <Box
                 component="img"
-                src={getCountryHeroImageUrl(country)}
+                src={imageUrl}
                 alt={country.name}
                 loading="lazy"
                 onError={() => setImgError(true)}

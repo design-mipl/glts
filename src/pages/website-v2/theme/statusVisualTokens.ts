@@ -19,6 +19,17 @@ export const statusVisualRadius = {
   full: '50%',
 } as const
 
+/** Elevated white/light card shadow — shared with retail apply-flow cards. */
+export const statusElevatedCardShadow =
+  '0 1px 2px rgba(15,27,43,0.04), 0 8px 24px -4px rgba(15,27,43,0.10)' as const
+
+export function getElevatedStatusCardSx(borderColor = 'rgba(15, 23, 42, 0.06)') {
+  return {
+    border: `1px solid ${borderColor}`,
+    boxShadow: statusElevatedCardShadow,
+  } as const
+}
+
 /** Blurred, restrained single-color ambient bloom — sits behind a headline number, never a flat fill. */
 export function getAmbientGlowSx(rgb: string, sizePx = 220, opacity = 0.32) {
   return {

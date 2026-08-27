@@ -1,25 +1,26 @@
 import type { RetailJourney } from '@/shared/services/retailJourneyResolver'
 import type { RetailStepDefinition } from '../types'
 
+/**
+ * Full retail apply step sequence for the V2 design pass.
+ *
+ * Always include the complete UX path for every application. Country-master
+ * gating (which steps/docs apply per offering) comes later — do not hide
+ * collection / jurisdiction / extras based on journey flags for now.
+ *
+ * Eligibility + conditional questions remain optional add-ons when the
+ * journey resolver already surfaces them for a given offering.
+ */
 export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinition[] {
   // Destination is chosen on the country page before apply starts.
   const steps: RetailStepDefinition[] = [
     { id: 'visa', phase: 'purpose', label: 'Visa type' },
+    // Always show city + travel date (cities may be empty until country master is wired).
+    { id: 'jurisdiction', phase: 'purpose', label: 'Submission city' },
+    { id: 'travelProfile', phase: 'traveller', label: 'Travel profile' },
+    { id: 'sponsor', phase: 'sponsor', label: 'Sponsor' },
+    { id: 'passport', phase: 'documents', label: 'Essential documents' },
   ]
-
-  // Application centre (jurisdiction cities) — before traveller details.
-  if (journey.requiresJurisdictionSelection) {
-    steps.push({ id: 'jurisdiction', phase: 'purpose', label: 'Submission city' })
-  }
-
-  // Name + Build profile per traveller.
-  steps.push({ id: 'travelProfile', phase: 'traveller', label: 'Travel profile' })
-
-  // Trip sponsor — after profiles are ready.
-  steps.push({ id: 'sponsor', phase: 'sponsor', label: 'Sponsor' })
-
-  // Photo + passport immediately after sponsor.
-  steps.push({ id: 'passport', phase: 'documents', label: 'Essential documents' })
 
   if (journey.hasEligibilityGate) {
     steps.push({ id: 'eligibility', phase: 'documents', label: 'Eligibility check' })
@@ -29,18 +30,12 @@ export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinitio
     steps.push({ id: `question:${question.id}`, phase: 'documents', label: question.title })
   }
 
-  steps.push({ id: 'checklist', phase: 'documents', label: 'Document checklist' })
-
-  if (journey.allowsPhysicalOriginalDocuments) {
-    steps.push(
-      { id: 'originalDocuments', phase: 'documents', label: 'Original documents' },
-      { id: 'collectionMethod', phase: 'documents', label: 'Collection method' },
-      { id: 'collectionDetails', phase: 'documents', label: 'Collection details' },
-      { id: 'collectionConfirmation', phase: 'documents', label: 'Confirm collection' },
-    )
-  }
-
   steps.push(
+    { id: 'checklist', phase: 'documents', label: 'Document checklist' },
+    { id: 'originalDocuments', phase: 'documents', label: 'Original documents' },
+    { id: 'collectionMethod', phase: 'documents', label: 'Collection method' },
+    { id: 'collectionDetails', phase: 'documents', label: 'Collection details' },
+    { id: 'collectionConfirmation', phase: 'documents', label: 'Confirm collection' },
     { id: 'insurance', phase: 'extras', label: 'Travel insurance' },
     { id: 'flightTicket', phase: 'extras', label: 'Flight ticket' },
     { id: 'review', phase: 'pay', label: 'Review' },

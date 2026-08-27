@@ -3,13 +3,53 @@ import {
   createRetailApplicantParty,
   emptyRetailFlowDraft,
   syncPrimaryApplicantMirror,
+  type RetailApplicantParty,
   type RetailFlowDraft,
+  type RetailSponsorSelection,
+  type RetailTravellerSponsor,
 } from '../types'
 
 const STORAGE_KEY = 'glts:retail-apply-flow'
 
+/**
+ * Migrate legacy application-level `draft.sponsor` onto each applicant.
+ * Old `traveller` mode (one person funds everyone) does not map cleanly —
+ * we mark that applicant as individual and leave others unset so the user re-confirms.
+ */
+function migrateLegacySponsor(
+  applicants: RetailApplicantParty[],
+  legacy?: RetailSponsorSelection,
+): RetailApplicantParty[] {
+  const anyHasSponsor = applicants.some((a) => a.sponsor != null)
+  if (anyHasSponsor || !legacy) return applicants
+
+  if (legacy.mode === 'self_paying') {
+    return applicants.map((a) => ({ ...a, sponsor: { mode: 'individual' as const } }))
+  }
+
+  if (legacy.mode === 'someone_else') {
+    const someoneElse: RetailTravellerSponsor = {
+      mode: 'someone_else',
+      name: legacy.name ?? '',
+      relationship: '',
+      contact: '',
+    }
+    return applicants.map((a) => ({ ...a, sponsor: { ...someoneElse } }))
+  }
+
+  if (legacy.mode === 'traveller') {
+    return applicants.map((a) =>
+      a.id === legacy.applicantId
+        ? { ...a, sponsor: { mode: 'individual' as const } }
+        : a,
+    )
+  }
+
+  return applicants
+}
+
 function normalizeDraft(draft: RetailFlowDraft): RetailFlowDraft {
-  const applicants =
+  const applicantsRaw =
     draft.applicants?.length > 0
       ? draft.applicants
       : [
@@ -21,7 +61,10 @@ function normalizeDraft(draft: RetailFlowDraft): RetailFlowDraft {
             passportFields: draft.passportFields,
           },
         ]
-  return syncPrimaryApplicantMirror({ ...draft, applicants })
+
+  const applicants = migrateLegacySponsor(applicantsRaw, draft.sponsor)
+  const { sponsor: _legacySponsor, ...rest } = draft
+  return syncPrimaryApplicantMirror({ ...rest, applicants })
 }
 
 function loadStoredDraft(countryId: string, visaOfferingId: string): RetailFlowDraft {

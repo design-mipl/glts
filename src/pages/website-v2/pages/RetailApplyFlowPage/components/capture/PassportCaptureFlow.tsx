@@ -440,18 +440,24 @@ export function PassportCaptureFlow({
             aspectRatio: '1.58 / 1',
             borderRadius: 28,
             overflow: 'hidden',
-            border: `2px solid rgba(115, 192, 100, 0.45)`,
-            bgcolor: colors.surfaceAlt,
-            backgroundImage: `
-              linear-gradient(rgba(115, 192, 100, 0.1) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(115, 192, 100, 0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '28px 28px',
+            bgcolor: '#0B1220',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            boxSizing: 'border-box',
           }}
         >
+          <Box
+            aria-hidden
+            sx={{
+              position: 'absolute',
+              inset: 14,
+              borderRadius: BORDER_RADIUS.lg,
+              border: '2px solid rgba(255, 255, 255, 0.92)',
+              pointerEvents: 'none',
+              zIndex: 2,
+            }}
+          />
           {mode === 'live' && status === 'live' ? (
             <Box
               component="video"
@@ -461,16 +467,17 @@ export function PassportCaptureFlow({
               autoPlay
               sx={{
                 position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
+                inset: 14,
+                width: 'calc(100% - 28px)',
+                height: 'calc(100% - 28px)',
                 objectFit: 'cover',
+                borderRadius: BORDER_RADIUS.lg,
               }}
             />
           ) : (
             <Box sx={{ textAlign: 'center', px: 3, position: 'relative', zIndex: 1 }}>
-              <Camera size={28} color={colors.textMuted} />
-              <Typography sx={{ mt: 1, fontSize: 13, color: colors.textMuted }}>
+              <Camera size={28} color="rgba(255,255,255,0.55)" />
+              <Typography sx={{ mt: 1, fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>
                 {status === 'starting' && 'Starting camera…'}
                 {status === 'denied' && 'Camera denied — upload from device instead.'}
                 {status === 'unavailable' && 'Camera unavailable — upload from device instead.'}
@@ -480,6 +487,41 @@ export function PassportCaptureFlow({
           )}
         </Box>
 
+        <Box
+          component="ul"
+          sx={{
+            mt: 2.5,
+            mb: 0,
+            pl: 2.25,
+            maxWidth: 520,
+            width: '100%',
+            textAlign: 'left',
+            listStyleType: 'disc',
+          }}
+        >
+          {(
+            [
+              'Use the page with your photo and the two code lines at the bottom, not the back page',
+              'Flat surface, no flash, all four corners visible',
+              'Colour only, under 5MB',
+            ] as const
+          ).map((tip) => (
+            <Typography
+              key={tip}
+              component="li"
+              sx={{
+                fontSize: 12.5,
+                lineHeight: 1.45,
+                color: colors.textMuted,
+                mb: 0.5,
+                '&:last-child': { mb: 0 },
+              }}
+            >
+              {tip}
+            </Typography>
+          ))}
+        </Box>
+
         {mode === 'live' && status === 'live' ? (
           <Button
             label="Capture passport"
@@ -487,7 +529,7 @@ export function PassportCaptureFlow({
             color="primary"
             startIcon={<Camera size={16} />}
             onClick={handleCapture}
-            sx={{ mt: 3, minWidth: 180 }}
+            sx={{ mt: 2.5, minWidth: 180 }}
           />
         ) : null}
       </Box>

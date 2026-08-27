@@ -6,16 +6,6 @@ import { isImageSource } from '../utils/imageSource'
 const IMG = (photoId: string, width = 640) =>
   `https://images.unsplash.com/${photoId}?auto=format&fit=crop&w=${width}&h=${Math.round(width * 0.7)}&q=80`
 
-export function getCountryHeroImageUrl(country: Country, width = 640): string {
-  const local = getLocalCountryHeroImageUrl(country.code)
-  if (local) return local
-
-  const id = country.heroPhotoId?.trim() ?? ''
-  if (!id) return ''
-  if (isImageSource(id)) return id
-  return IMG(id, width)
-}
-
 function country(
   partial: Omit<Country, 'visaTypes'> & { visaTypes?: Country['visaTypes'] },
 ): Country {
@@ -341,7 +331,8 @@ const COUNTRIES: Country[] = [
     visaCategory: 'e-Visa',
     validity: '90 days',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1483729558449-99ef03a8a475',
+    // Christ the Redeemer — verified Unsplash id
+    heroPhotoId: 'photo-1516306609758-0d2ee611928b',
     fastMinutes: 720,
     cities: 'Rio de Janeiro · São Paulo · Brasília',
   }),
@@ -395,7 +386,8 @@ const COUNTRIES: Country[] = [
     visaCategory: 'Sticker',
     validity: '90 days',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1601439678777-b2b3c56fe1d0',
+    // Bergen fjord — verified Unsplash id (prior id 404'd)
+    heroPhotoId: 'photo-1520769669658-f07657f5a307',
     fastMinutes: 720,
     cities: 'Oslo · Bergen · Trondheim',
   }),
@@ -454,6 +446,23 @@ const COUNTRIES: Country[] = [
     cities: 'Istanbul · Antalya · Cappadocia',
   }),
 ]
+
+export function getCountryHeroImageUrl(country: Country, width = 640): string {
+  const local = getLocalCountryHeroImageUrl(country.code)
+  if (local) return local
+
+  let id = country.heroPhotoId?.trim() ?? ''
+  // Master rows often use placeholder "default" — fall back to catalog photo by code.
+  if (!id || id === 'default') {
+    const catalog = COUNTRIES.find(
+      (entry) => entry.code === country.code || entry.id === country.id,
+    )
+    id = catalog?.heroPhotoId?.trim() ?? ''
+  }
+  if (!id || id === 'default') return ''
+  if (isImageSource(id)) return id
+  return IMG(id, width)
+}
 
 /** Portal application flow — visa options vary by destination */
 export interface PortalVisaOption {

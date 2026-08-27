@@ -13,7 +13,8 @@ interface StepShellProps {
   title: string
   /** Shorter headline swapped in below the `md` breakpoint (428px) — use when `title` wraps awkwardly on small phones. */
   mobileTitle?: string
-  helperText?: string
+  /** Helper under the title — string or rich node (e.g. accented date). */
+  helperText?: ReactNode
   children: ReactNode
   onBack?: () => void
   onContinue?: () => void
@@ -26,6 +27,8 @@ interface StepShellProps {
   contentMaxWidth?: number
   /** Optional action rendered left of Continue (e.g. Add travelers). */
   footerEndAction?: ReactNode
+  /** Trust / policy microcopy under the footer actions. */
+  footerCaption?: ReactNode
 }
 
 /** Retail step content chrome — centered body, actions pinned to card bottom. */
@@ -43,6 +46,7 @@ export function StepShell({
   titleAccessory,
   contentMaxWidth = 720,
   footerEndAction,
+  footerCaption,
 }: StepShellProps) {
   const colors = usePublicBrandColors()
 
@@ -122,7 +126,10 @@ export function StepShell({
           {titleAccessory}
         </Box>
         {helperText ? (
-          <Typography sx={{ fontSize: 14, color: colors.textSecondary, mb: 3, lineHeight: 1.5 }}>
+          <Typography
+            component="div"
+            sx={{ fontSize: 14, color: colors.textSecondary, mb: 3, lineHeight: 1.5 }}
+          >
             {helperText}
           </Typography>
         ) : null}
@@ -146,12 +153,7 @@ export function StepShell({
       </Box>
 
       {!hideContinue && onContinue ? (
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          flexWrap="nowrap"
-          gap={1.5}
+        <Box
           sx={{
             flex: '0 0 auto',
             width: '100%',
@@ -159,33 +161,57 @@ export function StepShell({
             pt: 2.5,
             borderTop: `1px solid ${colors.border}`,
             bgcolor: colors.white,
-            textAlign: 'left',
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 2,
           }}
         >
-          {onBack ? (
-            <Button
-              variant="outlined"
-              onClick={onBack}
-              sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx)}
-            >
-              {backLabel}
-            </Button>
-          ) : (
-            <Box />
-          )}
-          <Stack direction="row" alignItems="center" gap={1.5} flexWrap="wrap">
-            {footerEndAction}
-            <Button
-              variant="contained"
-              endIcon={<ArrowRight size={16} />}
-              onClick={onContinue}
-              disabled={continueDisabled}
-              sx={mergeButtonSx(getPrimaryButtonSx(colors), overlayFooterButtonSx)}
-            >
-              {continueLabel}
-            </Button>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            flexWrap="nowrap"
+            gap={1.5}
+            sx={{ width: '100%', textAlign: 'left' }}
+          >
+            {onBack ? (
+              <Button
+                variant="outlined"
+                onClick={onBack}
+                sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx)}
+              >
+                {backLabel}
+              </Button>
+            ) : (
+              <Box />
+            )}
+            <Stack direction="row" alignItems="center" gap={1.5} flexWrap="wrap">
+              {footerEndAction}
+              <Button
+                variant="contained"
+                endIcon={<ArrowRight size={16} />}
+                onClick={onContinue}
+                disabled={continueDisabled}
+                sx={mergeButtonSx(getPrimaryButtonSx(colors), overlayFooterButtonSx)}
+              >
+                {continueLabel}
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
+          {footerCaption ? (
+            <Typography
+              sx={{
+                mt: 1.25,
+                fontSize: 12,
+                color: colors.textMuted,
+                textAlign: 'center',
+                lineHeight: 1.45,
+              }}
+            >
+              {footerCaption}
+            </Typography>
+          ) : null}
+        </Box>
       ) : null}
     </Box>
   )

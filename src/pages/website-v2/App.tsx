@@ -5,6 +5,7 @@ import { ComingSoonPage } from '@/shared/components/ComingSoonPage'
 import ComponentPreviewPage from './pages/_preview/ComponentPreviewPage'
 import {
   AboutPage,
+  ApplicationTrackingPage,
   CorporateBusinessVisaPage,
   CountryDetailPage,
   CountryListingPage,
@@ -38,15 +39,8 @@ export function PublicWebsiteV2App() {
                 <Route path="/corporate" element={<CorporateBusinessVisaPage />} />
                 <Route path="/services" element={<ServicesPage />} />
                 <Route path="/about" element={<AboutPage />} />
-                <Route
-                  path="/track"
-                  element={
-                    <ComingSoonPage
-                      title="Track Application"
-                      returnLink={{ text: 'Open portal', href: '/retail/tracking' }}
-                    />
-                  }
-                />
+                <Route path="/track" element={<Navigate to="/track/GLTS-2026-0842" replace />} />
+                <Route path="/track/:applicationId" element={<ApplicationTrackingPage />} />
                 <Route path="/pricing" element={<ComingSoonPage title="Pricing" />} />
               </Routes>
             </PublicLayout>

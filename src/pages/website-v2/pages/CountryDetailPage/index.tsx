@@ -18,13 +18,13 @@ import { CountryTrustBadgeStrip } from '../../components/CountryTrustBadgeStrip'
 import { hasCountryTrustProfile } from '../../config/countryTrustBadges'
 import { publicFonts, usePublicBrandColors, getMarketingPrimaryButtonSx } from '@/shared/theme/publicBrand'
 import { BORDER_RADIUS } from '@/design-system/tokens'
-import { Clock, MapPin } from 'lucide-react'
+import { getElevatedStatusCardSx, statusVisualRadius } from '../../theme/statusVisualTokens'
 
 const timelineSteps = [
-  { step: 1, title: 'Submit', desc: 'Documents reviewed in 4h', icon: '📄' },
-  { step: 2, title: 'Appointment', desc: 'VFS biometrics booked', icon: '📅' },
-  { step: 3, title: 'Embassy', desc: 'Decision in 10–14 days', icon: '🏛' },
-  { step: 4, title: 'Collection', desc: 'Courier or pickup', icon: '✈️' },
+  { step: 1, title: 'Submit', desc: 'Documents reviewed in 4h' },
+  { step: 2, title: 'Appointment', desc: 'VFS biometrics booked' },
+  { step: 3, title: 'Embassy', desc: 'Decision in 10–14 days' },
+  { step: 4, title: 'Collection', desc: 'Courier or pickup' },
 ]
 
 const visaCategoryOptions = [
@@ -143,6 +143,9 @@ export function CountryDetailPage() {
     return <ComingSoonPage title="Country not found" returnLink={{ text: 'Browse destinations', href: '/countries' }} />
   }
 
+  const heroSrc = getCountryHeroImageUrl(country, 1400)
+  const showHeroFallback = heroImgError || !heroSrc
+
   return (
     <Box>
       <Box
@@ -155,9 +158,10 @@ export function CountryDetailPage() {
           mx: { xs: 2, sm: 3, md: 4, lg: 5 },
           mt: { xs: 2, sm: 3, md: 4 },
           borderRadius: BORDER_RADIUS.xl,
+          boxShadow: '0 1px 2px rgba(15,27,43,0.04), 0 8px 24px -4px rgba(15,27,43,0.10)',
         }}
       >
-        {heroImgError ? (
+        {showHeroFallback ? (
           <Box
             sx={{
               position: 'absolute',
@@ -173,7 +177,7 @@ export function CountryDetailPage() {
         ) : (
           <Box
             component="img"
-            src={getCountryHeroImageUrl(country, 1400)}
+            src={heroSrc}
             alt=""
             onError={() => setHeroImgError(true)}
             sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
@@ -195,16 +199,16 @@ export function CountryDetailPage() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 0.75,
-                    backgroundColor: 'rgba(251,191,36,0.15)',
-                    border: '1px solid rgba(251,191,36,0.3)',
+                    backgroundColor: 'rgba(254, 193, 7, 0.15)',
+                    border: '1px solid rgba(254, 193, 7, 0.35)',
                     borderRadius: '6px',
                     px: 1.5,
                     py: 0.5,
                     mb: 2,
                   }}
                 >
-                  <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#FCD34D' }}>
-                    🔥 Trending · +18% this month
+                  <Typography sx={{ fontSize: '11px', fontWeight: 700, color: colors.goldBright }}>
+                    Trending · +{master.trendingPercent ?? 18}% this month
                   </Typography>
                 </Box>
               )}
@@ -287,9 +291,9 @@ export function CountryDetailPage() {
           sx={{
             mb: 3,
             p: { xs: 2, md: 2.5 },
-            borderRadius: '16px',
+            borderRadius: statusVisualRadius.hero,
             bgcolor: colors.white,
-            border: `1px solid ${colors.border}`,
+            ...getElevatedStatusCardSx(colors.border),
           }}
         >
           <Typography sx={{ fontSize: '12px', fontWeight: 700, color: colors.textMuted, mb: 1.5 }}>
@@ -387,45 +391,47 @@ export function CountryDetailPage() {
           </Typography>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Card sx={{ p: 3, border: '1px solid #F3F4F6', boxShadow: 'none', borderRadius: '12px' }}>
+              <Card
+                sx={{
+                  p: 3,
+                  borderRadius: statusVisualRadius.hero,
+                  bgcolor: colors.white,
+                  ...getElevatedStatusCardSx('rgba(15, 23, 42, 0.06)'),
+                }}
+              >
                 <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.6px', mb: 2 }}>
                   EMBASSY
                 </Typography>
                 <Typography sx={{ fontWeight: 700, color: '#001F3F', fontSize: '15px', mb: 1 }}>
                   Consulate of {country.name}, Mumbai
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
-                  <MapPin size={13} color="#9CA3AF" style={{ marginTop: 2, flexShrink: 0 }} />
-                  <Typography sx={{ fontSize: '13px', color: '#6B7280' }}>
-                    Wankhede House, 1st Floor, D Road, Mumbai 400020
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Clock size={13} color="#9CA3AF" />
-                  <Typography sx={{ fontSize: '13px', color: '#6B7280' }}>Open · Mon–Fri 8:30–12:00</Typography>
-                </Box>
+                <Typography sx={{ fontSize: '13px', color: '#6B7280', mb: 1, lineHeight: 1.5 }}>
+                  Wankhede House, 1st Floor, D Road, Mumbai 400020
+                </Typography>
+                <Typography sx={{ fontSize: '13px', color: '#6B7280' }}>Open · Mon–Fri 8:30–12:00</Typography>
               </Card>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Card sx={{ p: 3, border: '1px solid #F3F4F6', boxShadow: 'none', borderRadius: '12px' }}>
+              <Card
+                sx={{
+                  p: 3,
+                  borderRadius: statusVisualRadius.hero,
+                  bgcolor: colors.white,
+                  ...getElevatedStatusCardSx('rgba(15, 23, 42, 0.06)'),
+                }}
+              >
                 <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.6px', mb: 2 }}>
                   VFS CENTER
                 </Typography>
                 <Typography sx={{ fontWeight: 700, color: '#001F3F', fontSize: '15px', mb: 1 }}>
                   VFS Global · Trade Centre, BKC
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
-                  <MapPin size={13} color="#9CA3AF" style={{ marginTop: 2, flexShrink: 0 }} />
-                  <Typography sx={{ fontSize: '13px', color: '#6B7280' }}>
-                    Biometrics required · slots open daily 9am
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Clock size={13} color="#9CA3AF" />
-                  <Typography sx={{ fontSize: '13px', color: '#6B7280', fontWeight: 600 }}>
-                    Appointment timing confirmed during application review
-                  </Typography>
-                </Box>
+                <Typography sx={{ fontSize: '13px', color: '#6B7280', mb: 1, lineHeight: 1.5 }}>
+                  Biometrics required · slots open daily 9am
+                </Typography>
+                <Typography sx={{ fontSize: '13px', color: '#6B7280', fontWeight: 600 }}>
+                  Appointment timing confirmed during application review
+                </Typography>
               </Card>
             </Grid>
           </Grid>

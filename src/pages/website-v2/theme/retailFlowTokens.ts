@@ -84,10 +84,20 @@ export const retailFlowLayout = {
 export const retailFlowShadows = {
   /** Floating flow card on canvas. */
   shell: `0 0 0 1px rgba(${retailGreenRgb}, 0.03), 0 20px 60px rgba(0, 0, 0, 0.18)`,
+  /** Elevated white/light surface — apply-flow cards, panels, steppers. */
+  elevated: '0 1px 2px rgba(15,27,43,0.04), 0 8px 24px -4px rgba(15,27,43,0.10)',
   /** Logo gem glow. */
   gem: `0 0 8px ${retailFlowColors.greenGlow}`,
   scan: `0 0 12px ${retailFlowColors.green}`,
 } as const
+
+/** Soft border + elevated shadow for white/light cards (global apply-flow treatment). */
+export function getElevatedCardSx(borderColor = 'rgba(15, 23, 42, 0.06)') {
+  return {
+    border: `1px solid ${borderColor}`,
+    boxShadow: retailFlowShadows.elevated,
+  } as const
+}
 
 export const retailFlowType = {
   stepTitle: {

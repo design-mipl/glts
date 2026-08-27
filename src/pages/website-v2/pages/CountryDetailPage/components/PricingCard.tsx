@@ -1,14 +1,16 @@
 import { Box, Card, Typography, Button, Divider, Stack, Chip } from '@mui/material'
-import { Info } from 'lucide-react'
 import type { Country } from '@/shared/types/visa'
 import {
-  publicLayout,
-  publicShadows,
   publicFonts,
   publicTypography,
   usePublicBrandColors,
   getMarketingPrimaryButtonSx,
 } from '@/shared/theme/publicBrand'
+import { LiveStatusPanel } from '../../../components/liveStatusPanel/LiveStatusPanel'
+import {
+  getElevatedStatusCardSx,
+  statusVisualRadius,
+} from '../../../theme/statusVisualTokens'
 
 interface PricingCardProps {
   country: Country
@@ -25,113 +27,138 @@ export function PricingCard({ country, selectedVisaCategoryLabel, applyHref }: P
     { label: 'Total', value: indicativeTotal, highlight: true },
   ]
 
-  return (
-    <Card
-      sx={{
-        p: 4,
-        border: `1px solid ${colors.greenBright}`,
-        borderRadius: publicLayout.cardRadius,
-        boxShadow: publicShadows.float,
-        bgcolor: '#fff',
-      }}
-    >
-      <Typography
-        sx={{
-          color: colors.textMuted,
-          textTransform: 'uppercase',
-          fontWeight: 700,
-          fontSize: publicTypography.caption,
-          letterSpacing: '0.5px',
-        }}
-      >
-        Fee estimate
-      </Typography>
+  const approvalLikelihood =
+    typeof country.rating === 'number' && country.rating > 0 ? `${country.rating}%` : null
 
-      <Chip
-        label={selectedVisaCategoryLabel}
-        size="small"
-        sx={{
-          mt: 1.25,
-          fontWeight: 800,
-          bgcolor: colors.greenMuted,
-          color: colors.greenDark,
-          border: `1px solid rgba(115, 192, 100, 0.28)`,
+  return (
+    <Stack spacing={2}>
+      <LiveStatusPanel
+        headline={{
+          eyebrow: 'Avg processing',
+          value: country.processingTime || 'TBD',
+          caption: `${country.name} · ${selectedVisaCategoryLabel}`,
         }}
+        bullets={[
+          ...(approvalLikelihood
+            ? [`Approval likelihood ${approvalLikelihood} for typical profiles`]
+            : []),
+          'Document review included',
+          'Live status tracking after you apply',
+        ]}
       />
 
-      <Typography
+      <Card
         sx={{
-          fontFamily: publicFonts.heading,
-          fontWeight: 800,
-          fontSize: { xs: '28px', md: '32px' },
-          color: colors.navy,
-          mt: 2,
-          mb: 1,
+          p: { xs: 3, md: 3.5 },
+          borderRadius: statusVisualRadius.hero,
+          bgcolor: colors.white,
+          ...getElevatedStatusCardSx('rgba(15, 23, 42, 0.06)'),
         }}
       >
-        {indicativeTotal}
-      </Typography>
-      <Typography sx={{ color: colors.textSecondary, fontSize: '14px', mb: 3, lineHeight: 1.55 }}>
-        Indicative total for {country.name}. Final embassy and GreenLight fee split is confirmed
-        before submission.
-      </Typography>
+        <Typography
+          sx={{
+            color: colors.textMuted,
+            textTransform: 'uppercase',
+            fontWeight: 700,
+            fontSize: publicTypography.caption,
+            letterSpacing: '0.5px',
+            fontFamily: publicFonts.body,
+          }}
+        >
+          Fee estimate
+        </Typography>
 
-      <Divider sx={{ mb: 3, borderColor: colors.border }} />
+        <Chip
+          label={selectedVisaCategoryLabel}
+          size="small"
+          sx={{
+            mt: 1.25,
+            fontWeight: 700,
+            bgcolor: colors.greenMuted,
+            color: colors.greenDark,
+            border: `1px solid rgba(115, 192, 100, 0.28)`,
+          }}
+        />
 
-      <Stack spacing={1.75} sx={{ mb: 4 }}>
-        {feeRows.map(row => (
-          <Box
-            key={row.label}
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: 2,
-              alignItems: 'flex-start',
-            }}
-          >
-            <Typography sx={{ color: colors.textSecondary, fontSize: '14px', fontWeight: 600 }}>
-              {row.label}
-            </Typography>
-            <Typography
+        <Typography
+          sx={{
+            fontFamily: publicFonts.heading,
+            fontWeight: 800,
+            fontSize: { xs: '24px', md: '28px' },
+            color: colors.navy,
+            mt: 2,
+            mb: 1,
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {indicativeTotal}
+        </Typography>
+        <Typography
+          sx={{
+            color: colors.textSecondary,
+            fontSize: '14px',
+            mb: 3,
+            lineHeight: 1.55,
+            fontFamily: publicFonts.body,
+          }}
+        >
+          Indicative total for {country.name}. Final embassy and GreenLight fee split is confirmed
+          before submission.
+        </Typography>
+
+        <Divider sx={{ mb: 3, borderColor: colors.border }} />
+
+        <Stack spacing={1.75} sx={{ mb: 3.5 }}>
+          {feeRows.map(row => (
+            <Box
+              key={row.label}
               sx={{
-                color: row.highlight ? colors.navy : colors.text,
-                fontSize: row.highlight ? '15px' : '13px',
-                fontWeight: row.highlight ? 800 : 600,
-                textAlign: 'right',
-                maxWidth: 170,
-                lineHeight: 1.45,
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: 2,
+                alignItems: 'flex-start',
               }}
             >
-              {row.value}
-            </Typography>
-          </Box>
-        ))}
-      </Stack>
+              <Typography sx={{ color: colors.textSecondary, fontSize: '14px', fontWeight: 600 }}>
+                {row.label}
+              </Typography>
+              <Typography
+                sx={{
+                  color: row.highlight ? colors.navy : colors.text,
+                  fontSize: row.highlight ? '15px' : '13px',
+                  fontWeight: row.highlight ? 800 : 600,
+                  textAlign: 'right',
+                  maxWidth: 170,
+                  lineHeight: 1.45,
+                }}
+              >
+                {row.value}
+              </Typography>
+            </Box>
+          ))}
+        </Stack>
 
-      <Stack spacing={1.25} sx={{ mb: 4 }}>
-        {[`Processing Time: ${country.processingTime}`, 'Document review included', 'Status tracking included'].map(item => (
-          <Typography key={item} sx={{ color: colors.text, fontSize: '14px', fontWeight: 500 }}>
-            {item}
-          </Typography>
-        ))}
-      </Stack>
+        <Button
+          fullWidth
+          variant="contained"
+          size="large"
+          href={applyHref}
+          sx={{ ...getMarketingPrimaryButtonSx(colors), py: 1.5, fontSize: '15px' }}
+        >
+          Start Application
+        </Button>
 
-      <Button
-        fullWidth
-        variant="contained"
-        size="large"
-        href={applyHref}
-        sx={{ ...getMarketingPrimaryButtonSx(colors), py: 1.5, fontSize: '15px' }}
-      >
-        Start Application
-      </Button>
-
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75, mt: 2 }}>
-        <Info size={14} color={colors.textMuted} style={{ marginTop: 2, flexShrink: 0 }} />
-        <Typography sx={{ color: colors.textMuted, fontSize: publicTypography.caption, lineHeight: 1.45 }}>
+        <Typography
+          sx={{
+            color: colors.textMuted,
+            fontSize: publicTypography.caption,
+            lineHeight: 1.45,
+            mt: 2,
+          }}
+        >
           Final pricing depends on destination rules, selected visa category and applicant profile.
         </Typography>
-      </Box>
-    </Card>
+      </Card>
+    </Stack>
   )
 }

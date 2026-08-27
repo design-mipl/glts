@@ -1,19 +1,92 @@
+import { useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
-import { FileCheck2 } from 'lucide-react'
+import { Camera, FileText, IdCard, IndianRupee } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { BORDER_RADIUS } from '@/design-system/tokens'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { StepShell } from '../StepShell'
+import { getElevatedCardSx } from '@/pages/website-v2/theme/retailFlowTokens'
+import { DocumentChecklistRow } from '@/pages/website-v2/components/documentChecklist/DocumentChecklistRow'
+import { WhyWeAskSheet } from '@/pages/website-v2/components/WhyWeAskSheet'
+import {
+  resolveDocumentWhyContent,
+  type DocumentWhyContent,
+} from '@/pages/website-v2/config/documentWhyContent'
 import type { RetailChecklistDocument } from '@/shared/services/retailJourneyResolver'
+import { StepShell } from '../StepShell'
 
 interface OriginalDocumentsStepProps {
   documents: RetailChecklistDocument[]
   onBack: () => void
   onContinue: () => void
+  /** Preview-only: skip StepShell chrome. */
+  previewOnly?: boolean
 }
 
-export function OriginalDocumentsStep({ documents, onBack, onContinue }: OriginalDocumentsStepProps) {
+function docIcon(doc: RetailChecklistDocument): LucideIcon {
+  const hay = `${doc.documentId} ${doc.name}`.toLowerCase()
+  if (/photo|photograph/.test(hay)) return Camera
+  if (/passport/.test(hay)) return FileText
+  if (/aadhaar|aadhar|pan|id/.test(hay)) return IdCard
+  if (/bank|statement|financial|salary|itr/.test(hay)) return IndianRupee
+  return FileText
+}
+
+export function OriginalDocumentsStep({
+  documents,
+  onBack,
+  onContinue,
+  previewOnly = false,
+}: OriginalDocumentsStepProps) {
   const colors = usePublicBrandColors()
+  const [whyContent, setWhyContent] = useState<DocumentWhyContent | null>(null)
   const originals = documents.filter((doc) => doc.originalDocument)
+
+  const body = (
+    <>
+      <Box
+        sx={{
+          ...getElevatedCardSx(colors.border),
+          borderRadius: BORDER_RADIUS.lg,
+          bgcolor: colors.white,
+          overflow: 'hidden',
+        }}
+      >
+        {originals.length === 0 ? (
+          <Typography sx={{ fontSize: 13.5, color: colors.textMuted, p: 2 }}>
+            No physical originals are required for this visa.
+          </Typography>
+        ) : (
+          <Stack spacing={0} sx={{ px: 0.5, py: 0.5 }}>
+            {originals.map((doc) => (
+              <DocumentChecklistRow
+                key={doc.documentId}
+                icon={docIcon(doc)}
+                name={doc.name}
+                description={
+                  doc.description ??
+                  'Upload is done — the embassy still needs the physical original.'
+                }
+                statusTag={{ label: 'Original required', tone: 'original' }}
+                onInfoClick={() =>
+                  setWhyContent(
+                    resolveDocumentWhyContent({
+                      documentId: doc.documentId,
+                      name: doc.name,
+                      description: doc.description,
+                    }),
+                  )
+                }
+              />
+            ))}
+          </Stack>
+        )}
+      </Box>
+
+      <WhyWeAskSheet open={Boolean(whyContent)} content={whyContent} onClose={() => setWhyContent(null)} />
+    </>
+  )
+
+  if (previewOnly) return body
 
   return (
     <StepShell
@@ -21,17 +94,9 @@ export function OriginalDocumentsStep({ documents, onBack, onContinue }: Origina
       helperText="The embassy requires original copies of the following — we'll arrange collection next."
       onBack={onBack}
       onContinue={onContinue}
+      contentMaxWidth={640}
     >
-      <Stack spacing={1.25}>
-        {originals.map((doc) => (
-          <Stack key={doc.documentId} direction="row" alignItems="center" spacing={1.5} sx={{ border: `1px solid ${colors.border}`, borderRadius: BORDER_RADIUS.lg, p: 1.5 }}>
-            <Box sx={{ width: 32, height: 32, borderRadius: BORDER_RADIUS.md, backgroundColor: colors.surfaceAlt, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FileCheck2 size={15} color={colors.textMuted} />
-            </Box>
-            <Typography sx={{ fontSize: '13.5px', fontWeight: 600, color: colors.text }}>{doc.name}</Typography>
-          </Stack>
-        ))}
-      </Stack>
+      {body}
     </StepShell>
   )
 }

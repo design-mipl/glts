@@ -1,10 +1,9 @@
-import { useMemo } from 'react'
 import { Box, Typography } from '@mui/material'
 import type { CountryVisaJurisdiction } from '@/shared/types/countryMaster'
-import { getTravelFeasibilityConfig } from '@/shared/services/countryMasterService'
+import { FormField, Input } from '@/design-system/UIComponents'
 import { BORDER_RADIUS } from '@/design-system/tokens'
 import { brandPrimaryGreenRgb, usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { TravelDateRiskCalendar } from '@/pages/customer/features/applications/components/create/TravelDateRiskCalendar'
+import { getElevatedCardSx } from '@/pages/website-v2/theme/retailFlowTokens'
 import { StepShell } from '../StepShell'
 
 interface JurisdictionStepProps {
@@ -19,9 +18,13 @@ interface JurisdictionStepProps {
   onContinue: () => void
 }
 
+/**
+ * Submission city + intended travel date.
+ * Uses a plain date field (not MUI X StaticDatePicker) so the retail apply
+ * chunk does not depend on Vite pre-bundled `@mui/x-date-pickers` / `dayjs` —
+ * a missing dep cache was blanking the entire /apply/new route.
+ */
 export function JurisdictionStep({
-  countryId,
-  visaOfferingId,
   jurisdictions,
   selectedId,
   travelDate = '',
@@ -31,10 +34,8 @@ export function JurisdictionStep({
   onContinue,
 }: JurisdictionStepProps) {
   const colors = usePublicBrandColors()
-  const feasibilityConfig = useMemo(
-    () => getTravelFeasibilityConfig(countryId, visaOfferingId, selectedId),
-    [countryId, visaOfferingId, selectedId],
-  )
+  const needsCity = jurisdictions.length > 0
+  const continueDisabled = !travelDate.trim() || (needsCity && !selectedId)
 
   return (
     <StepShell
@@ -42,7 +43,7 @@ export function JurisdictionStep({
       helperText="We'll use your residence to determine the appropriate application centre."
       onBack={onBack}
       onContinue={onContinue}
-      continueDisabled={!selectedId || !travelDate.trim()}
+      continueDisabled={continueDisabled}
       contentMaxWidth={960}
     >
       <Box
@@ -55,13 +56,7 @@ export function JurisdictionStep({
           alignItems: 'start',
         }}
       >
-        {/* Application city */}
-        <Box
-          sx={{
-            pr: { md: 3 },
-            minWidth: 0,
-          }}
-        >
+        <Box sx={{ pr: { md: 3 }, minWidth: 0 }}>
           <Typography
             sx={{
               fontSize: 11,
@@ -78,9 +73,10 @@ export function JurisdictionStep({
             Submission city
           </Typography>
 
-          {jurisdictions.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: colors.textMuted }}>
-              No application centres are configured for this visa yet.
+          {!needsCity ? (
+            <Typography sx={{ fontSize: 13, color: colors.textMuted, lineHeight: 1.45 }}>
+              No application centres are configured for this visa yet — continue with your travel
+              date. City options will come from country master later.
             </Typography>
           ) : (
             <Box
@@ -129,7 +125,6 @@ export function JurisdictionStep({
           )}
         </Box>
 
-        {/* Travel / application calendar */}
         <Box sx={{ pl: { md: 3 }, minWidth: 0 }}>
           <Typography
             sx={{
@@ -146,11 +141,22 @@ export function JurisdictionStep({
           >
             Intended travel date
           </Typography>
-          <TravelDateRiskCalendar
-            value={travelDate}
-            onChange={onTravelDateChange}
-            config={feasibilityConfig}
-          />
+          <Box
+            sx={{
+              ...getElevatedCardSx(colors.border),
+              borderRadius: BORDER_RADIUS.lg,
+              bgcolor: colors.white,
+              p: 2,
+            }}
+          >
+            <FormField label="Travel date" required>
+              <Input type="date" fullWidth value={travelDate} onChange={onTravelDateChange} />
+            </FormField>
+            <Typography sx={{ fontSize: 12.5, color: colors.textMuted, mt: 1.5, lineHeight: 1.45 }}>
+              Pick the date you plan to enter. We use this for appointment windows and document
+              validity checks.
+            </Typography>
+          </Box>
         </Box>
       </Box>
     </StepShell>

@@ -1,23 +1,27 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import { Camera, FileText, IdCard, IndianRupee, UserRound } from 'lucide-react'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { retailFlowLayout } from '@/pages/website-v2/theme/retailFlowTokens'
+import { getElevatedCardSx, retailFlowLayout } from '@/pages/website-v2/theme/retailFlowTokens'
 import { WhyWeAskSheet } from '@/pages/website-v2/components/WhyWeAskSheet'
 import { resolveDocumentWhyContent, type DocumentWhyContent } from '@/pages/website-v2/config/documentWhyContent'
 import { DocumentChecklistRow } from '@/pages/website-v2/components/documentChecklist/DocumentChecklistRow'
 import {
-  displayNameUpper,
-  initialsFromName,
-  profileAnswerTags,
-} from '../../config/travelProfileQuestions'
+  BulkUploadDropzone,
+  type BulkUploadDropzoneHandle,
+} from '@/pages/website-v2/components/bulkUpload/BulkUploadDropzone'
+import { TravellerUploadStatusRow } from '@/pages/website-v2/components/bulkUpload/TravellerUploadStatusRow'
+import type { TravellerUploadStatusItem } from '@/pages/website-v2/components/bulkUpload/types'
+import { LiveStatusPanel } from '@/pages/website-v2/components/liveStatusPanel/LiveStatusPanel'
+import { displayNameUpper, initialsFromName, profileAnswerTags } from '../../config/travelProfileQuestions'
 import { StepShell } from '../StepShell'
 import type { RetailChecklistDocument } from '@/shared/services/retailJourneyResolver'
 import type { RetailApplicantParty, RetailCapturedImage } from '../../types'
 
 type DocCategory = 'personal' | 'financial' | 'other'
 
-const AVATAR_TONES = ['#0FA968', '#5B8DEF', '#D4A0A0', '#B45309', '#4F46E5'] as const
+/** ~2 minutes of upload/review time estimated per remaining mandatory doc. */
+const MINUTES_PER_REMAINING_DOC = 2
 
 interface ChecklistStepProps {
   documents: RetailChecklistDocument[]
@@ -26,6 +30,13 @@ interface ChecklistStepProps {
   onUpload: (documentId: string, image: RetailCapturedImage, applicantId: string) => void
   onBack: () => void
   onContinue: () => void
+  /** Estimated approval date/time shown in the side LiveStatusPanel. */
+  estimatedApproval?: string
+  /** Trip context line under the estimate, e.g. "India → Schengen · Tourist visa". */
+  tripContext?: string
+  /** When true, render only the checklist body (no StepShell) — isolated preview. */
+  previewOnly?: boolean
+  onBulkFilesSelected?: (applicantId: string, files: File[]) => void
 }
 
 export function checklistUploadKey(applicantId: string, documentId: string) {
@@ -76,21 +87,184 @@ const CATEGORY_META: Record<DocCategory, { label: string; icon: typeof UserRound
   other: { label: 'Other', icon: FileText },
 }
 
-export function ChecklistStep({
+function travellerProgress(
+  applicant: RetailApplicantParty,
+  documents: RetailChecklistDocument[],
+  uploads: Record<string, RetailCapturedImage>,
+) {
+  const mandatory = documents.filter((d) => d.mandatory)
+  const total = mandatory.length
+  const done = mandatory.filter((d) => isDocComplete(d, applicant, uploads)).length
+  const percent = total === 0 ? 100 : Math.round((done / total) * 100)
+  return {
+    done,
+    total,
+    remaining: Math.max(0, total - done),
+    percent,
+    complete: total > 0 && done === total,
+  }
+}
+
+function pendingBulkItem(applicant: RetailApplicantParty): TravellerUploadStatusItem {
+  return {
+    id: applicant.id,
+    name: applicant.details.fullName.trim() || applicant.label,
+    status: 'pending',
+  }
+}
+
+/** UI-first OCR simulation until backend extraction exists. */
+function mockOcrConfidence(files: File[]): number {
+  const hay = files.map((f) => f.name.toLowerCase()).join(' ')
+  if (/blur|bad|unclear|fail/.test(hay)) return 38
+  if (/zip/.test(hay) && files.length === 1) return 72
+  if (files.length > 3) return 64
+  return 92
+}
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
+/** Two-column checklist body — flex 65/35 (not CSS Grid). */
+export function ChecklistCard({
   documents,
   applicants,
   uploads,
   onUpload,
-  onBack,
-  onContinue,
-}: ChecklistStepProps) {
+  estimatedApproval = 'Aug 29',
+  tripContext = 'India → Schengen · Tourist visa',
+  onBulkFilesSelected,
+}: {
+  documents: RetailChecklistDocument[]
+  applicants: RetailApplicantParty[]
+  uploads: Record<string, RetailCapturedImage>
+  onUpload: (documentId: string, image: RetailCapturedImage, applicantId: string) => void
+  estimatedApproval?: string
+  tripContext?: string
+  onBulkFilesSelected?: (applicantId: string, files: File[]) => void
+}) {
   const colors = usePublicBrandColors()
   const namedApplicants = applicants.filter((a) => a.details.fullName.trim())
   const list = namedApplicants.length > 0 ? namedApplicants : applicants
   const [activeApplicantId, setActiveApplicantId] = useState(list[0]?.id ?? '')
   const [whyContent, setWhyContent] = useState<DocumentWhyContent | null>(null)
+  const [bulkStatuses, setBulkStatuses] = useState<Record<string, TravellerUploadStatusItem>>({})
+  const dropzoneRef = useRef<BulkUploadDropzoneHandle | null>(null)
+  const reuploadTargetRef = useRef<string | null>(null)
 
   const activeApplicant = list.find((a) => a.id === activeApplicantId) ?? list[0]
+
+  const applicantIdsKey = list.map((a) => a.id).join('|')
+  const applicantNamesKey = list.map((a) => a.details.fullName).join('|')
+
+  useEffect(() => {
+    setBulkStatuses((prev) => {
+      const next = { ...prev }
+      let changed = false
+      for (const applicant of list) {
+        if (!next[applicant.id]) {
+          next[applicant.id] = pendingBulkItem(applicant)
+          changed = true
+        } else {
+          const name = applicant.details.fullName.trim() || applicant.label
+          if (next[applicant.id].name !== name) {
+            next[applicant.id] = { ...next[applicant.id], name }
+            changed = true
+          }
+        }
+      }
+      for (const id of Object.keys(next)) {
+        if (!list.some((a) => a.id === id)) {
+          delete next[id]
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by traveller id/name fingerprints
+  }, [applicantIdsKey, applicantNamesKey])
+
+  function patchBulk(applicantId: string, patch: Partial<TravellerUploadStatusItem>) {
+    setBulkStatuses((prev) => {
+      const existing = prev[applicantId]
+      const fallbackApplicant = list.find((a) => a.id === applicantId)
+      const base =
+        existing ??
+        (fallbackApplicant
+          ? pendingBulkItem(fallbackApplicant)
+          : { id: applicantId, name: 'Traveller', status: 'pending' as const })
+      return {
+        ...prev,
+        [applicantId]: { ...base, ...patch, id: applicantId },
+      }
+    })
+  }
+
+  async function runBulkPipeline(applicantId: string, files: File[]) {
+    if (!files.length) return
+    const applicant = list.find((a) => a.id === applicantId)
+    const name = applicant?.details.fullName.trim() || applicant?.label || 'Traveller'
+    const fileName = files.length === 1 ? files[0].name : `${files.length} files`
+
+    patchBulk(applicantId, { name, status: 'uploading', fileName, quality: undefined, attentionReason: undefined })
+    await sleep(650)
+    patchBulk(applicantId, { status: 'processing' })
+    await sleep(900)
+
+    const confidence = mockOcrConfidence(files)
+    if (confidence < 60) {
+      patchBulk(applicantId, {
+        status: 'needs_attention',
+        fileName,
+        quality: { confidence, note: 'Extraction unclear' },
+        attentionReason: 'Photo page is unclear — re-upload a sharper scan',
+      })
+    } else {
+      patchBulk(applicantId, {
+        status: 'uploaded',
+        fileName,
+        quality: {
+          confidence,
+          note: confidence >= 85 ? 'Passport details matched' : 'Review suggested',
+        },
+        attentionReason: undefined,
+      })
+      // Best-effort: mark passport complete for this traveller when bulk OCR “succeeds”.
+      const first = files[0]
+      if (first && !first.name.toLowerCase().endsWith('.zip')) {
+        handleFile('passport', first, applicantId)
+      } else if (first) {
+        onUpload(
+          'passport',
+          { dataUrl: `bulk://${encodeURIComponent(first.name)}`, capturedAt: new Date().toISOString() },
+          applicantId,
+        )
+      }
+    }
+
+    onBulkFilesSelected?.(applicantId, files)
+  }
+
+  function handleBulkFiles(files: File[]) {
+    const targetId = reuploadTargetRef.current ?? activeApplicant?.id
+    reuploadTargetRef.current = null
+    if (!targetId) return
+    void runBulkPipeline(targetId, files)
+  }
+
+  function handleReupload(travellerId: string) {
+    setActiveApplicantId(travellerId)
+    reuploadTargetRef.current = travellerId
+    dropzoneRef.current?.open()
+  }
+
+  const bulkRows = useMemo(
+    () => list.map((applicant) => bulkStatuses[applicant.id] ?? pendingBulkItem(applicant)),
+    [list, bulkStatuses],
+  )
 
   const grouped = useMemo(() => {
     const order: DocCategory[] = ['personal', 'financial', 'other']
@@ -107,11 +281,10 @@ export function ChecklistStep({
       .filter((group) => group.docs.length > 0)
   }, [documents])
 
-  const mandatoryComplete =
-    list.length > 0 &&
-    list.every((applicant) =>
-      documents.filter((doc) => doc.mandatory).every((doc) => isDocComplete(doc, applicant, uploads)),
-    )
+  const activeProgress = useMemo(() => {
+    if (!activeApplicant) return { done: 0, total: 0, remaining: 0, percent: 0, complete: false }
+    return travellerProgress(activeApplicant, documents, uploads)
+  }, [activeApplicant, documents, uploads])
 
   function handleFile(documentId: string, file: File, applicantId: string) {
     const reader = new FileReader()
@@ -122,208 +295,339 @@ export function ChecklistStep({
 
   return (
     <>
-      <StepShell
-        title="We work in parallel. You don't wait, your visa doesn't wait."
-        mobileTitle="We work in parallel. You don't wait."
-        helperText="The moment you checkout, we start drafting required forms and your slot is confirmed. Upload the documents any time in the next 5 days."
-        onBack={onBack}
-        onContinue={onContinue}
-        continueDisabled={!mandatoryComplete || !activeApplicant}
-        continueLabel="Continue"
-        contentMaxWidth={920}
+      <Box
+        data-testid="checklist-two-col"
+        sx={{
+          width: '100%',
+          ...getElevatedCardSx(colors.border),
+          borderRadius: retailFlowLayout.cardRadius,
+          bgcolor: colors.white,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
-        <Box
-          sx={{
-            width: '100%',
-            textAlign: 'left',
-            border: `1px solid ${colors.border}`,
-            borderRadius: retailFlowLayout.cardRadius,
-            bgcolor: colors.white,
-            boxShadow: '0 8px 28px rgba(15, 23, 42, 0.06)',
-            overflow: 'hidden',
-          }}
-        >
-          <Box sx={{ px: { xs: 2, sm: 3 }, pt: 2.5, pb: 2, textAlign: 'center' }}>
-            <Typography sx={{ fontSize: 18, fontWeight: 700, color: colors.navy, mb: 0.75 }}>
-              Here&apos;s what you will upload after checkout
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: colors.textMuted,
-              }}
-            >
-              Guided by experts — backed by approval data
-            </Typography>
-          </Box>
-
-          <Box
+        {/* Full-width header — spans both columns */}
+        <Box sx={{ px: { xs: 2, sm: 3 }, pt: 2.25, pb: 1.75, textAlign: 'center' }}>
+          <Typography sx={{ fontSize: 17, fontWeight: 700, color: colors.navy, mb: 0.5 }}>
+            Here&apos;s what you will upload after checkout
+          </Typography>
+          <Typography
             sx={{
-              display: 'flex',
-              gap: 1,
-              px: { xs: 2, sm: 3 },
-              pb: 2,
-              overflowX: 'auto',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: colors.textMuted,
             }}
           >
-            {list.map((applicant, index) => {
-              const active = applicant.id === activeApplicant?.id
-              const name = applicant.details.fullName.trim() || applicant.label
-              const tags = profileAnswerTags(applicant.profileAnswers)
-              const tagLine = [index > 0 ? 'Co-traveler' : null, ...tags.slice(0, 2)]
-                .filter(Boolean)
-                .join(' · ')
-              const tone = AVATAR_TONES[index % AVATAR_TONES.length]
+            Guided by experts — backed by approval data
+          </Typography>
+        </Box>
 
-              return (
+        {/* Full-width passenger tabs */}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            px: { xs: 2, sm: 3 },
+            pt: 1.5,
+            pb: 2.5,
+            overflowX: 'auto',
+          }}
+        >
+          {list.map((applicant, index) => {
+            const active = applicant.id === activeApplicant?.id
+            const name = applicant.details.fullName.trim() || applicant.label
+            const profileTags = profileAnswerTags(applicant.profileAnswers)
+            // Prefer marital + profession style line from Build profile (e.g. "Single · Salaried Employee").
+            const marital = profileTags.find((t) =>
+              ['Single', 'Married', 'Divorced', 'Widowed'].includes(t),
+            )
+            const profession = profileTags.find(
+              (t) => !['Single', 'Married', 'Divorced', 'Widowed', 'Yes', 'No'].includes(t),
+            )
+            const tagLine = [index > 0 ? 'Co-traveler' : null, marital, profession]
+              .filter(Boolean)
+              .join(' · ')
+
+            return (
+              <Box
+                key={applicant.id}
+                component="button"
+                type="button"
+                onClick={() => setActiveApplicantId(applicant.id)}
+                sx={{
+                  appearance: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  flex: '0 0 auto',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  textAlign: 'left',
+                  px: 2.25,
+                  py: 1.5,
+                  borderRadius: '10px',
+                  bgcolor: active ? colors.navy : colors.surfaceAlt,
+                  color: active ? '#fff' : colors.navy,
+                  transition: 'background-color 0.15s ease, color 0.15s ease',
+                  font: 'inherit',
+                }}
+              >
                 <Box
-                  key={applicant.id}
-                  component="button"
-                  type="button"
-                  onClick={() => setActiveApplicantId(applicant.id)}
                   sx={{
-                    appearance: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    flex: '1 1 180px',
-                    minWidth: 180,
-                    maxWidth: 280,
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    bgcolor: active ? 'rgba(255,255,255,0.18)' : colors.border,
+                    color: active ? '#fff' : colors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 1.25,
-                    textAlign: 'left',
-                    px: 1.5,
-                    py: 1.25,
-                    borderRadius: 999,
-                    bgcolor: active ? colors.navy : colors.surfaceAlt,
-                    color: active ? '#fff' : colors.navy,
-                    transition: 'background-color 0.15s ease',
-                    font: 'inherit',
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
-                  <Box
+                  {initialsFromName(name)}
+                </Box>
+                <Box sx={{ minWidth: 0, pr: 0.5 }}>
+                  <Typography
                     sx={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: '50%',
-                      bgcolor: tone,
-                      color: '#fff',
-                      fontSize: 12,
+                      fontSize: 13,
                       fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
+                      color: 'inherit',
+                      lineHeight: 1.2,
                     }}
                   >
-                    {initialsFromName(name)}
-                  </Box>
-                  <Box sx={{ minWidth: 0 }}>
+                    {displayNameUpper(name)}
+                  </Typography>
+                  {tagLine ? (
                     <Typography
                       sx={{
-                        fontSize: 12.5,
-                        fontWeight: 700,
-                        letterSpacing: '0.04em',
-                        color: 'inherit',
-                        lineHeight: 1.25,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+                        fontSize: 11,
+                        fontWeight: 500,
+                        color: active ? 'rgba(255,255,255,0.72)' : colors.textMuted,
+                        mt: 0.15,
+                        lineHeight: 1.2,
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      {displayNameUpper(name)}
+                      {tagLine}
                     </Typography>
-                    {tagLine ? (
-                      <Typography
+                  ) : null}
+                </Box>
+              </Box>
+            )
+          })}
+        </Box>
+
+        {/* Body row: left list (~65%) + right sidebar (~35%) — flex only */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: 'stretch',
+            gap: { xs: 2, md: 2.5 },
+            borderTop: `1px solid ${colors.border}`,
+            px: { xs: 2, sm: 2.5 },
+            py: { xs: 2, md: 2.5 },
+            bgcolor: colors.white,
+          }}
+        >
+          {/* Left — category-grouped DocumentChecklistRow list */}
+          <Box
+            sx={{
+              flex: { xs: '1 1 auto', md: '1 1 65%' },
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              ...getElevatedCardSx(colors.border),
+              borderRadius: retailFlowLayout.cardRadius,
+              bgcolor: colors.white,
+              overflow: 'hidden',
+            }}
+          >
+            <Stack spacing={0} sx={{ flex: 1 }}>
+              {activeApplicant
+                ? grouped.map(({ category, docs }) => {
+                    const meta = CATEGORY_META[category]
+                    const CatIcon = meta.icon
+                    return (
+                      <Box
+                        key={category}
                         sx={{
-                          fontSize: 11,
-                          color: active ? 'rgba(255,255,255,0.72)' : colors.textMuted,
-                          mt: 0.25,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
+                          display: 'flex',
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          borderBottom: `1px solid ${colors.border}`,
+                          '&:last-of-type': { borderBottom: 'none' },
                         }}
                       >
-                        {tagLine}
-                      </Typography>
-                    ) : null}
-                  </Box>
-                </Box>
-              )
-            })}
-          </Box>
-
-          <Stack spacing={0} sx={{ borderTop: `1px solid ${colors.border}` }}>
-            {activeApplicant
-              ? grouped.map(({ category, docs }) => {
-                  const meta = CATEGORY_META[category]
-                  const CatIcon = meta.icon
-                  return (
-                    <Box
-                      key={category}
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', sm: '132px 1fr' },
-                        borderBottom: `1px solid ${colors.border}`,
-                        '&:last-child': { borderBottom: 'none' },
-                      }}
-                    >
-                      <Box sx={{ px: 2, pt: { xs: 1.75, sm: 2.25 }, pb: { xs: 0.5, sm: 2 } }}>
                         <Box
                           sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 0.75,
-                            px: 1.25,
-                            py: 0.65,
-                            borderRadius: 999,
-                            bgcolor: colors.surfaceAlt,
-                            color: colors.textSecondary,
-                            fontSize: 11,
-                            fontWeight: 700,
-                            letterSpacing: '0.06em',
-                            textTransform: 'uppercase',
+                            flex: { sm: '0 0 120px' },
+                            px: 2,
+                            pt: { xs: 1.75, sm: 2.25 },
+                            pb: { xs: 0.5, sm: 2 },
                           }}
                         >
-                          <CatIcon size={13} />
-                          {meta.label}
+                          <Box
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 0.75,
+                              px: 1.25,
+                              py: 0.65,
+                              borderRadius: 999,
+                              bgcolor: colors.surfaceAlt,
+                              color: colors.textSecondary,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              letterSpacing: '0.06em',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            <CatIcon size={13} />
+                            {meta.label}
+                          </Box>
                         </Box>
-                      </Box>
 
-                      <Stack spacing={0} sx={{ px: { xs: 1, sm: 1.25 }, py: 1 }}>
-                        {docs.map((doc) => (
-                          <DocumentChecklistRow
-                            key={doc.documentId}
-                            icon={docIcon(doc)}
-                            name={doc.name}
-                            description={doc.description}
-                            completed={isDocComplete(doc, activeApplicant, uploads)}
-                            optional={!doc.mandatory}
-                            onInfoClick={() =>
-                              setWhyContent(
-                                resolveDocumentWhyContent({
-                                  documentId: doc.documentId,
-                                  name: doc.name,
-                                  description: doc.description,
-                                }),
-                              )
-                            }
-                            onFileSelect={(file) => handleFile(doc.documentId, file, activeApplicant.id)}
-                          />
-                        ))}
-                      </Stack>
-                    </Box>
-                  )
-                })
-              : null}
-          </Stack>
+                        <Stack spacing={0} sx={{ flex: 1, minWidth: 0, px: { xs: 1, sm: 1.25 }, py: 1 }}>
+                          {docs.map((doc) => (
+                            <DocumentChecklistRow
+                              key={doc.documentId}
+                              icon={docIcon(doc)}
+                              name={doc.name}
+                              description={doc.description}
+                              completed={isDocComplete(doc, activeApplicant, uploads)}
+                              optional={!doc.mandatory}
+                              onInfoClick={() =>
+                                setWhyContent(
+                                  resolveDocumentWhyContent({
+                                    documentId: doc.documentId,
+                                    name: doc.name,
+                                    description: doc.description,
+                                  }),
+                                )
+                              }
+                              onFileSelect={(file) => handleFile(doc.documentId, file, activeApplicant.id)}
+                            />
+                          ))}
+                        </Stack>
+                      </Box>
+                    )
+                  })
+                : null}
+            </Stack>
+          </Box>
+
+          {/* Right — bulk upload for active traveller + LiveStatusPanel readiness */}
+          <Box
+            sx={{
+              flex: { xs: '1 1 auto', md: '0 0 35%' },
+              maxWidth: { md: '35%' },
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+            }}
+          >
+            <BulkUploadDropzone
+              openFilePickerRef={dropzoneRef}
+              title="Upload passport folder or ZIP"
+              caption="Drag & drop, or browse — .zip, JPG, PNG, PDF. Status updates per traveller below."
+              onFilesSelected={handleBulkFiles}
+            />
+
+            <Stack spacing={1}>
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: colors.textMuted,
+                }}
+              >
+                Bulk upload status
+              </Typography>
+              {bulkRows.map((item) => (
+                <TravellerUploadStatusRow
+                  key={item.id}
+                  item={item}
+                  onReupload={handleReupload}
+                />
+              ))}
+            </Stack>
+
+            <LiveStatusPanel
+              headline={{
+                eyebrow: 'Estimated approval',
+                value: estimatedApproval,
+                caption: tripContext,
+              }}
+              readiness={{
+                percent: activeProgress.percent,
+                minutesLeft: activeProgress.remaining * MINUTES_PER_REMAINING_DOC,
+              }}
+            />
+          </Box>
         </Box>
-      </StepShell>
+      </Box>
 
       <WhyWeAskSheet open={Boolean(whyContent)} content={whyContent} onClose={() => setWhyContent(null)} />
     </>
+  )
+}
+
+export function ChecklistStep({
+  documents,
+  applicants,
+  uploads,
+  onUpload,
+  onBack,
+  onContinue,
+  estimatedApproval,
+  tripContext,
+  previewOnly = false,
+  onBulkFilesSelected,
+}: ChecklistStepProps) {
+  const namedApplicants = applicants.filter((a) => a.details.fullName.trim())
+  const list = namedApplicants.length > 0 ? namedApplicants : applicants
+
+  const mandatoryComplete =
+    list.length > 0 &&
+    list.every((applicant) =>
+      documents.filter((doc) => doc.mandatory).every((doc) => isDocComplete(doc, applicant, uploads)),
+    )
+
+  const card = (
+    <ChecklistCard
+      documents={documents}
+      applicants={applicants}
+      uploads={uploads}
+      onUpload={onUpload}
+      estimatedApproval={estimatedApproval}
+      tripContext={tripContext}
+      onBulkFilesSelected={onBulkFilesSelected}
+    />
+  )
+
+  if (previewOnly) return card
+
+  return (
+    <StepShell
+      title="We work in parallel. You don't wait, your visa doesn't wait."
+      mobileTitle="We work in parallel. You don't wait."
+      helperText="The moment you checkout, we start drafting required forms and your slot is confirmed. Upload the documents any time in the next 5 days."
+      onBack={onBack}
+      onContinue={onContinue}
+      continueDisabled={!mandatoryComplete || list.length === 0}
+      continueLabel="Continue"
+      contentMaxWidth={1100}
+    >
+      {card}
+    </StepShell>
   )
 }
