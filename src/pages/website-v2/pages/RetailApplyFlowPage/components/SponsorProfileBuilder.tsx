@@ -84,16 +84,16 @@ export function SponsorProfileBuilder({
       size="sm"
       hideCloseButton
       sx={{
-        width: { sm: 480 },
-        height: { xs: '100%', sm: 520 },
-        minHeight: { sm: 520 },
-        maxHeight: { sm: 520 },
+        width: { sm: 400 },
+        height: { xs: '100%', sm: 400 },
+        minHeight: { sm: 400 },
+        maxHeight: { sm: 400 },
         '& .MuiDialogContent-root': {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          px: { xs: 2, sm: 2.5 },
-          py: { xs: 1.5, sm: 2 },
+          px: { xs: 2, sm: 2.25 },
+          py: { xs: 1.5, sm: 1.75 },
         },
       }}
     >

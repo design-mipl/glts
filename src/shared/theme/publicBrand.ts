@@ -23,6 +23,10 @@ export interface PublicBrandColors {
   goldBright: string
   goldDark: string
   goldMuted: string
+  /** Travel Solutions accent — pre-application/discovery surfaces (destinations, country detail, about). */
+  teal: string
+  tealDark: string
+  tealMuted: string
   criticalMuted: string
   criticalBorder: string
   checklistMuted: string
@@ -53,6 +57,9 @@ export const publicLightColors: PublicBrandColors = {
   goldBright: '#FEC107',
   goldDark: '#FFA000',
   goldMuted: 'rgba(254, 193, 7, 0.12)',
+  teal: '#0C6C79',
+  tealDark: '#084F58',
+  tealMuted: 'rgba(12, 108, 121, 0.10)',
   criticalMuted: '#FEF2F2',
   criticalBorder: '#FECACA',
   checklistMuted: '#F2F5F9',
@@ -81,6 +88,9 @@ export const publicDarkColors: PublicBrandColors = {
   goldBright: '#FFD54F',
   goldDark: '#FFA000',
   goldMuted: 'rgba(254, 193, 7, 0.14)',
+  teal: '#4FB4C2',
+  tealDark: '#7ED0DB',
+  tealMuted: 'rgba(79, 180, 194, 0.16)',
   criticalMuted: '#2D1818',
   criticalBorder: '#5C2E2E',
   checklistMuted: '#151D2B',
@@ -109,6 +119,12 @@ export function usePublicBrandColors(): PublicBrandColors {
 export const publicFonts = {
   heading: '"Roboto", system-ui, sans-serif',
   body: '"Roboto", system-ui, sans-serif',
+  /** Display face for hero numerals/page titles on discovery surfaces (destinations, country detail).
+   *  Roboto Slab — same superfamily as body (harmonious metrics), slab-serif gravitas reads as
+   *  "official travel document" rather than a generic SaaS pairing. Use sparingly, large sizes only. */
+  display: '"Roboto Slab", "Roboto", system-ui, serif',
+  /** Tabular data face for processing-time/price/date readouts — boarding-pass / manifest feel. */
+  mono: '"Roboto Mono", ui-monospace, monospace',
 } as const
 
 export const publicLayout = {
@@ -141,6 +157,20 @@ export const publicTypography = {
 
 /** Product / portal button radius — matches design-system `BUTTON.borderRadius` (10px). */
 export const PRODUCT_BUTTON_BORDER_RADIUS = '10px'
+
+/** Shared easing/duration tokens for scroll-reveal, entrance, and press-feedback motion. */
+export const publicMotion = {
+  /** Entrances/exits — strong ease-out, no built-in CSS weakness. */
+  easeOut: 'cubic-bezier(0.23, 1, 0.32, 1)',
+  /** On-screen movement/morphing. */
+  easeInOut: 'cubic-bezier(0.77, 0, 0.175, 1)',
+  /** Scroll-reveal entrance duration. */
+  revealDurationMs: 500,
+  /** Per-item stagger delay for grids/lists revealing together. */
+  staggerMs: 70,
+  /** Press feedback (`:active`) duration for buttons/cards. */
+  pressDurationMs: 140,
+} as const
 
 /** Outlined secondary actions in wizards, drawers, and forms. */
 export function getOutlinedButtonSx(): SxProps<Theme> {

@@ -4,6 +4,7 @@ import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
 import { Check, Plus, Trash2, UserRound } from 'lucide-react'
 import { Button, IconButton } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { retailProfileCardGradient } from '@/pages/website-v2/theme/retailFlowTokens'
 import { StepShell } from '../StepShell'
 import { TravelProfileBuilder } from '../TravelProfileBuilder'
 import {
@@ -77,8 +78,9 @@ function TravellerProfileCard({
           border: `1px solid ${colors.border}`,
           borderRadius: 4,
           bgcolor: colors.white,
+          backgroundImage: retailProfileCardGradient,
           p: 1.75,
-          maxWidth: 210,
+          maxWidth: 180,
           width: '100%',
           mx: 'auto',
           minHeight: 210,
@@ -100,18 +102,18 @@ function TravellerProfileCard({
           />
         ) : null}
 
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.25, pr: onRemove ? 3.5 : 0 }}>
+        <Stack alignItems="center" spacing={0.75} sx={{ mb: 1, width: '100%', pr: onRemove ? 3.5 : 0 }}>
           <Box
             sx={{
-              width: 40,
-              height: 40,
+              width: 48,
+              height: 48,
               borderRadius: '50%',
               bgcolor: tone,
               color: '#fff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 700,
               flexShrink: 0,
             }}
@@ -125,6 +127,11 @@ function TravellerProfileCard({
               color: colors.navy,
               letterSpacing: '0.04em',
               lineHeight: 1.3,
+              textAlign: 'center',
+              width: '100%',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {nameUpper}
@@ -136,8 +143,9 @@ function TravellerProfileCard({
             display: 'flex',
             flexWrap: 'wrap',
             alignContent: 'flex-start',
+            justifyContent: 'center',
             gap: 0.5,
-            pt: 1,
+            pt: 1.5,
           }}
         >
           {tags.map((tag) => (
@@ -197,8 +205,9 @@ function TravellerProfileCard({
         border: `1px solid ${colors.border}`,
         borderRadius: 4,
         bgcolor: colors.white,
+        backgroundImage: retailProfileCardGradient,
         p: 2,
-        maxWidth: 210,
+        maxWidth: 180,
         width: '100%',
         mx: 'auto',
         boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
@@ -380,13 +389,13 @@ export function TravelProfileStep({
               display: 'grid',
               gridTemplateColumns: {
                 xs: '1fr',
-                sm: applicants.length === 1 ? 'minmax(0, 210px)' : 'repeat(2, minmax(0, 210px))',
-                md:
-                  applicants.length === 1
-                    ? 'minmax(0, 210px)'
-                    : applicants.length === 2
-                      ? 'repeat(2, minmax(0, 210px))'
-                      : 'repeat(3, minmax(0, 210px))',
+                sm: applicants.length === 1 ? 'minmax(0, 180px)' : 'repeat(2, minmax(0, 180px))',
+              md:
+                applicants.length === 1
+                  ? 'minmax(0, 180px)'
+                  : applicants.length === 2
+                    ? 'repeat(2, minmax(0, 180px))'
+                    : 'repeat(3, minmax(0, 180px))',
               },
               gap: 2,
               justifyContent: 'center',

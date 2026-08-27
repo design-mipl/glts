@@ -318,6 +318,9 @@ export function ReviewStep({
         <MetaRow label="Destination" value={journey.country.name} />
         <MetaRow label="Visa type" value={journey.visaType.name} />
         {draft.travelDate ? <MetaRow label="Travel date" value={draft.travelDate} /> : null}
+        {draft.jurisdictionName || draft.jurisdictionId ? (
+          <MetaRow label="Application centre" value={draft.jurisdictionName || draft.jurisdictionId || '—'} />
+        ) : null}
       </Box>
 
       {travellers.map((applicant, index) => {

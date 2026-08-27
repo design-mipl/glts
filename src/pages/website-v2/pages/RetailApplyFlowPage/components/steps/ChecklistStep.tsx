@@ -62,6 +62,36 @@ function isIdentityCaptureDoc(documentId: string): 'photo' | 'passport' | null {
   return null
 }
 
+/** Passport + photo are captured earlier — always show them under Personal as completed when present. */
+const ESSENTIAL_PERSONAL_DOCS: RetailChecklistDocument[] = [
+  {
+    documentId: 'photo',
+    name: 'Photograph',
+    description: 'Recent passport-size photo on a white background.',
+    mandatory: true,
+    originalDocument: false,
+  },
+  {
+    documentId: 'passport',
+    name: 'Passport',
+    description: 'Bio page — clear and fully visible.',
+    mandatory: true,
+    originalDocument: true,
+  },
+]
+
+function withEssentialPersonalDocs(documents: RetailChecklistDocument[]): RetailChecklistDocument[] {
+  const hasPhoto = documents.some((doc) => isIdentityCaptureDoc(doc.documentId) === 'photo')
+  const hasPassport = documents.some((doc) => isIdentityCaptureDoc(doc.documentId) === 'passport')
+  const missing = ESSENTIAL_PERSONAL_DOCS.filter((doc) => {
+    if (doc.documentId === 'photo') return !hasPhoto
+    if (doc.documentId === 'passport') return !hasPassport
+    return false
+  })
+  if (missing.length === 0) return documents
+  return [...missing, ...documents]
+}
+
 function docIcon(doc: RetailChecklistDocument) {
   const hay = `${doc.documentId} ${doc.name}`.toLowerCase()
   if (/photo|photograph/.test(hay)) return Camera
@@ -146,6 +176,8 @@ export function ChecklistCard({
 
   const activeApplicant = list.find((a) => a.id === activeApplicantId) ?? list[0]
 
+  const checklistDocuments = useMemo(() => withEssentialPersonalDocs(documents), [documents])
+
   async function runBulkPipeline(applicantId: string, files: File[]) {
     if (!files.length) return
     await sleep(400)
@@ -177,18 +209,18 @@ export function ChecklistCard({
       financial: [],
       other: [],
     }
-    for (const doc of documents) {
+    for (const doc of checklistDocuments) {
       map[categorizeDocument(doc)].push(doc)
     }
     return order
       .map((category) => ({ category, docs: map[category] }))
       .filter((group) => group.docs.length > 0)
-  }, [documents])
+  }, [checklistDocuments])
 
   const activeProgress = useMemo(() => {
     if (!activeApplicant) return { done: 0, total: 0, remaining: 0, percent: 0, complete: false }
-    return travellerProgress(activeApplicant, documents, uploads)
-  }, [activeApplicant, documents, uploads])
+    return travellerProgress(activeApplicant, checklistDocuments, uploads)
+  }, [activeApplicant, checklistDocuments, uploads])
 
   function handleFile(documentId: string, file: File, applicantId: string) {
     const reader = new FileReader()
@@ -211,31 +243,13 @@ export function ChecklistCard({
           flexDirection: 'column',
         }}
       >
-        {/* Full-width header — spans both columns */}
-        <Box sx={{ px: { xs: 2, sm: 3 }, pt: 2.25, pb: 1.75, textAlign: 'center' }}>
-          <Typography sx={{ fontSize: 17, fontWeight: 700, color: colors.navy, mb: 0.5 }}>
-            Here&apos;s what you will upload after checkout
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: colors.textMuted,
-            }}
-          >
-            Guided by experts — backed by approval data
-          </Typography>
-        </Box>
-
         {/* Full-width passenger tabs */}
         <Box
           sx={{
             display: 'flex',
             gap: 1,
             px: { xs: 2, sm: 3 },
-            pt: 1.5,
+            pt: 2.25,
             pb: 2.5,
             overflowX: 'auto',
           }}
@@ -479,16 +493,17 @@ export function ChecklistStep({
 }: ChecklistStepProps) {
   const namedApplicants = applicants.filter((a) => a.details.fullName.trim())
   const list = namedApplicants.length > 0 ? namedApplicants : applicants
+  const checklistDocuments = useMemo(() => withEssentialPersonalDocs(documents), [documents])
 
   const mandatoryComplete =
     list.length > 0 &&
     list.every((applicant) =>
-      documents.filter((doc) => doc.mandatory).every((doc) => isDocComplete(doc, applicant, uploads)),
+      checklistDocuments.filter((doc) => doc.mandatory).every((doc) => isDocComplete(doc, applicant, uploads)),
     )
 
   const card = (
     <ChecklistCard
-      documents={documents}
+      documents={checklistDocuments}
       applicants={applicants}
       uploads={uploads}
       onUpload={onUpload}

@@ -16,7 +16,7 @@ import {
   InputAdornment,
 } from '@mui/material'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
-import { publicLayout, publicShadows, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { publicFonts, publicLayout, publicShadows, usePublicBrandColors } from '../../../theme/publicSiteTokens'
 
 export type TripLengthChoice = '' | 'under-2-weeks' | '2-to-4-weeks' | 'month-or-longer'
 export type ApplicantGroupChoice = 'just-me' | 'family-group'
@@ -154,14 +154,22 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.25 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: '14px', color: colors.navy, letterSpacing: '0.5px' }}>
+          <Typography
+            sx={{
+              fontFamily: publicFonts.mono,
+              fontWeight: 700,
+              fontSize: '11px',
+              color: colors.navy,
+              letterSpacing: '0.14em',
+            }}
+          >
             PLAN YOUR VISA
           </Typography>
           <Button
             size="small"
             disabled={!hasActiveFilters}
             onClick={() => onFiltersChange(defaultFilters)}
-            sx={{ color: colors.greenBright, fontWeight: 600, textTransform: 'none', minWidth: 'auto', p: 0 }}
+            sx={{ color: colors.teal, fontWeight: 600, textTransform: 'none', minWidth: 'auto', p: 0 }}
           >
             Reset
           </Button>
@@ -169,7 +177,17 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
 
         <Stack spacing={2.75}>
           <Box>
-            <Typography sx={{ fontSize: '12px', fontWeight: 700, color: colors.textMuted, mb: 1.25 }}>
+            <Typography
+              sx={{
+                fontFamily: publicFonts.mono,
+                fontSize: '10px',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: colors.textMuted,
+                mb: 1.25,
+              }}
+            >
               Plan around your trip
             </Typography>
             <Stack spacing={1}>
@@ -184,7 +202,7 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                   readOnly: true,
                   endAdornment: (
                     <InputAdornment position="end">
-                      <CalendarDays size={17} color={colors.greenDark} />
+                      <CalendarDays size={17} color={colors.tealDark} />
                     </InputAdornment>
                   ),
                 }}
@@ -196,7 +214,7 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                     fontWeight: 700,
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
-                    color: colors.greenBright,
+                    color: colors.teal,
                   },
                   '& .MuiOutlinedInput-root': {
                     height: 40,
@@ -207,10 +225,10 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                       borderColor: colors.border,
                     },
                     '&:hover fieldset': {
-                      borderColor: colors.greenBright,
+                      borderColor: colors.teal,
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: colors.greenBright,
+                      borderColor: colors.teal,
                       borderWidth: 1,
                     },
                   },
@@ -247,8 +265,8 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                     fontSize: '13px',
                     lineHeight: 1.2,
                     '&.Mui-selected': {
-                      bgcolor: colors.greenMuted,
-                      color: colors.greenDark,
+                      bgcolor: colors.tealMuted,
+                      color: colors.tealDark,
                       fontWeight: 700,
                     },
                   },
@@ -264,7 +282,17 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
           </Box>
 
           <Box>
-            <Typography sx={{ fontSize: '12px', fontWeight: 700, color: colors.textMuted, mb: 1 }}>
+            <Typography
+              sx={{
+                fontFamily: publicFonts.mono,
+                fontSize: '10px',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: colors.textMuted,
+                mb: 1,
+              }}
+            >
               Anything we should know?
             </Typography>
             <FormGroup sx={{ gap: 0.25 }}>
@@ -277,7 +305,7 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                       size="small"
                       checked={filters.concerns.includes(option.value)}
                       onChange={() => toggleConcern(option.value)}
-                      sx={{ p: 0.25, mr: 0.75, '&.Mui-checked': { color: colors.greenBright } }}
+                      sx={{ p: 0.25, mr: 0.75, '&.Mui-checked': { color: colors.teal } }}
                     />
                   }
                   label={<Typography sx={{ fontSize: '13px', lineHeight: 1.25 }}>{option.label}</Typography>}
@@ -287,7 +315,17 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
           </Box>
 
           <Box>
-            <Typography sx={{ fontSize: '12px', fontWeight: 700, color: colors.textMuted, mb: 1 }}>
+            <Typography
+              sx={{
+                fontFamily: publicFonts.mono,
+                fontSize: '10px',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: colors.textMuted,
+                mb: 1,
+              }}
+            >
               Who's applying?
             </Typography>
             <ToggleButtonGroup
@@ -323,8 +361,8 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                   px: 0.75,
                   py: 0.5,
                   '&.Mui-selected': {
-                    bgcolor: colors.greenMuted,
-                    color: colors.greenDark,
+                    bgcolor: colors.tealMuted,
+                    color: colors.tealDark,
                   },
                 },
               }}
@@ -391,13 +429,13 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                     p: 0,
                     borderRadius: '9px',
                     color: isSelected ? colors.white : isCurrentMonth ? colors.navy : colors.textMuted,
-                    bgcolor: isSelected ? colors.greenBright : 'transparent',
-                    border: isToday && !isSelected ? `1px solid ${colors.greenBright}` : '1px solid transparent',
+                    bgcolor: isSelected ? colors.teal : 'transparent',
+                    border: isToday && !isSelected ? `1px solid ${colors.teal}` : '1px solid transparent',
                     fontSize: '13px',
                     fontWeight: isSelected || isToday ? 800 : 600,
                     '&:hover': {
-                      bgcolor: isSelected ? colors.greenDark : colors.greenMuted,
-                      color: isSelected ? colors.white : colors.greenDark,
+                      bgcolor: isSelected ? colors.tealDark : colors.tealMuted,
+                      color: isSelected ? colors.white : colors.tealDark,
                     },
                   }}
                 >
@@ -421,7 +459,7 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
             <Button
               size="small"
               onClick={() => selectTravelDate(new Date())}
-              sx={{ textTransform: 'none', color: colors.greenBright, fontWeight: 800 }}
+              sx={{ textTransform: 'none', color: colors.teal, fontWeight: 800 }}
             >
               Today
             </Button>

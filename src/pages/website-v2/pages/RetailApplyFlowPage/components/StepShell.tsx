@@ -26,13 +26,15 @@ interface StepShellProps {
   titleAccessory?: ReactNode
   /** Max width for title + body (footer stays full card width). */
   contentMaxWidth?: number
+  /** Floor for the scrollable body so short steps still fill the card. */
+  contentMinHeight?: number | string | Record<string, number | string>
   /** Optional action rendered left of Continue (e.g. Add travelers). */
   footerEndAction?: ReactNode
   /** Trust / policy microcopy under the footer actions. */
   footerCaption?: ReactNode
 }
 
-/** Retail step content chrome — centered body, actions pinned to card bottom. */
+/** Retail step content chrome — title top, body scrolls, actions pinned bottom. */
 export function StepShell({
   title,
   mobileTitle,
@@ -46,6 +48,7 @@ export function StepShell({
   hideContinue = false,
   titleAccessory,
   contentMaxWidth = 720,
+  contentMinHeight,
   footerEndAction,
   footerCaption,
 }: StepShellProps) {
@@ -55,8 +58,9 @@ export function StepShell({
     <Box
       sx={{
         width: '100%',
-        flex: '1 0 auto',
-        minHeight: '100%',
+        flex: 1,
+        minHeight: 0,
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
@@ -89,9 +93,9 @@ export function StepShell({
               <Typography
                 sx={{
                   display: { xs: 'block', md: 'none' },
-                  fontWeight: 900,
+                  fontWeight: 800,
                   letterSpacing: '-0.02em',
-                  fontSize: 26,
+                  fontSize: 20,
                   color: colors.navy,
                   m: 0,
                 }}
@@ -101,9 +105,9 @@ export function StepShell({
               <Typography
                 sx={{
                   display: { xs: 'none', md: 'block' },
-                  fontWeight: 900,
+                  fontWeight: 800,
                   letterSpacing: '-0.02em',
-                  fontSize: 32,
+                  fontSize: 22,
                   color: colors.navy,
                   m: 0,
                 }}
@@ -114,9 +118,9 @@ export function StepShell({
           ) : (
             <Typography
               sx={{
-                fontWeight: 900,
+                fontWeight: 800,
                 letterSpacing: '-0.02em',
-                fontSize: { xs: 26, md: 32 },
+                fontSize: { xs: 20, md: 22 },
                 color: colors.navy,
                 m: 0,
               }}
@@ -129,7 +133,7 @@ export function StepShell({
         {helperText ? (
           <Typography
             component="div"
-            sx={{ fontSize: 14, color: colors.textSecondary, mb: 3, lineHeight: 1.5 }}
+            sx={{ fontSize: 13, color: colors.textSecondary, mb: 2.5, lineHeight: 1.5 }}
           >
             {helperText}
           </Typography>
@@ -145,9 +149,13 @@ export function StepShell({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'stretch',
+          justifyContent: 'flex-start',
           textAlign: 'left',
-          minHeight: 'auto',
-          pt: 2.0,
+          minHeight: 0,
+          pt: 0.5,
+          overflowX: 'hidden',
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {children}
@@ -159,11 +167,9 @@ export function StepShell({
             flex: '0 0 auto',
             width: '100%',
             mt: 'auto',
-            pt: 2.5,
+            pt: 2,
             borderTop: `1px solid ${colors.border}`,
             bgcolor: colors.white,
-            position: 'sticky',
-            bottom: 0,
             zIndex: 2,
           }}
         >

@@ -17,7 +17,7 @@ import { TravelProfileStep } from './components/steps/TravelProfileStep'
 import { SponsorStep } from './components/steps/SponsorStep'
 import { SponsorDocsStep } from './components/steps/SponsorDocsStep'
 import { PassportStep } from './components/steps/PassportStep'
-import { JurisdictionStep } from './components/steps/JurisdictionStep'
+import { JurisdictionStep, resolveRetailJurisdictionPatch } from './components/steps/JurisdictionStep'
 import { ConditionalQuestionStep } from './components/steps/ConditionalQuestionStep'
 import { ChecklistStep } from './components/steps/ChecklistStep'
 import { OriginalDocumentsStep } from './components/steps/OriginalDocumentsStep'
@@ -235,7 +235,16 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
       <PassportStep
         countryName={countryMaster?.name}
         applicants={draft.applicants}
+        uploads={draft.documentUploads}
         onUpdateApplicant={updateApplicant}
+        onUploadBankStatement={(applicantId, image) =>
+          patchDraft((prev) => ({
+            documentUploads: {
+              ...prev.documentUploads,
+              [`${applicantId}__bank_statement`]: image,
+            },
+          }))
+        }
         onBack={goBack}
         onContinue={goNext}
       />
@@ -331,8 +340,39 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
             visaOfferingId={visaOfferingId}
             jurisdictions={jurisdictions}
             selectedId={draft.jurisdictionId}
+            jurisdictionName={draft.jurisdictionName}
+            issuedPassportState={draft.issuedPassportState}
+            placeOfResidence={draft.placeOfResidence}
             travelDate={draft.travelDate}
-            onSelect={(jurisdictionId) => patchDraft({ jurisdictionId })}
+            onSelect={(jurisdictionId, jurisdictionName) =>
+              patchDraft({ jurisdictionId, jurisdictionName })
+            }
+            onPassportStateChange={(stateName) =>
+              patchDraft(
+                resolveRetailJurisdictionPatch(
+                  countryId,
+                  visaOfferingId,
+                  { issuedPassportState: stateName },
+                  {
+                    issuedPassportState: draft.issuedPassportState,
+                    placeOfResidence: draft.placeOfResidence,
+                  },
+                ),
+              )
+            }
+            onPlaceOfResidenceChange={(stateName) =>
+              patchDraft(
+                resolveRetailJurisdictionPatch(
+                  countryId,
+                  visaOfferingId,
+                  { placeOfResidence: stateName },
+                  {
+                    issuedPassportState: draft.issuedPassportState,
+                    placeOfResidence: draft.placeOfResidence,
+                  },
+                ),
+              )
+            }
             onTravelDateChange={(isoDate) => patchDraft({ travelDate: isoDate })}
             onBack={goBack}
             onContinue={goNext}
@@ -482,11 +522,23 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         width: '100%',
         flex: 1,
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: 'stretch',
+        gap: { xs: 1.5, md: 2.5 },
         minHeight: 0,
       }}
     >
-      <Box sx={{ mb: 2.5, flex: '0 0 auto' }}>
+      <Box
+        sx={{
+          flex: '0 0 auto',
+          width: { xs: '100%', md: 80 },
+          alignSelf: 'stretch',
+          display: 'flex',
+          alignItems: { xs: 'stretch', md: 'center' },
+          justifyContent: { xs: 'flex-start', md: 'center' },
+          minHeight: 0,
+        }}
+      >
         <PhaseNav
           currentPhase={currentPhase}
           unlockedPhases={unlockedPhases}
@@ -503,19 +555,23 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
           p: { xs: 2.5, md: 3.5 },
           width: '100%',
           flex: 1,
+          minWidth: 0,
+          maxHeight: '100%',
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
           boxSizing: 'border-box',
           position: 'relative',
+          overflow: 'hidden',
         }}
       >
         <Box
           sx={{
-            flex: 1,
+            flex: '1 1 auto',
             display: 'flex',
             flexDirection: 'column',
             minHeight: 0,
+            maxHeight: '100%',
             width: '100%',
             overflow: 'hidden',
           }}

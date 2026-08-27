@@ -152,12 +152,12 @@ export function PassportCaptureFlow({
         applicantName={applicantName}
         badgeLabel="Scan passport"
         badgeIcon={ScanLine}
-        size="xl"
+        size="lg"
         contentAlign="start"
         fitToContent
         header={<CaptureHeadline lead="Passport," accent="review & contact" />}
         footer={
-          <Box sx={{ width: '100%', maxWidth: 920, mx: 'auto' }}>
+          <Box sx={{ width: '100%', maxWidth: 840, mx: 'auto' }}>
             <Box
               component="button"
               type="button"
@@ -187,10 +187,10 @@ export function PassportCaptureFlow({
         <Box
           sx={{
             width: '100%',
-            maxWidth: 960,
+            maxWidth: 840,
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '320px 1fr' },
-            gap: { xs: 2.5, md: 3.5 },
+            gridTemplateColumns: { xs: '1fr', md: '280px 1fr' },
+            gap: { xs: 2.5, md: 3 },
             textAlign: 'left',
             pt: 1,
           }}
@@ -442,8 +442,8 @@ export function PassportCaptureFlow({
       applicantName={applicantName}
       badgeLabel="Scan passport"
       badgeIcon={ScanLine}
-      size="xl"
-      contentMinHeight={{ xs: 560, sm: 680 }}
+      size="md"
+      contentMinHeight={{ xs: 420, sm: 460 }}
       header={<CaptureHeadline lead="Passport," accent="photo page up" />}
       footer={<CaptureModeBar mode={mode} onChange={setMode} />}
     >
@@ -456,11 +456,44 @@ export function PassportCaptureFlow({
         }}
       >
         <Box
+          component={mode === 'upload' ? 'button' : 'div'}
+          type={mode === 'upload' ? 'button' : undefined}
+          onClick={mode === 'upload' ? () => fileRef.current?.click() : undefined}
+          sx={{
+            appearance: 'none',
+            border: 'none',
+            bgcolor: 'transparent',
+            p: 0,
+            mb: 1.5,
+            cursor: mode === 'upload' ? 'pointer' : 'default',
+            maxWidth: 260,
+            width: '100%',
+            lineHeight: 0,
+            transition: `transform 160ms ${retailFlowEaseOut}`,
+            '&:active': mode === 'upload' ? { transform: 'scale(0.98)' } : undefined,
+          }}
+        >
+          <Box
+            component="img"
+            src="/images/retail-apply/passport-capture-mock.png"
+            alt="Example passport photo page"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+              borderRadius: BORDER_RADIUS.md,
+              userSelect: 'none',
+              pointerEvents: 'none',
+            }}
+          />
+        </Box>
+
+        <Box
           sx={{
             position: 'relative',
-            width: 'min(92vw, 640px)',
-            aspectRatio: '1.58 / 1',
-            borderRadius: 28,
+            width: 'min(100%, 320px)',
+            height: 200,
+            borderRadius: BORDER_RADIUS.md,
             overflow: 'hidden',
             bgcolor: '#0B1220',
             display: 'flex',
@@ -473,9 +506,9 @@ export function PassportCaptureFlow({
             aria-hidden
             sx={{
               position: 'absolute',
-              inset: 14,
-              borderRadius: BORDER_RADIUS.lg,
-              border: '2px solid rgba(255, 255, 255, 0.92)',
+              inset: 8,
+              borderRadius: BORDER_RADIUS.sm,
+              border: '1.5px solid rgba(255, 255, 255, 0.92)',
               pointerEvents: 'none',
               zIndex: 2,
             }}
@@ -489,17 +522,17 @@ export function PassportCaptureFlow({
               autoPlay
               sx={{
                 position: 'absolute',
-                inset: 14,
-                width: 'calc(100% - 28px)',
-                height: 'calc(100% - 28px)',
+                inset: 8,
+                width: 'calc(100% - 16px)',
+                height: 'calc(100% - 16px)',
                 objectFit: 'cover',
-                borderRadius: BORDER_RADIUS.lg,
+                borderRadius: BORDER_RADIUS.sm,
               }}
             />
           ) : (
-            <Box sx={{ textAlign: 'center', px: 3, position: 'relative', zIndex: 1 }}>
-              <Camera size={28} color="rgba(255,255,255,0.55)" />
-              <Typography sx={{ mt: 1, fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>
+            <Box sx={{ textAlign: 'center', px: 2, position: 'relative', zIndex: 1 }}>
+              <Camera size={22} color="rgba(255,255,255,0.55)" />
+              <Typography sx={{ mt: 0.75, fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>
                 {status === 'starting' && 'Starting camera…'}
                 {status === 'denied' && 'Camera denied — upload from device instead.'}
                 {status === 'unavailable' && 'Camera unavailable — upload from device instead.'}
@@ -512,10 +545,10 @@ export function PassportCaptureFlow({
         <Box
           component="ul"
           sx={{
-            mt: 2.5,
+            mt: 2,
             mb: 0,
             pl: 2.25,
-            maxWidth: 520,
+            maxWidth: 320,
             width: '100%',
             textAlign: 'left',
             listStyleType: 'disc',

@@ -171,6 +171,12 @@ export const retailFlowCanvasBackground = {
   ].join(', '),
 } as const
 
+/** Soft brand wash for traveller / sponsor / docs cards — green top-right, navy bottom-left. */
+export const retailProfileCardGradient = [
+  'radial-gradient(ellipse 90% 70% at 100% 0%, rgba(115, 192, 100, 0.14), transparent 58%)',
+  'radial-gradient(ellipse 90% 70% at 0% 100%, rgba(0, 31, 63, 0.07), transparent 58%)',
+].join(', ')
+
 /** Strong ease-out for entrances/interactions — starts fast, feels responsive. */
 export const retailFlowEaseOut = 'cubic-bezier(0.23, 1, 0.32, 1)'
 /** Strong ease-in-out for on-screen movement (sliding highlights, morphing). */

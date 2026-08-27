@@ -25,12 +25,11 @@ export function TabsNavigation({ activeTab, onTabChange }: TabsNavigationProps) 
             minHeight: 52,
           },
           '& .Mui-selected': { color: colors.navy, fontWeight: 700 },
-          '& .MuiTabs-indicator': { backgroundColor: colors.navy, height: 3, borderRadius: '3px 3px 0 0' },
+          '& .MuiTabs-indicator': { backgroundColor: colors.teal, height: 3, borderRadius: '3px 3px 0 0' },
         }}
       >
         <Tab label="Requirements" />
         <Tab label="Timeline" />
-        <Tab label="Pricing" />
         <Tab label="FAQs" />
       </Tabs>
     </Box>

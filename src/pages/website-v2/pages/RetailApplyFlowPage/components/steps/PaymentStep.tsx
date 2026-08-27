@@ -683,12 +683,12 @@ export function PaymentStep({
   if (previewOnly) {
     return (
       <Stack spacing={1.25} sx={{ width: '100%' }}>
-        <Typography sx={{ fontSize: 28, fontWeight: 900, color: colors.navy, textAlign: 'center' }}>
+        <Typography sx={{ fontSize: 22, fontWeight: 800, color: colors.navy, textAlign: 'center' }}>
           {countryCode}
         </Typography>
         <Typography
           component="div"
-          sx={{ fontSize: 15, fontWeight: 700, color: colors.navy, textAlign: 'center', mb: 0.5 }}
+          sx={{ fontSize: 13, fontWeight: 700, color: colors.navy, textAlign: 'center', mb: 0.5 }}
         >
           {guaranteeHelper}
         </Typography>

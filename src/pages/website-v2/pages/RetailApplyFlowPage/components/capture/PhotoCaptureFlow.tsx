@@ -90,8 +90,8 @@ export function PhotoCaptureFlow({
         applicantName={applicantName}
         badgeLabel="Capture photo"
         badgeIcon={Camera}
-        size="xl"
-        contentMinHeight={{ xs: 560, sm: 680 }}
+        size="md"
+        contentMinHeight={{ xs: 480, sm: 520 }}
         header={<CaptureHeadline lead="Look ahead," accent="straight at the camera" />}
         footer={
           <Box
@@ -150,8 +150,8 @@ export function PhotoCaptureFlow({
       applicantName={applicantName}
       badgeLabel="Capture photo"
       badgeIcon={Camera}
-      size="xl"
-      contentMinHeight={{ xs: 560, sm: 680 }}
+      size="md"
+      contentMinHeight={{ xs: 480, sm: 520 }}
       header={<CaptureHeadline lead="Look ahead," accent="straight at the camera" />}
       footer={<CaptureModeBar mode={mode} onChange={setMode} />}
     >
@@ -227,8 +227,8 @@ function CaptureFrame({ children }: { children: ReactNode }) {
     <Box
       sx={{
         position: 'relative',
-        width: 'min(100%, 440px)',
-        aspectRatio: '1 / 1.15',
+        width: 'min(100%, 348px)',
+        height: 400,
         bgcolor: '#0B1220',
         borderRadius: BORDER_RADIUS.xl,
         display: 'flex',

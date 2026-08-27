@@ -1,6 +1,8 @@
 import { Box, Stack, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { CircleHelp, Upload } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { BUTTON } from '@/design-system/formControl'
 import { brandPrimaryGreenRgb, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { retailFlowColors, retailFlowLayout } from '@/pages/website-v2/theme/retailFlowTokens'
 
@@ -59,6 +61,7 @@ export function DocumentChecklistRow({
 }: DocumentChecklistRowProps) {
   const colors = usePublicBrandColors()
   const tagTone = statusTag?.tone ?? 'neutral'
+  const isStatic = completed || Boolean(statusTag)
 
   return (
     <Stack
@@ -69,24 +72,24 @@ export function DocumentChecklistRow({
         px: 1.25,
         py: 1.35,
         borderRadius: retailFlowLayout.controlRadius,
-        '&:hover': { bgcolor: colors.surfaceAlt },
+        ...(isStatic ? null : { '&:hover': { bgcolor: colors.surfaceAlt } }),
       }}
     >
       <Box
+        aria-hidden
         sx={{
-          width: 34,
-          height: 34,
-          borderRadius: '50%',
-          border: `1px solid ${colors.border}`,
-          color: colors.textSecondary,
+          width: 28,
+          height: 28,
+          flexShrink: 0,
+          borderRadius: BUTTON.borderRadius,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          flexShrink: 0,
-          bgcolor: colors.white,
+          bgcolor: alpha(colors.textSecondary, completed ? 0.14 : 0.1),
+          color: colors.textSecondary,
         }}
       >
-        <Icon size={15} strokeWidth={1.75} />
+        <Icon size={14} strokeWidth={completed ? 2.25 : 1.75} />
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>

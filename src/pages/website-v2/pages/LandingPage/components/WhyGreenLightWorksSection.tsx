@@ -13,9 +13,11 @@ import { whyChooseGreenlightImage } from '../../../assets/landingPageImages'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
 import {
   publicFonts,
+  publicMotion,
   usePublicBrandColors,
   brandPrimaryGreenRgb,
 } from '@/shared/theme/publicBrand'
+import { useScrollReveal } from '../../../hooks/useScrollReveal'
 
 const FEATURES: {
   title: string
@@ -61,12 +63,19 @@ function FeatureCard({
   title,
   description,
   icon: Icon,
+  index,
+  active,
+  reducedMotion,
 }: {
   title: string
   description: string
   icon: LucideIcon
+  index: number
+  active: boolean
+  reducedMotion: boolean
 }) {
   const colors = usePublicBrandColors()
+  const delayMs = reducedMotion ? 0 : index * publicMotion.staggerMs
 
   return (
     <Box
@@ -80,10 +89,14 @@ function FeatureCard({
         display: 'flex',
         flexDirection: 'column',
         gap: 1.25,
-        transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
+        opacity: active ? 1 : 0,
+        transform: active ? 'translateY(0)' : 'translateY(14px)',
+        transition: reducedMotion
+          ? 'border-color 0.25s ease, box-shadow 0.25s ease'
+          : `opacity ${publicMotion.revealDurationMs}ms ${publicMotion.easeOut} ${delayMs}ms, transform ${publicMotion.revealDurationMs}ms ${publicMotion.easeOut} ${delayMs}ms, border-color 0.25s ease, box-shadow 0.25s ease`,
         '@media (hover: hover)': {
           '&:hover': {
-            transform: 'translateY(-4px)',
+            transform: active ? 'translateY(-4px)' : undefined,
             borderColor: `rgba(${brandPrimaryGreenRgb}, 0.45)`,
             boxShadow: `0 14px 32px rgba(${brandPrimaryGreenRgb}, 0.14)`,
           },
@@ -92,17 +105,27 @@ function FeatureCard({
     >
       <Box
         sx={{
-          width: 40,
-          height: 40,
-          borderRadius: '12px',
-          bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
+          justifyContent: 'space-between',
+          pb: 1,
+          mb: 0.25,
+          borderBottom: `1px dashed ${colors.border}`,
         }}
       >
-        <Icon size={20} color={colors.greenBright} strokeWidth={2.1} />
+        <Typography
+          sx={{
+            fontFamily: publicFonts.mono,
+            fontVariantNumeric: 'tabular-nums',
+            fontSize: '20px',
+            fontWeight: 700,
+            color: colors.textMuted,
+            letterSpacing: '-0.02em',
+          }}
+        >
+          {String(index + 1).padStart(2, '0')}
+        </Typography>
+        <Icon size={18} color={colors.greenBright} strokeWidth={1.9} />
       </Box>
       <Typography
         sx={{
@@ -131,6 +154,9 @@ function FeatureCard({
 
 export function WhyGreenLightWorksSection() {
   const colors = usePublicBrandColors()
+  const { ref: gridRef, active: gridActive, reducedMotion } = useScrollReveal<HTMLDivElement>({
+    threshold: 0.15,
+  })
 
   return (
     <Box
@@ -171,12 +197,12 @@ export function WhyGreenLightWorksSection() {
             <Typography
               component="h2"
               sx={{
-                fontFamily: publicFonts.heading,
+                fontFamily: publicFonts.display,
                 fontSize: { xs: '28px', md: '36px', lg: '40px' },
-                fontWeight: 800,
+                fontWeight: 700,
                 color: colors.navy,
                 lineHeight: 1.15,
-                letterSpacing: '-0.03em',
+                letterSpacing: '-0.5px',
                 mb: 1.75,
               }}
             >
@@ -197,6 +223,7 @@ export function WhyGreenLightWorksSection() {
             </Typography>
 
             <Box
+              ref={gridRef}
               sx={{
                 display: 'grid',
                 gridTemplateColumns: {
@@ -207,8 +234,14 @@ export function WhyGreenLightWorksSection() {
                 gap: 3,
               }}
             >
-              {FEATURES.map((feature) => (
-                <FeatureCard key={feature.title} {...feature} />
+              {FEATURES.map((feature, index) => (
+                <FeatureCard
+                  key={feature.title}
+                  {...feature}
+                  index={index}
+                  active={gridActive}
+                  reducedMotion={reducedMotion}
+                />
               ))}
             </Box>
           </Box>

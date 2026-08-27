@@ -12,13 +12,10 @@ import {
 import { alpha } from '@mui/material/styles'
 import {
   ArrowRight,
-  BadgeCheck,
-  FileCheck2,
-  Globe2,
+  CircleCheck,
   MapPin,
   Search,
   Stamp,
-  type LucideIcon,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { PublicContainer } from '../../../components/PublicContainer'
@@ -29,9 +26,11 @@ import {
 } from '../landingPageSpacing'
 import {
   publicFonts,
+  publicMotion,
   usePublicBrandColors,
   getMarketingPrimaryButtonSx,
   brandPrimaryGreenRgb,
+  brandGoldRgb,
 } from '@/shared/theme/publicBrand'
 import { retailHeroImage } from '../../../assets/retailHeroImage'
 import { getAllCountries } from '@/shared/services/visaService'
@@ -46,14 +45,18 @@ const fadeIn = keyframes`
   to { opacity: 1; }
 `
 
+const pulseDot = keyframes`
+  0%, 100% { box-shadow: 0 0 0 0 rgba(115, 192, 100, 0.45); }
+  50% { box-shadow: 0 0 0 5px rgba(115, 192, 100, 0); }
+`
+
 const trustMetrics: {
   value: string
   label: string
-  icon: LucideIcon
 }[] = [
-  { value: '98%*', label: 'Approval Rate', icon: BadgeCheck },
-  { value: '100,000+', label: 'Visas Processed', icon: FileCheck2 },
-  { value: '100+', label: 'Countries', icon: Globe2 },
+  { value: '98%*', label: 'Approval Rate' },
+  { value: '100,000+', label: 'Visas Processed' },
+  { value: '100+', label: 'Countries' },
 ]
 
 const VISA_TYPES = [
@@ -232,6 +235,8 @@ function HeroSearchBar() {
           alignSelf: { xs: 'stretch', sm: 'center' },
           whiteSpace: 'nowrap',
           boxShadow: `0 4px 14px rgba(${brandPrimaryGreenRgb}, 0.28)`,
+          transition: `transform ${publicMotion.pressDurationMs}ms ${publicMotion.easeOut}`,
+          '&:active': { transform: 'scale(0.97)' },
         }}
       >
         Search
@@ -265,7 +270,7 @@ export function HeroSection() {
           zIndex: 0,
           overflow: 'hidden',
           pointerEvents: 'none',
-          animation: `${fadeIn} 1.1s ease-out both`,
+          animation: `${fadeIn} 1.1s ${publicMotion.easeOut} both`,
           bgcolor: colors.white,
         }}
       >
@@ -286,7 +291,7 @@ export function HeroSection() {
             objectFit: 'cover',
             objectPosition: 'right center',
             display: 'block',
-            animation: `${fadeIn} 2.2s ease-out both`,
+            animation: `${fadeIn} 2.2s ${publicMotion.easeOut} both`,
             maskImage: `
               linear-gradient(90deg, transparent 0%, black 20%, black 100%),
               linear-gradient(180deg, transparent 0%, black 14%, black 100%)
@@ -346,6 +351,95 @@ export function HeroSection() {
         />
       </Box>
 
+      <Box
+        aria-hidden
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          position: 'absolute',
+          zIndex: 1,
+          right: { md: '7%', lg: '9%' },
+          bottom: { md: '9%', lg: '11%' },
+          width: 236,
+          borderRadius: '16px',
+          border: `1px solid ${HERO_BORDER}`,
+          bgcolor: alpha(colors.white, 0.88),
+          backdropFilter: 'blur(14px)',
+          boxShadow: '0 20px 44px rgba(15, 23, 42, 0.16)',
+          p: 2,
+          animation: `${fadeUp} 0.9s ${publicMotion.easeOut} 0.5s both`,
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={0.9} sx={{ mb: 1.25 }}>
+          <Box
+            sx={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              bgcolor: colors.greenBright,
+              animation: `${pulseDot} 2.2s ease-out infinite`,
+            }}
+          />
+          <Typography
+            sx={{
+              fontFamily: publicFonts.mono,
+              fontSize: '10.5px',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: HERO_TEXT_SECONDARY,
+            }}
+          >
+            Live Application
+          </Typography>
+        </Stack>
+
+        <Typography
+          sx={{
+            fontFamily: publicFonts.heading,
+            fontSize: '14px',
+            fontWeight: 700,
+            color: HERO_TEXT,
+            mb: 0.4,
+          }}
+        >
+          Business Visa — UAE
+        </Typography>
+
+        <Stack direction="row" alignItems="center" spacing={0.6} sx={{ mb: 1.5 }}>
+          <CircleCheck size={13} color={colors.greenBright} strokeWidth={2.25} />
+          <Typography sx={{ fontSize: '12px', color: HERO_TEXT_SECONDARY }}>
+            Documents verified
+          </Typography>
+        </Stack>
+
+        <Box sx={{ borderTop: `1px dashed ${HERO_BORDER}`, pt: 1.25 }}>
+          <Typography
+            sx={{
+              fontSize: '10.5px',
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              color: HERO_TEXT_SECONDARY,
+              mb: 0.35,
+            }}
+          >
+            Estimated ready
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: publicFonts.mono,
+              fontVariantNumeric: 'tabular-nums',
+              fontSize: '19px',
+              fontWeight: 700,
+              letterSpacing: '-0.02em',
+              color: `rgb(${brandGoldRgb})`,
+            }}
+          >
+            14 Nov
+          </Typography>
+        </Box>
+      </Box>
+
       <PublicContainer
         variant="hero"
         sx={{
@@ -366,7 +460,7 @@ export function HeroSection() {
           sx={{
             width: { xs: '100%', md: '52%', lg: '48%' },
             maxWidth: { md: 720, lg: 760 },
-            animation: `${fadeUp} 0.8s ease-out both`,
+            animation: `${fadeUp} 0.8s ${publicMotion.easeOut} both`,
             my: { md: 'auto' },
           }}
         >
@@ -375,11 +469,11 @@ export function HeroSection() {
               <Typography
                 component="h1"
                 sx={{
-                  fontFamily: publicFonts.heading,
+                  fontFamily: publicFonts.display,
                   fontSize: { xs: '36px', sm: '44px', md: '50px', lg: '56px' },
-                  fontWeight: 800,
+                  fontWeight: 700,
                   lineHeight: 1.06,
-                  letterSpacing: '-1.5px',
+                  letterSpacing: '-1px',
                   color: HERO_TEXT,
                   mb: { xs: 2.5, md: 3 },
                 }}
@@ -429,6 +523,8 @@ export function HeroSection() {
                   minHeight: 48,
                   fontWeight: 700,
                   whiteSpace: 'nowrap',
+                  transition: `transform ${publicMotion.pressDurationMs}ms ${publicMotion.easeOut}`,
+                  '&:active': { transform: 'scale(0.97)' },
                 }}
               >
                 Check Visa Requirements
@@ -446,10 +542,12 @@ export function HeroSection() {
                   color: HERO_TEXT,
                   bgcolor: alpha(colors.white, 0.72),
                   whiteSpace: 'nowrap',
+                  transition: `transform ${publicMotion.pressDurationMs}ms ${publicMotion.easeOut}, border-color 200ms ease, background-color 200ms ease`,
                   '&:hover': {
                     borderColor: colors.greenBright,
                     bgcolor: alpha(colors.white, 0.92),
                   },
+                  '&:active': { transform: 'scale(0.97)' },
                 }}
               >
                 Explore Destinations
@@ -458,70 +556,53 @@ export function HeroSection() {
 
             <HeroSearchBar />
 
-            <Box
+            <Stack
+              direction="row"
               sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' },
-                gap: { xs: 2.25, sm: 2.5, md: 2.75 },
                 width: '100%',
-                maxWidth: { md: 680 },
+                maxWidth: { md: 620 },
               }}
             >
-              {trustMetrics.map((metric) => {
-                const Icon = metric.icon
-                return (
-                  <Box
-                    key={metric.label}
+              {trustMetrics.map((metric, index) => (
+                <Box
+                  key={metric.label}
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    pl: index === 0 ? 0 : { xs: 1.5, sm: 2.5 },
+                    pr: { xs: 1, sm: 1.5 },
+                    borderLeft: index === 0 ? 'none' : `1px solid ${HERO_BORDER}`,
+                  }}
+                >
+                  <Typography
                     sx={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 1.25,
+                      fontFamily: publicFonts.mono,
+                      fontVariantNumeric: 'tabular-nums',
+                      fontSize: { xs: '18px', md: '21px' },
+                      fontWeight: 700,
+                      color: colors.greenBright,
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1.1,
+                      mb: 0.35,
                     }}
                   >
-                    <Box
-                      sx={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: '12px',
-                        bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Icon size={22} color={colors.greenBright} strokeWidth={2.15} />
-                    </Box>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography
-                        sx={{
-                          fontFamily: publicFonts.heading,
-                          fontSize: { xs: '20px', md: '22px' },
-                          fontWeight: 800,
-                          color: colors.greenBright,
-                          letterSpacing: '-0.03em',
-                          lineHeight: 1.1,
-                          mb: 0.25,
-                        }}
-                      >
-                        {metric.value}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          color: HERO_TEXT_SECONDARY,
-                          lineHeight: 1.35,
-                        }}
-                      >
-                        {metric.label}
-                      </Typography>
-                    </Box>
-                  </Box>
-                )
-              })}
-            </Box>
+                    {metric.value}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      letterSpacing: '0.02em',
+                      textTransform: 'uppercase',
+                      color: HERO_TEXT_SECONDARY,
+                      lineHeight: 1.35,
+                    }}
+                  >
+                    {metric.label}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
 
             <Typography
               sx={{

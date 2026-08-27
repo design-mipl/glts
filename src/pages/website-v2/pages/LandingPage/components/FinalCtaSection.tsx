@@ -5,15 +5,20 @@ import { PublicContainer } from '../../../components/PublicContainer'
 import { finalCtaBackgroundImage } from '../../../assets/landingPageImages'
 import {
   publicFonts,
+  publicMotion,
   usePublicBrandColors,
   getMarketingPrimaryButtonSx,
   getOutlinedButtonSx,
 } from '@/shared/theme/publicBrand'
 import { finalCtaContentSpacing, finalCtaSectionSx } from '../landingPageSpacing'
+import { useScrollReveal } from '../../../hooks/useScrollReveal'
 
 export function FinalCtaSection() {
   const colors = usePublicBrandColors()
   const [backgroundSrc, setBackgroundSrc] = useState<string>(finalCtaBackgroundImage.src)
+  const { ref: contentRef, active: contentActive, reducedMotion } = useScrollReveal<HTMLDivElement>({
+    threshold: 0.3,
+  })
 
   return (
     <Box
@@ -49,13 +54,24 @@ export function FinalCtaSection() {
       />
 
       <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1, width: '100%' }}>
-        <Stack spacing={finalCtaContentSpacing} sx={{ maxWidth: 720 }}>
+        <Stack
+          ref={contentRef}
+          spacing={finalCtaContentSpacing}
+          sx={{
+            maxWidth: 720,
+            opacity: contentActive ? 1 : 0,
+            transform: contentActive ? 'translateY(0)' : 'translateY(18px)',
+            transition: reducedMotion
+              ? 'none'
+              : `opacity ${publicMotion.revealDurationMs}ms ${publicMotion.easeOut}, transform ${publicMotion.revealDurationMs}ms ${publicMotion.easeOut}`,
+          }}
+        >
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
+              fontFamily: publicFonts.display,
               fontSize: { xs: '28px', sm: '32px', md: '40px' },
-              fontWeight: 800,
+              fontWeight: 700,
               lineHeight: 1.1,
               letterSpacing: '-0.7px',
               color: colors.white,
@@ -84,6 +100,8 @@ export function FinalCtaSection() {
                 ...getMarketingPrimaryButtonSx(colors),
                 px: 4,
                 alignSelf: { xs: 'stretch', sm: 'flex-start' },
+                transition: `transform ${publicMotion.pressDurationMs}ms ${publicMotion.easeOut}`,
+                '&:active': { transform: 'scale(0.97)' },
               }}
             >
               Check Visa Requirements
@@ -99,10 +117,12 @@ export function FinalCtaSection() {
                 bgcolor: 'rgba(255, 255, 255, 0.12)',
                 px: 3.5,
                 alignSelf: { xs: 'stretch', sm: 'flex-start' },
+                transition: `transform ${publicMotion.pressDurationMs}ms ${publicMotion.easeOut}, border-color 0.2s ease, background-color 0.2s ease`,
                 '&:hover': {
                   borderColor: colors.greenBright,
                   bgcolor: 'rgba(255, 255, 255, 0.2)',
                 },
+                '&:active': { transform: 'scale(0.97)' },
               }}
             >
               Talk to a Visa Expert

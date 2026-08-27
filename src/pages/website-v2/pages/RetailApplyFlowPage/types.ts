@@ -63,6 +63,9 @@ export type RetailSponsorSelection =
 /** Document upload id for sponsor bank statement (keyed via checklistUploadKey). */
 export const SPONSOR_BANK_STATEMENT_DOC_ID = 'sponsor_bank_statement' as const
 
+/** Traveller's own bank statement on the essential-documents step. */
+export const TRAVELLER_BANK_STATEMENT_DOC_ID = 'bank_statement' as const
+
 export interface RetailStepDefinition {
   id: RetailStepId
   phase: RetailPhaseId
@@ -136,6 +139,12 @@ export interface RetailFlowDraft {
   countryId: string
   visaOfferingId: string
   jurisdictionId?: string
+  /** Display name for resolved application centre (e.g. Delhi). */
+  jurisdictionName?: string
+  /** Passport issuing state — used to resolve jurisdiction (customer create flow). */
+  issuedPassportState?: string
+  /** Place of residence (>6 months) — preferred over passport state for jurisdiction. */
+  placeOfResidence?: string
   /** Intended travel date (ISO YYYY-MM-DD) — selected with application city. */
   travelDate?: string
   /** Step the applicant was last viewing — lets a page refresh resume in place, not just restore field values. */

@@ -30,7 +30,6 @@ export function TabsNavigation({ activeTab, onTabChange }: TabsNavigationProps) 
       >
         <Tab label="Requirements" />
         <Tab label="Timeline" />
-        <Tab label="Pricing" />
         <Tab label="FAQs" />
       </Tabs>
     </Box>
