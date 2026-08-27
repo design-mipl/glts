@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { LazyRouteBoundary } from '@/shared/routing/lazyRoute'
 import { PublicLayout } from './components/PublicLayout'
 import { ComingSoonPage } from '@/shared/components/ComingSoonPage'
+import ComponentPreviewPage from './pages/_preview/ComponentPreviewPage'
 import {
   AboutPage,
   CorporateBusinessVisaPage,
@@ -22,6 +23,8 @@ export function PublicWebsiteV2App() {
     <LazyRouteBoundary label="Loading page…">
       <Routes>
         <Route path="/apply/new" element={<WebsiteApplicationFlowPage />} />
+        {/* Temporary — isolated sanity-check for new upload components. Safe to remove. */}
+        <Route path="/_preview/uploads" element={<ComponentPreviewPage />} />
         <Route
           path="/*"
           element={
