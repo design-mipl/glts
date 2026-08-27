@@ -84,10 +84,20 @@ export const retailFlowLayout = {
 export const retailFlowShadows = {
   /** Floating flow card on canvas. */
   shell: `0 0 0 1px rgba(${retailGreenRgb}, 0.03), 0 20px 60px rgba(0, 0, 0, 0.18)`,
+  /** Elevated white/light surface — apply-flow cards, panels, steppers. */
+  elevated: '0 1px 2px rgba(15,27,43,0.04), 0 8px 24px -4px rgba(15,27,43,0.10)',
   /** Logo gem glow. */
   gem: `0 0 8px ${retailFlowColors.greenGlow}`,
   scan: `0 0 12px ${retailFlowColors.green}`,
 } as const
+
+/** Soft border + elevated shadow for white/light cards (global apply-flow treatment). */
+export function getElevatedCardSx(borderColor = 'rgba(15, 23, 42, 0.06)') {
+  return {
+    border: `1px solid ${borderColor}`,
+    boxShadow: retailFlowShadows.elevated,
+  } as const
+}
 
 export const retailFlowType = {
   stepTitle: {
@@ -161,6 +171,17 @@ export const retailFlowCanvasBackground = {
   ].join(', '),
 } as const
 
+/** Soft brand wash for traveller / sponsor / docs cards — green top-right, navy bottom-left. */
+export const retailProfileCardGradient = [
+  'radial-gradient(ellipse 90% 70% at 100% 0%, rgba(115, 192, 100, 0.14), transparent 58%)',
+  'radial-gradient(ellipse 90% 70% at 0% 100%, rgba(0, 31, 63, 0.07), transparent 58%)',
+].join(', ')
+
+/** Strong ease-out for entrances/interactions — starts fast, feels responsive. */
+export const retailFlowEaseOut = 'cubic-bezier(0.23, 1, 0.32, 1)'
+/** Strong ease-in-out for on-screen movement (sliding highlights, morphing). */
+export const retailFlowEaseInOut = 'cubic-bezier(0.77, 0, 0.175, 1)'
+
 export const retailFlowMotion = {
   fade: 'gltsFade 0.28s ease',
   keyframes: {
@@ -170,3 +191,19 @@ export const retailFlowMotion = {
     },
   },
 } as const
+
+/**
+ * Press feedback for any clickable surface (buttons, cards, toggles).
+ * Spread onto an `sx` prop — layers on top of existing styles.
+ */
+export function getPressableSx(scale = 0.97) {
+  return {
+    transition: `transform 160ms ${retailFlowEaseOut}`,
+    '&:active': { transform: `scale(${scale})` },
+  } as const
+}
+
+/** Per-item stagger delay for list/grid entrances — keep short (30-80ms). */
+export function getStaggerDelayMs(index: number, stepMs = 45, maxMs = 320) {
+  return Math.min(index * stepMs, maxMs)
+}

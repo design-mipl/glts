@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, Camera, Pencil, Upload } from 'lucide-react'
+import { AlertTriangle, Camera, Pencil, ScanLine, Upload } from 'lucide-react'
 import { Box, MenuItem, Select, Stack, TextField, Typography } from '@mui/material'
+import { motion } from 'framer-motion'
 import { BORDER_RADIUS } from '@/design-system/tokens'
 import { Button } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
 import {
   singleExtractedFields,
   type ExtractedField,
@@ -21,6 +23,7 @@ export interface PassportCaptureResult {
 }
 
 interface PassportCaptureFlowProps {
+  applicantName: string
   initialPassport?: RetailCapturedImage
   initialPassportBack?: RetailCapturedImage
   initialFields?: ExtractedField[]
@@ -55,6 +58,7 @@ function seedFields(existing?: ExtractedField[]): ExtractedField[] {
 }
 
 export function PassportCaptureFlow({
+  applicantName,
   initialPassport,
   initialPassportBack,
   initialFields,
@@ -145,12 +149,15 @@ export function PassportCaptureFlow({
     return (
       <CaptureFlowShell
         onClose={onClose}
-        size="xl"
+        applicantName={applicantName}
+        badgeLabel="Scan passport"
+        badgeIcon={ScanLine}
+        size="lg"
         contentAlign="start"
         fitToContent
         header={<CaptureHeadline lead="Passport," accent="review & contact" />}
         footer={
-          <Box sx={{ width: '100%', maxWidth: 920, mx: 'auto' }}>
+          <Box sx={{ width: '100%', maxWidth: 840, mx: 'auto' }}>
             <Box
               component="button"
               type="button"
@@ -168,6 +175,8 @@ export function PassportCaptureFlow({
                 cursor: canContinue ? 'pointer' : 'not-allowed',
                 bgcolor: canContinue ? colors.navy : colors.surfaceAlt,
                 color: canContinue ? '#fff' : colors.textMuted,
+                transition: `background-color 150ms ease, color 150ms ease, transform 160ms ${retailFlowEaseOut}`,
+                '&:active': canContinue ? { transform: 'scale(0.98)' } : undefined,
               }}
             >
               Continue
@@ -178,10 +187,10 @@ export function PassportCaptureFlow({
         <Box
           sx={{
             width: '100%',
-            maxWidth: 960,
+            maxWidth: 840,
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '320px 1fr' },
-            gap: { xs: 2.5, md: 3.5 },
+            gridTemplateColumns: { xs: '1fr', md: '280px 1fr' },
+            gap: { xs: 2.5, md: 3 },
             textAlign: 'left',
             pt: 1,
           }}
@@ -198,7 +207,10 @@ export function PassportCaptureFlow({
           >
             <Box sx={{ position: 'relative' }}>
               <Box
-                component="img"
+                component={motion.img}
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
                 src={front.dataUrl}
                 alt="Passport front"
                 sx={{
@@ -230,6 +242,8 @@ export function PassportCaptureFlow({
                   placeItems: 'center',
                   cursor: 'pointer',
                   boxShadow: '0 4px 12px rgba(15,23,42,0.2)',
+                  transition: `transform 160ms ${retailFlowEaseOut}`,
+                  '&:active': { transform: 'scale(0.9)' },
                 }}
               >
                 <Pencil size={14} />
@@ -239,7 +253,10 @@ export function PassportCaptureFlow({
             {back ? (
               <Box sx={{ position: 'relative' }}>
                 <Box
-                  component="img"
+                  component={motion.img}
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
                   src={back.dataUrl}
                   alt="Passport back"
                   sx={{
@@ -270,6 +287,8 @@ export function PassportCaptureFlow({
                     display: 'grid',
                     placeItems: 'center',
                     cursor: 'pointer',
+                    transition: `transform 160ms ${retailFlowEaseOut}`,
+                    '&:active': { transform: 'scale(0.9)' },
                   }}
                 >
                   <Pencil size={14} />
@@ -420,8 +439,11 @@ export function PassportCaptureFlow({
   return (
     <CaptureFlowShell
       onClose={onClose}
-      size="lg"
-      contentMinHeight={{ xs: 480, sm: 560 }}
+      applicantName={applicantName}
+      badgeLabel="Scan passport"
+      badgeIcon={ScanLine}
+      size="md"
+      contentMinHeight={{ xs: 420, sm: 460 }}
       header={<CaptureHeadline lead="Passport," accent="photo page up" />}
       footer={<CaptureModeBar mode={mode} onChange={setMode} />}
     >
@@ -434,24 +456,63 @@ export function PassportCaptureFlow({
         }}
       >
         <Box
+          component={mode === 'upload' ? 'button' : 'div'}
+          type={mode === 'upload' ? 'button' : undefined}
+          onClick={mode === 'upload' ? () => fileRef.current?.click() : undefined}
+          sx={{
+            appearance: 'none',
+            border: 'none',
+            bgcolor: 'transparent',
+            p: 0,
+            mb: 1.5,
+            cursor: mode === 'upload' ? 'pointer' : 'default',
+            maxWidth: 260,
+            width: '100%',
+            lineHeight: 0,
+            transition: `transform 160ms ${retailFlowEaseOut}`,
+            '&:active': mode === 'upload' ? { transform: 'scale(0.98)' } : undefined,
+          }}
+        >
+          <Box
+            component="img"
+            src="/images/retail-apply/passport-capture-mock.png"
+            alt="Example passport photo page"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+              borderRadius: BORDER_RADIUS.md,
+              userSelect: 'none',
+              pointerEvents: 'none',
+            }}
+          />
+        </Box>
+
+        <Box
           sx={{
             position: 'relative',
-            width: 'min(92vw, 560px)',
-            aspectRatio: '1.58 / 1',
-            borderRadius: 28,
+            width: 'min(100%, 320px)',
+            height: 200,
+            borderRadius: BORDER_RADIUS.md,
             overflow: 'hidden',
-            border: `2px solid rgba(115, 192, 100, 0.45)`,
-            bgcolor: colors.surfaceAlt,
-            backgroundImage: `
-              linear-gradient(rgba(115, 192, 100, 0.1) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(115, 192, 100, 0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '28px 28px',
+            bgcolor: '#0B1220',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            boxSizing: 'border-box',
           }}
         >
+          <Box
+            aria-hidden
+            sx={{
+              position: 'absolute',
+              inset: 8,
+              borderRadius: BORDER_RADIUS.sm,
+              border: '1.5px solid rgba(255, 255, 255, 0.92)',
+              pointerEvents: 'none',
+              zIndex: 2,
+            }}
+          />
           {mode === 'live' && status === 'live' ? (
             <Box
               component="video"
@@ -461,16 +522,17 @@ export function PassportCaptureFlow({
               autoPlay
               sx={{
                 position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
+                inset: 8,
+                width: 'calc(100% - 16px)',
+                height: 'calc(100% - 16px)',
                 objectFit: 'cover',
+                borderRadius: BORDER_RADIUS.sm,
               }}
             />
           ) : (
-            <Box sx={{ textAlign: 'center', px: 3, position: 'relative', zIndex: 1 }}>
-              <Camera size={28} color={colors.textMuted} />
-              <Typography sx={{ mt: 1, fontSize: 13, color: colors.textMuted }}>
+            <Box sx={{ textAlign: 'center', px: 2, position: 'relative', zIndex: 1 }}>
+              <Camera size={22} color="rgba(255,255,255,0.55)" />
+              <Typography sx={{ mt: 0.75, fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>
                 {status === 'starting' && 'Starting camera…'}
                 {status === 'denied' && 'Camera denied — upload from device instead.'}
                 {status === 'unavailable' && 'Camera unavailable — upload from device instead.'}
@@ -480,6 +542,41 @@ export function PassportCaptureFlow({
           )}
         </Box>
 
+        <Box
+          component="ul"
+          sx={{
+            mt: 2,
+            mb: 0,
+            pl: 2.25,
+            maxWidth: 320,
+            width: '100%',
+            textAlign: 'left',
+            listStyleType: 'disc',
+          }}
+        >
+          {(
+            [
+              'Use the page with your photo and the two code lines at the bottom, not the back page',
+              'Flat surface, no flash, all four corners visible',
+              'Colour only, under 5MB',
+            ] as const
+          ).map((tip) => (
+            <Typography
+              key={tip}
+              component="li"
+              sx={{
+                fontSize: 12.5,
+                lineHeight: 1.45,
+                color: colors.textMuted,
+                mb: 0.5,
+                '&:last-child': { mb: 0 },
+              }}
+            >
+              {tip}
+            </Typography>
+          ))}
+        </Box>
+
         {mode === 'live' && status === 'live' ? (
           <Button
             label="Capture passport"
@@ -487,7 +584,12 @@ export function PassportCaptureFlow({
             color="primary"
             startIcon={<Camera size={16} />}
             onClick={handleCapture}
-            sx={{ mt: 3, minWidth: 180 }}
+            sx={{
+              mt: 2.5,
+              minWidth: 180,
+              transition: `transform 160ms ${retailFlowEaseOut}`,
+              '&:active': { transform: 'scale(0.97)' },
+            }}
           />
         ) : null}
       </Box>
@@ -591,6 +693,7 @@ function UnderlineField({
               color: colors.navy,
               borderBottom: `1px solid ${value ? colors.border : 'rgba(15,23,42,0.2)'}`,
               borderBottomStyle: value ? 'solid' : 'dashed',
+              transition: 'border-color 150ms ease',
               pb: 0.5,
             },
           }}

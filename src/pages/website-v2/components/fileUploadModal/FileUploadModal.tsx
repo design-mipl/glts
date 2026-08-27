@@ -3,7 +3,7 @@ import { Box, Stack, Typography } from '@mui/material'
 import { AlertCircle, FileText, Upload, X } from 'lucide-react'
 import { Button, Modal } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { getRingBorderSx, statusVisualRadius } from '@/pages/website-v2/theme/statusVisualTokens'
+import { getRingBorderSx, statusElevatedCardShadow, statusVisualRadius, getElevatedStatusCardSx } from '@/pages/website-v2/theme/statusVisualTokens'
 
 export interface FileUploadModalProps {
   open: boolean
@@ -119,6 +119,9 @@ export function FileUploadModal({
           borderStyle: dragOver ? 'solid' : 'dashed',
           borderRadius: statusVisualRadius.card,
           bgcolor: colors.surfaceAlt,
+          boxShadow: dragOver
+            ? `0 0 0 3px ${colors.greenDark}26, ${statusElevatedCardShadow}`
+            : statusElevatedCardShadow,
           px: 2.5,
           py: 4,
           textAlign: 'center',
@@ -180,7 +183,7 @@ export function FileUploadModal({
                 px: 1.25,
                 py: 0.85,
                 borderRadius: statusVisualRadius.control,
-                border: `1px solid ${colors.border}`,
+                ...getElevatedStatusCardSx(colors.border),
                 bgcolor: colors.white,
               }}
             >

@@ -1,6 +1,7 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { BORDER_RADIUS } from '@/design-system/tokens'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
 
 interface OptionCardProps {
   label: string
@@ -23,8 +24,9 @@ export function OptionCard({ label, description, selected, onSelect, tone = 'def
         borderRadius: BORDER_RADIUS.lg,
         p: 2,
         cursor: 'pointer',
-        transition: 'all 0.15s ease',
+        transition: `border-color 150ms ${retailFlowEaseOut}, background-color 150ms ${retailFlowEaseOut}, transform 160ms ${retailFlowEaseOut}`,
         '&:hover': { borderColor: accent },
+        '&:active': { transform: 'scale(0.98)' },
       }}
     >
       <Stack direction="row" alignItems="flex-start" spacing={1.5}>
@@ -37,6 +39,7 @@ export function OptionCard({ label, description, selected, onSelect, tone = 'def
             borderRadius: '50%',
             border: `2px solid ${selected ? accent : colors.border}`,
             backgroundColor: selected ? accent : 'transparent',
+            transition: `border-color 150ms ${retailFlowEaseOut}, background-color 150ms ${retailFlowEaseOut}`,
           }}
         />
         <Box>

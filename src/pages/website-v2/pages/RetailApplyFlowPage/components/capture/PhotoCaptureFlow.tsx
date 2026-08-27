@@ -1,19 +1,28 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Box, Typography } from '@mui/material'
+import { motion } from 'framer-motion'
 import { Camera } from 'lucide-react'
 import { BORDER_RADIUS } from '@/design-system/tokens'
 import { Button } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
 import { useCameraCapture } from '../../hooks/useCameraCapture'
 import type { RetailCapturedImage } from '../../types'
 import { CaptureFlowShell, CaptureHeadline } from './CaptureFlowShell'
 import { CaptureModeBar, type CaptureInputMode } from './CaptureModeBar'
 
 interface PhotoCaptureFlowProps {
+  applicantName: string
   initialImage?: RetailCapturedImage
   onConfirm: (image: RetailCapturedImage) => void
   onClose: () => void
 }
+
+const PHOTO_TIPS = [
+  'Face fully visible, eyes open, neutral expression',
+  'Plain light background, no shadows across the face',
+  'Colour photo only, under 5MB',
+] as const
 
 function readFileAsImage(file: File): Promise<RetailCapturedImage> {
   return new Promise((resolve, reject) => {
@@ -25,7 +34,12 @@ function readFileAsImage(file: File): Promise<RetailCapturedImage> {
   })
 }
 
-export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCaptureFlowProps) {
+export function PhotoCaptureFlow({
+  applicantName,
+  initialImage,
+  onConfirm,
+  onClose,
+}: PhotoCaptureFlowProps) {
   const colors = usePublicBrandColors()
   const fileRef = useRef<HTMLInputElement>(null)
   const [phase, setPhase] = useState<'capture' | 'preview'>(initialImage ? 'preview' : 'capture')
@@ -73,8 +87,11 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
     return (
       <CaptureFlowShell
         onClose={onClose}
-        size="lg"
-        contentMinHeight={{ xs: 480, sm: 560 }}
+        applicantName={applicantName}
+        badgeLabel="Capture photo"
+        badgeIcon={Camera}
+        size="md"
+        contentMinHeight={{ xs: 480, sm: 520 }}
         header={<CaptureHeadline lead="Look ahead," accent="straight at the camera" />}
         footer={
           <Box
@@ -82,7 +99,7 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
               display: 'flex',
               gap: 1.5,
               width: '100%',
-              maxWidth: 420,
+              maxWidth: 480,
               mx: 'auto',
               justifyContent: 'center',
             }}
@@ -106,32 +123,23 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
           </Box>
         }
       >
-        <Box
-          sx={{
-            position: 'relative',
-            width: 'min(100%, 360px)',
-            aspectRatio: '1 / 1.15',
-            bgcolor: 'transparent',
-            borderRadius: BORDER_RADIUS.xl,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            p: 2.5,
-          }}
-        >
-          <CornerGuides />
+        <CaptureFrame>
           <Box
-            component="img"
+            component={motion.img}
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
             src={draft.dataUrl}
             alt="Photo preview"
             sx={{
-              width: '78%',
-              height: '78%',
+              width: '100%',
+              height: '100%',
               objectFit: 'cover',
               borderRadius: BORDER_RADIUS.md,
             }}
           />
-        </Box>
+        </CaptureFrame>
+        <TipList tips={PHOTO_TIPS} muted={colors.textMuted} />
       </CaptureFlowShell>
     )
   }
@@ -139,25 +147,15 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
   return (
     <CaptureFlowShell
       onClose={onClose}
-      size="lg"
-      contentMinHeight={{ xs: 480, sm: 560 }}
+      applicantName={applicantName}
+      badgeLabel="Capture photo"
+      badgeIcon={Camera}
+      size="md"
+      contentMinHeight={{ xs: 480, sm: 520 }}
       header={<CaptureHeadline lead="Look ahead," accent="straight at the camera" />}
       footer={<CaptureModeBar mode={mode} onChange={setMode} />}
     >
-      <Box
-        sx={{
-          position: 'relative',
-          width: 'min(88vw, 400px)',
-          aspectRatio: '1',
-          borderRadius: '50%',
-          overflow: 'hidden',
-          border: `2px solid rgba(115, 192, 100, 0.45)`,
-          bgcolor: colors.surfaceAlt,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <CaptureFrame>
         {mode === 'live' && status === 'live' ? (
           <Box
             component="video"
@@ -165,20 +163,28 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
             muted
             playsInline
             autoPlay
-            sx={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transform: 'scaleX(-1)',
+              borderRadius: BORDER_RADIUS.md,
+            }}
           />
         ) : (
           <Box sx={{ textAlign: 'center', px: 3 }}>
-            <Camera size={28} color={colors.textMuted} />
-            <Typography sx={{ mt: 1, fontSize: 13, color: colors.textMuted }}>
+            <Camera size={28} color="rgba(255,255,255,0.55)" />
+            <Typography sx={{ mt: 1, fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>
               {status === 'starting' && 'Starting camera…'}
               {status === 'denied' && 'Camera denied — upload from device instead.'}
               {status === 'unavailable' && 'Camera unavailable — upload from device instead.'}
-              {(status === 'idle' || mode === 'upload') && 'Position your face in the circle'}
+              {(status === 'idle' || mode === 'upload') && 'Position your face in the frame'}
             </Typography>
           </Box>
         )}
-      </Box>
+      </CaptureFrame>
+
+      <TipList tips={PHOTO_TIPS} muted={colors.textMuted} />
 
       {mode === 'live' && status === 'live' ? (
         <Button
@@ -187,7 +193,12 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
           color="primary"
           startIcon={<Camera size={16} />}
           onClick={handleCapture}
-          sx={{ mt: 3, minWidth: 180 }}
+          sx={{
+            mt: 2.5,
+            minWidth: 180,
+            transition: `transform 160ms ${retailFlowEaseOut}`,
+            '&:active': { transform: 'scale(0.97)' },
+          }}
         />
       ) : null}
 
@@ -211,48 +222,80 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
   )
 }
 
-function CornerGuides() {
-  const arm = 18
-  const thick = 2
-  const color = 'rgba(15, 23, 42, 0.85)'
-  const corner = (top: boolean, left: boolean) => (
+function CaptureFrame({ children }: { children: ReactNode }) {
+  return (
     <Box
       sx={{
-        position: 'absolute',
-        top: top ? 14 : 'auto',
-        bottom: top ? 'auto' : 28,
-        left: left ? 28 : 'auto',
-        right: left ? 'auto' : 28,
-        width: arm,
-        height: arm,
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          [top ? 'top' : 'bottom']: 0,
-          [left ? 'left' : 'right']: 0,
-          width: arm,
-          height: thick,
-          bgcolor: color,
-        },
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          [top ? 'top' : 'bottom']: 0,
-          [left ? 'left' : 'right']: 0,
-          width: thick,
-          height: arm,
-          bgcolor: color,
-        },
+        position: 'relative',
+        width: 'min(100%, 348px)',
+        height: 400,
+        bgcolor: '#0B1220',
+        borderRadius: BORDER_RADIUS.xl,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 2.5,
+        boxSizing: 'border-box',
+        overflow: 'hidden',
       }}
-    />
+    >
+      <Box
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          inset: 14,
+          borderRadius: BORDER_RADIUS.lg,
+          border: '2px solid rgba(255, 255, 255, 0.92)',
+          pointerEvents: 'none',
+          zIndex: 2,
+        }}
+      />
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          borderRadius: BORDER_RADIUS.md,
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
   )
+}
+
+function TipList({ tips, muted }: { tips: readonly string[]; muted: string }) {
   return (
-    <>
-      {corner(true, true)}
-      {corner(true, false)}
-      {corner(false, true)}
-      {corner(false, false)}
-    </>
+    <Box
+      component="ul"
+      sx={{
+        mt: 2.5,
+        mb: 0,
+        pl: 2.25,
+        maxWidth: 440,
+        textAlign: 'left',
+        listStyleType: 'disc',
+      }}
+    >
+      {tips.map((tip) => (
+        <Typography
+          key={tip}
+          component="li"
+          sx={{
+            fontSize: 13,
+            lineHeight: 1.45,
+            color: muted,
+            mb: 0.5,
+            '&:last-child': { mb: 0 },
+          }}
+        >
+          {tip}
+        </Typography>
+      ))}
+    </Box>
   )
 }
 
@@ -272,5 +315,7 @@ function pillButtonSx(
     fontWeight: 700,
     fontFamily: 'inherit',
     cursor: 'pointer',
+    transition: `transform 160ms ${retailFlowEaseOut}, background-color 150ms ease`,
+    '&:active': { transform: 'scale(0.97)' },
   }
 }

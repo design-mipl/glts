@@ -14,6 +14,7 @@ import {
 import { getCountryMasterById, getVisaOfferings } from '@/shared/services/countryMasterService'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { BORDER_RADIUS } from '@/design-system/tokens'
+import { getElevatedCardSx } from '@/pages/website-v2/theme/retailFlowTokens'
 import { StepShell } from '../StepShell'
 
 interface VisaStepProps {
@@ -112,20 +113,14 @@ export function VisaStep({ countryId, visaOfferingId, onSelect, onBack, onContin
                   height: '100%',
                   maxWidth: 260,
                   mx: 'auto',
-                  border: `1px solid ${selected ? 'rgba(115, 192, 100, 0.55)' : 'rgba(15, 23, 42, 0.08)'}`,
+                  ...getElevatedCardSx(selected ? 'rgba(115, 192, 100, 0.55)' : 'rgba(15, 23, 42, 0.08)'),
                   bgcolor: colors.white,
                   borderRadius: BORDER_RADIUS.xl,
-                  boxShadow: selected
-                    ? '0 8px 20px rgba(15, 23, 42, 0.1), 0 2px 6px rgba(15, 23, 42, 0.06)'
-                    : '0 4px 14px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
                   textAlign: 'center',
                   outline: 'none',
-                  transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
+                  transition: 'border-color 0.15s ease',
                   '&:hover': {
                     borderColor: 'rgba(115, 192, 100, 0.55)',
-                    boxShadow: selected
-                      ? '0 10px 24px rgba(15, 23, 42, 0.11), 0 3px 8px rgba(15, 23, 42, 0.07)'
-                      : '0 8px 20px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.05)',
                   },
                 }}
               >

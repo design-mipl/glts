@@ -3,18 +3,27 @@ import { Box, Stack, Typography } from '@mui/material'
 import { Check, Upload } from 'lucide-react'
 import { BORDER_RADIUS } from '@/design-system/tokens'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { FileUploadModal } from '@/pages/website-v2/components/fileUploadModal/FileUploadModal'
+import { retailProfileCardGradient } from '@/pages/website-v2/theme/retailFlowTokens'
 import { StepShell } from '../StepShell'
 import { PhotoCaptureFlow } from '../capture/PhotoCaptureFlow'
 import { PassportCaptureFlow } from '../capture/PassportCaptureFlow'
 import { displayNameUpper, initialsFromName } from '../../config/travelProfileQuestions'
-import type { RetailApplicantParty, RetailCapturedImage } from '../../types'
+import {
+  TRAVELLER_BANK_STATEMENT_DOC_ID,
+  type RetailApplicantParty,
+  type RetailCapturedImage,
+} from '../../types'
+import { checklistUploadKey } from './ChecklistStep'
 
 const AVATAR_TONES = ['#D4A0A0', '#0D9488', '#B45309', '#4F46E5', '#0891B2'] as const
 
 interface PassportStepProps {
   countryName?: string
   applicants: RetailApplicantParty[]
+  uploads?: Record<string, RetailCapturedImage>
   onUpdateApplicant: (id: string, patch: Partial<RetailApplicantParty>) => void
+  onUploadBankStatement?: (applicantId: string, image: RetailCapturedImage) => void
   onBack: () => void
   onContinue: () => void
 }
@@ -22,6 +31,7 @@ interface PassportStepProps {
 type ActiveCapture =
   | { kind: 'photo'; applicantId: string }
   | { kind: 'passport'; applicantId: string }
+  | { kind: 'bank'; applicantId: string }
 
 function cardTitle(applicant: RetailApplicantParty, index: number): string {
   const name = applicant.details.fullName.trim()
@@ -35,21 +45,36 @@ function cardInitials(applicant: RetailApplicantParty, index: number): string {
   return index === 0 ? 'T1' : `T${index + 1}`
 }
 
-function docsUploadedCount(applicant: RetailApplicantParty): { done: number; total: number } {
-  const total = 2
+function hasBankStatement(
+  applicant: RetailApplicantParty,
+  uploads: Record<string, RetailCapturedImage>,
+): boolean {
+  return Boolean(uploads[checklistUploadKey(applicant.id, TRAVELLER_BANK_STATEMENT_DOC_ID)])
+}
+
+function docsUploadedCount(
+  applicant: RetailApplicantParty,
+  uploads: Record<string, RetailCapturedImage>,
+): { done: number; total: number } {
+  const total = 3
   let done = 0
   if (applicant.photo) done += 1
   if (applicant.passport) done += 1
+  if (hasBankStatement(applicant, uploads)) done += 1
   return { done, total }
 }
 
-function applicantReady(applicant: RetailApplicantParty): boolean {
+function applicantReady(
+  applicant: RetailApplicantParty,
+  uploads: Record<string, RetailCapturedImage>,
+): boolean {
   return Boolean(
     applicant.photo &&
       applicant.passport &&
       applicant.passportBack &&
       applicant.details.email.trim() &&
-      applicant.details.phone.trim(),
+      applicant.details.phone.trim() &&
+      hasBankStatement(applicant, uploads),
   )
 }
 
@@ -71,24 +96,23 @@ function DocActionButton({
       onClick={onClick}
       sx={{
         appearance: 'none',
-        width: '100%',
+        flex: 1,
+        minWidth: 0,
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'flex-start',
-        gap: 1.25,
-        minHeight: 40,
-        py: 1.25,
-        px: 1.5,
-        borderRadius: BORDER_RADIUS.xl,
+        justifyContent: 'center',
+        gap: 0.5,
+        minHeight: 56,
+        py: 0.85,
+        px: 0.5,
+        borderRadius: BORDER_RADIUS.lg,
         border: uploaded
           ? '1px solid rgba(115, 192, 100, 0.35)'
           : `1px solid ${colors.border}`,
         bgcolor: uploaded ? 'rgba(115, 192, 100, 0.06)' : colors.surfaceAlt,
         cursor: 'pointer',
         fontFamily: 'inherit',
-        fontSize: 13,
-        fontWeight: 700,
-        color: colors.navy,
         transition: 'border-color 0.15s ease, background-color 0.15s ease',
         '&:hover': {
           borderColor: uploaded ? 'rgba(115, 192, 100, 0.55)' : colors.greenBright,
@@ -99,8 +123,8 @@ function DocActionButton({
       {uploaded ? (
         <Box
           sx={{
-            width: 22,
-            height: 22,
+            width: 20,
+            height: 20,
             borderRadius: '50%',
             bgcolor: colors.greenBright,
             color: '#fff',
@@ -110,14 +134,14 @@ function DocActionButton({
             flexShrink: 0,
           }}
         >
-          <Check size={12} strokeWidth={3} />
+          <Check size={11} strokeWidth={3} />
         </Box>
       ) : (
         <Box
           sx={{
-            width: 28,
-            height: 28,
-            borderRadius: BORDER_RADIUS.lg,
+            width: 22,
+            height: 22,
+            borderRadius: BORDER_RADIUS.md,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -126,25 +150,38 @@ function DocActionButton({
             color: colors.greenBright,
           }}
         >
-          <Upload size={14} strokeWidth={2.25} />
+          <Upload size={12} strokeWidth={2.25} />
         </Box>
       )}
-      {label}
+      <Typography
+        sx={{
+          fontSize: 10,
+          fontWeight: 700,
+          color: colors.navy,
+          lineHeight: 1.15,
+          textAlign: 'center',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {label}
+      </Typography>
     </Box>
   )
 }
 
-/** Essential documents — multi-traveller Photo + Passport cards with capture overlays. */
+/** Essential documents — multi-traveller Photo + Passport + Bank cards with capture overlays. */
 export function PassportStep({
   countryName,
   applicants,
+  uploads = {},
   onUpdateApplicant,
+  onUploadBankStatement,
   onBack,
   onContinue,
 }: PassportStepProps) {
   const colors = usePublicBrandColors()
   const [active, setActive] = useState<ActiveCapture | null>(null)
-  const allReady = applicants.every(applicantReady)
+  const allReady = applicants.every((applicant) => applicantReady(applicant, uploads))
   const activeApplicant = active
     ? applicants.find((applicant) => applicant.id === active.applicantId)
     : undefined
@@ -170,13 +207,13 @@ export function PassportStep({
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              sm: applicants.length === 1 ? 'minmax(0, 210px)' : 'repeat(2, minmax(0, 210px))',
+              sm: applicants.length === 1 ? 'minmax(0, 240px)' : 'repeat(2, minmax(0, 240px))',
               md:
                 applicants.length === 1
-                  ? 'minmax(0, 210px)'
+                  ? 'minmax(0, 240px)'
                   : applicants.length === 2
-                    ? 'repeat(2, minmax(0, 210px))'
-                    : 'repeat(3, minmax(0, 210px))',
+                    ? 'repeat(2, minmax(0, 240px))'
+                    : 'repeat(3, minmax(0, 240px))',
             },
             gap: 2,
             justifyContent: 'center',
@@ -184,8 +221,9 @@ export function PassportStep({
           }}
         >
           {applicants.map((applicant, index) => {
-            const { done, total } = docsUploadedCount(applicant)
+            const { done, total } = docsUploadedCount(applicant, uploads)
             const tone = AVATAR_TONES[index % AVATAR_TONES.length]
+            const bankDone = hasBankStatement(applicant, uploads)
             return (
               <Box
                 key={applicant.id}
@@ -193,8 +231,9 @@ export function PassportStep({
                   border: `1px solid ${colors.border}`,
                   borderRadius: 4,
                   bgcolor: colors.white,
+                  backgroundImage: retailProfileCardGradient,
                   p: 1.75,
-                  maxWidth: 210,
+                  maxWidth: 240,
                   width: '100%',
                   mx: 'auto',
                   minHeight: 210,
@@ -204,25 +243,25 @@ export function PassportStep({
                   flexDirection: 'column',
                 }}
               >
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.25, minWidth: 0 }}>
+                <Stack alignItems="center" spacing={0.75} sx={{ mb: 1.25, width: '100%' }}>
                   <Box
                     sx={{
-                      width: 40,
-                      height: 40,
+                      width: 48,
+                      height: 48,
                       borderRadius: '50%',
                       bgcolor: tone,
                       color: '#fff',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: 700,
                       flexShrink: 0,
                     }}
                   >
                     {cardInitials(applicant, index)}
                   </Box>
-                  <Box sx={{ minWidth: 0 }}>
+                  <Box sx={{ minWidth: 0, width: '100%', textAlign: 'center' }}>
                     <Typography
                       sx={{
                         fontWeight: 700,
@@ -243,7 +282,7 @@ export function PassportStep({
                   </Box>
                 </Stack>
 
-                <Stack spacing={1.25} sx={{ mt: 'auto', pt: 1.25 }}>
+                <Stack direction="row" spacing={0.75} sx={{ mt: 'auto', pt: 1.25 }}>
                   <DocActionButton
                     label="Photo"
                     uploaded={Boolean(applicant.photo)}
@@ -254,6 +293,11 @@ export function PassportStep({
                     uploaded={Boolean(applicant.passport)}
                     onClick={() => setActive({ kind: 'passport', applicantId: applicant.id })}
                   />
+                  <DocActionButton
+                    label="Bank"
+                    uploaded={bankDone}
+                    onClick={() => setActive({ kind: 'bank', applicantId: applicant.id })}
+                  />
                 </Stack>
               </Box>
             )
@@ -263,6 +307,7 @@ export function PassportStep({
 
       {active?.kind === 'photo' && activeApplicant ? (
         <PhotoCaptureFlow
+          applicantName={activeApplicant.details.fullName.trim() || activeApplicant.label}
           initialImage={activeApplicant.photo}
           onClose={() => setActive(null)}
           onConfirm={(image: RetailCapturedImage) => {
@@ -274,6 +319,7 @@ export function PassportStep({
 
       {active?.kind === 'passport' && activeApplicant ? (
         <PassportCaptureFlow
+          applicantName={activeApplicant.details.fullName.trim() || activeApplicant.label}
           initialPassport={activeApplicant.passport}
           initialPassportBack={activeApplicant.passportBack}
           initialFields={activeApplicant.passportFields}
@@ -290,6 +336,28 @@ export function PassportStep({
               },
             })
             setActive(null)
+          }}
+        />
+      ) : null}
+
+      {active?.kind === 'bank' && activeApplicant ? (
+        <FileUploadModal
+          open
+          onClose={() => setActive(null)}
+          documentName="Bank statement"
+          description="Last 3 months preferred. Must show the traveller's name and account details."
+          onUpload={(files) => {
+            const file = files[0]
+            if (!file || !onUploadBankStatement) return
+            const reader = new FileReader()
+            reader.onload = () => {
+              onUploadBankStatement(active.applicantId, {
+                dataUrl: String(reader.result ?? ''),
+                capturedAt: new Date().toISOString(),
+              })
+              setActive(null)
+            }
+            reader.readAsDataURL(file)
           }}
         />
       ) : null}

@@ -1,4 +1,5 @@
 import { Box, Typography } from '@mui/material'
+import { motion } from 'framer-motion'
 import { Aperture, Monitor } from 'lucide-react'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 
@@ -44,6 +45,7 @@ export function CaptureModeBar({ mode, onChange, disabled }: CaptureModeBarProps
             disabled={disabled}
             onClick={() => onChange(entry.id)}
             sx={{
+              position: 'relative',
               appearance: 'none',
               border: 'none',
               cursor: disabled ? 'not-allowed' : 'pointer',
@@ -55,16 +57,31 @@ export function CaptureModeBar({ mode, onChange, disabled }: CaptureModeBarProps
               px: 1.5,
               py: 1,
               borderRadius: 999,
-              bgcolor: active ? colors.navy : 'transparent',
+              bgcolor: 'transparent',
               color: active ? '#fff' : colors.navy,
               fontFamily: 'inherit',
-              transition: 'background-color 0.15s ease, color 0.15s ease',
+              opacity: disabled && !active ? 0.5 : 1,
+              transition: 'color 0.15s ease, opacity 0.15s ease',
             }}
           >
-            <Icon size={15} strokeWidth={2.25} />
+            {active ? (
+              <Box
+                component={motion.div}
+                layoutId="capture-mode-active-pill"
+                transition={{ type: 'spring', duration: 0.45, bounce: 0.15 }}
+                sx={{ position: 'absolute', inset: 0, borderRadius: 999, bgcolor: colors.navy, zIndex: 0 }}
+              />
+            ) : null}
+            <Icon size={15} strokeWidth={2.25} style={{ position: 'relative', zIndex: 1 }} />
             <Typography
               component="span"
-              sx={{ fontSize: { xs: 12, sm: 13 }, fontWeight: 700, whiteSpace: 'nowrap' }}
+              sx={{
+                position: 'relative',
+                zIndex: 1,
+                fontSize: { xs: 12, sm: 13 },
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+              }}
             >
               {entry.label}
             </Typography>

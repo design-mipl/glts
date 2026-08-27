@@ -14,7 +14,6 @@ import {
 } from 'lucide-react'
 import type { Country } from '@/shared/types/visa'
 import {
-  publicLightColors,
   publicShadows,
   publicTypography,
   publicFonts,
@@ -78,16 +77,13 @@ const mockRequirements: RequirementItem[] = [
   },
 ]
 
-const iconConfig: Record<
-  ReqType,
-  { Icon: React.ElementType; bg: string; color: string }
-> = {
-  document: { Icon: FileText, bg: publicLightColors.greenMuted, color: publicLightColors.greenBright },
-  photo: { Icon: Camera, bg: 'rgba(99, 102, 241, 0.1)', color: '#6366F1' },
-  financial: { Icon: CreditCard, bg: 'rgba(245, 158, 11, 0.12)', color: '#D97706' },
-  insurance: { Icon: Shield, bg: 'rgba(14, 165, 233, 0.1)', color: '#0EA5E9' },
-  travel: { Icon: Plane, bg: 'rgba(236, 72, 153, 0.1)', color: '#EC4899' },
-  accommodation: { Icon: Building2, bg: 'rgba(115, 192, 100, 0.15)', color: publicLightColors.greenDark },
+const iconMap: Record<ReqType, React.ElementType> = {
+  document: FileText,
+  photo: Camera,
+  financial: CreditCard,
+  insurance: Shield,
+  travel: Plane,
+  accommodation: Building2,
 }
 
 interface RequirementsSectionProps {
@@ -119,7 +115,7 @@ function RequirementRow({
   onWhyAsk: (content: DocumentWhyContent) => void
 }) {
   const colors = usePublicBrandColors()
-  const { Icon, bg, color } = iconConfig[req.type]
+  const Icon = iconMap[req.type]
 
   return (
     <Box
@@ -137,14 +133,15 @@ function RequirementRow({
           width: 44,
           height: 44,
           borderRadius: '12px',
-          bgcolor: bg,
+          bgcolor: colors.surfaceAlt,
+          border: `1px solid ${colors.border}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        <Icon size={20} color={color} strokeWidth={2} />
+        <Icon size={20} color={colors.navy} strokeWidth={2} />
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -288,9 +285,9 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
               size="small"
               sx={{
                 fontWeight: 800,
-                bgcolor: colors.greenMuted,
-                color: colors.greenDark,
-                border: `1px solid rgba(115, 192, 100, 0.28)`,
+                bgcolor: colors.tealMuted,
+                color: colors.tealDark,
+                border: `1px solid rgba(12, 108, 121, 0.28)`,
               }}
             />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, minWidth: 0 }}>
@@ -353,7 +350,7 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
             {orderedDocuments.map(doc => (
               <Chip
                 key={doc}
-                icon={<Circle size={6} fill={colors.greenBright} color={colors.greenBright} />}
+                icon={<Circle size={6} fill={colors.textMuted} color={colors.textMuted} />}
                 label={doc}
                 size="small"
                 sx={{

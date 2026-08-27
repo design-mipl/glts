@@ -4,6 +4,7 @@ import { Check } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import {
   publicFonts,
+  publicMotion,
   usePublicBrandColors,
   brandPrimaryGreenRgb,
 } from '@/shared/theme/publicBrand'
@@ -78,11 +79,11 @@ export function HowItWorks() {
               <Typography
                 component="h2"
                 sx={{
-                  fontFamily: publicFonts.heading,
+                  fontFamily: publicFonts.display,
                   fontSize: { xs: '26px', md: '32px' },
-                  fontWeight: 800,
+                  fontWeight: 700,
                   color: colors.navy,
-                  letterSpacing: '-0.5px',
+                  letterSpacing: '-0.3px',
                   lineHeight: 1.15,
                   mb: 1.25,
                 }}
@@ -139,7 +140,7 @@ export function HowItWorks() {
                         opacity: isActive ? 1 : 0.55,
                         transition: reducedMotion
                           ? 'none'
-                          : `background-color ${TRANSITION_MS}ms ease-in-out, opacity ${TRANSITION_MS}ms ease-in-out`,
+                          : `background-color ${TRANSITION_MS}ms ${publicMotion.easeInOut}, opacity ${TRANSITION_MS}ms ${publicMotion.easeInOut}`,
                         maskImage: `url(${howItWorksMapPinImage.src})`,
                         maskSize: 'contain',
                         maskRepeat: 'no-repeat',
@@ -172,7 +173,7 @@ export function HowItWorks() {
                       bgcolor: colors.greenBright,
                       transition: reducedMotion
                         ? 'none'
-                        : `width ${TRANSITION_MS}ms ease-in-out`,
+                        : `width ${TRANSITION_MS}ms ${publicMotion.easeInOut}`,
                     }}
                   />
                 </Box>
@@ -221,7 +222,7 @@ export function HowItWorks() {
                         gap: { xs: 1.75, sm: 1.5 },
                         fontFamily: 'inherit',
                         borderRadius: '16px',
-                        transition: `background-color ${TRANSITION_MS}ms ease-in-out`,
+                        transition: `background-color ${TRANSITION_MS}ms ${publicMotion.easeInOut}`,
                         '@media (hover: hover)': {
                           '&:hover': {
                             bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.06)`,
@@ -246,7 +247,7 @@ export function HowItWorks() {
                             : 'none',
                           transition: reducedMotion
                             ? 'none'
-                            : `background-color ${TRANSITION_MS}ms ease-in-out, border-color ${TRANSITION_MS}ms ease-in-out, box-shadow ${TRANSITION_MS}ms ease-in-out, color ${TRANSITION_MS}ms ease-in-out`,
+                            : `background-color ${TRANSITION_MS}ms ${publicMotion.easeInOut}, border-color ${TRANSITION_MS}ms ${publicMotion.easeInOut}, box-shadow ${TRANSITION_MS}ms ${publicMotion.easeInOut}, color ${TRANSITION_MS}ms ${publicMotion.easeInOut}`,
                         }}
                       >
                         <Icon size={24} strokeWidth={2.1} />
@@ -255,12 +256,14 @@ export function HowItWorks() {
                       <Box sx={{ minWidth: 0 }}>
                         <Typography
                           sx={{
+                            fontFamily: publicFonts.mono,
+                            fontVariantNumeric: 'tabular-nums',
                             fontSize: '11px',
                             fontWeight: 700,
                             letterSpacing: '0.08em',
                             color: isActive ? colors.greenBright : colors.textMuted,
                             mb: 0.5,
-                            transition: `color ${TRANSITION_MS}ms ease-in-out`,
+                            transition: `color ${TRANSITION_MS}ms ${publicMotion.easeInOut}`,
                           }}
                         >
                           {step.number}
@@ -273,7 +276,7 @@ export function HowItWorks() {
                             color: isActive ? colors.greenBright : colors.navy,
                             lineHeight: 1.3,
                             mb: 0.75,
-                            transition: `color ${TRANSITION_MS}ms ease-in-out`,
+                            transition: `color ${TRANSITION_MS}ms ${publicMotion.easeInOut}`,
                           }}
                         >
                           {step.title}
@@ -331,7 +334,7 @@ export function HowItWorks() {
                         : 'translateX(28px)',
                     transition: reducedMotion
                       ? 'none'
-                      : `opacity ${TRANSITION_MS}ms ease-in-out, transform ${TRANSITION_MS}ms ease-in-out`,
+                      : `opacity ${TRANSITION_MS}ms ${publicMotion.easeInOut}, transform ${TRANSITION_MS}ms ${publicMotion.easeInOut}`,
                     pointerEvents: isActive ? 'auto' : 'none',
                     zIndex: isActive ? 1 : 0,
                   }}
@@ -378,7 +381,7 @@ export function HowItWorks() {
                 opacity: entered || reducedMotion ? 1 : 0,
                 transition: reducedMotion
                   ? 'none'
-                  : `opacity ${TRANSITION_MS}ms ease-in-out`,
+                  : `opacity ${TRANSITION_MS}ms ${publicMotion.easeInOut}`,
               }}
             >
               <Box
@@ -386,7 +389,7 @@ export function HowItWorks() {
                 sx={{
                   animation: reducedMotion
                     ? 'none'
-                    : `overlayFade ${TRANSITION_MS}ms ease-in-out`,
+                    : `overlayFade ${TRANSITION_MS}ms ${publicMotion.easeInOut}`,
                   '@keyframes overlayFade': {
                     from: { opacity: 0, transform: 'translateY(6px)' },
                     to: { opacity: 1, transform: 'translateY(0)' },

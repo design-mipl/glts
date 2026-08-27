@@ -1,13 +1,22 @@
 import type { OriginalDocumentCollectionMethod } from '@/shared/types/originalDocumentCollection'
 import type { ExtractedField } from '@/pages/customer/features/applications/data/applicationFlowData'
 
-export type RetailPhaseId = 'purpose' | 'traveller' | 'sponsor' | 'documents' | 'extras' | 'pay'
+export type RetailPhaseId =
+  | 'purpose'
+  | 'traveller'
+  | 'sponsor'
+  | 'documents'
+  | 'collection'
+  | 'extras'
+  | 'review'
+  | 'pay'
 
 export type RetailStepId =
   | 'visa'
   | 'traveller'
   | 'travelProfile'
   | 'sponsor'
+  | 'sponsorDocs'
   | 'eligibility'
   | 'photo'
   | 'passport'
@@ -26,11 +35,36 @@ export type RetailStepId =
   | 'payment'
   | 'success'
 
-/** Who funds the trip — chosen after travel profiles are built. */
+/**
+ * Per-traveller sponsor (B10).
+ * Binary: Individual (self-funded) or Someone else + profile + bank statement.
+ */
+export type RetailTravellerSponsor =
+  | { mode: 'individual' }
+  | {
+      mode: 'someone_else'
+      name: string
+      relationship: string
+      /** Phone or email — inventory Step 8.6 “contact”. */
+      contact: string
+      /** True after Build sponsor profile modal is completed. */
+      profileComplete?: boolean
+    }
+
+/**
+ * @deprecated Application-level sponsor — migrated to `applicants[].sponsor` in normalizeDraft.
+ * Kept so sessionStorage drafts don’t crash mid-read.
+ */
 export type RetailSponsorSelection =
   | { mode: 'traveller'; applicantId: string }
   | { mode: 'self_paying' }
   | { mode: 'someone_else'; name: string }
+
+/** Document upload id for sponsor bank statement (keyed via checklistUploadKey). */
+export const SPONSOR_BANK_STATEMENT_DOC_ID = 'sponsor_bank_statement' as const
+
+/** Traveller's own bank statement on the essential-documents step. */
+export const TRAVELLER_BANK_STATEMENT_DOC_ID = 'bank_statement' as const
 
 export interface RetailStepDefinition {
   id: RetailStepId
@@ -70,6 +104,8 @@ export interface RetailApplicantParty {
   profileComplete?: boolean
   /** Answers collected inside Build profile (questions land here as they are added). */
   profileAnswers?: Record<string, string>
+  /** Who's paying for this traveller's trip (B10 — per traveller). */
+  sponsor?: RetailTravellerSponsor
   photo?: RetailCapturedImage
   passport?: RetailCapturedImage
   /** Passport back / address page. */
@@ -103,6 +139,12 @@ export interface RetailFlowDraft {
   countryId: string
   visaOfferingId: string
   jurisdictionId?: string
+  /** Display name for resolved application centre (e.g. Delhi). */
+  jurisdictionName?: string
+  /** Passport issuing state — used to resolve jurisdiction (customer create flow). */
+  issuedPassportState?: string
+  /** Place of residence (>6 months) — preferred over passport state for jurisdiction. */
+  placeOfResidence?: string
   /** Intended travel date (ISO YYYY-MM-DD) — selected with application city. */
   travelDate?: string
   /** Step the applicant was last viewing — lets a page refresh resume in place, not just restore field values. */
@@ -114,7 +156,10 @@ export interface RetailFlowDraft {
   applicants: RetailApplicantParty[]
   eligibilityAnswerId?: string
   eligibilityStatus?: 'eligible' | 'ineligible'
-  /** Trip sponsor — traveller, everyone self-paying, or an external person. */
+  /**
+   * @deprecated Prefer `applicants[].sponsor` (per-traveller).
+   * Still read once during draft normalize for in-progress sessionStorage drafts.
+   */
   sponsor?: RetailSponsorSelection
   /** @deprecated Prefer `applicants[0].photo` */
   photo?: RetailCapturedImage

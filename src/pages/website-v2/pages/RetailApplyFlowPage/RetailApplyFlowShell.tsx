@@ -15,8 +15,9 @@ import { VisaStep } from './components/steps/VisaStep'
 import { EligibilityStep } from './components/steps/EligibilityStep'
 import { TravelProfileStep } from './components/steps/TravelProfileStep'
 import { SponsorStep } from './components/steps/SponsorStep'
+import { SponsorDocsStep } from './components/steps/SponsorDocsStep'
 import { PassportStep } from './components/steps/PassportStep'
-import { JurisdictionStep } from './components/steps/JurisdictionStep'
+import { JurisdictionStep, resolveRetailJurisdictionPatch } from './components/steps/JurisdictionStep'
 import { ConditionalQuestionStep } from './components/steps/ConditionalQuestionStep'
 import { ChecklistStep } from './components/steps/ChecklistStep'
 import { OriginalDocumentsStep } from './components/steps/OriginalDocumentsStep'
@@ -56,6 +57,9 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
   const [visaOfferingId, setVisaOfferingId] = useState(initialVisaOfferingId)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [direction, setDirection] = useState<1 | -1>(1)
+  /** Fingerprint of resolved docs when review was last acknowledged — detects downstream requirement changes. */
+  const [reviewRequirementsBaseline, setReviewRequirementsBaseline] = useState<string | null>(null)
+  const [showRequirementsUpdated, setShowRequirementsUpdated] = useState(false)
 
   const countryId = initialCountryId
   const trustProfile = getCountryTrustProfile(countryId)
@@ -84,6 +88,10 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         restoredId = 'passport'
       } else if (restoredId === 'requirements') {
         restoredId = 'checklist'
+      } else if (restoredId === 'sponsorDocs') {
+        // Fall back if draft no longer needs sponsor documents.
+        const hasDocsStep = steps.some((step) => step.id === 'sponsorDocs')
+        if (!hasDocsStep) restoredId = 'sponsor'
       }
       const restoredIndex = steps.findIndex((step) => step.id === restoredId)
       if (restoredIndex !== -1) {
@@ -93,6 +101,26 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
       }
     }
   }, [steps, draft.lastStepId])
+
+  const requirementsFingerprint = useMemo(() => {
+    if (!journey) return ''
+    return journey.documents
+      .map((doc) => `${doc.documentId}:${doc.mandatory ? '1' : '0'}`)
+      .sort()
+      .join('|')
+  }, [journey])
+
+  useEffect(() => {
+    if (steps[currentStepIndex]?.id !== 'review') return
+    if (!requirementsFingerprint) return
+    if (reviewRequirementsBaseline === null) {
+      setReviewRequirementsBaseline(requirementsFingerprint)
+      return
+    }
+    if (requirementsFingerprint !== reviewRequirementsBaseline) {
+      setShowRequirementsUpdated(true)
+    }
+  }, [currentStepIndex, steps, requirementsFingerprint, reviewRequirementsBaseline])
 
   function goToStep(index: number, dir: 1 | -1) {
     setDirection(dir)
@@ -174,11 +202,11 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
     patchDraft((prev) => {
       if (prev.applicants.length <= 1) return {}
       const applicants = prev.applicants.filter((applicant) => applicant.id !== id)
-      const sponsor =
-        prev.sponsor?.mode === 'traveller' && prev.sponsor.applicantId === id
-          ? undefined
-          : prev.sponsor
-      return { applicants, sponsor }
+      // Drop sponsor bank-statement uploads keyed to the removed traveller.
+      const documentUploads = Object.fromEntries(
+        Object.entries(prev.documentUploads).filter(([key]) => !key.startsWith(`${id}__`)),
+      )
+      return { applicants, documentUploads }
     })
   }
 
@@ -207,7 +235,16 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
       <PassportStep
         countryName={countryMaster?.name}
         applicants={draft.applicants}
+        uploads={draft.documentUploads}
         onUpdateApplicant={updateApplicant}
+        onUploadBankStatement={(applicantId, image) =>
+          patchDraft((prev) => ({
+            documentUploads: {
+              ...prev.documentUploads,
+              [`${applicantId}__bank_statement`]: image,
+            },
+          }))
+        }
         onBack={goBack}
         onContinue={goNext}
       />
@@ -247,9 +284,27 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         return (
           <SponsorStep
             applicants={draft.applicants}
-            sponsor={draft.sponsor}
-            onChange={(sponsor) => patchDraft({ sponsor })}
+            onUpdateSponsor={(applicantId, sponsor) =>
+              updateApplicant(applicantId, { sponsor })
+            }
             onGoToTravelProfile={goToTravelProfile}
+            onBack={goBack}
+            onContinue={goNext}
+          />
+        )
+      case 'sponsorDocs':
+        return (
+          <SponsorDocsStep
+            applicants={draft.applicants}
+            uploads={draft.documentUploads}
+            onUpload={(applicantId, image) =>
+              patchDraft((prev) => ({
+                documentUploads: {
+                  ...prev.documentUploads,
+                  [`${applicantId}__sponsor_bank_statement`]: image,
+                },
+              }))
+            }
             onBack={goBack}
             onContinue={goNext}
           />
@@ -285,8 +340,39 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
             visaOfferingId={visaOfferingId}
             jurisdictions={jurisdictions}
             selectedId={draft.jurisdictionId}
+            jurisdictionName={draft.jurisdictionName}
+            issuedPassportState={draft.issuedPassportState}
+            placeOfResidence={draft.placeOfResidence}
             travelDate={draft.travelDate}
-            onSelect={(jurisdictionId) => patchDraft({ jurisdictionId })}
+            onSelect={(jurisdictionId, jurisdictionName) =>
+              patchDraft({ jurisdictionId, jurisdictionName })
+            }
+            onPassportStateChange={(stateName) =>
+              patchDraft(
+                resolveRetailJurisdictionPatch(
+                  countryId,
+                  visaOfferingId,
+                  { issuedPassportState: stateName },
+                  {
+                    issuedPassportState: draft.issuedPassportState,
+                    placeOfResidence: draft.placeOfResidence,
+                  },
+                ),
+              )
+            }
+            onPlaceOfResidenceChange={(stateName) =>
+              patchDraft(
+                resolveRetailJurisdictionPatch(
+                  countryId,
+                  visaOfferingId,
+                  { placeOfResidence: stateName },
+                  {
+                    issuedPassportState: draft.issuedPassportState,
+                    placeOfResidence: draft.placeOfResidence,
+                  },
+                ),
+              )
+            }
             onTravelDateChange={(isoDate) => patchDraft({ travelDate: isoDate })}
             onBack={goBack}
             onContinue={goNext}
@@ -324,34 +410,43 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
             onContinue={goNext}
           />
         )
-      case 'collectionDetails':
-        if (!draft.collectionMethod) return null
+      case 'collectionDetails': {
+        const method = draft.collectionMethod ?? 'picked_up_from_company'
         return (
           <CollectionDetailsStep
-            method={draft.collectionMethod}
+            method={method}
             values={draft.collectionDetails}
+            onSelectMethod={(next) =>
+              patchDraft({ collectionMethod: next, collectionDetails: {} })
+            }
             onChange={(key, value) =>
-              patchDraft((prev) => ({ collectionDetails: { ...prev.collectionDetails, [key]: value } }))
+              patchDraft((prev) => ({
+                collectionMethod: prev.collectionMethod ?? method,
+                collectionDetails: { ...prev.collectionDetails, [key]: value },
+              }))
             }
             onBack={goBack}
             onContinue={goNext}
           />
         )
-      case 'collectionConfirmation':
-        if (!draft.collectionMethod) return null
+      }
+      case 'collectionConfirmation': {
+        const method = draft.collectionMethod ?? 'picked_up_from_company'
         return (
           <CollectionConfirmationStep
-            method={draft.collectionMethod}
+            method={method}
             values={draft.collectionDetails}
             onBack={goBack}
             onContinue={goNext}
           />
         )
+      }
       case 'insurance':
         return (
           <InsuranceStep
             services={journey?.insuranceServices ?? []}
             selection={draft.insurance}
+            travelDate={draft.travelDate}
             onChange={(selection) => patchDraft({ insurance: selection })}
             onBack={goBack}
             onContinue={goNext}
@@ -362,6 +457,7 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
           <FlightTicketStep
             services={journey?.flightTicketServices ?? []}
             selection={draft.flightTicket}
+            travelDate={draft.travelDate}
             onChange={(selection) => patchDraft({ flightTicket: selection })}
             onBack={goBack}
             onContinue={goNext}
@@ -369,7 +465,24 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         )
       case 'review':
         if (!journey) return null
-        return <ReviewStep journey={journey} draft={draft} onBack={goBack} onContinue={goNext} />
+        return (
+          <ReviewStep
+            journey={journey}
+            draft={draft}
+            onBack={goBack}
+            onContinue={goNext}
+            requirementsUpdated={showRequirementsUpdated}
+            onDismissRequirementsUpdated={() => {
+              setShowRequirementsUpdated(false)
+              setReviewRequirementsBaseline(requirementsFingerprint)
+            }}
+            onEditStep={(stepId) => {
+              const targetIndex = steps.findIndex((step) => step.id === stepId)
+              if (targetIndex === -1) return
+              goToStep(targetIndex, targetIndex > currentStepIndex ? 1 : -1)
+            }}
+          />
+        )
       case 'payment':
         if (!journey) return null
         return (
@@ -409,11 +522,23 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         width: '100%',
         flex: 1,
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: 'stretch',
+        gap: { xs: 1.5, md: 2.5 },
         minHeight: 0,
       }}
     >
-      <Box sx={{ mb: 2.5, flex: '0 0 auto' }}>
+      <Box
+        sx={{
+          flex: '0 0 auto',
+          width: { xs: '100%', md: 80 },
+          alignSelf: 'stretch',
+          display: 'flex',
+          alignItems: { xs: 'stretch', md: 'center' },
+          justifyContent: { xs: 'flex-start', md: 'center' },
+          minHeight: 0,
+        }}
+      >
         <PhaseNav
           currentPhase={currentPhase}
           unlockedPhases={unlockedPhases}
@@ -430,21 +555,25 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
           p: { xs: 2.5, md: 3.5 },
           width: '100%',
           flex: 1,
+          minWidth: 0,
+          maxHeight: '100%',
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
           boxSizing: 'border-box',
           position: 'relative',
+          overflow: 'hidden',
         }}
       >
         <Box
           sx={{
-            flex: 1,
+            flex: '1 1 auto',
             display: 'flex',
             flexDirection: 'column',
             minHeight: 0,
+            maxHeight: '100%',
             width: '100%',
-            overflow: 'auto',
+            overflow: 'hidden',
           }}
         >
           <StepTransition stepKey={currentStep?.id ?? 'empty'} direction={direction}>

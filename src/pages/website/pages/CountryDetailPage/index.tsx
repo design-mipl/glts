@@ -1,4 +1,4 @@
-import { Box, Typography, Grid, Chip, Button, Breadcrumbs, Link, Card, Stack } from '@mui/material'
+import { Box, Typography, Grid, Chip, Button, Breadcrumbs, Link, Stack } from '@mui/material'
 import { useLocation, useParams } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
@@ -9,7 +9,7 @@ import { RequirementsSection } from './components/RequirementsSection'
 import { ComingSoonPage } from '@/shared/components/ComingSoonPage'
 import { PublicContainer } from '../../components/PublicContainer'
 import { publicLayout, publicFonts, usePublicBrandColors, getMarketingPrimaryButtonSx } from '@/shared/theme/publicBrand'
-import { ChevronRight, Clock, MapPin } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 
 const timelineSteps = [
   { step: 1, title: 'Submit', desc: 'Documents reviewed in 4h', icon: '📄' },
@@ -336,64 +336,8 @@ export function CountryDetailPage() {
           )}
 
           {activeTab === 2 && (
-            <Typography sx={{ color: '#6B7280' }}>
-              Review the fee estimate card for Embassy Fee, GreenLight Fee and indicative total.
-            </Typography>
-          )}
-          {activeTab === 3 && (
             <Typography sx={{ color: '#6B7280' }}>FAQs coming soon.</Typography>
           )}
-        </Box>
-
-        {/* Embassy Info */}
-        <Box sx={{ mt: 6 }}>
-          <Typography sx={{ fontWeight: 800, fontSize: '20px', color: '#001F3F', mb: 3 }}>
-            Embassy &amp; VFS Center
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Card sx={{ p: 3, border: '1px solid #F3F4F6', boxShadow: 'none', borderRadius: '12px' }}>
-                <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.6px', mb: 2 }}>
-                  EMBASSY
-                </Typography>
-                <Typography sx={{ fontWeight: 700, color: '#001F3F', fontSize: '15px', mb: 1 }}>
-                  Consulate of {country.name}, Mumbai
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
-                  <MapPin size={13} color="#9CA3AF" style={{ marginTop: 2, flexShrink: 0 }} />
-                  <Typography sx={{ fontSize: '13px', color: '#6B7280' }}>
-                    Wankhede House, 1st Floor, D Road, Mumbai 400020
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Clock size={13} color="#9CA3AF" />
-                  <Typography sx={{ fontSize: '13px', color: '#6B7280' }}>Open · Mon–Fri 8:30–12:00</Typography>
-                </Box>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Card sx={{ p: 3, border: '1px solid #F3F4F6', boxShadow: 'none', borderRadius: '12px' }}>
-                <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.6px', mb: 2 }}>
-                  VFS CENTER
-                </Typography>
-                <Typography sx={{ fontWeight: 700, color: '#001F3F', fontSize: '15px', mb: 1 }}>
-                  VFS Global · Trade Centre, BKC
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
-                  <MapPin size={13} color="#9CA3AF" style={{ marginTop: 2, flexShrink: 0 }} />
-                  <Typography sx={{ fontSize: '13px', color: '#6B7280' }}>
-                    Biometrics required · slots open daily 9am
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Clock size={13} color="#9CA3AF" />
-                  <Typography sx={{ fontSize: '13px', color: '#6B7280', fontWeight: 600 }}>
-                    Appointment timing confirmed during application review
-                  </Typography>
-                </Box>
-              </Card>
-            </Grid>
-          </Grid>
         </Box>
 
         {/* CTA Banner */}

@@ -3,17 +3,19 @@ import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import type { PublicBrandColors } from '@/shared/theme/publicBrand'
 import { retailFlowColors } from '@/pages/website-v2/theme/retailFlowTokens'
-import { getConicRingBackground, statusVisualRadius } from '@/pages/website-v2/theme/statusVisualTokens'
+import { statusVisualRadius, getElevatedStatusCardSx } from '@/pages/website-v2/theme/statusVisualTokens'
 import type { TravellerUploadStatusItem } from './types'
 
 const CRITICAL_TEXT = '#DC2626'
-const CRITICAL_BG = '#FEF2F2'
-const CRITICAL_BORDER = '#FECACA'
+const CRITICAL_TINT_BG = 'rgba(220, 38, 38, 0.10)'
+const CRITICAL_TINT_FG = '#B91C1C'
 
 export interface TravellerUploadStatusRowProps {
   item: TravellerUploadStatusItem
   onReupload?: (id: string) => void
 }
+
+type SemanticTone = 'high' | 'medium' | 'attention' | 'neutral'
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -43,36 +45,129 @@ function confidenceLabel(confidence: number): string {
   return 'Low confidence'
 }
 
-/** Confidence ring — the one emphasis number on the row, always gold, ring instead of a linear bar. */
-function ConfidenceRing({ confidence, colors }: { confidence: number; colors: PublicBrandColors }) {
+function toneFromConfidence(confidence: number): SemanticTone {
+  if (confidence >= 85) return 'high'
+  if (confidence >= 60) return 'medium'
+  return 'attention'
+}
+
+function avatarTone(item: TravellerUploadStatusItem): SemanticTone {
+  if (item.status === 'needs_attention') return 'attention'
+  if (item.status === 'uploaded' && item.quality?.confidence != null) {
+    return toneFromConfidence(item.quality.confidence)
+  }
+  return 'neutral'
+}
+
+function avatarColors(tone: SemanticTone, colors: PublicBrandColors): { bg: string; fg: string } {
+  switch (tone) {
+    case 'high':
+      return { bg: colors.greenMuted, fg: colors.greenDark }
+    case 'medium':
+      return { bg: colors.goldMuted, fg: colors.goldDark }
+    case 'attention':
+      return { bg: CRITICAL_TINT_BG, fg: CRITICAL_TINT_FG }
+    default:
+      return { bg: colors.surfaceAlt, fg: colors.textSecondary }
+  }
+}
+
+function ringStroke(tone: SemanticTone, colors: PublicBrandColors): string {
+  switch (tone) {
+    case 'high':
+      return colors.greenBright
+    case 'medium':
+      return colors.goldBright
+    case 'attention':
+      return CRITICAL_TEXT
+    default:
+      return colors.textMuted
+  }
+}
+
+/**
+ * Real SVG confidence ring — stroke-dasharray sized to %, label centered with flexbox
+ * (absolute overlay + flex center, verified pattern for Chrome).
+ */
+function ConfidenceRing({
+  confidence,
+  colors,
+}: {
+  confidence: number
+  colors: PublicBrandColors
+}) {
+  const size = 40
+  const stroke = 3
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  const clamped = Math.min(100, Math.max(0, confidence))
+  const dash = (clamped / 100) * c
+  const tone = toneFromConfidence(clamped)
+  const strokeColor = ringStroke(tone, colors)
+  const labelColor =
+    tone === 'high' ? colors.greenDark : tone === 'medium' ? colors.goldDark : CRITICAL_TINT_FG
+
   return (
     <Box
       sx={{
-        width: 38,
-        height: 38,
-        borderRadius: statusVisualRadius.full,
-        background: getConicRingBackground(colors.goldBright, colors.goldMuted, confidence),
+        position: 'relative',
+        width: size,
+        height: size,
+        flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        flexShrink: 0,
       }}
     >
       <Box
+        component="svg"
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        aria-hidden
+        sx={{ position: 'absolute', inset: 0, display: 'block' }}
+      >
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={colors.border}
+          strokeWidth={stroke}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={`${dash} ${c - dash}`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </Box>
+      <Typography
+        component="span"
         sx={{
-          width: 30,
-          height: 30,
-          borderRadius: statusVisualRadius.full,
-          bgcolor: colors.white,
+          position: 'relative',
+          zIndex: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          width: '100%',
+          height: '100%',
+          fontSize: 10,
+          fontWeight: 800,
+          lineHeight: 1,
+          color: labelColor,
+          fontVariantNumeric: 'tabular-nums',
+          fontFeatureSettings: '"tnum"',
+          pointerEvents: 'none',
         }}
       >
-        <Typography sx={{ fontSize: 10, fontWeight: 800, color: colors.goldDark, lineHeight: 1 }}>
-          {confidence}%
-        </Typography>
-      </Box>
+        {clamped}%
+      </Typography>
     </Box>
   )
 }
@@ -133,10 +228,11 @@ function StatusIndicator({ item, colors }: { item: TravellerUploadStatusItem; co
   )
 }
 
-/** One row per traveller in a bulk-upload list — status, OCR confidence ring, and a re-upload flag when needed. */
+/** One row per traveller — SVG confidence ring, semantic avatar, attention = left border only. */
 export function TravellerUploadStatusRow({ item, onReupload }: TravellerUploadStatusRowProps) {
   const colors = usePublicBrandColors()
   const attention = item.status === 'needs_attention'
+  const av = avatarColors(avatarTone(item), colors)
 
   return (
     <Stack
@@ -147,9 +243,10 @@ export function TravellerUploadStatusRow({ item, onReupload }: TravellerUploadSt
         px: 1.5,
         py: 1.25,
         borderRadius: statusVisualRadius.control,
-        border: `1px solid ${attention ? CRITICAL_BORDER : colors.border}`,
+        ...getElevatedStatusCardSx(colors.border),
+        // Needs attention: 3px solid left border only — white/default bg, never a red fill tint.
         borderLeft: attention ? `3px solid ${CRITICAL_TEXT}` : `1px solid ${colors.border}`,
-        bgcolor: attention ? CRITICAL_BG : colors.white,
+        bgcolor: colors.white,
       }}
     >
       <Box
@@ -157,9 +254,8 @@ export function TravellerUploadStatusRow({ item, onReupload }: TravellerUploadSt
           width: 36,
           height: 36,
           borderRadius: statusVisualRadius.full,
-          bgcolor: colors.surfaceAlt,
-          border: `1px solid ${colors.border}`,
-          color: colors.navy,
+          bgcolor: av.bg,
+          color: av.fg,
           fontSize: 12,
           fontWeight: 700,
           display: 'flex',
@@ -191,7 +287,7 @@ export function TravellerUploadStatusRow({ item, onReupload }: TravellerUploadSt
             appearance: 'none',
             border: `1px solid ${CRITICAL_TEXT}33`,
             borderRadius: statusVisualRadius.control,
-            bgcolor: '#fff',
+            bgcolor: colors.white,
             color: CRITICAL_TEXT,
             fontSize: 12,
             fontWeight: 700,

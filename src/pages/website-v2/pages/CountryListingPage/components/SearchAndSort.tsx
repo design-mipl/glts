@@ -40,8 +40,22 @@ export function SearchAndSort({
           minWidth: { xs: '100%', sm: 0 },
           '& .MuiOutlinedInput-root': {
             borderRadius: '14px',
-            bgcolor: '#fff',
+            bgcolor: colors.white,
             fontSize: '16px',
+            transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
+            '& fieldset': {
+              borderColor: colors.border,
+            },
+            '&:hover fieldset': {
+              borderColor: colors.teal,
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: colors.teal,
+              borderWidth: 1.5,
+            },
+            '&.Mui-focused': {
+              boxShadow: `0 0 0 4px rgba(12, 108, 121, 0.10)`,
+            },
           },
         }}
       />

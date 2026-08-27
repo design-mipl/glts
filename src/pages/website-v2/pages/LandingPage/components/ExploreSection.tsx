@@ -3,12 +3,13 @@ import { Box, Typography, Button } from '@mui/material'
 import { ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getAllCountries } from '@/shared/services/visaService'
-import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { publicFonts, publicMotion, usePublicBrandColors } from '../../../theme/publicSiteTokens'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { HomepageDestinationCard } from '../../../components/HomepageDestinationCard'
 import { destinationCardGridSx } from '../../../components/destinationCardGrid'
 import { defaultExploreFilters, applyExploreFilters } from '../../../utils/applyExploreFilters'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
+import { useScrollReveal } from '../../../hooks/useScrollReveal'
 
 /** Two full rows on the desktop 5-column grid. */
 const HOMEPAGE_DESTINATION_COUNT = 10
@@ -16,6 +17,7 @@ const HOMEPAGE_DESTINATION_COUNT = 10
 export function ExploreSection() {
   const colors = usePublicBrandColors()
   const navigate = useNavigate()
+  const { ref: headerRef, active: headerActive, reducedMotion } = useScrollReveal<HTMLDivElement>()
 
   const homepageCountries = useMemo(() => {
     const list = applyExploreFilters(getAllCountries(), defaultExploreFilters)
@@ -55,6 +57,7 @@ export function ExploreSection() {
     >
       <PublicContainer variant="hero">
         <Box
+          ref={headerRef}
           sx={{
             mb: landingSectionHeaderMb,
             display: 'flex',
@@ -62,14 +65,19 @@ export function ExploreSection() {
             alignItems: { xs: 'flex-start', sm: 'flex-end' },
             justifyContent: 'space-between',
             gap: { xs: 2, sm: 3 },
+            opacity: headerActive ? 1 : 0,
+            transform: headerActive ? 'translateY(0)' : 'translateY(16px)',
+            transition: reducedMotion
+              ? 'none'
+              : `opacity ${publicMotion.revealDurationMs}ms ${publicMotion.easeOut}, transform ${publicMotion.revealDurationMs}ms ${publicMotion.easeOut}`,
           }}
         >
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography
               component="h2"
               sx={{
-                fontFamily: publicFonts.heading,
-                fontWeight: 800,
+                fontFamily: publicFonts.display,
+                fontWeight: 700,
                 fontSize: { xs: '28px', md: '36px' },
                 color: colors.navy,
                 lineHeight: 1.15,
@@ -97,11 +105,13 @@ export function ExploreSection() {
               py: 1.1,
               flexShrink: 0,
               alignSelf: { xs: 'stretch', sm: 'center' },
+              transition: `transform ${publicMotion.pressDurationMs}ms ${publicMotion.easeOut}, border-color 200ms ease, background-color 200ms ease, color 200ms ease`,
               '&:hover': {
                 borderColor: colors.greenBright,
                 bgcolor: colors.greenMuted,
                 color: colors.greenDark,
               },
+              '&:active': { transform: 'scale(0.97)' },
             }}
           >
             View all destinations

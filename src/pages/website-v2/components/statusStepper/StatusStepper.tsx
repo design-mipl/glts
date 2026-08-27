@@ -1,5 +1,4 @@
 import { Box, Stack, Typography } from '@mui/material'
-import { Check } from 'lucide-react'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import type { PublicBrandColors } from '@/shared/theme/publicBrand'
 import { statusVisualRadius } from '@/pages/website-v2/theme/statusVisualTokens'
@@ -11,11 +10,39 @@ export interface StatusStepperProps {
   orientation?: 'vertical' | 'horizontal'
 }
 
-const CIRCLE_SIZE = 32
-const DASHED_LINE = (colorHex: string) =>
-  `repeating-linear-gradient(to bottom, ${colorHex} 0 4px, transparent 4px 9px)`
-const DASHED_LINE_HORIZONTAL = (colorHex: string) =>
-  `repeating-linear-gradient(to right, ${colorHex} 0 4px, transparent 4px 9px)`
+const CIRCLE_SIZE = 28
+const ICON_VIEWBOX = 24
+
+/** Hand-drawn check — custom path, not an icon-library glyph. */
+function CheckmarkPath({ color }: { color: string }) {
+  return (
+    <svg width={14} height={14} viewBox={`0 0 ${ICON_VIEWBOX} ${ICON_VIEWBOX}`} aria-hidden fill="none">
+      <path
+        d="M5.2 12.4c1.6 1.55 3.1 3.35 4.55 5.5 3.4-6.85 6.35-10.9 9.05-13.4"
+        stroke={color}
+        strokeWidth={2.4}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/** Custom clock glyph for the current step — muted amber tint hosts this path. */
+function ClockPath({ color }: { color: string }) {
+  return (
+    <svg width={14} height={14} viewBox={`0 0 ${ICON_VIEWBOX} ${ICON_VIEWBOX}`} aria-hidden fill="none">
+      <circle cx="12" cy="12" r="7.25" stroke={color} strokeWidth={1.75} />
+      <path
+        d="M12 8.2v4.15l2.85 1.7"
+        stroke={color}
+        strokeWidth={1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
 
 function StepCircle({ step, colors }: { step: StatusStepConfig; colors: PublicBrandColors }) {
   if (step.state === 'completed') {
@@ -25,42 +52,37 @@ function StepCircle({ step, colors }: { step: StatusStepConfig; colors: PublicBr
           width: CIRCLE_SIZE,
           height: CIRCLE_SIZE,
           borderRadius: statusVisualRadius.full,
-          bgcolor: colors.greenBright,
-          color: colors.onBrandFilled,
+          bgcolor: colors.navy,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        <Check size={16} strokeWidth={3} />
+        <CheckmarkPath color={colors.onBrandFilled} />
       </Box>
     )
   }
 
   if (step.state === 'current') {
-    const Icon = step.icon
     return (
       <Box
         sx={{
           width: CIRCLE_SIZE,
           height: CIRCLE_SIZE,
           borderRadius: statusVisualRadius.full,
-          bgcolor: colors.goldBright,
-          color: colors.onBrandFilled,
+          bgcolor: colors.goldMuted,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          boxShadow: `0 0 0 4px ${colors.goldBright}29`,
         }}
       >
-        {Icon ? <Icon size={15} strokeWidth={2.25} /> : null}
+        <ClockPath color={colors.goldDark} />
       </Box>
     )
   }
 
-  const PendingIcon = step.icon
   return (
     <Box
       sx={{
@@ -68,15 +90,10 @@ function StepCircle({ step, colors }: { step: StatusStepConfig; colors: PublicBr
         height: CIRCLE_SIZE,
         borderRadius: statusVisualRadius.full,
         border: `1.5px dashed ${colors.border}`,
-        color: colors.textMuted,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        bgcolor: 'transparent',
         flexShrink: 0,
       }}
-    >
-      {PendingIcon ? <PendingIcon size={13} strokeWidth={2} /> : null}
-    </Box>
+    />
   )
 }
 
@@ -104,6 +121,48 @@ function StatePill({ state, colors }: { state: StatusStepState; colors: PublicBr
   )
 }
 
+function StepCopy({
+  step,
+  colors,
+  align = 'left',
+}: {
+  step: StatusStepConfig
+  colors: PublicBrandColors
+  align?: 'left' | 'center'
+}) {
+  return (
+    <>
+      <Typography
+        sx={{
+          fontSize: align === 'center' ? 12.5 : 13.5,
+          fontWeight: 700,
+          color: colors.navy,
+          textAlign: align,
+        }}
+      >
+        {step.label}
+      </Typography>
+      {step.description ? (
+        <Typography
+          sx={{
+            fontSize: align === 'center' ? 11 : 12,
+            color: colors.textMuted,
+            mt: 0.15,
+            textAlign: align,
+            fontVariantNumeric: 'tabular-nums',
+            fontFeatureSettings: '"tnum"',
+          }}
+        >
+          {step.description}
+        </Typography>
+      ) : null}
+      <Box sx={{ display: 'flex', justifyContent: align === 'center' ? 'center' : 'flex-start' }}>
+        <StatePill state={step.state} colors={colors} />
+      </Box>
+    </>
+  )
+}
+
 function VerticalStepper({ steps, colors }: { steps: StatusStepConfig[]; colors: PublicBrandColors }) {
   return (
     <Stack spacing={0}>
@@ -118,20 +177,19 @@ function VerticalStepper({ steps, colors }: { steps: StatusStepConfig[]; colors:
                 <Box
                   sx={{
                     width: 2,
-                    minHeight: 30,
+                    minHeight: 28,
                     flex: 1,
                     my: 0.5,
-                    background: connectorSolid ? colors.greenBright : DASHED_LINE(colors.border),
+                    bgcolor: connectorSolid ? colors.navy : 'transparent',
+                    backgroundImage: connectorSolid
+                      ? 'none'
+                      : `repeating-linear-gradient(to bottom, ${colors.border} 0 4px, transparent 4px 9px)`,
                   }}
                 />
               ) : null}
             </Stack>
-            <Box sx={{ pb: isLast ? 0 : 2.5, pt: 0.35 }}>
-              <Typography sx={{ fontSize: 13.5, fontWeight: 700, color: colors.navy }}>{step.label}</Typography>
-              {step.description ? (
-                <Typography sx={{ fontSize: 12, color: colors.textMuted, mt: 0.15 }}>{step.description}</Typography>
-              ) : null}
-              <StatePill state={step.state} colors={colors} />
+            <Box sx={{ pb: isLast ? 0 : 2.25, pt: 0.2 }}>
+              <StepCopy step={step} colors={colors} />
             </Box>
           </Stack>
         )
@@ -166,7 +224,10 @@ function HorizontalStepper({ steps, colors }: { steps: StatusStepConfig[]; color
                   left: '-50%',
                   width: '100%',
                   height: 2,
-                  background: prevCompleted ? colors.greenBright : DASHED_LINE_HORIZONTAL(colors.border),
+                  bgcolor: prevCompleted ? colors.navy : 'transparent',
+                  backgroundImage: prevCompleted
+                    ? 'none'
+                    : `repeating-linear-gradient(to right, ${colors.border} 0 4px, transparent 4px 9px)`,
                   zIndex: 0,
                 }}
               />
@@ -174,17 +235,9 @@ function HorizontalStepper({ steps, colors }: { steps: StatusStepConfig[]; color
             <Box sx={{ position: 'relative', zIndex: 1 }}>
               <StepCircle step={step} colors={colors} />
             </Box>
-            <Typography
-              sx={{ fontSize: 12.5, fontWeight: 700, color: colors.navy, mt: 1, textAlign: 'center' }}
-            >
-              {step.label}
-            </Typography>
-            {step.description ? (
-              <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.15, textAlign: 'center' }}>
-                {step.description}
-              </Typography>
-            ) : null}
-            <StatePill state={step.state} colors={colors} />
+            <Box sx={{ mt: 1, width: '100%' }}>
+              <StepCopy step={step} colors={colors} align="center" />
+            </Box>
           </Box>
         )
       })}
@@ -192,7 +245,7 @@ function HorizontalStepper({ steps, colors }: { steps: StatusStepConfig[]; color
   )
 }
 
-/** Generic, config-driven step indicator — any length. Drives Application Tracking and the Cancellation Policy timeline. Not wired to a real screen yet. */
+/** Generic, config-driven step indicator — any length. Previewed in isolation before product wiring. */
 export function StatusStepper({ steps, orientation = 'vertical' }: StatusStepperProps) {
   const colors = usePublicBrandColors()
   if (!steps.length) return null

@@ -661,12 +661,12 @@ export function DestinationsMapSection() {
             id="destinations-map-heading"
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
-              fontWeight: 800,
+              fontFamily: publicFonts.display,
+              fontWeight: 700,
               fontSize: { xs: '28px', md: '36px', lg: '40px' },
               lineHeight: 1.15,
               color: colors.navy,
-              letterSpacing: 0,
+              letterSpacing: '-0.3px',
               mb: 1.25,
             }}
           >

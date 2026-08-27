@@ -1,29 +1,67 @@
 import { Box, Stack, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { CircleHelp, Upload } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { BUTTON } from '@/design-system/formControl'
 import { brandPrimaryGreenRgb, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { retailFlowColors, retailFlowLayout } from '@/pages/website-v2/theme/retailFlowTokens'
+
+export type DocumentChecklistStatusTone = 'original' | 'completed' | 'neutral'
 
 interface DocumentChecklistRowProps {
   icon: LucideIcon
   name: string
   description?: string
-  completed: boolean
+  completed?: boolean
   optional?: boolean
   onInfoClick: () => void
-  onFileSelect: (file: File) => void
+  /** Required when no `statusTag` — drives the Upload control. */
+  onFileSelect?: (file: File) => void
+  /**
+   * When set, replaces Upload / Completed (e.g. Original Documents step
+   * with an "Original required" annotation).
+   */
+  statusTag?: {
+    label: string
+    tone?: DocumentChecklistStatusTone
+  }
+}
+
+function statusTagSx(tone: DocumentChecklistStatusTone, colors: ReturnType<typeof usePublicBrandColors>) {
+  if (tone === 'original') {
+    return {
+      bgcolor: 'rgba(146, 96, 14, 0.1)',
+      color: '#92600E',
+      border: '1px solid rgba(146, 96, 14, 0.22)',
+    }
+  }
+  if (tone === 'completed') {
+    return {
+      bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
+      color: retailFlowColors.green,
+      border: '1px solid transparent',
+    }
+  }
+  return {
+    bgcolor: colors.surfaceAlt,
+    color: colors.textSecondary,
+    border: `1px solid ${colors.border}`,
+  }
 }
 
 export function DocumentChecklistRow({
   icon: Icon,
   name,
   description,
-  completed,
+  completed = false,
   optional = false,
   onInfoClick,
   onFileSelect,
+  statusTag,
 }: DocumentChecklistRowProps) {
   const colors = usePublicBrandColors()
+  const tagTone = statusTag?.tone ?? 'neutral'
+  const isStatic = completed || Boolean(statusTag)
 
   return (
     <Stack
@@ -34,24 +72,24 @@ export function DocumentChecklistRow({
         px: 1.25,
         py: 1.35,
         borderRadius: retailFlowLayout.controlRadius,
-        '&:hover': { bgcolor: colors.surfaceAlt },
+        ...(isStatic ? null : { '&:hover': { bgcolor: colors.surfaceAlt } }),
       }}
     >
       <Box
+        aria-hidden
         sx={{
-          width: 34,
-          height: 34,
-          borderRadius: '50%',
-          border: `1px solid ${colors.border}`,
-          color: colors.textSecondary,
+          width: 28,
+          height: 28,
+          flexShrink: 0,
+          borderRadius: BUTTON.borderRadius,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          flexShrink: 0,
-          bgcolor: colors.white,
+          bgcolor: alpha(colors.textSecondary, completed ? 0.14 : 0.1),
+          color: colors.textSecondary,
         }}
       >
-        <Icon size={15} strokeWidth={1.75} />
+        <Icon size={14} strokeWidth={completed ? 2.25 : 1.75} />
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -87,7 +125,23 @@ export function DocumentChecklistRow({
         ) : null}
       </Box>
 
-      {completed ? (
+      {statusTag ? (
+        <Box
+          sx={{
+            flexShrink: 0,
+            px: 1.1,
+            py: 0.4,
+            borderRadius: 999,
+            fontSize: 10.5,
+            fontWeight: 700,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            ...statusTagSx(tagTone, colors),
+          }}
+        >
+          {statusTag.label}
+        </Box>
+      ) : completed ? (
         <Box
           sx={{
             flexShrink: 0,
@@ -116,7 +170,7 @@ export function DocumentChecklistRow({
             borderRadius: '8px',
             px: 1.35,
             py: 0.65,
-            cursor: 'pointer',
+            cursor: onFileSelect ? 'pointer' : 'default',
             display: 'flex',
             alignItems: 'center',
             gap: 0.5,
@@ -124,15 +178,17 @@ export function DocumentChecklistRow({
           }}
         >
           <Upload size={12} /> Upload
-          <input
-            type="file"
-            accept="image/*,.pdf"
-            hidden
-            onChange={(event) => {
-              const file = event.target.files?.[0]
-              if (file) onFileSelect(file)
-            }}
-          />
+          {onFileSelect ? (
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              hidden
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                if (file) onFileSelect(file)
+              }}
+            />
+          ) : null}
         </Box>
       )}
     </Stack>

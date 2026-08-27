@@ -1,4 +1,4 @@
-import { Box, Typography, Grid, Chip, Card, Stack, Button } from '@mui/material'
+import { Box, Typography, Grid, Button } from '@mui/material'
 import { useLocation, useParams } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
@@ -18,13 +18,12 @@ import { CountryTrustBadgeStrip } from '../../components/CountryTrustBadgeStrip'
 import { hasCountryTrustProfile } from '../../config/countryTrustBadges'
 import { publicFonts, usePublicBrandColors, getMarketingPrimaryButtonSx } from '@/shared/theme/publicBrand'
 import { BORDER_RADIUS } from '@/design-system/tokens'
-import { Clock, MapPin } from 'lucide-react'
 
 const timelineSteps = [
-  { step: 1, title: 'Submit', desc: 'Documents reviewed in 4h', icon: '📄' },
-  { step: 2, title: 'Appointment', desc: 'VFS biometrics booked', icon: '📅' },
-  { step: 3, title: 'Embassy', desc: 'Decision in 10–14 days', icon: '🏛' },
-  { step: 4, title: 'Collection', desc: 'Courier or pickup', icon: '✈️' },
+  { step: 1, title: 'Submit', desc: 'Documents reviewed in 4h' },
+  { step: 2, title: 'Appointment', desc: 'VFS biometrics booked' },
+  { step: 3, title: 'Embassy', desc: 'Decision in 10–14 days' },
+  { step: 4, title: 'Collection', desc: 'Courier or pickup' },
 ]
 
 const visaCategoryOptions = [
@@ -143,6 +142,9 @@ export function CountryDetailPage() {
     return <ComingSoonPage title="Country not found" returnLink={{ text: 'Browse destinations', href: '/countries' }} />
   }
 
+  const heroSrc = getCountryHeroImageUrl(country, 1400)
+  const showHeroFallback = heroImgError || !heroSrc
+
   return (
     <Box>
       <Box
@@ -155,9 +157,10 @@ export function CountryDetailPage() {
           mx: { xs: 2, sm: 3, md: 4, lg: 5 },
           mt: { xs: 2, sm: 3, md: 4 },
           borderRadius: BORDER_RADIUS.xl,
+          boxShadow: '0 1px 2px rgba(15,27,43,0.04), 0 8px 24px -4px rgba(15,27,43,0.10)',
         }}
       >
-        {heroImgError ? (
+        {showHeroFallback ? (
           <Box
             sx={{
               position: 'absolute',
@@ -173,7 +176,7 @@ export function CountryDetailPage() {
         ) : (
           <Box
             component="img"
-            src={getCountryHeroImageUrl(country, 1400)}
+            src={heroSrc}
             alt=""
             onError={() => setHeroImgError(true)}
             sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
@@ -195,16 +198,24 @@ export function CountryDetailPage() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 0.75,
-                    backgroundColor: 'rgba(251,191,36,0.15)',
-                    border: '1px solid rgba(251,191,36,0.3)',
+                    backgroundColor: 'rgba(79, 180, 194, 0.16)',
+                    border: '1px solid rgba(79, 180, 194, 0.38)',
                     borderRadius: '6px',
                     px: 1.5,
                     py: 0.5,
                     mb: 2,
                   }}
                 >
-                  <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#FCD34D' }}>
-                    🔥 Trending · +18% this month
+                  <Typography
+                    sx={{
+                      fontFamily: publicFonts.mono,
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                      color: '#7ED0DB',
+                    }}
+                  >
+                    Trending · +{master.trendingPercent ?? 18}% this month
                   </Typography>
                 </Box>
               )}
@@ -212,14 +223,26 @@ export function CountryDetailPage() {
               {/* Title */}
               <Box sx={{ mb: 2.5 }}>
                 <Typography
+                  sx={{
+                    fontFamily: publicFonts.mono,
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '0.18em',
+                    color: 'rgba(255,255,255,0.55)',
+                    mb: 1,
+                  }}
+                >
+                  {country.code} · VISA APPLICATION
+                </Typography>
+                <Typography
                   component="h1"
                   sx={{
                     fontWeight: 800,
                     color: '#fff',
-                    fontSize: { xs: '28px', md: '40px' },
-                    lineHeight: 1.15,
+                    fontSize: { xs: '32px', md: '46px' },
+                    lineHeight: 1.1,
                     mb: 0.5,
-                    fontFamily: publicFonts.heading,
+                    fontFamily: publicFonts.display,
                   }}
                 >
                   {master.name} Visa for Indians
@@ -242,33 +265,83 @@ export function CountryDetailPage() {
                 </Box>
               ) : null}
 
-              {/* Visa facts from country master + selected retail type */}
-              <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap', mb: 3.5, justifyContent: 'center' }}>
-                {heroStats.map(({ label, value }) => (
-                  <Box key={label} sx={{ textAlign: 'center' }}>
-                    <Typography sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, mb: 0.25 }}>
-                      {label}
-                    </Typography>
-                    <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>{value}</Typography>
-                  </Box>
-                ))}
-              </Box>
-
-              <Button
-                variant="contained"
-                size="large"
-                href={applyHref}
+              {/* Visa facts + CTA — guaranteed vertical stack, never inline-wrapped */}
+              <Box
                 sx={{
-                  ...getMarketingPrimaryButtonSx(colors),
-                  px: { xs: 5, md: 6 },
-                  py: 1.5,
-                  minWidth: { xs: 220, md: 260 },
-                  fontSize: '15px',
-                  fontWeight: 700,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: { xs: 2.5, md: 3 },
                 }}
               >
-                Start Application
-              </Button>
+                {/* Departure-board readout */}
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'stretch',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                    gap: 0,
+                    border: '1px solid rgba(255,255,255,0.18)',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    bgcolor: 'rgba(255,255,255,0.04)',
+                  }}
+                >
+                  {heroStats.map(({ label, value }, index) => (
+                    <Box
+                      key={label}
+                      sx={{
+                        textAlign: 'center',
+                        px: { xs: 2, md: 3 },
+                        py: 1.25,
+                        borderLeft: index > 0 ? '1px solid rgba(255,255,255,0.14)' : 'none',
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontFamily: publicFonts.mono,
+                          color: 'rgba(255,255,255,0.5)',
+                          fontSize: '9px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.1em',
+                          fontWeight: 700,
+                          mb: 0.5,
+                        }}
+                      >
+                        {label}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontFamily: publicFonts.mono,
+                          fontVariantNumeric: 'tabular-nums',
+                          color: '#7ED0DB',
+                          fontWeight: 700,
+                          fontSize: '15px',
+                        }}
+                      >
+                        {value}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+
+                <Button
+                  variant="contained"
+                  size="large"
+                  href={applyHref}
+                  sx={{
+                    ...getMarketingPrimaryButtonSx(colors),
+                    px: { xs: 5, md: 6 },
+                    py: 1.5,
+                    minWidth: { xs: 220, md: 260 },
+                    fontSize: '15px',
+                    fontWeight: 700,
+                  }}
+                >
+                  Start Application
+                </Button>
+              </Box>
           </Box>
         </PublicContainer>
       </Box>
@@ -277,49 +350,14 @@ export function CountryDetailPage() {
         <Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 3 }}>
           <PricingCard
             country={country}
-            selectedVisaCategoryLabel={selectedVisaCategoryLabel}
+            visaCategoryOptions={visaCategoryOptions}
+            selectedVisaCategory={selectedVisaCategory}
+            onVisaCategoryChange={setSelectedVisaCategory}
             applyHref={applyHref}
           />
         </Box>
         <Grid container spacing={4}>
             <Grid size={{ xs: 12, lg: 8 }}>
-        <Box
-          sx={{
-            mb: 3,
-            p: { xs: 2, md: 2.5 },
-            borderRadius: '16px',
-            bgcolor: colors.white,
-            border: `1px solid ${colors.border}`,
-          }}
-        >
-          <Typography sx={{ fontSize: '12px', fontWeight: 700, color: colors.textMuted, mb: 1.5 }}>
-            SELECTED VISA CATEGORY
-          </Typography>
-          <Stack direction="row" flexWrap="wrap" gap={1} useFlexGap>
-            {visaCategoryOptions.map(option => {
-              const selected = option.value === selectedVisaCategory
-              return (
-                <Chip
-                  key={option.value}
-                  label={option.label}
-                  clickable
-                  onClick={() => setSelectedVisaCategory(option.value)}
-                  sx={{
-                    height: 32,
-                    fontWeight: selected ? 800 : 600,
-                    bgcolor: selected ? colors.greenBright : colors.surfaceAlt,
-                    color: selected ? colors.white : colors.navy,
-                    border: `1px solid ${selected ? colors.greenBright : colors.border}`,
-                    '&:hover': {
-                      bgcolor: selected ? colors.greenDark : colors.greenMuted,
-                    },
-                  }}
-                />
-              )
-            })}
-          </Stack>
-        </Box>
-
         <TabsNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         <Box sx={{ mt: 3 }}>
@@ -332,7 +370,7 @@ export function CountryDetailPage() {
 
           {activeTab === 1 && (
             <Box>
-              <Typography sx={{ fontWeight: 700, fontSize: '18px', color: '#001F3F', mb: 3 }}>
+              <Typography sx={{ fontWeight: 700, fontSize: '18px', color: colors.navy, mb: 3, fontFamily: publicFonts.heading }}>
                 How your application moves
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 0 }}>
@@ -344,11 +382,12 @@ export function CountryDetailPage() {
                           width: 44,
                           height: 44,
                           borderRadius: '50%',
-                          backgroundColor: '#001F3F',
-                          color: '#fff',
+                          backgroundColor: colors.navy,
+                          color: colors.white,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          fontFamily: publicFonts.mono,
                           fontWeight: 800,
                           fontSize: '16px',
                           flexShrink: 0,
@@ -357,12 +396,12 @@ export function CountryDetailPage() {
                         {step.step}
                       </Box>
                       {i < timelineSteps.length - 1 && (
-                        <Box sx={{ flex: 1, height: { xs: '100%', md: 2 }, width: { xs: 2, md: '100%' }, backgroundColor: '#E5E7EB', display: { xs: 'none', md: 'block' } }} />
+                        <Box sx={{ flex: 1, height: { xs: '100%', md: 2 }, width: { xs: 2, md: '100%' }, backgroundColor: colors.border, display: { xs: 'none', md: 'block' } }} />
                       )}
                     </Box>
                     <Box sx={{ textAlign: { md: 'center' }, px: { md: 1 } }}>
-                      <Typography sx={{ fontWeight: 700, color: '#001F3F', fontSize: '14px' }}>{step.title}</Typography>
-                      <Typography sx={{ color: '#6B7280', fontSize: '12.5px', mt: 0.25 }}>{step.desc}</Typography>
+                      <Typography sx={{ fontWeight: 700, color: colors.navy, fontSize: '14px' }}>{step.title}</Typography>
+                      <Typography sx={{ color: colors.textSecondary, fontSize: '12.5px', mt: 0.25 }}>{step.desc}</Typography>
                     </Box>
                   </Box>
                 ))}
@@ -371,71 +410,17 @@ export function CountryDetailPage() {
           )}
 
           {activeTab === 2 && (
-            <Typography sx={{ color: '#6B7280' }}>
-              Review the fee estimate card for Embassy Fee, GreenLight Fee and indicative total.
-            </Typography>
+            <Typography sx={{ color: colors.textSecondary }}>FAQs coming soon.</Typography>
           )}
-          {activeTab === 3 && (
-            <Typography sx={{ color: '#6B7280' }}>FAQs coming soon.</Typography>
-          )}
-        </Box>
-
-        {/* Embassy Info */}
-        <Box sx={{ mt: 6 }}>
-          <Typography sx={{ fontWeight: 800, fontSize: '20px', color: '#001F3F', mb: 3 }}>
-            Embassy &amp; VFS Center
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Card sx={{ p: 3, border: '1px solid #F3F4F6', boxShadow: 'none', borderRadius: '12px' }}>
-                <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.6px', mb: 2 }}>
-                  EMBASSY
-                </Typography>
-                <Typography sx={{ fontWeight: 700, color: '#001F3F', fontSize: '15px', mb: 1 }}>
-                  Consulate of {country.name}, Mumbai
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
-                  <MapPin size={13} color="#9CA3AF" style={{ marginTop: 2, flexShrink: 0 }} />
-                  <Typography sx={{ fontSize: '13px', color: '#6B7280' }}>
-                    Wankhede House, 1st Floor, D Road, Mumbai 400020
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Clock size={13} color="#9CA3AF" />
-                  <Typography sx={{ fontSize: '13px', color: '#6B7280' }}>Open · Mon–Fri 8:30–12:00</Typography>
-                </Box>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Card sx={{ p: 3, border: '1px solid #F3F4F6', boxShadow: 'none', borderRadius: '12px' }}>
-                <Typography sx={{ fontSize: '10px', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.6px', mb: 2 }}>
-                  VFS CENTER
-                </Typography>
-                <Typography sx={{ fontWeight: 700, color: '#001F3F', fontSize: '15px', mb: 1 }}>
-                  VFS Global · Trade Centre, BKC
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
-                  <MapPin size={13} color="#9CA3AF" style={{ marginTop: 2, flexShrink: 0 }} />
-                  <Typography sx={{ fontSize: '13px', color: '#6B7280' }}>
-                    Biometrics required · slots open daily 9am
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Clock size={13} color="#9CA3AF" />
-                  <Typography sx={{ fontSize: '13px', color: '#6B7280', fontWeight: 600 }}>
-                    Appointment timing confirmed during application review
-                  </Typography>
-                </Box>
-              </Card>
-            </Grid>
-          </Grid>
         </Box>
           </Grid>
           <Grid size={{ xs: 12, lg: 4 }} sx={{ display: { xs: 'none', lg: 'block' } }}>
             <Box sx={{ position: 'sticky', top: 96 }}>
               <PricingCard
                 country={country}
-                selectedVisaCategoryLabel={selectedVisaCategoryLabel}
+                visaCategoryOptions={visaCategoryOptions}
+                selectedVisaCategory={selectedVisaCategory}
+                onVisaCategoryChange={setSelectedVisaCategory}
                 applyHref={applyHref}
               />
             </Box>

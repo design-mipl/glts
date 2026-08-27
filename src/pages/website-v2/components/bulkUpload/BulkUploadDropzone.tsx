@@ -1,96 +1,99 @@
-import { useCallback, useRef, useState } from 'react'
-import { Box, Typography } from '@mui/material'
-import { FolderUp } from 'lucide-react'
+import { useCallback, useImperativeHandle, useRef, type Ref } from 'react'
+import { Box, Stack, Typography } from '@mui/material'
+import { FolderArchive } from 'lucide-react'
+import { FileUpload } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { getRingBorderSx, statusVisualRadius } from '@/pages/website-v2/theme/statusVisualTokens'
+import { getElevatedCardSx } from '@/pages/website-v2/theme/retailFlowTokens'
+
+export interface BulkUploadDropzoneHandle {
+  /** Opens the native file picker (used by TravellerUploadStatusRow re-upload). */
+  open: () => void
+}
 
 export interface BulkUploadDropzoneProps {
   onFilesSelected: (files: File[]) => void
   accept?: string
   title?: string
-  caption?: string
   disabled?: boolean
+  /** Optional imperative handle so parent rows can trigger “Browse” for re-upload. */
+  openFilePickerRef?: Ref<BulkUploadDropzoneHandle | null>
 }
 
-const DEFAULT_ACCEPT = '.zip,image/jpeg,image/png,application/pdf'
+const DEFAULT_ACCEPT = '.zip,image/*,.pdf'
 
-/** Dashed green dropzone for uploading a whole passport folder or ZIP at once. */
+function fileKey(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`
+}
+
+/** Passport bulk upload — same FileUpload card as the customer application flow. */
 export function BulkUploadDropzone({
   onFilesSelected,
   accept = DEFAULT_ACCEPT,
-  title = 'Upload passport folder or ZIP',
-  caption = 'Drag & drop, or browse — .zip, JPG, PNG, PDF',
+  title = 'Upload folder or ZIP',
   disabled = false,
+  openFilePickerRef,
 }: BulkUploadDropzoneProps) {
   const colors = usePublicBrandColors()
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [dragOver, setDragOver] = useState(false)
+  const reuploadInputRef = useRef<HTMLInputElement>(null)
+  const knownKeysRef = useRef<Set<string>>(new Set())
 
-  const handleFiles = useCallback(
+  useImperativeHandle(openFilePickerRef, () => ({
+    open: () => reuploadInputRef.current?.click(),
+  }))
+
+  const handleUpload = useCallback(
     (files: File[]) => {
-      if (!files.length) return
-      onFilesSelected(files)
+      const added = files.filter((file) => {
+        const key = fileKey(file)
+        if (knownKeysRef.current.has(key)) return false
+        knownKeysRef.current.add(key)
+        return true
+      })
+      if (added.length) onFilesSelected(added)
     },
     [onFilesSelected],
   )
 
   return (
     <Box
-      onDragOver={(event) => {
-        event.preventDefault()
-        if (!disabled) setDragOver(true)
-      }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={(event) => {
-        event.preventDefault()
-        setDragOver(false)
-        if (disabled) return
-        handleFiles(Array.from(event.dataTransfer.files))
-      }}
-      onClick={() => !disabled && inputRef.current?.click()}
       sx={{
-        ...getRingBorderSx(colors.greenDark, dragOver, colors.border),
-        borderWidth: '1.5px',
-        borderStyle: dragOver ? 'solid' : 'dashed',
-        borderRadius: statusVisualRadius.card,
+        ...getElevatedCardSx(colors.border),
+        p: 1.5,
+        borderRadius: '12px',
         bgcolor: colors.white,
-        px: 3,
-        py: 5,
-        textAlign: 'center',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.6 : 1,
       }}
     >
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+        <FolderArchive size={16} color={colors.greenBright} />
+        <Typography sx={{ fontWeight: 700, fontSize: 14, color: colors.navy }}>{title}</Typography>
+      </Stack>
+
+      <FileUpload
+        onUpload={handleUpload}
+        accept={accept}
+        multiple
+        disabled={disabled}
+        dropzoneTitle="Upload — choose files or drag & drop here"
+        dropzoneCaption=".zip, images (JPG, PNG), PDF · one file per traveler"
+        browseLabel="Browse files"
+        sx={{
+          // FileUpload defaults to py: 6, which is too tall for this 260px sidebar card.
+          '& > div': { py: 1.5, px: 1.5 },
+        }}
+      />
+
       <input
-        ref={inputRef}
+        ref={reuploadInputRef}
         type="file"
         accept={accept}
         multiple
         hidden
         disabled={disabled}
         onChange={(event) => {
-          if (event.target.files) handleFiles(Array.from(event.target.files))
+          if (event.target.files) onFilesSelected(Array.from(event.target.files))
           event.target.value = ''
         }}
       />
-      <Box
-        sx={{
-          width: 48,
-          height: 48,
-          borderRadius: statusVisualRadius.full,
-          bgcolor: colors.greenMuted,
-          color: colors.greenDark,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mx: 'auto',
-          mb: 1.5,
-        }}
-      >
-        <FolderUp size={22} strokeWidth={1.75} />
-      </Box>
-      <Typography sx={{ fontSize: 15, fontWeight: 700, color: colors.navy, mb: 0.5 }}>{title}</Typography>
-      <Typography sx={{ fontSize: 12.5, color: colors.textMuted }}>{caption}</Typography>
     </Box>
   )
 }

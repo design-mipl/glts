@@ -8,12 +8,14 @@ import {
   usePublicBrandColors,
 } from '@/shared/theme/publicBrand'
 import { overlayFooterButtonSx } from '@/design-system/UIComponents/Feedback/overlayHeaderTypography'
+import { getPressableSx } from '@/pages/website-v2/theme/retailFlowTokens'
 
 interface StepShellProps {
   title: string
   /** Shorter headline swapped in below the `md` breakpoint (428px) — use when `title` wraps awkwardly on small phones. */
   mobileTitle?: string
-  helperText?: string
+  /** Helper under the title — string or rich node (e.g. accented date). */
+  helperText?: ReactNode
   children: ReactNode
   onBack?: () => void
   onContinue?: () => void
@@ -24,11 +26,15 @@ interface StepShellProps {
   titleAccessory?: ReactNode
   /** Max width for title + body (footer stays full card width). */
   contentMaxWidth?: number
+  /** Floor for the scrollable body so short steps still fill the card. */
+  contentMinHeight?: number | string | Record<string, number | string>
   /** Optional action rendered left of Continue (e.g. Add travelers). */
   footerEndAction?: ReactNode
+  /** Trust / policy microcopy under the footer actions. */
+  footerCaption?: ReactNode
 }
 
-/** Retail step content chrome — centered body, actions pinned to card bottom. */
+/** Retail step content chrome — title top, body scrolls, actions pinned bottom. */
 export function StepShell({
   title,
   mobileTitle,
@@ -42,7 +48,9 @@ export function StepShell({
   hideContinue = false,
   titleAccessory,
   contentMaxWidth = 720,
+  contentMinHeight,
   footerEndAction,
+  footerCaption,
 }: StepShellProps) {
   const colors = usePublicBrandColors()
 
@@ -51,7 +59,8 @@ export function StepShell({
       sx={{
         width: '100%',
         flex: 1,
-        minHeight: { xs: 'auto', md: 0 },
+        minHeight: 0,
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
@@ -84,9 +93,9 @@ export function StepShell({
               <Typography
                 sx={{
                   display: { xs: 'block', md: 'none' },
-                  fontWeight: 900,
+                  fontWeight: 800,
                   letterSpacing: '-0.02em',
-                  fontSize: 26,
+                  fontSize: 20,
                   color: colors.navy,
                   m: 0,
                 }}
@@ -96,9 +105,9 @@ export function StepShell({
               <Typography
                 sx={{
                   display: { xs: 'none', md: 'block' },
-                  fontWeight: 900,
+                  fontWeight: 800,
                   letterSpacing: '-0.02em',
-                  fontSize: 32,
+                  fontSize: 22,
                   color: colors.navy,
                   m: 0,
                 }}
@@ -109,9 +118,9 @@ export function StepShell({
           ) : (
             <Typography
               sx={{
-                fontWeight: 900,
+                fontWeight: 800,
                 letterSpacing: '-0.02em',
-                fontSize: { xs: 26, md: 32 },
+                fontSize: { xs: 20, md: 22 },
                 color: colors.navy,
                 m: 0,
               }}
@@ -122,7 +131,10 @@ export function StepShell({
           {titleAccessory}
         </Box>
         {helperText ? (
-          <Typography sx={{ fontSize: 14, color: colors.textSecondary, mb: 3, lineHeight: 1.5 }}>
+          <Typography
+            component="div"
+            sx={{ fontSize: 13, color: colors.textSecondary, mb: 2.5, lineHeight: 1.5 }}
+          >
             {helperText}
           </Typography>
         ) : null}
@@ -137,55 +149,76 @@ export function StepShell({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'stretch',
+          justifyContent: 'flex-start',
           textAlign: 'left',
           minHeight: 0,
-          pt: 2.0,
+          pt: 0.5,
+          overflowX: 'hidden',
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {children}
       </Box>
 
       {!hideContinue && onContinue ? (
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          flexWrap="nowrap"
-          gap={1.5}
+        <Box
           sx={{
             flex: '0 0 auto',
             width: '100%',
             mt: 'auto',
-            pt: 2.5,
+            pt: 2,
             borderTop: `1px solid ${colors.border}`,
             bgcolor: colors.white,
-            textAlign: 'left',
+            zIndex: 2,
           }}
         >
-          {onBack ? (
-            <Button
-              variant="outlined"
-              onClick={onBack}
-              sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx)}
-            >
-              {backLabel}
-            </Button>
-          ) : (
-            <Box />
-          )}
-          <Stack direction="row" alignItems="center" gap={1.5} flexWrap="wrap">
-            {footerEndAction}
-            <Button
-              variant="contained"
-              endIcon={<ArrowRight size={16} />}
-              onClick={onContinue}
-              disabled={continueDisabled}
-              sx={mergeButtonSx(getPrimaryButtonSx(colors), overlayFooterButtonSx)}
-            >
-              {continueLabel}
-            </Button>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            flexWrap="nowrap"
+            gap={1.5}
+            sx={{ width: '100%', textAlign: 'left' }}
+          >
+            {onBack ? (
+              <Button
+                variant="outlined"
+                onClick={onBack}
+                sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx, getPressableSx())}
+              >
+                {backLabel}
+              </Button>
+            ) : (
+              <Box />
+            )}
+            <Stack direction="row" alignItems="center" gap={1.5} flexWrap="wrap">
+              {footerEndAction}
+              <Button
+                variant="contained"
+                endIcon={<ArrowRight size={16} />}
+                onClick={onContinue}
+                disabled={continueDisabled}
+                sx={mergeButtonSx(getPrimaryButtonSx(colors), overlayFooterButtonSx, getPressableSx())}
+              >
+                {continueLabel}
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
+          {footerCaption ? (
+            <Typography
+              sx={{
+                mt: 1.25,
+                fontSize: 12,
+                color: colors.textMuted,
+                textAlign: 'center',
+                lineHeight: 1.45,
+              }}
+            >
+              {footerCaption}
+            </Typography>
+          ) : null}
+        </Box>
       ) : null}
     </Box>
   )

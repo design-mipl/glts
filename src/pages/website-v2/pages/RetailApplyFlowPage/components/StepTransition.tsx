@@ -10,17 +10,21 @@ interface StepTransitionProps {
 
 const SLIDE_PX = 28
 
-/** Directional slide + fade when moving between apply steps. */
+/**
+ * Directional slide + fade between apply steps.
+ * Fills the card so StepShell can pin Back/Continue to the bottom;
+ * overflow lives inside each step body, not this chrome.
+ */
 export function StepTransition({ stepKey, direction, children }: StepTransitionProps) {
   return (
     <Box
       sx={{
-        flex: 1,
+        flex: '1 1 auto',
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
         minHeight: 0,
-        height: '100%',
+        maxHeight: '100%',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -49,17 +53,12 @@ export function StepTransition({ stepKey, direction, children }: StepTransitionP
           }}
           transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
           sx={{
-            flex: 1,
             display: 'flex',
             flexDirection: 'column',
             width: '100%',
+            flex: '1 1 auto',
             minHeight: 0,
             height: '100%',
-            '& > *': {
-              flex: 1,
-              minHeight: 0,
-              width: '100%',
-            },
           }}
         >
           {children}
