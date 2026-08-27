@@ -8,6 +8,7 @@ import {
   usePublicBrandColors,
 } from '@/shared/theme/publicBrand'
 import { overlayFooterButtonSx } from '@/design-system/UIComponents/Feedback/overlayHeaderTypography'
+import { getPressableSx } from '@/pages/website-v2/theme/retailFlowTokens'
 
 interface StepShellProps {
   title: string
@@ -54,8 +55,8 @@ export function StepShell({
     <Box
       sx={{
         width: '100%',
-        flex: 1,
-        minHeight: { xs: 'auto', md: 0 },
+        flex: '1 0 auto',
+        minHeight: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
@@ -145,7 +146,7 @@ export function StepShell({
           flexDirection: 'column',
           alignItems: 'stretch',
           textAlign: 'left',
-          minHeight: 0,
+          minHeight: 'auto',
           pt: 2.0,
         }}
       >
@@ -178,7 +179,7 @@ export function StepShell({
               <Button
                 variant="outlined"
                 onClick={onBack}
-                sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx)}
+                sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx, getPressableSx())}
               >
                 {backLabel}
               </Button>
@@ -192,7 +193,7 @@ export function StepShell({
                 endIcon={<ArrowRight size={16} />}
                 onClick={onContinue}
                 disabled={continueDisabled}
-                sx={mergeButtonSx(getPrimaryButtonSx(colors), overlayFooterButtonSx)}
+                sx={mergeButtonSx(getPrimaryButtonSx(colors), overlayFooterButtonSx, getPressableSx())}
               >
                 {continueLabel}
               </Button>

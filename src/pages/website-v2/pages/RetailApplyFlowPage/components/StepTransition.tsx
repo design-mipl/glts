@@ -10,7 +10,11 @@ interface StepTransitionProps {
 
 const SLIDE_PX = 28
 
-/** Directional slide + fade when moving between apply steps. */
+/**
+ * Directional slide + fade between apply steps.
+ * This box is the scroll container so tall steps (checklist, review, payment)
+ * remain fully reachable inside the viewport-locked apply shell.
+ */
 export function StepTransition({ stepKey, direction, children }: StepTransitionProps) {
   return (
     <Box
@@ -20,9 +24,10 @@ export function StepTransition({ stepKey, direction, children }: StepTransitionP
         flexDirection: 'column',
         width: '100%',
         minHeight: 0,
-        height: '100%',
         position: 'relative',
-        overflow: 'hidden',
+        overflowX: 'hidden',
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
       }}
     >
       <AnimatePresence mode="wait" initial={false} custom={direction}>
@@ -49,16 +54,15 @@ export function StepTransition({ stepKey, direction, children }: StepTransitionP
           }}
           transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
           sx={{
-            flex: 1,
             display: 'flex',
             flexDirection: 'column',
             width: '100%',
-            minHeight: 0,
-            height: '100%',
+            flex: '1 0 auto',
+            minHeight: '100%',
             '& > *': {
-              flex: 1,
-              minHeight: 0,
+              flex: '1 0 auto',
               width: '100%',
+              minHeight: '100%',
             },
           }}
         >

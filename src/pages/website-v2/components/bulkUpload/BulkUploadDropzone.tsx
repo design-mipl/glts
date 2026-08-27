@@ -1,12 +1,9 @@
-import { useCallback, useImperativeHandle, useRef, useState, type Ref } from 'react'
-import { Box, Typography } from '@mui/material'
-import { Cloud, FolderUp } from 'lucide-react'
+import { useCallback, useImperativeHandle, useRef, type Ref } from 'react'
+import { Box, Stack, Typography } from '@mui/material'
+import { FolderArchive } from 'lucide-react'
+import { FileUpload } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import {
-  getRingBorderSx,
-  statusElevatedCardShadow,
-  statusVisualRadius,
-} from '@/pages/website-v2/theme/statusVisualTokens'
+import { getElevatedCardSx } from '@/pages/website-v2/theme/retailFlowTokens'
 
 export interface BulkUploadDropzoneHandle {
   /** Opens the native file picker (used by TravellerUploadStatusRow re-upload). */
@@ -17,171 +14,86 @@ export interface BulkUploadDropzoneProps {
   onFilesSelected: (files: File[]) => void
   accept?: string
   title?: string
-  caption?: string
   disabled?: boolean
   /** Optional imperative handle so parent rows can trigger “Browse” for re-upload. */
   openFilePickerRef?: Ref<BulkUploadDropzoneHandle | null>
 }
 
-const DEFAULT_ACCEPT = '.zip,image/jpeg,image/png,application/pdf'
+const DEFAULT_ACCEPT = '.zip,image/*,.pdf'
 
-/** Dashed green dropzone for uploading a whole passport folder or ZIP at once. */
+function fileKey(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`
+}
+
+/** Passport bulk upload — same FileUpload card as the customer application flow. */
 export function BulkUploadDropzone({
   onFilesSelected,
   accept = DEFAULT_ACCEPT,
-  title = 'Upload a passport folder or ZIP',
-  caption = "Anything we can't auto-identify goes into a tray for you to sort in a tap. ZIP, JPG, PNG, or PDF.",
+  title = 'Upload folder or ZIP',
   disabled = false,
   openFilePickerRef,
 }: BulkUploadDropzoneProps) {
   const colors = usePublicBrandColors()
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [dragOver, setDragOver] = useState(false)
+  const reuploadInputRef = useRef<HTMLInputElement>(null)
+  const knownKeysRef = useRef<Set<string>>(new Set())
 
   useImperativeHandle(openFilePickerRef, () => ({
-    open: () => inputRef.current?.click(),
+    open: () => reuploadInputRef.current?.click(),
   }))
 
-  const handleFiles = useCallback(
+  const handleUpload = useCallback(
     (files: File[]) => {
-      if (!files.length) return
-      onFilesSelected(files)
+      const added = files.filter((file) => {
+        const key = fileKey(file)
+        if (knownKeysRef.current.has(key)) return false
+        knownKeysRef.current.add(key)
+        return true
+      })
+      if (added.length) onFilesSelected(added)
     },
     [onFilesSelected],
   )
 
-  function openFilePicker() {
-    if (!disabled) inputRef.current?.click()
-  }
-
   return (
     <Box
-      onDragOver={(event) => {
-        event.preventDefault()
-        if (!disabled) setDragOver(true)
-      }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={(event) => {
-        event.preventDefault()
-        setDragOver(false)
-        if (disabled) return
-        handleFiles(Array.from(event.dataTransfer.files))
-      }}
-      onClick={openFilePicker}
       sx={{
-        ...getRingBorderSx(colors.greenDark, dragOver, colors.border),
-        borderWidth: '1.5px',
-        borderStyle: dragOver ? 'solid' : 'dashed',
-        borderRadius: statusVisualRadius.card,
+        ...getElevatedCardSx(colors.border),
+        p: 1.5,
+        borderRadius: '12px',
         bgcolor: colors.white,
-        boxShadow: dragOver
-          ? `0 0 0 3px ${colors.greenDark}26, ${statusElevatedCardShadow}`
-          : statusElevatedCardShadow,
-        px: 3,
-        py: 5,
-        textAlign: 'center',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.6 : 1,
       }}
     >
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+        <FolderArchive size={16} color={colors.greenBright} />
+        <Typography sx={{ fontWeight: 700, fontSize: 14, color: colors.navy }}>{title}</Typography>
+      </Stack>
+
+      <FileUpload
+        onUpload={handleUpload}
+        accept={accept}
+        multiple
+        disabled={disabled}
+        dropzoneTitle="Upload — choose files or drag & drop here"
+        dropzoneCaption=".zip, images (JPG, PNG), PDF · one file per traveler"
+        browseLabel="Browse files"
+        sx={{
+          // FileUpload defaults to py: 6, which is too tall for this 260px sidebar card.
+          '& > div': { py: 1.5, px: 1.5 },
+        }}
+      />
+
       <input
-        ref={inputRef}
+        ref={reuploadInputRef}
         type="file"
         accept={accept}
         multiple
         hidden
         disabled={disabled}
         onChange={(event) => {
-          if (event.target.files) handleFiles(Array.from(event.target.files))
+          if (event.target.files) onFilesSelected(Array.from(event.target.files))
           event.target.value = ''
         }}
       />
-      <Box
-        sx={{
-          width: 48,
-          height: 48,
-          borderRadius: statusVisualRadius.full,
-          bgcolor: colors.greenMuted,
-          color: colors.greenDark,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mx: 'auto',
-          mb: 1.5,
-        }}
-      >
-        <FolderUp size={22} strokeWidth={1.75} />
-      </Box>
-      <Typography sx={{ fontSize: 15, fontWeight: 700, color: colors.navy, mb: 0.5 }}>{title}</Typography>
-      <Typography sx={{ fontSize: 12.5, color: colors.textMuted, mb: 2.5, maxWidth: 360, mx: 'auto' }}>
-        {caption}
-      </Typography>
-
-      <Box
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <Box
-          component="button"
-          type="button"
-          disabled={disabled}
-          onClick={(event) => {
-            event.stopPropagation()
-            openFilePicker()
-          }}
-          sx={{
-            appearance: 'none',
-            border: 'none',
-            cursor: disabled ? 'not-allowed' : 'pointer',
-            bgcolor: colors.greenDark,
-            color: '#fff',
-            borderRadius: statusVisualRadius.control,
-            px: 2,
-            py: 1,
-            fontSize: 13,
-            fontWeight: 700,
-            fontFamily: 'inherit',
-            lineHeight: 1.2,
-          }}
-        >
-          Browse files
-        </Box>
-
-        {/* TODO: wire Google Drive / cloud import when available */}
-        <Box
-          component="button"
-          type="button"
-          disabled={disabled}
-          onClick={(event) => {
-            event.stopPropagation()
-          }}
-          sx={{
-            appearance: 'none',
-            border: `1.5px solid ${colors.greenDark}`,
-            cursor: disabled ? 'not-allowed' : 'pointer',
-            bgcolor: colors.greenMuted,
-            color: colors.greenDark,
-            borderRadius: statusVisualRadius.control,
-            px: 2,
-            py: 1,
-            fontSize: 13,
-            fontWeight: 700,
-            fontFamily: 'inherit',
-            lineHeight: 1.2,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 0.75,
-          }}
-        >
-          <Cloud size={15} strokeWidth={2} />
-          Import from Drive
-        </Box>
-      </Box>
     </Box>
   )
 }

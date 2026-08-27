@@ -171,6 +171,11 @@ export const retailFlowCanvasBackground = {
   ].join(', '),
 } as const
 
+/** Strong ease-out for entrances/interactions — starts fast, feels responsive. */
+export const retailFlowEaseOut = 'cubic-bezier(0.23, 1, 0.32, 1)'
+/** Strong ease-in-out for on-screen movement (sliding highlights, morphing). */
+export const retailFlowEaseInOut = 'cubic-bezier(0.77, 0, 0.175, 1)'
+
 export const retailFlowMotion = {
   fade: 'gltsFade 0.28s ease',
   keyframes: {
@@ -180,3 +185,19 @@ export const retailFlowMotion = {
     },
   },
 } as const
+
+/**
+ * Press feedback for any clickable surface (buttons, cards, toggles).
+ * Spread onto an `sx` prop — layers on top of existing styles.
+ */
+export function getPressableSx(scale = 0.97) {
+  return {
+    transition: `transform 160ms ${retailFlowEaseOut}`,
+    '&:active': { transform: `scale(${scale})` },
+  } as const
+}
+
+/** Per-item stagger delay for list/grid entrances — keep short (30-80ms). */
+export function getStaggerDelayMs(index: number, stepMs = 45, maxMs = 320) {
+  return Math.min(index * stepMs, maxMs)
+}

@@ -1,8 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { useMemo, useRef, useState } from 'react'
+import { Box, Stack, Typography, keyframes } from '@mui/material'
 import { Camera, FileText, IdCard, IndianRupee, UserRound } from 'lucide-react'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { getElevatedCardSx, retailFlowLayout } from '@/pages/website-v2/theme/retailFlowTokens'
+import {
+  getElevatedCardSx,
+  getStaggerDelayMs,
+  retailFlowEaseOut,
+  retailFlowLayout,
+} from '@/pages/website-v2/theme/retailFlowTokens'
 import { WhyWeAskSheet } from '@/pages/website-v2/components/WhyWeAskSheet'
 import { resolveDocumentWhyContent, type DocumentWhyContent } from '@/pages/website-v2/config/documentWhyContent'
 import { DocumentChecklistRow } from '@/pages/website-v2/components/documentChecklist/DocumentChecklistRow'
@@ -10,8 +15,6 @@ import {
   BulkUploadDropzone,
   type BulkUploadDropzoneHandle,
 } from '@/pages/website-v2/components/bulkUpload/BulkUploadDropzone'
-import { TravellerUploadStatusRow } from '@/pages/website-v2/components/bulkUpload/TravellerUploadStatusRow'
-import type { TravellerUploadStatusItem } from '@/pages/website-v2/components/bulkUpload/types'
 import { LiveStatusPanel } from '@/pages/website-v2/components/liveStatusPanel/LiveStatusPanel'
 import { displayNameUpper, initialsFromName, profileAnswerTags } from '../../config/travelProfileQuestions'
 import { StepShell } from '../StepShell'
@@ -105,28 +108,16 @@ function travellerProgress(
   }
 }
 
-function pendingBulkItem(applicant: RetailApplicantParty): TravellerUploadStatusItem {
-  return {
-    id: applicant.id,
-    name: applicant.details.fullName.trim() || applicant.label,
-    status: 'pending',
-  }
-}
-
-/** UI-first OCR simulation until backend extraction exists. */
-function mockOcrConfidence(files: File[]): number {
-  const hay = files.map((f) => f.name.toLowerCase()).join(' ')
-  if (/blur|bad|unclear|fail/.test(hay)) return 38
-  if (/zip/.test(hay) && files.length === 1) return 72
-  if (files.length > 3) return 64
-  return 92
-}
-
 function sleep(ms: number) {
   return new Promise<void>((resolve) => {
     window.setTimeout(resolve, ms)
   })
 }
+
+const fadeUp = keyframes`
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+`
 
 /** Two-column checklist body — flex 65/35 (not CSS Grid). */
 export function ChecklistCard({
@@ -151,120 +142,33 @@ export function ChecklistCard({
   const list = namedApplicants.length > 0 ? namedApplicants : applicants
   const [activeApplicantId, setActiveApplicantId] = useState(list[0]?.id ?? '')
   const [whyContent, setWhyContent] = useState<DocumentWhyContent | null>(null)
-  const [bulkStatuses, setBulkStatuses] = useState<Record<string, TravellerUploadStatusItem>>({})
   const dropzoneRef = useRef<BulkUploadDropzoneHandle | null>(null)
-  const reuploadTargetRef = useRef<string | null>(null)
 
   const activeApplicant = list.find((a) => a.id === activeApplicantId) ?? list[0]
 
-  const applicantIdsKey = list.map((a) => a.id).join('|')
-  const applicantNamesKey = list.map((a) => a.details.fullName).join('|')
-
-  useEffect(() => {
-    setBulkStatuses((prev) => {
-      const next = { ...prev }
-      let changed = false
-      for (const applicant of list) {
-        if (!next[applicant.id]) {
-          next[applicant.id] = pendingBulkItem(applicant)
-          changed = true
-        } else {
-          const name = applicant.details.fullName.trim() || applicant.label
-          if (next[applicant.id].name !== name) {
-            next[applicant.id] = { ...next[applicant.id], name }
-            changed = true
-          }
-        }
-      }
-      for (const id of Object.keys(next)) {
-        if (!list.some((a) => a.id === id)) {
-          delete next[id]
-          changed = true
-        }
-      }
-      return changed ? next : prev
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by traveller id/name fingerprints
-  }, [applicantIdsKey, applicantNamesKey])
-
-  function patchBulk(applicantId: string, patch: Partial<TravellerUploadStatusItem>) {
-    setBulkStatuses((prev) => {
-      const existing = prev[applicantId]
-      const fallbackApplicant = list.find((a) => a.id === applicantId)
-      const base =
-        existing ??
-        (fallbackApplicant
-          ? pendingBulkItem(fallbackApplicant)
-          : { id: applicantId, name: 'Traveller', status: 'pending' as const })
-      return {
-        ...prev,
-        [applicantId]: { ...base, ...patch, id: applicantId },
-      }
-    })
-  }
-
   async function runBulkPipeline(applicantId: string, files: File[]) {
     if (!files.length) return
-    const applicant = list.find((a) => a.id === applicantId)
-    const name = applicant?.details.fullName.trim() || applicant?.label || 'Traveller'
-    const fileName = files.length === 1 ? files[0].name : `${files.length} files`
+    await sleep(400)
 
-    patchBulk(applicantId, { name, status: 'uploading', fileName, quality: undefined, attentionReason: undefined })
-    await sleep(650)
-    patchBulk(applicantId, { status: 'processing' })
-    await sleep(900)
-
-    const confidence = mockOcrConfidence(files)
-    if (confidence < 60) {
-      patchBulk(applicantId, {
-        status: 'needs_attention',
-        fileName,
-        quality: { confidence, note: 'Extraction unclear' },
-        attentionReason: 'Photo page is unclear — re-upload a sharper scan',
-      })
-    } else {
-      patchBulk(applicantId, {
-        status: 'uploaded',
-        fileName,
-        quality: {
-          confidence,
-          note: confidence >= 85 ? 'Passport details matched' : 'Review suggested',
-        },
-        attentionReason: undefined,
-      })
-      // Best-effort: mark passport complete for this traveller when bulk OCR “succeeds”.
-      const first = files[0]
-      if (first && !first.name.toLowerCase().endsWith('.zip')) {
-        handleFile('passport', first, applicantId)
-      } else if (first) {
-        onUpload(
-          'passport',
-          { dataUrl: `bulk://${encodeURIComponent(first.name)}`, capturedAt: new Date().toISOString() },
-          applicantId,
-        )
-      }
+    const first = files[0]
+    if (first && !first.name.toLowerCase().endsWith('.zip')) {
+      handleFile('passport', first, applicantId)
+    } else if (first) {
+      onUpload(
+        'passport',
+        { dataUrl: `bulk://${encodeURIComponent(first.name)}`, capturedAt: new Date().toISOString() },
+        applicantId,
+      )
     }
 
     onBulkFilesSelected?.(applicantId, files)
   }
 
   function handleBulkFiles(files: File[]) {
-    const targetId = reuploadTargetRef.current ?? activeApplicant?.id
-    reuploadTargetRef.current = null
+    const targetId = activeApplicant?.id
     if (!targetId) return
     void runBulkPipeline(targetId, files)
   }
-
-  function handleReupload(travellerId: string) {
-    setActiveApplicantId(travellerId)
-    reuploadTargetRef.current = travellerId
-    dropzoneRef.current?.open()
-  }
-
-  const bulkRows = useMemo(
-    () => list.map((applicant) => bulkStatuses[applicant.id] ?? pendingBulkItem(applicant)),
-    [list, bulkStatuses],
-  )
 
   const grouped = useMemo(() => {
     const order: DocCategory[] = ['personal', 'financial', 'other']
@@ -371,7 +275,8 @@ export function ChecklistCard({
                   borderRadius: '10px',
                   bgcolor: active ? colors.navy : colors.surfaceAlt,
                   color: active ? '#fff' : colors.navy,
-                  transition: 'background-color 0.15s ease, color 0.15s ease',
+                  transition: `background-color 150ms ${retailFlowEaseOut}, color 150ms ${retailFlowEaseOut}, transform 160ms ${retailFlowEaseOut}`,
+                  '&:active': { transform: 'scale(0.97)' },
                   font: 'inherit',
                 }}
               >
@@ -451,7 +356,7 @@ export function ChecklistCard({
           >
             <Stack spacing={0} sx={{ flex: 1 }}>
               {activeApplicant
-                ? grouped.map(({ category, docs }) => {
+                ? grouped.map(({ category, docs }, groupIndex) => {
                     const meta = CATEGORY_META[category]
                     const CatIcon = meta.icon
                     return (
@@ -462,6 +367,8 @@ export function ChecklistCard({
                           flexDirection: { xs: 'column', sm: 'row' },
                           borderBottom: `1px solid ${colors.border}`,
                           '&:last-of-type': { borderBottom: 'none' },
+                          animation: `${fadeUp} 0.32s ${retailFlowEaseOut} both`,
+                          animationDelay: `${getStaggerDelayMs(groupIndex)}ms`,
                         }}
                       >
                         <Box
@@ -499,7 +406,6 @@ export function ChecklistCard({
                               key={doc.documentId}
                               icon={docIcon(doc)}
                               name={doc.name}
-                              description={doc.description}
                               completed={isDocComplete(doc, activeApplicant, uploads)}
                               optional={!doc.mandatory}
                               onInfoClick={() =>
@@ -535,31 +441,9 @@ export function ChecklistCard({
           >
             <BulkUploadDropzone
               openFilePickerRef={dropzoneRef}
-              title="Upload passport folder or ZIP"
-              caption="Drag & drop, or browse — .zip, JPG, PNG, PDF. Status updates per traveller below."
+              title="Upload folder or ZIP"
               onFilesSelected={handleBulkFiles}
             />
-
-            <Stack spacing={1}>
-              <Typography
-                sx={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  color: colors.textMuted,
-                }}
-              >
-                Bulk upload status
-              </Typography>
-              {bulkRows.map((item) => (
-                <TravellerUploadStatusRow
-                  key={item.id}
-                  item={item}
-                  onReupload={handleReupload}
-                />
-              ))}
-            </Stack>
 
             <LiveStatusPanel
               headline={{

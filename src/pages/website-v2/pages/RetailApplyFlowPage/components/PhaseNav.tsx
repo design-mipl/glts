@@ -1,8 +1,11 @@
 import { Box } from '@mui/material'
+import { motion } from 'framer-motion'
 import {
+  ClipboardCheck,
   CreditCard,
   FileText,
   HandCoins,
+  MapPin,
   Plane,
   Sparkles,
   UserRound,
@@ -24,11 +27,13 @@ const PHASE_ICON: Record<RetailPhaseId, LucideIcon> = {
   traveller: UserRound,
   sponsor: HandCoins,
   documents: FileText,
+  collection: MapPin,
   extras: Sparkles,
+  review: ClipboardCheck,
   pay: CreditCard,
 }
 
-/** Primary journey chrome — Purpose | Travel profile | Sponsor | Documents | Extras | Payment. */
+/** Primary journey chrome — Purpose → … → Review → Payment. */
 export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseNavProps) {
   const colors = usePublicBrandColors()
 
@@ -40,9 +45,9 @@ export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseN
         display: 'flex',
         alignItems: 'center',
         width: '100%',
-        gap: { xs: 0.35, sm: 0.75 },
-        px: { xs: 0.75, sm: 1.25 },
-        py: { xs: 1, sm: 1.25 },
+        gap: { xs: 0.25, sm: 0.5 },
+        px: { xs: 0.5, sm: 1 },
+        py: { xs: 0.85, sm: 1 },
         border: `1px solid ${colors.border}`,
         borderRadius: BORDER_RADIUS.lg,
         bgcolor: colors.white,
@@ -64,6 +69,7 @@ export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseN
             onClick={() => isUnlocked && onSelectPhase(phase)}
             aria-current={isActive ? 'step' : undefined}
             sx={{
+              position: 'relative',
               flex: 1,
               minWidth: 0,
               appearance: 'none',
@@ -73,19 +79,19 @@ export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseN
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: { xs: 0.35, sm: 0.75 },
-              px: { xs: 0.5, sm: 1.25 },
-              py: 0.85,
-              bgcolor: isActive ? colors.greenBright : 'transparent',
+              gap: { xs: 0.25, sm: 0.5 },
+              px: { xs: 0.35, sm: 0.75 },
+              py: 0.75,
+              bgcolor: 'transparent',
               color: isActive ? colors.onBrandFilled : colors.textSecondary,
               fontFamily: 'inherit',
-              fontSize: { xs: '11px', sm: '13px' },
+              fontSize: { xs: '10px', sm: '12px' },
               fontWeight: isActive ? 700 : 600,
               letterSpacing: '0.01em',
               textAlign: 'center',
               lineHeight: 1.2,
               opacity: isUnlocked || isActive ? 1 : 0.4,
-              transition: 'background-color 0.15s ease, color 0.15s ease',
+              transition: 'color 0.15s ease',
               '&:hover':
                 isUnlocked && !isActive
                   ? { bgcolor: colors.surfaceAlt, color: colors.navy }
@@ -93,10 +99,31 @@ export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseN
               '&:disabled': { cursor: 'default' },
             }}
           >
-            <Icon size={14} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
+            {isActive ? (
+              <Box
+                component={motion.div}
+                layoutId="phase-nav-active-pill"
+                transition={{ type: 'spring', duration: 0.5, bounce: 0.15 }}
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: BORDER_RADIUS.md,
+                  bgcolor: colors.greenBright,
+                  zIndex: 0,
+                }}
+              />
+            ) : null}
+            <Icon
+              size={13}
+              strokeWidth={isActive ? 2.5 : 2}
+              aria-hidden
+              style={{ position: 'relative', zIndex: 1, flexShrink: 0 }}
+            />
             <Box
               component="span"
               sx={{
+                position: 'relative',
+                zIndex: 1,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',

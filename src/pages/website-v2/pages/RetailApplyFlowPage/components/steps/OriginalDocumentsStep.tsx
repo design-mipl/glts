@@ -62,10 +62,7 @@ export function OriginalDocumentsStep({
                 key={doc.documentId}
                 icon={docIcon(doc)}
                 name={doc.name}
-                description={
-                  doc.description ??
-                  'Upload is done — the embassy still needs the physical original.'
-                }
+                description="Upload is done — the embassy still needs the physical original."
                 statusTag={{ label: 'Original required', tone: 'original' }}
                 onInfoClick={() =>
                   setWhyContent(

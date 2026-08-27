@@ -31,7 +31,7 @@ import type {
   RetailExtraSelection,
   RetailFlowDraft,
 } from '@/pages/website-v2/pages/RetailApplyFlowPage/types'
-import { EMPTY_TRAVELLER_DETAILS, SPONSOR_BANK_STATEMENT_DOC_ID } from '@/pages/website-v2/pages/RetailApplyFlowPage/types'
+import { EMPTY_TRAVELLER_DETAILS } from '@/pages/website-v2/pages/RetailApplyFlowPage/types'
 import { getElevatedStatusCardSx } from '@/pages/website-v2/theme/statusVisualTokens'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
 
@@ -241,7 +241,10 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-/** Temporary, unrouted-from-nav preview for sanity-checking new status/upload components in isolation. Safe to delete. */
+/**
+ * Dev-only component reference for status/upload surfaces.
+ * Routed only when `import.meta.env.DEV` — not linked from product navigation.
+ */
 export default function ComponentPreviewPage() {
   const colors = usePublicBrandColors()
   const [modalOpen, setModalOpen] = useState(false)
@@ -274,12 +277,6 @@ export default function ComponentPreviewPage() {
     receivingOfficeId: 'office-mumbai',
   })
   const [sponsorApplicants, setSponsorApplicants] = useState(PREVIEW_APPLICANTS.slice(0, 2))
-  const [sponsorUploads, setSponsorUploads] = useState<Record<string, RetailCapturedImage>>({
-    [checklistUploadKey('t2', SPONSOR_BANK_STATEMENT_DOC_ID)]: {
-      dataUrl: 'data:preview-sponsor-bank',
-      capturedAt: new Date().toISOString(),
-    },
-  })
   const [insuranceChoice, setInsuranceChoice] = useState<RetailExtraSelection>({ choice: 'skip' })
   const [insuranceGlts, setInsuranceGlts] = useState<RetailExtraSelection>({
     choice: 'glts_arranged',
@@ -291,8 +288,29 @@ export default function ComponentPreviewPage() {
   })
   const [reviewBanner, setReviewBanner] = useState(true)
 
+  // Belt-and-suspenders: page is only routed in DEV, but never render in production chunks.
+  if (!import.meta.env.DEV) {
+    return null
+  }
+
   return (
     <Box sx={{ maxWidth: 1120, mx: 'auto', px: 3, py: 6 }}>
+      <Box
+        sx={{
+          mb: 3,
+          px: 2,
+          py: 1.5,
+          borderRadius: '10px',
+          border: `1px solid ${colors.border}`,
+          bgcolor: colors.surfaceAlt,
+        }}
+      >
+        <Typography sx={{ fontSize: 13, fontWeight: 600, color: colors.navy, lineHeight: 1.45 }}>
+          Dev only — component reference, not the real apply flow. May not reflect the latest
+          component versions if this page is not manually updated.
+        </Typography>
+      </Box>
+
       <Typography sx={{ fontSize: 22, fontWeight: 700, color: colors.navy, mb: 4 }}>
         Component preview — live status visual language
       </Typography>
@@ -329,17 +347,10 @@ export default function ComponentPreviewPage() {
         >
           <SponsorStep
             applicants={sponsorApplicants}
-            uploads={sponsorUploads}
             onUpdateSponsor={(applicantId, sponsor) =>
               setSponsorApplicants((prev) =>
                 prev.map((a) => (a.id === applicantId ? { ...a, sponsor } : a)),
               )
-            }
-            onUpload={(applicantId, image) =>
-              setSponsorUploads((prev) => ({
-                ...prev,
-                [checklistUploadKey(applicantId, SPONSOR_BANK_STATEMENT_DOC_ID)]: image,
-              }))
             }
             onGoToTravelProfile={() => undefined}
             onBack={() => undefined}

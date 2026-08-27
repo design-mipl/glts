@@ -1,9 +1,15 @@
 import { useMemo, useRef } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography, keyframes } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
 import { getPrimaryButtonSx, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import type { RetailJourney } from '@/shared/services/retailJourneyResolver'
 import { statusVisualRadius, getElevatedStatusCardSx } from '@/pages/website-v2/theme/statusVisualTokens'
+import { retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
+
+const ticketIn = keyframes`
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+`
 
 interface SuccessStepProps {
   journey: RetailJourney
@@ -139,6 +145,7 @@ export function SuccessStep({
           borderRadius: cardRadius,
           ...getElevatedStatusCardSx(colors.border),
           overflow: 'hidden',
+          animation: `${ticketIn} 0.42s ${retailFlowEaseOut} both`,
         }}
       >
         {/* Top stub — calm confirmation */}
@@ -241,6 +248,8 @@ export function SuccessStep({
               textDecoration: 'none',
               borderRadius: '10px',
               fontFamily: '"Roboto", system-ui, sans-serif',
+              transition: `transform 160ms ${retailFlowEaseOut}, background-color 150ms ease`,
+              '&:active': { transform: 'scale(0.98)' },
             }}
           >
             Track your application

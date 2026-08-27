@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Box, Collapse, Stack, Typography } from '@mui/material'
+import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, Plane, Shield } from 'lucide-react'
 import { FormField, Input } from '@/design-system/UIComponents'
 import { BORDER_RADIUS } from '@/design-system/tokens'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { getElevatedCardSx, retailFlowColors } from '@/pages/website-v2/theme/retailFlowTokens'
+import { getElevatedCardSx, retailFlowColors, retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
 import { StepShell } from './StepShell'
 import type { ExtraServiceChoice, RetailExtraSelection } from '../types'
 
@@ -97,7 +98,8 @@ function SegmentedChoice({
               fontWeight: selected ? 700 : 600,
               boxShadow: selected ? '0 1px 2px rgba(15,27,43,0.06)' : 'none',
               outline: selected ? `1.5px solid ${retailFlowColors.greenBorderSoft}` : 'none',
-              transition: 'background-color 0.15s ease, color 0.15s ease',
+              transition: `background-color 150ms ${retailFlowEaseOut}, color 150ms ${retailFlowEaseOut}, transform 160ms ${retailFlowEaseOut}`,
+              '&:active': { transform: 'scale(0.96)' },
             }}
           >
             {option.label}
@@ -369,20 +371,30 @@ export function ExtraServiceStep({
         <Typography sx={{ fontSize: 13, color: colors.textMuted, lineHeight: 1.45 }}>{choiceHint}</Typography>
       ) : null}
 
-      {selection.choice === 'glts_arranged' ? (
-        <GltsDetailCard
-          kind={kind}
-          service={services.find((s) => s.id === selection.serviceId) ?? primaryService}
-          travelStart={travelStart}
-          travelEnd={travelEnd}
-          onTravelStart={setTravelStart}
-          onTravelEnd={setTravelEnd}
-          origin={origin}
-          destination={destination}
-          onOrigin={setOrigin}
-          onDestination={setDestination}
-        />
-      ) : null}
+      <AnimatePresence mode="wait" initial={false}>
+        {selection.choice === 'glts_arranged' ? (
+          <motion.div
+            key="glts-detail-card"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+          >
+            <GltsDetailCard
+              kind={kind}
+              service={services.find((s) => s.id === selection.serviceId) ?? primaryService}
+              travelStart={travelStart}
+              travelEnd={travelEnd}
+              onTravelStart={setTravelStart}
+              onTravelEnd={setTravelEnd}
+              origin={origin}
+              destination={destination}
+              onOrigin={setOrigin}
+              onDestination={setDestination}
+            />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </Stack>
   )
 

@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Box, IconButton, InputAdornment, Stack, TextField, Typography } from '@mui/material'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Check, Search, Smile, UserRound, Users, X } from 'lucide-react'
 import { Modal } from '@/design-system/UIComponents'
 import { BORDER_RADIUS } from '@/design-system/tokens'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
 import type { RetailApplicantParty } from '../types'
 import {
   MARITAL_STATUS_OPTIONS,
@@ -32,10 +34,10 @@ interface TravelProfileBuilderProps {
 
 function optionIcon(questionId: TravelProfileQuestionId, optionId: string) {
   if (questionId === 'maritalStatus') {
-    if (optionId === 'single') return <UserRound size={20} strokeWidth={1.75} />
-    return <Users size={20} strokeWidth={1.75} />
+    if (optionId === 'single') return <UserRound size={14} strokeWidth={1.75} />
+    return <Users size={14} strokeWidth={1.75} />
   }
-  return <UserRound size={20} strokeWidth={1.75} />
+  return <UserRound size={14} strokeWidth={1.75} />
 }
 
 function ProfileOptionRow({
@@ -59,27 +61,29 @@ function ProfileOptionRow({
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: 1.5,
+        gap: 1,
         width: '100%',
+        minHeight: 36,
         textAlign: 'left',
         border: `1.5px solid ${selected ? ACCENT_BORDER : colors.border}`,
         bgcolor: selected ? ACCENT_SOFT : colors.white,
-        borderRadius: BORDER_RADIUS.lg,
-        px: 2,
-        py: 1.75,
+        borderRadius: BORDER_RADIUS.md,
+        px: 1.25,
+        py: 0.5,
         cursor: 'pointer',
-        transition: 'border-color 0.15s ease, background-color 0.15s ease',
+        transition: `border-color 150ms ${retailFlowEaseOut}, background-color 150ms ${retailFlowEaseOut}, transform 160ms ${retailFlowEaseOut}`,
         font: 'inherit',
         color: 'inherit',
         '&:hover': {
           borderColor: selected ? ACCENT_BORDER : 'rgba(15, 23, 42, 0.22)',
         },
+        '&:active': { transform: 'scale(0.98)' },
       }}
     >
       <Box
         sx={{
-          width: 36,
-          height: 36,
+          width: 24,
+          height: 24,
           borderRadius: '50%',
           border: `1.5px solid ${selected ? ACCENT : 'rgba(15, 23, 42, 0.12)'}`,
           color: selected ? ACCENT : colors.textSecondary,
@@ -91,12 +95,12 @@ function ProfileOptionRow({
       >
         {optionIcon(questionId, option.id)}
       </Box>
-      <Typography sx={{ flex: 1, fontSize: 15, fontWeight: 500, color: colors.navy }}>
+      <Typography sx={{ flex: 1, fontSize: 13, fontWeight: 500, color: colors.navy, lineHeight: 1.3 }}>
         {option.label}
       </Typography>
       {selected ? (
         <Box sx={{ color: ACCENT, display: 'flex', flexShrink: 0 }}>
-          <Check size={20} strokeWidth={2.5} />
+          <Check size={14} strokeWidth={2.5} />
         </Box>
       ) : null}
     </Box>
@@ -104,7 +108,7 @@ function ProfileOptionRow({
 }
 
 /**
- * Full-screen style Build profile questionnaire — profession, marital status, visa refusal.
+ * Compact Build profile questionnaire — profession, marital status, visa refusal.
  */
 export function TravelProfileBuilder({
   applicant,
@@ -175,20 +179,24 @@ export function TravelProfileBuilder({
     <Modal
       open
       onClose={onClose}
-      size="lg"
+      size="sm"
       hideCloseButton
       sx={{
-        minHeight: { sm: 640 },
+        width: { sm: 480 },
+        height: { xs: '100%', sm: 520 },
+        minHeight: { sm: 520 },
+        maxHeight: { sm: 520 },
         '& .MuiDialogContent-root': {
           display: 'flex',
           flexDirection: 'column',
-          px: { xs: 2, sm: 3 },
-          py: { xs: 2, sm: 2.5 },
+          overflow: 'hidden',
+          px: { xs: 2, sm: 2.5 },
+          py: { xs: 1.5, sm: 2 },
         },
       }}
     >
-      <Box sx={{ position: 'relative', width: '100%', flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+      <Box sx={{ position: 'relative', width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1, flexShrink: 0 }}>
           <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, flex: 1, pr: 1 }}>
             <Box
               sx={{
@@ -230,7 +238,7 @@ export function TravelProfileBuilder({
           </IconButton>
         </Stack>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1, flexShrink: 0 }}>
           <Box
             sx={{
               display: 'inline-flex',
@@ -248,81 +256,99 @@ export function TravelProfileBuilder({
           </Box>
         </Box>
 
-        <Box sx={{ textAlign: 'center', mt: { xs: 2, sm: 3.5 }, mb: 2.5, px: 1 }}>
-          <Typography
-            sx={{
-              fontSize: { xs: 22, sm: 26 },
-              fontWeight: 700,
-              color: colors.navy,
-              letterSpacing: '-0.02em',
-              lineHeight: 1.25,
-              mb: 1,
-            }}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={questionId}
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+            style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
           >
-            {title}
-          </Typography>
-          <Typography sx={{ fontSize: 13.5, color: colors.textMuted }}>
-            Documents required vary basis persona
-          </Typography>
-        </Box>
+            <Box sx={{ textAlign: 'center', mt: { xs: 1, sm: 1.5 }, mb: 1.5, px: 1, flexShrink: 0 }}>
+              <Typography
+                sx={{
+                  fontSize: { xs: 17, sm: 18 },
+                  fontWeight: 700,
+                  color: colors.navy,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.3,
+                  mb: 0.5,
+                }}
+              >
+                {title}
+              </Typography>
+              <Typography sx={{ fontSize: 12, color: colors.textMuted }}>
+                Documents required vary basis persona
+              </Typography>
+            </Box>
 
-        {questionId === 'profession' ? (
-          <TextField
-            value={professionQuery}
-            onChange={(event) => setProfessionQuery(event.target.value)}
-            placeholder="Search..."
-            fullWidth
-            size="small"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search size={16} color={colors.textMuted} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              mb: 2,
-              maxWidth: 520,
-              mx: 'auto',
-              width: '100%',
-              '& .MuiOutlinedInput-root': {
-                borderRadius: BORDER_RADIUS.lg,
-                bgcolor: colors.white,
-                fontSize: 14,
-              },
-            }}
-          />
-        ) : null}
-
-        <Stack
-          spacing={1.25}
-          sx={{
-            width: '100%',
-            maxWidth: 520,
-            mx: 'auto',
-            flex: 1,
-            minHeight: 0,
-            overflowY: questionId === 'profession' ? 'auto' : 'visible',
-            pr: questionId === 'profession' ? 0.5 : 0,
-            pb: 1,
-          }}
-        >
-          {options.length === 0 ? (
-            <Typography sx={{ textAlign: 'center', color: colors.textMuted, fontSize: 13, py: 3 }}>
-              No professions match your search
-            </Typography>
-          ) : (
-            options.map((option) => (
-              <ProfileOptionRow
-                key={option.id}
-                option={option}
-                questionId={questionId}
-                selected={selectedId === option.id}
-                onSelect={() => selectOption(option.id)}
+            {questionId === 'profession' ? (
+              <TextField
+                value={professionQuery}
+                onChange={(event) => setProfessionQuery(event.target.value)}
+                placeholder="Search..."
+                fullWidth
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search size={16} color={colors.textMuted} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  mb: 1.25,
+                  maxWidth: 400,
+                  mx: 'auto',
+                  width: '100%',
+                  flexShrink: 0,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: BORDER_RADIUS.md,
+                    bgcolor: colors.white,
+                    fontSize: 13,
+                    height: 36,
+                  },
+                }}
               />
-            ))
-          )}
-        </Stack>
+            ) : null}
+
+            <Stack
+              spacing={0.75}
+              sx={{
+                width: '100%',
+                maxWidth: 400,
+                mx: 'auto',
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                pr: 0.5,
+                pb: 0.5,
+                '&::-webkit-scrollbar': { width: 6 },
+                '&::-webkit-scrollbar-thumb': {
+                  bgcolor: 'rgba(15, 23, 42, 0.16)',
+                  borderRadius: 8,
+                },
+              }}
+            >
+              {options.length === 0 ? (
+                <Typography sx={{ textAlign: 'center', color: colors.textMuted, fontSize: 13, py: 3 }}>
+                  No professions match your search
+                </Typography>
+              ) : (
+                options.map((option) => (
+                  <ProfileOptionRow
+                    key={option.id}
+                    option={option}
+                    questionId={questionId}
+                    selected={selectedId === option.id}
+                    onSelect={() => selectOption(option.id)}
+                  />
+                ))
+              )}
+            </Stack>
+          </motion.div>
+        </AnimatePresence>
       </Box>
     </Modal>
   )

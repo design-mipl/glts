@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Box, Typography } from '@mui/material'
+import { motion } from 'framer-motion'
 import { Camera } from 'lucide-react'
 import { BORDER_RADIUS } from '@/design-system/tokens'
 import { Button } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
 import { useCameraCapture } from '../../hooks/useCameraCapture'
 import type { RetailCapturedImage } from '../../types'
 import { CaptureFlowShell, CaptureHeadline } from './CaptureFlowShell'
 import { CaptureModeBar, type CaptureInputMode } from './CaptureModeBar'
 
 interface PhotoCaptureFlowProps {
+  applicantName: string
   initialImage?: RetailCapturedImage
   onConfirm: (image: RetailCapturedImage) => void
   onClose: () => void
@@ -31,7 +34,12 @@ function readFileAsImage(file: File): Promise<RetailCapturedImage> {
   })
 }
 
-export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCaptureFlowProps) {
+export function PhotoCaptureFlow({
+  applicantName,
+  initialImage,
+  onConfirm,
+  onClose,
+}: PhotoCaptureFlowProps) {
   const colors = usePublicBrandColors()
   const fileRef = useRef<HTMLInputElement>(null)
   const [phase, setPhase] = useState<'capture' | 'preview'>(initialImage ? 'preview' : 'capture')
@@ -79,8 +87,11 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
     return (
       <CaptureFlowShell
         onClose={onClose}
-        size="lg"
-        contentMinHeight={{ xs: 480, sm: 560 }}
+        applicantName={applicantName}
+        badgeLabel="Capture photo"
+        badgeIcon={Camera}
+        size="xl"
+        contentMinHeight={{ xs: 560, sm: 680 }}
         header={<CaptureHeadline lead="Look ahead," accent="straight at the camera" />}
         footer={
           <Box
@@ -88,7 +99,7 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
               display: 'flex',
               gap: 1.5,
               width: '100%',
-              maxWidth: 420,
+              maxWidth: 480,
               mx: 'auto',
               justifyContent: 'center',
             }}
@@ -114,7 +125,10 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
       >
         <CaptureFrame>
           <Box
-            component="img"
+            component={motion.img}
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
             src={draft.dataUrl}
             alt="Photo preview"
             sx={{
@@ -133,8 +147,11 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
   return (
     <CaptureFlowShell
       onClose={onClose}
-      size="lg"
-      contentMinHeight={{ xs: 480, sm: 560 }}
+      applicantName={applicantName}
+      badgeLabel="Capture photo"
+      badgeIcon={Camera}
+      size="xl"
+      contentMinHeight={{ xs: 560, sm: 680 }}
       header={<CaptureHeadline lead="Look ahead," accent="straight at the camera" />}
       footer={<CaptureModeBar mode={mode} onChange={setMode} />}
     >
@@ -176,7 +193,12 @@ export function PhotoCaptureFlow({ initialImage, onConfirm, onClose }: PhotoCapt
           color="primary"
           startIcon={<Camera size={16} />}
           onClick={handleCapture}
-          sx={{ mt: 2.5, minWidth: 180 }}
+          sx={{
+            mt: 2.5,
+            minWidth: 180,
+            transition: `transform 160ms ${retailFlowEaseOut}`,
+            '&:active': { transform: 'scale(0.97)' },
+          }}
         />
       ) : null}
 
@@ -205,14 +227,14 @@ function CaptureFrame({ children }: { children: ReactNode }) {
     <Box
       sx={{
         position: 'relative',
-        width: 'min(100%, 360px)',
+        width: 'min(100%, 440px)',
         aspectRatio: '1 / 1.15',
         bgcolor: '#0B1220',
         borderRadius: BORDER_RADIUS.xl,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        p: 2.25,
+        p: 2.5,
         boxSizing: 'border-box',
         overflow: 'hidden',
       }}
@@ -253,7 +275,7 @@ function TipList({ tips, muted }: { tips: readonly string[]; muted: string }) {
         mt: 2.5,
         mb: 0,
         pl: 2.25,
-        maxWidth: 360,
+        maxWidth: 440,
         textAlign: 'left',
         listStyleType: 'disc',
       }}
@@ -263,7 +285,7 @@ function TipList({ tips, muted }: { tips: readonly string[]; muted: string }) {
           key={tip}
           component="li"
           sx={{
-            fontSize: 12.5,
+            fontSize: 13,
             lineHeight: 1.45,
             color: muted,
             mb: 0.5,
@@ -293,5 +315,7 @@ function pillButtonSx(
     fontWeight: 700,
     fontFamily: 'inherit',
     cursor: 'pointer',
+    transition: `transform 160ms ${retailFlowEaseOut}, background-color 150ms ease`,
+    '&:active': { transform: 'scale(0.97)' },
   }
 }

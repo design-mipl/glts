@@ -1,4 +1,4 @@
-import { Box, Button, Drawer, IconButton, Stack, Typography } from '@mui/material'
+import { Box, Button, Drawer, IconButton, Stack, Typography, keyframes } from '@mui/material'
 import { X } from 'lucide-react'
 import type { DocumentWhyContent } from '../config/documentWhyContent'
 import { usePublicBrandColors, publicFonts } from '@/shared/theme/publicBrand'
@@ -8,6 +8,11 @@ interface WhyWeAskSheetProps {
   content: DocumentWhyContent | null
   onClose: () => void
 }
+
+const fadeUp = keyframes`
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+`
 
 /** Slide-over explaining why a document/detail is required (Corridor-style trust). */
 export function WhyWeAskSheet({ open, content, onClose }: WhyWeAskSheetProps) {
@@ -47,14 +52,31 @@ export function WhyWeAskSheet({ open, content, onClose }: WhyWeAskSheetProps) {
         >
           Why we ask
         </Typography>
-        <IconButton aria-label="Close" onClick={onClose} size="small" sx={{ color: colors.textSecondary }}>
+        <IconButton
+          aria-label="Close"
+          onClick={onClose}
+          size="small"
+          sx={{
+            color: colors.textSecondary,
+            transition: 'background-color 150ms ease, transform 160ms cubic-bezier(0.23, 1, 0.32, 1)',
+            '&:active': { transform: 'scale(0.9)' },
+          }}
+        >
           <X size={18} />
         </IconButton>
       </Box>
 
       {content ? (
         <Stack spacing={2.5} sx={{ p: 2.5, flex: 1 }}>
-          <Typography sx={{ fontSize: '18px', fontWeight: 800, color: colors.navy, lineHeight: 1.3 }}>
+          <Typography
+            sx={{
+              fontSize: '18px',
+              fontWeight: 800,
+              color: colors.navy,
+              lineHeight: 1.3,
+              animation: `${fadeUp} 0.32s cubic-bezier(0.23, 1, 0.32, 1) both`,
+            }}
+          >
             {content.title}
           </Typography>
 
@@ -64,6 +86,8 @@ export function WhyWeAskSheet({ open, content, onClose }: WhyWeAskSheetProps) {
               borderRadius: '12px',
               bgcolor: colors.surface,
               border: `1px solid ${colors.border}`,
+              animation: `${fadeUp} 0.32s cubic-bezier(0.23, 1, 0.32, 1) both`,
+              animationDelay: '60ms',
             }}
           >
             <Typography
@@ -87,6 +111,8 @@ export function WhyWeAskSheet({ open, content, onClose }: WhyWeAskSheetProps) {
               borderRadius: '12px',
               bgcolor: colors.greenMuted,
               border: `1px solid rgba(115, 192, 100, 0.28)`,
+              animation: `${fadeUp} 0.32s cubic-bezier(0.23, 1, 0.32, 1) both`,
+              animationDelay: '110ms',
             }}
           >
             <Typography
@@ -115,7 +141,11 @@ export function WhyWeAskSheet({ open, content, onClose }: WhyWeAskSheetProps) {
               borderRadius: '10px',
               bgcolor: colors.greenBright,
               color: colors.onBrandFilled,
+              transition: 'background-color 150ms ease, transform 160ms cubic-bezier(0.23, 1, 0.32, 1)',
               '&:hover': { bgcolor: colors.greenDark },
+              '&:active': { transform: 'scale(0.98)' },
+              animation: `${fadeUp} 0.32s cubic-bezier(0.23, 1, 0.32, 1) both`,
+              animationDelay: '160ms',
             }}
           >
             Got it

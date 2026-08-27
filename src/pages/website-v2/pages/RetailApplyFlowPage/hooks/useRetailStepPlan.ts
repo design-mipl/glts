@@ -3,12 +3,17 @@ import { resolveRetailJourney } from '@/shared/services/retailJourneyResolver'
 import { buildRetailStepPlan } from '../config/stepPlan'
 import type { RetailFlowDraft } from '../types'
 
+function needsSponsorDocsStep(draft: RetailFlowDraft): boolean {
+  return draft.applicants.some(
+    (applicant) =>
+      applicant.sponsor?.mode === 'someone_else' && Boolean(applicant.sponsor.profileComplete),
+  )
+}
+
 /**
- * Step existence (which steps appear) only depends on country + offering — not on the
- * jurisdiction/answers collected along the way — because `retailJourneyRules` config and the
- * base document rules that drive `hasEligibilityGate` / `requiresJurisdictionSelection` /
- * `allowsPhysicalOriginalDocuments` are static per offering. So the step plan is resolved once
- * from a base (answer-less) journey, while step *content* uses the live journey below.
+ * Step existence mostly depends on country + offering. Sponsor bank-statement
+ * step is draft-dependent: only when at least one traveller has a completed
+ * “Someone else” sponsor profile.
  */
 export function useRetailStepPlan(countryId: string, visaOfferingId: string, draft: RetailFlowDraft) {
   const baseJourney = useMemo(
@@ -16,7 +21,11 @@ export function useRetailStepPlan(countryId: string, visaOfferingId: string, dra
     [countryId, visaOfferingId],
   )
 
-  const steps = useMemo(() => (baseJourney ? buildRetailStepPlan(baseJourney) : []), [baseJourney])
+  const steps = useMemo(() => {
+    const plan = baseJourney ? buildRetailStepPlan(baseJourney) : []
+    if (needsSponsorDocsStep(draft)) return plan
+    return plan.filter((step) => step.id !== 'sponsorDocs')
+  }, [baseJourney, draft.applicants])
 
   const journey = useMemo(
     () =>

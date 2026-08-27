@@ -15,6 +15,7 @@ import { VisaStep } from './components/steps/VisaStep'
 import { EligibilityStep } from './components/steps/EligibilityStep'
 import { TravelProfileStep } from './components/steps/TravelProfileStep'
 import { SponsorStep } from './components/steps/SponsorStep'
+import { SponsorDocsStep } from './components/steps/SponsorDocsStep'
 import { PassportStep } from './components/steps/PassportStep'
 import { JurisdictionStep } from './components/steps/JurisdictionStep'
 import { ConditionalQuestionStep } from './components/steps/ConditionalQuestionStep'
@@ -87,6 +88,10 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         restoredId = 'passport'
       } else if (restoredId === 'requirements') {
         restoredId = 'checklist'
+      } else if (restoredId === 'sponsorDocs') {
+        // Fall back if draft no longer needs sponsor documents.
+        const hasDocsStep = steps.some((step) => step.id === 'sponsorDocs')
+        if (!hasDocsStep) restoredId = 'sponsor'
       }
       const restoredIndex = steps.findIndex((step) => step.id === restoredId)
       if (restoredIndex !== -1) {
@@ -270,10 +275,19 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         return (
           <SponsorStep
             applicants={draft.applicants}
-            uploads={draft.documentUploads}
             onUpdateSponsor={(applicantId, sponsor) =>
               updateApplicant(applicantId, { sponsor })
             }
+            onGoToTravelProfile={goToTravelProfile}
+            onBack={goBack}
+            onContinue={goNext}
+          />
+        )
+      case 'sponsorDocs':
+        return (
+          <SponsorDocsStep
+            applicants={draft.applicants}
+            uploads={draft.documentUploads}
             onUpload={(applicantId, image) =>
               patchDraft((prev) => ({
                 documentUploads: {
@@ -282,7 +296,6 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
                 },
               }))
             }
-            onGoToTravelProfile={goToTravelProfile}
             onBack={goBack}
             onContinue={goNext}
           />
@@ -504,7 +517,7 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
             flexDirection: 'column',
             minHeight: 0,
             width: '100%',
-            overflow: 'auto',
+            overflow: 'hidden',
           }}
         >
           <StepTransition stepKey={currentStep?.id ?? 'empty'} direction={direction}>

@@ -1,8 +1,8 @@
+import { lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { LazyRouteBoundary } from '@/shared/routing/lazyRoute'
 import { PublicLayout } from './components/PublicLayout'
 import { ComingSoonPage } from '@/shared/components/ComingSoonPage'
-import ComponentPreviewPage from './pages/_preview/ComponentPreviewPage'
 import {
   AboutPage,
   ApplicationTrackingPage,
@@ -15,6 +15,11 @@ import {
   WebsiteApplicationFlowPage,
 } from './websiteRoutePages'
 
+/** Dev-only component reference — not linked from product nav; omitted from production routes. */
+const ComponentPreviewPage = import.meta.env.DEV
+  ? lazy(() => import('./pages/_preview/ComponentPreviewPage'))
+  : null
+
 /**
  * Main public website (website-v2). Mounted at `/*`.
  * In-site links use root paths (`/countries`, `/apply/new`, …) — see `siteBase.ts` / `w2()`.
@@ -24,8 +29,9 @@ export function PublicWebsiteV2App() {
     <LazyRouteBoundary label="Loading page…">
       <Routes>
         <Route path="/apply/new" element={<WebsiteApplicationFlowPage />} />
-        {/* Temporary — isolated sanity-check for new upload components. Safe to remove. */}
-        <Route path="/_preview/uploads" element={<ComponentPreviewPage />} />
+        {import.meta.env.DEV && ComponentPreviewPage ? (
+          <Route path="/_preview/uploads" element={<ComponentPreviewPage />} />
+        ) : null}
         <Route
           path="/*"
           element={

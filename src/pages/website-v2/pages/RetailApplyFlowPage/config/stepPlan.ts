@@ -19,6 +19,7 @@ export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinitio
     { id: 'jurisdiction', phase: 'purpose', label: 'Submission city' },
     { id: 'travelProfile', phase: 'traveller', label: 'Travel profile' },
     { id: 'sponsor', phase: 'sponsor', label: 'Sponsor' },
+    { id: 'sponsorDocs', phase: 'sponsor', label: 'Sponsor documents' },
     { id: 'passport', phase: 'documents', label: 'Essential documents' },
   ]
 
@@ -33,12 +34,12 @@ export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinitio
   steps.push(
     { id: 'checklist', phase: 'documents', label: 'Document checklist' },
     { id: 'originalDocuments', phase: 'documents', label: 'Original documents' },
-    { id: 'collectionMethod', phase: 'documents', label: 'Collection method' },
-    { id: 'collectionDetails', phase: 'documents', label: 'Collection details' },
-    { id: 'collectionConfirmation', phase: 'documents', label: 'Confirm collection' },
+    { id: 'collectionMethod', phase: 'collection', label: 'Collection method' },
+    { id: 'collectionDetails', phase: 'collection', label: 'Collection details' },
+    { id: 'collectionConfirmation', phase: 'collection', label: 'Confirm collection' },
     { id: 'insurance', phase: 'extras', label: 'Travel insurance' },
     { id: 'flightTicket', phase: 'extras', label: 'Flight ticket' },
-    { id: 'review', phase: 'pay', label: 'Review' },
+    { id: 'review', phase: 'review', label: 'Review' },
     { id: 'payment', phase: 'pay', label: 'Payment' },
     { id: 'success', phase: 'pay', label: 'Success' },
   )
@@ -46,21 +47,25 @@ export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinitio
   return steps
 }
 
-/** Top stepper phases — aligned to the retail apply journey. */
+/** Top stepper phases — aligned to the retail apply journey (B2–B19). */
 export const RETAIL_PHASE_ORDER = [
   'purpose',
   'traveller',
   'sponsor',
   'documents',
+  'collection',
   'extras',
+  'review',
   'pay',
 ] as const
 
 export const RETAIL_PHASE_LABEL: Record<(typeof RETAIL_PHASE_ORDER)[number], string> = {
   purpose: 'Purpose',
-  traveller: 'Travel profile',
+  traveller: 'Profile',
   sponsor: 'Sponsor',
   documents: 'Documents',
+  collection: 'Collection',
   extras: 'Extras',
+  review: 'Review',
   pay: 'Payment',
 }

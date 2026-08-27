@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, Camera, Pencil, Upload } from 'lucide-react'
+import { AlertTriangle, Camera, Pencil, ScanLine, Upload } from 'lucide-react'
 import { Box, MenuItem, Select, Stack, TextField, Typography } from '@mui/material'
+import { motion } from 'framer-motion'
 import { BORDER_RADIUS } from '@/design-system/tokens'
 import { Button } from '@/design-system/UIComponents'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
 import {
   singleExtractedFields,
   type ExtractedField,
@@ -21,6 +23,7 @@ export interface PassportCaptureResult {
 }
 
 interface PassportCaptureFlowProps {
+  applicantName: string
   initialPassport?: RetailCapturedImage
   initialPassportBack?: RetailCapturedImage
   initialFields?: ExtractedField[]
@@ -55,6 +58,7 @@ function seedFields(existing?: ExtractedField[]): ExtractedField[] {
 }
 
 export function PassportCaptureFlow({
+  applicantName,
   initialPassport,
   initialPassportBack,
   initialFields,
@@ -145,6 +149,9 @@ export function PassportCaptureFlow({
     return (
       <CaptureFlowShell
         onClose={onClose}
+        applicantName={applicantName}
+        badgeLabel="Scan passport"
+        badgeIcon={ScanLine}
         size="xl"
         contentAlign="start"
         fitToContent
@@ -168,6 +175,8 @@ export function PassportCaptureFlow({
                 cursor: canContinue ? 'pointer' : 'not-allowed',
                 bgcolor: canContinue ? colors.navy : colors.surfaceAlt,
                 color: canContinue ? '#fff' : colors.textMuted,
+                transition: `background-color 150ms ease, color 150ms ease, transform 160ms ${retailFlowEaseOut}`,
+                '&:active': canContinue ? { transform: 'scale(0.98)' } : undefined,
               }}
             >
               Continue
@@ -198,7 +207,10 @@ export function PassportCaptureFlow({
           >
             <Box sx={{ position: 'relative' }}>
               <Box
-                component="img"
+                component={motion.img}
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
                 src={front.dataUrl}
                 alt="Passport front"
                 sx={{
@@ -230,6 +242,8 @@ export function PassportCaptureFlow({
                   placeItems: 'center',
                   cursor: 'pointer',
                   boxShadow: '0 4px 12px rgba(15,23,42,0.2)',
+                  transition: `transform 160ms ${retailFlowEaseOut}`,
+                  '&:active': { transform: 'scale(0.9)' },
                 }}
               >
                 <Pencil size={14} />
@@ -239,7 +253,10 @@ export function PassportCaptureFlow({
             {back ? (
               <Box sx={{ position: 'relative' }}>
                 <Box
-                  component="img"
+                  component={motion.img}
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
                   src={back.dataUrl}
                   alt="Passport back"
                   sx={{
@@ -270,6 +287,8 @@ export function PassportCaptureFlow({
                     display: 'grid',
                     placeItems: 'center',
                     cursor: 'pointer',
+                    transition: `transform 160ms ${retailFlowEaseOut}`,
+                    '&:active': { transform: 'scale(0.9)' },
                   }}
                 >
                   <Pencil size={14} />
@@ -420,8 +439,11 @@ export function PassportCaptureFlow({
   return (
     <CaptureFlowShell
       onClose={onClose}
-      size="lg"
-      contentMinHeight={{ xs: 480, sm: 560 }}
+      applicantName={applicantName}
+      badgeLabel="Scan passport"
+      badgeIcon={ScanLine}
+      size="xl"
+      contentMinHeight={{ xs: 560, sm: 680 }}
       header={<CaptureHeadline lead="Passport," accent="photo page up" />}
       footer={<CaptureModeBar mode={mode} onChange={setMode} />}
     >
@@ -436,7 +458,7 @@ export function PassportCaptureFlow({
         <Box
           sx={{
             position: 'relative',
-            width: 'min(92vw, 560px)',
+            width: 'min(92vw, 640px)',
             aspectRatio: '1.58 / 1',
             borderRadius: 28,
             overflow: 'hidden',
@@ -529,7 +551,12 @@ export function PassportCaptureFlow({
             color="primary"
             startIcon={<Camera size={16} />}
             onClick={handleCapture}
-            sx={{ mt: 2.5, minWidth: 180 }}
+            sx={{
+              mt: 2.5,
+              minWidth: 180,
+              transition: `transform 160ms ${retailFlowEaseOut}`,
+              '&:active': { transform: 'scale(0.97)' },
+            }}
           />
         ) : null}
       </Box>
@@ -633,6 +660,7 @@ function UnderlineField({
               color: colors.navy,
               borderBottom: `1px solid ${value ? colors.border : 'rgba(15,23,42,0.2)'}`,
               borderBottomStyle: value ? 'solid' : 'dashed',
+              transition: 'border-color 150ms ease',
               pb: 0.5,
             },
           }}

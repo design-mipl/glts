@@ -57,6 +57,7 @@ function sponsorComplete(
   if (!sponsor) return false
   if (sponsor.mode === 'individual') return true
   return (
+    Boolean(sponsor.profileComplete) &&
     sponsor.name.trim().length > 0 &&
     sponsor.relationship.trim().length > 0 &&
     sponsor.contact.trim().length > 0 &&

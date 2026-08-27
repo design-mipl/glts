@@ -1,13 +1,22 @@
 import type { OriginalDocumentCollectionMethod } from '@/shared/types/originalDocumentCollection'
 import type { ExtractedField } from '@/pages/customer/features/applications/data/applicationFlowData'
 
-export type RetailPhaseId = 'purpose' | 'traveller' | 'sponsor' | 'documents' | 'extras' | 'pay'
+export type RetailPhaseId =
+  | 'purpose'
+  | 'traveller'
+  | 'sponsor'
+  | 'documents'
+  | 'collection'
+  | 'extras'
+  | 'review'
+  | 'pay'
 
 export type RetailStepId =
   | 'visa'
   | 'traveller'
   | 'travelProfile'
   | 'sponsor'
+  | 'sponsorDocs'
   | 'eligibility'
   | 'photo'
   | 'passport'
@@ -28,7 +37,7 @@ export type RetailStepId =
 
 /**
  * Per-traveller sponsor (B10).
- * Binary: Individual (self-funded) or Someone else + basic details.
+ * Binary: Individual (self-funded) or Someone else + profile + bank statement.
  */
 export type RetailTravellerSponsor =
   | { mode: 'individual' }
@@ -38,6 +47,8 @@ export type RetailTravellerSponsor =
       relationship: string
       /** Phone or email — inventory Step 8.6 “contact”. */
       contact: string
+      /** True after Build sponsor profile modal is completed. */
+      profileComplete?: boolean
     }
 
 /**

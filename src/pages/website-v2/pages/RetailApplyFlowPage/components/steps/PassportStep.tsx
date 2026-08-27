@@ -263,6 +263,7 @@ export function PassportStep({
 
       {active?.kind === 'photo' && activeApplicant ? (
         <PhotoCaptureFlow
+          applicantName={activeApplicant.details.fullName.trim() || activeApplicant.label}
           initialImage={activeApplicant.photo}
           onClose={() => setActive(null)}
           onConfirm={(image: RetailCapturedImage) => {
@@ -274,6 +275,7 @@ export function PassportStep({
 
       {active?.kind === 'passport' && activeApplicant ? (
         <PassportCaptureFlow
+          applicantName={activeApplicant.details.fullName.trim() || activeApplicant.label}
           initialPassport={activeApplicant.passport}
           initialPassportBack={activeApplicant.passportBack}
           initialFields={activeApplicant.passportFields}
