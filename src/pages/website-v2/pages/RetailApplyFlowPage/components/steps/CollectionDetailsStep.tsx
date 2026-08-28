@@ -1,20 +1,19 @@
-import { Box, Grid, Stack, Typography } from '@mui/material'
-import { Building2, Clock, FileCheck, Hand, MapPin } from 'lucide-react'
-import { FormField, Input, Select, Textarea } from '@/design-system/UIComponents'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { getElevatedCardSx, retailFlowColors } from '@/pages/website-v2/theme/retailFlowTokens'
+import { Box, Stack, Typography } from '@mui/material'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Building2, Check, Clock, FileCheck, Hand, MapPin } from 'lucide-react'
 import { listReceivingOfficeOptions } from '@/shared/utils/originalDocumentCollectionUtils'
 import type { OriginalDocumentCollectionMethod } from '@/shared/types/originalDocumentCollection'
 import { RETAIL_COLLECTION_METHOD_OPTIONS } from '../../config/retailCollectionMethods'
 import { PickupLocationStep } from './PickupLocationStep'
 import { StepShell } from '../StepShell'
+import { applyFlow, applyFont, applyRadius, getSelectableSx } from '@/pages/website-v2/theme/applyFlowTheme'
+import { ApplySelect, ApplyTextField, ApplyTextarea, FieldLabel, SectionHeading } from '@/pages/website-v2/theme/applyFormControls'
 
 interface CollectionDetailsStepProps {
   method: OriginalDocumentCollectionMethod
   values: Record<string, string>
   onChange: (key: string, value: string) => void
-  /** When provided, shows the shared B16 method card grid so users can switch methods here. */
+  /** When provided, shows the method rail so users can switch methods here. */
   onSelectMethod?: (method: OriginalDocumentCollectionMethod) => void
   onBack: () => void
   onContinue: () => void
@@ -58,93 +57,108 @@ const OFFICE_GUIDES: Record<string, { address: string; hours: string; prep: stri
   },
 }
 
-const ICON_TONES = [
-  { bg: 'rgba(15, 169, 104, 0.12)', fg: '#0F766E' },
-  { bg: 'rgba(8, 145, 178, 0.12)', fg: '#0E7490' },
-  { bg: 'rgba(180, 83, 9, 0.12)', fg: '#B45309' },
-  { bg: 'rgba(79, 70, 229, 0.12)', fg: '#4338CA' },
-] as const
-
-function MethodSelectorGrid({
+/** Left rail — vertical method list. Selecting a row swaps the panel on the right. */
+function MethodRail({
   selectedMethod,
   onSelect,
 }: {
   selectedMethod: OriginalDocumentCollectionMethod
   onSelect: (method: OriginalDocumentCollectionMethod) => void
 }) {
-  const colors = usePublicBrandColors()
-
   return (
-    <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
-      {RETAIL_COLLECTION_METHOD_OPTIONS.map((option, index) => {
+    <Stack role="radiogroup" aria-label="Handover method" spacing={1.5}>
+      {RETAIL_COLLECTION_METHOD_OPTIONS.map((option) => {
         const selected = option.value === selectedMethod
         const Icon = option.icon
-        const tone = ICON_TONES[index % ICON_TONES.length]
         return (
-          <Grid size={{ xs: 6, sm: 3 }} key={option.value}>
+          <Box
+            key={option.value}
+            component="button"
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onSelect(option.value)}
+            sx={{
+              ...getSelectableSx(selected),
+              appearance: 'none',
+              font: 'inherit',
+              textAlign: 'left',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 2,
+              pl: 3,
+              pr: 2.5,
+              py: 2.25,
+            }}
+          >
             <Box
-              onClick={() => onSelect(option.value)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  onSelect(option.value)
-                }
-              }}
-              aria-pressed={selected}
+              aria-hidden
               sx={{
-                p: 1.5,
-                cursor: 'pointer',
-                height: '100%',
-                ...getElevatedCardSx(selected ? 'rgba(115, 192, 100, 0.55)' : colors.border),
-                bgcolor: selected ? retailFlowColors.optionBgSelected : colors.white,
-                borderRadius: BORDER_RADIUS.lg,
-                textAlign: 'center',
-                outline: 'none',
-                transition: 'border-color 0.15s ease',
-                '&:hover': { borderColor: 'rgba(115, 192, 100, 0.55)' },
+                width: 32,
+                height: 32,
+                flex: '0 0 auto',
+                display: 'grid',
+                placeItems: 'center',
+                borderRadius: applyRadius.chip,
+                backgroundColor: selected ? 'transparent' : applyFlow.canvas,
+                border: `1px solid ${selected ? applyFlow.accentBorder : applyFlow.hairline}`,
+                color: selected ? applyFlow.accentInk : applyFlow.inkMuted,
               }}
             >
-              <Box
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  mx: 'auto',
-                  mb: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  bgcolor: tone.bg,
-                  color: tone.fg,
-                }}
-              >
-                <Icon size={18} strokeWidth={2.1} />
-              </Box>
-              <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: colors.navy, lineHeight: 1.25 }}>
-                {option.label}
-              </Typography>
+              <Icon size={15} strokeWidth={1.9} />
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                <Typography
+                  sx={{
+                    fontFamily: applyFont.body,
+                    fontSize: 13.5,
+                    fontWeight: 600,
+                    color: applyFlow.ink,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {option.label}
+                </Typography>
+                {selected ? (
+                  <Box
+                    aria-hidden
+                    sx={{
+                      width: 16,
+                      height: 16,
+                      flex: '0 0 auto',
+                      display: 'grid',
+                      placeItems: 'center',
+                      borderRadius: '50%',
+                      backgroundColor: applyFlow.accent,
+                      color: applyFlow.onAccent,
+                    }}
+                  >
+                    <Check size={10} strokeWidth={3.5} />
+                  </Box>
+                ) : null}
+              </Stack>
               <Typography
                 sx={{
-                  fontSize: 10.5,
-                  color: colors.textMuted,
-                  mt: 0.35,
-                  lineHeight: 1.35,
-                  display: { xs: 'none', sm: 'block' },
+                  fontFamily: applyFont.body,
+                  fontSize: 12,
+                  color: applyFlow.inkMuted,
+                  mt: 0.5,
+                  lineHeight: 1.4,
                 }}
               >
                 {option.description}
               </Typography>
             </Box>
-          </Grid>
+          </Box>
         )
       })}
-    </Grid>
+    </Stack>
   )
 }
 
-function InstructionsCard({
+function InstructionsBlock({
   title,
   address,
   hours,
@@ -157,55 +171,69 @@ function InstructionsCard({
   bullets: string[]
   icon: 'drop' | 'hand'
 }) {
-  const colors = usePublicBrandColors()
   const Icon = icon === 'drop' ? Building2 : Hand
 
   return (
     <Box
       sx={{
-        ...getElevatedCardSx(colors.border),
-        borderRadius: BORDER_RADIUS.lg,
-        bgcolor: colors.white,
-        p: 2.5,
+        border: `1px solid ${applyFlow.hairline}`,
+        borderRadius: applyRadius.card,
+        p: 2.75,
       }}
     >
-      <Stack direction="row" spacing={1.25} alignItems="flex-start" sx={{ mb: 2 }}>
+      <Stack direction="row" spacing={2} alignItems="flex-start" sx={{ mb: 2.5 }}>
         <Box
+          aria-hidden
           sx={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            bgcolor: retailFlowColors.greenMuted,
-            color: retailFlowColors.green,
+            width: 36,
+            height: 36,
+            borderRadius: applyRadius.chip,
+            backgroundColor: applyFlow.canvas,
+            border: `1px solid ${applyFlow.hairline}`,
+            color: applyFlow.inkMuted,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
           }}
         >
-          <Icon size={18} strokeWidth={2.2} />
+          <Icon size={17} strokeWidth={1.9} />
         </Box>
-        <Box>
-          <Typography sx={{ fontSize: 15, fontWeight: 800, color: colors.navy }}>{title}</Typography>
-          <Typography sx={{ fontSize: 13, color: colors.textSecondary, mt: 0.5, lineHeight: 1.45 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{ fontFamily: applyFont.body, fontSize: 14.5, fontWeight: 700, color: applyFlow.ink }}>
+            {title}
+          </Typography>
+          <Typography sx={{ fontFamily: applyFont.body, fontSize: 12.5, color: applyFlow.inkMuted, mt: 0.5, lineHeight: 1.45 }}>
             {address}
           </Typography>
         </Box>
       </Stack>
 
       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-        <Clock size={14} color={colors.textMuted} />
-        <Typography sx={{ fontSize: 12.5, color: colors.textMuted }}>{hours}</Typography>
+        <Clock size={13} style={{ color: applyFlow.inkFaint }} />
+        <Typography sx={{ fontFamily: applyFont.mono, fontSize: 11.5, color: applyFlow.inkMuted }}>{hours}</Typography>
       </Stack>
 
-      <Typography sx={{ fontSize: 12, fontWeight: 700, color: colors.navy, mb: 1, letterSpacing: '0.02em' }}>
+      <Typography
+        sx={{
+          fontFamily: applyFont.mono,
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: applyFlow.inkFaint,
+          mb: 1.25,
+        }}
+      >
         Before you go
       </Typography>
       <Stack spacing={1}>
         {bullets.map((line) => (
-          <Stack key={line} direction="row" spacing={1} alignItems="flex-start">
-            <FileCheck size={14} color={retailFlowColors.green} style={{ marginTop: 2, flexShrink: 0 }} />
-            <Typography sx={{ fontSize: 13, color: colors.textSecondary, lineHeight: 1.4 }}>{line}</Typography>
+          <Stack key={line} direction="row" spacing={1.25} alignItems="flex-start">
+            <FileCheck size={13} style={{ color: applyFlow.success, marginTop: 3, flexShrink: 0 }} />
+            <Typography sx={{ fontFamily: applyFont.body, fontSize: 12.5, color: applyFlow.inkMuted, lineHeight: 1.45 }}>
+              {line}
+            </Typography>
           </Stack>
         ))}
       </Stack>
@@ -220,28 +248,30 @@ function DropAtGltsPanel({
   officeId: string
   onSelectOffice: (id: string) => void
 }) {
-  const colors = usePublicBrandColors()
   const officeOptions = listReceivingOfficeOptions()
   const guide = OFFICE_GUIDES[officeId] ?? OFFICE_GUIDES['office-mumbai']
 
   return (
-    <Stack spacing={2}>
-      <FormField label="GLTS office" required>
-        <Select
-          fullWidth
+    <Stack spacing={2.5}>
+      <Box>
+        <FieldLabel htmlFor="drop-office" required>
+          GLTS office
+        </FieldLabel>
+        <ApplySelect
+          id="drop-office"
           value={officeId || 'office-mumbai'}
-          onChange={(value) => onSelectOffice(String(value))}
+          onChange={onSelectOffice}
           options={officeOptions.map((option) => ({ label: option.label, value: option.value }))}
         />
-      </FormField>
-      <InstructionsCard
+      </Box>
+      <InstructionsBlock
         title="Drop-off location"
         address={guide.address}
         hours={guide.hours}
         bullets={guide.prep}
         icon="drop"
       />
-      <Typography sx={{ fontSize: 12, color: colors.textMuted }}>
+      <Typography sx={{ fontFamily: applyFont.body, fontSize: 12, color: applyFlow.inkFaint }}>
         No map needed — choose an office and bring originals during operating hours.
       </Typography>
     </Stack>
@@ -259,16 +289,19 @@ function HandCarryPanel({
   const guide = OFFICE_GUIDES[officeId] ?? OFFICE_GUIDES['office-mumbai']
 
   return (
-    <Stack spacing={2}>
-      <FormField label="Bring documents to" required>
-        <Select
-          fullWidth
+    <Stack spacing={2.5}>
+      <Box>
+        <FieldLabel htmlFor="carry-office" required>
+          Bring documents to
+        </FieldLabel>
+        <ApplySelect
+          id="carry-office"
           value={officeId || 'office-mumbai'}
-          onChange={(value) => onSelectOffice(String(value))}
+          onChange={onSelectOffice}
           options={officeOptions.map((option) => ({ label: option.label, value: option.value }))}
         />
-      </FormField>
-      <InstructionsCard
+      </Box>
+      <InstructionsBlock
         title="Hand-carry process"
         address={guide.address}
         hours={guide.hours}
@@ -291,7 +324,6 @@ function CourierPanel({
   values: Record<string, string>
   onChange: (key: string, value: string) => void
 }) {
-  const colors = usePublicBrandColors()
   const addressLine1 = values.addressLine1 ?? values.pickupAddress ?? ''
   const addressLine2 = values.addressLine2 ?? ''
   const pinCode = values.pinCode ?? ''
@@ -312,100 +344,75 @@ function CourierPanel({
   }
 
   return (
-    <Box
-      sx={{
-        ...getElevatedCardSx(colors.border),
-        borderRadius: BORDER_RADIUS.lg,
-        bgcolor: colors.white,
-        p: 2,
-      }}
-    >
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
-        <MapPin size={16} color={retailFlowColors.green} />
-        <Typography sx={{ fontSize: 15, fontWeight: 800, color: colors.navy }}>
+    <Stack spacing={2.5}>
+      <Stack direction="row" spacing={1.25} alignItems="center">
+        <MapPin size={15} style={{ color: applyFlow.inkMuted }} />
+        <Typography sx={{ fontFamily: applyFont.body, fontSize: 14.5, fontWeight: 700, color: applyFlow.ink }}>
           Courier collection address
         </Typography>
       </Stack>
-      <Typography sx={{ fontSize: 12.5, color: colors.textMuted, mb: 2, lineHeight: 1.4 }}>
+      <Typography sx={{ fontFamily: applyFont.body, fontSize: 12.5, color: applyFlow.inkMuted, lineHeight: 1.45, mt: -1.5 }}>
         Where should the courier pick up your originals? Same address fields as pickup — no map.
       </Typography>
-      <Stack spacing={1.75}>
-        <FormField label="Address line 1" required>
-          <Input
-            value={addressLine1}
-            onChange={(v) => setAddressField('addressLine1', v)}
-            placeholder="Building, street"
-            fullWidth
-          />
-        </FormField>
-        <FormField label="Address line 2" optional>
-          <Input
-            value={addressLine2}
-            onChange={(v) => setAddressField('addressLine2', v)}
-            placeholder="Landmark, floor"
-            fullWidth
-          />
-        </FormField>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-            gap: 1.75,
-          }}
-        >
-          <FormField label="PIN code" required>
-            <Input value={pinCode} onChange={(v) => setAddressField('pinCode', v)} placeholder="e.g. 400021" fullWidth />
-          </FormField>
-          <FormField label="City" required>
-            <Input value={city} onChange={(v) => setAddressField('city', v)} placeholder="City" fullWidth />
-          </FormField>
+
+      <Box>
+        <FieldLabel required>Address line 1</FieldLabel>
+        <ApplyTextField value={addressLine1} onChange={(v) => setAddressField('addressLine1', v)} placeholder="Building, street" />
+      </Box>
+      <Box>
+        <FieldLabel>Address line 2</FieldLabel>
+        <ApplyTextField value={addressLine2} onChange={(v) => setAddressField('addressLine2', v)} placeholder="Landmark, floor" />
+      </Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 }}>
+        <Box>
+          <FieldLabel required>PIN code</FieldLabel>
+          <ApplyTextField value={pinCode} onChange={(v) => setAddressField('pinCode', v)} placeholder="e.g. 400021" />
         </Box>
-        <FormField label="State" required>
-          <Input value={state} onChange={(v) => setAddressField('state', v)} placeholder="State" fullWidth />
-        </FormField>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-            gap: 1.75,
-          }}
-        >
-          <FormField label="Preferred date" required>
-            <Input
-              type="date"
-              value={preferredDate}
-              onChange={(v) => {
-                onChange('preferredDate', v)
-                onChange('pickupDate', v)
-              }}
-              fullWidth
-            />
-          </FormField>
-          <FormField label="Preferred time window" required>
-            <Input
-              value={preferredWindow}
-              onChange={(v) => {
-                onChange('preferredWindow', v)
-                onChange('pickupTime', v)
-              }}
-              placeholder="e.g. 10:00–13:00"
-              fullWidth
-            />
-          </FormField>
+        <Box>
+          <FieldLabel required>City</FieldLabel>
+          <ApplyTextField value={city} onChange={(v) => setAddressField('city', v)} placeholder="City" />
         </Box>
-        <FormField label="Delivery instructions" optional>
-          <Textarea
-            value={deliveryInstructions}
+      </Box>
+      <Box>
+        <FieldLabel required>State</FieldLabel>
+        <ApplyTextField value={state} onChange={(v) => setAddressField('state', v)} placeholder="State" />
+      </Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 }}>
+        <Box>
+          <FieldLabel required>Preferred date</FieldLabel>
+          <ApplyTextField
+            type="date"
+            value={preferredDate}
             onChange={(v) => {
-              onChange('deliveryInstructions', v)
-              onChange('remarks', v)
+              onChange('preferredDate', v)
+              onChange('pickupDate', v)
             }}
-            placeholder="Gate code, contact on site…"
-            fullWidth
           />
-        </FormField>
-      </Stack>
-    </Box>
+        </Box>
+        <Box>
+          <FieldLabel required>Preferred time window</FieldLabel>
+          <ApplyTextField
+            value={preferredWindow}
+            onChange={(v) => {
+              onChange('preferredWindow', v)
+              onChange('pickupTime', v)
+            }}
+            placeholder="e.g. 10:00–13:00"
+          />
+        </Box>
+      </Box>
+      <Box>
+        <FieldLabel>Delivery instructions</FieldLabel>
+        <ApplyTextarea
+          value={deliveryInstructions}
+          onChange={(v) => {
+            onChange('deliveryInstructions', v)
+            onChange('remarks', v)
+          }}
+          placeholder="Gate code, contact on site…"
+        />
+      </Box>
+    </Stack>
   )
 }
 
@@ -429,7 +436,7 @@ function detailsComplete(method: OriginalDocumentCollectionMethod, values: Recor
 
 /**
  * B16 — Physical collection details for all four retail methods.
- * Shared method card grid at top; method-specific panel below.
+ * Left rail picks the method; right panel is the method-specific form, and swaps in place.
  */
 export function CollectionDetailsStep({
   method,
@@ -458,36 +465,54 @@ export function CollectionDetailsStep({
     ) : method === 'hand_carry_by_applicant' ? (
       <HandCarryPanel officeId={officeId} onSelectOffice={(id) => onChange('receivingOfficeId', id)} />
     ) : (
-      <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>
+      <Typography sx={{ fontFamily: applyFont.body, fontSize: 13, color: applyFlow.inkMuted }}>
         This collection method isn’t available in the retail flow.
       </Typography>
     )
 
-  const body = (
-    <Box sx={{ width: '100%', textAlign: 'left' }}>
-      {onSelectMethod ? <MethodSelectorGrid selectedMethod={method} onSelect={onSelectMethod} /> : null}
-      {panel}
+  const body = onSelectMethod ? (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: 'flex-start',
+        gap: { xs: 5, md: 6 },
+        width: '100%',
+      }}
+    >
+      <Box sx={{ flex: { xs: '1 1 auto', md: '0 0 260px' }, width: { xs: '100%', md: 260 }, minWidth: 0 }}>
+        <SectionHeading>Handover method</SectionHeading>
+        <MethodRail selectedMethod={method} onSelect={onSelectMethod} />
+      </Box>
+      <Box sx={{ flex: '1 1 auto', minWidth: 0, width: '100%' }}>
+        <SectionHeading>{RETAIL_COLLECTION_METHOD_OPTIONS.find((o) => o.value === method)?.label ?? 'Details'}</SectionHeading>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={method}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+          >
+            {panel}
+          </motion.div>
+        </AnimatePresence>
+      </Box>
     </Box>
+  ) : (
+    <Box sx={{ width: '100%', textAlign: 'left' }}>{panel}</Box>
   )
 
   if (previewOnly) return body
-
-  const titleByMethod: Record<string, string> = {
-    picked_up_from_company: 'Where should we pick up?',
-    delivered_to_office: 'Drop originals at GLTS',
-    couriered_by_applicant: 'Courier collection details',
-    hand_carry_by_applicant: 'Hand-carry your originals',
-  }
-
   return (
     <StepShell
-      title={titleByMethod[method] ?? 'Collection details'}
+      title="How should we get your original documents?"
       helperText="Choose how originals reach us, then confirm the details for that method."
       onBack={onBack}
       onContinue={onContinue}
       continueLabel={method === 'picked_up_from_company' ? 'Confirm pick-up' : 'Continue'}
       continueDisabled={!detailsComplete(method, values)}
-      contentMaxWidth={920}
+      contentMaxWidth={980}
     >
       {body}
     </StepShell>

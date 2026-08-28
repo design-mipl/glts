@@ -1,22 +1,21 @@
 import { useState, type ChangeEvent } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
-import { Check, Plus, Trash2, UserRound } from 'lucide-react'
-import { Button, IconButton } from '@/design-system/UIComponents'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { retailProfileCardGradient } from '@/pages/website-v2/theme/retailFlowTokens'
+import { Box, Button, Stack, Typography } from '@mui/material'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Check, Plus, X } from 'lucide-react'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+  getAccentButtonSx,
+  getQuietButtonSx,
+  tabularNums,
+} from '@/pages/website-v2/theme/applyFlowTheme'
+import { SectionHeading, StatusPill } from '@/pages/website-v2/theme/applyFormControls'
 import { StepShell } from '../StepShell'
 import { TravelProfileBuilder } from '../TravelProfileBuilder'
-import {
-  displayNameUpper,
-  initialsFromName,
-  profileAnswerTags,
-} from '../../config/travelProfileQuestions'
+import { initialsFromName, profileAnswerTags } from '../../config/travelProfileQuestions'
 import type { RetailApplicantParty } from '../../types'
-
-const AVATAR_TONES = ['#D4A0A0', '#0D9488', '#B45309', '#4F46E5', '#0891B2'] as const
-
-const CARD_LAYOUT_TRANSITION = { duration: 0.18, ease: [0.22, 1, 0.36, 1] as const }
 
 interface TravelProfileStepProps {
   countryName?: string
@@ -28,17 +27,21 @@ interface TravelProfileStepProps {
   onContinue: () => void
 }
 
-function displayName(applicant: RetailApplicantParty, index: number): string {
-  const name = applicant.details.fullName.trim()
-  if (name) return name
-  return index === 0 ? 'Traveller 1' : applicant.label
-}
-
 function applicantReady(applicant: RetailApplicantParty): boolean {
   return Boolean(applicant.details.fullName.trim() && applicant.profileComplete)
 }
 
-function TravellerProfileCard({
+const ROW_TRANSITION = { duration: 0.2, ease: [0.23, 1, 0.32, 1] as const }
+
+/**
+ * One traveller = one row in a manifest, not a portrait card.
+ *
+ * Rows are separated by hairlines rather than each being boxed, so a party of four reads
+ * as one list instead of four floating objects. The monogram uses a single neutral
+ * treatment for everyone — per-person accent colours were a flagged "AI-generated SaaS"
+ * tell, and colour here is reserved for completion state.
+ */
+function TravellerRow({
   applicant,
   index,
   onUpdate,
@@ -51,296 +54,191 @@ function TravellerProfileCard({
   onRemove?: () => void
   onOpenBuilder: () => void
 }) {
-  const colors = usePublicBrandColors()
-  const tone = AVATAR_TONES[index % AVATAR_TONES.length]
   const name = applicant.details.fullName
   const trimmed = name.trim()
   const complete = Boolean(applicant.profileComplete && trimmed)
   const tags = profileAnswerTags(applicant.profileAnswers)
-  const initials = initialsFromName(trimmed)
-  const nameUpper = trimmed ? displayNameUpper(trimmed) : ''
-
-  const commitNameAndBuild = () => {
-    if (!trimmed) return
-    onOpenBuilder()
-  }
-
-  if (complete && tags.length > 0) {
-    return (
-      <Box
-        component={motion.div}
-        layout
-        initial={{ opacity: 0, x: 36, scale: 0.96 }}
-        animate={{ opacity: 1, x: 0, scale: 1 }}
-        exit={{ opacity: 0, x: 24, scale: 0.96 }}
-        transition={CARD_LAYOUT_TRANSITION}
-        sx={{
-          border: `1px solid ${colors.border}`,
-          borderRadius: 4,
-          bgcolor: colors.white,
-          backgroundImage: retailProfileCardGradient,
-          p: 1.75,
-          maxWidth: 180,
-          width: '100%',
-          mx: 'auto',
-          minHeight: 210,
-          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {onRemove ? (
-          <IconButton
-            size="sm"
-            variant="soft"
-            color="error"
-            tooltip={`Remove ${displayName(applicant, index)}`}
-            icon={<Trash2 size={14} />}
-            onClick={onRemove}
-            sx={{ position: 'absolute', top: 6, right: 6, zIndex: 1 }}
-          />
-        ) : null}
-
-        <Stack alignItems="center" spacing={0.75} sx={{ mb: 1, width: '100%', pr: onRemove ? 3.5 : 0 }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '50%',
-              bgcolor: tone,
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 14,
-              fontWeight: 700,
-              flexShrink: 0,
-            }}
-          >
-            {initials}
-          </Box>
-          <Typography
-            sx={{
-              fontWeight: 700,
-              fontSize: 13,
-              color: colors.navy,
-              letterSpacing: '0.04em',
-              lineHeight: 1.3,
-              textAlign: 'center',
-              width: '100%',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {nameUpper}
-          </Typography>
-        </Stack>
-
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignContent: 'flex-start',
-            justifyContent: 'center',
-            gap: 0.5,
-            pt: 1.5,
-          }}
-        >
-          {tags.map((tag) => (
-            <Box
-              key={tag}
-              component="span"
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                px: 0.9,
-                py: 0.55,
-                borderRadius: 999,
-                bgcolor: colors.greenMuted,
-                border: `1px solid ${colors.border}`,
-                fontSize: 11,
-                fontWeight: 600,
-                color: colors.navy,
-                lineHeight: 1.2,
-              }}
-            >
-              {tag}
-            </Box>
-          ))}
-        </Box>
-
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 'auto', pt: 1.25 }}>
-          <Box
-            sx={{
-              width: 26,
-              height: 26,
-              borderRadius: '50%',
-              bgcolor: '#0FA968',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            aria-label="Profile complete"
-          >
-            <Check size={14} strokeWidth={2.75} />
-          </Box>
-          <Button label="Edit" variant="outlined" color="secondary" size="sm" onClick={onOpenBuilder} />
-        </Stack>
-      </Box>
-    )
-  }
 
   return (
     <Box
       component={motion.div}
       layout
-      initial={{ opacity: 0, x: 36, scale: 0.96 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 24, scale: 0.96 }}
-      transition={CARD_LAYOUT_TRANSITION}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
+      transition={ROW_TRANSITION}
       sx={{
-        border: `1px solid ${colors.border}`,
-        borderRadius: 4,
-        bgcolor: colors.white,
-        backgroundImage: retailProfileCardGradient,
-        p: 2,
-        maxWidth: 180,
-        width: '100%',
-        mx: 'auto',
-        boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
-        position: 'relative',
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        minHeight: 210,
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        flexDirection: { xs: 'column', sm: 'row' },
+        gap: { xs: 2.5, sm: 3.5 },
+        py: 3.25,
+        borderBottom: `1px solid ${applyFlow.hairlineSoft}`,
+        '&:first-of-type': { borderTop: `1px solid ${applyFlow.hairlineSoft}` },
       }}
     >
-      {onRemove ? (
-        <IconButton
-          size="sm"
-          variant="soft"
-          color="error"
-          tooltip={`Remove ${displayName(applicant, index)}`}
-          icon={<Trash2 size={14} />}
-          onClick={onRemove}
-          sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
-        />
-      ) : null}
-
-      <Box
-        sx={{
-          width: 48,
-          height: 48,
-          borderRadius: '50%',
-          bgcolor: tone,
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 16,
-          fontWeight: 700,
-          mt: 0.25,
-          mb: 0.75,
-        }}
-      >
-        {trimmed ? initialsFromName(trimmed) : <UserRound size={20} strokeWidth={1.75} />}
-      </Box>
-
-      <Typography
-        sx={{
-          fontWeight: 700,
-          fontSize: 13,
-          color: trimmed ? colors.navy : colors.textMuted,
-          letterSpacing: '0.06em',
-          textAlign: 'center',
-        }}
-      >
-        {nameUpper || 'ADD NAME'}
-      </Typography>
-
-      <Box
-        component="form"
-        sx={{ width: '100%', mt: 'auto', pt: 1.5 }}
-        onSubmit={(event) => {
-          event.preventDefault()
-          commitNameAndBuild()
-        }}
-      >
-        <Box
+      {/* Index + monogram */}
+      <Stack direction="row" alignItems="center" spacing={3.5} sx={{ flex: '0 0 auto' }}>
+        <Typography
           sx={{
-            border: `1px solid ${colors.border}`,
-            borderRadius: 2,
-            px: 1.5,
-            pt: 1,
-            pb: 1.1,
-            bgcolor: colors.white,
-            textAlign: 'left',
+            ...tabularNums,
+            fontFamily: applyFont.mono,
+            fontSize: 11,
+            fontWeight: 600,
+            color: applyFlow.inkFaint,
+            width: 18,
           }}
         >
-          <Typography
-            component="label"
-            htmlFor={`traveller-name-${applicant.id}`}
-            sx={{
-              display: 'block',
-              fontSize: 11,
-              fontWeight: 600,
-              color: colors.textMuted,
-              mb: 0.35,
-            }}
-          >
-            Name
-          </Typography>
+          {String(index + 1).padStart(2, '0')}
+        </Typography>
+        <Box
+          aria-hidden
+          sx={{
+            position: 'relative',
+            width: 38,
+            height: 38,
+            display: 'grid',
+            placeItems: 'center',
+            borderRadius: applyRadius.chip,
+            backgroundColor: applyFlow.canvas,
+            border: `1px solid ${complete ? applyFlow.successBorder : applyFlow.hairline}`,
+            fontFamily: applyFont.mono,
+            fontSize: 13,
+            fontWeight: 700,
+            color: applyFlow.inkMuted,
+            transition: `border-color 200ms ${applyMotion.easeOut}`,
+          }}
+        >
+          {trimmed ? initialsFromName(trimmed) : '—'}
+          {complete ? (
+            <Box
+              sx={{
+                position: 'absolute',
+                right: -5,
+                bottom: -5,
+                width: 17,
+                height: 17,
+                display: 'grid',
+                placeItems: 'center',
+                borderRadius: '50%',
+                backgroundColor: applyFlow.success,
+                color: '#FFFFFF',
+                border: `2px solid ${applyFlow.surface}`,
+              }}
+            >
+              <Check size={9} strokeWidth={4} />
+            </Box>
+          ) : null}
+        </Box>
+      </Stack>
+
+      {/* Name + profile summary */}
+      <Box sx={{ flex: '1 1 auto', minWidth: 0, width: '100%' }}>
+        <Box
+          component="input"
+          id={`traveller-name-${applicant.id}`}
+          value={name}
+          placeholder="Full name, exactly as printed on the passport"
+          aria-label={`Traveller ${index + 1} full name`}
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            onUpdate({
+              details: { ...applicant.details, fullName: event.target.value },
+              label:
+                index === 0
+                  ? applicant.label
+                  : event.target.value.trim() || `Traveller ${index + 1}`,
+              profileComplete: event.target.value.trim() ? applicant.profileComplete : false,
+            })
+          }
+          sx={{
+            width: '100%',
+            border: 'none',
+            borderBottom: `1px solid transparent`,
+            outline: 'none',
+            backgroundColor: 'transparent',
+            p: 0,
+            pb: 1,
+            fontFamily: applyFont.body,
+            fontSize: 15,
+            fontWeight: 600,
+            letterSpacing: '-0.01em',
+            color: applyFlow.ink,
+            transition: `border-color 150ms ${applyMotion.easeOut}`,
+            '&::placeholder': { color: applyFlow.inkFaint, fontWeight: 400 },
+            '&:hover': { borderBottomColor: applyFlow.hairline },
+            '&:focus': { borderBottomColor: applyFlow.accent },
+          }}
+        />
+        <Typography
+          sx={{
+            fontFamily: applyFont.mono,
+            fontSize: 11,
+            color: applyFlow.inkMuted,
+            mt: 1,
+            lineHeight: 1.45,
+          }}
+        >
+          {tags.length > 0 ? tags.join('  ·  ') : 'No profile details yet'}
+        </Typography>
+      </Box>
+
+      {/* Status + actions */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={3}
+        sx={{ flex: '0 0 auto', pl: { xs: 0, sm: 2 } }}
+      >
+        <StatusPill tone={complete ? 'done' : 'idle'}>{complete ? 'Ready' : 'Incomplete'}</StatusPill>
+        <Button
+          variant={complete ? 'text' : 'contained'}
+          disableElevation
+          onClick={onOpenBuilder}
+          disabled={!trimmed}
+          sx={
+            complete
+              ? { ...getQuietButtonSx(), px: 3.5, minHeight: 44 }
+              : { ...getAccentButtonSx(), px: 4, minHeight: 44 }
+          }
+        >
+          {complete ? 'Edit' : 'Build profile'}
+        </Button>
+        {onRemove ? (
           <Box
-            component="input"
-            id={`traveller-name-${applicant.id}`}
-            value={name}
-            placeholder="Traveller name"
-            onChange={(event: ChangeEvent<HTMLInputElement>) =>
-              onUpdate({
-                details: { ...applicant.details, fullName: event.target.value },
-                label: index === 0 ? applicant.label : event.target.value.trim() || `Traveller ${index + 1}`,
-                profileComplete: event.target.value.trim() ? applicant.profileComplete : false,
-              })
-            }
+            component="button"
+            type="button"
+            onClick={onRemove}
+            aria-label={`Remove traveller ${index + 1}`}
             sx={{
-              width: '100%',
+              width: 44,
+              height: 44,
+              display: 'grid',
+              placeItems: 'center',
+              appearance: 'none',
               border: 'none',
-              outline: 'none',
-              bgcolor: 'transparent',
-              font: 'inherit',
-              fontSize: 15,
-              fontWeight: 700,
-              color: colors.navy,
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              p: 0,
-              '&::placeholder': {
-                color: colors.textMuted,
-                fontWeight: 500,
-                letterSpacing: 0,
-                textTransform: 'none',
+              background: 'none',
+              borderRadius: applyRadius.control,
+              color: applyFlow.inkFaint,
+              cursor: 'pointer',
+              transition: `color 150ms ${applyMotion.easeOut}`,
+              '@media (hover: hover) and (pointer: fine)': {
+                '&:hover': { color: applyFlow.critical },
+              },
+              '&:focus-visible': {
+                outline: 'none',
+                boxShadow: `0 0 0 2px ${applyFlow.accent}`,
               },
             }}
-          />
-        </Box>
-        <Button
-          type="submit"
-          label={applicant.profileComplete ? 'Edit profile' : 'Build profile'}
-          variant="soft"
-          color="primary"
-          fullWidth
-          sx={{ mt: 1.5 }}
-          disabled={!trimmed}
-        />
-      </Box>
+          >
+            <X size={15} />
+          </Box>
+        ) : null}
+      </Stack>
     </Box>
   )
 }
 
-/** Travel profile — name each traveller, then Build profile questionnaire. */
+/** Travel profile — name each traveller, then build their profile questionnaire. */
 export function TravelProfileStep({
   countryName,
   applicants,
@@ -352,6 +250,7 @@ export function TravelProfileStep({
 }: TravelProfileStepProps) {
   const [buildingApplicantId, setBuildingApplicantId] = useState<string | null>(null)
   const allReady = applicants.every(applicantReady)
+  const readyCount = applicants.filter(applicantReady).length
   const buildingApplicant = buildingApplicantId
     ? applicants.find((applicant) => applicant.id === buildingApplicantId)
     : undefined
@@ -359,63 +258,47 @@ export function TravelProfileStep({
   return (
     <>
       <StepShell
-        title="Travel profile"
+        title="Who is travelling?"
         helperText={
           countryName
-            ? `Add each traveller and build their profile as per the official ${countryName} embassy requirements.`
-            : 'Add each traveller and build their profile as per the official embassy requirements.'
+            ? `Names must match each passport exactly. We'll then ask a short set of questions the ${countryName} embassy requires.`
+            : "Names must match each passport exactly. We'll then ask a short set of questions the embassy requires."
         }
         onBack={onBack}
         backLabel="Back"
         onContinue={onContinue}
         continueLabel="Continue"
         continueDisabled={!allReady}
-        contentMaxWidth={980}
+        contentMaxWidth={900}
         footerEndAction={
           <Button
-            label="Add travelers"
-            variant="soft"
-            color="primary"
-            startIcon={<Plus size={16} />}
+            variant="text"
+            startIcon={<Plus size={15} />}
             onClick={onAddTraveller}
-          />
+            sx={{ ...getQuietButtonSx(), px: 4, minHeight: 44 }}
+          >
+            Add traveller
+          </Button>
         }
       >
-        <LayoutGroup>
-          <Box
-            component={motion.div}
-            layout
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                sm: applicants.length === 1 ? 'minmax(0, 180px)' : 'repeat(2, minmax(0, 180px))',
-              md:
-                applicants.length === 1
-                  ? 'minmax(0, 180px)'
-                  : applicants.length === 2
-                    ? 'repeat(2, minmax(0, 180px))'
-                    : 'repeat(3, minmax(0, 180px))',
-              },
-              gap: 2,
-              justifyContent: 'center',
-              width: '100%',
-            }}
-          >
-            <AnimatePresence initial={false} mode="popLayout">
-              {applicants.map((applicant, index) => (
-                <TravellerProfileCard
-                  key={applicant.id}
-                  applicant={applicant}
-                  index={index}
-                  onUpdate={(patch) => onUpdateApplicant(applicant.id, patch)}
-                  onRemove={index > 0 ? () => onRemoveTraveller(applicant.id) : undefined}
-                  onOpenBuilder={() => setBuildingApplicantId(applicant.id)}
-                />
-              ))}
-            </AnimatePresence>
-          </Box>
-        </LayoutGroup>
+        <Box sx={{ width: '100%' }}>
+          <SectionHeading>
+            {`Travel party — ${readyCount} of ${applicants.length} ready`}
+          </SectionHeading>
+
+          <AnimatePresence initial={false} mode="popLayout">
+            {applicants.map((applicant, index) => (
+              <TravellerRow
+                key={applicant.id}
+                applicant={applicant}
+                index={index}
+                onUpdate={(patch) => onUpdateApplicant(applicant.id, patch)}
+                onRemove={index > 0 ? () => onRemoveTraveller(applicant.id) : undefined}
+                onOpenBuilder={() => setBuildingApplicantId(applicant.id)}
+              />
+            ))}
+          </AnimatePresence>
+        </Box>
       </StepShell>
 
       {buildingApplicant ? (

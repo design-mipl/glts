@@ -312,7 +312,7 @@ export function SponsorProfileBuilder({
                     />
                     <Button
                       label="Back"
-                      variant="ghost"
+                      variant="text"
                       fullWidth
                       onClick={() => setStep('relationship')}
                       sx={{ mt: 0.75 }}

@@ -2,10 +2,13 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Box, Typography } from '@mui/material'
 import { motion } from 'framer-motion'
 import { Camera } from 'lucide-react'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { Button } from '@/design-system/UIComponents'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
+import {
+  applyFlow,
+  applyFont,
+  applyRadius,
+  getAccentButtonSx,
+  getQuietButtonSx,
+} from '@/pages/website-v2/theme/applyFlowTheme'
 import { useCameraCapture } from '../../hooks/useCameraCapture'
 import type { RetailCapturedImage } from '../../types'
 import { CaptureFlowShell, CaptureHeadline } from './CaptureFlowShell'
@@ -40,7 +43,6 @@ export function PhotoCaptureFlow({
   onConfirm,
   onClose,
 }: PhotoCaptureFlowProps) {
-  const colors = usePublicBrandColors()
   const fileRef = useRef<HTMLInputElement>(null)
   const [phase, setPhase] = useState<'capture' | 'preview'>(initialImage ? 'preview' : 'capture')
   const [mode, setMode] = useState<CaptureInputMode>('live')
@@ -108,7 +110,7 @@ export function PhotoCaptureFlow({
               component="button"
               type="button"
               onClick={handleRetake}
-              sx={pillButtonSx(colors, 'ghost')}
+              sx={{ ...getQuietButtonSx(), flex: 1, py: 1.5, minHeight: 44 }}
             >
               Retake
             </Box>
@@ -116,7 +118,7 @@ export function PhotoCaptureFlow({
               component="button"
               type="button"
               onClick={() => onConfirm(draft)}
-              sx={pillButtonSx(colors, 'solid')}
+              sx={{ ...getAccentButtonSx(), flex: 1, py: 1.5, minHeight: 44, border: 'none' }}
             >
               Confirm
             </Box>
@@ -135,11 +137,11 @@ export function PhotoCaptureFlow({
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              borderRadius: BORDER_RADIUS.md,
+              borderRadius: applyRadius.control,
             }}
           />
         </CaptureFrame>
-        <TipList tips={PHOTO_TIPS} muted={colors.textMuted} />
+        <TipList tips={PHOTO_TIPS} />
       </CaptureFlowShell>
     )
   }
@@ -168,7 +170,7 @@ export function PhotoCaptureFlow({
               height: '100%',
               objectFit: 'cover',
               transform: 'scaleX(-1)',
-              borderRadius: BORDER_RADIUS.md,
+              borderRadius: applyRadius.control,
             }}
           />
         ) : (
@@ -184,22 +186,28 @@ export function PhotoCaptureFlow({
         )}
       </CaptureFrame>
 
-      <TipList tips={PHOTO_TIPS} muted={colors.textMuted} />
+      <TipList tips={PHOTO_TIPS} />
 
       {mode === 'live' && status === 'live' ? (
-        <Button
-          label="Capture photo"
-          variant="contained"
-          color="primary"
-          startIcon={<Camera size={16} />}
+        <Box
+          component="button"
+          type="button"
           onClick={handleCapture}
           sx={{
+            ...getAccentButtonSx(),
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 1,
             mt: 2.5,
             minWidth: 180,
-            transition: `transform 160ms ${retailFlowEaseOut}`,
-            '&:active': { transform: 'scale(0.97)' },
+            justifyContent: 'center',
+            py: 1.5,
+            px: 3,
+            border: 'none',
           }}
-        />
+        >
+          <Camera size={16} /> Capture photo
+        </Box>
       ) : null}
 
       <Box
@@ -230,7 +238,7 @@ function CaptureFrame({ children }: { children: ReactNode }) {
         width: 'min(100%, 348px)',
         height: 400,
         bgcolor: '#0B1220',
-        borderRadius: BORDER_RADIUS.xl,
+        borderRadius: applyRadius.card,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -244,7 +252,7 @@ function CaptureFrame({ children }: { children: ReactNode }) {
         sx={{
           position: 'absolute',
           inset: 14,
-          borderRadius: BORDER_RADIUS.lg,
+          borderRadius: applyRadius.control,
           border: '2px solid rgba(255, 255, 255, 0.92)',
           pointerEvents: 'none',
           zIndex: 2,
@@ -254,7 +262,7 @@ function CaptureFrame({ children }: { children: ReactNode }) {
         sx={{
           width: '100%',
           height: '100%',
-          borderRadius: BORDER_RADIUS.md,
+          borderRadius: applyRadius.control,
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
@@ -267,7 +275,7 @@ function CaptureFrame({ children }: { children: ReactNode }) {
   )
 }
 
-function TipList({ tips, muted }: { tips: readonly string[]; muted: string }) {
+function TipList({ tips }: { tips: readonly string[] }) {
   return (
     <Box
       component="ul"
@@ -285,9 +293,10 @@ function TipList({ tips, muted }: { tips: readonly string[]; muted: string }) {
           key={tip}
           component="li"
           sx={{
+            fontFamily: applyFont.body,
             fontSize: 13,
             lineHeight: 1.45,
-            color: muted,
+            color: applyFlow.inkMuted,
             mb: 0.5,
             '&:last-child': { mb: 0 },
           }}
@@ -297,25 +306,4 @@ function TipList({ tips, muted }: { tips: readonly string[]; muted: string }) {
       ))}
     </Box>
   )
-}
-
-function pillButtonSx(
-  colors: ReturnType<typeof usePublicBrandColors>,
-  variant: 'solid' | 'ghost',
-) {
-  return {
-    appearance: 'none' as const,
-    flex: 1,
-    border: variant === 'ghost' ? `1px solid ${colors.border}` : 'none',
-    bgcolor: variant === 'solid' ? colors.navy : colors.white,
-    color: variant === 'solid' ? '#fff' : colors.navy,
-    borderRadius: 999,
-    py: 1.35,
-    fontSize: 14,
-    fontWeight: 700,
-    fontFamily: 'inherit',
-    cursor: 'pointer',
-    transition: `transform 160ms ${retailFlowEaseOut}, background-color 150ms ease`,
-    '&:active': { transform: 'scale(0.97)' },
-  }
 }

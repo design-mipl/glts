@@ -1,7 +1,11 @@
 import { Box, Stack, Typography } from '@mui/material'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
+import { Check } from 'lucide-react'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  getSelectableSx,
+} from '@/pages/website-v2/theme/applyFlowTheme'
 
 interface OptionCardProps {
   label: string
@@ -12,40 +16,93 @@ interface OptionCardProps {
 }
 
 export function OptionCard({ label, description, selected, onSelect, tone = 'default' }: OptionCardProps) {
-  const colors = usePublicBrandColors()
-  const accent = tone === 'critical' ? colors.greenDark : colors.greenBright
+  const isCritical = tone === 'critical'
 
   return (
     <Box
+      component="button"
+      type="button"
+      role="radio"
+      aria-checked={selected}
       onClick={onSelect}
       sx={{
-        border: `1.5px solid ${selected ? accent : colors.border}`,
-        backgroundColor: selected ? colors.greenMuted : colors.white,
-        borderRadius: BORDER_RADIUS.lg,
-        p: 2,
-        cursor: 'pointer',
-        transition: `border-color 150ms ${retailFlowEaseOut}, background-color 150ms ${retailFlowEaseOut}, transform 160ms ${retailFlowEaseOut}`,
-        '&:hover': { borderColor: accent },
-        '&:active': { transform: 'scale(0.98)' },
+        ...getSelectableSx(selected),
+        appearance: 'none',
+        font: 'inherit',
+        textAlign: 'left',
+        width: '100%',
+        px: 4,
+        py: 3.5,
+        ...(isCritical && selected
+          ? {
+              borderColor: applyFlow.critical,
+              backgroundColor: applyFlow.criticalSoft,
+              '&::before': { backgroundColor: applyFlow.critical, transform: 'scaleY(1)' },
+            }
+          : null),
       }}
     >
-      <Stack direction="row" alignItems="flex-start" spacing={1.5}>
+      <Stack direction="row" alignItems="flex-start" spacing={3}>
         <Box
+          aria-hidden
           sx={{
-            mt: '3px',
+            mt: '1px',
             width: 18,
             height: 18,
             flexShrink: 0,
+            display: 'grid',
+            placeItems: 'center',
             borderRadius: '50%',
-            border: `2px solid ${selected ? accent : colors.border}`,
-            backgroundColor: selected ? accent : 'transparent',
-            transition: `border-color 150ms ${retailFlowEaseOut}, background-color 150ms ${retailFlowEaseOut}`,
+            border: `1.5px solid ${
+              selected
+                ? isCritical
+                  ? applyFlow.critical
+                  : applyFlow.accent
+                : applyFlow.hairlineStrong
+            }`,
+            backgroundColor: selected
+              ? isCritical
+                ? applyFlow.critical
+                : applyFlow.accent
+              : 'transparent',
+            color: isCritical ? '#FFFFFF' : applyFlow.onAccent,
+            transition: `border-color 160ms ${applyMotion.easeOut}, background-color 160ms ${applyMotion.easeOut}`,
           }}
-        />
-        <Box>
-          <Typography sx={{ fontSize: '14px', fontWeight: 600, color: colors.text }}>{label}</Typography>
+        >
+          <Check
+            size={11}
+            strokeWidth={3.5}
+            style={{
+              opacity: selected ? 1 : 0,
+              transform: selected ? 'scale(1)' : 'scale(0.7)',
+              transition: `opacity 160ms ${applyMotion.easeOut}, transform 160ms ${applyMotion.easeOut}`,
+            }}
+          />
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            sx={{
+              fontFamily: applyFont.body,
+              fontSize: 14.5,
+              fontWeight: 600,
+              lineHeight: 1.35,
+              color: applyFlow.ink,
+            }}
+          >
+            {label}
+          </Typography>
           {description && (
-            <Typography sx={{ fontSize: '13px', color: colors.textSecondary, mt: 0.25 }}>{description}</Typography>
+            <Typography
+              sx={{
+                fontFamily: applyFont.body,
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: applyFlow.inkMuted,
+                mt: 0.7,
+              }}
+            >
+              {description}
+            </Typography>
           )}
         </Box>
       </Stack>

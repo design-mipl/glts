@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import { Check, Upload } from 'lucide-react'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { FileUploadModal } from '@/pages/website-v2/components/fileUploadModal/FileUploadModal'
-import { retailProfileCardGradient } from '@/pages/website-v2/theme/retailFlowTokens'
 import { StepShell } from '../StepShell'
+import { applyFlow, applyFont, applyMotion, applyRadius } from '@/pages/website-v2/theme/applyFlowTheme'
+import { SectionHeading } from '@/pages/website-v2/theme/applyFormControls'
 import { PhotoCaptureFlow } from '../capture/PhotoCaptureFlow'
 import { PassportCaptureFlow } from '../capture/PassportCaptureFlow'
 import { displayNameUpper, initialsFromName } from '../../config/travelProfileQuestions'
@@ -16,7 +15,6 @@ import {
 } from '../../types'
 import { checklistUploadKey } from './ChecklistStep'
 
-const AVATAR_TONES = ['#D4A0A0', '#0D9488', '#B45309', '#4F46E5', '#0891B2'] as const
 
 interface PassportStepProps {
   countryName?: string
@@ -87,7 +85,6 @@ function DocActionButton({
   uploaded: boolean
   onClick: () => void
 }) {
-  const colors = usePublicBrandColors()
 
   return (
     <Box
@@ -99,67 +96,43 @@ function DocActionButton({
         flex: 1,
         minWidth: 0,
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 0.5,
-        minHeight: 56,
-        py: 0.85,
-        px: 0.5,
-        borderRadius: BORDER_RADIUS.lg,
-        border: uploaded
-          ? '1px solid rgba(115, 192, 100, 0.35)'
-          : `1px solid ${colors.border}`,
-        bgcolor: uploaded ? 'rgba(115, 192, 100, 0.06)' : colors.surfaceAlt,
+        gap: 1.5,
+        minHeight: 44,
+        py: 1.5,
+        px: 2.5,
+        borderRadius: applyRadius.chip,
+        border: `1px solid ${uploaded ? applyFlow.successBorder : applyFlow.hairline}`,
+        backgroundColor: uploaded ? applyFlow.successSoft : applyFlow.surface,
         cursor: 'pointer',
         fontFamily: 'inherit',
-        transition: 'border-color 0.15s ease, background-color 0.15s ease',
-        '&:hover': {
-          borderColor: uploaded ? 'rgba(115, 192, 100, 0.55)' : colors.greenBright,
-          bgcolor: uploaded ? 'rgba(115, 192, 100, 0.1)' : colors.surfaceAlt,
+        transition: `border-color 150ms ${applyMotion.easeOut}, background-color 150ms ${applyMotion.easeOut}, transform ${applyMotion.pressMs}ms ${applyMotion.easeOut}`,
+        '@media (hover: hover) and (pointer: fine)': {
+          '&:hover': { borderColor: uploaded ? applyFlow.successBorder : applyFlow.accentBorder },
+        },
+        '&:active': { transform: 'scale(0.97)' },
+        '&:focus-visible': {
+          outline: 'none',
+          borderColor: applyFlow.accent,
+          boxShadow: `0 0 0 3px ${applyFlow.accentRing}`,
         },
       }}
     >
       {uploaded ? (
-        <Box
-          sx={{
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            bgcolor: colors.greenBright,
-            color: '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Check size={11} strokeWidth={3} />
-        </Box>
+        <Check size={12} strokeWidth={3.5} style={{ color: applyFlow.success, flexShrink: 0 }} />
       ) : (
-        <Box
-          sx={{
-            width: 22,
-            height: 22,
-            borderRadius: BORDER_RADIUS.md,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            bgcolor: 'rgba(115, 192, 100, 0.14)',
-            color: colors.greenBright,
-          }}
-        >
-          <Upload size={12} strokeWidth={2.25} />
-        </Box>
+        <Upload size={12} strokeWidth={2.1} style={{ color: applyFlow.inkFaint, flexShrink: 0 }} />
       )}
       <Typography
         sx={{
-          fontSize: 10,
-          fontWeight: 700,
-          color: colors.navy,
+          fontFamily: applyFont.mono,
+          fontSize: 10.5,
+          fontWeight: 600,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          color: uploaded ? applyFlow.success : applyFlow.inkMuted,
           lineHeight: 1.15,
-          textAlign: 'center',
           whiteSpace: 'nowrap',
         }}
       >
@@ -179,7 +152,6 @@ export function PassportStep({
   onBack,
   onContinue,
 }: PassportStepProps) {
-  const colors = usePublicBrandColors()
   const [active, setActive] = useState<ActiveCapture | null>(null)
   const allReady = applicants.every((applicant) => applicantReady(applicant, uploads))
   const activeApplicant = active
@@ -189,11 +161,11 @@ export function PassportStep({
   return (
     <>
       <StepShell
-        title="The Essential Travelers details"
+        title="Passport, photo and funds"
         helperText={
           countryName
-            ? `These are as per the official ${countryName} embassy requirements for visa processing.`
-            : 'These are as per the official embassy requirements for visa processing.'
+            ? `Every traveller needs these three before ${countryName} will accept the application.`
+            : 'Every traveller needs these three before the embassy will accept the application.'
         }
         onBack={onBack}
         backLabel="Back"
@@ -202,72 +174,68 @@ export function PassportStep({
         continueDisabled={!allReady}
         contentMaxWidth={980}
       >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: applicants.length === 1 ? 'minmax(0, 240px)' : 'repeat(2, minmax(0, 240px))',
-              md:
-                applicants.length === 1
-                  ? 'minmax(0, 240px)'
-                  : applicants.length === 2
-                    ? 'repeat(2, minmax(0, 240px))'
-                    : 'repeat(3, minmax(0, 240px))',
-            },
-            gap: 2,
-            justifyContent: 'center',
-            width: '100%',
-          }}
-        >
+        <Box sx={{ width: '100%' }}>
+          <SectionHeading>
+            {`Documents — ${applicants.filter((a) => applicantReady(a, uploads)).length} of ${applicants.length} travellers complete`}
+          </SectionHeading>
+
           {applicants.map((applicant, index) => {
             const { done, total } = docsUploadedCount(applicant, uploads)
-            const tone = AVATAR_TONES[index % AVATAR_TONES.length]
             const bankDone = hasBankStatement(applicant, uploads)
+            const ready = applicantReady(applicant, uploads)
+
             return (
               <Box
                 key={applicant.id}
                 sx={{
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: 4,
-                  bgcolor: colors.white,
-                  backgroundImage: retailProfileCardGradient,
-                  p: 1.75,
-                  maxWidth: 240,
-                  width: '100%',
-                  mx: 'auto',
-                  minHeight: 210,
-                  boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
-                  position: 'relative',
                   display: 'flex',
-                  flexDirection: 'column',
+                  flexDirection: { xs: 'column', md: 'row' },
+                  alignItems: { xs: 'stretch', md: 'center' },
+                  gap: { xs: 2.5, md: 3.5 },
+                  py: 3.25,
+                  borderBottom: `1px solid ${applyFlow.hairlineSoft}`,
+                  '&:first-of-type': { borderTop: `1px solid ${applyFlow.hairlineSoft}` },
                 }}
               >
-                <Stack alignItems="center" spacing={0.75} sx={{ mb: 1.25, width: '100%' }}>
-                  <Box
+                <Stack direction="row" alignItems="center" spacing={3} sx={{ flex: '0 0 auto', minWidth: 0 }}>
+                  <Typography
                     sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      bgcolor: tone,
-                      color: '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 14,
+                      fontFamily: applyFont.mono,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: applyFlow.inkFaint,
+                      width: 18,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {String(index + 1).padStart(2, '0')}
+                  </Typography>
+                  <Box
+                    aria-hidden
+                    sx={{
+                      width: 38,
+                      height: 38,
+                      display: 'grid',
+                      placeItems: 'center',
+                      borderRadius: applyRadius.chip,
+                      backgroundColor: applyFlow.canvas,
+                      border: `1px solid ${ready ? applyFlow.successBorder : applyFlow.hairline}`,
+                      fontFamily: applyFont.mono,
+                      fontSize: 13,
                       fontWeight: 700,
-                      flexShrink: 0,
+                      color: applyFlow.inkMuted,
+                      flex: '0 0 auto',
                     }}
                   >
                     {cardInitials(applicant, index)}
                   </Box>
-                  <Box sx={{ minWidth: 0, width: '100%', textAlign: 'center' }}>
+                  <Box sx={{ minWidth: 0, width: { xs: 'auto', md: 150 } }}>
                     <Typography
                       sx={{
-                        fontWeight: 700,
-                        fontSize: 13,
-                        color: colors.navy,
-                        letterSpacing: '0.04em',
+                        fontFamily: applyFont.body,
+                        fontSize: 14.5,
+                        fontWeight: 600,
+                        color: applyFlow.ink,
                         lineHeight: 1.3,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -276,13 +244,21 @@ export function PassportStep({
                     >
                       {cardTitle(applicant, index)}
                     </Typography>
-                    <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.25 }}>
-                      {done}/{total} docs uploaded
+                    <Typography
+                      sx={{
+                        fontFamily: applyFont.mono,
+                        fontSize: 10.5,
+                        color: ready ? applyFlow.success : applyFlow.inkMuted,
+                        mt: 0.75,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {done} / {total} uploaded
                     </Typography>
                   </Box>
                 </Stack>
 
-                <Stack direction="row" spacing={0.75} sx={{ mt: 'auto', pt: 1.25 }}>
+                <Stack direction="row" spacing={1.5} sx={{ flex: '1 1 auto', minWidth: 0 }}>
                   <DocActionButton
                     label="Photo"
                     uploaded={Boolean(applicant.photo)}

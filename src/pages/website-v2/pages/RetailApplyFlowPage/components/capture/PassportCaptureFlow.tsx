@@ -2,10 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, Camera, Pencil, ScanLine, Upload } from 'lucide-react'
 import { Box, MenuItem, Select, Stack, TextField, Typography } from '@mui/material'
 import { motion } from 'framer-motion'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { Button } from '@/design-system/UIComponents'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+  getAccentButtonSx,
+} from '@/pages/website-v2/theme/applyFlowTheme'
 import {
   singleExtractedFields,
   type ExtractedField,
@@ -66,7 +69,6 @@ export function PassportCaptureFlow({
   onConfirm,
   onClose,
 }: PassportCaptureFlowProps) {
-  const colors = usePublicBrandColors()
   const fileRef = useRef<HTMLInputElement>(null)
   const backFileRef = useRef<HTMLInputElement>(null)
   const [phase, setPhase] = useState<'capture' | 'review'>(initialPassport ? 'review' : 'capture')
@@ -164,19 +166,12 @@ export function PassportCaptureFlow({
               disabled={!canContinue}
               onClick={handleConfirm}
               sx={{
-                appearance: 'none',
+                ...getAccentButtonSx(),
                 width: '100%',
                 border: 'none',
-                borderRadius: 999,
-                py: 1.5,
+                borderRadius: applyRadius.full,
+                py: 1.75,
                 fontSize: 14,
-                fontWeight: 700,
-                fontFamily: 'inherit',
-                cursor: canContinue ? 'pointer' : 'not-allowed',
-                bgcolor: canContinue ? colors.navy : colors.surfaceAlt,
-                color: canContinue ? '#fff' : colors.textMuted,
-                transition: `background-color 150ms ease, color 150ms ease, transform 160ms ${retailFlowEaseOut}`,
-                '&:active': canContinue ? { transform: 'scale(0.98)' } : undefined,
               }}
             >
               Continue
@@ -199,9 +194,9 @@ export function PassportCaptureFlow({
             spacing={1.5}
             sx={{
               p: 1.75,
-              borderRadius: BORDER_RADIUS.xl,
-              border: `1px dashed ${colors.border}`,
-              bgcolor: colors.surfaceAlt,
+              borderRadius: applyRadius.card,
+              border: `1px dashed ${applyFlow.hairlineStrong}`,
+              bgcolor: applyFlow.canvas,
               height: 'fit-content',
             }}
           >
@@ -215,9 +210,9 @@ export function PassportCaptureFlow({
                 alt="Passport front"
                 sx={{
                   width: '100%',
-                  borderRadius: BORDER_RADIUS.lg,
+                  borderRadius: applyRadius.control,
                   display: 'block',
-                  bgcolor: colors.white,
+                  bgcolor: applyFlow.surface,
                   minHeight: 170,
                   objectFit: 'cover',
                 }}
@@ -236,13 +231,13 @@ export function PassportCaptureFlow({
                   height: 34,
                   borderRadius: '50%',
                   border: 'none',
-                  bgcolor: colors.navy,
+                  bgcolor: applyFlow.navy,
                   color: '#fff',
                   display: 'grid',
                   placeItems: 'center',
                   cursor: 'pointer',
                   boxShadow: '0 4px 12px rgba(15,23,42,0.2)',
-                  transition: `transform 160ms ${retailFlowEaseOut}`,
+                  transition: `transform 160ms ${applyMotion.easeOut}`,
                   '&:active': { transform: 'scale(0.9)' },
                 }}
               >
@@ -261,9 +256,9 @@ export function PassportCaptureFlow({
                   alt="Passport back"
                   sx={{
                     width: '100%',
-                    borderRadius: BORDER_RADIUS.lg,
+                    borderRadius: applyRadius.control,
                     display: 'block',
-                    bgcolor: colors.white,
+                    bgcolor: applyFlow.surface,
                     minHeight: 150,
                     objectFit: 'cover',
                   }}
@@ -282,12 +277,12 @@ export function PassportCaptureFlow({
                     height: 34,
                     borderRadius: '50%',
                     border: 'none',
-                    bgcolor: colors.navy,
+                    bgcolor: applyFlow.navy,
                     color: '#fff',
                     display: 'grid',
                     placeItems: 'center',
                     cursor: 'pointer',
-                    transition: `transform 160ms ${retailFlowEaseOut}`,
+                    transition: `transform 160ms ${applyMotion.easeOut}`,
                     '&:active': { transform: 'scale(0.9)' },
                   }}
                 >
@@ -297,8 +292,8 @@ export function PassportCaptureFlow({
             ) : (
               <Box
                 sx={{
-                  borderRadius: BORDER_RADIUS.lg,
-                  bgcolor: 'rgba(15, 23, 42, 0.04)',
+                  borderRadius: applyRadius.control,
+                  bgcolor: applyFlow.canvas,
                   minHeight: 180,
                   display: 'flex',
                   flexDirection: 'column',
@@ -309,18 +304,27 @@ export function PassportCaptureFlow({
                   py: 3,
                 }}
               >
-                <AlertTriangle size={22} color="#DC2626" />
-                <Typography sx={{ fontWeight: 800, fontSize: 13, color: colors.navy }}>
+                <AlertTriangle size={22} style={{ color: applyFlow.critical }} />
+                <Typography sx={{ fontFamily: applyFont.body, fontWeight: 700, fontSize: 13, color: applyFlow.ink }}>
                   Passport Back required
                 </Typography>
-                <Button
-                  label="Upload"
-                  variant="contained"
-                  color="primary"
-                  size="sm"
-                  startIcon={<Upload size={14} />}
+                <Box
+                  component="button"
+                  type="button"
                   onClick={() => backFileRef.current?.click()}
-                />
+                  sx={{
+                    ...getAccentButtonSx(),
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    border: 'none',
+                    py: 1,
+                    px: 2,
+                    fontSize: 12.5,
+                  }}
+                >
+                  <Upload size={14} /> Upload
+                </Box>
               </Box>
             )}
           </Stack>
@@ -383,13 +387,13 @@ export function PassportCaptureFlow({
               sx={{
                 mt: 3.5,
                 pt: 3,
-                borderTop: `1px solid ${colors.border}`,
+                borderTop: `1px solid ${applyFlow.hairlineSoft}`,
               }}
             >
-              <Typography sx={{ fontWeight: 800, fontSize: 16, color: colors.navy }}>
+              <Typography sx={{ fontFamily: applyFont.display, fontWeight: 700, fontSize: 16, color: applyFlow.ink }}>
                 Contact Details
               </Typography>
-              <Typography sx={{ fontSize: 12, color: colors.textMuted, mt: 0.5, mb: 2 }}>
+              <Typography sx={{ fontFamily: applyFont.body, fontSize: 12, color: applyFlow.inkMuted, mt: 0.5, mb: 2 }}>
                 Required for sharing essential visa updates in real time.
               </Typography>
               <Box
@@ -469,7 +473,7 @@ export function PassportCaptureFlow({
             maxWidth: 260,
             width: '100%',
             lineHeight: 0,
-            transition: `transform 160ms ${retailFlowEaseOut}`,
+            transition: `transform 160ms ${applyMotion.easeOut}`,
             '&:active': mode === 'upload' ? { transform: 'scale(0.98)' } : undefined,
           }}
         >
@@ -481,7 +485,7 @@ export function PassportCaptureFlow({
               width: '100%',
               height: 'auto',
               display: 'block',
-              borderRadius: BORDER_RADIUS.md,
+              borderRadius: applyRadius.control,
               userSelect: 'none',
               pointerEvents: 'none',
             }}
@@ -493,7 +497,7 @@ export function PassportCaptureFlow({
             position: 'relative',
             width: 'min(100%, 320px)',
             height: 200,
-            borderRadius: BORDER_RADIUS.md,
+            borderRadius: applyRadius.control,
             overflow: 'hidden',
             bgcolor: '#0B1220',
             display: 'flex',
@@ -507,7 +511,7 @@ export function PassportCaptureFlow({
             sx={{
               position: 'absolute',
               inset: 8,
-              borderRadius: BORDER_RADIUS.sm,
+              borderRadius: applyRadius.chip,
               border: '1.5px solid rgba(255, 255, 255, 0.92)',
               pointerEvents: 'none',
               zIndex: 2,
@@ -526,7 +530,7 @@ export function PassportCaptureFlow({
                 width: 'calc(100% - 16px)',
                 height: 'calc(100% - 16px)',
                 objectFit: 'cover',
-                borderRadius: BORDER_RADIUS.sm,
+                borderRadius: applyRadius.chip,
               }}
             />
           ) : (
@@ -565,9 +569,10 @@ export function PassportCaptureFlow({
               key={tip}
               component="li"
               sx={{
+                fontFamily: applyFont.body,
                 fontSize: 12.5,
                 lineHeight: 1.45,
-                color: colors.textMuted,
+                color: applyFlow.inkMuted,
                 mb: 0.5,
                 '&:last-child': { mb: 0 },
               }}
@@ -578,19 +583,25 @@ export function PassportCaptureFlow({
         </Box>
 
         {mode === 'live' && status === 'live' ? (
-          <Button
-            label="Capture passport"
-            variant="contained"
-            color="primary"
-            startIcon={<Camera size={16} />}
+          <Box
+            component="button"
+            type="button"
             onClick={handleCapture}
             sx={{
+              ...getAccentButtonSx(),
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1,
               mt: 2.5,
               minWidth: 180,
-              transition: `transform 160ms ${retailFlowEaseOut}`,
-              '&:active': { transform: 'scale(0.97)' },
+              justifyContent: 'center',
+              py: 1.5,
+              px: 3,
+              border: 'none',
             }}
-          />
+          >
+            <Camera size={16} /> Capture passport
+          </Box>
         ) : null}
       </Box>
 
@@ -635,22 +646,22 @@ function UnderlineField({
   select?: boolean
   options?: string[]
 }) {
-  const colors = usePublicBrandColors()
   return (
     <Box>
       <Typography
         sx={{
-          fontSize: 11,
-          fontWeight: 800,
-          color: colors.navy,
+          fontFamily: applyFont.mono,
+          fontSize: 10.5,
+          fontWeight: 700,
+          color: applyFlow.inkMuted,
           textTransform: 'uppercase',
-          letterSpacing: '0.04em',
+          letterSpacing: '0.08em',
           mb: 0.75,
         }}
       >
         {label}
         {required ? (
-          <Box component="span" sx={{ color: '#DC2626', ml: 0.25 }}>
+          <Box component="span" sx={{ color: applyFlow.critical, ml: 0.25 }}>
             *
           </Box>
         ) : null}
@@ -664,10 +675,11 @@ function UnderlineField({
           onChange={(event) => onChange(String(event.target.value))}
           disableUnderline
           sx={{
+            fontFamily: applyFont.body,
             fontSize: 15,
             fontWeight: 700,
-            color: colors.navy,
-            borderBottom: `1px solid ${colors.border}`,
+            color: applyFlow.ink,
+            borderBottom: `1px solid ${applyFlow.hairline}`,
             pb: 0.5,
             '& .MuiSelect-select': { py: 0.5, pr: '28px !important' },
           }}
@@ -688,10 +700,11 @@ function UnderlineField({
           InputProps={{
             disableUnderline: true,
             sx: {
+              fontFamily: applyFont.body,
               fontSize: 15,
               fontWeight: 700,
-              color: colors.navy,
-              borderBottom: `1px solid ${value ? colors.border : 'rgba(15,23,42,0.2)'}`,
+              color: applyFlow.ink,
+              borderBottom: `1px solid ${value ? applyFlow.hairline : applyFlow.hairlineStrong}`,
               borderBottomStyle: value ? 'solid' : 'dashed',
               transition: 'border-color 150ms ease',
               pb: 0.5,

@@ -17,6 +17,7 @@ import {
 } from '@mui/material'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { publicFonts, publicLayout, publicShadows, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { applyFlow } from '../../../theme/applyFlowTheme'
 
 export type TripLengthChoice = '' | 'under-2-weeks' | '2-to-4-weeks' | 'month-or-longer'
 export type ApplicantGroupChoice = 'just-me' | 'family-group'
@@ -169,7 +170,7 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
             size="small"
             disabled={!hasActiveFilters}
             onClick={() => onFiltersChange(defaultFilters)}
-            sx={{ color: colors.teal, fontWeight: 600, textTransform: 'none', minWidth: 'auto', p: 0 }}
+            sx={{ color: applyFlow.accentInk, fontWeight: 600, textTransform: 'none', minWidth: 'auto', p: 0 }}
           >
             Reset
           </Button>
@@ -202,7 +203,7 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                   readOnly: true,
                   endAdornment: (
                     <InputAdornment position="end">
-                      <CalendarDays size={17} color={colors.tealDark} />
+                      <CalendarDays size={17} color={applyFlow.accentInk} />
                     </InputAdornment>
                   ),
                 }}
@@ -214,7 +215,7 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                     fontWeight: 700,
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
-                    color: colors.teal,
+                    color: applyFlow.accentInk,
                   },
                   '& .MuiOutlinedInput-root': {
                     height: 40,
@@ -225,10 +226,10 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                       borderColor: colors.border,
                     },
                     '&:hover fieldset': {
-                      borderColor: colors.teal,
+                      borderColor: applyFlow.accent,
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: colors.teal,
+                      borderColor: applyFlow.accent,
                       borderWidth: 1,
                     },
                   },
@@ -265,8 +266,8 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                     fontSize: '13px',
                     lineHeight: 1.2,
                     '&.Mui-selected': {
-                      bgcolor: colors.tealMuted,
-                      color: colors.tealDark,
+                      bgcolor: applyFlow.accentSoft,
+                      color: applyFlow.accentInk,
                       fontWeight: 700,
                     },
                   },
@@ -305,7 +306,7 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                       size="small"
                       checked={filters.concerns.includes(option.value)}
                       onChange={() => toggleConcern(option.value)}
-                      sx={{ p: 0.25, mr: 0.75, '&.Mui-checked': { color: colors.teal } }}
+                      sx={{ p: 0.25, mr: 0.75, '&.Mui-checked': { color: applyFlow.accentInk } }}
                     />
                   }
                   label={<Typography sx={{ fontSize: '13px', lineHeight: 1.25 }}>{option.label}</Typography>}
@@ -361,8 +362,8 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                   px: 0.75,
                   py: 0.5,
                   '&.Mui-selected': {
-                    bgcolor: colors.tealMuted,
-                    color: colors.tealDark,
+                    bgcolor: applyFlow.accentSoft,
+                    color: applyFlow.accentInk,
                   },
                 },
               }}
@@ -428,14 +429,14 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                     height: 32,
                     p: 0,
                     borderRadius: '9px',
-                    color: isSelected ? colors.white : isCurrentMonth ? colors.navy : colors.textMuted,
-                    bgcolor: isSelected ? colors.teal : 'transparent',
-                    border: isToday && !isSelected ? `1px solid ${colors.teal}` : '1px solid transparent',
+                    color: isSelected ? applyFlow.onAccent : isCurrentMonth ? colors.navy : colors.textMuted,
+                    bgcolor: isSelected ? applyFlow.accent : 'transparent',
+                    border: isToday && !isSelected ? `1px solid ${applyFlow.accentInk}` : '1px solid transparent',
                     fontSize: '13px',
                     fontWeight: isSelected || isToday ? 800 : 600,
                     '&:hover': {
-                      bgcolor: isSelected ? colors.tealDark : colors.tealMuted,
-                      color: isSelected ? colors.white : colors.tealDark,
+                      bgcolor: isSelected ? applyFlow.accentStrong : applyFlow.accentSoft,
+                      color: isSelected ? applyFlow.onAccent : applyFlow.accentInk,
                     },
                   }}
                 >
@@ -459,7 +460,7 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
             <Button
               size="small"
               onClick={() => selectTravelDate(new Date())}
-              sx={{ textTransform: 'none', color: colors.teal, fontWeight: 800 }}
+              sx={{ textTransform: 'none', color: applyFlow.accentInk, fontWeight: 800 }}
             >
               Today
             </Button>

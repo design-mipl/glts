@@ -34,8 +34,10 @@ export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinitio
   steps.push(
     { id: 'checklist', phase: 'documents', label: 'Document checklist' },
     { id: 'originalDocuments', phase: 'documents', label: 'Original documents' },
-    { id: 'collectionMethod', phase: 'collection', label: 'Collection method' },
-    { id: 'collectionDetails', phase: 'collection', label: 'Collection details' },
+    // Method + details are one step: `CollectionDetailsStep` already renders the method
+    // selector above the per-method form, so splitting them made the user answer
+    // "how should we collect?" and then immediately re-see the same four options.
+    { id: 'collectionDetails', phase: 'collection', label: 'Handover' },
     { id: 'collectionConfirmation', phase: 'collection', label: 'Confirm collection' },
     { id: 'insurance', phase: 'extras', label: 'Travel insurance' },
     { id: 'flightTicket', phase: 'extras', label: 'Flight ticket' },

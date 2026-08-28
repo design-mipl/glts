@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
-import { MapPin } from 'lucide-react'
+import { Check, MapPin } from 'lucide-react'
 import type { CountryVisaJurisdiction } from '@/shared/types/countryMaster'
 import {
   getApplicableStatesForOffering,
@@ -14,12 +13,17 @@ import {
   getTravelDateInputBounds,
   resolveJurisdictionMappingState,
 } from '@/shared/utils/jurisdictionRequirementPreview'
-import { BUTTON } from '@/design-system/formControl'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { SearchableStateSelect } from '@/pages/customer/features/applications/components/create/SearchableStateSelect'
-import { TravelDateFieldWithFeasibility } from '@/pages/customer/features/applications/components/create/TravelDateFieldWithFeasibility'
-import { brandPrimaryGreenRgb, usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { getElevatedCardSx, retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+  getSelectableSx,
+  tabularNums,
+} from '@/pages/website-v2/theme/applyFlowTheme'
+import { FieldLabel, SectionHeading } from '@/pages/website-v2/theme/applyFormControls'
+import { ApplyStateSelect } from '../ApplyStateSelect'
+import { ApplyDateCalendar } from '../ApplyDateCalendar'
 import { StepShell } from '../StepShell'
 
 interface JurisdictionStepProps {
@@ -39,28 +43,13 @@ interface JurisdictionStepProps {
   onContinue: () => void
 }
 
-function SectionLabel({ children }: { children: string }) {
-  const colors = usePublicBrandColors()
-  return (
-    <Typography
-      sx={{
-        fontSize: 11,
-        fontWeight: 700,
-        letterSpacing: '0.06em',
-        textTransform: 'uppercase',
-        color: colors.textMuted,
-        mb: 1.25,
-        textAlign: 'left',
-      }}
-    >
-      {children}
-    </Typography>
-  )
-}
-
 /**
- * Submission centre + travel date — mirrors customer RequirementPreviewStep:
- * passport state + residence resolve the centre; travel date is collected beside it.
+ * Submission centre + travel date.
+ *
+ * Composition: two zones inside one field, split by a vertical hairline — not two
+ * elevated cards sitting next to each other. The resolved application centre is a
+ * typographic readout anchored to a gold rule, which is the payoff of filling in the two
+ * fields above it, so it reads as a result rather than another input box.
  */
 export function JurisdictionStep({
   countryId,
@@ -78,8 +67,6 @@ export function JurisdictionStep({
   onBack,
   onContinue,
 }: JurisdictionStepProps) {
-  const colors = usePublicBrandColors()
-
   const applicableStates = useMemo(
     () => getApplicableStatesForOffering(countryId, visaOfferingId),
     [countryId, visaOfferingId],
@@ -88,11 +75,9 @@ export function JurisdictionStep({
   const useStateMapping = applicableStates.length > 0
   const needsCity = jurisdictions.length > 0
   const mappingState = resolveJurisdictionMappingState(placeOfResidence, issuedPassportState)
-  const resolved =
-    selectedId
-      ? jurisdictions.find((j) => j.id === selectedId)
-      : undefined
+  const resolved = selectedId ? jurisdictions.find((j) => j.id === selectedId) : undefined
   const centreLabel = resolved?.name ?? jurisdictionName ?? ''
+  const centreMeta = [resolved?.embassyOrVfs, resolved?.submissionCenter].filter(Boolean).join(' · ')
 
   const travelDateBounds = useMemo(
     () => getTravelDateInputBounds(getVisaApplicationWindow(countryId)),
@@ -116,46 +101,39 @@ export function JurisdictionStep({
   return (
     <StepShell
       title="Where will you submit your application?"
-      helperText="We’ll use your residence to pick the right application centre — then lock in your travel date."
+      helperText="Your residence decides the application centre. Then lock in when you intend to travel."
       onBack={onBack}
       onContinue={onContinue}
       continueDisabled={continueDisabled}
-      contentMaxWidth={1100}
+      contentMaxWidth={1000}
     >
       <Box
         sx={{
           width: '100%',
-          flex: 1,
           display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
+          flexDirection: { xs: 'column', lg: 'row' },
           alignItems: 'stretch',
-          gap: { xs: 2, md: 2.5 },
-          textAlign: 'left',
+          gap: { xs: 6, lg: 0 },
         }}
       >
-        {/* Left — jurisdiction resolution */}
+        {/* ── Zone 1: resolve the centre ─────────────────────────── */}
         <Box
           sx={{
-            flex: { xs: '1 1 auto', md: '1 1 50%' },
+            flex: { xs: '1 1 auto', lg: '1 1 46%' },
             minWidth: 0,
-            ...getElevatedCardSx(colors.border),
-            borderRadius: BORDER_RADIUS.lg,
-            bgcolor: colors.white,
-            p: { xs: 1.75, sm: 2 },
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: 0,
+            pr: { xs: 0, lg: 6 },
           }}
         >
-          <SectionLabel>{useStateMapping ? 'Travel & jurisdiction' : 'Submission city'}</SectionLabel>
+          <SectionHeading>{useStateMapping ? 'Jurisdiction' : 'Submission city'}</SectionHeading>
 
           {useStateMapping ? (
-            <Stack spacing={1.75} sx={{ flex: '0 0 auto' }}>
+            <Stack spacing={3.5}>
               <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 600, color: colors.navy, mb: 0.75 }}>
+                <FieldLabel htmlFor="passport-state" required>
                   Issued passport state
-                </Typography>
-                <SearchableStateSelect
+                </FieldLabel>
+                <ApplyStateSelect
+                  id="passport-state"
                   value={issuedPassportState}
                   options={applicableStates}
                   onChange={onPassportStateChange}
@@ -163,11 +141,11 @@ export function JurisdictionStep({
                   aria-label="Issued passport state"
                 />
               </Box>
+
               <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 600, color: colors.navy, mb: 0.75 }}>
-                  Place of residence
-                </Typography>
-                <SearchableStateSelect
+                <FieldLabel htmlFor="residence-state">Place of residence</FieldLabel>
+                <ApplyStateSelect
+                  id="residence-state"
                   value={placeOfResidence}
                   options={applicableStates}
                   onChange={onPlaceOfResidenceChange}
@@ -175,62 +153,70 @@ export function JurisdictionStep({
                   aria-label="Place of residence (more than 6 months)"
                   clearable
                 />
-                <Typography sx={{ fontSize: 11, color: colors.textMuted, mt: 0.75, lineHeight: 1.4 }}>
-                  Residence takes priority over passport state when both are set.
+                <Typography
+                  sx={{
+                    fontFamily: applyFont.body,
+                    fontSize: 12.5,
+                    color: applyFlow.inkMuted,
+                    mt: 2,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  If you set both, residence takes priority over passport state.
                 </Typography>
               </Box>
 
+              {/* Result readout — the payoff, anchored to a gold rule. */}
               <Box
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.5,
-                  px: 1.5,
-                  py: 1.25,
-                  borderRadius: BORDER_RADIUS.md,
-                  bgcolor: centreLabel
-                    ? `rgba(${brandPrimaryGreenRgb}, 0.08)`
-                    : colors.surfaceAlt,
-                  border: `1px solid ${
-                    centreLabel ? `rgba(${brandPrimaryGreenRgb}, 0.28)` : colors.border
-                  }`,
-                  transition: `background-color 150ms ${retailFlowEaseOut}, border-color 150ms ${retailFlowEaseOut}`,
+                  pl: 4,
+                  borderLeft: `2px solid ${centreLabel ? applyFlow.accent : applyFlow.hairline}`,
+                  transition: `border-color 200ms ${applyMotion.easeOut}`,
                 }}
               >
-                <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  sx={{
+                    ...tabularNums,
+                    fontFamily: applyFont.mono,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    color: applyFlow.inkMuted,
+                    mb: 1.5,
+                  }}
+                >
+                  Your application centre
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: applyFont.display,
+                    fontSize: centreLabel ? 19 : 14.5,
+                    fontWeight: 700,
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.2,
+                    color: centreLabel ? applyFlow.ink : applyFlow.inkMuted,
+                  }}
+                >
+                  {centreLabel || 'Select a state to resolve'}
+                </Typography>
+                {centreMeta ? (
                   <Typography
                     sx={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: '0.04em',
-                      textTransform: 'uppercase',
-                      color: colors.textMuted,
-                      lineHeight: 1.2,
+                      fontFamily: applyFont.mono,
+                      fontSize: 11.5,
+                      color: applyFlow.inkMuted,
+                      mt: 1.5,
+                      lineHeight: 1.5,
                     }}
                   >
-                    Your application centre
+                    {centreMeta}
                   </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: 16,
-                      fontWeight: 800,
-                      color: centreLabel ? colors.navy : colors.textMuted,
-                      mt: 0.25,
-                      lineHeight: 1.25,
-                    }}
-                  >
-                    {centreLabel || 'Select a state to resolve'}
-                  </Typography>
-                  {resolved?.submissionCenter || resolved?.embassyOrVfs ? (
-                    <Typography sx={{ fontSize: 12, color: colors.textSecondary, mt: 0.35 }}>
-                      {[resolved.embassyOrVfs, resolved.submissionCenter].filter(Boolean).join(' · ')}
-                    </Typography>
-                  ) : null}
-                </Box>
+                ) : null}
               </Box>
             </Stack>
           ) : needsCity ? (
-            <Stack spacing={1} sx={{ flex: 1 }}>
+            <Stack spacing={2} role="radiogroup" aria-label="Submission city">
               {jurisdictions.map((jurisdiction) => {
                 const selected = jurisdiction.id === selectedId
                 return (
@@ -238,23 +224,21 @@ export function JurisdictionStep({
                     key={jurisdiction.id}
                     component="button"
                     type="button"
+                    role="radio"
+                    aria-checked={selected}
                     onClick={() => onSelect(jurisdiction.id, jurisdiction.name)}
                     sx={{
+                      ...getSelectableSx(selected),
                       appearance: 'none',
-                      cursor: 'pointer',
+                      font: 'inherit',
                       textAlign: 'left',
+                      width: '100%',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 1.5,
-                      width: '100%',
-                      px: 1.75,
-                      py: 1.5,
-                      borderRadius: BORDER_RADIUS.md,
-                      border: `1.5px solid ${selected ? colors.greenBright : colors.border}`,
-                      bgcolor: selected ? `rgba(${brandPrimaryGreenRgb}, 0.06)` : colors.white,
-                      fontFamily: 'inherit',
-                      transition: `border-color 150ms ${retailFlowEaseOut}, background-color 150ms ${retailFlowEaseOut}`,
-                      '&:hover': { borderColor: colors.greenBright },
+                      gap: 3.5,
+                      pl: 4.5,
+                      pr: 4,
+                      py: 3.5,
                     }}
                   >
                     <Box
@@ -262,23 +246,38 @@ export function JurisdictionStep({
                       sx={{
                         width: 36,
                         height: 36,
-                        flexShrink: 0,
-                        borderRadius: BUTTON.borderRadius,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: alpha(colors.textSecondary, selected ? 0.14 : 0.1),
-                        color: selected ? colors.greenBright : colors.textSecondary,
+                        flex: '0 0 auto',
+                        display: 'grid',
+                        placeItems: 'center',
+                        borderRadius: applyRadius.chip,
+                        backgroundColor: selected ? 'transparent' : applyFlow.canvas,
+                        border: `1px solid ${selected ? applyFlow.accentBorder : applyFlow.hairline}`,
+                        color: selected ? applyFlow.accentInk : applyFlow.inkMuted,
                       }}
                     >
-                      <MapPin size={16} strokeWidth={selected ? 2.25 : 1.75} />
+                      <MapPin size={16} strokeWidth={1.9} />
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography sx={{ fontSize: 14, fontWeight: selected ? 700 : 600, color: colors.navy }}>
+                      <Typography
+                        sx={{
+                          fontFamily: applyFont.body,
+                          fontSize: 14.5,
+                          fontWeight: 600,
+                          color: applyFlow.ink,
+                          lineHeight: 1.3,
+                        }}
+                      >
                         {jurisdiction.name}
                       </Typography>
                       {(jurisdiction.embassyOrVfs || jurisdiction.submissionCenter) && (
-                        <Typography sx={{ fontSize: 12, color: colors.textSecondary, mt: 0.2 }}>
+                        <Typography
+                          sx={{
+                            fontFamily: applyFont.mono,
+                            fontSize: 11,
+                            color: applyFlow.inkMuted,
+                            mt: 0.8,
+                          }}
+                        >
                           {[jurisdiction.embassyOrVfs, jurisdiction.submissionCenter]
                             .filter(Boolean)
                             .join(' · ')}
@@ -290,39 +289,42 @@ export function JurisdictionStep({
                       sx={{
                         width: 18,
                         height: 18,
+                        flex: '0 0 auto',
+                        display: 'grid',
+                        placeItems: 'center',
                         borderRadius: '50%',
-                        border: `2px solid ${selected ? colors.greenBright : colors.border}`,
-                        bgcolor: selected ? colors.greenBright : 'transparent',
-                        flexShrink: 0,
+                        border: `1.5px solid ${selected ? applyFlow.accent : applyFlow.hairlineStrong}`,
+                        backgroundColor: selected ? applyFlow.accent : 'transparent',
+                        color: applyFlow.onAccent,
                       }}
-                    />
+                    >
+                      {selected ? <Check size={11} strokeWidth={3.5} /> : null}
+                    </Box>
                   </Box>
                 )
               })}
             </Stack>
           ) : (
-            <Typography sx={{ fontSize: 13, color: colors.textMuted, lineHeight: 1.45 }}>
+            <Typography
+              sx={{ fontFamily: applyFont.body, fontSize: 13.5, color: applyFlow.inkMuted, lineHeight: 1.55 }}
+            >
               No application centres are configured for this visa yet — continue with your travel
               date.
             </Typography>
           )}
         </Box>
 
-        {/* Right — travel date calendar */}
+        {/* ── Zone 2: travel date ────────────────────────────────── */}
         <Box
           sx={{
-            flex: { xs: '1 1 auto', md: '1 1 50%' },
+            flex: { xs: '1 1 auto', lg: '1 1 54%' },
             minWidth: 0,
-            ...getElevatedCardSx(colors.border),
-            borderRadius: BORDER_RADIUS.lg,
-            bgcolor: colors.white,
-            p: { xs: 1.75, sm: 2 },
-            display: 'flex',
-            flexDirection: 'column',
+            pl: { xs: 0, lg: 6 },
+            borderLeft: { xs: 'none', lg: `1px solid ${applyFlow.hairlineSoft}` },
           }}
         >
-          <SectionLabel>Intended travel date</SectionLabel>
-          <TravelDateFieldWithFeasibility
+          <SectionHeading>Travel date</SectionHeading>
+          <ApplyDateCalendar
             value={travelDate}
             onChange={onTravelDateChange}
             config={
@@ -331,7 +333,9 @@ export function JurisdictionStep({
                 thresholds: DEFAULT_TRAVEL_DATE_RISK_THRESHOLDS,
               }
             }
-            applicationWindowHelper={travelDateBounds.helperText}
+            min={travelDateBounds.min}
+            max={travelDateBounds.max}
+            helperText={travelDateBounds.helperText}
           />
         </Box>
       </Box>

@@ -7,6 +7,13 @@ import { RetailApplyFlowPage } from '../RetailApplyFlowPage'
 
 const WEBSITE_APPLY_LISTING_PATH = '/countries'
 
+/**
+ * `/apply/new` renders the retail apply flow in `../RetailApplyFlowPage`.
+ *
+ * `WebsiteApplicationFlowLayout` supplies the canvas and centres the flow panel; it
+ * intentionally renders no site header — the panel's own rail carries the brand mark,
+ * destination context and exit.
+ */
 export function WebsiteApplicationFlowPage() {
   return (
     <WebsiteApplicationFlowLayout>

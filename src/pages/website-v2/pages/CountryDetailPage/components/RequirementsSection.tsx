@@ -21,6 +21,7 @@ import {
 } from '@/shared/theme/publicBrand'
 import { WhyWeAskSheet } from '@/pages/website-v2/components/WhyWeAskSheet'
 import { resolveDocumentWhyContent, type DocumentWhyContent } from '@/pages/website-v2/config/documentWhyContent'
+import { applyFlow } from '@/pages/website-v2/theme/applyFlowTheme'
 
 type ReqType = 'document' | 'photo' | 'financial' | 'insurance' | 'travel' | 'accommodation'
 
@@ -109,9 +110,11 @@ function orderDocumentNames(documents: string[]) {
 
 function RequirementRow({
   req,
+  index,
   onWhyAsk,
 }: {
   req: RequirementItem
+  index: number
   onWhyAsk: (content: DocumentWhyContent) => void
 }) {
   const colors = usePublicBrandColors()
@@ -121,13 +124,31 @@ function RequirementRow({
     <Box
       sx={{
         display: 'flex',
-        gap: 2,
+        alignItems: 'flex-start',
+        gap: 1.5,
         py: 2.25,
         px: { xs: 2, sm: 2.5 },
         transition: 'background-color 0.2s',
         '&:hover': { bgcolor: colors.surfaceAlt },
       }}
     >
+      <Box
+        component="span"
+        sx={{
+          fontFamily: publicFonts.mono,
+          fontSize: '10px',
+          fontWeight: 700,
+          color: colors.textMuted,
+          pt: '15px',
+          width: 16,
+          flexShrink: 0,
+          textAlign: 'right',
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
+        {String(index + 1).padStart(2, '0')}
+      </Box>
+
       <Box
         sx={{
           width: 44,
@@ -285,9 +306,9 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
               size="small"
               sx={{
                 fontWeight: 800,
-                bgcolor: colors.tealMuted,
-                color: colors.tealDark,
-                border: `1px solid rgba(12, 108, 121, 0.28)`,
+                bgcolor: applyFlow.accentSoft,
+                color: applyFlow.accentInk,
+                border: `1px solid ${applyFlow.accentBorder}`,
               }}
             />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, minWidth: 0 }}>
@@ -396,13 +417,39 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
         {required.map((req, i) => (
           <Box key={req.id}>
             {i > 0 && <Divider />}
-            <RequirementRow req={req} onWhyAsk={setWhyContent} />
+            <RequirementRow req={req} index={i} onWhyAsk={setWhyContent} />
           </Box>
         ))}
 
         {optional.length > 0 && (
           <>
-            <Divider />
+            {/* Perforation seam — die-cut illusion, echoes the destination card's ticket-stub motif */}
+            <Box aria-hidden sx={{ position: 'relative', height: 0, borderTop: `2px dashed ${colors.border}` }}>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -9,
+                  left: -9,
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  bgcolor: colors.surfaceAlt,
+                  border: `1px solid ${colors.border}`,
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -9,
+                  right: -9,
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  bgcolor: colors.surfaceAlt,
+                  border: `1px solid ${colors.border}`,
+                }}
+              />
+            </Box>
             <Box
               sx={{
                 px: { xs: 2, sm: 2.5 },
@@ -418,7 +465,7 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
             {optional.map((req, i) => (
               <Box key={req.id}>
                 {i > 0 && <Divider />}
-                <RequirementRow req={req} onWhyAsk={setWhyContent} />
+                <RequirementRow req={req} index={required.length + i} onWhyAsk={setWhyContent} />
               </Box>
             ))}
           </>

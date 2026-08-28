@@ -1,10 +1,13 @@
 import { Box, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
-import { CircleHelp, Upload } from 'lucide-react'
+import { AlertCircle, Check, CircleHelp, Loader2, Upload } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { BUTTON } from '@/design-system/formControl'
-import { brandPrimaryGreenRgb, usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { retailFlowColors, retailFlowLayout } from '@/pages/website-v2/theme/retailFlowTokens'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+} from '@/pages/website-v2/theme/applyFlowTheme'
+import { StatusPill, type ApplyStatusTone } from '@/pages/website-v2/theme/applyFormControls'
 
 export type DocumentChecklistStatusTone = 'original' | 'completed' | 'neutral'
 
@@ -25,30 +28,30 @@ interface DocumentChecklistRowProps {
     label: string
     tone?: DocumentChecklistStatusTone
   }
+  /**
+   * Verification state after a file arrives. `verifying` while we read it, `error` when it
+   * could not be read — an errored row keeps its Upload control so the fix is one click,
+   * rather than sending the person back to a separate error screen.
+   */
+  status?: 'verifying' | 'error'
+  /** Shown in place of `description` when `status` is `error`. */
+  errorHint?: string
 }
 
-function statusTagSx(tone: DocumentChecklistStatusTone, colors: ReturnType<typeof usePublicBrandColors>) {
-  if (tone === 'original') {
-    return {
-      bgcolor: 'rgba(146, 96, 14, 0.1)',
-      color: '#92600E',
-      border: '1px solid rgba(146, 96, 14, 0.22)',
-    }
-  }
-  if (tone === 'completed') {
-    return {
-      bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
-      color: retailFlowColors.green,
-      border: '1px solid transparent',
-    }
-  }
-  return {
-    bgcolor: colors.surfaceAlt,
-    color: colors.textSecondary,
-    border: `1px solid ${colors.border}`,
-  }
+function pillTone(tone: DocumentChecklistStatusTone): ApplyStatusTone {
+  if (tone === 'original') return 'attention'
+  if (tone === 'completed') return 'done'
+  return 'idle'
 }
 
+/**
+ * One document in a checklist.
+ *
+ * Rows are separated by hairlines rather than being individually rounded and hover-filled —
+ * a checklist is a list, and boxing each line made twelve documents read as twelve cards.
+ * The icon uses one neutral treatment for every document type (no per-type colour), and
+ * green appears only once a file is actually in.
+ */
 export function DocumentChecklistRow({
   icon: Icon,
   name,
@@ -58,50 +61,97 @@ export function DocumentChecklistRow({
   onInfoClick,
   onFileSelect,
   statusTag,
+  status,
+  errorHint,
 }: DocumentChecklistRowProps) {
-  const colors = usePublicBrandColors()
-  const tagTone = statusTag?.tone ?? 'neutral'
-  const isStatic = completed || Boolean(statusTag)
+  const isVerifying = status === 'verifying'
+  const isError = status === 'error'
 
   return (
     <Stack
       direction="row"
       alignItems="center"
-      spacing={1.25}
+      spacing={3}
       sx={{
-        px: 1.25,
-        py: 1.35,
-        borderRadius: retailFlowLayout.controlRadius,
-        ...(isStatic ? null : { '&:hover': { bgcolor: colors.surfaceAlt } }),
+        px: 0,
+        py: 2.5,
+        borderBottom: `1px solid ${applyFlow.hairlineSoft}`,
       }}
     >
       <Box
         aria-hidden
         sx={{
-          width: 28,
-          height: 28,
+          width: 32,
+          height: 32,
           flexShrink: 0,
-          borderRadius: BUTTON.borderRadius,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: alpha(colors.textSecondary, completed ? 0.14 : 0.1),
-          color: colors.textSecondary,
+          display: 'grid',
+          placeItems: 'center',
+          borderRadius: applyRadius.chip,
+          backgroundColor: applyFlow.canvas,
+          border: `1px solid ${
+            isError
+              ? 'rgba(180, 35, 24, 0.4)'
+              : completed
+                ? applyFlow.successBorder
+                : isVerifying
+                  ? applyFlow.accentBorder
+                  : applyFlow.hairline
+          }`,
+          color: isError
+            ? applyFlow.critical
+            : completed
+              ? applyFlow.success
+              : isVerifying
+                ? applyFlow.accentInk
+                : applyFlow.inkMuted,
+          transition: `border-color 180ms ${applyMotion.easeOut}, color 180ms ${applyMotion.easeOut}`,
         }}
       >
-        <Icon size={14} strokeWidth={completed ? 2.25 : 1.75} />
+        {isVerifying ? (
+          <Loader2
+            size={14}
+            strokeWidth={2.4}
+            style={{ animation: 'docSpin 900ms linear infinite' }}
+          />
+        ) : isError ? (
+          <AlertCircle size={14} strokeWidth={2.2} />
+        ) : completed ? (
+          <Check size={14} strokeWidth={3} />
+        ) : (
+          <Icon size={14} strokeWidth={1.8} />
+        )}
+        <Box
+          component="style"
+          // Scoped keyframe for the verifying spinner.
+          dangerouslySetInnerHTML={{
+            __html: '@keyframes docSpin{to{transform:rotate(360deg)}}',
+          }}
+        />
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Stack direction="row" alignItems="center" spacing={0.75}>
-          <Typography sx={{ fontSize: 14, fontWeight: 600, color: colors.navy }}>
+        <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Typography
+            sx={{
+              fontFamily: applyFont.body,
+              fontSize: 13.5,
+              fontWeight: 600,
+              color: applyFlow.ink,
+              lineHeight: 1.3,
+            }}
+          >
             {name}
-            {optional ? ' (optional)' : ''}
+            {optional ? (
+              <Box component="span" sx={{ color: applyFlow.inkFaint, fontWeight: 400 }}>
+                {' '}
+                · optional
+              </Box>
+            ) : null}
           </Typography>
           <Box
             component="button"
             type="button"
-            aria-label={`Why we ask about ${name}`}
+            aria-label={`Why we ask for ${name}`}
             onClick={onInfoClick}
             sx={{
               appearance: 'none',
@@ -110,74 +160,79 @@ export function DocumentChecklistRow({
               p: 0,
               m: 0,
               cursor: 'pointer',
-              color: colors.textMuted,
+              color: applyFlow.inkFaint,
               display: 'inline-flex',
-              '&:hover': { color: colors.greenDark },
+              flexShrink: 0,
+              transition: `color 150ms ${applyMotion.easeOut}`,
+              '@media (hover: hover) and (pointer: fine)': {
+                '&:hover': { color: applyFlow.accentInk },
+              },
+              '&:focus-visible': {
+                outline: 'none',
+                color: applyFlow.accentInk,
+                boxShadow: `0 0 0 2px ${applyFlow.accent}`,
+                borderRadius: '50%',
+              },
             }}
           >
-            <CircleHelp size={14} />
+            <CircleHelp size={13} />
           </Box>
         </Stack>
-        {description ? (
-          <Typography sx={{ fontSize: 12, color: colors.textMuted, mt: 0.25 }}>
-            {description}
+        {isError || description ? (
+          <Typography
+            sx={{
+              fontFamily: applyFont.body,
+              fontSize: 12,
+              color: isError ? applyFlow.critical : applyFlow.inkMuted,
+              mt: 0.5,
+              lineHeight: 1.45,
+            }}
+          >
+            {isError ? errorHint || "We couldn't read that file. Try a clearer scan or a PDF." : description}
           </Typography>
         ) : null}
       </Box>
 
-      {statusTag ? (
-        <Box
-          sx={{
-            flexShrink: 0,
-            px: 1.1,
-            py: 0.4,
-            borderRadius: 999,
-            fontSize: 10.5,
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-            ...statusTagSx(tagTone, colors),
-          }}
-        >
-          {statusTag.label}
-        </Box>
+      {isVerifying ? (
+        <StatusPill tone="idle">Checking</StatusPill>
+      ) : statusTag ? (
+        <StatusPill tone={pillTone(statusTag.tone ?? 'neutral')}>{statusTag.label}</StatusPill>
       ) : completed ? (
-        <Box
-          sx={{
-            flexShrink: 0,
-            px: 1.1,
-            py: 0.4,
-            borderRadius: 999,
-            bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
-            color: retailFlowColors.green,
-            fontSize: 10.5,
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-          }}
-        >
-          Completed
-        </Box>
+        <StatusPill tone="done">Uploaded</StatusPill>
       ) : (
         <Box
           component="label"
           sx={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: colors.greenDark,
-            bgcolor: colors.greenMuted,
-            border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.15)`,
-            borderRadius: '8px',
-            px: 1.35,
-            py: 0.65,
-            cursor: onFileSelect ? 'pointer' : 'default',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5,
             flexShrink: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1.25,
+            minHeight: 36,
+            '@media (pointer: coarse)': { minHeight: 44 },
+            px: 3,
+            borderRadius: applyRadius.chip,
+            border: `1px solid ${isError ? 'rgba(180, 35, 24, 0.45)' : applyFlow.accentBorder}`,
+            backgroundColor: isError ? applyFlow.criticalSoft : applyFlow.accentSoft,
+            color: isError ? applyFlow.critical : applyFlow.accentInk,
+            fontFamily: applyFont.mono,
+            fontSize: 10.5,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            cursor: onFileSelect ? 'pointer' : 'default',
+            transition: `background-color 150ms ${applyMotion.easeOut}, transform ${applyMotion.pressMs}ms ${applyMotion.easeOut}`,
+            '@media (hover: hover) and (pointer: fine)': {
+              '&:hover': { backgroundColor: `rgba(254, 193, 7, 0.22)` },
+            },
+            '&:active': { transform: 'scale(0.97)' },
+            '&:focus-within': {
+              borderColor: applyFlow.accent,
+              boxShadow: `0 0 0 3px ${applyFlow.accentRing}`,
+            },
           }}
         >
-          <Upload size={12} /> Upload
+          <Upload size={12} strokeWidth={2.2} /> {isError ? 'Retry' : 'Upload'}
           {onFileSelect ? (
             <input
               type="file"

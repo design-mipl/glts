@@ -10,10 +10,12 @@ import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
 type WebsiteAbToggleProps = {
   fullWidth?: boolean
   onNavigate?: () => void
+  /** Render for legibility on a solid dark-navy background (e.g. the website-v2 header bar). */
+  onDark?: boolean
 }
 
 /** Compact A / B switch for the public-site header. */
-export function WebsiteAbToggle({ fullWidth = false, onNavigate }: WebsiteAbToggleProps) {
+export function WebsiteAbToggle({ fullWidth = false, onNavigate, onDark = false }: WebsiteAbToggleProps) {
   const colors = usePublicBrandColors()
   const navigate = useNavigate()
   const location = useLocation()
@@ -32,7 +34,13 @@ export function WebsiteAbToggle({ fullWidth = false, onNavigate }: WebsiteAbTogg
     fontSize: '11px',
     fontWeight: active ? 700 : 500,
     lineHeight: 1,
-    color: active ? colors.navy : colors.textMuted,
+    color: onDark
+      ? active
+        ? '#fff'
+        : 'rgba(255, 255, 255, 0.5)'
+      : active
+        ? colors.navy
+        : colors.textMuted,
     minWidth: 12,
     textAlign: 'center' as const,
     userSelect: 'none' as const,

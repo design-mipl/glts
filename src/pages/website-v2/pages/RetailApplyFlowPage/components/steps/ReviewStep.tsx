@@ -1,10 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Box, Collapse, Stack, Typography } from '@mui/material'
-import { AlertTriangle, CheckCircle2, ChevronDown, Pencil } from 'lucide-react'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { AlertTriangle, ChevronDown, Pencil } from 'lucide-react'
 import type { RetailJourney } from '@/shared/services/retailJourneyResolver'
-import { getElevatedCardSx, retailFlowColors } from '@/pages/website-v2/theme/retailFlowTokens'
 import { retailCollectionMethodLabel } from '../../config/retailCollectionMethods'
 import { initialsFromName } from '../../config/travelProfileQuestions'
 import {
@@ -16,6 +13,8 @@ import {
 } from '../../types'
 import { checklistUploadKey } from './ChecklistStep'
 import { StepShell } from '../StepShell'
+import { applyFlow, applyFont, applyMotion, applyRadius } from '@/pages/website-v2/theme/applyFlowTheme'
+import { StatusPill } from '@/pages/website-v2/theme/applyFormControls'
 
 interface ReviewStepProps {
   journey: RetailJourney
@@ -85,32 +84,10 @@ function extraLabel(selection: RetailExtraSelection, services: RetailJourney['in
 }
 
 function StatusBadge({ complete }: { complete: boolean }) {
-  return (
-    <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 0.5,
-        px: 1,
-        py: 0.35,
-        borderRadius: 999,
-        bgcolor: complete ? retailFlowColors.greenMuted : 'rgba(180, 83, 9, 0.12)',
-        color: complete ? retailFlowColors.green : '#B45309',
-        fontSize: 11,
-        fontWeight: 700,
-        letterSpacing: '0.04em',
-        textTransform: 'uppercase',
-        flexShrink: 0,
-      }}
-    >
-      {complete ? <CheckCircle2 size={12} strokeWidth={2.4} /> : null}
-      {complete ? 'Complete' : 'Incomplete'}
-    </Box>
-  )
+  return <StatusPill tone={complete ? 'done' : 'attention'}>{complete ? 'Complete' : 'Incomplete'}</StatusPill>
 }
 
 function EditLink({ label = 'Edit', onClick }: { label?: string; onClick?: () => void }) {
-  const colors = usePublicBrandColors()
   if (!onClick) return null
   return (
     <Box
@@ -128,20 +105,37 @@ function EditLink({ label = 'Edit', onClick }: { label?: string; onClick?: () =>
         font: 'inherit',
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 0.5,
-        color: retailFlowColors.green,
-        fontSize: 12.5,
-        fontWeight: 700,
-        p: 0,
-        '&:hover': { color: colors.greenDark },
+        gap: 1,
+        px: 1.5,
+        py: 1,
+        borderRadius: applyRadius.chip,
+        color: applyFlow.inkMuted,
+        fontFamily: applyFont.mono,
+        fontSize: 10.5,
+        fontWeight: 600,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        transition: `color 150ms ${applyMotion.easeOut}`,
+        '@media (hover: hover) and (pointer: fine)': {
+          '&:hover': { color: applyFlow.accentInk },
+        },
+        '&:focus-visible': {
+          outline: 'none',
+          boxShadow: `0 0 0 2px ${applyFlow.accent}`,
+        },
       }}
     >
-      <Pencil size={12} strokeWidth={2.4} />
+      <Pencil size={11} strokeWidth={2.2} />
       {label}
     </Box>
   )
 }
 
+/**
+ * Review section. A hairline-separated disclosure, not a bordered card — the review page
+ * is a single document to scan top to bottom, and boxing each section made it read as
+ * eight unrelated widgets.
+ */
 function AccordionBlock({
   title,
   summary,
@@ -157,21 +151,14 @@ function AccordionBlock({
   onEdit?: () => void
   children: ReactNode
 }) {
-  const colors = usePublicBrandColors()
   const [open, setOpen] = useState(defaultOpen)
 
   return (
-    <Box
-      sx={{
-        border: `1px solid ${colors.border}`,
-        borderRadius: BORDER_RADIUS.md,
-        overflow: 'hidden',
-        bgcolor: colors.white,
-      }}
-    >
+    <Box sx={{ borderBottom: `1px solid ${applyFlow.hairlineSoft}` }}>
       <Box
         component="button"
         type="button"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         sx={{
           appearance: 'none',
@@ -179,43 +166,81 @@ function AccordionBlock({
           width: '100%',
           display: 'flex',
           alignItems: 'center',
-          gap: 1,
-          px: 1.5,
-          py: 1.25,
+          gap: 3,
+          px: 0,
+          py: 3,
+          minHeight: 44,
           cursor: 'pointer',
           font: 'inherit',
-          bgcolor: colors.surfaceAlt,
+          bgcolor: 'transparent',
           textAlign: 'left',
+          '&:focus-visible': {
+            outline: 'none',
+            boxShadow: `inset 0 0 0 2px ${applyFlow.accent}`,
+            borderRadius: applyRadius.chip,
+          },
         }}
       >
+        <ChevronDown
+          size={14}
+          style={{
+            color: applyFlow.inkFaint,
+            flexShrink: 0,
+            transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+            transition: `transform 180ms ${applyMotion.easeOut}`,
+          }}
+        />
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: 13, fontWeight: 700, color: colors.navy }}>{title}</Typography>
+          <Typography
+            sx={{
+              fontFamily: applyFont.body,
+              fontSize: 14,
+              fontWeight: 600,
+              color: applyFlow.ink,
+              lineHeight: 1.3,
+            }}
+          >
+            {title}
+          </Typography>
           {summary ? (
-            <Typography sx={{ fontSize: 12, color: colors.textMuted, mt: 0.2, lineHeight: 1.35 }}>
+            <Typography
+              sx={{
+                fontFamily: applyFont.mono,
+                fontSize: 11,
+                color: applyFlow.inkMuted,
+                mt: 0.75,
+                lineHeight: 1.4,
+              }}
+            >
               {summary}
             </Typography>
           ) : null}
         </Box>
         <EditLink label={editLabel} onClick={onEdit} />
-        <ChevronDown
-          size={16}
-          color={colors.textMuted}
-          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease', flexShrink: 0 }}
-        />
       </Box>
       <Collapse in={open}>
-        <Box sx={{ px: 1.5, py: 1.5, borderTop: `1px solid ${colors.border}` }}>{children}</Box>
+        <Box sx={{ pl: 6, pr: 0, pb: 3.5 }}>{children}</Box>
       </Collapse>
     </Box>
   )
 }
 
 function MetaRow({ label, value }: { label: string; value: string }) {
-  const colors = usePublicBrandColors()
   return (
-    <Stack direction="row" justifyContent="space-between" spacing={2} sx={{ py: 0.55 }}>
-      <Typography sx={{ fontSize: 12.5, color: colors.textMuted }}>{label}</Typography>
-      <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: colors.navy, textAlign: 'right' }}>
+    <Stack direction="row" justifyContent="space-between" spacing={3} sx={{ py: 1.25 }}>
+      <Typography sx={{ fontFamily: applyFont.body, fontSize: 13, color: applyFlow.inkMuted }}>
+        {label}
+      </Typography>
+      <Typography
+        sx={{
+          fontFamily: applyFont.mono,
+          fontSize: 12,
+          fontWeight: 500,
+          color: applyFlow.ink,
+          textAlign: 'right',
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
         {value}
       </Typography>
     </Stack>
@@ -233,7 +258,6 @@ export function ReviewStep({
   onDismissRequirementsUpdated,
   previewOnly = false,
 }: ReviewStepProps) {
-  const colors = usePublicBrandColors()
   const [openTravellerId, setOpenTravellerId] = useState(draft.applicants[0]?.id ?? '')
 
   const travellers = draft.applicants
@@ -261,8 +285,9 @@ export function ReviewStep({
       {requirementsUpdated ? (
         <Box
           sx={{
-            ...getElevatedCardSx('rgba(180, 83, 9, 0.35)'),
-            borderRadius: BORDER_RADIUS.lg,
+            border: `1px solid rgba(180, 83, 9, 0.30)`,
+            borderLeft: `2px solid ${applyFlow.warning}`,
+            borderRadius: applyRadius.control,
             bgcolor: 'rgba(255, 247, 237, 1)',
             p: 1.75,
             display: 'flex',
@@ -306,13 +331,12 @@ export function ReviewStep({
 
       <Box
         sx={{
-          ...getElevatedCardSx(colors.border),
-          borderRadius: BORDER_RADIUS.lg,
-          bgcolor: colors.white,
+          borderRadius: applyRadius.control,
+          bgcolor: applyFlow.surface,
           p: 2,
         }}
       >
-        <Typography sx={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: colors.textMuted, mb: 1 }}>
+        <Typography sx={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: applyFlow.inkMuted, mb: 1 }}>
           Trip
         </Typography>
         <MetaRow label="Destination" value={journey.country.name} />
@@ -337,9 +361,8 @@ export function ReviewStep({
           <Box
             key={applicant.id}
             sx={{
-              ...getElevatedCardSx(colors.border),
-              borderRadius: BORDER_RADIUS.lg,
-              bgcolor: colors.white,
+                  borderRadius: applyRadius.control,
+              bgcolor: applyFlow.surface,
               overflow: 'hidden',
             }}
           >
@@ -358,8 +381,8 @@ export function ReviewStep({
                 py: 1.5,
                 cursor: 'pointer',
                 font: 'inherit',
-                bgcolor: open ? colors.navy : colors.white,
-                color: open ? '#fff' : colors.navy,
+                bgcolor: open ? applyFlow.accentSoft : applyFlow.surface,
+                color: applyFlow.ink,
                 textAlign: 'left',
               }}
             >
@@ -368,8 +391,8 @@ export function ReviewStep({
                   width: 32,
                   height: 32,
                   borderRadius: '50%',
-                  bgcolor: open ? 'rgba(255,255,255,0.18)' : colors.surfaceAlt,
-                  color: open ? '#fff' : colors.textSecondary,
+                  bgcolor: applyFlow.canvas,
+                  color: applyFlow.inkMuted,
                   fontSize: 11,
                   fontWeight: 700,
                   display: 'flex',
@@ -399,7 +422,7 @@ export function ReviewStep({
             </Box>
 
             <Collapse in={open}>
-              <Stack spacing={1.25} sx={{ p: 2, bgcolor: colors.white }}>
+              <Stack spacing={1.25} sx={{ p: 2, bgcolor: applyFlow.surface }}>
                 <AccordionBlock
                   title="Documents"
                   summary={`${doneDocs}/${mandatoryDocs.length} mandatory uploaded`}
@@ -448,7 +471,7 @@ export function ReviewStep({
                       />
                     </>
                   ) : (
-                    <Typography sx={{ fontSize: 12.5, color: colors.textMuted }}>
+                    <Typography sx={{ fontSize: 12.5, color: applyFlow.inkMuted }}>
                       This traveller is funding their own trip.
                     </Typography>
                   )}
@@ -475,9 +498,8 @@ export function ReviewStep({
 
       <Box
         sx={{
-          ...getElevatedCardSx(colors.border),
-          borderRadius: BORDER_RADIUS.lg,
-          bgcolor: colors.white,
+          borderRadius: applyRadius.control,
+          bgcolor: applyFlow.surface,
           p: 2,
         }}
       >
@@ -487,7 +509,7 @@ export function ReviewStep({
             fontWeight: 700,
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
-            color: colors.textMuted,
+            color: applyFlow.inkMuted,
             mb: 1.25,
           }}
         >
@@ -526,9 +548,9 @@ export function ReviewStep({
           >
             <Stack spacing={1}>
               <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography sx={{ fontSize: 12.5, color: colors.textMuted }}>Travel insurance</Typography>
+                <Typography sx={{ fontSize: 12.5, color: applyFlow.inkMuted }}>Travel insurance</Typography>
                 <Stack direction="row" spacing={1.25} alignItems="center">
-                  <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: colors.navy }}>
+                  <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: applyFlow.ink }}>
                     {extraLabel(draft.insurance, journey.insuranceServices)}
                   </Typography>
                   <EditLink
@@ -538,9 +560,9 @@ export function ReviewStep({
                 </Stack>
               </Stack>
               <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography sx={{ fontSize: 12.5, color: colors.textMuted }}>Flight ticket</Typography>
+                <Typography sx={{ fontSize: 12.5, color: applyFlow.inkMuted }}>Flight ticket</Typography>
                 <Stack direction="row" spacing={1.25} alignItems="center">
-                  <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: colors.navy }}>
+                  <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: applyFlow.ink }}>
                     {extraLabel(draft.flightTicket, journey.flightTicketServices)}
                   </Typography>
                   <EditLink
@@ -555,7 +577,7 @@ export function ReviewStep({
       </Box>
 
       {!allComplete ? (
-        <Typography sx={{ fontSize: 12.5, color: colors.textMuted, textAlign: 'center' }}>
+        <Typography sx={{ fontSize: 12.5, color: applyFlow.inkMuted, textAlign: 'center' }}>
           Finish incomplete travellers before payment — you can still proceed to review pricing.
         </Typography>
       ) : null}

@@ -1,80 +1,56 @@
 import { Box } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import type { ReactNode } from 'react'
-import { brandPrimaryGreenRgb, usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { PublicContainer } from './PublicContainer'
-import { WebsiteApplyHeader } from './WebsiteApplyHeader'
-import { publicFonts } from '../theme/publicSiteTokens'
+import { applyCanvasSx, applyFlow, applyFont } from '../theme/applyFlowTheme'
 
 interface WebsiteApplicationFlowLayoutProps {
   children: ReactNode
 }
 
-const GRID_SIZE_PX = 40
+/** Max width of the flow panel. Wider than a form, narrower than a dashboard. */
+const PANEL_MAX_WIDTH = 1220
 
 /**
- * Focused retail apply shell — minimal header, no marketing nav,
- * no site footer / sticky CTA. Graph-paper canvas behind the flow.
+ * Focused retail apply shell.
+ *
+ * Deliberately has **no site header**: the old one showed the logo plus the destination
+ * flag and name, which the flow panel's own rail now carries. Duplicating it pushed the
+ * panel down the page and made the screen read as "a website with a form on it" rather
+ * than a single application surface. The brand mark and the exit affordance live in the
+ * rail instead, so the panel owns the viewport.
  */
 export function WebsiteApplicationFlowLayout({ children }: WebsiteApplicationFlowLayoutProps) {
-  const colors = usePublicBrandColors()
-  const gridLine = `rgba(${brandPrimaryGreenRgb}, 0.07)`
-  const canvasTint = alpha(colors.greenBright, 0.02)
-  const gridSize = `${GRID_SIZE_PX}px ${GRID_SIZE_PX}px`
-
   return (
     <Box
+      component="main"
       sx={{
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
         height: '100vh',
         minHeight: '100vh',
         width: '100%',
-        fontFamily: publicFonts.body,
-        color: colors.text,
-        bgcolor: colors.surface,
+        fontFamily: applyFont.body,
+        color: applyFlow.ink,
+        boxSizing: 'border-box',
         overflow: 'hidden',
+        p: { xs: 0, lg: 5, xl: 7 },
+        ...applyCanvasSx,
       }}
     >
-      <WebsiteApplyHeader />
       <Box
-        component="main"
         sx={{
-          flex: 1,
           width: '100%',
+          maxWidth: PANEL_MAX_WIDTH,
+          flex: 1,
+          minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
-          pt: { xs: 3, md: 4 },
-          pb: { xs: 5, md: 6 },
-          minHeight: 0,
-          boxSizing: 'border-box',
-          bgcolor: colors.surface,
-          backgroundImage: [
-            // Horizontal lines
-            `linear-gradient(${gridLine} 1px, transparent 1px)`,
-            // Vertical lines
-            `linear-gradient(90deg, ${gridLine} 1px, transparent 1px)`,
-            // Soft green wash
-            `linear-gradient(${canvasTint}, ${canvasTint})`,
-          ].join(', '),
-          // One size per layer — both grid axes must tile at GRID_SIZE_PX
-          backgroundSize: `${gridSize}, ${gridSize}, auto`,
-          backgroundPosition: 'top left, top left, center',
-          backgroundRepeat: 'repeat, repeat, no-repeat',
-          backgroundAttachment: 'scroll',
+          // Full-bleed on phones — a floating card on a small screen wastes the viewport.
+          maxHeight: { xs: '100%', lg: 860 },
         }}
       >
-        <PublicContainer
-          sx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: 0,
-            width: '100%',
-          }}
-        >
-          {children}
-        </PublicContainer>
+        {children}
       </Box>
     </Box>
   )

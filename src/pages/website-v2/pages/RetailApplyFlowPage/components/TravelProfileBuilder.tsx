@@ -1,11 +1,16 @@
 import { useMemo, useState } from 'react'
-import { Box, IconButton, InputAdornment, Stack, TextField, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Search, Smile, UserRound, Users, X } from 'lucide-react'
+import { ArrowLeft, Check, Search, X } from 'lucide-react'
 import { Modal } from '@/design-system/UIComponents'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+  getSelectableSx,
+  tabularNums,
+} from '@/pages/website-v2/theme/applyFlowTheme'
 import type { RetailApplicantParty } from '../types'
 import {
   MARITAL_STATUS_OPTIONS,
@@ -14,16 +19,8 @@ import {
   TRAVEL_PROFILE_QUESTION_ORDER,
   VISA_REFUSAL_OPTIONS,
   displayNameUpper,
-  initialsFromName,
   type TravelProfileOption,
-  type TravelProfileQuestionId,
 } from '../config/travelProfileQuestions'
-
-/** Soft violet accent from Build-profile UX refs. */
-const ACCENT = '#7B6CF0'
-const ACCENT_SOFT = 'rgba(123, 108, 240, 0.12)'
-const ACCENT_BORDER = 'rgba(123, 108, 240, 0.55)'
-const AVATAR_ROSE = '#D4A0A0'
 
 interface TravelProfileBuilderProps {
   applicant: RetailApplicantParty
@@ -32,83 +29,20 @@ interface TravelProfileBuilderProps {
   onComplete: (patch: Partial<RetailApplicantParty>) => void
 }
 
-function optionIcon(questionId: TravelProfileQuestionId, optionId: string) {
-  if (questionId === 'maritalStatus') {
-    if (optionId === 'single') return <UserRound size={14} strokeWidth={1.75} />
-    return <Users size={14} strokeWidth={1.75} />
-  }
-  return <UserRound size={14} strokeWidth={1.75} />
-}
-
-function ProfileOptionRow({
-  option,
-  selected,
-  questionId,
-  onSelect,
-}: {
-  option: TravelProfileOption
-  selected: boolean
-  questionId: TravelProfileQuestionId
-  onSelect: () => void
-}) {
-  const colors = usePublicBrandColors()
-
-  return (
-    <Box
-      component="button"
-      type="button"
-      onClick={onSelect}
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-        width: '100%',
-        minHeight: 36,
-        textAlign: 'left',
-        border: `1.5px solid ${selected ? ACCENT_BORDER : colors.border}`,
-        bgcolor: selected ? ACCENT_SOFT : colors.white,
-        borderRadius: BORDER_RADIUS.md,
-        px: 1.25,
-        py: 0.5,
-        cursor: 'pointer',
-        transition: `border-color 150ms ${retailFlowEaseOut}, background-color 150ms ${retailFlowEaseOut}, transform 160ms ${retailFlowEaseOut}`,
-        font: 'inherit',
-        color: 'inherit',
-        '&:hover': {
-          borderColor: selected ? ACCENT_BORDER : 'rgba(15, 23, 42, 0.22)',
-        },
-        '&:active': { transform: 'scale(0.98)' },
-      }}
-    >
-      <Box
-        sx={{
-          width: 24,
-          height: 24,
-          borderRadius: '50%',
-          border: `1.5px solid ${selected ? ACCENT : 'rgba(15, 23, 42, 0.12)'}`,
-          color: selected ? ACCENT : colors.textSecondary,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
-      >
-        {optionIcon(questionId, option.id)}
-      </Box>
-      <Typography sx={{ flex: 1, fontSize: 13, fontWeight: 500, color: colors.navy, lineHeight: 1.3 }}>
-        {option.label}
-      </Typography>
-      {selected ? (
-        <Box sx={{ color: ACCENT, display: 'flex', flexShrink: 0 }}>
-          <Check size={14} strokeWidth={2.5} />
-        </Box>
-      ) : null}
-    </Box>
-  )
-}
-
 /**
- * Compact Build profile questionnaire — profession, marital status, visa refusal.
+ * Build-profile questionnaire.
+ *
+ * Rewritten from a fixed-height violet-accented dialog. Three things changed and each
+ * was a defect, not a preference:
+ *   - The accent was `#7B6CF0`, an off-brand violet — the "purple AI gradient" look the
+ *     V2 brief explicitly rules out. Selection now uses the flow's gold.
+ *   - The avatar chip used a hard-coded rose; per-person colour is the flagged
+ *     rainbow-avatar pattern. Identity is carried by the name, which is enough here.
+ *   - Height was pinned to 520px, so the profession list (60+ entries) overflowed on
+ *     short viewports. It's now viewport-relative with only the list scrolling.
+ *
+ * Also adds a question counter and a Back control — the old version gave no sense of how
+ * many questions remained and no way to revise an answer.
  */
 export function TravelProfileBuilder({
   applicant,
@@ -116,7 +50,6 @@ export function TravelProfileBuilder({
   onClose,
   onComplete,
 }: TravelProfileBuilderProps) {
-  const colors = usePublicBrandColors()
   const name = applicant.details.fullName.trim() || applicant.label
   const nameUpper = displayNameUpper(name)
   const firstName = name.split(/\s+/)[0] || name
@@ -127,6 +60,7 @@ export function TravelProfileBuilder({
   }))
   const [professionQuery, setProfessionQuery] = useState('')
 
+  const total = TRAVEL_PROFILE_QUESTION_ORDER.length
   const questionId = TRAVEL_PROFILE_QUESTION_ORDER[stepIndex] ?? 'profession'
   const destination = countryName?.trim() || 'this destination'
 
@@ -138,10 +72,17 @@ export function TravelProfileBuilder({
 
   const title =
     questionId === 'profession'
-      ? `What is ${firstName.toUpperCase()}'s profession`
+      ? `What does ${firstName} do?`
       : questionId === 'maritalStatus'
-        ? `What is ${firstName.toUpperCase()}'s marital status?`
-        : `Have you ever been refused a visa for ${destination}?`
+        ? `What is ${firstName}'s marital status?`
+        : `Has ${firstName} ever been refused a visa for ${destination}?`
+
+  const helper =
+    questionId === 'profession'
+      ? 'Required documents change with profession.'
+      : questionId === 'maritalStatus'
+        ? 'Some embassies ask for spouse or family documents.'
+        : 'A previous refusal usually means extra supporting documents.'
 
   const options: TravelProfileOption[] =
     questionId === 'profession'
@@ -162,18 +103,40 @@ export function TravelProfileBuilder({
   const selectOption = (optionId: string) => {
     const next = { ...answers, [answerKey]: optionId }
     setAnswers(next)
-
+    // Brief hold so the selection is visible before the question changes.
     window.setTimeout(() => {
-      if (stepIndex < TRAVEL_PROFILE_QUESTION_ORDER.length - 1) {
+      if (stepIndex < total - 1) {
         setStepIndex((index) => index + 1)
+        setProfessionQuery('')
         return
       }
-      onComplete({
-        profileAnswers: next,
-        profileComplete: true,
-      })
-    }, 180)
+      onComplete({ profileAnswers: next, profileComplete: true })
+    }, 170)
   }
+
+  const iconBtnSx = {
+    width: 34,
+    height: 34,
+    display: 'grid',
+    placeItems: 'center',
+    appearance: 'none',
+    border: `1px solid ${applyFlow.hairline}`,
+    background: 'none',
+    borderRadius: applyRadius.control,
+    color: applyFlow.inkMuted,
+    cursor: 'pointer',
+    flex: '0 0 auto',
+    transition: `color 150ms ${applyMotion.easeOut}, border-color 150ms ${applyMotion.easeOut}`,
+    '@media (pointer: coarse)': { width: 44, height: 44 },
+    '@media (hover: hover) and (pointer: fine)': {
+      '&:hover': { color: applyFlow.ink, borderColor: applyFlow.hairlineStrong },
+    },
+    '&:focus-visible': {
+      outline: 'none',
+      borderColor: applyFlow.accent,
+      boxShadow: `0 0 0 3px ${applyFlow.accentRing}`,
+    },
+  } as const
 
   return (
     <Modal
@@ -182,169 +145,231 @@ export function TravelProfileBuilder({
       size="sm"
       hideCloseButton
       sx={{
-        width: { sm: 480 },
-        height: { xs: '100%', sm: 520 },
-        minHeight: { sm: 520 },
-        maxHeight: { sm: 520 },
+        width: { xs: '100%', sm: 460 },
+        // Viewport-relative, not a fixed 520px — only the option list scrolls.
+        height: { xs: '100%', sm: 'auto' },
+        maxHeight: { xs: '100%', sm: 'min(560px, 88vh)' },
         '& .MuiDialogContent-root': {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          px: { xs: 2, sm: 2.5 },
-          py: { xs: 1.5, sm: 2 },
+          px: { xs: 4, sm: 5 },
+          py: { xs: 4, sm: 4.5 },
         },
       }}
     >
-      <Box sx={{ position: 'relative', width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1, flexShrink: 0 }}>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, flex: 1, pr: 1 }}>
+      <Box sx={{ width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        {/* Header — who, how far along, and a way out. */}
+        <Stack direction="row" alignItems="center" spacing={2.5} sx={{ flexShrink: 0, mb: 3.5 }}>
+          {stepIndex > 0 ? (
             <Box
+              component="button"
+              type="button"
+              aria-label="Previous question"
+              onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
+              sx={iconBtnSx}
+            >
+              <ArrowLeft size={15} />
+            </Box>
+          ) : null}
+
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
               sx={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                bgcolor: AVATAR_ROSE,
-                color: '#fff',
-                fontSize: 11,
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
+                ...tabularNums,
+                fontFamily: applyFont.mono,
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: applyFlow.inkFaint,
               }}
             >
-              {initialsFromName(name).slice(0, 1)}
-            </Box>
-            <Typography sx={{ fontSize: 13, color: colors.textMuted, minWidth: 0 }}>
-              Updating for{' '}
-              <Box component="span" sx={{ fontWeight: 700, color: colors.navy }}>
-                {nameUpper}
-              </Box>
+              Build profile · {String(stepIndex + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
             </Typography>
-          </Stack>
+            <Typography
+              sx={{
+                fontFamily: applyFont.body,
+                fontSize: 13,
+                fontWeight: 600,
+                color: applyFlow.ink,
+                mt: 0.5,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {nameUpper}
+            </Typography>
+          </Box>
 
-          <IconButton
-            aria-label="Close"
-            onClick={onClose}
-            size="small"
-            sx={{
-              bgcolor: 'rgba(15, 169, 104, 0.12)',
-              color: colors.navy,
-              flexShrink: 0,
-              '&:hover': { bgcolor: 'rgba(15, 169, 104, 0.2)' },
-            }}
-          >
-            <X size={16} />
-          </IconButton>
+          <Box component="button" type="button" aria-label="Close" onClick={onClose} sx={iconBtnSx}>
+            <X size={15} />
+          </Box>
         </Stack>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1, flexShrink: 0 }}>
-          <Box
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 0.75,
-              px: 1.5,
-              py: 0.5,
-              borderRadius: 999,
-              bgcolor: ACCENT_SOFT,
-              color: ACCENT,
-            }}
-          >
-            <Smile size={14} strokeWidth={2} />
-            <Typography sx={{ fontSize: 12, fontWeight: 600, color: ACCENT }}>Build profile</Typography>
-          </Box>
+        {/* Progress — one segment per question. */}
+        <Box sx={{ display: 'flex', gap: 1, flexShrink: 0, mb: 4 }} aria-hidden>
+          {TRAVEL_PROFILE_QUESTION_ORDER.map((q, i) => (
+            <Box
+              key={q}
+              sx={{
+                flex: 1,
+                height: '2px',
+                borderRadius: '1px',
+                backgroundColor: i <= stepIndex ? applyFlow.accent : applyFlow.accentTrack,
+                transition: `background-color 220ms ${applyMotion.easeOut}`,
+              }}
+            />
+          ))}
         </Box>
 
         <AnimatePresence mode="wait">
           <motion.div
             key={questionId}
-            initial={{ opacity: 0, x: 16 }}
+            initial={{ opacity: 0, x: 14 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+            exit={{ opacity: 0, x: -14 }}
+            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
             style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
           >
-            <Box sx={{ textAlign: 'center', mt: { xs: 1, sm: 1.5 }, mb: 1.5, px: 1, flexShrink: 0 }}>
+            <Box sx={{ flexShrink: 0, mb: 3 }}>
               <Typography
                 sx={{
-                  fontSize: { xs: 17, sm: 18 },
+                  fontFamily: applyFont.display,
+                  fontSize: 19,
                   fontWeight: 700,
-                  color: colors.navy,
                   letterSpacing: '-0.02em',
-                  lineHeight: 1.3,
-                  mb: 0.5,
+                  lineHeight: 1.2,
+                  color: applyFlow.ink,
                 }}
               >
                 {title}
               </Typography>
-              <Typography sx={{ fontSize: 12, color: colors.textMuted }}>
-                Documents required vary basis persona
+              <Typography
+                sx={{
+                  fontFamily: applyFont.body,
+                  fontSize: 13,
+                  color: applyFlow.inkMuted,
+                  mt: 1.25,
+                  lineHeight: 1.45,
+                }}
+              >
+                {helper}
               </Typography>
             </Box>
 
             {questionId === 'profession' ? (
-              <TextField
-                value={professionQuery}
-                onChange={(event) => setProfessionQuery(event.target.value)}
-                placeholder="Search..."
-                fullWidth
-                size="small"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={16} color={colors.textMuted} />
-                    </InputAdornment>
-                  ),
-                }}
+              <Box
                 sx={{
-                  mb: 1.25,
-                  maxWidth: 400,
-                  mx: 'auto',
-                  width: '100%',
                   flexShrink: 0,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: BORDER_RADIUS.md,
-                    bgcolor: colors.white,
-                    fontSize: 13,
-                    height: 36,
+                  mb: 2.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  px: 2.75,
+                  minHeight: 42,
+                  border: `1px solid ${applyFlow.hairline}`,
+                  borderRadius: applyRadius.control,
+                  '&:focus-within': {
+                    borderColor: applyFlow.accent,
+                    boxShadow: `0 0 0 3px ${applyFlow.accentRing}`,
                   },
                 }}
-              />
+              >
+                <Search size={15} style={{ color: applyFlow.inkFaint, flex: '0 0 auto' }} />
+                <Box
+                  component="input"
+                  value={professionQuery}
+                  placeholder="Search professions"
+                  aria-label="Search professions"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfessionQuery(e.target.value)}
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    border: 'none',
+                    outline: 'none',
+                    background: 'transparent',
+                    fontFamily: applyFont.body,
+                    fontSize: 14,
+                    color: applyFlow.ink,
+                    '&::placeholder': { color: applyFlow.inkFaint },
+                  }}
+                />
+              </Box>
             ) : null}
 
             <Stack
-              spacing={0.75}
+              spacing={1}
+              role="radiogroup"
+              aria-label={title}
               sx={{
                 width: '100%',
-                maxWidth: 400,
-                mx: 'auto',
                 flex: 1,
                 minHeight: 0,
                 overflowY: 'auto',
-                pr: 0.5,
-                pb: 0.5,
-                '&::-webkit-scrollbar': { width: 6 },
-                '&::-webkit-scrollbar-thumb': {
-                  bgcolor: 'rgba(15, 23, 42, 0.16)',
-                  borderRadius: 8,
-                },
+                pr: 1,
+                scrollbarWidth: 'thin',
+                scrollbarColor: `${applyFlow.hairlineStrong} transparent`,
               }}
             >
               {options.length === 0 ? (
-                <Typography sx={{ textAlign: 'center', color: colors.textMuted, fontSize: 13, py: 3 }}>
-                  No professions match your search
+                <Typography
+                  sx={{
+                    textAlign: 'center',
+                    color: applyFlow.inkMuted,
+                    fontFamily: applyFont.body,
+                    fontSize: 13,
+                    py: 6,
+                  }}
+                >
+                  No professions match “{professionQuery}”.
                 </Typography>
               ) : (
-                options.map((option) => (
-                  <ProfileOptionRow
-                    key={option.id}
-                    option={option}
-                    questionId={questionId}
-                    selected={selectedId === option.id}
-                    onSelect={() => selectOption(option.id)}
-                  />
-                ))
+                options.map((option) => {
+                  const selected = selectedId === option.id
+                  return (
+                    <Box
+                      key={option.id}
+                      component="button"
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => selectOption(option.id)}
+                      sx={{
+                        ...getSelectableSx(selected),
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2.5,
+                        minHeight: 44,
+                        pl: 3.5,
+                        pr: 3,
+                        py: 2,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          flex: 1,
+                          fontFamily: applyFont.body,
+                          fontSize: 14,
+                          fontWeight: selected ? 600 : 400,
+                          color: applyFlow.ink,
+                          lineHeight: 1.35,
+                          textAlign: 'left',
+                        }}
+                      >
+                        {option.label}
+                      </Typography>
+                      {selected ? (
+                        <Check
+                          size={14}
+                          strokeWidth={3}
+                          style={{ color: applyFlow.accentInk, flex: '0 0 auto' }}
+                        />
+                      ) : null}
+                    </Box>
+                  )
+                })
               )}
             </Stack>
           </motion.div>

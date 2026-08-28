@@ -7,6 +7,7 @@ import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
 import { getCountryHeroImageUrl } from '@/shared/services/visaService'
 import { formatEtaShort } from '@/shared/utils/countryDisplay'
 import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { applyFlow, accentGoldRgb } from '@/pages/website-v2/theme/applyFlowTheme'
 
 interface WebsiteListingCountryCardProps {
   country: Country
@@ -42,7 +43,7 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
         color: 'inherit',
         borderRadius: '18px',
         '&:focus-visible': {
-          outline: `2px solid ${colors.teal}`,
+          outline: `2px solid ${applyFlow.accent}`,
           outlineOffset: '3px',
         },
       }}
@@ -60,8 +61,8 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
           bgcolor: colors.white,
           transition: 'border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease',
           '&:hover': {
-            borderColor: colors.teal,
-            boxShadow: `0 10px 28px rgba(12, 108, 121, 0.14)`,
+            borderColor: applyFlow.accent,
+            boxShadow: `0 10px 28px rgba(${accentGoldRgb}, 0.14)`,
             transform: 'translateY(-3px)',
           },
           '@media (prefers-reduced-motion: reduce)': {
@@ -73,12 +74,12 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
           },
         }}
       >
-        {/* Accent bar — reveals on hover, teal ownership for discovery surfaces */}
+        {/* Accent bar — reveals on hover, gold ownership shared with the apply flow */}
         <Box
           aria-hidden
           sx={{
             height: '3px',
-            bgcolor: colors.teal,
+            bgcolor: applyFlow.accent,
             transform: 'scaleX(0)',
             transformOrigin: 'left center',
             transition: 'transform 0.25s ease',

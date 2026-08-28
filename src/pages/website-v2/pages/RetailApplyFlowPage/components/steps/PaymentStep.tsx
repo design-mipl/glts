@@ -3,11 +3,16 @@ import { Box, Collapse, Stack, Typography } from '@mui/material'
 import { ChevronDown, Clock3, Minus, Pencil, Plane, Plus, Shield } from 'lucide-react'
 import { BORDER_RADIUS } from '@/design-system/tokens'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { getElevatedCardSx, retailFlowColors } from '@/pages/website-v2/theme/retailFlowTokens'
 import { StatusStepper } from '@/pages/website-v2/components/statusStepper/StatusStepper'
 import type { StatusStepConfig } from '@/pages/website-v2/components/statusStepper/types'
 import type { RetailJourney } from '@/shared/services/retailJourneyResolver'
 import { StepShell } from '../StepShell'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+} from '@/pages/website-v2/theme/applyFlowTheme'
 import type {
   RetailExtraSelection,
   RetailFlowDraft,
@@ -84,14 +89,17 @@ function parseStayDays(validity: string | undefined): number {
   return match ? Number(match[1]) : DEFAULT_STAY_DAYS
 }
 
+/**
+ * Grouping block for the price panel. A hairline box, not an elevated card — on a payment
+ * screen the money is the thing that should carry weight, so nothing else gets a shadow.
+ */
 function ElevatedCard({ children, sx }: { children: ReactNode; sx?: object }) {
-  const colors = usePublicBrandColors()
   return (
     <Box
       sx={{
-        ...getElevatedCardSx(colors.border),
-        borderRadius: BORDER_RADIUS.lg,
-        bgcolor: colors.white,
+        border: `1px solid ${applyFlow.hairline}`,
+        borderRadius: applyRadius.control,
+        backgroundColor: applyFlow.surface,
         ...sx,
       }}
     >
@@ -107,9 +115,9 @@ function MetaDivider() {
       sx={{
         width: '1px',
         alignSelf: 'stretch',
-        minHeight: 28,
-        bgcolor: 'rgba(15,23,42,0.12)',
-        mx: { xs: 1, sm: 1.5 },
+        minHeight: 26,
+        bgcolor: applyFlow.hairline,
+        mx: { xs: 2, sm: 3 },
       }}
     />
   )
@@ -126,47 +134,48 @@ function DayStepper({
   min?: number
   max?: number
 }) {
-  const colors = usePublicBrandColors()
   return (
     <Stack
       direction="row"
       alignItems="center"
-      spacing={0.75}
+      spacing={0}
       sx={{
-        border: `1px solid ${colors.border}`,
-        borderRadius: 999,
-        bgcolor: colors.white,
-        px: 0.75,
-        py: 0.4,
+        border: `1px solid ${applyFlow.hairline}`,
+        borderRadius: applyRadius.chip,
+        backgroundColor: applyFlow.surface,
+        overflow: 'hidden',
       }}
     >
       <Box
         component="button"
         type="button"
+        aria-label="One day fewer"
         disabled={value <= min}
         onClick={() => onChange(Math.max(min, value - 1))}
-        sx={stepperIconBtn(colors)}
+        sx={stepperIconBtn()}
       >
         <Minus size={13} />
       </Box>
       <Typography
         sx={{
-          fontSize: 12.5,
-          fontWeight: 700,
-          color: colors.navy,
-          minWidth: 48,
+          fontFamily: applyFont.mono,
+          fontSize: 12,
+          fontWeight: 600,
+          color: applyFlow.ink,
+          minWidth: 58,
           textAlign: 'center',
           fontVariantNumeric: 'tabular-nums',
         }}
       >
-        {value} days
+        {value}d
       </Typography>
       <Box
         component="button"
         type="button"
+        aria-label="One day more"
         disabled={value >= max}
         onClick={() => onChange(Math.min(max, value + 1))}
-        sx={stepperIconBtn(colors)}
+        sx={stepperIconBtn()}
       >
         <Plus size={13} />
       </Box>
@@ -174,29 +183,32 @@ function DayStepper({
   )
 }
 
-function stepperIconBtn(colors: ReturnType<typeof usePublicBrandColors>) {
+function stepperIconBtn() {
   return {
     appearance: 'none' as const,
-    width: 24,
-    height: 24,
-    borderRadius: '50%',
+    width: 34,
+    height: 34,
+    '@media (pointer: coarse)': { width: 44, height: 44 },
+    borderRadius: 0,
     border: 'none',
-    bgcolor: retailFlowColors.greenMuted,
-    color: colors.greenDark,
+    bgcolor: 'transparent',
+    color: applyFlow.inkMuted,
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
-    p: 0,
-    '&:disabled': { opacity: 0.35, cursor: 'default' },
+    transition: `background-color 150ms ${applyMotion.easeOut}, color 150ms ${applyMotion.easeOut}`,
+    '@media (hover: hover) and (pointer: fine)': {
+      '&:hover:not(:disabled)': { backgroundColor: applyFlow.accentSoft, color: applyFlow.accentInk },
+    },
+    '&:disabled': { color: applyFlow.inkDisabled, cursor: 'default' },
+    '&:focus-visible': {
+      outline: 'none',
+      boxShadow: `inset 0 0 0 2px ${applyFlow.accent}`,
+    },
   }
 }
 
-/**
- * Payment layout mirrors the reference hierarchy
- * (country code + guarantee → meta row → pickup + upgrade | You Pay Now)
- * with GLTS green accents; gold reserved for the pay-now total.
- */
 export function PaymentStep({
   journey,
   draft,
@@ -223,7 +235,7 @@ export function PaymentStep({
   const travellerCount = Math.max(1, applicants.length)
 
   const countryCode = (journey.country.code || journey.country.name.slice(0, 2)).toUpperCase()
-  const stayDays = parseStayDays(journey.visaType.validity ?? journey.offering?.validity)
+  const stayDays = parseStayDays(journey.visaType.validity)
   const validFromIso = draft.travelDate
   const validTillIso = validFromIso ? addDaysIso(validFromIso, DEFAULT_VALIDITY_DAYS) : undefined
   const guaranteedIso = validFromIso ? addDaysIso(validFromIso, 11) : undefined
@@ -351,7 +363,7 @@ export function PaymentStep({
                     width: 22,
                     height: 22,
                     borderRadius: '50%',
-                    bgcolor: retailFlowColors.greenMuted,
+                    bgcolor: applyFlow.accentSoft,
                     color: colors.greenDark,
                     display: 'flex',
                     alignItems: 'center',
@@ -425,7 +437,7 @@ export function PaymentStep({
                           height: 30,
                           borderRadius: '50%',
                           border: 'none',
-                          bgcolor: insuranceSelected ? colors.navy : retailFlowColors.green,
+                          bgcolor: insuranceSelected ? colors.navy : applyFlow.accent,
                           color: '#fff',
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -658,9 +670,9 @@ export function PaymentStep({
                     appearance: 'none',
                     flex: 1,
                     border: `1.5px solid ${
-                      selected ? retailFlowColors.optionBorderSelected : colors.border
+                      selected ? applyFlow.accentBorder : colors.border
                     }`,
-                    bgcolor: selected ? retailFlowColors.optionBgSelected : colors.white,
+                    bgcolor: selected ? applyFlow.accentSoft : colors.white,
                     color: selected ? colors.greenDark : colors.navy,
                     borderRadius: BORDER_RADIUS.md,
                     py: 0.85,
@@ -699,7 +711,7 @@ export function PaymentStep({
 
   return (
     <StepShell
-      title={countryCode}
+      title="Review and pay"
       helperText={guaranteeHelper}
       onBack={onBack}
       onContinue={handlePay}
@@ -720,18 +732,40 @@ function MetaBlock({
   value: string
   endAdornment?: ReactNode
 }) {
-  const colors = usePublicBrandColors()
   return (
-    <Box sx={{ textAlign: 'left', px: { xs: 0.5, sm: 0.75 } }}>
-      <Typography sx={{ fontSize: 11.5, color: colors.textMuted, mb: 0.25 }}>{label}</Typography>
-      <Stack direction="row" alignItems="center" spacing={0.5}>
-        <Typography sx={{ fontSize: 13.5, fontWeight: 800, color: colors.navy }}>{value}</Typography>
+    <Box sx={{ textAlign: 'left' }}>
+      <Typography
+        sx={{
+          fontFamily: applyFont.mono,
+          fontSize: 9.5,
+          fontWeight: 600,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: applyFlow.inkFaint,
+          mb: 1,
+        }}
+      >
+        {label}
+      </Typography>
+      <Stack direction="row" alignItems="center" spacing={1.5}>
+        <Typography
+          sx={{
+            fontFamily: applyFont.body,
+            fontSize: 13.5,
+            fontWeight: 600,
+            color: applyFlow.ink,
+            lineHeight: 1.25,
+          }}
+        >
+          {value}
+        </Typography>
         {endAdornment}
       </Stack>
     </Box>
   )
 }
 
+/** One line of the bill. Amounts are mono + tabular so the column aligns on the decimal. */
 function PayLine({
   label,
   amount,
@@ -741,29 +775,32 @@ function PayLine({
   amount: number
   muted?: boolean
 }) {
-  const colors = usePublicBrandColors()
   return (
     <Stack
       direction="row"
       justifyContent="space-between"
-      alignItems="center"
-      sx={{ py: muted ? 0.55 : 1.35 }}
+      alignItems="baseline"
+      spacing={3}
+      sx={{ py: muted ? 1 : 1.75 }}
     >
       <Typography
         sx={{
-          fontSize: muted ? 12.5 : 14,
-          fontWeight: muted ? 500 : 600,
-          color: muted ? colors.textMuted : colors.navy,
+          fontFamily: applyFont.body,
+          fontSize: muted ? 12.5 : 13.5,
+          fontWeight: muted ? 400 : 500,
+          color: muted ? applyFlow.inkMuted : applyFlow.ink,
         }}
       >
         {label}
       </Typography>
       <Typography
         sx={{
-          fontSize: muted ? 12.5 : 14,
-          fontWeight: 700,
-          color: muted ? colors.textMuted : colors.navy,
+          fontFamily: applyFont.mono,
+          fontSize: muted ? 12 : 13.5,
+          fontWeight: muted ? 500 : 600,
+          color: muted ? applyFlow.inkMuted : applyFlow.ink,
           fontVariantNumeric: 'tabular-nums',
+          flex: '0 0 auto',
         }}
       >
         {formatInr(amount)}

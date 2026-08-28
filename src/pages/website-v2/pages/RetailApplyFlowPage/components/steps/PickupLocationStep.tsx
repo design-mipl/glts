@@ -1,10 +1,8 @@
 import { useCallback, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { MapPin, Search } from 'lucide-react'
-import { FormField, Input, Textarea } from '@/design-system/UIComponents'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { getElevatedCardSx, retailFlowColors } from '@/pages/website-v2/theme/retailFlowTokens'
+import { applyFlow, applyFont, applyMotion, applyRadius } from '@/pages/website-v2/theme/applyFlowTheme'
+import { ApplyTextField, ApplyTextarea, FieldLabel } from '@/pages/website-v2/theme/applyFormControls'
 import { StepShell } from '../StepShell'
 
 export interface PickupLocationValues {
@@ -40,7 +38,6 @@ export function PickupLocationStep({
   onContinue,
   previewOnly = false,
 }: PickupLocationStepProps) {
-  const colors = usePublicBrandColors()
   const mapRef = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
   const [pin, setPin] = useState({
@@ -97,30 +94,29 @@ export function PickupLocationStep({
   const mapColumn = (
     <Box
       sx={{
-        ...getElevatedCardSx(colors.border),
-        borderRadius: BORDER_RADIUS.lg,
+        border: `1px solid ${applyFlow.hairline}`,
+        borderRadius: applyRadius.card,
         overflow: 'hidden',
-        bgcolor: colors.white,
         position: 'relative',
-        minHeight: { xs: 280, md: 420 },
+        minHeight: { xs: 260, md: 360 },
         height: '100%',
       }}
     >
-      <Box sx={{ position: 'absolute', top: 12, left: 12, right: 12, zIndex: 2 }}>
+      <Box sx={{ position: 'absolute', top: 10, left: 10, right: 10, zIndex: 2 }}>
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            bgcolor: colors.white,
-            borderRadius: BORDER_RADIUS.md,
-            border: `1px solid ${colors.border}`,
+            bgcolor: applyFlow.surface,
+            borderRadius: applyRadius.control,
+            border: `1px solid ${applyFlow.hairline}`,
             boxShadow: '0 4px 14px rgba(15,27,43,0.08)',
-            px: 1.25,
-            py: 0.75,
+            px: 1.5,
+            py: 1,
           }}
         >
-          <Search size={15} color={colors.textMuted} />
+          <Search size={14} style={{ color: applyFlow.inkFaint, flexShrink: 0 }} />
           <Box
             component="input"
             value={query}
@@ -136,9 +132,9 @@ export function PickupLocationStep({
               flex: 1,
               border: 'none',
               outline: 'none',
-              font: 'inherit',
+              fontFamily: applyFont.body,
               fontSize: 13,
-              color: colors.navy,
+              color: applyFlow.ink,
               bgcolor: 'transparent',
               minWidth: 0,
             }}
@@ -150,15 +146,17 @@ export function PickupLocationStep({
             sx={{
               appearance: 'none',
               border: 'none',
-              bgcolor: retailFlowColors.greenMuted,
-              color: colors.greenDark,
-              borderRadius: '8px',
-              px: 1.1,
-              py: 0.55,
-              fontSize: 12,
+              bgcolor: applyFlow.accent,
+              color: applyFlow.onAccent,
+              borderRadius: applyRadius.chip,
+              px: 1.25,
+              py: 0.6,
+              fontSize: 11.5,
               fontWeight: 700,
               cursor: 'pointer',
-              fontFamily: 'inherit',
+              fontFamily: applyFont.body,
+              transition: `background-color 150ms ${applyMotion.easeOut}`,
+              '&:hover': { backgroundColor: applyFlow.accentStrong },
             }}
           >
             Go
@@ -184,14 +182,13 @@ export function PickupLocationStep({
           position: 'absolute',
           inset: 0,
           cursor: 'grab',
-          bgcolor: '#E8EEF2',
-          backgroundImage: `
-            linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
-            radial-gradient(circle at 30% 40%, rgba(115, 192, 100, 0.12), transparent 45%),
-            radial-gradient(circle at 70% 65%, rgba(15, 23, 42, 0.06), transparent 40%)
-          `,
-          backgroundSize: '28px 28px, 28px 28px, auto, auto',
+          bgcolor: applyFlow.canvas,
+          backgroundImage: [
+            'linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px)',
+            'linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px)',
+            `radial-gradient(circle at 70% 65%, rgba(${'254, 193, 7'}, 0.08), transparent 45%)`,
+          ].join(', '),
+          backgroundSize: '28px 28px, 28px 28px, auto',
           userSelect: 'none',
           touchAction: 'none',
         }}
@@ -235,19 +232,19 @@ export function PickupLocationStep({
         >
           <Box
             sx={{
-              width: 40,
-              height: 40,
+              width: 38,
+              height: 38,
               borderRadius: '50% 50% 50% 0',
               transform: 'rotate(-45deg)',
-              bgcolor: retailFlowColors.green,
+              bgcolor: applyFlow.accent,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               boxShadow: '0 6px 16px rgba(15,27,43,0.22)',
             }}
           >
-            <Box sx={{ transform: 'rotate(45deg)', color: '#fff', display: 'flex' }}>
-              <MapPin size={18} strokeWidth={2.4} />
+            <Box sx={{ transform: 'rotate(45deg)', color: applyFlow.onAccent, display: 'flex' }}>
+              <MapPin size={17} strokeWidth={2.4} />
             </Box>
           </Box>
         </Box>
@@ -258,8 +255,9 @@ export function PickupLocationStep({
             bottom: 10,
             left: 12,
             right: 12,
+            fontFamily: applyFont.body,
             fontSize: 11,
-            color: colors.textMuted,
+            color: applyFlow.inkMuted,
             textAlign: 'center',
             pointerEvents: 'none',
           }}
@@ -271,64 +269,45 @@ export function PickupLocationStep({
   )
 
   const formColumn = (
-    <Box
-      sx={{
-        ...getElevatedCardSx(colors.border),
-        borderRadius: BORDER_RADIUS.lg,
-        bgcolor: colors.white,
-        p: 2,
-        height: '100%',
-      }}
-    >
-      <Typography sx={{ fontSize: 15, fontWeight: 800, color: colors.navy, mb: 1.5 }}>
+    <Box sx={{ height: '100%' }}>
+      <Typography sx={{ fontFamily: applyFont.body, fontSize: 14.5, fontWeight: 700, color: applyFlow.ink, mb: 2 }}>
         Pickup address
       </Typography>
-      <Stack spacing={1.75}>
-        <FormField label="Address line 1" required>
-          <Input
-            value={addressLine1}
-            onChange={(v) => setField('addressLine1', v)}
-            placeholder="Building, street"
-            fullWidth
-          />
-        </FormField>
-        <FormField label="Address line 2" optional>
-          <Input
-            value={addressLine2}
-            onChange={(v) => setField('addressLine2', v)}
-            placeholder="Landmark, floor"
-            fullWidth
-          />
-        </FormField>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-            gap: 1.75,
-          }}
-        >
-          <FormField label="PIN code" required>
-            <Input value={pinCode} onChange={(v) => setField('pinCode', v)} placeholder="e.g. 400021" fullWidth />
-          </FormField>
-          <FormField label="City" required>
-            <Input value={city} onChange={(v) => setField('city', v)} placeholder="City" fullWidth />
-          </FormField>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.25 }}>
+        <Box>
+          <FieldLabel required>Address line 1</FieldLabel>
+          <ApplyTextField value={addressLine1} onChange={(v) => setField('addressLine1', v)} placeholder="Building, street" />
         </Box>
-        <FormField label="State" required>
-          <Input value={state} onChange={(v) => setField('state', v)} placeholder="State" fullWidth />
-        </FormField>
-        <FormField label="Delivery instructions" optional>
-          <Textarea
+        <Box>
+          <FieldLabel>Address line 2</FieldLabel>
+          <ApplyTextField value={addressLine2} onChange={(v) => setField('addressLine2', v)} placeholder="Landmark, floor" />
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.25 }}>
+          <Box>
+            <FieldLabel required>PIN code</FieldLabel>
+            <ApplyTextField value={pinCode} onChange={(v) => setField('pinCode', v)} placeholder="e.g. 400021" />
+          </Box>
+          <Box>
+            <FieldLabel required>City</FieldLabel>
+            <ApplyTextField value={city} onChange={(v) => setField('city', v)} placeholder="City" />
+          </Box>
+        </Box>
+        <Box>
+          <FieldLabel required>State</FieldLabel>
+          <ApplyTextField value={state} onChange={(v) => setField('state', v)} placeholder="State" />
+        </Box>
+        <Box>
+          <FieldLabel>Delivery instructions</FieldLabel>
+          <ApplyTextarea
             value={deliveryInstructions}
             onChange={(v) => {
               onChange('deliveryInstructions', v)
               onChange('remarks', v)
             }}
             placeholder="Gate code, preferred time window, contact on site…"
-            fullWidth
           />
-        </FormField>
-      </Stack>
+        </Box>
+      </Box>
     </Box>
   )
 
@@ -336,8 +315,8 @@ export function PickupLocationStep({
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: '1.05fr 0.95fr' },
-        gap: 2,
+        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+        gap: 3,
         alignItems: 'stretch',
         width: '100%',
       }}

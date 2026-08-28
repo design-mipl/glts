@@ -1,9 +1,15 @@
 import { useCallback, useRef, useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import { AlertCircle, FileText, Upload, X } from 'lucide-react'
-import { Button, Modal } from '@/design-system/UIComponents'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { getRingBorderSx, statusElevatedCardShadow, statusVisualRadius, getElevatedStatusCardSx } from '@/pages/website-v2/theme/statusVisualTokens'
+import { Modal } from '@/design-system/UIComponents'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+  getAccentButtonSx,
+  getQuietButtonSx,
+} from '@/pages/website-v2/theme/applyFlowTheme'
 
 export interface FileUploadModalProps {
   open: boolean
@@ -42,7 +48,6 @@ export function FileUploadModal({
   multiple = false,
   onUpload,
 }: FileUploadModalProps) {
-  const colors = usePublicBrandColors()
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const [files, setFiles] = useState<File[]>([])
@@ -101,8 +106,18 @@ export function FileUploadModal({
       size="sm"
       footer={
         <Stack direction="row" spacing={1.25} justifyContent="flex-end" sx={{ width: '100%' }}>
-          <Button label="Cancel" variant="outlined" onClick={resetAndClose} />
-          <Button label="Upload" variant="contained" disabled={!files.length} onClick={handleSubmit} />
+          <Box component="button" type="button" onClick={resetAndClose} sx={{ ...getQuietButtonSx(), px: 3, py: 1.25 }}>
+            Cancel
+          </Box>
+          <Box
+            component="button"
+            type="button"
+            disabled={!files.length}
+            onClick={handleSubmit}
+            sx={{ ...getAccentButtonSx(), border: 'none', px: 3, py: 1.25 }}
+          >
+            Upload
+          </Box>
         </Stack>
       }
     >
@@ -115,13 +130,11 @@ export function FileUploadModal({
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
         sx={{
-          ...getRingBorderSx(colors.greenDark, dragOver, colors.border),
-          borderStyle: dragOver ? 'solid' : 'dashed',
-          borderRadius: statusVisualRadius.card,
-          bgcolor: colors.surfaceAlt,
-          boxShadow: dragOver
-            ? `0 0 0 3px ${colors.greenDark}26, ${statusElevatedCardShadow}`
-            : statusElevatedCardShadow,
+          border: `1px ${dragOver ? 'solid' : 'dashed'} ${dragOver ? applyFlow.accent : applyFlow.hairlineStrong}`,
+          borderRadius: applyRadius.card,
+          bgcolor: dragOver ? applyFlow.accentSoft : applyFlow.canvas,
+          boxShadow: dragOver ? `0 0 0 3px ${applyFlow.accentRing}` : 'none',
+          transition: `border-color 150ms ${applyMotion.easeOut}, background-color 150ms ${applyMotion.easeOut}, box-shadow 150ms ${applyMotion.easeOut}`,
           px: 2.5,
           py: 4,
           textAlign: 'center',
@@ -140,34 +153,34 @@ export function FileUploadModal({
           sx={{
             width: 40,
             height: 40,
-            borderRadius: statusVisualRadius.full,
-            border: `1px solid ${colors.border}`,
-            bgcolor: colors.white,
+            borderRadius: applyRadius.full,
+            border: `1px solid ${applyFlow.hairline}`,
+            bgcolor: applyFlow.surface,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             mx: 'auto',
             mb: 1.25,
-            color: colors.textSecondary,
+            color: applyFlow.inkMuted,
           }}
         >
           <Upload size={18} strokeWidth={1.75} />
         </Box>
-        <Typography sx={{ fontSize: 13.5, fontWeight: 600, color: colors.navy, mb: 0.5 }}>
+        <Typography sx={{ fontFamily: applyFont.body, fontSize: 13.5, fontWeight: 600, color: applyFlow.ink, mb: 0.5 }}>
           Drag & drop your file here, or{' '}
-          <Box component="span" sx={{ color: colors.greenDark, fontWeight: 700 }}>
+          <Box component="span" sx={{ color: applyFlow.accentInk, fontWeight: 700 }}>
             browse
           </Box>
         </Typography>
-        <Typography sx={{ fontSize: 12, color: colors.textMuted }}>
+        <Typography sx={{ fontFamily: applyFont.body, fontSize: 12, color: applyFlow.inkMuted }}>
           {acceptLabel} · max {maxSizeMb}MB
         </Typography>
       </Box>
 
       {error ? (
-        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 1.25, color: '#DC2626' }}>
+        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 1.25, color: applyFlow.critical }}>
           <AlertCircle size={14} />
-          <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{error}</Typography>
+          <Typography sx={{ fontFamily: applyFont.body, fontSize: 12, fontWeight: 600 }}>{error}</Typography>
         </Stack>
       ) : null}
 
@@ -182,17 +195,17 @@ export function FileUploadModal({
               sx={{
                 px: 1.25,
                 py: 0.85,
-                borderRadius: statusVisualRadius.control,
-                ...getElevatedStatusCardSx(colors.border),
-                bgcolor: colors.white,
+                borderRadius: applyRadius.control,
+                border: `1px solid ${applyFlow.hairline}`,
+                bgcolor: applyFlow.surface,
               }}
             >
-              <FileText size={16} color={colors.textSecondary} />
+              <FileText size={16} style={{ color: applyFlow.inkMuted }} />
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: colors.navy }} noWrap>
+                <Typography sx={{ fontFamily: applyFont.body, fontSize: 12.5, fontWeight: 600, color: applyFlow.ink }} noWrap>
                   {file.name}
                 </Typography>
-                <Typography sx={{ fontSize: 11, color: colors.textMuted }}>
+                <Typography sx={{ fontFamily: applyFont.mono, fontSize: 11, color: applyFlow.inkMuted }}>
                   {formatBytes(file.size)}
                 </Typography>
               </Box>
@@ -210,9 +223,9 @@ export function FileUploadModal({
                   background: 'none',
                   p: 0.25,
                   cursor: 'pointer',
-                  color: colors.textMuted,
+                  color: applyFlow.inkMuted,
                   display: 'inline-flex',
-                  '&:hover': { color: colors.navy },
+                  '&:hover': { color: applyFlow.ink },
                 }}
               >
                 <X size={14} />

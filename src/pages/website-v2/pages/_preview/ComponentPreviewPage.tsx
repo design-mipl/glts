@@ -545,7 +545,6 @@ export default function ComponentPreviewPage() {
           applicants={PREVIEW_APPLICANTS}
           uploads={checklistUploads}
           estimatedApproval="Aug 29"
-          tripContext="India → Schengen · Tourist visa"
           onUpload={(documentId, image, applicantId) =>
             setChecklistUploads((prev) => ({
               ...prev,

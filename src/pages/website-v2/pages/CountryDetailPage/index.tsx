@@ -12,19 +12,14 @@ import type { CountryVisaType } from '@/shared/types/countryMaster'
 import { PricingCard } from './components/PricingCard'
 import { TabsNavigation } from './components/TabsNavigation'
 import { RequirementsSection } from './components/RequirementsSection'
+import { TimelineSection } from './components/TimelineSection'
 import { ComingSoonPage } from '@/shared/components/ComingSoonPage'
 import { PublicContainer } from '../../components/PublicContainer'
 import { CountryTrustBadgeStrip } from '../../components/CountryTrustBadgeStrip'
 import { hasCountryTrustProfile } from '../../config/countryTrustBadges'
-import { publicFonts, usePublicBrandColors, getMarketingPrimaryButtonSx } from '@/shared/theme/publicBrand'
+import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { accentGoldRgb, getAccentButtonSx } from '../../theme/applyFlowTheme'
 import { BORDER_RADIUS } from '@/design-system/tokens'
-
-const timelineSteps = [
-  { step: 1, title: 'Submit', desc: 'Documents reviewed in 4h' },
-  { step: 2, title: 'Appointment', desc: 'VFS biometrics booked' },
-  { step: 3, title: 'Embassy', desc: 'Decision in 10–14 days' },
-  { step: 4, title: 'Collection', desc: 'Courier or pickup' },
-]
 
 const visaCategoryOptions = [
   { value: 'tourist', label: 'Tourist Visa' },
@@ -198,8 +193,8 @@ export function CountryDetailPage() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 0.75,
-                    backgroundColor: 'rgba(79, 180, 194, 0.16)',
-                    border: '1px solid rgba(79, 180, 194, 0.38)',
+                    backgroundColor: `rgba(${accentGoldRgb}, 0.16)`,
+                    border: `1px solid rgba(${accentGoldRgb}, 0.38)`,
                     borderRadius: '6px',
                     px: 1.5,
                     py: 0.5,
@@ -212,7 +207,7 @@ export function CountryDetailPage() {
                       fontSize: '11px',
                       fontWeight: 700,
                       letterSpacing: '0.02em',
-                      color: '#7ED0DB',
+                      color: '#FEC107',
                     }}
                   >
                     Trending · +{master.trendingPercent ?? 18}% this month
@@ -315,7 +310,7 @@ export function CountryDetailPage() {
                         sx={{
                           fontFamily: publicFonts.mono,
                           fontVariantNumeric: 'tabular-nums',
-                          color: '#7ED0DB',
+                          color: '#FEC107',
                           fontWeight: 700,
                           fontSize: '15px',
                         }}
@@ -331,7 +326,7 @@ export function CountryDetailPage() {
                   size="large"
                   href={applyHref}
                   sx={{
-                    ...getMarketingPrimaryButtonSx(colors),
+                    ...getAccentButtonSx(),
                     px: { xs: 5, md: 6 },
                     py: 1.5,
                     minWidth: { xs: 220, md: 260 },
@@ -352,7 +347,7 @@ export function CountryDetailPage() {
             country={country}
             visaCategoryOptions={visaCategoryOptions}
             selectedVisaCategory={selectedVisaCategory}
-            onVisaCategoryChange={setSelectedVisaCategory}
+            onVisaCategoryChange={(value) => setSelectedVisaCategory(value as VisaCategoryValue)}
             applyHref={applyHref}
           />
         </Box>
@@ -368,46 +363,7 @@ export function CountryDetailPage() {
             />
           )}
 
-          {activeTab === 1 && (
-            <Box>
-              <Typography sx={{ fontWeight: 700, fontSize: '18px', color: colors.navy, mb: 3, fontFamily: publicFonts.heading }}>
-                How your application moves
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 0 }}>
-                {timelineSteps.map((step, i) => (
-                  <Box key={step.step} sx={{ display: 'flex', flexDirection: { xs: 'row', md: 'column' }, alignItems: { xs: 'flex-start', md: 'center' }, flex: 1, gap: { xs: 2, md: 0 } }}>
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', width: { md: '100%' }, mb: { md: 1.5 } }}>
-                      <Box
-                        sx={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: '50%',
-                          backgroundColor: colors.navy,
-                          color: colors.white,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontFamily: publicFonts.mono,
-                          fontWeight: 800,
-                          fontSize: '16px',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {step.step}
-                      </Box>
-                      {i < timelineSteps.length - 1 && (
-                        <Box sx={{ flex: 1, height: { xs: '100%', md: 2 }, width: { xs: 2, md: '100%' }, backgroundColor: colors.border, display: { xs: 'none', md: 'block' } }} />
-                      )}
-                    </Box>
-                    <Box sx={{ textAlign: { md: 'center' }, px: { md: 1 } }}>
-                      <Typography sx={{ fontWeight: 700, color: colors.navy, fontSize: '14px' }}>{step.title}</Typography>
-                      <Typography sx={{ color: colors.textSecondary, fontSize: '12.5px', mt: 0.25 }}>{step.desc}</Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          )}
+          {activeTab === 1 && <TimelineSection />}
 
           {activeTab === 2 && (
             <Typography sx={{ color: colors.textSecondary }}>FAQs coming soon.</Typography>
@@ -420,7 +376,7 @@ export function CountryDetailPage() {
                 country={country}
                 visaCategoryOptions={visaCategoryOptions}
                 selectedVisaCategory={selectedVisaCategory}
-                onVisaCategoryChange={setSelectedVisaCategory}
+                onVisaCategoryChange={(value) => setSelectedVisaCategory(value as VisaCategoryValue)}
                 applyHref={applyHref}
               />
             </Box>

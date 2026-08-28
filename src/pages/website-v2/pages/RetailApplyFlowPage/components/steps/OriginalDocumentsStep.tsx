@@ -1,10 +1,7 @@
 import { useState } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { Camera, FileText, IdCard, IndianRupee } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { getElevatedCardSx } from '@/pages/website-v2/theme/retailFlowTokens'
 import { DocumentChecklistRow } from '@/pages/website-v2/components/documentChecklist/DocumentChecklistRow'
 import { WhyWeAskSheet } from '@/pages/website-v2/components/WhyWeAskSheet'
 import {
@@ -13,6 +10,8 @@ import {
 } from '@/pages/website-v2/config/documentWhyContent'
 import type { RetailChecklistDocument } from '@/shared/services/retailJourneyResolver'
 import { StepShell } from '../StepShell'
+import { applyFlow, applyFont } from '@/pages/website-v2/theme/applyFlowTheme'
+import { SectionHeading } from '@/pages/website-v2/theme/applyFormControls'
 
 interface OriginalDocumentsStepProps {
   documents: RetailChecklistDocument[]
@@ -37,45 +36,38 @@ export function OriginalDocumentsStep({
   onContinue,
   previewOnly = false,
 }: OriginalDocumentsStepProps) {
-  const colors = usePublicBrandColors()
   const [whyContent, setWhyContent] = useState<DocumentWhyContent | null>(null)
   const originals = documents.filter((doc) => doc.originalDocument)
 
   const body = (
     <>
-      <Box
-        sx={{
-          ...getElevatedCardSx(colors.border),
-          borderRadius: BORDER_RADIUS.lg,
-          bgcolor: colors.white,
-          overflow: 'hidden',
-        }}
-      >
+      <Box sx={{ width: '100%' }}>
+        <SectionHeading>{`Originals required — ${originals.length}`}</SectionHeading>
         {originals.length === 0 ? (
-          <Typography sx={{ fontSize: 13.5, color: colors.textMuted, p: 2 }}>
+          <Typography
+            sx={{ fontFamily: applyFont.body, fontSize: 13.5, color: applyFlow.inkMuted, py: 4 }}
+          >
             No physical originals are required for this visa.
           </Typography>
         ) : (
-          <Stack spacing={0} sx={{ px: 0.5, py: 0.5 }}>
-            {originals.map((doc) => (
-              <DocumentChecklistRow
-                key={doc.documentId}
-                icon={docIcon(doc)}
-                name={doc.name}
-                description="Upload is done — the embassy still needs the physical original."
-                statusTag={{ label: 'Original required', tone: 'original' }}
-                onInfoClick={() =>
-                  setWhyContent(
-                    resolveDocumentWhyContent({
-                      documentId: doc.documentId,
-                      name: doc.name,
-                      description: doc.description,
-                    }),
-                  )
-                }
-              />
-            ))}
-          </Stack>
+          originals.map((doc) => (
+            <DocumentChecklistRow
+              key={doc.documentId}
+              icon={docIcon(doc)}
+              name={doc.name}
+              description="Already uploaded — the embassy still needs the physical copy."
+              statusTag={{ label: 'Original', tone: 'original' }}
+              onInfoClick={() =>
+                setWhyContent(
+                  resolveDocumentWhyContent({
+                    documentId: doc.documentId,
+                    name: doc.name,
+                    description: doc.description,
+                  }),
+                )
+              }
+            />
+          ))
         )}
       </Box>
 
@@ -87,7 +79,7 @@ export function OriginalDocumentsStep({
 
   return (
     <StepShell
-      title="These need physical originals"
+      title="We also need these as originals"
       helperText="The embassy requires original copies of the following — we'll arrange collection next."
       onBack={onBack}
       onContinue={onContinue}

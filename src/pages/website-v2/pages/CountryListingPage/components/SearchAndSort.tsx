@@ -1,6 +1,7 @@
 import { Box, TextField, InputAdornment } from '@mui/material'
 import { Search } from 'lucide-react'
 import { usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { applyFlow, accentGoldRgb } from '../../../theme/applyFlowTheme'
 
 interface SearchAndSortProps {
   searchTerm: string
@@ -47,14 +48,14 @@ export function SearchAndSort({
               borderColor: colors.border,
             },
             '&:hover fieldset': {
-              borderColor: colors.teal,
+              borderColor: applyFlow.accent,
             },
             '&.Mui-focused fieldset': {
-              borderColor: colors.teal,
+              borderColor: applyFlow.accent,
               borderWidth: 1.5,
             },
             '&.Mui-focused': {
-              boxShadow: `0 0 0 4px rgba(12, 108, 121, 0.10)`,
+              boxShadow: `0 0 0 4px rgba(${accentGoldRgb}, 0.10)`,
             },
           },
         }}

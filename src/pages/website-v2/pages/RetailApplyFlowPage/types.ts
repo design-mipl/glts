@@ -133,6 +133,8 @@ export type RetailPaymentMethod = 'upi' | 'card' | 'netbanking'
 export interface RetailExtraSelection {
   choice: ExtraServiceChoice
   serviceId?: string
+  /** Own policy/ticket file, captured directly on this step when `choice` is `self_provided`. */
+  document?: RetailCapturedImage
 }
 
 export interface RetailFlowDraft {

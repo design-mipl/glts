@@ -1,19 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
-import { FileText, Star } from 'lucide-react'
-import { Button } from '@/design-system/UIComponents'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { FileUploadModal } from '@/pages/website-v2/components/fileUploadModal/FileUploadModal'
-import { getElevatedCardSx, retailFlowColors } from '@/pages/website-v2/theme/retailFlowTokens'
-import { displayNameUpper, initialsFromName } from '../../config/travelProfileQuestions'
+import { applyFlow, applyFont, applyRadius } from '@/pages/website-v2/theme/applyFlowTheme'
+import { SectionHeading } from '@/pages/website-v2/theme/applyFormControls'
+import { initialsFromName } from '../../config/travelProfileQuestions'
 import {
   SPONSOR_BANK_STATEMENT_DOC_ID,
   type RetailApplicantParty,
   type RetailCapturedImage,
 } from '../../types'
 import { checklistUploadKey } from './ChecklistStep'
-import { sponsorGold } from '../SponsorProfileBuilder'
+import { UploadTile } from '../UploadTile'
 import { StepShell } from '../StepShell'
 
 interface SponsorDocsStepProps {
@@ -25,9 +21,15 @@ interface SponsorDocsStepProps {
   previewOnly?: boolean
 }
 
-const AVATAR_FALLBACK = '#8B6914'
-
-/** B10 beat 2 — Sponsor summary card + bank statement upload (sponsored travellers only). */
+/**
+ * B10 beat 2 — bank statement per sponsor.
+ *
+ * Every sponsored traveller is listed at once. The previous version put one sponsor at a
+ * time behind a tab strip inside a gold gradient card with a dashed 64px avatar and a
+ * star badge; with two sponsors you could not see that the second was still missing.
+ * Same manifest shape as the traveller and funding steps, so the whole flow reads as one
+ * document.
+ */
 export function SponsorDocsStep({
   applicants,
   uploads,
@@ -36,221 +38,140 @@ export function SponsorDocsStep({
   onContinue,
   previewOnly = false,
 }: SponsorDocsStepProps) {
-  const colors = usePublicBrandColors()
   const sponsored = useMemo(
-    () =>
-      applicants.filter(
-        (a) => a.sponsor?.mode === 'someone_else' && a.sponsor.profileComplete,
-      ),
+    () => applicants.filter((a) => a.sponsor?.mode === 'someone_else' && a.sponsor.profileComplete),
     [applicants],
   )
-
-  const [activeId, setActiveId] = useState(sponsored[0]?.id ?? '')
-  const [uploadOpen, setUploadOpen] = useState(false)
-
-  useEffect(() => {
-    if (!sponsored.some((a) => a.id === activeId) && sponsored[0]) {
-      setActiveId(sponsored[0].id)
-    }
-  }, [sponsored, activeId])
-
-  const active = sponsored.find((a) => a.id === activeId) ?? sponsored[0]
-  const sponsor = active?.sponsor?.mode === 'someone_else' ? active.sponsor : undefined
-  const bankKey = active ? checklistUploadKey(active.id, SPONSOR_BANK_STATEMENT_DOC_ID) : ''
-  const bankUpload = bankKey ? uploads[bankKey] : undefined
 
   const allComplete =
     sponsored.length > 0 &&
     sponsored.every((a) => Boolean(uploads[checklistUploadKey(a.id, SPONSOR_BANK_STATEMENT_DOC_ID)]))
 
-  const travellerName = active?.details.fullName.trim() || active?.label || 'traveller'
+  const doneCount = sponsored.filter((a) =>
+    Boolean(uploads[checklistUploadKey(a.id, SPONSOR_BANK_STATEMENT_DOC_ID)]),
+  ).length
 
-  const body = (
-    <Stack spacing={2.5} sx={{ width: '100%', textAlign: 'left' }}>
-      {sponsored.length === 0 ? (
-        <Typography sx={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', py: 4 }}>
-          No sponsored travellers on this application.
-        </Typography>
-      ) : (
-        <>
-          {sponsored.length > 1 ? (
-            <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 0.5 }}>
-              {sponsored.map((applicant) => {
-                const isActive = applicant.id === active?.id
-                const label = applicant.details.fullName.trim() || applicant.label
-                const done = Boolean(
-                  uploads[checklistUploadKey(applicant.id, SPONSOR_BANK_STATEMENT_DOC_ID)],
-                )
-                return (
-                  <Box
-                    key={applicant.id}
-                    component="button"
-                    type="button"
-                    onClick={() => setActiveId(applicant.id)}
-                    sx={{
-                      appearance: 'none',
-                      font: 'inherit',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      px: 1.5,
-                      py: 1,
-                      borderRadius: BORDER_RADIUS.lg,
-                      border: `1.5px solid ${isActive ? sponsorGold.border : colors.border}`,
-                      bgcolor: isActive ? sponsorGold.soft : colors.white,
-                      textAlign: 'left',
-                      minWidth: 120,
-                    }}
-                  >
-                    <Typography sx={{ fontSize: 12, fontWeight: 700, color: colors.navy }}>
-                      {label}
-                    </Typography>
-                    <Typography sx={{ fontSize: 11, color: done ? sponsorGold.main : colors.textMuted }}>
-                      {done ? 'Uploaded' : 'Needs statement'}
-                    </Typography>
-                  </Box>
-                )
-              })}
-            </Box>
-          ) : null}
+  function handleFile(applicantId: string, file: File) {
+    const reader = new FileReader()
+    reader.onload = () => {
+      onUpload(applicantId, {
+        dataUrl: String(reader.result ?? ''),
+        capturedAt: new Date().toISOString(),
+      })
+    }
+    reader.readAsDataURL(file)
+  }
 
-          {sponsor ? (
+  const body =
+    sponsored.length === 0 ? (
+      <Typography
+        sx={{ fontFamily: applyFont.body, fontSize: 13.5, color: applyFlow.inkMuted, py: 6 }}
+      >
+        No sponsored travellers — nothing to upload here.
+      </Typography>
+    ) : (
+      <Box sx={{ width: '100%' }}>
+        <SectionHeading>{`Sponsor statements — ${doneCount} of ${sponsored.length} uploaded`}</SectionHeading>
+
+        {sponsored.map((applicant, index) => {
+          const sponsor = applicant.sponsor?.mode === 'someone_else' ? applicant.sponsor : undefined
+          if (!sponsor) return null
+          const key = checklistUploadKey(applicant.id, SPONSOR_BANK_STATEMENT_DOC_ID)
+          const upload = uploads[key]
+          const travellerName = applicant.details.fullName.trim() || applicant.label
+
+          return (
             <Box
+              key={applicant.id}
               sx={{
-                borderRadius: BORDER_RADIUS.xl,
-                border: `1.5px solid ${sponsorGold.border}`,
-                background: 'linear-gradient(180deg, #FFFBF0 0%, #FFFFFF 70%)',
-                p: 2.5,
-                maxWidth: 440,
-                mx: 'auto',
-                width: '100%',
+                py: 3.25,
+                borderBottom: `1px solid ${applyFlow.hairlineSoft}`,
+                '&:first-of-type': { borderTop: `1px solid ${applyFlow.hairlineSoft}` },
               }}
             >
-              <Stack alignItems="center" spacing={0.75} sx={{ mb: 2.5 }}>
-                <Box
+              <Stack direction="row" alignItems="center" spacing={3} sx={{ mb: 2.5 }}>
+                <Typography
                   sx={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: '50%',
-                    bgcolor: AVATAR_FALLBACK,
-                    color: '#fff',
-                    fontSize: 22,
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    outline: `1.5px dashed ${sponsorGold.border}`,
-                    outlineOffset: 5,
-                  }}
-                >
-                  {initialsFromName(sponsor.name).slice(0, 1)}
-                </Box>
-                <Typography sx={{ fontSize: 16, fontWeight: 800, color: colors.navy }}>
-                  {displayNameUpper(sponsor.name)}
-                </Typography>
-                <Box
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 0.45,
-                    color: sponsorGold.main,
+                    fontFamily: applyFont.mono,
                     fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: '0.08em',
+                    fontWeight: 600,
+                    color: applyFlow.inkFaint,
+                    width: 18,
+                    fontVariantNumeric: 'tabular-nums',
                   }}
                 >
-                  <Star size={11} fill={sponsorGold.main} />
-                  SPONSOR
+                  {String(index + 1).padStart(2, '0')}
+                </Typography>
+                <Box
+                  aria-hidden
+                  sx={{
+                    width: 38,
+                    height: 38,
+                    display: 'grid',
+                    placeItems: 'center',
+                    borderRadius: applyRadius.chip,
+                    backgroundColor: applyFlow.canvas,
+                    border: `1px solid ${upload ? applyFlow.successBorder : applyFlow.hairline}`,
+                    fontFamily: applyFont.mono,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: applyFlow.inkMuted,
+                    flex: '0 0 auto',
+                  }}
+                >
+                  {initialsFromName(sponsor.name) || '—'}
                 </Box>
-                <Typography sx={{ fontSize: 12.5, color: colors.textMuted, textAlign: 'center' }}>
-                  {sponsor.relationship} · funding {travellerName}&apos;s trip
-                </Typography>
-              </Stack>
-
-              <Box
-                sx={{
-                  ...getElevatedCardSx(colors.border),
-                  borderRadius: BORDER_RADIUS.lg,
-                  bgcolor: colors.white,
-                  p: 2,
-                }}
-              >
-                <Typography sx={{ fontSize: 14, fontWeight: 800, color: colors.navy, mb: 0.35 }}>
-                  Sponsor bank statement
-                </Typography>
-                <Typography sx={{ fontSize: 12.5, color: colors.textMuted, mb: 1.5, lineHeight: 1.4 }}>
-                  Upload a recent statement in {sponsor.name}&apos;s name (JPEG, PNG, or PDF).
-                </Typography>
-
-                {bankUpload ? (
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={1.25}
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
                     sx={{
-                      p: 1.5,
-                      borderRadius: BORDER_RADIUS.md,
-                      bgcolor: retailFlowColors.greenMuted,
-                      border: `1px solid ${retailFlowColors.greenBorderSoft}`,
+                      fontFamily: applyFont.body,
+                      fontSize: 14.5,
+                      fontWeight: 600,
+                      color: applyFlow.ink,
+                      lineHeight: 1.3,
                     }}
                   >
-                    <FileText size={18} color={retailFlowColors.green} />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 700, color: colors.navy }}>
-                        Statement uploaded
-                      </Typography>
-                      <Typography sx={{ fontSize: 11.5, color: colors.textMuted }}>
-                        {new Date(bankUpload.capturedAt).toLocaleString()}
-                      </Typography>
-                    </Box>
-                    <Button label="Replace" variant="ghost" size="sm" onClick={() => setUploadOpen(true)} />
-                  </Stack>
-                ) : (
-                  <Button
-                    label="Upload bank statement"
-                    variant="soft"
-                    color="primary"
-                    fullWidth
-                    onClick={() => setUploadOpen(true)}
-                  />
-                )}
+                    {sponsor.name}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontFamily: applyFont.mono,
+                      fontSize: 10.5,
+                      color: applyFlow.inkMuted,
+                      mt: 0.75,
+                    }}
+                  >
+                    {[sponsor.relationship, `funding ${travellerName}`].filter(Boolean).join('  ·  ')}
+                  </Typography>
+                </Box>
+              </Stack>
+
+              <Box sx={{ pl: { xs: 0, sm: '84px' } }}>
+                <UploadTile
+                  label="Bank statement"
+                  hint="Last 3 months, showing the sponsor's name — PDF, JPG or PNG"
+                  value={upload?.dataUrl}
+                  capturedAt={upload?.capturedAt}
+                  required
+                  onFile={(file) => handleFile(applicant.id, file)}
+                />
               </Box>
             </Box>
-          ) : null}
-        </>
-      )}
-
-      <FileUploadModal
-        open={uploadOpen}
-        onClose={() => setUploadOpen(false)}
-        documentName="Sponsor bank statement"
-        description="Last 3 months preferred. Must show the sponsor's name and account details."
-        onUpload={(files) => {
-          const file = files[0]
-          if (!file || !active) return
-          const reader = new FileReader()
-          reader.onload = () => {
-            onUpload(active.id, {
-              dataUrl: String(reader.result ?? ''),
-              capturedAt: new Date().toISOString(),
-            })
-            setUploadOpen(false)
-          }
-          reader.readAsDataURL(file)
-        }}
-      />
-    </Stack>
-  )
+          )
+        })}
+      </Box>
+    )
 
   if (previewOnly) return body
 
   return (
     <StepShell
-      title="Sponsor documents"
-      helperText="Upload financial proof for each sponsor. Marked clearly so reviewers know it’s not the traveller’s statement."
+      title="Sponsor bank statements"
+      helperText="Each sponsor needs to show they can fund the trip. The statement must be in the sponsor's name, not the traveller's."
       onBack={onBack}
       onContinue={onContinue}
       continueDisabled={!allComplete}
-      contentMaxWidth={560}
+      contentMaxWidth={780}
     >
       {body}
     </StepShell>

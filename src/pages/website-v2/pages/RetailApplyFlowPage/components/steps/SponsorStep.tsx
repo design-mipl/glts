@@ -1,11 +1,15 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
-import { Check, Plus, User, UserRound } from 'lucide-react'
-import { Button, IconButton } from '@/design-system/UIComponents'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { retailFlowEaseOut, retailProfileCardGradient } from '@/pages/website-v2/theme/retailFlowTokens'
-import { displayNameUpper, initialsFromName } from '../../config/travelProfileQuestions'
+import { useMemo, useState, type ChangeEvent } from 'react'
+import { Box, Button, Stack, Typography } from '@mui/material'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+  getAccentButtonSx,
+  getQuietButtonSx,
+} from '@/pages/website-v2/theme/applyFlowTheme'
+import { SectionHeading, StatusPill } from '@/pages/website-v2/theme/applyFormControls'
+import { initialsFromName } from '../../config/travelProfileQuestions'
 import type { RetailApplicantParty, RetailTravellerSponsor } from '../../types'
 import { SponsorProfileBuilder } from '../SponsorProfileBuilder'
 import { StepShell } from '../StepShell'
@@ -22,289 +26,85 @@ interface SponsorStepProps {
 function sponsorSelectionComplete(sponsor: RetailTravellerSponsor | undefined): boolean {
   if (!sponsor) return false
   if (sponsor.mode === 'individual') return true
-  return Boolean(sponsor.profileComplete && sponsor.name.trim() && sponsor.relationship && sponsor.contact.trim())
-}
-
-function RadioDot({ selected }: { selected: boolean }) {
-  const colors = usePublicBrandColors()
-  return (
-    <Box
-      aria-hidden
-      sx={{
-        width: 18,
-        height: 18,
-        borderRadius: '50%',
-        border: `2px solid ${selected ? colors.navy : 'rgba(15, 23, 42, 0.25)'}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}
-    >
-      {selected ? (
-        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: colors.navy }} />
-      ) : null}
-    </Box>
+  return Boolean(
+    sponsor.profileComplete && sponsor.name.trim() && sponsor.relationship && sponsor.contact.trim(),
   )
 }
 
-/** Match TravellerProfileCard avatar tone from Travel profile. */
-const SPONSOR_AVATAR_TONE = '#D4A0A0'
-
-/** Same visual language as TravellerProfileCard — sponsor name + build / complete states. */
-function SponsorProfileCard({
-  name,
-  relationship,
-  contact,
-  profileComplete,
-  onNameChange,
-  onBuild,
-  onEdit,
+/**
+ * Two-option segmented control. Replaces two pill-shaped (999px) buttons — a fully rounded
+ * control reads as a tag, not a choice, and the brief rules out pill-shaped UI.
+ */
+function PayerToggle({
+  value,
+  onChange,
+  idPrefix,
 }: {
-  name: string
-  relationship?: string
-  contact?: string
-  profileComplete?: boolean
-  onNameChange: (value: string) => void
-  onBuild: () => void
-  onEdit: () => void
+  value: 'individual' | 'someone_else' | undefined
+  onChange: (mode: 'individual' | 'someone_else') => void
+  idPrefix: string
 }) {
-  const colors = usePublicBrandColors()
-  const trimmed = name.trim()
-  const nameUpper = trimmed ? displayNameUpper(trimmed) : ''
-  const tags = [relationship, contact].filter((value): value is string => Boolean(value?.trim()))
-  const complete = Boolean(profileComplete && trimmed && tags.length > 0)
-
-  if (complete) {
-    return (
-      <Box
-        sx={{
-          border: `1px solid ${colors.border}`,
-          borderRadius: 4,
-          bgcolor: colors.white,
-          backgroundImage: retailProfileCardGradient,
-          p: 1.75,
-          maxWidth: 210,
-          width: '100%',
-          mx: 'auto',
-          alignSelf: 'center',
-          minHeight: 210,
-          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.25 }}>
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              bgcolor: SPONSOR_AVATAR_TONE,
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 12,
-              fontWeight: 700,
-              flexShrink: 0,
-            }}
-          >
-            {initialsFromName(trimmed)}
-          </Box>
-          <Typography
-            sx={{
-              fontWeight: 700,
-              fontSize: 13,
-              color: colors.navy,
-              letterSpacing: '0.04em',
-              lineHeight: 1.3,
-            }}
-          >
-            {nameUpper}
-          </Typography>
-        </Stack>
-
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignContent: 'flex-start',
-            gap: 0.5,
-            pt: 1,
-          }}
-        >
-          {tags.map((tag) => (
-            <Box
-              key={tag}
-              component="span"
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                px: 0.9,
-                py: 0.55,
-                borderRadius: 999,
-                bgcolor: colors.greenMuted,
-                border: `1px solid ${colors.border}`,
-                fontSize: 11,
-                fontWeight: 600,
-                color: colors.navy,
-                lineHeight: 1.2,
-              }}
-            >
-              {tag}
-            </Box>
-          ))}
-        </Box>
-
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 'auto', pt: 1.25 }}>
-          <Box
-            sx={{
-              width: 26,
-              height: 26,
-              borderRadius: '50%',
-              bgcolor: '#0FA968',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            aria-label="Sponsor profile complete"
-          >
-            <Check size={14} strokeWidth={2.75} />
-          </Box>
-          <Button label="Edit" variant="outlined" color="secondary" size="sm" onClick={onEdit} />
-        </Stack>
-      </Box>
-    )
-  }
+  const options = [
+    { id: 'individual' as const, label: 'Self-funded' },
+    { id: 'someone_else' as const, label: 'Someone else' },
+  ]
 
   return (
     <Box
+      role="radiogroup"
+      aria-label="Who is paying"
       sx={{
-        border: `1px solid ${colors.border}`,
-        borderRadius: 4,
-        bgcolor: colors.white,
-        backgroundImage: retailProfileCardGradient,
-        p: 2,
-        maxWidth: 210,
-        width: '100%',
-        mx: 'auto',
-        alignSelf: 'center',
-        boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        minHeight: 210,
+        display: 'inline-flex',
+        p: '2px',
+        borderRadius: applyRadius.control,
+        border: `1px solid ${applyFlow.hairline}`,
+        backgroundColor: applyFlow.canvas,
       }}
     >
-      <Box
-        sx={{
-          width: 48,
-          height: 48,
-          borderRadius: '50%',
-          bgcolor: SPONSOR_AVATAR_TONE,
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 16,
-          fontWeight: 700,
-          mt: 0.25,
-          mb: 0.75,
-        }}
-      >
-        {trimmed ? initialsFromName(trimmed) : <UserRound size={20} strokeWidth={1.75} />}
-      </Box>
-
-      <Typography
-        sx={{
-          fontWeight: 700,
-          fontSize: 13,
-          color: trimmed ? colors.navy : colors.textMuted,
-          letterSpacing: '0.06em',
-          textAlign: 'center',
-        }}
-      >
-        {nameUpper || 'ADD NAME'}
-      </Typography>
-
-      <Box
-        component="form"
-        sx={{ width: '100%', mt: 'auto', pt: 1.5 }}
-        onSubmit={(event) => {
-          event.preventDefault()
-          if (trimmed) onBuild()
-        }}
-      >
-        <Box
-          sx={{
-            border: `1px solid ${colors.border}`,
-            borderRadius: 2,
-            px: 1.5,
-            pt: 1,
-            pb: 1.1,
-            bgcolor: colors.white,
-            textAlign: 'left',
-          }}
-        >
-          <Typography
-            component="label"
-            htmlFor="sponsor-name-input"
-            sx={{
-              display: 'block',
-              fontSize: 11,
-              fontWeight: 600,
-              color: colors.textMuted,
-              mb: 0.35,
-            }}
-          >
-            Name
-          </Typography>
+      {options.map((opt) => {
+        const selected = value === opt.id
+        return (
           <Box
-            component="input"
-            id="sponsor-name-input"
-            value={name}
-            placeholder="Sponsor name"
-            onChange={(event: ChangeEvent<HTMLInputElement>) => onNameChange(event.target.value)}
+            key={opt.id}
+            component="button"
+            type="button"
+            role="radio"
+            id={`${idPrefix}-${opt.id}`}
+            aria-checked={selected}
+            onClick={() => onChange(opt.id)}
             sx={{
-              width: '100%',
+              appearance: 'none',
               border: 'none',
-              outline: 'none',
-              bgcolor: 'transparent',
-              font: 'inherit',
-              fontSize: 15,
-              fontWeight: 700,
-              color: colors.navy,
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              p: 0,
-              '&::placeholder': {
-                color: colors.textMuted,
-                fontWeight: 500,
-                letterSpacing: 0,
-                textTransform: 'none',
+              cursor: 'pointer',
+              minHeight: 38,
+              '@media (pointer: coarse)': { minHeight: 44 },
+              px: 3.5,
+              borderRadius: '7px',
+              fontFamily: applyFont.body,
+              fontSize: 13,
+              fontWeight: selected ? 600 : 500,
+              color: selected ? applyFlow.onAccent : applyFlow.inkMuted,
+              backgroundColor: selected ? applyFlow.accent : 'transparent',
+              whiteSpace: 'nowrap',
+              transition: `background-color 180ms ${applyMotion.easeOut}, color 180ms ${applyMotion.easeOut}`,
+              '@media (hover: hover) and (pointer: fine)': {
+                '&:hover': { color: selected ? applyFlow.onAccent : applyFlow.ink },
+              },
+              '&:focus-visible': {
+                outline: 'none',
+                boxShadow: `0 0 0 2px ${applyFlow.accent}`,
               },
             }}
-          />
-        </Box>
-        <Button
-          type="submit"
-          label="Build profile"
-          variant="soft"
-          color="primary"
-          fullWidth
-          sx={{ mt: 1.5 }}
-          disabled={!trimmed}
-        />
-      </Box>
+          >
+            {opt.label}
+          </Box>
+        )
+      })}
     </Box>
   )
 }
 
-/** B10 beat 1 — Who's paying: Individual vs Someone else + build sponsor profile. */
+/** B10 beat 1 — Who's paying, per traveller. */
 export function SponsorStep({
   applicants,
   onUpdateSponsor,
@@ -313,275 +113,276 @@ export function SponsorStep({
   onContinue,
   previewOnly = false,
 }: SponsorStepProps) {
-  const colors = usePublicBrandColors()
   const named = useMemo(
     () => applicants.filter((a) => a.details.fullName.trim() || a.label),
     [applicants],
   )
-  const initialId =
-    named.find((a) => a.sponsor?.mode === 'someone_else')?.id ?? named[0]?.id ?? ''
-  const [activeId, setActiveId] = useState(initialId)
-  const [builderOpen, setBuilderOpen] = useState(false)
-  const [draftName, setDraftName] = useState('')
-
-  useEffect(() => {
-    if (!named.some((a) => a.id === activeId) && named[0]) {
-      setActiveId(named[0].id)
-    }
-  }, [named, activeId])
-
-  const active = named.find((a) => a.id === activeId) ?? named[0]
-  const sponsor = active?.sponsor
-  const travellerName = active?.details.fullName.trim() || active?.label || 'this traveller'
-
-  useEffect(() => {
-    if (sponsor?.mode === 'someone_else') {
-      setDraftName(sponsor.name)
-    } else {
-      setDraftName('')
-    }
-  }, [active?.id, sponsor])
+  // Which traveller's sponsor builder is open. Every traveller is visible at once, so
+  // this replaces the old "active tab" state — nobody is hidden behind a tab any more.
+  const [builderForId, setBuilderForId] = useState<string | null>(null)
 
   const allComplete = named.length > 0 && named.every((a) => sponsorSelectionComplete(a.sponsor))
+  const doneCount = named.filter((a) => sponsorSelectionComplete(a.sponsor)).length
+  const builderApplicant = builderForId ? named.find((a) => a.id === builderForId) : undefined
+  const builderSponsor =
+    builderApplicant?.sponsor?.mode === 'someone_else' ? builderApplicant.sponsor : undefined
 
-  function setMode(mode: 'individual' | 'someone_else') {
-    if (!active) return
+  function setMode(applicant: RetailApplicantParty, mode: 'individual' | 'someone_else') {
     if (mode === 'individual') {
-      onUpdateSponsor(active.id, { mode: 'individual' })
-      setBuilderOpen(false)
+      onUpdateSponsor(applicant.id, { mode: 'individual' })
+      if (builderForId === applicant.id) setBuilderForId(null)
       return
     }
-    const existing = sponsor?.mode === 'someone_else' ? sponsor : undefined
-    onUpdateSponsor(active.id, {
+    const existing = applicant.sponsor?.mode === 'someone_else' ? applicant.sponsor : undefined
+    onUpdateSponsor(applicant.id, {
       mode: 'someone_else',
       name: existing?.name ?? '',
       relationship: existing?.relationship ?? '',
       contact: existing?.contact ?? '',
       profileComplete: existing?.profileComplete,
     })
-    setDraftName(existing?.name ?? '')
   }
 
-  const body = (
-    <Stack spacing={2.5} sx={{ width: '100%', textAlign: 'left' }}>
-      {named.length === 0 ? (
-        <Stack spacing={1.5} alignItems="center" sx={{ py: 3 }}>
-          <Typography sx={{ fontSize: 13, color: colors.textMuted, textAlign: 'center' }}>
-            No travelers yet. Add them in Travel profile, then return here.
-          </Typography>
-          <Button label="Go to Travel profile" variant="soft" color="primary" onClick={onGoToTravelProfile} />
-        </Stack>
-      ) : (
-        <>
-          {named.length > 1 ? (
-            <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 0.5 }}>
-              {named.map((applicant) => {
-                const isActive = applicant.id === active?.id
-                const label = applicant.details.fullName.trim() || applicant.label
-                const done = sponsorSelectionComplete(applicant.sponsor)
-                return (
-                  <Box
-                    key={applicant.id}
-                    component="button"
-                    type="button"
-                    onClick={() => setActiveId(applicant.id)}
+  const body =
+    named.length === 0 ? (
+      <Stack spacing={3} alignItems="flex-start" sx={{ py: 6 }}>
+        <Typography
+          sx={{ fontFamily: applyFont.body, fontSize: 13.5, color: applyFlow.inkMuted }}
+        >
+          No travellers yet. Add them on the travel profile step, then come back.
+        </Typography>
+        <Button
+          variant="text"
+          onClick={onGoToTravelProfile}
+          sx={{ ...getQuietButtonSx(), px: 4, minHeight: 44 }}
+        >
+          Go to travel profile
+        </Button>
+      </Stack>
+    ) : (
+      <Box sx={{ width: '100%' }}>
+        <SectionHeading>{`Funding — ${doneCount} of ${named.length} answered`}</SectionHeading>
+
+        {named.map((applicant, index) => {
+          const sponsor = applicant.sponsor
+          const isSponsored = sponsor?.mode === 'someone_else'
+          const complete = sponsorSelectionComplete(sponsor)
+          const label = applicant.details.fullName.trim() || applicant.label
+
+          return (
+            <Box
+              key={applicant.id}
+              sx={{
+                py: 3.25,
+                borderBottom: `1px solid ${applyFlow.hairlineSoft}`,
+                '&:first-of-type': { borderTop: `1px solid ${applyFlow.hairlineSoft}` },
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', md: 'row' },
+                  alignItems: { xs: 'flex-start', md: 'center' },
+                  gap: { xs: 2.5, md: 3.5 },
+                }}
+              >
+                <Stack direction="row" alignItems="center" spacing={3} sx={{ flex: '0 0 auto', minWidth: 0 }}>
+                  <Typography
                     sx={{
-                      appearance: 'none',
-                      font: 'inherit',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      px: 1.5,
-                      py: 1,
-                      borderRadius: BORDER_RADIUS.lg,
-                      border: `1.5px solid ${isActive ? colors.green : colors.border}`,
-                      bgcolor: isActive ? colors.greenMuted : colors.white,
-                      textAlign: 'left',
-                      minWidth: 120,
+                      fontFamily: applyFont.mono,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: applyFlow.inkFaint,
+                      width: 18,
+                      fontVariantNumeric: 'tabular-nums',
                     }}
                   >
-                    <Typography sx={{ fontSize: 12, fontWeight: 700, color: colors.navy }}>
-                      {label}
-                    </Typography>
-                    <Typography sx={{ fontSize: 11, color: done ? colors.greenDark : colors.textMuted }}>
-                      {done ? 'Done' : 'Needs answer'}
-                    </Typography>
+                    {String(index + 1).padStart(2, '0')}
+                  </Typography>
+                  <Box
+                    aria-hidden
+                    sx={{
+                      width: 38,
+                      height: 38,
+                      display: 'grid',
+                      placeItems: 'center',
+                      borderRadius: applyRadius.chip,
+                      backgroundColor: applyFlow.canvas,
+                      border: `1px solid ${complete ? applyFlow.successBorder : applyFlow.hairline}`,
+                      fontFamily: applyFont.mono,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: applyFlow.inkMuted,
+                      flex: '0 0 auto',
+                    }}
+                  >
+                    {initialsFromName(label) || '—'}
                   </Box>
-                )
-              })}
+                  <Typography
+                    sx={{
+                      fontFamily: applyFont.body,
+                      fontSize: 14.5,
+                      fontWeight: 600,
+                      color: applyFlow.ink,
+                      lineHeight: 1.3,
+                      width: { xs: 'auto', md: 150 },
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {label}
+                  </Typography>
+                </Stack>
+
+                <Box sx={{ flex: '1 1 auto' }}>
+                  <PayerToggle
+                    value={sponsor?.mode}
+                    idPrefix={`payer-${applicant.id}`}
+                    onChange={(mode) => setMode(applicant, mode)}
+                  />
+                </Box>
+
+                {complete ? <StatusPill tone="done">Done</StatusPill> : null}
+              </Box>
+
+              {/* Sponsor detail, inline under the traveller it belongs to. */}
+              {isSponsored ? (
+                <Box
+                  sx={{
+                    mt: 3,
+                    ml: { xs: 0, md: '84px' },
+                    pl: 4,
+                    borderLeft: `2px solid ${
+                      sponsor?.profileComplete ? applyFlow.successBorder : applyFlow.accent
+                    }`,
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'stretch', sm: 'center' },
+                    gap: 3,
+                  }}
+                >
+                  <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>
+                    <Typography
+                      component="label"
+                      htmlFor={`sponsor-name-${applicant.id}`}
+                      sx={{
+                        display: 'block',
+                        fontFamily: applyFont.mono,
+                        fontSize: 10,
+                        fontWeight: 600,
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: applyFlow.inkFaint,
+                        mb: 1,
+                      }}
+                    >
+                      Sponsor
+                    </Typography>
+                    <Box
+                      component="input"
+                      id={`sponsor-name-${applicant.id}`}
+                      value={sponsor?.name ?? ''}
+                      placeholder="Sponsor's full name"
+                      onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                        onUpdateSponsor(applicant.id, {
+                          mode: 'someone_else',
+                          name: event.target.value,
+                          relationship: sponsor?.relationship ?? '',
+                          contact: sponsor?.contact ?? '',
+                          profileComplete: false,
+                        })
+                      }
+                      sx={{
+                        width: '100%',
+                        border: 'none',
+                        borderBottom: '1px solid transparent',
+                        outline: 'none',
+                        background: 'transparent',
+                        p: 0,
+                        pb: 1,
+                        fontFamily: applyFont.body,
+                        fontSize: 15,
+                        fontWeight: 600,
+                        color: applyFlow.ink,
+                        transition: `border-color 150ms ${applyMotion.easeOut}`,
+                        '&::placeholder': { color: applyFlow.inkFaint, fontWeight: 400 },
+                        '&:hover': { borderBottomColor: applyFlow.hairline },
+                        '&:focus': { borderBottomColor: applyFlow.accent },
+                      }}
+                    />
+                    {sponsor?.relationship || sponsor?.contact ? (
+                      <Typography
+                        sx={{
+                          fontFamily: applyFont.mono,
+                          fontSize: 11,
+                          color: applyFlow.inkMuted,
+                          mt: 1,
+                        }}
+                      >
+                        {[sponsor.relationship, sponsor.contact].filter(Boolean).join('  ·  ')}
+                      </Typography>
+                    ) : null}
+                  </Box>
+
+                  <Button
+                    variant={sponsor?.profileComplete ? 'text' : 'contained'}
+                    disableElevation
+                    disabled={!sponsor?.name.trim()}
+                    onClick={() => setBuilderForId(applicant.id)}
+                    sx={
+                      sponsor?.profileComplete
+                        ? { ...getQuietButtonSx(), px: 3.5, minHeight: 44, flex: '0 0 auto' }
+                        : { ...getAccentButtonSx(), px: 4, minHeight: 44, flex: '0 0 auto' }
+                    }
+                  >
+                    {sponsor?.profileComplete ? 'Edit details' : 'Add details'}
+                  </Button>
+                </Box>
+              ) : null}
             </Box>
-          ) : null}
+          )
+        })}
+      </Box>
+    )
 
-          <Stack spacing={1.5} sx={{ maxWidth: 520, mx: 'auto', width: '100%' }}>
-            <Stack direction="row" alignItems="center" spacing={0.75} sx={{ width: '100%' }}>
-              <Box
-                role="button"
-                tabIndex={0}
-                onClick={() => setMode('individual')}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    setMode('individual')
-                  }
-                }}
-                sx={{
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  flex: 1,
-                  minWidth: 0,
-                  px: 1.25,
-                  py: 1.25,
-                  borderRadius: 999,
-                  border: `1.5px solid ${
-                    sponsor?.mode === 'individual' ? colors.green : colors.border
-                  }`,
-                  bgcolor: colors.white,
-                  textAlign: 'left',
-                  transition: `border-color 150ms ${retailFlowEaseOut}`,
-                  '&:hover': { borderColor: colors.green },
-                }}
-              >
-                <IconButton
-                  icon={<User size={14} strokeWidth={1.75} />}
-                  variant="soft"
-                  color="success"
-                  size="sm"
-                  sx={{ pointerEvents: 'none', flexShrink: 0 }}
-                />
-                <Typography
-                  sx={{
-                    flex: 1,
-                    minWidth: 0,
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: colors.navy,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  Self-paying
-                </Typography>
-                <RadioDot selected={sponsor?.mode === 'individual'} />
-              </Box>
+  const overlay =
+    builderApplicant && builderSponsor ? (
+      <SponsorProfileBuilder
+        initialName={builderSponsor.name}
+        initialRelationship={builderSponsor.relationship}
+        initialContact={builderSponsor.contact}
+        travellerName={builderApplicant.details.fullName.trim() || builderApplicant.label}
+        onClose={() => setBuilderForId(null)}
+        onComplete={(next) => {
+          onUpdateSponsor(builderApplicant.id, next)
+          setBuilderForId(null)
+        }}
+      />
+    ) : null
 
-              <Box
-                role="button"
-                tabIndex={0}
-                onClick={() => setMode('someone_else')}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    setMode('someone_else')
-                  }
-                }}
-                sx={{
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  flex: 1,
-                  minWidth: 0,
-                  px: 1.25,
-                  py: 1.25,
-                  borderRadius: 999,
-                  border: `1.5px solid ${
-                    sponsor?.mode === 'someone_else' ? colors.green : colors.border
-                  }`,
-                  bgcolor: colors.white,
-                  textAlign: 'left',
-                  transition: `border-color 150ms ${retailFlowEaseOut}`,
-                  '&:hover': { borderColor: colors.green },
-                }}
-              >
-                <IconButton
-                  icon={<Plus size={14} strokeWidth={1.75} />}
-                  variant="soft"
-                  color="success"
-                  size="sm"
-                  sx={{ pointerEvents: 'none', flexShrink: 0 }}
-                />
-                <Typography
-                  sx={{
-                    flex: 1,
-                    minWidth: 0,
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: colors.navy,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  Someone else
-                </Typography>
-                <RadioDot selected={sponsor?.mode === 'someone_else'} />
-              </Box>
-            </Stack>
-
-            {sponsor?.mode === 'someone_else' ? (
-              <SponsorProfileCard
-                name={draftName || sponsor.name}
-                relationship={sponsor.relationship}
-                contact={sponsor.contact}
-                profileComplete={sponsor.profileComplete}
-                onNameChange={(value) => {
-                  setDraftName(value)
-                  onUpdateSponsor(active!.id, {
-                    mode: 'someone_else',
-                    name: value,
-                    relationship: sponsor.relationship,
-                    contact: sponsor.contact,
-                    profileComplete: false,
-                  })
-                }}
-                onBuild={() => {
-                  const nextName = (draftName || sponsor.name).trim()
-                  onUpdateSponsor(active!.id, {
-                    mode: 'someone_else',
-                    name: nextName,
-                    relationship: sponsor.relationship,
-                    contact: sponsor.contact,
-                    profileComplete: false,
-                  })
-                  setBuilderOpen(true)
-                }}
-                onEdit={() => {
-                  setDraftName(sponsor.name)
-                  setBuilderOpen(true)
-                }}
-              />
-            ) : null}
-          </Stack>
-        </>
-      )}
-
-      {builderOpen && active && sponsor?.mode === 'someone_else' ? (
-        <SponsorProfileBuilder
-          initialName={draftName || sponsor.name}
-          initialRelationship={sponsor.relationship}
-          initialContact={sponsor.contact}
-          travellerName={travellerName}
-          onClose={() => setBuilderOpen(false)}
-          onComplete={(next) => {
-            onUpdateSponsor(active.id, next)
-            setDraftName(next.name)
-            setBuilderOpen(false)
-          }}
-        />
-      ) : null}
-    </Stack>
-  )
-
-  if (previewOnly) return body
+  if (previewOnly) {
+    return (
+      <>
+        {body}
+        {overlay}
+      </>
+    )
+  }
 
   return (
-    <StepShell
-      title="Who's paying for this trip?"
-      helperText="Self-funded travellers continue immediately. Sponsored trips need a short sponsor profile first."
-      onBack={onBack}
-      onContinue={onContinue}
-      continueDisabled={!allComplete}
-      contentMaxWidth={560}
-    >
-      {body}
-    </StepShell>
+    <>
+      <StepShell
+        title="Who is paying for this trip?"
+        helperText="Self-funded travellers move straight on. A sponsored traveller needs the sponsor's details and a bank statement."
+        onBack={onBack}
+        onContinue={onContinue}
+        continueDisabled={!allComplete}
+        contentMaxWidth={860}
+      >
+        {body}
+      </StepShell>
+      {overlay}
+    </>
   )
 }

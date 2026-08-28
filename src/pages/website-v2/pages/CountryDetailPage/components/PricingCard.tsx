@@ -17,9 +17,9 @@ import {
   publicFonts,
   publicTypography,
   usePublicBrandColors,
-  getMarketingPrimaryButtonSx,
 } from '@/shared/theme/publicBrand'
 import { LiveStatusPanel } from '../../../components/liveStatusPanel/LiveStatusPanel'
+import { applyFlow, getAccentButtonSx } from '../../../theme/applyFlowTheme'
 import {
   getElevatedStatusCardSx,
   statusVisualRadius,
@@ -59,6 +59,14 @@ export function PricingCard({
   const totalPrice = unitPrice * travellerCount
   const totalPriceLabel = `₹${totalPrice.toLocaleString('en-IN')}`
 
+  // Indicative split pending a per-visa-type fee breakdown from the backend — embassy/government
+  // fees make up the bulk of most visa costs, with GreenLight's facilitation fee as the remainder.
+  // Split on the unit price first so the two line items always sum exactly to the total.
+  const embassyFeeUnit = Math.round(unitPrice * 0.8)
+  const serviceFeeUnit = unitPrice - embassyFeeUnit
+  const embassyFeeLabel = `₹${(embassyFeeUnit * travellerCount).toLocaleString('en-IN')}`
+  const serviceFeeLabel = `₹${(serviceFeeUnit * travellerCount).toLocaleString('en-IN')}`
+
   const travellerAwareHref = `${applyHref}${applyHref.includes('?') ? '&' : '?'}travellers=${travellerCount}`
 
   const approvalLikelihood =
@@ -72,8 +80,8 @@ export function PricingCard({
     color: colors.navy,
     bgcolor: colors.white,
     '& .MuiOutlinedInput-notchedOutline': { borderColor: colors.border },
-    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: colors.teal },
-    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: colors.teal, borderWidth: 1.5 },
+    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: applyFlow.accent },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: applyFlow.accent, borderWidth: 1.5 },
     '& .MuiSelect-select': { display: 'flex', alignItems: 'center', py: 0 },
   }
 
@@ -251,7 +259,7 @@ export function PricingCard({
           variant="contained"
           size="large"
           href={travellerAwareHref}
-          sx={{ ...getMarketingPrimaryButtonSx(colors), py: 1.5, fontSize: '15px', mb: 3 }}
+          sx={{ ...getAccentButtonSx(), py: 1.5, fontSize: '15px', mb: 3 }}
         >
           Start Application
         </Button>
@@ -265,8 +273,18 @@ export function PricingCard({
               </Typography>
               <Typography sx={{ color: colors.textMuted, fontSize: '12px' }}>Paid with application</Typography>
             </Box>
-            <Typography sx={{ color: colors.textSecondary, fontSize: '12.5px', fontWeight: 600, textAlign: 'right', flexShrink: 0, maxWidth: 88, lineHeight: 1.35 }}>
-              Confirmed after selection
+            <Typography
+              sx={{
+                fontFamily: publicFonts.mono,
+                fontVariantNumeric: 'tabular-nums',
+                color: colors.navy,
+                fontSize: '13px',
+                fontWeight: 700,
+                textAlign: 'right',
+                flexShrink: 0,
+              }}
+            >
+              {embassyFeeLabel}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
@@ -277,8 +295,18 @@ export function PricingCard({
               </Typography>
               <Typography sx={{ color: colors.textMuted, fontSize: '12px' }}>Included in total</Typography>
             </Box>
-            <Typography sx={{ color: colors.textSecondary, fontSize: '12.5px', fontWeight: 600, textAlign: 'right', flexShrink: 0, maxWidth: 88, lineHeight: 1.35 }}>
-              Confirmed after selection
+            <Typography
+              sx={{
+                fontFamily: publicFonts.mono,
+                fontVariantNumeric: 'tabular-nums',
+                color: colors.navy,
+                fontSize: '13px',
+                fontWeight: 700,
+                textAlign: 'right',
+                flexShrink: 0,
+              }}
+            >
+              {serviceFeeLabel}
             </Typography>
           </Box>
 

@@ -1,8 +1,9 @@
 import { useMemo, type ComponentType } from 'react'
-import { Box, Typography, Grid } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import {
   Briefcase,
   Building2,
+  Check,
   Globe2,
   GraduationCap,
   Heart,
@@ -12,9 +13,15 @@ import {
   type LucideProps,
 } from 'lucide-react'
 import { getCountryMasterById, getVisaOfferings } from '@/shared/services/countryMasterService'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { getElevatedCardSx } from '@/pages/website-v2/theme/retailFlowTokens'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+  eyebrowSx,
+  getSelectableSx,
+  tabularNums,
+} from '@/pages/website-v2/theme/applyFlowTheme'
 import { StepShell } from '../StepShell'
 
 interface VisaStepProps {
@@ -25,15 +32,10 @@ interface VisaStepProps {
   onContinue: () => void
 }
 
-const ICON_TONES = [
-  { bg: 'rgba(225, 29, 72, 0.12)', fg: '#BE123C' },
-  { bg: 'rgba(13, 148, 136, 0.12)', fg: '#0F766E' },
-  { bg: 'rgba(180, 83, 9, 0.12)', fg: '#B45309' },
-  { bg: 'rgba(79, 70, 229, 0.12)', fg: '#4338CA' },
-  { bg: 'rgba(8, 145, 178, 0.12)', fg: '#0E7490' },
-  { bg: 'rgba(147, 51, 234, 0.12)', fg: '#7E22CE' },
-] as const
-
+/**
+ * Icons differentiate by *shape only* — every badge shares one neutral treatment.
+ * Per-type pastel backgrounds are a flagged "AI-generated SaaS" tell and are not used here.
+ */
 function resolveVisaIcon(offering: {
   purposeId?: string
   purposeLabel?: string
@@ -69,95 +71,151 @@ function resolveVisaIcon(offering: {
 }
 
 export function VisaStep({ countryId, visaOfferingId, onSelect, onBack, onContinue }: VisaStepProps) {
-  const colors = usePublicBrandColors()
   const offerings = useMemo(() => getVisaOfferings(countryId, true, 'retail'), [countryId])
   const countryName = useMemo(() => getCountryMasterById(countryId)?.name, [countryId])
 
   return (
     <StepShell
       title="What are you travelling for?"
-      helperText="We'll use this to prepare your visa requirements."
+      helperText="This determines which documents your application will need."
       onBack={onBack}
       backLabel="Cancel"
       onContinue={onContinue}
       continueDisabled={!visaOfferingId}
     >
       {offerings.length === 0 ? (
-        <Typography sx={{ fontSize: 13, color: colors.textMuted, mb: 2 }}>
+        <Typography sx={{ fontFamily: applyFont.body, fontSize: 14, color: applyFlow.inkMuted, mb: 2 }}>
           No visa types are configured for {countryName ?? 'this destination'} yet. Choose another
-          destination or contact GLTS support.
+          destination, or contact GLTS support.
         </Typography>
       ) : null}
 
-      <Grid container spacing={3} justifyContent="center" sx={{ maxWidth: 560, mx: 'auto' }}>
+      <Stack
+        role="radiogroup"
+        aria-label="Visa type"
+        spacing={1.5}
+        sx={{ width: '100%', maxWidth: 620 }}
+      >
         {offerings.map((opt, index) => {
           const selected = visaOfferingId === opt.id
           const Icon = resolveVisaIcon(opt)
-          const tone = ICON_TONES[index % ICON_TONES.length]
+
           return (
-            <Grid size={{ xs: 12, sm: 6 }} key={opt.id} sx={{ maxWidth: { sm: 260 } }}>
-              <Box
-                onClick={() => onSelect(opt.id)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    onSelect(opt.id)
-                  }
-                }}
-                aria-pressed={selected}
-                sx={{
-                  p: 2,
-                  cursor: 'pointer',
-                  height: '100%',
-                  maxWidth: 260,
-                  mx: 'auto',
-                  ...getElevatedCardSx(selected ? 'rgba(115, 192, 100, 0.55)' : 'rgba(15, 23, 42, 0.08)'),
-                  bgcolor: colors.white,
-                  borderRadius: BORDER_RADIUS.xl,
-                  textAlign: 'center',
-                  outline: 'none',
-                  transition: 'border-color 0.15s ease',
-                  '&:hover': {
-                    borderColor: 'rgba(115, 192, 100, 0.55)',
-                  },
-                }}
-              >
+            <Box
+              key={opt.id}
+              component="button"
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onSelect(opt.id)}
+              sx={{
+                ...getSelectableSx(selected),
+                appearance: 'none',
+                font: 'inherit',
+                textAlign: 'left',
+                width: '100%',
+                pl: 3.5,
+                pr: 3.5,
+                py: 2.75,
+                // Short stagger on first paint so the list assembles rather than snapping in.
+                animation: `visaRowIn 300ms ${applyMotion.easeOut} both`,
+                animationDelay: `${Math.min(index * 45, 220)}ms`,
+                '@keyframes visaRowIn': {
+                  from: { opacity: 0, transform: 'translateY(6px)' },
+                  to: { opacity: 1, transform: 'translateY(0)' },
+                },
+                '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={3}>
                 <Box
+                  aria-hidden
                   sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '50%',
-                    mx: 'auto',
-                    mb: 1.25,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: tone.bg,
-                    color: tone.fg,
+                    flex: '0 0 auto',
+                    width: 34,
+                    height: 34,
+                    display: 'grid',
+                    placeItems: 'center',
+                    borderRadius: applyRadius.chip,
+                    // One neutral treatment for every type — shape carries the meaning.
+                    backgroundColor: selected ? 'transparent' : applyFlow.canvas,
+                    border: `1px solid ${selected ? applyFlow.accentBorder : applyFlow.hairline}`,
+                    color: selected ? applyFlow.accentInk : applyFlow.inkMuted,
+                    transition: `color 160ms ${applyMotion.easeOut}, border-color 160ms ${applyMotion.easeOut}`,
                   }}
                 >
-                  <Icon size={20} strokeWidth={2.25} />
+                  <Icon size={18} strokeWidth={1.9} />
                 </Box>
-                <Typography sx={{ fontWeight: 800, fontSize: 15, color: colors.navy }}>
-                  {opt.visaTypeLabel}
-                </Typography>
-                <Typography
+
+                <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: applyFont.body,
+                      fontSize: 15,
+                      fontWeight: 600,
+                      letterSpacing: '-0.01em',
+                      color: applyFlow.ink,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {opt.visaTypeLabel}
+                  </Typography>
+                  {opt.entryType ? (
+                    <Typography sx={{ ...eyebrowSx, mt: 0.8, letterSpacing: '0.1em' }}>
+                      {opt.entryType}
+                    </Typography>
+                  ) : null}
+                </Box>
+
+                {/* Processing time as a right-aligned mono readout — a manifest column, not a chip. */}
+                {opt.processingTimeline ? (
+                  <Typography
+                    sx={{
+                      ...tabularNums,
+                      flex: '0 0 auto',
+                      display: { xs: 'none', sm: 'block' },
+                      fontFamily: applyFont.mono,
+                      fontSize: 11.5,
+                      fontWeight: 500,
+                      color: applyFlow.inkMuted,
+                      textAlign: 'right',
+                      pl: 2,
+                    }}
+                  >
+                    {opt.processingTimeline}
+                  </Typography>
+                ) : null}
+
+                <Box
+                  aria-hidden
                   sx={{
-                    mt: 1,
-                    fontSize: 12,
-                    color: colors.textMuted,
-                    lineHeight: 1.45,
+                    flex: '0 0 auto',
+                    width: 18,
+                    height: 18,
+                    display: 'grid',
+                    placeItems: 'center',
+                    borderRadius: '50%',
+                    border: `1.5px solid ${selected ? applyFlow.accent : applyFlow.hairlineStrong}`,
+                    backgroundColor: selected ? applyFlow.accent : 'transparent',
+                    color: applyFlow.onAccent,
+                    transition: `border-color 160ms ${applyMotion.easeOut}, background-color 160ms ${applyMotion.easeOut}`,
                   }}
                 >
-                  {[opt.entryType, opt.processingTimeline].filter(Boolean).join(' · ')}
-                </Typography>
-              </Box>
-            </Grid>
+                  <Check
+                    size={11}
+                    strokeWidth={3.5}
+                    style={{
+                      opacity: selected ? 1 : 0,
+                      transform: selected ? 'scale(1)' : 'scale(0.7)',
+                      transition: `opacity 160ms ${applyMotion.easeOut}, transform 160ms ${applyMotion.easeOut}`,
+                    }}
+                  />
+                </Box>
+              </Stack>
+            </Box>
           )
         })}
-      </Grid>
+      </Stack>
     </StepShell>
   )
 }

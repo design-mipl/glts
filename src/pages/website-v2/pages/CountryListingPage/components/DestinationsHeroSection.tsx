@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { destinationsHeroImage } from '../../../assets/destinationsHeroImage'
 import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { applyFlow, accentGoldRgb } from '../../../theme/applyFlowTheme'
 
 interface DestinationsHeroSectionProps {
   destinationCount: number
@@ -101,7 +102,7 @@ export function DestinationsHeroSection({ destinationCount }: DestinationsHeroSe
             fontSize: '11px',
             fontWeight: 700,
             letterSpacing: '0.18em',
-            color: colors.teal,
+            color: applyFlow.accentInk,
             mb: 1,
           }}
         >
@@ -144,8 +145,8 @@ export function DestinationsHeroSection({ destinationCount }: DestinationsHeroSe
               width: 7,
               height: 7,
               borderRadius: '50%',
-              bgcolor: colors.teal,
-              boxShadow: `0 0 0 2px rgba(12, 108, 121, 0.24)`,
+              bgcolor: applyFlow.accentInk,
+              boxShadow: `0 0 0 2px rgba(${accentGoldRgb}, 0.24)`,
               flexShrink: 0,
               '@media (prefers-reduced-motion: no-preference)': {
                 animation: 'glts-hero-pulse 2.4s ease-in-out infinite',

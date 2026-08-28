@@ -1,24 +1,19 @@
 import type { ReactNode } from 'react'
-import { Box, IconButton, Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import { X, type LucideIcon } from 'lucide-react'
 import { Modal } from '@/design-system/UIComponents'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { displayNameUpper, initialsFromName } from '../../config/travelProfileQuestions'
-
-/** Match TravelProfileBuilder popup chrome. */
-const ACCENT = '#7B6CF0'
-const ACCENT_SOFT = 'rgba(123, 108, 240, 0.12)'
-const AVATAR_ROSE = '#D4A0A0'
+import { applyFlow, applyFont, applyMotion, applyRadius } from '@/pages/website-v2/theme/applyFlowTheme'
+import { displayNameUpper } from '../../config/travelProfileQuestions'
 
 interface CaptureFlowShellProps {
   onClose: () => void
   children: ReactNode
-  /** Traveller this capture belongs to — drives the profile-style top bar. */
+  /** Traveller this capture belongs to — drives the header line. */
   applicantName: string
-  /** Centered pill label under the person bar (e.g. "Capture photo"). */
+  /** Mono eyebrow label paired with `badgeIcon` (e.g. "Capture photo"). */
   badgeLabel: string
   badgeIcon?: LucideIcon
-  /** Pinned under the badge (e.g. CaptureHeadline). */
+  /** Pinned under the header (e.g. CaptureHeadline). */
   header?: ReactNode
   footer?: ReactNode
   /** Modal width — photo/passport capture use `xl`; review can stay `xl`. */
@@ -31,7 +26,7 @@ interface CaptureFlowShellProps {
   fitToContent?: boolean
 }
 
-/** Popup modal shell for photo / passport capture — profile-style header + roomy body. */
+/** Popup modal shell for photo / passport capture — same chrome language as `TravelProfileBuilder`. */
 export function CaptureFlowShell({
   onClose,
   children,
@@ -45,9 +40,32 @@ export function CaptureFlowShell({
   contentAlign = 'center',
   fitToContent = false,
 }: CaptureFlowShellProps) {
-  const colors = usePublicBrandColors()
   const name = applicantName.trim() || 'Traveller'
   const nameUpper = displayNameUpper(name)
+
+  const iconBtnSx = {
+    width: 34,
+    height: 34,
+    display: 'grid',
+    placeItems: 'center',
+    appearance: 'none',
+    border: `1px solid ${applyFlow.hairline}`,
+    background: 'none',
+    borderRadius: applyRadius.control,
+    color: applyFlow.inkMuted,
+    cursor: 'pointer',
+    flex: '0 0 auto',
+    transition: `color 150ms ${applyMotion.easeOut}, border-color 150ms ${applyMotion.easeOut}`,
+    '@media (pointer: coarse)': { width: 44, height: 44 },
+    '@media (hover: hover) and (pointer: fine)': {
+      '&:hover': { color: applyFlow.ink, borderColor: applyFlow.hairlineStrong },
+    },
+    '&:focus-visible': {
+      outline: 'none',
+      borderColor: applyFlow.accent,
+      boxShadow: `0 0 0 3px ${applyFlow.accentRing}`,
+    },
+  } as const
 
   return (
     <Modal
@@ -81,73 +99,52 @@ export function CaptureFlowShell({
           flexDirection: 'column',
         }}
       >
+        {/* Header — mono eyebrow (badge) + name, quiet close. No colour-coded avatar. */}
         <Stack
           direction="row"
           alignItems="center"
           justifyContent="space-between"
-          sx={{ mb: 1, flexShrink: 0 }}
+          sx={{ mb: 3, flexShrink: 0 }}
         >
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, flex: 1, pr: 1 }}>
-            <Box
-              sx={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                bgcolor: AVATAR_ROSE,
-                color: '#fff',
-                fontSize: 11,
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              {initialsFromName(name).slice(0, 1)}
-            </Box>
-            <Typography sx={{ fontSize: 13, color: colors.textMuted, minWidth: 0 }}>
-              Updating for{' '}
-              <Box component="span" sx={{ fontWeight: 700, color: colors.navy }}>
+          <Stack direction="row" alignItems="center" spacing={1.25} sx={{ minWidth: 0, flex: 1, pr: 1 }}>
+            {BadgeIcon ? <BadgeIcon size={14} strokeWidth={2} style={{ color: applyFlow.accentInk, flexShrink: 0 }} /> : null}
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                sx={{
+                  fontFamily: applyFont.mono,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: applyFlow.inkFaint,
+                }}
+              >
+                {badgeLabel}
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: applyFont.body,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: applyFlow.ink,
+                  mt: 0.35,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {nameUpper}
-              </Box>
-            </Typography>
+              </Typography>
+            </Box>
           </Stack>
 
-          <IconButton
-            aria-label="Close"
-            onClick={onClose}
-            size="small"
-            sx={{
-              bgcolor: 'rgba(15, 169, 104, 0.12)',
-              color: colors.navy,
-              flexShrink: 0,
-              '&:hover': { bgcolor: 'rgba(15, 169, 104, 0.2)' },
-            }}
-          >
-            <X size={16} />
-          </IconButton>
+          <Box component="button" type="button" aria-label="Close" onClick={onClose} sx={iconBtnSx}>
+            <X size={15} />
+          </Box>
         </Stack>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.25, flexShrink: 0 }}>
-          <Box
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 0.75,
-              px: 1.5,
-              py: 0.5,
-              borderRadius: 999,
-              bgcolor: ACCENT_SOFT,
-              color: ACCENT,
-            }}
-          >
-            {BadgeIcon ? <BadgeIcon size={14} strokeWidth={2} /> : null}
-            <Typography sx={{ fontSize: 12, fontWeight: 600, color: ACCENT }}>{badgeLabel}</Typography>
-          </Box>
-        </Box>
-
         {header ? (
-          <Box sx={{ flexShrink: 0, width: '100%', pb: 1.5 }}>{header}</Box>
+          <Box sx={{ flexShrink: 0, width: '100%', pb: 2 }}>{header}</Box>
         ) : null}
 
         <Box
@@ -159,7 +156,7 @@ export function CaptureFlowShell({
             flex: fitToContent ? '0 0 auto' : 1,
             width: '100%',
             minHeight: fitToContent ? undefined : 0,
-            color: colors.navy,
+            color: applyFlow.ink,
             pt: fitToContent ? 1 : 0.5,
             pb: 1,
           }}
@@ -172,7 +169,6 @@ export function CaptureFlowShell({
 }
 
 export function CaptureHeadline({ lead, accent }: { lead: string; accent: string }) {
-  const colors = usePublicBrandColors()
   return (
     <Box
       sx={{
@@ -186,16 +182,17 @@ export function CaptureHeadline({ lead, accent }: { lead: string; accent: string
       <Typography
         component="p"
         sx={{
-          fontSize: { xs: 22, sm: 28 },
+          fontFamily: applyFont.display,
+          fontSize: { xs: 20, sm: 25 },
           lineHeight: 1.25,
           letterSpacing: '-0.02em',
           m: 0,
         }}
       >
-        <Box component="span" sx={{ fontWeight: 600, color: colors.navy }}>
+        <Box component="span" sx={{ fontWeight: 600, color: applyFlow.ink }}>
           {lead}{' '}
         </Box>
-        <Box component="span" sx={{ fontWeight: 800, color: colors.greenDark }}>
+        <Box component="span" sx={{ fontWeight: 700, color: applyFlow.accentInk }}>
           {accent}
         </Box>
       </Typography>

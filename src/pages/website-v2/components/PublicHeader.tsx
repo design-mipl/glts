@@ -10,15 +10,16 @@ import {
   Divider,
   InputBase,
 } from '@mui/material'
-import { useTheme, alpha } from '@mui/material/styles'
+import { useTheme } from '@mui/material/styles'
 import { Menu, X, Search, User, ArrowRight } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Button as DsButton } from '@/design-system/UIComponents'
 import { WebsiteAbToggle } from '@/shared/website/WebsiteAbToggle'
 import { useScrolledHeader } from '../hooks/useScrolledHeader'
-import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
+import { GREENLIGHT_LOGO_SRC, GREENLIGHT_LOGO_DARK_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, publicShadows, usePublicBrandColors } from '../theme/publicSiteTokens'
+import { applyFlow } from '../theme/applyFlowTheme'
 import { PublicContainer } from './PublicContainer'
 
 const NAV_HEIGHT = 72
@@ -44,15 +45,13 @@ function NavLink({
   active: boolean
   compact?: boolean
 }) {
-  const colors = usePublicBrandColors()
-
   return (
     <Button
       component="a"
       href={href}
       disableRipple
       sx={{
-        color: active ? colors.navy : '#4B5563',
+        color: active ? applyFlow.accent : 'rgba(255, 255, 255, 0.72)',
         fontWeight: active ? 700 : 500,
         fontSize: compact ? '13px' : '14px',
         px: compact ? 1.25 : 1.75,
@@ -63,15 +62,15 @@ function NavLink({
         textTransform: 'none',
         fontFamily: publicFonts.body,
         borderRadius: '10px',
-        bgcolor: active ? colors.greenMuted : 'transparent',
+        bgcolor: active ? applyFlow.accentSoft : 'transparent',
         transition: 'color 0.2s, background-color 0.2s',
         whiteSpace: 'nowrap',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
         '&:hover': {
-          color: colors.navy,
-          bgcolor: colors.greenMuted,
+          color: '#fff',
+          bgcolor: 'rgba(255, 255, 255, 0.08)',
         },
       }}
     >
@@ -92,9 +91,6 @@ export function PublicHeader() {
   const isWide = useMediaQuery(theme.breakpoints.up('desktop'))
   const isTablet = useMediaQuery(theme.breakpoints.up('lg'))
   const showCenterNav = isTablet
-  const isHome = pathname === '/'
-  /** Homepage at top: nav blends into the hero (no white bar / gap). */
-  const heroOverlay = isHome && !scrolled
 
   const isActive = (href: string) => {
     const pathOnly = href.split('#')[0] || '/'
@@ -123,17 +119,10 @@ export function PublicHeader() {
           height: NAV_HEIGHT,
           display: 'flex',
           alignItems: 'center',
-          bgcolor: heroOverlay
-            ? 'transparent'
-            : alpha(colors.white, scrolled || !isHome ? 0.98 : 0.94),
-          backdropFilter: heroOverlay ? 'none' : 'blur(20px)',
-          WebkitBackdropFilter: heroOverlay ? 'none' : 'blur(20px)',
-          borderBottom: heroOverlay
-            ? '1px solid transparent'
-            : `1px solid ${scrolled ? colors.border : colors.borderSoft}`,
-          boxShadow: heroOverlay ? 'none' : scrolled ? publicShadows.nav : 'none',
-          transition:
-            'background-color 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, backdrop-filter 0.25s ease',
+          bgcolor: applyFlow.navy,
+          borderBottom: `1px solid ${scrolled ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.08)'}`,
+          boxShadow: scrolled ? '0 8px 24px rgba(0, 8, 20, 0.28)' : 'none',
+          transition: 'box-shadow 0.25s ease, border-color 0.25s ease',
         }}
       >
         <PublicContainer
@@ -167,8 +156,8 @@ export function PublicHeader() {
             >
               <Box
                 component="img"
-                src={GREENLIGHT_LOGO_SRC}
-                alt="Greenlight Travel Solutions"
+                src={GREENLIGHT_LOGO_DARK_SRC}
+                alt="Greenlight Visa Solutions"
                 sx={{
                   height: { xs: 34, md: 40 },
                   width: 'auto',
@@ -214,14 +203,23 @@ export function PublicHeader() {
             spacing={{ xs: 0.75, md: 1.25 }}
             sx={{ flexShrink: 0, zIndex: 2, ml: 'auto' }}
           >
-            <WebsiteAbToggle />
+            <WebsiteAbToggle onDark />
 
             <DsButton
               href="/sign-in"
-              variant="soft"
+              variant="outlined"
               color="primary"
               size={isWide ? 'md' : 'sm'}
               startIcon={<User size={isWide ? 16 : 14} />}
+              sx={{
+                borderColor: 'rgba(255, 255, 255, 0.32)',
+                color: '#fff',
+                '&:hover': {
+                  borderColor: applyFlow.accent,
+                  color: applyFlow.accent,
+                  backgroundColor: applyFlow.accentSoft,
+                },
+              }}
             >
               Sign in
             </DsButton>
@@ -231,8 +229,9 @@ export function PublicHeader() {
                 onClick={() => setDrawerOpen(true)}
                 aria-label="Open menu"
                 sx={{
-                  border: `1px solid ${colors.border}`,
+                  border: '1px solid rgba(255, 255, 255, 0.28)',
                   borderRadius: '10px',
+                  color: '#fff',
                   ml: 0.5,
                 }}
               >

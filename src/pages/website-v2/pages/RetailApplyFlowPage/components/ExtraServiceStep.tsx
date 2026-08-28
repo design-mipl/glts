@@ -1,14 +1,18 @@
-import { useMemo, useState } from 'react'
-import { Box, Collapse, Stack, Typography } from '@mui/material'
+import { useState } from 'react'
+import { Box, Stack, Typography } from '@mui/material'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, Plane, Shield } from 'lucide-react'
-import { FormField, Input } from '@/design-system/UIComponents'
-import { BORDER_RADIUS } from '@/design-system/tokens'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { getElevatedCardSx, retailFlowColors, retailFlowEaseOut } from '@/pages/website-v2/theme/retailFlowTokens'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+} from '@/pages/website-v2/theme/applyFlowTheme'
+import { ApplyTextField, FieldLabel, SectionHeading } from '@/pages/website-v2/theme/applyFormControls'
+import { UploadTile } from './UploadTile'
 import { StepShell } from './StepShell'
-import type { ExtraServiceChoice, RetailExtraSelection } from '../types'
+import type { ExtraServiceChoice, RetailExtraSelection, RetailCapturedImage } from '../types'
 
 export type ExtraServiceKind = 'insurance' | 'flight'
 
@@ -63,17 +67,17 @@ function SegmentedChoice({
   value: ExtraServiceChoice
   onChange: (choice: ExtraServiceChoice) => void
 }) {
-  const colors = usePublicBrandColors()
   return (
     <Box
+      role="radiogroup"
       sx={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr 1fr',
         gap: 0.5,
         p: 0.5,
-        borderRadius: BORDER_RADIUS.lg,
-        bgcolor: colors.surfaceAlt,
-        ...getElevatedCardSx(colors.border),
+        borderRadius: applyRadius.control,
+        backgroundColor: applyFlow.canvas,
+        border: `1px solid ${applyFlow.hairline}`,
       }}
     >
       {SEGMENT_OPTIONS.map((option) => {
@@ -83,22 +87,24 @@ function SegmentedChoice({
             key={option.choice}
             component="button"
             type="button"
+            role="radio"
+            aria-checked={selected}
             onClick={() => onChange(option.choice)}
             sx={{
               appearance: 'none',
               border: 'none',
               cursor: 'pointer',
               font: 'inherit',
+              fontFamily: applyFont.body,
               py: 1.15,
               px: 1,
-              borderRadius: BORDER_RADIUS.md,
-              bgcolor: selected ? colors.white : 'transparent',
-              color: selected ? colors.navy : colors.textMuted,
+              borderRadius: applyRadius.chip,
+              backgroundColor: selected ? applyFlow.surface : 'transparent',
+              color: selected ? applyFlow.ink : applyFlow.inkMuted,
               fontSize: 12.5,
               fontWeight: selected ? 700 : 600,
-              boxShadow: selected ? '0 1px 2px rgba(15,27,43,0.06)' : 'none',
-              outline: selected ? `1.5px solid ${retailFlowColors.greenBorderSoft}` : 'none',
-              transition: `background-color 150ms ${retailFlowEaseOut}, color 150ms ${retailFlowEaseOut}, transform 160ms ${retailFlowEaseOut}`,
+              boxShadow: selected ? `inset 0 0 0 1px ${applyFlow.accentBorder}` : 'none',
+              transition: `background-color 150ms ${applyMotion.easeOut}, color 150ms ${applyMotion.easeOut}, transform 160ms ${applyMotion.easeOut}`,
               '&:active': { transform: 'scale(0.96)' },
             }}
           >
@@ -110,9 +116,9 @@ function SegmentedChoice({
   )
 }
 
-function GltsDetailCard({
+/** Left-column booking fields, shown only when the traveller wants GLTS to arrange it. */
+function BookingFields({
   kind,
-  service,
   travelStart,
   travelEnd,
   onTravelStart,
@@ -123,7 +129,6 @@ function GltsDetailCard({
   onDestination,
 }: {
   kind: ExtraServiceKind
-  service?: ServiceMaster
   travelStart: string
   travelEnd: string
   onTravelStart: (v: string) => void
@@ -133,196 +138,171 @@ function GltsDetailCard({
   onOrigin?: (v: string) => void
   onDestination?: (v: string) => void
 }) {
-  const colors = usePublicBrandColors()
-  const [expanded, setExpanded] = useState(true)
-  const [showAll, setShowAll] = useState(false)
-
-  const lines = kind === 'insurance' ? INSURANCE_BENEFITS : FLIGHT_DETAILS
-  const visible = showAll ? lines : lines.slice(0, 4)
-  const hiddenCount = Math.max(0, lines.length - 4)
-  const Icon = kind === 'insurance' ? Shield : Plane
-  const brandLabel =
-    service?.serviceName ?? (kind === 'insurance' ? 'GLTS Protect' : 'GLTS E-ticket')
-  const headline =
-    kind === 'insurance' ? '$50,000 covered on your trip' : 'Provisional ticket for your visa filing'
-  const price =
-    service?.defaultPrice != null ? `₹${service.defaultPrice.toLocaleString('en-IN')}` : null
-
   return (
     <Box
       sx={{
-        ...getElevatedCardSx(colors.border),
-        borderRadius: BORDER_RADIUS.lg,
-        bgcolor: colors.white,
-        overflow: 'hidden',
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+        gap: 2.5,
       }}
     >
-      <Box sx={{ p: 2.25 }}>
-        <Stack direction="row" spacing={1.5} alignItems="flex-start">
-          <Box
-            sx={{
-              width: 44,
-              height: 44,
-              borderRadius: BORDER_RADIUS.md,
-              bgcolor: retailFlowColors.greenMuted,
-              color: retailFlowColors.green,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <Icon size={22} strokeWidth={2.1} />
+      {kind === 'flight' ? (
+        <>
+          <Box>
+            <FieldLabel>From</FieldLabel>
+            <ApplyTextField value={origin ?? ''} onChange={(v) => onOrigin?.(v)} placeholder="e.g. BOM — Mumbai" />
           </Box>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              sx={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                color: retailFlowColors.green,
-              }}
-            >
-              {brandLabel}
-            </Typography>
-            <Typography sx={{ fontSize: 18, fontWeight: 800, color: colors.navy, mt: 0.35, lineHeight: 1.25 }}>
-              {headline}
-            </Typography>
-            {price ? (
-              <Typography sx={{ fontSize: 13, color: colors.textMuted, mt: 0.5 }}>
-                From {price}
-              </Typography>
-            ) : null}
+          <Box>
+            <FieldLabel>To</FieldLabel>
+            <ApplyTextField
+              value={destination ?? ''}
+              onChange={(v) => onDestination?.(v)}
+              placeholder="e.g. CDG — Paris"
+            />
           </Box>
-        </Stack>
-
-        {kind === 'flight' ? (
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-              gap: 1.5,
-              mt: 2,
-            }}
-          >
-            <FormField label="From">
-              <Input
-                fullWidth
-                value={origin ?? ''}
-                onChange={(v) => onOrigin?.(v)}
-                placeholder="e.g. BOM — Mumbai"
-              />
-            </FormField>
-            <FormField label="To">
-              <Input
-                fullWidth
-                value={destination ?? ''}
-                onChange={(v) => onDestination?.(v)}
-                placeholder="e.g. CDG — Paris"
-              />
-            </FormField>
-            <FormField label="Departure">
-              <Input type="date" fullWidth value={travelStart} onChange={onTravelStart} />
-            </FormField>
-            <FormField label="Return">
-              <Input type="date" fullWidth value={travelEnd} onChange={onTravelEnd} />
-            </FormField>
-          </Box>
-        ) : (
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-              gap: 1.5,
-              mt: 2,
-            }}
-          >
-            <FormField label="Trip start">
-              <Input type="date" fullWidth value={travelStart} onChange={onTravelStart} />
-            </FormField>
-            <FormField label="Trip end">
-              <Input type="date" fullWidth value={travelEnd} onChange={onTravelEnd} />
-            </FormField>
-          </Box>
-        )}
+        </>
+      ) : null}
+      <Box>
+        <FieldLabel>{kind === 'flight' ? 'Departure' : 'Trip start'}</FieldLabel>
+        <ApplyTextField type="date" value={travelStart} onChange={onTravelStart} />
       </Box>
-
-      <Box sx={{ borderTop: `1px solid ${colors.border}` }}>
-        <Box
-          component="button"
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          sx={{
-            appearance: 'none',
-            border: 'none',
-            bgcolor: 'transparent',
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            px: 2.25,
-            py: 1.35,
-            cursor: 'pointer',
-            font: 'inherit',
-          }}
-        >
-          <Typography sx={{ fontSize: 13, fontWeight: 700, color: colors.navy }}>
-            {kind === 'insurance' ? "What's included" : 'Ticket details'}
-          </Typography>
-          <ChevronDown
-            size={16}
-            color={colors.textMuted}
-            style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}
-          />
-        </Box>
-        <Collapse in={expanded}>
-          <Stack spacing={0} sx={{ px: 2.25, pb: 2 }}>
-            {visible.map((line) => (
-              <Stack
-                key={line.label}
-                direction="row"
-                justifyContent="space-between"
-                sx={{
-                  py: 1,
-                  borderBottom: `1px solid ${colors.border}`,
-                  '&:last-of-type': { borderBottom: showAll || hiddenCount === 0 ? 'none' : undefined },
-                }}
-              >
-                <Typography sx={{ fontSize: 13, color: colors.textSecondary }}>{line.label}</Typography>
-                <Typography sx={{ fontSize: 13, fontWeight: 700, color: colors.navy }}>{line.amount}</Typography>
-              </Stack>
-            ))}
-            {!showAll && hiddenCount > 0 ? (
-              <Box
-                component="button"
-                type="button"
-                onClick={() => setShowAll(true)}
-                sx={{
-                  appearance: 'none',
-                  border: 'none',
-                  bgcolor: 'transparent',
-                  cursor: 'pointer',
-                  font: 'inherit',
-                  mt: 1,
-                  p: 0,
-                  textAlign: 'left',
-                  color: retailFlowColors.green,
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                }}
-              >
-                View {hiddenCount} more {kind === 'insurance' ? 'benefits' : 'details'}
-              </Box>
-            ) : null}
-          </Stack>
-        </Collapse>
+      <Box>
+        <FieldLabel>{kind === 'flight' ? 'Return' : 'Trip end'}</FieldLabel>
+        <ApplyTextField type="date" value={travelEnd} onChange={onTravelEnd} />
       </Box>
     </Box>
   )
 }
 
-/** Shared B17 essentials step — segmented Upload own / Get from GLTS / Skip + nested GLTS detail. */
+/** Right-column sticky reference — what GLTS provides, regardless of the choice made on the left. */
+function ReferenceCard({
+  kind,
+  service,
+}: {
+  kind: ExtraServiceKind
+  service?: ServiceMaster
+}) {
+  const [showAll, setShowAll] = useState(false)
+  const lines = kind === 'insurance' ? INSURANCE_BENEFITS : FLIGHT_DETAILS
+  const visible = showAll ? lines : lines.slice(0, 4)
+  const hiddenCount = Math.max(0, lines.length - 4)
+  const Icon = kind === 'insurance' ? Shield : Plane
+  const brandLabel = service?.serviceName ?? (kind === 'insurance' ? 'GLTS Protect' : 'GLTS E-ticket')
+  const headline =
+    kind === 'insurance' ? '$50,000 covered on your trip' : 'Provisional ticket for your visa filing'
+  const price = service?.defaultPrice != null ? `₹${service.defaultPrice.toLocaleString('en-IN')}` : null
+
+  return (
+    <Box>
+      <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ mb: 3 }}>
+        <Box
+          aria-hidden
+          sx={{
+            width: 38,
+            height: 38,
+            borderRadius: applyRadius.chip,
+            backgroundColor: applyFlow.canvas,
+            border: `1px solid ${applyFlow.hairline}`,
+            color: applyFlow.inkMuted,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <Icon size={18} strokeWidth={1.9} />
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            sx={{
+              fontFamily: applyFont.mono,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: applyFlow.inkFaint,
+            }}
+          >
+            {brandLabel}
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: applyFont.display,
+              fontSize: 16,
+              fontWeight: 700,
+              color: applyFlow.ink,
+              mt: 0.4,
+              lineHeight: 1.25,
+            }}
+          >
+            {headline}
+          </Typography>
+          {price ? (
+            <Typography sx={{ fontFamily: applyFont.mono, fontSize: 12, color: applyFlow.inkMuted, mt: 0.75 }}>
+              From {price}
+            </Typography>
+          ) : null}
+        </Box>
+      </Stack>
+
+      <Stack spacing={0}>
+        {visible.map((line) => (
+          <Stack
+            key={line.label}
+            direction="row"
+            justifyContent="space-between"
+            sx={{ py: 1.25, borderBottom: `1px solid ${applyFlow.hairlineSoft}` }}
+          >
+            <Typography sx={{ fontFamily: applyFont.body, fontSize: 12.5, color: applyFlow.inkMuted }}>
+              {line.label}
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: applyFont.mono,
+                fontSize: 12,
+                fontWeight: 600,
+                color: applyFlow.ink,
+                textAlign: 'right',
+                flexShrink: 0,
+                pl: 2,
+              }}
+            >
+              {line.amount}
+            </Typography>
+          </Stack>
+        ))}
+      </Stack>
+      {!showAll && hiddenCount > 0 ? (
+        <Box
+          component="button"
+          type="button"
+          onClick={() => setShowAll(true)}
+          sx={{
+            appearance: 'none',
+            border: 'none',
+            bgcolor: 'transparent',
+            cursor: 'pointer',
+            font: 'inherit',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.75,
+            mt: 1.5,
+            p: 0,
+            color: applyFlow.accentInk,
+            fontFamily: applyFont.body,
+            fontSize: 12,
+            fontWeight: 700,
+          }}
+        >
+          {hiddenCount} more {kind === 'insurance' ? 'benefits' : 'details'}
+          <ChevronDown size={13} />
+        </Box>
+      ) : null}
+    </Box>
+  )
+}
+
+/** Two-column B17 essentials step — decision + upload on the left, GLTS reference sticky on the right. */
 export function ExtraServiceStep({
   title,
   helperText,
@@ -335,67 +315,123 @@ export function ExtraServiceStep({
   onContinue,
   previewOnly = false,
 }: ExtraServiceStepProps) {
-  const colors = usePublicBrandColors()
   const primaryService = services[0]
   const [travelStart, setTravelStart] = useState(travelDate ?? '')
   const [travelEnd, setTravelEnd] = useState('')
   const [origin, setOrigin] = useState('')
   const [destination, setDestination] = useState('')
 
-  const choiceHint = useMemo(() => {
-    if (selection.choice === 'self_provided') {
-      return kind === 'insurance'
-        ? 'You’ll upload your own policy in the document checklist.'
-        : 'You’ll upload your own ticket when documents are due.'
-    }
-    if (selection.choice === 'skip') {
-      return 'You can add this later before submission if your embassy requires it.'
-    }
-    return null
-  }, [selection.choice, kind])
+  const docLabel = kind === 'insurance' ? 'Insurance policy' : 'Flight ticket'
 
   function setChoice(choice: ExtraServiceChoice) {
     onChange({
       choice,
       serviceId: choice === 'glts_arranged' ? selection.serviceId ?? primaryService?.id : undefined,
+      document: choice === 'self_provided' ? selection.document : undefined,
     })
   }
 
-  const continueDisabled = selection.choice === 'glts_arranged' && !selection.serviceId && services.length > 0
+  function handleDocFile(file: File) {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const document: RetailCapturedImage = {
+        dataUrl: reader.result as string,
+        capturedAt: new Date().toISOString(),
+      }
+      onChange({ ...selection, document })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const continueDisabled =
+    (selection.choice === 'glts_arranged' && !selection.serviceId && services.length > 0) ||
+    (selection.choice === 'self_provided' && !selection.document)
 
   const body = (
-    <Stack spacing={2.5} sx={{ width: '100%', textAlign: 'left' }}>
-      <SegmentedChoice value={selection.choice} onChange={setChoice} />
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: 'flex-start',
+        gap: { xs: 5, md: 7 },
+        width: '100%',
+      }}
+    >
+      <Box sx={{ flex: '1 1 auto', minWidth: 0, width: '100%', order: { xs: 2, md: 1 } }}>
+        <SectionHeading>Choose an option</SectionHeading>
+        <Stack spacing={2.5} sx={{ width: '100%', textAlign: 'left' }}>
+          <SegmentedChoice value={selection.choice} onChange={setChoice} />
 
-      {choiceHint ? (
-        <Typography sx={{ fontSize: 13, color: colors.textMuted, lineHeight: 1.45 }}>{choiceHint}</Typography>
-      ) : null}
+          <AnimatePresence mode="wait" initial={false}>
+            {selection.choice === 'self_provided' ? (
+              <motion.div
+                key="upload"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+              >
+                <UploadTile
+                  label={docLabel}
+                  hint="PDF, JPG or PNG"
+                  value={selection.document?.dataUrl}
+                  capturedAt={selection.document?.capturedAt}
+                  onFile={handleDocFile}
+                  onClear={() => onChange({ ...selection, document: undefined })}
+                  required
+                />
+              </motion.div>
+            ) : selection.choice === 'glts_arranged' ? (
+              <motion.div
+                key="booking"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+              >
+                <BookingFields
+                  kind={kind}
+                  travelStart={travelStart}
+                  travelEnd={travelEnd}
+                  onTravelStart={setTravelStart}
+                  onTravelEnd={setTravelEnd}
+                  origin={origin}
+                  destination={destination}
+                  onOrigin={setOrigin}
+                  onDestination={setDestination}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="skip"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+              >
+                <Typography sx={{ fontFamily: applyFont.body, fontSize: 13, color: applyFlow.inkMuted, lineHeight: 1.5 }}>
+                  You can add this later before submission if your embassy requires it.
+                </Typography>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Stack>
+      </Box>
 
-      <AnimatePresence mode="wait" initial={false}>
-        {selection.choice === 'glts_arranged' ? (
-          <motion.div
-            key="glts-detail-card"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-          >
-            <GltsDetailCard
-              kind={kind}
-              service={services.find((s) => s.id === selection.serviceId) ?? primaryService}
-              travelStart={travelStart}
-              travelEnd={travelEnd}
-              onTravelStart={setTravelStart}
-              onTravelEnd={setTravelEnd}
-              origin={origin}
-              destination={destination}
-              onOrigin={setOrigin}
-              onDestination={setDestination}
-            />
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </Stack>
+      <Box
+        sx={{
+          flex: { xs: '1 1 auto', md: '0 0 296px' },
+          width: { xs: '100%', md: 296 },
+          minWidth: 0,
+          order: { xs: 1, md: 2 },
+          position: { xs: 'static', md: 'sticky' },
+          top: 0,
+        }}
+      >
+        <SectionHeading>{kind === 'insurance' ? "What's included" : 'Ticket details'}</SectionHeading>
+        <ReferenceCard kind={kind} service={services.find((s) => s.id === selection.serviceId) ?? primaryService} />
+      </Box>
+    </Box>
   )
 
   if (previewOnly) return body
@@ -407,7 +443,7 @@ export function ExtraServiceStep({
       onBack={onBack}
       onContinue={onContinue}
       continueDisabled={continueDisabled}
-      contentMaxWidth={640}
+      contentMaxWidth={820}
     >
       {body}
     </StepShell>
