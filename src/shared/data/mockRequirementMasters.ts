@@ -1,49 +1,65 @@
-import { generateDocumentRuleId } from '@/shared/data/countryJurisdictionDefaults'
 import type { RequirementMaster } from '@/shared/types/requirementMaster'
 
 export const SEED_REQUIREMENT_MASTERS: RequirementMaster[] = [
   {
     id: 'req-schengen-tourist',
     name: 'Schengen tourist intake',
-    description: 'Sample pack: travel purpose questions plus core identity documents.',
+    description: 'Sample pack: purpose and employment questions with optional option-level documents.',
     status: 'active',
     questions: [
       {
         id: 'q-purpose',
-        prompt: 'What is the primary purpose of this trip?',
-        type: 'multiple_choice',
+        prompt: 'What is the primary purpose of this visit?',
         required: true,
         options: [
-          { id: 'q-purpose-1', label: 'Tourism' },
-          { id: 'q-purpose-2', label: 'Visiting family or friends' },
-          { id: 'q-purpose-3', label: 'Other' },
+          {
+            id: 'q-purpose-1',
+            label: 'Tourism',
+            documentIds: ['bank', 'insurance'],
+          },
+          {
+            id: 'q-purpose-2',
+            label: 'Visiting family or friends',
+            documentIds: ['invitation'],
+          },
+          {
+            id: 'q-purpose-3',
+            label: 'Business',
+            documentIds: ['company-covering-letter', 'invitation'],
+          },
+          {
+            id: 'q-purpose-4',
+            label: 'Other',
+            documentIds: [],
+          },
         ],
       },
       {
-        id: 'q-docs-held',
-        prompt: 'Which of the following do you already hold?',
-        type: 'checkboxes',
-        required: false,
+        id: 'q-employment',
+        prompt: 'What is your current employment status?',
+        required: true,
         options: [
-          { id: 'q-docs-1', label: 'Valid travel insurance' },
-          { id: 'q-docs-2', label: 'Confirmed hotel booking' },
-          { id: 'q-docs-3', label: 'Return flight reservation' },
+          {
+            id: 'q-employment-1',
+            label: 'Salaried',
+            documentIds: ['bank', 'salary-slip', 'employment-certificate'],
+          },
+          {
+            id: 'q-employment-2',
+            label: 'Self-employed',
+            documentIds: ['certificate-of-incorporation', 'bank'],
+          },
+          {
+            id: 'q-employment-3',
+            label: 'Student',
+            documentIds: [],
+          },
+          {
+            id: 'q-employment-4',
+            label: 'Unemployed',
+            documentIds: [],
+          },
         ],
-      },
-    ],
-    documents: [
-      {
-        id: generateDocumentRuleId(),
-        documentId: 'passport',
-        group: 'jurisdiction',
-        mandatory: true,
-        ocrEnabled: true,
-        multipleUpload: false,
-        commonDocument: false,
-        originalDocument: false,
-        ownerType: 'applicant',
-        sortOrder: 0,
-        acceptedFormats: ['PDF', 'JPG', 'PNG'],
       },
     ],
     createdBy: 'Rajan Mehta',

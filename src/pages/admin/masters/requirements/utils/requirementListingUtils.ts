@@ -1,11 +1,14 @@
-import type { RequirementMaster } from '@/shared/types/requirementMaster'
+import {
+  collectRequirementDocumentIds,
+  type RequirementMaster,
+} from '@/shared/types/requirementMaster'
 import { masterStatusLabel } from '../../config/masterStatusConfig'
 import { formatMasterDate } from '../../utils/masterListingUtils'
 
 export function getRequirementCellValue(row: RequirementMaster, key: string): string {
   if (key === 'status') return masterStatusLabel[row.status]
   if (key === 'questions') return String(row.questions.length)
-  if (key === 'documents') return String(row.documents.length)
+  if (key === 'documents') return String(collectRequirementDocumentIds(row).length)
   if (key === 'updatedAt') return row.updatedAt
   return String((row as unknown as Record<string, unknown>)[key] ?? '')
 }
@@ -21,20 +24,26 @@ export function matchesRequirementSearch(row: RequirementMaster, query: string):
 export function getRequirementEmptyState(onCreate: () => void) {
   return {
     emptyTitle: 'No requirement packs found',
-    emptyDescription: 'Create a pack with questionnaire questions and documents from Document Master.',
+    emptyDescription:
+      'Create a pack with questions and optional document mappings from Document Master.',
     emptyAction: { label: 'Create pack', onClick: onCreate },
   }
 }
 
 export function mapRequirementRowsToGridItems(rows: RequirementMaster[]) {
-  return rows.map((row) => ({
-    id: row.id,
-    title: row.name,
-    subtitle: row.description || `${row.questions.length} questions · ${row.documents.length} documents`,
-    meta: formatMasterDate(row.updatedAt),
-    status: masterStatusLabel[row.status],
-    statusColor: row.status === 'active' ? ('success' as const) : ('default' as const),
-  }))
+  return rows.map((row) => {
+    const documentCount = collectRequirementDocumentIds(row).length
+    return {
+      id: row.id,
+      title: row.name,
+      subtitle:
+        row.description ||
+        `${row.questions.length} questions · ${documentCount} documents`,
+      meta: formatMasterDate(row.updatedAt),
+      status: masterStatusLabel[row.status],
+      statusColor: row.status === 'active' ? ('success' as const) : ('default' as const),
+    }
+  })
 }
 
 export function downloadRequirementCsv(rows: RequirementMaster[]) {
@@ -45,7 +54,7 @@ export function downloadRequirementCsv(rows: RequirementMaster[]) {
       row.name,
       row.description.replace(/"/g, '""'),
       String(row.questions.length),
-      String(row.documents.length),
+      String(collectRequirementDocumentIds(row).length),
       masterStatusLabel[row.status],
       formatMasterDate(row.updatedAt),
     ]

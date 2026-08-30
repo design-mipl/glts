@@ -1,50 +1,43 @@
 import { useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
-import { Circle, Plus, Square, Trash2, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
 import {
   BaseCard,
   Button,
-  Checkbox,
   ConfirmDialog,
   FormField,
   IconButton,
   Input,
-  RadioGroup,
+  Toggle,
 } from '@/design-system/UIComponents'
-import type { RequirementQuestion, RequirementQuestionType } from '@/shared/types/requirementMaster'
+import type { RequirementQuestion } from '@/shared/types/requirementMaster'
 import { createRequirementOption } from '../utils/requirementQuestionUtils'
+import { RequirementOptionRow } from './RequirementOptionRow'
 
 interface RequirementQuestionCardProps {
   index: number
   question: RequirementQuestion
+  canMoveUp: boolean
+  canMoveDown: boolean
   onChange: (next: RequirementQuestion) => void
   onDelete: () => void
+  onMoveUp: () => void
+  onMoveDown: () => void
 }
 
 export function RequirementQuestionCard({
   index,
   question,
+  canMoveUp,
+  canMoveDown,
   onChange,
   onDelete,
+  onMoveUp,
+  onMoveDown,
 }: RequirementQuestionCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   const patch = (partial: Partial<RequirementQuestion>) => onChange({ ...question, ...partial })
-
-  const updateOption = (optionId: string, label: string) => {
-    patch({
-      options: question.options.map((option) =>
-        option.id === optionId ? { ...option, label } : option,
-      ),
-    })
-  }
-
-  const removeOption = (optionId: string) => {
-    if (question.options.length <= 2) return
-    patch({ options: question.options.filter((option) => option.id !== optionId) })
-  }
-
-  const OptionMark = question.type === 'checkboxes' ? Square : Circle
 
   return (
     <>
@@ -54,13 +47,29 @@ export function RequirementQuestionCard({
             <Typography variant="subtitle2" fontWeight={700}>
               Question {index + 1}
             </Typography>
-            <IconButton
-              icon={<Trash2 size={16} />}
-              tooltip="Delete question"
-              size="sm"
-              color="error"
-              onClick={() => setDeleteOpen(true)}
-            />
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <IconButton
+                icon={<ArrowUp size={14} />}
+                tooltip="Move up"
+                size="sm"
+                disabled={!canMoveUp}
+                onClick={onMoveUp}
+              />
+              <IconButton
+                icon={<ArrowDown size={14} />}
+                tooltip="Move down"
+                size="sm"
+                disabled={!canMoveDown}
+                onClick={onMoveDown}
+              />
+              <IconButton
+                icon={<Trash2 size={16} />}
+                tooltip="Delete question"
+                size="sm"
+                color="error"
+                onClick={() => setDeleteOpen(true)}
+              />
+            </Stack>
           </Stack>
 
           <FormField label="Question" required>
@@ -73,16 +82,11 @@ export function RequirementQuestionCard({
             />
           </FormField>
 
-          <RadioGroup
-            label="Question type"
+          <Toggle
+            label="Required"
+            checked={question.required}
+            onChange={(checked) => patch({ required: checked })}
             size="sm"
-            orientation="horizontal"
-            value={question.type}
-            onChange={(value) => patch({ type: value as RequirementQuestionType })}
-            options={[
-              { value: 'multiple_choice', label: 'Multiple choice' },
-              { value: 'checkboxes', label: 'Checkboxes' },
-            ]}
           />
 
           <Stack spacing={1}>
@@ -90,27 +94,24 @@ export function RequirementQuestionCard({
               Options
             </Typography>
             {question.options.map((option, optionIndex) => (
-              <Stack key={option.id} direction="row" spacing={1} alignItems="center">
-                <Box sx={{ color: 'text.secondary', display: 'flex', flexShrink: 0 }}>
-                  <OptionMark size={16} />
-                </Box>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Input
-                    value={option.label}
-                    onChange={(value) => updateOption(option.id, value)}
-                    placeholder={`Option ${optionIndex + 1}`}
-                    size="sm"
-                    fullWidth
-                  />
-                </Box>
-                <IconButton
-                  icon={<X size={14} />}
-                  tooltip="Remove option"
-                  size="sm"
-                  disabled={question.options.length <= 2}
-                  onClick={() => removeOption(option.id)}
-                />
-              </Stack>
+              <RequirementOptionRow
+                key={option.id}
+                option={option}
+                optionIndex={optionIndex}
+                canRemove={question.options.length > 2}
+                onChange={(next) =>
+                  patch({
+                    options: question.options.map((item) =>
+                      item.id === option.id ? next : item,
+                    ),
+                  })
+                }
+                onRemove={() =>
+                  patch({
+                    options: question.options.filter((item) => item.id !== option.id),
+                  })
+                }
+              />
             ))}
             <Box>
               <Button
@@ -118,17 +119,12 @@ export function RequirementQuestionCard({
                 size="sm"
                 variant="text"
                 startIcon={<Plus size={14} />}
-                onClick={() => patch({ options: [...question.options, createRequirementOption()] })}
+                onClick={() =>
+                  patch({ options: [...question.options, createRequirementOption()] })
+                }
               />
             </Box>
           </Stack>
-
-          <Checkbox
-            label="Required"
-            size="sm"
-            checked={question.required}
-            onChange={(checked) => patch({ required: checked })}
-          />
         </Stack>
       </BaseCard>
 
@@ -140,7 +136,7 @@ export function RequirementQuestionCard({
           onDelete()
         }}
         title="Delete this question?"
-        description="This question and its options will be removed."
+        description="This question, its options, and option document mappings will be removed. Document Master records are not deleted."
         confirmLabel="Delete"
         variant="destructive"
       />

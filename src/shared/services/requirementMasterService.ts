@@ -22,22 +22,32 @@ function cloneForm(data: RequirementMasterFormData): RequirementMasterFormData {
     description: data.description.trim(),
     status: data.status,
     questions: data.questions.map((question) => ({
-      ...question,
+      id: question.id,
       prompt: question.prompt.trim(),
-      options: question.options.map((option) => ({ ...option, label: option.label.trim() })),
+      required: question.required,
+      options: question.options.map((option) => ({
+        id: option.id,
+        label: option.label.trim(),
+        documentIds: [...option.documentIds],
+      })),
     })),
-    documents: data.documents.map((document, index) => ({ ...document, sortOrder: index })),
   }
 }
 
-let requirementStore: RequirementMaster[] = SEED_REQUIREMENT_MASTERS.map((row) => ({
-  ...row,
-  questions: row.questions.map((question) => ({
-    ...question,
-    options: question.options.map((option) => ({ ...option })),
-  })),
-  documents: row.documents.map((document) => ({ ...document })),
-}))
+function cloneRecord(row: RequirementMaster): RequirementMaster {
+  return {
+    ...row,
+    questions: row.questions.map((question) => ({
+      ...question,
+      options: question.options.map((option) => ({
+        ...option,
+        documentIds: [...option.documentIds],
+      })),
+    })),
+  }
+}
+
+let requirementStore: RequirementMaster[] = SEED_REQUIREMENT_MASTERS.map(cloneRecord)
 
 export const requirementMasterService = {
   list(filters: RequirementMasterListFilters = {}): RequirementMaster[] {
@@ -70,9 +80,11 @@ export const requirementMasterService = {
       status: record.status,
       questions: record.questions.map((question) => ({
         ...question,
-        options: question.options.map((option) => ({ ...option })),
+        options: question.options.map((option) => ({
+          ...option,
+          documentIds: [...option.documentIds],
+        })),
       })),
-      documents: record.documents.map((document) => ({ ...document })),
     }
   },
 

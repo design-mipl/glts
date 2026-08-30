@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Box, Stack } from '@mui/material'
 import { Plus } from 'lucide-react'
 import { Button, Tabs } from '@/design-system/UIComponents'
 import { AdminOverlayFormSection } from '@/pages/admin/components/AdminOverlayFormSection'
 import type { BusinessSegment, CountryMasterFormData } from '@/shared/types/countryMaster'
 import {
-  COUNTRY_VISA_CONFIGURATION_TABS,
   DEFAULT_COUNTRY_VISA_CONFIGURATION_TAB,
+  getCountryVisaConfigurationTabs,
   type CountryVisaConfigurationTab,
 } from '../../config/countryVisaConfigurationTabs'
 import {
@@ -14,6 +14,7 @@ import {
   type VisaConfigurationScope,
 } from './tabs/VisaConfigurationDocumentsTab'
 import { VisaConfigurationQcChecklistsTab } from './tabs/VisaConfigurationQcChecklistsTab'
+import { VisaConfigurationRequirementPackTab } from './tabs/VisaConfigurationRequirementPackTab'
 import { VisaConfigurationVfsRatesTab } from './tabs/VisaConfigurationVfsRatesTab'
 
 interface CountryVisaConfigurationTabsProps {
@@ -39,10 +40,28 @@ export function CountryVisaConfigurationTabs({
   onRefresh,
   readOnly,
 }: CountryVisaConfigurationTabsProps) {
-  const [activeTab, setActiveTab] = useState<CountryVisaConfigurationTab>(
-    DEFAULT_COUNTRY_VISA_CONFIGURATION_TAB,
+  // Retail: pack maps on visa type when jurisdictions are off; on jurisdiction when on.
+  const includeRequirementPack = segment === 'retail'
+
+  const tabs = useMemo(
+    () =>
+      getCountryVisaConfigurationTabs({
+        includeOperationalTabs: true,
+        includeRequirementPack,
+      }),
+    [includeRequirementPack],
   )
+
+  const [activeTab, setActiveTab] = useState<CountryVisaConfigurationTab>(() => {
+    return tabs[0]?.value ?? DEFAULT_COUNTRY_VISA_CONFIGURATION_TAB
+  })
   const [addConsulateServiceOpen, setAddConsulateServiceOpen] = useState(false)
+
+  const resolvedTab = tabs.some((tab) => tab.value === activeTab)
+    ? activeTab
+    : (tabs[0]?.value ?? DEFAULT_COUNTRY_VISA_CONFIGURATION_TAB)
+
+  if (tabs.length === 0) return null
 
   const handleTabChange = (value: string) => {
     const next = value as CountryVisaConfigurationTab
@@ -67,11 +86,11 @@ export function CountryVisaConfigurationTabs({
       >
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Tabs
-            items={COUNTRY_VISA_CONFIGURATION_TABS.map(tab => ({
+            items={tabs.map((tab) => ({
               value: tab.value,
               label: tab.label,
             }))}
-            value={activeTab}
+            value={resolvedTab}
             onChange={handleTabChange}
             variant="underline"
             size="sm"
@@ -79,7 +98,7 @@ export function CountryVisaConfigurationTabs({
             sx={{ borderBottom: 'none' }}
           />
         </Box>
-        {activeTab === 'vfs-rates' && !readOnly ? (
+        {resolvedTab === 'vfs-rates' && !readOnly ? (
           <Button
             label="Add service"
             size="sm"
@@ -88,8 +107,17 @@ export function CountryVisaConfigurationTabs({
           />
         ) : null}
       </Stack>
-      <Box sx={{ pt: activeTab === 'qc-checklists' || activeTab === 'vfs-rates' ? 1 : 2 }}>
-        {activeTab === 'documents' ? (
+      <Box
+        sx={{
+          pt:
+            resolvedTab === 'qc-checklists' ||
+            resolvedTab === 'vfs-rates' ||
+            resolvedTab === 'requirement-pack'
+              ? 1
+              : 2,
+        }}
+      >
+        {resolvedTab === 'documents' ? (
           <VisaConfigurationDocumentsTab
             scope={scope}
             countryId={countryId}
@@ -102,7 +130,7 @@ export function CountryVisaConfigurationTabs({
             readOnly={readOnly}
           />
         ) : null}
-        {activeTab === 'vfs-rates' ? (
+        {resolvedTab === 'vfs-rates' ? (
           <VisaConfigurationVfsRatesTab
             scope={scope}
             countryId={countryId}
@@ -116,7 +144,7 @@ export function CountryVisaConfigurationTabs({
             onAddModalOpenChange={setAddConsulateServiceOpen}
           />
         ) : null}
-        {activeTab === 'qc-checklists' ? (
+        {resolvedTab === 'qc-checklists' ? (
           <VisaConfigurationQcChecklistsTab
             scope={scope}
             countryId={countryId}
@@ -125,6 +153,17 @@ export function CountryVisaConfigurationTabs({
             jurisdictionId={jurisdictionId}
             formData={formData}
             onRefresh={onRefresh}
+            readOnly={readOnly}
+          />
+        ) : null}
+        {resolvedTab === 'requirement-pack' ? (
+          <VisaConfigurationRequirementPackTab
+            scope={scope}
+            segment={segment}
+            visaTypeId={visaTypeId}
+            jurisdictionId={jurisdictionId}
+            formData={formData}
+            onChange={onChange}
             readOnly={readOnly}
           />
         ) : null}

@@ -97,13 +97,6 @@ export function SacCodeFormDrawer({ open, record, onClose, onSaved }: SacCodeFor
           importance: 'secondary',
           children: <SacCodeFormFields {...fieldProps} section="applicability" />,
         },
-        {
-          id: 'status',
-          title: 'Status',
-          columns: ADMIN_DRAWER_FORM_LAYOUT.secondarySectionColumns,
-          importance: 'secondary',
-          children: <SacCodeFormFields {...fieldProps} section="status" />,
-        },
       ]}
     />
   )

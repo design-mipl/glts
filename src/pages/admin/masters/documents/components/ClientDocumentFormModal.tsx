@@ -5,7 +5,6 @@ import {
   Input,
   Modal,
   MultiSelect,
-  Select,
   Textarea,
   Toggle,
   useToast,
@@ -16,7 +15,6 @@ import { ADMIN_MODAL_FORM_LAYOUT } from '@/pages/admin/components/adminOverlayFo
 import { clientDocumentMasterService } from '@/shared/services/clientDocumentMasterService'
 import type { ClientDocumentMaster } from '@/shared/types/clientDocumentMaster'
 import { MASTER_APPLICABILITY_OPTIONS } from '@/shared/types/masterCommon'
-import { masterStatusLabel } from '../../config/masterStatusConfig'
 import {
   clientDocumentToFormData,
   INITIAL_CLIENT_DOCUMENT_FORM,
@@ -89,20 +87,6 @@ export function ClientDocumentFormModal({
             value={formData.documentType}
             onChange={(value) => setFormData({ ...formData, documentType: value })}
             placeholder="e.g. Company Registration Certificate"
-            size="sm"
-            fullWidth
-          />
-        </FormField>
-        <FormField label="Status" required>
-          <Select
-            value={formData.status}
-            onChange={(value) =>
-              setFormData({ ...formData, status: value as typeof formData.status })
-            }
-            placeholder="Select status"
-            options={(
-              Object.entries(masterStatusLabel) as [typeof formData.status, string][]
-            ).map(([value, label]) => ({ value, label }))}
             size="sm"
             fullWidth
           />

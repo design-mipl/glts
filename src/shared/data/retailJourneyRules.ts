@@ -1,14 +1,12 @@
 /**
  * Retail application flow — conditional question and eligibility config.
  *
- * This is the one genuinely new source of truth the retail flow needs: Country Master has
- * no concept of "ask an employment-status question and add extra documents based on the
- * answer" or "gate the whole journey behind an eligibility question". Everything else
- * (documents, pricing, jurisdictions, requirement cards) is resolved from the existing
- * Country/Document/Jurisdiction/Service masters via `retailJourneyResolver`.
+ * Prefer mapping a Requirement Master pack on the retail visa type / segment in
+ * Country Master (`requirementPackId`). `retailJourneyResolver` uses that pack
+ * first; this file remains a fallback for demos that are not yet mapped, plus
+ * eligibility gates (not yet modeled on Requirement Master).
  *
- * Keyed by (countryId, visaOfferingId) so it stays additive and does not touch
- * `CountryMaster`/`CountryVisaType` shapes.
+ * Keyed by (countryId, visaOfferingId) so it stays additive.
  */
 
 export interface ConditionalQuestionOption {

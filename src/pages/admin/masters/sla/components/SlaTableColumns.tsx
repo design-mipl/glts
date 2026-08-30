@@ -1,5 +1,5 @@
 import { Typography } from '@mui/material'
-import { Eye, PencilLine } from 'lucide-react'
+import { Eye, PencilLine, Power, PowerOff } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
@@ -14,9 +14,14 @@ import { formatMasterDate } from '../../utils/masterListingUtils'
 interface ColumnHandlers {
   onOpenView: (row: SlaMaster) => void
   onOpenEdit: (row: SlaMaster) => void
+  onToggleStatus: (row: SlaMaster) => void
 }
 
-export function buildSlaColumns({ onOpenView, onOpenEdit }: ColumnHandlers): Column<SlaMaster>[] {
+export function buildSlaColumns({
+  onOpenView,
+  onOpenEdit,
+  onToggleStatus,
+}: ColumnHandlers): Column<SlaMaster>[] {
   return [
     {
       key: 'name',
@@ -110,9 +115,15 @@ export function buildSlaColumns({ onOpenView, onOpenEdit }: ColumnHandlers): Col
       hideable: false,
       align: 'center',
       render: (_, row) => {
+        const isActive = row.status === 'active'
         const actions: RowAction[] = [
           { label: 'View', icon: <Eye size={14} />, onClick: () => onOpenView(row) },
           { label: 'Edit', icon: <PencilLine size={14} />, onClick: () => onOpenEdit(row) },
+          {
+            label: isActive ? 'Deactivate' : 'Activate',
+            icon: isActive ? <PowerOff size={14} /> : <Power size={14} />,
+            onClick: () => onToggleStatus(row),
+          },
         ]
         return <RowActions row={row} actions={actions} />
       },

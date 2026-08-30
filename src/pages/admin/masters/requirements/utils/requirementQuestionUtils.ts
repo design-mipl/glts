@@ -1,17 +1,23 @@
-import type { RequirementQuestion, RequirementQuestionOption } from '@/shared/types/requirementMaster'
+import type {
+  RequirementQuestion,
+  RequirementQuestionOption,
+} from '@/shared/types/requirementMaster'
 
 export function createRequirementOption(label = ''): RequirementQuestionOption {
-  return { id: `opt-${crypto.randomUUID()}`, label }
+  return { id: `opt-${crypto.randomUUID()}`, label, documentIds: [] }
 }
 
 export function createEmptyRequirementQuestion(): RequirementQuestion {
   return {
     id: `q-${crypto.randomUUID()}`,
     prompt: '',
-    type: 'multiple_choice',
     required: false,
-    options: [createRequirementOption(), createRequirementOption(), createRequirementOption()],
+    options: [createRequirementOption(), createRequirementOption()],
   }
+}
+
+export function formatDocumentCount(count: number): string {
+  return count === 1 ? '1 document' : `${count} documents`
 }
 
 export function validateRequirementForm(data: {
@@ -20,10 +26,7 @@ export function validateRequirementForm(data: {
 }): string[] {
   const issues: string[] = []
   if (!data.name.trim()) issues.push('Name is required')
-  if (data.questions.length === 0) {
-    issues.push('Add at least one question')
-    return issues
-  }
+
   data.questions.forEach((question, index) => {
     const n = index + 1
     if (!question.prompt.trim()) issues.push(`Question ${n}: enter a question`)
@@ -34,5 +37,14 @@ export function validateRequirementForm(data: {
       }
     })
   })
+
   return [...new Set(issues)]
+}
+
+export function moveItem<T>(items: T[], fromIndex: number, direction: 'up' | 'down'): T[] {
+  const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1
+  if (toIndex < 0 || toIndex >= items.length) return items
+  const next = [...items]
+  ;[next[fromIndex], next[toIndex]] = [next[toIndex], next[fromIndex]]
+  return next
 }

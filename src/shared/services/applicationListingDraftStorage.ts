@@ -25,3 +25,11 @@ export function persistCustomerDraftListingRow(row: SingleApplicationRow) {
   const existing = getSavedDraftListingRows().filter(saved => saved.id !== row.id)
   writeSavedDraftListingRows([row, ...existing])
 }
+
+export function removeCustomerDraftListingRow(applicationId: string): boolean {
+  const existing = getSavedDraftListingRows()
+  const next = existing.filter(row => row.id !== applicationId)
+  if (next.length === existing.length) return false
+  writeSavedDraftListingRows(next)
+  return true
+}

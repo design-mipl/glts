@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
-import { Check, Upload } from 'lucide-react'
+import { Check, FolderOpen, Upload } from 'lucide-react'
 import { FileUploadModal } from '@/pages/website/components/fileUploadModal/FileUploadModal'
 import { StepShell } from '../StepShell'
 import { applyFlow, applyFont, applyMotion, applyRadius } from '@/pages/website/theme/applyFlowTheme'
@@ -14,7 +14,74 @@ import {
   type RetailCapturedImage,
 } from '../../types'
 import { checklistUploadKey } from './ChecklistStep'
+import { getStoredDocumentByType } from '@/shared/services/storedDocumentsService'
 
+
+function StoredPassportReuseBanner({
+  applicants,
+  onApply,
+}: {
+  applicants: RetailApplicantParty[]
+  onApply: (applicantId: string, image: RetailCapturedImage) => void
+}) {
+  const stored = getStoredDocumentByType('passport')
+  if (!stored) return null
+
+  const target = applicants.find(a => !a.passport) ?? applicants[0]
+  if (!target || target.passport) return null
+
+  return (
+    <Box
+      sx={{
+        mb: 2.5,
+        p: 2,
+        borderRadius: applyRadius.chip,
+        border: `1px solid ${applyFlow.accentBorder}`,
+        bgcolor: applyFlow.surface,
+        display: 'flex',
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: 1.5,
+        flexDirection: { xs: 'column', sm: 'row' },
+      }}
+    >
+      <FolderOpen size={18} color={applyFlow.accent} style={{ flexShrink: 0, marginTop: 2 }} />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography sx={{ fontSize: 13, fontWeight: 700, color: applyFlow.ink }}>
+          Use stored passport
+        </Typography>
+        <Typography sx={{ fontSize: 12, color: applyFlow.inkMuted, mt: 0.25 }}>
+          {stored.fileName} from your account — apply to {target.details.fullName.trim() || target.label}.
+        </Typography>
+      </Box>
+      <Box
+        component="button"
+        type="button"
+        onClick={() =>
+          onApply(target.id, {
+            dataUrl: stored.fileUrl || `stored://${stored.id}`,
+            capturedAt: new Date().toISOString(),
+          })
+        }
+        sx={{
+          appearance: 'none',
+          border: `1px solid ${applyFlow.accent}`,
+          bgcolor: applyFlow.accent,
+          color: '#fff',
+          borderRadius: applyRadius.chip,
+          px: 2,
+          py: 1,
+          fontSize: 12,
+          fontWeight: 700,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Apply stored passport
+      </Box>
+    </Box>
+  )
+}
 
 interface PassportStepProps {
   countryName?: string
@@ -178,6 +245,16 @@ export function PassportStep({
           <SectionHeading>
             {`Documents — ${applicants.filter((a) => applicantReady(a, uploads)).length} of ${applicants.length} travellers complete`}
           </SectionHeading>
+
+          <StoredPassportReuseBanner
+            applicants={applicants}
+            onApply={(applicantId, image) =>
+              onUpdateApplicant(applicantId, {
+                passport: image,
+                passportBack: image,
+              })
+            }
+          />
 
           {applicants.map((applicant, index) => {
             const { done, total } = docsUploadedCount(applicant, uploads)

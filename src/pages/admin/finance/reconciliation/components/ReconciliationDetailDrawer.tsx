@@ -24,6 +24,7 @@ interface ReconciliationDetailDrawerProps {
   item: ReconciliationItem | null
   onClose: () => void
   onSubmitted?: () => void
+  onRejected?: () => void
 }
 
 function parseAmount(raw: string): number {
@@ -49,6 +50,7 @@ export function ReconciliationDetailDrawer({
   item,
   onClose,
   onSubmitted,
+  onRejected,
 }: ReconciliationDetailDrawerProps) {
   const { showToast } = useToast()
   const [referenceNumber, setReferenceNumber] = useState('')
@@ -157,7 +159,7 @@ export function ReconciliationDetailDrawer({
       variant: 'warning',
     })
     setRejectOpen(false)
-    onSubmitted?.()
+    onRejected?.()
     onClose()
   }
 

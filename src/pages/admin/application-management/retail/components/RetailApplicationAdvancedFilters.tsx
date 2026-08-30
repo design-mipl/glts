@@ -1,14 +1,11 @@
 import { Select } from '@/design-system/UIComponents'
 import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
-import type {
-  ApplicationListingFilterState,
-  ApplicationRecordType,
-} from '@/pages/customer/features/applications/types/applicationListing.types'
+import type { ApplicationListingFilterState } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { PROCESSING_STAGE_OPTIONS } from '@/pages/customer/features/applications/components/listing/applicationStatus'
 
 /** Admin-visible statuses — queue Status from Ops/Docs QC handoffs. */
 const ADMIN_STATUS_OPTIONS = [
-  'Pending Documents',
+  'Draft',
   'Verification Pending',
   'Ops · Correction Required',
   'Ops · Document Missing',
@@ -53,20 +50,6 @@ export function RetailApplicationAdvancedFilterFields({
 }: RetailApplicationAdvancedFilterFieldsProps) {
   return (
     <>
-      <ListingFilterField label="Application type">
-        <Select
-          value={draft.applicationType}
-          onChange={(v) => patch({ applicationType: String(v) as ApplicationRecordType | '' })}
-          options={[
-            { value: 'single', label: 'Single' },
-            { value: 'bulk', label: 'Bulk' },
-          ]}
-          placeholder="All types"
-          size="sm"
-          clearable
-          fullWidth
-        />
-      </ListingFilterField>
       <ListingFilterField label="Country">
         <Select
           value={draft.country}
@@ -132,7 +115,6 @@ export function hasRetailApplicationFiltersActive(filters: ApplicationListingFil
       filters.visaType ||
       filters.status ||
       filters.processingStage ||
-      filters.applicationType ||
       filters.createdBy,
   )
 }

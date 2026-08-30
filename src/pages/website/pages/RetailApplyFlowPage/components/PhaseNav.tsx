@@ -7,13 +7,15 @@ import {
   applyMotion,
   tabularNums,
 } from '@/pages/website/theme/applyFlowTheme'
-import { RETAIL_PHASE_LABEL, RETAIL_PHASE_ORDER } from '../config/stepPlan'
+import { RETAIL_PHASE_LABEL } from '../config/stepPlan'
 import type { RetailPhaseId } from '../types'
 
 interface PhaseNavProps {
   currentPhase: RetailPhaseId
   unlockedPhases: Set<RetailPhaseId>
   onSelectPhase: (phase: RetailPhaseId) => void
+  /** Visible phases — omit later phases until destination is chosen. */
+  phases: readonly RetailPhaseId[]
 }
 
 /** Left offset of the connector track — aligns to the centre of the number column. */
@@ -29,8 +31,8 @@ const TRACK_X = 26
  * - The active row carries a gold edge bar plus a wash that fades out to the right, so the
  *   row physically bleeds toward the content pane instead of sitting in its own box.
  */
-export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseNavProps) {
-  const currentIndex = RETAIL_PHASE_ORDER.indexOf(currentPhase)
+export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase, phases }: PhaseNavProps) {
+  const currentIndex = Math.max(0, phases.indexOf(currentPhase))
 
   return (
     <Box
@@ -42,7 +44,7 @@ export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseN
       <Box
         aria-hidden
         sx={{
-          display: { xs: 'none', md: 'block' },
+          display: { xs: 'none', md: phases.length > 1 ? 'block' : 'none' },
           position: 'absolute',
           left: TRACK_X,
           top: 22,
@@ -55,12 +57,12 @@ export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseN
       <Box
         aria-hidden
         sx={{
-          display: { xs: 'none', md: 'block' },
+          display: { xs: 'none', md: phases.length > 1 ? 'block' : 'none' },
           position: 'absolute',
           left: TRACK_X,
           top: 22,
           width: '1px',
-          height: `calc((100% - 44px) * ${currentIndex / Math.max(RETAIL_PHASE_ORDER.length - 1, 1)})`,
+          height: `calc((100% - 44px) * ${currentIndex / Math.max(phases.length - 1, 1)})`,
           backgroundColor: applyFlow.accent,
           transition: `height ${applyMotion.stepMs}ms ${applyMotion.easeInOut}`,
           '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
@@ -77,7 +79,7 @@ export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseN
           '&::-webkit-scrollbar': { display: 'none' },
         }}
       >
-        {RETAIL_PHASE_ORDER.map((phase, index) => {
+        {phases.map((phase, index) => {
           const isActive = phase === currentPhase
           const isCleared = index < currentIndex
           const isUnlocked = unlockedPhases.has(phase)
@@ -201,3 +203,4 @@ export function PhaseNav({ currentPhase, unlockedPhases, onSelectPhase }: PhaseN
     </Box>
   )
 }
+

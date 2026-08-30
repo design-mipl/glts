@@ -69,6 +69,18 @@ export interface SingleApplicationRow {
    * Customer checkout payment from the website retail journey (read-only in Admin Ops).
    */
   customerPayment?: import('@/shared/types/retailCustomerPayment').RetailCustomerPaymentSnapshot
+  /**
+   * Website retail apply cursor — Draft listing drop-off + continue-from-step.
+   */
+  retailApply?: {
+    countryId: string
+    visaOfferingId: string
+    lastStepId?: string
+    lastStepLabel?: string
+    lastStepIndex?: number
+    totalSteps?: number
+    paymentLinkSentAt?: string
+  }
   /** Admin B2B create: skip required document fill. Default required. */
   documentRequirement?: ApplicationDocumentRequirement
 }
@@ -377,15 +389,87 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     country: 'UK',
     countryFlag: '🇬🇧',
     visaType: 'Tourist e-Visa',
+    jurisdiction: 'Delhi',
     travelDate: '2026-06-12',
     submissionDate: '',
     createdAt: '2026-02-20',
     lastUpdated: '2026-02-20',
-    processingStage: 'Ready for submission',
+    processingStage: 'Step 5 of 14 · Essential documents',
     operationalStatus: 'Draft',
-    createdByEmail: 'sneha.patel@glts.com',
-    createdByRole: 'admin',
+    createdByEmail: 'anita.desai@email.com',
+    createdByRole: 'booker',
     customerSegment: 'retail',
+    retailApply: {
+      countryId: '4',
+      visaOfferingId: 'default-evisa-tourist',
+      lastStepId: 'passport',
+      lastStepLabel: 'Essential documents',
+      lastStepIndex: 5,
+      totalSteps: 14,
+    },
+  }),
+  singleRow({
+    id: 'GL-851',
+    applicantName: 'Rohan Mehta',
+    passportNumber: 'M2291844',
+    country: 'Japan',
+    countryFlag: '🇯🇵',
+    visaType: 'e-Visa · Tourist',
+    travelDate: '2026-07-04',
+    submissionDate: '',
+    createdAt: '2026-02-22',
+    lastUpdated: '2026-02-22',
+    processingStage: 'Step 3 of 14 · Travel profile',
+    operationalStatus: 'Draft',
+    createdByEmail: 'rohan.mehta@email.com',
+    createdByRole: 'booker',
+    customerSegment: 'retail',
+    retailApply: {
+      countryId: '2',
+      visaOfferingId: 'jp-evisa-tourist',
+      lastStepId: 'travelProfile',
+      lastStepLabel: 'Travel profile',
+      lastStepIndex: 3,
+      totalSteps: 14,
+    },
+  }),
+  singleRow({
+    id: 'GL-852',
+    applicantName: 'Neha Kapoor',
+    passportNumber: 'N4419022',
+    country: 'France',
+    countryFlag: '🇫🇷',
+    visaType: 'Tourist Visa',
+    jurisdiction: 'Delhi',
+    travelDate: '2026-08-18',
+    submissionDate: '',
+    createdAt: '2026-02-18',
+    lastUpdated: '2026-02-24',
+    processingStage: 'Step 13 of 14 · Payment · Link sent',
+    operationalStatus: 'Draft',
+    createdByEmail: 'neha.kapoor@email.com',
+    createdByRole: 'booker',
+    customerSegment: 'retail',
+    customerPayment: {
+      status: 'pending',
+      currency: 'INR',
+      lineItems: [
+        { id: 'visa-fees', label: 'Visa fees', amount: 7800 },
+        { id: 'service-fees', label: 'GLTS service fees', amount: 2499 },
+      ],
+      totalAmount: 10299,
+      referenceNumber: 'PAY-NEHA-852',
+      travellerCount: 1,
+    },
+    retailApply: {
+      countryId: '14',
+      visaOfferingId: 'schengen-tourist',
+      lastStepId: 'payment',
+      lastStepLabel: 'Payment',
+      lastStepIndex: 13,
+      totalSteps: 14,
+      paymentLinkSentAt: '2026-02-24T11:20:00.000Z',
+    },
   }),
   singleRow({
     id: 'GL-815',

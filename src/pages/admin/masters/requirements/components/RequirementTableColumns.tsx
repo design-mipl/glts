@@ -3,7 +3,10 @@ import { PencilLine, Power, PowerOff, Trash2 } from 'lucide-react'
 import type { Column, RowAction } from '@/design-system/UIComponents'
 import { Badge, RowActions } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
-import type { RequirementMaster } from '@/shared/types/requirementMaster'
+import {
+  collectRequirementDocumentIds,
+  type RequirementMaster,
+} from '@/shared/types/requirementMaster'
 import { masterStatusColor, masterStatusLabel } from '../../config/masterStatusConfig'
 import { formatMasterDate } from '../../utils/masterListingUtils'
 
@@ -48,7 +51,7 @@ export function buildRequirementColumns({
       filterable: false,
       render: (_, row) => (
         <Typography variant="body2" sx={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>
-          {row.documents.length}
+          {collectRequirementDocumentIds(row).length}
         </Typography>
       ),
     },

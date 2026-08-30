@@ -60,6 +60,15 @@ export const RECONCILIATION_LISTING_TABS: { value: ReconciliationTab; label: str
   { value: 'mode_of_payment', label: 'Mode of payment' },
 ]
 
+/** Status strip inside each category tab — Pending is the work queue; Submitted is history. */
+export type ReconciliationStatusTab = 'pending' | 'submitted' | 'rejected'
+
+export const RECONCILIATION_STATUS_TABS: { value: ReconciliationStatusTab; label: string }[] = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'submitted', label: 'Submitted' },
+  { value: 'rejected', label: 'Rejected' },
+]
+
 export const RECONCILIATION_PERIOD_OPTIONS: { value: ReconciliationPeriodPreset; label: string }[] = [
   { value: 'today', label: 'Today' },
   { value: 'yesterday', label: 'Yesterday' },

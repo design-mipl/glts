@@ -28,6 +28,7 @@ import {
   TrackingPage,
   VesselDetailPage,
   VesselListingPage,
+  StoredDocumentsPage,
 } from './customerRoutePages'
 import { CustomerSegmentPortalProvider } from './CustomerSegmentPortalContext'
 import type { CustomerSegmentPortalConfig } from './segmentTypes'
@@ -61,7 +62,7 @@ export function CustomerPortalRoutes({ config }: { config?: CustomerSegmentPorta
           <Route path="finance/receipts" element={<Navigate to="../payments" replace />} />
           <Route path="applications/new/single" element={<Navigate to="../new" replace />} />
           <Route path="applications/new/bulk" element={<Navigate to="../new" replace />} />
-          <Route path="documents" element={<PlaceholderPage title="Documents vault" />} />
+          <Route path="documents" element={<StoredDocumentsPage />} />
           <Route path="tracking" element={<TrackingPage />} />
           <Route path="users" element={<UserManagementRedirect />} />
           <Route path="users/admins" element={<AdminListingPage />} />

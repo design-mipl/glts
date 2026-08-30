@@ -16,6 +16,12 @@ export function canViewApplication(
   session: AuthSession | null,
 ): boolean {
   if (!session?.email) return false
+
+  // Retail customers see retail-segment applications in the prototype account workspace.
+  if (session.portal === 'retail') {
+    return !app.customerSegment || app.customerSegment === 'retail'
+  }
+
   const role = session.userRole ?? 'booker'
   const email = session.email.toLowerCase()
 

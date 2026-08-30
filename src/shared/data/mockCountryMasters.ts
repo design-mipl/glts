@@ -489,8 +489,14 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           purposeId: 'tourism',
           purposeLabel: 'Tourism',
           jurisdictions: [
-            singleJurisdictionForVisa('delhi', 'Delhi', 'France', stdApplicationDocuments),
-            singleJurisdictionForVisa('mumbai', 'Mumbai', 'France', stdApplicationDocuments),
+            {
+              ...singleJurisdictionForVisa('delhi', 'Delhi', 'France', stdApplicationDocuments),
+              requirementPackId: 'req-schengen-tourist',
+            },
+            {
+              ...singleJurisdictionForVisa('mumbai', 'Mumbai', 'France', stdApplicationDocuments),
+              requirementPackId: 'req-schengen-tourist',
+            },
           ],
         }),
         visaType({

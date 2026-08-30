@@ -30,7 +30,6 @@ export function useCountryGroupForm(initialData?: CountryGroupMasterFormData) {
     const next: Record<string, string> = {}
     if (!formData.name.trim()) next.name = 'Group name is required'
     if (!formData.countryIds.length) next.countryIds = 'Select at least one country'
-    if (!formData.status) next.status = 'Status is required'
     setErrors(next)
     return Object.keys(next).length === 0
   }

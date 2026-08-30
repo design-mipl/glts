@@ -30,6 +30,7 @@ interface PaymentStepProps {
   ) => void
   onBack: () => void
   onPay: () => void
+  continueLabel?: string
   previewOnly?: boolean
 }
 
@@ -215,6 +216,7 @@ export function PaymentStep({
   onChange,
   onBack,
   onPay,
+  continueLabel,
   previewOnly = false,
 }: PaymentStepProps) {
   const colors = usePublicBrandColors()
@@ -715,7 +717,7 @@ export function PaymentStep({
       helperText={guaranteeHelper}
       onBack={onBack}
       onContinue={handlePay}
-      continueLabel={`Pay ${formatInr(grandTotal)} to Submit`}
+      continueLabel={continueLabel ?? `Pay ${formatInr(grandTotal)} to Submit`}
       contentMaxWidth={880}
     >
       {body}

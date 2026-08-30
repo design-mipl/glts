@@ -8,6 +8,11 @@ import {
   type RetailSponsorSelection,
   type RetailTravellerSponsor,
 } from '../types'
+import {
+  ensureRetailWebsiteApplicationDraft,
+  getRetailWebsiteDraft,
+} from '@/shared/services/retailWebsiteApplicationService'
+import type { CustomerPortalRole } from '@/shared/auth/session'
 
 const STORAGE_KEY = 'glts:retail-apply-flow'
 
@@ -67,27 +72,37 @@ function normalizeDraft(draft: RetailFlowDraft): RetailFlowDraft {
   return syncPrimaryApplicantMirror({ ...rest, applicants })
 }
 
-function loadStoredDraft(countryId: string, visaOfferingId: string): RetailFlowDraft {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
-    if (!raw) return emptyRetailFlowDraft(countryId, visaOfferingId)
-    const parsed = JSON.parse(raw) as RetailFlowDraft
-    if (parsed.countryId !== countryId || parsed.visaOfferingId !== visaOfferingId) {
-      return emptyRetailFlowDraft(countryId, visaOfferingId)
-    }
-    return normalizeDraft({ ...emptyRetailFlowDraft(countryId, visaOfferingId), ...parsed })
-  } catch {
-    return emptyRetailFlowDraft(countryId, visaOfferingId)
+export interface UseRetailDraftOptions {
+  countryId: string
+  visaOfferingId: string
+  applicationId?: string
+  startFresh?: boolean
+  creatorEmail: string
+  creatorRole: CustomerPortalRole
+}
+
+function loadInitial(options: UseRetailDraftOptions): { id: string; draft: RetailFlowDraft } {
+  const ensured = ensureRetailWebsiteApplicationDraft({
+    countryId: options.countryId,
+    visaOfferingId: options.visaOfferingId,
+    applicationId: options.applicationId,
+    startFresh: options.startFresh,
+    creatorEmail: options.creatorEmail,
+    creatorRole: options.creatorRole,
+  })
+  const stored = getRetailWebsiteDraft(ensured.id)
+  return {
+    id: ensured.id,
+    draft: normalizeDraft(
+      stored ?? { ...emptyRetailFlowDraft(options.countryId, options.visaOfferingId), applicationId: ensured.id },
+    ),
   }
 }
 
-export function useRetailDraft(countryId: string, visaOfferingId: string) {
-  const [draft, setDraft] = useState<RetailFlowDraft>(() => loadStoredDraft(countryId, visaOfferingId))
-
-  useEffect(() => {
-    setDraft(loadStoredDraft(countryId, visaOfferingId))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countryId, visaOfferingId])
+export function useRetailDraft(options: UseRetailDraftOptions) {
+  const [initial] = useState(() => loadInitial(options))
+  const [applicationId] = useState(initial.id)
+  const [draft, setDraft] = useState<RetailFlowDraft>(initial.draft)
 
   useEffect(() => {
     try {
@@ -99,14 +114,17 @@ export function useRetailDraft(countryId: string, visaOfferingId: string) {
 
   const patchDraft = useCallback((patch: Partial<RetailFlowDraft> | ((prev: RetailFlowDraft) => Partial<RetailFlowDraft>)) => {
     setDraft((prev) => {
-      const next = { ...prev, ...(typeof patch === 'function' ? patch(prev) : patch) }
+      const next = { ...prev, ...(typeof patch === 'function' ? patch(prev) : patch), applicationId }
       return next.applicants ? syncPrimaryApplicantMirror(next) : next
     })
-  }, [])
+  }, [applicationId])
 
   const resetDraft = useCallback(() => {
-    setDraft(emptyRetailFlowDraft(countryId, visaOfferingId))
-  }, [countryId, visaOfferingId])
+    setDraft({
+      ...emptyRetailFlowDraft(options.countryId, options.visaOfferingId),
+      applicationId,
+    })
+  }, [applicationId, options.countryId, options.visaOfferingId])
 
-  return { draft, patchDraft, resetDraft }
+  return { draft, patchDraft, resetDraft, applicationId }
 }

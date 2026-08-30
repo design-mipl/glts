@@ -88,13 +88,6 @@ export function ServiceFormDrawer({ open, record, onClose, onSaved }: ServiceFor
           columns: ADMIN_DRAWER_FORM_LAYOUT.secondarySectionColumns,
           children: <ServiceFormFields {...fieldProps} section="applicability" />,
         },
-        {
-          id: 'status',
-          title: 'Status',
-          importance: 'secondary',
-          columns: ADMIN_DRAWER_FORM_LAYOUT.secondarySectionColumns,
-          children: <ServiceFormFields {...fieldProps} section="status" />,
-        },
       ]}
     />
   )

@@ -1,8 +1,7 @@
 import { Box } from '@mui/material'
-import { FormField, FormSection, Input, RichTextEditor, Select } from '@/design-system/UIComponents'
+import { FormField, FormSection, Input, RichTextEditor } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import type { DocumentMasterFormData } from '@/shared/types/documentMaster'
-import { documentStatusLabel } from '../config/documentStatusConfig'
 import {
   DOCUMENT_MASTER_RICH_TEXT_MIN_HEIGHT,
   DOCUMENT_MASTER_RICH_TEXT_TOOLBAR,
@@ -46,19 +45,6 @@ export function DocumentFormFields({
           value={formData.documentType}
           onChange={(value) => patch({ documentType: value })}
           placeholder="e.g. Passport, CDC, Invitation Letter"
-          size="sm"
-          fullWidth
-        />
-      </FormField>
-      <FormField label="Status" required>
-        <Select
-          value={formData.status}
-          onChange={(value) =>
-            patch({ status: value as DocumentMasterFormData['status'] })
-          }
-          options={(
-            Object.entries(documentStatusLabel) as [DocumentMasterFormData['status'], string][]
-          ).map(([value, label]) => ({ value, label }))}
           size="sm"
           fullWidth
         />
