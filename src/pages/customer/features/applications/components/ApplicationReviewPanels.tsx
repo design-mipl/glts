@@ -17,6 +17,7 @@ import { buildApplicationProcessingTimeline } from '@/shared/utils/applicationPr
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import type { ApplicationReviewOverview } from '../utils/applicationReviewOverview'
 import type { ApplicationDetailViewModel } from '../types/applicationDetail.types'
+import { useApplicationFlowPolicy } from '../context/ApplicationFlowPolicyContext'
 import { ApplicationReviewOverviewCard } from './review/ApplicationReviewOverviewCard'
 import { ApplicationReviewDocumentsSection } from './review/ApplicationReviewDocumentsSection'
 import { ApplicationReviewPassengerWorkspace } from './review/ApplicationReviewPassengerWorkspace'
@@ -106,6 +107,7 @@ export function ApplicationReviewPanels({
   onReuploadDocument,
 }: ApplicationReviewPanelsProps) {
   const colors = usePublicBrandColors()
+  const { customerSegment } = useApplicationFlowPolicy()
   const readyRows = useMemo(() => {
     const ready = queueReadyRows(rows)
     return ready.length > 0 ? ready : rows
@@ -219,7 +221,11 @@ export function ApplicationReviewPanels({
         <Typography sx={{ fontSize: 13, color: colors.textSecondary }}>{helperText}</Typography>
       ) : null}
 
-      <ApplicationReviewOverviewCard overview={overview} travelerCount={travelerCount} />
+      <ApplicationReviewOverviewCard
+        overview={overview}
+        travelerCount={travelerCount}
+        customerSegment={customerSegment}
+      />
 
       <ApplicationReviewPassengerWorkspace
         rows={readyRows}
@@ -237,6 +243,7 @@ export function ApplicationReviewPanels({
         detail={detail}
         applicationId={applicationId}
         documentsContent={documentsContent}
+        customerSegment={customerSegment}
       />
 
       <CustomerDocumentPreviewModal

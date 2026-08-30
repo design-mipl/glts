@@ -7,6 +7,7 @@ import { ensureRowBasicDetails } from '../../utils/applicantBasicDetailsUtils'
 import { ApplicationSummaryContent } from '../ApplicationSummaryContent'
 import { ApplicationProcessingTimeline } from '../ApplicationProcessingTimeline'
 import type { UploadQueueRow } from '../../data/applicationFlowData'
+import type { ApplicationCustomerSegment } from '../../types/applicationListing.types'
 import type { ApplicationReviewOverview } from '../../utils/applicationReviewOverview'
 import type { ApplicationDetailViewModel } from '../../types/applicationDetail.types'
 import type { ApplicationProcessingTimelineStep } from '@/shared/types/applicationProcessingTimeline'
@@ -25,6 +26,7 @@ interface ApplicationReviewDetailPanelProps {
   detail?: ApplicationDetailViewModel
   applicationId?: string
   documentsContent: ReactNode
+  customerSegment?: ApplicationCustomerSegment
 }
 
 function progressBadgeColor(tone: ReturnType<typeof getTravelerDocProgress>['tone']) {
@@ -41,6 +43,7 @@ export function ApplicationReviewDetailPanel({
   detail,
   applicationId,
   documentsContent,
+  customerSegment = 'marine',
 }: ApplicationReviewDetailPanelProps) {
   const colors = usePublicBrandColors()
   const [activeTab, setActiveTab] = useState(DOCUMENTS_TAB)
@@ -144,6 +147,7 @@ export function ApplicationReviewDetailPanel({
               overview={overview}
               row={selectedRow}
               singleListing={singleListing}
+              customerSegment={customerSegment}
               verifyContext={{ detail: detail!, applicationId: applicationId! }}
             />
           ) : (
@@ -151,6 +155,7 @@ export function ApplicationReviewDetailPanel({
               overview={overview}
               row={selectedRow}
               singleListing={singleListing}
+              customerSegment={customerSegment}
             />
           )
         ) : null}

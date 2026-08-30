@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
-import { Box, Typography, useMediaQuery } from '@mui/material'
+import { useState } from 'react'
+import { Box, Typography } from '@mui/material'
 import { ArrowRight } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
-import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
+import { publicFonts, publicMotion, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { visaServiceShowcaseImages } from '../../../assets/landingPageImages'
+import { useScrollReveal } from '../../../hooks/useScrollReveal'
 
 const CARD_RADIUS = '16px'
 const IMAGE_RADIUS = '14px'
-const TRANSITION = '300ms cubic-bezier(0.22, 1, 0.36, 1)'
+const TRANSITION = `300ms ${publicMotion.easeOut}`
 
 const visaServices = [
   {
@@ -16,7 +17,7 @@ const visaServices = [
     title: 'Tourist Visa',
     description: 'For holidays, leisure and short-term travel',
     image: visaServiceShowcaseImages.tourist,
-    href: '/v1/countries',
+    href: '/countries',
     objectPosition: 'center center',
   },
   {
@@ -24,7 +25,7 @@ const visaServices = [
     title: 'Business Visa',
     description: 'For meetings, conferences and business visits',
     image: visaServiceShowcaseImages.business,
-    href: '/v1/countries',
+    href: '/countries',
     objectPosition: 'center 35%',
   },
   {
@@ -32,7 +33,7 @@ const visaServices = [
     title: 'Student Visa',
     description: 'For overseas study and academic travel',
     image: visaServiceShowcaseImages.student,
-    href: '/v1/countries',
+    href: '/countries',
     objectPosition: 'center 32%',
   },
   {
@@ -40,7 +41,7 @@ const visaServices = [
     title: 'Transit Visa',
     description: 'For layovers and onward travel through another country',
     image: visaServiceShowcaseImages.transit,
-    href: '/v1/countries',
+    href: '/countries',
     objectPosition: 'center 40%',
   },
   {
@@ -48,7 +49,7 @@ const visaServices = [
     title: 'Visit & Family',
     description: 'For visiting friends, relatives and family members',
     image: visaServiceShowcaseImages.family,
-    href: '/v1/countries',
+    href: '/countries',
     objectPosition: 'center center',
   },
   {
@@ -56,35 +57,10 @@ const visaServices = [
     title: 'Other Visa Types',
     description: 'For special cases that need country-specific guidance',
     image: visaServiceShowcaseImages.other,
-    href: '/v1/countries',
+    href: '/countries',
     objectPosition: 'center 35%',
   },
 ] as const
-
-function useRowReveal() {
-  const ref = useRef<HTMLDivElement>(null)
-  const playedRef = useRef(false)
-  const [active, setActive] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting || playedRef.current) return
-        playedRef.current = true
-        setActive(true)
-      },
-      { threshold: 0.18, rootMargin: '0px 0px -6% 0px' },
-    )
-
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  return { ref, active }
-}
 
 function VisaServiceCard({
   title,
@@ -142,6 +118,9 @@ function VisaServiceCard({
           '&:hover .visa-card-arrow': {
             transform: 'translateX(4px)',
           },
+        },
+        '&:active': {
+          transform: 'translate3d(0, 0, 0) scale(0.98)',
         },
       }}
     >
@@ -239,8 +218,10 @@ function VisaServiceCard({
 
 export function VisaServicesSection() {
   const colors = usePublicBrandColors()
-  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const { ref, active } = useRowReveal()
+  const { ref, active, reducedMotion } = useScrollReveal<HTMLDivElement>({
+    threshold: 0.18,
+    rootMargin: '0px 0px -6% 0px',
+  })
 
   return (
     <Box
@@ -270,12 +251,12 @@ export function VisaServicesSection() {
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
+              fontFamily: publicFonts.display,
               fontSize: { xs: '26px', md: '32px' },
-              fontWeight: 800,
+              fontWeight: 700,
               color: colors.navy,
               lineHeight: 1.15,
-              letterSpacing: '-0.5px',
+              letterSpacing: '-0.3px',
               mb: 1.25,
             }}
           >

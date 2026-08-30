@@ -3,11 +3,17 @@ import { Box, Typography, Stack } from '@mui/material'
 import { Anchor, Building2, Handshake, User, ArrowRight, type LucideIcon } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
-import { publicFonts, usePublicBrandColors, brandPrimaryGreenRgb } from '../../../theme/publicSiteTokens'
+import {
+  publicFonts,
+  publicMotion,
+  usePublicBrandColors,
+  brandPrimaryGreenRgb,
+} from '../../../theme/publicSiteTokens'
 import {
   travelSolutionImages,
   SOLUTION_CARD_IMAGE_HEIGHT,
 } from '../../../assets/landingPageImages'
+import { useScrollReveal } from '../../../hooks/useScrollReveal'
 
 const solutions = [
   {
@@ -18,7 +24,7 @@ const solutions = [
     description:
       'Apply for tourist, business, visit, student and other visa categories with expert guidance and digital tracking.',
     ctaLabel: 'Explore Retail',
-    href: '/v1/retail-visas',
+    href: '/',
     image: travelSolutionImages.retail,
   },
   {
@@ -28,7 +34,7 @@ const solutions = [
     summary: 'Specialist visa support for seafarers and crew',
     description: 'Dedicated visa expertise for shipping companies, seafarers and marine professionals.',
     ctaLabel: 'Explore Marine',
-    href: '/v1/marine-crew',
+    href: '/marine-crew',
     image: travelSolutionImages.marine,
   },
   {
@@ -39,7 +45,7 @@ const solutions = [
     description:
       'Simplify employee and business visa applications across destinations with dedicated support and centralized management.',
     ctaLabel: 'Explore Corporate',
-    href: '/v1/corporate',
+    href: '/corporate',
     image: travelSolutionImages.corporate,
   },
   {
@@ -49,7 +55,7 @@ const solutions = [
     summary: 'Your visa processing partner',
     description: 'Reliable visa processing support for travel agents, DMCs and other travel partners.',
     ctaLabel: 'Partner With GreenLight',
-    href: '#final-cta',
+    href: '/#final-cta',
     image: travelSolutionImages.corporate,
   },
 ] as const
@@ -66,6 +72,9 @@ function SolutionCard({
   ctaLabel,
   href,
   image,
+  index,
+  active,
+  reducedMotion,
 }: {
   icon: LucideIcon
   title: string
@@ -74,9 +83,13 @@ function SolutionCard({
   ctaLabel: string
   href: string
   image: { src: string; fallback: string; alt: string }
+  index: number
+  active: boolean
+  reducedMotion: boolean
 }) {
   const colors = usePublicBrandColors()
   const [imgSrc, setImgSrc] = useState(image.src)
+  const delayMs = reducedMotion ? 0 : index * publicMotion.staggerMs
 
   return (
     <Box
@@ -94,12 +107,16 @@ function SolutionCard({
         textDecoration: 'none',
         color: 'inherit',
         overflow: 'hidden',
-        transition: `border-color ${TRANSITION_MS} ease, box-shadow ${TRANSITION_MS} ease, transform ${TRANSITION_MS} ${TRANSITION_EASE}`,
+        opacity: active ? 1 : 0,
+        transform: active ? 'translateY(0)' : 'translateY(16px)',
+        transition: reducedMotion
+          ? `border-color ${TRANSITION_MS} ease, box-shadow ${TRANSITION_MS} ease`
+          : `border-color ${TRANSITION_MS} ease, box-shadow ${TRANSITION_MS} ease, opacity ${publicMotion.revealDurationMs}ms ${publicMotion.easeOut} ${delayMs}ms, transform ${publicMotion.revealDurationMs}ms ${publicMotion.easeOut} ${delayMs}ms`,
         '@media (hover: hover)': {
           '&:hover': {
             borderColor: `rgba(${brandPrimaryGreenRgb}, 0.4)`,
             boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
-            transform: 'translateY(-6px)',
+            transform: active ? 'translateY(-6px)' : undefined,
             '& .solution-card-image': {
               transform: 'scale(1.06)',
             },
@@ -212,6 +229,9 @@ function SolutionCard({
 
 export function SpecializedSolutionsSection() {
   const colors = usePublicBrandColors()
+  const { ref: gridRef, active: gridActive, reducedMotion } = useScrollReveal<HTMLDivElement>({
+    threshold: 0.15,
+  })
 
   return (
     <Box
@@ -241,12 +261,12 @@ export function SpecializedSolutionsSection() {
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
+              fontFamily: publicFonts.display,
               fontSize: { xs: '26px', md: '32px' },
-              fontWeight: 800,
+              fontWeight: 700,
               color: colors.navy,
               lineHeight: 1.15,
-              letterSpacing: '-0.5px',
+              letterSpacing: '-0.3px',
               mb: 1.25,
             }}
           >
@@ -266,6 +286,7 @@ export function SpecializedSolutionsSection() {
         </Box>
 
         <Box
+          ref={gridRef}
           sx={{
             display: 'grid',
             gridTemplateColumns: {
@@ -277,8 +298,14 @@ export function SpecializedSolutionsSection() {
             alignItems: 'stretch',
           }}
         >
-          {solutions.map((solution) => (
-            <SolutionCard key={solution.id} {...solution} />
+          {solutions.map((solution, index) => (
+            <SolutionCard
+              key={solution.id}
+              {...solution}
+              index={index}
+              active={gridActive}
+              reducedMotion={reducedMotion}
+            />
           ))}
         </Box>
       </PublicContainer>

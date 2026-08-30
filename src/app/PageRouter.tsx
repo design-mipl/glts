@@ -6,12 +6,11 @@ const RetailPortalApp = lazyNamed(() => import('@/pages/customer/RetailApp'), 'R
 const B2BCustomerApp = lazyNamed(() => import('@/pages/customer/BusinessApp'), 'B2BCustomerApp')
 const AdminPortalApp = lazyNamed(() => import('@/pages/admin/App'), 'AdminPortalApp')
 const PublicWebsiteApp = lazyNamed(() => import('@/pages/website/App'), 'PublicWebsiteApp')
-const PublicWebsiteV2App = lazyNamed(() => import('@/pages/website-v2/App'), 'PublicWebsiteV2App')
 
-/** Preserve deep links from the former `/v2/*` mount. */
-function RedirectV2ToMain() {
+/** Preserve deep links from former `/v1/*` and `/v2/*` mounts. */
+function RedirectPrefixedWebsiteToMain({ prefix }: { prefix: '/v1' | '/v2' }) {
   const location = useLocation()
-  const rest = location.pathname.replace(/^\/v2\/?/, '/') || '/'
+  const rest = location.pathname.replace(new RegExp(`^${prefix}/?`), '/') || '/'
   const normalized = rest === '//' ? '/' : rest
   return <Navigate to={`${normalized}${location.search}${location.hash}`} replace />
 }
@@ -41,18 +40,14 @@ export function PageRouter() {
           <Route path="*" element={<AdminPortalApp />} />
         </Route>
 
-        {/* Legacy public website — Site A under /v1 */}
-        <Route path="/v1">
-          <Route index element={<PublicWebsiteApp />} />
-          <Route path="*" element={<PublicWebsiteApp />} />
-        </Route>
+        {/* Former website prefixes → main public site */}
+        <Route path="/v1" element={<RedirectPrefixedWebsiteToMain prefix="/v1" />} />
+        <Route path="/v1/*" element={<RedirectPrefixedWebsiteToMain prefix="/v1" />} />
+        <Route path="/v2" element={<RedirectPrefixedWebsiteToMain prefix="/v2" />} />
+        <Route path="/v2/*" element={<RedirectPrefixedWebsiteToMain prefix="/v2" />} />
 
-        {/* Former website-v2 prefix → main site */}
-        <Route path="/v2" element={<RedirectV2ToMain />} />
-        <Route path="/v2/*" element={<RedirectV2ToMain />} />
-
-        {/* Public Website (website-v2) — main marketing site */}
-        <Route path="/*" element={<PublicWebsiteV2App />} />
+        {/* Public Website — main marketing site */}
+        <Route path="/*" element={<PublicWebsiteApp />} />
       </Routes>
     </LazyRouteBoundary>
   )

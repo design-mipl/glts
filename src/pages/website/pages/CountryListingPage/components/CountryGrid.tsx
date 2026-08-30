@@ -42,8 +42,22 @@ export function CountryGrid({
 
   return (
     <Grid container columnSpacing={{ xs: 1.5, sm: 1.75, md: 2 }} rowSpacing={{ xs: 2, md: 2.5 }}>
-      {filtered.map(country => (
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={country.id}>
+      {filtered.map((country, index) => (
+        <Grid
+          size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+          key={country.id}
+          sx={{
+            '@media (prefers-reduced-motion: no-preference)': {
+              opacity: 0,
+              animation: 'glts-card-in 0.42s ease-out forwards',
+              animationDelay: `${Math.min(index * 45, 360)}ms`,
+            },
+            '@keyframes glts-card-in': {
+              from: { opacity: 0, transform: 'translateY(10px)' },
+              to: { opacity: 1, transform: 'translateY(0)' },
+            },
+          }}
+        >
           <CountryCard country={country} applicationContextQuery={applicationContextQuery} />
         </Grid>
       ))}

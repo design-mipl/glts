@@ -133,6 +133,19 @@ export const WorkflowListingPage = lazyNamed(
 )
 export const SlaListingPage = lazyNamed(() => import('../masters/sla'), 'SlaListingPage')
 
+export const RequirementListingPage = lazyNamed(
+  () => import('../masters/requirements'),
+  'RequirementListingPage',
+)
+export const CreateRequirementPage = lazyNamed(
+  () => import('../masters/requirements'),
+  'CreateRequirementPage',
+)
+export const EditRequirementPage = lazyNamed(
+  () => import('../masters/requirements'),
+  'EditRequirementPage',
+)
+
 export const OperationsDashboardPage = lazyNamed(
   () => import('../operations/dashboard/pages/OperationsDashboardPage'),
   'OperationsDashboardPage',
@@ -200,6 +213,23 @@ export const CorporateVerifyDocumentsPage = lazyNamed(
 export const CorporateViewFormPage = lazyNamed(
   () => import('../application-management/corporate'),
   'CorporateViewFormPage',
+)
+
+export const RetailApplicationListingPage = lazyNamed(
+  () => import('../application-management/retail'),
+  'RetailApplicationListingPage',
+)
+export const RetailCreateApplicationPage = lazyNamed(
+  () => import('../application-management/retail'),
+  'RetailCreateApplicationPage',
+)
+export const RetailVerifyDocumentsPage = lazyNamed(
+  () => import('../application-management/retail'),
+  'RetailVerifyDocumentsPage',
+)
+export const RetailViewFormPage = lazyNamed(
+  () => import('../application-management/retail'),
+  'RetailViewFormPage',
 )
 
 export const B2bApplicationListingPage = lazyNamed(

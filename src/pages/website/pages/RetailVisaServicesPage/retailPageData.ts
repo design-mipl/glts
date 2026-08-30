@@ -16,11 +16,11 @@ import { retailAdvantageImages } from '../../assets/retailAdvantageImages'
 import { retailServiceImages } from '../../assets/retailServiceImages'
 
 /** Public marketing path — avoids conflict with customer portal at `/retail/*`. */
-export const RETAIL_PAGE_PATH = '/v1/retail-visas'
+export const RETAIL_PAGE_PATH = '/'
 
 export const retailHeroCtas = {
-  primary: { label: 'Apply Online', href: '/v1/apply/new' },
-  secondary: { label: 'Talk to an Expert', href: '/v1/track' },
+  primary: { label: 'Apply Online', href: '/countries' },
+  secondary: { label: 'Talk to an Expert', href: '/track' },
 } as const
 
 export const retailHeroTrustPoints: {
@@ -63,7 +63,7 @@ export const retailServices: {
     id: 'tourist-family',
     title: 'Tourist & Family Visa',
     description: 'Expert guidance for holidays, family visits, and leisure travel visas.',
-    href: '/v1/countries',
+    href: '/countries',
     icon: Plane,
     image: retailServiceImages.touristFamily,
   },
@@ -71,7 +71,7 @@ export const retailServices: {
     id: 'business',
     title: 'Business Visa',
     description: 'Professional support for meetings, conferences, and business travel.',
-    href: '/v1/countries',
+    href: '/countries',
     icon: Briefcase,
     image: retailServiceImages.business,
   },
@@ -79,7 +79,7 @@ export const retailServices: {
     id: 'student',
     title: 'Student Visa',
     description: 'Complete assistance for overseas education and study travel files.',
-    href: '/v1/track',
+    href: '/track',
     icon: GraduationCap,
     image: retailServiceImages.student,
   },
@@ -87,7 +87,7 @@ export const retailServices: {
     id: 'transit',
     title: 'Transit Visa',
     description: 'Clear guidance for short stopovers and transit documentation needs.',
-    href: '/v1/countries',
+    href: '/countries',
     icon: PlaneTakeoff,
     image: retailServiceImages.transit,
   },
@@ -95,7 +95,7 @@ export const retailServices: {
     id: 'refusal',
     title: 'Refusal Cases',
     description: 'Specialist review and reapplication support after a visa refusal.',
-    href: '/v1/track',
+    href: '/track',
     icon: ShieldAlert,
     image: retailServiceImages.refusal,
   },
@@ -154,12 +154,12 @@ export const retailAdvantages: {
 export const retailFinalCta = {
   heading: 'Ready to Start Your Visa Application?',
   description: 'Apply online in a few simple steps or speak with our visa experts.',
-  primaryButton: { label: 'Apply Online', href: '/v1/apply/new' },
-  secondaryButton: { label: 'Talk to an Expert', href: '/v1/track' },
+  primaryButton: { label: 'Apply Online', href: '/countries' },
+  secondaryButton: { label: 'Talk to an Expert', href: '/track' },
   trustPoints: ['Secure Process', 'Expert Support', 'Real-time Updates'] as const,
   image: {
-    src: '/v1/images/retail-final-cta.png',
-    fallback: '/v1/images/retail-final-cta.png',
+    src: '/images/retail-final-cta.png',
+    fallback: '/images/retail-final-cta.png',
     alt: 'Traveler preparing documents in an airport lounge before departure',
   },
 } as const

@@ -25,6 +25,10 @@ import {
   CorporateCreateApplicationPage,
   CorporateVerifyDocumentsPage,
   CorporateViewFormPage,
+  RetailApplicationListingPage,
+  RetailCreateApplicationPage,
+  RetailVerifyDocumentsPage,
+  RetailViewFormPage,
   CountryConfigWorkspacePage,
   CountryGroupListingPage,
   CountryListingPage,
@@ -40,6 +44,9 @@ import {
   DocumentationDashboardNextPage,
   DocumentDetailPage,
   DocumentListingPage,
+  CreateRequirementPage,
+  EditRequirementPage,
+  RequirementListingPage,
   EditAgreementPage,
   EditCorporateAccountPage,
   EditCountryConfigWorkspacePage,
@@ -147,13 +154,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     kind: 'coming-soon',
   },
 
-  {
-    path: 'application-management/retail',
-    title: 'Retail application management',
-    description: 'This module is under development.',
-    eyebrow: 'Application management',
-    kind: 'coming-soon',
-  },
   {
     path: 'operations/*',
     title: 'Operations visibility',
@@ -440,6 +440,30 @@ export function AdminRoutes() {
         }
       />
       <Route
+        path="masters/requirements"
+        element={
+          <PermissionGuard>
+            <RequirementListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/requirements/new"
+        element={
+          <PermissionGuard>
+            <CreateRequirementPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/requirements/:requirementId/edit"
+        element={
+          <PermissionGuard>
+            <EditRequirementPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
         path="masters/tax"
         element={
           <PermissionGuard>
@@ -572,6 +596,38 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <CorporateVerifyDocumentsPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/retail"
+        element={
+          <PermissionGuard>
+            <RetailApplicationListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/retail/new"
+        element={
+          <PermissionGuard>
+            <RetailCreateApplicationPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/retail/:applicationId/view-form"
+        element={
+          <PermissionGuard>
+            <RetailViewFormPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/retail/:applicationId"
+        element={
+          <PermissionGuard>
+            <RetailVerifyDocumentsPage />
           </PermissionGuard>
         }
       />

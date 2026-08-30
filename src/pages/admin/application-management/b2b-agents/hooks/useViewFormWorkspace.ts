@@ -10,7 +10,7 @@ import {
 } from '@/shared/services/applicationFormAssistService'
 import { isApplicantDocumentSatisfied } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import {
-  GENERIC_FORM_ASSIST_STEPS,
+  resolveVisibleFormAssistSteps,
   buildFormAssistFieldsForStep,
   resolveFormAssistFlowExtras,
   type FormAssistContext,
@@ -103,13 +103,16 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
     }
   }, [selectedRow, detail, applicationId])
 
-  const currentStep = GENERIC_FORM_ASSIST_STEPS[activeStepIndex]
+  const steps = useMemo(() => resolveVisibleFormAssistSteps(formContext), [formContext])
+
+  const safeActiveStepIndex = Math.min(activeStepIndex, Math.max(0, steps.length - 1))
+  const currentStep = steps[safeActiveStepIndex]
   const currentFields = useMemo(() => {
     if (!formContext || !currentStep) return []
     return buildFormAssistFieldsForStep(currentStep.id, formContext)
   }, [formContext, currentStep])
 
-  const isLastStep = activeStepIndex === GENERIC_FORM_ASSIST_STEPS.length - 1
+  const isLastStep = safeActiveStepIndex === steps.length - 1
   const externallySubmitted = Boolean(
     applicationId &&
       selectedRow &&
@@ -180,16 +183,32 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
     [applicationId, selectedRow, refreshAssistRecord],
   )
 
+  useEffect(() => {
+    if (!applicationId || !selectedRow) return
+    if (activeStepIndex !== safeActiveStepIndex) {
+      applicationFormAssistService.setActiveStep(applicationId, selectedRow.id, safeActiveStepIndex)
+      refreshAssistRecord()
+    }
+  }, [applicationId, selectedRow, activeStepIndex, safeActiveStepIndex, refreshAssistRecord])
+
   const requestStepContinue = useCallback(() => {
     if (!applicationId || !selectedRow || !currentStep || isLastStep) return
     applicationFormAssistService.completeStep(
       applicationId,
       selectedRow.id,
       currentStep.id,
-      Math.min(activeStepIndex + 1, GENERIC_FORM_ASSIST_STEPS.length - 1),
+      Math.min(safeActiveStepIndex + 1, steps.length - 1),
     )
     refreshAssistRecord()
-  }, [applicationId, selectedRow, currentStep, isLastStep, activeStepIndex, refreshAssistRecord])
+  }, [
+    applicationId,
+    selectedRow,
+    currentStep,
+    isLastStep,
+    safeActiveStepIndex,
+    steps.length,
+    refreshAssistRecord,
+  ])
 
   const updateSubmission = useCallback(
     (patch: Partial<FormAssistRecord['submission']>) => {
@@ -234,8 +253,8 @@ export function useViewFormWorkspace(applicationId: string | undefined) {
     selectedTravelerId,
     setSelectedTravelerId,
     selectedRow,
-    steps: GENERIC_FORM_ASSIST_STEPS,
-    activeStepIndex,
+    steps,
+    activeStepIndex: safeActiveStepIndex,
     setActiveStep,
     currentStep,
     currentFields,

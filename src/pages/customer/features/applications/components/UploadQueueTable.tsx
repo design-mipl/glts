@@ -244,6 +244,7 @@ export function UploadQueueTable({
                         overview={summaryOverview}
                         row={row}
                         singleListing={singleListing}
+                        customerSegment={customerSegment}
                         verifyContext={
                           summaryDetail && summaryApplicationId
                             ? { detail: summaryDetail, applicationId: summaryApplicationId }

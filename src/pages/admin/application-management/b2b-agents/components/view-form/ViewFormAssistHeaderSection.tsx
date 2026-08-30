@@ -103,6 +103,7 @@ export function ViewFormAssistHeaderSection({
               {buildApplicationOverviewMetaRows(reviewOverview, {
                 travelerCount: overview.travelerCount,
                 includeConsultantAssignment: true,
+                customerSegment: 'b2bAgents',
               }).map(([label, value]) => (
                 <Grid size={1} key={label} sx={{ minWidth: 0 }}>
                   <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>{label}</Typography>

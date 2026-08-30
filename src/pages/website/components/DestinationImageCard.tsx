@@ -45,9 +45,11 @@ export function DestinationImageCard({
   revealDetailsOnHover = false,
 }: DestinationImageCardProps) {
   const colors = usePublicBrandColors()
-  const [imgError, setImgError] = useState(false)
-  const link = href ?? `/v1/countries/${country.id}`
+  const imageUrl = getCountryHeroImageUrl(country, imageWidth)
+  const [imgError, setImgError] = useState(!imageUrl)
+  const link = href ?? `/countries/${country.id}`
   const visaLabel = country.portalProcessingLabel ?? country.visaCategory
+  const showFallback = imgError || !imageUrl
 
   return (
     <Box
@@ -90,19 +92,28 @@ export function DestinationImageCard({
         },
       }}
     >
-      {imgError ? (
+      {showFallback ? (
         <Box
           sx={{
             position: 'absolute',
             inset: 0,
             background: `linear-gradient(145deg, ${colors.navyLight} 0%, ${colors.navy} 100%)`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
-        />
+        >
+          <CountryFlagVisual
+            flag={country.flags}
+            countryCode={country.code}
+            size={72}
+          />
+        </Box>
       ) : (
         <Box
           component="img"
           className="destination-card-image"
-          src={getCountryHeroImageUrl(country, imageWidth)}
+          src={imageUrl}
           alt={country.name}
           loading="lazy"
           onError={() => setImgError(true)}

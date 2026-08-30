@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { destinationsHeroImage } from '../../../assets/destinationsHeroImage'
-import { publicFonts, publicTypography, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { applyFlow, accentGoldRgb } from '../../../theme/applyFlowTheme'
 
 interface DestinationsHeroSectionProps {
   destinationCount: number
@@ -11,6 +12,28 @@ interface DestinationsHeroSectionProps {
 export function DestinationsHeroSection({ destinationCount }: DestinationsHeroSectionProps) {
   const colors = usePublicBrandColors()
   const [imgSrc, setImgSrc] = useState<string>(destinationsHeroImage.src)
+  const [displayCount, setDisplayCount] = useState(0)
+  const prefersReducedMotion = useRef(
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  ).current
+
+  useEffect(() => {
+    if (prefersReducedMotion || destinationCount === 0) {
+      setDisplayCount(destinationCount)
+      return
+    }
+    let raf = 0
+    const duration = 900
+    const start = performance.now()
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1)
+      const eased = 1 - (1 - progress) ** 3
+      setDisplayCount(Math.round(eased * destinationCount))
+      if (progress < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [destinationCount, prefersReducedMotion])
 
   return (
     <Box
@@ -73,18 +96,67 @@ export function DestinationsHeroSection({ destinationCount }: DestinationsHeroSe
 
       <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1, width: '100%' }}>
         <Typography
+          component="p"
+          sx={{
+            fontFamily: publicFonts.mono,
+            fontSize: '11px',
+            fontWeight: 700,
+            letterSpacing: '0.18em',
+            color: applyFlow.accentInk,
+            mb: 1,
+          }}
+        >
+          DESTINATIONS INDEX
+        </Typography>
+        <Typography
           component="h1"
           sx={{
-            fontFamily: publicFonts.heading,
-            fontSize: publicTypography.h2,
+            fontFamily: publicFonts.display,
+            fontVariantNumeric: 'tabular-nums',
+            fontSize: { xs: '36px', sm: '42px', md: '48px', lg: '54px' },
             fontWeight: 800,
             color: colors.navy,
+            lineHeight: 1.08,
             mb: 2,
           }}
         >
-          {destinationCount} destinations
+          {displayCount} destinations
         </Typography>
-        <Typography sx={{ fontSize: publicTypography.body, color: colors.textSecondary }}>
+        <Typography
+          component="p"
+          sx={{
+            fontFamily: publicFonts.mono,
+            fontSize: { xs: '11px', md: '12px' },
+            fontWeight: 600,
+            color: colors.textSecondary,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            lineHeight: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Box
+            aria-hidden
+            component="span"
+            sx={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              bgcolor: applyFlow.accentInk,
+              boxShadow: `0 0 0 2px rgba(${accentGoldRgb}, 0.24)`,
+              flexShrink: 0,
+              '@media (prefers-reduced-motion: no-preference)': {
+                animation: 'glts-hero-pulse 2.4s ease-in-out infinite',
+              },
+              '@keyframes glts-hero-pulse': {
+                '0%, 100%': { opacity: 1 },
+                '50%': { opacity: 0.4 },
+              },
+            }}
+          />
           Sorted by your nationality · Indian passport · Travel from Mar 2026
         </Typography>
       </PublicContainer>
