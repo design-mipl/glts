@@ -16,8 +16,8 @@ import type { VisaCategoryCardItem } from '../../components/VisaCategoryCardsSec
 import { testimonialPortraits } from '../../assets/testimonialPortraits'
 
 export const corporateHeroCtas = {
-  primary: { label: 'Speak with Our Corporate Team', href: '/v1/track' },
-  secondary: { label: 'Schedule a Consultation', href: '/v1/track' },
+  primary: { label: 'Speak with Our Corporate Team', href: '/track' },
+  secondary: { label: 'Schedule a Consultation', href: '/track' },
 } as const
 
 export const corporateHeroStats: {
@@ -214,10 +214,10 @@ export const corporateAdditionalServices = [
     description:
       'Business travel documentation, transit requirements, and destination-specific travel support for corporate travelers.',
     ctaLabel: 'Get Started',
-    href: '/v1/track',
+    href: '/track',
     image: {
-      src: '/v1/images/corporate-additional-services/travel-transit-documentation.png',
-      fallback: '/v1/images/corporate-additional-services/travel-transit-documentation.png',
+      src: '/images/corporate-additional-services/travel-transit-documentation.png',
+      fallback: '/images/corporate-additional-services/travel-transit-documentation.png',
       alt: 'Passport, visa booklet, boarding passes, and stamp arranged for travel documentation',
     },
   },
@@ -227,10 +227,10 @@ export const corporateAdditionalServices = [
     description:
       'Centralized visa records, audit-ready documentation, and compliance tracking for corporate travelers.',
     ctaLabel: 'Learn More',
-    href: '/v1/track',
+    href: '/track',
     image: {
-      src: '/v1/images/corporate-additional-services/compliance-record-management.png',
-      fallback: '/v1/images/corporate-additional-services/compliance-record-management.png',
+      src: '/images/corporate-additional-services/compliance-record-management.png',
+      fallback: '/images/corporate-additional-services/compliance-record-management.png',
       alt: 'Compliance checklist and dashboard review for corporate visa records',
     },
   },
@@ -240,10 +240,10 @@ export const corporateAdditionalServices = [
     description:
       'Travel protection and insurance assistance for employees, executives, and project teams.',
     ctaLabel: 'Learn More',
-    href: '/v1/track',
+    href: '/track',
     image: {
-      src: '/v1/images/corporate-additional-services/travel-insurance-support.png',
-      fallback: '/v1/images/corporate-additional-services/travel-insurance-support.png',
+      src: '/images/corporate-additional-services/travel-insurance-support.png',
+      fallback: '/images/corporate-additional-services/travel-insurance-support.png',
       alt: 'Travel insurance application form with passport and boarding passes',
     },
   },
@@ -253,10 +253,10 @@ export const corporateAdditionalServices = [
     description:
       'Foreign exchange assistance for global business travel and international assignments.',
     ctaLabel: 'Learn More',
-    href: '/v1/track',
+    href: '/track',
     image: {
-      src: '/v1/images/corporate-additional-services/forex-support.png',
-      fallback: '/v1/images/corporate-additional-services/forex-support.png',
+      src: '/images/corporate-additional-services/forex-support.png',
+      fallback: '/images/corporate-additional-services/forex-support.png',
       alt: 'International currencies and card on a world map for forex support',
     },
   },
@@ -301,7 +301,7 @@ export const corporateRetainerPlansSubtitle =
   'Retainer plans designed to simplify your corporate travel needs with priority service and expert support.'
 
 export const corporateRetainerPlansImage = {
-  src: '/v1/images/corporate-retainer-plans/boardroom.png',
-  fallback: '/v1/images/corporate-retainer-plans/boardroom.png',
+  src: '/images/corporate-retainer-plans/boardroom.png',
+  fallback: '/images/corporate-retainer-plans/boardroom.png',
   alt: 'Modern corporate boardroom overlooking a city skyline',
 } as const

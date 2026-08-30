@@ -84,8 +84,8 @@ export function MarineCrewVisaPage() {
         variant="marine"
         heading="Need Reliable Marine Crew Visa Support?"
         description="From crew changes to urgent travel documentation, our specialists ensure your seafarers move seamlessly across international borders."
-        primaryButton={{ label: 'Talk to a Marine Visa Specialist', href: '/v1/track' }}
-        secondaryButton={{ label: 'Request a Consultation', href: '/v1/track' }}
+        primaryButton={{ label: 'Talk to a Marine Visa Specialist', href: '/track' }}
+        secondaryButton={{ label: 'Request a Consultation', href: '/track' }}
       />
 
       <FAQSection faqs={marineFaqs} />

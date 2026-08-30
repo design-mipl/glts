@@ -10,17 +10,22 @@ import { AdditionalServicesSection } from './components/AdditionalServicesSectio
 import { TestimonialSection } from '../../components/TestimonialSection'
 import { FinalCtaSection } from './components/FinalCtaSection'
 import { FAQSection } from '../../components/FAQSection'
+import { OurRetailServicesSection } from '../RetailVisaServicesPage/components/OurRetailServicesSection'
+import { RetailAdvantageSection } from '../RetailVisaServicesPage/components/RetailAdvantageSection'
 import { landingTestimonials, landingFaqs } from './landingPageContent'
 import { usePublicBrandColors } from '../../theme/publicSiteTokens'
 
 export function LandingPage() {
   const colors = usePublicBrandColors()
+
   return (
     <Box sx={{ width: '100%', bgcolor: colors.white }}>
       <HeroSection />
       <ExploreSection />
       <HowItWorks />
       <VisaServicesSection />
+      <OurRetailServicesSection />
+      <RetailAdvantageSection />
       <WhyGreenLightWorksSection />
       <VisaMasterSection />
       <SpecializedSolutionsSection />

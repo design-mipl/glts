@@ -65,6 +65,10 @@ export interface SingleApplicationRow {
    * Set after Ops verify when payment work is finished (Ops or Docs).
    */
   paymentComplete?: boolean
+  /**
+   * Customer checkout payment from the website retail journey (read-only in Admin Ops).
+   */
+  customerPayment?: import('@/shared/types/retailCustomerPayment').RetailCustomerPaymentSnapshot
   /** Admin B2B create: skip required document fill. Default required. */
   documentRequirement?: ApplicationDocumentRequirement
 }
@@ -115,6 +119,10 @@ export interface BulkBatchRow {
    * Set after Ops verify when payment work is finished (Ops or Docs).
    */
   paymentComplete?: boolean
+  /**
+   * Customer checkout payment from the website retail journey (read-only in Admin Ops).
+   */
+  customerPayment?: import('@/shared/types/retailCustomerPayment').RetailCustomerPaymentSnapshot
   /** Admin B2B create: skip required document fill. Default required. */
   documentRequirement?: ApplicationDocumentRequirement
 }
@@ -1061,6 +1069,21 @@ export const mockSingleApplications: SingleApplicationRow[] = [
     customerSegment: 'retail',
     assignedTeamId: 'team-retail',
     assignedUserId: 'user-retail-1',
+    customerPayment: {
+      status: 'paid',
+      method: 'upi',
+      paidAt: '2026-02-25T11:20:00.000Z',
+      currency: 'INR',
+      lineItems: [
+        { id: 'visa-fees', label: 'Visa fees', amount: 8500 },
+        { id: 'service-fees', label: 'GLTS service fees', amount: 2499 },
+        { id: 'insurance', label: 'Travel insurance', amount: 504 },
+      ],
+      totalAmount: 11503,
+      referenceNumber: 'WEB-SARAH-F25',
+      processingTierLabel: 'Standard',
+      travellerCount: 1,
+    },
   }),
   singleRow({
     id: 'GL-834',

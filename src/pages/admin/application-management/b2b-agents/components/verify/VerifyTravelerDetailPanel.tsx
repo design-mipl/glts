@@ -262,6 +262,7 @@ export function VerifyTravelerDetailPanel({
               overview={toApplicationReviewOverview(overview!)}
               row={selectedRow}
               singleListing={singleListing}
+              customerSegment="b2bAgents"
               verifyContext={{ detail: detail!, applicationId: applicationId! }}
             />
           ) : (

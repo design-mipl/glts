@@ -11,13 +11,15 @@ import {
 import { PublicContainer } from '../../../components/PublicContainer'
 import {
   publicFonts,
+  publicMotion,
   usePublicBrandColors,
   getMarketingPrimaryButtonSx,
   brandPrimaryGreenRgb,
 } from '@/shared/theme/publicBrand'
+import { useScrollReveal } from '../../../hooks/useScrollReveal'
 const VISA_MASTER_IMAGE = {
-  src: '/v1/images/visa-master/passport.png',
-  fallback: '/v1/images/visa-master/passport.png',
+  src: '/images/visa-master/passport.png',
+  fallback: '/images/visa-master/passport.png',
   alt: 'Navy passport on a desk with a city skyline at dusk',
 } as const
 
@@ -251,6 +253,9 @@ function PassportFocal({ navy }: { navy: string }) {
 
 export function VisaMasterSection() {
   const colors = usePublicBrandColors()
+  const { ref: bandRef, active: bandActive, reducedMotion } = useScrollReveal<HTMLDivElement>({
+    threshold: 0.2,
+  })
 
   return (
     <Box
@@ -296,6 +301,7 @@ export function VisaMasterSection() {
 
       <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1, width: '100%' }}>
         <Box
+          ref={bandRef}
           sx={{
             display: 'grid',
             gridTemplateColumns: {
@@ -304,6 +310,11 @@ export function VisaMasterSection() {
             },
             gap: { xs: 3.5, md: 2, lg: 2.5 },
             alignItems: 'center',
+            opacity: bandActive ? 1 : 0,
+            transform: bandActive ? 'translateY(0)' : 'translateY(18px)',
+            transition: reducedMotion
+              ? 'none'
+              : `opacity ${publicMotion.revealDurationMs}ms ${publicMotion.easeOut}, transform ${publicMotion.revealDurationMs}ms ${publicMotion.easeOut}`,
           }}
         >
           {/* Left — copy + CTA */}
@@ -343,12 +354,12 @@ export function VisaMasterSection() {
               <Typography
                 component="h2"
                 sx={{
-                  fontFamily: publicFonts.heading,
+                  fontFamily: publicFonts.display,
                   fontSize: { xs: '28px', md: '34px', lg: '38px' },
-                  fontWeight: 800,
+                  fontWeight: 700,
                   color: colors.white,
                   lineHeight: 1.1,
-                  letterSpacing: '-0.02em',
+                  letterSpacing: '-0.3px',
                 }}
               >
                 Visa Master
@@ -368,9 +379,14 @@ export function VisaMasterSection() {
               <Box sx={{ pt: 0.75 }}>
                 <Button
                   variant="contained"
-                  href="/v1/countries"
+                  href="/countries"
                   endIcon={<ArrowRight size={16} />}
-                  sx={{ ...getMarketingPrimaryButtonSx(colors), px: 3.5 }}
+                  sx={{
+                    ...getMarketingPrimaryButtonSx(colors),
+                    px: 3.5,
+                    transition: `transform ${publicMotion.pressDurationMs}ms ${publicMotion.easeOut}`,
+                    '&:active': { transform: 'scale(0.97)' },
+                  }}
                 >
                   Explore Visa Master
                 </Button>

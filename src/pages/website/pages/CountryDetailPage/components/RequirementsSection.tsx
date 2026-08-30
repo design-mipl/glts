@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Box, Typography, Chip, Stack, Divider } from '@mui/material'
 import {
   FileText,
@@ -9,15 +10,18 @@ import {
   CheckCircle2,
   Circle,
   Info,
+  CircleHelp,
 } from 'lucide-react'
 import type { Country } from '@/shared/types/visa'
 import {
-  publicLightColors,
   publicShadows,
   publicTypography,
   publicFonts,
   usePublicBrandColors,
 } from '@/shared/theme/publicBrand'
+import { WhyWeAskSheet } from '@/pages/website/components/WhyWeAskSheet'
+import { resolveDocumentWhyContent, type DocumentWhyContent } from '@/pages/website/config/documentWhyContent'
+import { applyFlow } from '@/pages/website/theme/applyFlowTheme'
 
 type ReqType = 'document' | 'photo' | 'financial' | 'insurance' | 'travel' | 'accommodation'
 
@@ -74,16 +78,13 @@ const mockRequirements: RequirementItem[] = [
   },
 ]
 
-const iconConfig: Record<
-  ReqType,
-  { Icon: React.ElementType; bg: string; color: string }
-> = {
-  document: { Icon: FileText, bg: publicLightColors.greenMuted, color: publicLightColors.greenBright },
-  photo: { Icon: Camera, bg: 'rgba(99, 102, 241, 0.1)', color: '#6366F1' },
-  financial: { Icon: CreditCard, bg: 'rgba(245, 158, 11, 0.12)', color: '#D97706' },
-  insurance: { Icon: Shield, bg: 'rgba(14, 165, 233, 0.1)', color: '#0EA5E9' },
-  travel: { Icon: Plane, bg: 'rgba(236, 72, 153, 0.1)', color: '#EC4899' },
-  accommodation: { Icon: Building2, bg: 'rgba(115, 192, 100, 0.15)', color: publicLightColors.greenDark },
+const iconMap: Record<ReqType, React.ElementType> = {
+  document: FileText,
+  photo: Camera,
+  financial: CreditCard,
+  insurance: Shield,
+  travel: Plane,
+  accommodation: Building2,
 }
 
 interface RequirementsSectionProps {
@@ -107,15 +108,24 @@ function orderDocumentNames(documents: string[]) {
     .map(item => item.name)
 }
 
-function RequirementRow({ req }: { req: RequirementItem }) {
+function RequirementRow({
+  req,
+  index,
+  onWhyAsk,
+}: {
+  req: RequirementItem
+  index: number
+  onWhyAsk: (content: DocumentWhyContent) => void
+}) {
   const colors = usePublicBrandColors()
-  const { Icon, bg, color } = iconConfig[req.type]
+  const Icon = iconMap[req.type]
 
   return (
     <Box
       sx={{
         display: 'flex',
-        gap: 2,
+        alignItems: 'flex-start',
+        gap: 1.5,
         py: 2.25,
         px: { xs: 2, sm: 2.5 },
         transition: 'background-color 0.2s',
@@ -123,18 +133,36 @@ function RequirementRow({ req }: { req: RequirementItem }) {
       }}
     >
       <Box
+        component="span"
+        sx={{
+          fontFamily: publicFonts.mono,
+          fontSize: '10px',
+          fontWeight: 700,
+          color: colors.textMuted,
+          pt: '15px',
+          width: 16,
+          flexShrink: 0,
+          textAlign: 'right',
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
+        {String(index + 1).padStart(2, '0')}
+      </Box>
+
+      <Box
         sx={{
           width: 44,
           height: 44,
           borderRadius: '12px',
-          bgcolor: bg,
+          bgcolor: colors.surfaceAlt,
+          border: `1px solid ${colors.border}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        <Icon size={20} color={color} strokeWidth={2} />
+        <Icon size={20} color={colors.navy} strokeWidth={2} />
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -200,6 +228,35 @@ function RequirementRow({ req }: { req: RequirementItem }) {
         >
           {req.description}
         </Typography>
+        <Box
+          component="button"
+          type="button"
+          onClick={() =>
+            onWhyAsk(
+              resolveDocumentWhyContent({
+                name: req.name,
+                description: req.description,
+              }),
+            )
+          }
+          sx={{
+            mt: 1,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.55,
+            border: 'none',
+            background: 'none',
+            p: 0,
+            cursor: 'pointer',
+            color: colors.greenDark,
+            fontSize: '13px',
+            fontWeight: 700,
+            fontFamily: 'inherit',
+          }}
+        >
+          <CircleHelp size={14} />
+          Why we ask
+        </Box>
       </Box>
     </Box>
   )
@@ -210,6 +267,7 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
   const required = mockRequirements.filter(r => r.mandatory)
   const optional = mockRequirements.filter(r => !r.mandatory)
   const orderedDocuments = orderDocumentNames(country.documentsNeeded)
+  const [whyContent, setWhyContent] = useState<DocumentWhyContent | null>(null)
 
   return (
     <Box>
@@ -240,7 +298,7 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
               lineHeight: 1.55,
             }}
           >
-            Prepare these before you apply for your {country.name} visa.
+            Prepare these before you apply for your {country.name} visa. Every item explains why the consulate wants it.
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1.25 }}>
             <Chip
@@ -248,9 +306,9 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
               size="small"
               sx={{
                 fontWeight: 800,
-                bgcolor: colors.greenMuted,
-                color: colors.greenDark,
-                border: `1px solid rgba(115, 192, 100, 0.28)`,
+                bgcolor: applyFlow.accentSoft,
+                color: applyFlow.accentInk,
+                border: `1px solid ${applyFlow.accentBorder}`,
               }}
             />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, minWidth: 0 }}>
@@ -313,7 +371,7 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
             {orderedDocuments.map(doc => (
               <Chip
                 key={doc}
-                icon={<Circle size={6} fill={colors.greenBright} color={colors.greenBright} />}
+                icon={<Circle size={6} fill={colors.textMuted} color={colors.textMuted} />}
                 label={doc}
                 size="small"
                 sx={{
@@ -359,13 +417,39 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
         {required.map((req, i) => (
           <Box key={req.id}>
             {i > 0 && <Divider />}
-            <RequirementRow req={req} />
+            <RequirementRow req={req} index={i} onWhyAsk={setWhyContent} />
           </Box>
         ))}
 
         {optional.length > 0 && (
           <>
-            <Divider />
+            {/* Perforation seam — die-cut illusion, echoes the destination card's ticket-stub motif */}
+            <Box aria-hidden sx={{ position: 'relative', height: 0, borderTop: `2px dashed ${colors.border}` }}>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -9,
+                  left: -9,
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  bgcolor: colors.surfaceAlt,
+                  border: `1px solid ${colors.border}`,
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -9,
+                  right: -9,
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  bgcolor: colors.surfaceAlt,
+                  border: `1px solid ${colors.border}`,
+                }}
+              />
+            </Box>
             <Box
               sx={{
                 px: { xs: 2, sm: 2.5 },
@@ -381,7 +465,7 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
             {optional.map((req, i) => (
               <Box key={req.id}>
                 {i > 0 && <Divider />}
-                <RequirementRow req={req} />
+                <RequirementRow req={req} index={required.length + i} onWhyAsk={setWhyContent} />
               </Box>
             ))}
           </>
@@ -398,6 +482,8 @@ export function RequirementsSection({ country, selectedVisaCategoryLabel }: Requ
       >
         Document rules can vary by embassy. We verify your upload before submission.
       </Typography>
+
+      <WhyWeAskSheet open={Boolean(whyContent)} content={whyContent} onClose={() => setWhyContent(null)} />
     </Box>
   )
 }
