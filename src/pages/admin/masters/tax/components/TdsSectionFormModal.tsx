@@ -5,7 +5,6 @@ import { ADMIN_MODAL_FORM_LAYOUT } from '@/pages/admin/components/adminOverlayFo
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import { taxMasterService, TDS_APPLICABLE_ON_OPTIONS } from '@/shared/services/taxMasterService'
 import type { TdsSection } from '@/shared/types/taxMaster'
-import { masterStatusLabel } from '../../config/masterStatusConfig'
 import {
   INITIAL_TDS_SECTION_FORM,
   tdsSectionToFormData,
@@ -131,20 +130,6 @@ export function TdsSectionFormModal({ open, record, onClose, onSaved }: TdsSecti
             />
           </FormField>
         </AdminFullPageFormFieldSpan>
-        <FormField label="Status" required>
-          <Select
-            value={formData.status}
-            onChange={(value) =>
-              setFormData({ ...formData, status: value as typeof formData.status })
-            }
-            placeholder="Select status"
-            options={(
-              Object.entries(masterStatusLabel) as [typeof formData.status, string][]
-            ).map(([value, label]) => ({ value, label }))}
-            size="sm"
-            fullWidth
-          />
-        </FormField>
       </FormSection>
     </Modal>
   )

@@ -1,6 +1,6 @@
 import { Input, Select } from '@/design-system/UIComponents'
 import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
-import type { ReconciliationFilters, ReconciliationPeriodPreset, ReconciliationStatus, ReconciliationTab } from '@/shared/types/reconciliation'
+import type { ReconciliationFilters, ReconciliationPeriodPreset, ReconciliationTab } from '@/shared/types/reconciliation'
 import { RECONCILIATION_PAYMENT_MODE_OPTIONS, RECONCILIATION_PERIOD_OPTIONS } from '../config/reconciliationListingConfig'
 
 export interface ReconciliationAdvancedFilterFieldsProps {
@@ -48,21 +48,6 @@ export function ReconciliationAdvancedFilterFields({
           </ListingFilterField>
         </>
       ) : null}
-      <ListingFilterField label="Status">
-        <Select
-          value={draft.status ?? ''}
-          onChange={value => patch({ status: String(value) as ReconciliationStatus | '' })}
-          options={[
-            { value: '', label: 'All statuses' },
-            { value: 'pending', label: 'Pending' },
-            { value: 'submitted', label: 'Submitted' },
-            { value: 'rejected', label: 'Rejected' },
-          ]}
-          placeholder="Status"
-          size="sm"
-          fullWidth
-        />
-      </ListingFilterField>
       {tab === 'mode_of_payment' ? (
         <ListingFilterField label="Mode of payment">
           <Select

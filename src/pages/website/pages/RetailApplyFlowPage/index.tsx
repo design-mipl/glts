@@ -1,18 +1,16 @@
 import { useMemo } from 'react'
-import { Navigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { getCountryMasterById, getVisaOfferings } from '@/shared/services/countryMasterService'
 import { RetailApplyFlowShell } from './RetailApplyFlowShell'
 
-const COUNTRIES_HREF = '/countries'
-
 /**
- * Retail apply starts only after a country is chosen on the country page.
- * Cold `/apply/new` (no country) redirects to destinations.
+ * Retail apply — destination can be chosen in-flow (cold start) or via `?country=`.
  */
 export function RetailApplyFlowPage() {
   const [searchParams] = useSearchParams()
   const countryId = searchParams.get('country')?.trim() ?? ''
   const requestedVisaOfferingId = searchParams.get('visa')?.trim()
+  const applicationId = searchParams.get('application')?.trim() || undefined
 
   const countryExists = Boolean(countryId && getCountryMasterById(countryId))
 
@@ -22,15 +20,12 @@ export function RetailApplyFlowPage() {
     return getVisaOfferings(countryId, true, 'retail')[0]?.id ?? ''
   }, [countryExists, countryId, requestedVisaOfferingId])
 
-  if (!countryExists) {
-    return <Navigate to={COUNTRIES_HREF} replace />
-  }
-
   return (
     <RetailApplyFlowShell
-      key={`${countryId}:${visaOfferingId}`}
-      initialCountryId={countryId}
+      key={applicationId ?? 'new'}
+      initialCountryId={countryExists ? countryId : ''}
       initialVisaOfferingId={visaOfferingId}
+      applicationId={applicationId}
     />
   )
 }

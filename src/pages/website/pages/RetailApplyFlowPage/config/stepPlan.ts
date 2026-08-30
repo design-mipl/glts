@@ -11,9 +11,15 @@ import type { RetailStepDefinition } from '../types'
  * Eligibility + conditional questions remain optional add-ons when the
  * journey resolver already surfaces them for a given offering.
  */
+export const DESTINATION_STEP: RetailStepDefinition = {
+  id: 'destination',
+  phase: 'destination',
+  label: 'Destination',
+}
+
 export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinition[] {
-  // Destination is chosen on the country page before apply starts.
   const steps: RetailStepDefinition[] = [
+    DESTINATION_STEP,
     { id: 'visa', phase: 'purpose', label: 'Visa type' },
     // Always show city + travel date (cities may be empty until country master is wired).
     { id: 'jurisdiction', phase: 'purpose', label: 'Submission city' },
@@ -51,6 +57,7 @@ export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinitio
 
 /** Top stepper phases — aligned to the retail apply journey (B2–B19). */
 export const RETAIL_PHASE_ORDER = [
+  'destination',
   'purpose',
   'traveller',
   'sponsor',
@@ -62,6 +69,7 @@ export const RETAIL_PHASE_ORDER = [
 ] as const
 
 export const RETAIL_PHASE_LABEL: Record<(typeof RETAIL_PHASE_ORDER)[number], string> = {
+  destination: 'Destination',
   purpose: 'Purpose',
   traveller: 'Profile',
   sponsor: 'Sponsor',

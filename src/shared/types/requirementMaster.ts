@@ -1,19 +1,19 @@
-import type { CountryJurisdictionDocumentRule } from '@/shared/types/countryMaster'
 import type { MasterAuditFields, MasterRecordStatus } from '@/shared/types/masterCommon'
 
-export type RequirementQuestionType = 'multiple_choice' | 'checkboxes'
-
+/** Answer option — documents are Document Master ids (0..N, optional). */
 export interface RequirementQuestionOption {
   id: string
   label: string
+  /** Document Master ids required when this option is selected. */
+  documentIds: string[]
 }
 
+/** Single-select multiple-choice question. */
 export interface RequirementQuestion {
   id: string
   prompt: string
-  type: RequirementQuestionType
-  options: RequirementQuestionOption[]
   required: boolean
+  options: RequirementQuestionOption[]
 }
 
 export interface RequirementMaster extends MasterAuditFields {
@@ -22,7 +22,6 @@ export interface RequirementMaster extends MasterAuditFields {
   description: string
   status: MasterRecordStatus
   questions: RequirementQuestion[]
-  documents: CountryJurisdictionDocumentRule[]
 }
 
 export interface RequirementMasterFormData {
@@ -30,7 +29,6 @@ export interface RequirementMasterFormData {
   description: string
   status: MasterRecordStatus
   questions: RequirementQuestion[]
-  documents: CountryJurisdictionDocumentRule[]
 }
 
 export interface RequirementMasterListFilters {
@@ -42,4 +40,19 @@ export interface RequirementMasterKpiCounts {
   total: number
   active: number
   inactive: number
+}
+
+/** Unique Document Master ids referenced by option mappings in a pack. */
+export function collectRequirementDocumentIds(pack: {
+  questions: RequirementQuestion[]
+}): string[] {
+  const ids = new Set<string>()
+  for (const question of pack.questions) {
+    for (const option of question.options) {
+      for (const documentId of option.documentIds) {
+        ids.add(documentId)
+      }
+    }
+  }
+  return [...ids]
 }

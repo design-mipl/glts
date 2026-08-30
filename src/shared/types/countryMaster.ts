@@ -182,6 +182,11 @@ export interface CountryVisaJurisdiction {
   docsQcChecklist?: CountryQcChecklistTemplate
   /** VFS service rates for this jurisdiction. */
   vfsServiceRates?: CountryVfsServiceRate[]
+  /**
+   * Requirement Master pack for retail intake (when visa type has jurisdictions enabled).
+   * `undefined` / `null` / empty → fall back to visa-type then segment `requirementPackId`.
+   */
+  requirementPackId?: string | null
 }
 
 export interface CountryVisaType {
@@ -220,6 +225,13 @@ export interface CountryVisaType {
    * `undefined` / `null` / empty → inherit segment `workflowId`.
    */
   workflowId?: string | null
+  /**
+   * Optional Requirement Master pack (retail intake questions → documents).
+   * Used when jurisdiction is disabled on this visa type.
+   * When jurisdictions are enabled, map packs on each jurisdiction instead.
+   * `undefined` / `null` / empty → inherit segment `requirementPackId`.
+   */
+  requirementPackId?: string | null
   /** Legacy sync fields */
   purposeId?: string
   purposeLabel?: string
@@ -250,6 +262,11 @@ export interface CountrySegmentConfig {
   processingRules: CountryProcessingRules
   /** Default Workflow Master for visa types in this segment (overridable per visa type). */
   workflowId?: string
+  /**
+   * Default Requirement Master pack for visa types in this segment (retail only).
+   * Overridable per visa type via `CountryVisaType.requirementPackId`.
+   */
+  requirementPackId?: string
 }
 
 export interface CountryActivityEntry {

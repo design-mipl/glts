@@ -25,3 +25,4 @@ export const ForgotPasswordPage = lazyNamed(
   () => import('./pages/ForgotPasswordPage'),
   'ForgotPasswordPage',
 )
+export const RetailLoginPage = lazyNamed(() => import('./pages/RetailLoginPage'), 'RetailLoginPage')

@@ -3,7 +3,10 @@ import {
   Eye,
   Download,
   LifeBuoy,
+  PlayCircle,
+  Trash2,
 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import type { NavigateFunction } from 'react-router-dom'
 import { RowActions, Tooltip, type Column } from '@/design-system/UIComponents'
 import type { Toast } from '@/design-system/UIComponents'
@@ -45,27 +48,61 @@ function buildRowActions(
   base: string,
   navigate: NavigateFunction,
   showToast: ToastFn,
-  rowId: string,
-  _operationalStatus: string,
+  row: SingleApplicationRow | BulkBatchRow,
+  options?: {
+    onContinue?: (row: SingleApplicationRow) => void
+    onDeleteDraft?: (row: SingleApplicationRow) => void
+    isRetail?: boolean
+  },
 ) {
-  const detailPath = `${base}/applications/${rowId}`
+  const detailPath = `${base}/applications/${row.id}`
+  const isDraftSingle =
+    row.recordType === 'single' && row.operationalStatus === 'Draft'
 
-  return [
-    { label: 'View details', icon: <Eye size={16} />, onClick: () => navigate(detailPath) },
-    {
-      label: 'Download summary',
-      icon: <Download size={16} />,
-      onClick: () =>
-        showToast({ title: 'Download started', description: 'Summary PDF will download shortly.', variant: 'success' }),
-      divider: true,
-    },
-    {
-      label: 'Raise support ticket',
-      icon: <LifeBuoy size={16} />,
-      onClick: () =>
-        showToast({ title: 'Support ticket', description: 'Our team will contact you within one business day.', variant: 'info' }),
-    },
+  const actions: {
+    label: string
+    icon: ReactNode
+    onClick: () => void
+    divider?: boolean
+    variant?: 'default' | 'destructive'
+  }[] = [
+    { label: 'View application', icon: <Eye size={16} />, onClick: () => navigate(detailPath) },
   ]
+
+  if (isDraftSingle && options?.onContinue) {
+    actions.push({
+      label: 'Continue application',
+      icon: <PlayCircle size={16} />,
+      onClick: () => options.onContinue!(row as SingleApplicationRow),
+    })
+  }
+
+  actions.push({
+    label: 'Download summary',
+    icon: <Download size={16} />,
+    onClick: () =>
+      showToast({ title: 'Download started', description: 'Summary PDF will download shortly.', variant: 'success' }),
+    divider: true,
+  })
+
+  actions.push({
+    label: 'Raise support ticket',
+    icon: <LifeBuoy size={16} />,
+    onClick: () =>
+      showToast({ title: 'Support ticket', description: 'Our team will contact you within one business day.', variant: 'info' }),
+  })
+
+  if (isDraftSingle && options?.onDeleteDraft) {
+    actions.push({
+      label: 'Delete application',
+      icon: <Trash2 size={16} />,
+      onClick: () => options.onDeleteDraft!(row as SingleApplicationRow),
+      divider: true,
+      variant: 'destructive',
+    })
+  }
+
+  return actions
 }
 
 export interface ApplicationListingColumnsParams {
@@ -74,12 +111,18 @@ export interface ApplicationListingColumnsParams {
   showToast: ToastFn
   showCreatedBy?: boolean
   customerSegment?: ApplicationCustomerSegment
+  isRetail?: boolean
+  onContinueDraft?: (row: SingleApplicationRow) => void
+  onDeleteDraft?: (row: SingleApplicationRow) => void
 }
 
 export function buildSingleApplicationColumns({
   base,
   navigate,
   showToast,
+  onContinueDraft,
+  onDeleteDraft,
+  isRetail,
 }: ApplicationListingColumnsParams): Column<SingleApplicationRow>[] {
   return [
     {
@@ -138,7 +181,11 @@ export function buildSingleApplicationColumns({
       width: 56,
       render: (_: unknown, row: SingleApplicationRow) => (
         <RowActions
-          actions={buildRowActions(base, navigate, showToast, row.id, row.operationalStatus)}
+          actions={buildRowActions(base, navigate, showToast, row, {
+            isRetail,
+            onContinue: onContinueDraft,
+            onDeleteDraft,
+          })}
           row={row}
         />
       ),
@@ -153,6 +200,9 @@ export function buildUnifiedApplicationColumns({
   showToast,
   showCreatedBy = true,
   customerSegment = 'retail',
+  isRetail = false,
+  onContinueDraft,
+  onDeleteDraft,
 }: ApplicationListingColumnsParams): Column<SingleApplicationRow | BulkBatchRow>[] {
   const roleColumnKey = getTravelerRoleColumnKey(customerSegment)
   const roleColumnLabel = resolveApplicationTravelerRoleLabel(customerSegment)
@@ -397,6 +447,24 @@ export function buildUnifiedApplicationColumns({
         <CustomerStatusChip label={row.operationalStatus} tone={getApplicationOperationalTone(row.operationalStatus)} />
       ),
     },
+    {
+      key: 'processingStage',
+      label: isRetail ? 'Progress / stage' : 'Processing stage',
+      sortable: true,
+      filterable: false,
+      width: 180,
+      render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
+        <Typography variant="body2" sx={{ fontSize: 13 }} color="text.secondary">
+          {row.recordType === 'single' && row.operationalStatus === 'Draft' && row.retailApply
+            ? row.retailApply.lastStepIndex && row.retailApply.totalSteps
+              ? `Step ${row.retailApply.lastStepIndex}/${row.retailApply.totalSteps}${
+                  row.retailApply.lastStepLabel ? ` · ${row.retailApply.lastStepLabel}` : ''
+                }`
+              : row.processingStage
+            : row.processingStage}
+        </Typography>
+      ),
+    },
     { key: 'lastUpdated', label: 'Last updated', sortable: true, filterable: false, width: 110 },
     {
       key: 'actions',
@@ -408,7 +476,11 @@ export function buildUnifiedApplicationColumns({
       width: 56,
       render: (_: unknown, row: SingleApplicationRow | BulkBatchRow) => (
         <RowActions
-          actions={buildRowActions(base, navigate, showToast, row.id, row.operationalStatus)}
+          actions={buildRowActions(base, navigate, showToast, row, {
+            isRetail,
+            onContinue: onContinueDraft,
+            onDeleteDraft,
+          })}
           row={row}
         />
       ),
@@ -495,7 +567,7 @@ export function buildBulkApplicationColumns({
       width: 56,
       render: (_: unknown, row: BulkBatchRow) => (
         <RowActions
-          actions={buildRowActions(base, navigate, showToast, row.id, row.operationalStatus)}
+          actions={buildRowActions(base, navigate, showToast, row)}
           row={row}
         />
       ),

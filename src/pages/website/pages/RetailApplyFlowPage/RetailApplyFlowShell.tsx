@@ -8,7 +8,6 @@ import {
   applyMotion,
   applyRadius,
   getClippedCardClipPath,
-  tabularNums,
 } from '@/pages/website/theme/applyFlowTheme'
 import { getCountryTrustProfile } from '../../config/countryTrustBadges'
 import { useRetailDraft } from './hooks/useRetailDraft'
@@ -18,6 +17,7 @@ import { StepTransition } from './components/StepTransition'
 import { IneligibleScreen } from './components/IneligibleScreen'
 import { ApplyIntroTransition } from './components/ApplyIntroTransition'
 import { VisaStep } from './components/steps/VisaStep'
+import { DestinationStep } from './components/steps/DestinationStep'
 import { EligibilityStep } from './components/steps/EligibilityStep'
 import { TravelProfileStep } from './components/steps/TravelProfileStep'
 import { SponsorStep } from './components/steps/SponsorStep'
@@ -38,30 +38,52 @@ import { SuccessStep } from './components/steps/SuccessStep'
 import {
   buildCustomerPaymentFromRetailDraft,
   createRetailApplicationFromWebsitePayment,
+  persistRetailWebsiteDraftProgress,
+  sendRetailWebsitePaymentLink,
+  getRetailWebsitePaymentLinkSentAt,
 } from '@/shared/services/retailWebsiteApplicationService'
-import { RETAIL_PHASE_ORDER } from './config/stepPlan'
+import { DESTINATION_STEP, RETAIL_PHASE_ORDER } from './config/stepPlan'
 import {
   createRetailApplicantParty,
   type RetailApplicantParty,
   type RetailPhaseId,
-  type RetailStepDefinition,
   type RetailStepId,
 } from './types'
 import type { OriginalDocumentCollectionMethod } from '@/shared/types/originalDocumentCollection'
 import { getCountryMasterById, getVisaOfferings } from '@/shared/services/countryMasterService'
+import {
+  isAdminFlowPolicy,
+  useApplicationFlowPolicy,
+} from '@/pages/customer/features/applications/context/ApplicationFlowPolicyContext'
+import { loadSession } from '@/shared/auth/session'
+import { getSessionCreatorMeta } from '@/pages/customer/features/applications/utils/applicationAccessUtils'
+import { useToast } from '@/design-system/UIComponents'
+import { useSearchParams } from 'react-router-dom'
+import { GREENLIGHT_LOGO_DARK_SRC } from '@/components/brand/GreenlightLogo'
 
 const LISTING_HREF = '/countries'
 
-const VISA_ONLY_STEPS: RetailStepDefinition[] = [{ id: 'visa', phase: 'purpose', label: 'Visa type' }]
-
 interface RetailApplyFlowShellProps {
-  initialCountryId: string
-  initialVisaOfferingId: string
+  initialCountryId?: string
+  initialVisaOfferingId?: string
+  applicationId?: string
+  startFresh?: boolean
 }
 
-export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }: RetailApplyFlowShellProps) {
+export function RetailApplyFlowShell({
+  initialCountryId = '',
+  initialVisaOfferingId = '',
+  applicationId: applicationIdFromRoute,
+  startFresh = false,
+}: RetailApplyFlowShellProps) {
   const navigate = useAppNavigate()
-  const countryPageHref = `${LISTING_HREF}/${initialCountryId}`
+  const [searchParams] = useSearchParams()
+  const { policy, listingPath } = useApplicationFlowPolicy()
+  const isAdminAssist = isAdminFlowPolicy(policy)
+  const { showToast } = useToast()
+  const session = loadSession()
+  const creator = getSessionCreatorMeta(session)
+  const creatorEmail = creator.createdByEmail === 'unknown@glts.com' ? 'website@glts.com' : creator.createdByEmail
 
   const [visaOfferingId, setVisaOfferingId] = useState(initialVisaOfferingId)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
@@ -69,17 +91,32 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
   /** Fingerprint of resolved docs when review was last acknowledged — detects downstream requirement changes. */
   const [reviewRequirementsBaseline, setReviewRequirementsBaseline] = useState<string | null>(null)
   const [showRequirementsUpdated, setShowRequirementsUpdated] = useState(false)
+  const advanceAfterCountryRef = useRef(false)
 
-  const countryId = initialCountryId
+  const { draft, patchDraft, applicationId } = useRetailDraft({
+    countryId: initialCountryId,
+    visaOfferingId: initialVisaOfferingId || visaOfferingId,
+    applicationId: applicationIdFromRoute,
+    startFresh,
+    creatorEmail,
+    creatorRole: creator.createdByRole,
+  })
+
+  const countryId = draft.countryId || initialCountryId
+  const exitHref = listingPath || (countryId ? `${LISTING_HREF}/${countryId}` : LISTING_HREF)
   const trustProfile = getCountryTrustProfile(countryId)
-  const [showTrustIntro, setShowTrustIntro] = useState(() => Boolean(trustProfile))
+  const [showTrustIntro, setShowTrustIntro] = useState(() => !isAdminAssist && Boolean(trustProfile))
   const [createdApplicationId, setCreatedApplicationId] = useState<string | undefined>()
-  const { draft, patchDraft } = useRetailDraft(countryId, visaOfferingId)
-  const { journey, steps: resolvedSteps } = useRetailStepPlan(countryId, visaOfferingId, draft)
+  const { journey, steps: resolvedSteps } = useRetailStepPlan(countryId, visaOfferingId || draft.visaOfferingId, draft)
 
-  const steps = useMemo(
-    () => (resolvedSteps.length > 0 ? resolvedSteps : VISA_ONLY_STEPS),
-    [resolvedSteps],
+  const steps = useMemo(() => {
+    if (!countryId) return [DESTINATION_STEP]
+    return resolvedSteps.length > 0 ? resolvedSteps : [DESTINATION_STEP, { id: 'visa' as const, phase: 'purpose' as const, label: 'Visa type' }]
+  }, [countryId, resolvedSteps])
+
+  const visiblePhases = useMemo(
+    () => (countryId ? [...RETAIL_PHASE_ORDER] : (['destination'] as RetailPhaseId[])),
+    [countryId],
   )
 
   const jurisdictions = useMemo(
@@ -88,6 +125,7 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
   )
 
   const hasRestoredStepRef = useRef(false)
+  const [cursorReady, setCursorReady] = useState(false)
   useEffect(() => {
     if (hasRestoredStepRef.current || steps.length === 0) return
     hasRestoredStepRef.current = true
@@ -109,8 +147,65 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         // Mid-flow resume — skip the registered-agent intro.
         if (restoredIndex > 0) setShowTrustIntro(false)
       }
+    } else if (countryId) {
+      const visaIndex = steps.findIndex((step) => step.id === 'visa')
+      if (visaIndex !== -1) setCurrentStepIndex(visaIndex)
     }
-  }, [steps, draft.lastStepId])
+    setCursorReady(true)
+  }, [steps, draft.lastStepId, countryId])
+
+  useEffect(() => {
+    if (!advanceAfterCountryRef.current) return
+    if (!countryId) return
+    const visaIndex = steps.findIndex((step) => step.id === 'visa')
+    if (visaIndex === -1) return
+    advanceAfterCountryRef.current = false
+    setDirection(1)
+    setCurrentStepIndex(visaIndex)
+    patchDraft({ lastStepId: 'visa' })
+    if (trustProfile && !isAdminAssist) setShowTrustIntro(true)
+  }, [countryId, steps, patchDraft, trustProfile, isAdminAssist])
+
+  useEffect(() => {
+    if (!draft.visaOfferingId) return
+    if (draft.visaOfferingId === visaOfferingId) return
+    if (!visaOfferingId) setVisaOfferingId(draft.visaOfferingId)
+  }, [draft.visaOfferingId, visaOfferingId])
+
+  useEffect(() => {
+    if (!applicationId) return
+    if (searchParams.get('application') === applicationId) return
+    const next = new URLSearchParams(searchParams)
+    next.set('application', applicationId)
+    if (countryId) next.set('country', countryId)
+    if (visaOfferingId) next.set('visa', visaOfferingId)
+    navigate(`${window.location.pathname}?${next.toString()}`, { replace: true })
+  }, [applicationId, countryId, visaOfferingId, navigate, searchParams])
+
+  useEffect(() => {
+    if (!cursorReady) return
+    const step = steps[currentStepIndex]
+    persistRetailWebsiteDraftProgress({
+      applicationId,
+      draft,
+      journey: journey ?? undefined,
+      stepId: step?.id,
+      stepLabel: step?.label,
+      stepIndex: currentStepIndex + 1,
+      totalSteps: steps.length,
+      creatorEmail,
+      creatorRole: creator.createdByRole,
+    })
+  }, [
+    applicationId,
+    creator.createdByRole,
+    creatorEmail,
+    currentStepIndex,
+    cursorReady,
+    draft,
+    journey,
+    steps,
+  ])
 
   const requirementsFingerprint = useMemo(() => {
     if (!journey) return ''
@@ -146,7 +241,7 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
 
   function goBack() {
     if (currentStepIndex <= 0) {
-      navigate(countryPageHref)
+      navigate(exitHref)
       return
     }
     goToStep(currentStepIndex - 1, -1)
@@ -157,6 +252,38 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
     patchDraft({ visaOfferingId: nextOfferingId })
   }
 
+  function handleSelectCountry(nextCountryId: string) {
+    const offerings = getVisaOfferings(nextCountryId, true, 'retail')
+    const nextVisa = offerings[0]?.id ?? ''
+    const countryChanged = nextCountryId !== countryId
+    advanceAfterCountryRef.current = true
+    setVisaOfferingId(nextVisa)
+    patchDraft({
+      countryId: nextCountryId,
+      visaOfferingId: nextVisa,
+      ...(countryChanged
+        ? {
+            jurisdictionId: undefined,
+            jurisdictionName: undefined,
+            issuedPassportState: undefined,
+            placeOfResidence: undefined,
+            answers: {},
+            eligibilityAnswerId: undefined,
+            eligibilityStatus: undefined,
+            documentUploads: {},
+            collectionMethod: undefined,
+            collectionDetails: {},
+            insurance: { choice: 'skip' as const },
+            flightTicket: { choice: 'skip' as const },
+            processingTier: undefined,
+            paymentMethod: undefined,
+            paymentComplete: false,
+            lastStepId: 'destination' as const,
+          }
+        : {}),
+    })
+  }
+
   function handleSelectPhase(phase: RetailPhaseId) {
     const targetIndex = steps.findIndex((step) => step.phase === phase)
     if (targetIndex === -1) return
@@ -164,11 +291,11 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
   }
 
   const currentStep = steps[currentStepIndex]
-  const currentPhase: RetailPhaseId = currentStep?.phase ?? 'purpose'
-  const currentPhaseIndex = RETAIL_PHASE_ORDER.indexOf(currentPhase)
+  const currentPhase: RetailPhaseId = currentStep?.phase ?? (countryId ? 'purpose' : 'destination')
+  const currentPhaseIndex = visiblePhases.indexOf(currentPhase)
   const unlockedPhases = useMemo(
-    () => new Set<RetailPhaseId>(RETAIL_PHASE_ORDER.slice(0, currentPhaseIndex + 1)),
-    [currentPhaseIndex],
+    () => new Set<RetailPhaseId>(visiblePhases.slice(0, Math.max(currentPhaseIndex, 0) + 1)),
+    [visiblePhases, currentPhaseIndex],
   )
 
   const countryMaster = useMemo(() => getCountryMasterById(countryId), [countryId])
@@ -186,7 +313,7 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
       <IneligibleScreen
         reason={selectedOption?.ineligibleReason}
         onChangeAnswer={() => patchDraft({ eligibilityStatus: undefined, eligibilityAnswerId: undefined })}
-        listingHref={LISTING_HREF}
+        listingHref={exitHref}
       />
     )
   }
@@ -284,11 +411,20 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
     }
 
     switch (stepId) {
+      case 'destination':
+        return (
+          <DestinationStep
+            countryId={countryId}
+            onSelect={handleSelectCountry}
+            onBack={goBack}
+            onContinue={goNext}
+          />
+        )
       case 'visa':
         return (
           <VisaStep
             countryId={countryId}
-            visaOfferingId={visaOfferingId}
+            visaOfferingId={visaOfferingId || draft.visaOfferingId}
             onSelect={handleSelectVisa}
             onBack={goBack}
             onContinue={goNext}
@@ -507,11 +643,38 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
             draft={draft}
             onChange={(patch) => patchDraft(patch)}
             onBack={goBack}
+            continueLabel={
+              isAdminAssist
+                ? getRetailWebsitePaymentLinkSentAt(applicationId)
+                  ? 'Resend payment link'
+                  : 'Send payment link'
+                : undefined
+            }
             onPay={() => {
+              if (isAdminAssist) {
+                sendRetailWebsitePaymentLink({
+                  journey,
+                  draft: { ...draft, applicationId, paymentMethod: draft.paymentMethod ?? 'upi' },
+                  creatorEmail,
+                  creatorRole: creator.createdByRole,
+                })
+                showToast({
+                  title: 'Payment link sent',
+                  description: 'The customer can pay in advance from the link we sent.',
+                  variant: 'success',
+                })
+                navigate(exitHref)
+                return
+              }
               const payment = buildCustomerPaymentFromRetailDraft(journey, draft)
               const { id } = createRetailApplicationFromWebsitePayment({
                 journey,
-                draft: { ...draft, paymentComplete: true, paymentMethod: draft.paymentMethod ?? 'upi' },
+                draft: {
+                  ...draft,
+                  applicationId,
+                  paymentComplete: true,
+                  paymentMethod: draft.paymentMethod ?? 'upi',
+                },
                 payment,
               })
               setCreatedApplicationId(id)
@@ -525,7 +688,7 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
         return (
           <SuccessStep
             journey={journey}
-            listingHref={LISTING_HREF}
+            listingHref={exitHref}
             applicationReference={createdApplicationId}
           />
         )
@@ -593,19 +756,16 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
             pb: 3.5,
           }}
         >
-          <Typography
+          <Box
             component="a"
             href="/"
+            aria-label="Greenlight Travel Solutions"
             sx={{
-              fontFamily: applyFont.mono,
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: '0.12em',
-              color: applyFlow.railText,
-              textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 1.5,
+              textDecoration: 'none',
+              flexShrink: 0,
+              minWidth: 0,
               '&:focus-visible': {
                 outline: 'none',
                 boxShadow: `0 0 0 2px ${applyFlow.accent}`,
@@ -614,22 +774,29 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
             }}
           >
             <Box
-              aria-hidden
+              component="img"
+              src={GREENLIGHT_LOGO_DARK_SRC}
+              alt="Greenlight Travel Solutions"
               sx={{
-                width: 7,
-                height: 7,
-                borderRadius: '2px',
-                backgroundColor: applyFlow.accent,
-                flex: '0 0 auto',
+                height: 28,
+                width: 'auto',
+                maxWidth: 148,
+                objectFit: 'contain',
+                display: 'block',
               }}
             />
-            GLTS
-          </Typography>
+          </Box>
           <Typography
-            component="a"
-            href={countryPageHref}
+            component="button"
+            type="button"
+            onClick={() => navigate(exitHref)}
             aria-label="Exit application"
             sx={{
+              appearance: 'none',
+              border: 'none',
+              background: 'none',
+              padding: 0,
+              cursor: 'pointer',
               fontFamily: applyFont.mono,
               fontSize: 10,
               fontWeight: 600,
@@ -652,10 +819,11 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
             currentPhase={currentPhase}
             unlockedPhases={unlockedPhases}
             onSelectPhase={handleSelectPhase}
+            phases={visiblePhases}
           />
         </Box>
 
-        {/* Progress readout — the one big number on the screen, and it lives on navy. */}
+        {/* Progress bar only — no step totals (avoids overwhelming with “N of 14”). */}
         <Box
           sx={{
             flex: '0 0 auto',
@@ -665,32 +833,6 @@ export function RetailApplyFlowShell({ initialCountryId, initialVisaOfferingId }
             borderTop: `1px solid ${applyFlow.railLine}`,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 2 }}>
-            <Typography
-              sx={{
-                ...tabularNums,
-                fontFamily: applyFont.mono,
-                fontSize: 22,
-                fontWeight: 700,
-                lineHeight: 1,
-                color: applyFlow.accent,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              {String(currentStepIndex + 1).padStart(2, '0')}
-            </Typography>
-            <Typography
-              sx={{
-                ...tabularNums,
-                fontFamily: applyFont.mono,
-                fontSize: 12,
-                fontWeight: 500,
-                color: applyFlow.railTextFaint,
-              }}
-            >
-              / {String(steps.length).padStart(2, '0')} STEPS
-            </Typography>
-          </Box>
           <Box
             role="progressbar"
             aria-valuemin={0}

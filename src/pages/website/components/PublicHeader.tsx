@@ -11,7 +11,7 @@ import {
   InputBase,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { Menu, X, Search, User, ArrowRight } from 'lucide-react'
+import { Menu, X, Search, User, ArrowRight, LogOut } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Button as DsButton } from '@/design-system/UIComponents'
@@ -20,6 +20,7 @@ import { GREENLIGHT_LOGO_SRC, GREENLIGHT_LOGO_DARK_SRC } from '@/components/bran
 import { publicFonts, usePublicBrandColors } from '../theme/publicSiteTokens'
 import { applyFlow } from '../theme/applyFlowTheme'
 import { PublicContainer } from './PublicContainer'
+import { clearSession, loadSession } from '@/shared/auth/session'
 
 const NAV_HEIGHT = 72
 
@@ -88,6 +89,7 @@ export function PublicHeader() {
   const { pathname } = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const retailSession = loadSession()?.portal === 'retail'
 
   const isWide = useMediaQuery(theme.breakpoints.up('desktop'))
   const isTablet = useMediaQuery(theme.breakpoints.up('lg'))
@@ -204,24 +206,62 @@ export function PublicHeader() {
             spacing={{ xs: 0.75, md: 1.25 }}
             sx={{ flexShrink: 0, zIndex: 2, ml: 'auto' }}
           >
-            <DsButton
-              href="/sign-in"
-              variant="outlined"
-              color="primary"
-              size={isWide ? 'md' : 'sm'}
-              startIcon={<User size={isWide ? 16 : 14} />}
-              sx={{
-                borderColor: 'rgba(255, 255, 255, 0.32)',
-                color: '#fff',
-                '&:hover': {
-                  borderColor: applyFlow.accent,
-                  color: applyFlow.accent,
-                  backgroundColor: applyFlow.accentSoft,
-                },
-              }}
-            >
-              Sign in
-            </DsButton>
+            {retailSession ? (
+              <>
+                <DsButton
+                  href="/retail/account"
+                  variant="outlined"
+                  color="primary"
+                  size={isWide ? 'md' : 'sm'}
+                  startIcon={<User size={isWide ? 16 : 14} />}
+                  sx={{
+                    borderColor: 'rgba(255, 255, 255, 0.32)',
+                    color: '#fff',
+                    '&:hover': {
+                      borderColor: applyFlow.accent,
+                      color: applyFlow.accent,
+                      backgroundColor: applyFlow.accentSoft,
+                    },
+                  }}
+                >
+                  My account
+                </DsButton>
+                <DsButton
+                  variant="text"
+                  size={isWide ? 'md' : 'sm'}
+                  startIcon={<LogOut size={isWide ? 16 : 14} />}
+                  onClick={() => {
+                    clearSession()
+                    navigate('/sign-in', { replace: true })
+                  }}
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.85)',
+                    '&:hover': { color: applyFlow.accent, backgroundColor: applyFlow.accentSoft },
+                  }}
+                >
+                  Sign out
+                </DsButton>
+              </>
+            ) : (
+              <DsButton
+                href="/sign-in"
+                variant="outlined"
+                color="primary"
+                size={isWide ? 'md' : 'sm'}
+                startIcon={<User size={isWide ? 16 : 14} />}
+                sx={{
+                  borderColor: 'rgba(255, 255, 255, 0.32)',
+                  color: '#fff',
+                  '&:hover': {
+                    borderColor: applyFlow.accent,
+                    color: applyFlow.accent,
+                    backgroundColor: applyFlow.accentSoft,
+                  },
+                }}
+              >
+                Sign in
+              </DsButton>
+            )}
 
             {!isTablet && (
               <IconButton
@@ -327,24 +367,66 @@ export function PublicHeader() {
         <Divider sx={{ mx: 2.5, my: 2 }} />
 
         <Stack spacing={1.5} sx={{ px: 2.5, pb: 3 }}>
-          <Button
-            component="a"
-            href="/sign-in"
-            fullWidth
-            variant="outlined"
-            startIcon={<User size={18} />}
-            onClick={() => setDrawerOpen(false)}
-            sx={{
-              py: 1.25,
-              borderRadius: '12px',
-              borderColor: colors.border,
-              color: colors.navy,
-              fontWeight: 600,
-              textTransform: 'none',
-            }}
-          >
-            Sign in
-          </Button>
+          {retailSession ? (
+            <>
+              <Button
+                component="a"
+                href="/retail/account"
+                fullWidth
+                variant="outlined"
+                startIcon={<User size={18} />}
+                onClick={() => setDrawerOpen(false)}
+                sx={{
+                  py: 1.25,
+                  borderRadius: '12px',
+                  borderColor: colors.border,
+                  color: colors.navy,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                }}
+              >
+                My account
+              </Button>
+              <Button
+                fullWidth
+                variant="text"
+                startIcon={<LogOut size={18} />}
+                onClick={() => {
+                  setDrawerOpen(false)
+                  clearSession()
+                  navigate('/sign-in', { replace: true })
+                }}
+                sx={{
+                  py: 1.25,
+                  borderRadius: '12px',
+                  color: colors.textSecondary,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                }}
+              >
+                Sign out
+              </Button>
+            </>
+          ) : (
+            <Button
+              component="a"
+              href="/sign-in"
+              fullWidth
+              variant="outlined"
+              startIcon={<User size={18} />}
+              onClick={() => setDrawerOpen(false)}
+              sx={{
+                py: 1.25,
+                borderRadius: '12px',
+                borderColor: colors.border,
+                color: colors.navy,
+                fontWeight: 600,
+                textTransform: 'none',
+              }}
+            >
+              Sign in
+            </Button>
+          )}
           <Button
             component="a"
             href="/countries"

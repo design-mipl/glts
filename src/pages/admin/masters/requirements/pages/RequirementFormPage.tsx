@@ -7,25 +7,19 @@ import {
   EmptyState,
   FormField,
   Input,
-  Select,
-  Tabs,
   useToast,
 } from '@/design-system/UIComponents'
-import { AdminFullPageFormFieldSpan, AdminFullPageFormShell } from '@/pages/admin/components/AdminFullPageFormShell'
+import {
+  AdminFullPageFormShell,
+} from '@/pages/admin/components/AdminFullPageFormShell'
 import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { requirementMasterService } from '@/shared/services/requirementMasterService'
 import type { RequirementMasterFormData } from '@/shared/types/requirementMaster'
-import { masterStatusLabel } from '../../config/masterStatusConfig'
-import { RequirementDocumentsTab } from '../components/RequirementDocumentsTab'
-import { RequirementQuestionnaireTab } from '../components/RequirementQuestionnaireTab'
+import { RequirementQuestionsSection } from '../components/RequirementQuestionsSection'
 import { emptyRequirementForm } from '../hooks/useRequirementForm'
 import { validateRequirementForm } from '../utils/requirementQuestionUtils'
 
 const LISTING_PATH = '/admin/masters/requirements'
-const WORKSPACE_TABS = [
-  { value: 'questionnaire', label: 'Questionnaire' },
-  { value: 'documents', label: 'Documents' },
-] as const
 
 interface RequirementFormPageProps {
   mode: 'create' | 'edit'
@@ -40,7 +34,6 @@ export function RequirementFormPage({ mode, requirementId }: RequirementFormPage
   const [loading, setLoading] = useState(mode === 'edit')
   const [submitting, setSubmitting] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<(typeof WORKSPACE_TABS)[number]['value']>('questionnaire')
 
   const patch = (next: RequirementMasterFormData) => {
     setFormData(next)
@@ -97,7 +90,6 @@ export function RequirementFormPage({ mode, requirementId }: RequirementFormPage
   const handleSave = () => {
     const issues = validateRequirementForm(formData)
     if (issues.length > 0) {
-      setActiveTab('questionnaire')
       showToast({
         title: 'Complete required fields',
         description: issues[0],
@@ -126,7 +118,7 @@ export function RequirementFormPage({ mode, requirementId }: RequirementFormPage
       <AdminFullPageFormShell
         breadcrumbs={breadcrumbs}
         title={mode === 'create' ? 'Create requirement pack' : 'Edit requirement pack'}
-        description="Temporary name — questionnaire plus documents from Document Master."
+        description="Configure pack details and questions with optional option-level document mappings."
         footer={
           <AdminFullPageFormFooter
             onCancel={handleCancel}
@@ -141,6 +133,7 @@ export function RequirementFormPage({ mode, requirementId }: RequirementFormPage
             title: 'Pack details',
             importance: 'primary',
             columns: 2,
+            span: 2,
             children: (
               <>
                 <FormField label="Name" required>
@@ -152,61 +145,30 @@ export function RequirementFormPage({ mode, requirementId }: RequirementFormPage
                     fullWidth
                   />
                 </FormField>
-                <FormField label="Status" required>
-                  <Select
-                    value={formData.status}
-                    onChange={(value) =>
-                      patch({ ...formData, status: value as RequirementMasterFormData['status'] })
-                    }
-                    options={(Object.entries(masterStatusLabel) as [RequirementMasterFormData['status'], string][]).map(
-                      ([value, label]) => ({ value, label }),
-                    )}
+                <FormField label="Description" optional>
+                  <Input
+                    value={formData.description}
+                    onChange={(value) => patch({ ...formData, description: value })}
+                    placeholder="Optional summary for ops"
                     size="sm"
                     fullWidth
                   />
                 </FormField>
-                <AdminFullPageFormFieldSpan>
-                  <FormField label="Description" optional>
-                    <Input
-                      value={formData.description}
-                      onChange={(value) => patch({ ...formData, description: value })}
-                      placeholder="Optional summary for ops"
-                      size="sm"
-                      fullWidth
-                    />
-                  </FormField>
-                </AdminFullPageFormFieldSpan>
               </>
             ),
           },
           {
-            id: 'workspace',
-            title: 'Configuration',
+            id: 'questions',
+            title: 'Questions',
             importance: 'secondary',
             columns: 1,
             span: 2,
             children: (
-              <Box>
-                <Tabs
-                  items={[...WORKSPACE_TABS]}
-                  value={activeTab}
-                  onChange={(value) => setActiveTab(value as typeof activeTab)}
-                  variant="underline"
-                  size="sm"
+              <Box sx={{ pb: 8 }}>
+                <RequirementQuestionsSection
+                  questions={formData.questions}
+                  onChange={(questions) => patch({ ...formData, questions })}
                 />
-                <Box sx={{ mt: 2, pb: 10 }}>
-                  {activeTab === 'questionnaire' ? (
-                    <RequirementQuestionnaireTab
-                      questions={formData.questions}
-                      onChange={(questions) => patch({ ...formData, questions })}
-                    />
-                  ) : (
-                    <RequirementDocumentsTab
-                      documents={formData.documents}
-                      onChange={(documents) => patch({ ...formData, documents })}
-                    />
-                  )}
-                </Box>
               </Box>
             ),
           },
@@ -218,7 +180,7 @@ export function RequirementFormPage({ mode, requirementId }: RequirementFormPage
         onClose={() => setCancelOpen(false)}
         onConfirm={() => navigate(LISTING_PATH)}
         title="Discard changes?"
-        description="Unsaved questionnaire and document changes will be lost."
+        description="Unsaved pack details and questions will be lost."
       />
     </>
   )

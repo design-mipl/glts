@@ -3,13 +3,15 @@
  *
  * This is intentionally thin: it does not introduce a new source of truth for documents,
  * pricing, or jurisdictions. It composes `countryMasterService`, `jurisdictionRequirementPreview`,
- * `embassyVfsFeeMasterService`, `serviceMasterService`, and `documentMasterService` — plus the one
- * genuinely new config layer, `retailJourneyRules` — into the shape the retail UI steps consume.
+ * `embassyVfsFeeMasterService`, `serviceMasterService`, and `documentMasterService` — plus
+ * Requirement Master packs mapped on Country Master (`requirementPackId`) and the fallback
+ * `retailJourneyRules` — into the shape the retail UI steps consume.
  */
 
 import {
   getCountryMasterById,
   getRequirementPreviewCards,
+  getSegmentForOffering,
   getVisaOfferingById,
   getVisaTypeForOffering,
   offeringAllowsPhysicalOriginalDocuments,
@@ -37,6 +39,7 @@ import type {
   RequirementPreviewCard,
 } from '@/shared/types/countryMaster'
 import type { ServiceMaster } from '@/shared/types/serviceMaster'
+import { resolveRequirementPackConditionalQuestions } from '@/shared/utils/countryRequirementPackUtils'
 
 export interface RetailChecklistDocument {
   documentId: string
@@ -232,7 +235,17 @@ export function resolveRetailJourney(input: ResolveRetailJourneyInput): RetailJo
   const offering = getVisaOfferingById(countryId, visaOfferingId)
   if (!country || !visaType || !offering) return undefined
 
+  const retailSegment = getSegmentForOffering(countryId, visaOfferingId)
   const rules = getRetailJourneyRules(countryId, visaOfferingId)
+  const selectedJurisdiction = jurisdictionId
+    ? visaType.jurisdictions?.find((entry) => entry.id === jurisdictionId)
+    : undefined
+  const packQuestions = resolveRequirementPackConditionalQuestions({
+    segment: retailSegment,
+    visaType,
+    jurisdiction: selectedJurisdiction,
+  })
+  const conditionalQuestions = packQuestions ?? rules.conditionalQuestions ?? []
   const requiresJurisdictionSelection = offeringRequiresJurisdictionSelection(countryId, visaOfferingId)
   const applicableStates = getApplicableStatesForOffering(countryId, visaOfferingId)
 
@@ -240,7 +253,7 @@ export function resolveRetailJourney(input: ResolveRetailJourneyInput): RetailJo
   const baseDocuments = baseDocumentRules.map((rule) =>
     toChecklistDocument(rule.documentId, rule.mandatory, rule.originalDocument),
   )
-  const conditionalDocuments = resolveConditionalDocuments(rules.conditionalQuestions ?? [], answers)
+  const conditionalDocuments = resolveConditionalDocuments(conditionalQuestions, answers)
 
   const seenIds = new Set(baseDocuments.map((doc) => doc.documentId))
   const documents = [
@@ -267,7 +280,7 @@ export function resolveRetailJourney(input: ResolveRetailJourneyInput): RetailJo
     applicableStates,
     hasEligibilityGate: offeringHasEligibilityGate(countryId, visaOfferingId),
     eligibility: rules.eligibility ?? [],
-    conditionalQuestions: rules.conditionalQuestions ?? [],
+    conditionalQuestions,
     requirementPreviewCards: getRequirementPreviewCards(countryId, visaOfferingId, jurisdictionId),
     documents: documents.map((doc) => ({
       ...doc,

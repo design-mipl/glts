@@ -1,16 +1,11 @@
 import type { BulkBatchRow, SingleApplicationRow } from '@/pages/customer/features/applications/data/applicationFlowData'
-import {
-  formatBulkApplicantListingLabel,
-  resolveBulkApplicantNames,
-} from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationListingRow } from '@/pages/customer/features/applications/types/applicationListing.types'
-import { isBulkRow } from '@/pages/customer/features/applications/types/applicationListing.types'
-import { resolveApplicationCompanyName, resolveApplicationDesignation } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
-import { resolveApplicationBillingEntity } from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
+import type { CustomerListingGridItem } from '@/pages/customer/features/shared/components/listing/CustomerListingGrid'
+import { getApplicationOperationalTone } from '@/pages/customer/features/applications/components/listing/applicationStatus'
 import { resolveApplicationCreatorLabel } from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
 import { getListingCellValue } from '@/pages/customer/features/applications/utils/applicationListingUtils'
-import { mapApplicationRowsToGridItems } from '@/pages/customer/features/applications/utils/applicationListingGrid'
 import type { MarineApplicationRow as RetailApplicationRow } from '@/shared/services/marineApplicationAdminService'
+import { formatRetailWebsiteDropOff } from '@/shared/services/retailWebsiteApplicationService'
 import {
   resolveApplicationConsultantName,
   resolveApplicationPriorityLabel,
@@ -36,21 +31,15 @@ export function matchesRetailApplicationSearch(row: RetailApplicationRow, query:
   const s = query.trim().toLowerCase()
   if (!s) return true
   if (row.id.toLowerCase().includes(s)) return true
-  if (resolveApplicationCompanyName(row).toLowerCase().includes(s)) return true
-  const designation = resolveApplicationDesignation(row).toLowerCase()
-  if (designation !== '—' && designation.includes(s)) return true
-  if (resolveApplicationBillingEntity(row).toLowerCase().includes(s)) return true
   if (resolveApplicationCreatorLabel(row.createdByEmail).toLowerCase().includes(s)) return true
   if (row.jurisdiction?.toLowerCase().includes(s)) return true
-  if (isBulkRow(row)) {
-    const paxLabel = formatBulkApplicantListingLabel(row).toLowerCase()
-    const paxNames = resolveBulkApplicantNames(row).join(' ').toLowerCase()
-    return (
-      paxLabel.includes(s) ||
-      paxNames.includes(s) ||
-      row.country.toLowerCase().includes(s) ||
-      row.visaType.toLowerCase().includes(s)
-    )
+  const dropOff =
+    row.recordType === 'single' && row.operationalStatus === 'Draft'
+      ? formatRetailWebsiteDropOff(row).toLowerCase()
+      : row.processingStage.toLowerCase()
+  if (dropOff.includes(s)) return true
+  if (row.recordType !== 'single') {
+    return row.country.toLowerCase().includes(s) || row.visaType.toLowerCase().includes(s)
   }
   return (
     row.applicantName.toLowerCase().includes(s) ||
@@ -64,14 +53,14 @@ export function getRetailApplicationCellValue(row: RetailApplicationRow, key: st
   if (key === 'countryVisa') {
     return `${row.country} · ${row.visaType}`
   }
-  if (key === 'applicationType') {
-    return getListingCellValue(row as ApplicationListingRow, 'applicationType')
-  }
   if (key === 'consultant') {
     return resolveApplicationConsultantName(row)
   }
   if (key === 'priority') {
     return resolveApplicationPriorityLabel(row)
+  }
+  if (key === 'processingStage' && row.recordType === 'single' && row.operationalStatus === 'Draft') {
+    return formatRetailWebsiteDropOff(row)
   }
   return getListingCellValue(row as ApplicationListingRow, key)
 }
@@ -113,7 +102,8 @@ export function getRetailApplicationEmptyState(
     case 'draft':
       return {
         emptyTitle: 'No draft applications',
-        emptyDescription: 'Draft application created in the Customer Portal.',
+        emptyDescription:
+          'Incomplete website applications appear here. Continue from the step the customer dropped.',
       }
     case 'verification_pending':
       return {
@@ -158,55 +148,72 @@ export function getRetailApplicationEmptyState(
     default:
       return {
         emptyTitle: 'No applications',
-        emptyDescription: 'Retail applications from the website and customer portal appear here across all operational stages.',
+        emptyDescription: 'Retail applications from the website apply flow appear here across all operational stages.',
         emptyAction: onCreate ? { label: 'Create application', onClick: onCreate } : undefined,
       }
   }
 }
 
-export function mapRetailApplicationRowsToGridItems(rows: RetailApplicationRow[]) {
-  return mapApplicationRowsToGridItems(rows as ApplicationListingRow[])
+function toneToGridColor(
+  tone: ReturnType<typeof getApplicationOperationalTone>,
+): CustomerListingGridItem['statusColor'] {
+  if (tone === 'success') return 'success'
+  if (tone === 'warning') return 'warning'
+  if (tone === 'info') return 'info'
+  return 'default'
+}
+
+export function mapRetailApplicationRowsToGridItems(rows: RetailApplicationRow[]): CustomerListingGridItem[] {
+  return rows.map(row => {
+    const tone = getApplicationOperationalTone(row.operationalStatus)
+    const paxName = row.recordType === 'single' ? row.applicantName : 'Passengers'
+    const stage =
+      row.recordType === 'single' && row.operationalStatus === 'Draft'
+        ? formatRetailWebsiteDropOff(row)
+        : row.processingStage
+    return {
+      id: row.id,
+      title: paxName,
+      subtitle: row.id,
+      meta: `${row.countryFlag ?? ''} ${row.country} · ${row.visaType}${
+        row.jurisdiction ? ` · ${row.jurisdiction}` : ''
+      } · ${stage} · Created by ${resolveApplicationCreatorLabel(row.createdByEmail)}`,
+      status: row.operationalStatus,
+      statusColor: toneToGridColor(tone),
+    }
+  })
 }
 
 export function exportRetailApplicationsToCsv(rows: RetailApplicationRow[]): string {
   const headers = [
     'Creation date',
     'GLTS reference',
-    'Type',
     'Pax name',
-    'Designation',
-    'Company name',
-    'Billing entity',
     'Country',
     'Visa type',
     'Jurisdiction',
     'Travel date',
     'Created by',
     'Status',
-    'Processing stage',
+    'Dropped at / processing stage',
     'Last updated',
   ]
 
   const lines = rows.map(row => {
-    const type = isBulkRow(row) ? 'Bulk' : 'Single'
-    const applicant = isBulkRow(row) ? formatBulkApplicantListingLabel(row) : row.applicantName
-    const companyName = resolveApplicationCompanyName(row)
+    const applicant = row.recordType === 'single' ? row.applicantName : '—'
     const createdBy = getRetailApplicationCellValue(row, 'createdBy')
+    const stage = getRetailApplicationCellValue(row, 'processingStage')
     return [
       row.createdAt,
       row.id,
-      type,
       applicant,
-      resolveApplicationDesignation(row),
-      companyName,
-      resolveApplicationBillingEntity(row),
       row.country,
       row.visaType,
       row.jurisdiction ?? '—',
       row.travelDate,
       createdBy,
       row.operationalStatus,
-      row.processingStage,
+      stage,
       row.lastUpdated,
     ]
       .map(value => `"${String(value).replace(/"/g, '""')}"`)
@@ -229,7 +236,7 @@ export function downloadRetailApplicationCsv(rows: RetailApplicationRow[]) {
 
 export function getAllRetailListingRows(
   singles: SingleApplicationRow[],
-  bulks: BulkBatchRow[],
+  _bulks: BulkBatchRow[],
 ): RetailApplicationRow[] {
-  return [...singles, ...bulks]
+  return singles
 }

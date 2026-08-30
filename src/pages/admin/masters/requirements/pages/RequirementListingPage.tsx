@@ -98,7 +98,7 @@ export function RequirementListingPage() {
         stickyPageHeader={
           <AdminListingStickyHeader
             title="Requirement Master"
-            description="Reusable questionnaire and document packs. Name is temporary."
+            description="Reusable packs: questions with optional option-level document mappings."
             actions={
               <Button label="Create pack" startIcon={<Plus size={14} />} onClick={openCreate} />
             }

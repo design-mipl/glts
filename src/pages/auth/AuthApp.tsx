@@ -8,6 +8,7 @@ import {
   MarineLoginPage,
   OperationsLoginPage,
   PortalSelectionPage,
+  RetailLoginPage,
 } from './authRoutePages'
 
 export function AuthApp() {
@@ -15,6 +16,7 @@ export function AuthApp() {
     <LazyRouteBoundary label="Loading…">
       <Routes>
         <Route index element={<PortalSelectionPage />} />
+        <Route path="retail" element={<RetailLoginPage />} />
         <Route path="business" element={<BusinessLoginHubPage />} />
         <Route path="business/marine" element={<MarineLoginPage />} />
         <Route path="business/corporate" element={<CorporateLoginPage />} />

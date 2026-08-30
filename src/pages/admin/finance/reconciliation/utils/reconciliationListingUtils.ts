@@ -1,4 +1,9 @@
-import type { ReconciliationFilters, ReconciliationItem, ReconciliationTab } from '@/shared/types/reconciliation'
+import type {
+  ReconciliationFilters,
+  ReconciliationItem,
+  ReconciliationStatus,
+  ReconciliationTab,
+} from '@/shared/types/reconciliation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { getReconciliationPaymentModeLabel, RECONCILIATION_PERIOD_OPTIONS } from '../config/reconciliationListingConfig'
 
@@ -16,7 +21,6 @@ export function hasReconciliationFiltersActive(
 ): boolean {
   if (filters.period === 'custom' && (filters.customFrom || filters.customTo)) return true
   if (filters.period !== 'today') return true
-  if (filters.status) return true
   if (tab === 'mode_of_payment' && filters.paymentMode) return true
   return false
 }
@@ -77,7 +81,11 @@ export function computeReconciliationKpis(rows: ReconciliationItem[]) {
   }
 }
 
-export function getReconciliationEmptyState(tab: ReconciliationTab, hasSearch: boolean) {
+export function getReconciliationEmptyState(
+  tab: ReconciliationTab,
+  hasSearch: boolean,
+  statusTab: ReconciliationStatus = 'pending',
+) {
   if (hasSearch) {
     return {
       title: 'No matching records',
@@ -91,8 +99,21 @@ export function getReconciliationEmptyState(tab: ReconciliationTab, hasSearch: b
     courier: 'courier expenses',
     mode_of_payment: 'payment records',
   }
+  const category = labels[tab]
+  if (statusTab === 'submitted') {
+    return {
+      title: `No submitted ${category} in this period`,
+      description: 'Reconciled records will appear here after you submit them from Pending.',
+    }
+  }
+  if (statusTab === 'rejected') {
+    return {
+      title: `No rejected ${category} in this period`,
+      description: 'Rejected records will appear here when you reject a pending item.',
+    }
+  }
   return {
-    title: `No ${labels[tab]} in this period`,
+    title: `No pending ${category} in this period`,
     description: 'Adjust the period filter or check expense / claim sheet data.',
   }
 }

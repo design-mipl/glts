@@ -2,6 +2,7 @@ import type { OriginalDocumentCollectionMethod } from '@/shared/types/originalDo
 import type { ExtractedField } from '@/pages/customer/features/applications/data/applicationFlowData'
 
 export type RetailPhaseId =
+  | 'destination'
   | 'purpose'
   | 'traveller'
   | 'sponsor'
@@ -12,6 +13,7 @@ export type RetailPhaseId =
   | 'pay'
 
 export type RetailStepId =
+  | 'destination'
   | 'visa'
   | 'traveller'
   | 'travelProfile'
@@ -138,6 +140,8 @@ export interface RetailExtraSelection {
 }
 
 export interface RetailFlowDraft {
+  /** GLTS listing id once the apply session is persisted as a draft. */
+  applicationId?: string
   countryId: string
   visaOfferingId: string
   jurisdictionId?: string

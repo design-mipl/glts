@@ -79,7 +79,7 @@ export function VisaStep({ countryId, visaOfferingId, onSelect, onBack, onContin
       title="What are you travelling for?"
       helperText="This determines which documents your application will need."
       onBack={onBack}
-      backLabel="Cancel"
+      backLabel="Back"
       onContinue={onContinue}
       continueDisabled={!visaOfferingId}
     >

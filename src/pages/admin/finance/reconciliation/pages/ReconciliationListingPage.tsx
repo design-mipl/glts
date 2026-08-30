@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
-import { BulkActions, Pagination, type BulkAction, useToast } from '@/design-system/UIComponents'
+import { BulkActions, Pagination, Tabs, type BulkAction, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   AdminListingGrid,
@@ -20,7 +20,11 @@ import {
   buildReconciliationColumns,
   mapReconciliationRowsToGridItems,
 } from '../components/ReconciliationTableColumns'
-import { RECONCILIATION_LISTING_TABS } from '../config/reconciliationListingConfig'
+import {
+  RECONCILIATION_LISTING_TABS,
+  RECONCILIATION_STATUS_TABS,
+  type ReconciliationStatusTab,
+} from '../config/reconciliationListingConfig'
 import {
   EMPTY_RECONCILIATION_FILTERS,
   computeReconciliationKpis,
@@ -33,20 +37,34 @@ import {
 } from '../utils/reconciliationListingUtils'
 
 const TAB_VALUES = RECONCILIATION_LISTING_TABS.map(tab => tab.value) as readonly ReconciliationTab[]
+const STATUS_TAB_VALUES = RECONCILIATION_STATUS_TABS.map(
+  tab => tab.value,
+) as readonly ReconciliationStatusTab[]
 
 export function ReconciliationListingPage() {
   const theme = useTheme()
   const { showToast } = useToast()
   const [activeTab, setActiveTab] = useListingTabParam(TAB_VALUES, 'insurance')
+  const [statusTab, setStatusTab] = useListingTabParam(STATUS_TAB_VALUES, 'pending', 'status')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [filters, setFilters] = useState<ReconciliationFilters>(EMPTY_RECONCILIATION_FILTERS)
   const [selectedItem, setSelectedItem] = useState<ReconciliationItem | null>(null)
   const [bulkItems, setBulkItems] = useState<ReconciliationItem[] | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
+  const categoryFilters = useMemo(
+    (): ReconciliationFilters => ({ ...filters, status: '' }),
+    [filters],
+  )
+
+  const allCategoryRows = useMemo(
+    () => reconciliationService.list(activeTab, categoryFilters),
+    [activeTab, categoryFilters, refreshKey],
+  )
+
   const tabRows = useMemo(
-    () => reconciliationService.list(activeTab, filters),
-    [activeTab, filters, refreshKey],
+    () => allCategoryRows.filter(row => row.status === statusTab),
+    [allCategoryRows, statusTab],
   )
 
   const listing = useCustomerListing({
@@ -56,7 +74,7 @@ export function ReconciliationListingPage() {
     initialPageSize: 10,
   })
 
-  const kpis = useMemo(() => computeReconciliationKpis(tabRows), [tabRows])
+  const kpis = useMemo(() => computeReconciliationKpis(allCategoryRows), [allCategoryRows])
   const columns = useMemo(
     () =>
       buildReconciliationColumns(activeTab, {
@@ -69,8 +87,13 @@ export function ReconciliationListingPage() {
     [columns],
   )
   const emptyState = useMemo(
-    () => getReconciliationEmptyState(activeTab, Boolean(listing.tableState.searchQuery.trim())),
-    [activeTab, listing.tableState.searchQuery],
+    () =>
+      getReconciliationEmptyState(
+        activeTab,
+        Boolean(listing.tableState.searchQuery.trim()),
+        statusTab,
+      ),
+    [activeTab, listing.tableState.searchQuery, statusTab],
   )
   const gridItems = useMemo(
     () => mapReconciliationRowsToGridItems(listing.paginatedRows),
@@ -82,25 +105,30 @@ export function ReconciliationListingPage() {
     [listing.filterSourceRows, listing.tableState.selectedRows],
   )
 
+  const isPendingStatus = statusTab === 'pending'
+
   const bulkActions = useMemo<BulkAction[]>(
-    () => [
-      {
-        label: 'Reconcile',
-        onClick: rows => {
-          const pending = (rows as ReconciliationItem[]).filter(row => row.status === 'pending')
-          if (pending.length === 0) {
-            showToast({
-              title: 'Nothing to reconcile',
-              description: 'Selected rows are already submitted. Choose pending records.',
-              variant: 'warning',
-            })
-            return
-          }
-          setBulkItems(pending)
-        },
-      },
-    ],
-    [showToast],
+    () =>
+      isPendingStatus
+        ? [
+            {
+              label: 'Reconcile',
+              onClick: rows => {
+                const pending = (rows as ReconciliationItem[]).filter(row => row.status === 'pending')
+                if (pending.length === 0) {
+                  showToast({
+                    title: 'Nothing to reconcile',
+                    description: 'Selected rows are already submitted. Choose pending records.',
+                    variant: 'warning',
+                  })
+                  return
+                }
+                setBulkItems(pending)
+              },
+            },
+          ]
+        : [],
+    [isPendingStatus, showToast],
   )
 
   const handleExport = useCallback(() => {
@@ -112,9 +140,20 @@ export function ReconciliationListingPage() {
     })
   }, [activeTab, listing.filterSourceRows, showToast])
 
+  const handleStatusTabChange = useCallback(
+    (next: ReconciliationStatusTab) => {
+      setStatusTab(next)
+      setSelectedItem(null)
+      setBulkItems(null)
+      listing.setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
+    },
+    [listing, setStatusTab],
+  )
+
   const handleTabChange = useCallback(
     (tab: ReconciliationTab) => {
       setActiveTab(tab)
+      setStatusTab('pending')
       setViewMode('table')
       setSelectedItem(null)
       setBulkItems(null)
@@ -123,7 +162,16 @@ export function ReconciliationListingPage() {
         setFilters(current => ({ ...current, paymentMode: '' }))
       }
     },
-    [filters.paymentMode, listing, setActiveTab],
+    [filters.paymentMode, listing, setActiveTab, setStatusTab],
+  )
+
+  const refreshAfterAction = useCallback(
+    (nextStatus: ReconciliationStatusTab) => {
+      listing.setTableState(state => ({ ...state, selectedRows: [] }))
+      setRefreshKey(key => key + 1)
+      setStatusTab(nextStatus)
+    },
+    [listing, setStatusTab],
   )
 
   const handleBulkConfirm = useCallback(
@@ -147,10 +195,9 @@ export function ReconciliationListingPage() {
         variant: 'success',
       })
       setBulkItems(null)
-      listing.setTableState(state => ({ ...state, selectedRows: [] }))
-      setRefreshKey(key => key + 1)
+      refreshAfterAction('submitted')
     },
-    [bulkItems, listing, showToast],
+    [bulkItems, refreshAfterAction, showToast],
   )
 
   const footerBg =
@@ -180,41 +227,70 @@ export function ReconciliationListingPage() {
         tabValue={activeTab}
         onTabChange={value => handleTabChange(value as ReconciliationTab)}
         toolbar={
-          <AdminListingToolbar
-            searchValue={listing.tableState.searchQuery}
-            onSearch={listing.handleSearch}
-            searchPlaceholder="Search ref, passenger, client, vendor, or book entry…"
-            onExport={handleExport}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            columns={toolbarColumns}
-            hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
-            onHiddenColumnKeysChange={keys =>
-              listing.setTableState(state => ({ ...state, hiddenColumnKeys: keys }))
-            }
-            filterPopover={{
-              active: hasReconciliationFiltersActive(filters, activeTab),
-              value: filters,
-              onApply: next => {
-                setFilters(next)
-                listing.setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
-              },
-              onClear: () => {
-                setFilters(EMPTY_RECONCILIATION_FILTERS)
-                listing.setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
-              },
-              hasActive: value => hasReconciliationFiltersActive(value, activeTab),
-              width: 'wide',
-              children: (draft, patch) => (
-                <ReconciliationAdvancedFilterFields draft={draft} patch={patch} tab={activeTab} />
-              ),
-            }}
-          />
+          <Stack spacing={1.25}>
+            <Box
+              sx={{
+                mx: -2,
+                px: 2,
+                borderBottom: 1,
+                borderColor: 'divider',
+              }}
+            >
+              <Tabs
+                value={statusTab}
+                onChange={value => handleStatusTabChange(value as ReconciliationStatusTab)}
+                variant="underline"
+                size="sm"
+                scrollable
+                items={RECONCILIATION_STATUS_TABS.map(tab => ({
+                  value: tab.value,
+                  label: `${tab.label} (${
+                    tab.value === 'pending'
+                      ? kpis.pending
+                      : tab.value === 'submitted'
+                        ? kpis.submitted
+                        : kpis.rejected
+                  })`,
+                }))}
+                sx={{ mb: 0, minHeight: 40 }}
+              />
+            </Box>
+            <AdminListingToolbar
+              searchValue={listing.tableState.searchQuery}
+              onSearch={listing.handleSearch}
+              searchPlaceholder="Search ref, passenger, client, vendor, or book entry…"
+              onExport={handleExport}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              columns={toolbarColumns}
+              hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
+              onHiddenColumnKeysChange={keys =>
+                listing.setTableState(state => ({ ...state, hiddenColumnKeys: keys }))
+              }
+              filterPopover={{
+                active: hasReconciliationFiltersActive(filters, activeTab),
+                value: filters,
+                onApply: next => {
+                  setFilters({ ...next, status: '' })
+                  listing.setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
+                },
+                onClear: () => {
+                  setFilters(EMPTY_RECONCILIATION_FILTERS)
+                  listing.setTableState(state => ({ ...state, page: 0, selectedRows: [] }))
+                },
+                hasActive: value => hasReconciliationFiltersActive(value, activeTab),
+                width: 'wide',
+                children: (draft, patch) => (
+                  <ReconciliationAdvancedFilterFields draft={draft} patch={patch} tab={activeTab} />
+                ),
+              }}
+            />
+          </Stack>
         }
         listingContent={
           viewMode === 'table' ? (
             <Stack spacing={0}>
-              {listing.tableState.selectedRows.length > 0 ? (
+              {isPendingStatus && listing.tableState.selectedRows.length > 0 ? (
                 <BulkActions
                   selectedRows={selectedRows}
                   actions={bulkActions}
@@ -235,7 +311,7 @@ export function ReconciliationListingPage() {
                 onColumnFiltersChange={listing.setColumnFilters}
                 getCellValue={getReconciliationCellValue}
                 onRowClick={row => setSelectedItem(row)}
-                bulkActions={bulkActions}
+                bulkActions={isPendingStatus ? bulkActions : undefined}
                 stickyHeader
                 emptyTitle={emptyState.title}
                 emptyDescription={emptyState.description}
@@ -270,10 +346,8 @@ export function ReconciliationListingPage() {
         open={Boolean(selectedItem)}
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
-        onSubmitted={() => {
-          listing.setTableState(state => ({ ...state, selectedRows: [] }))
-          setRefreshKey(key => key + 1)
-        }}
+        onSubmitted={() => refreshAfterAction('submitted')}
+        onRejected={() => refreshAfterAction('rejected')}
       />
 
       <ReconciliationBulkModal

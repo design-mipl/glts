@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, alpha, useTheme } from '@mui/material'
 import { Plus } from 'lucide-react'
-import { Button, Pagination, useToast } from '@/design-system/UIComponents'
+import { Button, ConfirmDialog, Pagination, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   AdminListingStickyHeader,
@@ -30,6 +30,8 @@ export function SlaListingPage() {
   const [editRecord, setEditRecord] = useState<SlaMaster | null>(null)
   const [viewOpen, setViewOpen] = useState(false)
   const [viewRecord, setViewRecord] = useState<SlaMaster | null>(null)
+  const [statusTarget, setStatusTarget] = useState<SlaMaster | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
 
   const loadRows = useCallback(() => {
     setLoading(true)
@@ -68,6 +70,7 @@ export function SlaListingPage() {
       buildSlaColumns({
         onOpenView: openView,
         onOpenEdit: openEdit,
+        onToggleStatus: setStatusTarget,
       }),
     [],
   )
@@ -168,6 +171,32 @@ export function SlaListingPage() {
           setEditRecord(null)
         }}
         onSaved={loadRows}
+      />
+
+      <ConfirmDialog
+        open={Boolean(statusTarget)}
+        onClose={() => setStatusTarget(null)}
+        loading={actionLoading}
+        title={statusTarget?.status === 'active' ? 'Deactivate this SLA?' : 'Activate this SLA?'}
+        description={
+          statusTarget
+            ? `"${statusTarget.name}" will be marked ${statusTarget.status === 'active' ? 'inactive' : 'active'}.`
+            : undefined
+        }
+        confirmLabel={statusTarget?.status === 'active' ? 'Deactivate' : 'Activate'}
+        onConfirm={() => {
+          if (!statusTarget) return
+          const next = statusTarget.status === 'active' ? 'inactive' : 'active'
+          setActionLoading(true)
+          slaMasterService.setStatus(statusTarget.id, next)
+          setActionLoading(false)
+          setStatusTarget(null)
+          showToast({
+            title: next === 'active' ? 'SLA activated' : 'SLA deactivated',
+            variant: 'success',
+          })
+          loadRows()
+        }}
       />
     </>
   )

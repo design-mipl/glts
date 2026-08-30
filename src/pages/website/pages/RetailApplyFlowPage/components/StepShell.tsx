@@ -23,8 +23,11 @@ interface StepShellProps {
   continueDisabled?: boolean
   hideContinue?: boolean
   titleAccessory?: ReactNode
-  /** Max width for title + body (footer stays full card width). */
-  contentMaxWidth?: number
+  /**
+   * Max width for title + body (footer stays full card width).
+   * Pass `'none'` to use the full content pane (e.g. destination grid).
+   */
+  contentMaxWidth?: number | 'none'
   /** Floor for the scrollable body so short steps still fill the card. */
   contentMinHeight?: number | string | Record<string, number | string>
   /** Optional action rendered left of Continue (e.g. Add travelers). */
@@ -66,6 +69,8 @@ export function StepShell({
     m: 0,
   } as const
 
+  const bodyMaxWidth = contentMaxWidth === 'none' ? undefined : contentMaxWidth
+
   return (
     <Box
       sx={{
@@ -83,8 +88,8 @@ export function StepShell({
         sx={{
           flex: '0 0 auto',
           width: '100%',
-          maxWidth: contentMaxWidth,
-          pr: { xs: 0, md: '210px' },
+          maxWidth: bodyMaxWidth,
+          pr: { xs: 0, md: contentMaxWidth === 'none' ? 0 : '210px' },
         }}
       >
         <Box
@@ -133,7 +138,7 @@ export function StepShell({
         sx={{
           flex: '1 1 auto',
           width: '100%',
-          maxWidth: contentMaxWidth,
+          maxWidth: bodyMaxWidth,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'stretch',

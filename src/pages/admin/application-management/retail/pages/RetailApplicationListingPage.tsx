@@ -17,8 +17,11 @@ import {
 import { useCustomerListing } from '@/pages/customer/features/shared/hooks/useCustomerListing'
 import { useListingTabParam } from '@/shared/hooks/useListingTabParam'
 import { getCurrentListingHref, navigateFromListing } from '@/shared/utils/listingNavigationUtils'
-import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
-import type { MarineApplicationRow as RetailApplicationRow } from '@/shared/services/marineApplicationAdminService'
+import { beginNewRetailWebsiteApplication } from '@/shared/services/retailWebsiteApplicationService'
+import {
+  marineApplicationAdminService,
+  type MarineApplicationRow as RetailApplicationRow,
+} from '@/shared/services/marineApplicationAdminService'
 import { adminPortalUserService } from '@/shared/services/adminPortalUserService'
 import { teamService } from '@/shared/services/teamService'
 import {
@@ -150,6 +153,7 @@ export function RetailApplicationListingPage() {
   )
 
   const handleCreate = useCallback(() => {
+    beginNewRetailWebsiteApplication()
     navigateFromListing(navigate, `${RETAIL_LISTING_PATH}/new`, listingReturnHref, {
       state: { freshStart: true },
     })
@@ -213,7 +217,7 @@ export function RetailApplicationListingPage() {
         <AdminListingToolbar
           searchValue={listing.tableState.searchQuery}
           onSearch={listing.handleSearch}
-          searchPlaceholder="Search by GLTS reference, applicant, company, jurisdiction, passport no."
+          searchPlaceholder="Search by GLTS reference, applicant, jurisdiction, passport no."
           onExport={handleExport}
           viewMode={viewMode}
           onViewModeChange={setViewMode}

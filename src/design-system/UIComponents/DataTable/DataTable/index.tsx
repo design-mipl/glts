@@ -1,4 +1,4 @@
-import { useState, Fragment, useMemo, useCallback, memo } from 'react'
+import { useState, Fragment, useMemo, useCallback, memo, useEffect, useRef } from 'react'
 import {
   Box, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Checkbox, IconButton, Skeleton,
@@ -326,6 +326,22 @@ export default function DataTable({
   const isDark = theme.palette.mode === 'dark'
 
   const [editingCell, setEditingCell] = useState<{ rowId: string; columnKey: string } | null>(null)
+  const tableContainerRef = useRef<HTMLDivElement | null>(null)
+  const [viewportWidthPx, setViewportWidthPx] = useState<number | null>(null)
+
+  useEffect(() => {
+    const el = tableContainerRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+
+    const updateWidth = () => {
+      setViewportWidthPx(el.clientWidth)
+    }
+    updateWidth()
+
+    const observer = new ResizeObserver(() => updateWidth())
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [isMobile])
 
   const visibleColumns = useMemo(
     () =>
@@ -549,6 +565,7 @@ export default function DataTable({
       )}
 
       <TableContainer
+        ref={tableContainerRef}
         sx={{
           width: '100%',
           maxHeight: height !== 'auto' ? height : undefined,
@@ -558,6 +575,10 @@ export default function DataTable({
           borderColor: embedded ? undefined : 'divider',
           borderRadius: embedded ? 0 : BORDER_RADIUS.lg,
           boxShadow: embedded ? 'none' : SHADOWS.sm,
+          // Used by empty-state sticky pin so message stays in the visible scrollport.
+          ...(viewportWidthPx != null
+            ? { ['--datatable-viewport-width' as string]: `${viewportWidthPx}px` }
+            : undefined),
         }}
       >
         <Table
@@ -673,13 +694,24 @@ export default function DataTable({
             {loading && <SkeletonRows count={5} cols={totalCols} />}
             {!loading && data.length === 0 && (
               <TableRow>
-                <TableCell colSpan={totalCols} sx={{ border: 0 }}>
-                  <EmptyState
-                    variant={state.searchQuery || state.filters.length > 0 || Object.values(state.columnSearch).some(Boolean) ? 'no-results' : 'no-data'}
-                    title={emptyState?.title}
-                    description={emptyState?.description}
-                    action={emptyState?.action}
-                  />
+                <TableCell colSpan={totalCols} sx={{ border: 0, p: 0 }}>
+                  {/* Sticky to the table scrollport so empty copy stays visible when columns are wide. */}
+                  <Box
+                    sx={{
+                      position: 'sticky',
+                      left: 0,
+                      width: 'var(--datatable-viewport-width, 100%)',
+                      maxWidth: 'var(--datatable-viewport-width, 100%)',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <EmptyState
+                      variant={state.searchQuery || state.filters.length > 0 || Object.values(state.columnSearch).some(Boolean) ? 'no-results' : 'no-data'}
+                      title={emptyState?.title}
+                      description={emptyState?.description}
+                      action={emptyState?.action}
+                    />
+                  </Box>
                 </TableCell>
               </TableRow>
             )}

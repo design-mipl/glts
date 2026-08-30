@@ -3,6 +3,7 @@ import {
   ClipboardCheck,
   FileText,
   MessageSquarePlus,
+  Play,
   UserCog,
 } from 'lucide-react'
 import type { NavigateFunction } from 'react-router-dom'
@@ -13,20 +14,11 @@ import {
   type BulkBatchRow,
   type SingleApplicationRow,
 } from '@/pages/customer/features/applications/data/applicationFlowData'
-import {
-  getApplicationOperationalBadgeColor,
-  getApplicationTypeLabel,
-} from '@/pages/customer/features/applications/components/listing/applicationStatus'
-import { resolveApplicationCompanyName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
-import {
-  resolveApplicationBillingEntity,
-} from '@/pages/customer/features/applications/utils/applicationReferenceUtils'
-import {
-  resolveApplicationCreatorLabel,
-  resolveApplicationCreatorRoleLabel,
-} from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
+import { getApplicationOperationalBadgeColor } from '@/pages/customer/features/applications/components/listing/applicationStatus'
+import { resolveApplicationCreatorLabel, resolveApplicationCreatorRoleLabel } from '@/pages/customer/features/applications/utils/applicationCreatorUtils'
 import type { MarineApplicationRow as RetailApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import { isCustomerSubmitted } from '@/shared/services/marineApplicationAdminService'
+import { formatRetailApplyDropOffLines } from '@/shared/utils/retailApplyDropOff'
 import { formatDisplayDate, formatDisplayDateTime } from '@/shared/utils/formatDisplayDate'
 import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { isRetailReadOnlyWorkspace, isRetailPendingPaymentWorkspace, opensRetailViewFormDirectly, resolveRetailWorkspaceMode } from '../config/RetailWorkspaceMode'
@@ -88,8 +80,19 @@ function buildRowActions(
         },
       }
 
+  const continuePath = `/admin/application-management/retail/new?application=${encodeURIComponent(row.id)}`
+
   return [
     primaryAction,
+    ...(!submitted
+      ? [
+          {
+            label: 'Continue application',
+            icon: <Play size={16} />,
+            onClick: () => navigateFromListing(navigate, continuePath, fromListing),
+          },
+        ]
+      : []),
     {
       label: 'Add Remarks',
       icon: <MessageSquarePlus size={16} />,
@@ -136,7 +139,7 @@ export function buildRetailApplicationColumns({
       widthSize: 'md',
       sortable: true,
       filterable: false,
-      render: (value: string, row: RetailApplicationRow) => (
+      render: (value: string) => (
         <Box>
           <Typography
             variant="body2"
@@ -145,13 +148,6 @@ export function buildRetailApplicationColumns({
           >
             {value}
           </Typography>
-          <Box sx={{ mt: 0.35 }}>
-            <Badge
-              label={getApplicationTypeLabel(row.recordType)}
-              color={row.recordType === 'bulk' ? 'info' : 'neutral'}
-              size="sm"
-            />
-          </Box>
         </Box>
       ),
     },
@@ -190,30 +186,6 @@ export function buildRetailApplicationColumns({
           </Tooltip>
         )
       },
-    },
-    {
-      key: 'companyName',
-      label: 'Company name',
-      widthSize: 'lg',
-      sortable: true,
-      filterable: true,
-      render: (_: unknown, row: RetailApplicationRow) => (
-        <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-          {resolveApplicationCompanyName(row)}
-        </Typography>
-      ),
-    },
-    {
-      key: 'billingEntityName',
-      label: 'Billing entity',
-      widthSize: 'md',
-      sortable: false,
-      filterable: false,
-      render: (_: unknown, row: RetailApplicationRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationBillingEntity(row)}
-        </Typography>
-      ),
     },
     {
       key: 'countryVisa',
@@ -312,7 +284,7 @@ export function buildRetailApplicationColumns({
     {
       key: 'operationalStatus',
       label: 'Status',
-      widthSize: 'xxl',
+      widthSize: 'xl',
       sortable: true,
       filterable: true,
       render: (_: unknown, row: RetailApplicationRow) => (
@@ -325,15 +297,52 @@ export function buildRetailApplicationColumns({
     },
     {
       key: 'processingStage',
-      label: 'Processing stage',
-      widthSize: 'md',
+      label: 'Stage',
+      widthSize: 'lg',
       sortable: false,
       filterable: true,
-      render: (value: string) => (
-        <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
-          {value}
-        </Typography>
-      ),
+      render: (_: unknown, row: RetailApplicationRow) => {
+        if (
+          row.recordType === 'single' &&
+          row.operationalStatus === 'Draft' &&
+          row.retailApply
+        ) {
+          const { primary, secondary } = formatRetailApplyDropOffLines(row.retailApply)
+          return (
+            <Box sx={{ minWidth: 0, py: 0.25 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: 12, lineHeight: 1.3, whiteSpace: 'nowrap' }}
+              >
+                {primary}
+              </Typography>
+              {secondary ? (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    lineHeight: 1.3,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {secondary}
+                </Typography>
+              ) : null}
+            </Box>
+          )
+        }
+
+        return (
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+            {row.processingStage}
+          </Typography>
+        )
+      },
     },
     {
       key: 'sla',
