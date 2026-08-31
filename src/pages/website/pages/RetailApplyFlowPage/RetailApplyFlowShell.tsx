@@ -21,7 +21,6 @@ import { DestinationStep } from './components/steps/DestinationStep'
 import { EligibilityStep } from './components/steps/EligibilityStep'
 import { TravelProfileStep } from './components/steps/TravelProfileStep'
 import { SponsorStep } from './components/steps/SponsorStep'
-import { SponsorDocsStep } from './components/steps/SponsorDocsStep'
 import { PassportStep } from './components/steps/PassportStep'
 import { JurisdictionStep, resolveRetailJurisdictionPatch } from './components/steps/JurisdictionStep'
 import { ConditionalQuestionStep } from './components/steps/ConditionalQuestionStep'
@@ -29,7 +28,6 @@ import { ChecklistStep } from './components/steps/ChecklistStep'
 import { OriginalDocumentsStep } from './components/steps/OriginalDocumentsStep'
 import { CollectionMethodStep } from './components/steps/CollectionMethodStep'
 import { CollectionDetailsStep } from './components/steps/CollectionDetailsStep'
-import { CollectionConfirmationStep } from './components/steps/CollectionConfirmationStep'
 import { InsuranceStep } from './components/steps/InsuranceStep'
 import { FlightTicketStep } from './components/steps/FlightTicketStep'
 import { ReviewStep } from './components/steps/ReviewStep'
@@ -137,9 +135,11 @@ export function RetailApplyFlowShell({
       } else if (restoredId === 'requirements') {
         restoredId = 'checklist'
       } else if (restoredId === 'sponsorDocs') {
-        // Fall back if draft no longer needs sponsor documents.
-        const hasDocsStep = steps.some((step) => step.id === 'sponsorDocs')
-        if (!hasDocsStep) restoredId = 'sponsor'
+        // Retired step — sponsor uploads now live on the Documents step.
+        restoredId = 'checklist'
+      } else if (restoredId === 'collectionConfirmation') {
+        // Retired step — it only replayed the handover selection.
+        restoredId = 'collectionDetails'
       }
       const restoredIndex = steps.findIndex((step) => step.id === restoredId)
       if (restoredIndex !== -1) {
@@ -378,16 +378,7 @@ export function RetailApplyFlowShell({
       <PassportStep
         countryName={countryMaster?.name}
         applicants={draft.applicants}
-        uploads={draft.documentUploads}
         onUpdateApplicant={updateApplicant}
-        onUploadBankStatement={(applicantId, image) =>
-          patchDraft((prev) => ({
-            documentUploads: {
-              ...prev.documentUploads,
-              [`${applicantId}__bank_statement`]: image,
-            },
-          }))
-        }
         onBack={goBack}
         onContinue={goNext}
       />
@@ -444,23 +435,6 @@ export function RetailApplyFlowShell({
             onContinue={goNext}
           />
         )
-      case 'sponsorDocs':
-        return (
-          <SponsorDocsStep
-            applicants={draft.applicants}
-            uploads={draft.documentUploads}
-            onUpload={(applicantId, image) =>
-              patchDraft((prev) => ({
-                documentUploads: {
-                  ...prev.documentUploads,
-                  [`${applicantId}__sponsor_bank_statement`]: image,
-                },
-              }))
-            }
-            onBack={goBack}
-            onContinue={goNext}
-          />
-        )
       case 'traveller':
       case 'passport':
       case 'photo':
@@ -496,6 +470,7 @@ export function RetailApplyFlowShell({
             issuedPassportState={draft.issuedPassportState}
             placeOfResidence={draft.placeOfResidence}
             travelDate={draft.travelDate}
+            travelDateEnd={draft.travelDateEnd}
             onSelect={(jurisdictionId, jurisdictionName) =>
               patchDraft({ jurisdictionId, jurisdictionName })
             }
@@ -525,7 +500,15 @@ export function RetailApplyFlowShell({
                 ),
               )
             }
-            onTravelDateChange={(isoDate) => patchDraft({ travelDate: isoDate })}
+            onTravelDateChange={(isoDate) =>
+              // Re-picking departure invalidates a return date that now sits before it.
+              patchDraft((prev) => ({
+                travelDate: isoDate,
+                travelDateEnd:
+                  prev.travelDateEnd && prev.travelDateEnd < isoDate ? undefined : prev.travelDateEnd,
+              }))
+            }
+            onTravelDateEndChange={(isoDate) => patchDraft({ travelDateEnd: isoDate || undefined })}
             onBack={goBack}
             onContinue={goNext}
           />
@@ -577,17 +560,6 @@ export function RetailApplyFlowShell({
                 collectionDetails: { ...prev.collectionDetails, [key]: value },
               }))
             }
-            onBack={goBack}
-            onContinue={goNext}
-          />
-        )
-      }
-      case 'collectionConfirmation': {
-        const method = draft.collectionMethod ?? 'picked_up_from_company'
-        return (
-          <CollectionConfirmationStep
-            method={method}
-            values={draft.collectionDetails}
             onBack={goBack}
             onContinue={goNext}
           />

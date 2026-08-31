@@ -11,7 +11,12 @@ import {
   getQuietButtonSx,
   tabularNums,
 } from '@/pages/website/theme/applyFlowTheme'
-import { SectionHeading, StatusPill } from '@/pages/website/theme/applyFormControls'
+import {
+  FieldLabel,
+  SectionHeading,
+  StatusPill,
+  applyControlSx,
+} from '@/pages/website/theme/applyFormControls'
 import { StepShell } from '../StepShell'
 import { TravelProfileBuilder } from '../TravelProfileBuilder'
 import { initialsFromName, profileAnswerTags } from '../../config/travelProfileQuestions'
@@ -34,12 +39,13 @@ function applicantReady(applicant: RetailApplicantParty): boolean {
 const ROW_TRANSITION = { duration: 0.2, ease: [0.23, 1, 0.32, 1] as const }
 
 /**
- * One traveller = one row in a manifest, not a portrait card.
+ * One traveller = one titled block.
  *
- * Rows are separated by hairlines rather than each being boxed, so a party of four reads
- * as one list instead of four floating objects. The monogram uses a single neutral
- * treatment for everyone — per-person accent colours were a flagged "AI-generated SaaS"
- * tell, and colour here is reserved for completion state.
+ * The previous version was a bare hairline row whose only input was an unlabelled
+ * borderless name field, so it read as a caption rather than something to fill in — people
+ * could not tell where the name went, or which block belonged to whom. Each traveller now
+ * carries an explicit "TRAVELLER 01" header and a labelled, required Full name control, and
+ * blocks are boxed so a party of six stays attributable when scrolled.
  */
 function TravellerRow({
   applicant,
@@ -68,56 +74,44 @@ function TravellerRow({
       exit={{ opacity: 0, y: -4 }}
       transition={ROW_TRANSITION}
       sx={{
-        display: 'flex',
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        flexDirection: { xs: 'column', sm: 'row' },
-        gap: { xs: 2.5, sm: 3.5 },
-        py: 3.25,
-        borderBottom: `1px solid ${applyFlow.hairlineSoft}`,
-        '&:first-of-type': { borderTop: `1px solid ${applyFlow.hairlineSoft}` },
+        borderRadius: applyRadius.card,
+        border: `1px solid ${complete ? applyFlow.successBorder : applyFlow.hairline}`,
+        backgroundColor: applyFlow.surface,
+        px: { xs: 2.75, sm: 3 },
+        py: 2.75,
+        mb: 2,
+        transition: `border-color 200ms ${applyMotion.easeOut}`,
       }}
     >
-      {/* Index + monogram */}
-      <Stack direction="row" alignItems="center" spacing={3.5} sx={{ flex: '0 0 auto' }}>
-        <Typography
-          sx={{
-            ...tabularNums,
-            fontFamily: applyFont.mono,
-            fontSize: 11,
-            fontWeight: 600,
-            color: applyFlow.inkFaint,
-            width: 18,
-          }}
-        >
-          {String(index + 1).padStart(2, '0')}
-        </Typography>
+      {/* Whose block this is — stated, not implied by position. */}
+      <Stack direction="row" alignItems="center" spacing={2.5} sx={{ mb: 2.25 }}>
         <Box
           aria-hidden
           sx={{
             position: 'relative',
-            width: 38,
-            height: 38,
+            width: 28,
+            height: 28,
+            flex: '0 0 auto',
             display: 'grid',
             placeItems: 'center',
             borderRadius: applyRadius.chip,
             backgroundColor: applyFlow.canvas,
             border: `1px solid ${complete ? applyFlow.successBorder : applyFlow.hairline}`,
             fontFamily: applyFont.mono,
-            fontSize: 13,
+            fontSize: 11,
             fontWeight: 700,
             color: applyFlow.inkMuted,
-            transition: `border-color 200ms ${applyMotion.easeOut}`,
           }}
         >
-          {trimmed ? initialsFromName(trimmed) : '—'}
+          {trimmed ? initialsFromName(trimmed) : String(index + 1).padStart(2, '0')}
           {complete ? (
             <Box
               sx={{
                 position: 'absolute',
                 right: -5,
                 bottom: -5,
-                width: 17,
-                height: 17,
+                width: 16,
+                height: 16,
                 display: 'grid',
                 placeItems: 'center',
                 borderRadius: '50%',
@@ -130,79 +124,42 @@ function TravellerRow({
             </Box>
           ) : null}
         </Box>
-      </Stack>
 
-      {/* Name + profile summary */}
-      <Box sx={{ flex: '1 1 auto', minWidth: 0, width: '100%' }}>
-        <Box
-          component="input"
-          id={`traveller-name-${applicant.id}`}
-          value={name}
-          placeholder="Full name, exactly as printed on the passport"
-          aria-label={`Traveller ${index + 1} full name`}
-          onChange={(event: ChangeEvent<HTMLInputElement>) =>
-            onUpdate({
-              details: { ...applicant.details, fullName: event.target.value },
-              label:
-                index === 0
-                  ? applicant.label
-                  : event.target.value.trim() || `Traveller ${index + 1}`,
-              profileComplete: event.target.value.trim() ? applicant.profileComplete : false,
-            })
-          }
-          sx={{
-            width: '100%',
-            border: 'none',
-            borderBottom: `1px solid transparent`,
-            outline: 'none',
-            backgroundColor: 'transparent',
-            p: 0,
-            pb: 1,
-            fontFamily: applyFont.body,
-            fontSize: 15,
-            fontWeight: 600,
-            letterSpacing: '-0.01em',
-            color: applyFlow.ink,
-            transition: `border-color 150ms ${applyMotion.easeOut}`,
-            '&::placeholder': { color: applyFlow.inkFaint, fontWeight: 400 },
-            '&:hover': { borderBottomColor: applyFlow.hairline },
-            '&:focus': { borderBottomColor: applyFlow.accent },
-          }}
-        />
-        <Typography
-          sx={{
-            fontFamily: applyFont.mono,
-            fontSize: 11,
-            color: applyFlow.inkMuted,
-            mt: 1,
-            lineHeight: 1.45,
-          }}
-        >
-          {tags.length > 0 ? tags.join('  ·  ') : 'No profile details yet'}
-        </Typography>
-      </Box>
+        <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>
+          <Typography
+            sx={{
+              ...tabularNums,
+              fontFamily: applyFont.mono,
+              fontSize: 10.5,
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: applyFlow.inkMuted,
+            }}
+          >
+            Traveller {String(index + 1).padStart(2, '0')}
+            {index === 0 ? (
+              <Box component="span" sx={{ color: applyFlow.inkFaint }}> · you</Box>
+            ) : null}
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: applyFont.body,
+              fontSize: 13,
+              fontWeight: 600,
+              color: trimmed ? applyFlow.ink : applyFlow.inkFaint,
+              mt: 0.75,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {trimmed || 'Name not entered yet'}
+          </Typography>
+        </Box>
 
-      {/* Status + actions */}
-      <Stack
-        direction="row"
-        alignItems="center"
-        spacing={3}
-        sx={{ flex: '0 0 auto', pl: { xs: 0, sm: 2 } }}
-      >
         <StatusPill tone={complete ? 'done' : 'idle'}>{complete ? 'Ready' : 'Incomplete'}</StatusPill>
-        <Button
-          variant={complete ? 'text' : 'contained'}
-          disableElevation
-          onClick={onOpenBuilder}
-          disabled={!trimmed}
-          sx={
-            complete
-              ? { ...getQuietButtonSx(), px: 3.5, minHeight: 44 }
-              : { ...getAccentButtonSx(), px: 4, minHeight: 44 }
-          }
-        >
-          {complete ? 'Edit' : 'Build profile'}
-        </Button>
+
         {onRemove ? (
           <Box
             component="button"
@@ -210,19 +167,21 @@ function TravellerRow({
             onClick={onRemove}
             aria-label={`Remove traveller ${index + 1}`}
             sx={{
-              width: 44,
-              height: 44,
+              width: 34,
+              height: 34,
+              flex: '0 0 auto',
+              '@media (pointer: coarse)': { width: 44, height: 44 },
               display: 'grid',
               placeItems: 'center',
               appearance: 'none',
-              border: 'none',
+              border: `1px solid ${applyFlow.hairline}`,
               background: 'none',
               borderRadius: applyRadius.control,
               color: applyFlow.inkFaint,
               cursor: 'pointer',
-              transition: `color 150ms ${applyMotion.easeOut}`,
+              transition: `color 150ms ${applyMotion.easeOut}, border-color 150ms ${applyMotion.easeOut}`,
               '@media (hover: hover) and (pointer: fine)': {
-                '&:hover': { color: applyFlow.critical },
+                '&:hover': { color: applyFlow.critical, borderColor: 'rgba(180, 35, 24, 0.4)' },
               },
               '&:focus-visible': {
                 outline: 'none',
@@ -230,10 +189,77 @@ function TravellerRow({
               },
             }}
           >
-            <X size={15} />
+            <X size={14} />
           </Box>
         ) : null}
       </Stack>
+
+      {/* The field, labelled. This is the thing people could not previously find. */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'stretch', md: 'flex-end' },
+          gap: 3,
+        }}
+      >
+        <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>
+          <FieldLabel htmlFor={`traveller-name-${applicant.id}`} required>
+            Full name
+          </FieldLabel>
+          <Box
+            component="input"
+            id={`traveller-name-${applicant.id}`}
+            value={name}
+            placeholder="Exactly as printed on the passport"
+            aria-label={`Traveller ${index + 1} full name`}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              onUpdate({
+                details: { ...applicant.details, fullName: event.target.value },
+                label:
+                  index === 0
+                    ? applicant.label
+                    : event.target.value.trim() || `Traveller ${index + 1}`,
+                profileComplete: event.target.value.trim() ? applicant.profileComplete : false,
+              })
+            }
+            sx={applyControlSx}
+          />
+        </Box>
+
+        <Box sx={{ flex: '0 0 auto' }}>
+          <FieldLabel>Embassy questions</FieldLabel>
+          <Button
+            variant={complete ? 'text' : 'contained'}
+            disableElevation
+            onClick={onOpenBuilder}
+            disabled={!trimmed}
+            sx={
+              complete
+                ? { ...getQuietButtonSx(), px: 4, minHeight: 42, width: { xs: '100%', md: 'auto' } }
+                : { ...getAccentButtonSx(), px: 4, minHeight: 42, width: { xs: '100%', md: 'auto' } }
+            }
+          >
+            {complete ? 'Edit answers' : 'Add details'}
+          </Button>
+        </Box>
+      </Box>
+
+      <Typography
+        sx={{
+          fontFamily: applyFont.mono,
+          fontSize: 11,
+          color: complete ? applyFlow.inkMuted : applyFlow.inkFaint,
+          mt: 2,
+          lineHeight: 1.45,
+        }}
+      >
+        {tags.length > 0
+          ? tags.join('  ·  ')
+          : trimmed
+            ? 'Profession, marital status and refusal history still needed'
+            : 'Enter the full name to unlock the profile questions'}
+      </Typography>
     </Box>
   )
 }
@@ -270,16 +296,6 @@ export function TravelProfileStep({
         continueLabel="Continue"
         continueDisabled={!allReady}
         contentMaxWidth={900}
-        footerEndAction={
-          <Button
-            variant="text"
-            startIcon={<Plus size={15} />}
-            onClick={onAddTraveller}
-            sx={{ ...getQuietButtonSx(), px: 4, minHeight: 44 }}
-          >
-            Add traveller
-          </Button>
-        }
       >
         <Box sx={{ width: '100%' }}>
           <SectionHeading>
@@ -298,6 +314,50 @@ export function TravelProfileStep({
               />
             ))}
           </AnimatePresence>
+
+          {/*
+            Add-traveller also lives at the end of the list, not only in the footer — the
+            footer button sits next to Continue, where it reads as a secondary way forward
+            rather than an action on the list above it.
+          */}
+          <Box
+            component="button"
+            type="button"
+            onClick={onAddTraveller}
+            sx={{
+              width: '100%',
+              appearance: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 2,
+              minHeight: 44,
+              borderRadius: applyRadius.card,
+              border: `1px dashed ${applyFlow.hairlineStrong}`,
+              backgroundColor: 'transparent',
+              color: applyFlow.inkMuted,
+              fontFamily: applyFont.body,
+              fontSize: 13.5,
+              fontWeight: 600,
+              transition: `border-color 150ms ${applyMotion.easeOut}, color 150ms ${applyMotion.easeOut}, background-color 150ms ${applyMotion.easeOut}`,
+              '@media (hover: hover) and (pointer: fine)': {
+                '&:hover': {
+                  borderColor: applyFlow.accentBorder,
+                  backgroundColor: applyFlow.accentSoft,
+                  color: applyFlow.ink,
+                },
+              },
+              '&:focus-visible': {
+                outline: 'none',
+                borderColor: applyFlow.accent,
+                boxShadow: `0 0 0 3px ${applyFlow.accentRing}`,
+              },
+            }}
+          >
+            <Plus size={15} />
+            Add traveller {String(applicants.length + 1).padStart(2, '0')}
+          </Box>
         </Box>
       </StepShell>
 

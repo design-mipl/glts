@@ -26,9 +26,8 @@ interface SponsorStepProps {
 function sponsorSelectionComplete(sponsor: RetailTravellerSponsor | undefined): boolean {
   if (!sponsor) return false
   if (sponsor.mode === 'individual') return true
-  return Boolean(
-    sponsor.profileComplete && sponsor.name.trim() && sponsor.relationship && sponsor.contact.trim(),
-  )
+  // Name + relationship only — phone/email and bank details are no longer collected here.
+  return Boolean(sponsor.profileComplete && sponsor.name.trim() && sponsor.relationship)
 }
 
 /**
@@ -138,7 +137,6 @@ export function SponsorStep({
       mode: 'someone_else',
       name: existing?.name ?? '',
       relationship: existing?.relationship ?? '',
-      contact: existing?.contact ?? '',
       profileComplete: existing?.profileComplete,
     })
   }
@@ -289,7 +287,6 @@ export function SponsorStep({
                           mode: 'someone_else',
                           name: event.target.value,
                           relationship: sponsor?.relationship ?? '',
-                          contact: sponsor?.contact ?? '',
                           profileComplete: false,
                         })
                       }
@@ -311,7 +308,7 @@ export function SponsorStep({
                         '&:focus': { borderBottomColor: applyFlow.accent },
                       }}
                     />
-                    {sponsor?.relationship || sponsor?.contact ? (
+                    {sponsor?.relationship ? (
                       <Typography
                         sx={{
                           fontFamily: applyFont.mono,
@@ -320,7 +317,7 @@ export function SponsorStep({
                           mt: 1,
                         }}
                       >
-                        {[sponsor.relationship, sponsor.contact].filter(Boolean).join('  ·  ')}
+                        {sponsor.relationship}
                       </Typography>
                     ) : null}
                   </Box>
@@ -351,7 +348,6 @@ export function SponsorStep({
       <SponsorProfileBuilder
         initialName={builderSponsor.name}
         initialRelationship={builderSponsor.relationship}
-        initialContact={builderSponsor.contact}
         travellerName={builderApplicant.details.fullName.trim() || builderApplicant.label}
         onClose={() => setBuilderForId(null)}
         onComplete={(next) => {
@@ -374,7 +370,7 @@ export function SponsorStep({
     <>
       <StepShell
         title="Who is paying for this trip?"
-        helperText="Self-funded travellers move straight on. A sponsored traveller needs the sponsor's details and a bank statement."
+        helperText="Self-funded travellers move straight on. For a sponsored traveller we just need who the sponsor is and how they're related — their documents are collected with everyone else's."
         onBack={onBack}
         onContinue={onContinue}
         continueDisabled={!allComplete}

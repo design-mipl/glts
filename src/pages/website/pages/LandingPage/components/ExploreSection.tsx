@@ -1,42 +1,96 @@
 import { useMemo } from 'react'
-import { Box, Typography, Button } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getAllCountries } from '@/shared/services/visaService'
-import { publicFonts, publicMotion, usePublicBrandColors } from '../../../theme/publicSiteTokens'
-import { PublicContainer } from '../../../components/PublicContainer'
+import { SiteSection, SiteSectionHeading } from '../../../components/SiteSection'
+import { site, siteFont, siteMotion, siteRadius } from '@/pages/website/theme/siteTheme'
 import { HomepageDestinationCard } from '../../../components/HomepageDestinationCard'
 import { destinationCardGridSx } from '../../../components/destinationCardGrid'
 import { defaultExploreFilters, applyExploreFilters } from '../../../utils/applyExploreFilters'
-import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
-import { useScrollReveal } from '../../../hooks/useScrollReveal'
 
 /** Two full rows on the desktop 5-column grid. */
 const HOMEPAGE_DESTINATION_COUNT = 10
 
+/** Quiet secondary action — hairline, never a second filled button competing with the CTA. */
+export function SiteTextLink({
+  children,
+  onClick,
+  href,
+}: {
+  children: React.ReactNode
+  onClick?: () => void
+  href?: string
+}) {
+  return (
+    <Box
+      component={href ? 'a' : 'button'}
+      type={href ? undefined : 'button'}
+      href={href}
+      onClick={onClick}
+      sx={{
+        appearance: 'none',
+        cursor: 'pointer',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 1.5,
+        px: 3.5,
+        minHeight: 42,
+        '@media (pointer: coarse)': { minHeight: 44 },
+        borderRadius: siteRadius.control,
+        border: `1px solid ${site.hairline}`,
+        backgroundColor: 'transparent',
+        color: site.ink,
+        textDecoration: 'none',
+        fontFamily: siteFont.body,
+        fontSize: 13.5,
+        fontWeight: 600,
+        whiteSpace: 'nowrap',
+        transition: `border-color 150ms ${siteMotion.easeOut}, background-color 150ms ${siteMotion.easeOut}`,
+        '@media (hover: hover) and (pointer: fine)': {
+          '&:hover': { borderColor: site.hairlineStrong, backgroundColor: site.canvas },
+          '&:hover .linkArrow': { transform: 'translateX(3px)' },
+        },
+        '&:active': { transform: 'scale(0.98)' },
+        '&:focus-visible': {
+          outline: 'none',
+          borderColor: site.accent,
+          boxShadow: `0 0 0 3px ${site.accentRing}`,
+        },
+      }}
+    >
+      {children}
+      <Box
+        component="span"
+        className="linkArrow"
+        sx={{ display: 'inline-flex', transition: `transform 180ms ${siteMotion.easeOut}` }}
+      >
+        <ArrowRight size={15} />
+      </Box>
+    </Box>
+  )
+}
+
 export function ExploreSection() {
-  const colors = usePublicBrandColors()
   const navigate = useNavigate()
-  const { ref: headerRef, active: headerActive, reducedMotion } = useScrollReveal<HTMLDivElement>()
 
   const homepageCountries = useMemo(() => {
     const list = applyExploreFilters(getAllCountries(), defaultExploreFilters)
-    const ranked = [...list]
-      .sort((a, b) => {
-        if (a.trending !== b.trending) return a.trending ? -1 : 1
-        return b.trendingPercent - a.trendingPercent
-      })
+    const ranked = [...list].sort((a, b) => {
+      if (a.trending !== b.trending) return a.trending ? -1 : 1
+      return b.trendingPercent - a.trendingPercent
+    })
 
     const top = ranked.slice(0, HOMEPAGE_DESTINATION_COUNT)
-    const philippines = ranked.find(country => country.code === 'PH')
-    const usa = ranked.find(country => country.code === 'US')
+    const philippines = ranked.find((country) => country.code === 'PH')
+    const usa = ranked.find((country) => country.code === 'US')
 
-    if (philippines && !top.some(country => country.code === 'PH')) {
+    if (philippines && !top.some((country) => country.code === 'PH')) {
       top[top.length - 1] = philippines
     }
 
-    if (usa && !top.some(country => country.code === 'US')) {
-      const replaceIndex = top.findIndex(country => country.code !== 'PH')
+    if (usa && !top.some((country) => country.code === 'US')) {
+      const replaceIndex = top.findIndex((country) => country.code !== 'PH')
       if (replaceIndex >= 0) {
         top[replaceIndex] = usa
       }
@@ -46,106 +100,41 @@ export function ExploreSection() {
   }, [])
 
   return (
-    <Box
-      component="section"
-      id="destinations"
-      sx={{
-        bgcolor: colors.white,
-        pt: landingSectionPy,
-        pb: landingSectionPy,
-      }}
-    >
-      <PublicContainer variant="hero">
+    <SiteSection id="destinations">
+      <SiteSectionHeading
+        eyebrow={`Destinations · ${homepageCountries.length} shown`}
+        title="Where are you travelling?"
+        lead="Real fees and real processing times per destination — the same figures your application is priced against."
+        action={
+          <SiteTextLink onClick={() => navigate('/countries')}>All destinations</SiteTextLink>
+        }
+      />
+
+      {homepageCountries.length === 0 ? (
         <Box
-          ref={headerRef}
           sx={{
-            mb: landingSectionHeaderMb,
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'flex-start', sm: 'flex-end' },
-            justifyContent: 'space-between',
-            gap: { xs: 2, sm: 3 },
-            opacity: headerActive ? 1 : 0,
-            transform: headerActive ? 'translateY(0)' : 'translateY(16px)',
-            transition: reducedMotion
-              ? 'none'
-              : `opacity ${publicMotion.revealDurationMs}ms ${publicMotion.easeOut}, transform ${publicMotion.revealDurationMs}ms ${publicMotion.easeOut}`,
+            py: 10,
+            textAlign: 'center',
+            borderRadius: siteRadius.card,
+            border: `1px dashed ${site.hairlineStrong}`,
           }}
         >
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography
-              component="h2"
-              sx={{
-                fontFamily: publicFonts.display,
-                fontWeight: 700,
-                fontSize: { xs: '28px', md: '36px' },
-                color: colors.navy,
-                lineHeight: 1.15,
-                mb: 1,
-              }}
-            >
-              Where Are You Travelling?
-            </Typography>
-            <Typography sx={{ fontSize: '15px', color: colors.textSecondary, maxWidth: 520 }}>
-              Check visa fees and processing times by destination.
-            </Typography>
-          </Box>
-
-          <Button
-            variant="outlined"
-            endIcon={<ArrowRight size={16} />}
-            onClick={() => navigate('/countries')}
-            sx={{
-              textTransform: 'none',
-              borderRadius: '10px',
-              borderColor: colors.border,
-              color: colors.greenBright,
-              fontWeight: 600,
-              px: 3,
-              py: 1.1,
-              flexShrink: 0,
-              alignSelf: { xs: 'stretch', sm: 'center' },
-              transition: `transform ${publicMotion.pressDurationMs}ms ${publicMotion.easeOut}, border-color 200ms ease, background-color 200ms ease, color 200ms ease`,
-              '&:hover': {
-                borderColor: colors.greenBright,
-                bgcolor: colors.greenMuted,
-                color: colors.greenDark,
-              },
-              '&:active': { transform: 'scale(0.97)' },
-            }}
-          >
-            View all destinations
-          </Button>
+          <Typography sx={{ fontFamily: siteFont.body, fontWeight: 600, color: site.ink }}>
+            No destinations available
+          </Typography>
+          <Typography sx={{ fontFamily: siteFont.body, fontSize: 13, color: site.inkMuted, mt: 1 }}>
+            Try again shortly, or browse the full list.
+          </Typography>
         </Box>
-
-        {homepageCountries.length === 0 ? (
-          <Box
-            sx={{
-              py: 8,
-              textAlign: 'center',
-              bgcolor: colors.surface,
-              borderRadius: '16px',
-              border: `1px dashed ${colors.border}`,
-            }}
-          >
-            <Typography sx={{ fontWeight: 600, color: colors.navy }}>
-              No destinations available
-            </Typography>
-          </Box>
-        ) : (
-          <Box
-            role="list"
-            aria-label="Destination cards"
-            sx={destinationCardGridSx}
-          >
-            {homepageCountries.map((country, index) => (
-              <Box key={country.id} role="listitem">
-                <HomepageDestinationCard country={country} index={index} animate={false} />
-              </Box>
-            ))}
-          </Box>
-        )}
-      </PublicContainer>
-    </Box>
+      ) : (
+        <Box role="list" aria-label="Destination cards" sx={destinationCardGridSx}>
+          {homepageCountries.map((country, index) => (
+            <Box key={country.id} role="listitem">
+              <HomepageDestinationCard country={country} index={index} animate={false} />
+            </Box>
+          ))}
+        </Box>
+      )}
+    </SiteSection>
   )
 }

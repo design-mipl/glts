@@ -20,6 +20,11 @@ const ComponentPreviewPage = import.meta.env.DEV
   ? lazy(() => import('./pages/_preview/ComponentPreviewPage'))
   : null
 
+/** Dev-only design-direction spike — proposal surface, not product UI. */
+const DirectionSpikePage = import.meta.env.DEV
+  ? lazy(() => import('./pages/_preview/DirectionSpikePage'))
+  : null
+
 /**
  * Public marketing website. Mounted at `/*`.
  * In-site links use root paths (`/countries`, `/apply/new`, …).
@@ -31,6 +36,9 @@ export function PublicWebsiteApp() {
         <Route path="/apply/new" element={<WebsiteApplicationFlowPage />} />
         {import.meta.env.DEV && ComponentPreviewPage ? (
           <Route path="/_preview/uploads" element={<ComponentPreviewPage />} />
+        ) : null}
+        {import.meta.env.DEV && DirectionSpikePage ? (
+          <Route path="/_preview/direction" element={<DirectionSpikePage />} />
         ) : null}
         <Route
           path="/*"

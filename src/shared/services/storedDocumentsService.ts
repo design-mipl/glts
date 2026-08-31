@@ -3,7 +3,14 @@
  * Prototype persistence via localStorage (no backend yet).
  */
 
-export type StoredDocumentType = 'aadhaar' | 'pan' | 'passport' | 'other'
+export type StoredDocumentType = 'aadhaar' | 'pan' | 'passport' | 'photo' | 'other'
+
+/**
+ * Grouping used by the retail account documents grid. Categories exist so the list stays
+ * scannable as a customer accumulates 15–20 reusable documents; without them the grid is
+ * just an undifferentiated wall of cards.
+ */
+export type StoredDocumentCategory = 'travel' | 'identity' | 'supporting'
 
 export type StoredDocumentStatus = 'ready' | 'expired' | 'pending'
 
@@ -25,11 +32,37 @@ const TYPE_LABELS: Record<StoredDocumentType, string> = {
   aadhaar: 'Aadhaar Card',
   pan: 'PAN Card',
   passport: 'Passport',
+  photo: 'Passport Photo',
   other: 'Other document',
 }
 
+const TYPE_CATEGORY: Record<StoredDocumentType, StoredDocumentCategory> = {
+  passport: 'travel',
+  photo: 'travel',
+  aadhaar: 'identity',
+  pan: 'identity',
+  other: 'supporting',
+}
+
+export const STORED_DOCUMENT_CATEGORY_LABELS: Record<StoredDocumentCategory, string> = {
+  travel: 'Travel documents',
+  identity: 'Identity proof',
+  supporting: 'Supporting documents',
+}
+
+/** Display order for category sections — most reused first. */
+export const STORED_DOCUMENT_CATEGORY_ORDER: StoredDocumentCategory[] = [
+  'travel',
+  'identity',
+  'supporting',
+]
+
 export function storedDocumentTypeLabel(type: StoredDocumentType): string {
   return TYPE_LABELS[type]
+}
+
+export function storedDocumentCategory(type: StoredDocumentType): StoredDocumentCategory {
+  return TYPE_CATEGORY[type]
 }
 
 const SEED: StoredDocument[] = [

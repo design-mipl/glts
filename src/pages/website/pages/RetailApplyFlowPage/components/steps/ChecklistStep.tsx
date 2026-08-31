@@ -1,10 +1,14 @@
-import { useMemo, useRef, useState } from 'react'
-import { Box, Typography, keyframes } from '@mui/material'
-import { Camera, FileText, IdCard, IndianRupee, UserRound } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Box, Collapse, Typography } from '@mui/material'
 import {
-  getStaggerDelayMs,
-  retailFlowEaseOut,
-} from '@/pages/website/theme/retailFlowTokens'
+  Camera,
+  ChevronDown,
+  FileText,
+  HandCoins,
+  IdCard,
+  IndianRupee,
+  UserRound,
+} from 'lucide-react'
 import { WhyWeAskSheet } from '@/pages/website/components/WhyWeAskSheet'
 import { resolveDocumentWhyContent, type DocumentWhyContent } from '@/pages/website/config/documentWhyContent'
 import { DocumentChecklistRow } from '@/pages/website/components/documentChecklist/DocumentChecklistRow'
@@ -12,21 +16,23 @@ import {
   BulkUploadDropzone,
   type BulkUploadDropzoneHandle,
 } from '@/pages/website/components/bulkUpload/BulkUploadDropzone'
-import { initialsFromName, profileAnswerTags } from '../../config/travelProfileQuestions'
+import { initialsFromName } from '../../config/travelProfileQuestions'
 import { StepShell } from '../StepShell'
 import {
   applyFlow,
   applyFont,
   applyMotion,
   applyRadius,
-  getSelectableSx,
+  tabularNums,
 } from '@/pages/website/theme/applyFlowTheme'
 import type { RetailChecklistDocument } from '@/shared/services/retailJourneyResolver'
-import type { RetailApplicantParty, RetailCapturedImage } from '../../types'
+import {
+  SPONSOR_BANK_STATEMENT_DOC_ID,
+  type RetailApplicantParty,
+  type RetailCapturedImage,
+} from '../../types'
 
 type DocCategory = 'personal' | 'financial' | 'other'
-
-/** ~2 minutes of upload/review time estimated per remaining mandatory doc. */
 
 interface ChecklistStepProps {
   documents: RetailChecklistDocument[]
@@ -35,9 +41,8 @@ interface ChecklistStepProps {
   onUpload: (documentId: string, image: RetailCapturedImage, applicantId: string) => void
   onBack: () => void
   onContinue: () => void
-  /** Estimated approval date/time shown in the side LiveStatusPanel. */
+  /** Estimated approval date/time shown beside the readiness figure. */
   estimatedApproval?: string
-  /** Trip context line under the estimate, e.g. "India → Schengen · Tourist visa". */
   /** When true, render only the checklist body (no StepShell) — isolated preview. */
   previewOnly?: boolean
   onBulkFilesSelected?: (applicantId: string, files: File[]) => void
@@ -81,6 +86,15 @@ const ESSENTIAL_PERSONAL_DOCS: RetailChecklistDocument[] = [
   },
 ]
 
+/** Synthesised only when a sponsor's requirement pack contributes no financial document. */
+const SPONSOR_FALLBACK_DOC: RetailChecklistDocument = {
+  documentId: SPONSOR_BANK_STATEMENT_DOC_ID,
+  name: 'Sponsor bank statement',
+  description: "Last 3 months, in the sponsor's name — not the traveller's.",
+  mandatory: true,
+  originalDocument: false,
+}
+
 function withEssentialPersonalDocs(documents: RetailChecklistDocument[]): RetailChecklistDocument[] {
   const hasPhoto = documents.some((doc) => isIdentityCaptureDoc(doc.documentId) === 'photo')
   const hasPassport = documents.some((doc) => isIdentityCaptureDoc(doc.documentId) === 'passport')
@@ -115,48 +129,101 @@ function isDocComplete(
   )
 }
 
-const CATEGORY_META: Record<DocCategory, { label: string; icon: typeof UserRound }> = {
-  personal: { label: 'Personal', icon: UserRound },
-  financial: { label: 'Financial', icon: IndianRupee },
-  other: { label: 'Other', icon: FileText },
+const CATEGORY_LABEL: Record<DocCategory, string> = {
+  personal: 'Personal',
+  financial: 'Financial',
+  other: 'Supporting',
 }
 
-function travellerProgress(
-  applicant: RetailApplicantParty,
+/**
+ * One collapsible party in the document list — a traveller, or the sponsor funding one.
+ *
+ * Sections exist because the flat list did not survive contact with reality: ten travellers
+ * at a dozen documents each is 120 rows with nothing telling you whose passport you are
+ * looking at. Everything here is derived from the resolved requirement pack, so a six-,
+ * ten- or fifteen-document configuration renders without any change to this file.
+ */
+interface DocSubject {
+  /** Stable key for open/closed state — an applicant may contribute two subjects. */
+  key: string
+  applicantId: string
+  kind: 'traveller' | 'sponsor'
+  name: string
+  /** Line under the name, e.g. "Traveller 02" or "Sponsor · funding Priya". */
+  role: string
+  documents: RetailChecklistDocument[]
+}
+
+/**
+ * Split the resolved documents across the people who actually have to produce them.
+ *
+ * A sponsored traveller does not supply their own funds evidence, so the financial
+ * documents move to that traveller's sponsor rather than being duplicated in both
+ * sections. Upload keys stay `applicantId__documentId` either way, so nothing downstream
+ * (review, payment, persistence) needs to know a document was re-attributed.
+ */
+function buildSubjects(
+  applicants: RetailApplicantParty[],
   documents: RetailChecklistDocument[],
+): DocSubject[] {
+  const subjects: DocSubject[] = []
+
+  applicants.forEach((applicant, index) => {
+    const name = applicant.details.fullName.trim() || applicant.label
+    const sponsor = applicant.sponsor?.mode === 'someone_else' ? applicant.sponsor : undefined
+
+    const financial = documents.filter((doc) => categorizeDocument(doc) === 'financial')
+    const ownDocuments = sponsor ? documents.filter((doc) => !financial.includes(doc)) : documents
+
+    subjects.push({
+      key: `${applicant.id}__traveller`,
+      applicantId: applicant.id,
+      kind: 'traveller',
+      name,
+      role: index === 0 ? 'Traveller 01 · you' : `Traveller ${String(index + 1).padStart(2, '0')}`,
+      documents: ownDocuments,
+    })
+
+    if (sponsor) {
+      subjects.push({
+        key: `${applicant.id}__sponsor`,
+        applicantId: applicant.id,
+        kind: 'sponsor',
+        name: sponsor.name.trim() || 'Sponsor',
+        role: `Sponsor · funding ${name}`,
+        documents: financial.length > 0 ? financial : [SPONSOR_FALLBACK_DOC],
+      })
+    }
+  })
+
+  return subjects
+}
+
+function subjectProgress(
+  subject: DocSubject,
+  applicant: RetailApplicantParty | undefined,
   uploads: Record<string, RetailCapturedImage>,
 ) {
-  const mandatory = documents.filter((d) => d.mandatory)
-  const total = mandatory.length
-  const done = mandatory.filter((d) => isDocComplete(d, applicant, uploads)).length
-  const percent = total === 0 ? 100 : Math.round((done / total) * 100)
+  const mandatory = subject.documents.filter((doc) => doc.mandatory)
+  const done = applicant
+    ? mandatory.filter((doc) => isDocComplete(doc, applicant, uploads)).length
+    : 0
   return {
     done,
-    total,
-    remaining: Math.max(0, total - done),
-    percent,
-    complete: total > 0 && done === total,
+    total: mandatory.length,
+    complete: mandatory.length > 0 && done === mandatory.length,
   }
 }
 
-function sleep(ms: number) {
-  return new Promise<void>((resolve) => {
-    window.setTimeout(resolve, ms)
-  })
-}
+/** Per-row upload state that is not derivable from the draft (in flight / failed). */
+type RowStatus = 'verifying' | 'error'
 
-const fadeUp = keyframes`
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-`
-
-/** Two-column checklist body — flex 65/35 (not CSS Grid). */
 export function ChecklistCard({
   documents,
   applicants,
   uploads,
   onUpload,
-  estimatedApproval = 'Aug 29',
+  estimatedApproval,
   onBulkFilesSelected,
 }: {
   documents: RetailChecklistDocument[]
@@ -168,275 +235,126 @@ export function ChecklistCard({
 }) {
   const namedApplicants = applicants.filter((a) => a.details.fullName.trim())
   const list = namedApplicants.length > 0 ? namedApplicants : applicants
-  const [activeApplicantId, setActiveApplicantId] = useState(list[0]?.id ?? '')
-  const [whyContent, setWhyContent] = useState<DocumentWhyContent | null>(null)
-  /** Per-document verification state, keyed by `applicantId__documentId`. */
-  const [docStatus, setDocStatus] = useState<Record<string, 'verifying' | 'error'>>({})
-  const dropzoneRef = useRef<BulkUploadDropzoneHandle | null>(null)
-
-  const activeApplicant = list.find((a) => a.id === activeApplicantId) ?? list[0]
 
   const checklistDocuments = useMemo(() => withEssentialPersonalDocs(documents), [documents])
+  const subjects = useMemo(
+    () => buildSubjects(list, checklistDocuments),
+    [list, checklistDocuments],
+  )
 
-  async function runBulkPipeline(applicantId: string, files: File[]) {
-    if (!files.length) return
-    await sleep(400)
+  const [openKey, setOpenKey] = useState(() => subjects[0]?.key ?? '')
+  const [whyContent, setWhyContent] = useState<DocumentWhyContent | null>(null)
+  /** `applicantId__documentId` -> transient row state. Cleared once the draft has the file. */
+  const [rowStatus, setRowStatus] = useState<Record<string, RowStatus>>({})
+  const [rowError, setRowError] = useState<Record<string, string>>({})
+  const dropzoneRef = useRef<BulkUploadDropzoneHandle | null>(null)
 
-    const first = files[0]
-    if (first && !first.name.toLowerCase().endsWith('.zip')) {
-      handleFile('passport', first, applicantId)
-    } else if (first) {
-      onUpload(
-        'passport',
-        { dataUrl: `bulk://${encodeURIComponent(first.name)}`, capturedAt: new Date().toISOString() },
-        applicantId,
-      )
+  // A traveller added or removed after this step was opened must not leave the accordion
+  // pointing at a party that no longer exists.
+  useEffect(() => {
+    if (subjects.length === 0) return
+    if (subjects.some((subject) => subject.key === openKey)) return
+    setOpenKey(subjects[0].key)
+  }, [subjects, openKey])
+
+  const openSubject = subjects.find((subject) => subject.key === openKey)
+
+  const totals = useMemo(() => {
+    let done = 0
+    let total = 0
+    for (const subject of subjects) {
+      const applicant = list.find((a) => a.id === subject.applicantId)
+      const progress = subjectProgress(subject, applicant, uploads)
+      done += progress.done
+      total += progress.total
     }
+    return { done, total, percent: total === 0 ? 0 : Math.round((done / total) * 100) }
+  }, [subjects, list, uploads])
 
-    onBulkFilesSelected?.(applicantId, files)
+  function clearRow(key: string) {
+    setRowStatus((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setRowError((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
   }
-
-  function handleBulkFiles(files: File[]) {
-    const targetId = activeApplicant?.id
-    if (!targetId) return
-    void runBulkPipeline(targetId, files)
-  }
-
-  const grouped = useMemo(() => {
-    const order: DocCategory[] = ['personal', 'financial', 'other']
-    const map: Record<DocCategory, RetailChecklistDocument[]> = {
-      personal: [],
-      financial: [],
-      other: [],
-    }
-    for (const doc of checklistDocuments) {
-      map[categorizeDocument(doc)].push(doc)
-    }
-    return order
-      .map((category) => ({ category, docs: map[category] }))
-      .filter((group) => group.docs.length > 0)
-  }, [checklistDocuments])
-
-  const activeProgress = useMemo(() => {
-    if (!activeApplicant) return { done: 0, total: 0, remaining: 0, percent: 0, complete: false }
-    return travellerProgress(activeApplicant, checklistDocuments, uploads)
-  }, [activeApplicant, checklistDocuments, uploads])
 
   /**
-   * Read a file, then clear the row's verifying state. The row shows `checking` while the
-   * read is in flight and `error` if it fails, so a bad file is fixed in place instead of
-   * silently doing nothing — which is what the old version did on a FileReader failure.
+   * Read one file into one document slot. Individual uploads and bulk uploads both land
+   * here, which is what keeps the two in sync: there is one status per document, set by
+   * whichever path produced the file, and a failure marks only that row.
    */
-  function handleFile(documentId: string, file: File, applicantId: string) {
+  function ingestFile(applicantId: string, documentId: string, file: File) {
     const key = checklistUploadKey(applicantId, documentId)
-    setDocStatus((prev) => ({ ...prev, [key]: 'verifying' }))
+    setRowStatus((prev) => ({ ...prev, [key]: 'verifying' }))
+    setRowError((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
 
     const reader = new FileReader()
     reader.onload = () => {
       onUpload(
         documentId,
-        { dataUrl: reader.result as string, capturedAt: new Date().toISOString() },
+        { dataUrl: String(reader.result ?? ''), capturedAt: new Date().toISOString() },
         applicantId,
       )
-      setDocStatus((prev) => {
-        const next = { ...prev }
-        delete next[key]
-        return next
-      })
+      clearRow(key)
     }
     reader.onerror = () => {
-      setDocStatus((prev) => ({ ...prev, [key]: 'error' }))
+      setRowStatus((prev) => ({ ...prev, [key]: 'error' }))
+      setRowError((prev) => ({
+        ...prev,
+        [key]: `We couldn't read “${file.name}”. Upload this document again as a clear PDF or photo.`,
+      }))
     }
     reader.readAsDataURL(file)
+  }
+
+  /**
+   * Bulk intake. Files are matched, in order, to the documents still outstanding for the
+   * open party, and each one drives its own row's status — so the individual list shows
+   * uploaded / processing / failed per document instead of the bulk block reporting
+   * separately and asking for the same files twice.
+   */
+  function handleBulkFiles(files: File[]) {
+    if (!openSubject) return
+    const applicant = list.find((a) => a.id === openSubject.applicantId)
+    if (!applicant) return
+
+    const outstanding = openSubject.documents.filter(
+      (doc) => !isDocComplete(doc, applicant, uploads),
+    )
+    files.slice(0, outstanding.length).forEach((file, index) => {
+      ingestFile(applicant.id, outstanding[index].documentId, file)
+    })
+
+    onBulkFilesSelected?.(applicant.id, files)
   }
 
   return (
     <>
       <Box sx={{ width: '100%' }}>
-        {/* Traveller strip — profile details stay visible while you work per person. */}
-        {list.length > 1 ? (
-          <Box
-            role="tablist"
-            aria-label="Traveller"
-            sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', pb: 3, scrollbarWidth: 'none' }}
-          >
-            {list.map((applicant, index) => {
-              const active = applicant.id === activeApplicant?.id
-              const name = applicant.details.fullName.trim() || applicant.label
-              const tags = profileAnswerTags(applicant.profileAnswers)
-              const marital = tags.find((t) => ['Single', 'Married', 'Divorced', 'Widowed'].includes(t))
-              const profession = tags.find(
-                (t) => !['Single', 'Married', 'Divorced', 'Widowed', 'Yes', 'No'].includes(t),
-              )
-              const tagLine = [index > 0 ? 'Co-traveller' : null, marital, profession]
-                .filter(Boolean)
-                .join(' · ')
-              const p = travellerProgress(applicant, checklistDocuments, uploads)
-
-              return (
-                <Box
-                  key={applicant.id}
-                  component="button"
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setActiveApplicantId(applicant.id)}
-                  sx={{
-                    ...getSelectableSx(active),
-                    flex: '0 0 auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2.5,
-                    minHeight: 44,
-                    pl: 3,
-                    pr: 3.5,
-                    py: 2,
-                  }}
-                >
-                  <Box
-                    aria-hidden
-                    sx={{
-                      width: 30,
-                      height: 30,
-                      display: 'grid',
-                      placeItems: 'center',
-                      borderRadius: applyRadius.chip,
-                      backgroundColor: applyFlow.canvas,
-                      border: `1px solid ${p.complete ? applyFlow.successBorder : applyFlow.hairline}`,
-                      fontFamily: applyFont.mono,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: applyFlow.inkMuted,
-                      flex: '0 0 auto',
-                    }}
-                  >
-                    {initialsFromName(name)}
-                  </Box>
-                  <Box sx={{ minWidth: 0, textAlign: 'left' }}>
-                    <Typography
-                      sx={{
-                        fontFamily: applyFont.body,
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: applyFlow.ink,
-                        lineHeight: 1.25,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {name}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontFamily: applyFont.mono,
-                        fontSize: 10,
-                        color: p.complete ? applyFlow.success : applyFlow.inkMuted,
-                        mt: 0.4,
-                        whiteSpace: 'nowrap',
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
-                    >
-                      {p.done}/{p.total}{tagLine ? `  ·  ${tagLine}` : ''}
-                    </Typography>
-                  </Box>
-                </Box>
-              )
-            })}
-          </Box>
-        ) : null}
-
-        {/* Two columns: the list you work through on the left, the tools that act on
-            all of it on the right. The right rail sticks so the dropzone and the
-            readiness figure stay reachable while the list scrolls. */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: 'flex-start',
-            gap: { xs: 4, md: 6 },
-          }}
-        >
-          <Box sx={{ flex: '1 1 auto', minWidth: 0, width: '100%', order: { xs: 2, md: 1 } }}>
-        {/* Documents, grouped. Category label is an inline mono rule, not a 120px gutter. */}
-        {activeApplicant
-          ? grouped.map(({ category, docs }, groupIndex) => (
-              <Box
-                key={category}
-                sx={{
-                  mt: groupIndex === 0 ? 3 : 4,
-                  animation: `${fadeUp} 0.3s ${retailFlowEaseOut} both`,
-                  animationDelay: `${getStaggerDelayMs(groupIndex)}ms`,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontFamily: applyFont.mono,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: applyFlow.inkFaint,
-                    mb: 1,
-                  }}
-                >
-                  {CATEGORY_META[category].label}
-                </Typography>
-                {docs.map((doc) => {
-                  const key = checklistUploadKey(activeApplicant.id, doc.documentId)
-                  return (
-                    <DocumentChecklistRow
-                      key={doc.documentId}
-                      icon={docIcon(doc)}
-                      name={doc.name}
-                      completed={isDocComplete(doc, activeApplicant, uploads)}
-                      optional={!doc.mandatory}
-                      status={docStatus[key]}
-                      onInfoClick={() =>
-                        setWhyContent(
-                          resolveDocumentWhyContent({
-                            documentId: doc.documentId,
-                            name: doc.name,
-                            description: doc.description,
-                          }),
-                        )
-                      }
-                      onFileSelect={(file) => handleFile(doc.documentId, file, activeApplicant.id)}
-                    />
-                  )
-                })}
-              </Box>
-            ))
-          : null}
-          </Box>
-
-          <Box
-            sx={{
-              flex: { xs: '1 1 auto', md: '0 0 296px' },
-              width: { xs: '100%', md: 296 },
-              minWidth: 0,
-              order: { xs: 1, md: 2 },
-              position: { xs: 'static', md: 'sticky' },
-              top: 0,
-            }}
-          >
-        <BulkUploadDropzone
-          openFilePickerRef={dropzoneRef}
-          title="Drop the whole set at once"
-          onFilesSelected={handleBulkFiles}
-        />
-
-        {/* Readiness — mono figure over a hairline bar. */}
+        {/* Overall readiness across every party — the figure that decides Continue. */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
             gap: 3,
-            mt: 4,
-            pb: 3,
+            pb: 2.5,
+            mb: 3,
             borderBottom: `1px solid ${applyFlow.hairlineSoft}`,
           }}
         >
           <Typography
             sx={{
+              ...tabularNums,
               fontFamily: applyFont.mono,
               fontSize: 10.5,
               fontWeight: 700,
@@ -444,16 +362,15 @@ export function ChecklistCard({
               textTransform: 'uppercase',
               color: applyFlow.inkMuted,
               flex: '0 0 auto',
-              fontVariantNumeric: 'tabular-nums',
             }}
           >
-            {activeProgress.done} / {activeProgress.total} ready
+            {totals.done} / {totals.total} ready
           </Typography>
           <Box
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-valuenow={activeProgress.percent}
+            aria-valuenow={totals.percent}
             aria-label="Document readiness"
             sx={{
               flex: '1 1 auto',
@@ -466,8 +383,8 @@ export function ChecklistCard({
             <Box
               sx={{
                 height: '100%',
-                width: `${activeProgress.percent}%`,
-                backgroundColor: activeProgress.complete ? applyFlow.success : applyFlow.accent,
+                width: `${totals.percent}%`,
+                backgroundColor: totals.percent === 100 ? applyFlow.success : applyFlow.accent,
                 transition: `width 300ms ${applyMotion.easeInOut}, background-color 300ms linear`,
               }}
             />
@@ -475,12 +392,12 @@ export function ChecklistCard({
           {estimatedApproval ? (
             <Typography
               sx={{
+                ...tabularNums,
                 fontFamily: applyFont.mono,
                 fontSize: 10.5,
                 color: applyFlow.inkMuted,
                 flex: '0 0 auto',
                 whiteSpace: 'nowrap',
-                fontVariantNumeric: 'tabular-nums',
               }}
             >
               APPROVAL {estimatedApproval}
@@ -488,7 +405,203 @@ export function ChecklistCard({
           ) : null}
         </Box>
 
-          </Box>
+        <BulkUploadDropzone
+          openFilePickerRef={dropzoneRef}
+          title={
+            openSubject
+              ? `Drop ${openSubject.name}'s documents together`
+              : 'Drop the whole set at once'
+          }
+          caption="We match each file to the outstanding documents below and mark them off as they land"
+          onFilesSelected={handleBulkFiles}
+        />
+
+        {/* One section per party. Single-open, so ten travellers stay one screen tall. */}
+        <Box sx={{ mt: 3 }}>
+          {subjects.map((subject) => {
+            const applicant = list.find((a) => a.id === subject.applicantId)
+            const progress = subjectProgress(subject, applicant, uploads)
+            const open = subject.key === openKey
+            const isSponsor = subject.kind === 'sponsor'
+
+            const grouped = (['personal', 'financial', 'other'] as DocCategory[])
+              .map((category) => ({
+                category,
+                docs: subject.documents.filter((doc) => categorizeDocument(doc) === category),
+              }))
+              .filter((group) => group.docs.length > 0)
+
+            return (
+              <Box
+                key={subject.key}
+                sx={{
+                  borderRadius: applyRadius.control,
+                  border: `1px solid ${open ? applyFlow.hairlineStrong : applyFlow.hairline}`,
+                  backgroundColor: applyFlow.surface,
+                  mb: 2,
+                  overflow: 'hidden',
+                  transition: `border-color 180ms ${applyMotion.easeOut}`,
+                }}
+              >
+                <Box
+                  component="button"
+                  type="button"
+                  aria-expanded={open}
+                  onClick={() => setOpenKey(open ? '' : subject.key)}
+                  sx={{
+                    appearance: 'none',
+                    border: 'none',
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2.5,
+                    px: 3,
+                    py: 2,
+                    minHeight: 44,
+                    cursor: 'pointer',
+                    font: 'inherit',
+                    textAlign: 'left',
+                    backgroundColor: open ? applyFlow.canvas : 'transparent',
+                    transition: `background-color 180ms ${applyMotion.easeOut}`,
+                    '&:focus-visible': {
+                      outline: 'none',
+                      boxShadow: `inset 0 0 0 2px ${applyFlow.accent}`,
+                    },
+                  }}
+                >
+                  <Box
+                    aria-hidden
+                    sx={{
+                      width: 26,
+                      height: 26,
+                      flex: '0 0 auto',
+                      display: 'grid',
+                      placeItems: 'center',
+                      borderRadius: applyRadius.chip,
+                      backgroundColor: applyFlow.surface,
+                      border: `1px solid ${
+                        progress.complete ? applyFlow.successBorder : applyFlow.hairline
+                      }`,
+                      fontFamily: applyFont.mono,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: applyFlow.inkMuted,
+                    }}
+                  >
+                    {isSponsor ? (
+                      <HandCoins size={14} strokeWidth={1.9} />
+                    ) : (
+                      initialsFromName(subject.name) || <UserRound size={14} strokeWidth={1.9} />
+                    )}
+                  </Box>
+
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontFamily: applyFont.body,
+                        fontSize: 13.5,
+                        fontWeight: 600,
+                        color: applyFlow.ink,
+                        lineHeight: 1.3,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {subject.name}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontFamily: applyFont.mono,
+                        fontSize: 10.5,
+                        color: applyFlow.inkMuted,
+                        mt: 0.5,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {subject.role}
+                    </Typography>
+                  </Box>
+
+                  <Typography
+                    sx={{
+                      ...tabularNums,
+                      fontFamily: applyFont.mono,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: progress.complete ? applyFlow.success : applyFlow.inkMuted,
+                      flex: '0 0 auto',
+                    }}
+                  >
+                    {progress.done}/{progress.total}
+                  </Typography>
+
+                  <ChevronDown
+                    size={14}
+                    style={{
+                      color: applyFlow.inkFaint,
+                      flexShrink: 0,
+                      transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+                      transition: `transform 180ms ${applyMotion.easeOut}`,
+                    }}
+                  />
+                </Box>
+
+                <Collapse in={open} unmountOnExit>
+                  <Box sx={{ px: 3, pb: 1.5 }}>
+                    {grouped.map((group, groupIndex) => (
+                      <Box key={group.category} sx={{ mt: groupIndex === 0 ? 1 : 2.5 }}>
+                        <Typography
+                          sx={{
+                            fontFamily: applyFont.mono,
+                            fontSize: 10,
+                            fontWeight: 700,
+                            letterSpacing: '0.14em',
+                            textTransform: 'uppercase',
+                            color: applyFlow.inkFaint,
+                            mb: 0.5,
+                          }}
+                        >
+                          {CATEGORY_LABEL[group.category]}
+                        </Typography>
+                        {group.docs.map((doc) => {
+                          const key = checklistUploadKey(subject.applicantId, doc.documentId)
+                          return (
+                            <DocumentChecklistRow
+                              key={doc.documentId}
+                              icon={docIcon(doc)}
+                              name={doc.name}
+                              dense
+                              completed={
+                                applicant ? isDocComplete(doc, applicant, uploads) : false
+                              }
+                              optional={!doc.mandatory}
+                              status={rowStatus[key]}
+                              errorHint={rowError[key]}
+                              onInfoClick={() =>
+                                setWhyContent(
+                                  resolveDocumentWhyContent({
+                                    documentId: doc.documentId,
+                                    name: doc.name,
+                                    description: doc.description,
+                                  }),
+                                )
+                              }
+                              onFileSelect={(file) =>
+                                ingestFile(subject.applicantId, doc.documentId, file)
+                              }
+                            />
+                          )
+                        })}
+                      </Box>
+                    ))}
+                  </Box>
+                </Collapse>
+              </Box>
+            )
+          })}
         </Box>
       </Box>
 
@@ -512,11 +625,17 @@ export function ChecklistStep({
   const list = namedApplicants.length > 0 ? namedApplicants : applicants
   const checklistDocuments = useMemo(() => withEssentialPersonalDocs(documents), [documents])
 
-  const mandatoryComplete =
-    list.length > 0 &&
-    list.every((applicant) =>
-      checklistDocuments.filter((doc) => doc.mandatory).every((doc) => isDocComplete(doc, applicant, uploads)),
-    )
+  const mandatoryComplete = useMemo(() => {
+    const subjects = buildSubjects(list, checklistDocuments)
+    if (subjects.length === 0) return false
+    return subjects.every((subject) => {
+      const applicant = list.find((a) => a.id === subject.applicantId)
+      if (!applicant) return false
+      return subject.documents
+        .filter((doc) => doc.mandatory)
+        .every((doc) => isDocComplete(doc, applicant, uploads))
+    })
+  }, [list, checklistDocuments, uploads])
 
   const card = (
     <ChecklistCard
@@ -534,8 +653,7 @@ export function ChecklistStep({
   return (
     <StepShell
       title="Add your documents"
-      mobileTitle="Add your documents"
-      helperText="Drop the whole set in one go and we'll sort them, or add them one at a time. You can finish this any time in the next 5 days — we start drafting your forms as soon as you check out."
+      helperText="Open a traveller, drop their whole set in one go, and we'll tick each document off as it lands. You can finish this any time in the next 5 days — we start drafting your forms as soon as you check out."
       onBack={onBack}
       onContinue={onContinue}
       continueDisabled={!mandatoryComplete || list.length === 0}

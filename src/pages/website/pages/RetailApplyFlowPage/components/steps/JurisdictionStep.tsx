@@ -35,10 +35,12 @@ interface JurisdictionStepProps {
   issuedPassportState?: string
   placeOfResidence?: string
   travelDate?: string
+  travelDateEnd?: string
   onSelect: (jurisdictionId: string, jurisdictionName?: string) => void
   onPassportStateChange: (stateName: string) => void
   onPlaceOfResidenceChange: (stateName: string) => void
   onTravelDateChange: (isoDate: string) => void
+  onTravelDateEndChange: (isoDate: string) => void
   onBack: () => void
   onContinue: () => void
 }
@@ -60,10 +62,12 @@ export function JurisdictionStep({
   issuedPassportState = '',
   placeOfResidence = '',
   travelDate = '',
+  travelDateEnd = '',
   onSelect,
   onPassportStateChange,
   onPlaceOfResidenceChange,
   onTravelDateChange,
+  onTravelDateEndChange,
   onBack,
   onContinue,
 }: JurisdictionStepProps) {
@@ -94,14 +98,98 @@ export function JurisdictionStep({
 
   const continueDisabled =
     !travelDate.trim() ||
+    !travelDateEnd.trim() ||
     (useStateMapping
       ? !(issuedPassportState.trim() && mappingState && selectedId)
       : needsCity && !selectedId)
 
+  /**
+   * The resolved centre sits directly under the fields that produce it, so the cause and
+   * the result read as one thought. It is a bordered card rather than the plain text it
+   * used to be — prominent enough to be the answer to the step's question, small enough
+   * not to outweigh the inputs above it.
+   */
+  const centreCard = (
+    <Box
+      sx={{
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2.5,
+        px: 2.75,
+        py: 2.25,
+        borderRadius: applyRadius.card,
+        border: `1px solid ${centreLabel ? applyFlow.accentBorder : applyFlow.hairline}`,
+        backgroundColor: centreLabel ? applyFlow.accentSoft : applyFlow.canvas,
+        transition: `border-color 220ms ${applyMotion.easeOut}, background-color 220ms ${applyMotion.easeOut}`,
+      }}
+    >
+      <Box
+        aria-hidden
+        sx={{
+          width: 28,
+          height: 28,
+          flex: '0 0 auto',
+          display: 'grid',
+          placeItems: 'center',
+          borderRadius: applyRadius.chip,
+          backgroundColor: applyFlow.surface,
+          border: `1px solid ${centreLabel ? applyFlow.accentBorder : applyFlow.hairline}`,
+          color: centreLabel ? applyFlow.accentInk : applyFlow.inkFaint,
+        }}
+      >
+        <MapPin size={14} strokeWidth={1.9} />
+      </Box>
+
+      <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>
+        <Typography
+          sx={{
+            ...tabularNums,
+            fontFamily: applyFont.mono,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: applyFlow.inkMuted,
+            mb: 0.75,
+          }}
+        >
+          Your application centre
+        </Typography>
+        <Typography
+          sx={{
+            fontFamily: applyFont.display,
+            fontSize: centreLabel ? 16 : 13.5,
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.2,
+            color: centreLabel ? applyFlow.ink : applyFlow.inkMuted,
+          }}
+        >
+          {centreLabel || (useStateMapping ? 'Select a state to resolve your centre' : 'Choose a submission city')}
+        </Typography>
+        {centreMeta ? (
+          <Typography
+            sx={{
+              fontFamily: applyFont.mono,
+              fontSize: 10.5,
+              color: applyFlow.inkMuted,
+              mt: 0.75,
+              lineHeight: 1.45,
+            }}
+          >
+            {centreMeta}
+          </Typography>
+        ) : null}
+      </Box>
+
+    </Box>
+  )
+
   return (
     <StepShell
       title="Where will you submit your application?"
-      helperText="Your residence decides the application centre. Then lock in when you intend to travel."
+      helperText="Your residence decides the application centre. Then lock in the dates you intend to travel."
       onBack={onBack}
       onContinue={onContinue}
       continueDisabled={continueDisabled}
@@ -166,56 +254,10 @@ export function JurisdictionStep({
                 </Typography>
               </Box>
 
-              {/* Result readout — the payoff, anchored to a gold rule. */}
-              <Box
-                sx={{
-                  pl: 4,
-                  borderLeft: `2px solid ${centreLabel ? applyFlow.accent : applyFlow.hairline}`,
-                  transition: `border-color 200ms ${applyMotion.easeOut}`,
-                }}
-              >
-                <Typography
-                  sx={{
-                    ...tabularNums,
-                    fontFamily: applyFont.mono,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: applyFlow.inkMuted,
-                    mb: 1.5,
-                  }}
-                >
-                  Your application centre
-                </Typography>
-                <Typography
-                  sx={{
-                    fontFamily: applyFont.display,
-                    fontSize: centreLabel ? 19 : 14.5,
-                    fontWeight: 700,
-                    letterSpacing: '-0.02em',
-                    lineHeight: 1.2,
-                    color: centreLabel ? applyFlow.ink : applyFlow.inkMuted,
-                  }}
-                >
-                  {centreLabel || 'Select a state to resolve'}
-                </Typography>
-                {centreMeta ? (
-                  <Typography
-                    sx={{
-                      fontFamily: applyFont.mono,
-                      fontSize: 11.5,
-                      color: applyFlow.inkMuted,
-                      mt: 1.5,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {centreMeta}
-                  </Typography>
-                ) : null}
-              </Box>
+              {centreCard}
             </Stack>
           ) : needsCity ? (
+            <Stack spacing={2}>
             <Stack spacing={2} role="radiogroup" aria-label="Submission city">
               {jurisdictions.map((jurisdiction) => {
                 const selected = jurisdiction.id === selectedId
@@ -304,6 +346,9 @@ export function JurisdictionStep({
                 )
               })}
             </Stack>
+            {/* Card sits outside the radiogroup — it is the result, not another option. */}
+            {centreCard}
+            </Stack>
           ) : (
             <Typography
               sx={{ fontFamily: applyFont.body, fontSize: 13.5, color: applyFlow.inkMuted, lineHeight: 1.55 }}
@@ -323,10 +368,12 @@ export function JurisdictionStep({
             borderLeft: { xs: 'none', lg: `1px solid ${applyFlow.hairlineSoft}` },
           }}
         >
-          <SectionHeading>Travel date</SectionHeading>
+          <SectionHeading>Travel dates</SectionHeading>
           <ApplyDateCalendar
             value={travelDate}
             onChange={onTravelDateChange}
+            endValue={travelDateEnd}
+            onRangeEndChange={onTravelDateEndChange}
             config={
               travelFeasibilityConfig ?? {
                 requiredWorkingDays: null,

@@ -1,17 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import { Box, Typography, Collapse, useMediaQuery } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
-import { Plus, Minus } from 'lucide-react'
-import { PublicContainer } from './PublicContainer'
-import {
-  publicFonts,
-  usePublicBrandColors,
-} from '../theme/publicSiteTokens'
-import {
-  landingSectionHeaderMb,
-  landingSectionPy,
-} from '../pages/LandingPage/landingPageSpacing'
-import { faqSupportCardImage } from '../assets/landingPageImages'
+import { useState } from 'react'
+import { Box, Typography, Collapse } from '@mui/material'
+import { Minus, Plus } from 'lucide-react'
+import { SiteSection, SiteSectionHeading } from './SiteSection'
+import { site, siteFont, siteMotion, siteRadius, mrzSx } from '../theme/siteTheme'
 
 export interface FAQItem {
   q: string
@@ -23,17 +14,23 @@ export interface FAQSectionProps {
   title?: string
 }
 
-const DEFAULT_TITLE = "FAQ's"
-const HEIGHT_TRANSITION_MS = 300
+const DEFAULT_TITLE = 'Common questions'
 
+/**
+ * FAQ.
+ *
+ * Rebuilt as a single hairline-divided list. The previous version paired the accordion
+ * with a large support photograph whose height was measured with a `ResizeObserver` and
+ * mirrored onto the image on every expand — a layout read/write loop maintained purely so
+ * a decorative image stayed the same height as the questions. The image is gone and so is
+ * the observer.
+ *
+ * Each row is its own disclosure and several can be open at once: people scanning an FAQ
+ * are usually comparing two answers, and an accordion that closes the previous one makes
+ * that impossible.
+ */
 export function FAQSection({ faqs, title = DEFAULT_TITLE }: FAQSectionProps) {
-  const colors = usePublicBrandColors()
-  const theme = useTheme()
-  const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
-  const accordionRef = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
-  const [imgSrc, setImgSrc] = useState(faqSupportCardImage.src)
-  const [accordionHeight, setAccordionHeight] = useState<number | null>(null)
 
   const toggle = (index: number) => {
     setExpanded((prev) => {
@@ -44,196 +41,118 @@ export function FAQSection({ faqs, title = DEFAULT_TITLE }: FAQSectionProps) {
     })
   }
 
-  useEffect(() => {
-    const el = accordionRef.current
-    if (!el || !isDesktop) {
-      setAccordionHeight(null)
-      return
-    }
-
-    const updateHeight = () => {
-      setAccordionHeight(el.getBoundingClientRect().height)
-    }
-
-    updateHeight()
-
-    const observer = new ResizeObserver(() => {
-      updateHeight()
-    })
-    observer.observe(el)
-
-    return () => observer.disconnect()
-  }, [isDesktop, faqs.length])
-
   return (
-    <Box component="section" sx={{ py: landingSectionPy, backgroundColor: colors.white }}>
-      <PublicContainer variant="hero">
-        <Box sx={{ maxWidth: 640, mb: landingSectionHeaderMb }}>
-          <Typography
-            component="h2"
-            sx={{
-              fontFamily: publicFonts.heading,
-              fontWeight: 800,
-              color: colors.navy,
-              fontSize: { xs: '28px', md: '32px', lg: '36px' },
-              letterSpacing: '-0.03em',
-              lineHeight: 1.15,
-              mb: 1.5,
-            }}
-          >
-            {title}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: { xs: '15px', md: '16px' },
-              lineHeight: 1.65,
-              color: colors.textSecondary,
-            }}
-          >
-            Quick answers to common visa questions — or reach our specialists for personalized
-            guidance.
-          </Typography>
-        </Box>
+    <SiteSection tone="canvas">
+      <SiteSectionHeading
+        eyebrow={`Questions · ${String(faqs.length).padStart(2, '0')}`}
+        title={title}
+        lead="Short answers to what people ask most. Anything not covered here, a specialist can answer directly."
+      />
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              md: 'minmax(0, 1.15fr) minmax(0, 1.2fr)',
-            },
-            gap: { xs: 3, md: 3.5, lg: 4 },
-            alignItems: 'start',
-          }}
-        >
-          {/* Left — premium support image (height tracks accordion) */}
-          <Box
-            sx={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              minHeight: { xs: 360, sm: 400 },
-              height: {
-                xs: 'auto',
-                md: accordionHeight ? `${accordionHeight}px` : 'auto',
-              },
-              aspectRatio: { xs: '4 / 5', md: 'unset' },
-            }}
-          >
+      <Box
+        sx={{
+          maxWidth: 860,
+          border: `1px solid ${site.hairline}`,
+          borderRadius: siteRadius.card,
+          backgroundColor: site.surface,
+          overflow: 'hidden',
+        }}
+      >
+        {faqs.map(({ q, a }, index) => {
+          const isOpen = expanded.has(index)
+          return (
             <Box
-              component="img"
-              src={imgSrc}
-              alt={faqSupportCardImage.alt}
-              loading="lazy"
-              onError={() => setImgSrc(faqSupportCardImage.fallback)}
+              key={q}
               sx={{
-                display: 'block',
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                objectPosition: 'center center',
-                borderRadius: '20px',
+                borderBottom: `1px solid ${site.hairlineSoft}`,
+                '&:last-of-type': { borderBottom: 'none' },
               }}
-            />
-          </Box>
+            >
+              <Box
+                component="button"
+                type="button"
+                onClick={() => toggle(index)}
+                aria-expanded={isOpen}
+                sx={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  minHeight: 44,
+                  py: 2.5,
+                  px: { xs: 3, md: 3.5 },
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontFamily: 'inherit',
+                  transition: `background-color 180ms ${siteMotion.easeOut}`,
+                  '@media (hover: hover) and (pointer: fine)': {
+                    '&:hover': { backgroundColor: site.canvas },
+                  },
+                  '&:focus-visible': {
+                    outline: 'none',
+                    boxShadow: `inset 0 0 0 2px ${site.accent}`,
+                  },
+                }}
+              >
+                <Typography sx={{ ...mrzSx, fontSize: 9.5, flex: '0 0 auto', width: 24 }}>
+                  {String(index + 1).padStart(2, '0')}
+                </Typography>
 
-          {/* Right — FAQ accordion list */}
-          <Box
-            ref={accordionRef}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: { xs: 1.5, md: 1.75 },
-              minWidth: 0,
-            }}
-          >
-            {faqs.map(({ q, a }, index) => {
-              const isOpen = expanded.has(index)
-              return (
-                <Box
-                  key={q}
+                <Typography
                   sx={{
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '16px',
-                    bgcolor: colors.white,
-                    boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)',
-                    overflow: 'hidden',
+                    flex: 1,
+                    minWidth: 0,
+                    fontFamily: siteFont.body,
+                    fontWeight: 600,
+                    fontSize: { xs: 14, md: 15 },
+                    color: site.ink,
+                    lineHeight: 1.4,
                   }}
                 >
-                  <Box
-                    component="button"
-                    type="button"
-                    onClick={() => toggle(index)}
-                    aria-expanded={isOpen}
-                    sx={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      justifyContent: 'space-between',
-                      gap: 2,
-                      py: { xs: 2, md: 2.25 },
-                      px: { xs: 2, md: 2.25 },
-                      bgcolor: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontWeight: 600,
-                        color: colors.navy,
-                        fontSize: { xs: '15px', md: '16px' },
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {q}
-                    </Typography>
-                    <Box
-                      sx={{
-                        flexShrink: 0,
-                        width: 28,
-                        height: 28,
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: isOpen ? colors.greenBright : 'transparent',
-                        color: isOpen ? colors.white : colors.navy,
-                        transition: 'background-color 0.2s ease, color 0.2s ease',
-                      }}
-                      aria-hidden
-                    >
-                      {isOpen ? (
-                        <Minus size={18} strokeWidth={2.25} />
-                      ) : (
-                        <Plus size={18} strokeWidth={2.25} />
-                      )}
-                    </Box>
-                  </Box>
+                  {q}
+                </Typography>
 
-                  <Collapse in={isOpen} timeout={HEIGHT_TRANSITION_MS}>
-                    <Typography
-                      sx={{
-                        px: { xs: 2, md: 2.25 },
-                        pb: { xs: 2, md: 2.25 },
-                        color: colors.textSecondary,
-                        fontSize: { xs: '13px', md: '14px' },
-                        lineHeight: 1.65,
-                      }}
-                    >
-                      {a}
-                    </Typography>
-                  </Collapse>
+                <Box
+                  aria-hidden
+                  sx={{
+                    flexShrink: 0,
+                    width: 26,
+                    height: 26,
+                    display: 'grid',
+                    placeItems: 'center',
+                    borderRadius: siteRadius.chip,
+                    border: `1px solid ${isOpen ? site.accentBorder : site.hairline}`,
+                    backgroundColor: isOpen ? site.accentSoft : 'transparent',
+                    color: isOpen ? site.accentInk : site.inkMuted,
+                    transition: `background-color 180ms ${siteMotion.easeOut}, border-color 180ms ${siteMotion.easeOut}, color 180ms ${siteMotion.easeOut}`,
+                  }}
+                >
+                  {isOpen ? <Minus size={14} strokeWidth={2.2} /> : <Plus size={14} strokeWidth={2.2} />}
                 </Box>
-              )
-            })}
-          </Box>
-        </Box>
-      </PublicContainer>
-    </Box>
+              </Box>
+
+              <Collapse in={isOpen} timeout={220}>
+                <Typography
+                  sx={{
+                    pl: { xs: 3, md: '76px' },
+                    pr: { xs: 3, md: 3.5 },
+                    pb: 3,
+                    fontFamily: siteFont.body,
+                    color: site.inkMuted,
+                    fontSize: 13.5,
+                    lineHeight: 1.6,
+                    maxWidth: '72ch',
+                  }}
+                >
+                  {a}
+                </Typography>
+              </Collapse>
+            </Box>
+          )
+        })}
+      </Box>
+    </SiteSection>
   )
 }

@@ -47,8 +47,12 @@ export type RetailTravellerSponsor =
       mode: 'someone_else'
       name: string
       relationship: string
-      /** Phone or email — inventory Step 8.6 “contact”. */
-      contact: string
+      /**
+       * @deprecated Phone/email are no longer collected for sponsors (client decision) and
+       * neither are sponsor bank details. Kept optional so sessionStorage drafts written by
+       * an earlier build still parse — nothing reads it any more.
+       */
+      contact?: string
       /** True after Build sponsor profile modal is completed. */
       profileComplete?: boolean
     }
@@ -151,8 +155,10 @@ export interface RetailFlowDraft {
   issuedPassportState?: string
   /** Place of residence (>6 months) — preferred over passport state for jurisdiction. */
   placeOfResidence?: string
-  /** Intended travel date (ISO YYYY-MM-DD) — selected with application city. */
+  /** Start of the intended trip (ISO YYYY-MM-DD) — selected with application city. */
   travelDate?: string
+  /** End of the intended trip (ISO YYYY-MM-DD). Travel is a range, not a single day. */
+  travelDateEnd?: string
   /** Step the applicant was last viewing — lets a page refresh resume in place, not just restore field values. */
   lastStepId?: RetailStepId
   answers: Record<string, string>

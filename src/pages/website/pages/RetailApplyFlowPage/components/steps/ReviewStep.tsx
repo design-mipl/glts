@@ -1,6 +1,18 @@
-import { useMemo, useState, type ReactNode } from 'react'
-import { Box, Collapse, Stack, Typography } from '@mui/material'
-import { AlertTriangle, ChevronDown, Pencil } from 'lucide-react'
+import { useMemo, type ReactNode } from 'react'
+import { Box, Stack, Typography } from '@mui/material'
+import {
+  AlertTriangle,
+  CalendarRange,
+  FileText,
+  HandCoins,
+  MapPin,
+  Pencil,
+  Plane,
+  Shield,
+  Truck,
+  Users,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { RetailJourney } from '@/shared/services/retailJourneyResolver'
 import { retailCollectionMethodLabel } from '../../config/retailCollectionMethods'
 import { initialsFromName } from '../../config/travelProfileQuestions'
@@ -13,7 +25,13 @@ import {
 } from '../../types'
 import { checklistUploadKey } from './ChecklistStep'
 import { StepShell } from '../StepShell'
-import { applyFlow, applyFont, applyMotion, applyRadius } from '@/pages/website/theme/applyFlowTheme'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+  tabularNums,
+} from '@/pages/website/theme/applyFlowTheme'
 import { StatusPill } from '@/pages/website/theme/applyFormControls'
 
 interface ReviewStepProps {
@@ -48,43 +66,34 @@ function isDocComplete(
   return Boolean(uploads[checklistUploadKey(applicant.id, documentId)] || uploads[documentId])
 }
 
-function sponsorComplete(
-  applicant: RetailApplicantParty,
-  uploads: RetailFlowDraft['documentUploads'],
-): boolean {
+function sponsorComplete(applicant: RetailApplicantParty): boolean {
   const sponsor = applicant.sponsor
   if (!sponsor) return false
   if (sponsor.mode === 'individual') return true
-  return (
-    Boolean(sponsor.profileComplete) &&
-    sponsor.name.trim().length > 0 &&
-    sponsor.relationship.trim().length > 0 &&
-    sponsor.contact.trim().length > 0 &&
-    Boolean(uploads[checklistUploadKey(applicant.id, SPONSOR_BANK_STATEMENT_DOC_ID)])
-  )
+  // Sponsor documents are counted with the traveller's own set on the Documents step,
+  // so completeness here is just the sponsor's identity and relationship.
+  return Boolean(sponsor.profileComplete) && sponsor.name.trim().length > 0 &&
+    sponsor.relationship.trim().length > 0
 }
 
-function travellerComplete(
-  applicant: RetailApplicantParty,
-  journey: RetailJourney,
-  draft: RetailFlowDraft,
-): boolean {
-  const docsOk = journey.documents
-    .filter((d) => d.mandatory)
-    .every((d) => isDocComplete(d.documentId, applicant, draft.documentUploads))
-  const profileOk = Boolean(applicant.profileComplete || applicant.details.fullName.trim())
-  const sponsorOk = sponsorComplete(applicant, draft.documentUploads)
-  return docsOk && profileOk && sponsorOk
+function extraLabel(
+  selection: RetailExtraSelection,
+  services: RetailJourney['insuranceServices'],
+): string {
+  if (selection.choice === 'skip') return 'Not added'
+  if (selection.choice === 'self_provided') return 'Own policy uploaded'
+  return services.find((service) => service.id === selection.serviceId)?.serviceName ?? 'Arranged by GLTS'
 }
 
-function extraLabel(selection: RetailExtraSelection, services: RetailJourney['insuranceServices']): string {
-  if (selection.choice === 'skip') return 'Skipped'
-  if (selection.choice === 'self_provided') return 'Upload own'
-  return services.find((service) => service.id === selection.serviceId)?.serviceName ?? 'Get from GLTS'
-}
-
-function StatusBadge({ complete }: { complete: boolean }) {
-  return <StatusPill tone={complete ? 'done' : 'attention'}>{complete ? 'Complete' : 'Incomplete'}</StatusPill>
+function formatDate(iso?: string) {
+  if (!iso) return '—'
+  const date = new Date(`${iso}T12:00:00`)
+  if (Number.isNaN(date.getTime())) return iso
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date)
 }
 
 function EditLink({ label = 'Edit', onClick }: { label?: string; onClick?: () => void }) {
@@ -93,10 +102,7 @@ function EditLink({ label = 'Edit', onClick }: { label?: string; onClick?: () =>
     <Box
       component="button"
       type="button"
-      onClick={(event) => {
-        event.stopPropagation()
-        onClick()
-      }}
+      onClick={onClick}
       sx={{
         appearance: 'none',
         border: 'none',
@@ -106,23 +112,23 @@ function EditLink({ label = 'Edit', onClick }: { label?: string; onClick?: () =>
         display: 'inline-flex',
         alignItems: 'center',
         gap: 1,
-        px: 1.5,
+        flex: '0 0 auto',
+        px: 2,
         py: 1,
+        minHeight: 32,
+        '@media (pointer: coarse)': { minHeight: 44, px: 3 },
         borderRadius: applyRadius.chip,
         color: applyFlow.inkMuted,
         fontFamily: applyFont.mono,
         fontSize: 10.5,
-        fontWeight: 600,
+        fontWeight: 700,
         letterSpacing: '0.08em',
         textTransform: 'uppercase',
-        transition: `color 150ms ${applyMotion.easeOut}`,
+        transition: `color 150ms ${applyMotion.easeOut}, background-color 150ms ${applyMotion.easeOut}`,
         '@media (hover: hover) and (pointer: fine)': {
-          '&:hover': { color: applyFlow.accentInk },
+          '&:hover': { color: applyFlow.accentInk, backgroundColor: applyFlow.accentSoft },
         },
-        '&:focus-visible': {
-          outline: 'none',
-          boxShadow: `0 0 0 2px ${applyFlow.accent}`,
-        },
+        '&:focus-visible': { outline: 'none', boxShadow: `0 0 0 2px ${applyFlow.accent}` },
       }}
     >
       <Pencil size={11} strokeWidth={2.2} />
@@ -132,122 +138,134 @@ function EditLink({ label = 'Edit', onClick }: { label?: string; onClick?: () =>
 }
 
 /**
- * Review section. A hairline-separated disclosure, not a bordered card — the review page
- * is a single document to scan top to bottom, and boxing each section made it read as
- * eight unrelated widgets.
+ * One verification card.
+ *
+ * Everything is open. This screen exists so somebody can find the one wrong date before
+ * they pay, and the previous version buried every field behind a collapsed accordion — you
+ * had to expand eight sections to check the thing you came to check. Sections are titled
+ * cards, each with its own way back to the step that owns it.
  */
-function AccordionBlock({
+function ReviewSection({
+  icon: Icon,
   title,
-  summary,
-  defaultOpen = false,
-  editLabel,
   onEdit,
+  editLabel,
+  status,
   children,
 }: {
+  icon: LucideIcon
   title: string
-  summary?: string
-  defaultOpen?: boolean
-  editLabel?: string
   onEdit?: () => void
+  editLabel?: string
+  status?: ReactNode
   children: ReactNode
 }) {
-  const [open, setOpen] = useState(defaultOpen)
-
   return (
-    <Box sx={{ borderBottom: `1px solid ${applyFlow.hairlineSoft}` }}>
-      <Box
-        component="button"
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+    <Box
+      sx={{
+        borderRadius: applyRadius.control,
+        border: `1px solid ${applyFlow.hairline}`,
+        backgroundColor: applyFlow.surface,
+      }}
+    >
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={2.5}
         sx={{
-          appearance: 'none',
-          border: 'none',
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 3,
-          px: 0,
-          py: 3,
-          minHeight: 44,
-          cursor: 'pointer',
-          font: 'inherit',
-          bgcolor: 'transparent',
-          textAlign: 'left',
-          '&:focus-visible': {
-            outline: 'none',
-            boxShadow: `inset 0 0 0 2px ${applyFlow.accent}`,
-            borderRadius: applyRadius.chip,
-          },
+          px: 3,
+          py: 1.75,
+          borderBottom: `1px solid ${applyFlow.hairlineSoft}`,
         }}
       >
-        <ChevronDown
-          size={14}
-          style={{
-            color: applyFlow.inkFaint,
-            flexShrink: 0,
-            transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
-            transition: `transform 180ms ${applyMotion.easeOut}`,
+        <Box
+          aria-hidden
+          sx={{
+            width: 26,
+            height: 26,
+            flex: '0 0 auto',
+            display: 'grid',
+            placeItems: 'center',
+            borderRadius: applyRadius.chip,
+            backgroundColor: applyFlow.canvas,
+            border: `1px solid ${applyFlow.hairline}`,
+            color: applyFlow.inkMuted,
           }}
-        />
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            sx={{
-              fontFamily: applyFont.body,
-              fontSize: 14,
-              fontWeight: 600,
-              color: applyFlow.ink,
-              lineHeight: 1.3,
-            }}
-          >
-            {title}
-          </Typography>
-          {summary ? (
-            <Typography
-              sx={{
-                fontFamily: applyFont.mono,
-                fontSize: 11,
-                color: applyFlow.inkMuted,
-                mt: 0.75,
-                lineHeight: 1.4,
-              }}
-            >
-              {summary}
-            </Typography>
-          ) : null}
+        >
+          <Icon size={13} strokeWidth={1.9} />
         </Box>
+        <Typography
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            fontFamily: applyFont.mono,
+            fontSize: 10.5,
+            fontWeight: 700,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: applyFlow.inkMuted,
+          }}
+        >
+          {title}
+        </Typography>
+        {status}
         <EditLink label={editLabel} onClick={onEdit} />
-      </Box>
-      <Collapse in={open}>
-        <Box sx={{ pl: 6, pr: 0, pb: 3.5 }}>{children}</Box>
-      </Collapse>
+      </Stack>
+      <Box sx={{ px: 3, py: 2 }}>{children}</Box>
     </Box>
   )
 }
 
-function MetaRow({ label, value }: { label: string; value: string }) {
+/** Label above value — reads faster down a column than a label/value row on a wide card. */
+function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <Stack direction="row" justifyContent="space-between" spacing={3} sx={{ py: 1.25 }}>
-      <Typography sx={{ fontFamily: applyFont.body, fontSize: 13, color: applyFlow.inkMuted }}>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography
+        sx={{
+          fontFamily: applyFont.mono,
+          fontSize: 9.5,
+          fontWeight: 600,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: applyFlow.inkFaint,
+          mb: 0.75,
+        }}
+      >
         {label}
       </Typography>
       <Typography
         sx={{
-          fontFamily: applyFont.mono,
-          fontSize: 12,
-          fontWeight: 500,
+          ...tabularNums,
+          fontFamily: applyFont.body,
+          fontSize: 13,
+          fontWeight: 600,
           color: applyFlow.ink,
-          textAlign: 'right',
-          fontVariantNumeric: 'tabular-nums',
+          lineHeight: 1.35,
+          wordBreak: 'break-word',
         }}
       >
         {value}
       </Typography>
-    </Stack>
+    </Box>
   )
 }
 
-/** B18 — Pre-payment review: accordion per traveller + category, edit links, requirements banner. */
+function FieldGrid({ children }: { children: ReactNode }) {
+  return (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+        columnGap: 4,
+        rowGap: 2.25,
+      }}
+    >
+      {children}
+    </Box>
+  )
+}
+
+/** B18 — pre-payment verification. Money lives on the next step, not this one. */
 export function ReviewStep({
   journey,
   draft,
@@ -258,27 +276,36 @@ export function ReviewStep({
   onDismissRequirementsUpdated,
   previewOnly = false,
 }: ReviewStepProps) {
-  const [openTravellerId, setOpenTravellerId] = useState(draft.applicants[0]?.id ?? '')
-
   const travellers = draft.applicants
-  const completion = useMemo(
-    () =>
-      Object.fromEntries(
-        travellers.map((a) => [a.id, travellerComplete(a, journey, draft)]),
-      ) as Record<string, boolean>,
-    [travellers, journey, draft],
+  const mandatoryDocs = useMemo(
+    () => journey.documents.filter((doc) => doc.mandatory),
+    [journey.documents],
   )
 
-  const allComplete = travellers.every((a) => completion[a.id])
+  const docTotals = useMemo(() => {
+    let done = 0
+    let total = 0
+    for (const applicant of travellers) {
+      for (const doc of mandatoryDocs) {
+        total += 1
+        if (isDocComplete(doc.documentId, applicant, draft.documentUploads)) done += 1
+      }
+    }
+    return { done, total }
+  }, [travellers, mandatoryDocs, draft.documentUploads])
+
+  const sponsored = travellers.filter((a) => a.sponsor?.mode === 'someone_else')
+  const allDocsIn = docTotals.total > 0 && docTotals.done === docTotals.total
+  const sponsorsResolved = travellers.every(sponsorComplete)
+
   const collectionLabel = draft.collectionMethod
     ? retailCollectionMethodLabel(draft.collectionMethod)
     : 'Not arranged'
-  const collectionSummary = draft.collectionMethod
-    ? draft.collectionDetails.pickupAddress ||
-      draft.collectionDetails.addressLine1 ||
-      draft.collectionDetails.receivingOfficeId ||
-      'Details saved'
-    : 'Choose how originals reach us'
+  const collectionAddress =
+    draft.collectionDetails.pickupAddress ||
+    draft.collectionDetails.addressLine1 ||
+    draft.collectionDetails.receivingOfficeId ||
+    '—'
 
   const body = (
     <Stack spacing={2} sx={{ width: '100%', textAlign: 'left' }}>
@@ -288,21 +315,40 @@ export function ReviewStep({
             border: `1px solid rgba(180, 83, 9, 0.30)`,
             borderLeft: `2px solid ${applyFlow.warning}`,
             borderRadius: applyRadius.control,
-            bgcolor: 'rgba(255, 247, 237, 1)',
-            p: 1.75,
+            bgcolor: applyFlow.warningSoft,
+            p: 3,
             display: 'flex',
-            gap: 1.25,
+            gap: 2.5,
             alignItems: 'flex-start',
           }}
         >
-          <AlertTriangle size={18} color="#B45309" style={{ flexShrink: 0, marginTop: 2 }} />
+          <AlertTriangle
+            size={17}
+            color={applyFlow.warning}
+            style={{ flexShrink: 0, marginTop: 2 }}
+          />
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontSize: 13.5, fontWeight: 800, color: '#92400E' }}>
+            <Typography
+              sx={{
+                fontFamily: applyFont.body,
+                fontSize: 13.5,
+                fontWeight: 700,
+                color: applyFlow.warning,
+              }}
+            >
               Requirements updated
             </Typography>
-            <Typography sx={{ fontSize: 12.5, color: '#9A3412', mt: 0.35, lineHeight: 1.45 }}>
-              Your last edit changed what this application needs. Review each traveller’s documents
-              before paying.
+            <Typography
+              sx={{
+                fontFamily: applyFont.body,
+                fontSize: 12.5,
+                color: applyFlow.inkMuted,
+                mt: 0.75,
+                lineHeight: 1.5,
+              }}
+            >
+              Your last edit changed what this application needs. Check the documents section
+              before you pay.
             </Typography>
             {onDismissRequirementsUpdated ? (
               <Box
@@ -315,11 +361,14 @@ export function ReviewStep({
                   bgcolor: 'transparent',
                   cursor: 'pointer',
                   font: 'inherit',
-                  mt: 1,
+                  mt: 1.5,
                   p: 0,
-                  fontSize: 12.5,
+                  fontFamily: applyFont.mono,
+                  fontSize: 10.5,
                   fontWeight: 700,
-                  color: '#B45309',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: applyFlow.warning,
                 }}
               >
                 Got it
@@ -329,258 +378,280 @@ export function ReviewStep({
         </Box>
       ) : null}
 
-      <Box
-        sx={{
-          borderRadius: applyRadius.control,
-          bgcolor: applyFlow.surface,
-          p: 2,
-        }}
+      <ReviewSection
+        icon={MapPin}
+        title="Visa & application"
+        onEdit={onEditStep ? () => onEditStep('visa') : undefined}
       >
-        <Typography sx={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: applyFlow.inkMuted, mb: 1 }}>
-          Trip
-        </Typography>
-        <MetaRow label="Destination" value={journey.country.name} />
-        <MetaRow label="Visa type" value={journey.visaType.name} />
-        {draft.travelDate ? <MetaRow label="Travel date" value={draft.travelDate} /> : null}
-        {draft.jurisdictionName || draft.jurisdictionId ? (
-          <MetaRow label="Application centre" value={draft.jurisdictionName || draft.jurisdictionId || '—'} />
-        ) : null}
-      </Box>
+        <FieldGrid>
+          <Field label="Destination" value={`${journey.country.flag ?? ''} ${journey.country.name}`.trim()} />
+          <Field label="Visa type" value={journey.visaType.name} />
+          <Field
+            label="Application centre"
+            value={draft.jurisdictionName || draft.jurisdictionId || '—'}
+          />
+          <Field label="Passport issued in" value={draft.issuedPassportState || '—'} />
+          {draft.placeOfResidence ? (
+            <Field label="Place of residence" value={draft.placeOfResidence} />
+          ) : null}
+        </FieldGrid>
+      </ReviewSection>
 
-      {travellers.map((applicant, index) => {
-        const name = applicant.details.fullName.trim() || applicant.label
-        const open = openTravellerId === applicant.id
-        const complete = completion[applicant.id]
-        const mandatoryDocs = journey.documents.filter((d) => d.mandatory)
-        const doneDocs = mandatoryDocs.filter((d) =>
-          isDocComplete(d.documentId, applicant, draft.documentUploads),
-        ).length
-        const sponsor = applicant.sponsor
+      <ReviewSection
+        icon={CalendarRange}
+        title="Travel dates"
+        onEdit={onEditStep ? () => onEditStep('jurisdiction') : undefined}
+      >
+        <FieldGrid>
+          <Field label="Departure" value={formatDate(draft.travelDate)} />
+          <Field label="Return" value={formatDate(draft.travelDateEnd)} />
+        </FieldGrid>
+      </ReviewSection>
 
-        return (
-          <Box
-            key={applicant.id}
-            sx={{
-                  borderRadius: applyRadius.control,
-              bgcolor: applyFlow.surface,
-              overflow: 'hidden',
-            }}
-          >
-            <Box
-              component="button"
-              type="button"
-              onClick={() => setOpenTravellerId(open ? '' : applicant.id)}
-              sx={{
-                appearance: 'none',
-                border: 'none',
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.25,
-                px: 2,
-                py: 1.5,
-                cursor: 'pointer',
-                font: 'inherit',
-                bgcolor: open ? applyFlow.accentSoft : applyFlow.surface,
-                color: applyFlow.ink,
-                textAlign: 'left',
-              }}
-            >
-              <Box
+      <ReviewSection
+        icon={Users}
+        title={`Applicants · ${travellers.length}`}
+        onEdit={onEditStep ? () => onEditStep('travelProfile') : undefined}
+      >
+        <Stack spacing={0}>
+          {travellers.map((applicant, index) => {
+            const name = applicant.details.fullName.trim() || applicant.label
+            const done = mandatoryDocs.filter((doc) =>
+              isDocComplete(doc.documentId, applicant, draft.documentUploads),
+            ).length
+            const ready = done === mandatoryDocs.length && Boolean(applicant.profileComplete)
+
+            return (
+              <Stack
+                key={applicant.id}
+                direction="row"
+                alignItems="center"
+                spacing={2.5}
                 sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  bgcolor: applyFlow.canvas,
-                  color: applyFlow.inkMuted,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
+                  py: 2,
+                  borderBottom: `1px solid ${applyFlow.hairlineSoft}`,
+                  '&:last-of-type': { borderBottom: 'none' },
                 }}
               >
-                {initialsFromName(name)}
-              </Box>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: 14, fontWeight: 800, lineHeight: 1.2 }}>{name}</Typography>
-                <Typography sx={{ fontSize: 11.5, opacity: 0.75, mt: 0.2 }}>
-                  {index === 0 ? 'Primary traveller' : `Traveller ${index + 1}`}
-                </Typography>
-              </Box>
-              <StatusBadge complete={complete} />
-              <ChevronDown
-                size={16}
-                style={{
-                  transform: open ? 'rotate(180deg)' : 'none',
-                  transition: 'transform 0.15s ease',
-                  opacity: 0.8,
-                  flexShrink: 0,
-                }}
-              />
-            </Box>
-
-            <Collapse in={open}>
-              <Stack spacing={1.25} sx={{ p: 2, bgcolor: applyFlow.surface }}>
-                <AccordionBlock
-                  title="Documents"
-                  summary={`${doneDocs}/${mandatoryDocs.length} mandatory uploaded`}
-                  defaultOpen
-                  onEdit={onEditStep ? () => onEditStep('checklist') : undefined}
+                <Box
+                  aria-hidden
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    flex: '0 0 auto',
+                    display: 'grid',
+                    placeItems: 'center',
+                    borderRadius: applyRadius.chip,
+                    backgroundColor: applyFlow.canvas,
+                    border: `1px solid ${ready ? applyFlow.successBorder : applyFlow.hairline}`,
+                    fontFamily: applyFont.mono,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: applyFlow.inkMuted,
+                  }}
                 >
-                  <Stack spacing={0.5}>
-                    {journey.documents.map((doc) => {
-                      const ok = isDocComplete(doc.documentId, applicant, draft.documentUploads)
-                      return (
-                        <MetaRow
-                          key={doc.documentId}
-                          label={`${doc.name}${doc.mandatory ? '' : ' (optional)'}`}
-                          value={ok ? 'Uploaded' : 'Missing'}
-                        />
-                      )
-                    })}
-                  </Stack>
-                </AccordionBlock>
-
-                <AccordionBlock
-                  title="Sponsor"
-                  summary={
-                    !sponsor
-                      ? 'Not answered'
-                      : sponsor.mode === 'individual'
-                        ? 'Individual (self-funded)'
-                        : `Sponsored by ${sponsor.name || '—'}`
-                  }
-                  onEdit={onEditStep ? () => onEditStep('sponsor') : undefined}
-                >
-                  {sponsor?.mode === 'someone_else' ? (
-                    <>
-                      <MetaRow label="Name" value={sponsor.name || '—'} />
-                      <MetaRow label="Relationship" value={sponsor.relationship || '—'} />
-                      <MetaRow label="Contact" value={sponsor.contact || '—'} />
-                      <MetaRow
-                        label="Bank statement"
-                        value={
-                          draft.documentUploads[
-                            checklistUploadKey(applicant.id, SPONSOR_BANK_STATEMENT_DOC_ID)
-                          ]
-                            ? 'Uploaded'
-                            : 'Missing'
-                        }
-                      />
-                    </>
-                  ) : (
-                    <Typography sx={{ fontSize: 12.5, color: applyFlow.inkMuted }}>
-                      This traveller is funding their own trip.
-                    </Typography>
-                  )}
-                </AccordionBlock>
-
-                <AccordionBlock
-                  title="Profile"
-                  summary={
-                    applicant.details.passportNumber
-                      ? `Passport ${applicant.details.passportNumber}`
-                      : 'Travel profile'
-                  }
-                  onEdit={onEditStep ? () => onEditStep('travelProfile') : undefined}
-                >
-                  <MetaRow label="Full name" value={applicant.details.fullName || '—'} />
-                  <MetaRow label="Passport" value={applicant.details.passportNumber || '—'} />
-                  <MetaRow label="Nationality" value={applicant.details.nationality || '—'} />
-                </AccordionBlock>
+                  {initialsFromName(name) || String(index + 1).padStart(2, '0')}
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: applyFont.body,
+                      fontSize: 13.5,
+                      fontWeight: 600,
+                      color: applyFlow.ink,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {name}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      ...tabularNums,
+                      fontFamily: applyFont.mono,
+                      fontSize: 10.5,
+                      color: applyFlow.inkMuted,
+                      mt: 0.5,
+                    }}
+                  >
+                    {index === 0 ? 'Primary traveller' : `Traveller ${String(index + 1).padStart(2, '0')}`}
+                    {'  ·  '}
+                    {done}/{mandatoryDocs.length} documents
+                  </Typography>
+                </Box>
+                <StatusPill tone={ready ? 'done' : 'attention'}>
+                  {ready ? 'Ready' : 'Incomplete'}
+                </StatusPill>
               </Stack>
-            </Collapse>
-          </Box>
-        )
-      })}
+            )
+          })}
+        </Stack>
+      </ReviewSection>
+
+      <ReviewSection
+        icon={HandCoins}
+        title="Funding"
+        onEdit={onEditStep ? () => onEditStep('sponsor') : undefined}
+        status={
+          sponsorsResolved ? null : <StatusPill tone="attention">Incomplete</StatusPill>
+        }
+      >
+        {sponsored.length === 0 ? (
+          <Typography
+            sx={{ fontFamily: applyFont.body, fontSize: 13, color: applyFlow.inkMuted }}
+          >
+            Every traveller is funding their own trip.
+          </Typography>
+        ) : (
+          <Stack spacing={0}>
+            {travellers.map((applicant) => {
+              const sponsor = applicant.sponsor
+              if (sponsor?.mode !== 'someone_else') return null
+              const travellerName = applicant.details.fullName.trim() || applicant.label
+              return (
+                <Box
+                  key={applicant.id}
+                  sx={{
+                    py: 2,
+                    borderBottom: `1px solid ${applyFlow.hairlineSoft}`,
+                    '&:last-of-type': { borderBottom: 'none' },
+                  }}
+                >
+                  <FieldGrid>
+                    <Field label="Sponsor" value={sponsor.name || '—'} />
+                    <Field
+                      label="Relationship"
+                      value={`${sponsor.relationship || '—'} · funding ${travellerName}`}
+                    />
+                  </FieldGrid>
+                </Box>
+              )
+            })}
+          </Stack>
+        )}
+      </ReviewSection>
+
+      <ReviewSection
+        icon={FileText}
+        title="Documents"
+        onEdit={onEditStep ? () => onEditStep('checklist') : undefined}
+        status={
+          <StatusPill tone={allDocsIn ? 'done' : 'attention'}>
+            {docTotals.done}/{docTotals.total} uploaded
+          </StatusPill>
+        }
+      >
+        <Stack spacing={0}>
+          {journey.documents.map((doc) => {
+            const missingFor = travellers.filter(
+              (applicant) => !isDocComplete(doc.documentId, applicant, draft.documentUploads),
+            )
+            const ok = missingFor.length === 0
+            return (
+              <Stack
+                key={doc.documentId}
+                direction="row"
+                alignItems="center"
+                spacing={2.5}
+                sx={{
+                  py: 1.5,
+                  borderBottom: `1px solid ${applyFlow.hairlineSoft}`,
+                  '&:last-of-type': { borderBottom: 'none' },
+                }}
+              >
+                <Typography
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontFamily: applyFont.body,
+                    fontSize: 13,
+                    color: applyFlow.ink,
+                    lineHeight: 1.35,
+                  }}
+                >
+                  {doc.name}
+                  {doc.mandatory ? null : (
+                    <Box component="span" sx={{ color: applyFlow.inkFaint }}> · optional</Box>
+                  )}
+                </Typography>
+                <Typography
+                  sx={{
+                    ...tabularNums,
+                    fontFamily: applyFont.mono,
+                    fontSize: 10.5,
+                    fontWeight: 600,
+                    color: ok ? applyFlow.success : applyFlow.warning,
+                    flex: '0 0 auto',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {ok
+                    ? 'All uploaded'
+                    : `Missing for ${missingFor.length} of ${travellers.length}`}
+                </Typography>
+              </Stack>
+            )
+          })}
+          {sponsored.length > 0 &&
+          sponsored.some(
+            (applicant) =>
+              draft.documentUploads[
+                checklistUploadKey(applicant.id, SPONSOR_BANK_STATEMENT_DOC_ID)
+              ],
+          ) ? (
+            <Typography
+              sx={{
+                fontFamily: applyFont.mono,
+                fontSize: 10.5,
+                color: applyFlow.inkMuted,
+                mt: 2,
+              }}
+            >
+              Sponsor documents included.
+            </Typography>
+          ) : null}
+        </Stack>
+      </ReviewSection>
+
+      <ReviewSection
+        icon={Truck}
+        title="Original documents"
+        onEdit={onEditStep ? () => onEditStep('collectionDetails') : undefined}
+      >
+        <FieldGrid>
+          <Field label="Handover" value={collectionLabel} />
+          <Field label="Address / office" value={collectionAddress} />
+        </FieldGrid>
+      </ReviewSection>
 
       <Box
         sx={{
-          borderRadius: applyRadius.control,
-          bgcolor: applyFlow.surface,
-          p: 2,
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+          gap: 2,
         }}
       >
-        <Typography
-          sx={{
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            color: applyFlow.inkMuted,
-            mb: 1.25,
-          }}
+        <ReviewSection
+          icon={Shield}
+          title="Travel insurance"
+          onEdit={onEditStep ? () => onEditStep('insurance') : undefined}
         >
-          Application
-        </Typography>
-        <Stack spacing={1.25}>
-          <AccordionBlock
-            title="Collection method"
-            summary={`${collectionLabel} · ${collectionSummary}`}
-            onEdit={
-              onEditStep
-                ? () => onEditStep(draft.collectionMethod ? 'collectionDetails' : 'collectionMethod')
-                : undefined
-            }
-          >
-            <MetaRow label="Method" value={collectionLabel} />
-            {draft.collectionDetails.pickupAddress || draft.collectionDetails.addressLine1 ? (
-              <MetaRow
-                label="Address"
-                value={
-                  draft.collectionDetails.pickupAddress ||
-                  draft.collectionDetails.addressLine1 ||
-                  '—'
-                }
-              />
-            ) : null}
-            {draft.collectionDetails.receivingOfficeId ? (
-              <MetaRow label="Office" value={draft.collectionDetails.receivingOfficeId} />
-            ) : null}
-          </AccordionBlock>
+          <Field
+            label="Selection"
+            value={extraLabel(draft.insurance, journey.insuranceServices)}
+          />
+        </ReviewSection>
 
-          <AccordionBlock
-            title="Essentials"
-            summary={`Insurance: ${extraLabel(draft.insurance, journey.insuranceServices)} · Ticket: ${extraLabel(draft.flightTicket, journey.flightTicketServices)}`}
-            defaultOpen
-          >
-            <Stack spacing={1}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography sx={{ fontSize: 12.5, color: applyFlow.inkMuted }}>Travel insurance</Typography>
-                <Stack direction="row" spacing={1.25} alignItems="center">
-                  <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: applyFlow.ink }}>
-                    {extraLabel(draft.insurance, journey.insuranceServices)}
-                  </Typography>
-                  <EditLink
-                    label="Edit"
-                    onClick={onEditStep ? () => onEditStep('insurance') : undefined}
-                  />
-                </Stack>
-              </Stack>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography sx={{ fontSize: 12.5, color: applyFlow.inkMuted }}>Flight ticket</Typography>
-                <Stack direction="row" spacing={1.25} alignItems="center">
-                  <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: applyFlow.ink }}>
-                    {extraLabel(draft.flightTicket, journey.flightTicketServices)}
-                  </Typography>
-                  <EditLink
-                    label="Edit"
-                    onClick={onEditStep ? () => onEditStep('flightTicket') : undefined}
-                  />
-                </Stack>
-              </Stack>
-            </Stack>
-          </AccordionBlock>
-        </Stack>
+        <ReviewSection
+          icon={Plane}
+          title="Flight ticket"
+          onEdit={onEditStep ? () => onEditStep('flightTicket') : undefined}
+        >
+          <Field
+            label="Selection"
+            value={extraLabel(draft.flightTicket, journey.flightTicketServices)}
+          />
+        </ReviewSection>
       </Box>
-
-      {!allComplete ? (
-        <Typography sx={{ fontSize: 12.5, color: applyFlow.inkMuted, textAlign: 'center' }}>
-          Finish incomplete travellers before payment — you can still proceed to review pricing.
-        </Typography>
-      ) : null}
     </Stack>
   )
 
@@ -589,11 +660,16 @@ export function ReviewStep({
   return (
     <StepShell
       title="Review your application"
-      helperText="Check each traveller, then continue to payment. Use Edit to jump back and fix anything."
+      helperText="Check every detail against your passports before we price it up. Use Edit on any section to go back and fix something — nothing you've entered is lost."
       onBack={onBack}
       onContinue={onContinue}
-      continueLabel="Proceed to payment"
-      contentMaxWidth={720}
+      continueLabel="Everything looks right"
+      contentMaxWidth={860}
+      footerCaption={
+        allDocsIn
+          ? undefined
+          : 'You can continue to pricing with documents outstanding — we just cannot submit until they are in.'
+      }
     >
       {body}
     </StepShell>

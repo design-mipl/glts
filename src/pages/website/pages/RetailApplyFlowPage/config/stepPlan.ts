@@ -25,7 +25,9 @@ export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinitio
     { id: 'jurisdiction', phase: 'purpose', label: 'Submission city' },
     { id: 'travelProfile', phase: 'traveller', label: 'Travel profile' },
     { id: 'sponsor', phase: 'sponsor', label: 'Sponsor' },
-    { id: 'sponsorDocs', phase: 'sponsor', label: 'Sponsor documents' },
+    // No sponsor-documents step: sponsor uploads are part of the main Documents step, so
+    // every file for the application is collected in one place instead of the customer
+    // being interrupted for a bank statement the moment they name a sponsor.
     { id: 'passport', phase: 'documents', label: 'Essential documents' },
   ]
 
@@ -44,7 +46,8 @@ export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinitio
     // selector above the per-method form, so splitting them made the user answer
     // "how should we collect?" and then immediately re-see the same four options.
     { id: 'collectionDetails', phase: 'collection', label: 'Handover' },
-    { id: 'collectionConfirmation', phase: 'collection', label: 'Confirm collection' },
+    // No separate confirmation step: it only replayed the selection the customer had just
+    // made on the previous screen, so handover goes straight through to extras.
     { id: 'insurance', phase: 'extras', label: 'Travel insurance' },
     { id: 'flightTicket', phase: 'extras', label: 'Flight ticket' },
     { id: 'review', phase: 'review', label: 'Review' },

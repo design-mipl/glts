@@ -1,19 +1,13 @@
 import { useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import { Check, FolderOpen, Upload } from 'lucide-react'
-import { FileUploadModal } from '@/pages/website/components/fileUploadModal/FileUploadModal'
 import { StepShell } from '../StepShell'
 import { applyFlow, applyFont, applyMotion, applyRadius } from '@/pages/website/theme/applyFlowTheme'
 import { SectionHeading } from '@/pages/website/theme/applyFormControls'
 import { PhotoCaptureFlow } from '../capture/PhotoCaptureFlow'
 import { PassportCaptureFlow } from '../capture/PassportCaptureFlow'
 import { displayNameUpper, initialsFromName } from '../../config/travelProfileQuestions'
-import {
-  TRAVELLER_BANK_STATEMENT_DOC_ID,
-  type RetailApplicantParty,
-  type RetailCapturedImage,
-} from '../../types'
-import { checklistUploadKey } from './ChecklistStep'
+import { type RetailApplicantParty, type RetailCapturedImage } from '../../types'
 import { getStoredDocumentByType } from '@/shared/services/storedDocumentsService'
 
 
@@ -86,9 +80,7 @@ function StoredPassportReuseBanner({
 interface PassportStepProps {
   countryName?: string
   applicants: RetailApplicantParty[]
-  uploads?: Record<string, RetailCapturedImage>
   onUpdateApplicant: (id: string, patch: Partial<RetailApplicantParty>) => void
-  onUploadBankStatement?: (applicantId: string, image: RetailCapturedImage) => void
   onBack: () => void
   onContinue: () => void
 }
@@ -96,7 +88,6 @@ interface PassportStepProps {
 type ActiveCapture =
   | { kind: 'photo'; applicantId: string }
   | { kind: 'passport'; applicantId: string }
-  | { kind: 'bank'; applicantId: string }
 
 function cardTitle(applicant: RetailApplicantParty, index: number): string {
   const name = applicant.details.fullName.trim()
@@ -110,36 +101,29 @@ function cardInitials(applicant: RetailApplicantParty, index: number): string {
   return index === 0 ? 'T1' : `T${index + 1}`
 }
 
-function hasBankStatement(
-  applicant: RetailApplicantParty,
-  uploads: Record<string, RetailCapturedImage>,
-): boolean {
-  return Boolean(uploads[checklistUploadKey(applicant.id, TRAVELLER_BANK_STATEMENT_DOC_ID)])
-}
-
-function docsUploadedCount(
-  applicant: RetailApplicantParty,
-  uploads: Record<string, RetailCapturedImage>,
-): { done: number; total: number } {
-  const total = 3
+/**
+ * This step captures identity only — photo and passport.
+ *
+ * Financial evidence used to be a third card here, but it is not an identity capture and
+ * the client does not want a bank statement collected at this point. Any funds document a
+ * given visa actually requires now comes from the requirement pack and is uploaded on the
+ * Documents step with everything else, rather than being hardcoded into this screen.
+ */
+function docsUploadedCount(applicant: RetailApplicantParty): { done: number; total: number } {
+  const total = 2
   let done = 0
   if (applicant.photo) done += 1
   if (applicant.passport) done += 1
-  if (hasBankStatement(applicant, uploads)) done += 1
   return { done, total }
 }
 
-function applicantReady(
-  applicant: RetailApplicantParty,
-  uploads: Record<string, RetailCapturedImage>,
-): boolean {
+function applicantReady(applicant: RetailApplicantParty): boolean {
   return Boolean(
     applicant.photo &&
       applicant.passport &&
       applicant.passportBack &&
       applicant.details.email.trim() &&
-      applicant.details.phone.trim() &&
-      hasBankStatement(applicant, uploads),
+      applicant.details.phone.trim(),
   )
 }
 
@@ -213,14 +197,12 @@ function DocActionButton({
 export function PassportStep({
   countryName,
   applicants,
-  uploads = {},
   onUpdateApplicant,
-  onUploadBankStatement,
   onBack,
   onContinue,
 }: PassportStepProps) {
   const [active, setActive] = useState<ActiveCapture | null>(null)
-  const allReady = applicants.every((applicant) => applicantReady(applicant, uploads))
+  const allReady = applicants.every(applicantReady)
   const activeApplicant = active
     ? applicants.find((applicant) => applicant.id === active.applicantId)
     : undefined
@@ -228,11 +210,11 @@ export function PassportStep({
   return (
     <>
       <StepShell
-        title="Passport, photo and funds"
+        title="Passport and photo"
         helperText={
           countryName
-            ? `Every traveller needs these three before ${countryName} will accept the application.`
-            : 'Every traveller needs these three before the embassy will accept the application.'
+            ? `Every traveller needs both of these before ${countryName} will accept the application. Supporting documents come next.`
+            : 'Every traveller needs both of these before the embassy will accept the application. Supporting documents come next.'
         }
         onBack={onBack}
         backLabel="Back"
@@ -243,7 +225,7 @@ export function PassportStep({
       >
         <Box sx={{ width: '100%' }}>
           <SectionHeading>
-            {`Documents — ${applicants.filter((a) => applicantReady(a, uploads)).length} of ${applicants.length} travellers complete`}
+            {`Documents — ${applicants.filter(applicantReady).length} of ${applicants.length} travellers complete`}
           </SectionHeading>
 
           <StoredPassportReuseBanner
@@ -257,9 +239,8 @@ export function PassportStep({
           />
 
           {applicants.map((applicant, index) => {
-            const { done, total } = docsUploadedCount(applicant, uploads)
-            const bankDone = hasBankStatement(applicant, uploads)
-            const ready = applicantReady(applicant, uploads)
+            const { done, total } = docsUploadedCount(applicant)
+            const ready = applicantReady(applicant)
 
             return (
               <Box
@@ -346,11 +327,6 @@ export function PassportStep({
                     uploaded={Boolean(applicant.passport)}
                     onClick={() => setActive({ kind: 'passport', applicantId: applicant.id })}
                   />
-                  <DocActionButton
-                    label="Bank"
-                    uploaded={bankDone}
-                    onClick={() => setActive({ kind: 'bank', applicantId: applicant.id })}
-                  />
                 </Stack>
               </Box>
             )
@@ -393,27 +369,6 @@ export function PassportStep({
         />
       ) : null}
 
-      {active?.kind === 'bank' && activeApplicant ? (
-        <FileUploadModal
-          open
-          onClose={() => setActive(null)}
-          documentName="Bank statement"
-          description="Last 3 months preferred. Must show the traveller's name and account details."
-          onUpload={(files) => {
-            const file = files[0]
-            if (!file || !onUploadBankStatement) return
-            const reader = new FileReader()
-            reader.onload = () => {
-              onUploadBankStatement(active.applicantId, {
-                dataUrl: String(reader.result ?? ''),
-                capturedAt: new Date().toISOString(),
-              })
-              setActive(null)
-            }
-            reader.readAsDataURL(file)
-          }}
-        />
-      ) : null}
     </>
   )
 }

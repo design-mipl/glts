@@ -1,19 +1,37 @@
 import { useState } from 'react'
-import { Box, IconButton, Stack, TextField, Typography } from '@mui/material'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Check, HandCoins, Star, X } from 'lucide-react'
-import { Modal, Button } from '@/design-system/UIComponents'
-import { BORDER_RADIUS } from '@/design-system/tokens'
-import { usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { retailFlowEaseOut } from '@/pages/website/theme/retailFlowTokens'
-import { displayNameUpper, initialsFromName } from '../config/travelProfileQuestions'
+import { Box, Button, Stack, Typography, keyframes } from '@mui/material'
+import { ArrowLeft, Check, X } from 'lucide-react'
+import { Modal } from '@/design-system/UIComponents'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+  getAccentButtonSx,
+  getQuietButtonSx,
+  getSelectableSx,
+  tabularNums,
+} from '@/pages/website/theme/applyFlowTheme'
+import { FieldLabel, applyControlSx } from '@/pages/website/theme/applyFormControls'
+import { displayNameUpper } from '../config/travelProfileQuestions'
 import type { RetailTravellerSponsor } from '../types'
 
-/** Gold sponsor accent — distinct from traveller profile violet. */
-const SPONSOR_GOLD = '#C4A035'
-const SPONSOR_GOLD_SOFT = 'rgba(196, 160, 53, 0.12)'
-const SPONSOR_GOLD_BORDER = 'rgba(196, 160, 53, 0.55)'
-const AVATAR_ROSE = '#D4A0A0'
+/**
+ * Panel swap. A CSS animation rather than an `AnimatePresence mode="wait"` exit/enter pair:
+ * that pattern only mounts the incoming panel once the outgoing one finishes animating, so
+ * anything that stalls the animation frame loop — a backgrounded tab, a busy main thread —
+ * leaves the dialog showing a panel the header has already moved past. Content should never
+ * be gated on an animation completing. This also runs off the main thread.
+ */
+const panelIn = keyframes`
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: translateX(0); }
+`
+
+const panelFadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`
 
 const RELATIONSHIP_OPTIONS = [
   { id: 'parent', label: 'Parent' },
@@ -26,32 +44,39 @@ const RELATIONSHIP_OPTIONS = [
 ] as const
 
 interface SponsorProfileBuilderProps {
-  /** Draft name from the someone-else card (may be edited further in-modal). */
+  /** Draft name from the someone-else row (may be edited further in-modal). */
   initialName: string
   initialRelationship?: string
-  initialContact?: string
   travellerName: string
   onClose: () => void
   onComplete: (sponsor: Extract<RetailTravellerSponsor, { mode: 'someone_else' }>) => void
 }
 
 /**
- * Build sponsor profile — same modal chrome as TravelProfileBuilder,
- * questions tailored to B10 someone-else (relationship + contact).
+ * Build sponsor profile.
+ *
+ * This dialog was the one place the retail flow fell back to the default application
+ * theme: it rendered design-system `Button`s and pulled colours from
+ * `usePublicBrandColors()`, so the moment sponsor details were confirmed the accent, the
+ * buttons and the text fields all switched to the admin/portal palette. The fix is
+ * structural rather than per-element — the dialog now composes the same
+ * `applyFlowTheme` / `applyFormControls` primitives as every other retail step, and
+ * imports nothing from the shared brand palette. `Modal` is kept purely as unstyled
+ * overlay chrome (backdrop + focus trap), which is what `TravelProfileBuilder` already does.
+ *
+ * Scope also narrowed per the client: no phone, no email, and no bank details here.
+ * Sponsor documents are collected with everyone else's on the Documents step.
  */
 export function SponsorProfileBuilder({
   initialName,
   initialRelationship = '',
-  initialContact = '',
   travellerName,
   onClose,
   onComplete,
 }: SponsorProfileBuilderProps) {
-  const colors = usePublicBrandColors()
-  const [step, setStep] = useState<'relationship' | 'contact'>('relationship')
+  const [step, setStep] = useState<'relationship' | 'confirm'>('relationship')
   const [name, setName] = useState(initialName.trim())
   const [relationship, setRelationship] = useState(initialRelationship)
-  const [contact, setContact] = useState(initialContact)
 
   const displayName = name.trim() || 'Sponsor'
   const nameUpper = displayNameUpper(displayName)
@@ -59,23 +84,46 @@ export function SponsorProfileBuilder({
 
   function selectRelationship(label: string) {
     setRelationship(label)
-    window.setTimeout(() => setStep('contact'), 160)
+    // Brief hold so the selection registers visually before the panel changes.
+    window.setTimeout(() => setStep('confirm'), 160)
   }
 
   function handleFinish() {
     const trimmedName = name.trim()
-    const trimmedContact = contact.trim()
-    if (!trimmedName || !relationship || trimmedContact.length < 3) return
+    if (!trimmedName || !relationship) return
     onComplete({
       mode: 'someone_else',
       name: trimmedName,
       relationship,
-      contact: trimmedContact,
       profileComplete: true,
     })
   }
 
-  const contactReady = name.trim().length > 0 && contact.trim().length >= 3
+  const iconBtnSx = {
+    width: 34,
+    height: 34,
+    display: 'grid',
+    placeItems: 'center',
+    appearance: 'none',
+    border: `1px solid ${applyFlow.hairline}`,
+    background: 'none',
+    borderRadius: applyRadius.control,
+    color: applyFlow.inkMuted,
+    cursor: 'pointer',
+    flex: '0 0 auto',
+    transition: `color 150ms ${applyMotion.easeOut}, border-color 150ms ${applyMotion.easeOut}`,
+    '@media (pointer: coarse)': { width: 44, height: 44 },
+    '@media (hover: hover) and (pointer: fine)': {
+      '&:hover': { color: applyFlow.ink, borderColor: applyFlow.hairlineStrong },
+    },
+    '&:focus-visible': {
+      outline: 'none',
+      borderColor: applyFlow.accent,
+      boxShadow: `0 0 0 3px ${applyFlow.accentRing}`,
+    },
+  } as const
+
+  const stepIndex = step === 'relationship' ? 0 : 1
 
   return (
     <Modal
@@ -84,122 +132,136 @@ export function SponsorProfileBuilder({
       size="sm"
       hideCloseButton
       sx={{
-        width: { sm: 400 },
-        height: { xs: '100%', sm: 400 },
-        minHeight: { sm: 400 },
-        maxHeight: { sm: 400 },
+        width: { xs: '100%', sm: 460 },
+        height: { xs: '100%', sm: 'auto' },
+        maxHeight: { xs: '100%', sm: 'min(560px, 88vh)' },
         '& .MuiDialogContent-root': {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          px: { xs: 2, sm: 2.25 },
-          py: { xs: 1.5, sm: 1.75 },
+          backgroundColor: applyFlow.surface,
+          px: { xs: 4, sm: 5 },
+          py: { xs: 4, sm: 4.5 },
         },
       }}
     >
-      <Box sx={{ position: 'relative', width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1, flexShrink: 0 }}>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, flex: 1, pr: 1 }}>
+      <Box sx={{ width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <Stack direction="row" alignItems="center" spacing={2.5} sx={{ flexShrink: 0, mb: 3.5 }}>
+          {step === 'confirm' ? (
             <Box
+              component="button"
+              type="button"
+              aria-label="Back to relationship"
+              onClick={() => setStep('relationship')}
+              sx={iconBtnSx}
+            >
+              <ArrowLeft size={15} />
+            </Box>
+          ) : null}
+
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
               sx={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                bgcolor: AVATAR_ROSE,
-                color: '#fff',
-                fontSize: 11,
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
+                ...tabularNums,
+                fontFamily: applyFont.mono,
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: applyFlow.inkFaint,
               }}
             >
-              {initialsFromName(displayName).slice(0, 1)}
-            </Box>
-            <Typography sx={{ fontSize: 13, color: colors.textMuted, minWidth: 0 }}>
-              Sponsor for{' '}
-              <Box component="span" sx={{ fontWeight: 700, color: colors.navy }}>
-                {displayNameUpper(travellerName || 'traveller')}
-              </Box>
+              Sponsor · {String(stepIndex + 1).padStart(2, '0')} / 02
             </Typography>
-          </Stack>
-
-          <IconButton
-            aria-label="Close"
-            onClick={onClose}
-            size="small"
-            sx={{
-              bgcolor: 'rgba(15, 169, 104, 0.12)',
-              color: colors.navy,
-              flexShrink: 0,
-              '&:hover': { bgcolor: 'rgba(15, 169, 104, 0.2)' },
-            }}
-          >
-            <X size={16} />
-          </IconButton>
-        </Stack>
-
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1, flexShrink: 0 }}>
-          <Box
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 0.75,
-              px: 1.5,
-              py: 0.5,
-              borderRadius: 999,
-              bgcolor: SPONSOR_GOLD_SOFT,
-              color: SPONSOR_GOLD,
-            }}
-          >
-            <HandCoins size={14} strokeWidth={2} />
-            <Typography sx={{ fontSize: 12, fontWeight: 600, color: SPONSOR_GOLD }}>
-              Build sponsor profile
+            <Typography
+              sx={{
+                fontFamily: applyFont.body,
+                fontSize: 13,
+                fontWeight: 600,
+                color: applyFlow.ink,
+                mt: 0.5,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Funding {displayNameUpper(travellerName || 'traveller')}
             </Typography>
           </Box>
+
+          <Box component="button" type="button" aria-label="Close" onClick={onClose} sx={iconBtnSx}>
+            <X size={15} />
+          </Box>
+        </Stack>
+
+        <Box sx={{ display: 'flex', gap: 1, flexShrink: 0, mb: 4 }} aria-hidden>
+          {[0, 1].map((i) => (
+            <Box
+              key={i}
+              sx={{
+                flex: 1,
+                height: '2px',
+                borderRadius: '1px',
+                backgroundColor: i <= stepIndex ? applyFlow.accent : applyFlow.accentTrack,
+                transition: `background-color 220ms ${applyMotion.easeOut}`,
+              }}
+            />
+          ))}
         </Box>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={step}
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-            style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
-          >
+        <Box
+          key={step}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            minHeight: 0,
+            animation: `${panelIn} 200ms ${applyMotion.easeOut} both`,
+            '@media (prefers-reduced-motion: reduce)': {
+              animation: `${panelFadeIn} 150ms linear both`,
+            },
+          }}
+        >
             {step === 'relationship' ? (
               <>
-                <Box sx={{ textAlign: 'center', mt: { xs: 1, sm: 1.5 }, mb: 1.5, px: 1, flexShrink: 0 }}>
+                <Box sx={{ flexShrink: 0, mb: 3 }}>
                   <Typography
                     sx={{
-                      fontSize: { xs: 17, sm: 18 },
+                      fontFamily: applyFont.display,
+                      fontSize: 19,
                       fontWeight: 700,
-                      color: colors.navy,
                       letterSpacing: '-0.02em',
-                      lineHeight: 1.3,
-                      mb: 0.5,
+                      lineHeight: 1.2,
+                      color: applyFlow.ink,
                     }}
                   >
                     How is {nameUpper} related to {travellerFirst}?
                   </Typography>
-                  <Typography sx={{ fontSize: 12, color: colors.textMuted }}>
-                    Relationship helps consulates assess financial support
+                  <Typography
+                    sx={{
+                      fontFamily: applyFont.body,
+                      fontSize: 13,
+                      color: applyFlow.inkMuted,
+                      mt: 1.25,
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    Relationship is what consulates use to assess financial support.
                   </Typography>
                 </Box>
 
                 <Stack
-                  spacing={0.75}
+                  spacing={1}
+                  role="radiogroup"
+                  aria-label="Relationship to traveller"
                   sx={{
                     width: '100%',
-                    maxWidth: 400,
-                    mx: 'auto',
                     flex: 1,
                     minHeight: 0,
                     overflowY: 'auto',
-                    pr: 0.5,
-                    pb: 0.5,
+                    pr: 1,
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: `${applyFlow.hairlineStrong} transparent`,
                   }}
                 >
                   {RELATIONSHIP_OPTIONS.map((option) => {
@@ -209,35 +271,39 @@ export function SponsorProfileBuilder({
                         key={option.id}
                         component="button"
                         type="button"
+                        role="radio"
+                        aria-checked={selected}
                         onClick={() => selectRelationship(option.label)}
                         sx={{
+                          ...getSelectableSx(selected),
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 1,
-                          width: '100%',
-                          minHeight: 36,
-                          textAlign: 'left',
-                          border: `1.5px solid ${selected ? SPONSOR_GOLD_BORDER : colors.border}`,
-                          bgcolor: selected ? SPONSOR_GOLD_SOFT : colors.white,
-                          borderRadius: BORDER_RADIUS.md,
-                          px: 1.25,
-                          py: 0.5,
-                          cursor: 'pointer',
-                          transition: `border-color 150ms ${retailFlowEaseOut}, background-color 150ms ${retailFlowEaseOut}`,
-                          font: 'inherit',
-                          color: 'inherit',
-                          '&:hover': {
-                            borderColor: selected ? SPONSOR_GOLD_BORDER : 'rgba(15, 23, 42, 0.22)',
-                          },
+                          gap: 2.5,
+                          minHeight: 44,
+                          pl: 3.5,
+                          pr: 3,
+                          py: 2,
                         }}
                       >
-                        <Typography sx={{ flex: 1, fontSize: 13, fontWeight: 500, color: colors.navy }}>
+                        <Typography
+                          sx={{
+                            flex: 1,
+                            fontFamily: applyFont.body,
+                            fontSize: 14,
+                            fontWeight: selected ? 600 : 400,
+                            color: applyFlow.ink,
+                            lineHeight: 1.35,
+                            textAlign: 'left',
+                          }}
+                        >
                           {option.label}
                         </Typography>
                         {selected ? (
-                          <Box sx={{ color: SPONSOR_GOLD, display: 'flex' }}>
-                            <Check size={14} strokeWidth={2.5} />
-                          </Box>
+                          <Check
+                            size={14}
+                            strokeWidth={3}
+                            style={{ color: applyFlow.accentInk, flex: '0 0 auto' }}
+                          />
                         ) : null}
                       </Box>
                     )
@@ -246,90 +312,106 @@ export function SponsorProfileBuilder({
               </>
             ) : (
               <>
-                <Box sx={{ textAlign: 'center', mt: { xs: 1, sm: 1.5 }, mb: 2, px: 1, flexShrink: 0 }}>
+                <Box sx={{ flexShrink: 0, mb: 3 }}>
                   <Typography
                     sx={{
-                      fontSize: { xs: 17, sm: 18 },
+                      fontFamily: applyFont.display,
+                      fontSize: 19,
                       fontWeight: 700,
-                      color: colors.navy,
                       letterSpacing: '-0.02em',
-                      lineHeight: 1.3,
-                      mb: 0.5,
+                      lineHeight: 1.2,
+                      color: applyFlow.ink,
                     }}
                   >
                     Confirm sponsor details
                   </Typography>
-                  <Typography sx={{ fontSize: 12, color: colors.textMuted }}>
-                    We’ll ask for their bank statement on the next step
+                  <Typography
+                    sx={{
+                      fontFamily: applyFont.body,
+                      fontSize: 13,
+                      color: applyFlow.inkMuted,
+                      mt: 1.25,
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    Any documents this sponsor needs are collected with everyone else&apos;s on the
+                    Documents step.
                   </Typography>
                 </Box>
 
-                <Stack spacing={1.75} sx={{ width: '100%', maxWidth: 400, mx: 'auto', flex: 1 }}>
-                  <TextField
-                    label="Sponsor's name"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    fullWidth
-                    size="small"
-                    sx={{
-                      '& .MuiOutlinedInput-root': { borderRadius: BORDER_RADIUS.md, fontSize: 13 },
-                    }}
-                  />
-                  <TextField
-                    label="Phone or email"
-                    value={contact}
-                    onChange={(event) => setContact(event.target.value)}
-                    fullWidth
-                    size="small"
-                    placeholder="Contact for verification"
-                    sx={{
-                      '& .MuiOutlinedInput-root': { borderRadius: BORDER_RADIUS.md, fontSize: 13 },
-                    }}
-                  />
+                <Stack spacing={3.5} sx={{ width: '100%', flex: 1, minHeight: 0 }}>
+                  <Box>
+                    <FieldLabel htmlFor="sponsor-modal-name" required>
+                      Sponsor&apos;s full name
+                    </FieldLabel>
+                    <Box
+                      component="input"
+                      id="sponsor-modal-name"
+                      value={name}
+                      placeholder="As printed on their documents"
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                        setName(event.target.value)
+                      }
+                      sx={applyControlSx}
+                    />
+                  </Box>
+
                   <Box
                     sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                      alignSelf: 'center',
-                      color: SPONSOR_GOLD,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: '0.06em',
+                      pl: 4,
+                      borderLeft: `2px solid ${applyFlow.accent}`,
                     }}
                   >
-                    <Star size={11} fill={SPONSOR_GOLD} />
-                    SPONSOR · {relationship || '—'}
+                    <Typography
+                      sx={{
+                        fontFamily: applyFont.mono,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: applyFlow.inkMuted,
+                        mb: 1,
+                      }}
+                    >
+                      Relationship
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontFamily: applyFont.body,
+                        fontSize: 14.5,
+                        fontWeight: 600,
+                        color: applyFlow.ink,
+                      }}
+                    >
+                      {relationship || '—'}
+                    </Typography>
                   </Box>
-                  <Box sx={{ mt: 'auto', pt: 1 }}>
+
+                  <Box sx={{ mt: 'auto', pt: 2 }}>
                     <Button
-                      label="Save sponsor profile"
                       variant="contained"
-                      color="primary"
+                      disableElevation
                       fullWidth
-                      disabled={!contactReady}
+                      disabled={!name.trim() || !relationship}
                       onClick={handleFinish}
-                    />
+                      sx={{ ...getAccentButtonSx(), minHeight: 44 }}
+                    >
+                      Save sponsor
+                    </Button>
                     <Button
-                      label="Back"
                       variant="text"
                       fullWidth
                       onClick={() => setStep('relationship')}
-                      sx={{ mt: 0.75 }}
-                    />
+                      sx={{ ...getQuietButtonSx(), minHeight: 44, mt: 2 }}
+                    >
+                      Back
+                    </Button>
                   </Box>
                 </Stack>
               </>
             )}
-          </motion.div>
-        </AnimatePresence>
+        </Box>
       </Box>
     </Modal>
   )
 }
-
-export const sponsorGold = {
-  main: SPONSOR_GOLD,
-  soft: SPONSOR_GOLD_SOFT,
-  border: SPONSOR_GOLD_BORDER,
-} as const

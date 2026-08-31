@@ -2,8 +2,16 @@ import { useMemo, useState } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import { FileText, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { Button, ConfirmDialog, useToast } from '@/design-system/UIComponents'
-import { applyFlow, applyFont, applyRadius } from '@/pages/website/theme/applyFlowTheme'
+import { ConfirmDialog, useToast } from '@/design-system/UIComponents'
+import { AccentButton } from './retailAccountButtons'
+import {
+  applyFlow,
+  applyFont,
+  applyMotion,
+  applyRadius,
+  eyebrowSx,
+  focusRingSx,
+} from '@/pages/website/theme/applyFlowTheme'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import { navigateToContinueRetailApplication } from '@/pages/customer/features/applications/utils/createApplicationNavigation'
 import { deleteRetailWebsiteApplicationDraft } from '@/shared/services/retailWebsiteApplicationService'
@@ -52,25 +60,43 @@ export function RetailApplicationsPanel() {
   }
 
   return (
-    <Box>
+    /* One panel, matching My Documents — header, tabs and list share a single surface
+       instead of floating cards on the canvas. */
+    <Box
+      sx={{
+        p: { xs: 2.5, lg: 3 },
+        borderRadius: applyRadius.card,
+        bgcolor: applyFlow.surface,
+        border: `1px solid ${applyFlow.hairline}`,
+      }}
+    >
       <Stack
-        direction={{ xs: 'column', sm: 'row' }}
+        direction={{ xs: 'column', lg: 'row' }}
         justifyContent="space-between"
-        alignItems={{ xs: 'stretch', sm: 'center' }}
+        alignItems={{ xs: 'stretch', lg: 'flex-start' }}
         spacing={1.5}
         sx={{ mb: 2.5 }}
       >
-        <Typography sx={{ fontFamily: applyFont.body, fontWeight: 800, fontSize: 22, color: applyFlow.ink }}>
-          Applications
-        </Typography>
-        <Button
-          variant="contained"
-          size="sm"
-          startIcon={<Plus size={14} />}
-          onClick={() => navigate('/countries')}
-        >
+        <Box>
+          <Typography sx={{ ...eyebrowSx, mb: 0.75 }}>Your visas</Typography>
+          <Typography
+            sx={{
+              fontFamily: applyFont.display,
+              fontWeight: 700,
+              fontSize: 22,
+              color: applyFlow.ink,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Applications
+          </Typography>
+          <Typography sx={{ mt: 0.5, fontSize: 13.5, color: applyFlow.inkMuted, maxWidth: 520 }}>
+            Pick up an application where you left off, or track one we're processing.
+          </Typography>
+        </Box>
+        <AccentButton startIcon={<Plus size={15} />} onClick={() => navigate('/countries')}>
           Start application
-        </Button>
+        </AccentButton>
       </Stack>
 
       <Stack direction="row" spacing={0.75} sx={{ mb: 2.5 }}>
@@ -89,16 +115,16 @@ export function RetailApplicationsPanel() {
       {rows.length === 0 ? (
         <Box
           sx={{
-            py: 6,
+            py: 5,
             px: 3,
             textAlign: 'center',
-            borderRadius: applyRadius.card,
-            bgcolor: applyFlow.surface,
-            border: `1px solid ${applyFlow.hairline}`,
+            borderRadius: applyRadius.control,
+            bgcolor: applyFlow.canvas,
+            border: `1px dashed ${applyFlow.hairlineStrong}`,
           }}
         >
-          <FileText size={32} color={applyFlow.inkFaint} />
-          <Typography sx={{ mt: 1.5, fontWeight: 800, fontSize: 16, color: applyFlow.ink }}>
+          <FileText size={26} color={applyFlow.inkFaint} />
+          <Typography sx={{ mt: 1.25, fontWeight: 700, fontSize: 15, color: applyFlow.ink }}>
             {tab === 'ongoing' ? 'No ongoing applications' : 'No purchased applications'}
           </Typography>
           <Typography sx={{ mt: 0.75, fontSize: 13.5, color: applyFlow.inkMuted, maxWidth: 360, mx: 'auto' }}>
@@ -107,13 +133,21 @@ export function RetailApplicationsPanel() {
               : 'Applications appear here after payment while we process your visa.'}
           </Typography>
           {tab === 'ongoing' ? (
-            <Button variant="contained" sx={{ mt: 2.5 }} onClick={() => navigate('/countries')}>
+            <AccentButton sx={{ mt: 2.5 }} onClick={() => navigate('/countries')}>
               Browse destinations
-            </Button>
+            </AccentButton>
           ) : null}
         </Box>
       ) : (
-        <Stack spacing={1.75}>
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 2,
+            // Two-up only once the main column is genuinely wide enough — the project's
+            // `desktop` key is 1024px (see src/design-system/breakpoints.ts).
+            gridTemplateColumns: { xs: '1fr', desktop: 'repeat(2, minmax(0, 1fr))' },
+          }}
+        >
           {rows.map(row => (
             <RetailApplicationCard
               key={row.id}
@@ -128,7 +162,7 @@ export function RetailApplicationsPanel() {
               onDelete={tab === 'ongoing' ? () => setDeleteTarget(row) : undefined}
             />
           ))}
-        </Stack>
+        </Box>
       )}
 
       <ConfirmDialog
@@ -166,12 +200,16 @@ function TabChip({ active, label, onClick }: { active: boolean; label: string; o
         py: 1,
         borderRadius: '999px',
         cursor: 'pointer',
-        transition: 'all 140ms ease',
-        '&:hover': {
-          borderColor: applyFlow.accentBorder,
-          color: applyFlow.accentInk,
+        transition: `background-color 140ms ${applyMotion.easeOut}, border-color 140ms ${applyMotion.easeOut}, color 140ms ${applyMotion.easeOut}`,
+        '@media (hover: hover) and (pointer: fine)': {
+          '&:hover': {
+            borderColor: applyFlow.accentBorder,
+            color: applyFlow.accentInk,
+          },
         },
+        ...focusRingSx,
       }}
+      aria-pressed={active}
     >
       {label}
     </Box>

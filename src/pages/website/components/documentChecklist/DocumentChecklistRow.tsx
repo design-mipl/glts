@@ -36,6 +36,11 @@ interface DocumentChecklistRowProps {
   status?: 'verifying' | 'error'
   /** Shown in place of `description` when `status` is `error`. */
   errorHint?: string
+  /**
+   * Tighter vertical rhythm for long lists. A fifteen-document checklist at the default
+   * spacing is mostly whitespace and forces scrolling past what you came to check.
+   */
+  dense?: boolean
 }
 
 function pillTone(tone: DocumentChecklistStatusTone): ApplyStatusTone {
@@ -63,6 +68,7 @@ export function DocumentChecklistRow({
   statusTag,
   status,
   errorHint,
+  dense = false,
 }: DocumentChecklistRowProps) {
   const isVerifying = status === 'verifying'
   const isError = status === 'error'
@@ -71,18 +77,20 @@ export function DocumentChecklistRow({
     <Stack
       direction="row"
       alignItems="center"
-      spacing={3}
+      spacing={dense ? 2.5 : 3}
       sx={{
         px: 0,
-        py: 2.5,
+        py: dense ? 1.5 : 2.5,
+        minHeight: dense ? 44 : undefined,
         borderBottom: `1px solid ${applyFlow.hairlineSoft}`,
+        '&:last-of-type': { borderBottom: 'none' },
       }}
     >
       <Box
         aria-hidden
         sx={{
-          width: 32,
-          height: 32,
+          width: dense ? 26 : 32,
+          height: dense ? 26 : 32,
           flexShrink: 0,
           display: 'grid',
           placeItems: 'center',
@@ -109,16 +117,16 @@ export function DocumentChecklistRow({
       >
         {isVerifying ? (
           <Loader2
-            size={14}
+            size={dense ? 12 : 14}
             strokeWidth={2.4}
             style={{ animation: 'docSpin 900ms linear infinite' }}
           />
         ) : isError ? (
-          <AlertCircle size={14} strokeWidth={2.2} />
+          <AlertCircle size={dense ? 12 : 14} strokeWidth={2.2} />
         ) : completed ? (
-          <Check size={14} strokeWidth={3} />
+          <Check size={dense ? 12 : 14} strokeWidth={3} />
         ) : (
-          <Icon size={14} strokeWidth={1.8} />
+          <Icon size={dense ? 12 : 14} strokeWidth={1.8} />
         )}
         <Box
           component="style"
@@ -134,7 +142,7 @@ export function DocumentChecklistRow({
           <Typography
             sx={{
               fontFamily: applyFont.body,
-              fontSize: 13.5,
+              fontSize: dense ? 13 : 13.5,
               fontWeight: 600,
               color: applyFlow.ink,
               lineHeight: 1.3,
@@ -194,7 +202,7 @@ export function DocumentChecklistRow({
       </Box>
 
       {isVerifying ? (
-        <StatusPill tone="idle">Checking</StatusPill>
+        <StatusPill tone="idle">Processing</StatusPill>
       ) : statusTag ? (
         <StatusPill tone={pillTone(statusTag.tone ?? 'neutral')}>{statusTag.label}</StatusPill>
       ) : completed ? (
@@ -232,7 +240,7 @@ export function DocumentChecklistRow({
             },
           }}
         >
-          <Upload size={12} strokeWidth={2.2} /> {isError ? 'Retry' : 'Upload'}
+          <Upload size={12} strokeWidth={2.2} /> {isError ? 'Upload again' : 'Upload'}
           {onFileSelect ? (
             <input
               type="file"

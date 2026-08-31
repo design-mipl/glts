@@ -23,6 +23,16 @@ import { getCountryMasterById } from '@/shared/services/countryMasterService'
 
 const PHYSICAL_COLLECTION_FEE_PLACEHOLDER = 499
 const INSURANCE_PLACEHOLDER = 504
+
+/**
+ * GST on GLTS's own charges (service fee + courier/handling). Statutory embassy and
+ * consulate fees are collected on the applicant's behalf and sit outside the GST net, so
+ * they are not part of the taxable base.
+ *
+ * Exported because the retail payment screen must show the identical figure it charges —
+ * the checkout breakdown and this snapshot are the same bill.
+ */
+export const RETAIL_GST_RATE = 0.18
 const DRAFT_STORE_KEY = 'glts:retail-website-application-drafts'
 const ACTIVE_DRAFT_KEY = 'glts:retail-apply-active-id'
 
@@ -395,7 +405,7 @@ function pricingSnapshot(
 
   const lineItems = [
     { id: 'visa-fees', label: 'Visa fees', amount: embassyFeeTotal },
-    { id: 'service-fees', label: 'GLTS service fees', amount: gltsServiceFee },
+    { id: 'service-fees', label: 'GLTS fee', amount: gltsServiceFee },
   ]
   if (physicalCollectionFee > 0) {
     lineItems.push({ id: 'courier', label: 'Physical collection / courier', amount: physicalCollectionFee })
@@ -403,6 +413,10 @@ function pricingSnapshot(
   if (insuranceTotal > 0) {
     lineItems.push({ id: 'insurance', label: 'Travel insurance', amount: insuranceTotal })
   }
+  // GST is its own line so the snapshot the customer paid against matches the checkout
+  // screen exactly — the tax must never be folded into the GLTS fee or the total.
+  const gstAmount = Math.round((gltsServiceFee + physicalCollectionFee) * RETAIL_GST_RATE)
+  lineItems.push({ id: 'gst', label: `GST (${Math.round(RETAIL_GST_RATE * 100)}%)`, amount: gstAmount })
 
   const totalAmount = lineItems.reduce((sum, item) => sum + item.amount, 0)
   const tierLabels = draft.processingTier

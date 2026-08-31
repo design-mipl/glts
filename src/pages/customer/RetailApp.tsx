@@ -1,13 +1,10 @@
 import { Navigate, Routes, Route } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import { Box } from '@mui/material'
 import { loadSession } from '@/shared/auth/session'
 import { LazyRouteBoundary } from '@/shared/routing/lazyRoute'
 import { RetailAccountShell } from './retail-account/RetailAccountShell'
 import { RetailAccountPage } from './retail-account/RetailAccountPage'
-import { ApplicationDetailPage } from './shared/customerRoutePages'
-import { PublicContainer } from '@/pages/website/components/PublicContainer'
-import { applyCanvasSx } from '@/pages/website/theme/applyFlowTheme'
+import { RetailApplicationDetailPage } from './retail-account/RetailApplicationDetailPage'
 
 function RetailSessionGate({ children }: { children: ReactNode }) {
   const session = loadSession()
@@ -15,16 +12,6 @@ function RetailSessionGate({ children }: { children: ReactNode }) {
     return <Navigate to="/sign-in/retail" replace />
   }
   return <>{children}</>
-}
-
-function RetailApplicationDetailPage() {
-  return (
-    <Box sx={{ ...applyCanvasSx, py: { xs: 3, md: 4 } }}>
-      <PublicContainer>
-        <ApplicationDetailPage />
-      </PublicContainer>
-    </Box>
-  )
 }
 
 /**
@@ -38,10 +25,13 @@ export function RetailPortalApp() {
         <Routes>
           <Route element={<RetailAccountShell />}>
             <Route index element={<Navigate to="account" replace />} />
-            <Route path="account" element={<RetailAccountPage />} />
+            <Route path="account" element={<RetailAccountPage section="applications" />} />
+            <Route path="account/documents" element={<RetailAccountPage section="documents" />} />
+            {/* Profile is not its own destination — it lives in the account rail. */}
+            <Route path="account/profile" element={<Navigate to="/retail/account" replace />} />
             <Route path="profile" element={<Navigate to="/retail/account" replace />} />
             <Route path="dashboard" element={<Navigate to="/retail/account" replace />} />
-            <Route path="documents" element={<Navigate to="/retail/account" replace />} />
+            <Route path="documents" element={<Navigate to="/retail/account/documents" replace />} />
             <Route path="applications" element={<Navigate to="/retail/account" replace />} />
             <Route path="applications/:applicationId" element={<RetailApplicationDetailPage />} />
             <Route path="*" element={<Navigate to="/retail/account" replace />} />

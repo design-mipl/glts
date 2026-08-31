@@ -1,311 +1,192 @@
-import { useState } from 'react'
 import { Box, Typography } from '@mui/material'
-import { ArrowRight } from 'lucide-react'
-import { PublicContainer } from '../../../components/PublicContainer'
-import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
-import { publicFonts, publicMotion, usePublicBrandColors } from '@/shared/theme/publicBrand'
-import { visaServiceShowcaseImages } from '../../../assets/landingPageImages'
-import { useScrollReveal } from '../../../hooks/useScrollReveal'
+import {
+  ArrowRight,
+  Briefcase,
+  GraduationCap,
+  Palmtree,
+  PlaneTakeoff,
+  Users,
+  Sparkles,
+  type LucideIcon,
+} from 'lucide-react'
+import { SiteSection, SiteSectionHeading } from '../../../components/SiteSection'
+import { site, siteFont, siteMotion, siteRadius, mrzSx } from '@/pages/website/theme/siteTheme'
 
-const CARD_RADIUS = '16px'
-const IMAGE_RADIUS = '14px'
-const TRANSITION = `300ms ${publicMotion.easeOut}`
-
-const visaServices = [
+const VISA_SERVICES: {
+  id: string
+  title: string
+  description: string
+  icon: LucideIcon
+  href: string
+}[] = [
   {
     id: 'tourist',
-    title: 'Tourist Visa',
-    description: 'For holidays, leisure and short-term travel',
-    image: visaServiceShowcaseImages.tourist,
-    href: '/countries',
-    objectPosition: 'center center',
+    title: 'Tourist',
+    description: 'Holidays, leisure and short-term travel.',
+    icon: Palmtree,
+    href: '/countries?visaType=tourist',
   },
   {
     id: 'business',
-    title: 'Business Visa',
-    description: 'For meetings, conferences and business visits',
-    image: visaServiceShowcaseImages.business,
-    href: '/countries',
-    objectPosition: 'center 35%',
+    title: 'Business',
+    description: 'Meetings, conferences and client visits.',
+    icon: Briefcase,
+    href: '/countries?visaType=business',
   },
   {
     id: 'student',
-    title: 'Student Visa',
-    description: 'For overseas study and academic travel',
-    image: visaServiceShowcaseImages.student,
-    href: '/countries',
-    objectPosition: 'center 32%',
+    title: 'Student',
+    description: 'Overseas study and academic travel.',
+    icon: GraduationCap,
+    href: '/countries?visaType=student',
   },
   {
     id: 'transit',
-    title: 'Transit Visa',
-    description: 'For layovers and onward travel through another country',
-    image: visaServiceShowcaseImages.transit,
-    href: '/countries',
-    objectPosition: 'center 40%',
+    title: 'Transit',
+    description: 'Layovers and onward travel through a third country.',
+    icon: PlaneTakeoff,
+    href: '/countries?visaType=transit',
   },
   {
     id: 'family',
-    title: 'Visit & Family',
-    description: 'For visiting friends, relatives and family members',
-    image: visaServiceShowcaseImages.family,
-    href: '/countries',
-    objectPosition: 'center center',
+    title: 'Visit & family',
+    description: 'Visiting relatives, partners and friends.',
+    icon: Users,
+    href: '/countries?visaType=family',
   },
   {
     id: 'other',
-    title: 'Other Visa Types',
-    description: 'For special cases that need country-specific guidance',
-    image: visaServiceShowcaseImages.other,
+    title: 'Everything else',
+    description: 'Country-specific categories and unusual cases.',
+    icon: Sparkles,
     href: '/countries',
-    objectPosition: 'center 35%',
   },
-] as const
+]
 
-function VisaServiceCard({
-  title,
-  description,
-  image,
-  href,
-  objectPosition,
-  index,
-  active,
-  reducedMotion,
-}: (typeof visaServices)[number] & {
-  index: number
-  active: boolean
-  reducedMotion: boolean
-}) {
-  const colors = usePublicBrandColors()
-  const [imageSrc, setImageSrc] = useState<string>(image.src)
-  const delayMs = reducedMotion ? 0 : index * 70
-
-  return (
-    <Box
-      component="a"
-      href={href}
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: '0 0 auto',
-        width: {
-          xs: 'min(220px, 72vw)',
-          sm: 200,
-          md: 210,
-          lg: '100%',
-        },
-        minWidth: 0,
-        textDecoration: 'none',
-        color: 'inherit',
-        borderRadius: CARD_RADIUS,
-        bgcolor: colors.white,
-        opacity: active ? 1 : 0,
-        transform: active ? 'translate3d(0, 0, 0)' : 'translate3d(0, 16px, 0)',
-        transition: reducedMotion
-          ? 'none'
-          : `opacity 0.5s ${TRANSITION} ${delayMs}ms, transform 0.5s ${TRANSITION} ${delayMs}ms`,
-        willChange: 'opacity, transform',
-        '@media (hover: hover)': {
-          '&:hover': {
-            transform: active ? 'translate3d(0, -4px, 0)' : undefined,
-          },
-          '&:hover .visa-card-image': {
-            transform: 'scale(1.04)',
-          },
-          '&:hover .visa-card-cta': {
-            color: colors.greenDark,
-          },
-          '&:hover .visa-card-arrow': {
-            transform: 'translateX(4px)',
-          },
-        },
-        '&:active': {
-          transform: 'translate3d(0, 0, 0) scale(0.98)',
-        },
-      }}
-    >
-      <Box
-        sx={{
-          position: 'relative',
-          width: '100%',
-          aspectRatio: '4 / 5',
-          borderRadius: IMAGE_RADIUS,
-          overflow: 'hidden',
-          mb: 1.75,
-          bgcolor: colors.surfaceAlt,
-          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.1)',
-        }}
-      >
-        <Box
-          component="img"
-          className="visa-card-image"
-          src={imageSrc}
-          alt={image.alt}
-          loading="lazy"
-          onError={() => setImageSrc(image.fallback)}
-          sx={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition,
-            display: 'block',
-            transform: 'scale(1)',
-            transition: reducedMotion ? 'none' : `transform 0.5s ${TRANSITION}`,
-            willChange: 'transform',
-          }}
-        />
-      </Box>
-
-      <Typography
-        sx={{
-          fontFamily: publicFonts.heading,
-          fontSize: { xs: '15px', md: '16px' },
-          fontWeight: 800,
-          color: colors.navy,
-          lineHeight: 1.25,
-          letterSpacing: '-0.02em',
-          mb: 0.6,
-        }}
-      >
-        {title}
-      </Typography>
-
-      <Typography
-        sx={{
-          fontSize: { xs: '12.5px', md: '13px' },
-          color: colors.textSecondary,
-          lineHeight: 1.4,
-          mb: 1.25,
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-          minHeight: '2.8em',
-        }}
-      >
-        {description}
-      </Typography>
-
-      <Box
-        className="visa-card-cta"
-        sx={{
-          mt: 'auto',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 0.5,
-          color: colors.greenBright,
-          fontSize: '13.5px',
-          fontWeight: 700,
-          letterSpacing: '-0.01em',
-          transition: reducedMotion ? 'none' : `color ${TRANSITION}`,
-        }}
-      >
-        Apply Now
-        <Box
-          component="span"
-          className="visa-card-arrow"
-          sx={{
-            display: 'inline-flex',
-            transition: reducedMotion ? 'none' : `transform ${TRANSITION}`,
-          }}
-        >
-          <ArrowRight size={15} strokeWidth={2.25} />
-        </Box>
-      </Box>
-    </Box>
-  )
-}
-
+/**
+ * Visa categories.
+ *
+ * Was a horizontally-scrolling rail of six 4:5 stock photographs — generic travel imagery
+ * that told the reader nothing about the category and put six lazy images on the page.
+ * Photography is kept where it is actually information (the destination cards, which show
+ * the place you are going) and dropped where it is decoration.
+ *
+ * Each cell now carries the category's own filter link, so the section is a way into the
+ * product rather than six routes to the same unfiltered list.
+ */
 export function VisaServicesSection() {
-  const colors = usePublicBrandColors()
-  const { ref, active, reducedMotion } = useScrollReveal<HTMLDivElement>({
-    threshold: 0.18,
-    rootMargin: '0px 0px -6% 0px',
-  })
-
   return (
-    <Box
-      component="section"
-      id="visa-services"
-      sx={{
-        bgcolor: colors.white,
-        py: landingSectionPy,
-        scrollMarginTop: 88,
-      }}
-    >
-      <PublicContainer variant="hero">
-        <Box sx={{ maxWidth: 640, mb: landingSectionHeaderMb }}>
-          <Typography
-            sx={{
-              fontSize: '11px',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: colors.greenBright,
-              mb: 1.5,
-            }}
-          >
-            Visa Services
-          </Typography>
+    <SiteSection id="visa-services" tone="canvas" sx={{ scrollMarginTop: 88 }}>
+      <SiteSectionHeading
+        eyebrow={`Categories · ${String(VISA_SERVICES.length).padStart(2, '0')}`}
+        title="Every visa category, expertly managed."
+        lead="Each one includes a pre-submission review by a specialist and a live application status you can check at any time."
+      />
 
-          <Typography
-            component="h2"
-            sx={{
-              fontFamily: publicFonts.display,
-              fontSize: { xs: '26px', md: '32px' },
-              fontWeight: 700,
-              color: colors.navy,
-              lineHeight: 1.15,
-              letterSpacing: '-0.3px',
-              mb: 1.25,
-            }}
-          >
-            Every visa category, expertly managed.
-          </Typography>
-
-          <Typography
-            sx={{
-              fontSize: { xs: '15px', md: '16px' },
-              color: colors.textSecondary,
-              lineHeight: 1.65,
-            }}
-          >
-            From tourist trips to work permits — each service includes pre-submission review and
-            live application tracking.
-          </Typography>
-        </Box>
-
-        <Box
-          ref={ref}
-          sx={{
-            display: { xs: 'flex', lg: 'grid' },
-            gridTemplateColumns: {
-              lg: 'repeat(6, minmax(0, 1fr))',
-            },
-            gap: { xs: 2.5, sm: 2.75, md: 3 },
-            overflowX: { xs: 'auto', lg: 'visible' },
-            pb: { xs: 1, lg: 0 },
-            mx: { xs: -3, sm: -4, md: -5, lg: 0 },
-            px: { xs: 3, sm: 4, md: 5, lg: 0 },
-            scrollSnapType: { xs: 'x mandatory', lg: 'none' },
-            WebkitOverflowScrolling: 'touch',
-            scrollbarWidth: 'thin',
-            '& > *': {
-              scrollSnapAlign: { xs: 'start', lg: 'unset' },
-            },
-          }}
-        >
-          {visaServices.map((service, index) => (
-            <VisaServiceCard
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, minmax(0, 1fr))',
+            lg: 'repeat(3, minmax(0, 1fr))',
+          },
+          gap: '1px',
+          backgroundColor: site.hairline,
+          border: `1px solid ${site.hairline}`,
+          borderRadius: siteRadius.card,
+          overflow: 'hidden',
+        }}
+      >
+        {VISA_SERVICES.map((service) => {
+          const Icon = service.icon
+          return (
+            <Box
               key={service.id}
-              {...service}
-              index={index}
-              active={active}
-              reducedMotion={reducedMotion}
-            />
-          ))}
-        </Box>
-      </PublicContainer>
-    </Box>
+              component="a"
+              href={service.href}
+              sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 3,
+                p: { xs: 3.5, md: 4 },
+                minHeight: 44,
+                textDecoration: 'none',
+                backgroundColor: site.surface,
+                transition: `background-color 200ms ${siteMotion.easeOut}`,
+                '@media (hover: hover) and (pointer: fine)': {
+                  '&:hover': { backgroundColor: site.canvas },
+                  '&:hover .svcArrow': { transform: 'translateX(3px)', color: site.accentInk },
+                },
+                '&:focus-visible': {
+                  outline: 'none',
+                  boxShadow: `inset 0 0 0 2px ${site.accent}`,
+                },
+              }}
+            >
+              <Box
+                aria-hidden
+                sx={{
+                  width: 32,
+                  height: 32,
+                  flex: '0 0 auto',
+                  display: 'grid',
+                  placeItems: 'center',
+                  borderRadius: siteRadius.chip,
+                  border: `1px solid ${site.hairline}`,
+                  backgroundColor: site.canvas,
+                  color: site.inkMuted,
+                }}
+              >
+                <Icon size={15} strokeWidth={1.9} />
+              </Box>
+
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  sx={{
+                    fontFamily: siteFont.display,
+                    fontSize: 15.5,
+                    fontWeight: 700,
+                    letterSpacing: '-0.02em',
+                    color: site.ink,
+                    lineHeight: 1.25,
+                    mb: 1,
+                  }}
+                >
+                  {service.title}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: siteFont.body,
+                    fontSize: 13,
+                    color: site.inkMuted,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {service.description}
+                </Typography>
+                <Typography sx={{ ...mrzSx, fontSize: 9.5, mt: 2, color: site.inkFaint }}>
+                  See destinations
+                </Typography>
+              </Box>
+
+              <Box
+                aria-hidden
+                className="svcArrow"
+                sx={{
+                  flex: '0 0 auto',
+                  display: 'inline-flex',
+                  color: site.inkFaint,
+                  mt: 0.5,
+                  transition: `transform 180ms ${siteMotion.easeOut}, color 180ms ${siteMotion.easeOut}`,
+                }}
+              >
+                <ArrowRight size={15} />
+              </Box>
+            </Box>
+          )
+        })}
+      </Box>
+    </SiteSection>
   )
 }
