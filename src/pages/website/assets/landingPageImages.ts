@@ -281,8 +281,32 @@ export const additionalServicesSlider = [
     title: 'Travel Insurance',
     description: 'Travel protection options aligned to your itinerary and visa journey.',
     ctaLabel: 'View Options',
-    href: '/countries',
+    href: '/extra-services?service=travel-insurance',
     image: additionalServicesFeatured.image,
+  },
+  {
+    id: 'attestation',
+    title: 'Attestation',
+    description: 'MEA, embassy, and HRD attestation for visa and corporate documentation.',
+    ctaLabel: 'Request Service',
+    href: '/extra-services?service=attestation',
+    image: {
+      src: '/images/additional-services/guided-document-preparation.png',
+      fallback: '/images/additional-services/guided-document-preparation.png',
+      alt: 'Visa specialist reviewing attestation documents on a checklist',
+    },
+  },
+  {
+    id: 'notary',
+    title: 'Notary',
+    description: 'Affidavits, declarations, and certified copies notarised to embassy specifications.',
+    ctaLabel: 'Request Service',
+    href: '/extra-services?service=notary',
+    image: {
+      src: '/images/additional-services/travel-documentation.png',
+      fallback: '/images/additional-services/travel-documentation.png',
+      alt: 'Notarised travel documents prepared for submission',
+    },
   },
   {
     id: 'ticket-for-visa',

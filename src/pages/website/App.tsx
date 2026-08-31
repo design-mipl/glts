@@ -12,6 +12,7 @@ import {
   LandingPage,
   MarineCrewVisaPage,
   ServicesPage,
+  ExtraServicesPage,
   WebsiteApplicationFlowPage,
 } from './websiteRoutePages'
 
@@ -52,6 +53,7 @@ export function PublicWebsiteApp() {
                 <Route path="/marine-crew" element={<MarineCrewVisaPage />} />
                 <Route path="/corporate" element={<CorporateBusinessVisaPage />} />
                 <Route path="/services" element={<ServicesPage />} />
+                <Route path="/extra-services" element={<ExtraServicesPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/track" element={<Navigate to="/track/GLTS-2026-0842" replace />} />
                 <Route path="/track/:applicationId" element={<ApplicationTrackingPage />} />

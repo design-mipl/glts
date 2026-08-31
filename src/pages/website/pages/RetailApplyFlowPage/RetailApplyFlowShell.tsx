@@ -51,6 +51,7 @@ import type { OriginalDocumentCollectionMethod } from '@/shared/types/originalDo
 import { getCountryMasterById, getVisaOfferings } from '@/shared/services/countryMasterService'
 import {
   isAdminFlowPolicy,
+  isWebsiteFlowPolicy,
   useApplicationFlowPolicy,
 } from '@/pages/customer/features/applications/context/ApplicationFlowPolicyContext'
 import { loadSession } from '@/shared/auth/session'
@@ -101,6 +102,8 @@ export function RetailApplyFlowShell({
   })
 
   const countryId = draft.countryId || initialCountryId
+  /** Retail website: country is chosen before apply — hide destination from the phase rail once known. */
+  const hideDestinationFromNav = isWebsiteFlowPolicy(policy) && Boolean(countryId)
   const exitHref = listingPath || (countryId ? `${LISTING_HREF}/${countryId}` : LISTING_HREF)
   const trustProfile = getCountryTrustProfile(countryId)
   const [showTrustIntro, setShowTrustIntro] = useState(() => !isAdminAssist && Boolean(trustProfile))
@@ -109,13 +112,20 @@ export function RetailApplyFlowShell({
 
   const steps = useMemo(() => {
     if (!countryId) return [DESTINATION_STEP]
-    return resolvedSteps.length > 0 ? resolvedSteps : [DESTINATION_STEP, { id: 'visa' as const, phase: 'purpose' as const, label: 'Visa type' }]
-  }, [countryId, resolvedSteps])
+    const base =
+      resolvedSteps.length > 0
+        ? resolvedSteps
+        : [DESTINATION_STEP, { id: 'visa' as const, phase: 'purpose' as const, label: 'Visa type' }]
+    return hideDestinationFromNav ? base.filter((step) => step.id !== 'destination') : base
+  }, [countryId, resolvedSteps, hideDestinationFromNav])
 
-  const visiblePhases = useMemo(
-    () => (countryId ? [...RETAIL_PHASE_ORDER] : (['destination'] as RetailPhaseId[])),
-    [countryId],
-  )
+  const visiblePhases = useMemo(() => {
+    if (!countryId) return ['destination'] as RetailPhaseId[]
+    if (hideDestinationFromNav) {
+      return RETAIL_PHASE_ORDER.filter((phase) => phase !== 'destination')
+    }
+    return [...RETAIL_PHASE_ORDER]
+  }, [countryId, hideDestinationFromNav])
 
   const jurisdictions = useMemo(
     () => (countryId && visaOfferingId ? resolveJurisdictionOptions(countryId, visaOfferingId) : []),
@@ -130,7 +140,9 @@ export function RetailApplyFlowShell({
 
     if (draft.lastStepId) {
       let restoredId = draft.lastStepId
-      if (restoredId === 'photo' || restoredId === 'confirm' || restoredId === 'traveller') {
+      if (restoredId === 'destination' && hideDestinationFromNav) {
+        restoredId = 'visa'
+      } else if (restoredId === 'photo' || restoredId === 'confirm' || restoredId === 'traveller') {
         restoredId = 'passport'
       } else if (restoredId === 'requirements') {
         restoredId = 'checklist'
@@ -152,7 +164,7 @@ export function RetailApplyFlowShell({
       if (visaIndex !== -1) setCurrentStepIndex(visaIndex)
     }
     setCursorReady(true)
-  }, [steps, draft.lastStepId, countryId])
+  }, [steps, draft.lastStepId, countryId, hideDestinationFromNav])
 
   useEffect(() => {
     if (!advanceAfterCountryRef.current) return

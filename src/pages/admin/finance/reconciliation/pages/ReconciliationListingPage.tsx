@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Box, Stack, alpha, useTheme } from '@mui/material'
 import { BulkActions, Pagination, Tabs, type BulkAction, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
@@ -41,11 +42,15 @@ const STATUS_TAB_VALUES = RECONCILIATION_STATUS_TABS.map(
   tab => tab.value,
 ) as readonly ReconciliationStatusTab[]
 
+const DEFAULT_CATEGORY_TAB: ReconciliationTab = 'insurance'
+const DEFAULT_STATUS_TAB: ReconciliationStatusTab = 'pending'
+
 export function ReconciliationListingPage() {
   const theme = useTheme()
   const { showToast } = useToast()
-  const [activeTab, setActiveTab] = useListingTabParam(TAB_VALUES, 'insurance')
-  const [statusTab, setStatusTab] = useListingTabParam(STATUS_TAB_VALUES, 'pending', 'status')
+  const [, setSearchParams] = useSearchParams()
+  const [activeTab] = useListingTabParam(TAB_VALUES, DEFAULT_CATEGORY_TAB)
+  const [statusTab, setStatusTab] = useListingTabParam(STATUS_TAB_VALUES, DEFAULT_STATUS_TAB, 'status')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [filters, setFilters] = useState<ReconciliationFilters>(EMPTY_RECONCILIATION_FILTERS)
   const [selectedItem, setSelectedItem] = useState<ReconciliationItem | null>(null)
@@ -152,8 +157,21 @@ export function ReconciliationListingPage() {
 
   const handleTabChange = useCallback(
     (tab: ReconciliationTab) => {
-      setActiveTab(tab)
-      setStatusTab('pending')
+      // Category + status must update in one setSearchParams call — two separate
+      // calls race and the category tab change is lost.
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          if (tab === DEFAULT_CATEGORY_TAB) {
+            next.delete('tab')
+          } else {
+            next.set('tab', tab)
+          }
+          next.delete('status')
+          return next
+        },
+        { replace: true },
+      )
       setViewMode('table')
       setSelectedItem(null)
       setBulkItems(null)
@@ -162,7 +180,7 @@ export function ReconciliationListingPage() {
         setFilters(current => ({ ...current, paymentMode: '' }))
       }
     },
-    [filters.paymentMode, listing, setActiveTab, setStatusTab],
+    [filters.paymentMode, listing, setSearchParams],
   )
 
   const refreshAfterAction = useCallback(

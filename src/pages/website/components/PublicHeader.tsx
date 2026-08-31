@@ -31,6 +31,7 @@ const navLinks = [
   { label: 'Corporate', href: '/corporate' },
   { label: 'Travel Agents', href: '/#specialist-visa-services' },
   { label: 'Services', href: '/services' },
+  { label: 'Extra Services', href: '/extra-services' },
   { label: 'About Us', href: '/about' },
 ]
 
