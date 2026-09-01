@@ -1,6 +1,7 @@
 import { Button, type ButtonProps } from '@mui/material'
 import {
   applyFlow,
+  applyFlowButtonPadding,
   applyFont,
   applyRadius,
   getAccentButtonSx,
@@ -14,7 +15,7 @@ import {
  * green CTA here would read as a different product.
  */
 
-const BASE = { minHeight: 36, px: 2, py: 0.75 } as const
+const BASE = { minHeight: 36, ...applyFlowButtonPadding.md } as const
 
 /** Primary CTA — gold fill, ink label. One per surface. */
 export function AccentButton({ sx, ...props }: ButtonProps) {

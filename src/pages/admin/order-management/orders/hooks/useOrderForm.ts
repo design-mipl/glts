@@ -50,8 +50,8 @@ export function useOrderForm(initialData?: OrderFormData) {
     return Object.keys(next).length === 0
   }
 
-  const reset = () => {
-    setFormData(initialData ?? INITIAL_ORDER_FORM)
+  const reset = (next?: OrderFormData) => {
+    setFormData(next ?? initialData ?? INITIAL_ORDER_FORM)
     setErrors({})
   }
 

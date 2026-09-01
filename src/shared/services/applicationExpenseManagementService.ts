@@ -3,7 +3,7 @@ import {
   mockSingleApplications,
 } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationCustomerSegment } from '@/pages/customer/features/applications/types/applicationListing.types'
-import { GLTS_MAR_1025_CREW, SEED_APPLICATION_EXPENSES, SEED_APPLICATION_EXPENSE_VERSION } from '@/shared/data/mockApplicationExpenses'
+import { GLTS_MAR_1025_CREW, SEED_APPLICATION_EXPENSES, SEED_APPLICATION_EXPENSE_VERSION, buildTodayReconciliationSeedExpenses } from '@/shared/data/mockApplicationExpenses'
 import { applicationArrangedExpenseService } from '@/shared/services/applicationArrangedExpenseService'
 import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
 import { operationalCaseHandlingService } from '@/shared/services/operationalCaseHandlingService'
@@ -355,6 +355,24 @@ function buildListingLookup(): Map<string, ApplicationExpenseListingRow> {
 }
 
 export const applicationExpenseManagementService = {
+  /** Re-stamp rolling "today" reconciliation demo rows so the default period filter stays populated. */
+  refreshTodayReconciliationSeedExpenses(): void {
+    const store = readStore()
+    let changed = false
+    for (const expense of buildTodayReconciliationSeedExpenses()) {
+      const existing = store[expense.id]
+      if (
+        !existing ||
+        existing.expenseDate !== expense.expenseDate ||
+        existing.updatedAt !== expense.updatedAt
+      ) {
+        store[expense.id] = expense
+        changed = true
+      }
+    }
+    if (changed) writeStore(store)
+  },
+
   listApplications(
     segment: ApplicationCustomerSegment,
     filters: ApplicationExpenseListingFilters = {},

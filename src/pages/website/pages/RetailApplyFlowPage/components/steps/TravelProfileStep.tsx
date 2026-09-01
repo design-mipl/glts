@@ -236,8 +236,8 @@ function TravellerRow({
             disabled={!trimmed}
             sx={
               complete
-                ? { ...getQuietButtonSx(), px: 4, minHeight: 42, width: { xs: '100%', md: 'auto' } }
-                : { ...getAccentButtonSx(), px: 4, minHeight: 42, width: { xs: '100%', md: 'auto' } }
+                ? { ...getQuietButtonSx(), px: 4, py: 2, minHeight: 42, width: { xs: '100%', md: 'auto' } }
+                : { ...getAccentButtonSx(), px: 4, py: 2, minHeight: 42, width: { xs: '100%', md: 'auto' } }
             }
           >
             {complete ? 'Edit answers' : 'Add details'}

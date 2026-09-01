@@ -22,6 +22,23 @@ export const CreateOrderPage = lazyNamed(() => import('../order-management/order
 export const EditOrderPage = lazyNamed(() => import('../order-management/orders'), 'EditOrderPage')
 export const OrderDetailPage = lazyNamed(() => import('../order-management/orders'), 'OrderDetailPage')
 
+export const OrderEnquiryListingPage = lazyNamed(
+  () => import('../order-management/order-enquiries'),
+  'OrderEnquiryListingPage',
+)
+export const CreateOrderEnquiryPage = lazyNamed(
+  () => import('../order-management/order-enquiries'),
+  'CreateOrderEnquiryPage',
+)
+export const EditOrderEnquiryPage = lazyNamed(
+  () => import('../order-management/order-enquiries'),
+  'EditOrderEnquiryPage',
+)
+export const OrderEnquiryDetailPage = lazyNamed(
+  () => import('../order-management/order-enquiries'),
+  'OrderEnquiryDetailPage',
+)
+
 export const AgreementDetailPage = lazyNamed(
   () => import('../customer-accounts/agreements'),
   'AgreementDetailPage',

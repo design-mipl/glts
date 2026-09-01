@@ -1,13 +1,15 @@
 import type { MasterAuditFields } from './masterCommon'
 
 /**
- * Order module — standalone workflow with its own customer capture
- * (not linked to Enquiry). Vendor assignment per line item is manual.
+ * Order module — service orders with customer capture and vendor line items.
+ * May originate directly or from an order enquiry (`orderEnquiryId`).
  */
 
 export type OrderStatus = 'draft' | 'confirmed' | 'in-progress' | 'completed' | 'cancelled'
 
 export type OrderCustomerType = 'retail' | 'corporate' | 'marine'
+
+export type OrderSource = 'direct' | 'order_enquiry'
 
 export interface OrderCustomerInfo {
   companyOrCustomerName: string
@@ -54,6 +56,8 @@ export interface Order extends MasterAuditFields {
   orderNumber: string
   orderDate: string
   status: OrderStatus
+  source?: OrderSource
+  orderEnquiryId?: string
   customer: OrderCustomerInfo
   lineItems: OrderServiceLineItem[]
   totals: OrderTotals
@@ -66,6 +70,8 @@ export type OrderFormData = Omit<
   'id' | 'orderNumber' | 'orderDate' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'totals'
 > & {
   status?: OrderStatus
+  source?: OrderSource
+  orderEnquiryId?: string
 }
 
 export interface OrderListFilters {

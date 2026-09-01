@@ -11,6 +11,7 @@ const footerSections: Record<string, { label: string; href: string }[]> = {
     { label: 'Corporate Visa Services', href: '/corporate' },
     { label: 'Travel Partners', href: '/#specialist-visa-services' },
     { label: 'Destinations', href: '/countries' },
+    { label: 'Extra Services', href: '/extra-services' },
   ],
   Company: [
     { label: 'About Us', href: '/about' },

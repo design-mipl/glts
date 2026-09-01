@@ -56,69 +56,6 @@ export interface RetailJourneyRuleSet {
 const EMPTY_RULE_SET: RetailJourneyRuleSet = {}
 
 const RETAIL_JOURNEY_RULES: Record<string, Record<string, RetailJourneyRuleSet>> = {
-  // Japan — Demo B: conditional documents via employment status.
-  '2': {
-    'jp-evisa-tourist': {
-      conditionalQuestions: [
-        {
-          id: 'employmentStatus',
-          title: "What's your current employment status?",
-          helperText: 'This determines which financial documents we need from you.',
-          options: [
-            {
-              id: 'employed',
-              label: 'Salaried employee',
-              description: 'Working full-time or part-time for an employer',
-              extraDocumentIds: ['salary-slip', 'employment-certificate'],
-            },
-            {
-              id: 'self_employed',
-              label: 'Self-employed / business owner',
-              description: 'Running your own business or freelancing',
-              extraDocumentIds: ['income-tax-return', 'company-bank-statement'],
-            },
-            {
-              id: 'student',
-              label: 'Student',
-              description: 'Currently enrolled in a school, college, or university',
-              extraDocumentIds: ['authority-letter'],
-            },
-            {
-              id: 'not_employed',
-              label: 'Not currently employed',
-              extraDocumentIds: ['bank-balance-certificate'],
-            },
-          ],
-        },
-      ],
-    },
-  },
-  // France — Demo C: jurisdiction selection + sponsorship question + original documents.
-  '14': {
-    'schengen-tourist': {
-      conditionalQuestions: [
-        {
-          id: 'sponsorship',
-          title: 'Is your trip self-funded or sponsored by someone else?',
-          helperText: 'Sponsored trips need an invitation and guarantee letter from your host.',
-          options: [
-            {
-              id: 'self_funded',
-              label: "I'm funding this trip myself",
-              extraDocumentIds: [],
-            },
-            {
-              id: 'sponsored',
-              label: 'Someone else is sponsoring my trip',
-              description: 'A friend, family member, or company in France is covering this visit',
-              extraDocumentIds: ['invitation', 'letter-of-guarantee'],
-            },
-          ],
-        },
-      ],
-      originalDocumentIdsOverride: ['passport', 'photo', 'bank-balance-certificate'],
-    },
-  },
   // Turkey — Demo D: eligibility gate before anything else.
   '32': {
     'tr-evisa-tourist': {

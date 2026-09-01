@@ -74,11 +74,15 @@ import {
   MarineVerifyDocumentsPage,
   MarineViewFormPage,
   CreateOrderPage,
+  CreateOrderEnquiryPage,
   EditOrderPage,
+  EditOrderEnquiryPage,
   OperationalCaseHandlingPage,
   OperationsDashboardNextPage,
   OperationsDashboardPage,
   OrderDetailPage,
+  OrderEnquiryDetailPage,
+  OrderEnquiryListingPage,
   OrderListingPage,
   QuotationDetailPage,
   QuotationListingPage,
@@ -248,6 +252,38 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <EnquiryDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="order-management/order-enquiries"
+        element={
+          <PermissionGuard>
+            <OrderEnquiryListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="order-management/order-enquiries/new"
+        element={
+          <PermissionGuard>
+            <CreateOrderEnquiryPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="order-management/order-enquiries/:enquiryId/edit"
+        element={
+          <PermissionGuard>
+            <EditOrderEnquiryPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="order-management/order-enquiries/:enquiryId"
+        element={
+          <PermissionGuard>
+            <OrderEnquiryDetailPage />
           </PermissionGuard>
         }
       />

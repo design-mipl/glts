@@ -155,9 +155,18 @@ export const focusRingSx = {
   },
 } as const
 
+/** Apply-flow button padding — horizontal = 2 × vertical (MUI spacing units). */
+export const applyFlowButtonPadding = {
+  sm: { px: 1.5, py: 0.75 },
+  md: { px: 2, py: 1 },
+  lg: { px: 4, py: 2 },
+  xl: { px: 5, py: 2.5 },
+} as const
+
 /** Primary CTA — gold fill, ink label. The single loudest element on any step. */
 export function getAccentButtonSx() {
   return {
+    ...applyFlowButtonPadding.md,
     backgroundColor: applyFlow.accent,
     color: applyFlow.onAccent,
     fontFamily: applyFont.body,
@@ -182,6 +191,7 @@ export function getAccentButtonSx() {
 /** Secondary / Back — quiet, hairline, no fill competing with the gold CTA. */
 export function getQuietButtonSx() {
   return {
+    ...applyFlowButtonPadding.md,
     color: applyFlow.inkMuted,
     fontFamily: applyFont.body,
     fontSize: 14,

@@ -106,7 +106,7 @@ export function FileUploadModal({
       size="sm"
       footer={
         <Stack direction="row" spacing={1.25} justifyContent="flex-end" sx={{ width: '100%' }}>
-          <Box component="button" type="button" onClick={resetAndClose} sx={{ ...getQuietButtonSx(), px: 3, py: 1.25 }}>
+          <Box component="button" type="button" onClick={resetAndClose} sx={{ ...getQuietButtonSx(), px: 3, py: 1.5 }}>
             Cancel
           </Box>
           <Box
@@ -114,7 +114,7 @@ export function FileUploadModal({
             type="button"
             disabled={!files.length}
             onClick={handleSubmit}
-            sx={{ ...getAccentButtonSx(), border: 'none', px: 3, py: 1.25 }}
+            sx={{ ...getAccentButtonSx(), border: 'none', px: 3, py: 1.5 }}
           >
             Upload
           </Box>

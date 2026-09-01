@@ -1,11 +1,11 @@
 import { Avatar, Box, Stack, Typography } from '@mui/material'
 import { Camera } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { PhotoCaptureFlow } from '@/pages/website/pages/RetailApplyFlowPage/components/capture/PhotoCaptureFlow'
 import { QuietButton } from './retailAccountButtons'
 import { applyFlow, applyFont, applyRadius, focusRingSx } from '@/pages/website/theme/applyFlowTheme'
-import { PersonalInfoDrawer } from '@/pages/customer/features/profile/components/PersonalInfoDrawer'
+import { RetailPersonalInfoModal } from './RetailPersonalInfoModal'
 import { useRetailAccountIdentity, retailInitials } from './useRetailAccountIdentity'
-
 /**
  * Profile lives permanently in the account rail rather than behind its own nav item —
  * it is identity, not a destination. Kept deliberately light: picture, name, contact,
@@ -14,9 +14,13 @@ import { useRetailAccountIdentity, retailInitials } from './useRetailAccountIden
 export function RetailProfileCard() {
   const { account, displayName, displayEmail, displayPhone, photoUrl, saveProfile, savePhoto } =
     useRetailAccountIdentity()
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [photoCaptureOpen, setPhotoCaptureOpen] = useState(false)
 
+  const initialPhoto = useMemo(
+    () => (photoUrl ? { dataUrl: photoUrl, capturedAt: new Date().toISOString() } : undefined),
+    [photoUrl],
+  )
   return (
     <>
       <Box
@@ -43,22 +47,11 @@ export function RetailProfileCard() {
             >
               {retailInitials(displayName)}
             </Avatar>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={e => {
-                const file = e.target.files?.[0]
-                if (file) savePhoto(file)
-              }}
-            />
             <Box
               component="button"
               type="button"
-              onClick={() => fileRef.current?.click()}
-              aria-label="Change photo"
-              sx={{
+              onClick={() => setPhotoCaptureOpen(true)}
+              aria-label="Change photo"              sx={{
                 position: 'absolute',
                 right: -2,
                 bottom: -2,
@@ -96,15 +89,27 @@ export function RetailProfileCard() {
             ) : null}
           </Stack>
 
-          <QuietButton fullWidth sx={{ mt: 0.5 }} onClick={() => setDrawerOpen(true)}>
+          <QuietButton fullWidth sx={{ mt: 0.5 }} onClick={() => setModalOpen(true)}>
             Edit profile
           </QuietButton>
         </Stack>
       </Box>
 
-      <PersonalInfoDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+      {photoCaptureOpen ? (
+        <PhotoCaptureFlow
+          applicantName={displayName}
+          initialImage={initialPhoto}
+          onClose={() => setPhotoCaptureOpen(false)}
+          onConfirm={image => {
+            savePhoto(image)
+            setPhotoCaptureOpen(false)
+          }}
+        />
+      ) : null}
+
+      <RetailPersonalInfoModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
         account={{
           ...account,
           name: displayName,

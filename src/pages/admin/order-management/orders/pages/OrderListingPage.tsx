@@ -122,7 +122,7 @@ export function OrderListingPage() {
     <AdminListingShell
       stickyPageHeader={
         <AdminListingStickyHeader
-          title="Order Management"
+          title="Orders"
           description="Track customer orders, service line items, vendor assignment, and billing totals."
           actions={
             <Stack direction="row" spacing={2.5} flexWrap="wrap" useFlexGap>

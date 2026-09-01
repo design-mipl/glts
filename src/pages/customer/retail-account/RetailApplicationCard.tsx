@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Box, Menu, MenuItem, Stack, Typography } from '@mui/material'
 import { ChevronRight, MoreVertical } from 'lucide-react'
-import { AccentButton } from './retailAccountButtons'
 import {
   applyFlow,
   applyFont,
@@ -76,13 +75,14 @@ export function RetailApplicationCard({
         borderRadius: applyRadius.card,
         bgcolor: applyFlow.surface,
         border: `1px solid ${applyFlow.hairline}`,
+        boxShadow: '0 2px 10px rgba(15, 23, 42, 0.05)',
         transition: `border-color 160ms ${applyMotion.easeOut}, box-shadow 160ms ${applyMotion.easeOut}`,
         '@media (hover: hover) and (pointer: fine)': {
           '&:hover': {
             borderColor: applyFlow.hairlineStrong,
-            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
           },
-          '&:hover .retail-app-chevron': { transform: 'translateX(2px)', color: applyFlow.ink },
+          '&:hover .retail-app-chevron svg': { transform: 'translateX(2px)' },
         },
         ...focusRingSx,
       }}
@@ -158,12 +158,45 @@ export function RetailApplicationCard({
               <MoreVertical size={15} />
             </Box>
           ) : null}
-          <ChevronRight
+          <Box
+            component="button"
+            type="button"
             className="retail-app-chevron"
-            size={18}
-            color={applyFlow.inkFaint}
-            style={{ transition: `transform 160ms ${applyMotion.easeOut}, color 160ms ease` }}
-          />
+            aria-label={
+              onContinue
+                ? `Continue ${row.visaType} application`
+                : `View ${row.visaType} application`
+            }
+            onClick={e => {
+              e.stopPropagation()
+              if (onContinue) onContinue()
+              else onView()
+            }}
+            sx={{
+              width: 32,
+              height: 32,
+              display: 'grid',
+              placeItems: 'center',
+              borderRadius: applyRadius.chip,
+              border: `1px solid ${applyFlow.hairline}`,
+              bgcolor: applyFlow.canvas,
+              color: applyFlow.inkFaint,
+              cursor: 'pointer',
+              p: 0,
+              '&:hover': {
+                bgcolor: applyFlow.accentSoft,
+                borderColor: applyFlow.accentBorder,
+                color: applyFlow.ink,
+              },
+              '& svg': {
+                transition: `transform 160ms ${applyMotion.easeOut}`,
+              },
+              ...focusRingSx,
+              ...getPressSx(),
+            }}
+          >
+            <ChevronRight size={16} />
+          </Box>
         </Stack>
       </Stack>
 
@@ -218,18 +251,6 @@ export function RetailApplicationCard({
         <Typography sx={{ mt: 1.75, fontSize: 12.5, color: applyFlow.inkMuted }} noWrap>
           {currentStep}
         </Typography>
-      ) : null}
-
-      {mode === 'ongoing' && onContinue ? (
-        <AccentButton
-          sx={{ mt: 2 }}
-          onClick={e => {
-            e.stopPropagation()
-            onContinue()
-          }}
-        >
-          Continue application
-        </AccentButton>
       ) : null}
 
       <Menu

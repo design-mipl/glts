@@ -110,7 +110,7 @@ export function PhotoCaptureFlow({
               component="button"
               type="button"
               onClick={handleRetake}
-              sx={{ ...getQuietButtonSx(), flex: 1, py: 1.5, minHeight: 44 }}
+              sx={{ ...getQuietButtonSx(), flex: 1, px: 3, py: 1.5, minHeight: 44 }}
             >
               Retake
             </Box>
@@ -118,7 +118,7 @@ export function PhotoCaptureFlow({
               component="button"
               type="button"
               onClick={() => onConfirm(draft)}
-              sx={{ ...getAccentButtonSx(), flex: 1, py: 1.5, minHeight: 44, border: 'none' }}
+              sx={{ ...getAccentButtonSx(), flex: 1, px: 3, py: 1.5, minHeight: 44, border: 'none' }}
             >
               Confirm
             </Box>

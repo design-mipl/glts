@@ -5,6 +5,7 @@ import {
   applyFlow,
   applyFont,
   applyMotion,
+  applyFlowButtonPadding,
   getAccentButtonSx,
   getQuietButtonSx,
 } from '@/pages/website/theme/applyFlowTheme'
@@ -182,7 +183,7 @@ export function StepShell({
             sx={{ width: '100%', textAlign: 'left' }}
           >
             {onBack ? (
-              <Button variant="text" onClick={onBack} sx={{ ...getQuietButtonSx(), px: 4, py: 2, minHeight: 44 }}>
+              <Button variant="text" onClick={onBack} sx={{ ...getQuietButtonSx(), ...applyFlowButtonPadding.lg, minHeight: 44 }}>
                 {backLabel}
               </Button>
             ) : (
@@ -204,8 +205,7 @@ export function StepShell({
                 disabled={continueDisabled}
                 sx={{
                   ...getAccentButtonSx(),
-                  px: 5,
-                  py: 2.5,
+                  ...applyFlowButtonPadding.xl,
                   minHeight: 44,
                   '@media (hover: hover) and (pointer: fine)': {
                     '&:hover .MuiButton-endIcon svg': { transform: 'translateX(3px)' },

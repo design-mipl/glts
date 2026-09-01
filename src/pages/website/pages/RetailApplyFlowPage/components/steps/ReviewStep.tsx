@@ -23,7 +23,7 @@ import {
   type RetailFlowDraft,
   type RetailStepId,
 } from '../../types'
-import { checklistUploadKey } from './ChecklistStep'
+import { checklistUploadKey, isRetailDocumentUploadComplete } from '@/shared/utils/retailDocumentFlowUtils'
 import { StepShell } from '../StepShell'
 import {
   applyFlow,
@@ -46,24 +46,12 @@ interface ReviewStepProps {
   previewOnly?: boolean
 }
 
-function isIdentityCaptureDoc(documentId: string): 'photo' | 'passport' | null {
-  const id = documentId.toLowerCase()
-  if (id === 'photo' || id === 'photograph') return 'photo'
-  if (id.includes('photo') && !id.includes('passport')) return 'photo'
-  if (id === 'passport') return 'passport'
-  if (id.includes('passport') && !/old|stamp|back|front|all|pages/.test(id)) return 'passport'
-  return null
-}
-
 function isDocComplete(
   documentId: string,
   applicant: RetailApplicantParty,
   uploads: RetailFlowDraft['documentUploads'],
 ): boolean {
-  const identity = isIdentityCaptureDoc(documentId)
-  if (identity === 'photo' && applicant.photo) return true
-  if (identity === 'passport' && applicant.passport) return true
-  return Boolean(uploads[checklistUploadKey(applicant.id, documentId)] || uploads[documentId])
+  return isRetailDocumentUploadComplete(documentId, applicant, uploads)
 }
 
 function sponsorComplete(applicant: RetailApplicantParty): boolean {

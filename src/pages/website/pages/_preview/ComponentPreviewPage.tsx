@@ -327,6 +327,8 @@ export default function ComponentPreviewPage() {
         >
           <OriginalDocumentsStep
             documents={PREVIEW_DOCS}
+            applicants={PREVIEW_APPLICANTS}
+            uploads={{}}
             onBack={() => undefined}
             onContinue={() => undefined}
           />

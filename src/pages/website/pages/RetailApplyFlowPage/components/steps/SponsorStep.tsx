@@ -152,7 +152,7 @@ export function SponsorStep({
         <Button
           variant="text"
           onClick={onGoToTravelProfile}
-          sx={{ ...getQuietButtonSx(), px: 4, minHeight: 44 }}
+          sx={{ ...getQuietButtonSx(), px: 4, py: 2, minHeight: 44 }}
         >
           Go to travel profile
         </Button>
@@ -329,8 +329,8 @@ export function SponsorStep({
                     onClick={() => setBuilderForId(applicant.id)}
                     sx={
                       sponsor?.profileComplete
-                        ? { ...getQuietButtonSx(), px: 3.5, minHeight: 44, flex: '0 0 auto' }
-                        : { ...getAccentButtonSx(), px: 4, minHeight: 44, flex: '0 0 auto' }
+                        ? { ...getQuietButtonSx(), px: 3.5, py: 1.75, minHeight: 44, flex: '0 0 auto' }
+                        : { ...getAccentButtonSx(), px: 4, py: 2, minHeight: 44, flex: '0 0 auto' }
                     }
                   >
                     {sponsor?.profileComplete ? 'Edit details' : 'Add details'}

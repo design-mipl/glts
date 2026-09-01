@@ -19,6 +19,10 @@ export const CorporateBusinessVisaPage = lazyNamed(
 )
 export const AboutPage = lazyNamed(() => import('./pages/AboutPage'), 'AboutPage')
 export const ServicesPage = lazyNamed(() => import('./pages/ServicesPage'), 'ServicesPage')
+export const ExtraServicesPage = lazyNamed(
+  () => import('./pages/ExtraServicesPage'),
+  'ExtraServicesPage',
+)
 export const WebsiteApplicationFlowPage = lazyNamed(
   () => import('./pages/WebsiteApplicationFlowPage'),
   'WebsiteApplicationFlowPage',

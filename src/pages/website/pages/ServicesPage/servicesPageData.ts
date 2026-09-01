@@ -97,7 +97,7 @@ export const servicesAdditional = {
       title: 'Travel Insurance Support',
       description: 'Travel protection assistance tailored to trip type and duration.',
       ctaLabel: 'Learn More',
-      href: '/track',
+      href: '/extra-services?service=travel-insurance',
       image: servicesAdditionalImages.insurance,
     },
     {
@@ -116,6 +116,6 @@ export const servicesFinalCta = {
   description:
     'Our visa specialists will help you select the right solution based on your travel needs.',
   primaryButton: { label: 'Contact Us', href: '/track' },
-  secondaryButton: { label: 'Request Consultation', href: '/track' },
+  secondaryButton: { label: 'Extra Services', href: '/extra-services' },
   image: servicesFinalCtaImage,
 } as const

@@ -122,7 +122,7 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
   const headersByTab: Record<ReconciliationTab, string[]> = {
     approved_claim_sheet: [
       'Claim number',
-      'GLTS No',
+      'GLTS reference',
       'Passenger',
       'Client',
       'Visa country',
@@ -135,7 +135,7 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'User',
     ],
     insurance: [
-      'RefNo',
+      'GLTS reference',
       'GLTS creation date',
       'PassengerName',
       'Client',
@@ -154,7 +154,7 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'User',
     ],
     ticket: [
-      'RefNo',
+      'GLTS reference',
       'GLTS Creation date',
       'PassengerName',
       'Client',
@@ -173,7 +173,7 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'User',
     ],
     courier: [
-      'RefNo',
+      'GLTS reference',
       'GLTS Creation date',
       'PassengerName',
       'Client',
@@ -190,7 +190,7 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'User',
     ],
     mode_of_payment: [
-      'GLTS No',
+      'GLTS reference',
       'Passenger Name',
       'Country',
       'Service',

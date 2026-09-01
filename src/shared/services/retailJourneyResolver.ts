@@ -14,13 +14,16 @@ import {
   getSegmentForOffering,
   getVisaOfferingById,
   getVisaTypeForOffering,
-  offeringAllowsPhysicalOriginalDocuments,
   offeringRequiresJurisdictionSelection,
   getApplicableStatesForOffering,
   getOfferingDocumentRules,
   resolveOfferingVfsServiceRates,
   patchStateFromVisaOffering,
 } from '@/shared/services/countryMasterService'
+import {
+  filterRetailChecklistDocuments,
+  resolveRetailOriginalDocumentIds,
+} from '@/shared/utils/retailDocumentFlowUtils'
 import { documentMasterService } from '@/shared/services/documentMasterService'
 import { serviceMasterService } from '@/shared/services/serviceMasterService'
 import { embassyVfsFeeMasterService } from '@/shared/services/embassyVfsFeeMasterService'
@@ -198,17 +201,6 @@ function resolvePricing(
   }
 }
 
-function resolveOriginalDocumentIds(
-  countryId: string,
-  offeringId: string,
-  baseDocuments: RetailChecklistDocument[],
-  override?: string[],
-): string[] {
-  if (override?.length) return override
-  if (!offeringAllowsPhysicalOriginalDocuments(countryId, offeringId)) return []
-  return baseDocuments.filter((doc) => doc.originalDocument).map((doc) => doc.documentId)
-}
-
 const HOTEL_KEYWORDS = ['hotel', 'accommodation', 'stay booking']
 
 function isHotelService(service: ServiceMaster): boolean {
@@ -256,7 +248,7 @@ export function resolveRetailJourney(input: ResolveRetailJourneyInput): RetailJo
   const conditionalDocuments = resolveConditionalDocuments(conditionalQuestions, answers)
 
   const seenIds = new Set(baseDocuments.map((doc) => doc.documentId))
-  const documents = [
+  const mergedDocuments = [
     ...baseDocuments,
     ...conditionalDocuments.filter((doc) => {
       if (seenIds.has(doc.documentId)) return false
@@ -265,12 +257,8 @@ export function resolveRetailJourney(input: ResolveRetailJourneyInput): RetailJo
     }),
   ]
 
-  const originalDocumentIds = resolveOriginalDocumentIds(
-    countryId,
-    visaOfferingId,
-    documents,
-    rules.originalDocumentIdsOverride,
-  )
+  const documents = filterRetailChecklistDocuments(mergedDocuments)
+  const originalDocumentIds = resolveRetailOriginalDocumentIds(documents)
 
   return {
     country,
@@ -282,10 +270,7 @@ export function resolveRetailJourney(input: ResolveRetailJourneyInput): RetailJo
     eligibility: rules.eligibility ?? [],
     conditionalQuestions,
     requirementPreviewCards: getRequirementPreviewCards(countryId, visaOfferingId, jurisdictionId),
-    documents: documents.map((doc) => ({
-      ...doc,
-      originalDocument: originalDocumentIds.includes(doc.documentId),
-    })),
+    documents,
     allowsPhysicalOriginalDocuments: originalDocumentIds.length > 0,
     originalDocumentIds,
     pricing: resolvePricing(country, visaType, countryId, visaOfferingId, jurisdictionId),

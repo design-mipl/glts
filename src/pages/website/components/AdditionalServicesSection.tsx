@@ -49,6 +49,8 @@ const EASE = 'ease-in-out'
 const SERVICE_ICONS: Record<string, LucideIcon> = {
   'travel-insurance': ShieldCheck,
   'travel-insurance-support': ShieldCheck,
+  attestation: FileCheck2,
+  notary: FileText,
   'ticket-for-visa': PlaneTakeoff,
   'hotel-booking-for-visa': Building2,
   'passport-assistance': FileText,

@@ -328,7 +328,7 @@ export function CountryDetailPage() {
                   sx={{
                     ...getAccentButtonSx(),
                     px: { xs: 5, md: 6 },
-                    py: 1.5,
+                    py: { xs: 2.5, md: 3 },
                     minWidth: { xs: 220, md: 260 },
                     fontSize: '15px',
                     fontWeight: 700,
