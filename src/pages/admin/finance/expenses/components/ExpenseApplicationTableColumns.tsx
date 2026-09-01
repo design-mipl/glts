@@ -6,8 +6,11 @@ import type { ApplicationExpenseListingRow } from '@/shared/types/applicationExp
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { navigateFromListing } from '@/shared/utils/listingNavigationUtils'
 import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
-import { rollupPaymentStatusLabel } from '@/shared/utils/applicationExpenseManagementUtils'
-import { expenseRollupPaymentColor } from '../config/expenseStatusConfig'
+import {
+  financeStatusActionLabel,
+  financeStatusLabel,
+} from '@/shared/utils/applicationExpenseManagementUtils'
+import { expenseFinanceStatusColor } from '../config/expenseStatusConfig'
 import { EXPENSE_LISTING_BASE_PATH } from '../config/expenseListingTabs'
 
 export interface ExpenseApplicationColumnHandlers {
@@ -108,17 +111,22 @@ export function buildExpenseApplicationColumns(
       render: (_: unknown, row) => formatInr(row.pendingExpense),
     },
     {
-      key: 'paymentStatus',
-      label: 'Payment Status',
+      key: 'financeStatus',
+      label: 'Status',
       widthSize: adminListingColumnWidthSize('statusGroup'),
       sortable: true,
       filterable: true,
       render: (_: unknown, row) => (
-        <Badge
-          label={rollupPaymentStatusLabel(row.paymentStatus)}
-          color={expenseRollupPaymentColor[row.paymentStatus]}
-          size="sm"
-        />
+        <Box>
+          <Badge
+            label={financeStatusLabel(row.financeStatus)}
+            color={expenseFinanceStatusColor[row.financeStatus]}
+            size="sm"
+          />
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: 11, mt: 0.25 }}>
+            {financeStatusActionLabel(row)}
+          </Typography>
+        </Box>
       ),
     },
     {

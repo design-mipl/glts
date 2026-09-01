@@ -1,4 +1,5 @@
 import type {
+  ApplicationExpenseFinanceStatus,
   ApplicationExpenseProofStatus,
   ApplicationExpenseRollupApprovalStatus,
   ApplicationExpenseRollupPaymentStatus,
@@ -25,6 +26,15 @@ export const expenseRollupPaymentColor: Record<
   partially_paid: 'info',
   paid: 'success',
   pending_reimbursement: 'warning',
+}
+
+export const expenseFinanceStatusColor: Record<
+  ApplicationExpenseFinanceStatus,
+  'success' | 'warning' | 'error' | 'info' | 'neutral'
+> = {
+  needs_update: 'warning',
+  paid: 'info',
+  reconciled: 'success',
 }
 
 export const expenseProofStatusColor: Record<

@@ -24,6 +24,16 @@ interface InvoiceConsulateRefundsSectionProps {
   readOnly?: boolean
 }
 
+function refundStatusBadge(row: InvoiceConsulateRefundLine): { label: string; color: 'success' | 'warning' | 'info' } {
+  if (row.status === 'managed' || row.appliedVia === 'managed') {
+    return { label: 'Managed', color: 'info' }
+  }
+  if (row.status === 'applied') {
+    return { label: 'Applied', color: 'success' }
+  }
+  return { label: 'Pending', color: 'warning' }
+}
+
 export function InvoiceConsulateRefundsSection({
   refunds,
   onChange,
@@ -32,11 +42,12 @@ export function InvoiceConsulateRefundsSection({
   if (refunds.length === 0) return null
 
   const includedTotal = sumIncludedConsulateRefunds(refunds)
+  const managedCount = refunds.filter(row => row.status === 'pending' && row.managed).length
 
-  const toggleIncluded = (id: string, included: boolean) => {
+  const patchPending = (id: string, patch: Partial<Pick<InvoiceConsulateRefundLine, 'included' | 'managed'>>) => {
     onChange(
       refunds.map(row =>
-        row.id === id && row.status === 'pending' ? { ...row, included } : row,
+        row.id === id && row.status === 'pending' ? { ...row, ...patch } : row,
       ),
     )
   }
@@ -54,14 +65,22 @@ export function InvoiceConsulateRefundsSection({
             Consulate refunds
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
-            From Ground Operations · Tracking & Logistics (passenger level)
+            Include subtracts this amount. Managed closes it when you already changed service amounts.
+            Leave both unchecked to apply later.
           </Typography>
         </Box>
-        {includedTotal > 0 ? (
-          <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
-            To apply · {formatInr(includedTotal)}
-          </Typography>
-        ) : null}
+        <Stack spacing={0.25} alignItems={{ xs: 'flex-start', sm: 'flex-end' }}>
+          {includedTotal > 0 ? (
+            <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
+              To apply · {formatInr(includedTotal)}
+            </Typography>
+          ) : null}
+          {managedCount > 0 ? (
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12 }}>
+              Managed · {managedCount} (not subtracted)
+            </Typography>
+          ) : null}
+        </Stack>
       </Stack>
 
       <Box sx={{ overflowX: 'auto' }}>
@@ -69,7 +88,10 @@ export function InvoiceConsulateRefundsSection({
           <TableHead>
             <TableRow>
               {!readOnly ? (
-                <TableCell sx={{ ...agreementEmbeddedTableHeadCellSx, width: 48 }}>Include</TableCell>
+                <>
+                  <TableCell sx={{ ...agreementEmbeddedTableHeadCellSx, width: 56 }}>Include</TableCell>
+                  <TableCell sx={{ ...agreementEmbeddedTableHeadCellSx, width: 72 }}>Managed</TableCell>
+                </>
               ) : null}
               <TableCell sx={agreementEmbeddedTableHeadCellSx}>Passenger</TableCell>
               <TableCell sx={agreementEmbeddedTableHeadCellSx}>Vendor</TableCell>
@@ -83,18 +105,34 @@ export function InvoiceConsulateRefundsSection({
           <TableBody>
             {refunds.map(row => {
               const isPending = row.status === 'pending'
+              const badge = refundStatusBadge(row)
               return (
-                <TableRow key={row.id} sx={{ opacity: isPending || row.included ? 1 : 0.7 }}>
+                <TableRow key={row.id} sx={{ opacity: isPending || row.included || row.managed ? 1 : 0.7 }}>
                   {!readOnly ? (
-                    <TableCell sx={{ verticalAlign: 'top', py: 1 }}>
-                      <Checkbox
-                        size="small"
-                        checked={isPending ? row.included : false}
-                        disabled={!isPending}
-                        onChange={(_, checked) => toggleIncluded(row.id, checked)}
-                        inputProps={{ 'aria-label': `Include refund for ${row.passengerName}` }}
-                      />
-                    </TableCell>
+                    <>
+                      <TableCell sx={{ verticalAlign: 'top', py: 1 }}>
+                        <Checkbox
+                          size="small"
+                          checked={isPending ? row.included : false}
+                          disabled={!isPending}
+                          onChange={(_, checked) =>
+                            patchPending(row.id, { included: checked, managed: checked ? false : row.managed })
+                          }
+                          inputProps={{ 'aria-label': `Include refund for ${row.passengerName}` }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ verticalAlign: 'top', py: 1 }}>
+                        <Checkbox
+                          size="small"
+                          checked={isPending ? row.managed : row.status === 'managed'}
+                          disabled={!isPending}
+                          onChange={(_, checked) =>
+                            patchPending(row.id, { managed: checked, included: checked ? false : row.included })
+                          }
+                          inputProps={{ 'aria-label': `Mark refund managed for ${row.passengerName}` }}
+                        />
+                      </TableCell>
+                    </>
                   ) : null}
                   <TableCell sx={{ fontSize: 13, verticalAlign: 'top' }}>
                     <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
@@ -106,12 +144,8 @@ export function InvoiceConsulateRefundsSection({
                   </TableCell>
                   <TableCell sx={{ fontSize: 13, verticalAlign: 'top' }}>{row.vendorName}</TableCell>
                   <TableCell sx={{ verticalAlign: 'top' }}>
-                    <Badge
-                      label={row.status === 'applied' ? 'Applied' : 'Pending'}
-                      color={row.status === 'applied' ? 'success' : 'warning'}
-                      size="sm"
-                    />
-                    {row.status === 'applied' && row.appliedDocumentNumber ? (
+                    <Badge label={badge.label} color={badge.color} size="sm" />
+                    {row.status !== 'pending' && row.appliedDocumentNumber ? (
                       <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.35 }}>
                         {row.appliedDocumentNumber}
                       </Typography>

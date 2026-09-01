@@ -47,6 +47,7 @@ import {
   goRefundLinePresetId,
   isGoRefundExpenseId,
   listConsulateRefundsForApplication,
+  managedRefundsFromLines,
   sumIncludedConsulateRefunds,
 } from './invoiceConsulateRefundUtils'
 
@@ -713,7 +714,7 @@ function pushConsulateRefundLines(
   mode: InvoiceCompositionMode = 'generate',
 ) {
   for (const refund of refunds ?? []) {
-    if (refund.status !== 'pending' || !refund.included || refund.amount <= 0) continue
+    if (refund.status !== 'pending' || !refund.included || refund.managed || refund.amount <= 0) continue
     const label = `Consulate refund · ${refund.vendorName}`
     // Credit note composition keeps positive amounts (negated on submit).
     // Generate / revise apply as a reduction on the invoice.
@@ -801,6 +802,10 @@ export function compositionToWorkspaceState(
 
   const applicationIds = state.singles.map(s => s.applicationId)
   const batchIds = state.bulks.map(b => b.batchId)
+  const compositionRefunds = [
+    ...state.singles.flatMap(single => single.consulateRefunds ?? []),
+    ...state.bulks.flatMap(bulk => bulk.applicants.flatMap(applicant => applicant.consulateRefunds ?? [])),
+  ]
 
   return {
     selection: {
@@ -830,6 +835,11 @@ export function compositionToWorkspaceState(
     invoiceDate: state.documentDate || todayDocumentDate(),
     draftInvoiceId: state.draftInvoiceId,
     agreementId: state.agreementId ?? agreement?.id,
+    managedConsulateRefunds: managedRefundsFromLines(
+      compositionRefunds,
+      state.draftInvoiceId ?? '',
+      '',
+    ),
   }
 }
 
@@ -922,29 +932,48 @@ function hydrateServiceLinesFromItems(
   })
 }
 
+function syncRefundDispositions(
+  refunds: InvoiceConsulateRefundLine[],
+  includedCaseIds: Set<string>,
+  managedCaseIds: Set<string>,
+): InvoiceConsulateRefundLine[] {
+  const hasDraftDisposition = includedCaseIds.size > 0 || managedCaseIds.size > 0
+  return refunds.map(refund => {
+    if (refund.status !== 'pending') return refund
+    if (!hasDraftDisposition) return refund
+    if (includedCaseIds.has(refund.caseId)) {
+      return { ...refund, included: true, managed: false }
+    }
+    if (managedCaseIds.has(refund.caseId)) {
+      return { ...refund, included: false, managed: true }
+    }
+    return { ...refund, included: false, managed: false }
+  })
+}
+
 function hydrateCompositionFromDraft(
   state: InvoiceFeeCompositionState,
   draft: Invoice,
   mode: InvoiceCompositionMode = 'generate',
 ): InvoiceFeeCompositionState {
   const next = { ...state, draftInvoiceId: draft.id }
+  const includedCaseIds = new Set(
+    draft.lineItems
+      .map(li => caseIdFromGoRefundPreset(li.servicePresetId))
+      .filter((id): id is string => Boolean(id)),
+  )
+  const managedCaseIds = new Set((draft.managedConsulateRefunds ?? []).map(row => row.caseId))
 
   for (const single of next.singles) {
     const items = draft.lineItems.filter(
       li => li.applicationId === single.applicationId && !isGoRefundExpenseId(li.servicePresetId),
     )
     single.serviceLines = hydrateServiceLinesFromItems(single.serviceLines, items, mode)
-    // Sync Include checkboxes from draft refund lines already on the invoice.
     if (single.consulateRefunds?.length) {
-      const includedCaseIds = new Set(
-        draft.lineItems
-          .map(li => caseIdFromGoRefundPreset(li.servicePresetId))
-          .filter((id): id is string => Boolean(id)),
-      )
-      single.consulateRefunds = single.consulateRefunds.map(refund =>
-        refund.status === 'pending'
-          ? { ...refund, included: includedCaseIds.size === 0 ? refund.included : includedCaseIds.has(refund.caseId) }
-          : refund,
+      single.consulateRefunds = syncRefundDispositions(
+        single.consulateRefunds,
+        includedCaseIds,
+        managedCaseIds,
       )
     }
   }
@@ -959,18 +988,10 @@ function hydrateCompositionFromDraft(
       )
       applicant.serviceLines = hydrateServiceLinesFromItems(applicant.serviceLines, items, mode)
       if (applicant.consulateRefunds?.length) {
-        const includedCaseIds = new Set(
-          draft.lineItems
-            .map(li => caseIdFromGoRefundPreset(li.servicePresetId))
-            .filter((id): id is string => Boolean(id)),
-        )
-        applicant.consulateRefunds = applicant.consulateRefunds.map(refund =>
-          refund.status === 'pending'
-            ? {
-                ...refund,
-                included: includedCaseIds.size === 0 ? refund.included : includedCaseIds.has(refund.caseId),
-              }
-            : refund,
+        applicant.consulateRefunds = syncRefundDispositions(
+          applicant.consulateRefunds,
+          includedCaseIds,
+          managedCaseIds,
         )
       }
     }

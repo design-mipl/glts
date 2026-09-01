@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Box, alpha, useTheme } from '@mui/material'
+import { Box, Stack, alpha, useTheme } from '@mui/material'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Pagination, useToast } from '@/design-system/UIComponents'
+import { Pagination, Tabs, useToast } from '@/design-system/UIComponents'
 import { AdminListingShell } from '@/pages/admin/components/AdminListingShell'
 import {
   AdminListingGrid,
@@ -16,8 +16,10 @@ import { applicationExpenseManagementService } from '@/shared/services/applicati
 import { ExpenseApplicationKpiRow } from '../components/ExpenseApplicationKpiRow'
 import { buildExpenseApplicationColumns } from '../components/ExpenseApplicationTableColumns'
 import {
+  EXPENSE_FINANCE_STATUS_TABS,
   EXPENSE_LISTING_BASE_PATH,
   EXPENSE_LISTING_TABS,
+  type ExpenseFinanceStatusTab,
   type ExpenseListingTab,
 } from '../config/expenseListingTabs'
 import {
@@ -31,6 +33,9 @@ import {
 } from '../utils/expenseListingUtils'
 
 const EXPENSE_TAB_VALUES = EXPENSE_LISTING_TABS.map(tab => tab.value) as readonly ExpenseListingTab[]
+const EXPENSE_STATUS_VALUES = EXPENSE_FINANCE_STATUS_TABS.map(
+  tab => tab.value,
+) as readonly ExpenseFinanceStatusTab[]
 
 export function ExpenseListingPage() {
   const theme = useTheme()
@@ -38,19 +43,24 @@ export function ExpenseListingPage() {
   const location = useLocation()
   const { showToast } = useToast()
   const [activeTab, setActiveTab] = useListingTabParam(EXPENSE_TAB_VALUES, 'marine')
+  const [statusTab, setStatusTab] = useListingTabParam(EXPENSE_STATUS_VALUES, 'needs_update', 'status')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const listingReturnHref = getCurrentListingHref(location)
   const [synced, setSynced] = useState(false)
 
   useEffect(() => {
-    const id = requestIdleCallback(() => {
-      applicationExpenseManagementService.syncAllSubmitted()
-      setSynced(true)
-    })
-    return () => cancelIdleCallback(id)
+    applicationExpenseManagementService.syncAllSubmitted()
+    setSynced(true)
   }, [])
 
-  const tabRows = useMemo(() => (synced ? loadExpenseListingRows(activeTab) : []), [activeTab, synced])
+  const segmentRows = useMemo(
+    () => (synced ? loadExpenseListingRows(activeTab) : []),
+    [activeTab, synced],
+  )
+  const tabRows = useMemo(
+    () => segmentRows.filter(row => row.financeStatus === statusTab),
+    [segmentRows, statusTab],
+  )
 
   const listing = useCustomerListing({
     rows: tabRows,
@@ -59,7 +69,7 @@ export function ExpenseListingPage() {
     initialPageSize: 10,
   })
 
-  const kpis = useMemo(() => computeExpenseListingKpis(tabRows), [tabRows])
+  const kpis = useMemo(() => computeExpenseListingKpis(segmentRows), [segmentRows])
   const columns = useMemo(
     () => buildExpenseApplicationColumns({ navigate, fromListing: listingReturnHref }),
     [navigate, listingReturnHref],
@@ -69,8 +79,8 @@ export function ExpenseListingPage() {
     [columns],
   )
   const emptyState = useMemo(
-    () => getExpenseListingEmptyState(activeTab, Boolean(listing.tableState.searchQuery.trim())),
-    [activeTab, listing.tableState.searchQuery],
+    () => getExpenseListingEmptyState(activeTab, statusTab, Boolean(listing.tableState.searchQuery.trim())),
+    [activeTab, statusTab, listing.tableState.searchQuery],
   )
   const gridItems = useMemo(() => mapExpenseRowsToGridItems(listing.paginatedRows), [listing.paginatedRows])
 
@@ -79,13 +89,25 @@ export function ExpenseListingPage() {
     showToast({ title: 'Export started', description: 'Your expense listing export will download shortly.', variant: 'success' })
   }, [listing.filterSourceRows, showToast])
 
+  const resetPage = useCallback(() => {
+    listing.setTableState(state => ({ ...state, page: 0 }))
+  }, [listing])
+
   const handleTabChange = useCallback(
     (tab: ExpenseListingTab) => {
       setActiveTab(tab)
       setViewMode('table')
-      listing.setTableState(state => ({ ...state, page: 0 }))
+      resetPage()
     },
-    [listing, setActiveTab],
+    [resetPage, setActiveTab],
+  )
+
+  const handleStatusTabChange = useCallback(
+    (tab: ExpenseFinanceStatusTab) => {
+      setStatusTab(tab)
+      resetPage()
+    },
+    [resetPage, setStatusTab],
   )
 
   const footerBg =
@@ -98,36 +120,63 @@ export function ExpenseListingPage() {
       stickyPageHeader={
         <AdminListingStickyHeader
           title="Expense management"
-          description="Consolidated financial view of submitted applications and mapped expenses."
+          description="Vendor and passenger assignments appear here as expenses. Confirm actuals, then reconcile, then bill."
         />
       }
       kpis={
-        activeTab === 'marine' ? (
-          <ExpenseApplicationKpiRow
-            submittedApplications={kpis.submittedApplications}
-            totalExpense={kpis.totalExpense}
-            pendingPayment={kpis.pendingPayment}
-            paidApplications={kpis.paidApplications}
-          />
-        ) : undefined
+        <ExpenseApplicationKpiRow
+          needsUpdate={kpis.needsUpdate}
+          paid={kpis.paid}
+          reconciled={kpis.reconciled}
+          totalExpense={kpis.totalExpense}
+        />
       }
       tabs={EXPENSE_LISTING_TABS}
       tabValue={activeTab}
       onTabChange={value => handleTabChange(value as ExpenseListingTab)}
       toolbar={
-        <AdminListingToolbar
-          searchValue={listing.tableState.searchQuery}
-          onSearch={listing.handleSearch}
-          searchPlaceholder="Search application ID, company, vessel, or passenger name…"
-          onExport={handleExport}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          columns={toolbarColumns}
-          hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
-          onHiddenColumnKeysChange={keys =>
-            listing.setTableState(state => ({ ...state, hiddenColumnKeys: keys }))
-          }
-        />
+        <Stack spacing={1.25}>
+          <Box
+            sx={{
+              mx: -2,
+              px: 2,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Tabs
+              value={statusTab}
+              onChange={value => handleStatusTabChange(value as ExpenseFinanceStatusTab)}
+              variant="underline"
+              size="sm"
+              scrollable
+              items={EXPENSE_FINANCE_STATUS_TABS.map(tab => ({
+                value: tab.value,
+                label: `${tab.label} (${
+                  tab.value === 'needs_update'
+                    ? kpis.needsUpdate
+                    : tab.value === 'paid'
+                      ? kpis.paid
+                      : kpis.reconciled
+                })`,
+              }))}
+              sx={{ mb: 0, minHeight: 40 }}
+            />
+          </Box>
+          <AdminListingToolbar
+            searchValue={listing.tableState.searchQuery}
+            onSearch={listing.handleSearch}
+            searchPlaceholder="Search application ID, company, vessel, or passenger name…"
+            onExport={handleExport}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            columns={toolbarColumns}
+            hiddenColumnKeys={listing.tableState.hiddenColumnKeys}
+            onHiddenColumnKeysChange={keys =>
+              listing.setTableState(state => ({ ...state, hiddenColumnKeys: keys }))
+            }
+          />
+        </Stack>
       }
       listingContent={
         viewMode === 'table' ? (
