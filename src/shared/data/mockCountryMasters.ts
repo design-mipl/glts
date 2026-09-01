@@ -489,14 +489,8 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           purposeId: 'tourism',
           purposeLabel: 'Tourism',
           jurisdictions: [
-            {
-              ...singleJurisdictionForVisa('delhi', 'Delhi', 'France', stdApplicationDocuments),
-              requirementPackId: 'req-schengen-tourist',
-            },
-            {
-              ...singleJurisdictionForVisa('mumbai', 'Mumbai', 'France', stdApplicationDocuments),
-              requirementPackId: 'req-schengen-tourist',
-            },
+            singleJurisdictionForVisa('delhi', 'Delhi', 'France', stdApplicationDocuments),
+            singleJurisdictionForVisa('mumbai', 'Mumbai', 'France', stdApplicationDocuments),
           ],
         }),
         visaType({
@@ -1099,10 +1093,22 @@ function enrichPrimaryRetailFromCatalog(
   })
 }
 
+const BASIC_RETAIL_REQUIREMENT_PACK_ID = 'req-basic-retail'
+
+function ensureRetailRequirementPack(segments: CountrySegmentConfig[]): CountrySegmentConfig[] {
+  return segments.map((seg) =>
+    seg.segment === 'retail' && !seg.requirementPackId
+      ? { ...seg, requirementPackId: BASIC_RETAIL_REQUIREMENT_PACK_ID }
+      : seg,
+  )
+}
+
 function buildMasterFromCountry(c: ReturnType<typeof getAllCountries>[0]): CountryMaster {
-  const segments = ensureAllSegments(
-    normalizeCountrySegments(
-      enrichPrimaryRetailFromCatalog(SEGMENTS_BY_COUNTRY[c.id] ?? DEFAULT_SEGMENTS, c),
+  const segments = ensureRetailRequirementPack(
+    ensureAllSegments(
+      normalizeCountrySegments(
+        enrichPrimaryRetailFromCatalog(SEGMENTS_BY_COUNTRY[c.id] ?? DEFAULT_SEGMENTS, c),
+      ),
     ),
   )
   const now = new Date().toISOString()

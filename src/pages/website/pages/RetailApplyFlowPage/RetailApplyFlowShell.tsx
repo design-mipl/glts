@@ -545,7 +545,15 @@ export function RetailApplyFlowShell({
           />
         )
       case 'originalDocuments':
-        return <OriginalDocumentsStep documents={journey?.documents ?? []} onBack={goBack} onContinue={goNext} />
+        return (
+          <OriginalDocumentsStep
+            documents={journey?.documents ?? []}
+            applicants={draft.applicants}
+            uploads={draft.documentUploads}
+            onBack={goBack}
+            onContinue={goNext}
+          />
+        )
       case 'collectionMethod':
         return (
           <CollectionMethodStep

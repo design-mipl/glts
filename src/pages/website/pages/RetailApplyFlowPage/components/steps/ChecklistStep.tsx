@@ -19,6 +19,10 @@ import {
 import { initialsFromName } from '../../config/travelProfileQuestions'
 import { StepShell } from '../StepShell'
 import {
+  checklistUploadKey,
+  isRetailChecklistDocumentComplete,
+} from '@/shared/utils/retailDocumentFlowUtils'
+import {
   applyFlow,
   applyFont,
   applyMotion,
@@ -48,15 +52,21 @@ interface ChecklistStepProps {
   onBulkFilesSelected?: (applicantId: string, files: File[]) => void
 }
 
-export function checklistUploadKey(applicantId: string, documentId: string) {
-  return `${applicantId}__${documentId}`
-}
+export { checklistUploadKey } from '@/shared/utils/retailDocumentFlowUtils'
 
 function categorizeDocument(doc: RetailChecklistDocument): DocCategory {
   const hay = `${doc.documentId} ${doc.name}`.toLowerCase()
   if (/bank|statement|itr|salary|financial|funds|balance|income/.test(hay)) return 'financial'
   if (/photo|passport|aadhaar|aadhar|pan|identity|birth|national|id.?card/.test(hay)) return 'personal'
   return 'other'
+}
+
+function isDocComplete(
+  doc: RetailChecklistDocument,
+  applicant: RetailApplicantParty,
+  uploads: Record<string, RetailCapturedImage>,
+): boolean {
+  return isRetailChecklistDocumentComplete(doc, applicant, uploads)
 }
 
 function isIdentityCaptureDoc(documentId: string): 'photo' | 'passport' | null {
@@ -114,19 +124,6 @@ function docIcon(doc: RetailChecklistDocument) {
   if (/aadhaar|aadhar|pan|id/.test(hay)) return IdCard
   if (/bank|statement|financial|salary|itr/.test(hay)) return IndianRupee
   return FileText
-}
-
-function isDocComplete(
-  doc: RetailChecklistDocument,
-  applicant: RetailApplicantParty,
-  uploads: Record<string, RetailCapturedImage>,
-): boolean {
-  const identity = isIdentityCaptureDoc(doc.documentId)
-  if (identity === 'photo' && applicant.photo) return true
-  if (identity === 'passport' && applicant.passport) return true
-  return Boolean(
-    uploads[checklistUploadKey(applicant.id, doc.documentId)] || uploads[doc.documentId],
-  )
 }
 
 const CATEGORY_LABEL: Record<DocCategory, string> = {

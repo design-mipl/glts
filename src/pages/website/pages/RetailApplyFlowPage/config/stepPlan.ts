@@ -2,14 +2,7 @@ import type { RetailJourney } from '@/shared/services/retailJourneyResolver'
 import type { RetailStepDefinition } from '../types'
 
 /**
- * Full retail apply step sequence for the V2 design pass.
- *
- * Always include the complete UX path for every application. Country-master
- * gating (which steps/docs apply per offering) comes later — do not hide
- * collection / jurisdiction / extras based on journey flags for now.
- *
- * Eligibility + conditional questions remain optional add-ons when the
- * journey resolver already surfaces them for a given offering.
+ * Retail apply step sequence driven by Country Master + resolved journey flags.
  */
 export const DESTINATION_STEP: RetailStepDefinition = {
   id: 'destination',
@@ -21,13 +14,9 @@ export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinitio
   const steps: RetailStepDefinition[] = [
     DESTINATION_STEP,
     { id: 'visa', phase: 'purpose', label: 'Visa type' },
-    // Always show city + travel date (cities may be empty until country master is wired).
     { id: 'jurisdiction', phase: 'purpose', label: 'Submission city' },
     { id: 'travelProfile', phase: 'traveller', label: 'Travel profile' },
     { id: 'sponsor', phase: 'sponsor', label: 'Sponsor' },
-    // No sponsor-documents step: sponsor uploads are part of the main Documents step, so
-    // every file for the application is collected in one place instead of the customer
-    // being interrupted for a bank statement the moment they name a sponsor.
     { id: 'passport', phase: 'documents', label: 'Essential documents' },
   ]
 
@@ -39,15 +28,14 @@ export function buildRetailStepPlan(journey: RetailJourney): RetailStepDefinitio
     steps.push({ id: `question:${question.id}`, phase: 'documents', label: question.title })
   }
 
+  steps.push({ id: 'checklist', phase: 'documents', label: 'Document checklist' })
+
+  if (journey.allowsPhysicalOriginalDocuments) {
+    steps.push({ id: 'originalDocuments', phase: 'documents', label: 'Original documents' })
+    steps.push({ id: 'collectionDetails', phase: 'collection', label: 'Handover' })
+  }
+
   steps.push(
-    { id: 'checklist', phase: 'documents', label: 'Document checklist' },
-    { id: 'originalDocuments', phase: 'documents', label: 'Original documents' },
-    // Method + details are one step: `CollectionDetailsStep` already renders the method
-    // selector above the per-method form, so splitting them made the user answer
-    // "how should we collect?" and then immediately re-see the same four options.
-    { id: 'collectionDetails', phase: 'collection', label: 'Handover' },
-    // No separate confirmation step: it only replayed the selection the customer had just
-    // made on the previous screen, so handover goes straight through to extras.
     { id: 'insurance', phase: 'extras', label: 'Travel insurance' },
     { id: 'flightTicket', phase: 'extras', label: 'Flight ticket' },
     { id: 'review', phase: 'review', label: 'Review' },
