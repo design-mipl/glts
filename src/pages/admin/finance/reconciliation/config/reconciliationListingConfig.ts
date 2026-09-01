@@ -47,7 +47,7 @@ export function getReconciliationPaymentModeLabel(value?: string): string {
 }
 
 export function reconciliationRequiresBookEntry(tab?: ReconciliationTab): boolean {
-  return tab !== 'courier'
+  return tab === 'approved_claim_sheet' || tab === 'mode_of_payment'
 }
 
 export const RECONCILIATION_BASE_PATH = '/admin/finance/reconciliation'

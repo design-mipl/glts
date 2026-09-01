@@ -1251,4 +1251,4 @@ export const SEED_APPLICATION_EXPENSES: ApplicationExpenseRecord[] = (
     (expense.readyForReconciliation ? 'invoiced' : 'not_invoiced'),
 }))
 
-export const SEED_APPLICATION_EXPENSE_VERSION = 10
+export const SEED_APPLICATION_EXPENSE_VERSION = 11

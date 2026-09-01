@@ -320,6 +320,8 @@ export const orderService = {
       orderNumber: `ORD-${Date.now().toString().slice(-5)}`,
       orderDate: nowIso(),
       status: payload.status ?? 'draft',
+      source: payload.source,
+      orderEnquiryId: payload.orderEnquiryId,
       customer: payload.customer,
       lineItems,
       totals: computeTotals(lineItems),

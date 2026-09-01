@@ -77,10 +77,13 @@ export const adminNav: NavConfig[] = [
     ],
   },
   {
-    type: 'item',
+    type: 'group',
     label: 'Order Management',
     icon: createElement(ShoppingCart, iconProps),
-    href: '/admin/order-management/orders',
+    children: [
+      { type: 'item', label: 'Order Enquiries', href: '/admin/order-management/order-enquiries' },
+      { type: 'item', label: 'Orders', href: '/admin/order-management/orders' },
+    ],
   },
   {
     type: 'item',

@@ -3,6 +3,7 @@ import { Box, Button, Stack, Typography } from '@mui/material'
 import { Check } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useToast } from '@/design-system/UIComponents'
+import { orderEnquiryService } from '@/shared/services/orderEnquiryService'
 import { PublicContainer } from '../../../components/PublicContainer'
 import {
   ApplySelect,
@@ -212,17 +213,26 @@ export function ExtraServiceRequestSection() {
       if (!isValid || submitting) return
 
       setSubmitting(true)
-      window.setTimeout(() => {
-        setSubmitting(false)
-        setForm({ ...EMPTY_FORM, service: activeService.id })
-        showToast({
-          title: 'Request received',
-          description: 'A GreenLight specialist will contact you shortly.',
-          variant: 'success',
+      void orderEnquiryService
+        .createFromWebsite({
+          companyName: form.companyName,
+          contactPerson: form.contactPerson,
+          mobile: form.mobile,
+          email: form.email,
+          companyAddress: form.companyAddress,
+          service: form.service,
         })
-      }, 600)
+        .then(() => {
+          setForm({ ...EMPTY_FORM, service: activeService.id })
+          showToast({
+            title: 'Request received',
+            description: 'A GreenLight specialist will contact you shortly.',
+            variant: 'success',
+          })
+        })
+        .finally(() => setSubmitting(false))
     },
-    [activeService.id, isValid, showToast, submitting],
+    [activeService.id, form, isValid, showToast, submitting],
   )
 
   return (
@@ -362,6 +372,7 @@ export function ExtraServiceRequestSection() {
                 sx={{
                   ...getAccentButtonSx(),
                   mt: 1,
+                  px: 3.5,
                   py: 1.75,
                   fontSize: 14,
                 }}

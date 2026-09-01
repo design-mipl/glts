@@ -436,7 +436,8 @@ export function PublicHeader() {
             endIcon={<ArrowRight size={18} />}
             onClick={() => setDrawerOpen(false)}
             sx={{
-              py: 1.35,
+              px: 2,
+              py: 1,
               borderRadius: '12px',
               bgcolor: colors.greenBright,
               fontWeight: 700,

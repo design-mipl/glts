@@ -259,7 +259,7 @@ export function PricingCard({
           variant="contained"
           size="large"
           href={travellerAwareHref}
-          sx={{ ...getAccentButtonSx(), py: 1.5, fontSize: '15px', mb: 3 }}
+          sx={{ ...getAccentButtonSx(), px: 3, py: 1.5, fontSize: '15px', mb: 3 }}
         >
           Start Application
         </Button>

@@ -6,11 +6,13 @@ import { ConfirmDialog, useToast } from '@/design-system/UIComponents'
 import { AccentButton } from './retailAccountButtons'
 import {
   applyFlow,
+  applyFlowButtonPadding,
   applyFont,
   applyMotion,
   applyRadius,
   eyebrowSx,
   focusRingSx,
+  getPressSx,
 } from '@/pages/website/theme/applyFlowTheme'
 import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
 import { navigateToContinueRetailApplication } from '@/pages/customer/features/applications/utils/createApplicationNavigation'
@@ -188,28 +190,30 @@ function TabChip({ active, label, onClick }: { active: boolean; label: string; o
       component="button"
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       sx={{
         appearance: 'none',
-        border: `1px solid ${active ? applyFlow.accentBorder : applyFlow.hairline}`,
-        bgcolor: active ? applyFlow.accentSoft : applyFlow.surface,
-        color: active ? applyFlow.accentInk : applyFlow.inkMuted,
-        fontWeight: active ? 800 : 600,
-        fontSize: 13,
-        fontFamily: applyFont.body,
-        px: 2,
-        py: 1,
-        borderRadius: '999px',
         cursor: 'pointer',
-        transition: `background-color 140ms ${applyMotion.easeOut}, border-color 140ms ${applyMotion.easeOut}, color 140ms ${applyMotion.easeOut}`,
-        '@media (hover: hover) and (pointer: fine)': {
-          '&:hover': {
-            borderColor: applyFlow.accentBorder,
-            color: applyFlow.accentInk,
-          },
+        ...applyFlowButtonPadding.md,
+        minHeight: 36,
+        display: 'inline-flex',
+        alignItems: 'center',
+        borderRadius: applyRadius.control,
+        fontFamily: applyFont.body,
+        fontSize: 13.5,
+        fontWeight: active ? 700 : 600,
+        color: active ? applyFlow.ink : applyFlow.inkFaint,
+        bgcolor: active ? applyFlow.accentSoft : applyFlow.canvas,
+        border: `1px solid ${active ? applyFlow.accentBorder : applyFlow.hairline}`,
+        transition: `background-color 160ms ${applyMotion.easeOut}, border-color 160ms ${applyMotion.easeOut}, color 160ms ${applyMotion.easeOut}`,
+        '&:hover': {
+          bgcolor: applyFlow.accentSoft,
+          borderColor: applyFlow.accentBorder,
+          color: applyFlow.ink,
         },
         ...focusRingSx,
+        ...getPressSx(),
       }}
-      aria-pressed={active}
     >
       {label}
     </Box>

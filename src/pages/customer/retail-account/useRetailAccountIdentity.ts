@@ -1,6 +1,7 @@
 import { useToast } from '@/design-system/UIComponents'
 import { loadSession, saveSession } from '@/shared/auth/session'
 import { useProfileAccount } from '@/pages/customer/features/profile/hooks/useProfileAccount'
+import type { RetailCapturedImage } from '@/pages/website/pages/RetailApplyFlowPage/types'
 
 export function retailInitials(name: string) {
   return name
@@ -36,8 +37,8 @@ export function useRetailAccountIdentity() {
     showToast({ title: 'Profile updated', variant: 'success' })
   }
 
-  const savePhoto = (file: File) => {
-    updatePersonalAccount({ profilePhotoUrl: URL.createObjectURL(file) })
+  const savePhoto = (image: RetailCapturedImage) => {
+    updatePersonalAccount({ profilePhotoUrl: image.dataUrl })
     showToast({ title: 'Photo updated', variant: 'success' })
   }
 

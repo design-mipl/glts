@@ -1,5 +1,14 @@
 import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
+import {
+  applicationFormAssistService,
+  EMPTY_FORM_ASSIST_SUBMISSION,
+  type FormAssistPaymentEntry,
+  type FormAssistPaymentMode,
+  type FormAssistSubmissionDraft,
+  type FormAssistVfsServiceChargeLine,
+} from '@/shared/services/applicationFormAssistService'
 import { groundOpsClaimSheetService } from '@/shared/services/groundOpsClaimSheetService'
+import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
 import { getCurrentUser } from '@/shared/services/authService'
 import { computeExpenseIwAmount } from '@/pages/admin/finance/expenses/config/expenseDetailFormConfig'
 import {
@@ -7,17 +16,23 @@ import {
   reconciliationRequiresBookEntry,
   type ReconciliationPaymentMode,
 } from '@/pages/admin/finance/reconciliation/config/reconciliationListingConfig'
+import { getOperationalCaseFormAssistSeeds } from '@/shared/data/mockOperationalCaseFormAssistSeeds'
+import type { ApplicationCustomerSegment } from '@/pages/customer/features/applications/types/applicationListing.types'
 import type { ApplicationExpenseRecord } from '@/shared/types/applicationExpenseManagement'
 import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
 import type {
+  ReconciliationClaimSheetRow,
   ReconciliationFilters,
   ReconciliationItem,
+  ReconciliationPaymentEntryRow,
+  ReconciliationPaymentServiceLine,
   ReconciliationPeriodPreset,
   ReconciliationStatus,
   ReconciliationTab,
   RejectReconciliationInput,
   SubmitReconciliationInput,
 } from '@/shared/types/reconciliation'
+import { resolveCardLabel } from '@/shared/utils/cardMasterOptions'
 
 const STORAGE_KEY = 'glts:finance-reconciliation-submissions'
 
@@ -42,10 +57,12 @@ interface ApplicationEnrichment {
 
 /** Session cache — rebuild only after mutations or explicit invalidate. */
 let projectedItemsCache: ReconciliationItem[] | null = null
+let projectedPaymentEntriesCache: ReconciliationPaymentEntryRow[] | null = null
 let upstreamSynced = false
 
 function invalidateProjectedCache() {
   projectedItemsCache = null
+  projectedPaymentEntriesCache = null
 }
 
 const TICKET_TYPES = new Set([
@@ -147,14 +164,6 @@ function writeSubmissions(store: SubmissionStore) {
   } catch {
     // ignore mock storage failures
   }
-}
-
-function isGroundOpsExpense(expense: ApplicationExpenseRecord): boolean {
-  return (
-    expense.expenseType === 'ground_operation_service' ||
-    expense.expenseSource === 'ground_operations' ||
-    expense.createdFrom === 'ground_operations'
-  )
 }
 
 function demoCardUsed(id: string): string {
@@ -309,162 +318,234 @@ function buildExpenseItem(
   }
 }
 
-function buildClaimSheetItems(sheet: GroundOpsClaimSheet, submissions: SubmissionStore): ReconciliationItem[] {
-  const reviewedAt = toDateKey(sheet.reviewedAt) || toDateKey(sheet.generatedAt)
-  if (sheet.cases.length === 0) {
-    const itemId = `claim:${sheet.id}:summary`
-    const submission = submissions[itemId]
-    return [
-      {
-        id: itemId,
-        sourceKind: 'claim_sheet',
-        sourceId: sheet.id,
-        tab: 'approved_claim_sheet',
-        status: submission?.status ?? 'pending',
-        refNo: sheet.claimNumber,
-        gltsCreationDate: toDateKey(sheet.generatedAt),
-        passengerName: '—',
-        client: '—',
-        bookedBy: sheet.generatedBy,
-        consultant: '—',
-        visaCountry: '—',
-        vendor: '—',
-        bookingDate: reviewedAt,
-        cost: sheet.grandTotal,
-        markup: 0,
-        total: sheet.grandTotal,
-        policyNumber: '',
-        vendorInvoiceNumber: '',
-        locationFrom: '',
-        locationTo: '',
-        trackingNumber: '',
-        courierBookedBy: '',
-        chargesName: 'Approved claim sheet',
-        paymentDate: reviewedAt,
-        paymentMode: '',
-        cardUsed: '',
-        amountInr: sheet.grandTotal,
-        foreignCurrencyAmount: 0,
-        staffName: sheet.generatedBy,
-        acPersonName: submission?.reconciledBy ?? '',
-        acEntryNo: '',
-        claimNumber: sheet.claimNumber,
-        claimTeam: sheet.team,
-        claimCasesCount: 0,
-        claimGrandTotal: sheet.grandTotal,
-        claimReviewedAt: reviewedAt,
-        referenceNumber: submission?.referenceNumber ?? '',
-        reconciledAt: submission?.reconciledAt,
-        reconciledBy: submission?.reconciledBy,
-        rejectionReason: submission?.rejectionReason ?? sheet.rejectionReason,
-      },
-    ]
-  }
-
-  return sheet.cases.map(caseRow => {
-    const itemId = `claim:${sheet.id}:${caseRow.caseId}`
-    const submission = submissions[itemId]
-    return {
-      id: itemId,
-      sourceKind: 'claim_sheet' as const,
-      sourceId: sheet.id,
-      tab: 'approved_claim_sheet' as const,
-      status: submission?.status ?? ('pending' as const),
-      refNo: caseRow.applicationId || sheet.claimNumber,
-      gltsCreationDate: toDateKey(sheet.generatedAt),
-      passengerName: caseRow.passengerName,
-      client: caseRow.companyName,
-      bookedBy: sheet.generatedBy,
-      consultant: '—',
-      visaCountry: caseRow.country,
-      vendor: '—',
-      bookingDate: reviewedAt,
-      cost: caseRow.caseExpenseTotal,
-      markup: 0,
-      total: caseRow.caseExpenseTotal,
-      policyNumber: '',
-      vendorInvoiceNumber: '',
-      locationFrom: '',
-      locationTo: '',
-      trackingNumber: '',
-      courierBookedBy: '',
-      chargesName: 'Approved claim sheet',
-      paymentDate: reviewedAt,
-      paymentMode: '',
-      cardUsed: '',
-      amountInr: caseRow.caseExpenseTotal,
-      foreignCurrencyAmount: 0,
-      staffName: sheet.generatedBy,
-      acPersonName: submission?.reconciledBy ?? '',
-      acEntryNo: '',
-      claimNumber: sheet.claimNumber,
-      claimTeam: sheet.team,
-      claimCasesCount: sheet.cases.length,
-      claimGrandTotal: sheet.grandTotal,
-      claimReviewedAt: reviewedAt,
-      referenceNumber: submission?.referenceNumber ?? '',
-      reconciledAt: submission?.reconciledAt,
-      reconciledBy: submission?.reconciledBy,
-      rejectionReason: submission?.rejectionReason ?? sheet.rejectionReason,
-    }
-  })
+function claimSheetReconciliationId(sheetId: string): string {
+  return `claim:${sheetId}`
 }
 
-function buildClaimSheetPaymentItem(
+function isClaimSheetReconciliationId(id: string): boolean {
+  return /^claim:[^:]+$/.test(id)
+}
+
+function getClaimSheetSubmission(
+  sheetId: string,
+  submissions: SubmissionStore,
+): ReconciliationSubmission | undefined {
+  const sheetKey = claimSheetReconciliationId(sheetId)
+  if (submissions[sheetKey]) return submissions[sheetKey]
+
+  const legacyPrefix = `${sheetKey}:`
+  for (const [key, value] of Object.entries(submissions)) {
+    if (key.startsWith(legacyPrefix)) return value
+  }
+  return undefined
+}
+
+function buildClaimSheetRow(
   sheet: GroundOpsClaimSheet,
   submissions: SubmissionStore,
-  itemId: string,
-  partial: {
-    refNo: string
-    passengerName: string
-    client: string
-    visaCountry: string
-    chargesName: string
-    amount: number
-    paymentMode: ReconciliationPaymentMode
-  },
-): ReconciliationItem {
-  const reviewedAt = toDateKey(sheet.reviewedAt) || toDateKey(sheet.generatedAt)
-  const submission = submissions[itemId]
+): ReconciliationClaimSheetRow {
+  const id = claimSheetReconciliationId(sheet.id)
+  const submission = getClaimSheetSubmission(sheet.id, submissions)
+  return {
+    id,
+    sheetId: sheet.id,
+    sheet,
+    status: submission?.status ?? 'pending',
+    referenceNumber: submission?.referenceNumber ?? '',
+    reconciledAt: submission?.reconciledAt,
+    reconciledBy: submission?.reconciledBy,
+    rejectionReason: submission?.rejectionReason ?? sheet.rejectionReason,
+  }
+}
+
+function listClaimSheetRows(filters: ReconciliationFilters = { period: 'today' }): ReconciliationClaimSheetRow[] {
+  const range = resolveReconciliationDateRange(filters.period, filters.customFrom, filters.customTo)
+  const submissions = readSubmissions()
+
+  return groundOpsClaimSheetService
+    .list()
+    .filter(sheet => sheet.status === 'approved' || sheet.status === 'settled')
+    .filter(sheet => {
+      const dateKey = toDateKey(sheet.reviewedAt) || toDateKey(sheet.generatedAt)
+      return inPeriod(dateKey, range)
+    })
+    .map(sheet => buildClaimSheetRow(sheet, submissions))
+    .sort((a, b) => {
+      const aDate = toDateKey(a.sheet.reviewedAt) || toDateKey(a.sheet.generatedAt)
+      const bDate = toDateKey(b.sheet.reviewedAt) || toDateKey(b.sheet.generatedAt)
+      return bDate.localeCompare(aDate)
+    })
+}
+
+function paymentEntryReconciliationId(
+  applicationId: string,
+  travelerRowId: string,
+  paymentEntryId: string,
+): string {
+  return `pay:${applicationId}::${travelerRowId}::${paymentEntryId}`
+}
+
+function parsePaymentEntryReconciliationId(
+  id: string,
+): { applicationId: string; travelerRowId: string; paymentEntryId: string } | null {
+  if (!id.startsWith('pay:')) return null
+  const parts = id.slice(4).split('::')
+  if (parts.length !== 3) return null
+  return {
+    applicationId: parts[0],
+    travelerRowId: parts[1],
+    paymentEntryId: parts[2],
+  }
+}
+
+function isPaymentEntryReconciliationId(id: string): boolean {
+  return parsePaymentEntryReconciliationId(id) !== null
+}
+
+function mapFormAssistPaymentToReconciliation(mode: FormAssistPaymentMode): ReconciliationPaymentMode | null {
+  switch (mode) {
+    case 'card':
+      return 'credit_card'
+    case 'bank_transfer':
+      return 'bank'
+    default:
+      return null
+  }
+}
+
+function resolvePaymentEntryServices(
+  catalog: FormAssistVfsServiceChargeLine[],
+  entry: FormAssistPaymentEntry,
+): ReconciliationPaymentServiceLine[] {
+  const selected = new Set(entry.serviceIds)
+  return catalog
+    .filter(line => selected.has(line.id))
+    .map(line => ({
+      id: line.id,
+      serviceName: line.serviceName,
+      amount: line.amount,
+      gstIncluded: line.gstIncluded,
+      vendorName: line.vendorName,
+    }))
+}
+
+function buildLegacyPaymentEntryFromSeed(
+  submission: FormAssistSubmissionDraft,
+): FormAssistPaymentEntry[] {
+  const hasLegacyPayment =
+    Boolean(submission.paymentDate?.trim()) ||
+    Boolean(submission.paymentReferenceNumber?.trim()) ||
+    Boolean(submission.amountPaid?.trim())
+  if (!hasLegacyPayment) return []
+
+  return [
+    {
+      id: 'payment-entry-legacy',
+      paidByUserId: '',
+      paidByUserName: submission.submittedBy?.trim() || 'Unknown',
+      serviceIds: (submission.vfsServiceCharges ?? []).map(line => line.id),
+      paymentDate: submission.paymentDate ?? '',
+      paymentMode: submission.paymentMode ?? 'card',
+      paymentCardId: submission.paymentCardId ?? '',
+      paymentReferenceNumber: submission.paymentReferenceNumber ?? '',
+      amountPaid: submission.amountPaid ?? '',
+      receiptStatus: submission.receiptStatus ?? 'awaited',
+      paymentRemarks: submission.paymentRemarks ?? '',
+      paymentReceiptFileName: submission.paymentReceiptFileName ?? '',
+      createdAt: new Date().toISOString(),
+      createdByUserId: '',
+    },
+  ]
+}
+
+function resolveSubmissionForTraveler(
+  applicationId: string,
+  travelerRowId: string,
+  passengerSequence: number,
+): FormAssistSubmissionDraft {
+  const record = applicationFormAssistService.getRecord(applicationId, travelerRowId)
+  if (record.submission.paymentEntries.length > 0) return record.submission
+
+  const legacyEntries = buildLegacyPaymentEntryFromSeed(record.submission)
+  if (legacyEntries.length > 0) {
+    return { ...record.submission, paymentEntries: legacyEntries }
+  }
+
+  const seed = getOperationalCaseFormAssistSeeds().find(
+    item => item.applicationId === applicationId && item.passengerSequence === passengerSequence,
+  )
+  if (!seed) return record.submission
+
+  const seededSubmission: FormAssistSubmissionDraft = {
+    ...EMPTY_FORM_ASSIST_SUBMISSION,
+    ...seed.submission,
+    vfsServiceCharges: seed.submission.vfsServiceCharges,
+    paymentEntries: [],
+  }
+  const seededEntries = buildLegacyPaymentEntryFromSeed(seededSubmission)
+  return { ...seededSubmission, paymentEntries: seededEntries }
+}
+
+function parsePaymentAmountInr(raw: string, services: ReconciliationPaymentServiceLine[]): number {
+  const parsed = Number.parseFloat(String(raw).replace(/,/g, ''))
+  if (Number.isFinite(parsed) && parsed > 0) return parsed
+  return services.reduce((sum, line) => sum + line.amount, 0)
+}
+
+function buildPaymentEntryRow(input: {
+  applicationId: string
+  travelerRowId: string
+  passengerName: string
+  client: string
+  visaCountry: string
+  gltsCreationDate: string
+  entry: FormAssistPaymentEntry
+  services: ReconciliationPaymentServiceLine[]
+  submissions: SubmissionStore
+}): ReconciliationPaymentEntryRow | null {
+  const reconciliationMode = mapFormAssistPaymentToReconciliation(input.entry.paymentMode)
+  if (!reconciliationMode) return null
+
+  const id = paymentEntryReconciliationId(
+    input.applicationId,
+    input.travelerRowId,
+    input.entry.id,
+  )
+  const submission = input.submissions[id]
+  const amountInr = parsePaymentAmountInr(input.entry.amountPaid, input.services)
+  const serviceNames = input.services.map(service => service.serviceName).filter(Boolean)
 
   return {
-    id: itemId,
-    sourceKind: 'claim_sheet',
-    sourceId: sheet.id,
-    tab: 'mode_of_payment',
+    id,
+    applicationId: input.applicationId,
+    travelerRowId: input.travelerRowId,
+    paymentEntryId: input.entry.id,
+    entry: input.entry,
+    services: input.services,
     status: submission?.status ?? 'pending',
-    refNo: partial.refNo,
-    gltsCreationDate: toDateKey(sheet.generatedAt),
-    passengerName: partial.passengerName,
-    client: partial.client,
-    bookedBy: sheet.generatedBy,
-    consultant: '—',
-    visaCountry: partial.visaCountry,
-    vendor: 'Ground Operations',
-    bookingDate: reviewedAt,
-    cost: partial.amount,
-    markup: 0,
-    total: partial.amount,
-    policyNumber: '',
-    vendorInvoiceNumber: '',
-    locationFrom: '',
-    locationTo: '',
-    trackingNumber: '',
-    courierBookedBy: '',
-    chargesName: partial.chargesName,
-    paymentDate: reviewedAt,
-    paymentMode: partial.paymentMode,
-    cardUsed: partial.paymentMode === 'credit_card' ? demoCardUsed(itemId) : '',
-    amountInr: partial.amount,
-    foreignCurrencyAmount: 0,
-    staffName: sheet.generatedBy,
-    acPersonName: submission?.reconciledBy ?? '',
-    acEntryNo: '',
-    claimNumber: sheet.claimNumber,
-    claimTeam: sheet.team,
-    claimCasesCount: sheet.cases.length,
-    claimGrandTotal: sheet.grandTotal,
-    claimReviewedAt: reviewedAt,
+    refNo: input.applicationId,
+    gltsCreationDate: input.gltsCreationDate,
+    passengerName: input.passengerName,
+    client: input.client,
+    visaCountry: input.visaCountry,
+    paymentDate: input.entry.paymentDate,
+    paymentMode: reconciliationMode,
+    paymentReferenceNumber: input.entry.paymentReferenceNumber,
+    cardUsed:
+      reconciliationMode === 'credit_card' && input.entry.paymentCardId
+        ? resolveCardLabel(input.entry.paymentCardId)
+        : '',
+    amountInr,
+    foreignCurrencyAmount:
+      reconciliationMode === 'credit_card' ? Math.round(amountInr * 0.011 * 100) / 100 : 0,
+    staffName: input.entry.paidByUserName || '—',
+    serviceCount: input.services.length,
+    servicesSummary:
+      serviceNames.length === 0
+        ? '—'
+        : serviceNames.length <= 2
+          ? serviceNames.join(', ')
+          : `${serviceNames.slice(0, 2).join(', ')} +${serviceNames.length - 2} more`,
     referenceNumber: submission?.referenceNumber ?? '',
     reconciledAt: submission?.reconciledAt,
     reconciledBy: submission?.reconciledBy,
@@ -472,77 +553,62 @@ function buildClaimSheetPaymentItem(
   }
 }
 
-function buildClaimSheetPaymentItems(
-  sheet: GroundOpsClaimSheet,
-  submissions: SubmissionStore,
-): ReconciliationItem[] {
-  const paymentMode = mapToReconciliationPaymentMode(sheet.fundTransferType)
-  if (!paymentMode) return []
+function listPaymentEntryRows(): ReconciliationPaymentEntryRow[] {
+  if (projectedPaymentEntriesCache) return projectedPaymentEntriesCache
 
-  const items: ReconciliationItem[] = []
+  ensureUpstreamSynced()
+  const submissions = readSubmissions()
+  const rows: ReconciliationPaymentEntryRow[] = []
+  const seen = new Set<string>()
 
-  for (const caseRow of sheet.cases) {
-    caseRow.services.forEach((service, serviceIndex) => {
-      if (service.amount <= 0) return
-      items.push(
-        buildClaimSheetPaymentItem(
-          sheet,
-          submissions,
-          `claim-pay:${sheet.id}:${caseRow.caseId}:svc:${serviceIndex}`,
-          {
-            refNo: caseRow.applicationId || sheet.claimNumber,
-            passengerName: caseRow.passengerName,
-            client: caseRow.companyName,
-            visaCountry: caseRow.country,
-            chargesName: service.serviceName,
-            amount: service.amount,
-            paymentMode,
-          },
-        ),
-      )
-    })
+  for (const segment of ['marine', 'retail', 'corporate', 'b2bAgents'] as ApplicationCustomerSegment[]) {
+    const { singles, bulks } = marineApplicationAdminService.listAllSubmittedBySegment(segment)
+    for (const app of [...singles, ...bulks]) {
+      const detail = marineApplicationAdminService.getDetail(app.id)
+      const client = app.companyName?.trim() || detail.application?.vesselName?.trim() || '—'
+      const visaCountry = app.country?.trim() || detail.application?.country?.trim() || '—'
+      const gltsCreationDate = toDateKey(app.submissionDate) || toDateKey(app.createdAt) || ''
 
-    caseRow.additionalExpenses.forEach((expense, expenseIndex) => {
-      if (expense.amount <= 0) return
-      items.push(
-        buildClaimSheetPaymentItem(
-          sheet,
-          submissions,
-          `claim-pay:${sheet.id}:${caseRow.caseId}:add:${expenseIndex}`,
-          {
-            refNo: caseRow.applicationId || sheet.claimNumber,
-            passengerName: caseRow.passengerName,
-            client: caseRow.companyName,
-            visaCountry: caseRow.country,
-            chargesName: expense.serviceName,
-            amount: expense.amount,
-            paymentMode,
-          },
-        ),
-      )
-    })
+      for (const traveler of detail.uploadQueueRows.filter(row => row.status !== 'processing')) {
+        const submission = resolveSubmissionForTraveler(app.id, traveler.id, traveler.sequenceNo)
+        const catalog = submission.vfsServiceCharges ?? []
+        if (submission.paymentEntries.length === 0) continue
+
+        for (const entry of submission.paymentEntries) {
+          const dedupeKey = paymentEntryReconciliationId(app.id, traveler.id, entry.id)
+          if (seen.has(dedupeKey)) continue
+          seen.add(dedupeKey)
+
+          const services = resolvePaymentEntryServices(catalog, entry)
+          const row = buildPaymentEntryRow({
+            applicationId: app.id,
+            travelerRowId: traveler.id,
+            passengerName: traveler.travelerName || '—',
+            client,
+            visaCountry,
+            gltsCreationDate,
+            entry,
+            services,
+            submissions,
+          })
+          if (row) rows.push(row)
+        }
+      }
+    }
   }
 
-  sheet.otherExpenses.forEach((other, otherIndex) => {
-    if (other.amount <= 0) return
-    items.push(
-      buildClaimSheetPaymentItem(sheet, submissions, `claim-pay:${sheet.id}:other:${otherIndex}`, {
-        refNo: sheet.claimNumber,
-        passengerName: '—',
-        client: sheet.team,
-        visaCountry: '—',
-        chargesName: other.description,
-        amount: other.amount,
-        paymentMode,
-      }),
-    )
-  })
-
-  return items
+  projectedPaymentEntriesCache = rows.sort((a, b) =>
+    (b.paymentDate || b.gltsCreationDate).localeCompare(a.paymentDate || a.gltsCreationDate),
+  )
+  return projectedPaymentEntriesCache
 }
 
-function isAllowedModeOfPaymentItem(item: ReconciliationItem): boolean {
-  return item.paymentMode === 'credit_card' || item.paymentMode === 'bank' || item.paymentMode === 'dd'
+function filterPaymentEntryRows(filters: ReconciliationFilters): ReconciliationPaymentEntryRow[] {
+  const range = resolveReconciliationDateRange(filters.period, filters.customFrom, filters.customTo)
+  return listPaymentEntryRows()
+    .filter(row => inPeriod(toDateKey(row.paymentDate) || row.gltsCreationDate, range))
+    .filter(row => (filters.paymentMode ? row.paymentMode === filters.paymentMode : true))
+    .filter(row => (filters.status ? row.status === filters.status : true))
 }
 
 function inPeriod(dateKey: string, range: { from: Date; to: Date }): boolean {
@@ -553,7 +619,9 @@ function inPeriod(dateKey: string, range: { from: Date; to: Date }): boolean {
 
 function ensureUpstreamSynced() {
   if (upstreamSynced) return
+  applicationExpenseManagementService.refreshTodayReconciliationSeedExpenses()
   applicationExpenseManagementService.syncAllSubmitted()
+  invalidateProjectedCache()
   upstreamSynced = true
 }
 
@@ -588,17 +656,8 @@ function listProjectedItems(): ReconciliationItem[] {
         if (typedTab) {
           items.push(buildExpenseItem(expense, typedTab, submissions, enrichment))
         }
-        if (!isGroundOpsExpense(expense) && mapToReconciliationPaymentMode(expense.paymentMode)) {
-          items.push(buildExpenseItem(expense, 'mode_of_payment', submissions, enrichment))
-        }
       }
     }
-  }
-
-  for (const sheet of groundOpsClaimSheetService.list()) {
-    if (sheet.status !== 'approved' && sheet.status !== 'settled') continue
-    items.push(...buildClaimSheetItems(sheet, submissions))
-    items.push(...buildClaimSheetPaymentItems(sheet, submissions))
   }
 
   projectedItemsCache = items
@@ -653,24 +712,13 @@ function persistExpenseAmounts(
 
 export const reconciliationService = {
   list(tab: ReconciliationTab, filters: ReconciliationFilters = { period: 'today' }): ReconciliationItem[] {
+    if (tab === 'approved_claim_sheet' || tab === 'mode_of_payment') return []
     const range = resolveReconciliationDateRange(filters.period, filters.customFrom, filters.customTo)
     return listProjectedItems()
       .filter(item => item.tab === tab)
-      .filter(item => (tab === 'mode_of_payment' ? isAllowedModeOfPaymentItem(item) : true))
       .filter(item => {
-        const dateKey =
-          tab === 'approved_claim_sheet'
-            ? item.claimReviewedAt || item.gltsCreationDate
-            : tab === 'mode_of_payment'
-              ? item.paymentDate || item.gltsCreationDate
-              : item.bookingDate || item.gltsCreationDate
+        const dateKey = item.bookingDate || item.gltsCreationDate
         return inPeriod(dateKey, range)
-      })
-      .filter(item => {
-        if (tab === 'mode_of_payment' && filters.paymentMode) {
-          return item.paymentMode === filters.paymentMode
-        }
-        return true
       })
       .filter(item => {
         if (!filters.status) return true
@@ -681,6 +729,166 @@ export const reconciliationService = {
         const bDate = b.bookingDate || b.gltsCreationDate
         return bDate.localeCompare(aDate)
       })
+  },
+
+  listClaimSheets(filters: ReconciliationFilters = { period: 'today' }): ReconciliationClaimSheetRow[] {
+    return listClaimSheetRows(filters)
+  },
+
+  listPaymentEntries(filters: ReconciliationFilters = { period: 'today' }): ReconciliationPaymentEntryRow[] {
+    return filterPaymentEntryRows({ ...filters, status: filters.status || '' })
+  },
+
+  getPaymentEntryRowById(id: string): ReconciliationPaymentEntryRow | undefined {
+    if (!isPaymentEntryReconciliationId(id)) return undefined
+    return listPaymentEntryRows().find(row => row.id === id)
+  },
+
+  submitPaymentEntry(
+    input: Pick<SubmitReconciliationInput, 'id'> &
+      Partial<Pick<SubmitReconciliationInput, 'referenceNumber'>>,
+  ): { ok: true; row: ReconciliationPaymentEntryRow } | { ok: false; error: string } {
+    const existing = this.getPaymentEntryRowById(input.id)
+    if (!existing) return { ok: false, error: 'Payment entry not found.' }
+    if (existing.status === 'submitted') {
+      return { ok: false, error: 'This payment entry is already reconciled.' }
+    }
+    if (existing.status === 'rejected') {
+      return { ok: false, error: 'This payment entry was rejected and cannot be reconciled.' }
+    }
+
+    const referenceNumber = input.referenceNumber?.trim()
+    if (!referenceNumber) {
+      return { ok: false, error: 'Book entry number is required.' }
+    }
+    const user = getCurrentUser()
+    const reconciledBy = user?.name?.trim() || 'Accounts user'
+    const reconciledAt = new Date().toISOString()
+    const store = readSubmissions()
+
+    store[input.id] = {
+      referenceNumber,
+      status: 'submitted',
+      reconciledAt,
+      reconciledBy,
+    }
+    writeSubmissions(store)
+    invalidateProjectedCache()
+
+    const updated = this.getPaymentEntryRowById(input.id)
+    if (!updated) return { ok: false, error: 'Could not refresh payment entry row.' }
+    return { ok: true, row: updated }
+  },
+
+  rejectPaymentEntry(
+    input: RejectReconciliationInput,
+  ): { ok: true; rejected: number } | { ok: false; error: string } {
+    const reason = input.reason.trim()
+    if (!reason) return { ok: false, error: 'Rejection reason is required.' }
+
+    const existing = this.getPaymentEntryRowById(input.id)
+    if (!existing) return { ok: false, error: 'Payment entry not found.' }
+    if (existing.status === 'submitted') {
+      return { ok: false, error: 'Submitted payment entries cannot be rejected.' }
+    }
+    if (existing.status === 'rejected') {
+      return { ok: false, error: 'This payment entry is already rejected.' }
+    }
+
+    const user = getCurrentUser()
+    const reconciledBy = user?.name?.trim() || 'Accounts user'
+    const reconciledAt = new Date().toISOString()
+    const store = readSubmissions()
+
+    store[input.id] = {
+      status: 'rejected',
+      reconciledAt,
+      reconciledBy,
+      rejectionReason: reason,
+    }
+    writeSubmissions(store)
+    invalidateProjectedCache()
+
+    return { ok: true, rejected: 1 }
+  },
+
+  getClaimSheetRowById(id: string): ReconciliationClaimSheetRow | undefined {
+    if (!isClaimSheetReconciliationId(id)) return undefined
+    const sheetId = id.slice('claim:'.length)
+    const sheet = groundOpsClaimSheetService.getById(sheetId)
+    if (!sheet || (sheet.status !== 'approved' && sheet.status !== 'settled')) return undefined
+    return buildClaimSheetRow(sheet, readSubmissions())
+  },
+
+  submitClaimSheetReference(
+    input: Pick<SubmitReconciliationInput, 'id'> &
+      Partial<Pick<SubmitReconciliationInput, 'referenceNumber'>>,
+  ): { ok: true; row: ReconciliationClaimSheetRow } | { ok: false; error: string } {
+    const existing = this.getClaimSheetRowById(input.id)
+    if (!existing) return { ok: false, error: 'Claim sheet not found.' }
+    if (existing.status === 'submitted') {
+      return { ok: false, error: 'This claim sheet is already reconciled.' }
+    }
+    if (existing.status === 'rejected') {
+      return { ok: false, error: 'This claim sheet was rejected and cannot be reconciled.' }
+    }
+
+    const referenceNumber = input.referenceNumber?.trim()
+    if (!referenceNumber) {
+      return { ok: false, error: 'Book entry number is required.' }
+    }
+    const user = getCurrentUser()
+    const reconciledBy = user?.name?.trim() || 'Accounts user'
+    const reconciledAt = new Date().toISOString()
+    const store = readSubmissions()
+
+    store[input.id] = {
+      referenceNumber,
+      status: 'submitted',
+      reconciledAt,
+      reconciledBy,
+    }
+    writeSubmissions(store)
+
+    const updated = this.getClaimSheetRowById(input.id)
+    if (!updated) return { ok: false, error: 'Could not refresh claim sheet row.' }
+    return { ok: true, row: updated }
+  },
+
+  rejectClaimSheet(
+    input: RejectReconciliationInput,
+  ): { ok: true; rejected: number } | { ok: false; error: string } {
+    const reason = input.reason.trim()
+    if (!reason) return { ok: false, error: 'Rejection reason is required.' }
+
+    const existing = this.getClaimSheetRowById(input.id)
+    if (!existing) return { ok: false, error: 'Claim sheet not found.' }
+    if (existing.status === 'submitted') {
+      return { ok: false, error: 'Submitted claim sheets cannot be rejected.' }
+    }
+    if (existing.status === 'rejected') {
+      return { ok: false, error: 'This claim sheet is already rejected.' }
+    }
+
+    const result = groundOpsClaimSheetService.rejectFromReconciliation(existing.sheetId, reason)
+    if (!result.ok) {
+      return { ok: false, error: result.error || 'Could not reject claim sheet.' }
+    }
+
+    const user = getCurrentUser()
+    const reconciledBy = user?.name?.trim() || 'Accounts user'
+    const reconciledAt = new Date().toISOString()
+    const store = readSubmissions()
+
+    store[input.id] = {
+      status: 'rejected',
+      reconciledAt,
+      reconciledBy,
+      rejectionReason: reason,
+    }
+    writeSubmissions(store)
+
+    return { ok: true, rejected: 1 }
   },
 
   getById(id: string): ReconciliationItem | undefined {
@@ -742,8 +950,9 @@ export const reconciliationService = {
     const bookEntry = referenceNumber.trim()
     const byId = new Map(listProjectedItems().map(item => [item.id, item]))
     const requiresBookEntry = ids.some(id => {
+      if (isClaimSheetReconciliationId(id) || isPaymentEntryReconciliationId(id)) return true
       const existing = byId.get(id)
-      return existing && reconciliationRequiresBookEntry(existing.tab)
+      return existing ? reconciliationRequiresBookEntry(existing.tab) : false
     })
     if (requiresBookEntry && !bookEntry) {
       return { ok: false, error: 'Book entry number is required.' }
@@ -757,6 +966,32 @@ export const reconciliationService = {
     let submitted = 0
 
     for (const id of ids) {
+      if (isClaimSheetReconciliationId(id)) {
+        const existing = this.getClaimSheetRowById(id)
+        if (!existing || existing.status !== 'pending') continue
+        store[id] = {
+          referenceNumber: bookEntry || undefined,
+          status: 'submitted',
+          reconciledAt,
+          reconciledBy,
+        }
+        submitted += 1
+        continue
+      }
+
+      if (isPaymentEntryReconciliationId(id)) {
+        const existing = this.getPaymentEntryRowById(id)
+        if (!existing || existing.status !== 'pending') continue
+        store[id] = {
+          referenceNumber: bookEntry || undefined,
+          status: 'submitted',
+          reconciledAt,
+          reconciledBy,
+        }
+        submitted += 1
+        continue
+      }
+
       const existing = byId.get(id)
       if (!existing || existing.status !== 'pending') continue
       store[id] = {

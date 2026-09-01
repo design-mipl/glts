@@ -1,3 +1,6 @@
+import type { FormAssistPaymentEntry } from '@/shared/services/applicationFormAssistService'
+import type { GroundOpsClaimSheet } from '@/shared/types/groundOpsClaimSheet'
+
 export type ReconciliationTab =
   | 'approved_claim_sheet'
   | 'insurance'
@@ -17,7 +20,44 @@ export type ReconciliationPeriodPreset =
 
 export type ReconciliationStatus = 'pending' | 'submitted' | 'rejected'
 
-export type ReconciliationSourceKind = 'expense' | 'claim_sheet'
+export type ReconciliationSourceKind = 'expense' | 'claim_sheet' | 'payment_entry'
+
+export interface ReconciliationPaymentServiceLine {
+  id: string
+  serviceName: string
+  amount: number
+  gstIncluded?: boolean
+  vendorName?: string
+}
+
+/** One row per pending-payment entry (multiple services in one payment). */
+export interface ReconciliationPaymentEntryRow {
+  id: string
+  applicationId: string
+  travelerRowId: string
+  paymentEntryId: string
+  entry: FormAssistPaymentEntry
+  services: ReconciliationPaymentServiceLine[]
+  status: ReconciliationStatus
+  refNo: string
+  gltsCreationDate: string
+  passengerName: string
+  client: string
+  visaCountry: string
+  paymentDate: string
+  paymentMode: string
+  paymentReferenceNumber: string
+  cardUsed: string
+  amountInr: number
+  foreignCurrencyAmount: number
+  staffName: string
+  serviceCount: number
+  servicesSummary: string
+  referenceNumber: string
+  reconciledAt?: string
+  reconciledBy?: string
+  rejectionReason?: string
+}
 
 export interface ReconciliationFilters {
   period: ReconciliationPeriodPreset
@@ -81,6 +121,18 @@ export interface ReconciliationItem {
   claimReviewedAt: string
 
   /** Book entry number entered on successful reconcile. */
+  referenceNumber: string
+  reconciledAt?: string
+  reconciledBy?: string
+  rejectionReason?: string
+}
+
+/** One row per approved claim sheet — mirrors Fund Allocation claim sheet listing grain. */
+export interface ReconciliationClaimSheetRow {
+  id: string
+  sheetId: string
+  sheet: GroundOpsClaimSheet
+  status: ReconciliationStatus
   referenceNumber: string
   reconciledAt?: string
   reconciledBy?: string

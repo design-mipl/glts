@@ -66,6 +66,7 @@ export function ApplicationTrackingPage() {
             alignItems: 'center',
             justifyContent: 'center',
             px: 5,
+            py: 2.5,
             minHeight: 44,
             textDecoration: 'none',
           }}

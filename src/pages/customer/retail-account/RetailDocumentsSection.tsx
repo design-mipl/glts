@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Box, Menu, MenuItem, Stack, Typography } from '@mui/material'
 import {
   FileText,
@@ -7,19 +7,14 @@ import {
   MoreVertical,
   Plus,
   Search,
-  Upload,
 } from 'lucide-react'
-import {
-  ConfirmDialog,
-  Drawer,
-  FormField,
-  Input,
-  Select,
-  useToast,
-} from '@/design-system/UIComponents'
+import { ConfirmDialog, useToast } from '@/design-system/UIComponents'
 import { AccentButton, QuietButton } from './retailAccountButtons'
+import { RetailDocumentModal } from './RetailDocumentModal'
+import { useRetailAccountIdentity } from './useRetailAccountIdentity'
 import {
   applyFlow,
+  applyFlowButtonPadding,
   applyFont,
   applyMotion,
   applyRadius,
@@ -42,14 +37,6 @@ import {
 } from '@/shared/services/storedDocumentsService'
 import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
 
-const DOC_TYPE_OPTIONS: { value: StoredDocumentType; label: string }[] = [
-  { value: 'passport', label: 'Passport' },
-  { value: 'photo', label: 'Passport Photo' },
-  { value: 'aadhaar', label: 'Aadhaar Card' },
-  { value: 'pan', label: 'PAN Card' },
-  { value: 'other', label: 'Other' },
-]
-
 /** Photo documents get an image glyph so they are distinguishable at a glance in a dense grid. */
 function docIcon(type: StoredDocumentType) {
   if (type === 'photo') return ImageIcon
@@ -61,54 +48,42 @@ type FilterKey = 'all' | StoredDocumentCategory
 
 export function RetailDocumentsSection() {
   const { showToast } = useToast()
+  const { displayName } = useRetailAccountIdentity()
   const [docs, setDocs] = useState(() => listStoredDocuments())
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<FilterKey>('all')
 
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<StoredDocument | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<StoredDocument | null>(null)
-  const [docType, setDocType] = useState<StoredDocumentType>('passport')
-  const [label, setLabel] = useState('')
-  const [fileName, setFileName] = useState('')
-  const [fileUrl, setFileUrl] = useState<string | undefined>()
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const refresh = useCallback(() => setDocs(listStoredDocuments()), [])
 
   const openCreate = () => {
     setEditing(null)
-    setDocType('passport')
-    setLabel('')
-    setFileName('')
-    setFileUrl(undefined)
-    setDrawerOpen(true)
+    setModalOpen(true)
   }
 
   const openReplace = (doc: StoredDocument) => {
     setEditing(doc)
-    setDocType(doc.type)
-    setLabel(doc.label)
-    setFileName(doc.fileName)
-    setFileUrl(doc.fileUrl)
-    setDrawerOpen(true)
+    setModalOpen(true)
   }
 
-  const handleSave = () => {
-    if (!fileName.trim()) {
+  const handleSave = (payload: {
+    id?: string
+    type: StoredDocumentType
+    label: string
+    fileName: string
+    fileUrl?: string
+  }) => {
+    if (!payload.fileName.trim()) {
       showToast({ title: 'Choose a file to upload', variant: 'error' })
       return
     }
-    upsertStoredDocument({
-      id: editing?.id,
-      type: docType,
-      label: label.trim() || storedDocumentTypeLabel(docType),
-      fileName: fileName.trim(),
-      fileUrl,
-    })
+    upsertStoredDocument(payload)
     refresh()
-    setDrawerOpen(false)
-    showToast({ title: editing ? 'Document replaced' : 'Document saved', variant: 'success' })
+    setModalOpen(false)
+    showToast({ title: payload.id ? 'Document replaced' : 'Document saved', variant: 'success' })
   }
 
   const counts = useMemo(() => {
@@ -293,59 +268,13 @@ export function RetailDocumentsSection() {
         </Stack>
       )}
 
-      <Drawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title={editing ? 'Replace document' : 'Add document'}
-        width={420}
-        footer={
-          <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
-            <QuietButton fullWidth onClick={() => setDrawerOpen(false)}>
-              Cancel
-            </QuietButton>
-            <AccentButton fullWidth onClick={handleSave}>
-              {editing ? 'Replace' : 'Save document'}
-            </AccentButton>
-          </Stack>
-        }
-      >
-        <Stack spacing={2}>
-          <FormField label="Document type">
-            <Select
-              value={docType}
-              onChange={v => setDocType(String(v) as StoredDocumentType)}
-              options={DOC_TYPE_OPTIONS}
-              disabled={Boolean(editing) && editing!.type !== 'other'}
-              fullWidth
-            />
-          </FormField>
-          <FormField label="Label" optional>
-            <Input value={label} onChange={setLabel} placeholder={storedDocumentTypeLabel(docType)} />
-          </FormField>
-          <FormField label="File">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.webp"
-              hidden
-              onChange={e => {
-                const file = e.target.files?.[0]
-                if (!file) return
-                setFileName(file.name)
-                setFileUrl(URL.createObjectURL(file))
-              }}
-            />
-            <Stack direction="row" spacing={1} alignItems="center">
-              <QuietButton startIcon={<Upload size={14} />} onClick={() => fileInputRef.current?.click()}>
-                Choose file
-              </QuietButton>
-              <Typography sx={{ fontSize: 12, color: applyFlow.inkMuted, minWidth: 0 }} noWrap>
-                {fileName || 'No file selected'}
-              </Typography>
-            </Stack>
-          </FormField>
-        </Stack>
-      </Drawer>
+      <RetailDocumentModal
+        open={modalOpen}
+        editing={editing}
+        ownerName={displayName}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSave}
+      />
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}
@@ -578,21 +507,26 @@ function FilterChip({
       sx={{
         appearance: 'none',
         cursor: 'pointer',
-        px: 1.5,
-        height: 30,
+        ...applyFlowButtonPadding.md,
+        minHeight: 36,
         display: 'inline-flex',
         alignItems: 'center',
         gap: 0.75,
-        borderRadius: applyRadius.full,
+        borderRadius: applyRadius.control,
         fontFamily: applyFont.body,
-        fontSize: 12.5,
+        fontSize: 13.5,
         fontWeight: active ? 700 : 600,
-        color: active ? applyFlow.ink : applyFlow.inkMuted,
-        bgcolor: active ? applyFlow.accentSoft : 'transparent',
+        color: active ? applyFlow.ink : applyFlow.inkFaint,
+        bgcolor: active ? applyFlow.accentSoft : applyFlow.canvas,
         border: `1px solid ${active ? applyFlow.accentBorder : applyFlow.hairline}`,
-        transition: `background-color 150ms ${applyMotion.easeOut}, border-color 150ms ${applyMotion.easeOut}, color 150ms ${applyMotion.easeOut}`,
-        '&:hover': { borderColor: applyFlow.hairlineStrong, color: applyFlow.ink },
+        transition: `background-color 160ms ${applyMotion.easeOut}, border-color 160ms ${applyMotion.easeOut}, color 160ms ${applyMotion.easeOut}`,
+        '&:hover': {
+          bgcolor: applyFlow.accentSoft,
+          borderColor: applyFlow.accentBorder,
+          color: applyFlow.ink,
+        },
         ...focusRingSx,
+        ...getPressSx(),
       }}
     >
       {label}

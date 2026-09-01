@@ -170,6 +170,7 @@ export function PassportCaptureFlow({
                 width: '100%',
                 border: 'none',
                 borderRadius: applyRadius.full,
+                px: 3.5,
                 py: 1.75,
                 fontSize: 14,
               }}
@@ -470,7 +471,7 @@ export function PassportCaptureFlow({
             p: 0,
             mb: 1.5,
             cursor: mode === 'upload' ? 'pointer' : 'default',
-            maxWidth: 260,
+            maxWidth: 200,
             width: '100%',
             lineHeight: 0,
             transition: `transform 160ms ${applyMotion.easeOut}`,
