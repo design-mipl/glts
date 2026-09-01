@@ -205,14 +205,16 @@ function TabChip({ active, label, onClick }: { active: boolean; label: string; o
         color: active ? applyFlow.ink : applyFlow.inkFaint,
         bgcolor: active ? applyFlow.accentSoft : applyFlow.canvas,
         border: `1px solid ${active ? applyFlow.accentBorder : applyFlow.hairline}`,
-        transition: `background-color 160ms ${applyMotion.easeOut}, border-color 160ms ${applyMotion.easeOut}, color 160ms ${applyMotion.easeOut}`,
         '&:hover': {
           bgcolor: applyFlow.accentSoft,
           borderColor: applyFlow.accentBorder,
           color: applyFlow.ink,
         },
         ...focusRingSx,
-        ...getPressSx(),
+        ...getPressSx(
+          0.97,
+          `background-color 160ms ${applyMotion.easeOut}, border-color 160ms ${applyMotion.easeOut}, color 160ms ${applyMotion.easeOut}`,
+        ),
       }}
     >
       {label}

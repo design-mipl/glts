@@ -138,9 +138,10 @@ export function getClippedCardClipPath(notchPx = 18) {
 }
 
 /** Press feedback for any clickable surface. Subtle — 0.97 or higher. */
-export function getPressSx(scale = 0.97) {
+export function getPressSx(scale = 0.97, extraTransition?: string) {
+  const pressTransition = `transform ${applyMotion.pressMs}ms ${applyMotion.easeOut}`
   return {
-    transition: `transform ${applyMotion.pressMs}ms ${applyMotion.easeOut}`,
+    transition: extraTransition ? `${extraTransition}, ${pressTransition}` : pressTransition,
     '&:active': { transform: `scale(${scale})` },
     '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
   } as const
