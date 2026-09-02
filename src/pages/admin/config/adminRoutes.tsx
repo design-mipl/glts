@@ -84,6 +84,7 @@ import {
   OrderEnquiryDetailPage,
   OrderEnquiryListingPage,
   OrderListingPage,
+  OrganizationLocationListingPage,
   QuotationDetailPage,
   QuotationListingPage,
   QuotationPdfPreviewPage,
@@ -536,6 +537,14 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <BankMasterListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/organization-location"
+        element={
+          <PermissionGuard>
+            <OrganizationLocationListingPage />
           </PermissionGuard>
         }
       />
