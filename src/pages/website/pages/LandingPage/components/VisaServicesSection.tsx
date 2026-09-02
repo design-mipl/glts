@@ -9,8 +9,9 @@ import {
   Sparkles,
   type LucideIcon,
 } from 'lucide-react'
-import { SiteSection, SiteSectionHeading } from '../../../components/SiteSection'
-import { site, siteFont, siteMotion, siteRadius, mrzSx } from '@/pages/website/theme/siteTheme'
+import { Link } from 'react-router-dom'
+import { PaperSection, PaperSectionHeading } from '../../../components/PaperSection'
+import { accent, ink, paper, paperFont, paperMotion, paperRadius, paperShadow } from '../../../theme/sitePaper'
 
 const VISA_SERVICES: {
   id: string
@@ -66,19 +67,23 @@ const VISA_SERVICES: {
 /**
  * Visa categories.
  *
- * Was a horizontally-scrolling rail of six 4:5 stock photographs — generic travel imagery
- * that told the reader nothing about the category and put six lazy images on the page.
- * Photography is kept where it is actually information (the destination cards, which show
- * the place you are going) and dropped where it is decoration.
+ * Each cell carries its own filter link, so the section is a way into the product rather
+ * than six routes to the same unfiltered list.
  *
- * Each cell now carries the category's own filter link, so the section is a way into the
- * product rather than six routes to the same unfiltered list.
+ * This was the page's second dark band. The bands are gone: the site is one light surface
+ * now, and separation comes from a one-step change of paper plus a hairline. Inverting to
+ * near-black was the loudest device on the page and it was being spent on a list of six
+ * categories — the least emotive content here.
+ *
+ * A second section, `RetailServicesBento`, listed these same six categories again ("Tourist
+ * & Family", "Business", "Student", "Transit", "Refusal Cases") two scrolls later. It has
+ * been removed rather than restyled.
  */
 export function VisaServicesSection() {
   return (
-    <SiteSection id="visa-services" tone="canvas" sx={{ scrollMarginTop: 88 }}>
-      <SiteSectionHeading
-        eyebrow={`Categories · ${String(VISA_SERVICES.length).padStart(2, '0')}`}
+    <PaperSection id="visa-services" ground="canvas">
+      <PaperSectionHeading
+        eyebrow="Visa categories"
         title="Every visa category, expertly managed."
         lead="Each one includes a pre-submission review by a specialist and a live application status you can check at any time."
       />
@@ -87,106 +92,131 @@ export function VisaServicesSection() {
         sx={{
           display: 'grid',
           gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, minmax(0, 1fr))',
-            lg: 'repeat(3, minmax(0, 1fr))',
+            xs: 'minmax(0, 1fr)',
+            lg: 'repeat(2, minmax(0, 1fr))',
+            xl: 'repeat(3, minmax(0, 1fr))',
           },
-          gap: '1px',
-          backgroundColor: site.hairline,
-          border: `1px solid ${site.hairline}`,
-          borderRadius: siteRadius.card,
-          overflow: 'hidden',
+          gap: { xs: 2, xl: 2.5 },
         }}
       >
         {VISA_SERVICES.map((service) => {
           const Icon = service.icon
+
           return (
             <Box
               key={service.id}
-              component="a"
-              href={service.href}
+              component={Link}
+              to={service.href}
+              className="gl-category-card"
               sx={{
                 display: 'flex',
-                alignItems: 'flex-start',
-                gap: 3,
-                p: { xs: 3.5, md: 4 },
-                minHeight: 44,
+                gap: 2,
+                p: { xs: 2.5, xl: 3 },
+                minWidth: 0,
                 textDecoration: 'none',
-                backgroundColor: site.surface,
-                transition: `background-color 200ms ${siteMotion.easeOut}`,
+                backgroundColor: paper.white,
+                border: `1px solid ${paper.hairline}`,
+                borderRadius: paperRadius.card,
+                transition: [
+                  `border-color ${paperMotion.hoverMs}ms ease`,
+                  `box-shadow ${paperMotion.hoverMs}ms ease`,
+                  `transform ${paperMotion.hoverMs}ms ${paperMotion.easeOut}`,
+                ].join(', '),
+
+                '&:focus-visible': { outline: `2px solid ${ink.strong}`, outlineOffset: 2 },
+
                 '@media (hover: hover) and (pointer: fine)': {
-                  '&:hover': { backgroundColor: site.canvas },
-                  '&:hover .svcArrow': { transform: 'translateX(3px)', color: site.accentInk },
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    borderColor: accent.border,
+                    boxShadow: paperShadow.lift,
+                  },
+                  '&:hover .gl-category-arrow': { transform: 'translateX(3px)' },
                 },
-                '&:focus-visible': {
-                  outline: 'none',
-                  boxShadow: `inset 0 0 0 2px ${site.accent}`,
+                '@media (prefers-reduced-motion: reduce)': {
+                  transition: `border-color ${paperMotion.hoverMs}ms linear`,
+                  '&:hover': { transform: 'none' },
+                  '&:hover .gl-category-arrow': { transform: 'none' },
                 },
               }}
             >
+              {/* One neutral icon treatment for every category — differentiate by glyph,
+                  never by giving each type its own tinted background. */}
               <Box
                 aria-hidden
                 sx={{
-                  width: 32,
-                  height: 32,
                   flex: '0 0 auto',
+                  width: 38,
+                  height: 38,
                   display: 'grid',
                   placeItems: 'center',
-                  borderRadius: siteRadius.chip,
-                  border: `1px solid ${site.hairline}`,
-                  backgroundColor: site.canvas,
-                  color: site.inkMuted,
+                  borderRadius: paperRadius.control,
+                  border: `1px solid ${accent.border}`,
+                  backgroundColor: accent.softer,
+                  color: accent.ink,
                 }}
               >
-                <Icon size={15} strokeWidth={1.9} />
+                <Icon size={18} strokeWidth={1.9} />
               </Box>
 
-              <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Typography
+                  component="h3"
                   sx={{
-                    fontFamily: siteFont.display,
-                    fontSize: 15.5,
+                    m: 0,
+                    fontFamily: paperFont.display,
+                    fontSize: { xs: 17, xl: 18 },
                     fontWeight: 700,
-                    letterSpacing: '-0.02em',
-                    color: site.ink,
+                    letterSpacing: '-0.018em',
                     lineHeight: 1.25,
-                    mb: 1,
+                    color: ink.strong,
                   }}
                 >
                   {service.title}
                 </Typography>
+
                 <Typography
                   sx={{
-                    fontFamily: siteFont.body,
-                    fontSize: 13,
-                    color: site.inkMuted,
-                    lineHeight: 1.5,
+                    mt: 0.75,
+                    fontFamily: paperFont.body,
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    color: ink.muted,
                   }}
                 >
                   {service.description}
                 </Typography>
-                <Typography sx={{ ...mrzSx, fontSize: 9.5, mt: 2, color: site.inkFaint }}>
-                  See destinations
-                </Typography>
-              </Box>
 
-              <Box
-                aria-hidden
-                className="svcArrow"
-                sx={{
-                  flex: '0 0 auto',
-                  display: 'inline-flex',
-                  color: site.inkFaint,
-                  mt: 0.5,
-                  transition: `transform 180ms ${siteMotion.easeOut}, color 180ms ${siteMotion.easeOut}`,
-                }}
-              >
-                <ArrowRight size={15} />
+                <Box
+                  sx={{
+                    mt: 1.75,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    fontFamily: paperFont.body,
+                    fontSize: 13.5,
+                    fontWeight: 600,
+                    color: accent.ink,
+                  }}
+                >
+                  See destinations
+                  <Box
+                    component="span"
+                    aria-hidden
+                    className="gl-category-arrow"
+                    sx={{
+                      display: 'inline-flex',
+                      transition: `transform 180ms ${paperMotion.easeOut}`,
+                    }}
+                  >
+                    <ArrowRight size={15} />
+                  </Box>
+                </Box>
               </Box>
             </Box>
           )
         })}
       </Box>
-    </SiteSection>
+    </PaperSection>
   )
 }

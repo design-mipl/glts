@@ -107,3 +107,8 @@ export function resolveExtraServiceId(value: string | null): ExtraServiceId {
 export function extraServiceIndex(id: ExtraServiceId): number {
   return extraServices.findIndex((service) => service.id === id)
 }
+
+/** DOM id of the selector tab for a service — shared by the tablist and its panel. */
+export function extraServiceTabId(id: ExtraServiceId): string {
+  return `extra-service-tab-${id}`
+}

@@ -1,178 +1,158 @@
-import { useCallback, useState } from 'react'
 import { Box, Typography } from '@mui/material'
-import { SiteSection, SiteSectionHeading } from '../../../components/SiteSection'
-import { site, siteFont, siteMotion, siteRadius, mrzSx } from '@/pages/website/theme/siteTheme'
+import { PaperSection, PaperSectionHeading } from '../../../components/PaperSection'
+import { accent, ink, paper, paperFont } from '../../../theme/sitePaper'
 import { howItWorksSteps } from '../landingWorkflowContent'
 
-const STEP_COUNT = howItWorksSteps.length
+/** Half the node's size — the connector line is drawn through the nodes' centres. */
+const NODE = 44
+const NODE_HALF = NODE / 2
 
 /**
- * How it works — the checkpoint spine.
+ * How it works.
  *
- * Numbering is kept here because this content genuinely is a sequence: the order is the
- * information. (Elsewhere on the site, 01/02/03 markers were decoration and have been
- * dropped.) The spine replaces the previous treatment — masked map-pin PNGs sliding along
- * a rounded green progress bar — with the same checkpoint device the apply flow uses for
- * phase navigation, so "where am I in the process" looks identical before and after signup.
+ * Numbering is kept here and nowhere else on the page. This content genuinely is a
+ * sequence — the order is the information — whereas the `01 / 02 / 03` markers that ran on
+ * three other sections were numbering unordered lists, which is decoration.
  *
- * The active step is driven by hover/focus and reverts to step one on leave. Nodes are
- * square, not circular: a stamp, not a bubble.
+ * Two things were removed from the previous version.
+ *
+ * THE HOVER STATE MACHINE. Each stage was a button that, on hover or focus, advanced a
+ * gold progress bar along a spine and tinted the active card. It looked considered and did
+ * nothing: all five descriptions are on screen at all times, so the interaction revealed
+ * no information. Motion on a section every visitor scrolls past needs a purpose beyond
+ * looking alive, and this had none. What replaced it is a static connector, which says
+ * "these happen in order" — the one thing the graphic is actually for.
+ *
+ * THE FIVE-COLUMN PHONE LAYOUT. The grid was `{ xs: '1fr', sm: repeat(5, 1fr) }`, and `sm`
+ * in this project is 375px — so every phone wider than an iPhone SE rendered five 77px
+ * columns, which is where the site's horizontal scrollbar came from. It is one column
+ * until 900px now, and the connector rotates with it.
  */
 export function HowItWorks() {
-  const [activeIndex, setActiveIndex] = useState(0)
-
-  const goTo = useCallback((index: number) => {
-    setActiveIndex(((index % STEP_COUNT) + STEP_COUNT) % STEP_COUNT)
-  }, [])
-
   return (
-    <SiteSection id="how-it-works" tone="canvas">
-      <Box onMouseLeave={() => goTo(0)}>
-        <SiteSectionHeading
-          eyebrow={`Process · ${String(STEP_COUNT).padStart(2, '0')} stages`}
-          title="How it works"
-          lead="Every application runs the same route: check what is required, file it correctly, and clear each gate with an expert watching. No step is left to guesswork."
-        />
+    <PaperSection id="how-it-works" ground="canvas">
+      <PaperSectionHeading
+        eyebrow="How it works"
+        title="Five stages, and you can see all of them"
+        lead="Every application runs the same route: check what is required, file it correctly, and clear each stage with a specialist watching. Nothing is left to guesswork."
+      />
 
-        {/* The spine. One hairline rail, one node per stage, filled to the active step. */}
+      <Box sx={{ position: 'relative' }}>
+        {/* Connector. Horizontal across the row on wide screens, vertical down the gutter
+            on narrow ones — first node centre to last node centre in both cases. */}
         <Box
           aria-hidden
           sx={{
-            display: { xs: 'none', sm: 'block' },
-            position: 'relative',
-            height: 12,
-            mx: `calc(100% / ${STEP_COUNT} / 2)`,
-            mb: 4,
-          }}
-        >
-          <Box
-            sx={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              top: 5,
+            position: 'absolute',
+            backgroundColor: paper.hairlineStrong,
+            zIndex: 0,
+            // Narrow: a vertical rule down the node gutter.
+            left: `${NODE_HALF}px`,
+            top: `${NODE_HALF}px`,
+            bottom: `${NODE_HALF}px`,
+            width: '1px',
+            // Wide: a horizontal rule through the row of nodes. With five equal columns
+            // and left-aligned nodes, the last node's centre sits one fifth from the right.
+            '@media (min-width: 900px)': {
+              left: `${NODE_HALF}px`,
+              right: `calc(20% - ${NODE_HALF}px)`,
+              top: `${NODE_HALF}px`,
+              bottom: 'auto',
+              width: 'auto',
               height: '1px',
-              backgroundColor: site.hairlineStrong,
-            }}
-          >
-            <Box
-              sx={{
-                height: '100%',
-                width: `${STEP_COUNT <= 1 ? 100 : (activeIndex / (STEP_COUNT - 1)) * 100}%`,
-                backgroundColor: site.accent,
-                transition: `width 260ms ${siteMotion.easeInOut}`,
-                '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
-              }}
-            />
-          </Box>
-
-          {howItWorksSteps.map((step, index) => {
-            const reached = index <= activeIndex
-            return (
-              <Box
-                key={`node-${step.id}`}
-                sx={{
-                  position: 'absolute',
-                  left: `${(index / Math.max(STEP_COUNT - 1, 1)) * 100}%`,
-                  top: 0,
-                  width: 11,
-                  height: 11,
-                  transform: 'translateX(-50%) rotate(45deg)',
-                  backgroundColor: reached ? site.accent : site.surface,
-                  border: `1px solid ${reached ? site.accent : site.hairlineStrong}`,
-                  transition: `background-color 260ms ${siteMotion.easeOut}, border-color 260ms ${siteMotion.easeOut}`,
-                  '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
-                }}
-              />
-            )
-          })}
-        </Box>
+            },
+          }}
+        />
 
         <Box
+          component="ol"
           sx={{
+            position: 'relative',
+            zIndex: 1,
+            listStyle: 'none',
+            m: 0,
+            p: 0,
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: `repeat(${STEP_COUNT}, minmax(0, 1fr))` },
-            gap: { xs: 1, sm: 2 },
+            // One column until there is genuinely room for five.
+            gridTemplateColumns: { xs: 'minmax(0, 1fr)', xl: 'repeat(5, minmax(0, 1fr))' },
+            gap: { xs: 4, xl: 3 },
           }}
         >
-          {howItWorksSteps.map((step, index) => {
-            const isActive = index === activeIndex
+          {howItWorksSteps.map((step) => {
             const Icon = step.icon
+
             return (
               <Box
+                component="li"
                 key={step.id}
-                component="button"
-                type="button"
-                onMouseEnter={() => goTo(index)}
-                onFocus={() => goTo(index)}
-                onClick={() => goTo(index)}
-                aria-pressed={isActive}
-                aria-label={`Stage ${step.number}: ${step.title}`}
                 sx={{
-                  m: 0,
-                  p: { xs: 2.5, sm: 2.5, md: 3 },
-                  minHeight: 44,
-                  border: `1px solid ${isActive ? site.hairlineStrong : 'transparent'}`,
-                  borderRadius: siteRadius.control,
-                  backgroundColor: isActive ? site.surface : 'transparent',
-                  cursor: 'pointer',
-                  textAlign: 'left',
                   display: 'flex',
-                  flexDirection: { xs: 'row', sm: 'column' },
+                  // Narrow: node beside the text. Wide: node above it.
+                  flexDirection: { xs: 'row', xl: 'column' },
                   alignItems: 'flex-start',
-                  gap: { xs: 2.5, sm: 2 },
-                  fontFamily: 'inherit',
-                  transition: `background-color 220ms ${siteMotion.easeOut}, border-color 220ms ${siteMotion.easeOut}`,
-                  '&:focus-visible': {
-                    outline: 'none',
-                    borderColor: site.accent,
-                    boxShadow: `0 0 0 3px ${site.accentRing}`,
-                  },
-                  '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+                  gap: { xs: 2.5, xl: 2.5 },
+                  minWidth: 0,
+                  pr: { xl: 2.5 },
                 }}
               >
-                {/* One neutral icon treatment for every stage — no per-step colour. */}
                 <Box
                   aria-hidden
                   sx={{
-                    width: 34,
-                    height: 34,
-                    flexShrink: 0,
+                    flex: '0 0 auto',
+                    width: NODE,
+                    height: NODE,
                     display: 'grid',
                     placeItems: 'center',
-                    borderRadius: siteRadius.chip,
-                    border: `1px solid ${isActive ? site.accentBorder : site.hairline}`,
-                    backgroundColor: isActive ? site.accentSoft : site.canvas,
-                    color: isActive ? site.accentInk : site.inkMuted,
-                    transition: `border-color 220ms ${siteMotion.easeOut}, background-color 220ms ${siteMotion.easeOut}, color 220ms ${siteMotion.easeOut}`,
+                    borderRadius: '50%',
+                    // Opaque, so the connector reads as passing behind rather than through.
+                    backgroundColor: paper.white,
+                    border: `1px solid ${accent.border}`,
+                    color: accent.ink,
                   }}
                 >
-                  <Icon size={16} strokeWidth={1.9} />
+                  <Icon size={19} strokeWidth={1.9} />
                 </Box>
 
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ ...mrzSx, fontSize: 9.5, mb: 1.25 }}>
+                  <Typography
+                    component="span"
+                    sx={{
+                      display: 'block',
+                      mb: 1,
+                      fontFamily: paperFont.mono,
+                      fontVariantNumeric: 'tabular-nums',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      letterSpacing: '0.08em',
+                      lineHeight: 1,
+                      color: accent.ink,
+                    }}
+                  >
                     Stage {step.number}
                   </Typography>
+
                   <Typography
+                    component="h3"
                     sx={{
-                      fontFamily: siteFont.display,
-                      fontSize: { xs: 15, md: 16 },
-                      fontWeight: 700,
-                      letterSpacing: '-0.02em',
-                      color: site.ink,
-                      lineHeight: 1.25,
+                      m: 0,
                       mb: 1,
+                      fontFamily: paperFont.display,
+                      fontSize: { xs: 16.5, xl: 17 },
+                      fontWeight: 700,
+                      letterSpacing: '-0.018em',
+                      lineHeight: 1.25,
+                      color: ink.strong,
                     }}
                   >
                     {step.title}
                   </Typography>
+
                   <Typography
                     sx={{
-                      fontFamily: siteFont.body,
-                      fontSize: 13,
-                      color: site.inkMuted,
-                      lineHeight: 1.5,
+                      fontFamily: paperFont.body,
+                      fontSize: 14,
+                      lineHeight: 1.6,
+                      color: ink.muted,
                     }}
                   >
                     {step.description}
@@ -183,6 +163,6 @@ export function HowItWorks() {
           })}
         </Box>
       </Box>
-    </SiteSection>
+    </PaperSection>
   )
 }

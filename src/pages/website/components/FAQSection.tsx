@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Box, Typography, Collapse } from '@mui/material'
+import { Box, Collapse, Typography } from '@mui/material'
 import { Minus, Plus } from 'lucide-react'
-import { SiteSection, SiteSectionHeading } from './SiteSection'
-import { site, siteFont, siteMotion, siteRadius, mrzSx } from '../theme/siteTheme'
+import { PaperSection, PaperSectionHeading } from './PaperSection'
+import { accent, ink, paper, paperFont, paperMotion } from '../theme/sitePaper'
 
 export interface FAQItem {
   q: string
@@ -17,24 +17,25 @@ export interface FAQSectionProps {
 const DEFAULT_TITLE = 'Common questions'
 
 /**
- * FAQ.
- *
- * Rebuilt as a single hairline-divided list. The previous version paired the accordion
- * with a large support photograph whose height was measured with a `ResizeObserver` and
- * mirrored onto the image on every expand — a layout read/write loop maintained purely so
- * a decorative image stayed the same height as the questions. The image is gone and so is
- * the observer.
+ * FAQ — a single hairline-divided list of disclosures.
  *
  * Each row is its own disclosure and several can be open at once: people scanning an FAQ
  * are usually comparing two answers, and an accordion that closes the previous one makes
  * that impossible.
+ *
+ * The `01 / 02 / 03` index that ran down the left of each question is gone. Questions are
+ * not a sequence — nobody reads an FAQ in order — so the numbers were labelling nothing.
+ *
+ * Motion: the disclosure is the one place on this page where something genuinely appears,
+ * so it animates. 200ms, strong ease-out, height only on the panel MUI already measures.
+ * The `+ / −` toggle carries the state, so the row still reads correctly with motion off.
  */
 export function FAQSection({ faqs, title = DEFAULT_TITLE }: FAQSectionProps) {
-  const [expanded, setExpanded] = useState<Set<number>>(new Set())
+  const [openIds, setOpenIds] = useState<Set<number>>(new Set())
 
-  const toggle = (index: number) => {
-    setExpanded((prev) => {
-      const next = new Set(prev)
+  function toggle(index: number) {
+    setOpenIds((current) => {
+      const next = new Set(current)
       if (next.has(index)) next.delete(index)
       else next.add(index)
       return next
@@ -42,117 +43,115 @@ export function FAQSection({ faqs, title = DEFAULT_TITLE }: FAQSectionProps) {
   }
 
   return (
-    <SiteSection tone="canvas">
-      <SiteSectionHeading
-        eyebrow={`Questions · ${String(faqs.length).padStart(2, '0')}`}
+    <PaperSection id="faq" ground="base" divided>
+      <PaperSectionHeading
+        eyebrow="Questions"
         title={title}
         lead="Short answers to what people ask most. Anything not covered here, a specialist can answer directly."
       />
 
-      <Box
-        sx={{
-          maxWidth: 860,
-          border: `1px solid ${site.hairline}`,
-          borderRadius: siteRadius.card,
-          backgroundColor: site.surface,
-          overflow: 'hidden',
-        }}
-      >
-        {faqs.map(({ q, a }, index) => {
-          const isOpen = expanded.has(index)
+      <Box sx={{ borderTop: `1px solid ${paper.hairline}`, maxWidth: 860 }}>
+        {faqs.map((faq, index) => {
+          const isOpen = openIds.has(index)
+          const panelId = `faq-panel-${index}`
+          const buttonId = `faq-button-${index}`
+
           return (
-            <Box
-              key={q}
-              sx={{
-                borderBottom: `1px solid ${site.hairlineSoft}`,
-                '&:last-of-type': { borderBottom: 'none' },
-              }}
-            >
+            <Box key={faq.q} sx={{ borderBottom: `1px solid ${paper.hairline}` }}>
               <Box
                 component="button"
                 type="button"
-                onClick={() => toggle(index)}
+                id={buttonId}
                 aria-expanded={isOpen}
+                aria-controls={panelId}
+                onClick={() => toggle(index)}
                 sx={{
+                  appearance: 'none',
                   width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 3,
-                  minHeight: 44,
-                  py: 2.5,
-                  px: { xs: 3, md: 3.5 },
-                  backgroundColor: 'transparent',
+                  m: 0,
+                  px: 0,
+                  py: { xs: 2.25, xl: 2.75 },
                   border: 'none',
+                  background: 'transparent',
                   cursor: 'pointer',
                   textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 2.5,
                   fontFamily: 'inherit',
-                  transition: `background-color 180ms ${siteMotion.easeOut}`,
-                  '@media (hover: hover) and (pointer: fine)': {
-                    '&:hover': { backgroundColor: site.canvas },
-                  },
+                  color: isOpen ? accent.ink : ink.strong,
+                  transition: `color ${paperMotion.hoverMs}ms ease`,
+
                   '&:focus-visible': {
-                    outline: 'none',
-                    boxShadow: `inset 0 0 0 2px ${site.accent}`,
+                    outline: `2px solid ${ink.strong}`,
+                    outlineOffset: 3,
+                    borderRadius: 4,
+                  },
+                  '@media (hover: hover) and (pointer: fine)': {
+                    '&:hover': { color: accent.ink },
                   },
                 }}
               >
-                <Typography sx={{ ...mrzSx, fontSize: 9.5, flex: '0 0 auto', width: 24 }}>
-                  {String(index + 1).padStart(2, '0')}
-                </Typography>
-
                 <Typography
+                  component="span"
                   sx={{
-                    flex: 1,
-                    minWidth: 0,
-                    fontFamily: siteFont.body,
-                    fontWeight: 600,
-                    fontSize: { xs: 14, md: 15 },
-                    color: site.ink,
-                    lineHeight: 1.4,
+                    fontFamily: paperFont.display,
+                    fontSize: { xs: 16, xl: 17.5 },
+                    fontWeight: 700,
+                    letterSpacing: '-0.015em',
+                    lineHeight: 1.35,
+                    color: 'inherit',
                   }}
                 >
-                  {q}
+                  {faq.q}
                 </Typography>
 
                 <Box
                   aria-hidden
                   sx={{
-                    flexShrink: 0,
-                    width: 26,
-                    height: 26,
+                    flex: '0 0 auto',
+                    width: 30,
+                    height: 30,
                     display: 'grid',
                     placeItems: 'center',
-                    borderRadius: siteRadius.chip,
-                    border: `1px solid ${isOpen ? site.accentBorder : site.hairline}`,
-                    backgroundColor: isOpen ? site.accentSoft : 'transparent',
-                    color: isOpen ? site.accentInk : site.inkMuted,
-                    transition: `background-color 180ms ${siteMotion.easeOut}, border-color 180ms ${siteMotion.easeOut}, color 180ms ${siteMotion.easeOut}`,
+                    borderRadius: '50%',
+                    border: `1px solid ${isOpen ? accent.border : paper.hairlineStrong}`,
+                    backgroundColor: isOpen ? accent.softer : 'transparent',
+                    color: isOpen ? accent.ink : ink.muted,
+                    transition: `border-color ${paperMotion.hoverMs}ms ease, background-color ${paperMotion.hoverMs}ms ease, color ${paperMotion.hoverMs}ms ease`,
                   }}
                 >
-                  {isOpen ? <Minus size={14} strokeWidth={2.2} /> : <Plus size={14} strokeWidth={2.2} />}
+                  {isOpen ? <Minus size={15} /> : <Plus size={15} />}
                 </Box>
               </Box>
 
-              <Collapse in={isOpen} timeout={220}>
+              <Collapse
+                in={isOpen}
+                timeout={paperMotion.overlayMs}
+                easing={paperMotion.easeOut}
+                unmountOnExit
+              >
                 <Typography
+                  id={panelId}
+                  role="region"
+                  aria-labelledby={buttonId}
                   sx={{
-                    pl: { xs: 3, md: '76px' },
-                    pr: { xs: 3, md: 3.5 },
-                    pb: 3,
-                    fontFamily: siteFont.body,
-                    color: site.inkMuted,
-                    fontSize: 13.5,
-                    lineHeight: 1.6,
-                    maxWidth: '72ch',
+                    pb: { xs: 2.5, xl: 3 },
+                    pr: { xs: 0, xl: 7 },
+                    fontFamily: paperFont.body,
+                    fontSize: 15,
+                    lineHeight: 1.7,
+                    color: ink.muted,
                   }}
                 >
-                  {a}
+                  {faq.a}
                 </Typography>
               </Collapse>
             </Box>
           )
         })}
       </Box>
-    </SiteSection>
+    </PaperSection>
   )
 }

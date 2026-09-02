@@ -1,140 +1,118 @@
 import { useMemo } from 'react'
-import { Box, Typography } from '@mui/material'
+import { Box } from '@mui/material'
 import { ArrowRight } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { getAllCountries } from '@/shared/services/visaService'
-import { SiteSection, SiteSectionHeading } from '../../../components/SiteSection'
-import { site, siteFont, siteMotion, siteRadius } from '@/pages/website/theme/siteTheme'
-import { HomepageDestinationCard } from '../../../components/HomepageDestinationCard'
-import { destinationCardGridSx } from '../../../components/destinationCardGrid'
+import { PaperSection, PaperSectionEmpty, PaperSectionHeading } from '../../../components/PaperSection'
+import { PaperDestinationCard } from '../../../components/PaperDestinationCard'
+import { Button } from '../../../components/ui'
 import { defaultExploreFilters, applyExploreFilters } from '../../../utils/applyExploreFilters'
 
-/** Two full rows on the desktop 5-column grid. */
-const HOMEPAGE_DESTINATION_COUNT = 10
+/**
+ * Eight, not ten.
+ *
+ * Ten cards only divide evenly into a five-column grid, which forced a five-up row that is
+ * far too tight below a very wide desktop — and left two orphans at every other width.
+ * Eight divides cleanly by both two and four, so the grid is two tiers instead of three
+ * and every breakpoint produces full rows. The section's job is to show that coverage
+ * exists, not to be the coverage; `/countries` is one click away.
+ */
+const HOMEPAGE_DESTINATION_COUNT = 8
 
-/** Quiet secondary action — hairline, never a second filled button competing with the CTA. */
-export function SiteTextLink({
-  children,
-  onClick,
-  href,
-}: {
-  children: React.ReactNode
-  onClick?: () => void
-  href?: string
-}) {
-  return (
-    <Box
-      component={href ? 'a' : 'button'}
-      type={href ? undefined : 'button'}
-      href={href}
-      onClick={onClick}
-      sx={{
-        appearance: 'none',
-        cursor: 'pointer',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 1.5,
-        px: 3.5,
-        minHeight: 42,
-        '@media (pointer: coarse)': { minHeight: 44 },
-        borderRadius: siteRadius.control,
-        border: `1px solid ${site.hairline}`,
-        backgroundColor: 'transparent',
-        color: site.ink,
-        textDecoration: 'none',
-        fontFamily: siteFont.body,
-        fontSize: 13.5,
-        fontWeight: 600,
-        whiteSpace: 'nowrap',
-        transition: `border-color 150ms ${siteMotion.easeOut}, background-color 150ms ${siteMotion.easeOut}`,
-        '@media (hover: hover) and (pointer: fine)': {
-          '&:hover': { borderColor: site.hairlineStrong, backgroundColor: site.canvas },
-          '&:hover .linkArrow': { transform: 'translateX(3px)' },
-        },
-        '&:active': { transform: 'scale(0.98)' },
-        '&:focus-visible': {
-          outline: 'none',
-          borderColor: site.accent,
-          boxShadow: `0 0 0 3px ${site.accentRing}`,
-        },
-      }}
-    >
-      {children}
-      <Box
-        component="span"
-        className="linkArrow"
-        sx={{ display: 'inline-flex', transition: `transform 180ms ${siteMotion.easeOut}` }}
-      >
-        <ArrowRight size={15} />
-      </Box>
-    </Box>
-  )
-}
+/** Both are core retail markets and should not fall off the homepage on a ranking wobble. */
+const PINNED_CODES = ['PH', 'US'] as const
 
+/**
+ * Destinations — second on the page, because "do you cover where I'm going" is the first
+ * question a visitor actually has.
+ *
+ * No filter row and no scrolling rail. A filter here duplicated the destinations page's
+ * job on a section whose only purpose is to show coverage, and a rail hid half the answer
+ * behind an interaction.
+ */
 export function ExploreSection() {
-  const navigate = useNavigate()
-
   const homepageCountries = useMemo(() => {
     const list = applyExploreFilters(getAllCountries(), defaultExploreFilters)
+
     const ranked = [...list].sort((a, b) => {
       if (a.trending !== b.trending) return a.trending ? -1 : 1
       return b.trendingPercent - a.trendingPercent
     })
 
     const top = ranked.slice(0, HOMEPAGE_DESTINATION_COUNT)
-    const philippines = ranked.find((country) => country.code === 'PH')
-    const usa = ranked.find((country) => country.code === 'US')
 
-    if (philippines && !top.some((country) => country.code === 'PH')) {
-      top[top.length - 1] = philippines
-    }
+    // Ensure the pinned markets are present without displacing each other.
+    for (const code of PINNED_CODES) {
+      if (top.some((country) => country.code === code)) continue
 
-    if (usa && !top.some((country) => country.code === 'US')) {
-      const replaceIndex = top.findIndex((country) => country.code !== 'PH')
-      if (replaceIndex >= 0) {
-        top[replaceIndex] = usa
-      }
+      const pinned = ranked.find((country) => country.code === code)
+      if (!pinned) continue
+
+      const replaceIndex = top.findLastIndex(
+        (country) => !PINNED_CODES.includes(country.code as (typeof PINNED_CODES)[number]),
+      )
+      if (replaceIndex >= 0) top[replaceIndex] = pinned
     }
 
     return top
   }, [])
 
   return (
-    <SiteSection id="destinations">
-      <SiteSectionHeading
-        eyebrow={`Destinations · ${homepageCountries.length} shown`}
+    <PaperSection id="destinations" ground="base" divided>
+      <PaperSectionHeading
+        eyebrow="Destinations"
         title="Where are you travelling?"
-        lead="Real fees and real processing times per destination — the same figures your application is priced against."
+        lead="Real fees and real processing times, shown up front — the same figures your application is priced against."
         action={
-          <SiteTextLink onClick={() => navigate('/countries')}>All destinations</SiteTextLink>
+          <Button asChild variant="secondary" className="gl-all-destinations">
+            <Link to="/countries">
+              All destinations
+              <Box
+                component="span"
+                aria-hidden
+                sx={{
+                  display: 'inline-flex',
+                  transition: 'transform 180ms cubic-bezier(0.23, 1, 0.32, 1)',
+                  '.gl-all-destinations:hover &': { transform: 'translateX(3px)' },
+                  '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+                }}
+              >
+                <ArrowRight size={16} />
+              </Box>
+            </Link>
+          </Button>
         }
       />
 
       {homepageCountries.length === 0 ? (
+        <PaperSectionEmpty
+          title="No destinations available right now"
+          hint="Try again shortly, or browse the full list."
+        />
+      ) : (
         <Box
+          role="list"
+          aria-label="Destinations"
           sx={{
-            py: 10,
-            textAlign: 'center',
-            borderRadius: siteRadius.card,
-            border: `1px dashed ${site.hairlineStrong}`,
+            display: 'grid',
+            // Two tiers only. The inherited grid used `sm`/`lg`, which in this project's
+            // remapped scale is 375px and 600px — it put three cards across a phone and
+            // five across a tablet.
+            gridTemplateColumns: {
+              xs: 'repeat(2, minmax(0, 1fr))',
+              xl: 'repeat(4, minmax(0, 1fr))',
+            },
+            gap: { xs: 2, lg: 2.5, xl: 3 },
+            alignItems: 'stretch',
           }}
         >
-          <Typography sx={{ fontFamily: siteFont.body, fontWeight: 600, color: site.ink }}>
-            No destinations available
-          </Typography>
-          <Typography sx={{ fontFamily: siteFont.body, fontSize: 13, color: site.inkMuted, mt: 1 }}>
-            Try again shortly, or browse the full list.
-          </Typography>
-        </Box>
-      ) : (
-        <Box role="list" aria-label="Destination cards" sx={destinationCardGridSx}>
-          {homepageCountries.map((country, index) => (
-            <Box key={country.id} role="listitem">
-              <HomepageDestinationCard country={country} index={index} animate={false} />
+          {homepageCountries.map((country) => (
+            <Box key={country.id} role="listitem" sx={{ minWidth: 0 }}>
+              <PaperDestinationCard country={country} ground="base" />
             </Box>
           ))}
         </Box>
       )}
-    </SiteSection>
+    </PaperSection>
   )
 }
