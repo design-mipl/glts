@@ -17,6 +17,7 @@ interface QuotationPricingTemplateControlsProps {
   formData: QuotationFormData
   onChange: (partial: Partial<QuotationFormData>) => void
   readOnly?: boolean
+  replaceScopeLabel?: string
 }
 
 /** Templates + Save as template for the Pricing section header (commercial only). */
@@ -24,6 +25,7 @@ export function QuotationPricingTemplateControls({
   formData,
   onChange,
   readOnly = false,
+  replaceScopeLabel = 'this quotation',
 }: QuotationPricingTemplateControlsProps) {
   const { showToast } = useToast()
   const retail = isRetailPricingMode(formData.workflowType)
@@ -121,7 +123,7 @@ export function QuotationPricingTemplateControls({
         title="Replace current pricing?"
         description={
           pendingTemplate
-            ? `Applying "${pendingTemplate.name}" will replace all processing visa fees and miscellaneous services on this quotation.`
+            ? `Applying "${pendingTemplate.name}" will replace all processing visa fees and miscellaneous services on ${replaceScopeLabel}.`
             : undefined
         }
         confirmLabel="Replace pricing"

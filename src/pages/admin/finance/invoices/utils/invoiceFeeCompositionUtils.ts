@@ -12,7 +12,7 @@ import type { InvoiceLineItem, InvoiceTaxConfig, InvoiceWorkspaceState } from '@
 import { EMPTY_INVOICE_BILLING_SELECTION } from '@/shared/types/invoice'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
 import type { ApplicationExpenseRecord } from '@/shared/types/applicationExpenseManagement'
-import type { CommercialVisaPricingRule } from '@/shared/types/quotation'
+import { resolveAgreementMiscForEntity, resolveAgreementRulesForEntity } from '@/shared/utils/agreementPricingScheduleUtils'
 import { companyMasterService } from '@/shared/services/companyMasterService'
 import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import { countryGroupMasterService } from '@/shared/services/countryGroupMasterService'
@@ -175,15 +175,26 @@ function scoreCommercialRule(
   return -1
 }
 
+function matchAgreementEntityId(
+  agreement: CommercialAgreement,
+  billingEntityName?: string,
+): string | undefined {
+  const key = normalizeKey(billingEntityName ?? '')
+  if (!key) return undefined
+  return agreement.entities.find((entity) => normalizeKey(entity.entityName) === key)?.id
+}
+
 /** Resolve GLTS processing fees from agreement for application country / visa type. */
 export function resolveGltsProcessingFeeFromAgreement(
   agreement: CommercialAgreement | null | undefined,
   country: string,
   visaType: string,
+  billingEntityName?: string,
 ): { amount: number; remark: string; ruleId: string; gstApplicable: boolean } | null {
   if (!agreement) return null
   const countryId = resolveCountryId(country)
-  const rules = agreement.commercialVisaPricing ?? []
+  const entityId = matchAgreementEntityId(agreement, billingEntityName)
+  const rules = resolveAgreementRulesForEntity(agreement, entityId)
 
   let best: CommercialVisaPricingRule | null = null
   let bestScore = -1
@@ -229,8 +240,9 @@ export function createGltsProcessingServiceLine(
   agreement: CommercialAgreement | null | undefined,
   country: string,
   visaType: string,
+  billingEntityName?: string,
 ): InvoiceBillableServiceLine | null {
-  const resolved = resolveGltsProcessingFeeFromAgreement(agreement, country, visaType)
+  const resolved = resolveGltsProcessingFeeFromAgreement(agreement, country, visaType, billingEntityName)
   if (!resolved) return null
   return {
     id: newId('svc-glts'),
@@ -253,8 +265,9 @@ export function mergeCompositionServiceLines(
   country: string,
   visaType: string,
   expenseLines: InvoiceBillableServiceLine[],
+  billingEntityName?: string,
 ): InvoiceBillableServiceLine[] {
-  const glts = createGltsProcessingServiceLine(agreement, country, visaType)
+  const glts = createGltsProcessingServiceLine(agreement, country, visaType, billingEntityName)
   const selected = expenseLines.filter(line => {
     if (line.category === 'glts_processing') return !glts
     return line.category === 'miscellaneous_dispatch' || line.category === 'vfs'
@@ -354,6 +367,7 @@ export function listBulkBatchApplicants(
         batch.country,
         batch.visaType,
         expenseLines,
+        resolveApplicationBillingEntity(batch),
       ),
       consulateRefunds: listConsulateRefundsForApplication(batch.id, {
         passengerName: row.travelerName,
@@ -389,6 +403,7 @@ function buildSingleCard(
       row.country,
       row.visaType,
       expenseLines,
+      resolveApplicationBillingEntity(row),
     ),
     consulateRefunds: listConsulateRefundsForApplication(row.id),
   }
@@ -1111,6 +1126,7 @@ export interface AgreementBillableServiceOption {
  */
 export function listAgreementBillableServiceOptions(
   agreement: CommercialAgreement | undefined | null,
+  billingEntityName?: string,
 ): AgreementBillableServiceOption[] {
   if (!agreement) return []
 
@@ -1122,10 +1138,13 @@ export function listAgreementBillableServiceOptions(
     byKey.set(key, { value, label: label.trim(), defaultAmount, gstApplicable })
   }
 
+  const entityId = matchAgreementEntityId(agreement, billingEntityName)
+  const misc = resolveAgreementMiscForEntity(agreement, entityId)
+
   for (const row of agreement.miscellaneousCosts) {
     add(row.id, row.serviceName, row.amount, row.gstApplicable !== false)
   }
-  for (const row of agreement.miscellaneousServices ?? []) {
+  for (const row of misc) {
     add(row.serviceId || row.id, row.serviceName, row.amount, row.gstApplicable !== false)
   }
 

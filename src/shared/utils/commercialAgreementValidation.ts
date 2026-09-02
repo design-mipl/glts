@@ -14,6 +14,11 @@ import {
   getSelectedFinanceContactPersons,
   extractManualFinanceContacts,
 } from '@/shared/utils/agreementFinanceContacts'
+import {
+  countPricingScheduleFees,
+  ensureAgreementPricingSchedules,
+  getDefaultPricingSchedule,
+} from '@/shared/utils/agreementPricingScheduleUtils'
 
 export const AGREEMENT_FIELD_MESSAGES = {
   referenceQuotation: 'Select a reference quotation',
@@ -30,8 +35,11 @@ export const AGREEMENT_FIELD_MESSAGES = {
   entityContactPerson: 'Contact person is required',
   entityEmail: 'Email address is required',
   entityPhone: 'Phone number is required',
-  pricingRequired: 'Add at least one processing visa fees entry',
+  pricingRequired: 'Add at least one processing visa fees entry to default pricing',
   pricingIncomplete: 'Complete all processing visa fees before continuing',
+  pricingSetName: 'Pricing name is required',
+  pricingSetEntities: 'Map at least one entity to this pricing',
+  pricingSetEntityConflict: 'An entity can only be mapped to one pricing set',
   pricingCountry: 'Country is required',
   pricingVisaType: 'Visa type is required',
   pricingServicePreset: 'Service is required',
@@ -115,6 +123,7 @@ export function createEmptyAgreementFormData(): CommercialAgreementFormData {
     miscellaneousCosts: [],
     commercialVisaPricing: [],
     miscellaneousServices: [],
+    pricingSchedules: ensureAgreementPricingSchedules([], [], [], []),
     billingConfig: createDefaultBillingConfig(),
     financeContacts: {
       accountsSpocName: '',
@@ -195,30 +204,66 @@ export function validateEntities(data: CommercialAgreementFormData): Record<stri
   return errors
 }
 
+function visaFeesIncomplete(entries: CommercialAgreementFormData['commercialVisaPricing']): boolean {
+  return entries.some((entry) => {
+    if (entry.serviceFee <= 0) return true
+    if (entry.scope === 'country' && !entry.countryId) return true
+    if (entry.scope === 'country_group' && !entry.countryGroupId) return true
+    return false
+  })
+}
+
 export function validatePricing(data: CommercialAgreementFormData): Record<string, string> {
   const errors: Record<string, string> = {}
-  const commercial = data.commercialVisaPricing ?? []
-  if (commercial.length === 0 && data.pricingMatrix.length === 0) {
+  const schedules = ensureAgreementPricingSchedules(
+    data.pricingSchedules,
+    data.commercialVisaPricing,
+    data.miscellaneousServices,
+    data.entities,
+  )
+  const defaultSchedule = getDefaultPricingSchedule(schedules)
+  const defaultFees = defaultSchedule?.commercialVisaPricing ?? data.commercialVisaPricing ?? []
+
+  if (defaultFees.length === 0 && data.pricingMatrix.length === 0) {
     errors.pricingMatrix = AGREEMENT_FIELD_MESSAGES.pricingRequired
     return errors
   }
-  if (commercial.length > 0) {
-    const incomplete = commercial.some((entry) => {
-      if (entry.serviceFee <= 0) return true
-      if (entry.scope === 'country' && !entry.countryId) return true
-      if (entry.scope === 'country_group' && !entry.countryGroupId) return true
-      return false
-    })
-    if (incomplete) {
-      errors.pricingMatrix = AGREEMENT_FIELD_MESSAGES.pricingIncomplete
-    }
-    return errors
+
+  if (defaultFees.length > 0 && visaFeesIncomplete(defaultFees)) {
+    errors.pricingMatrix = AGREEMENT_FIELD_MESSAGES.pricingIncomplete
   }
-  data.pricingMatrix.forEach((row, index) => {
-    if (!row.country.trim()) errors[`pricing.${index}.country`] = AGREEMENT_FIELD_MESSAGES.pricingCountry
-    if (!row.visaType.trim()) errors[`pricing.${index}.visaType`] = AGREEMENT_FIELD_MESSAGES.pricingVisaType
-    if (!row.servicePresetId.trim()) errors[`pricing.${index}.servicePresetId`] = AGREEMENT_FIELD_MESSAGES.pricingServicePreset
-  })
+
+  const seenEntities = new Set<string>()
+  schedules
+    .filter((schedule) => schedule.appliesTo === 'entities')
+    .forEach((schedule, index) => {
+      if (!schedule.name.trim()) {
+        errors[`pricingSchedules.${index}.name`] = AGREEMENT_FIELD_MESSAGES.pricingSetName
+      }
+      if (schedule.entityIds.length === 0) {
+        errors[`pricingSchedules.${index}.entityIds`] = AGREEMENT_FIELD_MESSAGES.pricingSetEntities
+      }
+      for (const entityId of schedule.entityIds) {
+        if (seenEntities.has(entityId)) {
+          errors[`pricingSchedules.${index}.entityIds`] = AGREEMENT_FIELD_MESSAGES.pricingSetEntityConflict
+        }
+        seenEntities.add(entityId)
+      }
+      if (countPricingScheduleFees(schedule) > 0 && visaFeesIncomplete(schedule.commercialVisaPricing)) {
+        errors[`pricingSchedules.${index}.fees`] = AGREEMENT_FIELD_MESSAGES.pricingIncomplete
+      }
+    })
+
+  if (Object.keys(errors).length > 0) return errors
+
+  if (defaultFees.length === 0) {
+    data.pricingMatrix.forEach((row, index) => {
+      if (!row.country.trim()) errors[`pricing.${index}.country`] = AGREEMENT_FIELD_MESSAGES.pricingCountry
+      if (!row.visaType.trim()) errors[`pricing.${index}.visaType`] = AGREEMENT_FIELD_MESSAGES.pricingVisaType
+      if (!row.servicePresetId.trim()) errors[`pricing.${index}.servicePresetId`] = AGREEMENT_FIELD_MESSAGES.pricingServicePreset
+    })
+  }
+
   return errors
 }
 
@@ -367,6 +412,12 @@ export function validateForActivation(
           miscellaneousCosts: agreement.miscellaneousCosts ?? [],
           commercialVisaPricing: agreement.commercialVisaPricing ?? [],
           miscellaneousServices: agreement.miscellaneousServices ?? [],
+          pricingSchedules: ensureAgreementPricingSchedules(
+            agreement.pricingSchedules,
+            agreement.commercialVisaPricing ?? [],
+            agreement.miscellaneousServices ?? [],
+            agreement.entities ?? [],
+          ),
           billingConfig: { ...createDefaultBillingConfig(), ...agreement.billingConfig },
           financeContacts: agreement.financeContacts,
           financeContactPersons: agreement.financeContactPersons ?? [],
@@ -478,6 +529,12 @@ export function normalizeLegacyAgreement(record: CommercialAgreement): Commercia
     miscellaneousCosts: record.miscellaneousCosts ?? [],
     commercialVisaPricing: record.commercialVisaPricing ?? [],
     miscellaneousServices: record.miscellaneousServices ?? [],
+    pricingSchedules: ensureAgreementPricingSchedules(
+      record.pricingSchedules,
+      record.commercialVisaPricing ?? [],
+      record.miscellaneousServices ?? [],
+      record.entities ?? [],
+    ),
     billingConfig: {
       ...createDefaultBillingConfig(),
       ...record.billingConfig,

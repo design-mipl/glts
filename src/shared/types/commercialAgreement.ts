@@ -70,6 +70,19 @@ export interface AgreementPricingRow {
   remarks: string
 }
 
+export type AgreementPricingAppliesTo = 'all' | 'entities'
+
+/** Named fee schedule on an agreement. Quotations stay a single list; agreements may have several. */
+export interface AgreementPricingSchedule {
+  id: string
+  name: string
+  appliesTo: AgreementPricingAppliesTo
+  /** Required when appliesTo is `entities`. Each entity may appear on at most one override. */
+  entityIds: string[]
+  commercialVisaPricing: CommercialVisaPricingRule[]
+  miscellaneousServices: QuotationServiceLine[]
+}
+
 export interface AgreementMiscCostRow {
   id: string
   serviceName: string
@@ -152,9 +165,11 @@ export interface CommercialAgreement {
   /** Flattened compat projection for invoices / legacy readers. */
   pricingMatrix: AgreementPricingRow[]
   miscellaneousCosts: AgreementMiscCostRow[]
-  /** Structured commercial visa pricing (source of truth in UI). */
+  /** Default-schedule visa fees (compat). Prefer `pricingSchedules`. */
   commercialVisaPricing?: CommercialVisaPricingRule[]
   miscellaneousServices?: QuotationServiceLine[]
+  /** Default + entity-specific fee schedules. Source of truth in agreement UI. */
+  pricingSchedules?: AgreementPricingSchedule[]
   billingConfig: AgreementBillingConfig
   financeContacts: AgreementFinanceContacts
   financeContactPersons?: AgreementFinanceContactPerson[]
@@ -187,6 +202,7 @@ export interface CommercialAgreementFormData {
   miscellaneousCosts: AgreementMiscCostRow[]
   commercialVisaPricing: CommercialVisaPricingRule[]
   miscellaneousServices: QuotationServiceLine[]
+  pricingSchedules: AgreementPricingSchedule[]
   billingConfig: AgreementBillingConfig
   financeContacts: AgreementFinanceContacts
   financeContactPersons: AgreementFinanceContactPerson[]
