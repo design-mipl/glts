@@ -19,6 +19,7 @@ interface QuotationPricingSectionProps {
   onChange: (partial: Partial<QuotationFormData>) => void
   error?: string
   readOnly?: boolean
+  addVisaPricingLabel?: string
 }
 
 function SectionHeader({
@@ -90,6 +91,7 @@ export function QuotationPricingSection({
   onChange,
   error,
   readOnly = false,
+  addVisaPricingLabel = 'Add Pricing',
 }: QuotationPricingSectionProps) {
   const retail = isRetailPricingMode(formData.workflowType)
   const totals = computeQuotationFormTotals(formData)
@@ -132,7 +134,7 @@ export function QuotationPricingSection({
           action={
             !readOnly ? (
               <Button
-                label="Add Pricing"
+                label={addVisaPricingLabel}
                 size="sm"
                 startIcon={<Plus size={14} />}
                 onClick={openAddVisaPricing}

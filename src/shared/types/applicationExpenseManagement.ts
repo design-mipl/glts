@@ -158,6 +158,9 @@ export type ApplicationExpenseRollupPaymentStatus =
   | 'paid'
   | 'pending_reimbursement'
 
+/** Furthest-behind finance queue status for an application or expense line. */
+export type ApplicationExpenseFinanceStatus = 'needs_update' | 'paid' | 'reconciled'
+
 export interface ApplicationExpenseListingRow {
   id: string
   applicationId: string
@@ -172,6 +175,8 @@ export interface ApplicationExpenseListingRow {
   pendingExpense: number
   approvalStatus: ApplicationExpenseRollupApprovalStatus
   paymentStatus: ApplicationExpenseRollupPaymentStatus
+  financeStatus: ApplicationExpenseFinanceStatus
+  needsUpdateCount: number
   customerSegment: ApplicationCustomerSegment
   recordType: 'single' | 'bulk'
   assignedTeamId?: string

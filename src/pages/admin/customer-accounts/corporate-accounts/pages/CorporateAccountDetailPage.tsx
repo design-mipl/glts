@@ -177,7 +177,8 @@ export function CorporateAccountDetailPage() {
           <Tabs
             items={[
               { label: 'Overview', value: 'overview' },
-              { label: 'Admins', value: 'admins', badge: corporateAccountService.getCounts(account).totalAdmins },
+              { label: 'Super admin and admin', value: 'admins', badge: corporateAccountService.getCounts(account).totalAdmins },
+              { label: 'Bookers', value: 'bookers', badge: corporateAccountService.getCounts(account).totalBookers },
               {
                 label: 'Assigned users',
                 value: 'assigned-users',
@@ -185,7 +186,6 @@ export function CorporateAccountDetailPage() {
               },
               { label: 'Entities', value: 'entities', badge: corporateAccountService.getCounts(account).totalEntities },
               { label: 'Vessels', value: 'vessels', badge: corporateAccountService.getCounts(account).totalVessels },
-              { label: 'Bookers', value: 'bookers', badge: corporateAccountService.getCounts(account).totalBookers },
               { label: 'Billing configuration', value: 'billing' },
               { label: 'Documents', value: 'documents' },
               { label: 'Activity logs', value: 'activity', badge: account.activities.length },
@@ -206,9 +206,6 @@ export function CorporateAccountDetailPage() {
               onSetAccessStatus={(adminId, accessStatus) => setAccessTarget({ adminId, accessStatus })}
             />
           ) : null}
-          {activeTab === 'assigned-users' ? <AssignedUsersTab account={account} /> : null}
-          {activeTab === 'entities' ? <EntitiesTab account={account} /> : null}
-          {activeTab === 'vessels' ? <VesselsTab account={account} /> : null}
           {activeTab === 'bookers' ? (
             <BookersTab
               account={account}
@@ -216,6 +213,9 @@ export function CorporateAccountDetailPage() {
               onSetStatus={(bookerId, status) => setBookerAccessTarget({ bookerId, status })}
             />
           ) : null}
+          {activeTab === 'assigned-users' ? <AssignedUsersTab account={account} /> : null}
+          {activeTab === 'entities' ? <EntitiesTab account={account} /> : null}
+          {activeTab === 'vessels' ? <VesselsTab account={account} /> : null}
           {activeTab === 'billing' ? <BillingTab account={account} /> : null}
           {activeTab === 'documents' ? <DocumentsTab account={account} /> : null}
           {activeTab === 'activity' ? <ActivityTab account={account} /> : null}

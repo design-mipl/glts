@@ -8,7 +8,6 @@ import { getListingReturnHref } from '@/shared/utils/listingNavigationUtils'
 import type { EnquiryFollowupOutcome } from '@/shared/types/enquiry'
 import { AddFollowupModal } from '../components/AddFollowupModal'
 import { AssignmentModal, type AssignmentModalValue } from '../components/AssignmentModal'
-import { ConvertToQuotationDialog } from '../components/ConvertToQuotationDialog'
 import { EnquiryDetailSummary } from '../components/EnquiryDetailSummary'
 import { ActivityTimelineTab } from '../components/detail/ActivityTimelineTab'
 import { AssignmentOwnershipTab } from '../components/detail/AssignmentOwnershipTab'
@@ -44,7 +43,6 @@ export function EnquiryDetailPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false)
   const [followupModalOpen, setFollowupModalOpen] = useState(false)
-  const [convertModalOpen, setConvertModalOpen] = useState(false)
 
   const [assignmentValue, setAssignmentValue] = useState(initialAssignment)
   const [followupValue, setFollowupValue] = useState(() => createInitialFollowupValue())
@@ -104,7 +102,9 @@ export function EnquiryDetailPage() {
           <EnquiryDetailSummary
             enquiry={enquiry}
             onEdit={() => navigate(`/admin/customer-accounts/enquiries/${enquiry.id}/edit`)}
-            onConvert={() => setConvertModalOpen(true)}
+            onConvert={() =>
+              navigate(`/admin/customer-accounts/quotations/new?enquiryId=${encodeURIComponent(enquiry.id)}`)
+            }
           />
         }
       >
@@ -236,21 +236,6 @@ export function EnquiryDetailPage() {
         }}
       />
 
-      <ConvertToQuotationDialog
-        open={convertModalOpen}
-        onClose={() => setConvertModalOpen(false)}
-        onConfirm={async () => {
-          const result = await enquiryService.convertToQuotation(enquiry.id, getEnquiryActor())
-          if (result.ok) {
-            showToast({ title: `Quotation ${result.quotationId} generated`, variant: 'success' })
-            setConvertModalOpen(false)
-            await reload()
-            navigate(`/admin/customer-accounts/quotations/${result.quotationId}`)
-            return
-          }
-          showToast({ title: 'Unable to convert enquiry', variant: 'error' })
-        }}
-      />
     </>
   )
 }

@@ -342,10 +342,10 @@ export function useGenerateInvoiceComposition({
         id: 'application-fees',
         title: isCreditNote ? 'Services to credit' : isRevised ? 'Revised billable services' : 'Billable services',
         description: isCreditNote
-          ? 'Select services to credit and set the credit amount (full or partial). Consulate refunds from Ground Ops can be included below each application.'
+          ? 'Select services to credit and set the credit amount (full or partial). Consulate refunds can be included, marked Managed if already absorbed in service credits, or left pending.'
           : isRevised
             ? 'Credit amount is from the credit note (reference). Updated amount is the final billable amount from application services.'
-            : 'GLTS fees from agreement. Add misc (agreement) or VFS (country master) as needed. Consulate refunds from Ground Ops appear per passenger when recorded.',
+            : 'GLTS fees from agreement. Add misc (agreement) or VFS (country master) as needed. Consulate refunds from Ground Ops appear per passenger — Include to subtract, or Managed if you already changed service amounts.',
         headerAction: feeAccordionToolbar,
         span: 2,
         columns: 1,

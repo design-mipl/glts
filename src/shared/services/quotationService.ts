@@ -20,6 +20,7 @@ import {
   mapMiscToAgreementCosts,
   canConvertQuotationToAgreement,
 } from '@/shared/utils/quotationPricingUtils'
+import { createDefaultPricingSchedule } from '@/shared/utils/agreementPricingScheduleUtils'
 import {
   getCurrentVersion,
   getLatestVersion,
@@ -654,6 +655,7 @@ export const quotationService = {
       miscellaneousServices,
       pricingMatrix,
       miscellaneousCosts: mapMiscToAgreementCosts(miscellaneousServices),
+      pricingSchedules: [createDefaultPricingSchedule(commercialVisaPricing, miscellaneousServices)],
       billingConfig: {
         creditBillingEnabled: true,
         billingCycle: 'monthly',
