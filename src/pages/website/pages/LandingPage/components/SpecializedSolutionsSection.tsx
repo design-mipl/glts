@@ -1,172 +1,187 @@
 import { Box, Typography } from '@mui/material'
-import { Anchor, Building2, Handshake, User, ArrowRight, type LucideIcon } from 'lucide-react'
-import { SiteSection, SiteSectionHeading } from '../../../components/SiteSection'
-import {
-  site,
-  siteFont,
-  siteMotion,
-  siteRadius,
-  mrzSx,
-  clippedCorner,
-} from '@/pages/website/theme/siteTheme'
+import { ArrowRight, Anchor, Building2, Handshake, Users, type LucideIcon } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { PaperSection, PaperSectionHeading } from '../../../components/PaperSection'
+import { accent, ink, paper, paperFont, paperMotion, paperRadius, paperShadow } from '../../../theme/sitePaper'
 
 const SOLUTIONS: {
   id: string
-  icon: LucideIcon
   title: string
-  summary: string
+  audience: string
   description: string
   ctaLabel: string
   href: string
+  icon: LucideIcon
 }[] = [
   {
     id: 'retail',
-    icon: User,
     title: 'Retail',
-    summary: 'Individuals and families',
+    audience: 'Individuals and families',
     description:
       'Tourist, business, visit and student applications with expert review and live tracking.',
     ctaLabel: 'Explore retail',
     href: '/countries',
+    icon: Users,
   },
   {
     id: 'marine',
-    icon: Anchor,
     title: 'Marine',
-    summary: 'Seafarers and crew',
+    audience: 'Seafarers and crew',
     description:
       'Crew-change visas, joining letters and port-specific requirements for shipping operators.',
     ctaLabel: 'Explore marine',
     href: '/marine-crew',
+    icon: Anchor,
   },
   {
     id: 'corporate',
-    icon: Building2,
     title: 'Corporate',
-    summary: 'Businesses and teams',
+    audience: 'Businesses and teams',
     description:
       'Centralised employee visa management across destinations, with one point of accountability.',
     ctaLabel: 'Explore corporate',
     href: '/corporate',
+    icon: Building2,
   },
   {
-    id: 'travel-partners',
-    icon: Handshake,
+    id: 'partners',
     title: 'Travel partners',
-    summary: 'Agents and DMCs',
+    audience: 'Agents and DMCs',
     description:
       'White-label visa processing for travel agents, DMCs and tour operators at volume.',
     ctaLabel: 'Partner with us',
     href: '/#final-cta',
+    icon: Handshake,
   },
 ]
 
 /**
- * Business lines.
+ * Who we serve — the four business lines, which are also the site's top-level navigation.
  *
- * Four cards, each cut with the travel-document corner so the section reads as a set of
- * passes. The previous version stacked a photograph, a shadow, a 6px hover lift and a
- * staggered scroll reveal on each — four separate attention devices for content whose job
- * is simply to route four audiences to the right page.
+ * The `01 / 02 / 03 / 04` markers are gone. These four are not a sequence: nobody moves
+ * from Retail to Marine to Corporate, and numbering an unordered set is decoration
+ * pretending to be structure. Numbering survives in exactly one place on this page, the
+ * process section, where the order genuinely is the information.
+ *
+ * The section lead previously described "the same clearance engine behind every one".
+ * That is the machine register the rest of this rebuild is moving away from — a person
+ * choosing who to trust with their passport is not reassured by being told there is an
+ * engine.
  */
 export function SpecializedSolutionsSection() {
   return (
-    <SiteSection id="specialized-solutions">
-      <SiteSectionHeading
+    <PaperSection id="who-we-serve" ground="base" divided>
+      <PaperSectionHeading
         eyebrow="Who we serve"
         title="Four lines. One process."
-        lead="The same clearance engine behind every one — configured for who is travelling and why."
+        lead="The same people and the same checks behind every one — set up for who is travelling, and why."
       />
 
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, minmax(0, 1fr))',
-            lg: 'repeat(4, minmax(0, 1fr))',
+            xs: 'minmax(0, 1fr)',
+            lg: 'repeat(2, minmax(0, 1fr))',
+            xl: 'repeat(4, minmax(0, 1fr))',
           },
-          gap: 2,
+          gap: { xs: 2, xl: 2.5 },
         }}
       >
-        {SOLUTIONS.map((solution, index) => {
+        {SOLUTIONS.map((solution) => {
           const Icon = solution.icon
+
           return (
             <Box
               key={solution.id}
-              component="a"
-              href={solution.href}
+              component={Link}
+              to={solution.href}
+              className="gl-solution-card"
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                p: { xs: 3.5, md: 4 },
+                p: { xs: 2.5, xl: 3 },
+                minWidth: 0,
                 textDecoration: 'none',
-                border: `1px solid ${site.hairline}`,
-                borderRadius: siteRadius.card,
-                clipPath: clippedCorner(16),
-                backgroundColor: site.surface,
-                transition: `border-color 200ms ${siteMotion.easeOut}, background-color 200ms ${siteMotion.easeOut}`,
+                backgroundColor: paper.white,
+                border: `1px solid ${paper.hairline}`,
+                borderRadius: paperRadius.card,
+                transition: [
+                  `border-color ${paperMotion.hoverMs}ms ease`,
+                  `box-shadow ${paperMotion.hoverMs}ms ease`,
+                  `transform ${paperMotion.hoverMs}ms ${paperMotion.easeOut}`,
+                ].join(', '),
+
+                '&:focus-visible': { outline: `2px solid ${ink.strong}`, outlineOffset: 2 },
+
                 '@media (hover: hover) and (pointer: fine)': {
-                  '&:hover': { borderColor: site.accentBorder, backgroundColor: site.accentSoft },
-                  '&:hover .solArrow': { transform: 'translateX(3px)' },
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    borderColor: accent.border,
+                    boxShadow: paperShadow.lift,
+                  },
+                  '&:hover .gl-solution-arrow': { transform: 'translateX(3px)' },
                 },
-                '&:focus-visible': {
-                  outline: 'none',
-                  borderColor: site.accent,
-                  boxShadow: `0 0 0 3px ${site.accentRing}`,
+                '@media (prefers-reduced-motion: reduce)': {
+                  transition: `border-color ${paperMotion.hoverMs}ms linear`,
+                  '&:hover': { transform: 'none' },
+                  '&:hover .gl-solution-arrow': { transform: 'none' },
                 },
               }}
             >
               <Box
+                aria-hidden
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  mb: 3,
+                  width: 38,
+                  height: 38,
+                  mb: 2,
+                  display: 'grid',
+                  placeItems: 'center',
+                  borderRadius: paperRadius.control,
+                  border: `1px solid ${accent.border}`,
+                  backgroundColor: accent.softer,
+                  color: accent.ink,
                 }}
               >
-                <Box
-                  aria-hidden
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    display: 'grid',
-                    placeItems: 'center',
-                    borderRadius: siteRadius.chip,
-                    border: `1px solid ${site.hairline}`,
-                    backgroundColor: site.canvas,
-                    color: site.inkMuted,
-                  }}
-                >
-                  <Icon size={15} strokeWidth={1.9} />
-                </Box>
-                <Typography sx={{ ...mrzSx, fontSize: 9.5 }}>
-                  {String(index + 1).padStart(2, '0')}
-                </Typography>
+                <Icon size={18} strokeWidth={1.9} />
               </Box>
 
               <Typography
+                component="h3"
                 sx={{
-                  fontFamily: siteFont.display,
-                  fontSize: 18,
+                  m: 0,
+                  fontFamily: paperFont.display,
+                  fontSize: { xs: 17, xl: 18 },
                   fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                  color: site.ink,
-                  lineHeight: 1.2,
+                  letterSpacing: '-0.018em',
+                  lineHeight: 1.25,
+                  color: ink.strong,
                 }}
               >
                 {solution.title}
               </Typography>
-              <Typography sx={{ ...mrzSx, fontSize: 9.5, mt: 1.25 }}>{solution.summary}</Typography>
 
               <Typography
                 sx={{
-                  fontFamily: siteFont.body,
+                  mt: 0.5,
+                  fontFamily: paperFont.body,
                   fontSize: 13,
-                  color: site.inkMuted,
-                  lineHeight: 1.55,
-                  mt: 2.5,
-                  mb: 3,
+                  fontWeight: 600,
+                  lineHeight: 1.35,
+                  color: ink.faint,
+                }}
+              >
+                {solution.audience}
+              </Typography>
+
+              <Typography
+                sx={{
+                  mt: 1.5,
+                  flex: 1,
+                  fontFamily: paperFont.body,
+                  fontSize: 14,
+                  lineHeight: 1.6,
+                  color: ink.muted,
                 }}
               >
                 {solution.description}
@@ -174,34 +189,30 @@ export function SpecializedSolutionsSection() {
 
               <Box
                 sx={{
-                  mt: 'auto',
-                  pt: 2.5,
-                  borderTop: `1px solid ${site.hairlineSoft}`,
+                  mt: 2.5,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 1.5,
-                  color: site.ink,
-                  fontFamily: siteFont.body,
-                  fontSize: 13,
+                  gap: 0.75,
+                  fontFamily: paperFont.body,
+                  fontSize: 13.5,
                   fontWeight: 600,
+                  color: accent.ink,
                 }}
               >
                 {solution.ctaLabel}
                 <Box
                   component="span"
-                  className="solArrow"
-                  sx={{
-                    display: 'inline-flex',
-                    transition: `transform 180ms ${siteMotion.easeOut}`,
-                  }}
+                  aria-hidden
+                  className="gl-solution-arrow"
+                  sx={{ display: 'inline-flex', transition: `transform 180ms ${paperMotion.easeOut}` }}
                 >
-                  <ArrowRight size={14} />
+                  <ArrowRight size={15} />
                 </Box>
               </Box>
             </Box>
           )
         })}
       </Box>
-    </SiteSection>
+    </PaperSection>
   )
 }

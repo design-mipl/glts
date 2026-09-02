@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import { useContext, type ReactNode } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import { PublicContainer } from './PublicContainer'
-import { site, siteType, mrzSx } from '@/pages/website/theme/siteTheme'
+import { siteInk, siteInkCanvasSx, siteTokensFor, type SiteTone } from '@/pages/website/theme/siteTheme'
+import { SiteToneContext, useSiteTone } from './siteTone'
 
 /**
  * Marketing section chrome.
@@ -22,6 +23,7 @@ export function SiteSectionHeading({
   align = 'left',
   action,
   maxWidth = 620,
+  tone,
 }: {
   eyebrow?: string
   title: ReactNode
@@ -30,7 +32,11 @@ export function SiteSectionHeading({
   /** Optional control on the heading line — e.g. a "View all" link. */
   action?: ReactNode
   maxWidth?: number
+  /** Defaults to the enclosing band's tone — only pass this to override it. */
+  tone?: SiteTone
 }) {
+  const inherited = useSiteTone()
+  const t = tone ? siteTokensFor(tone) : inherited
   const centered = align === 'center'
 
   return (
@@ -56,18 +62,19 @@ export function SiteSectionHeading({
           >
             <Box
               aria-hidden
-              sx={{ width: 22, height: '1px', backgroundColor: site.accent, flex: '0 0 auto' }}
+              /* Brand green, not gold: gold means "press this", and a section mark is not an action. */
+              sx={{ width: 22, height: '2px', backgroundColor: t.brand, flex: '0 0 auto' }}
             />
-            <Typography sx={mrzSx}>{eyebrow}</Typography>
+            <Typography sx={t.mrz}>{eyebrow}</Typography>
           </Stack>
         ) : null}
 
-        <Typography component="h2" sx={siteType.section}>
+        <Typography component="h2" sx={t.type.section}>
           {title}
         </Typography>
 
         {lead ? (
-          <Typography sx={{ ...siteType.lead, mt: 2.5, maxWidth: 560, mx: centered ? 'auto' : undefined }}>
+          <Typography sx={{ ...t.type.lead, mt: 2.5, maxWidth: 560, mx: centered ? 'auto' : undefined }}>
             {lead}
           </Typography>
         ) : null}
@@ -80,12 +87,90 @@ export function SiteSectionHeading({
 
 /**
  * Section wrapper. `tone` picks the ground: `surface` is the default white, `canvas` is
- * the light structural grey used to separate adjacent sections without drawing a border.
+ * the light structural grey used to separate adjacent sections without drawing a border,
+ * and `ink` is the deep inverted band.
+ *
+ * Ink bands carry the grid ground rather than a flat fill, so two adjacent ink sections
+ * read as one continuous band instead of two stacked panels — which is why the landing
+ * page groups sections into a few long bands rather than alternating every section.
  */
 export function SiteSection({
   children,
   id,
-  tone = 'surface',
+  tone,
+  sx,
+}: {
+  children: ReactNode
+  id?: string
+  /** Omit inside a `SiteInkBand` — the band's tone is inherited and the ground is its own. */
+  tone?: SiteTone
+  sx?: object
+}) {
+  const inheritedTone = useContext(SiteToneContext)
+  const resolvedTone = tone ?? inheritedTone
+  /** Inside a band, the band already paints the ground — repainting it doubles the bloom. */
+  const paintsOwnGround = tone !== undefined || inheritedTone === 'surface'
+
+  return (
+    <SiteToneContext.Provider value={resolvedTone}>
+      <Box
+        component="section"
+        id={id}
+        sx={{
+          py: { xs: 8, md: 12 },
+          ...(paintsOwnGround ? siteTokensFor(resolvedTone).ground : null),
+          ...sx,
+        }}
+      >
+        <PublicContainer variant="hero">{children}</PublicContainer>
+      </Box>
+    </SiteToneContext.Provider>
+  )
+}
+
+/**
+ * Continuous ink band — wraps several sections on one uninterrupted ground.
+ *
+ * The grid and the gold bloom are painted once here, so the sections inside must be
+ * transparent. Without this, each section repeats the bloom and the band reads as a
+ * stack of near-identical dark cards.
+ */
+export function SiteInkBand({
+  children,
+  id,
+  sx,
+}: {
+  children: ReactNode
+  id?: string
+  sx?: object
+}) {
+  return (
+    <SiteToneContext.Provider value="ink">
+      <Box
+        id={id}
+        sx={{
+          position: 'relative',
+          color: siteInk.textMuted,
+          ...siteInkCanvasSx,
+          ...sx,
+        }}
+      >
+        {children}
+      </Box>
+    </SiteToneContext.Provider>
+  )
+}
+
+/**
+ * Continuous light band — the counterpart to `SiteInkBand`.
+ *
+ * `canvas` is the structural grey. Sections inside stay transparent so two adjacent
+ * light sections read as one band rather than as two panels with a seam between them.
+ */
+export function SiteLightBand({
+  children,
+  id,
+  tone = 'canvas',
   sx,
 }: {
   children: ReactNode
@@ -94,16 +179,10 @@ export function SiteSection({
   sx?: object
 }) {
   return (
-    <Box
-      component="section"
-      id={id}
-      sx={{
-        py: { xs: 8, md: 12 },
-        backgroundColor: tone === 'canvas' ? site.canvas : site.surface,
-        ...sx,
-      }}
-    >
-      <PublicContainer variant="hero">{children}</PublicContainer>
-    </Box>
+    <SiteToneContext.Provider value={tone}>
+      <Box id={id} sx={{ position: 'relative', ...siteTokensFor(tone).ground, ...sx }}>
+        {children}
+      </Box>
+    </SiteToneContext.Provider>
   )
 }

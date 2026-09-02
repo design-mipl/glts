@@ -1,5 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from 'react'
-import { Box, Typography, Button, IconButton, useMediaQuery } from '@mui/material'
+import {
+  createElement,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type TouchEvent as ReactTouchEvent,
+} from 'react'
+import { Box, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import {
   ArrowLeft,
@@ -23,27 +30,22 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { PublicContainer } from './PublicContainer'
-import {
-  landingSectionHeaderMb,
-  landingSectionPy,
-} from '../pages/LandingPage/landingPageSpacing'
-import {
-  publicFonts,
-  usePublicBrandColors,
-  brandPrimaryGreenRgb,
-  getMarketingPrimaryButtonSx,
-} from '@/shared/theme/publicBrand'
+import { SiteSection, SiteSectionHeading } from './SiteSection'
+import { useSiteTone } from './siteTone'
+import { siteFont, siteMotion, siteRadius, clippedCorner } from '@/pages/website/theme/siteTheme'
 import { additionalServicesSlider } from '../assets/landingPageImages'
 
-const CARD_RADIUS = '16px'
 const GAP_PX = 18
 /** Row height for featured + collapsed cards. */
 const SQUARE_H = { xs: 210, sm: 230, md: 260 }
 /** Collapsed card width — slightly narrower so the featured card can breathe. */
 const SQUARE_W = { xs: 196, sm: 214, md: 236 }
-const EXPAND_MS = '360ms'
-const EASE = 'ease-in-out'
+/**
+ * Was 360ms `ease-in-out`. The featured card is re-keyed on every arrow press, so this is
+ * an entrance that a visitor can fire repeatedly — it belongs under the 300ms ceiling, on
+ * the strong ease-out, so a fast second press doesn't visibly restart a slow curve.
+ */
+const SWAP_MS = '220ms'
 
 /** Icons shown on collapsed cards before a service opens as the featured panel. */
 const SERVICE_ICONS: Record<string, LucideIcon> = {
@@ -75,8 +77,13 @@ const SERVICE_ICONS: Record<string, LucideIcon> = {
   refusal: ShieldAlert,
 }
 
-function resolveServiceIcon(serviceId: string): LucideIcon {
-  return SERVICE_ICONS[serviceId] ?? FileText
+/**
+ * Rendered through `createElement` rather than as `<Icon />` off a local variable: the
+ * component is chosen by a lookup at render time, and assigning that to a capitalised
+ * binding reads to the linter as a component defined during render.
+ */
+function renderServiceIcon(serviceId: string) {
+  return createElement(SERVICE_ICONS[serviceId] ?? FileText, { size: 22, strokeWidth: 1.85 })
 }
 
 export type AdditionalServiceItem = {
@@ -163,7 +170,7 @@ function FeaturedCard({
   reducedMotion: boolean
   squareSize: number
 }) {
-  const colors = usePublicBrandColors()
+  const t = useSiteTone()
   const navigate = useNavigate()
 
   return (
@@ -173,11 +180,11 @@ function FeaturedCard({
         flex: '1 1 auto',
         minWidth: 0,
         height: squareSize,
-        borderRadius: CARD_RADIUS,
+        borderRadius: siteRadius.card,
+        clipPath: clippedCorner(20),
         overflow: 'hidden',
-        bgcolor: colors.white,
-        border: `1px solid ${colors.border}`,
-        boxShadow: `0 12px 28px rgba(${brandPrimaryGreenRgb}, 0.12)`,
+        backgroundColor: t.surface,
+        border: `1px solid ${t.hairline}`,
         display: 'flex',
       }}
     >
@@ -185,34 +192,36 @@ function FeaturedCard({
         sx={{
           flex: '0 0 38%',
           maxWidth: 280,
-          p: { xs: 2, md: 2.5 },
+          p: { xs: 2.5, md: 3 },
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           position: 'relative',
           zIndex: 2,
-          bgcolor: colors.white,
+          backgroundColor: t.surface,
         }}
       >
         <Typography
           sx={{
-            fontFamily: publicFonts.heading,
-            fontSize: { xs: '17px', md: '19px' },
-            fontWeight: 800,
-            color: colors.greenBright,
+            fontFamily: siteFont.display,
+            fontSize: { xs: 16, md: 18 },
+            fontWeight: 700,
+            color: t.text,
             letterSpacing: '-0.02em',
             lineHeight: 1.2,
-            mb: 0.85,
+            mb: 1.25,
           }}
         >
           {service.title}
         </Typography>
+
         <Typography
           sx={{
-            fontSize: { xs: '12.5px', md: '13px' },
-            color: colors.textSecondary,
-            lineHeight: 1.45,
-            mb: 1.75,
+            fontFamily: siteFont.body,
+            fontSize: { xs: 12.5, md: 13 },
+            color: t.textMuted,
+            lineHeight: 1.5,
+            mb: 2.5,
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
@@ -221,22 +230,56 @@ function FeaturedCard({
         >
           {service.description}
         </Typography>
-        <Button
-          variant="contained"
-          endIcon={<ArrowRight size={14} strokeWidth={2.25} />}
+
+        <Box
+          component="button"
+          type="button"
           onClick={() => navigate(service.href)}
           sx={{
-            ...getMarketingPrimaryButtonSx(colors),
+            appearance: 'none',
+            border: 'none',
+            cursor: 'pointer',
             alignSelf: 'flex-start',
-            borderRadius: '10px',
-            minHeight: 34,
-            px: 1.75,
-            fontSize: '12.5px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 1.25,
+            px: 2.25,
+            minHeight: 36,
+            '@media (pointer: coarse)': { minHeight: 44 },
+            borderRadius: siteRadius.control,
+            backgroundColor: t.accent,
+            color: '#12151A',
+            fontFamily: siteFont.body,
+            fontSize: 12.5,
             fontWeight: 700,
+            whiteSpace: 'nowrap',
+            transition: `background-color 150ms ${siteMotion.easeOut}, transform ${siteMotion.pressMs}ms ${siteMotion.easeOut}`,
+            '@media (hover: hover) and (pointer: fine)': {
+              '&:hover': { backgroundColor: t.accentStrong },
+              '&:hover .svcCtaArrow': { transform: 'translateX(3px)' },
+            },
+            '&:active': { transform: 'scale(0.97)' },
+            '&:focus-visible': {
+              outline: 'none',
+              boxShadow: `0 0 0 3px ${t.accentSoft}`,
+            },
+            '@media (prefers-reduced-motion: reduce)': {
+              transition: 'background-color 150ms linear',
+            },
           }}
         >
           {service.ctaLabel}
-        </Button>
+          <Box
+            component="span"
+            className="svcCtaArrow"
+            sx={{
+              display: 'inline-flex',
+              transition: `transform 180ms ${siteMotion.easeOut}`,
+            }}
+          >
+            <ArrowRight size={14} strokeWidth={2.25} />
+          </Box>
+        </Box>
       </Box>
 
       <Box sx={{ flex: 1, position: 'relative', minWidth: 0, overflow: 'hidden' }}>
@@ -245,9 +288,11 @@ function FeaturedCard({
           sx={{
             position: 'absolute',
             inset: 0,
-            animation: reducedMotion ? 'none' : `featuredImageIn ${EXPAND_MS} ${EASE}`,
+            animation: reducedMotion
+              ? 'none'
+              : `featuredImageIn ${SWAP_MS} ${siteMotion.easeOut}`,
             '@keyframes featuredImageIn': {
-              from: { opacity: 0, transform: 'scale(1.05)' },
+              from: { opacity: 0, transform: 'scale(1.04)' },
               to: { opacity: 1, transform: 'scale(1)' },
             },
           }}
@@ -259,12 +304,13 @@ function FeaturedCard({
             objectPosition={service.image.objectPosition ?? 'center center'}
           />
         </Box>
+        {/* Feathers the photograph into the copy panel so the card reads as one surface. */}
         <Box
           aria-hidden
           sx={{
             position: 'absolute',
             inset: 0,
-            background: `linear-gradient(90deg, ${colors.white} 0%, transparent 18%)`,
+            background: `linear-gradient(90deg, ${t.surface} 0%, transparent 18%)`,
             pointerEvents: 'none',
           }}
         />
@@ -286,8 +332,7 @@ function SquareCard({
   squareWidth: number
   squareHeight: number
 }) {
-  const colors = usePublicBrandColors()
-  const Icon = resolveServiceIcon(service.id)
+  const t = useSiteTone()
 
   return (
     <Box
@@ -301,60 +346,72 @@ function SquareCard({
         height: squareHeight,
         m: 0,
         p: { xs: 2, md: 2.5 },
-        border: `1px solid ${colors.border}`,
-        borderRadius: CARD_RADIUS,
-        bgcolor: colors.white,
-        boxShadow: '0 6px 18px rgba(15, 23, 42, 0.07)',
+        border: `1px solid ${t.hairline}`,
+        borderRadius: siteRadius.card,
+        backgroundColor: t.surface,
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 1.15,
+        gap: 1.5,
         textAlign: 'center',
+        /**
+         * No `translateY` lift and no coloured glow — the shadow-lift hover belonged to the
+         * retired visual language. Selection here is a hairline going darker plus the
+         * press scale, which is the same feedback every other control on the site gives.
+         */
         transition: reducedMotion
           ? 'none'
-          : `transform ${EXPAND_MS} ${EASE}, box-shadow ${EXPAND_MS} ${EASE}, border-color ${EXPAND_MS} ${EASE}`,
-        '@media (hover: hover)': {
+          : `border-color 160ms ${siteMotion.easeOut}, background-color 160ms ${siteMotion.easeOut}, transform ${siteMotion.pressMs}ms ${siteMotion.easeOut}`,
+        '@media (hover: hover) and (pointer: fine)': {
           '&:hover': {
-            transform: 'translateY(-3px)',
-            borderColor: colors.greenBright,
-            boxShadow: `0 12px 28px rgba(${brandPrimaryGreenRgb}, 0.14)`,
+            borderColor: t.hairlineStrong,
+            backgroundColor: t.surfaceRaised,
           },
-          '&:hover .square-icon': {
-            bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.18)`,
-            borderColor: `rgba(${brandPrimaryGreenRgb}, 0.4)`,
-            transform: 'scale(1.06)',
-          },
+          '&:hover .square-icon': { backgroundColor: t.brandSoft, borderColor: t.brand },
+        },
+        '&:active': { transform: 'scale(0.97)' },
+        '&:focus-visible': {
+          outline: 'none',
+          borderColor: t.accent,
+          boxShadow: `0 0 0 3px ${t.accentSoft}`,
         },
       }}
     >
+      {/*
+       * One neutral icon treatment for every service type. Per-type coloured chips are
+       * the flagged "AI-generated SaaS" tell in the V2 spec — types are told apart by the
+       * icon's shape, never by giving each one its own tint.
+       */}
       <Box
         className="square-icon"
+        aria-hidden
         sx={{
-          width: { xs: 56, md: 64 },
-          height: { xs: 56, md: 64 },
-          borderRadius: '14px',
+          width: { xs: 48, md: 54 },
+          height: { xs: 48, md: 54 },
+          borderRadius: siteRadius.control,
           flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
-          border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.22)`,
+          backgroundColor: t.brandSoft,
+          border: `1px solid ${t.brandBorder}`,
+          color: t.brandText,
           transition: reducedMotion
             ? 'none'
-            : `transform ${EXPAND_MS} ${EASE}, background-color ${EXPAND_MS} ${EASE}, border-color ${EXPAND_MS} ${EASE}`,
+            : `border-color 160ms ${siteMotion.easeOut}, color 160ms ${siteMotion.easeOut}`,
         }}
       >
-        <Icon size={26} color={colors.greenBright} strokeWidth={1.85} aria-hidden />
+        {renderServiceIcon(service.id)}
       </Box>
 
       <Typography
         sx={{
-          fontFamily: publicFonts.heading,
-          fontSize: { xs: '12.5px', md: '13px' },
+          fontFamily: siteFont.display,
+          fontSize: { xs: 12.5, md: 13.5 },
           fontWeight: 700,
-          color: colors.navy,
+          color: t.text,
           textAlign: 'center',
           lineHeight: 1.3,
           letterSpacing: '-0.02em',
@@ -370,11 +427,12 @@ function SquareCard({
 
       <Typography
         sx={{
-          fontSize: { xs: '11.5px', md: '12px' },
-          fontWeight: 500,
-          color: colors.textSecondary,
+          fontFamily: siteFont.body,
+          fontSize: { xs: 11.5, md: 12 },
+          fontWeight: 400,
+          color: t.textMuted,
           textAlign: 'center',
-          lineHeight: 1.4,
+          lineHeight: 1.45,
           display: '-webkit-box',
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
@@ -397,36 +455,59 @@ function NavArrow({
   onClick: () => void
   label: string
 }) {
-  const colors = usePublicBrandColors()
+  const t = useSiteTone()
   const Icon = direction === 'prev' ? ArrowLeft : ArrowRight
 
   return (
-    <IconButton
+    <Box
+      component="button"
+      type="button"
       aria-label={label}
       onClick={onClick}
       sx={{
+        appearance: 'none',
+        cursor: 'pointer',
         width: 40,
         height: 40,
-        borderRadius: '50%',
-        border: `1px solid ${colors.border}`,
-        bgcolor: colors.white,
-        color: colors.navy,
-        boxShadow: '0 4px 14px rgba(15, 23, 42, 0.08)',
+        display: 'grid',
+        placeItems: 'center',
         flexShrink: 0,
-        transition: `border-color ${EXPAND_MS} ${EASE}, color ${EXPAND_MS} ${EASE}, box-shadow ${EXPAND_MS} ${EASE}`,
-        '&:hover': {
-          borderColor: colors.greenBright,
-          color: colors.greenBright,
-          bgcolor: colors.white,
-          boxShadow: `0 8px 20px rgba(${brandPrimaryGreenRgb}, 0.16)`,
+        borderRadius: '50%',
+        border: `1px solid ${t.hairline}`,
+        backgroundColor: 'transparent',
+        color: t.textMuted,
+        transition: `border-color 150ms ${siteMotion.easeOut}, color 150ms ${siteMotion.easeOut}, transform ${siteMotion.pressMs}ms ${siteMotion.easeOut}`,
+        '@media (hover: hover) and (pointer: fine)': {
+          '&:hover': { borderColor: t.hairlineStrong, color: t.text },
         },
+        '&:active': { transform: 'scale(0.95)' },
+        '&:focus-visible': {
+          outline: 'none',
+          borderColor: t.accent,
+          boxShadow: `0 0 0 3px ${t.accentSoft}`,
+        },
+        '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
       }}
     >
-      <Icon size={18} strokeWidth={2.25} />
-    </IconButton>
+      <Icon size={17} strokeWidth={2.25} />
+    </Box>
   )
 }
 
+/**
+ * Additional services — featured panel plus collapsed icon cards.
+ *
+ * Moved off the retired `publicFonts` / `publicColors` language onto the site tokens: 10px
+ * radius instead of 16px, hairline construction instead of green-tinted drop shadows, the
+ * neutral icon treatment the V2 spec locks in, and the gold CTA every other section uses.
+ * Colours now come from `useSiteTone`, so the section inherits whichever band it sits in
+ * rather than forcing its own white ground.
+ *
+ * The slider interaction is unchanged — it was never the problem, and it is deliberately a
+ * different shape from the service bento that precedes it on the homepage.
+ *
+ * Mounted on the homepage and, via `OurRetailServicesSection`, on the Retail page.
+ */
 export function AdditionalServicesSection({
   id = 'additional-services',
   sectionLabel = 'Additional Services',
@@ -434,7 +515,6 @@ export function AdditionalServicesSection({
   description = 'Optional travel assistance for the documents and bookings commonly needed with visa applications.',
   services = additionalServicesSlider,
 }: AdditionalServicesSectionProps) {
-  const colors = usePublicBrandColors()
   const theme = useTheme()
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const isSm = useMediaQuery(theme.breakpoints.up('sm'))
@@ -477,129 +557,78 @@ export function AdditionalServicesSection({
   if (!activeService) return null
 
   return (
-    <Box
-      component="section"
-      id={id}
-      sx={{
-        bgcolor: colors.white,
-        py: landingSectionPy,
-      }}
-    >
-      <PublicContainer variant="hero">
-        <Box sx={{ maxWidth: 560, mb: landingSectionHeaderMb }}>
-          <Typography
-            sx={{
-              fontSize: '11px',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: colors.greenBright,
-              mb: 1.5,
-            }}
-          >
-            {sectionLabel}
-          </Typography>
-          <Typography
-            component="h2"
-            sx={{
-              fontFamily: publicFonts.heading,
-              fontSize: { xs: '26px', md: '32px' },
-              fontWeight: 800,
-              color: colors.navy,
-              lineHeight: 1.15,
-              letterSpacing: '-0.5px',
-              mb: 1.25,
-            }}
-          >
-            {heading}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: { xs: '15px', md: '16px' },
-              color: colors.textSecondary,
-              lineHeight: 1.65,
-            }}
-          >
-            {description}
-          </Typography>
-        </Box>
+    <SiteSection id={id}>
+      <SiteSectionHeading eyebrow={sectionLabel} title={heading} lead={description} />
 
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: { xs: 1.25, md: 2 },
-          }}
-        >
-          <Box sx={{ display: { xs: 'none', sm: 'flex' } }}>
-            <NavArrow direction="prev" onClick={goPrev} label="Previous services" />
-          </Box>
-
-          <Box
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            sx={{
-              flex: 1,
-              minWidth: 0,
-              display: 'flex',
-              alignItems: 'stretch',
-              gap: `${GAP_PX}px`,
-              height: squareHeight,
-              overflow: 'hidden',
-            }}
-          >
-            <Box
-              key={activeService.id}
-              sx={{
-                flex: '1 1 auto',
-                minWidth: 0,
-                height: squareHeight,
-                animation: reducedMotion ? 'none' : `slideFade ${EXPAND_MS} ${EASE}`,
-                '@keyframes slideFade': {
-                  from: { opacity: 0.55, transform: 'translateX(12px)' },
-                  to: { opacity: 1, transform: 'translateX(0)' },
-                },
-              }}
-            >
-              <FeaturedCard
-                service={activeService}
-                reducedMotion={reducedMotion}
-                squareSize={squareHeight}
-              />
-            </Box>
-
-            {collapsedServices.map((service) => (
-              <SquareCard
-                key={`${activeIndex}-${service.id}`}
-                service={service}
-                squareWidth={squareWidth}
-                squareHeight={squareHeight}
-                reducedMotion={reducedMotion}
-                onSelect={() => {
-                  const next = services.findIndex((item) => item.id === service.id)
-                  if (next >= 0) setActiveIndex(next)
-                }}
-              />
-            ))}
-          </Box>
-
-          <Box sx={{ display: { xs: 'none', sm: 'flex' } }}>
-            <NavArrow direction="next" onClick={goNext} label="Next services" />
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            display: { xs: 'flex', sm: 'none' },
-            justifyContent: 'center',
-            gap: 1.5,
-            mt: 2.5,
-          }}
-        >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, md: 2 } }}>
+        <Box sx={{ display: { xs: 'none', sm: 'flex' } }}>
           <NavArrow direction="prev" onClick={goPrev} label="Previous services" />
+        </Box>
+
+        <Box
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            display: 'flex',
+            alignItems: 'stretch',
+            gap: `${GAP_PX}px`,
+            height: squareHeight,
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            key={activeService.id}
+            sx={{
+              flex: '1 1 auto',
+              minWidth: 0,
+              height: squareHeight,
+              animation: reducedMotion ? 'none' : `slideFade ${SWAP_MS} ${siteMotion.easeOut}`,
+              '@keyframes slideFade': {
+                from: { opacity: 0.55, transform: 'translateX(10px)' },
+                to: { opacity: 1, transform: 'translateX(0)' },
+              },
+            }}
+          >
+            <FeaturedCard
+              service={activeService}
+              reducedMotion={reducedMotion}
+              squareSize={squareHeight}
+            />
+          </Box>
+
+          {collapsedServices.map((service) => (
+            <SquareCard
+              key={`${activeIndex}-${service.id}`}
+              service={service}
+              squareWidth={squareWidth}
+              squareHeight={squareHeight}
+              reducedMotion={reducedMotion}
+              onSelect={() => {
+                const next = services.findIndex((item) => item.id === service.id)
+                if (next >= 0) setActiveIndex(next)
+              }}
+            />
+          ))}
+        </Box>
+
+        <Box sx={{ display: { xs: 'none', sm: 'flex' } }}>
           <NavArrow direction="next" onClick={goNext} label="Next services" />
         </Box>
-      </PublicContainer>
-    </Box>
+      </Box>
+
+      <Box
+        sx={{
+          display: { xs: 'flex', sm: 'none' },
+          justifyContent: 'center',
+          gap: 1.5,
+          mt: 2.5,
+        }}
+      >
+        <NavArrow direction="prev" onClick={goPrev} label="Previous services" />
+        <NavArrow direction="next" onClick={goNext} label="Next services" />
+      </Box>
+    </SiteSection>
   )
 }
