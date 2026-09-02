@@ -120,6 +120,10 @@ export const BankMasterListingPage = lazyNamed(
   () => import('../masters/bank-master'),
   'BankMasterListingPage',
 )
+export const OrganizationLocationListingPage = lazyNamed(
+  () => import('../masters/organization-location'),
+  'OrganizationLocationListingPage',
+)
 export const CardMasterListingPage = lazyNamed(
   () => import('../masters/card-master'),
   'CardMasterListingPage',

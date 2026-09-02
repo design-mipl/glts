@@ -124,6 +124,7 @@ export const adminNav: NavConfig[] = [
       { type: 'item', label: 'Jurisdiction Master', href: '/admin/masters/jurisdiction' },
       { type: 'item', label: 'Card Master', href: '/admin/masters/card-master' },
       { type: 'item', label: 'Bank Master', href: '/admin/masters/bank-master' },
+      { type: 'item', label: 'Organization & Location Master', href: '/admin/masters/organization-location' },
       { type: 'item', label: 'Document master', href: '/admin/masters/documents' },
       { type: 'item', label: 'Requirement Master', href: '/admin/masters/requirements' },
       { type: 'item', label: 'GLTS Fee Master', href: '/admin/masters/services' },
