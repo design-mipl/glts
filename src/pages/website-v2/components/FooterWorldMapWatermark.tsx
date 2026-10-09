@@ -33,7 +33,7 @@ export function FooterWorldMapWatermark() {
           height: '100%',
           objectFit: 'contain',
           objectPosition: 'center',
-          opacity: { xs: 0.2, sm: 0.24, md: 0.26 },
+          opacity: { xs: 0.06, sm: 0.08, md: 0.1 },
           filter: 'brightness(0) invert(1)',
         }}
       />

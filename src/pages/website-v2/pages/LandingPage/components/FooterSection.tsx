@@ -1,34 +1,35 @@
 import { Box, Typography, Link, Divider, Stack, Grid } from '@mui/material'
+import { ArrowRight } from 'lucide-react'
+import { Button } from '@/design-system/UIComponents'
 import { FooterWorldMapWatermark } from '../../../components/FooterWorldMapWatermark'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { GREENLIGHT_LOGO_DARK_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 
 const footerSections: Record<string, { label: string; href: string }[]> = {
   Product: [
-    { label: 'Retail Visa Services', href: '/v2' },
-    { label: 'Marine Visa Services', href: '/v2/marine-crew' },
-    { label: 'Corporate Visa Services', href: '/v2/corporate' },
-    { label: 'Travel Partners', href: '/v2#specialist-visa-services' },
-    { label: 'Destinations', href: '/v2/countries' },
+    { label: 'Visa Services', href: '/visa-services' },
+    { label: 'Marine Visa Services', href: '/marine-crew' },
+    { label: 'Corporate Visa Services', href: '/corporate' },
+    { label: 'Travel Agents', href: '/travel-agents' },
+    { label: 'Destinations', href: '/countries' },
+    { label: 'Visa Guide', href: '/visa-guide' },
   ],
   Company: [
-    { label: 'About Us', href: '/v2/about' },
-    { label: 'Contact Us', href: '/v2/track' },
-    { label: 'Blog / Visa Updates', href: '#' },
+    { label: 'About Us', href: '/about' },
+    { label: 'Design System →', href: '/design-system' },
+    { label: 'Blogs & Visa Updates', href: '/blogs' },
   ],
   Legal: [
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Terms & Conditions', href: '#' },
-    { label: 'Refund & Cancellation Policy', href: '#' },
-    { label: 'Security', href: '#' },
-    { label: 'Compliance', href: '#' },
+    { label: 'Privacy Policy', href: '/legal/privacy' },
+    { label: 'Terms & Conditions', href: '/legal/terms' },
+    { label: 'Refund & Cancellation Policy', href: '/legal/refund-cancellation' },
   ],
   Support: [
-    { label: 'Portal Access', href: '/sign-in' },
-    { label: 'Track Application', href: '/v2/track' },
-    { label: 'Help Centre', href: '#' },
-    { label: 'Contact Support', href: '/v2/track' },
+    { label: 'Portal Access', href: '/sign-in/portals' },
+    { label: 'Track Application', href: '/track' },
+    { label: 'Contact Us', href: '/contact' },
   ],
 }
 
@@ -65,9 +66,27 @@ export function FooterSection() {
                 fontFamily: publicFonts.body,
               }}
             >
-              Tech-enabled visa assistance with expert review for travelers, families, businesses,
-              marine teams and travel partners.
+              Specialist visa services powered by experienced visa professionals and modern technology.
             </Typography>
+            <Button
+              href="/enquiry"
+              variant="contained"
+              color="primary"
+              endIcon={<ArrowRight size={17} aria-hidden="true" />}
+              sx={{
+                minHeight: 46,
+                px: 3,
+                borderRadius: `${ds.radius.medium}px`,
+                bgcolor: ds.color.brand,
+                color: ds.color.navy,
+                fontWeight: 700,
+                letterSpacing: '0.03em',
+                textTransform: 'uppercase',
+                '&:hover': { bgcolor: ds.color.brandHover, color: ds.color.white },
+              }}
+            >
+              Enquire now
+            </Button>
           </Grid>
 
           {Object.entries(footerSections).map(([section, links]) => (

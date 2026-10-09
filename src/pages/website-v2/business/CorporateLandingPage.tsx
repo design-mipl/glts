@@ -110,9 +110,9 @@ export function CorporateLandingPage() {
               <Typography
                 component="h1"
                 sx={{
-                  fontWeight: 800,
+                  fontWeight: 700,
                   color: '#fff',
-                  fontFamily: publicFonts.heading,
+                  fontFamily: publicFonts.display,
                   fontSize: publicTypography.h2,
                   lineHeight: 1.1,
                   letterSpacing: '-1px',
@@ -256,7 +256,7 @@ export function CorporateLandingPage() {
       <Box sx={{ py: publicLayout.sectionMajor, backgroundColor: colors.surface }}>
         <PublicContainer>
           <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Typography sx={{ fontWeight: 800, fontFamily: publicFonts.heading, color: colors.navy, fontSize: publicTypography.h2, mb: 1 }}>
+            <Typography sx={{ fontWeight: 700, fontFamily: publicFonts.display, color: colors.navy, fontSize: publicTypography.h2, mb: 1 }}>
               Everything your travel desk needs.
             </Typography>
             <Typography sx={{ color: '#6B7280', fontSize: '15px', maxWidth: 520, mx: 'auto' }}>
@@ -430,7 +430,7 @@ export function CorporateLandingPage() {
             <Button
               variant="outlined"
               size="large"
-              href="/v2"
+              href="/"
               sx={{
                 borderColor: '#E5E7EB',
                 color: '#374151',

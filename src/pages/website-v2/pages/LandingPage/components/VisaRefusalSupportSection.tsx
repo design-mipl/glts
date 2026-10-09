@@ -63,9 +63,9 @@ export function VisaRefusalSupportSection() {
               <Typography
                 component="h2"
                 sx={{
-                  fontFamily: publicFonts.heading,
+                  fontFamily: publicFonts.display,
                   fontSize: { xs: '22px', md: '28px' },
-                  fontWeight: 800,
+                  fontWeight: 700,
                   color: '#fff',
                   lineHeight: 1.2,
                   mb: 1.25,
@@ -89,7 +89,7 @@ export function VisaRefusalSupportSection() {
 
           <Button
             variant="contained"
-            href="/v2/track"
+            href="/track"
             endIcon={<ArrowRight size={16} />}
             sx={{
               ...getMarketingPrimaryButtonSx(colors),

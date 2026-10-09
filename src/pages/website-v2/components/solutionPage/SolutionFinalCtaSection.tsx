@@ -12,6 +12,7 @@ import {
 import { MarineCtaBackgroundPattern } from './finalCta/MarineCtaBackgroundPattern'
 import { CorporateCtaBackgroundPattern } from './finalCta/CorporateCtaBackgroundPattern'
 import {
+  finalCtaActionPt,
   finalCtaContentSpacing,
   finalCtaSectionSx,
 } from '../../pages/LandingPage/landingPageSpacing'
@@ -24,7 +25,7 @@ interface SolutionFinalCtaSectionProps {
   heading: string
   description: string
   primaryButton: { label: string; href: string }
-  secondaryButton: { label: string; href: string }
+  secondaryButton?: { label: string; href: string }
 }
 
 const patternByVariant: Record<SolutionFinalCtaVariant, ReactNode> = {
@@ -63,7 +64,10 @@ export function SolutionFinalCtaSection({
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          objectPosition: variant === 'marine' ? 'center 42%' : 'center 40%',
+          objectPosition: {
+            xs: variant === 'marine' ? 'center 62%' : 'center 66%',
+            md: variant === 'marine' ? 'center 58%' : 'center 65%',
+          },
         }}
       />
 
@@ -73,7 +77,9 @@ export function SolutionFinalCtaSection({
           position: 'absolute',
           inset: 0,
           background:
-            'linear-gradient(90deg, rgba(0,31,63,0.88) 0%, rgba(0,31,63,0.78) 42%, rgba(0,31,63,0.62) 100%)',
+            variant === 'marine'
+              ? 'linear-gradient(90deg, rgba(0,31,63,0.78) 0%, rgba(0,31,63,0.58) 42%, rgba(0,31,63,0.36) 100%)'
+              : 'linear-gradient(90deg, rgba(0,31,63,0.80) 0%, rgba(0,31,63,0.62) 42%, rgba(0,31,63,0.38) 100%)',
         }}
       />
 
@@ -84,9 +90,9 @@ export function SolutionFinalCtaSection({
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
+              fontFamily: publicFonts.display,
               fontSize: { xs: '28px', sm: '32px', md: '40px' },
-              fontWeight: 800,
+              fontWeight: 700,
               lineHeight: 1.1,
               letterSpacing: '-0.7px',
               color: colors.white,
@@ -105,7 +111,7 @@ export function SolutionFinalCtaSection({
             {description}
           </Typography>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: 1 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: finalCtaActionPt }}>
             <Button
               variant="contained"
               href={primaryButton.href}
@@ -118,25 +124,27 @@ export function SolutionFinalCtaSection({
             >
               {primaryButton.label}
             </Button>
-            <Button
-              variant="outlined"
-              href={secondaryButton.href}
-              endIcon={<CalendarDays size={16} />}
-              sx={{
-                ...getOutlinedButtonSx(),
-                borderColor: 'rgba(255, 255, 255, 0.45)',
-                color: colors.white,
-                bgcolor: 'rgba(255, 255, 255, 0.12)',
-                px: 3.5,
-                alignSelf: { xs: 'stretch', sm: 'flex-start' },
-                '&:hover': {
-                  borderColor: colors.greenBright,
-                  bgcolor: 'rgba(255, 255, 255, 0.2)',
-                },
-              }}
-            >
-              {secondaryButton.label}
-            </Button>
+            {secondaryButton ? (
+              <Button
+                variant="outlined"
+                href={secondaryButton.href}
+                endIcon={<CalendarDays size={16} />}
+                sx={{
+                  ...getOutlinedButtonSx(),
+                  borderColor: 'rgba(255, 255, 255, 0.45)',
+                  color: colors.white,
+                  bgcolor: 'rgba(255, 255, 255, 0.12)',
+                  px: 3.5,
+                  alignSelf: { xs: 'stretch', sm: 'flex-start' },
+                  '&:hover': {
+                    borderColor: colors.greenBright,
+                    bgcolor: 'rgba(255, 255, 255, 0.2)',
+                  },
+                }}
+              >
+                {secondaryButton.label}
+              </Button>
+            ) : null}
           </Stack>
         </Stack>
       </PublicContainer>

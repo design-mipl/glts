@@ -75,9 +75,9 @@ export function DestinationsHeroSection({ destinationCount }: DestinationsHeroSe
         <Typography
           component="h1"
           sx={{
-            fontFamily: publicFonts.heading,
+            fontFamily: publicFonts.display,
             fontSize: publicTypography.h2,
-            fontWeight: 800,
+            fontWeight: 700,
             color: colors.navy,
             mb: 2,
           }}

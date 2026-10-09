@@ -52,7 +52,7 @@ export function CountryListingPage() {
   }
 
   return (
-    <Box sx={{ bgcolor: colors.surface, minHeight: 'calc(100vh - 80px)', pb: { xs: 12, md: 4 } }}>
+    <Box sx={{ bgcolor: colors.surface, minHeight: 'calc(100vh - 80px)' }}>
       <DestinationsHeroSection destinationCount={countries.length} />
 
       <Box sx={{ py: landingSectionPy }}>

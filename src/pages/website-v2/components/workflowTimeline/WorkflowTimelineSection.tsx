@@ -1,6 +1,6 @@
 import { Box, Typography, Stack } from '@mui/material'
 import { PublicContainer } from '../PublicContainer'
-import { landingSectionHeaderMb, landingSectionPy } from '../../pages/LandingPage/landingPageSpacing'
+import { featureSectionPy, landingSectionHeaderMb } from '../../pages/LandingPage/landingPageSpacing'
 import { publicFonts, usePublicBrandColors, brandPrimaryGreenRgb } from '../../theme/publicSiteTokens'
 import { WorkflowZigZagConnector } from './WorkflowZigZagConnector'
 import { useWorkflowRevealAnimation } from './useWorkflowRevealAnimation'
@@ -324,7 +324,7 @@ export function WorkflowTimelineSection({
       id={id}
       sx={{
         bgcolor: colors.white,
-        py: landingSectionPy,
+        py: featureSectionPy,
       }}
     >
       <PublicContainer variant="hero">
@@ -352,9 +352,9 @@ export function WorkflowTimelineSection({
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
+              fontFamily: publicFonts.display,
               fontSize: { xs: '28px', md: '36px' },
-              fontWeight: 800,
+              fontWeight: 700,
               color: colors.navy,
               lineHeight: 1.15,
               letterSpacing: '-0.02em',

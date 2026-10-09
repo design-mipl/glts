@@ -62,14 +62,14 @@ export function RetailHeroBackgroundImage({ parallaxOffsetY = 0 }: RetailHeroBac
         sx={{
           position: 'absolute',
           inset: 0,
-          background: `linear-gradient(
+          background: { xs: 'linear-gradient(90deg, rgba(0,31,63,.9) 0%, rgba(0,31,63,.75) 65%, rgba(0,31,63,.5) 100%)', md: `linear-gradient(
             105deg,
             rgba(0, 31, 63, 0.88) 0%,
             rgba(0, 31, 63, 0.72) 34%,
             rgba(0, 31, 63, 0.38) 58%,
             rgba(0, 31, 63, 0.22) 78%,
             rgba(0, 31, 63, 0.28) 100%
-          )`,
+          )` },
         }}
       />
     </Box>

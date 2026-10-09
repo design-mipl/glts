@@ -1,180 +1,128 @@
-import { useEffect, useRef, useState } from 'react'
-import { Box, Typography, Grid, keyframes, useMediaQuery } from '@mui/material'
-import { SolutionPageSection } from '../../../components/solutionPage/SolutionPageSection'
-import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
-import { marineCompanyTypes, type MarineCompanyType } from '../marinePageData'
-
-const slideFromTop = keyframes`
-  from { opacity: 0; transform: translateY(-18px); }
-  to { opacity: 1; transform: translateY(0); }
-`
-
-const slideFromBottom = keyframes`
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
-`
-
-const ENTRANCE_ANIMATION = {
-  'from-top': slideFromTop,
-  'from-bottom': slideFromBottom,
-} as const
-
-const STAGGER_S = 0.14
-const DURATION_S = 0.72
-
-function CompanyTypeItem({
-  item,
-  isVisible,
-  index,
-}: {
-  item: MarineCompanyType
-  isVisible: boolean
-  index: number
-}) {
-  const colors = usePublicBrandColors()
-  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const [imgSrc, setImgSrc] = useState(item.image.src)
-  const animation = ENTRANCE_ANIMATION[item.entrance]
-
-  const shouldAnimate = isVisible && !prefersReducedMotion
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        width: '100%',
-        gap: 1.5,
-        opacity: isVisible || prefersReducedMotion ? 1 : 0,
-        animation: shouldAnimate ? `${animation} ${DURATION_S}s ease-out both` : undefined,
-        animationDelay: shouldAnimate ? `${index * STAGGER_S}s` : undefined,
-      }}
-    >
-      <Box
-        sx={{
-          width: '100%',
-          aspectRatio: '4 / 3',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          bgcolor: colors.surfaceAlt,
-        }}
-      >
-        <Box
-          component="img"
-          src={imgSrc}
-          alt={item.image.alt}
-          loading="lazy"
-          onError={() => setImgSrc(item.image.fallback)}
-          sx={{
-            display: 'block',
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center',
-          }}
-        />
-      </Box>
-
-      <Typography
-        sx={{
-          fontFamily: publicFonts.heading,
-          fontSize: { xs: '15px', md: '18px' },
-          fontWeight: 700,
-          color: colors.navy,
-          lineHeight: 1.3,
-          textAlign: 'center',
-          width: '100%',
-        }}
-      >
-        {item.title}
-      </Typography>
-
-      <Typography
-        sx={{
-          fontSize: { xs: '14px', md: '15px' },
-          color: colors.textSecondary,
-          lineHeight: 1.6,
-          maxWidth: 320,
-          width: '100%',
-          textAlign: 'center',
-          mx: 'auto',
-        }}
-      >
-        {item.description}
-      </Typography>
-    </Box>
-  )
-}
+import { Box, Typography } from '@mui/material'
+import { PublicContainer } from '../../../components/PublicContainer'
+import { publicFonts } from '../../../theme/publicSiteTokens'
+import { marineCompanyTypes } from '../marinePageData'
+import { landingSectionHeaderMb, landingSectionPy } from '../../LandingPage/landingPageSpacing'
 
 export function CompaniesWeWorkWithSection() {
-  const colors = usePublicBrandColors()
-  const contentRef = useRef<HTMLDivElement>(null)
-  const hasPlayedRef = useRef(false)
-  const [isVisible, setIsVisible] = useState(false)
-
-  useEffect(() => {
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reducedMotion) {
-      setIsVisible(true)
-      return
-    }
-
-    const el = contentRef.current
-    if (!el) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting || hasPlayedRef.current) return
-        hasPlayedRef.current = true
-        setIsVisible(true)
-      },
-      { threshold: 0.25, rootMargin: '0px 0px -8% 0px' },
-    )
-
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
   return (
-    <SolutionPageSection
+    <Box
+      component="section"
       id="companies-we-work-with"
-      title="Companies We Work With"
-      subtitle="GreenLight supports marine travel operations across the following organization types."
+      sx={{
+        bgcolor: '#FDFEFE',
+        py: landingSectionPy,
+      }}
     >
-      <Box ref={contentRef}>
-        <Grid container alignItems="stretch">
+      <PublicContainer variant="hero">
+        <Box sx={{ textAlign: 'center', mb: landingSectionHeaderMb }}>
+          <Box
+            aria-hidden="true"
+            sx={{
+              width: 54,
+              height: 3,
+              bgcolor: '#2FA34F',
+              borderRadius: 2,
+              mx: 'auto',
+              mt: 1,
+              mb: 2,
+            }}
+          />
+          <Typography
+            component="h2"
+            sx={{
+              color: '#10264A',
+              fontFamily: publicFonts.display,
+              fontSize: { xs: '30px', sm: '36px', lg: '42px' },
+              fontWeight: 700,
+              lineHeight: 1.2,
+              letterSpacing: '-0.025em',
+              mb: 2,
+            }}
+          >
+            Companies We Work With
+          </Typography>
+          <Typography
+            sx={{
+              color: '#5F6D83',
+              fontFamily: publicFonts.body,
+              fontSize: { xs: '16px', md: '20px' },
+              lineHeight: 1.5,
+            }}
+          >
+            GreenLight supports marine travel operations across the following organization types.
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))' },
+            gap: 3,
+            alignItems: 'stretch',
+          }}
+        >
           {marineCompanyTypes.map((item, index) => (
-            <Grid
+            <Box
               key={item.title}
-              size={{ xs: 12, md: 4 }}
               sx={{
                 display: 'flex',
-                justifyContent: 'center',
-                py: { xs: index === 0 ? 0 : 2.5, md: 0 },
-                pb: { xs: index < marineCompanyTypes.length - 1 ? 2.5 : 0, md: 0 },
-                px: { md: index === 0 ? 0 : 3, lg: index === 0 ? 0 : 4 },
-                pr: { md: index < marineCompanyTypes.length - 1 ? 3 : 0, lg: index < marineCompanyTypes.length - 1 ? 4 : 0 },
-                borderRight: {
-                  md:
-                    index < marineCompanyTypes.length - 1
-                      ? `1px solid ${colors.borderSoft}`
-                      : 'none',
-                },
-                borderBottom: {
-                  xs:
-                    index < marineCompanyTypes.length - 1
-                      ? `1px solid ${colors.borderSoft}`
-                      : 'none',
-                  md: 'none',
-                },
+                flexDirection: 'column',
+                minWidth: 0,
+                minHeight: { lg: 350 },
+                gridColumn: { md: index === marineCompanyTypes.length - 1 ? '1 / -1' : 'auto', lg: 'auto' },
+                width: { xs: '100%', md: index === marineCompanyTypes.length - 1 ? 'calc(50% - 12px)' : '100%', lg: '100%' },
+                justifySelf: 'center',
+                overflow: 'hidden',
+                borderRadius: '14px',
+                bgcolor: '#FFFFFF',
+                border: '1px solid #E7EDF1',
+                boxShadow: '0 2px 7px rgba(16, 38, 74, 0.08)',
               }}
             >
-              <CompanyTypeItem item={item} isVisible={isVisible} index={index} />
-            </Grid>
+              <Box
+                component="img"
+                src={item.image.src}
+                alt={item.image.alt}
+                loading="lazy"
+                sx={{
+                  display: 'block',
+                  width: '100%',
+                  height: { xs: 210, lg: 200 },
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                  flexShrink: 0,
+                }}
+              />
+              <Box sx={{ px: 2.5, pt: 2, pb: 2.5, flex: 1 }}>
+                <Typography
+                  component="h3"
+                  sx={{
+                    color: '#10264A',
+                    fontFamily: publicFonts.display,
+                    fontSize: { xs: '20px', lg: '22px' },
+                    fontWeight: 700,
+                    lineHeight: 1.3,
+                    mb: 0.75,
+                  }}
+                >
+                  {item.title}
+                </Typography>
+                <Typography
+                  sx={{
+                    color: '#5F6D83',
+                    fontFamily: publicFonts.body,
+                    fontSize: { xs: '16px', lg: '18px' },
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {item.description}
+                </Typography>
+              </Box>
+            </Box>
           ))}
-        </Grid>
-      </Box>
-    </SolutionPageSection>
+        </Box>
+      </PublicContainer>
+    </Box>
   )
 }

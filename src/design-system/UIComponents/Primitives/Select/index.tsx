@@ -153,6 +153,7 @@ export default function Select({
               {...params}
               label={label}
               placeholder={placeholder}
+              InputLabelProps={placeholder ? { shrink: true } : undefined}
               error={error}
               helperText={helperText}
               required={required}
@@ -209,7 +210,7 @@ export default function Select({
       size="small"
       sx={[outlinedFieldSx(theme, inputHeight), ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
     >
-      {label && <InputLabel id={labelId}>{label}</InputLabel>}
+      {label && <InputLabel id={labelId} shrink={placeholder ? true : undefined}>{label}</InputLabel>}
       <MuiSelect
         labelId={labelId}
         label={label}

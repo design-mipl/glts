@@ -9,10 +9,7 @@ import {
   getMarketingPrimaryButtonSx,
   getOutlinedButtonSx,
 } from '@/shared/theme/publicBrand'
-import {
-  finalCtaContentSpacing,
-  finalCtaSectionSx,
-} from '../../LandingPage/landingPageSpacing'
+import { finalCtaSectionPy, finalCtaSectionSx } from '../../LandingPage/landingPageSpacing'
 import { retailFinalCta } from '../retailPageData'
 
 export function RetailFinalCtaSection() {
@@ -23,7 +20,7 @@ export function RetailFinalCtaSection() {
     <Box
       component="section"
       id="final-cta"
-      sx={finalCtaSectionSx}
+      sx={{ ...finalCtaSectionSx, minHeight: { xs: 440, sm: 350, md: 360 }, py: finalCtaSectionPy, '&:last-child': { mb: 0 } }}
     >
       <Box
         component="img"
@@ -38,7 +35,7 @@ export function RetailFinalCtaSection() {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          objectPosition: { xs: '68% center', md: 'center 40%' },
+          objectPosition: { xs: '65% center', sm: '63% 30%', md: 'center 20%' },
         }}
       />
 
@@ -47,19 +44,24 @@ export function RetailFinalCtaSection() {
         sx={{
           position: 'absolute',
           inset: 0,
-          background:
-            'linear-gradient(90deg, rgba(0,31,63,0.88) 0%, rgba(0,31,63,0.72) 42%, rgba(0,31,63,0.48) 72%, rgba(0,31,63,0.55) 100%)',
+          background: {
+            xs: 'linear-gradient(90deg, rgba(0,31,63,0.9) 0%, rgba(0,31,63,0.74) 58%, rgba(0,31,63,0.58) 100%)',
+            md: 'linear-gradient(90deg, rgba(0,31,63,0.9) 0%, rgba(0,31,63,0.72) 36%, rgba(0,31,63,0.28) 76%, rgba(0,31,63,0.16) 100%)',
+          },
         }}
       />
 
       <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1, width: '100%' }}>
-        <Stack spacing={finalCtaContentSpacing} sx={{ maxWidth: 720 }}>
+        <Stack spacing={1.5} sx={{ maxWidth: 720 }}>
+          <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1, color: colors.greenBright, fontSize: 12, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }}>
+            <Box component="span" sx={{ width: 26, height: 3, bgcolor: colors.greenBright, borderRadius: 1 }} /> Get started today
+          </Typography>
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
-              fontSize: { xs: '28px', sm: '32px', md: '40px' },
-              fontWeight: 800,
+              fontFamily: publicFonts.display,
+              fontSize: { xs: '29px', sm: '34px', md: '39px' },
+              fontWeight: 700,
               lineHeight: 1.1,
               letterSpacing: '-0.7px',
               color: colors.white,
@@ -78,7 +80,7 @@ export function RetailFinalCtaSection() {
             {retailFinalCta.description}
           </Typography>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: 1 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: .5 }}>
             <Button
               variant="contained"
               href={retailFinalCta.primaryButton.href}

@@ -1,540 +1,455 @@
-import { useMemo, useState } from 'react'
-import {
-  Box,
-  Typography,
-  Button,
-  Stack,
-  Select,
-  MenuItem,
-  FormControl,
-  keyframes,
-} from '@mui/material'
+import { useMemo, useState, type FormEvent } from 'react'
+import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import {
-  ArrowRight,
-  BadgeCheck,
-  FileCheck2,
-  Globe2,
-  MapPin,
-  Search,
-  Stamp,
-  type LucideIcon,
-} from 'lucide-react'
+import { ArrowRight, PlaneTakeoff } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { Button, Select } from '@/design-system/UIComponents'
 import { PublicContainer } from '../../../components/PublicContainer'
-import {
-  PUBLIC_NAV_HEIGHT_PX,
-  landingPageHeroContentPt,
-  landingPageHeroMinHeight,
-} from '../landingPageSpacing'
-import {
-  publicFonts,
-  usePublicBrandColors,
-  getMarketingPrimaryButtonSx,
-  brandPrimaryGreenRgb,
-} from '@/shared/theme/publicBrand'
-import { retailHeroImage } from '../../../assets/retailHeroImage'
+import { PUBLIC_NAV_HEIGHT_PX } from '../landingPageSpacing'
 import { getAllCountries } from '@/shared/services/visaService'
+import { websiteButtonSx, websiteFieldSx } from '../../../theme/websiteComponentStyles'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 
-const fadeUp = keyframes`
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
-`
+const homeHeroBackground = '/images/home-airport-background.png'
+const homeHeroTravelers = '/images/home-airport-travelers-cutout.png'
+const homeHeroComposite = '/images/home-airport-travelers.png'
 
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`
+const heroCheckerFieldSx = {
+  ...websiteFieldSx,
+  minWidth: 0,
+  '& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root, & .MuiAutocomplete-inputRoot.MuiInputBase-root': {
+    height: '56px !important',
+    minHeight: '56px !important',
+    boxSizing: 'border-box',
+    padding: '10px 42px 10px 14px !important',
+    alignItems: 'center',
+    borderRadius: `${ds.radius.medium}px`,
+    bgcolor: ds.color.surface,
+  },
+  '& .MuiAutocomplete-input': {
+    fontSize: 16,
+    lineHeight: 1.5,
+  },
+  '& .MuiAutocomplete-endAdornment': {
+    top: '50%',
+    right: 10,
+    transform: 'translateY(-50%)',
+  },
+  '& .MuiInputLabel-root': {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    p: 0,
+    m: -1,
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    whiteSpace: 'nowrap',
+    border: 0,
+  },
+  '& .MuiOutlinedInput-notchedOutline legend': { maxWidth: '0 !important' },
+}
 
-const trustMetrics: {
-  value: string
-  label: string
-  icon: LucideIcon
-}[] = [
-  { value: '98%*', label: 'Approval Rate', icon: BadgeCheck },
-  { value: '100,000+', label: 'Visas Processed', icon: FileCheck2 },
-  { value: '100+', label: 'Countries', icon: Globe2 },
-]
-
-const VISA_TYPES = [
-  { value: 'tourist', label: 'Tourist Visa' },
-  { value: 'business', label: 'Business Visa' },
-  { value: 'student', label: 'Student Visa' },
-  { value: 'transit', label: 'Transit Visa' },
-  { value: 'family', label: 'Family Applications' },
-  { value: 'group', label: 'Group Applications' },
-  { value: 'other', label: 'Other Visas' },
-] as const
-
-const POPULAR_DESTINATION_CODES = ['AE', 'US', 'GB', 'SG', 'CA', 'AU', 'DE', 'FR', 'JP', 'TH'] as const
-
-const HERO_BORDER = '#E5E7EB'
-const HERO_TEXT = '#111827'
-const HERO_TEXT_SECONDARY = '#6B7280'
-
-function HeroSearchBar() {
-  const colors = usePublicBrandColors()
+function VisaChecker() {
   const navigate = useNavigate()
-  const [destination, setDestination] = useState('')
-  const [visaType, setVisaType] = useState('')
+  const [nationality, setNationality] = useState<string | number>('')
+  const [destination, setDestination] = useState<string | number>('')
+  const [formMessage, setFormMessage] = useState('')
 
-  const destinations = useMemo(() => {
-    const all = getAllCountries()
-    const popular = POPULAR_DESTINATION_CODES.map((code) =>
-      all.find((country) => country.code === code),
-    ).filter(Boolean) as ReturnType<typeof getAllCountries>
-    return popular.length > 0 ? popular : all.slice(0, 10)
-  }, [])
+  const countries = useMemo(
+    () => [...getAllCountries()].sort((a, b) => a.name.localeCompare(b.name)),
+    [],
+  )
+  const nationalityOptions = useMemo(
+    () =>
+      countries.map((country) => ({
+        value: country.code,
+        label: country.name,
+        icon: country.flags || undefined,
+      })),
+    [countries],
+  )
+  const destinationOptions = useMemo(
+    () =>
+      countries.map((country) => ({
+        value: country.id,
+        label: country.name,
+        icon: country.flags || undefined,
+      })),
+    [countries],
+  )
 
-  const fieldSx = {
-    height: 48,
-    fontSize: '14px',
-    color: HERO_TEXT,
-    '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-    '& .MuiSelect-select': {
-      py: 0,
-      display: 'flex',
-      alignItems: 'center',
-      minHeight: '48px !important',
-    },
-  } as const
-
-  const handleSearch = () => {
-    if (destination) {
-      const params = new URLSearchParams({ country: destination })
-      if (visaType) params.set('visaType', visaType)
-      navigate(`/v2/apply/new?${params.toString()}`)
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!nationality || !destination) {
+      setFormMessage('Please select your nationality and destination to continue.')
       return
     }
-    navigate(visaType ? `/v2/countries?visaType=${encodeURIComponent(visaType)}` : '/v2/countries')
+
+    setFormMessage('')
+    // Keep the current application entry route and its supported destination preselection.
+    navigate(`/apply/new?${new URLSearchParams({ country: String(destination) }).toString()}`)
   }
 
   return (
     <Box
+      id="visa-checker"
       component="form"
-      onSubmit={(event) => {
-        event.preventDefault()
-        handleSearch()
-      }}
+      aria-label="Choose your nationality and destination"
+      onSubmit={handleSubmit}
       sx={{
-        width: { xs: '100%', md: 'min(100vw - 48px, 760px)' },
-        maxWidth: 760,
-        display: 'flex',
-        flexDirection: { xs: 'column', sm: 'row' },
-        alignItems: 'stretch',
-        gap: { xs: 1.25, sm: 0 },
-        bgcolor: alpha(colors.white, 0.94),
-        border: `1px solid ${HERO_BORDER}`,
-        borderRadius: '14px',
-        boxShadow: '0 10px 28px rgba(15, 23, 42, 0.1)',
-        p: { xs: 1.25, sm: 1 },
-        pl: { sm: 1.5 },
-        minHeight: { sm: 68 },
+        width: '100%',
+        border: `1px solid ${alpha(ds.semanticColor.border.strong, 0.62)}`,
+        borderRadius: `${ds.radius.large}px`,
+        bgcolor: ds.color.surface,
+        boxShadow: '0 22px 56px rgba(10, 37, 64, 0.11)',
+        overflow: 'hidden',
       }}
     >
       <Box
         sx={{
-          flex: 1,
           display: 'flex',
           alignItems: 'center',
-          gap: 1.15,
-          px: { xs: 0.5, sm: 1 },
-          minWidth: 0,
+          gap: 1.25,
+          minHeight: 56,
+          px: { xs: 2.25, sm: 3 },
+          borderBottom: `1px solid ${ds.color.border}`,
         }}
       >
-        <MapPin size={18} color={colors.greenBright} strokeWidth={2.1} />
-        <FormControl fullWidth size="small" variant="outlined">
+        <PlaneTakeoff size={18} color={ds.color.teal} aria-hidden="true" />
+        <Typography sx={{ color: ds.color.navy, fontSize: 14, fontWeight: 700 }}>
+          Where are you headed?
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'minmax(0, 1fr)',
+            sm: 'minmax(0, 1fr) 20px minmax(0, 1fr)',
+          },
+          alignItems: 'end',
+          columnGap: { xs: 0, sm: 1.5 },
+          rowGap: { xs: 1.75, sm: 2 },
+          p: { xs: 2.25, sm: 3 },
+        }}
+      >
+        <Box sx={{ minWidth: 0 }}>
+          <Typography component="span" aria-hidden="true" sx={{ display: 'block', color: ds.color.textSecondary, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', mb: 1 }}>
+            NATIONALITY
+          </Typography>
           <Select
-            displayEmpty
+            label="Nationality"
+            placeholder="Select nationality"
+            value={nationality}
+            onChange={(value) => {
+              setNationality(value)
+              setFormMessage('')
+            }}
+            options={nationalityOptions}
+            searchable
+            required
+            fullWidth
+            size="md"
+            sx={heroCheckerFieldSx}
+          />
+        </Box>
+
+        <Box aria-hidden="true" sx={{ display: { xs: 'none', sm: 'flex' }, height: 56, alignItems: 'center', justifyContent: 'center', color: ds.color.textMuted }}>
+          <ArrowRight size={16} />
+        </Box>
+
+        <Box sx={{ minWidth: 0 }}>
+          <Typography component="span" aria-hidden="true" sx={{ display: 'block', color: ds.color.textSecondary, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', mb: 1 }}>
+            DESTINATION
+          </Typography>
+          <Select
+            label="Destination"
+            placeholder="Select destination"
             value={destination}
-            onChange={(event) => setDestination(event.target.value)}
-            sx={fieldSx}
-            renderValue={(selected) => {
-              if (!selected) {
-                return <Box sx={{ color: HERO_TEXT_SECONDARY }}>Destination</Box>
-              }
-              const match = destinations.find((country) => country.id === selected)
-              return match?.name ?? selected
+            onChange={(value) => {
+              setDestination(value)
+              setFormMessage('')
             }}
-          >
-            <MenuItem value="">
-              <em>All destinations</em>
-            </MenuItem>
-            {destinations.map((country) => (
-              <MenuItem key={country.id} value={country.id}>
-                {country.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            options={destinationOptions}
+            searchable
+            required
+            fullWidth
+            size="md"
+            sx={heroCheckerFieldSx}
+          />
+        </Box>
+
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          size="md"
+          fullWidth
+          endIcon={<ArrowRight size={18} aria-hidden="true" />}
+          sx={{
+            ...websiteButtonSx,
+            minHeight: 56,
+            whiteSpace: 'nowrap',
+            textTransform: 'none',
+            borderRadius: `${ds.radius.medium}px`,
+            fontSize: 16,
+            fontWeight: 700,
+            gridColumn: '1 / -1',
+            '&.MuiButton-containedPrimary': {
+              backgroundColor: ds.color.brand,
+              color: ds.semanticColor.text.inverse,
+            },
+            '&.MuiButton-containedPrimary:hover': {
+              backgroundColor: ds.color.brandHover,
+            },
+            '&:focus-visible': {
+              outline: `3px solid ${ds.color.focus}`,
+              outlineOffset: 2,
+            },
+          }}
+        >
+          Get started
+        </Button>
       </Box>
 
-      <Box
-        aria-hidden
-        sx={{
-          display: { xs: 'none', sm: 'block' },
-          width: '1px',
-          alignSelf: 'stretch',
-          my: 1.25,
-          bgcolor: HERO_BORDER,
-          flexShrink: 0,
-        }}
-      />
-
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.15,
-          px: { xs: 0.5, sm: 1 },
-          minWidth: 0,
-        }}
-      >
-        <Stamp size={18} color={colors.greenBright} strokeWidth={2.1} />
-        <FormControl fullWidth size="small" variant="outlined">
-          <Select
-            displayEmpty
-            value={visaType}
-            onChange={(event) => setVisaType(event.target.value)}
-            sx={fieldSx}
-            renderValue={(selected) => {
-              if (!selected) {
-                return <Box sx={{ color: HERO_TEXT_SECONDARY }}>Visa type</Box>
-              }
-              return VISA_TYPES.find((type) => type.value === selected)?.label ?? selected
-            }}
-          >
-            <MenuItem value="">
-              <em>All visa types</em>
-            </MenuItem>
-            {VISA_TYPES.map((type) => (
-              <MenuItem key={type.value} value={type.value}>
-                {type.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
-
-      <Button
-        type="submit"
-        variant="contained"
-        startIcon={<Search size={17} strokeWidth={2.25} />}
-        sx={{
-          ...getMarketingPrimaryButtonSx(colors),
-          borderRadius: '10px',
-          minHeight: 48,
-          height: 48,
-          px: 2.75,
-          mx: { sm: 0.25 },
-          alignSelf: { xs: 'stretch', sm: 'center' },
-          whiteSpace: 'nowrap',
-          boxShadow: `0 4px 14px rgba(${brandPrimaryGreenRgb}, 0.28)`,
-        }}
-      >
-        Search
-      </Button>
+      {formMessage ? (
+        <Typography role="alert" sx={{ px: { xs: 2.25, sm: 3 }, pb: { xs: 2.25, sm: 3 }, color: ds.color.error, fontSize: ds.type.bodySmall.size }}>
+          {formMessage}
+        </Typography>
+      ) : null}
     </Box>
   )
 }
 
 export function HeroSection() {
-  const colors = usePublicBrandColors()
-  const navigate = useNavigate()
-
   return (
     <Box
       component="section"
+      aria-labelledby="home-hero-title"
       sx={{
         position: 'relative',
         mt: `-${PUBLIC_NAV_HEIGHT_PX}px`,
         pt: `${PUBLIC_NAV_HEIGHT_PX}px`,
         overflow: 'hidden',
-        bgcolor: colors.white,
-        minHeight: landingPageHeroMinHeight,
-        pb: { xs: 7, md: 8, lg: 9 },
+        bgcolor: ds.color.canvas,
+        color: ds.color.text,
+        isolation: 'isolate',
       }}
     >
       <Box
-        aria-hidden
+        aria-hidden="true"
         sx={{
           position: 'absolute',
-          inset: 0,
-          zIndex: 0,
+          top: PUBLIC_NAV_HEIGHT_PX,
+          right: 0,
+          bottom: 0,
+          width: { xs: 0, md: '100%' },
+          display: { xs: 'none', md: 'block' },
           overflow: 'hidden',
-          pointerEvents: 'none',
-          animation: `${fadeIn} 1.1s ease-out both`,
-          bgcolor: colors.white,
+          zIndex: 0,
+          '@media (min-width: 760px) and (max-width: 899.95px)': { display: 'block' },
         }}
       >
         <Box
           component="img"
-          src={retailHeroImage.src}
+          src={homeHeroBackground}
           alt=""
           sx={{
-            position: 'absolute',
-            top: { xs: 64, md: 88 },
-            right: 0,
-            bottom: 0,
-            left: 'auto',
-            width: { xs: '100%', md: '72%' },
-            height: { xs: 'calc(100% - 64px)', md: 'calc(100% - 88px)' },
-            transform: 'scale(1.05)',
-            transformOrigin: 'right center',
-            objectFit: 'cover',
-            objectPosition: 'right center',
+            width: '100%',
+            height: '100%',
             display: 'block',
-            animation: `${fadeIn} 2.2s ease-out both`,
-            maskImage: `
-              linear-gradient(90deg, transparent 0%, black 20%, black 100%),
-              linear-gradient(180deg, transparent 0%, black 14%, black 100%)
-            `,
-            WebkitMaskImage: `
-              linear-gradient(90deg, transparent 0%, black 20%, black 100%),
-              linear-gradient(180deg, transparent 0%, black 14%, black 100%)
-            `,
-            maskComposite: 'intersect',
-            WebkitMaskComposite: 'source-in',
+            objectFit: 'cover',
+            objectPosition: 'center center',
           }}
         />
         <Box
           sx={{
             position: 'absolute',
             inset: 0,
-            background: {
-              xs: `
-                linear-gradient(
-                  180deg,
-                  ${alpha(colors.white, 0.92)} 0%,
-                  ${alpha(colors.white, 0.55)} 12%,
-                  ${alpha(colors.white, 0.15)} 28%,
-                  transparent 42%,
-                  transparent 72%,
-                  ${alpha(colors.white, 0.18)} 100%
-                ),
-                linear-gradient(
-                  90deg,
-                  ${alpha(colors.white, 0.94)} 0%,
-                  ${alpha(colors.white, 0.72)} 38%,
-                  ${alpha(colors.white, 0.22)} 66%,
-                  transparent 88%
-                )
-              `,
-              md: `
-                linear-gradient(
-                  180deg,
-                  ${alpha(colors.white, 0.95)} 0%,
-                  ${alpha(colors.white, 0.6)} 10%,
-                  ${alpha(colors.white, 0.18)} 22%,
-                  transparent 36%,
-                  transparent 80%,
-                  ${alpha(colors.white, 0.2)} 100%
-                ),
-                linear-gradient(
-                  90deg,
-                  ${alpha(colors.white, 0.97)} 0%,
-                  ${alpha(colors.white, 0.88)} 22%,
-                  ${alpha(colors.white, 0.4)} 44%,
-                  ${alpha(colors.white, 0.1)} 58%,
-                  transparent 72%
-                )
-              `,
-            },
+            background: [
+              `linear-gradient(90deg, ${ds.color.canvas} 0%, ${alpha(ds.color.canvas, 0.94)} 18%, ${alpha(ds.color.canvas, 0.58)} 34%, ${alpha(ds.color.canvas, 0.16)} 44%, transparent 55%)`,
+              `linear-gradient(180deg, ${ds.color.canvas} 0%, ${alpha(ds.color.canvas, 0.84)} 7%, ${alpha(ds.color.canvas, 0.24)} 19%, transparent 34%, transparent 68%, ${alpha(ds.color.canvas, 0.22)} 82%, ${alpha(ds.color.canvas, 0.82)} 96%, ${ds.color.canvas} 100%)`,
+            ].join(', '),
           }}
         />
       </Box>
+
+      <Box
+        component="svg"
+        aria-hidden="true"
+        viewBox="0 0 1440 270"
+        preserveAspectRatio="none"
+        sx={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: { md: 28, lg: 36 },
+          width: '100%',
+          height: { md: 230, lg: 270 },
+          display: { xs: 'none', md: 'block' },
+          zIndex: 1,
+          pointerEvents: 'none',
+          '@media (min-width: 760px) and (max-width: 899.95px)': { display: 'block', height: 230, bottom: 24 },
+        }}
+      >
+        <defs>
+          <linearGradient id="home-hero-ribbon" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor={ds.color.brand} stopOpacity="0.16" />
+            <stop offset="50%" stopColor={ds.color.brand} stopOpacity="0.36" />
+            <stop offset="100%" stopColor={ds.color.teal} stopOpacity="0.58" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M0 28 C285 44 412 195 700 206 C965 216 1132 86 1440 105 L1440 170 C1124 158 971 270 700 267 C395 263 277 108 0 97 Z"
+          fill="url(#home-hero-ribbon)"
+        />
+        <path
+          d="M0 28 C285 44 412 195 700 206 C965 216 1132 86 1440 105"
+          fill="none"
+          stroke={ds.color.brand}
+          strokeOpacity="0.39"
+          strokeWidth="2"
+        />
+      </Box>
+
+      <Box
+        component="img"
+        src={homeHeroTravelers}
+        alt=""
+        aria-hidden="true"
+        sx={{
+          position: 'absolute',
+          top: PUBLIC_NAV_HEIGHT_PX,
+          right: 0,
+          bottom: 0,
+          width: { xs: 0, md: '50%', lg: '56%' },
+          height: `calc(100% - ${PUBLIC_NAV_HEIGHT_PX}px)`,
+          display: { xs: 'none', md: 'block' },
+          objectFit: 'contain',
+          objectPosition: 'right bottom',
+          maskImage: 'linear-gradient(180deg, #000 0%, #000 76%, rgba(0, 0, 0, 0.76) 87%, transparent 100%)',
+          zIndex: 2,
+          pointerEvents: 'none',
+          '@media (min-width: 760px) and (max-width: 899.95px)': { display: 'block', width: '50%' },
+        }}
+      />
 
       <PublicContainer
         variant="hero"
         sx={{
           position: 'relative',
-          zIndex: 1,
-          width: '100%',
+          zIndex: 3,
+          minHeight: { md: 620, lg: 660 },
           display: 'flex',
-          alignItems: { xs: 'center', md: 'flex-start' },
-          minHeight: {
-            xs: `calc(100dvh - ${PUBLIC_NAV_HEIGHT_PX}px)`,
-            md: landingPageHeroMinHeight.md,
-            lg: landingPageHeroMinHeight.lg,
+          flexDirection: 'column',
+          justifyContent: 'center',
+          pt: { xs: 4, sm: 5, md: 5, lg: 6 },
+          pb: { xs: 0, md: 6, lg: 7 },
+          '@media (min-width: 760px) and (max-width: 899.95px)': {
+            minHeight: 650,
+            pb: 5,
           },
-          pt: landingPageHeroContentPt,
+        }}
+      >
+        <Box sx={{
+          width: { xs: '100%', md: '49%', lg: '48%' },
+          maxWidth: 640,
+          pb: { xs: 4, md: 0 },
+          '@media (min-width: 760px) and (max-width: 899.95px)': { width: '55%', pb: 0 },
+        }}>
+          <Typography
+            component="p"
+            sx={{
+              color: ds.color.brandHover,
+              fontSize: ds.type.eyebrow.size,
+              fontWeight: ds.type.eyebrow.weight,
+              letterSpacing: ds.type.eyebrow.tracking,
+              lineHeight: ds.type.eyebrow.lineHeight,
+              mb: { xs: 1.75, md: 2.25 },
+            }}
+          >
+            GREENLIGHT TRAVEL SOLUTIONS
+          </Typography>
+          <Typography
+            id="home-hero-title"
+            component="h1"
+            sx={{
+              color: ds.color.navy,
+              fontFamily: ds.fonts.display,
+              fontSize: { xs: ds.type.h1.mobile, sm: ds.type.h1.tablet, md: 44, lg: 54 },
+              fontWeight: ds.type.display.weight,
+              lineHeight: ds.type.display.lineHeight,
+              letterSpacing: ds.type.display.tracking,
+              mb: { xs: 2, md: 2.75 },
+              textWrap: 'balance',
+            }}
+          >
+            <Box component="span" sx={{ display: 'block' }}>Visas Done Right —</Box>
+            <Box component="span" sx={{ display: 'block', color: ds.color.brandHover }}>Before They Go Wrong</Box>
+          </Typography>
+          <Typography
+            component="p"
+            sx={{
+              color: ds.color.navy,
+              fontSize: { xs: ds.type.bodyLarge.mobile, sm: ds.type.bodyLarge.size },
+              fontWeight: 700,
+              lineHeight: ds.type.bodyLarge.lineHeight,
+              mb: { xs: 1.5, md: 1.75 },
+            }}
+          >
+            Technology at Every Step. Experts Who Get it Right.
+          </Typography>
+          <Typography
+            component="p"
+            sx={{
+              color: ds.color.textSecondary,
+              fontSize: { xs: ds.type.body.mobile, sm: ds.type.body.size },
+              lineHeight: ds.type.body.lineHeight,
+              maxWidth: 540,
+              mb: { xs: 3.5, md: 4.5 },
+            }}
+          >
+            Check requirements, apply securely, upload documents and track your application — with GreenLight experts reviewing your application at every critical step.
+          </Typography>
+          <VisaChecker />
+        </Box>
+      </PublicContainer>
+      <Box
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          position: 'relative',
+          width: '100%',
+          height: { xs: 210, sm: 290 },
+          overflow: 'hidden',
+          backgroundImage: `url('${homeHeroComposite}')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
+          '@media (min-width: 760px) and (max-width: 899.95px)': { display: 'none' },
         }}
       >
         <Box
-          sx={{
-            width: { xs: '100%', md: '52%', lg: '48%' },
-            maxWidth: { md: 720, lg: 760 },
-            animation: `${fadeUp} 0.8s ease-out both`,
-            my: { md: 'auto' },
-          }}
+          component="svg"
+          aria-hidden="true"
+          viewBox="0 0 600 290"
+          preserveAspectRatio="none"
+          sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
         >
-          <Stack spacing={{ xs: 4.5, md: 5.5, lg: 6 }} alignItems="flex-start" textAlign="left">
-            <Box sx={{ maxWidth: { md: 560, lg: 600 } }}>
-              <Typography
-                component="h1"
-                sx={{
-                  fontFamily: publicFonts.heading,
-                  fontSize: { xs: '36px', sm: '44px', md: '50px', lg: '56px' },
-                  fontWeight: 800,
-                  lineHeight: 1.06,
-                  letterSpacing: '-1.5px',
-                  color: HERO_TEXT,
-                  mb: { xs: 2.5, md: 3 },
-                }}
-              >
-                Visas Done Right
-                <Box component="span" sx={{ color: colors.greenBright }}>
-                  {' '}
-                  — Before They Go Wrong
-                </Box>
-              </Typography>
-
-              <Typography
-                sx={{
-                  fontFamily: publicFonts.heading,
-                  fontSize: { xs: '18px', md: '20px' },
-                  fontWeight: 700,
-                  color: HERO_TEXT,
-                  mb: 1.25,
-                  lineHeight: 1.35,
-                }}
-              >
-                Expert-verified. Tech-enabled.
-              </Typography>
-
-              <Typography
-                sx={{
-                  fontSize: { xs: '15px', md: '16px', lg: '17px' },
-                  color: HERO_TEXT_SECONDARY,
-                  lineHeight: 1.7,
-                  maxWidth: 460,
-                }}
-              >
-                Check requirements, apply securely, upload documents and track your application —
-                with GreenLight experts reviewing your application at every critical step.
-              </Typography>
-            </Box>
-
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-              <Button
-                variant="contained"
-                endIcon={<ArrowRight size={18} strokeWidth={2.25} />}
-                onClick={() => navigate('/v2/countries')}
-                sx={{
-                  ...getMarketingPrimaryButtonSx(colors),
-                  borderRadius: '12px',
-                  px: 3,
-                  minHeight: 48,
-                  fontWeight: 700,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Check Visa Requirements
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => navigate('/v2/countries')}
-                sx={{
-                  borderRadius: '12px',
-                  px: 3,
-                  minHeight: 48,
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  borderColor: HERO_BORDER,
-                  color: HERO_TEXT,
-                  bgcolor: alpha(colors.white, 0.72),
-                  whiteSpace: 'nowrap',
-                  '&:hover': {
-                    borderColor: colors.greenBright,
-                    bgcolor: alpha(colors.white, 0.92),
-                  },
-                }}
-              >
-                Explore Destinations
-              </Button>
-            </Stack>
-
-            <HeroSearchBar />
-
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' },
-                gap: { xs: 2.25, sm: 2.5, md: 2.75 },
-                width: '100%',
-                maxWidth: { md: 680 },
-              }}
-            >
-              {trustMetrics.map((metric) => {
-                const Icon = metric.icon
-                return (
-                  <Box
-                    key={metric.label}
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 1.25,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: '12px',
-                        bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Icon size={22} color={colors.greenBright} strokeWidth={2.15} />
-                    </Box>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography
-                        sx={{
-                          fontFamily: publicFonts.heading,
-                          fontSize: { xs: '20px', md: '22px' },
-                          fontWeight: 800,
-                          color: colors.greenBright,
-                          letterSpacing: '-0.03em',
-                          lineHeight: 1.1,
-                          mb: 0.25,
-                        }}
-                      >
-                        {metric.value}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          color: HERO_TEXT_SECONDARY,
-                          lineHeight: 1.35,
-                        }}
-                      >
-                        {metric.label}
-                      </Typography>
-                    </Box>
-                  </Box>
-                )
-              })}
-            </Box>
-
-            <Typography
-              sx={{
-                fontSize: '12px',
-                fontWeight: 600,
-                color: HERO_TEXT_SECONDARY,
-                lineHeight: 1.45,
-              }}
-            >
-              Registered agent support available for China, South Korea, and Brazil.
-            </Typography>
-          </Stack>
+          <path
+            d="M0 58 C140 72 230 210 350 214 C455 217 515 119 600 121 L600 176 C498 180 447 274 348 272 C214 270 132 126 0 112 Z"
+            transform="translate(0 -14)"
+            fill={alpha(ds.color.brand, 0.42)}
+          />
         </Box>
-      </PublicContainer>
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            background: `linear-gradient(180deg, ${ds.color.canvas} 0%, transparent 22%, transparent 74%, ${ds.color.canvas} 100%)`,
+          }}
+        />
+      </Box>
     </Box>
   )
 }

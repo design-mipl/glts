@@ -48,6 +48,11 @@ export const servicesAdditionalImages = {
     fallback: '/images/corporate-additional-services/forex-support.png',
     alt: 'Foreign currency and travel funds for forex support',
   },
+  travelAssistance: {
+    src: '/images/services/travel-assistance-24x7.png',
+    fallback: '/images/services/travel-assistance-24x7.png',
+    alt: 'Travel support specialist helping a traveler at an airport assistance desk',
+  },
 } as const
 
 export const servicesFinalCtaImage = {

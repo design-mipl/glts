@@ -16,8 +16,8 @@ import type { VisaCategoryCardItem } from '../../components/VisaCategoryCardsSec
 import { testimonialPortraits } from '../../assets/testimonialPortraits'
 
 export const corporateHeroCtas = {
-  primary: { label: 'Speak with Our Corporate Team', href: '/v2/track' },
-  secondary: { label: 'Schedule a Consultation', href: '/v2/track' },
+  primary: { label: 'Speak with Our Corporate Team', href: '/track' },
+  secondary: { label: 'Schedule a Consultation', href: '/track' },
 } as const
 
 export const corporateHeroStats: {
@@ -167,19 +167,6 @@ export const corporateAccuracyVisuals = {
   },
 } as const
 
-export const corporateDestinations = [
-  'China',
-  'Singapore',
-  'South Korea',
-  'Taiwan',
-  'Belgium',
-  'Netherlands',
-  'France',
-  'United Kingdom',
-  'United States',
-  'Australia',
-] as const
-
 export const corporateVisaCategories: VisaCategoryCardItem[] = [
   {
     id: 'business-travel-visas',
@@ -214,7 +201,7 @@ export const corporateAdditionalServices = [
     description:
       'Business travel documentation, transit requirements, and destination-specific travel support for corporate travelers.',
     ctaLabel: 'Get Started',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/corporate-additional-services/travel-transit-documentation.png',
       fallback: '/images/corporate-additional-services/travel-transit-documentation.png',
@@ -227,7 +214,7 @@ export const corporateAdditionalServices = [
     description:
       'Centralized visa records, audit-ready documentation, and compliance tracking for corporate travelers.',
     ctaLabel: 'Learn More',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/corporate-additional-services/compliance-record-management.png',
       fallback: '/images/corporate-additional-services/compliance-record-management.png',
@@ -240,7 +227,7 @@ export const corporateAdditionalServices = [
     description:
       'Travel protection and insurance assistance for employees, executives, and project teams.',
     ctaLabel: 'Learn More',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/corporate-additional-services/travel-insurance-support.png',
       fallback: '/images/corporate-additional-services/travel-insurance-support.png',
@@ -253,7 +240,7 @@ export const corporateAdditionalServices = [
     description:
       'Foreign exchange assistance for global business travel and international assignments.',
     ctaLabel: 'Learn More',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/corporate-additional-services/forex-support.png',
       fallback: '/images/corporate-additional-services/forex-support.png',

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { whyChooseGreenlightImage } from '../../../assets/landingPageImages'
-import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
+import { featureSectionPy, landingSectionHeaderMb } from '../landingPageSpacing'
 import {
   publicFonts,
   usePublicBrandColors,
@@ -138,7 +138,7 @@ export function WhyGreenLightWorksSection() {
       id="why-greenlight-works"
       sx={{
         bgcolor: colors.white,
-        py: landingSectionPy,
+        py: featureSectionPy,
       }}
     >
       <PublicContainer variant="hero">
@@ -171,9 +171,9 @@ export function WhyGreenLightWorksSection() {
             <Typography
               component="h2"
               sx={{
-                fontFamily: publicFonts.heading,
+                fontFamily: publicFonts.display,
                 fontSize: { xs: '28px', md: '36px', lg: '40px' },
-                fontWeight: 800,
+                fontWeight: 700,
                 color: colors.navy,
                 lineHeight: 1.15,
                 letterSpacing: '-0.03em',

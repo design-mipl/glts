@@ -149,9 +149,9 @@ export function WhyGreenLightSection() {
             <Typography
               component="h2"
               sx={{
-                fontFamily: publicFonts.heading,
+                fontFamily: publicFonts.display,
                 fontSize: { xs: '24px', sm: '28px', md: '30px', lg: '34px' },
-                fontWeight: 800,
+                fontWeight: 700,
                 color: colors.white,
                 letterSpacing: '-0.02em',
                 lineHeight: 1.15,

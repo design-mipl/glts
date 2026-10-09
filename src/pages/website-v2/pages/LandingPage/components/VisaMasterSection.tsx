@@ -15,6 +15,7 @@ import {
   getMarketingPrimaryButtonSx,
   brandPrimaryGreenRgb,
 } from '@/shared/theme/publicBrand'
+import { darkSectionPy } from '../landingPageSpacing'
 const VISA_MASTER_IMAGE = {
   src: '/images/visa-master/passport.png',
   fallback: '/images/visa-master/passport.png',
@@ -52,10 +53,12 @@ function PremiumFeatureItem({
   title,
   description,
   icon: Icon,
+  visaServices = false,
 }: {
   title: string
   description: string
   icon: LucideIcon
+  visaServices?: boolean
 }) {
   const colors = usePublicBrandColors()
 
@@ -64,19 +67,19 @@ function PremiumFeatureItem({
       sx={{
         flex: 1,
         minWidth: 0,
-        px: { xs: 1.5, lg: 1.75 },
+        px: { xs: 1.5, desktopMd: visaServices ? 1.75 : 2 },
         py: { xs: 0.5, lg: 0 },
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         textAlign: 'center',
-        gap: 1.5,
+        gap: visaServices ? 1.5 : { xs: 1.5, desktopMd: 2 },
       }}
     >
       <Box
         sx={{
-          width: 56,
-          height: 56,
+          width: { xs: 56, desktopMd: visaServices ? 56 : 68 },
+          height: { xs: 56, desktopMd: visaServices ? 56 : 68 },
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
@@ -85,14 +88,14 @@ function PremiumFeatureItem({
           bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.1)`,
         }}
       >
-        <Icon size={26} color={colors.greenBright} strokeWidth={1.85} />
+        <Icon size={visaServices ? 26 : 30} color={colors.greenBright} strokeWidth={1.85} />
       </Box>
 
       <Box sx={{ minWidth: 0 }}>
         <Typography
           sx={{
             fontFamily: publicFonts.heading,
-            fontSize: { xs: '15px', md: '16px' },
+            fontSize: visaServices ? { xs: '17px', desktop: '18px' } : { xs: '15px', desktop: '16px', desktopMd: '18px' },
             fontWeight: 700,
             color: colors.white,
             lineHeight: 1.3,
@@ -103,8 +106,8 @@ function PremiumFeatureItem({
         </Typography>
         <Typography
           sx={{
-            fontSize: { xs: '13px', md: '13.5px' },
-            color: 'rgba(255, 255, 255, 0.68)',
+            fontSize: visaServices ? '15px' : { xs: '13px', desktop: '13.5px', desktopMd: '15px' },
+            color: visaServices ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.84)',
             lineHeight: 1.5,
           }}
         >
@@ -115,14 +118,14 @@ function PremiumFeatureItem({
   )
 }
 
-function PassportFocal({ navy }: { navy: string }) {
+function PassportFocal({ navy, visaServices }: { navy: string; visaServices: boolean }) {
   return (
     <Box
       sx={{
         position: 'relative',
-        width: { xs: 220, md: 250, lg: 280 },
-        height: { xs: 250, md: 280, lg: 300 },
-        mx: { xs: 'auto', md: 0 },
+        width: { xs: 245, desktop: visaServices ? 315 : 250, desktopMd: visaServices ? 330 : 340 },
+        height: { xs: 270, desktop: visaServices ? 350 : 280, desktopMd: visaServices ? 365 : 400 },
+        mx: { xs: 'auto', desktop: 0 },
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
@@ -137,8 +140,8 @@ function PassportFocal({ navy }: { navy: string }) {
           top: '46%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: { xs: 200, md: 230, lg: 260 },
-          height: { xs: 200, md: 230, lg: 260 },
+          width: { xs: 200, desktop: 230, desktopMd: visaServices ? 260 : 320 },
+          height: { xs: 200, desktop: 230, desktopMd: visaServices ? 260 : 350 },
           borderRadius: '50%',
           background:
             'radial-gradient(circle, rgba(180, 210, 255, 0.12) 0%, rgba(120, 170, 230, 0.07) 40%, transparent 72%)',
@@ -154,8 +157,8 @@ function PassportFocal({ navy }: { navy: string }) {
           top: '48%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: { xs: 150, md: 175, lg: 195 },
-          height: { xs: 150, md: 175, lg: 195 },
+          width: { xs: 150, desktop: 175, desktopMd: visaServices ? 195 : 240 },
+          height: { xs: 150, desktop: 175, desktopMd: visaServices ? 195 : 270 },
           borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)',
           filter: 'blur(150px)',
@@ -249,7 +252,7 @@ function PassportFocal({ navy }: { navy: string }) {
   )
 }
 
-export function VisaMasterSection() {
+export function VisaMasterSection({ visaServices = false }: { visaServices?: boolean }) {
   const colors = usePublicBrandColors()
 
   return (
@@ -259,9 +262,9 @@ export function VisaMasterSection() {
       sx={{
         position: 'relative',
         overflow: 'hidden',
-        py: { xs: 5, md: 6, lg: 7 },
+        py: visaServices ? { xs: 7, md: 8, desktop: 9 } : darkSectionPy,
         bgcolor: colors.navy,
-        minHeight: { md: 300, lg: 320 },
+        minHeight: visaServices ? { md: 420 } : { md: 300, lg: 320 },
         display: 'flex',
         alignItems: 'center',
       }}
@@ -298,12 +301,12 @@ export function VisaMasterSection() {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              md: 'minmax(0, 0.95fr) auto minmax(0, 1.4fr)',
-            },
-            gap: { xs: 3.5, md: 2, lg: 2.5 },
+            gridTemplateColumns: visaServices
+              ? { xs: '1fr', lg: 'minmax(0, 1fr) auto' }
+              : { xs: '1fr', desktop: 'minmax(0, 0.95fr) auto minmax(0, 1.4fr)' },
+            gap: visaServices ? { xs: 3.5, lg: 4 } : { xs: 3.5, md: 2, lg: 2.5 },
             alignItems: 'center',
+            ...(visaServices ? { '@media (min-width: 1100px)': { gridTemplateColumns: 'minmax(0, .95fr) minmax(270px, 330px) minmax(0, 1.35fr)', gap: 2.5 } } : {}),
           }}
         >
           {/* Left — copy + CTA */}
@@ -343,9 +346,9 @@ export function VisaMasterSection() {
               <Typography
                 component="h2"
                 sx={{
-                  fontFamily: publicFonts.heading,
-                  fontSize: { xs: '28px', md: '34px', lg: '38px' },
-                  fontWeight: 800,
+                  fontFamily: publicFonts.display,
+                  fontSize: visaServices ? { xs: '32px', lg: '38px', desktop: '42px' } : { xs: '28px', desktop: '34px', desktopMd: '44px' },
+                  fontWeight: 700,
                   color: colors.white,
                   lineHeight: 1.1,
                   letterSpacing: '-0.02em',
@@ -356,8 +359,8 @@ export function VisaMasterSection() {
 
               <Typography
                 sx={{
-                  fontSize: { xs: '14px', md: '15px' },
-                  color: 'rgba(255, 255, 255, 0.82)',
+                  fontSize: visaServices ? { xs: '16px', desktop: '17px' } : { xs: '14px', desktop: '15px', desktopMd: '17px' },
+                  color: visaServices ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.82)',
                   lineHeight: 1.6,
                 }}
               >
@@ -368,7 +371,7 @@ export function VisaMasterSection() {
               <Box sx={{ pt: 0.75 }}>
                 <Button
                   variant="contained"
-                  href="/v2/countries"
+                  href="/countries"
                   endIcon={<ArrowRight size={16} />}
                   sx={{ ...getMarketingPrimaryButtonSx(colors), px: 3.5 }}
                 >
@@ -379,33 +382,37 @@ export function VisaMasterSection() {
           </Box>
 
           {/* Center — blended passport */}
-          <PassportFocal navy={colors.navy} />
+          <PassportFocal navy={colors.navy} visaServices={visaServices} />
 
           {/* Right — feature panel */}
           <Box
             sx={{
-              borderRadius: '18px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              bgcolor: 'rgba(4, 22, 42, 0.45)',
+              borderRadius: visaServices ? 0 : '18px',
+              border: visaServices ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+              bgcolor: visaServices ? 'transparent' : 'rgba(4, 22, 42, 0.45)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
-              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              boxShadow: visaServices ? 'none' : 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
               px: { xs: 1.25, md: 1.5, lg: 1.75 },
-              py: { xs: 1.75, md: 2.25 },
+              py: { xs: 1.75, desktop: 2.25, desktopMd: visaServices ? 2.25 : 3.5 },
+              minHeight: { desktopMd: visaServices ? 'auto' : 260 },
+              display: 'flex',
+              alignItems: 'center',
               position: 'relative',
               zIndex: 2,
+              ...(visaServices ? { gridColumn: { xs: 'auto', lg: '1 / -1' }, '@media (min-width: 1100px)': { gridColumn: 'auto' } } : {}),
             }}
           >
             <Box
               sx={{
-                display: { xs: 'none', lg: 'flex' },
+                display: visaServices ? 'none' : { xs: 'none', desktopMd: 'flex' },
                 alignItems: 'stretch',
                 width: '100%',
               }}
             >
               {premiumFeatures.map((feature, index) => (
                 <Fragment key={feature.title}>
-                  <PremiumFeatureItem {...feature} />
+                  <PremiumFeatureItem {...feature} visaServices={visaServices} />
                   {index < premiumFeatures.length - 1 && (
                     <Box
                       aria-hidden
@@ -423,13 +430,15 @@ export function VisaMasterSection() {
 
             <Box
               sx={{
-                display: { xs: 'grid', lg: 'none' },
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                gap: 2.25,
+                display: visaServices ? 'grid' : { xs: 'grid', desktopMd: 'none' },
+                width: '100%',
+                gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' },
+                gap: visaServices ? 0 : 2.25,
+                ...(visaServices ? { '@media (min-width: 1100px)': { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }, '& > :nth-of-type(odd)': { borderRight: { lg: '1px solid rgba(255,255,255,.15)' } }, '& > :nth-of-type(-n+2)': { borderBottom: { lg: '1px solid rgba(255,255,255,.15)' } }, '& > *': { py: { xs: 2, lg: 2.5 } } } : {}),
               }}
             >
               {premiumFeatures.map((feature) => (
-                <PremiumFeatureItem key={feature.title} {...feature} />
+                <PremiumFeatureItem key={feature.title} {...feature} visaServices={visaServices} />
               ))}
             </Box>
           </Box>

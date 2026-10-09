@@ -90,6 +90,9 @@ export default function Input({
       variant="outlined"
       size={size === 'sm' ? 'small' : 'medium'}
       slotProps={{
+        ...(type === 'date' || type === 'datetime-local' || type === 'month' || type === 'time' || type === 'week'
+          ? { inputLabel: { shrink: true } }
+          : {}),
         input: {
           readOnly: readonly,
           startAdornment: startAdornment ? (

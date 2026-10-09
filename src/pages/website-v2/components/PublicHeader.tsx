@@ -15,7 +15,6 @@ import { Menu, X, Search, User, ArrowRight } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Button as DsButton } from '@/design-system/UIComponents'
-import { WebsiteAbToggle } from '@/shared/website/WebsiteAbToggle'
 import { useScrolledHeader } from '../hooks/useScrolledHeader'
 import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, publicShadows, usePublicBrandColors } from '../theme/publicSiteTokens'
@@ -24,13 +23,13 @@ import { PublicContainer } from './PublicContainer'
 const NAV_HEIGHT = 72
 
 const navLinks = [
-  { label: 'Home', href: '/v2' },
-  { label: 'Destinations', href: '/v2/countries' },
-  { label: 'Marine', href: '/v2/marine-crew' },
-  { label: 'Corporate', href: '/v2/corporate' },
-  { label: 'Travel Agents', href: '/v2#specialist-visa-services' },
-  { label: 'Services', href: '/v2/services' },
-  { label: 'About Us', href: '/v2/about' },
+  { label: 'Home', href: '/' },
+  { label: 'Destinations', href: '/countries' },
+  { label: 'Marine', href: '/marine-crew' },
+  { label: 'Corporate', href: '/corporate' },
+  { label: 'Travel Agents', href: '/travel-agents' },
+  { label: 'Services', href: '/services' },
+  { label: 'About Us', href: '/about' },
 ]
 
 function NavLink({
@@ -85,30 +84,28 @@ export function PublicHeader() {
   const theme = useTheme()
   const navigate = useNavigate()
   const scrolled = useScrolledHeader()
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   const isWide = useMediaQuery(theme.breakpoints.up('desktop'))
   const isTablet = useMediaQuery(theme.breakpoints.up('lg'))
   const showCenterNav = isTablet
-  const isHome = pathname === '/v2' || pathname === '/v2/'
+  const isHome = pathname === '/'
   /** Homepage at top: nav blends into the hero (no white bar / gap). */
   const heroOverlay = isHome && !scrolled
 
   const isActive = (href: string) => {
-    const pathOnly = href.split('#')[0] || '/v2'
-    if (pathOnly === '/v2' || pathOnly === '/v2/') {
-      // Hash-only home anchors (e.g. Visa Master) should not mark Home active.
-      if (href.includes('#')) return false
-      return pathname === '/v2' || pathname === '/v2/'
-    }
+    const [linkPath, anchor] = href.split('#')
+    const pathOnly = linkPath || '/'
+    if (anchor) return pathname === pathOnly && hash === `#${anchor}`
+    if (pathOnly === '/') return pathname === '/'
     return pathname === pathOnly || pathname.startsWith(`${pathOnly}/`)
   }
 
   const handleSearchSubmit = () => {
     const q = searchQuery.trim()
-    navigate(q ? `/v2/countries?search=${encodeURIComponent(q)}` : '/v2/countries')
+    navigate(q ? `/countries?search=${encodeURIComponent(q)}` : '/countries')
     setSearchQuery('')
   }
 
@@ -157,7 +154,7 @@ export function PublicHeader() {
           >
             <Box
               component="a"
-              href="/v2"
+              href="/"
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -214,8 +211,6 @@ export function PublicHeader() {
             spacing={{ xs: 0.75, md: 1.25 }}
             sx={{ flexShrink: 0, zIndex: 2, ml: 'auto' }}
           >
-            <WebsiteAbToggle />
-
             <DsButton
               href="/sign-in"
               variant="soft"
@@ -329,7 +324,6 @@ export function PublicHeader() {
         <Divider sx={{ mx: 2.5, my: 2 }} />
 
         <Stack spacing={1.5} sx={{ px: 2.5, pb: 3 }}>
-          <WebsiteAbToggle fullWidth onNavigate={() => setDrawerOpen(false)} />
           <Button
             component="a"
             href="/sign-in"
@@ -350,7 +344,7 @@ export function PublicHeader() {
           </Button>
           <Button
             component="a"
-            href="/v2/apply/new"
+            href="/apply/new"
             fullWidth
             variant="contained"
             endIcon={<ArrowRight size={18} />}

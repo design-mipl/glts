@@ -5,6 +5,7 @@ import { FooterSection } from '../pages/LandingPage/components/FooterSection'
 import { MobileStickyCta } from './MobileStickyCta'
 import { publicFonts } from '../theme/publicSiteTokens'
 import { useLenis } from '../hooks/useLenis'
+import { websiteCssVariables } from '../theme/websiteDesignSystem'
 
 interface PublicLayoutProps {
   children: ReactNode
@@ -15,6 +16,7 @@ export function PublicLayout({ children, hideFooter = false }: PublicLayoutProps
   useLenis()
   return (
     <Box
+      style={websiteCssVariables}
       sx={{
         display: 'flex',
         flexDirection: 'column',

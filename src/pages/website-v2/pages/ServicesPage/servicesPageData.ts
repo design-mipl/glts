@@ -35,8 +35,8 @@ export const serviceCategories: {
       'Document checklist support',
       'Real-time application tracking',
     ],
-    ctaLabel: 'View Retail Services',
-    href: '/v2',
+    ctaLabel: 'View Visa Services',
+    href: '/visa-services',
     image: servicesCategoryImages.retail,
   },
   {
@@ -52,7 +52,7 @@ export const serviceCategories: {
       'Priority processing options',
     ],
     ctaLabel: 'View Corporate Services',
-    href: '/v2/corporate',
+    href: '/corporate',
     image: servicesCategoryImages.corporate,
   },
   {
@@ -68,7 +68,7 @@ export const serviceCategories: {
       'Port-of-call coordination',
     ],
     ctaLabel: 'View Marine Services',
-    href: '/v2/marine-crew',
+    href: '/marine-crew',
     image: servicesCategoryImages.marine,
   },
 ]
@@ -80,7 +80,7 @@ export const servicesAdditional = {
     description:
       'Itineraries, transit letters, and embassy-ready paperwork that keep travelers moving without documentation gaps.',
     ctaLabel: 'Learn More',
-    href: '/v2/track',
+    href: '/track',
     image: servicesAdditionalImages.travelTransit,
   },
   cards: [
@@ -89,7 +89,7 @@ export const servicesAdditional = {
       title: 'Compliance Record Management',
       description: 'Centralized visa records and audit-ready documentation trails.',
       ctaLabel: 'Learn More',
-      href: '/v2/track',
+      href: '/track',
       image: servicesAdditionalImages.compliance,
     },
     {
@@ -97,7 +97,7 @@ export const servicesAdditional = {
       title: 'Travel Insurance Support',
       description: 'Travel protection assistance tailored to trip type and duration.',
       ctaLabel: 'Learn More',
-      href: '/v2/track',
+      href: '/track',
       image: servicesAdditionalImages.insurance,
     },
     {
@@ -105,8 +105,16 @@ export const servicesAdditional = {
       title: 'Forex Support',
       description: 'Foreign exchange assistance for travel funds and assignments.',
       ctaLabel: 'Learn More',
-      href: '/v2/track',
+      href: '/track',
       image: servicesAdditionalImages.forex,
+    },
+    {
+      id: 'travel-assistance-24x7',
+      title: '24×7 Travel Assistance',
+      description: 'Round-the-clock support for itinerary changes, emergencies, and travel coordination.',
+      ctaLabel: 'Learn More',
+      href: '/track',
+      image: servicesAdditionalImages.travelAssistance,
     },
   ],
 } as const
@@ -115,7 +123,7 @@ export const servicesFinalCta = {
   heading: 'Need Help Choosing the Right Service?',
   description:
     'Our visa specialists will help you select the right solution based on your travel needs.',
-  primaryButton: { label: 'Contact Us', href: '/v2/track' },
-  secondaryButton: { label: 'Request Consultation', href: '/v2/track' },
+  primaryButton: { label: 'Contact Us', href: '/track' },
+  secondaryButton: { label: 'Request Consultation', href: '/track' },
   image: servicesFinalCtaImage,
 } as const

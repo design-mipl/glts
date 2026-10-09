@@ -2,10 +2,10 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { LazyRouteBoundary, lazyNamed } from '@/shared/routing/lazyRoute'
 
 const AuthApp = lazyNamed(() => import('@/pages/auth/AuthApp'), 'AuthApp')
+const SignUpPage = lazyNamed(() => import('@/pages/auth/pages/SignUpPage'), 'SignUpPage')
 const RetailPortalApp = lazyNamed(() => import('@/pages/customer/RetailApp'), 'RetailPortalApp')
 const B2BCustomerApp = lazyNamed(() => import('@/pages/customer/BusinessApp'), 'B2BCustomerApp')
 const AdminPortalApp = lazyNamed(() => import('@/pages/admin/App'), 'AdminPortalApp')
-const PublicWebsiteApp = lazyNamed(() => import('@/pages/website/App'), 'PublicWebsiteApp')
 const PublicWebsiteV2App = lazyNamed(() => import('@/pages/website-v2/App'), 'PublicWebsiteV2App')
 
 export function PageRouter() {
@@ -14,6 +14,7 @@ export function PageRouter() {
       <Routes>
         {/* Sign-in flow — /sign-in/* */}
         <Route path="/sign-in/*" element={<AuthApp />} />
+        <Route path="/sign-up" element={<SignUpPage />} />
 
         {/* Legacy operations entry now belongs inside the admin portal. */}
         <Route path="/operations/*" element={<Navigate to="/admin/operations" replace />} />
@@ -33,14 +34,11 @@ export function PageRouter() {
           <Route path="*" element={<AdminPortalApp />} />
         </Route>
 
-        {/* Public Website v2 — alternate marketing site (full page set under /v2) */}
-        <Route path="/v2">
+        {/* Public website — V2 owns the root and all non-portal routes. */}
+        <Route path="/">
           <Route index element={<PublicWebsiteV2App />} />
           <Route path="*" element={<PublicWebsiteV2App />} />
         </Route>
-
-        {/* Public Website — everything else */}
-        <Route path="/*" element={<PublicWebsiteApp />} />
       </Routes>
     </LazyRouteBoundary>
   )

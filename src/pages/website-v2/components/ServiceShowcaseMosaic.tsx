@@ -16,7 +16,7 @@ function ServiceShowcaseCard({
   points,
   image,
   fallback,
-  href = '/v2/countries',
+  href = '/countries',
   minHeight,
 }: {
   title: string

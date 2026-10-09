@@ -19,7 +19,7 @@ export const aboutHeroContent = {
   heading: 'Your Trusted Partner for Accurate Visa Solutions',
   description:
     'GreenLight delivers accurate, compliant, and technology-enabled visa solutions for Retail, Corporate, and Marine clients — with expert review before every submission.',
-  primaryCta: { label: 'Talk to an Expert', href: '/v2/track' },
+  primaryCta: { label: 'Talk to an Expert', href: '/track' },
   image: aboutHeroImage,
 } as const
 
@@ -82,25 +82,25 @@ export const aboutIndustries: {
   {
     title: 'Retail Travelers',
     description: 'Tourist, family, and personal travel visas with guided document preparation.',
-    href: '/v2',
+    href: '/',
     image: aboutIndustryImages.retail,
   },
   {
     title: 'Corporate Businesses',
     description: 'Business travel and project visas with dedicated account coordination.',
-    href: '/v2/corporate',
+    href: '/corporate',
     image: aboutIndustryImages.corporate,
   },
   {
     title: 'Marine & Offshore',
     description: 'Crew, superintendent, and offshore visa handling for vessel operations.',
-    href: '/v2/marine-crew',
+    href: '/marine-crew',
     image: aboutIndustryImages.marine,
   },
   {
     title: 'Travel Partners',
     description: 'Reliable visa fulfillment support for agencies and travel management companies.',
-    href: '/v2',
+    href: '/travel-agents',
     image: aboutIndustryImages.partners,
   },
 ]
@@ -109,7 +109,7 @@ export const aboutFinalCta = {
   heading: 'Ready to Start Your Visa Journey?',
   description:
     'Our experts are ready to help you choose the right visa solution with confidence.',
-  primaryButton: { label: 'Contact Us', href: '/v2/track' },
-  secondaryButton: { label: 'Explore Services', href: '/v2/services' },
+  primaryButton: { label: 'Contact Us', href: '/track' },
+  secondaryButton: { label: 'Explore Services', href: '/services' },
   image: aboutFinalCtaImage,
 } as const

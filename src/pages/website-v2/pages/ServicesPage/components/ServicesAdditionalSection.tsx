@@ -170,9 +170,9 @@ export function ServicesAdditionalSection() {
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
+              fontFamily: publicFonts.display,
               fontSize: { xs: '28px', md: '36px' },
-              fontWeight: 800,
+              fontWeight: 700,
               color: colors.navy,
               lineHeight: 1.15,
               letterSpacing: '-0.03em',
@@ -200,7 +200,7 @@ export function ServicesAdditionalSection() {
             gridTemplateColumns: {
               xs: '1fr',
               sm: 'repeat(2, minmax(0, 1fr))',
-              lg: 'repeat(4, minmax(0, 1fr))',
+              lg: 'repeat(5, minmax(0, 1fr))',
             },
             gap: { xs: 2, md: 2.5 },
             alignItems: 'stretch',

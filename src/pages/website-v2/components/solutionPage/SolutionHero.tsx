@@ -34,9 +34,9 @@ export function SolutionHero({ title, subtitle, children }: SolutionHeroProps) {
           <Typography
             component="h1"
             sx={{
-              fontFamily: publicFonts.heading,
+              fontFamily: publicFonts.display,
               fontSize: { xs: '32px', md: '40px' },
-              fontWeight: 800,
+              fontWeight: 700,
               color: colors.navy,
               lineHeight: 1.15,
               mb: subtitle ? 2 : 0,

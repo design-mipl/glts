@@ -4,6 +4,10 @@ export const PortalSelectionPage = lazyNamed(
   () => import('./pages/PortalSelectionPage'),
   'PortalSelectionPage',
 )
+export const RetailAuthPage = lazyNamed(
+  () => import('./pages/RetailAuthPage'),
+  'RetailAuthPage',
+)
 export const BusinessLoginHubPage = lazyNamed(
   () => import('./pages/BusinessLoginHubPage'),
   'BusinessLoginHubPage',

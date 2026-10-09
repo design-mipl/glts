@@ -1,94 +1,82 @@
-import { useMemo } from 'react'
 import { Box } from '@mui/material'
-import { CommonDestinationsSection } from '../../components/CommonDestinationsSection'
+import { Anchor, FileCheck2, Globe2, RefreshCw } from 'lucide-react'
 import { VisaCategoryCardsSection } from '../../components/VisaCategoryCardsSection'
-import { WhyAccuracySplitSection } from '../../components/WhyAccuracySplitSection'
-import { AdditionalServicesSection } from '../../components/AdditionalServicesSection'
-import { TestimonialSection } from '../../components/TestimonialSection'
-import { FAQSection } from '../../components/FAQSection'
+import { ChallengesWeSolveSection } from '../../components/ChallengesWeSolveSection'
+import { TrustedCompaniesSection } from '../../components/TrustedCompaniesSection'
+import { marineCompanyLogos } from '../../assets/companyLogos'
+import { LandingFaqSection } from '../LandingPage/components/LandingFaqSection'
 import { SolutionFinalCtaSection } from '../../components/solutionPage/SolutionFinalCtaSection'
-import { WorkflowTimelineSection } from '../../components/workflowTimeline/WorkflowTimelineSection'
-import { resolveDestinationCountries } from '../../utils/resolveDestinationCountries'
 import { usePublicBrandColors } from '../../theme/publicSiteTokens'
 import { MarineHero } from './components/MarineHero'
+import { MarineAccuracySection } from './components/MarineAccuracySection'
+import { MarineWorkflowSection } from './components/MarineWorkflowSection'
 import { CompaniesWeWorkWithSection } from './components/CompaniesWeWorkWithSection'
 import { MarineRetainerPlansSection } from './components/MarineRetainerPlansSection'
 import {
-  marineImpactPoints,
-  marineAccuracyVisuals,
   marineVisaCategories,
-  marineDestinations,
-  marineAdditionalServices,
-  marineTestimonials,
   marineFaqs,
-  marineProcessSteps,
 } from './marinePageData'
 
 export function MarineCrewVisaPage() {
   const colors = usePublicBrandColors()
-  const marineDestinationCountries = useMemo(
-    () => resolveDestinationCountries(marineDestinations),
-    [],
-  )
-
   return (
     <Box component="main" sx={{ bgcolor: colors.white }}>
       <MarineHero />
 
-      <WhyAccuracySplitSection
-        id="why-marine-visa-accuracy"
-        title="Why Marine Visa Accuracy Matters"
-        description="In marine operations, visa delays affect vessel schedules, crew rotations, port operations, and contractual commitments."
-        images={{
-          primary: marineAccuracyVisuals.primary,
-          secondaryTop: marineAccuracyVisuals.secondaryTop,
-          secondaryBottom: marineAccuracyVisuals.secondaryBottom,
-        }}
-        impacts={marineImpactPoints}
+      <MarineAccuracySection />
+
+      <ChallengesWeSolveSection
+        id="marine-industry-challenges"
+        heading="Industry Challenges We Solve"
+        description="We understand the unique needs of the marine and offshore industry."
+        challenges={[
+          {
+            title: 'Urgent Crew Movements',
+            description: 'Coordinate last-minute crew changes around vessel departure and port schedules.',
+            icon: Anchor,
+          },
+          {
+            title: 'Multiple Port and Destination Rules',
+            description: 'Navigate different visa requirements across ports, routes, and transit countries.',
+            icon: Globe2,
+          },
+          {
+            title: 'Seafarer Documentation',
+            description: 'Prepare seaman books, contracts, joining letters, and supporting records correctly.',
+            icon: FileCheck2,
+          },
+          {
+            title: 'Changing Visa Requirements',
+            description: 'Respond quickly when embassy rules or entry requirements change.',
+            icon: RefreshCw,
+          },
+        ]}
       />
 
       <VisaCategoryCardsSection items={marineVisaCategories} />
 
-      <CommonDestinationsSection
-        subtitle="Frequently requested marine crew visa destinations supported through GreenLight."
-        countries={marineDestinationCountries}
-      />
-
-      <WorkflowTimelineSection
-        id="how-marine-visa-handling-works"
-        sectionLabel="Marine Workflow"
-        heading="How Marine Crew Visa Handling Works"
-        subheading="A transparent workflow designed for vessel operators, crew managers, and maritime coordinators."
-        steps={marineProcessSteps}
-      />
+      <MarineWorkflowSection />
 
       <CompaniesWeWorkWithSection />
 
-      <AdditionalServicesSection
-        id="additional-marine-services"
-        sectionLabel="Additional Services"
-        heading="Everything Your Crew Needs Beyond Visas"
-        description="Documentation, compliance, insurance, and travel support built for seafarers, offshore crew, and marine operations teams."
-        services={marineAdditionalServices}
-      />
-
       <MarineRetainerPlansSection />
 
-      <TestimonialSection
-        testimonials={marineTestimonials}
-        subtitle="Shipping companies, offshore operators, and crew managers rely on GreenLight for seafarer visas, urgent port calls, and compliant crew rotations."
-        markerIcon="ship"
+      <TrustedCompaniesSection
+        id="trusted-maritime-companies"
+        heading="Trusted by Maritime Companies"
+        previewOnly
+        logos={marineCompanyLogos}
       />
 
       <SolutionFinalCtaSection
         variant="marine"
         heading="Need Reliable Marine Crew Visa Support?"
         description="From crew changes to urgent travel documentation, our specialists ensure your seafarers move seamlessly across international borders."
-        primaryButton={{ label: 'Talk to a Marine Visa Specialist', href: '/v2/track' }}
-        secondaryButton={{ label: 'Request a Consultation', href: '/v2/track' }}
+        primaryButton={{ label: 'Talk to a Marine Visa Specialist', href: '/track' }}
+        secondaryButton={{ label: 'Request a Consultation', href: '/track' }}
       />
 
-      <FAQSection faqs={marineFaqs} />
+      <LandingFaqSection faqs={marineFaqs} />
     </Box>
   )
 }

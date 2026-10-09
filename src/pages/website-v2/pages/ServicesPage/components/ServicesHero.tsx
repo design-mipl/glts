@@ -88,9 +88,9 @@ export function ServicesHero() {
           <Typography
             component="h1"
             sx={{
-              fontFamily: publicFonts.heading,
+              fontFamily: publicFonts.display,
               fontSize: { xs: '34px', sm: '40px', md: '46px' },
-              fontWeight: 800,
+              fontWeight: 700,
               color: colors.white,
               lineHeight: 1.1,
               letterSpacing: '-0.02em',

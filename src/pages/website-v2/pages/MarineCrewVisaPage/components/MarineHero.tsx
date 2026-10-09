@@ -108,9 +108,9 @@ export function MarineHero() {
           <Typography
             component="h1"
             sx={{
-              fontFamily: publicFonts.heading,
+              fontFamily: publicFonts.display,
               fontSize: { xs: '40px', sm: '48px', md: '56px', lg: '64px' },
-              fontWeight: 800,
+              fontWeight: 700,
               color: colors.white,
               lineHeight: 1.15,
               letterSpacing: '-0.03em',

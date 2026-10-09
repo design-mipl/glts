@@ -1,5 +1,5 @@
-import { Box, Typography, Stack, Chip, Button, keyframes } from '@mui/material'
-import { ArrowRight, CalendarDays, User } from 'lucide-react'
+import { Box, Typography, Stack, Button, keyframes } from '@mui/material'
+import { ArrowRight, MessageCircle, Check } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import {
   publicFonts,
@@ -14,18 +14,18 @@ import { RetailHeroBackgroundImage } from './RetailHeroBackgroundImage'
 
 /** Match Marine / Corporate hero vertical rhythm. */
 const retailHeroMinHeight = {
-  xs: 580,
-  md: 640,
-  lg: 720,
+  xs: 620,
+  md: 520,
+  desktop: 540,
 } as const
 
 const retailHeroSpacing = {
-  topPadding: { xs: '92px', md: '100px', lg: '108px' },
-  bottomPadding: { xs: '60px', md: '70px', lg: '80px' },
-  badgeToHeading: { xs: '28px', md: '32px' },
-  headingToDescription: { xs: '24px', md: '28px' },
-  descriptionToCta: { xs: '36px', md: '40px' },
-  ctaToStats: { xs: '48px', md: '56px' },
+  topPadding: { xs: '56px', desktop: '54px' },
+  bottomPadding: { xs: '50px', desktop: '50px' },
+  badgeToHeading: { xs: '14px', desktop: '16px' },
+  headingToDescription: { xs: '18px', desktop: '20px' },
+  descriptionToCta: { xs: '25px', desktop: '28px' },
+  ctaToStats: { xs: '28px', desktop: '34px' },
 } as const
 
 const fadeInContent = keyframes`
@@ -67,59 +67,44 @@ export function RetailHero() {
       >
         <Box
           sx={{
-            width: { xs: '100%', lg: '62%', xl: '56%' },
-            maxWidth: 720,
+            width: { xs: '100%', md: '57%' },
+            maxWidth: 620,
             animation: `${fadeInContent} 0.85s ease-out both`,
+            '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
           }}
         >
-          <Chip
-            icon={<User size={14} />}
-            label="RETAIL VISA SERVICES"
-            sx={{
-              height: 28,
-              mb: retailHeroSpacing.badgeToHeading,
-              fontSize: '11px',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.18)`,
-              color: colors.greenBright,
-              border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.35)`,
-              '& .MuiChip-icon': { color: colors.greenBright, ml: 1 },
-            }}
-          />
+          <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: retailHeroSpacing.badgeToHeading, fontSize: 12, fontWeight: 800, letterSpacing: '.1em', color: colors.greenBright }}>
+            <Box component="span" sx={{ width: 27, height: 3, bgcolor: colors.greenBright, borderRadius: 1 }} /> VISA SERVICES
+          </Typography>
 
           <Typography
             component="h1"
             sx={{
-              fontFamily: publicFonts.heading,
-              fontSize: { xs: '34px', sm: '40px', md: '46px', lg: '52px' },
-              fontWeight: 800,
+              fontFamily: publicFonts.display,
+              fontSize: { xs: '39px', md: '47px', desktop: '56px' },
+              fontWeight: 700,
               color: colors.white,
-              lineHeight: 1.1,
+              lineHeight: 1.07,
               letterSpacing: '-0.02em',
               mb: retailHeroSpacing.headingToDescription,
-              maxWidth: 580,
+              maxWidth: 570,
             }}
           >
-            Visas Done Right, Before They Go Wrong.
+            Visa Services, Guided by Experts.
           </Typography>
 
           <Typography
             sx={{
               fontSize: { xs: '16px', md: '17px' },
               color: 'rgba(255, 255, 255, 0.88)',
-              lineHeight: 1.75,
+              lineHeight: 1.6,
               mb: retailHeroSpacing.descriptionToCta,
-              maxWidth: 460,
+              maxWidth: 520,
               whiteSpace: 'pre-line',
             }}
           >
-            {[
-              'Expert-led review.',
-              'Clear steps.',
-              'Timely submission.',
-              'Visa solutions for every kind of traveler.',
-            ].join('\n')}
+            From tourist and family visits to business, study, and transit travel, get clear
+            requirements, expert document review, and a transparent path to submission.
           </Typography>
 
           <Stack
@@ -144,7 +129,7 @@ export function RetailHero() {
             <Button
               variant="outlined"
               href={retailHeroCtas.secondary.href}
-              endIcon={<CalendarDays size={16} />}
+              endIcon={<MessageCircle size={16} />}
               sx={{
                 ...getOutlinedButtonSx(),
                 borderColor: 'rgba(255, 255, 255, 0.45)',
@@ -166,50 +151,43 @@ export function RetailHero() {
 
           <Box
             component="ul"
-            aria-label="Retail trust indicators"
+            aria-label="Visa service trust indicators"
             sx={{
               listStyle: 'none',
               m: 0,
               p: { xs: 1.5, md: 0 },
               display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
+              flexDirection: { xs: 'column', sm: 'row' },
               gap: 0,
               width: '100%',
               borderRadius: { xs: '16px', md: 0 },
-              bgcolor: {
-                xs: 'rgba(255, 255, 255, 0.06)',
-                md: 'transparent',
-              },
-              border: {
-                xs: '1px solid rgba(255, 255, 255, 0.12)',
-                md: 'none',
-              },
-              backdropFilter: { xs: 'blur(12px)', md: 'none' },
+              bgcolor: 'transparent',
+              border: 'none',
             }}
           >
-            {retailHeroTrustPoints.map(({ label, icon: Icon }, index) => (
+            {retailHeroTrustPoints.map(({ label }, index) => (
               <Box
                 component="li"
                 key={label}
                 sx={{
                   flex: { md: '1 1 0' },
                   minWidth: 0,
-                  minHeight: { md: 64 },
+                  minHeight: { sm: 46 },
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 1.75,
-                  py: { xs: 1.75, md: 1.25 },
-                  px: { xs: 1, md: 1.5 },
+                  gap: 1.1,
+                  py: { xs: 1, sm: .75 },
+                  px: { xs: 0, sm: 1.5 },
                   borderBottom: {
                     xs:
                       index < retailHeroTrustPoints.length - 1
                         ? '1px solid rgba(255,255,255,0.14)'
                         : 'none',
-                    md: 'none',
+                    sm: 'none',
                   },
                   borderRight: {
                     xs: 'none',
-                    md:
+                    sm:
                       index < retailHeroTrustPoints.length - 1
                         ? '1px solid rgba(255,255,255,0.22)'
                         : 'none',
@@ -218,22 +196,22 @@ export function RetailHero() {
               >
                 <Box
                   sx={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: '14px',
+                    width: 27,
+                    height: 27,
+                    borderRadius: '50%',
                     flexShrink: 0,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.14)`,
-                    border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.28)`,
+                    bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.16)`,
+                    border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.65)`,
                   }}
                 >
-                  <Icon size={20} color={colors.greenBright} strokeWidth={1.85} aria-hidden />
+                  <Check size={16} color={colors.greenBright} strokeWidth={2.5} aria-hidden />
                 </Box>
                 <Typography
                   sx={{
-                    fontSize: { xs: '13.5px', md: '14px' },
+                    fontSize: { xs: '13.5px', md: '13.5px' },
                     fontWeight: 600,
                     color: colors.white,
                     lineHeight: 1.3,

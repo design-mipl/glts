@@ -24,10 +24,16 @@ export interface VisaCategoryCardItem {
 interface VisaCategoryCardsSectionProps {
   id?: string
   title?: string
+  subtitle?: string
+  headingAlign?: 'left' | 'center'
+  headingSize?: 'default' | 'business'
   items: VisaCategoryCardItem[]
+  desktopColumns?: 2 | 3 | 4
+  readable?: boolean
+  imageHeight?: { mobile: number; tablet: number; desktop: number }
 }
 
-function VisaCategoryCard({ title, description, image, href = '/v2/countries' }: VisaCategoryCardItem) {
+function VisaCategoryCard({ title, description, image, href = '/countries', readable = false, imageHeight }: VisaCategoryCardItem & { readable?: boolean; imageHeight?: { mobile: number; tablet: number; desktop: number } }) {
   const colors = usePublicBrandColors()
   const [imgSrc, setImgSrc] = useState(image.src)
 
@@ -64,7 +70,11 @@ function VisaCategoryCard({ title, description, image, href = '/v2/countries' }:
         sx={{
           position: 'relative',
           width: '100%',
-          height: SOLUTION_CARD_IMAGE_HEIGHT,
+          height: imageHeight?.mobile ?? SOLUTION_CARD_IMAGE_HEIGHT,
+          ...(imageHeight && {
+            '@media (min-width: 600px)': { height: imageHeight.tablet },
+            '@media (min-width: 1024px)': { height: imageHeight.desktop },
+          }),
           flexShrink: 0,
           overflow: 'hidden',
           bgcolor: colors.surfaceAlt,
@@ -105,7 +115,7 @@ function VisaCategoryCard({ title, description, image, href = '/v2/countries' }:
           <Typography
             sx={{
               fontFamily: publicFonts.heading,
-              fontSize: '18px',
+              fontSize: readable ? { xs: '19px', md: '20px' } : '18px',
               fontWeight: 800,
               color: colors.navy,
               lineHeight: 1.25,
@@ -117,7 +127,7 @@ function VisaCategoryCard({ title, description, image, href = '/v2/countries' }:
 
         <Typography
           sx={{
-            fontSize: '14px',
+            fontSize: readable ? '16px' : '14px',
             color: colors.textSecondary,
             lineHeight: 1.65,
             mb: 2,
@@ -136,23 +146,29 @@ function VisaCategoryCard({ title, description, image, href = '/v2/countries' }:
   )
 }
 
-export function VisaCategoryCardsSection({ id = 'visa-categories', title = 'Visa Categories', items }: VisaCategoryCardsSectionProps) {
+export function VisaCategoryCardsSection({ id = 'visa-categories', title = 'Visa Categories', subtitle, headingAlign, headingSize, items, desktopColumns, readable = false, imageHeight }: VisaCategoryCardsSectionProps) {
+  const columnCount = desktopColumns ?? Math.min(items.length, 3)
+
   return (
-    <SolutionPageSection id={id} title={title}>
+    <SolutionPageSection id={id} title={title} subtitle={subtitle} headingAlign={headingAlign} headingSize={headingSize} readable={readable}>
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: {
             xs: '1fr',
             sm: 'repeat(2, minmax(0, 1fr))',
-            md: `repeat(${Math.min(items.length, 3)}, minmax(0, 1fr))`,
+            md: columnCount === 4 ? 'repeat(2, minmax(0, 1fr))' : `repeat(${columnCount}, minmax(0, 1fr))`,
+            ...(columnCount === 4 && {
+              '@media (max-width: 599.95px)': { gridTemplateColumns: '1fr' },
+              '@media (min-width: 1024px)': { gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' },
+            }),
           },
           gap: { xs: 2, md: 2.5 },
           alignItems: 'stretch',
         }}
       >
         {items.map((item) => (
-          <VisaCategoryCard key={item.id} {...item} />
+          <VisaCategoryCard key={item.id} {...item} readable={readable} imageHeight={imageHeight} />
         ))}
       </Box>
     </SolutionPageSection>

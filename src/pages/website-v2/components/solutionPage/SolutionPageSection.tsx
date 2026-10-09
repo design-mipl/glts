@@ -8,10 +8,13 @@ interface SolutionPageSectionProps {
   id?: string
   title: string
   subtitle?: string
+  headingAlign?: 'left' | 'center'
+  headingSize?: 'default' | 'business'
+  readable?: boolean
   children: ReactNode
 }
 
-export function SolutionPageSection({ id, title, subtitle, children }: SolutionPageSectionProps) {
+export function SolutionPageSection({ id, title, subtitle, headingAlign = 'left', headingSize = 'default', readable = false, children }: SolutionPageSectionProps) {
   const colors = usePublicBrandColors()
 
   return (
@@ -23,22 +26,27 @@ export function SolutionPageSection({ id, title, subtitle, children }: SolutionP
       }}
     >
       <PublicContainer variant="hero">
-        <Box sx={{ mb: landingSectionHeaderMb, maxWidth: 720 }}>
+        <Box sx={{ mb: landingSectionHeaderMb, maxWidth: 820, mx: headingAlign === 'center' ? 'auto' : 0, textAlign: headingAlign }}>
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
-              fontSize: { xs: '22px', md: '28px' },
+              fontFamily: publicFonts.display,
+              fontSize: headingSize === 'business' ? '28px' : { xs: '22px', md: '28px' },
               fontWeight: 700,
               color: colors.navy,
-              lineHeight: 1.25,
-              mb: subtitle ? 1.25 : 0,
+              lineHeight: headingSize === 'business' ? 1.2 : 1.25,
+              letterSpacing: headingSize === 'business' ? '-0.02em' : undefined,
+              ...(headingSize === 'business' && {
+                '@media (min-width: 600px)': { fontSize: '32px' },
+                '@media (min-width: 1024px)': { fontSize: '36px' },
+              }),
+              mb: subtitle ? 2 : 0,
             }}
           >
             {title}
           </Typography>
           {subtitle ? (
-            <Typography sx={{ fontSize: '15px', color: colors.textSecondary, lineHeight: 1.65 }}>
+            <Typography sx={{ fontSize: readable ? '16px' : '15px', color: colors.textSecondary, lineHeight: readable ? 1.55 : 1.65 }}>
               {subtitle}
             </Typography>
           ) : null}

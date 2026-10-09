@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { LazyRouteBoundary, lazyNamed } from '@/shared/routing/lazyRoute'
-import { PublicLayout } from '@/pages/website/components/PublicLayout'
+import { PublicLayout } from '@/pages/website-v2/components/PublicLayout'
 import { businessAppBase } from '@/shared/auth/customerSegment'
 import { loadSession } from '@/shared/auth/session'
 
@@ -8,7 +8,7 @@ const MarinePortalApp = lazyNamed(() => import('./marine/App'), 'MarinePortalApp
 const CorporatePortalApp = lazyNamed(() => import('./corporate/App'), 'CorporatePortalApp')
 const B2bAgentPortalApp = lazyNamed(() => import('./b2b-agent/App'), 'B2bAgentPortalApp')
 const CorporateLandingPage = lazyNamed(
-  () => import('@/pages/website/business/CorporateLandingPage'),
+  () => import('@/pages/website-v2/business/CorporateLandingPage'),
   'CorporateLandingPage',
 )
 

@@ -18,7 +18,7 @@ const solutions = [
     description:
       'Apply for tourist, business, visit, student and other visa categories with expert guidance and digital tracking.',
     ctaLabel: 'Explore Retail',
-    href: '/v2',
+    href: '/',
     image: travelSolutionImages.retail,
   },
   {
@@ -28,7 +28,7 @@ const solutions = [
     summary: 'Specialist visa support for seafarers and crew',
     description: 'Dedicated visa expertise for shipping companies, seafarers and marine professionals.',
     ctaLabel: 'Explore Marine',
-    href: '/v2/marine-crew',
+    href: '/marine-crew',
     image: travelSolutionImages.marine,
   },
   {
@@ -39,7 +39,7 @@ const solutions = [
     description:
       'Simplify employee and business visa applications across destinations with dedicated support and centralized management.',
     ctaLabel: 'Explore Corporate',
-    href: '/v2/corporate',
+    href: '/corporate',
     image: travelSolutionImages.corporate,
   },
   {
@@ -49,10 +49,17 @@ const solutions = [
     summary: 'Your visa processing partner',
     description: 'Reliable visa processing support for travel agents, DMCs and other travel partners.',
     ctaLabel: 'Partner With GreenLight',
-    href: '/v2#final-cta',
+    href: '/travel-agents',
     image: travelSolutionImages.corporate,
   },
 ] as const
+
+const visaServiceImages: Record<string, { src: string; fallback: string; alt: string; objectPosition?: string }> = {
+  retail: { src: '/images/about-industries/retail-travelers.png', fallback: '/images/about-industries/retail-travelers.png', alt: 'Travelers enjoying a seaside destination', objectPosition: 'center 72%' },
+  marine: { src: '/images/about-industries/marine-offshore.png', fallback: '/images/about-industries/marine-offshore.png', alt: 'Marine shipping operations at a port', objectPosition: 'center 55%' },
+  corporate: { src: '/images/about-industries/corporate-businesses.png', fallback: '/images/about-industries/corporate-businesses.png', alt: 'Business travelers in an airport' },
+  'travel-partners': { src: '/images/services/travel-assistance-24x7.png', fallback: '/images/services/travel-assistance-24x7.png', alt: 'Travel specialist assisting a customer' },
+}
 
 const CARD_RADIUS = '20px'
 const TRANSITION_MS = '300ms'
@@ -66,6 +73,7 @@ function SolutionCard({
   ctaLabel,
   href,
   image,
+  visaServices = false,
 }: {
   icon: LucideIcon
   title: string
@@ -73,7 +81,8 @@ function SolutionCard({
   description: string
   ctaLabel: string
   href: string
-  image: { src: string; fallback: string; alt: string }
+  image: { src: string; fallback: string; alt: string; objectPosition?: string }
+  visaServices?: boolean
 }) {
   const colors = usePublicBrandColors()
   const [imgSrc, setImgSrc] = useState(image.src)
@@ -87,7 +96,7 @@ function SolutionCard({
         flexDirection: 'column',
         width: '100%',
         height: '100%',
-        borderRadius: CARD_RADIUS,
+        borderRadius: visaServices ? '14px' : CARD_RADIUS,
         border: `1px solid ${colors.border}`,
         boxShadow: '0 4px 20px rgba(15, 23, 42, 0.06)',
         bgcolor: colors.white,
@@ -111,7 +120,7 @@ function SolutionCard({
         sx={{
           position: 'relative',
           width: '100%',
-          height: SOLUTION_CARD_IMAGE_HEIGHT,
+          height: visaServices ? { xs: 205, md: 175, desktop: 155 } : SOLUTION_CARD_IMAGE_HEIGHT,
           flexShrink: 0,
           overflow: 'hidden',
           bgcolor: colors.surfaceAlt,
@@ -132,7 +141,7 @@ function SolutionCard({
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            objectPosition: 'center',
+            objectPosition: visaServices ? image.objectPosition ?? 'center' : 'center',
             display: 'block',
             transition: `transform ${TRANSITION_MS} ${TRANSITION_EASE}`,
             willChange: 'transform',
@@ -145,7 +154,7 @@ function SolutionCard({
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
-          p: { xs: 2.25, md: 2.5 },
+          p: visaServices ? { xs: 2.25, desktop: 2.25 } : { xs: 2.25, md: 2.5 },
         }}
       >
         <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 1 }}>
@@ -166,7 +175,7 @@ function SolutionCard({
           <Typography
             sx={{
               fontFamily: publicFonts.heading,
-              fontSize: '18px',
+              fontSize: visaServices ? '18px' : '18px',
               fontWeight: 800,
               color: colors.navy,
               lineHeight: 1.25,
@@ -179,7 +188,7 @@ function SolutionCard({
         <Typography
           sx={{
             fontFamily: publicFonts.heading,
-            fontSize: '16px',
+            fontSize: visaServices ? '15px' : '16px',
             fontWeight: 800,
             color: colors.navy,
             lineHeight: 1.35,
@@ -191,7 +200,7 @@ function SolutionCard({
 
         <Typography
           sx={{
-            fontSize: '14px',
+            fontSize: visaServices ? '15px' : '14px',
             color: colors.textSecondary,
             lineHeight: 1.65,
             mb: 2,
@@ -202,7 +211,7 @@ function SolutionCard({
         </Typography>
 
         <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: colors.greenBright }}>
-          <Typography sx={{ fontSize: '13px', fontWeight: 700 }}>{ctaLabel}</Typography>
+          <Typography sx={{ fontSize: visaServices ? '15px' : '13px', fontWeight: 700 }}>{ctaLabel}</Typography>
           <ArrowRight size={15} strokeWidth={2.5} />
         </Stack>
       </Box>
@@ -210,7 +219,7 @@ function SolutionCard({
   )
 }
 
-export function SpecializedSolutionsSection() {
+export function SpecializedSolutionsSection({ visaServices = false }: { visaServices?: boolean }) {
   const colors = usePublicBrandColors()
 
   return (
@@ -224,7 +233,7 @@ export function SpecializedSolutionsSection() {
       }}
     >
       <PublicContainer variant="hero">
-        <Box sx={{ maxWidth: 640, mb: landingSectionHeaderMb }}>
+        <Box sx={{ maxWidth: visaServices ? 790 : 640, mb: landingSectionHeaderMb }}>
           <Typography
             sx={{
               fontSize: '11px',
@@ -241,9 +250,9 @@ export function SpecializedSolutionsSection() {
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
-              fontSize: { xs: '26px', md: '32px' },
-              fontWeight: 800,
+              fontFamily: publicFonts.display,
+              fontSize: visaServices ? { xs: '30px', lg: '36px', desktop: '42px' } : { xs: '26px', md: '32px' },
+              fontWeight: 700,
               color: colors.navy,
               lineHeight: 1.15,
               letterSpacing: '-0.5px',
@@ -255,7 +264,7 @@ export function SpecializedSolutionsSection() {
 
           <Typography
             sx={{
-              fontSize: { xs: '15px', md: '16px' },
+            fontSize: visaServices ? { xs: '15px', desktop: '16px' } : { xs: '15px', md: '16px' },
               color: colors.textSecondary,
               lineHeight: 1.65,
             }}
@@ -268,17 +277,16 @@ export function SpecializedSolutionsSection() {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              md: 'repeat(2, minmax(0, 1fr))',
-              lg: 'repeat(4, minmax(0, 1fr))',
-            },
-            gap: { xs: 2, md: 2.5 },
+            gridTemplateColumns: visaServices
+              ? { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }
+              : { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' },
+            gap: visaServices ? 2 : { xs: 2, md: 2.5 },
             alignItems: 'stretch',
+            ...(visaServices ? { '@media (min-width: 1100px)': { gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' } } : {}),
           }}
         >
           {solutions.map((solution) => (
-            <SolutionCard key={solution.id} {...solution} />
+            <SolutionCard key={solution.id} {...solution} image={visaServices ? visaServiceImages[solution.id] : solution.image} visaServices={visaServices} />
           ))}
         </Box>
       </PublicContainer>

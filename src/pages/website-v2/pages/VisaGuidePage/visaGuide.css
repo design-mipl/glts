@@ -1,0 +1,203 @@
+.visa-guide-page {
+  min-height: 100vh;
+  color: var(--glts-text);
+  background: #f7faf9;
+}
+
+.visa-guide-page * { box-sizing: border-box; }
+.visa-guide-page button, .visa-guide-page select { font: inherit; }
+.visa-guide-page button { cursor: pointer; }
+.visa-guide-page :is(button, a, select):focus-visible { outline: 3px solid var(--glts-focus); outline-offset: 3px; }
+
+.visa-guide-hero {
+  min-height: 325px;
+  padding: 34px 0 38px;
+  background: linear-gradient(90deg, rgba(255,255,255,.48), rgba(255,255,255,.02) 72%), url('/images/visa-guide/hero-alpine-flight.png') center 48% / cover no-repeat;
+}
+.visa-guide-hero-copy h1 {
+  margin: 0;
+  color: #06482b;
+  font-size: clamp(36px, 4vw, 55px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -.025em;
+  font-family: var(--font-display);
+}
+.visa-guide-hero-copy p { margin: 8px 0 0; max-width: 620px; color: #20394a; font-size: 16px; line-height: 1.5; }
+.visa-guide-search-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(200px, .94fr);
+  gap: 14px 18px;
+  align-items: stretch;
+  width: min(100%, 1080px);
+  margin-top: 34px;
+  padding: 17px 18px 14px;
+  background: #fff;
+  border: 1px solid rgba(214, 228, 222, .95);
+  border-radius: 13px;
+  box-shadow: 0 18px 48px rgba(0, 31, 63, .18);
+}
+.visa-guide-landing { min-height: 0; }
+.visa-guide-landing .visa-guide-hero { min-height: 440px; padding-top: 58px; }
+.visa-guide-landing-panel { grid-template-columns: minmax(0, 1.45fr) minmax(210px, 1fr); max-width: 780px; }
+.visa-guide-landing-panel .visa-guide-search-note { grid-column: 1 / -1; }
+.visa-guide-field {
+  min-width: 0;
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 13px;
+  border: 1px solid #dce7e3;
+  border-radius: 8px;
+  background: #fff;
+  color: #087448;
+}
+.visa-guide-field > span { min-width: 0; flex: 1; }
+.visa-guide-field strong { display: block; color: var(--glts-navy); font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+.visa-guide-field select { width: 100%; min-width: 0; padding: 0; border: 0; outline: 0; appearance: none; background: transparent; color: #172d3c; font-size: 14px; font-weight: 500; cursor: pointer; }
+.visa-guide-field:focus-within { outline: 3px solid rgba(12,108,121,.28); border-color: var(--glts-focus); }
+.visa-guide-field select:focus-visible { outline: 0; }
+.visa-guide-search-actions { display: grid; gap: 8px; }
+.visa-guide-primary-button, .visa-guide-outline-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 37px;
+  border-radius: 7px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color .18s ease, border-color .18s ease;
+}
+.visa-guide-primary-button { border: 1px solid #087d47; background: #078446; color: #fff; }
+.visa-guide-primary-button:hover { background: #056b3a; color: #fff; }
+.visa-guide-outline-button { border: 1px solid #3aaa72; background: #fff; color: #087448; }
+.visa-guide-outline-button:hover { background: #f0faf4; color: #075c39; }
+.visa-guide-search-note { grid-column: 1 / 3; display: flex; align-items: center; gap: 7px; margin: 0; color: #536477; font-size: 12px; line-height: 1.4; }
+.visa-guide-search-note svg { flex-shrink: 0; color: #078446; }
+
+.visa-guide-country { padding-top: 28px; scroll-margin-top: 88px; }
+.visa-guide-country-banner {
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 22px 30px 36px;
+  overflow: hidden;
+  border-radius: 13px 13px 0 0;
+  background-position: center;
+  background-size: cover;
+  color: #fff;
+}
+.visa-guide-back { display: inline-flex; align-items: center; gap: 6px; min-height: 31px; padding: 5px 9px; border: 1px solid rgba(255,255,255,.56); border-radius: 5px; background: rgba(0,31,63,.2); color: #fff; font-size: 12px; font-weight: 600; text-decoration: none; }
+.visa-guide-back:hover { background: rgba(0,31,63,.55); }
+.visa-guide-coming-soon { min-height: 0; }
+.visa-guide-coming-back { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 25px; color: #087448; font-size: 14px; font-weight: 700; text-decoration: none; }
+.visa-guide-coming-back:hover { text-decoration: underline; }
+.visa-guide-coming-card { max-width: 680px; padding: clamp(28px, 5vw, 56px); border: 1px solid #dbe9e1; border-radius: 13px; background: #fff; box-shadow: 0 8px 25px rgba(0,31,63,.06); }
+.visa-guide-coming-card > svg { color: #087d47; }
+.visa-guide-coming-card h1 { margin: 16px 0 10px; color: var(--glts-navy); font-family: var(--font-display); font-size: clamp(28px, 3vw, 38px); line-height: 1.2; }
+.visa-guide-coming-card p { margin: 0 0 24px; color: #586b78; font-size: 15px; line-height: 1.6; }
+.visa-guide-coming-card .visa-guide-primary-button { min-height: 43px; padding: 0 18px; }
+.visa-guide-country-heading h2 { display: flex; align-items: center; gap: 12px; margin: 0 0 5px; font-family: var(--font-display); font-size: clamp(31px, 3vw, 43px); line-height: 1.1; }
+.visa-guide-flag { display: inline-flex; font-size: 35px; line-height: 1; }
+.visa-guide-country-heading p { margin: 0; color: rgba(255,255,255,.95); font-size: 14px; line-height: 1.5; }
+
+.visa-guide-tabs-scroll { overflow-x: auto; background: #fff; border: 1px solid #dfe8e5; border-top: 0; border-radius: 0 0 10px 10px; scrollbar-width: thin; }
+.visa-guide-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); min-width: 780px; }
+.visa-guide-tab { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 62px; padding: 12px 10px; white-space: nowrap; border: 0; border-bottom: 3px solid transparent; background: #fff; color: #2d405b; font-size: 13px; font-weight: 700; }
+.visa-guide-tab + .visa-guide-tab { border-left: 1px solid #ecf0ee; }
+.visa-guide-tab:hover { background: #f4faf6; }
+.visa-guide-tab.is-active { border-bottom-color: #087c45; background: #eaf7ef; color: #087448; }
+
+.visa-guide-content-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(275px, 3fr); gap: 22px; align-items: start; margin-top: 20px; }
+.visa-guide-checklist { min-width: 0; padding: 22px; background: #fff; border: 1px solid #e1ebe6; border-radius: 11px; box-shadow: 0 4px 16px rgba(0,31,63,.04); }
+.visa-guide-checklist-heading { display: flex; align-items: flex-start; gap: 13px; }
+.visa-guide-heading-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 42px; height: 42px; border-radius: 11px; background: #e5f5ec; color: #078446; }
+.visa-guide-checklist h3 { margin: 1px 0 6px; color: var(--glts-navy); font-family: var(--font-display); font-size: clamp(20px, 2vw, 25px); line-height: 1.2; }
+.visa-guide-checklist-heading p { max-width: 740px; margin: 0; color: #5a6a79; font-size: 13px; line-height: 1.55; }
+.visa-guide-source-note { display: inline-flex; align-items: center; gap: 7px; margin: 17px 0 14px; color: #536477; font-size: 12px; font-weight: 600; }
+.visa-guide-source-note svg { color: #087d47; flex-shrink: 0; }
+.visa-guide-requirement-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.visa-guide-requirement { overflow: hidden; border: 1px solid #e3ece8; border-radius: 8px; background: #fff; transition: border-color .18s ease, box-shadow .18s ease; }
+.visa-guide-requirement:hover, .visa-guide-requirement.is-open { border-color: #a6d9b9; box-shadow: 0 2px 10px rgba(0,69,35,.04); }
+.visa-guide-requirement-button { display: grid; grid-template-columns: 27px 20px minmax(110px, .55fr) minmax(0, 1.5fr) 18px; gap: 12px; align-items: center; width: 100%; min-height: 61px; padding: 10px 13px; border: 0; background: transparent; color: inherit; text-align: left; }
+.visa-guide-requirement-number { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #e4f6e9; color: #087b45; font-size: 12px; font-weight: 800; }
+.visa-guide-requirement-icon { color: #0e3654; }
+.visa-guide-requirement-title { color: var(--glts-navy); font-size: 14px; font-weight: 700; line-height: 1.35; }
+.visa-guide-requirement-summary { color: #637282; font-size: 13px; line-height: 1.45; }
+.visa-guide-requirement-chevron { color: #6c7b89; transition: transform .2s ease; }
+.visa-guide-requirement.is-open .visa-guide-requirement-chevron { transform: rotate(180deg); }
+.visa-guide-requirement-details { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .22s ease, opacity .22s ease; }
+.visa-guide-requirement.is-open .visa-guide-requirement-details { grid-template-rows: 1fr; opacity: 1; }
+.visa-guide-requirement-details-inner { overflow: hidden; padding: 0 18px 0 72px; color: #48596a; font-size: 13px; line-height: 1.55; }
+.visa-guide-requirement.is-open .visa-guide-requirement-details-inner { padding-bottom: 15px; }
+.visa-guide-requirement-details-inner p { margin: 0 0 7px; }
+.visa-guide-requirement-details-inner p:last-child { margin-bottom: 0; }
+.visa-guide-empty-state { margin-top: 8px; padding: 35px 24px; border: 1px dashed #b9d7c8; border-radius: 9px; background: #f7fbf8; color: #3c5960; text-align: center; }
+.visa-guide-empty-state > svg { color: #087d47; }
+.visa-guide-empty-state h4 { margin: 9px 0; color: var(--glts-navy); font-size: 18px; }
+.visa-guide-empty-state p { max-width: 500px; margin: 0 auto 15px; font-size: 14px; line-height: 1.55; }
+.visa-guide-empty-state a { display: inline-flex; gap: 6px; align-items: center; color: #087448; font-size: 14px; font-weight: 700; }
+.visa-guide-disclaimer { margin: 18px 0 0; padding: 12px 14px; border-left: 3px solid #a3b5ae; background: #f6f8f7; color: #586775; font-size: 12px; line-height: 1.55; }
+
+.visa-guide-sidebar { display: grid; gap: 15px; min-width: 0; }
+.visa-guide-help-card, .visa-guide-why-card { padding: 21px; border: 1px solid #e0ebe5; border-radius: 10px; background: #fff; box-shadow: 0 3px 12px rgba(0,31,63,.04); }
+.visa-guide-help-heading { display: flex; align-items: flex-start; gap: 12px; }
+.visa-guide-help-heading > svg { flex-shrink: 0; color: #087d47; }
+.visa-guide-sidebar h3 { margin: 0; color: var(--glts-navy); font-family: var(--font-display); font-size: 18px; line-height: 1.25; }
+.visa-guide-help-heading p { margin: 6px 0 0; color: #687887; font-size: 13px; line-height: 1.5; }
+.visa-guide-help-card > .visa-guide-primary-button { width: 100%; min-height: 43px; margin: 17px 0; }
+.visa-guide-contact-list { display: grid; gap: 11px; padding-top: 15px; border-top: 1px solid #e8efea; }
+.visa-guide-contact-list > :is(a, span) { display: flex; align-items: flex-start; gap: 10px; color: #3b5060; font-size: 13px; line-height: 1.45; text-decoration: none; }
+.visa-guide-contact-list a:hover { color: #087448; text-decoration: underline; }
+.visa-guide-contact-list svg { flex-shrink: 0; margin-top: 1px; color: #087d47; }
+.visa-guide-why-card { background: #eaf7ef; border-color: #d4eadb; }
+.visa-guide-why-card h3 { display: flex; align-items: center; gap: 10px; font-size: 17px; }
+.visa-guide-why-card h3 span { color: #078446; font-family: sans-serif; font-size: 25px; line-height: 1; }
+.visa-guide-why-card ul { display: grid; gap: 9px; margin: 16px 0 0; padding: 0; list-style: none; }
+.visa-guide-why-card li { display: flex; align-items: center; gap: 9px; color: #385b50; font-size: 13px; }
+.visa-guide-why-card li svg { flex-shrink: 0; padding: 2px; border-radius: 50%; background: #078446; color: #fff; }
+.visa-guide-travel-card { display: flex; align-items: flex-end; min-height: 270px; padding: 21px; overflow: hidden; border-radius: 10px; background-position: center; background-size: cover; color: #fff; }
+.visa-guide-travel-card h3 { margin: 8px 0 6px; color: #fff; font-size: 19px; }
+.visa-guide-travel-card p { margin: 0; color: rgba(255,255,255,.9); font-size: 13px; line-height: 1.5; }
+
+@media (max-width: 900px) {
+  .visa-guide-content-grid { grid-template-columns: minmax(0, 1fr); }
+  .visa-guide-sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .visa-guide-travel-card { grid-column: 1 / -1; min-height: 230px; background-position: center 40%; }
+}
+@media (max-width: 700px) {
+  .visa-guide-hero { min-height: 0; padding: 30px 0 32px; background-position: 58% center; }
+  .visa-guide-landing .visa-guide-hero { min-height: 390px; padding-top: 38px; }
+  .visa-guide-hero-copy p { max-width: 350px; font-size: 14px; }
+  .visa-guide-search-panel { grid-template-columns: 1fr; gap: 10px; margin-top: 25px; padding: 13px; }
+  .visa-guide-landing-panel .visa-guide-search-note { grid-column: 1; }
+  .visa-guide-field { min-height: 60px; }
+  .visa-guide-search-actions { grid-template-columns: 1fr 1fr; }
+  .visa-guide-search-actions > * { min-height: 44px; }
+  .visa-guide-search-note { grid-column: 1; }
+  .visa-guide-country { padding-top: 18px; }
+  .visa-guide-country-banner { min-height: 210px; padding: 17px 20px 24px; background-position: 55% center; }
+  .visa-guide-content-grid { margin-top: 13px; }
+  .visa-guide-checklist { padding: 18px 14px; }
+  .visa-guide-requirement-button { grid-template-columns: 26px 19px minmax(0, 1fr) 18px; gap: 9px; }
+  .visa-guide-requirement-summary { grid-column: 3; grid-row: 2; }
+  .visa-guide-requirement-chevron { grid-column: 4; grid-row: 1 / 3; }
+  .visa-guide-requirement-details-inner { padding-left: 67px; }
+}
+@media (max-width: 560px) {
+  .visa-guide-sidebar { grid-template-columns: 1fr; }
+  .visa-guide-travel-card { grid-column: auto; min-height: 270px; }
+  .visa-guide-search-actions { grid-template-columns: 1fr; }
+  .visa-guide-country-heading p { font-size: 13px; }
+  .visa-guide-desktop-break { display: none; }
+  .visa-guide-tab { min-height: 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .visa-guide-page *, .visa-guide-page *::before, .visa-guide-page *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}

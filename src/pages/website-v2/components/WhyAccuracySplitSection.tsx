@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material'
 import type { LucideIcon } from 'lucide-react'
 import { PublicContainer } from './PublicContainer'
 import { publicFonts, usePublicBrandColors, brandPrimaryGreenRgb } from '../theme/publicSiteTokens'
-import { landingSectionPy } from '../pages/LandingPage/landingPageSpacing'
+import { featureSectionPy } from '../pages/LandingPage/landingPageSpacing'
 
 interface CollageImage {
   src: string
@@ -101,7 +101,7 @@ export function WhyAccuracySplitSection({
   const colors = usePublicBrandColors()
 
   return (
-    <Box component="section" id={id} sx={{ py: landingSectionPy }}>
+    <Box component="section" id={id} sx={{ py: featureSectionPy }}>
       <PublicContainer variant="hero">
         <Box
           sx={{
@@ -160,9 +160,9 @@ export function WhyAccuracySplitSection({
             <Typography
               component="h2"
               sx={{
-                fontFamily: publicFonts.heading,
+                fontFamily: publicFonts.display,
                 fontSize: { xs: '26px', md: '32px' },
-                fontWeight: 800,
+                fontWeight: 700,
                 color: colors.navy,
                 lineHeight: 1.15,
                 letterSpacing: '-0.01em',

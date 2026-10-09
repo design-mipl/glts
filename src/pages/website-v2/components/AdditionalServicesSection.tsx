@@ -500,9 +500,9 @@ export function AdditionalServicesSection({
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
+              fontFamily: publicFonts.display,
               fontSize: { xs: '26px', md: '32px' },
-              fontWeight: 800,
+              fontWeight: 700,
               color: colors.navy,
               lineHeight: 1.15,
               letterSpacing: '-0.5px',

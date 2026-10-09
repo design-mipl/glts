@@ -91,9 +91,9 @@ export function WhoWeAreSection() {
             <Typography
               component="h2"
               sx={{
-                fontFamily: publicFonts.heading,
+                fontFamily: publicFonts.display,
                 fontSize: { xs: '28px', md: '34px', lg: '36px' },
-                fontWeight: 800,
+                fontWeight: 700,
                 color: colors.navy,
                 lineHeight: 1.15,
                 letterSpacing: '-0.03em',

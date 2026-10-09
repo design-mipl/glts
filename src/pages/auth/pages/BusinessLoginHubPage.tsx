@@ -50,7 +50,7 @@ export function BusinessLoginHubPage() {
       }}
     >
       <Button
-        onClick={() => navigate('/sign-in')}
+        onClick={() => navigate('/sign-in/portals')}
         sx={{
           position: 'absolute',
           top: 24,

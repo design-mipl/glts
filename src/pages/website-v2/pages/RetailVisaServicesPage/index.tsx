@@ -1,32 +1,44 @@
-import { useMemo } from 'react'
 import { Box } from '@mui/material'
-import { usePublicBrandColors } from '../../theme/publicSiteTokens'
-import { CommonDestinationsSection } from '../../components/CommonDestinationsSection'
-import { resolveDestinationCountries } from '../../utils/resolveDestinationCountries'
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+import { publicLayout, usePublicBrandColors } from '../../theme/publicSiteTokens'
 import { RetailHero } from './components/RetailHero'
+import { VisaServicesJourney } from './components/VisaServicesJourney'
 import { OurRetailServicesSection } from './components/OurRetailServicesSection'
 import { RetailAdvantageSection } from './components/RetailAdvantageSection'
+import { VisaMasterSection } from '../LandingPage/components/VisaMasterSection'
+import { SpecializedSolutionsSection } from '../LandingPage/components/SpecializedSolutionsSection'
 import { RetailFinalCtaSection } from './components/RetailFinalCtaSection'
-import { retailDestinations } from './retailPageData'
+import { finalCtaSectionMb } from '../LandingPage/landingPageSpacing'
+import './visaServicesPage.css'
 
-export function RetailVisaServicesPage() {
+export function VisaServicesPage() {
   const colors = usePublicBrandColors()
-  const retailDestinationCountries = useMemo(
-    () => resolveDestinationCountries(retailDestinations),
-    [],
-  )
+  const { hash } = useLocation()
+
+  useEffect(() => {
+    if (!hash) return
+
+    const frame = requestAnimationFrame(() => {
+      const target = document.getElementById(hash.slice(1))
+      if (!target) return
+
+      const top = target.getBoundingClientRect().top + window.scrollY - publicLayout.navHeight - 16
+      window.scrollTo({ top: Math.max(0, top), behavior: 'auto' })
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [hash])
 
   return (
-    <Box component="main" sx={{ bgcolor: colors.white }}>
+    <Box id="visa-services-page" sx={{ bgcolor: colors.white, pb: finalCtaSectionMb }}>
       <RetailHero />
 
-      <CommonDestinationsSection
-        subtitle="Frequently requested retail visa destinations supported through GreenLight."
-        countries={retailDestinationCountries}
-      />
-
+      <VisaServicesJourney />
       <OurRetailServicesSection />
       <RetailAdvantageSection />
+      <VisaMasterSection visaServices />
+      <SpecializedSolutionsSection visaServices />
       <RetailFinalCtaSection />
     </Box>
   )

@@ -26,9 +26,9 @@ export const retailServiceImages = {
     objectPosition: 'center',
   },
   refusal: {
-    src: '/images/visa-services/project.png',
-    fallback: '/images/visa-services/project.png',
-    alt: 'Specialist reviewing visa documentation for a refusal case',
-    objectPosition: 'center 40%',
+    src: '/images/retail-advantage/fewer-last-minute-surprises.png',
+    fallback: '/images/retail-advantage/fewer-last-minute-surprises.png',
+    alt: 'Specialist reviewing application documents with a client',
+    objectPosition: 'center 45%',
   },
 } as const

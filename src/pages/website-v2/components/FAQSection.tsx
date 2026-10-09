@@ -72,8 +72,8 @@ export function FAQSection({ faqs, title = DEFAULT_TITLE }: FAQSectionProps) {
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
-              fontWeight: 800,
+              fontFamily: publicFonts.display,
+              fontWeight: 700,
               color: colors.navy,
               fontSize: { xs: '28px', md: '32px', lg: '36px' },
               letterSpacing: '-0.03em',

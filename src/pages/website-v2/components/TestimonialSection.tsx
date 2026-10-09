@@ -633,9 +633,9 @@ export function TestimonialSection({
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
+              fontFamily: publicFonts.display,
               fontSize: { xs: '30px', md: '40px', lg: '44px' },
-              fontWeight: 800,
+              fontWeight: 700,
               color: colors.navy,
               lineHeight: 1.12,
               mb: 2,

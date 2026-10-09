@@ -1,3 +1,5 @@
+import { websiteSectionPadding } from '../../theme/websiteDesignSystem'
+
 /** Public sticky header height — keep in sync with `PublicHeader` NAV_HEIGHT. */
 export const PUBLIC_NAV_HEIGHT_PX = 72
 
@@ -10,16 +12,11 @@ export const landingTrustFloatOverlap = {
   md: 6,
 } as const
 
-/**
- * Vertical section rhythm (MUI spacing × 8px).
- * Mobile 56px · Tablet 72px · Desktop 88px — within
- * 48–64 / 64–80 / 80–100 targets for inter-section breathing room.
- */
-export const landingSectionPy = {
-  xs: 7,
-  md: 9,
-  lg: 11,
-} as const
+/** Responsive public section padding from the website design system. */
+export const landingSectionPy = websiteSectionPadding.regular
+export const featureSectionPy = websiteSectionPadding.feature
+export const compactSectionPy = websiteSectionPadding.compact
+export const darkSectionPy = websiteSectionPadding.dark
 
 export const landingHeroPt = {
   xs: 6,
@@ -34,9 +31,9 @@ export const landingHeroPb = {
 } as const
 
 export const landingSectionHeaderMb = {
-  xs: 4.5,
-  md: 5.5,
-  lg: 6,
+  xs: 5,
+  lg: 5.5,
+  desktop: 6,
 } as const
 
 /** Top offset below sticky nav — shared across landing, marine, and corporate heroes. */
@@ -66,29 +63,27 @@ export const publicHeroVisualMinHeight = {
  * `minHeight` only (no maxHeight) so text↔button gaps never get clipped.
  */
 export const finalCtaSectionHeight = {
-  xs: 320,
-  sm: 340,
-  md: 360,
-  lg: 380,
+  xs: 'auto',
+  sm: 300,
+  md: 320,
+  lg: 340,
 } as const
 
 /** Vertical padding inside the Final CTA band (above / below content). */
 export const finalCtaSectionPy = {
-  xs: 4,
-  md: 5,
+  ...compactSectionPy,
 } as const
 
 /**
  * Stack spacing between heading → description → buttons (and trust row).
  * Keep this even when the band has breathing room above/below.
  */
-export const finalCtaContentSpacing = 3.5
+export const finalCtaContentSpacing = 2.5
+/** Adds 12px to the 20px stack gap before the CTA controls. */
+export const finalCtaActionPt = 1.5
 
 /** Consistent gap between Final CTA and footer. */
-export const finalCtaSectionMb = {
-  xs: 4,
-  md: 5,
-} as const
+export const finalCtaSectionMb = compactSectionPy
 
 /** Shared section shell — height floor, padding, and flex centering. */
 export const finalCtaSectionSx = {
@@ -99,7 +94,8 @@ export const finalCtaSectionSx = {
   display: 'flex' as const,
   alignItems: 'center' as const,
   py: finalCtaSectionPy,
-  mb: finalCtaSectionMb,
+  mb: 0,
+  '&:last-child': { mb: finalCtaSectionMb },
 }
 
 /** Content padding below the overlaid nav inside the immersive homepage hero. */

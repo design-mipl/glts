@@ -1,59 +1,7 @@
-import {
-  LayoutDashboard,
-  ShieldCheck,
-  Send,
-  Radio,
-  Ship,
-  RefreshCw,
-  ClipboardX,
-  AlertTriangle,
-  type LucideIcon,
-} from 'lucide-react'
 import type { FAQItem } from '../../components/FAQSection'
 import type { TestimonialItem } from '../../components/TestimonialSection'
 import type { VisaCategoryCardItem } from '../../components/VisaCategoryCardsSection'
 import { testimonialPortraits } from '../../assets/testimonialPortraits'
-
-export const marineImpactPoints = [
-  {
-    title: 'Missed sailings',
-    description: 'Crew cannot join vessels on schedule when visa processing falls behind rotation windows.',
-    icon: Ship,
-  },
-  {
-    title: 'Crew rotation issues',
-    description: 'Overlapping contracts and reliefs create documentation pressure across multiple movements.',
-    icon: RefreshCw,
-  },
-  {
-    title: 'Port clearance delays',
-    description: 'Incomplete or incorrect visa documentation slows embarkation and disembarkation.',
-    icon: ClipboardX,
-  },
-  {
-    title: 'Operational impact',
-    description: 'Fleet schedules, manning plans, and client commitments are affected by travel delays.',
-    icon: AlertTriangle,
-  },
-]
-
-export const marineAccuracyVisuals = {
-  primary: {
-    src: '/images/marine-accuracy/primary-port.png',
-    fallback: '/images/marine-accuracy/primary-port.png',
-    alt: 'Aerial view of a commercial shipping port at sunset',
-  },
-  secondaryTop: {
-    src: '/images/marine-accuracy/secondary-bridge.png',
-    fallback: '/images/marine-accuracy/secondary-bridge.png',
-    alt: 'Seafarers reviewing charts on a ship bridge',
-  },
-  secondaryBottom: {
-    src: '/images/marine-accuracy/secondary-documents.png',
-    fallback: '/images/marine-accuracy/secondary-documents.png',
-    alt: 'Marine officers reviewing documentation and compliance paperwork',
-  },
-} as const
 
 export const marineVisaCategories: VisaCategoryCardItem[] = [
   {
@@ -85,50 +33,6 @@ export const marineVisaCategories: VisaCategoryCardItem[] = [
       fallback: '/images/marine-visa-categories/superintendent-visas.png',
       alt: 'Marine superintendents reviewing vessel plans during a shipyard inspection',
     },
-  },
-]
-
-export const marineDestinations = [
-  'China',
-  'Belgium',
-  'Netherlands',
-  'Australia',
-  'France',
-  'Philippines',
-  'United States',
-  'Singapore',
-  'United Kingdom',
-  'South Korea',
-] as const
-
-export const marineProcessSteps: {
-  title: string
-  description: string
-  icon: LucideIcon
-}[] = [
-  {
-    title: 'Requirements Visible on Portal',
-    description:
-      'Country-specific crew visa requirements, checklists, and submission rules are available before filing begins.',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'Detailed Document Review',
-    description:
-      'Marine specialists review seafarer books, contracts, joining instructions, and embassy requirements.',
-    icon: ShieldCheck,
-  },
-  {
-    title: 'Application & Submission Handling',
-    description:
-      'Applications are prepared and submitted according to crew movement schedules and vessel timelines.',
-    icon: Send,
-  },
-  {
-    title: 'Tracking & Live Updates',
-    description:
-      'Coordinators receive live status updates, milestone alerts, and visibility across active crew cases.',
-    icon: Radio,
   },
 ]
 
@@ -218,7 +122,7 @@ export const marineAdditionalServices = [
     description:
       'Complete documentation support including travel itineraries, transit permits, invitation letters, and embassy-ready paperwork.',
     ctaLabel: 'Get Started',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/marine-additional-services/travel-transit-documentation.png',
       fallback: '/images/marine-additional-services/travel-transit-documentation.png',
@@ -231,7 +135,7 @@ export const marineAdditionalServices = [
     description:
       'Secure management of crew documentation, compliance records, certifications, and renewal tracking.',
     ctaLabel: 'Learn More',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/marine-additional-services/compliance-record-management.png',
       fallback: '/images/marine-additional-services/compliance-record-management.png',
@@ -244,7 +148,7 @@ export const marineAdditionalServices = [
     description:
       'Comprehensive travel insurance solutions for crew members and offshore professionals.',
     ctaLabel: 'Learn More',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/marine-additional-services/travel-insurance-support.png',
       fallback: '/images/marine-additional-services/travel-insurance-support.png',
@@ -257,7 +161,7 @@ export const marineAdditionalServices = [
     description:
       'Foreign currency exchange assistance with competitive rates for international travel.',
     ctaLabel: 'Learn More',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/marine-additional-services/forex-support.png',
       fallback: '/images/marine-additional-services/forex-support.png',
@@ -270,7 +174,7 @@ export const marineAdditionalServices = [
     description:
       'Round-the-clock support for itinerary changes, emergencies, and travel coordination.',
     ctaLabel: 'Learn More',
-    href: '/v2/track',
+    href: '/track',
     image: {
       src: '/images/marine-additional-services/travel-assistance-24x7.png',
       fallback: '/images/marine-additional-services/travel-assistance-24x7.png',
@@ -381,6 +285,6 @@ export const marineTestimonials: TestimonialItem[] = [
 ]
 
 export const marineHeroCtas = {
-  primary: { label: 'Talk to a Marine Visa Specialist', href: '/v2/track' },
-  secondary: { label: 'Request a Consultation', href: '/v2/track' },
+  primary: { label: 'Talk to a Marine Visa Specialist', href: '/track' },
+  secondary: { label: 'Request a Consultation', href: '/track' },
 } as const

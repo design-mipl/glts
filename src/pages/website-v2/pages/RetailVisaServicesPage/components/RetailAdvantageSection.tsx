@@ -1,157 +1,37 @@
-import { useState } from 'react'
 import { Box, Typography } from '@mui/material'
-import {
-  publicFonts,
-  usePublicBrandColors,
-  brandPrimaryGreenRgb,
-} from '../../../theme/publicSiteTokens'
-import { SolutionPageSection } from '../../../components/solutionPage/SolutionPageSection'
+import { PublicContainer } from '../../../components/PublicContainer'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 import { retailAdvantages } from '../retailPageData'
-
-const CARD_RADIUS = '18px'
-const TRANSITION_MS = '280ms'
-/** Shared crop frame so every advantage card image is the same height. */
-const IMAGE_ASPECT_RATIO = '16 / 10'
-
-function AdvantageCard({
-  title,
-  description,
-  icon: Icon,
-  image,
-}: (typeof retailAdvantages)[number]) {
-  const colors = usePublicBrandColors()
-  const [imgSrc, setImgSrc] = useState(image.src)
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        borderRadius: CARD_RADIUS,
-        border: `1px solid ${colors.border}`,
-        boxShadow: '0 6px 20px rgba(15, 23, 42, 0.06)',
-        bgcolor: colors.white,
-        overflow: 'hidden',
-        transition: `transform ${TRANSITION_MS} ease, box-shadow ${TRANSITION_MS} ease, border-color ${TRANSITION_MS} ease`,
-        '@media (hover: hover)': {
-          '&:hover': {
-            transform: 'translateY(-5px)',
-            borderColor: `rgba(${brandPrimaryGreenRgb}, 0.4)`,
-            boxShadow: '0 16px 36px rgba(15, 23, 42, 0.12)',
-          },
-          '&:hover .retail-advantage-image': {
-            transform: 'scale(1.04)',
-          },
-        },
-      }}
-    >
-      <Box
-        sx={{
-          position: 'relative',
-          aspectRatio: IMAGE_ASPECT_RATIO,
-          flexShrink: 0,
-          overflow: 'hidden',
-          bgcolor: colors.surfaceAlt,
-          borderTopLeftRadius: CARD_RADIUS,
-          borderTopRightRadius: CARD_RADIUS,
-        }}
-      >
-        <Box
-          component="img"
-          className="retail-advantage-image"
-          src={imgSrc}
-          alt={image.alt}
-          loading="lazy"
-          onError={() => setImgSrc(image.fallback)}
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: image.objectPosition,
-            display: 'block',
-            transition: `transform ${TRANSITION_MS} ease`,
-          }}
-        />
-      </Box>
-
-      <Box
-        sx={{
-          p: { xs: 2.25, md: 2.5 },
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1.25,
-          flex: 1,
-        }}
-      >
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: '12px',
-            bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Icon size={20} color={colors.greenBright} strokeWidth={2} aria-hidden />
-        </Box>
-
-        <Typography
-          sx={{
-            fontFamily: publicFonts.heading,
-            fontSize: { xs: '16px', md: '17px' },
-            fontWeight: 700,
-            color: colors.navy,
-            letterSpacing: '-0.02em',
-            lineHeight: 1.3,
-          }}
-        >
-          {title}
-        </Typography>
-
-        <Typography
-          sx={{
-            fontSize: '14px',
-            color: colors.textSecondary,
-            lineHeight: 1.6,
-          }}
-        >
-          {description}
-        </Typography>
-      </Box>
-    </Box>
-  )
-}
+import { landingSectionPy } from '../../LandingPage/landingPageSpacing'
 
 export function RetailAdvantageSection() {
   return (
-    <SolutionPageSection
-      id="retail-advantage"
-      title="Retail Advantage"
-      subtitle="A clearer path from destination choice to embassy-ready submission — built for individual travelers."
-    >
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, minmax(0, 1fr))',
-            md: 'repeat(3, minmax(0, 1fr))',
-            lg: 'repeat(5, minmax(0, 1fr))',
-          },
-          gap: { xs: 2, md: 2.5 },
-          alignItems: 'stretch',
-        }}
-      >
-        {retailAdvantages.map((item) => (
-          <AdvantageCard key={item.id} {...item} />
-        ))}
-      </Box>
-    </SolutionPageSection>
+    <Box component="section" id="retail-advantage" aria-labelledby="retail-advantage-heading"
+      sx={{ bgcolor: '#f6faf8', py: landingSectionPy, scrollMarginTop: 88 }}>
+      <PublicContainer variant="hero">
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, .95fr) minmax(0, 1fr)' }, gap: { xs: 4, md: 6, desktop: 8 }, alignItems: 'center' }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ color: ds.color.brandHover, fontSize: 12, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', mb: 1 }}>Why choose GreenLight</Typography>
+            <Typography id="retail-advantage-heading" component="h2" sx={{ fontFamily: ds.fonts.display, fontSize: { xs: 31, md: 35, desktop: 40 }, fontWeight: 700, lineHeight: 1.12, color: ds.color.navy, letterSpacing: '-.02em', mb: 1.25, maxWidth: 430 }}>Why GreenLight for Visa Services</Typography>
+            <Typography sx={{ color: ds.color.textSecondary, fontSize: { xs: 15, desktop: 16 }, lineHeight: 1.6, maxWidth: 470, mb: 3.25 }}>A clearer path from destination choice to embassy-ready submission, with expert review at every step.</Typography>
+            <Box component="img" src="/images/how-it-works/step-01-check-requirements.png" alt="Visa consultant reviewing an application with a traveler" loading="lazy"
+              sx={{ width: '100%', height: { xs: 275, md: 340, desktop: 360 }, display: 'block', borderRadius: '16px', objectFit: 'cover', objectPosition: 'center', boxShadow: '0 14px 30px rgba(15,35,55,.1)' }} />
+          </Box>
+          <Box component="ul" sx={{ display: 'grid', gap: 1.6, listStyle: 'none', p: 0, m: 0 }}>
+            {retailAdvantages.map(({ id, title, description, icon: Icon }) => (
+              <Box component="li" key={id} sx={{ display: 'flex', alignItems: 'center', gap: 2.25, minHeight: 86, px: { xs: 2, desktop: 2.5 }, py: 1.5, borderRadius: '13px', bgcolor: '#fff', boxShadow: '0 7px 24px rgba(23,63,66,.045)', border: '1px solid #f0f4f1' }}>
+                <Box sx={{ width: 48, height: 48, flexShrink: 0, display: 'grid', placeItems: 'center', borderRadius: '50%', bgcolor: '#e8f9ec', color: ds.color.brandHover }}>
+                  <Icon size={22} strokeWidth={2} aria-hidden="true" />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography component="h3" sx={{ color: ds.color.navy, fontSize: { xs: 16, desktop: 17 }, fontWeight: 800, lineHeight: 1.3, mb: 0.25 }}>{title}</Typography>
+                  <Typography sx={{ color: ds.color.textSecondary, fontSize: { xs: 14, desktop: 15 }, lineHeight: 1.45 }}>{description}</Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      </PublicContainer>
+    </Box>
   )
 }

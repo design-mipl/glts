@@ -5,12 +5,11 @@ import { useNavigate } from 'react-router-dom'
 import { getAllCountries } from '@/shared/services/visaService'
 import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
 import { PublicContainer } from '../../../components/PublicContainer'
-import { HomepageDestinationCard } from '../../../components/HomepageDestinationCard'
-import { destinationCardGridSx } from '../../../components/destinationCardGrid'
+import { PremiumDestinationCard } from './PremiumDestinationCard'
 import { defaultExploreFilters, applyExploreFilters } from '../../../utils/applyExploreFilters'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
 
-/** Two full rows on the desktop 5-column grid. */
+/** Two rows of featured destinations in the desktop five-column grid. */
 const HOMEPAGE_DESTINATION_COUNT = 10
 
 export function ExploreSection() {
@@ -68,12 +67,12 @@ export function ExploreSection() {
             <Typography
               component="h2"
               sx={{
-                fontFamily: publicFonts.heading,
-                fontWeight: 800,
+                fontFamily: publicFonts.display,
+                fontWeight: 700,
                 fontSize: { xs: '28px', md: '36px' },
                 color: colors.navy,
                 lineHeight: 1.15,
-                mb: 1,
+                mb: 2,
               }}
             >
               Where Are You Travelling?
@@ -86,7 +85,7 @@ export function ExploreSection() {
           <Button
             variant="outlined"
             endIcon={<ArrowRight size={16} />}
-            onClick={() => navigate('/v2/countries')}
+            onClick={() => navigate('/countries')}
             sx={{
               textTransform: 'none',
               borderRadius: '10px',
@@ -125,12 +124,23 @@ export function ExploreSection() {
         ) : (
           <Box
             role="list"
-            aria-label="Destination cards"
-            sx={destinationCardGridSx}
+            aria-label="Featured destinations"
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'minmax(0, 1fr)',
+                sm: 'repeat(2, minmax(0, 1fr))',
+                md: 'repeat(3, minmax(0, 1fr))',
+                lg: 'repeat(5, minmax(0, 1fr))',
+              },
+              gap: { xs: 2.5, lg: 2 },
+              rowGap: 3,
+              alignItems: 'stretch',
+            }}
           >
-            {homepageCountries.map((country, index) => (
-              <Box key={country.id} role="listitem">
-                <HomepageDestinationCard country={country} index={index} animate={false} />
+            {homepageCountries.map((country) => (
+              <Box key={country.id} role="listitem" sx={{ minWidth: 0 }}>
+                <PremiumDestinationCard country={country} />
               </Box>
             ))}
           </Box>

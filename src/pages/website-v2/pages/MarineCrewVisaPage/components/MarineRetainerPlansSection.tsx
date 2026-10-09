@@ -11,7 +11,7 @@ import {
   marineRetainerPlansSubtitle,
   marineRetainerPlansImage,
 } from '../marinePageData'
-import { landingSectionPy } from '../../LandingPage/landingPageSpacing'
+import { darkSectionPy } from '../../LandingPage/landingPageSpacing'
 
 const PLAN_ICONS: Record<(typeof marineRetainerPlans)[number]['icon'], LucideIcon> = {
   ship: Ship,
@@ -30,7 +30,7 @@ export function MarineRetainerPlansSection() {
       sx={{
         position: 'relative',
         overflow: 'hidden',
-        py: landingSectionPy,
+        py: darkSectionPy,
         bgcolor: colors.navy,
         minHeight: { md: 340, lg: 360 },
         display: 'flex',
@@ -162,9 +162,9 @@ export function MarineRetainerPlansSection() {
             <Typography
               component="h2"
               sx={{
-                fontFamily: publicFonts.heading,
+                fontFamily: publicFonts.display,
                 fontSize: { xs: '24px', sm: '28px', md: '30px', lg: '34px' },
-                fontWeight: 800,
+                fontWeight: 700,
                 color: colors.white,
                 letterSpacing: '-0.02em',
                 lineHeight: 1.15,

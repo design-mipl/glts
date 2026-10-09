@@ -1,5 +1,6 @@
 import chroma from 'chroma-js';
 import { publicLightColors } from '@/shared/theme/publicBrand';
+import { websiteDesignSystem } from '@/pages/website-v2/theme/websiteDesignSystem';
 
 // ─── Brand color ─────────────────────────────────────────────────────────────
 // Locked to publicBrand; use publicBrand.ts as the source of truth for product UI.
@@ -180,6 +181,21 @@ export const tokens = {
     '2xl': '21px',
     '3xl': '27px',
     '4xl': '32px',
+  },
+
+  /**
+   * Backward-compatible MUI shape sourced from the authoritative public website type scale.
+   * Keep this projection for existing theme consumers; app/admin-specific typography belongs
+   * in their own theme layer rather than defining a second public-site scale here.
+   */
+  typography: {
+    h1: { mobile: websiteDesignSystem.type.h1.mobile, tablet: websiteDesignSystem.type.h1.tablet, desktop: websiteDesignSystem.type.h1.size, weight: websiteDesignSystem.type.h1.weight, lineHeight: websiteDesignSystem.type.h1.lineHeight },
+    h2: { mobile: websiteDesignSystem.type.h2.mobile, tablet: websiteDesignSystem.type.h2.tablet, desktop: websiteDesignSystem.type.h2.size, weight: websiteDesignSystem.type.h2.weight, lineHeight: websiteDesignSystem.type.h2.lineHeight },
+    h3: { mobile: websiteDesignSystem.type.h3.mobile, tablet: websiteDesignSystem.type.h3.tablet, desktop: websiteDesignSystem.type.h3.size, weight: websiteDesignSystem.type.h3.weight, lineHeight: websiteDesignSystem.type.h3.lineHeight },
+    h4: { mobile: websiteDesignSystem.type.h4.mobile, tablet: websiteDesignSystem.type.h4.tablet, desktop: websiteDesignSystem.type.h4.size, weight: websiteDesignSystem.type.h4.weight, lineHeight: websiteDesignSystem.type.h4.lineHeight },
+    bodyLarge: { size: websiteDesignSystem.type.bodyLarge.size, weight: websiteDesignSystem.type.bodyLarge.weight, lineHeight: websiteDesignSystem.type.bodyLarge.lineHeight },
+    body: { size: websiteDesignSystem.type.body.size, weight: websiteDesignSystem.type.body.weight, lineHeight: websiteDesignSystem.type.body.lineHeight },
+    small: { size: websiteDesignSystem.type.bodySmall.size, weight: websiteDesignSystem.type.bodySmall.weight, lineHeight: websiteDesignSystem.type.bodySmall.lineHeight },
   },
 
   fontWeight: {

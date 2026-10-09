@@ -10,6 +10,7 @@ import {
 } from '@/shared/theme/publicBrand'
 import { aboutFinalCta } from '../aboutPageData'
 import {
+  finalCtaActionPt,
   finalCtaContentSpacing,
   finalCtaSectionSx,
 } from '../../LandingPage/landingPageSpacing'
@@ -37,7 +38,7 @@ export function AboutFinalCtaSection() {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          objectPosition: 'center right',
+          objectPosition: { xs: '70% 55%', md: 'center 55%' },
         }}
       />
 
@@ -47,7 +48,7 @@ export function AboutFinalCtaSection() {
           position: 'absolute',
           inset: 0,
           background:
-            'linear-gradient(90deg, rgba(0,31,63,0.88) 0%, rgba(0,31,63,0.72) 48%, rgba(0,31,63,0.55) 100%)',
+            'linear-gradient(90deg, rgba(0,31,63,0.64) 0%, rgba(0,31,63,0.38) 48%, rgba(0,31,63,0.18) 100%)',
         }}
       />
 
@@ -56,9 +57,9 @@ export function AboutFinalCtaSection() {
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.heading,
+              fontFamily: publicFonts.display,
               fontSize: { xs: '28px', sm: '32px', md: '40px' },
-              fontWeight: 800,
+              fontWeight: 700,
               lineHeight: 1.1,
               letterSpacing: '-0.7px',
               color: colors.white,
@@ -77,7 +78,7 @@ export function AboutFinalCtaSection() {
             {aboutFinalCta.description}
           </Typography>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: 1 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: finalCtaActionPt }}>
             <Button
               variant="contained"
               href={aboutFinalCta.primaryButton.href}

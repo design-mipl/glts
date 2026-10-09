@@ -12,9 +12,8 @@ export const solutionCtaBackgroundImages = {
     alt: 'Maritime workers in safety gear walking an offshore platform deck at sunset with a ship on the horizon',
   },
   corporate: {
-    src: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=2400&h=900&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1570168007207-a0e90bb4cde2?auto=format&fit=crop&w=2400&h=900&q=90',
-    alt: 'Business professionals collaborating on international corporate travel',
+    src: '/images/about-industries/corporate-businesses.png',
+    fallback: '/images/about-industries/corporate-businesses.png',
+    alt: 'Business professionals collaborating in a premium airport lounge',
   },
 } as const satisfies Record<string, SolutionCtaImageAsset>

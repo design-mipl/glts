@@ -1,35 +1,26 @@
-import { useMemo } from 'react'
 import { Box } from '@mui/material'
+import { Clock3, Eye, FileText, Globe2 } from 'lucide-react'
 import { CorporateHero } from './components/CorporateHero'
 import { CorporateRetainerPlansSection } from './components/CorporateRetainerPlansSection'
-import { WorkflowTimelineSection } from '../../components/workflowTimeline/WorkflowTimelineSection'
-import { CommonDestinationsSection } from '../../components/CommonDestinationsSection'
+import { ProcessStepsSection } from '../../components/ProcessStepsSection'
 import { VisaCategoryCardsSection } from '../../components/VisaCategoryCardsSection'
 import { WhyAccuracySplitSection } from '../../components/WhyAccuracySplitSection'
-import { AdditionalServicesSection } from '../../components/AdditionalServicesSection'
-import { TestimonialSection } from '../../components/TestimonialSection'
-import { FAQSection } from '../../components/FAQSection'
+import { ChallengesWeSolveSection } from '../../components/ChallengesWeSolveSection'
+import { TrustedCompaniesSection } from '../../components/TrustedCompaniesSection'
+import { corporateCompanyLogos } from '../../assets/companyLogos'
+import { LandingFaqSection } from '../LandingPage/components/LandingFaqSection'
 import { SolutionFinalCtaSection } from '../../components/solutionPage/SolutionFinalCtaSection'
-import { resolveDestinationCountries } from '../../utils/resolveDestinationCountries'
 import { usePublicBrandColors } from '../../theme/publicSiteTokens'
 import {
-  corporateTestimonials,
   corporateFaqs,
   corporateImpactPoints,
   corporateAccuracyVisuals,
-  corporateDestinations,
   corporateVisaCategories,
-  corporateAdditionalServices,
 } from './corporatePageData'
 import { corporateProcessSteps } from './corporateWorkflowContent'
 
 export function CorporateBusinessVisaPage() {
   const colors = usePublicBrandColors()
-  const corporateDestinationCountries = useMemo(
-    () => resolveDestinationCountries(corporateDestinations),
-    [],
-  )
-
   return (
     <Box component="main" sx={{ bgcolor: colors.white }}>
       <CorporateHero />
@@ -47,14 +38,37 @@ export function CorporateBusinessVisaPage() {
         impacts={corporateImpactPoints}
       />
 
-      <VisaCategoryCardsSection items={corporateVisaCategories} />
-
-      <CommonDestinationsSection
-        subtitle="Frequently requested corporate business visa destinations supported through GreenLight."
-        countries={corporateDestinationCountries}
+      <ChallengesWeSolveSection
+        id="corporate-travel-challenges"
+        heading="Common Corporate Travel Challenges"
+        description="We understand the complexities of managing visas for a global workforce."
+        challenges={[
+          {
+            title: 'Multiple Destinations and Visa Types',
+            description: 'Coordinate different visa rules and application types across every destination.',
+            icon: Globe2,
+          },
+          {
+            title: 'Tight Travel Timelines',
+            description: 'Keep business trips on schedule when approvals and appointments have limited lead time.',
+            icon: Clock3,
+          },
+          {
+            title: 'Complex Documentation',
+            description: 'Manage country-specific paperwork, supporting evidence, and compliance requirements.',
+            icon: FileText,
+          },
+          {
+            title: 'Limited Application Visibility',
+            description: 'Track each application’s status and next steps in one clear view.',
+            icon: Eye,
+          },
+        ]}
       />
 
-      <WorkflowTimelineSection
+      <VisaCategoryCardsSection items={corporateVisaCategories} />
+
+      <ProcessStepsSection
         id="how-corporate-visa-handling-works"
         sectionLabel="Corporate Workflow"
         heading="How Corporate Business Visa Handling Works"
@@ -62,30 +76,23 @@ export function CorporateBusinessVisaPage() {
         steps={corporateProcessSteps}
       />
 
-      <AdditionalServicesSection
-        id="additional-corporate-visa-services"
-        sectionLabel="Additional Services"
-        heading="Everything Your Teams Need Beyond Visas"
-        description="Documentation, compliance, insurance, and travel support built for HR teams, business travelers, and corporate mobility programs."
-        services={corporateAdditionalServices}
-      />
-
       <CorporateRetainerPlansSection />
 
-      <TestimonialSection
-        testimonials={corporateTestimonials}
-        subtitle="HR teams, business travelers, and corporate travel coordinators at multinational companies trust GreenLight for reliable business visa support."
+      <TrustedCompaniesSection
+        id="trusted-corporate-companies"
+        heading="Trusted by Companies"
+        logos={corporateCompanyLogos}
       />
 
       <SolutionFinalCtaSection
         variant="corporate"
         heading="Simplify Corporate Visa Management"
         description="Dedicated account management, priority processing, and end-to-end visa support for your employees and business travelers."
-        primaryButton={{ label: 'Speak with Our Corporate Team', href: '/v2/track' }}
-        secondaryButton={{ label: 'Schedule a Consultation', href: '/v2/track' }}
+        primaryButton={{ label: 'Speak with Our Corporate Team', href: '/track' }}
+        secondaryButton={{ label: 'Schedule a Consultation', href: '/track' }}
       />
 
-      <FAQSection faqs={corporateFaqs} />
+      <LandingFaqSection faqs={corporateFaqs} />
     </Box>
   )
 }

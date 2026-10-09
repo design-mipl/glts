@@ -1,0 +1,24 @@
+/* The public footer is shared. These spacing refinements apply only to this page. */
+main:has(#visa-services-page) + footer {
+  padding-top: 56px;
+  padding-bottom: 28px;
+}
+
+main:has(#visa-services-page) + footer > .MuiContainer-root > .MuiGrid-container {
+  margin-bottom: 48px;
+}
+
+main:has(#visa-services-page) + footer > .MuiContainer-root > .MuiDivider-root {
+  margin-bottom: 28px;
+}
+
+@media (max-width: 600px) {
+  main:has(#visa-services-page) + footer {
+    padding-top: 52px;
+    padding-bottom: 30px;
+  }
+
+  main:has(#visa-services-page) + footer > .MuiContainer-root > .MuiGrid-container {
+    margin-bottom: 36px;
+  }
+}
