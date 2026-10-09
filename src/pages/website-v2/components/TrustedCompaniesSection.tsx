@@ -51,7 +51,7 @@ export function TrustedCompaniesSection({
         listStyle: 'none',
       }}
     >
-      {logos.map(({ name, src, alt, width, height = 76 }) => (
+      {logos.map(({ name, src, alt, width, height = 76, crop }) => (
         <Box
           component="li"
           key={name}
@@ -78,10 +78,14 @@ export function TrustedCompaniesSection({
             alt={duplicate ? '' : (alt ?? name)}
             sx={{
               display: 'block',
-              width: width ? Math.min(width, 160) : 'auto',
+              width: {
+                xs: width ? Math.min(width, 160) : 'auto',
+                md: crop ? '100%' : width ? Math.min(width, 160) : 'auto',
+              },
               height: { xs: Math.min(height, 48), md: Math.min(height, 58) },
               maxWidth: '100%',
-              objectFit: 'contain',
+              objectFit: { xs: 'contain', md: crop ? 'cover' : 'contain' },
+              objectPosition: 'center',
             }}
           />
         </Box>
