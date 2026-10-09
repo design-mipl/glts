@@ -6,11 +6,12 @@ import {
   usePublicBrandColors,
   brandPrimaryGreenRgb,
   getMarketingPrimaryButtonSx,
-  getOutlinedButtonSx,
 } from '../../../theme/publicSiteTokens'
+import { websiteSecondaryButtonSx } from '../../../theme/websiteComponentStyles'
 import { useHeroScrollParallax } from '../../../hooks/useHeroScrollParallax'
 import { corporateHeroCtas, corporateHeroStats } from '../corporatePageData'
 import { CorporateHeroBackgroundImage } from './CorporateHeroBackgroundImage'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 
 /** Match Marine hero vertical rhythm. */
 const corporateHeroMinHeight = {
@@ -91,12 +92,8 @@ export function CorporateHero() {
           <Typography
             component="h1"
             sx={{
-              fontFamily: publicFonts.display,
-              fontSize: { xs: '34px', sm: '40px', md: '46px' },
-              fontWeight: 700,
+              ...websiteHeadingSx.display,
               color: colors.white,
-              lineHeight: 1.1,
-              letterSpacing: '-0.02em',
               mb: corporateHeroSpacing.headingToDescription,
               maxWidth: 620,
             }}
@@ -141,7 +138,7 @@ export function CorporateHero() {
               href={corporateHeroCtas.secondary.href}
               endIcon={<CalendarDays size={16} />}
               sx={{
-                ...getOutlinedButtonSx(),
+                ...websiteSecondaryButtonSx,
                 borderColor: 'rgba(255, 255, 255, 0.45)',
                 color: colors.white,
                 bgcolor: 'rgba(255, 255, 255, 0.1)',

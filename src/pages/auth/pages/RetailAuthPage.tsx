@@ -18,6 +18,8 @@ import { ArrowLeft, ArrowRight, Bell, Eye, EyeOff, FileCheck2, FolderOpen, LockK
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, publicLightColors as colors } from '@/shared/theme/publicBrand'
+import { websiteDesignSystem as ds } from '@/pages/website-v2/theme/websiteDesignSystem'
+import { websiteHeadingSx } from '@/pages/website-v2/theme/websiteComponentStyles'
 import { WEBSITE_APPLICATION_FLOW_STORAGE_KEY } from '@/pages/customer/features/applications/context/ApplicationFlowPolicyContext'
 
 type SignInField = 'identifier' | 'password'
@@ -63,16 +65,16 @@ function validateCreate(values: CreateValues): Partial<Record<CreateField, strin
 
 const fieldSx = {
   '& .MuiOutlinedInput-root': {
-    minHeight: 50,
-    borderRadius: '10px',
+    minHeight: ds.component.field.auth.minHeight,
+    borderRadius: `${ds.component.field.auth.radius}px`,
     bgcolor: colors.white,
     fontFamily: publicFonts.body,
-    fontSize: 14,
+    fontSize: ds.component.field.auth.fontSize,
     '& fieldset': { borderColor: colors.border },
     '&:hover fieldset': { borderColor: colors.greenDark },
     '&.Mui-focused fieldset': { borderColor: colors.greenDark, borderWidth: 2 },
   },
-  '& .MuiFormHelperText-root': { mx: 0, mt: 0.65, fontSize: 12 },
+  '& .MuiFormHelperText-root': { mx: 0, mt: 0.65, fontSize: ds.component.field.auth.helperFontSize },
 }
 
 interface AuthFieldProps {
@@ -174,7 +176,7 @@ function TravelPanel() {
           <Box component="img" src={GREENLIGHT_LOGO_SRC} alt="" sx={{ width: 166, maxWidth: '100%', height: 'auto', display: 'block' }} />
         </Box>
         <Box sx={{ mt: { xs: 7, desktop: 9 }, maxWidth: 360 }}>
-          <Typography component="h1" sx={{ fontFamily: publicFonts.display, color: colors.navy, fontSize: { xs: 38, desktop: 52 }, lineHeight: 1.04, fontWeight: 700, letterSpacing: '-0.035em' }}>
+          <Typography component="h1" sx={{ ...websiteHeadingSx.authTitle, color: colors.navy }}>
             Your Visa Journey,<br />Simpler.
           </Typography>
           <Box aria-hidden="true" sx={{ width: 48, height: 4, borderRadius: 4, bgcolor: colors.greenDark, my: 2.5 }} />
@@ -208,16 +210,16 @@ function TravelPanel() {
 }
 
 const submitButtonSx = {
-  minHeight: 48,
-  borderRadius: '9px',
+  minHeight: ds.component.button.auth.minHeight,
+  borderRadius: `${ds.component.button.auth.radius}px`,
   bgcolor: colors.greenDark,
-  color: colors.white,
+  color: colors.navy,
   fontFamily: publicFonts.body,
-  fontSize: 15,
-  fontWeight: 700,
+  fontSize: ds.component.button.auth.fontSize,
+  fontWeight: ds.component.button.auth.fontWeight,
   textTransform: 'none',
   boxShadow: 'none',
-  '&:hover': { bgcolor: '#477F3D', boxShadow: '0 8px 20px rgba(0,31,63,0.12)' },
+  '&:hover': { bgcolor: '#477F3D', color: colors.white, boxShadow: '0 8px 20px rgba(0,31,63,0.12)' },
   '&:focus-visible': { outline: `3px solid ${colors.navy}`, outlineOffset: 3 },
 }
 
@@ -317,7 +319,7 @@ export function RetailAuthPage({ authActions }: { authActions?: RetailAuthAction
 
             {isCreateAccount ? (
               <Box role="tabpanel" id="retail-create-panel" aria-labelledby="retail-create-tab">
-                <Typography component="h2" sx={{ fontFamily: publicFonts.display, color: colors.navy, fontSize: { xs: 25, desktop: 29 }, fontWeight: 700, lineHeight: 1.18 }}>
+                <Typography component="h2" sx={{ ...websiteHeadingSx.authPanelTitle, color: colors.navy }}>
                   Create your GreenLight account
                 </Typography>
                 <Typography sx={{ mt: 0.75, mb: 2.5, color: colors.textSecondary, fontSize: 14, lineHeight: 1.5 }}>
@@ -349,7 +351,7 @@ export function RetailAuthPage({ authActions }: { authActions?: RetailAuthAction
               </Box>
             ) : (
               <Box role="tabpanel" id="retail-sign-in-panel" aria-labelledby="retail-sign-in-tab">
-                <Typography component="h2" sx={{ fontFamily: publicFonts.display, color: colors.navy, fontSize: { xs: 27, desktop: 31 }, fontWeight: 700, lineHeight: 1.18 }}>
+                <Typography component="h2" sx={{ ...websiteHeadingSx.authPanelTitle, color: colors.navy }}>
                   Welcome back
                 </Typography>
                 <Typography sx={{ mt: 0.75, mb: 3, color: colors.textSecondary, fontSize: 14, lineHeight: 1.55 }}>
@@ -372,7 +374,7 @@ export function RetailAuthPage({ authActions }: { authActions?: RetailAuthAction
                     <Typography sx={{ fontFamily: publicFonts.display, color: colors.navy, fontSize: 16, fontWeight: 700 }}>New to GreenLight?</Typography>
                     <Typography sx={{ color: colors.textSecondary, fontSize: 12, lineHeight: 1.55, mt: 0.4 }}>Create an account to start your visa application, track progress and access your documents.</Typography>
                   </Box>
-                  <Button component={RouterLink} to="/sign-up" variant="outlined" endIcon={<ArrowRight size={16} />} sx={{ minHeight: 40, borderColor: colors.greenDark, color: colors.greenDark, fontFamily: publicFonts.body, fontSize: 12, fontWeight: 700, textTransform: 'none', borderRadius: '9px', whiteSpace: 'nowrap', '&:focus-visible': { outline: `2px solid ${colors.greenDark}`, outlineOffset: 2 } }}>
+                  <Button component={RouterLink} to="/sign-up" variant="outlined" endIcon={<ArrowRight size={16} />} sx={{ minHeight: ds.component.button.authSecondary.minHeight, borderColor: colors.greenDark, color: colors.greenDark, fontFamily: publicFonts.body, fontSize: ds.component.button.authSecondary.fontSize, fontWeight: ds.component.button.authSecondary.fontWeight, textTransform: 'none', borderRadius: `${ds.component.button.authSecondary.radius}px`, whiteSpace: 'nowrap', '&:focus-visible': { outline: `2px solid ${colors.greenDark}`, outlineOffset: 2 } }}>
                     Create an account
                   </Button>
                 </Box>

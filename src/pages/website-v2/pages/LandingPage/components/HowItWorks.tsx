@@ -9,6 +9,9 @@ import {
 } from '@/shared/theme/publicBrand'
 import { howItWorksSteps } from '../landingWorkflowContent'
 import { landingSectionPy } from '../landingPageSpacing'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
+import { ProcessTimelineCopy, ResponsiveProcessTimeline } from '../../../components/workflowTimeline/ProcessTimeline'
 
 const STEP_COUNT = howItWorksSteps.length
 const LAST_STEP = STEP_COUNT - 1
@@ -114,12 +117,8 @@ export function HowItWorks() {
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.display,
-              fontSize: { xs: '26px', md: '32px' },
-              fontWeight: 700,
+              ...websiteHeadingSx.h2,
               color: colors.navy,
-              letterSpacing: '-0.5px',
-              lineHeight: 1.15,
               mb: 1.25,
             }}
           >
@@ -142,9 +141,6 @@ export function HowItWorks() {
           ref={timelineRef}
           sx={{
             position: 'relative',
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', desktop: `repeat(${STEP_COUNT}, minmax(0, 1fr))` },
-            gap: { xs: 4, desktop: 3 },
             '&::before': {
               content: '""',
               position: 'absolute',
@@ -199,13 +195,19 @@ export function HowItWorks() {
               transformOrigin: 'left',
             }}
           />
-          {howItWorksSteps.map((step, index) => {
+          <ResponsiveProcessTimeline
+            steps={howItWorksSteps}
+            ariaLabel="Your visa journey steps"
+            variant="journey"
+            horizontalAt={ds.breakpoint.laptop}
+            listSx={{ gap: { xs: 4, desktop: 3 } }}
+            itemSx={{ minWidth: 0 }}
+            renderStep={(step, index) => {
             const isCompleted = index <= visibleStep
             const Icon = step.icon
 
             return (
               <Box
-                key={step.id}
                 component="article"
                 className="journey-step"
                 data-completed={isCompleted}
@@ -259,52 +261,23 @@ export function HowItWorks() {
                     },
                   }}
                 >
-                  <Icon size={26} strokeWidth={2.1} aria-hidden="true" />
+                  <Icon size={ds.icon.process} strokeWidth={ds.icon.strokeWidth} aria-hidden="true" />
                 </Box>
 
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography
-                    sx={{
-                      fontFamily: publicFonts.body,
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      letterSpacing: '0.08em',
-                      color: isCompleted ? colors.greenDark : colors.textSecondary,
-                      transition: 'color 250ms ease-out',
-                      mb: 0.75,
-                    }}
-                  >
-                    {step.number}
-                  </Typography>
-                  <Typography
-                    component="h3"
-                    className="journey-title"
-                    sx={{
-                      fontFamily: publicFonts.heading,
-                      fontSize: { xs: '18px', xl: '19px', desktop: '21px' },
-                      fontWeight: 700,
-                      color: isCompleted ? colors.greenDark : colors.navy,
-                      lineHeight: 1.3,
-                      mb: 1,
-                      transition: 'color 250ms ease-out',
-                    }}
-                  >
-                    {step.title}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontFamily: publicFonts.body,
-                      fontSize: { xs: '15px', desktop: '16px' },
-                      color: colors.text,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {step.description}
-                  </Typography>
-                </Box>
+                <ProcessTimelineCopy
+                  title={step.title}
+                  description={step.description}
+                  number={step.number}
+                  titleClassName="journey-title"
+                  sx={{ minWidth: 0 }}
+                  numberSx={{ fontFamily: publicFonts.body, letterSpacing: '0.08em', color: isCompleted ? colors.greenDark : colors.textSecondary, transition: 'color 250ms ease-out', mb: 0.75 }}
+                  titleSx={{ fontFamily: publicFonts.heading, fontSize: { xs: '18px', xl: '19px', desktop: '21px' }, color: isCompleted ? colors.greenDark : colors.navy, lineHeight: 1.3, mb: 1, transition: 'color 250ms ease-out' }}
+                  descriptionSx={{ fontFamily: publicFonts.body, fontSize: { xs: '15px', desktop: '16px' }, color: colors.text, lineHeight: 1.5 }}
+                />
               </Box>
             )
-          })}
+          }}
+          />
         </Box>
       </PublicContainer>
     </Box>

@@ -2,7 +2,6 @@ import { Box, Typography, Stack, Chip, Button, keyframes } from '@mui/material'
 import { ArrowRight, Building2 } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import {
-  publicFonts,
   usePublicBrandColors,
   brandPrimaryGreenRgb,
   getMarketingPrimaryButtonSx,
@@ -10,6 +9,7 @@ import {
 import { useHeroScrollParallax } from '../../../hooks/useHeroScrollParallax'
 import { aboutHeroContent } from '../aboutPageData'
 import { AboutHeroBackgroundImage } from './AboutHeroBackgroundImage'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 
 const aboutHeroMinHeight = {
   xs: 520,
@@ -88,12 +88,8 @@ export function AboutHero() {
           <Typography
             component="h1"
             sx={{
-              fontFamily: publicFonts.display,
-              fontSize: { xs: '34px', sm: '40px', md: '46px' },
-              fontWeight: 700,
+              ...websiteHeadingSx.display,
               color: colors.white,
-              lineHeight: 1.1,
-              letterSpacing: '-0.02em',
               mb: aboutHeroSpacing.headingToDescription,
               maxWidth: 640,
             }}

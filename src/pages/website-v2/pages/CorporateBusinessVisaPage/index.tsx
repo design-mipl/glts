@@ -40,8 +40,11 @@ export function CorporateBusinessVisaPage() {
 
       <ChallengesWeSolveSection
         id="corporate-travel-challenges"
+        variant="corporate"
+        eyebrow="Corporate solutions"
         heading="Common Corporate Travel Challenges"
         description="We understand the complexities of managing visas for a global workforce."
+        desktopColumns={4}
         challenges={[
           {
             title: 'Multiple Destinations and Visa Types',

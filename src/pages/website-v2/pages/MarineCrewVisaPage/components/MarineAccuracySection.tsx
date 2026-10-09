@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { Bell, FileCheck2, Ship, UsersRound } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { publicFonts } from '../../../theme/publicSiteTokens'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 import { featureSectionPy } from '../../LandingPage/landingPageSpacing'
 
 const benefits = [
@@ -80,12 +81,8 @@ export function MarineAccuracySection() {
             <Typography
               component="h2"
               sx={{
+                ...websiteHeadingSx.h2,
                 color: '#10264A',
-                fontFamily: publicFonts.display,
-                fontSize: { xs: '32px', sm: '38px', lg: '42px' },
-                fontWeight: 700,
-                lineHeight: 1.12,
-                letterSpacing: '-0.025em',
                 maxWidth: 560,
                 mb: 1.25,
               }}

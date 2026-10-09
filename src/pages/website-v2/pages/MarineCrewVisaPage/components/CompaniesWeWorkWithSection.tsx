@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { publicFonts } from '../../../theme/publicSiteTokens'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 import { marineCompanyTypes } from '../marinePageData'
 import { landingSectionHeaderMb, landingSectionPy } from '../../LandingPage/landingPageSpacing'
 
@@ -31,12 +32,8 @@ export function CompaniesWeWorkWithSection() {
           <Typography
             component="h2"
             sx={{
+              ...websiteHeadingSx.h2,
               color: '#10264A',
-              fontFamily: publicFonts.display,
-              fontSize: { xs: '30px', sm: '36px', lg: '42px' },
-              fontWeight: 700,
-              lineHeight: 1.2,
-              letterSpacing: '-0.025em',
               mb: 2,
             }}
           >

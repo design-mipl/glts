@@ -1,4 +1,4 @@
-import { websiteSectionPadding } from '../../theme/websiteDesignSystem'
+import { websiteDesignSystem, websiteSectionPadding } from '../../theme/websiteDesignSystem'
 
 /** Public sticky header height — keep in sync with `PublicHeader` NAV_HEIGHT. */
 export const PUBLIC_NAV_HEIGHT_PX = 72
@@ -31,9 +31,9 @@ export const landingHeroPb = {
 } as const
 
 export const landingSectionHeaderMb = {
-  xs: 5,
-  lg: 5.5,
-  desktop: 6,
+  xs: `${websiteDesignSystem.space[6]}px`,
+  lg: `${websiteDesignSystem.space[6]}px`,
+  desktop: `${websiteDesignSystem.space[6]}px`,
 } as const
 
 /** Top offset below sticky nav — shared across landing, marine, and corporate heroes. */

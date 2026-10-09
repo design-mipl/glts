@@ -3,6 +3,7 @@ import { ArrowRight, Crown, Plane, UsersRound, type LucideIcon } from 'lucide-re
 import { PublicContainer } from '../../../components/PublicContainer'
 import { getPrimaryButtonSx, mergeButtonSx, publicFonts, publicLightColors } from '../../../theme/publicSiteTokens'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 
 const serviceHighlights: {
   title: string
@@ -86,12 +87,8 @@ export function VisaServicesPreviewSection() {
               id="visa-services-preview-heading"
               component="h2"
               sx={{
-                fontFamily: publicFonts.display,
+                ...websiteHeadingSx.h2,
                 color: colors.navy,
-                fontSize: { xs: '30px', lg: '38px', desktop: '44px' },
-                fontWeight: 700,
-                lineHeight: 1.15,
-                letterSpacing: '-0.025em',
               }}
             >
               The Right Support. For Every Journey.

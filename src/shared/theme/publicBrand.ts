@@ -66,10 +66,10 @@ export function getPrimaryButtonSx(colors: PublicBrandColors): SxProps<Theme> {
     borderRadius: `${ds.component.button.product.radius}px`,
     fontSize: `${ds.component.button.product.fontSize}px`,
     boxShadow: `0 4px 14px ${colors.greenBright}4D`,
-    color: colors.onBrandFilled,
+    color: ds.color.onBrand,
     '&:hover': {
       backgroundColor: colors.greenDark,
-      color: colors.onBrandFilled,
+      color: ds.color.onBrand,
     },
   }
 }
@@ -78,8 +78,16 @@ export function getPrimaryButtonSx(colors: PublicBrandColors): SxProps<Theme> {
 export function getMarketingPrimaryButtonSx(colors: PublicBrandColors): SxProps<Theme> {
   return {
     ...getPrimaryButtonSx(colors),
+    minHeight: ds.component.button.marketing.minHeight,
     fontSize: `${ds.component.button.marketing.fontSize}px`,
     fontWeight: ds.component.button.marketing.fontWeight,
     padding: ds.component.button.marketing.padding,
+    boxSizing: 'border-box',
+    '& .MuiButton-startIcon > svg, & .MuiButton-endIcon > svg': {
+      width: `${ds.component.button.marketing.iconSize}px`,
+      height: `${ds.component.button.marketing.iconSize}px`,
+      flexShrink: 0,
+    },
+    '&:focus-visible': { outline: `3px solid ${ds.color.focus}`, outlineOffset: 3 },
   }
 }

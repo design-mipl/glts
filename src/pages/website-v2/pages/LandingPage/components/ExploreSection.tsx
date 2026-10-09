@@ -3,13 +3,14 @@ import { Box, Typography, Button } from '@mui/material'
 import { ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getAllCountries } from '@/shared/services/visaService'
-import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { usePublicBrandColors } from '../../../theme/publicSiteTokens'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { PremiumDestinationCard } from './PremiumDestinationCard'
 import { defaultExploreFilters, applyExploreFilters } from '../../../utils/applyExploreFilters'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 
-/** Two rows of featured destinations in the desktop five-column grid. */
+/** Featured destination selection, arranged to keep card details readable at desktop widths. */
 const HOMEPAGE_DESTINATION_COUNT = 10
 
 export function ExploreSection() {
@@ -65,13 +66,10 @@ export function ExploreSection() {
         >
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography
-              component="h2"
-              sx={{
-                fontFamily: publicFonts.display,
-                fontWeight: 700,
-                fontSize: { xs: '28px', md: '36px' },
+            component="h2"
+            sx={{
+                ...websiteHeadingSx.h2,
                 color: colors.navy,
-                lineHeight: 1.15,
                 mb: 2,
               }}
             >
@@ -127,19 +125,28 @@ export function ExploreSection() {
             aria-label="Featured destinations"
             sx={{
               display: 'grid',
-              gridTemplateColumns: {
-                xs: 'minmax(0, 1fr)',
-                sm: 'repeat(2, minmax(0, 1fr))',
-                md: 'repeat(3, minmax(0, 1fr))',
-                lg: 'repeat(5, minmax(0, 1fr))',
-              },
+              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+              '@media (min-width: 1024px)': { gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' },
+              '@media (min-width: 1536px)': { gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' },
               gap: { xs: 2.5, lg: 2 },
               rowGap: 3,
               alignItems: 'stretch',
             }}
           >
-            {homepageCountries.map((country) => (
-              <Box key={country.id} role="listitem" sx={{ minWidth: 0 }}>
+            {homepageCountries.map((country, index) => (
+              <Box
+                key={country.id}
+                role="listitem"
+                sx={{
+                  minWidth: 0,
+                  ...(index === homepageCountries.length - 2 && {
+                    '@media (min-width: 1024px) and (max-width: 1535.95px)': { gridColumnStart: 2 },
+                  }),
+                  ...(index === homepageCountries.length - 1 && {
+                    '@media (min-width: 1024px) and (max-width: 1535.95px)': { gridColumnStart: 3 },
+                  }),
+                }}
+              >
                 <PremiumDestinationCard country={country} />
               </Box>
             ))}

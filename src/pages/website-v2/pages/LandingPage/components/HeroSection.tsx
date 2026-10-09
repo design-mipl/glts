@@ -7,7 +7,7 @@ import { Button, Select } from '@/design-system/UIComponents'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { PUBLIC_NAV_HEIGHT_PX } from '../landingPageSpacing'
 import { getAllCountries } from '@/shared/services/visaService'
-import { websiteButtonSx, websiteFieldSx } from '../../../theme/websiteComponentStyles'
+import { websiteButtonSx, websiteFieldSx, websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 
 const homeHeroBackground = '/images/home-airport-background.png'
@@ -197,10 +197,11 @@ function VisaChecker() {
             gridColumn: '1 / -1',
             '&.MuiButton-containedPrimary': {
               backgroundColor: ds.color.brand,
-              color: ds.semanticColor.text.inverse,
+              color: ds.color.onBrand,
             },
             '&.MuiButton-containedPrimary:hover': {
               backgroundColor: ds.color.brandHover,
+              color: ds.color.onBrand,
             },
             '&:focus-visible': {
               outline: `3px solid ${ds.color.focus}`,
@@ -374,12 +375,8 @@ export function HeroSection() {
             id="home-hero-title"
             component="h1"
             sx={{
+              ...websiteHeadingSx.display,
               color: ds.color.navy,
-              fontFamily: ds.fonts.display,
-              fontSize: { xs: ds.type.h1.mobile, sm: ds.type.h1.tablet, md: 44, lg: 54 },
-              fontWeight: ds.type.display.weight,
-              lineHeight: ds.type.display.lineHeight,
-              letterSpacing: ds.type.display.tracking,
               mb: { xs: 2, md: 2.75 },
               textWrap: 'balance',
             }}

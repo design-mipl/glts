@@ -1,115 +1,19 @@
-import { useState } from 'react'
-import { Box, Typography, Stack, Button } from '@mui/material'
-import { ArrowRight, CalendarDays } from 'lucide-react'
-import { PublicContainer } from '../../../components/PublicContainer'
+import { CalendarDays } from 'lucide-react'
+import { PublicFinalCtaSection } from '../../../components/PublicFinalCtaSection'
 import { finalCtaBackgroundImage } from '../../../assets/landingPageImages'
-import {
-  publicFonts,
-  usePublicBrandColors,
-  getMarketingPrimaryButtonSx,
-  getOutlinedButtonSx,
-} from '@/shared/theme/publicBrand'
-import { finalCtaActionPt, finalCtaContentSpacing, finalCtaSectionSx } from '../landingPageSpacing'
 
 export function FinalCtaSection() {
-  const colors = usePublicBrandColors()
-  const [backgroundSrc, setBackgroundSrc] = useState<string>(finalCtaBackgroundImage.src)
-
   return (
-    <Box
-      component="section"
+    <PublicFinalCtaSection
       id="final-cta"
-      sx={finalCtaSectionSx}
-    >
-      <Box
-        component="img"
-        src={backgroundSrc}
-        alt=""
-        aria-hidden
-        loading="lazy"
-        onError={() => setBackgroundSrc(finalCtaBackgroundImage.fallback)}
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          objectPosition: { xs: '70% 55%', md: 'center 55%' },
-        }}
-      />
-
-      <Box
-        aria-hidden
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          background:
-            'linear-gradient(90deg, rgba(0,31,63,0.64) 0%, rgba(0,31,63,0.38) 48%, rgba(0,31,63,0.18) 100%)',
-        }}
-      />
-
-      <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1, width: '100%' }}>
-        <Stack spacing={finalCtaContentSpacing} sx={{ maxWidth: 720 }}>
-          <Typography
-            component="h2"
-            sx={{
-              fontFamily: publicFonts.display,
-              fontSize: { xs: '28px', sm: '32px', md: '40px' },
-              fontWeight: 700,
-              lineHeight: 1.1,
-              letterSpacing: '-0.7px',
-              color: colors.white,
-            }}
-          >
-            Ready to Submit With Confidence?
-          </Typography>
-
-          <Typography
-            sx={{
-              fontSize: { xs: '16px', md: '17px' },
-              lineHeight: 1.65,
-              color: 'rgba(255, 255, 255, 0.9)',
-            }}
-          >
-            Get expert-reviewed visa assistance with real-time tracking, compliance checks, and
-            dedicated support from start to finish.
-          </Typography>
-
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: finalCtaActionPt }}>
-            <Button
-              variant="contained"
-              href="/countries"
-              endIcon={<ArrowRight size={18} />}
-              sx={{
-                ...getMarketingPrimaryButtonSx(colors),
-                px: 4,
-                alignSelf: { xs: 'stretch', sm: 'flex-start' },
-              }}
-            >
-              Check Visa Requirements
-            </Button>
-            <Button
-              variant="outlined"
-              href="/track"
-              endIcon={<CalendarDays size={16} />}
-              sx={{
-                ...getOutlinedButtonSx(),
-                borderColor: 'rgba(255, 255, 255, 0.45)',
-                color: colors.white,
-                bgcolor: 'rgba(255, 255, 255, 0.12)',
-                px: 3.5,
-                alignSelf: { xs: 'stretch', sm: 'flex-start' },
-                '&:hover': {
-                  borderColor: colors.greenBright,
-                  bgcolor: 'rgba(255, 255, 255, 0.2)',
-                },
-              }}
-            >
-              Talk to a Visa Expert
-            </Button>
-          </Stack>
-        </Stack>
-      </PublicContainer>
-    </Box>
+      variant="editorial"
+      heading="Ready to Submit With Confidence?"
+      description="Get expert-reviewed visa assistance with real-time tracking, compliance checks, and dedicated support from start to finish."
+      image={finalCtaBackgroundImage}
+      imagePosition={{ xs: '70% 55%', md: 'center 55%' }}
+      overlay="linear-gradient(90deg, rgba(0,31,63,0.64) 0%, rgba(0,31,63,0.38) 48%, rgba(0,31,63,0.18) 100%)"
+      primaryButton={{ label: 'Check Visa Requirements', href: '/countries' }}
+      secondaryButton={{ label: 'Talk to a Visa Expert', href: '/track', icon: <CalendarDays size={16} /> }}
+    />
   )
 }

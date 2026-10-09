@@ -3,7 +3,9 @@ import { Box, Typography, Stack } from '@mui/material'
 import { Anchor, Building2, Handshake, User, ArrowRight, type LucideIcon } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 import { publicFonts, usePublicBrandColors, brandPrimaryGreenRgb } from '../../../theme/publicSiteTokens'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 import {
   travelSolutionImages,
   SOLUTION_CARD_IMAGE_HEIGHT,
@@ -61,10 +63,6 @@ const visaServiceImages: Record<string, { src: string; fallback: string; alt: st
   'travel-partners': { src: '/images/services/travel-assistance-24x7.png', fallback: '/images/services/travel-assistance-24x7.png', alt: 'Travel specialist assisting a customer' },
 }
 
-const CARD_RADIUS = '20px'
-const TRANSITION_MS = '300ms'
-const TRANSITION_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)'
-
 function SolutionCard({
   icon: Icon,
   title,
@@ -86,6 +84,8 @@ function SolutionCard({
 }) {
   const colors = usePublicBrandColors()
   const [imgSrc, setImgSrc] = useState(image.src)
+  const cardTokens = visaServices ? ds.component.card.category : ds.component.card.service
+  const cardRadius = visaServices ? ds.component.card.category.compactRadius : cardTokens.radius
 
   return (
     <Box
@@ -96,21 +96,23 @@ function SolutionCard({
         flexDirection: 'column',
         width: '100%',
         height: '100%',
-        borderRadius: visaServices ? '14px' : CARD_RADIUS,
+        borderRadius: `${cardRadius}px`,
         border: `1px solid ${colors.border}`,
         boxShadow: '0 4px 20px rgba(15, 23, 42, 0.06)',
         bgcolor: colors.white,
         textDecoration: 'none',
         color: 'inherit',
         overflow: 'hidden',
-        transition: `border-color ${TRANSITION_MS} ease, box-shadow ${TRANSITION_MS} ease, transform ${TRANSITION_MS} ${TRANSITION_EASE}`,
+        transition: `border-color ${ds.component.card.hoverDurationMs}ms ease, box-shadow ${ds.component.card.hoverDurationMs}ms ease, transform ${ds.component.card.hoverDurationMs}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+        '&:focus-visible': { outline: `${ds.component.card.focusWidth}px solid ${ds.color.focus}`, outlineOffset: 3 },
+        '@media (prefers-reduced-motion: reduce)': { transition: 'none', '& .solution-card-image': { transition: 'none' } },
         '@media (hover: hover)': {
           '&:hover': {
             borderColor: `rgba(${brandPrimaryGreenRgb}, 0.4)`,
             boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
             transform: 'translateY(-6px)',
             '& .solution-card-image': {
-              transform: 'scale(1.06)',
+              transform: `scale(${ds.component.card.imageZoomScale})`,
             },
           },
         },
@@ -124,8 +126,8 @@ function SolutionCard({
           flexShrink: 0,
           overflow: 'hidden',
           bgcolor: colors.surfaceAlt,
-          borderTopLeftRadius: CARD_RADIUS,
-          borderTopRightRadius: CARD_RADIUS,
+          borderTopLeftRadius: `${cardRadius}px`,
+          borderTopRightRadius: `${cardRadius}px`,
         }}
       >
         <Box
@@ -143,7 +145,7 @@ function SolutionCard({
             objectFit: 'cover',
             objectPosition: visaServices ? image.objectPosition ?? 'center' : 'center',
             display: 'block',
-            transition: `transform ${TRANSITION_MS} ${TRANSITION_EASE}`,
+            transition: `transform ${ds.component.card.hoverDurationMs}ms cubic-bezier(0.4, 0, 0.2, 1)`,
             willChange: 'transform',
           }}
         />
@@ -154,15 +156,15 @@ function SolutionCard({
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
-          p: visaServices ? { xs: 2.25, desktop: 2.25 } : { xs: 2.25, md: 2.5 },
+          p: { xs: `${cardTokens.padding.mobile}px`, md: `${cardTokens.padding.desktop}px` },
         }}
       >
         <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 1 }}>
           <Box
             sx={{
-              width: 34,
-              height: 34,
-              borderRadius: '10px',
+              width: cardTokens.iconContainerSize,
+              height: cardTokens.iconContainerSize,
+              borderRadius: `${cardTokens.iconRadius}px`,
               bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
               display: 'flex',
               alignItems: 'center',
@@ -170,12 +172,12 @@ function SolutionCard({
               flexShrink: 0,
             }}
           >
-            <Icon size={18} color={colors.greenBright} strokeWidth={2.1} />
+            <Icon size={cardTokens.iconSize} color={colors.greenBright} strokeWidth={ds.icon.strokeWidth} aria-hidden="true" />
           </Box>
           <Typography
             sx={{
               fontFamily: publicFonts.heading,
-              fontSize: visaServices ? '18px' : '18px',
+              fontSize: `${cardTokens.titleSize}px`,
               fontWeight: 800,
               color: colors.navy,
               lineHeight: 1.25,
@@ -188,7 +190,7 @@ function SolutionCard({
         <Typography
           sx={{
             fontFamily: publicFonts.heading,
-            fontSize: visaServices ? '15px' : '16px',
+            fontSize: `${visaServices ? ds.component.card.category.subtitleSize : ds.component.card.service.summarySize}px`,
             fontWeight: 800,
             color: colors.navy,
             lineHeight: 1.35,
@@ -200,9 +202,9 @@ function SolutionCard({
 
         <Typography
           sx={{
-            fontSize: visaServices ? '15px' : '14px',
+            fontSize: `${visaServices ? ds.component.card.category.bodySize : cardTokens.bodySize}px`,
             color: colors.textSecondary,
-            lineHeight: 1.65,
+            lineHeight: cardTokens.bodyLineHeight,
             mb: 2,
             flex: 1,
           }}
@@ -211,7 +213,7 @@ function SolutionCard({
         </Typography>
 
         <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: colors.greenBright }}>
-          <Typography sx={{ fontSize: visaServices ? '15px' : '13px', fontWeight: 700 }}>{ctaLabel}</Typography>
+          <Typography sx={{ fontSize: visaServices ? '15px' : '14px', fontWeight: 700 }}>{ctaLabel}</Typography>
           <ArrowRight size={15} strokeWidth={2.5} />
         </Stack>
       </Box>
@@ -250,12 +252,8 @@ export function SpecializedSolutionsSection({ visaServices = false }: { visaServ
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.display,
-              fontSize: visaServices ? { xs: '30px', lg: '36px', desktop: '42px' } : { xs: '26px', md: '32px' },
-              fontWeight: 700,
+              ...websiteHeadingSx.h2,
               color: colors.navy,
-              lineHeight: 1.15,
-              letterSpacing: '-0.5px',
               mb: 1.25,
             }}
           >

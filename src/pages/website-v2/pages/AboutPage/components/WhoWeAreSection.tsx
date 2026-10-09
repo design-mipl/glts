@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import { PublicContainer } from '../../../components/PublicContainer'
-import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 import { landingSectionPy } from '../../LandingPage/landingPageSpacing'
 import { aboutWhoWeAre } from '../aboutPageData'
 
@@ -91,12 +92,8 @@ export function WhoWeAreSection() {
             <Typography
               component="h2"
               sx={{
-                fontFamily: publicFonts.display,
-                fontSize: { xs: '28px', md: '34px', lg: '36px' },
-                fontWeight: 700,
+                ...websiteHeadingSx.h2,
                 color: colors.navy,
-                lineHeight: 1.15,
-                letterSpacing: '-0.03em',
                 mb: 2.25,
               }}
             >
@@ -108,7 +105,7 @@ export function WhoWeAreSection() {
                 <Typography
                   key={paragraph.slice(0, 32)}
                   sx={{
-                    fontSize: { xs: '14.5px', md: '15.5px' },
+                    fontSize: { xs: '16px', md: '16px' },
                     color: colors.textSecondary,
                     lineHeight: 1.7,
                   }}

@@ -9,7 +9,9 @@ import {
   getMarketingPrimaryButtonSx,
 } from '../../../theme/publicSiteTokens'
 import { landingSectionHeaderMb, landingSectionPy } from '../../LandingPage/landingPageSpacing'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 import { serviceCategories } from '../servicesPageData'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 
 function ServiceCategoryCard({
   title,
@@ -21,6 +23,7 @@ function ServiceCategoryCard({
 }: (typeof serviceCategories)[number]) {
   const colors = usePublicBrandColors()
   const [imgSrc, setImgSrc] = useState<string>(image.src)
+  const cardTokens = ds.component.card.service
 
   return (
     <Box
@@ -28,12 +31,14 @@ function ServiceCategoryCard({
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: '20px',
+        borderRadius: `${cardTokens.radius}px`,
         border: `1px solid ${colors.border}`,
         boxShadow: '0 8px 28px rgba(15, 23, 42, 0.07)',
         bgcolor: colors.white,
         overflow: 'hidden',
-        transition: 'transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease',
+        transition: `transform ${ds.component.card.hoverDurationMs}ms ease, box-shadow ${ds.component.card.hoverDurationMs}ms ease, border-color ${ds.component.card.hoverDurationMs}ms ease`,
+        '&:focus-within': { outline: `${ds.component.card.focusWidth}px solid ${ds.color.focus}`, outlineOffset: 2 },
+        '@media (prefers-reduced-motion: reduce)': { transition: 'none', '& .service-category-image': { transition: 'none' } },
         '@media (hover: hover)': {
           '&:hover': {
             transform: 'translateY(-5px)',
@@ -41,7 +46,7 @@ function ServiceCategoryCard({
             boxShadow: '0 18px 40px rgba(15, 23, 42, 0.12)',
           },
           '&:hover .service-category-image': {
-            transform: 'scale(1.05)',
+            transform: `scale(${ds.component.card.imageZoomScale})`,
           },
         },
       }}
@@ -50,7 +55,7 @@ function ServiceCategoryCard({
         sx={{
           position: 'relative',
           width: '100%',
-          aspectRatio: '16 / 10',
+          aspectRatio: cardTokens.imageAspectRatio,
           overflow: 'hidden',
           bgcolor: colors.surfaceAlt,
         }}
@@ -68,7 +73,7 @@ function ServiceCategoryCard({
             height: '100%',
             objectFit: 'cover',
             objectPosition: image.objectPosition ?? 'center center',
-            transition: 'transform 0.4s ease',
+            transition: `transform ${ds.component.card.hoverDurationMs}ms ease`,
           }}
         />
         <Box
@@ -84,11 +89,11 @@ function ServiceCategoryCard({
 
       <Box
         sx={{
-          p: { xs: 2.5, md: 3 },
+          p: { xs: `${cardTokens.padding.mobile}px`, md: `${cardTokens.padding.desktop}px` },
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
-          gap: 2,
+          gap: `${cardTokens.gap}px`,
         }}
       >
         <Box>
@@ -96,8 +101,8 @@ function ServiceCategoryCard({
             component="h3"
             sx={{
               fontFamily: publicFonts.heading,
-              fontSize: { xs: '20px', md: '22px' },
-              fontWeight: 700,
+              fontSize: `${cardTokens.prominentTitleSize}px`,
+              fontWeight: cardTokens.titleWeight,
               color: colors.navy,
               letterSpacing: '-0.02em',
               lineHeight: 1.25,
@@ -108,9 +113,9 @@ function ServiceCategoryCard({
           </Typography>
           <Typography
             sx={{
-              fontSize: '14.5px',
+              fontSize: `${cardTokens.bodySize}px`,
               color: colors.textSecondary,
-              lineHeight: 1.65,
+              lineHeight: cardTokens.bodyLineHeight,
             }}
           >
             {description}
@@ -195,12 +200,8 @@ export function ServiceCategoriesSection() {
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.display,
-              fontSize: { xs: '28px', md: '36px' },
-              fontWeight: 700,
+              ...websiteHeadingSx.h2,
               color: colors.navy,
-              lineHeight: 1.15,
-              letterSpacing: '-0.03em',
               mb: 1.5,
             }}
           >

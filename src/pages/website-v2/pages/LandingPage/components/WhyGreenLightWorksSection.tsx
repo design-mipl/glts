@@ -11,11 +11,13 @@ import {
 import { PublicContainer } from '../../../components/PublicContainer'
 import { whyChooseGreenlightImage } from '../../../assets/landingPageImages'
 import { featureSectionPy, landingSectionHeaderMb } from '../landingPageSpacing'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 import {
   publicFonts,
   usePublicBrandColors,
   brandPrimaryGreenRgb,
 } from '@/shared/theme/publicBrand'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 
 const FEATURES: {
   title: string
@@ -67,6 +69,7 @@ function FeatureCard({
   icon: LucideIcon
 }) {
   const colors = usePublicBrandColors()
+  const cardTokens = ds.component.card.benefit
 
   return (
     <Box
@@ -74,13 +77,14 @@ function FeatureCard({
         height: '100%',
         bgcolor: colors.white,
         border: `1px solid ${colors.border}`,
-        borderRadius: '16px',
+        borderRadius: `${cardTokens.radius}px`,
         boxShadow: '0 6px 18px rgba(15, 23, 42, 0.06)',
-        p: { xs: 2, md: 2.25 },
+        p: { xs: `${cardTokens.padding.mobile}px`, md: `${cardTokens.padding.desktop}px` },
         display: 'flex',
         flexDirection: 'column',
-        gap: 1.25,
-        transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
+        gap: `${cardTokens.gap}px`,
+        transition: `transform ${ds.component.card.hoverDurationMs}ms ease, box-shadow ${ds.component.card.hoverDurationMs}ms ease, border-color ${ds.component.card.hoverDurationMs}ms ease`,
+        '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
         '@media (hover: hover)': {
           '&:hover': {
             transform: 'translateY(-4px)',
@@ -92,8 +96,8 @@ function FeatureCard({
     >
       <Box
         sx={{
-          width: 40,
-          height: 40,
+          width: cardTokens.iconContainerSize,
+          height: cardTokens.iconContainerSize,
           borderRadius: '12px',
           bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
           display: 'flex',
@@ -102,13 +106,13 @@ function FeatureCard({
           flexShrink: 0,
         }}
       >
-        <Icon size={20} color={colors.greenBright} strokeWidth={2.1} />
+        <Icon size={ds.icon.standard} color={colors.greenBright} strokeWidth={ds.icon.strokeWidth} aria-hidden="true" />
       </Box>
       <Typography
         sx={{
           fontFamily: publicFonts.heading,
-          fontSize: '15px',
-          fontWeight: 700,
+          fontSize: `${cardTokens.titleSize}px`,
+          fontWeight: cardTokens.titleWeight,
           color: colors.navy,
           letterSpacing: '-0.02em',
           lineHeight: 1.3,
@@ -118,9 +122,9 @@ function FeatureCard({
       </Typography>
       <Typography
         sx={{
-          fontSize: '13px',
+          fontSize: `${cardTokens.bodySize + 1}px`,
           color: colors.textSecondary,
-          lineHeight: 1.5,
+          lineHeight: cardTokens.bodyLineHeight,
         }}
       >
         {description}
@@ -169,14 +173,10 @@ export function WhyGreenLightWorksSection() {
             </Typography>
 
             <Typography
-              component="h2"
-              sx={{
-                fontFamily: publicFonts.display,
-                fontSize: { xs: '28px', md: '36px', lg: '40px' },
-                fontWeight: 700,
+            component="h2"
+            sx={{
+                ...websiteHeadingSx.h2,
                 color: colors.navy,
-                lineHeight: 1.15,
-                letterSpacing: '-0.03em',
                 mb: 1.75,
               }}
             >
@@ -199,11 +199,8 @@ export function WhyGreenLightWorksSection() {
             <Box
               sx={{
                 display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  sm: 'repeat(2, minmax(0, 1fr))',
-                  md: 'repeat(3, minmax(0, 1fr))',
-                },
+                gridTemplateColumns: '1fr',
+                '@media (min-width: 600px)': { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
                 gap: 3,
               }}
             >

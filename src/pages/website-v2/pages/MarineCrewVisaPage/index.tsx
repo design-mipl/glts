@@ -27,8 +27,11 @@ export function MarineCrewVisaPage() {
 
       <ChallengesWeSolveSection
         id="marine-industry-challenges"
+        variant="marine"
+        eyebrow="Industry insights"
         heading="Industry Challenges We Solve"
         description="We understand the unique needs of the marine and offshore industry."
+        desktopColumns={4}
         challenges={[
           {
             title: 'Urgent Crew Movements',

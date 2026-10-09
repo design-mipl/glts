@@ -2,15 +2,15 @@ import { Box, Typography, Stack, Button, keyframes } from '@mui/material'
 import { ArrowRight, MessageCircle, Check } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import {
-  publicFonts,
   usePublicBrandColors,
   brandPrimaryGreenRgb,
   getMarketingPrimaryButtonSx,
-  getOutlinedButtonSx,
 } from '../../../theme/publicSiteTokens'
+import { websiteSecondaryButtonSx } from '../../../theme/websiteComponentStyles'
 import { useHeroScrollParallax } from '../../../hooks/useHeroScrollParallax'
 import { retailHeroCtas, retailHeroTrustPoints } from '../retailPageData'
 import { RetailHeroBackgroundImage } from './RetailHeroBackgroundImage'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 
 /** Match Marine / Corporate hero vertical rhythm. */
 const retailHeroMinHeight = {
@@ -80,12 +80,8 @@ export function RetailHero() {
           <Typography
             component="h1"
             sx={{
-              fontFamily: publicFonts.display,
-              fontSize: { xs: '39px', md: '47px', desktop: '56px' },
-              fontWeight: 700,
+              ...websiteHeadingSx.display,
               color: colors.white,
-              lineHeight: 1.07,
-              letterSpacing: '-0.02em',
               mb: retailHeroSpacing.headingToDescription,
               maxWidth: 570,
             }}
@@ -131,7 +127,7 @@ export function RetailHero() {
               href={retailHeroCtas.secondary.href}
               endIcon={<MessageCircle size={16} />}
               sx={{
-                ...getOutlinedButtonSx(),
+                ...websiteSecondaryButtonSx,
                 borderColor: 'rgba(255, 255, 255, 0.45)',
                 color: colors.white,
                 bgcolor: 'rgba(255, 255, 255, 0.1)',

@@ -2,16 +2,19 @@ import type { CSSProperties } from 'react'
 import { FOUNDATION_BREAKPOINT_VALUES } from '@/design-system/breakpoints'
 import { publicFonts, publicLightColors, publicShadows } from '@/shared/theme/publicBrandPrimitives'
 
-const containerTokens = { max: 1280, heroMax: 1760, gutterMobile: 24, gutterTablet: 32, gutterDesktop: 48 } as const
+const containerTokens = { max: 1280, heroMax: 1280, gutterMobile: 24, gutterTablet: 32, gutterDesktop: 48 } as const
 const radiusTokens = { small: 8, medium: 12, large: 20, card: 22, pill: 999 } as const
 const controlTokens = { height: 44, buttonHeight: 44, iconButtonSize: 44, labelGap: 8, iconGap: 8 } as const
 const buttonSizeTokens = {
-  website: { minHeight: controlTokens.buttonHeight, radius: radiusTokens.medium, fontSize: 14, fontWeight: 600, paddingX: 12 },
+  website: { minHeight: controlTokens.buttonHeight, radius: radiusTokens.medium, fontSize: 14, fontWeight: 600, paddingX: 12, iconSize: 16 },
   product: { radius: 10, fontSize: 13, fontWeight: 600 },
-  marketing: { radius: 10, fontSize: 16, fontWeight: 700, padding: '10px 20px' },
+  auth: { minHeight: 48, radius: 9, fontSize: 15, fontWeight: 700 },
+  authSecondary: { minHeight: 40, radius: 9, fontSize: 12, fontWeight: 700 },
+  marketing: { minHeight: 48, radius: 10, fontSize: 16, fontWeight: 700, padding: '10px 20px', iconSize: 18 },
 } as const
 const fieldSizeTokens = {
   website: { minHeight: controlTokens.height, radius: radiusTokens.medium },
+  auth: { minHeight: 50, radius: 10, fontSize: 14, labelFontSize: 13, helperFontSize: 12 },
   productSmall: { minHeight: 34 },
   productStandard: { minHeight: 40 },
 } as const
@@ -32,6 +35,7 @@ export const websiteDesignSystem = {
     canvas: publicLightColors.surface,
     surface: '#FFFFFF',
     surfaceMuted: publicLightColors.surfaceAlt,
+    challengeSurface: '#F1F8F3',
     text: publicLightColors.text,
     textSecondary: publicLightColors.textSecondary,
     textMuted: publicLightColors.textSecondary,
@@ -85,7 +89,7 @@ export const websiteDesignSystem = {
     darkText: { heading: publicLightColors.white, body: publicLightColors.white, secondary: '#CBD5E1' },
   },
   space: [0, 4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 120] as const,
-  /** `max` is the standard reading/card shell; `heroMax` is for immersive, full-width sections. */
+  /** Both public container variants share a readable 1280px content width; hero gutters stay wider. */
   container: containerTokens,
   /** Legacy MUI spacing-unit aliases remain for existing consumers; new code should use `section`. */
   layoutCompatibility: {
@@ -109,7 +113,7 @@ export const websiteDesignSystem = {
   grid: { mobile: 4, tablet: 8, desktop: 12, gapMobile: 16, gapTablet: 24, gapDesktop: 32 },
   section: {
     compact: { mobile: 40, tablet: 52, desktop: 64, contentMax: containerTokens.max, headingGap: 16, descriptionGap: 20, contentGap: 40 },
-    regular: { mobile: 56, tablet: 72, desktop: 96, contentMax: containerTokens.max, headingGap: 16, descriptionGap: 20, contentGap: 48 },
+    regular: { mobile: 48, tablet: 64, desktop: 80, contentMax: containerTokens.max, headingGap: 16, descriptionGap: 20, contentGap: 40 },
     feature: { mobile: 64, tablet: 88, desktop: 120, contentMax: containerTokens.max, headingGap: 16, descriptionGap: 20, contentGap: 48 },
     dark: { mobile: 64, tablet: 80, desktop: 112, contentMax: containerTokens.max, headingGap: 16, descriptionGap: 20, contentGap: 48 },
     hero: { mobile: 80, tablet: 96, desktop: 120, contentMax: containerTokens.heroMax, headingGap: 16, descriptionGap: 32, contentGap: 48 },
@@ -132,11 +136,83 @@ export const websiteDesignSystem = {
       h6: { size: 16, weight: 600, lineHeight: 1.35 },
       overline: { size: 12, weight: 600, letterSpacing: '0.08em' },
       cardTitle: { size: 18, mobile: 16, weight: 700, lineHeight: 1.3 },
+      sectionCompact: { size: 36, tablet: 32, mobile: 28, weight: 700, lineHeight: 1.2, tracking: '-0.02em' },
+      authTitle: { size: 52, mobile: 38, weight: 700, lineHeight: 1.04, tracking: '-0.035em' },
+      authPanelTitle: { size: 30, mobile: 26, weight: 700, lineHeight: 1.18 },
+    },
+    faq: {
+      questionSize: 16,
+      questionWeight: 700,
+      questionLineHeight: 1.4,
+      answerSize: 14,
+      answerLineHeight: 1.6,
+      rowMinHeight: 60,
+      rowPaddingX: 16,
+      rowPaddingY: 12,
+      iconContainerSize: 28,
+      iconSize: 20,
+      gap: 12,
+      radius: radiusTokens.medium,
+      transitionMs: 240,
+    },
+    card: {
+      service: { radius: radiusTokens.large, compactRadius: 16, imageRadius: 14, padding: { mobile: 20, desktop: 24 }, gap: 16, imageAspectRatio: '16 / 10', portraitAspectRatio: '4 / 5', iconContainerSize: 34, iconSize: 18, iconRadius: 10, titleSize: 18, prominentTitleSize: 20, compactTitleMobileSize: 15, compactBodyMobileSize: 12.5, compactBodySize: 13, featuredBodySize: 16, defaultBodySize: 15, titleWeight: 700, summarySize: 16, bodySize: 15, bodyLineHeight: 1.6 },
+      category: { radius: radiusTokens.card, compactRadius: 14, padding: { mobile: 18, desktop: 20 }, gap: 16, imageAspectRatio: '16 / 10', iconContainerSize: 34, iconSize: 18, iconRadius: 10, titleSize: 20, subtitleSize: 15, titleWeight: 700, bodySize: 15, readableBodySize: 16, bodyLineHeight: 1.6 },
+      challenge: { radius: radiusTokens.medium, padding: { mobile: 16, desktop: 18 }, gap: 12, iconContainerSize: 48, titleSize: 18, titleWeight: 700, bodySize: 15, bodyLineHeight: 1.5 },
+      benefit: { radius: 16, padding: { mobile: 16, desktop: 18 }, gap: 10, iconContainerSize: 40, titleSize: 15, titleWeight: 700, bodySize: 14, bodyLineHeight: 1.5 },
+      editorial: { radius: 18, padding: { mobile: 18, desktop: 20 }, gap: 8, imageAspectRatio: '4 / 3', titleSize: 17, titleWeight: 700, bodySize: 14, bodyLineHeight: 1.55 },
+      imageZoomScale: 1.05,
+      hoverDurationMs: 280,
+      focusWidth: 3,
+    },
+    finalCta: {
+      contentMaxWidth: 720,
+      descriptionMaxWidth: 620,
+      contentGap: 20,
+      actionPaddingTop: 12,
+      headingSize: { mobile: 28, tablet: 32, desktop: 40 },
+      headingLineHeight: 1.1,
+      bodySize: { mobile: 16, desktop: 17 },
+      bodyLineHeight: 1.65,
+      actionGap: 12,
+      primaryPaddingX: 32,
+      secondaryPaddingX: 28,
+      variant: {
+        retail: {
+          minHeight: { xs: 440, sm: 350, md: 360 },
+          contentGap: 12,
+          actionPaddingTop: 4,
+          overlay: {
+            xs: 'linear-gradient(90deg, rgba(0,31,63,.90) 0%, rgba(0,31,63,.74) 58%, rgba(0,31,63,.58) 100%)',
+            md: 'linear-gradient(90deg, rgba(0,31,63,.90) 0%, rgba(0,31,63,.72) 36%, rgba(0,31,63,.28) 76%, rgba(0,31,63,.16) 100%)',
+          },
+        },
+        b2b: {
+          contentGap: 20,
+          actionPaddingTop: 12,
+          overlay: 'linear-gradient(90deg, rgba(0,31,63,.80) 0%, rgba(0,31,63,.58) 48%, rgba(0,31,63,.30) 100%)',
+        },
+        editorial: {
+          contentGap: 20,
+          actionPaddingTop: 12,
+          overlay: 'linear-gradient(90deg, rgba(0,31,63,.72) 0%, rgba(0,31,63,.46) 48%, rgba(0,31,63,.22) 100%)',
+        },
+      },
     },
     button: buttonSizeTokens,
     field: fieldSizeTokens,
   },
-  icon: { small: 16, standard: 20, large: 24, strokeWidth: 2, container: 44 },
+  icon: {
+    small: 16,
+    standard: 20,
+    feature: 24,
+    process: 28,
+    large: 24,
+    strokeWidth: 2,
+    container: 44,
+    featureContainer: 44,
+    processContainer: 68,
+  },
   /** Exact min-widths behind the active MUI keys. `tablet/laptop/desktop` are semantic aliases. */
   breakpoint: {
     ...FOUNDATION_BREAKPOINT_VALUES,

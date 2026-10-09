@@ -1,7 +1,8 @@
 import { Box, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 import { PublicContainer } from '../PublicContainer'
-import { publicFonts, usePublicBrandColors } from '../../theme/publicSiteTokens'
+import { usePublicBrandColors } from '../../theme/publicSiteTokens'
+import { websiteHeadingSx } from '../../theme/websiteComponentStyles'
 import { landingSectionHeaderMb, landingSectionPy } from '../../pages/LandingPage/landingPageSpacing'
 
 interface SolutionPageSectionProps {
@@ -30,16 +31,8 @@ export function SolutionPageSection({ id, title, subtitle, headingAlign = 'left'
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.display,
-              fontSize: headingSize === 'business' ? '28px' : { xs: '22px', md: '28px' },
-              fontWeight: 700,
+              ...(headingSize === 'business' ? websiteHeadingSx.h2Compact : websiteHeadingSx.h2),
               color: colors.navy,
-              lineHeight: headingSize === 'business' ? 1.2 : 1.25,
-              letterSpacing: headingSize === 'business' ? '-0.02em' : undefined,
-              ...(headingSize === 'business' && {
-                '@media (min-width: 600px)': { fontSize: '32px' },
-                '@media (min-width: 1024px)': { fontSize: '36px' },
-              }),
               mb: subtitle ? 2 : 0,
             }}
           >

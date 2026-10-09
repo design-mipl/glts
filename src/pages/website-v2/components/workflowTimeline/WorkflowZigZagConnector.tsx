@@ -1,14 +1,16 @@
 import { Box } from '@mui/material'
 import { usePublicBrandColors } from '../../theme/publicSiteTokens'
-import { WORKFLOW_ZIGZAG_PATH, WORKFLOW_ZIGZAG_VIEWBOX } from './workflowGeometry'
+import { getWorkflowZigZagPath, WORKFLOW_ZIGZAG_VIEWBOX } from './workflowGeometry'
 
 interface WorkflowZigZagConnectorProps {
   visible: boolean
   trackHeight: number
+  stepCount: number
+  variant: 'desktop' | 'tablet'
 }
 
 /** Thin dashed zig-zag connector through alternating step icon centers. */
-export function WorkflowZigZagConnector({ visible, trackHeight }: WorkflowZigZagConnectorProps) {
+export function WorkflowZigZagConnector({ visible, trackHeight, stepCount, variant }: WorkflowZigZagConnectorProps) {
   const colors = usePublicBrandColors()
 
   return (
@@ -30,7 +32,7 @@ export function WorkflowZigZagConnector({ visible, trackHeight }: WorkflowZigZag
       }}
     >
       <path
-        d={WORKFLOW_ZIGZAG_PATH}
+        d={getWorkflowZigZagPath(stepCount, variant)}
         fill="none"
         stroke={colors.greenBright}
         strokeWidth="1.75"

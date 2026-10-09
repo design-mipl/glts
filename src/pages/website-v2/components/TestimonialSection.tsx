@@ -368,7 +368,7 @@ function TestimonialCard({
 
       <Typography
         sx={{
-          fontSize: '14px',
+          fontSize: '15px',
           color: colors.text,
           lineHeight: 1.65,
           overflow: 'hidden',

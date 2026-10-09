@@ -3,14 +3,13 @@ import { Box, Typography } from '@mui/material'
 import { ArrowRight } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import {
-  publicFonts,
   usePublicBrandColors,
   brandPrimaryGreenRgb,
 } from '../../../theme/publicSiteTokens'
 import { landingSectionHeaderMb, landingSectionPy } from '../../LandingPage/landingPageSpacing'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 import { aboutIndustries } from '../aboutPageData'
-
-const CARD_RADIUS = '18px'
 
 function IndustryCard({
   title,
@@ -20,6 +19,7 @@ function IndustryCard({
 }: (typeof aboutIndustries)[number]) {
   const colors = usePublicBrandColors()
   const [imgSrc, setImgSrc] = useState<string>(image.src)
+  const cardTokens = ds.component.card.editorial
 
   return (
     <Box
@@ -29,14 +29,16 @@ function IndustryCard({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        borderRadius: CARD_RADIUS,
+        borderRadius: `${cardTokens.radius}px`,
         border: `1px solid ${colors.border}`,
         boxShadow: '0 6px 20px rgba(15, 23, 42, 0.06)',
         bgcolor: colors.white,
         textDecoration: 'none',
         color: 'inherit',
         overflow: 'hidden',
-        transition: 'transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease',
+        transition: `transform ${ds.component.card.hoverDurationMs}ms ease, box-shadow ${ds.component.card.hoverDurationMs}ms ease, border-color ${ds.component.card.hoverDurationMs}ms ease`,
+        '&:focus-visible': { outline: `${ds.component.card.focusWidth}px solid ${ds.color.focus}`, outlineOffset: 3 },
+        '@media (prefers-reduced-motion: reduce)': { transition: 'none', '& .industry-card-image': { transition: 'none' } },
         '@media (hover: hover)': {
           '&:hover': {
             transform: 'translateY(-5px)',
@@ -57,7 +59,7 @@ function IndustryCard({
         sx={{
           position: 'relative',
           width: '100%',
-          aspectRatio: '4 / 3',
+          aspectRatio: cardTokens.imageAspectRatio,
           overflow: 'hidden',
           bgcolor: colors.surfaceAlt,
         }}
@@ -75,7 +77,7 @@ function IndustryCard({
             height: '100%',
             objectFit: 'cover',
             objectPosition: 'center',
-            transition: 'transform 0.4s ease',
+            transition: `transform ${ds.component.card.hoverDurationMs}ms ease`,
           }}
         />
         <Box
@@ -88,13 +90,11 @@ function IndustryCard({
         />
       </Box>
 
-      <Box sx={{ p: { xs: 2.25, md: 2.5 }, display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
+      <Box sx={{ p: { xs: `${cardTokens.padding.mobile}px`, md: `${cardTokens.padding.desktop}px` }, display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
           <Typography
             sx={{
-              fontFamily: publicFonts.heading,
-              fontSize: { xs: '17px', md: '18px' },
-              fontWeight: 700,
+              ...websiteHeadingSx.cardTitle,
               color: colors.navy,
               letterSpacing: '-0.02em',
               lineHeight: 1.3,
@@ -111,9 +111,9 @@ function IndustryCard({
         </Box>
         <Typography
           sx={{
-            fontSize: '14px',
+            fontSize: `${cardTokens.bodySize + 1}px`,
             color: colors.textSecondary,
-            lineHeight: 1.6,
+            lineHeight: cardTokens.bodyLineHeight,
           }}
         >
           {description}
@@ -153,12 +153,8 @@ export function IndustriesWeServeSection() {
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.display,
-              fontSize: { xs: '28px', md: '36px' },
-              fontWeight: 700,
+              ...websiteHeadingSx.h2,
               color: colors.navy,
-              lineHeight: 1.15,
-              letterSpacing: '-0.03em',
               mb: 1.5,
             }}
           >

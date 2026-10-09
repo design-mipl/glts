@@ -43,24 +43,45 @@ export function TrustedCompaniesSection({
         alignItems: 'center',
         flexShrink: 0,
         gap: 'var(--trusted-logo-gap)',
+        width: { md: '100%' },
+        justifyContent: { md: 'center' },
         m: 0,
-        pr: 'var(--trusted-logo-gap)',
+        pr: { xs: 'var(--trusted-logo-gap)', md: 0 },
         pl: 0,
         listStyle: 'none',
       }}
     >
-      {logos.map(({ name, src, alt, width, height = 76, crop = false }) => (
-        <Box component="li" key={name} sx={{ flexShrink: 0 }}>
+      {logos.map(({ name, src, alt, width, height = 76 }) => (
+        <Box
+          component="li"
+          key={name}
+          sx={{
+            flexShrink: 0,
+            width: {
+              xs: 148,
+              sm: 176,
+              md: `calc((min(100vw - 96px, 1280px) - ${12 * (logos.length - 1)}px) / ${logos.length})`,
+            },
+            height: { xs: 64, md: 76 },
+            px: 2,
+            display: 'grid',
+            placeItems: 'center',
+            boxSizing: 'border-box',
+            bgcolor: colors.white,
+            border: `1px solid ${colors.border}`,
+            borderRadius: '10px',
+          }}
+        >
           <Box
             component="img"
             src={src}
             alt={duplicate ? '' : (alt ?? name)}
             sx={{
               display: 'block',
-              width: width ? { xs: Math.round(width * 0.8), sm: width } : 'auto',
-              height: { xs: Math.round(height * 0.8), sm: Math.round(height * 0.9), md: height },
-              maxWidth: 'none',
-              objectFit: crop ? 'cover' : 'contain',
+              width: width ? Math.min(width, 160) : 'auto',
+              height: { xs: Math.min(height, 48), md: Math.min(height, 58) },
+              maxWidth: '100%',
+              objectFit: 'contain',
             }}
           />
         </Box>
@@ -89,16 +110,16 @@ export function TrustedCompaniesSection({
 
         <Box
           sx={{
-            '--trusted-logo-gap': { xs: '32px', sm: '48px', md: '72px' },
-            overflow: 'hidden',
+            overflow: { xs: 'hidden', md: 'visible' },
             maskImage: {
               xs: 'linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent)',
-              md: 'linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent)',
+              md: 'none',
             },
             WebkitMaskImage: {
               xs: 'linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent)',
-              md: 'linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent)',
+              md: 'none',
             },
+            '--trusted-logo-gap': { xs: '32px', sm: '48px', md: '12px' },
             '@media (hover: hover) and (pointer: fine)': {
               '&:hover .trusted-companies-track': { animationPlayState: 'paused' },
             },
@@ -113,9 +134,10 @@ export function TrustedCompaniesSection({
             className="trusted-companies-track"
             sx={{
               display: 'flex',
-              width: 'max-content',
-              animation: `trustedCompaniesScroll ${Math.max(1, durationSeconds)}s linear infinite`,
+              width: { xs: 'max-content', md: '100%' },
+              animation: { xs: `trustedCompaniesScroll ${Math.max(1, durationSeconds)}s linear infinite`, md: 'none' },
               animationDirection: direction === 'right' ? 'reverse' : 'normal',
+              '& > .trusted-companies-duplicate': { display: { md: 'none' } },
               '@keyframes trustedCompaniesScroll': {
                 from: { transform: 'translate3d(0, 0, 0)' },
                 to: { transform: 'translate3d(-50%, 0, 0)' },

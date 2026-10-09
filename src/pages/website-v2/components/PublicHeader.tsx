@@ -19,6 +19,7 @@ import { useScrolledHeader } from '../hooks/useScrolledHeader'
 import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, publicShadows, usePublicBrandColors } from '../theme/publicSiteTokens'
 import { PublicContainer } from './PublicContainer'
+import { websiteDesignSystem as ds } from '../theme/websiteDesignSystem'
 
 const NAV_HEIGHT = 72
 
@@ -88,8 +89,8 @@ export function PublicHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
-  const isWide = useMediaQuery(theme.breakpoints.up('desktop'))
-  const isTablet = useMediaQuery(theme.breakpoints.up('lg'))
+  const isWide = useMediaQuery(theme.breakpoints.up(ds.breakpoint.laptop))
+  const isTablet = useMediaQuery(theme.breakpoints.up(ds.breakpoint.tabletLandscape))
   const showCenterNav = isTablet
   const isHome = pathname === '/'
   /** Homepage at top: nav blends into the hero (no white bar / gap). */
@@ -217,6 +218,7 @@ export function PublicHeader() {
               color="primary"
               size={isWide ? 'md' : 'sm'}
               startIcon={<User size={isWide ? 16 : 14} />}
+              sx={{ color: colors.navy }}
             >
               Sign in
             </DsButton>
@@ -353,9 +355,10 @@ export function PublicHeader() {
               py: 1.35,
               borderRadius: '12px',
               bgcolor: colors.greenBright,
+              color: colors.navy,
               fontWeight: 700,
               textTransform: 'none',
-              '&:hover': { bgcolor: colors.greenDark },
+              '&:hover': { bgcolor: colors.greenDark, color: colors.navy },
             }}
           >
             Start application

@@ -4,14 +4,15 @@ import { featureSectionPy, landingSectionHeaderMb } from '../../pages/LandingPag
 import { publicFonts, usePublicBrandColors, brandPrimaryGreenRgb } from '../../theme/publicSiteTokens'
 import { WorkflowZigZagConnector } from './WorkflowZigZagConnector'
 import { useWorkflowRevealAnimation } from './useWorkflowRevealAnimation'
+import { websiteHeadingSx } from '../../theme/websiteComponentStyles'
+import { ProcessTimelineCopy, ProcessTimelineMarker } from './ProcessTimeline'
 import {
   WORKFLOW_BADGE_SIZE,
   WORKFLOW_ICON_INNER,
   WORKFLOW_ICON_SIZE,
-  WORKFLOW_STEP_X_PERCENT,
-  WORKFLOW_STEP_Y_DESKTOP,
-  WORKFLOW_STEP_Y_TABLET,
   WORKFLOW_TRACK_HEIGHT,
+  getWorkflowStepXPercent,
+  getWorkflowStepYPositions,
 } from './workflowGeometry'
 import type { WorkflowTimelineSectionProps, WorkflowStep } from './types'
 
@@ -37,55 +38,20 @@ function WorkflowStepIcon({
         transition: 'opacity 0.35s ease, transform 0.35s ease',
       }}
     >
-      <Box
-        sx={{
-          width: WORKFLOW_ICON_SIZE,
-          height: WORKFLOW_ICON_SIZE,
-          borderRadius: '50%',
-          bgcolor: colors.white,
-          border: `1.5px solid rgba(${brandPrimaryGreenRgb}, 0.42)`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          ...(revealed && {
-            animation: 'workflowStepGlow 0.75s ease',
-          }),
-          '@keyframes workflowStepGlow': {
-            '0%': {
-              boxShadow: 'none',
-            },
-            '40%': {
-              boxShadow: `0 0 0 7px rgba(${brandPrimaryGreenRgb}, 0.2)`,
-            },
-            '100%': {
-              boxShadow: 'none',
-            },
-          },
-        }}
-      >
-        <Icon size={WORKFLOW_ICON_INNER} color={colors.greenBright} strokeWidth={2} />
-      </Box>
-      <Box
-        sx={{
-          position: 'absolute',
-          top: -6,
-          right: -8,
-          minWidth: WORKFLOW_BADGE_SIZE,
-          height: WORKFLOW_BADGE_SIZE,
-          px: 0.25,
-          borderRadius: '50%',
-          bgcolor: colors.greenBright,
-          color: colors.white,
-          fontSize: '11px',
-          fontWeight: 700,
-          lineHeight: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {String(stepNumber).padStart(2, '0')}
-      </Box>
+      <ProcessTimelineMarker
+        icon={Icon}
+        number={String(stepNumber).padStart(2, '0')}
+        iconSize={WORKFLOW_ICON_INNER}
+        containerSize={WORKFLOW_ICON_SIZE}
+        numberSize={WORKFLOW_BADGE_SIZE}
+        background={colors.white}
+        borderColor={`rgba(${brandPrimaryGreenRgb}, 0.42)`}
+        color={colors.greenBright}
+        numberBackground={colors.greenBright}
+        numberColor={colors.white}
+        borderWidth={1.5}
+        sx={{ ...(revealed && { animation: 'workflowStepGlow 0.75s ease' }), '@keyframes workflowStepGlow': { '0%': { boxShadow: 'none' }, '40%': { boxShadow: `0 0 0 7px rgba(${brandPrimaryGreenRgb}, 0.2)` }, '100%': { boxShadow: 'none' } } }}
+      />
     </Box>
   )
 }
@@ -112,27 +78,7 @@ function WorkflowStepText({
         transition: 'opacity 0.35s ease 0.05s, transform 0.35s ease 0.05s',
       }}
     >
-      <Typography
-        sx={{
-          fontFamily: publicFonts.heading,
-          fontSize: { xs: '15px', md: '17px' },
-          fontWeight: 700,
-          color: colors.navy,
-          lineHeight: 1.3,
-          mb: 1,
-        }}
-      >
-        {title}
-      </Typography>
-      <Typography
-        sx={{
-          fontSize: { xs: '13.5px', md: '14.5px' },
-          color: colors.textSecondary,
-          lineHeight: 1.55,
-        }}
-      >
-        {description}
-      </Typography>
+      <ProcessTimelineCopy title={title} description={description} titleSx={{ fontFamily: publicFonts.heading, color: colors.navy, mb: 1 }} descriptionSx={{ color: colors.textSecondary }} />
     </Box>
   )
 }
@@ -140,13 +86,17 @@ function WorkflowStepText({
 function HorizontalWorkflowFlow({
   steps,
   stepYPositions,
+  connectorVariant,
   trackHeight,
+  stepWidth,
   lineVisible,
   revealedCount,
 }: {
   steps: WorkflowStep[]
   stepYPositions: readonly number[]
+  connectorVariant: 'desktop' | 'tablet'
   trackHeight: number
+  stepWidth: number
   lineVisible: boolean
   revealedCount: number
 }) {
@@ -155,8 +105,10 @@ function HorizontalWorkflowFlow({
     Math.max(...stepYPositions) + WORKFLOW_ICON_SIZE / 2 + 128
 
   return (
-    <Box sx={{ position: 'relative', minHeight: flowMinHeight }}>
+    <Box component="ol" role="list" aria-label="Workflow steps" sx={{ position: 'relative', minHeight: flowMinHeight, listStyle: 'none', m: 0, p: 0 }}>
       <Box
+        component="li"
+        aria-hidden="true"
         sx={{
           position: 'absolute',
           top: 0,
@@ -166,19 +118,21 @@ function HorizontalWorkflowFlow({
           pointerEvents: 'none',
         }}
       >
-        <WorkflowZigZagConnector visible={lineVisible} trackHeight={trackHeight} />
+        <WorkflowZigZagConnector visible={lineVisible} trackHeight={trackHeight} stepCount={steps.length} variant={connectorVariant} />
       </Box>
 
       {steps.map((step, index) => (
         <Box
           key={step.title}
+          component="li"
           sx={{
+            listStyle: 'none',
             position: 'absolute',
-            left: `${WORKFLOW_STEP_X_PERCENT[index]}%`,
-            top: stepYPositions[index] - WORKFLOW_ICON_SIZE / 2,
+            left: `${getWorkflowStepXPercent(steps.length)[index]}%`,
+            top: (stepYPositions[index] ?? 42) - WORKFLOW_ICON_SIZE / 2,
             transform: 'translateX(-50%)',
             zIndex: 1,
-            width: 260,
+            width: stepWidth,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -213,11 +167,13 @@ function DesktopWorkflowFlow({
   revealedCount: number
 }) {
   return (
-    <Box sx={{ display: { xs: 'none', lg: 'block' }, px: { lg: 1 } }}>
+    <Box sx={{ display: { xs: 'none', desktopMd: 'block' }, px: { desktopMd: 1 } }}>
       <HorizontalWorkflowFlow
         steps={steps}
-        stepYPositions={WORKFLOW_STEP_Y_DESKTOP}
+        stepYPositions={getWorkflowStepYPositions(steps.length, 'desktop')}
+        connectorVariant="desktop"
         trackHeight={WORKFLOW_TRACK_HEIGHT.desktop}
+        stepWidth={260}
         lineVisible={lineVisible}
         revealedCount={revealedCount}
       />
@@ -235,11 +191,13 @@ function TabletWorkflowFlow({
   revealedCount: number
 }) {
   return (
-    <Box sx={{ display: { xs: 'none', md: 'block', lg: 'none' } }}>
+    <Box sx={{ display: { xs: 'none', desktop: 'block', desktopMd: 'none' } }}>
       <HorizontalWorkflowFlow
         steps={steps}
-        stepYPositions={WORKFLOW_STEP_Y_TABLET}
+        stepYPositions={getWorkflowStepYPositions(steps.length, 'tablet')}
+        connectorVariant="tablet"
         trackHeight={WORKFLOW_TRACK_HEIGHT.tablet}
+        stepWidth={230}
         lineVisible={lineVisible}
         revealedCount={revealedCount}
       />
@@ -258,15 +216,21 @@ function MobileWorkflowFlow({
 }) {
   return (
     <Stack
+      component="ol"
+      role="list"
+      aria-label="Workflow steps"
       spacing={0}
       sx={{
-        display: { xs: 'flex', md: 'none' },
+        display: { xs: 'flex', desktop: 'none' },
         maxWidth: 440,
         mx: 'auto',
+        listStyle: 'none',
+        m: 0,
+        p: 0,
       }}
     >
       {steps.map((step, index) => (
-        <Stack key={step.title} direction="row" spacing={2} alignItems="stretch">
+        <Stack component="li" role="listitem" key={step.title} direction="row" spacing={2} alignItems="stretch" sx={{ listStyle: 'none' }}>
           <Stack alignItems="center" sx={{ width: WORKFLOW_ICON_SIZE + 8, flexShrink: 0 }}>
             <WorkflowStepIcon
               stepNumber={index + 1}
@@ -352,12 +316,9 @@ export function WorkflowTimelineSection({
           <Typography
             component="h2"
             sx={{
+              ...websiteHeadingSx.h2,
               fontFamily: publicFonts.display,
-              fontSize: { xs: '28px', md: '36px' },
-              fontWeight: 700,
               color: colors.navy,
-              lineHeight: 1.15,
-              letterSpacing: '-0.02em',
               mb: 1.5,
             }}
           >

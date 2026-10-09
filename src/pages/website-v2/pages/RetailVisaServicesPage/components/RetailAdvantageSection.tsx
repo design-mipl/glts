@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 import { retailAdvantages } from '../retailPageData'
 import { landingSectionPy } from '../../LandingPage/landingPageSpacing'
 
@@ -12,7 +13,7 @@ export function RetailAdvantageSection() {
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, .95fr) minmax(0, 1fr)' }, gap: { xs: 4, md: 6, desktop: 8 }, alignItems: 'center' }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ color: ds.color.brandHover, fontSize: 12, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', mb: 1 }}>Why choose GreenLight</Typography>
-            <Typography id="retail-advantage-heading" component="h2" sx={{ fontFamily: ds.fonts.display, fontSize: { xs: 31, md: 35, desktop: 40 }, fontWeight: 700, lineHeight: 1.12, color: ds.color.navy, letterSpacing: '-.02em', mb: 1.25, maxWidth: 430 }}>Why GreenLight for Visa Services</Typography>
+            <Typography id="retail-advantage-heading" component="h2" sx={{ ...websiteHeadingSx.h2, color: ds.color.navy, mb: 1.25, maxWidth: 430 }}>Why GreenLight for Visa Services</Typography>
             <Typography sx={{ color: ds.color.textSecondary, fontSize: { xs: 15, desktop: 16 }, lineHeight: 1.6, maxWidth: 470, mb: 3.25 }}>A clearer path from destination choice to embassy-ready submission, with expert review at every step.</Typography>
             <Box component="img" src="/images/how-it-works/step-01-check-requirements.png" alt="Visa consultant reviewing an application with a traveler" loading="lazy"
               sx={{ width: '100%', height: { xs: 275, md: 340, desktop: 360 }, display: 'block', borderRadius: '16px', objectFit: 'cover', objectPosition: 'center', boxShadow: '0 14px 30px rgba(15,35,55,.1)' }} />

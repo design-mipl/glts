@@ -14,10 +14,11 @@ import {
   usePublicBrandColors,
   brandPrimaryGreenRgb,
   getMarketingPrimaryButtonSx,
-  getOutlinedButtonSx,
 } from '../../../theme/publicSiteTokens'
+import { websiteSecondaryButtonSx } from '../../../theme/websiteComponentStyles'
 import { marineHeroCtas } from '../marinePageData'
 import { MarineHeroBackgroundVideo } from './MarineHeroBackgroundVideo'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 
 /** Taller immersive banner for the marine crew solution page. */
 const marineHeroMinHeight = {
@@ -108,12 +109,8 @@ export function MarineHero() {
           <Typography
             component="h1"
             sx={{
-              fontFamily: publicFonts.display,
-              fontSize: { xs: '40px', sm: '48px', md: '56px', lg: '64px' },
-              fontWeight: 700,
+              ...websiteHeadingSx.display,
               color: colors.white,
-              lineHeight: 1.15,
-              letterSpacing: '-0.03em',
               mb: marineHeroSpacing.headingToDescription,
               maxWidth: 620,
             }}
@@ -158,7 +155,7 @@ export function MarineHero() {
               href={marineHeroCtas.secondary.href}
               endIcon={<CalendarDays size={16} />}
               sx={{
-                ...getOutlinedButtonSx(),
+                ...websiteSecondaryButtonSx,
                 borderColor: 'rgba(255, 255, 255, 0.45)',
                 color: colors.white,
                 bgcolor: 'rgba(255, 255, 255, 0.1)',

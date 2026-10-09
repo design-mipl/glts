@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material'
 import type { LucideIcon } from 'lucide-react'
 import { PublicContainer } from './PublicContainer'
 import { publicFonts, usePublicBrandColors, brandPrimaryGreenRgb } from '../theme/publicSiteTokens'
+import { websiteHeadingSx } from '../theme/websiteComponentStyles'
 import { featureSectionPy } from '../pages/LandingPage/landingPageSpacing'
 
 interface CollageImage {
@@ -37,7 +38,7 @@ function CollageImageTile({
 }: {
   image: CollageImage
   className?: string
-  minHeight: { xs: number; md: number }
+  minHeight: { xs: number; md?: number; desktop?: number }
 }) {
   const [imgSrc, setImgSrc] = useState(image.src)
 
@@ -101,30 +102,33 @@ export function WhyAccuracySplitSection({
   const colors = usePublicBrandColors()
 
   return (
-    <Box component="section" id={id} sx={{ py: featureSectionPy }}>
+    <Box component="section" id={id} sx={{ bgcolor: '#FDFEFE', py: featureSectionPy }}>
       <PublicContainer variant="hero">
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '1.05fr 1fr' },
-            gap: { xs: 3, md: 5 },
-            alignItems: { xs: 'start', md: 'center' },
+            gridTemplateColumns: { xs: '1fr', desktop: 'minmax(0, 0.82fr) minmax(0, 1fr)' },
+            gap: { xs: 5, desktop: '42px' },
+            alignItems: { xs: 'start', desktop: 'stretch' },
           }}
         >
-          <Box sx={{ position: 'relative' }}>
+          <Box sx={{ position: 'relative', width: '100%', minHeight: { desktop: 454 }, alignSelf: 'stretch' }}>
             <Box
               sx={{
                 display: 'grid',
-                gap: { xs: 2, md: 2.25 },
+                gap: { xs: 2, desktop: 2.25 },
                 gridTemplateColumns: { xs: '1fr', sm: '1.25fr 1fr' },
                 gridTemplateRows: { xs: 'repeat(3, auto)', sm: 'repeat(2, minmax(0, 1fr))' },
+                height: '100%',
               }}
             >
-              <Box sx={{ gridRow: { sm: '1 / span 2' } }}>
-                <CollageImageTile image={images.primary} minHeight={{ xs: 220, md: 500 }} />
+              <Box sx={{ gridRow: { sm: '1 / span 2' }, height: '100%' }}>
+                <Box sx={{ height: '100%', '& > *': { height: '100%' } }}>
+                  <CollageImageTile image={images.primary} minHeight={{ xs: 360, md: 454 }} />
+                </Box>
               </Box>
-              <CollageImageTile image={images.secondaryTop} minHeight={{ xs: 170, md: 238 }} />
-              <CollageImageTile image={images.secondaryBottom} minHeight={{ xs: 170, md: 238 }} />
+              <CollageImageTile image={images.secondaryTop} minHeight={{ xs: 170, desktop: 216 }} />
+              <CollageImageTile image={images.secondaryBottom} minHeight={{ xs: 170, desktop: 216 }} />
             </Box>
 
             {badgeLabel ? (
@@ -156,17 +160,14 @@ export function WhyAccuracySplitSection({
             ) : null}
           </Box>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <Box sx={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column' }}>
             <Typography
               component="h2"
               sx={{
-                fontFamily: publicFonts.display,
-                fontSize: { xs: '26px', md: '32px' },
-                fontWeight: 700,
+                ...websiteHeadingSx.h2,
                 color: colors.navy,
-                lineHeight: 1.15,
-                letterSpacing: '-0.01em',
-                mb: 1.5,
+                maxWidth: 560,
+                mb: 1.25,
               }}
             >
               {title}
@@ -174,16 +175,17 @@ export function WhyAccuracySplitSection({
 
             <Typography
               sx={{
-                fontSize: '15px',
+                fontFamily: publicFonts.body,
+                fontSize: { xs: '16px', desktopLg: '18px' },
                 color: colors.textSecondary,
-                lineHeight: 1.7,
-                mb: { xs: 2.5, md: 3.25 },
+                lineHeight: 1.5,
+                maxWidth: 640,
               }}
             >
               {description}
             </Typography>
 
-            <Box sx={{ display: 'grid', gap: 1.5 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'repeat(2, minmax(0, 1fr))', desktop: '1fr', desktopMd: 'repeat(2, minmax(0, 1fr))' }, columnGap: 2.5, rowGap: { xs: 3, desktop: 5.5 }, mt: { xs: 4, desktop: 4.5 }, flexGrow: { desktop: 1 }, alignContent: { desktop: 'space-between' } }}>
               {impacts.map((item) => {
                 const Icon = item.icon
                 return (
@@ -191,47 +193,33 @@ export function WhyAccuracySplitSection({
                     key={item.title}
                     sx={{
                       display: 'grid',
-                      gridTemplateColumns: '44px 1fr',
+                      gridTemplateColumns: { xs: '80px minmax(0, 1fr)', desktopLg: '88px minmax(0, 1fr)' },
                       gap: 1.5,
                       alignItems: 'start',
-                      p: { xs: 1.75, md: 2 },
-                      borderRadius: '16px',
-                      bgcolor: colors.white,
-                      border: `1px solid ${colors.border}`,
-                      boxShadow: '0 6px 18px rgba(15, 23, 42, 0.05)',
-                      transition:
-                        'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
-                      '@media (hover: hover)': {
-                        '&:hover': {
-                          transform: 'translateY(-2px)',
-                          borderColor: `rgba(${brandPrimaryGreenRgb}, 0.4)`,
-                          boxShadow: `0 12px 28px rgba(${brandPrimaryGreenRgb}, 0.12)`,
-                        },
-                      },
+                      minWidth: 0,
                     }}
                   >
                     <Box
                       sx={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: '12px',
-                        bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.12)`,
-                        border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.22)`,
+                        width: { xs: 80, desktopLg: 88 },
+                        height: { xs: 80, desktopLg: 88 },
+                        borderRadius: '50%',
+                        bgcolor: '#EAF8EC',
                         display: 'grid',
                         placeItems: 'center',
-                        flexShrink: 0,
                       }}
                     >
-                      <Icon size={20} color={colors.greenBright} strokeWidth={2.1} />
+                      <Icon size={46} color={colors.greenDark} strokeWidth={1.8} aria-hidden="true" />
                     </Box>
-                    <Box sx={{ minWidth: 0, pt: 0.15 }}>
+                    <Box sx={{ minWidth: 0, pt: 0.25 }}>
                       <Typography
-                        sx={{ fontSize: '15px', fontWeight: 700, color: colors.navy, mb: 0.4 }}
+                        component="h3"
+                        sx={{ color: colors.navy, fontFamily: publicFonts.heading, fontSize: { xs: '18px', desktopLg: '19px' }, fontWeight: 700, lineHeight: 1.35, mb: 0.75 }}
                       >
                         {item.title}
                       </Typography>
                       <Typography
-                        sx={{ fontSize: '14px', color: colors.textSecondary, lineHeight: 1.55 }}
+                        sx={{ color: colors.textSecondary, fontFamily: publicFonts.body, fontSize: { xs: '16px', desktopLg: '17px' }, lineHeight: 1.5 }}
                       >
                         {item.description}
                       </Typography>

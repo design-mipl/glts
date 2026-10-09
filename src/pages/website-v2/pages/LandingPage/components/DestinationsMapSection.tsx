@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { PublicContainer } from '../../../components/PublicContainer'
 import footerWorldMapSrc from '../../../assets/footerWorldMap.svg'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 import {
   publicFonts,
   usePublicBrandColors,
@@ -661,10 +662,7 @@ export function DestinationsMapSection() {
             id="destinations-map-heading"
             component="h2"
             sx={{
-              fontFamily: publicFonts.display,
-              fontWeight: 700,
-              fontSize: { xs: '28px', md: '36px', lg: '40px' },
-              lineHeight: 1.15,
+              ...websiteHeadingSx.h2,
               color: colors.navy,
               letterSpacing: 0,
               mb: 1.25,

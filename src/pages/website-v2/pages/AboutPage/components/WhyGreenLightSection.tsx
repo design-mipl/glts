@@ -1,6 +1,8 @@
 import { Box, Typography } from '@mui/material'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { publicFonts, usePublicBrandColors } from '../../../theme/publicSiteTokens'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 import { aboutDifferentiators, aboutWhyGreenLight } from '../aboutPageData'
 import { landingSectionPy } from '../../LandingPage/landingPageSpacing'
 
@@ -149,12 +151,8 @@ export function WhyGreenLightSection() {
             <Typography
               component="h2"
               sx={{
-                fontFamily: publicFonts.display,
-                fontSize: { xs: '24px', sm: '28px', md: '30px', lg: '34px' },
-                fontWeight: 700,
+                ...websiteHeadingSx.h2,
                 color: colors.white,
-                letterSpacing: '-0.02em',
-                lineHeight: 1.15,
                 mb: 1.25,
               }}
             >
@@ -207,7 +205,7 @@ export function WhyGreenLightSection() {
                       flexShrink: 0,
                     }}
                   >
-                    <Icon size={28} color={colors.white} strokeWidth={1.65} />
+                    <Icon size={ds.icon.feature} color={colors.white} strokeWidth={ds.icon.strokeWidth} />
                   </Box>
 
                   <Box sx={{ minWidth: 0 }}>

@@ -37,7 +37,9 @@ export function MobileStickyCta() {
           textTransform: 'none',
           fontFamily: publicFonts.body,
           backgroundColor: colors.greenBright,
+          color: colors.navy,
           boxShadow: '0 8px 24px rgba(115, 192, 100, 0.35)',
+          '&:hover': { backgroundColor: colors.greenDark, color: colors.navy },
         }}
       >
         Start Application

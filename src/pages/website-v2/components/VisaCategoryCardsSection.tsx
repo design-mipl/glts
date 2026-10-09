@@ -4,10 +4,7 @@ import { ArrowRight } from 'lucide-react'
 import { publicFonts, usePublicBrandColors, brandPrimaryGreenRgb } from '../theme/publicSiteTokens'
 import { SOLUTION_CARD_IMAGE_HEIGHT } from '../assets/landingPageImages'
 import { SolutionPageSection } from './solutionPage/SolutionPageSection'
-
-const CARD_RADIUS = '20px'
-const TRANSITION_MS = '300ms'
-const TRANSITION_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)'
+import { websiteDesignSystem as ds } from '../theme/websiteDesignSystem'
 
 export interface VisaCategoryCardItem {
   id: string
@@ -36,6 +33,7 @@ interface VisaCategoryCardsSectionProps {
 function VisaCategoryCard({ title, description, image, href = '/countries', readable = false, imageHeight }: VisaCategoryCardItem & { readable?: boolean; imageHeight?: { mobile: number; tablet: number; desktop: number } }) {
   const colors = usePublicBrandColors()
   const [imgSrc, setImgSrc] = useState(image.src)
+  const cardTokens = ds.component.card.category
 
   return (
     <Box
@@ -46,21 +44,23 @@ function VisaCategoryCard({ title, description, image, href = '/countries', read
         flexDirection: 'column',
         width: '100%',
         height: '100%',
-        borderRadius: CARD_RADIUS,
+        borderRadius: `${cardTokens.radius}px`,
         border: `1px solid ${colors.border}`,
         boxShadow: '0 4px 20px rgba(15, 23, 42, 0.06)',
         bgcolor: colors.white,
         textDecoration: 'none',
         color: 'inherit',
         overflow: 'hidden',
-        transition: `border-color ${TRANSITION_MS} ease, box-shadow ${TRANSITION_MS} ease, transform ${TRANSITION_MS} ${TRANSITION_EASE}`,
+        transition: `border-color ${ds.component.card.hoverDurationMs}ms ease, box-shadow ${ds.component.card.hoverDurationMs}ms ease, transform ${ds.component.card.hoverDurationMs}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+        '&:focus-visible': { outline: `${ds.component.card.focusWidth}px solid ${ds.color.focus}`, outlineOffset: 3 },
+        '@media (prefers-reduced-motion: reduce)': { transition: 'none', '& .visa-category-card-image': { transition: 'none' } },
         '@media (hover: hover)': {
           '&:hover': {
             borderColor: `rgba(${brandPrimaryGreenRgb}, 0.4)`,
             boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
             transform: 'translateY(-6px)',
             '& .visa-category-card-image': {
-              transform: 'scale(1.06)',
+              transform: `scale(${ds.component.card.imageZoomScale})`,
             },
           },
         },
@@ -78,8 +78,8 @@ function VisaCategoryCard({ title, description, image, href = '/countries', read
           flexShrink: 0,
           overflow: 'hidden',
           bgcolor: colors.surfaceAlt,
-          borderTopLeftRadius: CARD_RADIUS,
-          borderTopRightRadius: CARD_RADIUS,
+          borderTopLeftRadius: `${cardTokens.radius}px`,
+          borderTopRightRadius: `${cardTokens.radius}px`,
         }}
       >
         <Box
@@ -97,7 +97,7 @@ function VisaCategoryCard({ title, description, image, href = '/countries', read
             objectFit: 'cover',
             objectPosition: 'center',
             display: 'block',
-            transition: `transform ${TRANSITION_MS} ${TRANSITION_EASE}`,
+            transition: `transform ${ds.component.card.hoverDurationMs}ms cubic-bezier(0.4, 0, 0.2, 1)`,
             willChange: 'transform',
           }}
         />
@@ -108,15 +108,15 @@ function VisaCategoryCard({ title, description, image, href = '/countries', read
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
-          p: { xs: 2.25, md: 2.5 },
+          p: { xs: `${cardTokens.padding.mobile}px`, md: `${cardTokens.padding.desktop}px` },
         }}
       >
         <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 1 }}>
           <Typography
             sx={{
               fontFamily: publicFonts.heading,
-              fontSize: readable ? { xs: '19px', md: '20px' } : '18px',
-              fontWeight: 800,
+              fontSize: readable ? { xs: `${cardTokens.titleSize - 1}px`, md: `${cardTokens.titleSize}px` } : `${cardTokens.titleSize - 2}px`,
+              fontWeight: cardTokens.titleWeight,
               color: colors.navy,
               lineHeight: 1.25,
             }}
@@ -127,9 +127,9 @@ function VisaCategoryCard({ title, description, image, href = '/countries', read
 
         <Typography
           sx={{
-            fontSize: readable ? '16px' : '14px',
+            fontSize: readable ? `${cardTokens.readableBodySize}px` : `${cardTokens.bodySize}px`,
             color: colors.textSecondary,
-            lineHeight: 1.65,
+            lineHeight: cardTokens.bodyLineHeight,
             mb: 2,
             flex: 1,
           }}
@@ -138,7 +138,7 @@ function VisaCategoryCard({ title, description, image, href = '/countries', read
         </Typography>
 
         <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: colors.greenBright }}>
-          <Typography sx={{ fontSize: '13px', fontWeight: 700 }}>Learn More</Typography>
+          <Typography sx={{ fontSize: '14px', fontWeight: 700 }}>Learn More</Typography>
           <ArrowRight size={15} strokeWidth={2.5} />
         </Stack>
       </Box>
@@ -154,15 +154,9 @@ export function VisaCategoryCardsSection({ id = 'visa-categories', title = 'Visa
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, minmax(0, 1fr))',
-            md: columnCount === 4 ? 'repeat(2, minmax(0, 1fr))' : `repeat(${columnCount}, minmax(0, 1fr))`,
-            ...(columnCount === 4 && {
-              '@media (max-width: 599.95px)': { gridTemplateColumns: '1fr' },
-              '@media (min-width: 1024px)': { gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' },
-            }),
-          },
+          gridTemplateColumns: '1fr',
+          '@media (min-width: 600px)': { gridTemplateColumns: `repeat(${Math.min(columnCount, 2)}, minmax(0, 1fr))` },
+          '@media (min-width: 1024px)': { gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` },
           gap: { xs: 2, md: 2.5 },
           alignItems: 'stretch',
         }}

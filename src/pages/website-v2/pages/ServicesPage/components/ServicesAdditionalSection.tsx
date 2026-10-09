@@ -9,9 +9,11 @@ import {
   getMarketingPrimaryButtonSx,
 } from '../../../theme/publicSiteTokens'
 import { landingSectionHeaderMb, landingSectionPy } from '../../LandingPage/landingPageSpacing'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 import { servicesAdditional } from '../servicesPageData'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 
-const CARD_HEIGHT = { xs: 280, sm: 300, md: 320 }
+const CARD_MIN_HEIGHT = { xs: 260, md: 290 }
 
 function AdditionalCard({
   title,
@@ -28,26 +30,30 @@ function AdditionalCard({
 }) {
   const colors = usePublicBrandColors()
   const [imgSrc, setImgSrc] = useState<string>(image.src)
+  const cardTokens = ds.component.card.editorial
 
   return (
     <Box
       sx={{
         position: 'relative',
         width: '100%',
-        height: CARD_HEIGHT,
-        borderRadius: '18px',
+        height: '100%',
+        minHeight: CARD_MIN_HEIGHT,
+        borderRadius: `${cardTokens.radius}px`,
         overflow: 'hidden',
         border: `1px solid ${colors.border}`,
         boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
         bgcolor: colors.surfaceAlt,
-        transition: 'transform 0.28s ease, box-shadow 0.28s ease',
+        transition: `transform ${ds.component.card.hoverDurationMs}ms ease, box-shadow ${ds.component.card.hoverDurationMs}ms ease`,
+        '&:focus-within': { outline: `${ds.component.card.focusWidth}px solid ${ds.color.focus}`, outlineOffset: 2 },
+        '@media (prefers-reduced-motion: reduce)': { transition: 'none', '& .additional-card-image': { transition: 'none' } },
         '@media (hover: hover)': {
           '&:hover': {
             transform: 'translateY(-4px)',
             boxShadow: '0 16px 36px rgba(15, 23, 42, 0.14)',
           },
           '&:hover .additional-card-image': {
-            transform: 'scale(1.05)',
+            transform: `scale(${ds.component.card.imageZoomScale})`,
           },
         },
       }}
@@ -66,7 +72,7 @@ function AdditionalCard({
           height: '100%',
           objectFit: 'cover',
           objectPosition: 'center',
-          transition: 'transform 0.4s ease',
+          transition: `transform ${ds.component.card.hoverDurationMs}ms ease`,
         }}
       />
 
@@ -87,16 +93,16 @@ function AdditionalCard({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-end',
-          p: { xs: 2.25, md: 2.5 },
-          gap: 1,
+          p: { xs: `${cardTokens.padding.mobile}px`, md: `${cardTokens.padding.desktop}px` },
+          gap: `${cardTokens.gap}px`,
         }}
       >
         <Typography
           component="h3"
           sx={{
             fontFamily: publicFonts.heading,
-            fontSize: { xs: '16px', md: '17px' },
-            fontWeight: 700,
+            fontSize: `${cardTokens.titleSize}px`,
+            fontWeight: cardTokens.titleWeight,
             color: colors.white,
             letterSpacing: '-0.02em',
             lineHeight: 1.25,
@@ -106,11 +112,11 @@ function AdditionalCard({
         </Typography>
         <Typography
           sx={{
-            fontSize: '13.5px',
+            fontSize: `${cardTokens.bodySize + 1}px`,
             color: 'rgba(255, 255, 255, 0.82)',
-            lineHeight: 1.55,
+            lineHeight: cardTokens.bodyLineHeight,
             display: '-webkit-box',
-            WebkitLineClamp: 3,
+            WebkitLineClamp: 4,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
           }}
@@ -126,9 +132,9 @@ function AdditionalCard({
             alignSelf: 'flex-start',
             mt: 0.75,
             px: 2.25,
-            minHeight: 36,
-            height: 36,
-            fontSize: '12px',
+            minHeight: 40,
+            height: 40,
+            fontSize: '14px',
             bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.95)`,
           }}
         >
@@ -170,12 +176,8 @@ export function ServicesAdditionalSection() {
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.display,
-              fontSize: { xs: '28px', md: '36px' },
-              fontWeight: 700,
+              ...websiteHeadingSx.h2,
               color: colors.navy,
-              lineHeight: 1.15,
-              letterSpacing: '-0.03em',
               mb: 1.5,
             }}
           >
@@ -197,11 +199,9 @@ export function ServicesAdditionalSection() {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, minmax(0, 1fr))',
-              lg: 'repeat(5, minmax(0, 1fr))',
-            },
+            gridTemplateColumns: '1fr',
+            '@media (min-width: 600px)': { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
+            '@media (min-width: 1024px)': { gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' },
             gap: { xs: 2, md: 2.5 },
             alignItems: 'stretch',
           }}

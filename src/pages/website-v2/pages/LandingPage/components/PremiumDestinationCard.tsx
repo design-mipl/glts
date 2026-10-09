@@ -23,7 +23,7 @@ export function PremiumDestinationCard({ country }: PremiumDestinationCardProps)
         position: 'relative',
         display: 'block',
         width: '100%',
-        height: { xs: 480, sm: 440, lg: 460 },
+        height: { xs: 380, sm: 400, lg: 360, xl: 380 },
         overflow: 'hidden',
         borderRadius: `${ds.radius.large}px`,
         bgcolor: ds.color.navy,
@@ -101,7 +101,7 @@ export function PremiumDestinationCard({ country }: PremiumDestinationCardProps)
           bottom: 0,
           maxHeight: '100%',
           overflowY: 'auto',
-          p: { xs: 2, lg: 1.5 },
+          p: { xs: 2, lg: 2 },
           border: '1px solid rgba(255, 255, 255, 0.26)',
           borderRadius: `${ds.radius.medium}px ${ds.radius.medium}px ${ds.radius.large}px ${ds.radius.large}px`,
           background: 'linear-gradient(135deg, rgba(11, 25, 39, 0.82), rgba(8, 19, 31, 0.72))',
@@ -148,7 +148,7 @@ export function PremiumDestinationCard({ country }: PremiumDestinationCardProps)
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 1, lg: 0.5 }, minWidth: 0 }}>
             <Clock3 size={16} color="rgba(255, 255, 255, 0.86)" aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ color: 'rgba(255, 255, 255, 0.76)', fontSize: 11, lineHeight: 1.3 }}>
+              <Typography sx={{ color: 'rgba(255, 255, 255, 0.76)', fontSize: 12, lineHeight: 1.3 }}>
                 Processing time
               </Typography>
               <Typography sx={{ color: ds.color.white, fontSize: { xs: 14, lg: 13 }, fontWeight: 700, lineHeight: 1.35 }}>
@@ -159,7 +159,7 @@ export function PremiumDestinationCard({ country }: PremiumDestinationCardProps)
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 1, lg: 0.5 }, minWidth: 0 }}>
             <FileCheck2 size={16} color="rgba(255, 255, 255, 0.86)" aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ color: 'rgba(255, 255, 255, 0.76)', fontSize: 11, lineHeight: 1.3 }}>
+              <Typography sx={{ color: 'rgba(255, 255, 255, 0.76)', fontSize: 12, lineHeight: 1.3 }}>
                 Visa category
               </Typography>
               <Typography sx={{ color: ds.color.white, fontSize: { xs: 14, lg: 13 }, fontWeight: 700, lineHeight: 1.35 }}>
@@ -193,7 +193,7 @@ export function PremiumDestinationCard({ country }: PremiumDestinationCardProps)
                 <Typography sx={{ color: 'rgba(255, 255, 255, 0.78)', fontSize: { xs: 10, xl: 11 }, lineHeight: 1.3 }}>
                   Ticket price
                 </Typography>
-                <Typography sx={{ color: '#F5D77B', fontSize: { xs: 14, lg: 12, xl: 14 }, fontWeight: 700, lineHeight: 1.3, overflowWrap: 'anywhere' }}>
+              <Typography sx={{ color: '#F5D77B', fontSize: { xs: 14, lg: 14 }, fontWeight: 700, lineHeight: 1.3, overflowWrap: 'anywhere' }}>
                   From ₹{country.price.toLocaleString('en-IN')}
                 </Typography>
               </Box>
@@ -204,14 +204,14 @@ export function PremiumDestinationCard({ country }: PremiumDestinationCardProps)
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: { xs: 0.5, lg: 0.25 },
-                  width: { xs: 128, lg: 116, xl: 148 },
+                  width: { xs: 128, lg: 132, xl: 148 },
                   minHeight: { xs: 42, xl: 38 },
                   px: { xs: 1, lg: 0.5, xl: 1 },
                   boxSizing: 'border-box',
                   borderRadius: `${ds.radius.medium}px`,
                   bgcolor: ds.color.brand,
                   color: ds.color.navy,
-                  fontSize: { xs: 11, lg: 10.5, xl: 11 },
+                  fontSize: { xs: 11, lg: 11, xl: 12 },
                   fontWeight: 700,
                   lineHeight: 1.15,
                   textAlign: 'center',

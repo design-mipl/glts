@@ -5,9 +5,9 @@ import { PublicContainer } from '../../../components/PublicContainer'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
 import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
 import { visaServiceShowcaseImages } from '../../../assets/landingPageImages'
+import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 
-const CARD_RADIUS = '16px'
-const IMAGE_RADIUS = '14px'
 const TRANSITION = '300ms cubic-bezier(0.22, 1, 0.36, 1)'
 
 const visaServices = [
@@ -102,6 +102,7 @@ function VisaServiceCard({
 }) {
   const colors = usePublicBrandColors()
   const [imageSrc, setImageSrc] = useState<string>(image.src)
+  const cardTokens = ds.component.card.service
   const delayMs = reducedMotion ? 0 : index * 70
 
   return (
@@ -121,7 +122,8 @@ function VisaServiceCard({
         minWidth: 0,
         textDecoration: 'none',
         color: 'inherit',
-        borderRadius: CARD_RADIUS,
+        borderRadius: `${cardTokens.compactRadius}px`,
+        border: `1px solid ${ds.color.border}`,
         bgcolor: colors.white,
         opacity: active ? 1 : 0,
         transform: active ? 'translate3d(0, 0, 0)' : 'translate3d(0, 16px, 0)',
@@ -129,12 +131,13 @@ function VisaServiceCard({
           ? 'none'
           : `opacity 0.5s ${TRANSITION} ${delayMs}ms, transform 0.5s ${TRANSITION} ${delayMs}ms`,
         willChange: 'opacity, transform',
+        '&:focus-visible': { outline: `${ds.component.card.focusWidth}px solid ${ds.color.focus}`, outlineOffset: 3 },
         '@media (hover: hover)': {
           '&:hover': {
             transform: active ? 'translate3d(0, -4px, 0)' : undefined,
           },
           '&:hover .visa-card-image': {
-            transform: 'scale(1.04)',
+            transform: `scale(${ds.component.card.imageZoomScale})`,
           },
           '&:hover .visa-card-cta': {
             color: colors.greenDark,
@@ -149,8 +152,8 @@ function VisaServiceCard({
         sx={{
           position: 'relative',
           width: '100%',
-          aspectRatio: '4 / 5',
-          borderRadius: IMAGE_RADIUS,
+          aspectRatio: cardTokens.portraitAspectRatio,
+          borderRadius: `${cardTokens.imageRadius}px`,
           overflow: 'hidden',
           mb: 1.75,
           bgcolor: colors.surfaceAlt,
@@ -180,7 +183,7 @@ function VisaServiceCard({
       <Typography
         sx={{
           fontFamily: publicFonts.heading,
-          fontSize: { xs: '15px', md: '16px' },
+          fontSize: { xs: `${cardTokens.compactTitleMobileSize}px`, md: `${cardTokens.titleSize - 2}px` },
           fontWeight: 800,
           color: colors.navy,
           lineHeight: 1.25,
@@ -193,7 +196,7 @@ function VisaServiceCard({
 
       <Typography
         sx={{
-          fontSize: { xs: '12.5px', md: '13px' },
+          fontSize: { xs: `${cardTokens.compactBodyMobileSize}px`, md: `${cardTokens.compactBodySize}px` },
           color: colors.textSecondary,
           lineHeight: 1.4,
           mb: 1.25,
@@ -270,12 +273,8 @@ export function VisaServicesSection() {
           <Typography
             component="h2"
             sx={{
-              fontFamily: publicFonts.display,
-              fontSize: { xs: '26px', md: '32px' },
-              fontWeight: 700,
+              ...websiteHeadingSx.h2,
               color: colors.navy,
-              lineHeight: 1.15,
-              letterSpacing: '-0.5px',
               mb: 1.25,
             }}
           >
