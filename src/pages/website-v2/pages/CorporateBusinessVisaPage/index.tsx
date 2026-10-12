@@ -14,7 +14,7 @@ import { usePublicBrandColors } from '../../theme/publicSiteTokens'
 import {
   corporateFaqs,
   corporateImpactPoints,
-  corporateAccuracyVisuals,
+  corporateAccuracyImage,
   corporateVisaCategories,
 } from './corporatePageData'
 import { corporateProcessSteps } from './corporateWorkflowContent'
@@ -29,22 +29,15 @@ export function CorporateBusinessVisaPage() {
         id="why-corporate-visa-accuracy"
         title="Why Corporate Visa Accuracy Matters"
         description="For corporate travel programs, visa delays affect meetings, projects, assignments, and business continuity."
-        badgeLabel={corporateAccuracyVisuals.badgeLabel}
-        images={{
-          primary: corporateAccuracyVisuals.primary,
-          secondaryTop: corporateAccuracyVisuals.secondaryTop,
-          secondaryBottom: corporateAccuracyVisuals.secondaryBottom,
-        }}
+        image={corporateAccuracyImage}
         impacts={corporateImpactPoints}
       />
 
       <ChallengesWeSolveSection
         id="corporate-travel-challenges"
-        variant="corporate"
         eyebrow="Corporate solutions"
         heading="Common Corporate Travel Challenges"
         description="We understand the complexities of managing visas for a global workforce."
-        desktopColumns={4}
         challenges={[
           {
             title: 'Multiple Destinations and Visa Types',

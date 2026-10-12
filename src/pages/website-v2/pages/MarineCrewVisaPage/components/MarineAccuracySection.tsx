@@ -3,6 +3,7 @@ import { Bell, FileCheck2, Ship, UsersRound } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { publicFonts } from '../../../theme/publicSiteTokens'
 import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 import { featureSectionPy } from '../../LandingPage/landingPageSpacing'
 
 const benefits = [
@@ -105,11 +106,10 @@ export function MarineAccuracySection() {
               sx={{
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', xl: 'repeat(2, minmax(0, 1fr))' },
-                columnGap: 2.5,
-                rowGap: { xs: 3, desktop: 5.5 },
+                gap: 2,
+                gridAutoRows: '1fr',
                 mt: { xs: 4, desktop: 4.5 },
                 flexGrow: { desktop: 1 },
-                alignContent: { desktop: 'space-between' },
               }}
             >
               {benefits.map(({ title, description, icon: Icon }) => (
@@ -120,6 +120,12 @@ export function MarineAccuracySection() {
                     gridTemplateColumns: { xs: '80px minmax(0, 1fr)', lg: '88px minmax(0, 1fr)' },
                     gap: 1.5,
                     alignItems: 'start',
+                    minWidth: 0,
+                    p: { xs: 2, desktopMd: 2.25 },
+                    bgcolor: ds.color.white,
+                    border: `1px solid ${ds.color.border}`,
+                    borderRadius: `${ds.component.card.benefit.radius}px`,
+                    boxShadow: '0 6px 20px rgba(15, 35, 55, 0.055)',
                   }}
                 >
                   <Box
@@ -134,7 +140,7 @@ export function MarineAccuracySection() {
                   >
                     <Icon size={46} color="#168D3F" strokeWidth={1.8} aria-hidden="true" />
                   </Box>
-                  <Box sx={{ pt: 0.25 }}>
+                  <Box sx={{ minWidth: 0, pt: 0.25 }}>
                     <Typography
                       component="h3"
                       sx={{

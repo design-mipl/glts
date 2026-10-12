@@ -6,9 +6,11 @@ import { PublicFinalCtaSection } from '../../components/PublicFinalCtaSection'
 import { VisaCategoryCardsSection } from '../../components/VisaCategoryCardsSection'
 import { ChallengesWeSolveSection } from '../../components/ChallengesWeSolveSection'
 import { TrustedCompaniesSection } from '../../components/TrustedCompaniesSection'
+import { ServiceHeroContent } from '../../components/ServiceHeroContent'
+import { serviceHeroSectionSx } from '../../components/serviceHeroStyles'
 import { travelAgentCompanyLogos } from '../../assets/companyLogos'
 import type { FAQItem } from '../../components/FAQSection'
-import { publicFonts, usePublicBrandColors, getMarketingPrimaryButtonSx, brandPrimaryGreenRgb } from '../../theme/publicSiteTokens'
+import { publicFonts, usePublicBrandColors, getMarketingPrimaryButtonSx } from '../../theme/publicSiteTokens'
 import { websiteHeadingSx } from '../../theme/websiteComponentStyles'
 import { websiteDesignSystem as ds } from '../../theme/websiteDesignSystem'
 import { ProcessTimelineCopy, ProcessTimelineMarker, ResponsiveProcessTimeline } from '../../components/workflowTimeline/ProcessTimeline'
@@ -70,25 +72,20 @@ function Eyebrow({ children, mb = 1 }: { children: string; mb?: number }) {
 function TravelAgentsHero() {
   const colors = usePublicBrandColors()
   return (
-    <Box component="section" aria-labelledby="travel-agents-heading" sx={{ position: 'relative', overflow: 'hidden', bgcolor: colors.navy, minHeight: { xs: 720, md: 680, lg: 720 }, boxSizing: 'border-box', display: 'flex', alignItems: 'center', pt: { xs: '92px', md: '100px', lg: '108px' }, pb: { xs: '60px', md: '70px', lg: '80px' } }}>
+    <Box component="section" aria-labelledby="travel-agents-heading" sx={{ ...serviceHeroSectionSx, bgcolor: colors.navy }}>
       <Box component="img" src="/images/travel-agents/agent-assisting-customer.png" alt="" aria-hidden="true" fetchPriority="high" sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: { xs: '69% center', md: 'center 48%' } }} />
       <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: { xs: 'linear-gradient(90deg, rgba(0,31,63,.92) 0%, rgba(0,31,63,.83) 58%, rgba(0,31,63,.64) 100%)', md: 'linear-gradient(90deg, rgba(0,31,63,.94) 0%, rgba(0,31,63,.82) 34%, rgba(0,31,63,.48) 58%, rgba(0,31,63,.24) 100%)' } }} />
-      <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', rowGap: { xs: '64px', md: '96px', lg: '112px' }, width: '100%' }}>
-        <Box sx={{ maxWidth: 690 }}>
-          <Eyebrow mb={4}>Partner with confidence</Eyebrow>
-          <Typography id="travel-agents-heading" component="h1" sx={{ ...websiteHeadingSx.display, color: colors.white, maxWidth: 680, mb: { xs: 3, md: 3.5 } }}>Visa Support for Travel Agents</Typography>
-          <Typography sx={{ maxWidth: 570, color: 'rgba(255,255,255,.91)', fontSize: { xs: 16, md: 17 }, lineHeight: 1.6, mb: { xs: 4.5, md: 5 } }}>Help your customers navigate visa requirements with clear guidance, document support, and a coordinated application process.</Typography>
-          <Button variant="contained" href="/enquiry" endIcon={<ArrowRight size={18} />} sx={{ ...getMarketingPrimaryButtonSx(colors), minHeight: 48, px: 3, alignSelf: { xs: 'stretch', sm: 'flex-start' } }}>Enquire About Partnership</Button>
-        </Box>
-        <Box component="ul" aria-label="Travel agent support benefits" sx={{ display: 'flex', flexDirection: { xs: 'column', desktop: 'row' }, alignItems: 'stretch', gap: 0, width: '100%', maxWidth: 1100, listStyle: 'none', m: 0, p: { xs: 1.5, desktop: 0 }, borderRadius: { xs: '16px', desktop: 0 }, bgcolor: { xs: 'rgba(255, 255, 255, 0.06)', desktop: 'transparent' }, border: { xs: '1px solid rgba(255, 255, 255, 0.12)', desktop: 'none' }, backdropFilter: { xs: 'blur(12px)', desktop: 'none' } }}>
-          {heroBenefits.map(({ title, description, icon: Icon }, index) => (
-            <Box component="li" key={title} sx={{ flex: { desktop: '1 1 0' }, minWidth: 0, minHeight: { desktop: 64 }, display: 'flex', alignItems: 'center', gap: 2.25, py: { xs: 2, desktop: 1.25 }, px: { xs: 1, desktop: 1.75 }, borderBottom: { xs: index < heroBenefits.length - 1 ? '1px solid rgba(255,255,255,0.14)' : 'none', desktop: 'none' }, borderRight: { xs: 'none', desktop: index < heroBenefits.length - 1 ? '1px solid rgba(255,255,255,0.22)' : 'none' }, borderRadius: { xs: '10px', desktop: 0 }, transition: 'background-color 0.2s ease, transform 0.2s ease', '@media (hover: hover)': { '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.06)', transform: 'translateY(-1px)' } } }}>
-              <Box sx={{ width: 48, height: 48, borderRadius: '14px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.14)`, border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.28)` }}><Icon size={26} color={colors.greenBright} strokeWidth={1.85} aria-hidden="true" /></Box>
-              <Box sx={{ minWidth: 0 }}><Typography component="h2" sx={{ fontFamily: publicFonts.heading, color: colors.greenBright, fontSize: { xs: '18px', desktop: '19px' }, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.15, mb: 0.4 }}>{title}</Typography><Typography sx={{ color: 'rgba(255, 255, 255, 0.82)', fontSize: { xs: '12px', desktop: '12.5px' }, fontWeight: 500, lineHeight: 1.35 }}>{description}</Typography></Box>
-            </Box>
-          ))}
-        </Box>
-      </PublicContainer>
+      <ServiceHeroContent
+        headingId="travel-agents-heading"
+        eyebrow="Partner with confidence"
+        eyebrowIcon={UsersRound}
+        heading="Visa Support for Travel Agents"
+        description="Help your customers navigate visa requirements with clear guidance, document support, and a coordinated application process."
+        primaryAction={{ label: 'Enquire About Partnership', href: '/enquiry?service=travel-agents' }}
+        secondaryAction={{ label: 'Contact Our Team', href: '/contact' }}
+        items={heroBenefits}
+        itemsLabel="Travel agent support benefits"
+      />
     </Box>
   )
 }
@@ -104,13 +101,13 @@ function TravelAgentIntroduction() {
           </Box>
           <Box sx={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column' }}>
             <Typography sx={{ color: colors.greenDark, fontFamily: publicFonts.heading, fontSize: '16px', fontWeight: 700, lineHeight: 1.5, letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1 }}>Travel agent support</Typography>
-            <Typography id="travel-agent-support-heading" component="h2" sx={{ ...headingSx, color: colors.navy, maxWidth: 620, mb: 1.25 }}>Support Your Customers with a Visa Partner</Typography>
-            <Typography sx={{ color: colors.textSecondary, fontFamily: publicFonts.body, fontSize: { xs: '16px', desktopLg: '18px' }, lineHeight: 1.5, maxWidth: 640 }}>Your agency can share traveller and trip details with GLTS, receive guidance on the applicable process, and coordinate documentation and updates through GLTS.</Typography>
-            <Box component="ul" sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'repeat(2, minmax(0, 1fr))', desktop: '1fr', desktopMd: 'repeat(2, minmax(0, 1fr))' }, columnGap: 2.5, rowGap: { xs: 3, desktop: 5.5 }, m: 0, mt: { xs: 4, desktop: 4.5 }, p: 0, flexGrow: { desktop: 1 }, alignContent: { desktop: 'space-between' }, listStyle: 'none' }}>
+            <Typography id="travel-agent-support-heading" component="h2" sx={{ ...headingSx, color: colors.navy, maxWidth: 560, mb: 1.25 }}>Support Your Customers with a Visa Partner</Typography>
+            <Typography sx={{ color: colors.textSecondary, fontFamily: publicFonts.body, fontSize: { xs: '16px', lg: '18px' }, lineHeight: 1.5, maxWidth: 640 }}>Your agency can share traveller and trip details with GLTS, receive guidance on the applicable process, and coordinate documentation and updates through GLTS.</Typography>
+            <Box component="ul" sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'repeat(2, minmax(0, 1fr))' }, gap: 2, gridAutoRows: '1fr', m: 0, mt: { xs: 4, desktop: 4.5 }, p: 0, flexGrow: { desktop: 1 }, listStyle: 'none' }}>
               {supportBenefits.map(({ title, description, icon: Icon }) => (
-                <Box component="li" key={title} sx={{ display: 'grid', gridTemplateColumns: { xs: '80px minmax(0, 1fr)', desktopLg: '88px minmax(0, 1fr)' }, gap: 1.5, alignItems: 'start', minWidth: 0 }}>
-                  <Box sx={{ width: { xs: 80, desktopLg: 88 }, height: { xs: 80, desktopLg: 88 }, borderRadius: '50%', bgcolor: '#EAF8EC', display: 'grid', placeItems: 'center' }}><Icon size={46} color={colors.greenDark} strokeWidth={1.8} aria-hidden="true" /></Box>
-                  <Box sx={{ minWidth: 0, pt: 0.25 }}><Typography component="h3" sx={{ color: colors.navy, fontFamily: publicFonts.heading, fontSize: { xs: '18px', desktopLg: '19px' }, fontWeight: 700, lineHeight: 1.35, mb: 0.75 }}>{title}</Typography><Typography sx={{ color: colors.textSecondary, fontFamily: publicFonts.body, fontSize: { xs: '16px', desktopLg: '17px' }, lineHeight: 1.5 }}>{description}</Typography></Box>
+                <Box component="li" key={title} sx={{ display: 'grid', gridTemplateColumns: { xs: '80px minmax(0, 1fr)', lg: '88px minmax(0, 1fr)' }, gap: 1.5, alignItems: 'start', minWidth: 0, p: { xs: 2, desktopMd: 2.25 }, bgcolor: ds.color.white, border: `1px solid ${ds.color.border}`, borderRadius: `${ds.component.card.benefit.radius}px`, boxShadow: '0 6px 20px rgba(15, 35, 55, 0.055)' }}>
+                  <Box sx={{ width: { xs: 80, lg: 88 }, height: { xs: 80, lg: 88 }, borderRadius: '50%', bgcolor: '#EAF8EC', display: 'grid', placeItems: 'center' }}><Icon size={46} color={colors.greenDark} strokeWidth={1.8} aria-hidden="true" /></Box>
+                  <Box sx={{ minWidth: 0, pt: 0.25 }}><Typography component="h3" sx={{ color: colors.navy, fontFamily: publicFonts.heading, fontSize: { xs: '18px', lg: '19px' }, fontWeight: 700, lineHeight: 1.35, mb: 0.75 }}>{title}</Typography><Typography sx={{ color: colors.textSecondary, fontFamily: publicFonts.body, fontSize: { xs: '16px', lg: '17px' }, lineHeight: 1.5 }}>{description}</Typography></Box>
                 </Box>
               ))}
             </Box>
@@ -125,11 +122,9 @@ function TravelAgentChallenges() {
   return (
     <ChallengesWeSolveSection
       id="travel-agent-challenges"
-      variant="travelAgents"
       eyebrow="Common challenges"
       heading="Challenges Travel Agents Face"
       description="Visa requirements vary by destination and can create challenges for travel agents. Here’s how we help address common concerns."
-      desktopColumns={2}
       challenges={travelAgentChallenges}
     />
   )

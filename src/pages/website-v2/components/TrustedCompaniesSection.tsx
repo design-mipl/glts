@@ -18,32 +18,32 @@ interface TrustedCompaniesSectionProps {
   logos: readonly TrustedCompanyLogo[]
   durationSeconds?: number
   direction?: 'left' | 'right'
+  expandPaddedLogos?: boolean
 }
 
-export function TrustedCompaniesSection({
-  id,
-  heading,
-  logos,
-  durationSeconds = 36,
-  direction = 'left',
-}: TrustedCompaniesSectionProps) {
-  const colors = usePublicBrandColors()
+interface LogoMarqueeProps {
+  logos: readonly TrustedCompanyLogo[]
+  durationSeconds: number
+  direction: 'left' | 'right'
+  expandPaddedLogos: boolean
+  colors: ReturnType<typeof usePublicBrandColors>
+}
 
-  if (logos.length === 0) return null
-
+function LogoMarquee({ logos, durationSeconds, direction, expandPaddedLogos, colors }: LogoMarqueeProps) {
+  // Three equal runs cover the hero container even when one run is narrower than it.
+  // Moving exactly one run makes the first and last animation frames identical.
   const renderLogos = (duplicate: boolean) => (
     <Box
       component="ul"
       aria-hidden={duplicate ? true : undefined}
+      className={duplicate ? 'trusted-companies-duplicate' : undefined}
       sx={{
         display: 'flex',
         alignItems: 'center',
         flexShrink: 0,
         gap: 'var(--trusted-logo-gap)',
-        width: { md: '100%' },
-        justifyContent: { md: 'center' },
         m: 0,
-        pr: { xs: 'var(--trusted-logo-gap)', md: 0 },
+        pr: 'var(--trusted-logo-gap)',
         pl: 0,
         listStyle: 'none',
       }}
@@ -75,13 +75,10 @@ export function TrustedCompaniesSection({
             alt={duplicate ? '' : (alt ?? name)}
             sx={{
               display: 'block',
-              width: {
-                xs: width ? Math.min(width, 160) : 'auto',
-                md: crop ? '100%' : width ? Math.min(width, 160) : 'auto',
-              },
-              height: { xs: Math.min(height, 48), md: Math.min(height, 58) },
-              maxWidth: '100%',
-              objectFit: { xs: 'contain', md: crop ? 'cover' : 'contain' },
+              width: expandPaddedLogos && crop ? '100%' : width ? Math.min(width, 160) : 'auto',
+              height: { xs: expandPaddedLogos && crop ? 58 : Math.min(height, 48), md: Math.min(height, 58) },
+              maxWidth: expandPaddedLogos && crop ? 120 : '100%',
+              objectFit: expandPaddedLogos && crop ? 'cover' : 'contain',
               objectPosition: 'center',
             }}
           />
@@ -89,6 +86,57 @@ export function TrustedCompaniesSection({
       ))}
     </Box>
   )
+
+  return (
+    <Box
+      sx={{
+        width: '100%',
+        overflow: 'hidden',
+        maskImage: { xs: 'linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent)', md: 'none' },
+        WebkitMaskImage: { xs: 'linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent)', md: 'none' },
+        '--trusted-logo-gap': { xs: '32px', sm: '48px', md: '12px' },
+        '&:hover .trusted-companies-track': { animationPlayState: 'paused' },
+        '@media (prefers-reduced-motion: reduce)': {
+          overflowX: 'auto',
+          maskImage: 'none',
+          WebkitMaskImage: 'none',
+          '& .trusted-companies-track': { animation: 'none' },
+          '& .trusted-companies-duplicate': { display: 'none' },
+        },
+      }}
+    >
+      <Box
+        className="trusted-companies-track"
+        sx={{
+          display: 'flex',
+          width: 'max-content',
+          animation: `trustedCompaniesScroll ${Math.max(1, durationSeconds)}s linear infinite`,
+          animationDirection: direction === 'right' ? 'reverse' : 'normal',
+          '@keyframes trustedCompaniesScroll': {
+            from: { transform: 'translate3d(0, 0, 0)' },
+            to: { transform: 'translate3d(-33.333333333333%, 0, 0)' },
+          },
+        }}
+      >
+        {renderLogos(false)}
+        {renderLogos(true)}
+        {renderLogos(true)}
+      </Box>
+    </Box>
+  )
+}
+
+export function TrustedCompaniesSection({
+  id,
+  heading,
+  logos,
+  durationSeconds = 36,
+  direction = 'left',
+  expandPaddedLogos = false,
+}: TrustedCompaniesSectionProps) {
+  const colors = usePublicBrandColors()
+
+  if (logos.length === 0) return null
 
   return (
     <Box component="section" id={id} aria-labelledby={`${id}-heading`} sx={{ bgcolor: colors.white, py: compactSectionPy }}>
@@ -109,48 +157,7 @@ export function TrustedCompaniesSection({
           {heading}
         </Typography>
 
-        <Box
-          sx={{
-            overflow: { xs: 'hidden', md: 'visible' },
-            maskImage: {
-              xs: 'linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent)',
-              md: 'none',
-            },
-            WebkitMaskImage: {
-              xs: 'linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent)',
-              md: 'none',
-            },
-            '--trusted-logo-gap': { xs: '32px', sm: '48px', md: '12px' },
-            '@media (hover: hover) and (pointer: fine)': {
-              '&:hover .trusted-companies-track': { animationPlayState: 'paused' },
-            },
-            '@media (prefers-reduced-motion: reduce)': {
-              overflowX: 'auto',
-              '& .trusted-companies-track': { animation: 'none' },
-              '& .trusted-companies-duplicate': { display: 'none' },
-            },
-          }}
-        >
-          <Box
-            className="trusted-companies-track"
-            sx={{
-              display: 'flex',
-              width: { xs: 'max-content', md: '100%' },
-              animation: { xs: `trustedCompaniesScroll ${Math.max(1, durationSeconds)}s linear infinite`, md: 'none' },
-              animationDirection: direction === 'right' ? 'reverse' : 'normal',
-              '& > .trusted-companies-duplicate': { display: { md: 'none' } },
-              '@keyframes trustedCompaniesScroll': {
-                from: { transform: 'translate3d(0, 0, 0)' },
-                to: { transform: 'translate3d(-50%, 0, 0)' },
-              },
-            }}
-          >
-            {renderLogos(false)}
-            <Box className="trusted-companies-duplicate" sx={{ display: 'flex' }}>
-              {renderLogos(true)}
-            </Box>
-          </Box>
-        </Box>
+        <LogoMarquee logos={logos} durationSeconds={durationSeconds} direction={direction} expandPaddedLogos={expandPaddedLogos} colors={colors} />
       </PublicContainer>
     </Box>
   )

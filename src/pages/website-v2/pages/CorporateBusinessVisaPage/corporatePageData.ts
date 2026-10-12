@@ -16,8 +16,8 @@ import type { VisaCategoryCardItem } from '../../components/VisaCategoryCardsSec
 import { testimonialPortraits } from '../../assets/testimonialPortraits'
 
 export const corporateHeroCtas = {
-  primary: { label: 'Speak with Our Corporate Team', href: '/track' },
-  secondary: { label: 'Schedule a Consultation', href: '/track' },
+  primary: { label: 'Enquire About Corporate Visas', href: '/enquiry?service=corporate' },
+  secondary: { label: 'Contact Our Team', href: '/contact' },
 } as const
 
 export const corporateHeroStats: {
@@ -145,26 +145,11 @@ export const corporateImpactPoints = [
   },
 ] as const
 
-export const corporateAccuracyVisuals = {
-  badgeLabel: 'Enterprise Travel Support',
-  primary: {
-    src: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&h=1400&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&h=1400&q=90',
-    alt: 'International corporate team collaboration',
-  },
-  secondaryTop: {
-    src: 'https://images.unsplash.com/photo-1577415124269-fc1140a69e91?auto=format&fit=crop&w=1000&h=700&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1000&h=700&q=90',
-    alt: 'Business travelers in airport and mobility planning context',
-  },
-  secondaryBottom: {
-    src: 'https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1000&h=700&q=90',
-    fallback:
-      'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1000&h=700&q=90',
-    alt: 'Project deployment and international workforce operations',
-  },
+export const corporateAccuracyImage = {
+  src: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&h=1400&q=90',
+  fallback:
+    'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&h=1400&q=90',
+  alt: 'International corporate team collaboration',
 } as const
 
 export const corporateVisaCategories: VisaCategoryCardItem[] = [

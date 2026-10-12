@@ -285,6 +285,6 @@ export const marineTestimonials: TestimonialItem[] = [
 ]
 
 export const marineHeroCtas = {
-  primary: { label: 'Talk to a Marine Visa Specialist', href: '/track' },
-  secondary: { label: 'Request a Consultation', href: '/track' },
+  primary: { label: 'Enquire About Marine Visas', href: '/enquiry?service=marine-crew' },
+  secondary: { label: 'Contact Our Team', href: '/contact' },
 } as const

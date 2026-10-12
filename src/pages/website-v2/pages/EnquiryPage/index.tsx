@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Alert, Box, Typography } from '@mui/material'
 import { ArrowRight, Building2, Mail, Phone, Tag, UserRound } from 'lucide-react'
 import { Button, Input, Textarea } from '@/design-system/UIComponents'
@@ -20,6 +21,19 @@ const emptyValues: EnquiryValues = {
   company: '',
   subject: '',
   message: '',
+}
+
+const serviceSubjects = {
+  'marine-crew': 'Marine crew visa enquiry',
+  corporate: 'Corporate visa enquiry',
+  'travel-agents': 'Travel agent partnership enquiry',
+} as const
+
+type EnquiryOrigin = keyof typeof serviceSubjects
+
+function getEnquiryOrigin(value: string | null): EnquiryOrigin | null {
+  if (value === 'marine-crew' || value === 'corporate' || value === 'travel-agents') return value
+  return null
 }
 
 const phoneCountry = { code: 'IN', dialCode: '+91' } as const
@@ -55,11 +69,11 @@ function validate(values: EnquiryValues): EnquiryErrors {
   return errors
 }
 
-function buildEnquiryPayload(values: EnquiryValues): EnquiryFormData {
+function buildEnquiryPayload(values: EnquiryValues, origin: EnquiryOrigin | null): EnquiryFormData {
   return {
     customer: {
       companyOrCustomerName: values.company.trim() || values.fullName.trim(),
-      customerType: 'retail',
+      customerType: origin === 'marine-crew' ? 'marine' : origin === 'corporate' ? 'corporate' : 'retail',
       contactPersonName: values.fullName.trim(),
       contactNumber: `${phoneCountry.dialCode} ${values.phone.replace(/\D/g, '')}`,
       emailAddress: values.email.trim(),
@@ -69,7 +83,7 @@ function buildEnquiryPayload(values: EnquiryValues): EnquiryFormData {
       visaType: '',
       purposeOfVisit: '',
       numberOfApplicants: 1,
-      marineRequirement: false,
+      marineRequirement: origin === 'marine-crew',
       urgencyLevel: 'low',
     },
     operationalRequirements: {
@@ -90,7 +104,12 @@ function buildEnquiryPayload(values: EnquiryValues): EnquiryFormData {
 }
 
 export function EnquiryPage() {
-  const [values, setValues] = useState<EnquiryValues>(emptyValues)
+  const [searchParams] = useSearchParams()
+  const origin = getEnquiryOrigin(searchParams.get('service'))
+  const [values, setValues] = useState<EnquiryValues>(() => ({
+    ...emptyValues,
+    subject: origin ? serviceSubjects[origin] : '',
+  }))
   const [errors, setErrors] = useState<EnquiryErrors>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -116,8 +135,8 @@ export function EnquiryPage() {
 
     setSubmitting(true)
     try {
-      await enquiryService.create(buildEnquiryPayload(values), 'Website enquiry')
-      setValues(emptyValues)
+      await enquiryService.create(buildEnquiryPayload(values, origin), 'Website enquiry')
+      setValues({ ...emptyValues, subject: origin ? serviceSubjects[origin] : '' })
       setErrors({})
       setSuccess(true)
     } catch {
