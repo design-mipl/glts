@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react'
 import { FOUNDATION_BREAKPOINT_VALUES } from '@/design-system/breakpoints'
 import { publicFonts, publicLightColors, publicShadows } from '@/shared/theme/publicBrandPrimitives'
 
-const containerTokens = { max: 1280, heroMax: 1280, gutterMobile: 24, gutterTablet: 32, gutterDesktop: 48 } as const
+const containerTokens = { max: 1280, heroMax: 1440, gutterMobile: 18, gutterTablet: 28, gutterLaptop: 36, gutterDesktop: 48 } as const
 const radiusTokens = { small: 8, medium: 12, large: 20, card: 22, pill: 999 } as const
 const controlTokens = { height: 44, buttonHeight: 44, iconButtonSize: 44, labelGap: 8, iconGap: 8 } as const
 const buttonSizeTokens = {
@@ -89,7 +89,7 @@ export const websiteDesignSystem = {
     darkText: { heading: publicLightColors.white, body: publicLightColors.white, secondary: '#CBD5E1' },
   },
   space: [0, 4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 120] as const,
-  /** Both public container variants share a readable 1280px content width; hero gutters stay wider. */
+  /** Usable content widths; PublicContainer adds the responsive gutters outside these limits. */
   container: containerTokens,
   /** Legacy MUI spacing-unit aliases remain for existing consumers; new code should use `section`. */
   layoutCompatibility: {
@@ -110,12 +110,12 @@ export const websiteDesignSystem = {
       overline: '12px',
     },
   },
-  grid: { mobile: 4, tablet: 8, desktop: 12, gapMobile: 16, gapTablet: 24, gapDesktop: 32 },
+  grid: { mobile: 4, tablet: 8, desktop: 12, gapMobile: 16, gapTablet: 20, gapDesktop: 24 },
   section: {
     compact: { mobile: 40, tablet: 52, desktop: 64, contentMax: containerTokens.max, headingGap: 16, descriptionGap: 20, contentGap: 40 },
     regular: { mobile: 48, tablet: 64, desktop: 80, contentMax: containerTokens.max, headingGap: 16, descriptionGap: 20, contentGap: 40 },
-    feature: { mobile: 64, tablet: 88, desktop: 120, contentMax: containerTokens.max, headingGap: 16, descriptionGap: 20, contentGap: 48 },
-    dark: { mobile: 64, tablet: 80, desktop: 112, contentMax: containerTokens.max, headingGap: 16, descriptionGap: 20, contentGap: 48 },
+    feature: { mobile: 56, tablet: 72, desktop: 88, contentMax: containerTokens.max, headingGap: 16, descriptionGap: 20, contentGap: 40 },
+    dark: { mobile: 56, tablet: 72, desktop: 88, contentMax: containerTokens.max, headingGap: 16, descriptionGap: 20, contentGap: 40 },
     hero: { mobile: 80, tablet: 96, desktop: 120, contentMax: containerTokens.heroMax, headingGap: 16, descriptionGap: 32, contentGap: 48 },
   },
   sectionHierarchy: ['Eyebrow', 'Heading', 'Supporting copy', 'Main content', 'CTA if needed'] as const,
@@ -232,7 +232,7 @@ export const websiteDesignSystem = {
 
 /**
  * Section padding uses existing public behavior: base/mobile, tablet at 600px (`lg`),
- * and desktop at 1024px (`desktop`). Standard containers cap at 1280px; hero shells at 1760px.
+ * and desktop at 1024px (`desktop`). Standard content caps at 1280px; wide content at 1440px.
  */
 export const websiteSectionPadding = Object.fromEntries(
   (['compact', 'regular', 'feature', 'dark'] as const).map((variant) => [

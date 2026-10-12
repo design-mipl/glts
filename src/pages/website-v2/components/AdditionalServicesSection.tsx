@@ -37,7 +37,7 @@ import {
 import { additionalServicesSlider } from '../assets/landingPageImages'
 
 const CARD_RADIUS = '16px'
-const GAP_PX = 18
+const GAP_PX = 20
 /** Row height for featured + collapsed cards. */
 const SQUARE_H = { xs: 210, sm: 230, md: 260 }
 /** Collapsed card width — slightly narrower so the featured card can breathe. */

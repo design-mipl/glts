@@ -278,7 +278,7 @@ export function SpecializedSolutionsSection({ visaServices = false }: { visaServ
             gridTemplateColumns: visaServices
               ? { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }
               : { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' },
-            gap: visaServices ? 2 : { xs: 2, md: 2.5 },
+            gap: { xs: `${ds.grid.gapTablet}px`, desktop: `${ds.grid.gapDesktop}px` },
             alignItems: 'stretch',
             ...(visaServices ? { '@media (min-width: 1100px)': { gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' } } : {}),
           }}

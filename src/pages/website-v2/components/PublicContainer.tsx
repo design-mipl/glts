@@ -1,5 +1,5 @@
 import { Container, type ContainerProps } from '@mui/material'
-import { publicLayout } from '../theme/publicSiteTokens'
+import { websiteDesignSystem as ds } from '../theme/websiteDesignSystem'
 
 interface PublicContainerProps extends ContainerProps {
   variant?: 'standard' | 'hero'
@@ -11,17 +11,25 @@ export function PublicContainer({
   sx,
   ...props
 }: PublicContainerProps) {
-  const maxWidth = variant === 'hero' ? publicLayout.containerHero : publicLayout.containerStandard
+  const contentWidth = variant === 'hero' ? ds.container.heroMax : ds.container.max
+  const gutters = {
+    xs: `${ds.container.gutterMobile}px`,
+    lg: `${ds.container.gutterTablet}px`,
+    desktop: `${ds.container.gutterLaptop}px`,
+    desktopLg: `${ds.container.gutterDesktop}px`,
+  }
 
   return (
     <Container
       maxWidth={false}
       sx={{
-        maxWidth,
-        px:
-          variant === 'hero'
-            ? { xs: 3, sm: 4, md: 5, lg: 6, xl: 8 }
-            : { xs: 3, sm: 4, md: 5, lg: 6 },
+        maxWidth: {
+          xs: contentWidth + 2 * ds.container.gutterMobile,
+          lg: contentWidth + 2 * ds.container.gutterTablet,
+          desktop: contentWidth + 2 * ds.container.gutterLaptop,
+          desktopLg: contentWidth + 2 * ds.container.gutterDesktop,
+        },
+        px: gutters,
         mx: 'auto',
         width: '100%',
         ...sx,

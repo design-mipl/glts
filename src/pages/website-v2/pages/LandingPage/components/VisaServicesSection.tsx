@@ -300,7 +300,7 @@ export function VisaServicesSection() {
             gridTemplateColumns: {
               lg: 'repeat(6, minmax(0, 1fr))',
             },
-            gap: { xs: 2.5, sm: 2.75, md: 3 },
+            gap: { xs: `${ds.grid.gapTablet}px`, desktop: `${ds.grid.gapDesktop}px` },
             overflowX: { xs: 'auto', lg: 'visible' },
             pb: { xs: 1, lg: 0 },
             mx: { xs: -3, sm: -4, md: -5, lg: 0 },

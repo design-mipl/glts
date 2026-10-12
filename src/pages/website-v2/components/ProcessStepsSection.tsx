@@ -77,7 +77,7 @@ export function ProcessStepsSection({ id, sectionLabel, heading, subheading, ste
           horizontalAt={ds.breakpoint.tablet}
           desktopColumns={Math.min(steps.length, 4)}
           tabletColumns={2}
-          listSx={{ columnGap: { xs: 0, sm: 3, lg: 4 }, rowGap: { xs: 5, sm: 6 }, mt: { xs: 5, lg: 4 } }}
+          listSx={{ columnGap: { xs: 0, sm: '20px', desktop: '24px' }, rowGap: { xs: '32px', sm: '40px' }, mt: { xs: 5, lg: 4 } }}
           itemSx={{ position: 'relative', minWidth: 0, px: { xs: 1, sm: 2 }, textAlign: 'center' }}
           renderStep={({ title, description, icon }, index) => (
             <>

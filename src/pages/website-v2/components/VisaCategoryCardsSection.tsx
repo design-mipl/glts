@@ -157,7 +157,7 @@ export function VisaCategoryCardsSection({ id = 'visa-categories', title = 'Visa
           gridTemplateColumns: '1fr',
           '@media (min-width: 600px)': { gridTemplateColumns: `repeat(${Math.min(columnCount, 2)}, minmax(0, 1fr))` },
           '@media (min-width: 1024px)': { gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` },
-          gap: { xs: 2, md: 2.5 },
+          gap: { xs: `${ds.grid.gapTablet}px`, desktop: `${ds.grid.gapDesktop}px` },
           alignItems: 'stretch',
         }}
       >

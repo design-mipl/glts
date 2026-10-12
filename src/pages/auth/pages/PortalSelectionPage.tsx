@@ -52,7 +52,7 @@ export function PortalSelectionPage() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        px: 2,
+        px: { xs: '18px', md: '28px', desktop: '48px' },
         py: 6,
       }}
     >
@@ -100,8 +100,8 @@ export function PortalSelectionPage() {
 
       <Stack
         direction={{ xs: 'column', md: 'row' }}
-        spacing={2.5}
-        sx={{ width: '100%', maxWidth: 1100, flexWrap: { md: 'wrap' }, justifyContent: 'center' }}
+        spacing={0}
+        sx={{ width: '100%', maxWidth: 1280, flexWrap: { md: 'wrap' }, justifyContent: 'center', gap: { xs: '20px', desktop: '24px' } }}
         useFlexGap
       >
         {PORTALS.map(portal => {
@@ -110,9 +110,9 @@ export function PortalSelectionPage() {
             <Box
               key={portal.id}
               sx={{
-                flex: { xs: '1 1 auto', md: '1 1 240px' },
-                maxWidth: { md: 260 },
-                p: 3,
+                flex: { xs: '1 1 auto', md: '1 1 260px' },
+                minWidth: 0,
+                p: '24px',
                 borderRadius: '16px',
                 border: `1px solid ${colors.border}`,
                 bgcolor: colors.white,

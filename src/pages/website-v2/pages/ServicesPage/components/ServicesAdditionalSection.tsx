@@ -202,7 +202,7 @@ export function ServicesAdditionalSection() {
             gridTemplateColumns: '1fr',
             '@media (min-width: 600px)': { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
             '@media (min-width: 1024px)': { gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' },
-            gap: { xs: 2, md: 2.5 },
+            gap: { xs: `${ds.grid.gapTablet}px`, desktop: `${ds.grid.gapDesktop}px` },
             alignItems: 'stretch',
           }}
         >

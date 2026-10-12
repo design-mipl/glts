@@ -39,7 +39,7 @@
 }
 .visa-guide-landing { min-height: 0; }
 .visa-guide-landing .visa-guide-hero { min-height: 440px; padding-top: 58px; }
-.visa-guide-landing-panel { grid-template-columns: minmax(0, 1.45fr) minmax(210px, 1fr); max-width: 780px; }
+.visa-guide-landing-panel { grid-template-columns: minmax(0, 1.45fr) minmax(210px, 1fr); max-width: 960px; }
 .visa-guide-landing-panel .visa-guide-search-note { grid-column: 1 / -1; }
 .visa-guide-field {
   min-width: 0;

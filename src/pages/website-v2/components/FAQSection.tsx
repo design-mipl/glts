@@ -60,7 +60,7 @@ export function FAQSection({ faqs, title = DEFAULT_TITLE, headingAlign = 'left' 
               xs: '1fr',
               xl: 'minmax(0, 1.15fr) minmax(0, 1.2fr)',
             },
-            gap: { xs: 3, xl: 3.5, desktop: 4 },
+            gap: { xs: '20px', xl: '24px', desktop: '32px' },
             alignItems: { xs: 'start', xl: 'stretch' },
           }}
         >

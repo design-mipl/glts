@@ -47,7 +47,7 @@ export function FooterSection() {
       }}
     >
       <FooterWorldMapWatermark />
-      <PublicContainer sx={{ position: 'relative', zIndex: 1 }}>
+      <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1 }}>
         <Grid container spacing={{ xs: 6, md: 8 }} sx={{ mb: 10 }}>
           <Grid size={{ xs: 12, md: 4 }}>
             <Box

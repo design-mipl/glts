@@ -72,13 +72,13 @@ export function ChallengesWeSolveSection({ id, heading, description, eyebrow, ch
     <Box component="section" id={id} aria-labelledby={`${id}-heading`} sx={{ position: 'relative', overflow: 'hidden', bgcolor: isTravelAgents ? ds.color.challengeSurface : colors.white, py: landingSectionPy }}>
       <ChallengeDecorations variant={variant} />
       <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1 }}>
-        <Box sx={{ maxWidth: ds.container.max, mx: 'auto' }}>
+        <Box>
           <Box sx={{ maxWidth: 820, mx: 'auto', textAlign: 'center', mb: { xs: 4, tablet: 4.5, desktopMd: 5 } }}>
             {eyebrow ? <Typography sx={{ color: colors.greenDark, fontFamily: ds.fonts.heading, fontSize: 13, fontWeight: 800, letterSpacing: '0.08em', lineHeight: 1.4, textTransform: 'uppercase', mb: 1 }}>{eyebrow}</Typography> : null}
             <Typography component="h2" id={`${id}-heading`} sx={{ ...websiteHeadingSx.h2Compact, color: colors.navy, mb: 1 }}>{heading}</Typography>
             {description ? <Typography sx={{ color: colors.textSecondary, fontFamily: publicFonts.body, fontSize: { xs: 15, tablet: 16 }, lineHeight: 1.5 }}>{description}</Typography> : null}
           </Box>
-          <Box component="ul" sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', tablet: 'repeat(2, minmax(0, 1fr))', desktopMd: `repeat(${desktopColumns}, minmax(0, 1fr))` }, gap: { xs: 2, tablet: 2.5 }, alignItems: 'stretch', listStyle: 'none', m: 0, p: 0 }}>
+          <Box component="ul" sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', tablet: 'repeat(2, minmax(0, 1fr))', desktopMd: `repeat(${desktopColumns}, minmax(0, 1fr))` }, gap: { xs: '20px', tablet: '24px' }, alignItems: 'stretch', listStyle: 'none', m: 0, p: 0 }}>
             {challenges.map(({ title, description: detail, icon: Icon }) => (
               <Box component="li" key={title} sx={{ display: 'grid', gridTemplateColumns: `${iconContainerSize}px minmax(0, 1fr)`, alignItems: 'start', gap: { xs: 1.75, tablet: 2 }, minWidth: 0, minHeight: { tablet: isTravelAgents ? 120 : 176, desktopMd: isTravelAgents ? 120 : 188 }, p: { xs: `${cardTokens.padding.mobile + 4}px`, tablet: `${cardTokens.padding.desktop + 4}px` }, bgcolor: colors.white, border: `1px solid ${colors.border}`, borderRadius: `${cardTokens.radius}px`, boxShadow: '0 6px 20px rgba(15, 35, 55, 0.055)', transition: `border-color ${ds.component.card.hoverDurationMs}ms ease, box-shadow ${ds.component.card.hoverDurationMs}ms ease, transform ${ds.component.card.hoverDurationMs}ms ease`, '@media (prefers-reduced-motion: reduce)': { transition: 'none' }, '@media (hover: hover)': { '&:hover': { borderColor: `rgba(${brandPrimaryGreenRgb}, 0.38)`, boxShadow: '0 10px 24px rgba(15, 23, 42, 0.08)', transform: 'translateY(-2px)' } } }}>
                 <Box sx={{ width: iconContainerSize, height: iconContainerSize, borderRadius: '50%', bgcolor: ds.color.successSurface, display: 'grid', placeItems: 'center', flexShrink: 0 }}><Icon size={isTravelAgents ? 29 : 28} color={colors.greenDark} strokeWidth={ds.icon.strokeWidth} aria-hidden="true" /></Box>

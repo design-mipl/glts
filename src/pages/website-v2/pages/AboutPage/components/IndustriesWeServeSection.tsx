@@ -180,7 +180,7 @@ export function IndustriesWeServeSection() {
               sm: 'repeat(2, minmax(0, 1fr))',
               lg: 'repeat(4, minmax(0, 1fr))',
             },
-            gap: { xs: 2.5, md: 3 },
+            gap: { xs: `${ds.grid.gapTablet}px`, desktop: `${ds.grid.gapDesktop}px` },
           }}
         >
           {aboutIndustries.map((industry) => (

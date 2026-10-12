@@ -9,6 +9,7 @@ import { PremiumDestinationCard } from './PremiumDestinationCard'
 import { defaultExploreFilters, applyExploreFilters } from '../../../utils/applyExploreFilters'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
 import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
+import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 
 /** Featured destination selection, arranged to keep card details readable at desktop widths. */
 const HOMEPAGE_DESTINATION_COUNT = 10
@@ -128,7 +129,7 @@ export function ExploreSection() {
               gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
               '@media (min-width: 1024px)': { gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' },
               '@media (min-width: 1536px)': { gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' },
-              gap: { xs: 2.5, lg: 2 },
+              gap: { xs: `${ds.grid.gapTablet}px`, desktop: `${ds.grid.gapDesktop}px` },
               rowGap: 3,
               alignItems: 'stretch',
             }}
