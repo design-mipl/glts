@@ -24,10 +24,11 @@ export const corporateHeroStats: {
   value: string
   label: string
   icon: LucideIcon
+  footnote?: string
 }[] = [
   { value: '500+', label: 'Corporate Clients', icon: Building2 },
   { value: '25,000+', label: 'Business Visas Processed', icon: FileCheck2 },
-  { value: '98%', label: 'Approval Success Rate*', icon: BadgeCheck },
+  { value: '98%', label: 'Approval Success Rate*', icon: BadgeCheck, footnote: '* Based on applications meeting eligibility criteria.' },
   { value: '24/7', label: 'Dedicated Corporate Support', icon: Headphones },
   { value: '35+', label: 'Countries Covered', icon: Globe2 },
 ]

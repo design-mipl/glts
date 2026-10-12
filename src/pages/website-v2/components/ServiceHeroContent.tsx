@@ -6,7 +6,7 @@ import { websiteHeadingSx } from '../theme/websiteComponentStyles'
 import { websiteDesignSystem as ds } from '../theme/websiteDesignSystem'
 
 type HeroInfoItem = { icon: LucideIcon } & (
-  | { value: string; label: string }
+  | { value: string; label: string; footnote?: string }
   | { title: string; description: string }
 )
 
@@ -169,6 +169,11 @@ export function ServiceHeroContent({
                   <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'rgba(255, 255, 255, 0.88)', lineHeight: 1.35 }}>
                     {detail}
                   </Typography>
+                  {'footnote' in item && item.footnote && (
+                    <Typography sx={{ mt: 0.75, fontSize: 11, color: 'rgba(255, 255, 255, 0.72)', lineHeight: 1.4 }}>
+                      {item.footnote}
+                    </Typography>
+                  )}
                 </Box>
               </Box>
             )

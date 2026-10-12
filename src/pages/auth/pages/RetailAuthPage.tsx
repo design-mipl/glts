@@ -369,21 +369,14 @@ export function RetailAuthPage({ authActions }: { authActions?: RetailAuthAction
                     {submitting ? 'Signing in…' : 'Sign in'}
                   </Button>
                 </Box>
-                <Box sx={{ mt: 4, p: 2.25, borderRadius: '12px', bgcolor: '#EFF8F1', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
-                  <Box sx={{ flex: '1 1 190px' }}>
-                    <Typography sx={{ fontFamily: publicFonts.display, color: colors.navy, fontSize: 16, fontWeight: 700 }}>New to GreenLight?</Typography>
-                    <Typography sx={{ color: colors.textSecondary, fontSize: 12, lineHeight: 1.55, mt: 0.4 }}>Create an account to start your visa application, track progress and access your documents.</Typography>
-                  </Box>
-                  <Button component={RouterLink} to="/sign-up" variant="outlined" endIcon={<ArrowRight size={16} />} sx={{ minHeight: ds.component.button.authSecondary.minHeight, borderColor: colors.greenDark, color: colors.greenDark, fontFamily: publicFonts.body, fontSize: ds.component.button.authSecondary.fontSize, fontWeight: ds.component.button.authSecondary.fontWeight, textTransform: 'none', borderRadius: `${ds.component.button.authSecondary.radius}px`, whiteSpace: 'nowrap', '&:focus-visible': { outline: `2px solid ${colors.greenDark}`, outlineOffset: 2 } }}>
-                    Create an account
-                  </Button>
-                </Box>
               </Box>
             )}
+            <Box component="nav" aria-label="Account legal information" sx={{ mt: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 1, fontFamily: publicFonts.body, fontSize: 12.5 }}>
+              <Link component={RouterLink} to="/legal/privacy" sx={{ color: colors.textSecondary, textDecoration: 'none', '&:hover': { color: colors.greenDark, textDecoration: 'underline' }, '&:focus-visible': { outline: `2px solid ${colors.greenDark}`, outlineOffset: 3 } }}>Privacy Policy</Link>
+              <Box component="span" aria-hidden="true" sx={{ color: colors.textSecondary }}>|</Box>
+              <Link component={RouterLink} to="/legal/terms" sx={{ color: colors.textSecondary, textDecoration: 'none', '&:hover': { color: colors.greenDark, textDecoration: 'underline' }, '&:focus-visible': { outline: `2px solid ${colors.greenDark}`, outlineOffset: 3 } }}>Terms &amp; Conditions</Link>
+            </Box>
           </Paper>
-          <Link component={RouterLink} to="/sign-in/portals" sx={{ mt: 2, color: colors.textSecondary, fontSize: 12, fontWeight: 600, '&:focus-visible': { outline: `2px solid ${colors.greenDark}`, outlineOffset: 3 } }}>
-            Access another GLTS workspace
-          </Link>
         </Box>
       </Box>
     </Box>

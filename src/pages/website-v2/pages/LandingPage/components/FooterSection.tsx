@@ -18,7 +18,6 @@ const footerSections: Record<string, { label: string; href: string }[]> = {
   ],
   Company: [
     { label: 'About Us', href: '/about' },
-    { label: 'Design System →', href: '/design-system' },
     { label: 'Blogs & Visa Updates', href: '/blogs' },
   ],
   Legal: [
@@ -27,8 +26,6 @@ const footerSections: Record<string, { label: string; href: string }[]> = {
     { label: 'Refund & Cancellation Policy', href: '/legal/refund-cancellation' },
   ],
   Support: [
-    { label: 'Portal Access', href: '/sign-in/portals' },
-    { label: 'Track Application', href: '/track' },
     { label: 'Contact Us', href: '/contact' },
   ],
 }
@@ -129,24 +126,9 @@ export function FooterSection() {
 
         <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)', mb: 6 }} />
 
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ xs: 'flex-start', sm: 'center' }}
-          spacing={3}
-        >
-          <Typography sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '14px' }}>
-            © 2026 GreenLight Travel Solutions Pvt. Ltd. All rights reserved.
-          </Typography>
-          <Stack spacing={0.75}>
-            <Typography sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px' }}>
-              GreenLight Visa Solutions is a brand of GreenLight Travel Solutions Pvt. Ltd.
-            </Typography>
-            <Typography sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>
-              * Based on applications meeting eligibility criteria.
-            </Typography>
-          </Stack>
-        </Stack>
+        <Typography sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '14px' }}>
+          © 2026 GreenLight Travel Solutions Pvt. Ltd. All rights reserved.
+        </Typography>
       </PublicContainer>
     </Box>
   )

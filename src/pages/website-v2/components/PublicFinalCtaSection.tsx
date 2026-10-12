@@ -57,6 +57,9 @@ export function PublicFinalCtaSection({
   const [backgroundSrc, setBackgroundSrc] = useState(image.src)
   const headingId = useId()
   const cta = ds.component.finalCta
+  const editorialActionAlign = variant === 'editorial'
+    ? { xs: 'stretch', lg: 'flex-start' }
+    : { xs: 'stretch', sm: 'flex-start' }
 
   return (
     <Box
@@ -110,12 +113,12 @@ export function PublicFinalCtaSection({
           <Typography sx={{ maxWidth: cta.descriptionMaxWidth, fontSize: { xs: cta.bodySize.mobile, md: cta.bodySize.desktop }, lineHeight: cta.bodyLineHeight, color: 'rgba(255,255,255,.9)' }}>
             {description}
           </Typography>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={`${cta.actionGap}px`} sx={{ pt: `${cta.variant[variant].actionPaddingTop}px` }}>
+          <Stack direction={variant === 'editorial' ? { xs: 'column', lg: 'row' } : { xs: 'column', sm: 'row' }} spacing={`${cta.actionGap}px`} sx={{ pt: `${cta.variant[variant].actionPaddingTop}px` }}>
             <Button
               variant="contained"
               href={primaryButton.href}
               endIcon={primaryButton.icon ?? <ArrowRight size={ds.component.button.marketing.iconSize} />}
-              sx={{ ...getMarketingPrimaryButtonSx(colors), px: `${cta.primaryPaddingX}px`, alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
+              sx={{ ...getMarketingPrimaryButtonSx(colors), px: `${cta.primaryPaddingX}px`, alignSelf: editorialActionAlign }}
             >
               {primaryButton.label}
             </Button>
@@ -130,7 +133,7 @@ export function PublicFinalCtaSection({
                   color: colors.white,
                   bgcolor: 'rgba(255,255,255,.12)',
                   px: `${cta.secondaryPaddingX}px`,
-                  alignSelf: { xs: 'stretch', sm: 'flex-start' },
+                  alignSelf: editorialActionAlign,
                   '&:hover': { borderColor: colors.greenBright, bgcolor: 'rgba(255,255,255,.2)' },
                 }}
               >

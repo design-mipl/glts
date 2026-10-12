@@ -1,4 +1,4 @@
-import { CalendarDays } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { PublicFinalCtaSection } from '../../../components/PublicFinalCtaSection'
 import { finalCtaBackgroundImage } from '../../../assets/landingPageImages'
 
@@ -13,7 +13,7 @@ export function FinalCtaSection() {
       imagePosition={{ xs: '70% 55%', md: 'center 55%' }}
       overlay="linear-gradient(90deg, rgba(0,31,63,0.64) 0%, rgba(0,31,63,0.38) 48%, rgba(0,31,63,0.18) 100%)"
       primaryButton={{ label: 'Check Visa Requirements', href: '/countries' }}
-      secondaryButton={{ label: 'Talk to a Visa Expert', href: '/track', icon: <CalendarDays size={16} /> }}
+      secondaryButton={{ label: 'Enquire Now', href: '/enquiry', icon: <ArrowRight size={16} /> }}
     />
   )
 }

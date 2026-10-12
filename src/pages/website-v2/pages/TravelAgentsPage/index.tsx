@@ -193,21 +193,23 @@ function TravelAgentBenefitsSection() {
   return (
     <Box component="section" id="why-travel-agents-work-with-glts" aria-labelledby="why-travel-agents-heading" sx={{ bgcolor: colors.white, py: landingSectionPy }}>
       <PublicContainer variant="hero">
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0,.9fr) minmax(220px,.72fr) minmax(0,1.2fr)' }, gap: { xs: 4, lg: 3 }, alignItems: 'center' }}>
-          <Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, gridTemplateAreas: { xs: '"intro" "image" "benefits"', lg: '"intro intro" "image benefits"', desktopMd: '"intro benefits" "image benefits"' }, columnGap: { lg: 4, desktopMd: 6 }, rowGap: { xs: 3.5, desktopMd: 3 }, alignItems: 'start' }}>
+          <Box sx={{ gridArea: 'intro', minWidth: 0 }}>
             <Eyebrow>Why partner with GLTS</Eyebrow>
             <Typography id="why-travel-agents-heading" component="h2" sx={{ ...headingSx, color: colors.navy, mb: 1.25 }}>Why Travel Agents Work With GLTS</Typography>
-            <Typography sx={{ color: colors.textSecondary, fontSize: 15, lineHeight: 1.55, mb: 2.25 }}>We provide reliable guidance, organised documentation and ongoing communication, so you can support your customers with confidence.</Typography>
-            <Button variant="contained" href="/enquiry" endIcon={<ArrowRight size={ds.component.button.marketing.iconSize} />} sx={getMarketingPrimaryButtonSx(colors)}>Enquire About Partnership</Button>
+            <Typography sx={{ color: colors.textSecondary, fontSize: { xs: 15, sm: 16 }, lineHeight: 1.6, maxWidth: 580 }}>We provide reliable guidance, organised documentation and ongoing communication, so you can support your customers with confidence.</Typography>
           </Box>
-          <Box component="img" src="/images/visa-master/passport.png" alt="Navy passport ready for an international journey" loading="lazy" sx={{ width: '100%', height: { xs: 280, lg: 350 }, objectFit: 'cover', objectPosition: 'center 52%', borderRadius: '14px', boxShadow: '0 12px 28px rgba(15,35,55,.1)' }} />
-          <Box component="ul" sx={{ display: 'grid', gap: 1.25, listStyle: 'none', p: 0, m: 0 }}>
-            {partnershipBenefits.map(({ title, description, icon: Icon }) => (
-              <Box component="li" key={title} sx={{ display: 'grid', gridTemplateColumns: `${ds.icon.featureContainer}px minmax(0,1fr)`, gap: 1.4, alignItems: 'center', minHeight: 72, p: 1.25, bgcolor: '#f8fbf9', border: '1px solid #eef3ef', borderRadius: '12px' }}>
-                <Box sx={{ width: ds.icon.featureContainer, height: ds.icon.featureContainer, display: 'grid', placeItems: 'center', borderRadius: '50%', bgcolor: '#e8f6eb', color: colors.greenDark }}><Icon size={ds.icon.standard} strokeWidth={ds.icon.strokeWidth} aria-hidden="true" /></Box>
-                <Box><Typography component="h3" sx={{ color: colors.navy, fontSize: 15, fontWeight: 800, lineHeight: 1.25, mb: .25 }}>{title}</Typography><Typography sx={{ color: colors.textSecondary, fontSize: 14, lineHeight: 1.45 }}>{description}</Typography></Box>
-              </Box>
-            ))}
+          <Box component="img" src="/images/visa-master/passport.png" alt="Navy passport ready for an international journey" loading="lazy" sx={{ gridArea: 'image', display: 'block', width: '100%', maxWidth: { xs: 560, desktopLg: 600 }, mx: { xs: 'auto', lg: 0 }, aspectRatio: '4 / 3', objectFit: 'cover', objectPosition: 'center 52%', borderRadius: '14px', boxShadow: '0 12px 28px rgba(15,35,55,.1)' }} />
+          <Box sx={{ gridArea: 'benefits', minWidth: 0 }}>
+            <Box component="ul" sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', desktopMd: 'repeat(2, minmax(0, 1fr))' }, gridAutoRows: '1fr', gap: { xs: 1.5, desktopMd: 2 }, listStyle: 'none', p: 0, m: 0 }}>
+              {partnershipBenefits.map(({ title, description, icon: Icon }) => (
+                <Box component="li" key={title} sx={{ display: 'grid', gridTemplateColumns: '44px minmax(0, 1fr)', gap: 1.5, alignItems: 'start', minWidth: 0, minHeight: { xs: 100, desktopMd: 150 }, p: 2, bgcolor: '#f8fbf9', border: `1px solid ${ds.color.border}`, borderRadius: `${ds.component.card.benefit.radius}px` }}>
+                  <Box sx={{ width: 44, height: 44, display: 'grid', placeItems: 'center', borderRadius: '50%', bgcolor: '#e8f6eb', color: colors.greenDark }}><Icon size={24} strokeWidth={ds.icon.strokeWidth} aria-hidden="true" /></Box>
+                  <Box sx={{ minWidth: 0 }}><Typography component="h3" sx={{ color: colors.navy, fontSize: 16, fontWeight: 800, lineHeight: 1.3, mb: 0.75 }}>{title}</Typography><Typography sx={{ color: colors.textSecondary, fontSize: 14, lineHeight: 1.5 }}>{description}</Typography></Box>
+                </Box>
+              ))}
+            </Box>
+            <Button variant="contained" href="/enquiry?service=travel-agents" endIcon={<ArrowRight size={ds.component.button.marketing.iconSize} />} sx={{ ...getMarketingPrimaryButtonSx(colors), mt: 3, width: { xs: '100%', sm: 'auto' } }}>Enquire About Partnership</Button>
           </Box>
         </Box>
       </PublicContainer>

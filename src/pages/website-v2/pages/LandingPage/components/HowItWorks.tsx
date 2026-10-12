@@ -15,61 +15,48 @@ import { ProcessTimelineCopy, ResponsiveProcessTimeline } from '../../../compone
 
 const STEP_COUNT = howItWorksSteps.length
 const LAST_STEP = STEP_COUNT - 1
-const STEP_INTERVAL_MS = 300
+const STEP_INTERVAL_MS = 3600
 const START_DELAY_MS = 150
+const STEP_TRANSITION_SECONDS = 0.65
 
 export function HowItWorks() {
   const colors = usePublicBrandColors()
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const sectionRef = useRef<HTMLElement | null>(null)
   const timelineRef = useRef<HTMLDivElement | null>(null)
-  const hasStartedRef = useRef(false)
   const [activeStep, setActiveStep] = useState(-1)
+  const [inView, setInView] = useState(() => typeof IntersectionObserver === 'undefined')
+  const remainingMsRef = useRef(START_DELAY_MS)
   const [mobileFractions, setMobileFractions] = useState(() =>
     Array.from({ length: STEP_COUNT }, (_, index) => index / LAST_STEP),
   )
   const visibleStep = reducedMotion ? LAST_STEP : activeStep
-  const nextProgressStep = visibleStep < 0 ? -1 : Math.min(visibleStep + 1, LAST_STEP)
-  const desktopProgress = nextProgressStep < 0 ? 0 : nextProgressStep / LAST_STEP
-  const mobileProgress = nextProgressStep < 0 ? 0 : mobileFractions[nextProgressStep]
+  const desktopProgress = visibleStep < 0 ? 0 : visibleStep / LAST_STEP
+  const mobileProgress = visibleStep < 0 ? 0 : mobileFractions[visibleStep]
 
   useEffect(() => {
     const section = sectionRef.current
     if (!section) return
-    const timers: number[] = []
-    let observer: IntersectionObserver | undefined
+    if (typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.05 })
+    observer.observe(section)
+    return () => observer.disconnect()
+  }, [])
 
-    if (reducedMotion) {
-      hasStartedRef.current = true
-      timers.push(window.setTimeout(() => setActiveStep(LAST_STEP), 0))
-    } else if (!hasStartedRef.current) {
-      const startSequence = () => {
-        if (hasStartedRef.current) return
-        hasStartedRef.current = true
-        observer?.disconnect()
-        for (let index = 0; index < STEP_COUNT; index += 1) {
-          timers.push(window.setTimeout(() => setActiveStep(index), START_DELAY_MS + index * STEP_INTERVAL_MS))
-        }
-      }
-
-      if (typeof IntersectionObserver === 'undefined') {
-        startSequence()
-      } else {
-        observer = new IntersectionObserver(
-          ([entry]) => {
-            if (entry.isIntersecting) startSequence()
-          },
-          { threshold: 0.3 },
-        )
-        observer.observe(section)
-      }
-    }
-
+  useEffect(() => {
+    if (reducedMotion || !inView || activeStep >= LAST_STEP) return
+    const startedAt = performance.now()
+    let advanced = false
+    const timer = window.setTimeout(() => {
+      advanced = true
+      remainingMsRef.current = STEP_INTERVAL_MS
+      setActiveStep((step) => Math.min(step + 1, LAST_STEP))
+    }, remainingMsRef.current)
     return () => {
-      observer?.disconnect()
-      timers.forEach((timer) => window.clearTimeout(timer))
+      window.clearTimeout(timer)
+      if (!advanced) remainingMsRef.current = Math.max(0, remainingMsRef.current - (performance.now() - startedAt))
     }
-  }, [reducedMotion])
+  }, [activeStep, inView, reducedMotion])
 
   useEffect(() => {
     const timeline = timelineRef.current
@@ -161,7 +148,7 @@ export function HowItWorks() {
             aria-hidden="true"
             initial={false}
             animate={{ scaleY: mobileProgress }}
-            transition={{ duration: reducedMotion ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: reducedMotion ? 0 : STEP_TRANSITION_SECONDS, ease: [0.22, 1, 0.36, 1] }}
             sx={{
               display: { xs: 'block', desktop: 'none' },
               position: 'absolute',
@@ -181,7 +168,7 @@ export function HowItWorks() {
             aria-hidden="true"
             initial={false}
             animate={{ scaleX: desktopProgress }}
-            transition={{ duration: reducedMotion ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: reducedMotion ? 0 : STEP_TRANSITION_SECONDS, ease: [0.22, 1, 0.36, 1] }}
             sx={{
               display: { xs: 'none', desktop: 'block' },
               position: 'absolute',
@@ -221,7 +208,7 @@ export function HowItWorks() {
                   columnGap: { xs: 2.75, desktop: 0 },
                   rowGap: { xs: 0, desktop: 3 },
                   textAlign: { xs: 'left', desktop: 'center' },
-                  animation: isCompleted && !reducedMotion ? 'journeyStepEnter 350ms ease-out both' : 'none',
+                  animation: isCompleted && !reducedMotion ? 'journeyStepEnter 650ms ease-out both' : 'none',
                   '@keyframes journeyStepEnter': {
                     from: { opacity: 0, transform: 'translateY(8px)' },
                     to: { opacity: 1, transform: 'translateY(0)' },
@@ -254,7 +241,7 @@ export function HowItWorks() {
                     color: isCompleted ? colors.onBrandFilled : colors.navy,
                     boxShadow: isCompleted ? `0 8px 22px rgba(${brandPrimaryGreenRgb}, 0.24)` : 'none',
                     transform: isCompleted ? 'scale(1)' : 'scale(0.92)',
-                    transition: 'transform 350ms ease-out, border-color 250ms ease-out, background-color 250ms ease-out, color 250ms ease-out, box-shadow 250ms ease-out',
+                    transition: 'transform 650ms ease-out, border-color 650ms ease-out, background-color 650ms ease-out, color 650ms ease-out, box-shadow 650ms ease-out',
                     '@media (prefers-reduced-motion: reduce)': {
                       transform: 'none',
                       transition: 'none',
@@ -270,8 +257,8 @@ export function HowItWorks() {
                   number={step.number}
                   titleClassName="journey-title"
                   sx={{ minWidth: 0 }}
-                  numberSx={{ fontFamily: publicFonts.body, letterSpacing: '0.08em', color: isCompleted ? colors.greenDark : colors.textSecondary, transition: 'color 250ms ease-out', mb: 0.75 }}
-                  titleSx={{ fontFamily: publicFonts.heading, fontSize: { xs: '18px', xl: '19px', desktop: '21px' }, color: isCompleted ? colors.greenDark : colors.navy, lineHeight: 1.3, mb: 1, transition: 'color 250ms ease-out' }}
+                  numberSx={{ fontFamily: publicFonts.body, letterSpacing: '0.08em', color: isCompleted ? colors.greenDark : colors.textSecondary, transition: 'color 650ms ease-out', mb: 0.75 }}
+                  titleSx={{ fontFamily: publicFonts.heading, fontSize: { xs: '18px', xl: '19px', desktop: '21px' }, color: isCompleted ? colors.greenDark : colors.navy, lineHeight: 1.3, mb: 1, transition: 'color 650ms ease-out' }}
                   descriptionSx={{ fontFamily: publicFonts.body, fontSize: { xs: '15px', desktop: '16px' }, color: colors.text, lineHeight: 1.5 }}
                 />
               </Box>
