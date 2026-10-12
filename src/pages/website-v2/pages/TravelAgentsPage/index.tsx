@@ -254,7 +254,6 @@ export function TravelAgentsPage() {
       <TrustedCompaniesSection
         id="trusted-travel-partners"
         heading="Trusted by Travel Agents"
-        previewOnly
         logos={travelAgentCompanyLogos}
       />
       <LandingFaqSection heading="Frequently Asked Questions" faqs={travelAgentFaqs} />

@@ -18,7 +18,6 @@ interface TrustedCompaniesSectionProps {
   logos: readonly TrustedCompanyLogo[]
   durationSeconds?: number
   direction?: 'left' | 'right'
-  previewOnly?: boolean
 }
 
 export function TrustedCompaniesSection({
@@ -27,11 +26,9 @@ export function TrustedCompaniesSection({
   logos,
   durationSeconds = 36,
   direction = 'left',
-  previewOnly = false,
 }: TrustedCompaniesSectionProps) {
   const colors = usePublicBrandColors()
 
-  if (previewOnly && !import.meta.env.DEV) return null
   if (logos.length === 0) return null
 
   const renderLogos = (duplicate: boolean) => (

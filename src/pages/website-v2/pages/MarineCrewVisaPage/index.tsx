@@ -67,7 +67,6 @@ export function MarineCrewVisaPage() {
       <TrustedCompaniesSection
         id="trusted-maritime-companies"
         heading="Trusted by Maritime Companies"
-        previewOnly
         logos={marineCompanyLogos}
       />
 
