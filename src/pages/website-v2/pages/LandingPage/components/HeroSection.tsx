@@ -7,6 +7,7 @@ import { Button, Select } from '@/design-system/UIComponents'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { PUBLIC_NAV_HEIGHT_PX } from '../landingPageSpacing'
 import { getAllCountries } from '@/shared/services/visaService'
+import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
 import { websiteButtonSx, websiteFieldSx, websiteHeadingSx } from '../../../theme/websiteComponentStyles'
 import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 
@@ -18,17 +19,26 @@ const heroCheckerFieldSx = {
   ...websiteFieldSx,
   minWidth: 0,
   '& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root, & .MuiAutocomplete-inputRoot.MuiInputBase-root': {
-    height: '56px !important',
-    minHeight: '56px !important',
+    height: '52px !important',
+    minHeight: '52px !important',
     boxSizing: 'border-box',
-    padding: '10px 42px 10px 14px !important',
+    padding: '8px 42px 8px 14px !important',
     alignItems: 'center',
+    flexWrap: 'nowrap',
     borderRadius: `${ds.radius.medium}px`,
     bgcolor: ds.color.surface,
   },
-  '& .MuiAutocomplete-input': {
-    fontSize: 16,
+  '& .MuiAutocomplete-inputRoot .MuiAutocomplete-input': {
+    fontSize: '14px !important',
     lineHeight: 1.5,
+    minWidth: '0 !important',
+    alignSelf: 'center',
+    '&::placeholder': { color: ds.color.textMuted, opacity: 1 },
+  },
+  '& .MuiAutocomplete-inputRoot.Mui-focused': { outline: 'none' },
+  '& .MuiAutocomplete-inputRoot.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: ds.color.brandHover,
+    borderWidth: '2px',
   },
   '& .MuiAutocomplete-endAdornment': {
     top: '50%',
@@ -49,6 +59,21 @@ const heroCheckerFieldSx = {
   '& .MuiOutlinedInput-notchedOutline legend': { maxWidth: '0 !important' },
 }
 
+const heroCountryListboxSx = {
+  overflowY: 'auto',
+  scrollbarWidth: 'none',
+  '&::-webkit-scrollbar': { display: 'none' },
+  '& .MuiAutocomplete-option': {
+    minHeight: '42px',
+    mx: '4px',
+    my: '2px',
+    px: '10px',
+    py: '8px',
+    borderRadius: '6px',
+    whiteSpace: 'nowrap',
+  },
+}
+
 function VisaChecker() {
   const navigate = useNavigate()
   const [nationality, setNationality] = useState<string | number>('')
@@ -64,7 +89,7 @@ function VisaChecker() {
       countries.map((country) => ({
         value: country.code,
         label: country.name,
-        icon: country.flags || undefined,
+        icon: <CountryFlagVisual flag={country.flags} countryCode={country.code} size={24} />,
       })),
     [countries],
   )
@@ -73,7 +98,7 @@ function VisaChecker() {
       countries.map((country) => ({
         value: country.id,
         label: country.name,
-        icon: country.flags || undefined,
+        icon: <CountryFlagVisual flag={country.flags} countryCode={country.code} size={24} />,
       })),
     [countries],
   )
@@ -110,7 +135,7 @@ function VisaChecker() {
           display: 'flex',
           alignItems: 'center',
           gap: 1.25,
-          minHeight: 56,
+          minHeight: 52,
           px: { xs: 2.25, sm: 3 },
           borderBottom: `1px solid ${ds.color.border}`,
         }}
@@ -125,16 +150,16 @@ function VisaChecker() {
           display: 'grid',
           gridTemplateColumns: {
             xs: 'minmax(0, 1fr)',
-            sm: 'minmax(0, 1fr) 20px minmax(0, 1fr)',
+            sm: 'minmax(0, 1fr) 24px minmax(0, 1fr)',
           },
           alignItems: 'end',
-          columnGap: { xs: 0, sm: 1.5 },
-          rowGap: { xs: 1.75, sm: 2 },
-          p: { xs: 2.25, sm: 3 },
+          columnGap: { xs: 0, sm: '12px' },
+          rowGap: { xs: '12px', sm: '14px' },
+          p: { xs: '14px', sm: '16px' },
         }}
       >
         <Box sx={{ minWidth: 0 }}>
-          <Typography component="span" aria-hidden="true" sx={{ display: 'block', color: ds.color.textSecondary, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', mb: 1 }}>
+          <Typography component="span" aria-hidden="true" sx={{ display: 'block', color: ds.color.textSecondary, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', mb: '6px' }}>
             NATIONALITY
           </Typography>
           <Select
@@ -147,19 +172,21 @@ function VisaChecker() {
             }}
             options={nationalityOptions}
             searchable
+            showSelectedIcon
             required
             fullWidth
             size="md"
             sx={heroCheckerFieldSx}
+            listboxSx={heroCountryListboxSx}
           />
         </Box>
 
-        <Box aria-hidden="true" sx={{ display: { xs: 'none', sm: 'flex' }, height: 56, alignItems: 'center', justifyContent: 'center', color: ds.color.textMuted }}>
+        <Box aria-hidden="true" sx={{ display: { xs: 'none', sm: 'flex' }, height: 52, alignItems: 'center', justifyContent: 'center', color: ds.color.textMuted }}>
           <ArrowRight size={16} />
         </Box>
 
         <Box sx={{ minWidth: 0 }}>
-          <Typography component="span" aria-hidden="true" sx={{ display: 'block', color: ds.color.textSecondary, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', mb: 1 }}>
+          <Typography component="span" aria-hidden="true" sx={{ display: 'block', color: ds.color.textSecondary, fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', mb: '6px' }}>
             DESTINATION
           </Typography>
           <Select
@@ -172,10 +199,12 @@ function VisaChecker() {
             }}
             options={destinationOptions}
             searchable
+            showSelectedIcon
             required
             fullWidth
             size="md"
             sx={heroCheckerFieldSx}
+            listboxSx={heroCountryListboxSx}
           />
         </Box>
 
@@ -188,7 +217,7 @@ function VisaChecker() {
           endIcon={<ArrowRight size={18} aria-hidden="true" />}
           sx={{
             ...websiteButtonSx,
-            minHeight: 56,
+            minHeight: 52,
             whiteSpace: 'nowrap',
             textTransform: 'none',
             borderRadius: `${ds.radius.medium}px`,

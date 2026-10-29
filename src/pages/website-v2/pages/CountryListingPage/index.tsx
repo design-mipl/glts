@@ -1,6 +1,7 @@
-import { Box, CircularProgress } from '@mui/material'
+import { Box } from '@mui/material'
 import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { GLTSLoader } from '@/components/GLTSLoader'
 import { useCountries } from '@/shared/hooks/useCountries'
 import { FilterSidebar, getDefaultDestinationPlanningFilters } from './components/FilterSidebar'
 import { SearchAndSort } from './components/SearchAndSort'
@@ -44,11 +45,7 @@ export function CountryListingPage() {
   }, [planningFilters, search])
 
   if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 16 }}>
-        <CircularProgress sx={{ color: colors.greenBright }} />
-      </Box>
-    )
+    return <GLTSLoader variant="inline" label="Loading destinations" />
   }
 
   return (

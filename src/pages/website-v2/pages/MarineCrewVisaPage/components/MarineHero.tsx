@@ -21,12 +21,11 @@ export function MarineHero() {
   const colors = usePublicBrandColors()
 
   return (
-    <Box component="section" aria-labelledby="marine-hero-heading" sx={{ ...serviceHeroSectionSx, bgcolor: colors.navy }}>
+    <Box component="section" aria-labelledby="marine-hero-heading" sx={{ ...serviceHeroSectionSx, minHeight: { desktop: 620 }, bgcolor: colors.navy }}>
       <MarineHeroBackgroundVideo />
       <ServiceHeroContent
         headingId="marine-hero-heading"
         eyebrow="MARINE CREW VISA SERVICES"
-        eyebrowIcon={Anchor}
         heading="Marine Crew Visa Services"
         description="Visa handling built for seafarers, offshore crew, superintendents, and marine operations teams — with accuracy, speed, and regulatory compliance at every stage."
         primaryAction={marineHeroCtas.primary}
@@ -34,6 +33,8 @@ export function MarineHero() {
         items={marineHeroStats}
         itemsLabel="Marine service statistics"
         animate
+        compactSpacing
+        prominentItems
       />
     </Box>
   )

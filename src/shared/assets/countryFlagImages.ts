@@ -1,5 +1,6 @@
 import australiaFlag from '@/assets/flags/australia.png'
 import belgiumFlag from '@/assets/flags/belgium.png'
+import brazilFlag from '@/assets/flags/brazil.svg'
 import canadaFlag from '@/assets/flags/canada.png'
 import chinaFlag from '@/assets/flags/china.png'
 import franceFlag from '@/assets/flags/france.png'
@@ -20,6 +21,7 @@ const COUNTRY_FLAG_IMAGES_BY_CODE: Partial<Record<string, string>> = {
   AE: unitedArabEmiratesFlag,
   AU: australiaFlag,
   BE: belgiumFlag,
+  BR: brazilFlag,
   CA: canadaFlag,
   CN: chinaFlag,
   FR: franceFlag,

@@ -404,7 +404,6 @@ export function LegalInformationPage() {
                   minHeight: { xs: 'auto', md: 0 },
                   overflowY: { xs: 'visible', md: 'auto' },
                   overflowX: 'hidden',
-                  overscrollBehavior: 'contain',
                   px: 0,
                   scrollbarWidth: 'thin',
                   scrollbarColor: `${colors.greenDark} ${colors.surfaceAlt}`,

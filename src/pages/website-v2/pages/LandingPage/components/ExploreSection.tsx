@@ -8,7 +8,7 @@ import { PublicContainer } from '../../../components/PublicContainer'
 import { PremiumDestinationCard } from './PremiumDestinationCard'
 import { defaultExploreFilters, applyExploreFilters } from '../../../utils/applyExploreFilters'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
-import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
+import { websiteHeadingSx, websiteSecondaryButtonSx } from '../../../theme/websiteComponentStyles'
 import { websiteDesignSystem as ds } from '../../../theme/websiteDesignSystem'
 
 /** Featured destination selection, arranged to keep card details readable at desktop widths. */
@@ -86,19 +86,18 @@ export function ExploreSection() {
             endIcon={<ArrowRight size={16} />}
             onClick={() => navigate('/countries')}
             sx={{
-              textTransform: 'none',
-              borderRadius: '10px',
-              borderColor: colors.border,
-              color: colors.greenBright,
-              fontWeight: 600,
-              px: 3,
-              py: 1.1,
+              ...websiteSecondaryButtonSx,
+              borderColor: colors.greenDark,
+              bgcolor: colors.white,
+              color: colors.navy,
+              minHeight: ds.component.button.marketing.minHeight,
+              px: '20px',
               flexShrink: 0,
               alignSelf: { xs: 'stretch', sm: 'center' },
               '&:hover': {
-                borderColor: colors.greenBright,
+                borderColor: colors.greenDark,
                 bgcolor: colors.greenMuted,
-                color: colors.greenDark,
+                color: colors.navy,
               },
             }}
           >

@@ -341,7 +341,7 @@ const COUNTRIES: Country[] = [
     visaCategory: 'e-Visa',
     validity: '90 days',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1483729558449-99ef03a8a475',
+    heroPhotoId: 'photo-1516834611397-8d633eaec5d0',
     fastMinutes: 720,
     cities: 'Rio de Janeiro · São Paulo · Brasília',
   }),

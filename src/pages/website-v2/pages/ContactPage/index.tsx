@@ -4,8 +4,18 @@ import { ChevronRight, Clock3, Mail, MapPin, Phone, Smartphone } from 'lucide-re
 import { PublicContainer } from '../../components/PublicContainer'
 import { websiteDesignSystem as ds, websiteSectionPadding } from '../../theme/websiteDesignSystem'
 
-// Match the Google Maps iframe format used by the previous Greenlight Contact page.
-const mapUrl = 'https://maps.google.com/maps?height=400&hl=en&ie=UTF8&iwloc=B&output=embed&q=Wadala+Udyog+Bhavan%2C+Naigaon+Cross+Road%2C+NMGS+Marg%2C+Mumbai+400031&t=&width=600&z=16'
+/**
+ * Verified Google Business Profile: GreenLight Travel Solutions Private Limited
+ * (B7, Wadala Udyog Bhavan). Place ID / feature ID resolved from Google Maps embed —
+ * not a building-wide "Udyog Bhavan" search.
+ *
+ * Note: `q=place_id:…&output=embed` falls back to a world-map centre. Use the
+ * Maps embed `pb` place format so the iframe centres and zooms correctly.
+ */
+const GLTS_MAPS_PLACE_ID = 'ChIJF3YHkxDP5zsRSrYNdLkCFaM'
+const mapEmbedUrl =
+  'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1886.085!2d72.8495586!3d19.0121658!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7cf1093077617%3A0xa31502b9740db64a!2sGreenLight%20Travel%20Solutions%20Private%20Limited!5e0!3m2!1sen!2sin!4v1!5m2!1sen!2sin'
+const openInMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('GreenLight Travel Solutions')}&query_place_id=${GLTS_MAPS_PLACE_ID}`
 
 const contactLinkSx = {
   display: 'inline-block',
@@ -142,6 +152,14 @@ export function ContactPage() {
                   Dadar / Wadala,<br />
                   Mumbai 400031
                 </Box>
+                <Link
+                  href={openInMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ ...contactLinkSx, mt: 0.75 }}
+                >
+                  Open in Maps
+                </Link>
               </ContactItem>
               <ContactItem icon={<Clock3 size={21} strokeWidth={2} />} label="Working Hours">
                 Mon - Sat : 10:00 AM - 6:00 PM<br />
@@ -166,8 +184,8 @@ export function ContactPage() {
           >
             <Box
               component="iframe"
-              title="Map showing Wadala Udyog Bhavan, Wadala, Mumbai"
-              src={mapUrl}
+              title="Map showing GreenLight Travel Solutions, B7 Wadala Udyog Bhavan, Mumbai"
+              src={mapEmbedUrl}
               loading="lazy"
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen

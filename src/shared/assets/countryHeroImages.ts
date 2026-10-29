@@ -1,4 +1,5 @@
 import belgiumImg from '@/assets/country/Belgium.png'
+import brazilImg from '@/assets/country/Brazil.png'
 import canadaImg from '@/assets/country/Canada.png'
 import franceImg from '@/assets/country/France.png'
 import japanImg from '@/assets/country/Japan.png'
@@ -12,6 +13,7 @@ import taiwanImg from '@/assets/country/Taiwan.png'
 
 const COUNTRY_HERO_IMAGES_BY_CODE: Partial<Record<string, string>> = {
   BE: belgiumImg,
+  BR: brazilImg,
   CA: canadaImg,
   FR: franceImg,
   JP: japanImg,

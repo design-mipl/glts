@@ -35,10 +35,7 @@ export function PageRouter() {
         </Route>
 
         {/* Public website — V2 owns the root and all non-portal routes. */}
-        <Route path="/">
-          <Route index element={<PublicWebsiteV2App />} />
-          <Route path="*" element={<PublicWebsiteV2App />} />
-        </Route>
+        <Route path="/*" element={<PublicWebsiteV2App />} />
       </Routes>
     </LazyRouteBoundary>
   )

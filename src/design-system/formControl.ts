@@ -119,7 +119,8 @@ export function autocompleteSlotProps(theme: Theme) {
       },
     },
     listbox: {
-      sx: { maxHeight: 280, py: 0.5 },
+      'data-lenis-prevent': '',
+      sx: { maxHeight: 280, py: 0.5, overscrollBehavior: 'contain' },
     },
   }
 }

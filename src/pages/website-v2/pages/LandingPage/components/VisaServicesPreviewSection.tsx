@@ -1,9 +1,9 @@
 import { Box, Button, Typography } from '@mui/material'
 import { ArrowRight, Crown, Plane, UsersRound, type LucideIcon } from 'lucide-react'
 import { PublicContainer } from '../../../components/PublicContainer'
-import { getPrimaryButtonSx, mergeButtonSx, publicFonts, publicLightColors } from '../../../theme/publicSiteTokens'
+import { publicFonts, publicLightColors } from '../../../theme/publicSiteTokens'
 import { landingSectionHeaderMb, landingSectionPy } from '../landingPageSpacing'
-import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
+import { websiteHeadingSx, websiteSecondaryButtonSx } from '../../../theme/websiteComponentStyles'
 
 const serviceHighlights: {
   title: string
@@ -97,16 +97,25 @@ export function VisaServicesPreviewSection() {
           <Button
             component="a"
             href="/visa-services"
-            variant="contained"
+            variant="outlined"
             endIcon={<ArrowRight size={18} />}
-            sx={mergeButtonSx(getPrimaryButtonSx(colors), {
+            sx={{
+              ...websiteSecondaryButtonSx,
               justifySelf: { xs: 'start', desktop: 'end' },
               alignSelf: 'end',
               minHeight: 44,
-              px: 3,
+              px: '24px',
               whiteSpace: 'nowrap',
               fontFamily: publicFonts.body,
-            })}
+              borderColor: colors.greenDark,
+              bgcolor: colors.white,
+              color: colors.navy,
+              '&:hover': {
+                borderColor: colors.greenDark,
+                bgcolor: colors.greenMuted,
+                color: colors.navy,
+              },
+            }}
           >
             Visa Services
           </Button>
@@ -164,7 +173,7 @@ export function VisaServicesPreviewSection() {
                   },
                 }}
               >
-                <Box sx={{ position: 'relative', width: '30%', flexShrink: 0, overflow: 'hidden', bgcolor: colors.surfaceAlt }}>
+                <Box sx={{ position: 'relative', width: { xs: '40%', lg: '42%', desktop: '44%', desktopLg: '45%' }, flexShrink: 0, overflow: 'hidden', bgcolor: colors.surfaceAlt }}>
                   <Box
                     component="img"
                     className="visa-services-preview-image"

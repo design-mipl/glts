@@ -5,7 +5,7 @@ export const serviceHeroSectionSx = {
   boxSizing: 'border-box' as const,
   minHeight: { desktop: 720 },
   display: 'flex' as const,
-  alignItems: 'center' as const,
-  pt: { xs: '92px', md: '100px', lg: '108px' },
-  pb: { xs: '60px', md: '70px', lg: '80px' },
+  alignItems: 'stretch' as const,
+  pt: { xs: '72px', md: '80px', lg: '88px', desktopMd: '96px' },
+  pb: { xs: '56px', md: '64px', lg: '72px', desktopMd: '48px' },
 }

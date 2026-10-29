@@ -39,26 +39,57 @@
 }
 .visa-guide-landing { min-height: 0; }
 .visa-guide-landing .visa-guide-hero { min-height: 440px; padding-top: 58px; }
-.visa-guide-landing-panel { grid-template-columns: minmax(0, 1.45fr) minmax(210px, 1fr); max-width: 960px; }
+.visa-guide-landing-panel {
+  grid-template-columns: minmax(220px, 340px) auto;
+  max-width: 720px;
+  width: 100%;
+  align-items: center;
+  justify-content: start;
+}
+.visa-guide-landing-panel .visa-guide-field { width: 100%; }
 .visa-guide-landing-panel .visa-guide-search-note { grid-column: 1 / -1; }
 .visa-guide-field {
   min-width: 0;
-  min-height: 66px;
+  min-height: 48px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 9px 13px;
+  gap: 10px;
+  padding: 6px 12px;
   border: 1px solid #dce7e3;
   border-radius: 8px;
   background: #fff;
   color: #087448;
+  cursor: pointer;
 }
-.visa-guide-field > span { min-width: 0; flex: 1; }
-.visa-guide-field strong { display: block; color: var(--glts-navy); font-size: 12px; font-weight: 700; margin-bottom: 2px; }
-.visa-guide-field select { width: 100%; min-width: 0; padding: 0; border: 0; outline: 0; appearance: none; background: transparent; color: #172d3c; font-size: 14px; font-weight: 500; cursor: pointer; }
+.visa-guide-field-icon,
+.visa-guide-field-chevron { flex-shrink: 0; pointer-events: none; }
+.visa-guide-field-control { min-width: 0; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
+.visa-guide-field strong { display: block; color: var(--glts-navy); font-size: 11px; font-weight: 700; line-height: 1.2; }
+.visa-guide-country-select { width: 100%; min-width: 0; color: #172d3c; font-size: 14px; font-weight: 500; }
+.visa-guide-country-select .MuiSelect-select {
+  min-height: 22px !important;
+  padding: 0 !important;
+  line-height: 1.35;
+  cursor: pointer;
+}
+.visa-guide-country-select .MuiSelect-icon { display: none; }
+.visa-guide-select-placeholder { color: #64748b; }
 .visa-guide-field:focus-within { outline: 3px solid rgba(12,108,121,.28); border-color: var(--glts-focus); }
-.visa-guide-field select:focus-visible { outline: 0; }
-.visa-guide-search-actions { display: grid; gap: 8px; }
+.visa-guide-country-select .MuiSelect-select:focus-visible { outline: 0; }
+.visa-guide-search-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+.visa-guide-search-actions > * {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: max-content;
+  min-height: 48px;
+  padding-inline: 14px;
+}
 .visa-guide-primary-button, .visa-guide-outline-button {
   display: inline-flex;
   align-items: center;
@@ -76,8 +107,10 @@
 .visa-guide-primary-button:hover { background: #056b3a; color: #fff; }
 .visa-guide-outline-button { border: 1px solid #3aaa72; background: #fff; color: #087448; }
 .visa-guide-outline-button:hover { background: #f0faf4; color: #075c39; }
-.visa-guide-search-note { grid-column: 1 / 3; display: flex; align-items: center; gap: 7px; margin: 0; color: #536477; font-size: 12px; line-height: 1.4; }
+.visa-guide-search-note { grid-column: 1 / -1; display: flex; align-items: center; gap: 7px; margin: 0; color: #536477; font-size: 12px; line-height: 1.4; }
 .visa-guide-search-note svg { flex-shrink: 0; color: #078446; }
+.visa-guide-search-error { grid-column: 1 / -1; margin: 0; color: #b42318; font-size: 12px; font-weight: 600; line-height: 1.4; }
+.visa-guide-field.has-error { border-color: #f04438; }
 
 .visa-guide-country { padding-top: 28px; scroll-margin-top: 88px; }
 .visa-guide-country-banner {
@@ -176,10 +209,11 @@
   .visa-guide-landing .visa-guide-hero { min-height: 390px; padding-top: 38px; }
   .visa-guide-hero-copy p { max-width: 350px; font-size: 14px; }
   .visa-guide-search-panel { grid-template-columns: 1fr; gap: 10px; margin-top: 25px; padding: 13px; }
+  .visa-guide-landing-panel { grid-template-columns: 1fr; justify-content: stretch; }
   .visa-guide-landing-panel .visa-guide-search-note { grid-column: 1; }
-  .visa-guide-field { min-height: 60px; }
-  .visa-guide-search-actions { grid-template-columns: 1fr 1fr; }
-  .visa-guide-search-actions > * { min-height: 44px; }
+  .visa-guide-field { min-height: 46px; }
+  .visa-guide-search-actions { width: 100%; justify-content: stretch; }
+  .visa-guide-search-actions > * { flex: 1 1 0; min-width: 0; min-height: 44px; }
   .visa-guide-search-note { grid-column: 1; }
   .visa-guide-country { padding-top: 18px; }
   .visa-guide-country-banner { min-height: 210px; padding: 17px 20px 24px; background-position: 55% center; }
@@ -193,7 +227,9 @@
 @media (max-width: 560px) {
   .visa-guide-sidebar { grid-template-columns: 1fr; }
   .visa-guide-travel-card { grid-column: auto; min-height: 270px; }
-  .visa-guide-search-actions { grid-template-columns: 1fr; }
+  /* Keep Check Requirements + Enquire Now side by side on small screens */
+  .visa-guide-search-actions { gap: 6px; }
+  .visa-guide-search-actions > * { min-height: 42px; padding-inline: 8px; font-size: 12px; gap: 6px; }
   .visa-guide-country-heading p { font-size: 13px; }
   .visa-guide-desktop-break { display: none; }
   .visa-guide-tab { min-height: 56px; }

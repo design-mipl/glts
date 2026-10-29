@@ -13,7 +13,7 @@ import {
 import { useTheme, alpha } from '@mui/material/styles'
 import { Menu, X, Search, User, ArrowRight } from 'lucide-react'
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import { Button as DsButton } from '@/design-system/UIComponents'
 import { useScrolledHeader } from '../hooks/useScrolledHeader'
 import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
@@ -48,8 +48,8 @@ function NavLink({
 
   return (
     <Button
-      component="a"
-      href={href}
+      component={RouterLink}
+      to={href}
       disableRipple
       sx={{
         color: active ? colors.navy : '#4B5563',
@@ -154,8 +154,8 @@ export function PublicHeader() {
             sx={{ minWidth: 0, flexShrink: 0, zIndex: 2 }}
           >
             <Box
-              component="a"
-              href="/"
+              component={RouterLink}
+              to="/"
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -301,8 +301,8 @@ export function PublicHeader() {
           {navLinks.map(({ label, href }) => (
             <ListItem key={label} disablePadding sx={{ mb: 0.5 }}>
               <Button
-                component="a"
-                href={href}
+                component={RouterLink}
+                to={href}
                 fullWidth
                 onClick={() => setDrawerOpen(false)}
                 sx={{

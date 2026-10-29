@@ -1,5 +1,4 @@
 import { Box } from '@mui/material'
-import { BriefcaseBusiness } from 'lucide-react'
 import { ServiceHeroContent } from '../../../components/ServiceHeroContent'
 import { serviceHeroSectionSx } from '../../../components/serviceHeroStyles'
 import { useHeroScrollParallax } from '../../../hooks/useHeroScrollParallax'
@@ -12,12 +11,11 @@ export function CorporateHero() {
   const { sectionRef, offsetY } = useHeroScrollParallax()
 
   return (
-    <Box ref={sectionRef} component="section" aria-labelledby="corporate-hero-heading" sx={{ ...serviceHeroSectionSx, bgcolor: colors.navy }}>
+    <Box ref={sectionRef} component="section" aria-labelledby="corporate-hero-heading" sx={{ ...serviceHeroSectionSx, minHeight: { desktop: 620 }, bgcolor: colors.navy }}>
       <CorporateHeroBackgroundImage parallaxOffsetY={offsetY} />
       <ServiceHeroContent
         headingId="corporate-hero-heading"
         eyebrow="CORPORATE VISA SERVICES"
-        eyebrowIcon={BriefcaseBusiness}
         heading="Business Travel Visa Services"
         description="Corporate visa handling for business travel, project assignments, and enterprise mobility teams — with dedicated account management and embassy-ready documentation."
         primaryAction={corporateHeroCtas.primary}
@@ -25,6 +23,7 @@ export function CorporateHero() {
         items={corporateHeroStats}
         itemsLabel="Corporate trust metrics"
         animate
+        compactSpacing
       />
     </Box>
   )

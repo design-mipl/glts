@@ -103,7 +103,7 @@ export function WhyAccuracySplitSection({
                       display: 'grid',
                       gridTemplateColumns: { xs: '80px minmax(0, 1fr)', desktopLg: '88px minmax(0, 1fr)' },
                       gap: 1.5,
-                      alignItems: 'start',
+                      alignItems: 'center',
                       minWidth: 0,
                       p: { xs: 2, desktopMd: 2.25 },
                       bgcolor: colors.white,
@@ -124,7 +124,7 @@ export function WhyAccuracySplitSection({
                     >
                       <Icon size={46} color={colors.greenDark} strokeWidth={1.8} aria-hidden="true" />
                     </Box>
-                    <Box sx={{ minWidth: 0, pt: 0.25 }}>
+                    <Box sx={{ minWidth: 0 }}>
                       <Typography
                         component="h3"
                         sx={{ color: colors.navy, fontFamily: publicFonts.heading, fontSize: { xs: '18px', desktopLg: '19px' }, fontWeight: 700, lineHeight: 1.35, mb: 0.75 }}

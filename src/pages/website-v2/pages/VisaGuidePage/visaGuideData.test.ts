@@ -25,6 +25,32 @@ function renderCategory(visaType?: string) {
   ))
 }
 
+describe('Visa Guide landing → country route', () => {
+  it('registers australia in guide data under the landing dropdown slug', () => {
+    expect(getVisaGuideCountry('australia')?.slug).toBe('australia')
+    expect(getVisaGuideCountry('australia')?.name).toBe('Australia')
+  })
+
+  it('renders the Australia guide for /visa-guide/australia', () => {
+    const html = renderCategory()
+    expect(html).toContain('Australia')
+    expect(html).toContain('Business Visa Requirements')
+    expect(html).not.toContain('requirements coming soon')
+  })
+
+  it('renders coming soon for singapore without a published checklist', () => {
+    const html = renderToStaticMarkup(createElement(
+      MemoryRouter,
+      { initialEntries: ['/visa-guide/singapore'] },
+      createElement(Routes, null, createElement(Route, {
+        path: '/visa-guide/:countrySlug',
+        element: createElement(VisaGuidePage),
+      })),
+    ))
+    expect(html).toContain('Singapore requirements coming soon')
+  })
+})
+
 describe('Australia Visa Guide legacy checklists', () => {
   const country = getVisaGuideCountry('australia')!
 

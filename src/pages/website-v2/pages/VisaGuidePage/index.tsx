@@ -1,4 +1,6 @@
-import { useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { MenuItem, Select } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   Anchor, ArrowLeft, ArrowRight, BriefcaseBusiness, Camera, Check, ChevronDown,
@@ -8,6 +10,8 @@ import {
 } from 'lucide-react'
 import { PublicContainer } from '../../components/PublicContainer'
 import { publicFonts } from '../../theme/publicSiteTokens'
+import { selectMenuSlotProps } from '@/design-system/formControl'
+import { CountryFlagVisual } from '@/shared/components/CountryFlagVisual'
 import {
   getVisaGuideCountry, toggleVisaGuideRequirement, visaGuideCategories,
   type ExpandedVisaGuideRequirements, type VisaGuideCategoryId, type VisaGuideRequirement,
@@ -50,6 +54,18 @@ const requirementIcons = {
   'priority-service': Clock3,
 } as const
 
+const countryOptions = [
+  { value: 'australia', label: 'Australia' },
+  { value: 'singapore', label: 'Singapore' },
+] as const
+
+type CountryOptionValue = (typeof countryOptions)[number]['value']
+
+/** Maps a landing-page selection to the existing guide route slug. */
+function resolveGuideCountrySlug(value: string): CountryOptionValue | undefined {
+  return countryOptions.find(option => option.value === value)?.value
+}
+
 function resolveCategory(value: string | null): VisaGuideCategoryId {
   return visaGuideCategories.find(category => category.id === value)?.id ?? 'business'
 }
@@ -90,12 +106,60 @@ function RequirementRow({ requirement, number, categoryId, expanded, onToggle }:
 
 function VisaGuideLanding() {
   const navigate = useNavigate()
+  const theme = useTheme()
+  const countryFieldRef = useRef<HTMLDivElement>(null)
+  /** Blocks click-through from the closing menu from immediately reopening the Select. */
+  const suppressOpenRef = useRef(false)
   const [selectedCountry, setSelectedCountry] = useState('')
+  const [countryMenuOpen, setCountryMenuOpen] = useState(false)
+  const [countryMenuWidth, setCountryMenuWidth] = useState<number>()
+  const [selectionError, setSelectionError] = useState<string | null>(null)
+  const countryMenuProps = selectMenuSlotProps(theme)
+
+  const closeCountryMenu = () => {
+    setCountryMenuOpen(false)
+    // Prevent the same click that closed the menu (backdrop / field) from immediately reopening it.
+    suppressOpenRef.current = true
+    window.setTimeout(() => {
+      suppressOpenRef.current = false
+    }, 300)
+  }
+
+  const openCountryMenu = () => {
+    if (suppressOpenRef.current || countryMenuOpen) return
+    setCountryMenuWidth(countryFieldRef.current?.getBoundingClientRect().width)
+    setCountryMenuOpen(true)
+  }
+
+  const toggleCountryMenu = () => {
+    if (suppressOpenRef.current) return
+    if (countryMenuOpen) closeCountryMenu()
+    else openCountryMenu()
+  }
+
+  const openSelectedGuide = () => {
+    closeCountryMenu()
+
+    const slug = resolveGuideCountrySlug(selectedCountry)
+    if (!slug) {
+      setSelectionError('Please select a country to check visa requirements.')
+      return
+    }
+
+    // Known destinations without a published checklist still use the guide route
+    // (coming-soon page). Australia must resolve to the existing guide data.
+    if (!getVisaGuideCountry(slug) && slug === 'australia') {
+      setSelectionError('Australia visa guidance could not be loaded. Please try again or enquire with our team.')
+      return
+    }
+
+    setSelectionError(null)
+    navigate(`/visa-guide/${slug}`)
+  }
 
   const checkRequirements = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!selectedCountry) return
-    navigate(`/visa-guide/${selectedCountry}`)
+    openSelectedGuide()
   }
 
   return (
@@ -106,24 +170,79 @@ function VisaGuideLanding() {
             <h1 id="visa-guide-title">Visa Guide</h1>
             <p>Check visa requirements and required documents for your destination.</p>
           </div>
-          <form className="visa-guide-search-panel visa-guide-landing-panel" onSubmit={checkRequirements} aria-label="Select a country for visa requirements">
-            <label className="visa-guide-field">
-              <Globe2 size={21} aria-hidden="true" />
-              <span>
-                <strong>Select Country</strong>
-                <select value={selectedCountry} onChange={event => setSelectedCountry(event.target.value)} aria-label="Select Country" required>
-                  <option value="" disabled>Choose a country</option>
-                  <option value="australia">Australia</option>
-                  <option value="singapore">Singapore</option>
-                </select>
+          <form className="visa-guide-search-panel visa-guide-landing-panel" onSubmit={checkRequirements} aria-label="Select a country for visa requirements" noValidate>
+            <div
+              className={`visa-guide-field${selectionError ? ' has-error' : ''}`}
+              ref={countryFieldRef}
+              onClick={event => {
+                // Decorative icons / label sit outside MUI Select — toggle from the whole field.
+                if ((event.target as HTMLElement).closest('.MuiSelect-root')) return
+                toggleCountryMenu()
+              }}
+            >
+              <Globe2 className="visa-guide-field-icon" size={20} aria-hidden="true" />
+              <span className="visa-guide-field-control">
+                <strong id="visa-guide-country-label">Select Country</strong>
+                <Select
+                  className="visa-guide-country-select"
+                  variant="standard"
+                  disableUnderline
+                  displayEmpty
+                  open={countryMenuOpen}
+                  labelId="visa-guide-country-label"
+                  value={selectedCountry}
+                  onChange={event => {
+                    setSelectedCountry(String(event.target.value))
+                    setSelectionError(null)
+                    closeCountryMenu()
+                  }}
+                  onOpen={openCountryMenu}
+                  onClose={closeCountryMenu}
+                  renderValue={value => countryOptions.find(option => option.value === value)?.label ?? <span className="visa-guide-select-placeholder">Choose a country</span>}
+                  MenuProps={{
+                    ...countryMenuProps,
+                    // Anchor to the full field (globe + value + chevron), not the inset Select trigger,
+                    // so the menu drops directly under the control instead of opening off to the side.
+                    anchorEl: countryFieldRef.current,
+                    disableAutoFocusItem: true,
+                    marginThreshold: 0,
+                    anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+                    transformOrigin: { vertical: 'top', horizontal: 'left' },
+                    // Inline style beats Select’s built-in minWidth based on the inset trigger.
+                    PaperProps: {
+                      style: countryMenuWidth
+                        ? { width: countryMenuWidth, minWidth: countryMenuWidth, maxWidth: countryMenuWidth }
+                        : undefined,
+                    },
+                    slotProps: {
+                      ...countryMenuProps.slotProps,
+                      paper: {
+                        ...countryMenuProps.slotProps.paper,
+                        sx: {
+                          ...countryMenuProps.slotProps.paper.sx,
+                          width: countryMenuWidth,
+                          minWidth: countryMenuWidth,
+                          maxWidth: countryMenuWidth,
+                          ml: 0,
+                        },
+                      },
+                    },
+                  }}
+                >
+                  {countryOptions.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+                </Select>
               </span>
-              <ChevronDown size={17} aria-hidden="true" />
-            </label>
+              <ChevronDown className="visa-guide-field-chevron" size={17} aria-hidden="true" />
+            </div>
             <div className="visa-guide-search-actions">
               <button className="visa-guide-primary-button" type="submit"><Search size={18} aria-hidden="true" /> Check Requirements</button>
               <Link className="visa-guide-outline-button" to="/enquiry"><Mail size={17} aria-hidden="true" /> Enquire Now</Link>
             </div>
-            <p className="visa-guide-search-note"><ShieldCheck size={15} aria-hidden="true" /> Australia guidance is available. Singapore requirements are coming soon.</p>
+            {selectionError ? (
+              <p className="visa-guide-search-error" role="alert">{selectionError}</p>
+            ) : (
+              <p className="visa-guide-search-note"><ShieldCheck size={15} aria-hidden="true" /> Australia guidance is available. Singapore requirements are coming soon.</p>
+            )}
           </form>
         </PublicContainer>
       </section>
@@ -138,14 +257,22 @@ function VisaGuideCountryPage({ countrySlug }: { countrySlug: string }) {
   const [expandedRequirements, setExpandedRequirements] = useState<ExpandedVisaGuideRequirements>({})
 
   if (!country) {
+    const destinationLabel = resolveGuideCountrySlug(countrySlug)
+      ? countryOptions.find(option => option.value === countrySlug)?.label
+      : undefined
+
     return (
       <div className="visa-guide-page visa-guide-coming-soon" style={{ fontFamily: publicFonts.body }}>
         <PublicContainer sx={{ py: { xs: 8, md: 12 } }}>
           <Link className="visa-guide-coming-back" to="/visa-guide"><ArrowLeft size={17} aria-hidden="true" /> Back to Visa Guide</Link>
           <div className="visa-guide-coming-card">
             <Globe2 size={35} aria-hidden="true" />
-            <h1>{countrySlug === 'singapore' ? 'Singapore' : 'Destination'} requirements coming soon</h1>
-            <p>We do not have a verified visa checklist for this destination yet. Our team can help you confirm the documents for your trip.</p>
+            <h1>{destinationLabel ? `${destinationLabel} requirements coming soon` : 'Destination requirements coming soon'}</h1>
+            <p>
+              {destinationLabel
+                ? `We do not have a published visa checklist for ${destinationLabel} yet. Our team can help you confirm the documents for your trip.`
+                : 'We could not find a visa guide for this destination. Choose a supported country from the Visa Guide page, or enquire with our team.'}
+            </p>
             <Link className="visa-guide-primary-button" to="/enquiry">Enquire Now <ArrowRight size={17} aria-hidden="true" /></Link>
           </div>
         </PublicContainer>
@@ -191,7 +318,12 @@ function VisaGuideCountryPage({ countrySlug }: { countrySlug: string }) {
               <ArrowLeft size={16} aria-hidden="true" /> Back to Visa Guide
             </Link>
             <div className="visa-guide-country-heading">
-              <h2 id="visa-guide-country-title"><span className="visa-guide-flag" role="img" aria-label="Australian flag">{country.flag}</span>{country.name}</h2>
+              <h2 id="visa-guide-country-title">
+                <span className="visa-guide-flag" role="img" aria-label={`${country.name} flag`}>
+                  <CountryFlagVisual flag={country.flag} countryCode={country.countryCode} size={35} />
+                </span>
+                {country.name}
+              </h2>
               <p>Find visa requirements and document guidance<br className="visa-guide-desktop-break" /> for your travel to {country.name}.</p>
             </div>
           </div>
@@ -227,10 +359,8 @@ function VisaGuideCountryPage({ countrySlug }: { countrySlug: string }) {
                 <span className="visa-guide-heading-icon"><BriefcaseBusiness size={24} aria-hidden="true" /></span>
                 <div>
                   <h3 id="visa-guide-checklist-title">{activeCategory.label} Requirements</h3>
-                  <p>{content.description}</p>
                 </div>
               </div>
-              <p className="visa-guide-source-note"><ShieldCheck size={16} aria-hidden="true" /> {content.sourceNote}</p>
               {content.requirements.length ? (
                 <ol className="visa-guide-requirement-list">
                   {content.requirements.map((requirement, index) => (

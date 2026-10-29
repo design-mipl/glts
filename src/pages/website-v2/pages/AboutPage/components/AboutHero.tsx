@@ -1,5 +1,6 @@
 import { Box, Typography, Stack, Chip, Button, keyframes } from '@mui/material'
 import { ArrowRight, Building2 } from 'lucide-react'
+import { Link as RouterLink } from 'react-router-dom'
 import { PublicContainer } from '../../../components/PublicContainer'
 import {
   usePublicBrandColors,
@@ -111,9 +112,10 @@ export function AboutHero() {
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <Button
+              component={RouterLink}
+              to={aboutHeroContent.primaryCta.href}
               variant="contained"
-              href={aboutHeroContent.primaryCta.href}
-              endIcon={<ArrowRight size={18} />}
+              endIcon={<ArrowRight size={18} aria-hidden="true" />}
               sx={{
                 ...getMarketingPrimaryButtonSx(colors),
                 px: 4,

@@ -19,7 +19,7 @@ export const aboutHeroContent = {
   heading: 'Your Trusted Partner for Accurate Visa Solutions',
   description:
     'GreenLight delivers accurate, compliant, and technology-enabled visa solutions for Retail, Corporate, and Marine clients — with expert review before every submission.',
-  primaryCta: { label: 'Talk to an Expert', href: '/track' },
+  primaryCta: { label: 'Explore Visa Services', href: '/visa-services' },
   image: aboutHeroImage,
 } as const
 

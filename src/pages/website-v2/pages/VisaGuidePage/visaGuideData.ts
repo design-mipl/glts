@@ -39,6 +39,8 @@ export interface VisaGuideCategoryContent {
 export interface VisaGuideCountry {
   slug: string
   name: string
+  /** ISO 3166-1 alpha-2 code used to resolve the local flag asset. */
+  countryCode: string
   flag: string
   bannerImage: string
   travelImage: string
@@ -60,6 +62,7 @@ const legacyDisclaimer = [
 const australia: VisaGuideCountry = {
   slug: 'australia',
   name: 'Australia',
+  countryCode: 'AU',
   flag: '🇦🇺',
   bannerImage: '/images/visa-guide/australia-sydney-harbour.png',
   travelImage: '/images/visa-guide/australia-coast.png',

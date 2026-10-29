@@ -15,7 +15,7 @@ import { ProcessTimelineCopy, ResponsiveProcessTimeline } from '../../../compone
 
 const STEP_COUNT = howItWorksSteps.length
 const LAST_STEP = STEP_COUNT - 1
-const STEP_INTERVAL_MS = 3600
+const STEP_INTERVAL_MS = 3000
 const START_DELAY_MS = 150
 const STEP_TRANSITION_SECONDS = 0.65
 

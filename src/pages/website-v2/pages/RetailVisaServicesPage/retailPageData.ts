@@ -9,7 +9,7 @@ import {
   ListChecks,
   Plane,
   PlaneTakeoff,
-  ShieldAlert,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react'
 import { retailAdvantageImages } from '../../assets/retailAdvantageImages'
@@ -46,17 +46,17 @@ export const retailServices: {
   }
 }[] = [
   {
-    id: 'tourist-family',
-    title: 'Tourist & Family Visa',
-    description: 'Expert guidance for holidays, family visits, and leisure travel visas.',
+    id: 'tourist',
+    title: 'Tourist Visa',
+    description: 'For holidays, leisure travel and visiting tourist destinations.',
     href: '/countries',
     icon: Plane,
-    image: retailServiceImages.touristFamily,
+    image: retailServiceImages.tourist,
   },
   {
     id: 'business',
     title: 'Business Visa',
-    description: 'Professional support for meetings, conferences, and business travel.',
+    description: 'For business meetings, conferences, events and short-term business travel.',
     href: '/countries',
     icon: Briefcase,
     image: retailServiceImages.business,
@@ -64,7 +64,7 @@ export const retailServices: {
   {
     id: 'student',
     title: 'Student Visa',
-    description: 'Complete assistance for overseas education and study travel files.',
+    description: 'Guidance and application support for students travelling overseas for education.',
     href: '/enquiry',
     icon: GraduationCap,
     image: retailServiceImages.student,
@@ -72,18 +72,26 @@ export const retailServices: {
   {
     id: 'transit',
     title: 'Transit Visa',
-    description: 'Clear guidance for short stopovers and transit documentation needs.',
+    description: 'For travellers transiting through another country on their journey.',
     href: '/countries',
     icon: PlaneTakeoff,
     image: retailServiceImages.transit,
   },
   {
-    id: 'refusal',
-    title: 'Refusal Cases',
-    description: 'Specialist review and reapplication support after a visa refusal.',
+    id: 'visit-family',
+    title: 'Visit & Family Visa',
+    description: 'Support for visiting family, friends and other short-term stays.',
+    href: '/countries',
+    icon: UsersRound,
+    image: retailServiceImages.visitFamily,
+  },
+  {
+    id: 'other',
+    title: 'Other Visa Types',
+    description: 'Explore work, project, medical and other specialized visa categories.',
     href: '/enquiry',
-    icon: ShieldAlert,
-    image: retailServiceImages.refusal,
+    icon: FileStack,
+    image: retailServiceImages.other,
   },
 ]
 
@@ -142,7 +150,6 @@ export const retailFinalCta = {
   description: 'Apply online in a few simple steps or speak with our visa experts.',
   primaryButton: { label: 'Apply Online', href: '/apply/new' },
   secondaryButton: { label: 'Talk to an Expert', href: '/enquiry' },
-  trustPoints: ['Secure Process', 'Expert Support', 'Real-time Updates'] as const,
   image: {
     src: '/images/retail-final-cta.png',
     fallback: '/images/retail-final-cta.png',

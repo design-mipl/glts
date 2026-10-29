@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import { Box, Typography } from '@mui/material'
 import { ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { PublicContainer } from '../../../components/PublicContainer'
 import { FAQAccordionList } from '../../../components/FAQAccordionList'
 import { websiteHeadingSx } from '../../../theme/websiteComponentStyles'
@@ -31,10 +32,10 @@ export function LandingFaqSection({ faqs, displayOrder, heading = 'Questions, an
         <Box
           sx={{
             display: 'flex',
-            flexDirection: { xs: 'column', md: headingAlign === 'center' ? 'column' : 'row' },
-            alignItems: headingAlign === 'center' ? 'center' : { xs: 'flex-start', md: 'flex-start' },
+            flexDirection: { xs: 'column', xl: headingAlign === 'center' ? 'column' : 'row' },
+            alignItems: headingAlign === 'center' ? 'center' : 'flex-start',
             justifyContent: 'space-between',
-            gap: { xs: 3, md: headingAlign === 'center' ? 3 : 5 },
+            gap: { xs: 3, xl: headingAlign === 'center' ? 3 : 5 },
             mb: landingSectionHeaderMb,
           }}
         >
@@ -76,8 +77,8 @@ export function LandingFaqSection({ faqs, displayOrder, heading = 'Questions, an
           </Box>
 
           <Box
-            component="a"
-            href="/enquiry"
+            component={Link}
+            to="/enquiry"
             sx={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -113,7 +114,8 @@ export function LandingFaqSection({ faqs, displayOrder, heading = 'Questions, an
           faqs={faqs}
           displayOrder={displayOrder}
           columns={2}
-          columnsAt={ds.breakpoint.mobileLarge}
+          columnsAt={ds.breakpoint.tabletLandscape}
+          appearance="dividers"
           ariaLabel={`${heading} questions`}
         />
       </PublicContainer>

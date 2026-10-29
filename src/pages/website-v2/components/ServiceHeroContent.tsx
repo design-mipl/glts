@@ -1,4 +1,4 @@
-import { Box, Button, Chip, Typography, keyframes } from '@mui/material'
+import { Box, Button, Typography, keyframes } from '@mui/material'
 import { ArrowRight, type LucideIcon } from 'lucide-react'
 import { PublicContainer } from './PublicContainer'
 import { publicFonts, usePublicBrandColors, brandPrimaryGreenRgb, getMarketingPrimaryButtonSx } from '../theme/publicSiteTokens'
@@ -7,13 +7,12 @@ import { websiteDesignSystem as ds } from '../theme/websiteDesignSystem'
 
 type HeroInfoItem = { icon: LucideIcon } & (
   | { value: string; label: string; footnote?: string }
-  | { title: string; description: string }
+  | { title: string; description?: string }
 )
 
 interface ServiceHeroContentProps {
   headingId: string
   eyebrow: string
-  eyebrowIcon: LucideIcon
   heading: string
   description: string
   primaryAction: { label: string; href: string }
@@ -21,6 +20,10 @@ interface ServiceHeroContentProps {
   items: readonly HeroInfoItem[]
   itemsLabel: string
   animate?: boolean
+  compactSpacing?: boolean
+  prominentItems?: boolean
+  spacious?: boolean
+  unframedItems?: boolean
 }
 
 const fadeInContent = keyframes`
@@ -31,7 +34,6 @@ const fadeInContent = keyframes`
 export function ServiceHeroContent({
   headingId,
   eyebrow,
-  eyebrowIcon: EyebrowIcon,
   heading,
   description,
   primaryAction,
@@ -39,38 +41,42 @@ export function ServiceHeroContent({
   items,
   itemsLabel,
   animate = false,
+  compactSpacing = false,
+  prominentItems = false,
+  spacious = false,
+  unframedItems = false,
 }: ServiceHeroContentProps) {
   const colors = usePublicBrandColors()
 
   return (
-    <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1, width: '100%' }}>
-      <Box sx={{ width: '100%', animation: animate ? `${fadeInContent} 0.85s ease-out both` : undefined, '@media (prefers-reduced-motion: reduce)': { animation: 'none' } }}>
+    <PublicContainer variant="hero" sx={{ position: 'relative', zIndex: 1, width: '100%', display: 'flex' }}>
+      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: compactSpacing ? 'flex-start' : 'space-between', animation: animate ? `${fadeInContent} 0.85s ease-out both` : undefined, '@media (prefers-reduced-motion: reduce)': { animation: 'none' } }}>
         <Box sx={{ maxWidth: 720 }}>
-          <Chip
-            icon={<EyebrowIcon size={14} aria-hidden="true" />}
-            label={eyebrow}
+          <Typography
+            component="p"
             sx={{
-              height: 28,
-              mb: { xs: 2.5, lg: 3 },
-              fontSize: '11px',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
+              mb: spacious ? { xs: 2, lg: 2.5 } : { xs: 1.5, lg: 2 },
+              fontFamily: publicFonts.heading,
+              fontSize: 12,
+              fontWeight: 800,
+              lineHeight: 1.4,
+              letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.18)`,
               color: colors.greenBright,
-              border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.35)`,
-              '& .MuiChip-icon': { color: colors.greenBright, ml: 1 },
             }}
-          />
+          >
+            {eyebrow}
+          </Typography>
 
           <Typography
             id={headingId}
             component="h1"
             sx={{
               ...websiteHeadingSx.display,
+              fontSize: { xs: ds.type.display.mobile, lg: ds.type.display.tablet, desktopMd: ds.type.display.size },
               color: colors.white,
               maxWidth: 680,
-              mb: { xs: 2, lg: 2.5 },
+              mb: spacious ? { xs: 2.5, lg: 3 } : { xs: 1.75, lg: 2 },
             }}
           >
             {heading}
@@ -79,16 +85,16 @@ export function ServiceHeroContent({
           <Typography
             sx={{
               color: 'rgba(255, 255, 255, 0.9)',
-              fontSize: { xs: 16, lg: 18, desktopMd: 19 },
-              lineHeight: 1.6,
-              maxWidth: 640,
-              mb: { xs: 3, lg: 4 },
+              fontSize: { xs: 16, lg: 17, desktopMd: 18 },
+              lineHeight: 1.55,
+              maxWidth: 620,
+              mb: spacious ? { xs: 3.5, lg: 4.5 } : { xs: 3, lg: 3.5 },
             }}
           >
             {description}
           </Typography>
 
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' }, flexWrap: 'wrap', gap: { xs: 1, sm: 2 } }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, alignItems: { xs: 'stretch', lg: 'center' }, flexWrap: 'wrap', gap: spacious ? { xs: 1.5, lg: 2.5 } : { xs: 1, lg: 2 } }}>
             <Button
               variant="contained"
               href={primaryAction.href}
@@ -96,9 +102,9 @@ export function ServiceHeroContent({
               sx={{
                 ...getMarketingPrimaryButtonSx(colors),
                 minHeight: 48,
-                px: { xs: 2, sm: 3.5 },
-                fontSize: { xs: 14, sm: 16 },
-                width: { xs: '100%', sm: 'auto' },
+                px: { xs: 2, lg: 3.5 },
+                fontSize: { xs: 14, lg: 16 },
+                width: { xs: '100%', lg: 'auto' },
                 whiteSpace: 'normal',
                 lineHeight: 1.3,
               }}
@@ -111,8 +117,8 @@ export function ServiceHeroContent({
               endIcon={<ArrowRight size={18} aria-hidden="true" />}
               sx={{
                 minHeight: 48,
-                alignSelf: { xs: 'flex-start', sm: 'center' },
-                px: { xs: 0, sm: 1.5 },
+                alignSelf: { xs: 'flex-start', lg: 'center' },
+                px: { xs: 0, lg: 1.5 },
                 color: colors.white,
                 fontSize: 16,
                 fontWeight: 600,
@@ -131,13 +137,29 @@ export function ServiceHeroContent({
           aria-label={itemsLabel}
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'repeat(2, minmax(0, 1fr))', desktopMd: `repeat(${items.length}, minmax(0, 1fr))` },
-            gap: { xs: 1, lg: 1.5 },
+            gridTemplateColumns: 'minmax(0, 1fr)',
+            '@media (min-width: 360px)': { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
+            columnGap: { xs: 1.5, lg: 2, desktopMd: 0 },
+            rowGap: prominentItems ? { xs: 2.5, lg: 3 } : { xs: 2, lg: 2.5 },
             listStyle: 'none',
             m: 0,
-            mt: { xs: 5, lg: 7 },
-            p: 0,
+            mt: spacious
+              ? { xs: '72px', lg: '80px', desktopMd: '88px' }
+              : compactSpacing
+                ? { xs: '36px', lg: '44px', desktopMd: '48px' }
+                : { xs: 4.5, lg: 5.5, desktopMd: 7 },
+            px: unframedItems ? 0 : prominentItems ? { xs: 2, lg: 3 } : { xs: 1.75, lg: 2.5 },
+            py: unframedItems ? 0 : prominentItems ? { xs: 2.5, lg: 3 } : { xs: 2, lg: 2.5 },
             width: '100%',
+            bgcolor: unframedItems ? 'transparent' : 'rgba(0, 31, 63, 0.36)',
+            borderRadius: unframedItems ? 0 : `${ds.radius.medium}px`,
+            '@media (min-width: 360px) and (max-width: 1279px)': {
+              '& > li:nth-of-type(2n)': { borderLeft: '1px solid rgba(255,255,255,0.28)', pl: { xs: 1.5, lg: 2 } },
+            },
+            [`@media (min-width: ${ds.breakpoint.desktop}px)`]: {
+              gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+              '& > li:not(:first-of-type)': { borderLeft: '1px solid rgba(255,255,255,0.28)', pl: 2.25 },
+            },
           }}
         >
           {items.map((item) => {
@@ -147,30 +169,29 @@ export function ServiceHeroContent({
             return (
               <Box
                 component="li"
-                key={detail}
+                key={headline}
                 sx={{
                   minWidth: 0,
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.5,
-                  p: { xs: 1.5, lg: 1.75 },
-                  bgcolor: 'rgba(255, 255, 255, 0.07)',
-                  border: '1px solid rgba(255, 255, 255, 0.18)',
-                  borderRadius: '12px',
+                  flexDirection: { xs: 'column', lg: 'row' },
+                  alignItems: { xs: 'flex-start', lg: 'center' },
+                  gap: prominentItems ? { xs: 1.25, lg: 1.5 } : { xs: 1, lg: 1.5 },
                 }}
               >
-                <Box sx={{ width: 44, height: 44, flexShrink: 0, display: 'grid', placeItems: 'center', borderRadius: '12px', bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.18)` }}>
-                  <Icon size={24} color={colors.greenBright} strokeWidth={1.8} aria-hidden="true" />
+                <Box sx={{ width: prominentItems ? { xs: 48, lg: 54 } : { xs: 40, lg: 44 }, height: prominentItems ? { xs: 48, lg: 54 } : { xs: 40, lg: 44 }, flexShrink: 0, display: 'grid', placeItems: 'center', borderRadius: '50%', bgcolor: `rgba(${brandPrimaryGreenRgb}, 0.18)`, border: `1px solid rgba(${brandPrimaryGreenRgb}, 0.45)` }}>
+                  <Icon size={prominentItems ? 28 : 22} color={colors.greenBright} strokeWidth={1.8} aria-hidden="true" />
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontFamily: publicFonts.heading, fontSize: { xs: 18, desktopMd: 20 }, fontWeight: 800, color: colors.white, lineHeight: 1.15, mb: 0.4 }}>
+                  <Typography sx={{ fontFamily: publicFonts.heading, fontSize: prominentItems ? { xs: 20, lg: 23, desktopMd: 24 } : { xs: 16, lg: 18, desktopMd: 19 }, fontWeight: 800, color: colors.white, lineHeight: 1.2, mb: 0.35 }}>
                     {headline}
                   </Typography>
-                  <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'rgba(255, 255, 255, 0.88)', lineHeight: 1.35 }}>
-                    {detail}
-                  </Typography>
+                  {detail && (
+                    <Typography sx={{ fontSize: prominentItems ? { xs: 14, lg: 15 } : { xs: 12, lg: 13 }, fontWeight: prominentItems ? 600 : 500, color: 'rgba(255, 255, 255, 0.9)', lineHeight: 1.4 }}>
+                      {detail}
+                    </Typography>
+                  )}
                   {'footnote' in item && item.footnote && (
-                    <Typography sx={{ mt: 0.75, fontSize: 11, color: 'rgba(255, 255, 255, 0.72)', lineHeight: 1.4 }}>
+                    <Typography sx={{ mt: 0.6, fontSize: 10.5, color: 'rgba(255, 255, 255, 0.78)', lineHeight: 1.4 }}>
                       {item.footnote}
                     </Typography>
                   )}

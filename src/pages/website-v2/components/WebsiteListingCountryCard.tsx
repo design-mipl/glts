@@ -82,6 +82,7 @@ export function WebsiteListingCountryCard({ country, href }: WebsiteListingCount
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
+                  objectPosition: country.code === 'BR' ? 'center 30%' : 'center',
                 }}
               />
             )}

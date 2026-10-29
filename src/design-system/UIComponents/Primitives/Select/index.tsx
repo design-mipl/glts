@@ -51,7 +51,10 @@ export interface SelectProps {
   loading?: boolean
   /** When true, renders an Autocomplete so options can be filtered by typing. */
   searchable?: boolean
+  /** Show the selected option's icon beside its text in a searchable field. */
+  showSelectedIcon?: boolean
   sx?: SxProps<Theme>
+  listboxSx?: SxProps<Theme>
 }
 
 export default function Select({
@@ -69,7 +72,9 @@ export default function Select({
   clearable = false,
   loading = false,
   searchable = false,
+  showSelectedIcon = false,
   sx,
+  listboxSx,
 }: SelectProps) {
   const theme = useTheme()
   const labelId = label ? `select-label-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined
@@ -91,6 +96,7 @@ export default function Select({
 
   if (searchable) {
     const fieldSx = autocompleteOutlinedFieldSx(theme, inputHeight)
+    const autocompleteSlots = autocompleteSlotProps(theme)
     return (
       <Box sx={{ width: fullWidth ? '100%' : undefined }}>
         <Autocomplete
@@ -103,7 +109,9 @@ export default function Select({
           getOptionLabel={(opt) => opt.label}
           isOptionEqualToValue={(opt, val) => opt.value === val.value}
           getOptionDisabled={(opt) => Boolean(opt.disabled)}
-          slotProps={autocompleteSlotProps(theme)}
+          slotProps={listboxSx
+            ? { ...autocompleteSlots, listbox: { ...autocompleteSlots.listbox, sx: [autocompleteSlots.listbox.sx, ...(Array.isArray(listboxSx) ? listboxSx : [listboxSx])] } }
+            : autocompleteSlots}
           sx={[
             { minWidth: fullWidth ? undefined : 200, width: fullWidth ? '100%' : undefined },
             ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
@@ -111,7 +119,7 @@ export default function Select({
           renderOption={(props, option) => {
             const { key, ...rest } = props as { key: string } & React.HTMLAttributes<HTMLLIElement>
             return (
-              <li key={key} {...rest}>
+              <li key={key} {...rest} style={{ ...rest.style, display: 'flex', alignItems: 'center' }}>
                 {option.avatar ? (
                   <MuiAvatar
                     src={option.avatar}
@@ -127,6 +135,10 @@ export default function Select({
                       mr: 1,
                       display: 'inline-flex',
                       alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      width: 24,
+                      height: 24,
                       color: 'text.secondary',
                     }}
                   >
@@ -143,7 +155,9 @@ export default function Select({
                     </Typography>
                   </Box>
                 ) : (
-                  option.label
+                  <Box component="span" sx={{ minWidth: 0, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {option.label}
+                  </Box>
                 )}
               </li>
             )
@@ -161,6 +175,14 @@ export default function Select({
               sx={fieldSx}
               InputProps={{
                 ...params.InputProps,
+                startAdornment: showSelectedIcon && selectedOption?.icon && params.inputProps.value === selectedOption.label ? (
+                  <>
+                    <Box component="span" aria-hidden="true" sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, mr: '8px', flexShrink: 0 }}>
+                      {selectedOption.icon}
+                    </Box>
+                    {params.InputProps.startAdornment}
+                  </>
+                ) : params.InputProps.startAdornment,
                 endAdornment: (
                   <>
                     {loading ? <CircularProgress color="inherit" size={16} sx={{ mr: 1 }} /> : null}

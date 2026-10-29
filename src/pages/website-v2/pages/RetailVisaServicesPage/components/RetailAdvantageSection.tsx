@@ -10,7 +10,7 @@ export function RetailAdvantageSection() {
     <Box component="section" id="retail-advantage" aria-labelledby="retail-advantage-heading"
       sx={{ bgcolor: '#f6faf8', py: landingSectionPy, scrollMarginTop: 88 }}>
       <PublicContainer variant="hero">
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, .95fr) minmax(0, 1fr)' }, gap: { xs: 4, md: 6, desktop: 8 }, alignItems: 'center' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', desktop: 'minmax(0, .95fr) minmax(0, 1fr)' }, gap: { xs: 4, desktop: 8 }, alignItems: 'center' }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ color: ds.color.brandHover, fontSize: 12, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', mb: 1 }}>Why choose GreenLight</Typography>
             <Typography id="retail-advantage-heading" component="h2" sx={{ ...websiteHeadingSx.h2, color: ds.color.navy, mb: 1.25, maxWidth: 430 }}>Why GreenLight for Visa Services</Typography>
@@ -18,7 +18,7 @@ export function RetailAdvantageSection() {
             <Box component="img" src="/images/how-it-works/step-01-check-requirements.png" alt="Visa consultant reviewing an application with a traveler" loading="lazy"
               sx={{ width: '100%', height: { xs: 275, md: 340, desktop: 360 }, display: 'block', borderRadius: '16px', objectFit: 'cover', objectPosition: 'center', boxShadow: '0 14px 30px rgba(15,35,55,.1)' }} />
           </Box>
-          <Box component="ul" sx={{ display: 'grid', gap: 1.6, listStyle: 'none', p: 0, m: 0 }}>
+          <Box component="ul" sx={{ display: 'grid', gridTemplateRows: `repeat(${retailAdvantages.length}, minmax(86px, 1fr))`, gap: 1.6, alignSelf: 'stretch', listStyle: 'none', p: 0, m: 0, mt: { desktop: 4 } }}>
             {retailAdvantages.map(({ id, title, description, icon: Icon }) => (
               <Box component="li" key={id} sx={{ display: 'flex', alignItems: 'center', gap: 2.25, minHeight: 86, px: { xs: 2, desktop: 2.5 }, py: 1.5, borderRadius: '13px', bgcolor: '#fff', boxShadow: '0 7px 24px rgba(23,63,66,.045)', border: '1px solid #f0f4f1' }}>
                 <Box sx={{ width: 48, height: 48, flexShrink: 0, display: 'grid', placeItems: 'center', borderRadius: '50%', bgcolor: '#e8f9ec', color: ds.color.brandHover }}>
