@@ -135,6 +135,10 @@ export interface VerifyOverviewData {
   compassNo?: string
   joiningPort?: string
   entityName?: string
+  department?: string
+  costCode?: string
+  note1?: string
+  note2?: string
   consultantName?: string
   consultantTeamName?: string
   priority?: string
@@ -406,6 +410,10 @@ export function buildOverviewFromDetail(
     compassNo: compassNo && compassNo !== '—' ? compassNo : undefined,
     joiningPort: joiningPort && joiningPort !== '—' ? joiningPort : undefined,
     entityName: entityName && entityName !== '—' ? entityName : undefined,
+    department: extras?.department?.trim() || undefined,
+    costCode: extras?.costCode?.trim() || undefined,
+    note1: extras?.note1?.trim() || undefined,
+    note2: extras?.note2?.trim() || undefined,
     consultantName: (() => {
       if (!listing?.assignedUserId) return undefined
       const name = resolveApplicationConsultantName(listing)

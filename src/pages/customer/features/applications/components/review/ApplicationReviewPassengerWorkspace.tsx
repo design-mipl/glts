@@ -1,5 +1,6 @@
 import { Box } from '@mui/material'
 import type { ReactNode } from 'react'
+import type { ApplicationCustomerSegment } from '../../types/applicationListing.types'
 import type { UploadQueueRow } from '../../data/applicationFlowData'
 import type { ApplicationReviewOverview } from '../../utils/applicationReviewOverview'
 import type { ApplicationDetailViewModel } from '../../types/applicationDetail.types'
@@ -24,6 +25,7 @@ interface ApplicationReviewPassengerWorkspaceProps {
   detail?: ApplicationDetailViewModel
   applicationId?: string
   documentsContent: ReactNode
+  customerSegment?: ApplicationCustomerSegment
 }
 
 export function ApplicationReviewPassengerWorkspace({
@@ -42,6 +44,7 @@ export function ApplicationReviewPassengerWorkspace({
   detail,
   applicationId,
   documentsContent,
+  customerSegment = 'marine',
 }: ApplicationReviewPassengerWorkspaceProps) {
   return (
     <Box
@@ -98,6 +101,7 @@ export function ApplicationReviewPassengerWorkspace({
           detail={detail}
           applicationId={applicationId}
           documentsContent={documentsContent}
+          customerSegment={customerSegment}
         />
       </Box>
     </Box>

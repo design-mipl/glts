@@ -1,13 +1,11 @@
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { PermissionGuard } from '@/pages/admin/components/PermissionGuard'
 
-/** Layout for nested `/admin/finance/invoices/*` routes (React Router 7). */
+/** Layout for nested `/admin/finance/invoices/*` routes. */
 export function InvoiceFinanceRoutes() {
-  const location = useLocation()
-
   return (
     <PermissionGuard>
-      <Outlet key={location.pathname} />
+      <Outlet />
     </PermissionGuard>
   )
 }

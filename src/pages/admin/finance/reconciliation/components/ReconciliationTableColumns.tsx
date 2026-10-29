@@ -3,8 +3,7 @@ import { Badge, RowActions, type Column } from '@/design-system/UIComponents'
 import { adminListingColumnWidthSize } from '@/pages/admin/components/listing'
 import type { ReconciliationItem, ReconciliationTab } from '@/shared/types/reconciliation'
 import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
-import { getExpensePaymentModeLabel } from '@/pages/admin/finance/expenses/config/expenseDetailFormConfig'
-import { getReconciliationStatusBadgeColor, getReconciliationStatusLabel } from '../config/reconciliationListingConfig'
+import { getReconciliationPaymentModeLabel, getReconciliationStatusBadgeColor, getReconciliationStatusLabel } from '../config/reconciliationListingConfig'
 import { formatReconciliationMoney } from '../utils/reconciliationListingUtils'
 
 export interface ReconciliationColumnHandlers {
@@ -57,17 +56,6 @@ function routeLabel(row: ReconciliationItem): string {
   return `${row.locationFrom || '—'} → ${row.locationTo || '—'}`
 }
 
-function settlementRefColumn(): Column<ReconciliationItem> {
-  return {
-    key: 'referenceNumber',
-    label: 'Book entry number',
-    widthSize: adminListingColumnWidthSize('code'),
-    sortable: true,
-    searchable: true,
-    render: (value: string) => value || '—',
-  }
-}
-
 function userColumn(): Column<ReconciliationItem> {
   return {
     key: 'reconciledBy',
@@ -90,7 +78,6 @@ function trailingMetaColumns(
       sortable: true,
       render: (_, row) => statusRender(row),
     },
-    settlementRefColumn(),
     userColumn(),
     actionsColumn(onOpen),
   ]
@@ -102,64 +89,11 @@ export function buildReconciliationColumns(
 ): Column<ReconciliationItem>[] {
   const { onOpen } = handlers
 
-  if (tab === 'approved_claim_sheet') {
-    return [
-      {
-        key: 'claimNumber',
-        label: 'Claim no',
-        widthSize: adminListingColumnWidthSize('code'),
-        sortable: true,
-        searchable: true,
-        hideable: false,
-        render: (value: string) => (
-          <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13, fontFamily: 'monospace' }}>
-            {value}
-          </Typography>
-        ),
-      },
-      {
-        key: 'refNo',
-        label: 'GLTS No',
-        widthSize: adminListingColumnWidthSize('code'),
-        sortable: true,
-        searchable: true,
-      },
-      { key: 'passengerName', label: 'Passenger', widthSize: adminListingColumnWidthSize('name'), sortable: true, searchable: true },
-      { key: 'client', label: 'Client', widthSize: adminListingColumnWidthSize('company'), sortable: true, searchable: true },
-      { key: 'visaCountry', label: 'Visa country', widthSize: adminListingColumnWidthSize('country'), sortable: true },
-      { key: 'claimTeam', label: 'Team', widthSize: adminListingColumnWidthSize('name'), sortable: true },
-      {
-        key: 'claimReviewedAt',
-        label: 'Reviewed',
-        widthSize: adminListingColumnWidthSize('date'),
-        sortable: true,
-        render: (_, row) => formatDisplayDate(row.claimReviewedAt),
-      },
-      {
-        key: 'total',
-        label: 'Case total',
-        widthSize: 'md',
-        sortable: true,
-        align: 'right',
-        render: (_, row) => moneyRender(row.total),
-      },
-      {
-        key: 'claimGrandTotal',
-        label: 'Claim total',
-        widthSize: 'md',
-        sortable: true,
-        align: 'right',
-        render: (_, row) => moneyRender(row.claimGrandTotal),
-      },
-      ...trailingMetaColumns(onOpen),
-    ]
-  }
-
   if (tab === 'insurance') {
     return [
       {
         key: 'refNo',
-        label: 'RefNo',
+        label: 'GLTS reference',
         widthSize: adminListingColumnWidthSize('code'),
         sortable: true,
         searchable: true,
@@ -191,9 +125,9 @@ export function buildReconciliationColumns(
         render: (_, row) => formatDisplayDate(row.bookingDate),
       },
       { key: 'policyNumber', label: 'Policy number', widthSize: adminListingColumnWidthSize('code'), sortable: true, searchable: true },
-      { key: 'vendorInvoiceNumber', label: 'Vendor Invoice number', widthSize: adminListingColumnWidthSize('code'), sortable: true },
+      { key: 'vendorInvoiceNumber', label: 'Invoice No.', widthSize: adminListingColumnWidthSize('code'), sortable: true, searchable: true },
       { key: 'cost', label: 'Cost', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.cost) },
-      { key: 'markup', label: 'Markup', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.markup) },
+      { key: 'markup', label: 'IW', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.markup) },
       { key: 'total', label: 'Total', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.total) },
       ...trailingMetaColumns(onOpen),
     ]
@@ -203,7 +137,7 @@ export function buildReconciliationColumns(
     return [
       {
         key: 'refNo',
-        label: 'RefNo',
+        label: 'GLTS reference',
         widthSize: adminListingColumnWidthSize('code'),
         sortable: true,
         searchable: true,
@@ -235,8 +169,9 @@ export function buildReconciliationColumns(
         render: (_, row) => formatDisplayDate(row.bookingDate),
       },
       { key: 'cost', label: 'Cost', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.cost) },
-      { key: 'markup', label: 'Markup', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.markup) },
+      { key: 'markup', label: 'IW', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.markup) },
       { key: 'total', label: 'Total', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.total) },
+      { key: 'vendorInvoiceNumber', label: 'Invoice No.', widthSize: adminListingColumnWidthSize('code'), sortable: true, searchable: true },
       {
         key: 'locationFrom',
         label: 'Locations of Ticket bookings',
@@ -256,7 +191,7 @@ export function buildReconciliationColumns(
     return [
       {
         key: 'refNo',
-        label: 'RefNo',
+        label: 'GLTS reference',
         widthSize: adminListingColumnWidthSize('code'),
         sortable: true,
         searchable: true,
@@ -287,11 +222,16 @@ export function buildReconciliationColumns(
         sortable: true,
         render: (_, row) => formatDisplayDate(row.bookingDate),
       },
-      { key: 'trackingNumber', label: 'Tracking no (AWB)', widthSize: adminListingColumnWidthSize('code'), sortable: true, searchable: true },
+      { key: 'trackingNumber', label: 'AWB Number', widthSize: adminListingColumnWidthSize('code'), sortable: true, searchable: true },
       { key: 'courierBookedBy', label: 'Courier Booked by GLTS staff', widthSize: adminListingColumnWidthSize('name'), sortable: true },
-      { key: 'cost', label: 'Cost', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.cost) },
-      { key: 'markup', label: 'Markup', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.markup) },
-      { key: 'total', label: 'Total', widthSize: 'md', sortable: true, align: 'right', render: (_, row) => moneyRender(row.total) },
+      {
+        key: 'total',
+        label: 'Amount',
+        widthSize: 'md',
+        sortable: true,
+        align: 'right',
+        render: (_, row) => moneyRender(row.total),
+      },
       {
         key: 'locationFrom',
         label: 'Locations of Courier',
@@ -311,7 +251,7 @@ export function buildReconciliationColumns(
   return [
     {
       key: 'refNo',
-      label: 'GLTS No',
+      label: 'GLTS reference',
       widthSize: adminListingColumnWidthSize('code'),
       sortable: true,
       searchable: true,
@@ -324,7 +264,7 @@ export function buildReconciliationColumns(
     },
     { key: 'passengerName', label: 'Passenger Name', widthSize: adminListingColumnWidthSize('name'), sortable: true, searchable: true },
     { key: 'visaCountry', label: 'Country', widthSize: adminListingColumnWidthSize('country'), sortable: true },
-    { key: 'chargesName', label: 'Charges Name', widthSize: adminListingColumnWidthSize('applicationSummary'), sortable: true, searchable: true },
+    { key: 'chargesName', label: 'Service', widthSize: adminListingColumnWidthSize('applicationSummary'), sortable: true, searchable: true },
     { key: 'vendor', label: 'Vendor Name', widthSize: adminListingColumnWidthSize('company'), sortable: true },
     {
       key: 'paymentDate',
@@ -339,7 +279,7 @@ export function buildReconciliationColumns(
       widthSize: adminListingColumnWidthSize('status'),
       sortable: true,
       filterable: true,
-      render: (_, row) => getExpensePaymentModeLabel(row.paymentMode),
+      render: (_, row) => getReconciliationPaymentModeLabel(row.paymentMode),
     },
     { key: 'cardUsed', label: 'Card Used', widthSize: adminListingColumnWidthSize('code'), sortable: true, render: (value: string) => value || '—' },
     {

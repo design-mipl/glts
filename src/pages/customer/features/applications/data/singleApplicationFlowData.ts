@@ -50,16 +50,16 @@ export function getAccountMappedCountries(segment?: BusinessSegment): Country[] 
   })
 }
 
-export function getRecentlyUsedCountries(): Country[] {
-  const map = new Map(getAccountMappedCountries().map(c => [c.id, c]))
+export function getRecentlyUsedCountries(segment?: BusinessSegment): Country[] {
+  const map = new Map(getAccountMappedCountries(segment).map(c => [c.id, c]))
   return RECENTLY_USED_COUNTRY_IDS.map(id => map.get(id)).filter((c): c is Country => Boolean(c))
 }
 
-export function getTrendingAccountCountries(): Country[] {
+export function getTrendingAccountCountries(segment?: BusinessSegment): Country[] {
   const allowed = new Set<string>(ACCOUNT_MAPPED_COUNTRY_IDS)
-  return listCountryMasters({ accountMappedOnly: true })
+  return listCountryMasters({ accountMappedOnly: true, segment })
     .filter(c => c.trending && allowed.has(c.id))
-    .map((master) => countryMasterToPortalCountry(master))
+    .map((master) => countryMasterToPortalCountry(master, { segment }))
 }
 
 export function getVisaPurposeOptions(countryId: string, segment?: BusinessSegment): VisaPurposeOption[] {

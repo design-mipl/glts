@@ -1,9 +1,26 @@
-import { PROCESSING_TYPE_LABELS } from '@/shared/constants/countryProcessing'
-import type { BusinessSegment, CountryMaster, CountryVisaType } from '@/shared/types/countryMaster'
+import type { BusinessSegment, CountryMaster, CountryProcessingRules, CountryVisaType } from '@/shared/types/countryMaster'
 import type { VisaCategory } from '@/shared/types/visa'
+
+const SUBMISSION_MODE_LABELS: Record<CountryProcessingRules['submissionMode'], string> = {
+  embassy_direct: 'Embassy',
+  vfs: 'VFS',
+  e_visa_portal: 'E-Visa',
+  agent_channel: 'Agent submission',
+  agent_submission: 'Agent submission',
+}
 
 export interface PortalCountryDisplayOptions {
   segment?: BusinessSegment
+}
+
+function resolveSegmentRules(
+  master: CountryMaster,
+  segment?: BusinessSegment,
+): CountryProcessingRules | undefined {
+  if (segment) {
+    return master.segments.find((e) => e.segment === segment && e.enabled)?.processingRules
+  }
+  return master.segments.find((e) => e.enabled)?.processingRules
 }
 
 function activeVisaTypesForSegment(
@@ -46,20 +63,49 @@ function primaryVisaType(
   return undefined
 }
 
-/** Card headline label — admin processing type (E-Visa, VFS, Embassy, …). */
-export function resolvePortalProcessingLabel(master: CountryMaster): string {
-  return PROCESSING_TYPE_LABELS[master.processingType] ?? master.processingType
+/** Explicit visa-type list price; ignores seeded consulate-rate rows when pricing is unset. */
+function visaTypeListPrice(visaType: CountryVisaType): number {
+  return visaType.pricing != null && visaType.pricing > 0 ? visaType.pricing : 0
 }
 
-/** Validity line on destination cards — admin validity label with visa-type fallback. */
+function lowestSegmentListPrice(master: CountryMaster, segment: BusinessSegment): number {
+  const priced = activeVisaTypesForSegment(master, segment)
+    .map(visaTypeListPrice)
+    .filter((price) => price > 0)
+  if (priced.length > 0) return Math.min(...priced)
+
+  const offerings = master.visaOfferings.filter(
+    (offering) => offering.active && offering.segment === segment && offering.approxCost != null && offering.approxCost > 0,
+  )
+  if (offerings.length > 0) {
+    return Math.min(...offerings.map((offering) => offering.approxCost as number))
+  }
+
+  return 0
+}
+
+/** Card headline label derived from segment submissionMode (E-Visa, VFS, Embassy, …). */
+export function resolvePortalProcessingLabel(
+  master: CountryMaster,
+  options: PortalCountryDisplayOptions = {},
+): string {
+  const rules = resolveSegmentRules(master, options.segment)
+  if (rules) return SUBMISSION_MODE_LABELS[rules.submissionMode] ?? rules.submissionMode
+  return 'Embassy'
+}
+
+/** Validity line on destination cards — segment visa type when scoped, else country label. */
 export function resolvePortalValidityLabel(
   master: CountryMaster,
   options: PortalCountryDisplayOptions = {},
 ): string {
+  const visaType = primaryVisaType(master, options.segment)
+  if (options.segment) {
+    return visaType?.validity?.trim() || master.validity?.trim() || 'As per embassy'
+  }
+
   const configured = master.validity?.trim()
   if (configured) return configured
-
-  const visaType = primaryVisaType(master, options.segment)
   return visaType?.validity?.trim() || 'As per embassy'
 }
 
@@ -80,25 +126,26 @@ export function resolvePortalFastMinutes(master: CountryMaster): number | undefi
   return undefined
 }
 
-/** Map admin processing type to legacy visa category filters where needed. */
-export function resolvePortalVisaCategory(master: CountryMaster): VisaCategory {
-  switch (master.processingType) {
-    case 'e_visa':
-      return 'e-Visa'
-    case 'hybrid':
-      return 'No Visa Required'
-    default:
-      return 'Sticker'
-  }
+/** Map segment submissionMode to legacy visa category filters where needed. */
+export function resolvePortalVisaCategory(
+  master: CountryMaster,
+  options: PortalCountryDisplayOptions = {},
+): VisaCategory {
+  const rules = resolveSegmentRules(master, options.segment)
+  if (rules?.submissionMode === 'e_visa_portal') return 'e-Visa'
+  return 'Sticker'
 }
 
 export function resolvePortalProcessingTime(
   master: CountryMaster,
   options: PortalCountryDisplayOptions = {},
 ): string {
-  if (master.processingTime?.trim()) return master.processingTime.trim()
-
   const visaType = primaryVisaType(master, options.segment)
+  if (options.segment) {
+    return visaType?.processingTime?.trim() || master.processingTime?.trim() || 'TBD'
+  }
+
+  if (master.processingTime?.trim()) return master.processingTime.trim()
   return visaType?.processingTime?.trim() || 'TBD'
 }
 
@@ -106,14 +153,14 @@ export function resolvePortalStartingPrice(
   master: CountryMaster,
   options: PortalCountryDisplayOptions = {},
 ): number {
+  if (options.segment) {
+    const segmentPrice = lowestSegmentListPrice(master, options.segment)
+    return segmentPrice > 0 ? segmentPrice : master.price
+  }
+
   if (master.price > 0) return master.price
 
-  const segment = options.segment
   const offerings = master.visaOfferings.filter((offering) => offering.active)
-  const scoped = segment
-    ? offerings.filter((offering) => offering.segment === segment)
-    : offerings
-
-  const priced = scoped.find((offering) => offering.approxCost != null && offering.approxCost > 0)
+  const priced = offerings.find((offering) => offering.approxCost != null && offering.approxCost > 0)
   return priced?.approxCost ?? master.price
 }

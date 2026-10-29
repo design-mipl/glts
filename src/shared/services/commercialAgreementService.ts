@@ -17,7 +17,7 @@ import {
   normalizeLegacyAgreement,
   validateForActivation,
 } from '@/shared/utils/commercialAgreementValidation'
-import { syncAgreementCommercialPricing } from '@/shared/utils/quotationPricingUtils'
+import { syncAgreementPricingSchedules } from '@/shared/utils/agreementPricingScheduleUtils'
 import type { AgreementHoldTerminateStatus } from '@/shared/types/commercialAgreement'
 import {
   buildAgreementDocumentsFromMaster,
@@ -91,7 +91,7 @@ function formToAgreement(
   companyId: string,
   companyName: string,
 ): Omit<CommercialAgreement, 'id' | 'agreementId' | 'createdAt' | 'updatedAt' | 'activities'> {
-  const synced = syncAgreementCommercialPricing(syncFinanceContactsFromSources(data))
+  const synced = syncAgreementPricingSchedules(syncFinanceContactsFromSources(data))
   return {
     companyId,
     companyName,
@@ -109,6 +109,7 @@ function formToAgreement(
     miscellaneousCosts: synced.miscellaneousCosts,
     commercialVisaPricing: synced.commercialVisaPricing,
     miscellaneousServices: synced.miscellaneousServices,
+    pricingSchedules: synced.pricingSchedules,
     billingConfig: synced.billingConfig,
     financeContacts: synced.financeContacts,
     financeContactPersons: synced.financeContactPersons,
@@ -224,6 +225,7 @@ export const commercialAgreementService = {
       miscellaneousCosts: [...normalized.miscellaneousCosts],
       commercialVisaPricing: [...(normalized.commercialVisaPricing ?? [])],
       miscellaneousServices: [...(normalized.miscellaneousServices ?? [])],
+      pricingSchedules: [...(normalized.pricingSchedules ?? [])],
       billingConfig: { ...normalized.billingConfig },
       financeContacts: { ...normalized.financeContacts },
       financeContactPersons: normalized.financeContactPersons
@@ -235,7 +237,7 @@ export const commercialAgreementService = {
         : [],
       documents: [...normalized.documents],
     }
-    return syncAgreementCommercialPricing(syncFinanceContactsFromSources(base))
+    return syncAgreementPricingSchedules(syncFinanceContactsFromSources(base))
   },
 
   hydrateFromQuotation(

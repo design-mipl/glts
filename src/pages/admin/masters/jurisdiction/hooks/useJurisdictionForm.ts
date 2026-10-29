@@ -26,7 +26,6 @@ export function useJurisdictionForm(initialData?: JurisdictionMasterFormData) {
   const validate = () => {
     const next: Record<string, string> = {}
     if (!formData.name.trim()) next.name = 'Jurisdiction name is required'
-    if (!formData.status) next.status = 'Status is required'
     setErrors(next)
     return Object.keys(next).length === 0
   }

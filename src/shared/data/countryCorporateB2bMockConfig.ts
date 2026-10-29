@@ -173,6 +173,11 @@ const APPLICANT_FINANCIAL: DocSpec[] = [
     docId: 'bank',
     description: 'Personal bank statements covering the last three months for financial assessment.',
   },
+  {
+    id: 'bank-balance-certificate',
+    docId: 'bank-balance-certificate',
+    description: 'Bank-issued balance certificate confirming sufficient funds for the trip.',
+  },
 ]
 
 const APPLICANT_TRAVEL: DocSpec[] = [
@@ -227,7 +232,11 @@ function combineRules(...groups: CountryJurisdictionDocumentRule[][]): CountryJu
 }
 
 function corporateBusinessDocuments(prefix: string, includeWorkContract = false): CountryJurisdictionDocumentRule[] {
-  const applicant = ownerDocs(`${prefix}-applicant`, 'applicant', [...APPLICANT_IDENTITY, ...APPLICANT_FINANCIAL])
+  const applicant = ownerDocs(`${prefix}-applicant`, 'applicant', [
+    ...APPLICANT_IDENTITY,
+    ...APPLICANT_FINANCIAL,
+    ...APPLICANT_TRAVEL,
+  ])
   const company = ownerDocs(
     `${prefix}-company`,
     'company',
@@ -332,6 +341,7 @@ const B2B_BUSINESS_SCOPE = [
 
 export const corporateApplicationDocuments: CountryDocumentChecklistItem[] = specsToChecklist([
   APPLICANT_FINANCIAL,
+  APPLICANT_TRAVEL,
   COMPANY_DOCS,
   INVITING_COMPANY_DOCS,
 ])
@@ -350,6 +360,7 @@ export const b2bBusinessApplicationDocuments: CountryDocumentChecklistItem[] = s
 
 export const corporateWorkApplicationDocuments: CountryDocumentChecklistItem[] = specsToChecklist([
   APPLICANT_FINANCIAL,
+  APPLICANT_TRAVEL,
   COMPANY_DOCS,
   WORK_EXTRA_COMPANY_DOCS,
   INVITING_COMPANY_DOCS,

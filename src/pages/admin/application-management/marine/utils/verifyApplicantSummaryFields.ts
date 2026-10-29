@@ -27,7 +27,7 @@ function pickFields(
   }
   return fieldIds
     .map(id => byId.get(id))
-    .filter((field): field is VerifySummaryField => Boolean(field))
+    .filter((field): field is VerifySummaryField => field != null && field.value !== '—')
 }
 
 export function buildVerifyApplicantSummaryFields(
@@ -35,7 +35,7 @@ export function buildVerifyApplicantSummaryFields(
   detail: ApplicationDetailViewModel,
   applicationId: string,
   documentsLabel: string,
-): { primary: VerifySummaryField[]; marine: VerifySummaryField[] } {
+): { primary: VerifySummaryField[]; secondary: VerifySummaryField[] } {
   const ctx: FormAssistContext = {
     row: ensureRowBasicDetails(row),
     detail,
@@ -44,43 +44,46 @@ export function buildVerifyApplicantSummaryFields(
 
   const primary = pickFields(
     ctx,
-    ['personal', 'passport', 'travel'],
+    ['personal', 'passport', 'travel', 'immigration'],
     [
-      'rank',
-      'traveler',
-      'passportNo',
-      'nationality',
-      'dateOfBirth',
-      'passportExpiry',
-      'paxContactNo',
-      'paxEmailId',
-      'travel',
-      'visa',
-      'country',
-      'jurisdiction',
+      'applicantName',
+      'passportNumber',
+      'applicantNationality',
+      'applicantDateOfBirth',
+      'passportExpiryDate',
+      'applicantMobileNumber',
+      'applicantPhoneNumber',
+      'applicantEmail',
+      'travelDate',
+      'visaType',
+      'destination',
+      'applicationReference',
     ],
   )
 
   primary.push({ label: 'Documents', value: documentsLabel })
 
-  const marine = pickFields(
+  const secondary = pickFields(
     ctx,
-    ['employment', 'details', 'address'],
+    ['employment', 'maritime', 'family', 'education'],
     [
-      'crewId',
-      'cdcNumber',
-      'employmentOccupation',
-      'lastContractSignDate',
-      'poCidNo',
-      'compassNo',
-      'joiningPort',
-      'billingEntity',
+      'crewPositionRank',
+      'occupation',
+      'designation',
+      'employmentStartDate',
+      'organisationName',
+      'organisationAddress',
+      'organisationHostAddress',
+      'seamanBookNumber',
       'vesselName',
-      'imoNumber',
-      'location',
-      'billingAddress',
+      'vesselIdImo',
+      'joiningPort',
+      'contractNumber',
+      'maritimeCrewVisaReference',
+      'shippingCompany',
+      'institutionName',
     ],
   )
 
-  return { primary, marine }
+  return { primary, secondary }
 }

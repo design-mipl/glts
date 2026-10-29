@@ -3,12 +3,15 @@ import type { ApplicationExpenseListingFilters } from '@/shared/types/applicatio
 import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import {
   applyListingFilters,
+  financeStatusActionLabel,
+  financeStatusEmptyStateCopy,
+  financeStatusLabel,
   getListingCellValue,
   matchesListingSearch,
   segmentEmptyStateCopy,
 } from '@/shared/utils/applicationExpenseManagementUtils'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
-import type { ExpenseListingTab } from '../config/expenseListingTabs'
+import type { ExpenseFinanceStatusTab, ExpenseListingTab } from '../config/expenseListingTabs'
 
 export interface ExpenseListingFilterState {
   applicationId: string
@@ -62,14 +65,23 @@ export function matchesExpenseListingSearch(row: ApplicationExpenseListingRow, q
 
 export { getListingCellValue as getExpenseListingCellValue }
 
-export function getExpenseListingEmptyState(tab: ExpenseListingTab, hasSearch: boolean) {
+export function getExpenseListingEmptyState(
+  tab: ExpenseListingTab,
+  statusTab: ExpenseFinanceStatusTab,
+  hasSearch: boolean,
+) {
   if (hasSearch) {
     return {
       title: 'No applications match your search',
       description: 'Try a different application ID, company, vessel, or passenger name.',
     }
   }
-  return segmentEmptyStateCopy(tab)
+  const segmentEmpty = segmentEmptyStateCopy(tab)
+  const statusEmpty = financeStatusEmptyStateCopy(statusTab)
+  return {
+    title: statusEmpty.title,
+    description: `${statusEmpty.description} ${segmentEmpty.description}`,
+  }
 }
 
 export function getExpenseListingFilterOptions(rows: ApplicationExpenseListingRow[]) {
@@ -86,10 +98,10 @@ export function getExpenseListingFilterOptions(rows: ApplicationExpenseListingRo
 
 export function computeExpenseListingKpis(rows: ApplicationExpenseListingRow[]) {
   return {
-    submittedApplications: rows.length,
+    needsUpdate: rows.filter(r => r.financeStatus === 'needs_update').length,
+    paid: rows.filter(r => r.financeStatus === 'paid').length,
+    reconciled: rows.filter(r => r.financeStatus === 'reconciled').length,
     totalExpense: rows.reduce((sum, r) => sum + r.totalExpense, 0),
-    pendingPayment: rows.reduce((sum, r) => sum + r.pendingExpense, 0),
-    paidApplications: rows.filter(r => r.paymentStatus === 'paid').length,
   }
 }
 
@@ -105,7 +117,8 @@ export function downloadExpenseListingCsv(rows: ApplicationExpenseListingRow[]) 
     'Submission Date',
     'Total Expense',
     'Pending Payment',
-    'Payment Status',
+    'Status',
+    'Action needed',
   ]
   const lines = rows.map(row =>
     [
@@ -119,7 +132,8 @@ export function downloadExpenseListingCsv(rows: ApplicationExpenseListingRow[]) 
       row.submissionDate,
       formatInr(row.totalExpense),
       formatInr(row.pendingExpense),
-      row.paymentStatus,
+      financeStatusLabel(row.financeStatus),
+      financeStatusActionLabel(row),
     ]
       .map(v => `"${String(v).replace(/"/g, '""')}"`)
       .join(','),
@@ -139,6 +153,6 @@ export function mapExpenseRowsToGridItems(rows: ApplicationExpenseListingRow[]) 
     title: row.applicationId,
     subtitle: row.companyName,
     description: `${row.vesselName} · ${row.visaCountry} · ${row.visaType}`,
-    meta: `${formatInr(row.totalExpense)} total · ${row.paymentStatus}`,
+    meta: `${formatInr(row.totalExpense)} total · ${financeStatusLabel(row.financeStatus)}`,
   }))
 }

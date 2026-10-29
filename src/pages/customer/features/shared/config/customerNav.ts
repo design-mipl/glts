@@ -3,8 +3,10 @@ import {
   Building2,
   Database,
   FileText,
+  FolderOpen,
   LayoutDashboard,
   UserCog,
+  UserRound,
 } from 'lucide-react'
 import type { NavConfig } from '@/design-system/UIComponents'
 import { FINANCE_NAV_ITEMS, FINANCE_NAV_PARENT } from '@/pages/customer/features/finance/config/financeNav'
@@ -44,9 +46,9 @@ export function buildCustomerNavConfig({
     { type: 'divider' },
     {
       type: 'item',
-      label: 'Client Profile Details',
+      label: isBusiness ? 'Client Profile Details' : 'My account',
       href: `${base}/profile`,
-      icon: createElement(Building2, iconProps),
+      icon: createElement(isBusiness ? Building2 : UserRound, iconProps),
     },
     {
       type: 'item',
@@ -55,6 +57,15 @@ export function buildCustomerNavConfig({
       icon: createElement(FileText, iconProps),
     },
   ]
+
+  if (!isBusiness) {
+    items.push({
+      type: 'item',
+      label: 'Stored Documents',
+      href: `${base}/documents`,
+      icon: createElement(FolderOpen, iconProps),
+    })
+  }
 
   if (isBusiness) {
     items.push({

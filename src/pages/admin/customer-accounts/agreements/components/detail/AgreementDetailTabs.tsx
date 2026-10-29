@@ -115,6 +115,12 @@ export function OverviewTab({ agreement }: TabProps) {
             <OverviewField label="Billing type" value={billingTypeLabel[agreement.billingType]} />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <OverviewField
+              label="Billing day"
+              value={agreement.billingConfig.billingDay ? String(agreement.billingConfig.billingDay) : '—'}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <OverviewField label="Agreement type" value={agreementTypeLabel[agreement.agreementType]} />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>

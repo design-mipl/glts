@@ -1,9 +1,3 @@
-export type LegacyDashboardId =
-  | 'admin'
-  | 'operations'
-  | 'documentation'
-  | 'accounts'
-
 export type DashboardNextId =
   | 'super-admin'
   | 'admin'
@@ -21,49 +15,9 @@ export interface AdminDashboardDefinition {
   status: 'live' | 'coming-soon'
 }
 
-export interface LegacyDashboardDefinition extends AdminDashboardDefinition {
-  id: LegacyDashboardId
-}
-
 export interface DashboardNextDefinition extends AdminDashboardDefinition {
   id: DashboardNextId
 }
-
-/** Legacy Dashboard module submodules. */
-export const ADMIN_DASHBOARDS: LegacyDashboardDefinition[] = [
-  {
-    id: 'admin',
-    label: 'Admin',
-    href: '/admin',
-    title: 'Admin dashboard',
-    description: 'Executive command center for management visibility.',
-    status: 'live',
-  },
-  {
-    id: 'operations',
-    label: 'Operations',
-    href: '/admin/dashboard/operations',
-    title: 'Operations dashboard',
-    description: 'Work management dashboard for operations consultants.',
-    status: 'live',
-  },
-  {
-    id: 'documentation',
-    label: 'Documentation',
-    href: '/admin/dashboard/documentation',
-    title: 'Documentation dashboard',
-    description: 'Document processing and quality control workspace.',
-    status: 'live',
-  },
-  {
-    id: 'accounts',
-    label: 'Accounts',
-    href: '/admin/dashboard/accounts',
-    title: 'Accounts dashboard',
-    description: 'Financial operations workspace for invoicing, collections, and reporting.',
-    status: 'live',
-  },
-]
 
 /** Default admin landing — Super Admin dashboard (next). */
 export const ADMIN_HOME_HREF = '/admin/dashboard-next/super-admin'
@@ -121,7 +75,4 @@ export const ADMIN_DASHBOARD_NEXT: DashboardNextDefinition[] = [
 ]
 
 /** Combined list for route placeholders and cross-module lookups by href. */
-export const ADMIN_ALL_DASHBOARDS: AdminDashboardDefinition[] = [
-  ...ADMIN_DASHBOARDS,
-  ...ADMIN_DASHBOARD_NEXT,
-]
+export const ADMIN_ALL_DASHBOARDS: AdminDashboardDefinition[] = [...ADMIN_DASHBOARD_NEXT]

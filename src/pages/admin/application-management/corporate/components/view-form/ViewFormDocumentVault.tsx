@@ -18,6 +18,7 @@ interface ViewFormDocumentVaultProps {
   selectedRow: UploadQueueRow
   detail: ApplicationDetailViewModel
   submission?: FormAssistSubmissionDraft
+  listingRow?: { country?: string; visaType?: string; jurisdiction?: string } | null
   /** When true, document list is expanded on mount (e.g. finance expense detail). */
   defaultExpanded?: boolean
 }
@@ -98,6 +99,7 @@ export function ViewFormDocumentVault({
   selectedRow,
   detail,
   submission,
+  listingRow,
   defaultExpanded = false,
 }: ViewFormDocumentVaultProps) {
   const { showToast } = useToast()
@@ -111,8 +113,9 @@ export function ViewFormDocumentVault({
         selectedRow,
         detail,
         submission,
+        listingRow,
       }),
-    [applicationId, selectedRow, detail, submission],
+    [applicationId, selectedRow, detail, submission, listingRow],
   )
 
   const availableCount = items.filter(item => item.available).length

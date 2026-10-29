@@ -1,8 +1,10 @@
-export type PortalKind = 'business' | 'operations'
+export type PortalKind = 'business' | 'operations' | 'retail'
 
 export type CustomerType = 'marine' | 'corporate' | 'b2b_agent'
 
 export type CustomerPortalRole = 'super_admin' | 'admin' | 'booker'
+
+export type RetailAuthMethod = 'phone_otp' | 'google'
 
 /** @deprecated Use CustomerPortalRole */
 export type PortalUserRole = CustomerPortalRole
@@ -21,6 +23,10 @@ export interface AuthSession {
   companyName?: string
   contactName?: string
   userRole?: CustomerPortalRole
+  /** Retail customer phone (E.164-ish display string). */
+  phone?: string
+  /** How the retail customer authenticated. */
+  authMethod?: RetailAuthMethod
 }
 
 function migrateLegacyRole(role: string | undefined): CustomerPortalRole | undefined {

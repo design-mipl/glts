@@ -1,33 +1,26 @@
-import { useSearchParams } from 'react-router-dom'
-import { CreateApplicationFlowPage } from '@/pages/customer/features/applications/pages/create/CreateApplicationFlowPage'
 import {
   ApplicationFlowPolicyProvider,
   WEBSITE_APPLICATION_FLOW_STORAGE_KEY,
 } from '@/pages/customer/features/applications/context/ApplicationFlowPolicyContext'
-import { WebsiteApplicationFlowLayout } from '../../components/WebsiteApplicationFlowLayout'
+import { WebsiteApplicationFlowLayout } from '@/pages/website/components/WebsiteApplicationFlowLayout'
+import { RetailApplyFlowPage } from '@/pages/website/pages/RetailApplyFlowPage'
 
 const WEBSITE_APPLY_LISTING_PATH = '/countries'
 
+/**
+ * `/apply/new` renders main's retail apply flow.
+ * Marketing UI stays on website-v2; the apply wizard comes from `src/pages/website`.
+ */
 export function WebsiteApplicationFlowPage() {
-  const [searchParams] = useSearchParams()
-  const preselectedCountryId = searchParams.get('country')?.trim() ?? ''
-
   return (
     <WebsiteApplicationFlowLayout>
       <ApplicationFlowPolicyProvider
         policy="website"
         listingPath={WEBSITE_APPLY_LISTING_PATH}
         storageKey={WEBSITE_APPLICATION_FLOW_STORAGE_KEY}
-        breadcrumbItems={[
-          { label: 'Home', href: '/' },
-          { label: 'Destinations', href: '/countries' },
-          { label: 'Apply' },
-        ]}
+        breadcrumbItems={[]}
       >
-        <CreateApplicationFlowPage
-          preselectedCountryId={preselectedCountryId || undefined}
-          initialStep={preselectedCountryId ? 'visa' : 'country'}
-        />
+        <RetailApplyFlowPage />
       </ApplicationFlowPolicyProvider>
     </WebsiteApplicationFlowLayout>
   )

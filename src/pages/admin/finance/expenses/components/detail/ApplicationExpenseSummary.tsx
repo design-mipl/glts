@@ -3,10 +3,10 @@ import { Badge, BaseCard } from '@/design-system/UIComponents'
 import type { ApplicationCustomerSegment } from '@/pages/customer/features/applications/types/applicationListing.types'
 import type { ApplicationExpenseDetailView } from '@/shared/types/applicationExpenseManagement'
 import {
-  deriveRollupPaymentStatus,
-  rollupPaymentStatusLabel,
+  deriveApplicationFinanceStatus,
+  financeStatusLabel,
 } from '@/shared/utils/applicationExpenseManagementUtils'
-import { expenseRollupPaymentColor } from '../../config/expenseStatusConfig'
+import { expenseFinanceStatusColor } from '../../config/expenseStatusConfig'
 
 interface ApplicationExpenseSummaryProps {
   detail: ApplicationExpenseDetailView
@@ -47,7 +47,7 @@ function MetaItem({ label, value }: { label: string; value: string }) {
 }
 
 export function ApplicationExpenseSummary({ detail }: ApplicationExpenseSummaryProps) {
-  const rollupPayment = deriveRollupPaymentStatus(detail.expenses)
+  const financeStatus = deriveApplicationFinanceStatus(detail.expenses)
   const countryVisa = [detail.visaCountry, detail.visaType].filter(Boolean).join(' · ')
   const hasExpenses = detail.expenses.length > 0
 
@@ -90,12 +90,12 @@ export function ApplicationExpenseSummary({ detail }: ApplicationExpenseSummaryP
               <Badge label={detail.applicationStatus} color="info" size="sm" />
               {hasExpenses ? (
                 <Badge
-                  label={rollupPaymentStatusLabel(rollupPayment)}
-                  color={expenseRollupPaymentColor[rollupPayment]}
+                  label={financeStatusLabel(financeStatus)}
+                  color={expenseFinanceStatusColor[financeStatus]}
                   size="sm"
                 />
               ) : (
-                <Badge label="No Expenses" color="neutral" size="sm" />
+                <Badge label="Needs update" color="warning" size="sm" />
               )}
             </Stack>
           </Stack>

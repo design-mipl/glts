@@ -12,6 +12,9 @@ import { getListingCellValue } from '@/pages/customer/features/applications/util
 import { mapApplicationRowsToGridItems } from '@/pages/customer/features/applications/utils/applicationListingGrid'
 import type { MarineApplicationRow as B2bApplicationRow } from '@/shared/services/marineApplicationAdminService'
 import {
+  resolveDocumentRequirementLabel,
+} from '@/shared/utils/applicationDocumentRequirement'
+import {
   resolveApplicationConsultantName,
   resolveApplicationPriorityLabel,
 } from '../../shared/utils/applicationConsultantUtils'
@@ -42,6 +45,7 @@ export function matchesB2bApplicationSearch(row: B2bApplicationRow, query: strin
   if (resolveApplicationBillingEntity(row).toLowerCase().includes(s)) return true
   if (resolveApplicationCreatorLabel(row.createdByEmail).toLowerCase().includes(s)) return true
   if (row.jurisdiction?.toLowerCase().includes(s)) return true
+  if (resolveDocumentRequirementLabel(row).toLowerCase().includes(s)) return true
   if (isBulkRow(row)) {
     const paxLabel = formatBulkApplicantListingLabel(row).toLowerCase()
     const paxNames = resolveBulkApplicantNames(row).join(' ').toLowerCase()
@@ -63,6 +67,9 @@ export function matchesB2bApplicationSearch(row: B2bApplicationRow, query: strin
 export function getB2bApplicationCellValue(row: B2bApplicationRow, key: string): string {
   if (key === 'countryVisa') {
     return `${row.country} · ${row.visaType}`
+  }
+  if (key === 'documentRequirement') {
+    return resolveDocumentRequirementLabel(row)
   }
   if (key === 'applicationType') {
     return getListingCellValue(row as ApplicationListingRow, 'applicationType')
@@ -165,7 +172,14 @@ export function getB2bApplicationEmptyState(
 }
 
 export function mapB2bApplicationRowsToGridItems(rows: B2bApplicationRow[]) {
-  return mapApplicationRowsToGridItems(rows as ApplicationListingRow[])
+  return mapApplicationRowsToGridItems(rows as ApplicationListingRow[]).map((item, index) => {
+    const row = rows[index]
+    if (!row) return item
+    return {
+      ...item,
+      subtitle: `${resolveDocumentRequirementLabel(row)} · ${item.subtitle}`,
+    }
+  })
 }
 
 export function exportB2bApplicationsToCsv(rows: B2bApplicationRow[]): string {
@@ -173,6 +187,7 @@ export function exportB2bApplicationsToCsv(rows: B2bApplicationRow[]): string {
     'Creation date',
     'GLTS reference',
     'Type',
+    'Documents',
     'Pax name',
     'Designation',
     'Company name',
@@ -196,6 +211,7 @@ export function exportB2bApplicationsToCsv(rows: B2bApplicationRow[]): string {
       row.createdAt,
       row.id,
       type,
+      resolveDocumentRequirementLabel(row),
       applicant,
       resolveApplicationDesignation(row),
       companyName,

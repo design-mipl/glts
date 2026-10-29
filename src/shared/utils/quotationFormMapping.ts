@@ -8,6 +8,7 @@ function mapEnquiryCustomerTypeToWorkflow(
 ): QuotationFormData['workflowType'] {
   if (customerType === 'marine') return 'marine'
   if (customerType === 'corporate') return 'corporate'
+  if (customerType === 'b2b') return 'b2b_agent'
   return 'retail'
 }
 

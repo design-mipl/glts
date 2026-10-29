@@ -10,7 +10,11 @@ export function useCustomerLogout() {
 
   return useCallback(() => {
     const signIn =
-      isBusiness && customerType ? businessSignInPath(customerType) : isBusiness ? '/sign-in/business' : '/'
+      isBusiness && customerType
+        ? businessSignInPath(customerType)
+        : isBusiness
+          ? '/sign-in/business'
+          : '/sign-in'
     clearSession()
     navigate(signIn, { replace: true })
   }, [customerType, isBusiness, navigate])

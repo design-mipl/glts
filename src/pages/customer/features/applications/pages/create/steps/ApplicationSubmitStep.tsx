@@ -5,6 +5,7 @@ import { useToast } from '@/design-system/UIComponents'
 import { usePublicBrandColors, getPrimaryButtonSx, getOutlinedButtonSx, mergeButtonSx } from '@/shared/theme/publicBrand'
 import { overlayFooterButtonSx } from '@/design-system/UIComponents/Feedback/overlayHeaderTypography'
 import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
+import { getApplicationCustomerSegmentLabel } from '@/shared/config/applicationCustomerSegmentConfig'
 import type { ApplicationFlowState } from '../../../hooks/useApplicationFlowState'
 import {
   isAdminFlowPolicy,
@@ -13,14 +14,16 @@ import {
   useApplicationFlowPolicy,
 } from '../../../context/ApplicationFlowPolicyContext'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
-import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
-import { deriveApplicationSubmitKind } from '../../../utils/applicationSubmitKind'
 import { ApplicationReviewPanels } from '../../../components/ApplicationReviewPanels'
 import type { CustomerChecklistItem } from '@/pages/customer/features/shared/components/CustomerPrimitives'
 
 interface ApplicationSubmitStepProps {
   state: ApplicationFlowState
   onSubmitted: () => void
+}
+
+function segmentOperationsLabel(customerSegment: ReturnType<typeof useApplicationFlowPolicy>['customerSegment']): string {
+  return `${getApplicationCustomerSegmentLabel(customerSegment)} operations`
 }
 
 export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitStepProps) {
@@ -36,7 +39,6 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
 
   const rows = state.uploadQueueRows
   const readyRows = useMemo(() => rows.filter(r => r.status !== 'processing'), [rows])
-  const submitKind = useMemo(() => deriveApplicationSubmitKind(rows), [rows])
 
   const cancelListingPath = listingPath || (isWebsite ? '/countries' : `${base}/applications`)
   const postSubmitBase = isWebsite ? '/retail' : base
@@ -51,55 +53,40 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
           : 'marine applications listing'
 
   const handleSubmit = () => {
-    if (isAdmin) {
-      const { id, kind } = marineApplicationAdminService.createAndSubmitFromFlow(
-        state,
-        customerSegment,
-      )
-      onSubmitted()
-      showToast({
-        title: 'Application created',
-        description:
-          kind === 'single'
+    const { id, kind } = marineApplicationAdminService.createAndSubmitFromFlow(state, customerSegment)
+    onSubmitted()
+    showToast({
+      title: isAdmin ? 'Application created' : 'Application submitted',
+      description:
+        kind === 'single'
+          ? isAdmin
             ? `${id} is now in the ${segmentListingLabel}.`
-            : `${id} batch is now in the ${segmentListingLabel}.`,
-        variant: 'success',
-      })
+            : 'Your application is in the tracking lifecycle. View it from Application Management.'
+          : isAdmin
+            ? `${id} batch is now in the ${segmentListingLabel}.`
+            : `${id} is ready for GLTS review.`,
+      variant: 'success',
+    })
+    if (isAdmin) {
       navigate(cancelListingPath)
       return
     }
-
-    const refId = customerPortalService.submitApplication(submitKind, {
-      applicationId: state.gltsApplicationId,
-      batchId: state.gltsBatchId,
-    })
-    onSubmitted()
-    showToast({
-      title: 'Application submitted',
-      description:
-        submitKind === 'single'
-          ? 'Your application is in the tracking lifecycle. View it from Application Management.'
-          : `${refId} is ready for GLTS review.`,
-      variant: 'success',
-    })
-    navigate(submitKind === 'single' ? `${postSubmitBase}/applications` : `${postSubmitBase}/applications/${refId}`)
+    navigate(kind === 'single' ? `${postSubmitBase}/applications` : `${postSubmitBase}/applications/${id}`)
   }
 
   const handleDraft = () => {
+    const { id, kind } = marineApplicationAdminService.saveDraftFromFlow(state, customerSegment)
+    onSubmitted()
     showToast({
       title: 'Draft saved',
       description: isAdmin
-        ? `Resume from ${
-            customerSegment === 'b2bAgents'
-              ? 'B2B agents'
-              : customerSegment === 'corporate'
-                ? 'Corporate'
-                : 'Marine'
-          } applications when draft persistence is enabled.`
+        ? `${id} is saved as a draft in ${getApplicationCustomerSegmentLabel(customerSegment)} applications.`
         : isWebsite
           ? 'Resume from the Apply flow when you return.'
-          : 'Resume from Application Management → Draft applications.',
-      variant: 'info',
+          : kind === 'bulk'
+            ? `${id} batch saved to Draft applications.`
+            : 'Application moved to Draft applications.',
+      variant: 'success',
     })
     navigate(cancelListingPath)
   }
@@ -123,7 +110,9 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
       </Typography>
       <Typography sx={{ fontSize: 13, color: colors.textSecondary, mb: 2.5 }}>
         {isAdmin
-          ? 'Review the application summary. Fields may be incomplete; submit when ready to add the record to marine operations.'
+          ? customerSegment === 'b2bAgents' && state.documentRequirement === 'not_required'
+            ? 'Documents were marked not required. Review the summary and submit — document files are optional.'
+            : `Review the application summary. Fields may be incomplete; submit when ready to add the record to ${segmentOperationsLabel(customerSegment)}.`
           : isWebsite
             ? 'Review each traveler summary and document checklist before submitting your application.'
             : 'Select a traveler from the listing to review their summary and document checklist before submission.'}
@@ -164,15 +153,13 @@ export function ApplicationSubmitStep({ state, onSubmitted }: ApplicationSubmitS
       ) : null}
 
       <Stack direction="row" spacing={1.5} flexWrap="wrap">
-        {!isAdmin ? (
-          <Button
-            variant="outlined"
-            onClick={handleDraft}
-            sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx)}
-          >
-            Save draft
-          </Button>
-        ) : null}
+        <Button
+          variant="outlined"
+          onClick={handleDraft}
+          sx={mergeButtonSx(getOutlinedButtonSx(), overlayFooterButtonSx)}
+        >
+          Save draft
+        </Button>
         <Button
           variant="contained"
           onClick={handleSubmit}

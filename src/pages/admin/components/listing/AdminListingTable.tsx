@@ -4,6 +4,7 @@ import { Box } from '@mui/material'
 import { ColumnFilter, DataTable, Pagination } from '@/design-system/UIComponents'
 import type { Column, TableState } from '@/design-system/UIComponents'
 import type { BulkAction } from '@/design-system/UIComponents'
+import { AdminListingLoadingState } from './AdminListingLoadingState'
 
 export interface AdminListingTableProps<T extends object> {
   columns: Column<T>[]
@@ -74,6 +75,10 @@ export function AdminListingTable<T extends object>({
     return Array.from(values).sort((a, b) => a.localeCompare(b))
   }, [activeFilterColumn, filterSourceData, getCellValue])
 
+  if (loading) {
+    return <AdminListingLoadingState />
+  }
+
   return (
     <Box sx={{ width: '100%', overflowX: 'auto' }}>
       <DataTable
@@ -84,7 +89,6 @@ export function AdminListingTable<T extends object>({
         state={state}
         onStateChange={onStateChange}
         onRowClick={onRowClick}
-        loading={loading}
         bulkActions={bulkActions}
         hideToolbar
         hidePagination

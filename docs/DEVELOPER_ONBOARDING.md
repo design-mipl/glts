@@ -78,6 +78,7 @@ createRoot(document.getElementById('root')!).render(
 | `/retail/*` | `RetailPortalApp` |
 | `/business/*` | `B2BCustomerApp` |
 | `/admin/*` | `AdminPortalApp` |
+| `/v1/*`, `/v2/*` | Redirect to the same path on `PublicWebsiteApp` |
 | `/*` | `PublicWebsiteApp` |
 
 Important current routes:

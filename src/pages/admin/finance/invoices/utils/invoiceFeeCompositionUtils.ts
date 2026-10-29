@@ -11,8 +11,9 @@ import type { Invoice } from '@/shared/types/invoice'
 import type { InvoiceLineItem, InvoiceTaxConfig, InvoiceWorkspaceState } from '@/shared/types/invoice'
 import { EMPTY_INVOICE_BILLING_SELECTION } from '@/shared/types/invoice'
 import type { CommercialAgreement } from '@/shared/types/commercialAgreement'
-import type { ApplicationExpenseRecord } from '@/shared/types/applicationExpenseManagement'
 import type { CommercialVisaPricingRule } from '@/shared/types/quotation'
+import type { ApplicationExpenseRecord } from '@/shared/types/applicationExpenseManagement'
+import { resolveAgreementMiscForEntity, resolveAgreementRulesForEntity } from '@/shared/utils/agreementPricingScheduleUtils'
 import { companyMasterService } from '@/shared/services/companyMasterService'
 import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import { countryGroupMasterService } from '@/shared/services/countryGroupMasterService'
@@ -47,6 +48,7 @@ import {
   goRefundLinePresetId,
   isGoRefundExpenseId,
   listConsulateRefundsForApplication,
+  managedRefundsFromLines,
   sumIncludedConsulateRefunds,
 } from './invoiceConsulateRefundUtils'
 
@@ -174,15 +176,26 @@ function scoreCommercialRule(
   return -1
 }
 
+function matchAgreementEntityId(
+  agreement: CommercialAgreement,
+  billingEntityName?: string,
+): string | undefined {
+  const key = normalizeKey(billingEntityName ?? '')
+  if (!key) return undefined
+  return agreement.entities.find((entity) => normalizeKey(entity.entityName) === key)?.id
+}
+
 /** Resolve GLTS processing fees from agreement for application country / visa type. */
 export function resolveGltsProcessingFeeFromAgreement(
   agreement: CommercialAgreement | null | undefined,
   country: string,
   visaType: string,
+  billingEntityName?: string,
 ): { amount: number; remark: string; ruleId: string; gstApplicable: boolean } | null {
   if (!agreement) return null
   const countryId = resolveCountryId(country)
-  const rules = agreement.commercialVisaPricing ?? []
+  const entityId = matchAgreementEntityId(agreement, billingEntityName)
+  const rules = resolveAgreementRulesForEntity(agreement, entityId)
 
   let best: CommercialVisaPricingRule | null = null
   let bestScore = -1
@@ -228,8 +241,9 @@ export function createGltsProcessingServiceLine(
   agreement: CommercialAgreement | null | undefined,
   country: string,
   visaType: string,
+  billingEntityName?: string,
 ): InvoiceBillableServiceLine | null {
-  const resolved = resolveGltsProcessingFeeFromAgreement(agreement, country, visaType)
+  const resolved = resolveGltsProcessingFeeFromAgreement(agreement, country, visaType, billingEntityName)
   if (!resolved) return null
   return {
     id: newId('svc-glts'),
@@ -252,8 +266,9 @@ export function mergeCompositionServiceLines(
   country: string,
   visaType: string,
   expenseLines: InvoiceBillableServiceLine[],
+  billingEntityName?: string,
 ): InvoiceBillableServiceLine[] {
-  const glts = createGltsProcessingServiceLine(agreement, country, visaType)
+  const glts = createGltsProcessingServiceLine(agreement, country, visaType, billingEntityName)
   const selected = expenseLines.filter(line => {
     if (line.category === 'glts_processing') return !glts
     return line.category === 'miscellaneous_dispatch' || line.category === 'vfs'
@@ -353,6 +368,7 @@ export function listBulkBatchApplicants(
         batch.country,
         batch.visaType,
         expenseLines,
+        resolveApplicationBillingEntity(batch),
       ),
       consulateRefunds: listConsulateRefundsForApplication(batch.id, {
         passengerName: row.travelerName,
@@ -388,6 +404,7 @@ function buildSingleCard(
       row.country,
       row.visaType,
       expenseLines,
+      resolveApplicationBillingEntity(row),
     ),
     consulateRefunds: listConsulateRefundsForApplication(row.id),
   }
@@ -713,7 +730,7 @@ function pushConsulateRefundLines(
   mode: InvoiceCompositionMode = 'generate',
 ) {
   for (const refund of refunds ?? []) {
-    if (refund.status !== 'pending' || !refund.included || refund.amount <= 0) continue
+    if (refund.status !== 'pending' || !refund.included || refund.managed || refund.amount <= 0) continue
     const label = `Consulate refund · ${refund.vendorName}`
     // Credit note composition keeps positive amounts (negated on submit).
     // Generate / revise apply as a reduction on the invoice.
@@ -801,6 +818,10 @@ export function compositionToWorkspaceState(
 
   const applicationIds = state.singles.map(s => s.applicationId)
   const batchIds = state.bulks.map(b => b.batchId)
+  const compositionRefunds = [
+    ...state.singles.flatMap(single => single.consulateRefunds ?? []),
+    ...state.bulks.flatMap(bulk => bulk.applicants.flatMap(applicant => applicant.consulateRefunds ?? [])),
+  ]
 
   return {
     selection: {
@@ -830,6 +851,11 @@ export function compositionToWorkspaceState(
     invoiceDate: state.documentDate || todayDocumentDate(),
     draftInvoiceId: state.draftInvoiceId,
     agreementId: state.agreementId ?? agreement?.id,
+    managedConsulateRefunds: managedRefundsFromLines(
+      compositionRefunds,
+      state.draftInvoiceId ?? '',
+      '',
+    ),
   }
 }
 
@@ -922,29 +948,48 @@ function hydrateServiceLinesFromItems(
   })
 }
 
+function syncRefundDispositions(
+  refunds: InvoiceConsulateRefundLine[],
+  includedCaseIds: Set<string>,
+  managedCaseIds: Set<string>,
+): InvoiceConsulateRefundLine[] {
+  const hasDraftDisposition = includedCaseIds.size > 0 || managedCaseIds.size > 0
+  return refunds.map(refund => {
+    if (refund.status !== 'pending') return refund
+    if (!hasDraftDisposition) return refund
+    if (includedCaseIds.has(refund.caseId)) {
+      return { ...refund, included: true, managed: false }
+    }
+    if (managedCaseIds.has(refund.caseId)) {
+      return { ...refund, included: false, managed: true }
+    }
+    return { ...refund, included: false, managed: false }
+  })
+}
+
 function hydrateCompositionFromDraft(
   state: InvoiceFeeCompositionState,
   draft: Invoice,
   mode: InvoiceCompositionMode = 'generate',
 ): InvoiceFeeCompositionState {
   const next = { ...state, draftInvoiceId: draft.id }
+  const includedCaseIds = new Set(
+    draft.lineItems
+      .map(li => caseIdFromGoRefundPreset(li.servicePresetId))
+      .filter((id): id is string => Boolean(id)),
+  )
+  const managedCaseIds = new Set((draft.managedConsulateRefunds ?? []).map(row => row.caseId))
 
   for (const single of next.singles) {
     const items = draft.lineItems.filter(
       li => li.applicationId === single.applicationId && !isGoRefundExpenseId(li.servicePresetId),
     )
     single.serviceLines = hydrateServiceLinesFromItems(single.serviceLines, items, mode)
-    // Sync Include checkboxes from draft refund lines already on the invoice.
     if (single.consulateRefunds?.length) {
-      const includedCaseIds = new Set(
-        draft.lineItems
-          .map(li => caseIdFromGoRefundPreset(li.servicePresetId))
-          .filter((id): id is string => Boolean(id)),
-      )
-      single.consulateRefunds = single.consulateRefunds.map(refund =>
-        refund.status === 'pending'
-          ? { ...refund, included: includedCaseIds.size === 0 ? refund.included : includedCaseIds.has(refund.caseId) }
-          : refund,
+      single.consulateRefunds = syncRefundDispositions(
+        single.consulateRefunds,
+        includedCaseIds,
+        managedCaseIds,
       )
     }
   }
@@ -959,18 +1004,10 @@ function hydrateCompositionFromDraft(
       )
       applicant.serviceLines = hydrateServiceLinesFromItems(applicant.serviceLines, items, mode)
       if (applicant.consulateRefunds?.length) {
-        const includedCaseIds = new Set(
-          draft.lineItems
-            .map(li => caseIdFromGoRefundPreset(li.servicePresetId))
-            .filter((id): id is string => Boolean(id)),
-        )
-        applicant.consulateRefunds = applicant.consulateRefunds.map(refund =>
-          refund.status === 'pending'
-            ? {
-                ...refund,
-                included: includedCaseIds.size === 0 ? refund.included : includedCaseIds.has(refund.caseId),
-              }
-            : refund,
+        applicant.consulateRefunds = syncRefundDispositions(
+          applicant.consulateRefunds,
+          includedCaseIds,
+          managedCaseIds,
         )
       }
     }
@@ -1090,6 +1127,7 @@ export interface AgreementBillableServiceOption {
  */
 export function listAgreementBillableServiceOptions(
   agreement: CommercialAgreement | undefined | null,
+  billingEntityName?: string,
 ): AgreementBillableServiceOption[] {
   if (!agreement) return []
 
@@ -1101,10 +1139,13 @@ export function listAgreementBillableServiceOptions(
     byKey.set(key, { value, label: label.trim(), defaultAmount, gstApplicable })
   }
 
+  const entityId = matchAgreementEntityId(agreement, billingEntityName)
+  const misc = resolveAgreementMiscForEntity(agreement, entityId)
+
   for (const row of agreement.miscellaneousCosts) {
     add(row.id, row.serviceName, row.amount, row.gstApplicable !== false)
   }
-  for (const row of agreement.miscellaneousServices ?? []) {
+  for (const row of misc) {
     add(row.serviceId || row.id, row.serviceName, row.amount, row.gstApplicable !== false)
   }
 

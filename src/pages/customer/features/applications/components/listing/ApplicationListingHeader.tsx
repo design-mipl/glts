@@ -11,7 +11,8 @@ import { navigateToCreateApplication } from '../../utils/createApplicationNaviga
 
 export function ApplicationListingHeader() {
   const navigate = useNavigate()
-  const { base } = useCustomerPortalBase()
+  const { base, isBusiness } = useCustomerPortalBase()
+  const isRetail = !isBusiness
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -29,18 +30,29 @@ export function ApplicationListingHeader() {
             color="text.primary"
             sx={PORTAL_RECORD_PAGE_TITLE_SX}
           >
-            Application Management
+            {isRetail ? 'My applications' : 'Application Management'}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75, maxWidth: 720 }}>
-            Operational workspace for draft and submitted applications
+            {isRetail
+              ? 'Ongoing drafts you can continue, and purchased applications you can track through processing.'
+              : 'Operational workspace for draft and submitted applications'}
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          label="Create application"
-          startIcon={<Plus size={14} />}
-          onClick={() => navigateToCreateApplication(navigate, base)}
-        />
+        {isRetail ? (
+          <Button
+            variant="contained"
+            label="Start application"
+            startIcon={<Plus size={14} />}
+            onClick={() => navigate('/countries')}
+          />
+        ) : (
+          <Button
+            variant="contained"
+            label="Create application"
+            startIcon={<Plus size={14} />}
+            onClick={() => navigateToCreateApplication(navigate, base)}
+          />
+        )}
       </Stack>
     </Box>
   )

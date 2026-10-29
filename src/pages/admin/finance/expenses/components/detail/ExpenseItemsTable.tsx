@@ -17,6 +17,7 @@ import type {
   ApplicationExpenseRecord,
 } from '@/shared/types/applicationExpenseManagement'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
+import { deriveExpenseLineFinanceStatus, financeStatusLabel } from '@/shared/utils/applicationExpenseManagementUtils'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
 import {
   computeExpenseIwAmount,
@@ -26,7 +27,7 @@ import {
   resolveExpenseCostAmount,
   resolveExpenseInvoiceStatus,
 } from '../../config/expenseDetailFormConfig'
-import { expenseInvoiceStatusColor } from '../../config/expenseStatusConfig'
+import { expenseFinanceStatusColor, expenseInvoiceStatusColor } from '../../config/expenseStatusConfig'
 
 export type ExpenseItemAction = 'view' | 'edit' | 'upload_proof' | 'delete'
 
@@ -54,8 +55,9 @@ function buildHeaders(hideMappingColumn: boolean) {
     { key: 'cost', label: 'Cost', align: 'right' as const, width: '10%' },
     { key: 'iw', label: 'IW', align: 'right' as const, width: '9%' },
     { key: 'total', label: 'Total', align: 'right' as const, width: '11%' },
-    { key: 'paidBy', label: 'Paid by', align: 'left' as const, width: hideMappingColumn ? '18%' : '14%' },
-    { key: 'mode', label: 'Mode', align: 'left' as const, width: '9%' },
+    { key: 'paidBy', label: 'Paid by', align: 'left' as const, width: hideMappingColumn ? '16%' : '12%' },
+    { key: 'status', label: 'Status', align: 'left' as const, width: '12%' },
+    { key: 'mode', label: 'Mode', align: 'left' as const, width: '8%' },
     { key: 'invoice', label: 'Invoice', align: 'left' as const, width: '11%' },
     { key: 'actions', label: '', align: 'center' as const, width: 56 },
   ]
@@ -201,7 +203,7 @@ export function ExpenseItemsTable({
             size="small"
             sx={{
               width: '100%',
-              minWidth: 960,
+              minWidth: 1080,
               tableLayout: 'fixed',
               borderCollapse: 'separate',
               borderSpacing: 0,
@@ -246,6 +248,7 @@ export function ExpenseItemsTable({
                 const total = row.amount
                 const iw = computeExpenseIwAmount(cost, total)
                 const invoiceStatus = resolveExpenseInvoiceStatus(row)
+                const financeStatus = deriveExpenseLineFinanceStatus(row)
 
                 return (
                   <TableRow
@@ -297,6 +300,13 @@ export function ExpenseItemsTable({
                     </TableCell>
                     <TableCell>
                       <PaidByCell expense={row} />
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        label={financeStatusLabel(financeStatus)}
+                        color={expenseFinanceStatusColor[financeStatus]}
+                        size="sm"
+                      />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" noWrap sx={{ fontSize: 13 }}>

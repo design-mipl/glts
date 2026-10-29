@@ -12,6 +12,7 @@ export function VerifyDocumentsOverview({ overview }: VerifyDocumentsOverviewPro
       overview={toApplicationReviewOverview(overview)}
       travelerCount={overview.travelerCount}
       variant="admin"
+      customerSegment="corporate"
     />
   )
 }

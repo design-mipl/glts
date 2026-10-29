@@ -2,7 +2,7 @@ import { Box, Stack, Typography } from '@mui/material'
 import { FormField, Input, Select } from '@/design-system/UIComponents'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
 import { advanceTypeLabel, processingBlockRuleLabel } from '../../config/agreementStatusConfig'
-import { formatAgreementDate } from '../../utils/agreementFormUtils'
+import { BILLING_DAY_OPTIONS, formatAgreementDate, formatBillingDay } from '../../utils/agreementFormUtils'
 import { agreementFieldError } from '../agreementFormLayout'
 
 interface AgreementBillingConfigSectionProps {
@@ -28,6 +28,7 @@ export function AgreementBillingConfigSection({
         <Typography variant="body2">Agreement start date: {formatAgreementDate(data.startDate)}</Typography>
         <Typography variant="body2">Agreement expiry date: {formatAgreementDate(data.endDate)}</Typography>
         <Typography variant="body2">Billing type: {data.billingType}</Typography>
+        <Typography variant="body2">Billing day: {formatBillingDay(data.billingConfig.billingDay)}</Typography>
         {data.billingType === 'credit' ? (
           <>
             <Typography variant="body2">Credit period: {data.billingConfig.creditPeriodDays} days</Typography>
@@ -64,6 +65,15 @@ export function AgreementBillingConfigSection({
             { value: 'credit', label: 'Credit' },
           ]}
           placeholder="Select billing type"
+          fullWidth
+        />
+      </FormField>
+      <FormField label="Billing day" required {...agreementFieldError(errors, 'billingDay')}>
+        <Select
+          value={data.billingConfig.billingDay ? String(data.billingConfig.billingDay) : ''}
+          onChange={(v) => updateBilling({ billingDay: Number(v) || 0 })}
+          options={BILLING_DAY_OPTIONS}
+          placeholder="Select day"
           fullWidth
         />
       </FormField>

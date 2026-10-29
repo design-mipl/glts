@@ -7,6 +7,7 @@ import {
   validateAgreementForm,
   validateAgreementSection,
 } from '@/shared/utils/commercialAgreementValidation'
+import { syncAgreementPricingSchedules } from '@/shared/utils/agreementPricingScheduleUtils'
 
 function generateEntityId() {
   return `agr-ent-${Date.now()}-${Math.floor(Math.random() * 1000)}`
@@ -82,12 +83,14 @@ export function useAgreementForm(initial?: CommercialAgreementFormData) {
     (quotationId: string, versionId?: string) => {
       const patch = commercialAgreementService.hydrateFromQuotation(quotationId, versionId)
       if (!patch) return
-      setFormData((prev) => ({
-        ...prev,
-        ...patch,
-        customerSourceMode: 'quotation',
-        referenceQuotationId: quotationId,
-      }))
+      setFormData((prev) =>
+        syncAgreementPricingSchedules({
+          ...prev,
+          ...patch,
+          customerSourceMode: 'quotation',
+          referenceQuotationId: quotationId,
+        }),
+      )
     },
     [setFormData],
   )
@@ -139,6 +142,10 @@ export function useAgreementForm(initial?: CommercialAgreementFormData) {
       setFormData((prev) => ({
         ...prev,
         entities: prev.entities.filter((e) => e.id !== entityId),
+        pricingSchedules: prev.pricingSchedules.map((schedule) => ({
+          ...schedule,
+          entityIds: schedule.entityIds.filter((id) => id !== entityId),
+        })),
       }))
     },
     [setFormData],

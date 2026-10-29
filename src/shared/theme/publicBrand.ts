@@ -5,7 +5,14 @@ import { publicLightColors, publicDarkColors } from './publicBrandPrimitives'
 import type { PublicBrandColors, PublicBrandMode } from './publicBrandPrimitives'
 
 export type { PublicBrandColors, PublicBrandMode } from './publicBrandPrimitives'
-export { brandPrimaryGreenRgb, publicDarkColors, publicFonts, publicLightColors, publicShadows } from './publicBrandPrimitives'
+export {
+  brandPrimaryGreenRgb,
+  brandGoldRgb,
+  publicDarkColors,
+  publicFonts,
+  publicLightColors,
+  publicShadows,
+} from './publicBrandPrimitives'
 
 export function getPublicBrandColors(mode: PublicBrandMode): PublicBrandColors {
   return mode === 'dark' ? publicDarkColors : publicLightColors
@@ -41,6 +48,20 @@ export const publicTypography = {
 
 /** Product / portal button radius — matches design-system `BUTTON.borderRadius` (10px). */
 export const PRODUCT_BUTTON_BORDER_RADIUS = `${ds.component.button.product.radius}px`
+
+/** Shared easing/duration tokens for scroll-reveal, entrance, and press-feedback motion. */
+export const publicMotion = {
+  /** Entrances/exits — strong ease-out, no built-in CSS weakness. */
+  easeOut: 'cubic-bezier(0.23, 1, 0.32, 1)',
+  /** On-screen movement/morphing. */
+  easeInOut: 'cubic-bezier(0.77, 0, 0.175, 1)',
+  /** Scroll-reveal entrance duration. */
+  revealDurationMs: 500,
+  /** Per-item stagger delay for grids/lists revealing together. */
+  staggerMs: 70,
+  /** Press feedback (`:active`) duration for buttons/cards. */
+  pressDurationMs: 140,
+} as const
 
 /** Outlined secondary actions in wizards, drawers, and forms. */
 export function getOutlinedButtonSx(): SxProps<Theme> {

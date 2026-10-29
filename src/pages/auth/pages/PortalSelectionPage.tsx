@@ -1,10 +1,18 @@
 import { Box, Typography, Button, Stack } from '@mui/material'
-import { Building2, Cog, Ship, Users, ArrowRight } from 'lucide-react'
+import { Building2, Cog, Ship, Users, ArrowRight, UserRound } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { GREENLIGHT_LOGO_SRC } from '@/components/brand/GreenlightLogo'
 import { publicFonts, usePublicBrandColors } from '@/shared/theme/publicBrand'
 
 const PORTALS = [
+  {
+    id: 'retail',
+    title: 'Retail Customer Login',
+    subtitle: 'Individual travellers',
+    description: 'Sign in with phone or Google to manage your visas, documents, and applications.',
+    icon: UserRound,
+    href: '/sign-in/retail',
+  },
   {
     id: 'marine',
     title: 'Marine Portal',

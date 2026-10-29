@@ -1,7 +1,14 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fundAllocationService } from '@/shared/services/fundAllocationService'
-import type { FundAllocationBatchRow, FundAllocationQueueFilters } from '@/shared/types/fundAllocation'
-import { applyFundAllocationBatchFilters } from '@/shared/utils/fundAllocationBatchUtils'
+import type {
+  FundAllocationBatchRow,
+  FundAllocationPassengerRow,
+  FundAllocationQueueFilters,
+} from '@/shared/types/fundAllocation'
+import {
+  applyFundAllocationBatchFilters,
+  groupPassengersIntoAllocationBatches,
+} from '@/shared/utils/fundAllocationBatchUtils'
 import {
   EMPTY_FUND_ALLOCATION_FILTERS,
   getFundAllocationFilterOptions,
@@ -18,16 +25,23 @@ export function useFundUtilizationListing() {
   const [queueFilters, setQueueFilters] = useState<FundAllocationQueueFilters>(EMPTY_FUND_ALLOCATION_FILTERS)
   const [tableState, setTableState] = useState<TableState>({ page: 0, pageSize: 10 })
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [ready, setReady] = useState(false)
 
-  const allBatches = useMemo(() => {
-    void refreshKey
-    return fundAllocationService.listAllocatedBatches()
-  }, [refreshKey])
+  useEffect(() => {
+    const id = requestIdleCallback(() => setReady(true))
+    return () => cancelIdleCallback(id)
+  }, [])
 
   const allocatedPassengers = useMemo(() => {
+    if (!ready) return [] as FundAllocationPassengerRow[]
     void refreshKey
     return fundAllocationService.list().filter(row => row.allocationStatus === 'allocated')
-  }, [refreshKey])
+  }, [refreshKey, ready])
+
+  const allBatches = useMemo(
+    () => groupPassengersIntoAllocationBatches(allocatedPassengers),
+    [allocatedPassengers],
+  )
 
   const filterOptions = useMemo(
     () => getFundAllocationFilterOptions(allocatedPassengers),
@@ -90,6 +104,7 @@ export function useFundUtilizationListing() {
     setTableState,
     paginatedBatches,
     total,
+    isLoading: !ready,
     selectedRecord,
     selectRecord,
     closeDetail,

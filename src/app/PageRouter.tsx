@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { LazyRouteBoundary, lazyNamed } from '@/shared/routing/lazyRoute'
 
 const AuthApp = lazyNamed(() => import('@/pages/auth/AuthApp'), 'AuthApp')
@@ -7,6 +7,14 @@ const RetailPortalApp = lazyNamed(() => import('@/pages/customer/RetailApp'), 'R
 const B2BCustomerApp = lazyNamed(() => import('@/pages/customer/BusinessApp'), 'B2BCustomerApp')
 const AdminPortalApp = lazyNamed(() => import('@/pages/admin/App'), 'AdminPortalApp')
 const PublicWebsiteV2App = lazyNamed(() => import('@/pages/website-v2/App'), 'PublicWebsiteV2App')
+
+/** Preserve deep links from former `/v1/*` and `/v2/*` mounts. */
+function RedirectPrefixedWebsiteToMain({ prefix }: { prefix: '/v1' | '/v2' }) {
+  const location = useLocation()
+  const rest = location.pathname.replace(new RegExp(`^${prefix}/?`), '/') || '/'
+  const normalized = rest === '//' ? '/' : rest
+  return <Navigate to={`${normalized}${location.search}${location.hash}`} replace />
+}
 
 export function PageRouter() {
   return (
@@ -34,7 +42,13 @@ export function PageRouter() {
           <Route path="*" element={<AdminPortalApp />} />
         </Route>
 
-        {/* Public website — V2 owns the root and all non-portal routes. */}
+        {/* Former website prefixes → current public site */}
+        <Route path="/v1" element={<RedirectPrefixedWebsiteToMain prefix="/v1" />} />
+        <Route path="/v1/*" element={<RedirectPrefixedWebsiteToMain prefix="/v1" />} />
+        <Route path="/v2" element={<RedirectPrefixedWebsiteToMain prefix="/v2" />} />
+        <Route path="/v2/*" element={<RedirectPrefixedWebsiteToMain prefix="/v2" />} />
+
+        {/* Public website — V2 owns marketing UI; /apply/new uses main retail flow */}
         <Route path="/*" element={<PublicWebsiteV2App />} />
       </Routes>
     </LazyRouteBoundary>

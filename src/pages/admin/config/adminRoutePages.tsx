@@ -17,6 +17,28 @@ export const EnquiryListingPage = lazyNamed(
   'EnquiryListingPage',
 )
 
+export const OrderListingPage = lazyNamed(() => import('../order-management/orders'), 'OrderListingPage')
+export const CreateOrderPage = lazyNamed(() => import('../order-management/orders'), 'CreateOrderPage')
+export const EditOrderPage = lazyNamed(() => import('../order-management/orders'), 'EditOrderPage')
+export const OrderDetailPage = lazyNamed(() => import('../order-management/orders'), 'OrderDetailPage')
+
+export const OrderEnquiryListingPage = lazyNamed(
+  () => import('../order-management/order-enquiries'),
+  'OrderEnquiryListingPage',
+)
+export const CreateOrderEnquiryPage = lazyNamed(
+  () => import('../order-management/order-enquiries'),
+  'CreateOrderEnquiryPage',
+)
+export const EditOrderEnquiryPage = lazyNamed(
+  () => import('../order-management/order-enquiries'),
+  'EditOrderEnquiryPage',
+)
+export const OrderEnquiryDetailPage = lazyNamed(
+  () => import('../order-management/order-enquiries'),
+  'OrderEnquiryDetailPage',
+)
+
 export const AgreementDetailPage = lazyNamed(
   () => import('../customer-accounts/agreements'),
   'AgreementDetailPage',
@@ -98,6 +120,10 @@ export const BankMasterListingPage = lazyNamed(
   () => import('../masters/bank-master'),
   'BankMasterListingPage',
 )
+export const OrganizationLocationListingPage = lazyNamed(
+  () => import('../masters/organization-location'),
+  'OrganizationLocationListingPage',
+)
 export const CardMasterListingPage = lazyNamed(
   () => import('../masters/card-master'),
   'CardMasterListingPage',
@@ -128,22 +154,22 @@ export const WorkflowListingPage = lazyNamed(
 )
 export const SlaListingPage = lazyNamed(() => import('../masters/sla'), 'SlaListingPage')
 
+export const RequirementListingPage = lazyNamed(
+  () => import('../masters/requirements'),
+  'RequirementListingPage',
+)
+export const CreateRequirementPage = lazyNamed(
+  () => import('../masters/requirements'),
+  'CreateRequirementPage',
+)
+export const EditRequirementPage = lazyNamed(
+  () => import('../masters/requirements'),
+  'EditRequirementPage',
+)
+
 export const OperationsDashboardPage = lazyNamed(
   () => import('../operations/dashboard/pages/OperationsDashboardPage'),
   'OperationsDashboardPage',
-)
-
-export const AccountsDashboardPage = lazyNamed(
-  () => import('../dashboard'),
-  'AccountsDashboardPage',
-)
-export const DocumentationDashboardPage = lazyNamed(
-  () => import('../dashboard'),
-  'DocumentationDashboardPage',
-)
-export const OperationsConsultantDashboardPage = lazyNamed(
-  () => import('../dashboard'),
-  'OperationsConsultantDashboardPage',
 )
 
 export const SuperAdminDashboardNextPage = lazyNamed(
@@ -210,6 +236,23 @@ export const CorporateViewFormPage = lazyNamed(
   'CorporateViewFormPage',
 )
 
+export const RetailApplicationListingPage = lazyNamed(
+  () => import('../application-management/retail'),
+  'RetailApplicationListingPage',
+)
+export const RetailCreateApplicationPage = lazyNamed(
+  () => import('../application-management/retail'),
+  'RetailCreateApplicationPage',
+)
+export const RetailVerifyDocumentsPage = lazyNamed(
+  () => import('../application-management/retail'),
+  'RetailVerifyDocumentsPage',
+)
+export const RetailViewFormPage = lazyNamed(
+  () => import('../application-management/retail'),
+  'RetailViewFormPage',
+)
+
 export const B2bApplicationListingPage = lazyNamed(
   () => import('../application-management/b2b-agents'),
   'B2bApplicationListingPage',
@@ -232,27 +275,27 @@ export const InvoiceFinanceRoutes = lazyNamed(
   'InvoiceFinanceRoutes',
 )
 export const BillingReportsPage = lazyNamed(
-  () => import('../finance/invoices'),
+  () => import('../finance/invoices/pages/BillingReportsPage'),
   'BillingReportsPage',
 )
 export const CreditNoteCompositionPage = lazyNamed(
-  () => import('../finance/invoices'),
+  () => import('../finance/invoices/pages/CreditNoteCompositionPage'),
   'CreditNoteCompositionPage',
 )
 export const GenerateInvoiceCompositionPage = lazyNamed(
-  () => import('../finance/invoices'),
+  () => import('../finance/invoices/pages/GenerateInvoiceCompositionPage'),
   'GenerateInvoiceCompositionPage',
 )
 export const GenerateInvoiceStepperPage = lazyNamed(
-  () => import('../finance/invoices'),
+  () => import('../finance/invoices/pages/GenerateInvoiceStepperPage'),
   'GenerateInvoiceStepperPage',
 )
 export const InvoiceDetailPage = lazyNamed(
-  () => import('../finance/invoices'),
+  () => import('../finance/invoices/pages/InvoiceDetailPage'),
   'InvoiceDetailPage',
 )
 export const InvoiceListingPage = lazyNamed(
-  () => import('../finance/invoices'),
+  () => import('../finance/invoices/pages/InvoiceListingPage'),
   'InvoiceListingPage',
 )
 
@@ -261,11 +304,11 @@ export const ExpenseFinanceRoutes = lazyNamed(
   'ExpenseFinanceRoutes',
 )
 export const ApplicationExpenseDetailPage = lazyNamed(
-  () => import('../finance/expenses'),
+  () => import('../finance/expenses/pages/ApplicationExpenseDetailPage'),
   'ApplicationExpenseDetailPage',
 )
 export const ExpenseListingPage = lazyNamed(
-  () => import('../finance/expenses'),
+  () => import('../finance/expenses/pages/ExpenseListingPage'),
   'ExpenseListingPage',
 )
 
@@ -274,20 +317,20 @@ export const VendorBillingRoutes = lazyNamed(
   'VendorBillingRoutes',
 )
 export const VendorBillingDetailPage = lazyNamed(
-  () => import('../finance/vendor-billing'),
+  () => import('../finance/vendor-billing/pages/VendorBillingDetailPage'),
   'VendorBillingDetailPage',
 )
 export const VendorBillingListingPage = lazyNamed(
-  () => import('../finance/vendor-billing'),
+  () => import('../finance/vendor-billing/pages/VendorBillingListingPage'),
   'VendorBillingListingPage',
 )
 
 export const FundAllocationListingPage = lazyNamed(
-  () => import('../finance/fund-allocation'),
+  () => import('../finance/fund-allocation/pages/FundAllocationListingPage'),
   'FundAllocationListingPage',
 )
 export const ReconciliationListingPage = lazyNamed(
-  () => import('../finance/reconciliation'),
+  () => import('../finance/reconciliation/pages/ReconciliationListingPage'),
   'ReconciliationListingPage',
 )
 

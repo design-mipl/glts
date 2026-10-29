@@ -297,23 +297,46 @@ function mutate(
   updater(overlay)
   overlay.lastUpdated = nowIso()
   overlayStore.set(id, overlay)
+  invalidateListResultCache()
   return buildFundAllocationRowForId(id)
+}
+
+let listResultCache: FundAllocationPassengerRow[] | null = null
+let listResultCacheClearScheduled = false
+
+function cacheListResult(rows: FundAllocationPassengerRow[]): FundAllocationPassengerRow[] {
+  listResultCache = rows
+  if (!listResultCacheClearScheduled) {
+    listResultCacheClearScheduled = true
+    queueMicrotask(() => {
+      listResultCache = null
+      listResultCacheClearScheduled = false
+    })
+  }
+  return rows
+}
+
+function invalidateListResultCache() {
+  listResultCache = null
 }
 
 export const fundAllocationService = {
   list(): FundAllocationPassengerRow[] {
-    return listFundAllocationOperationalRows()
-      .map(toFundAllocationRow)
-      .sort((a, b) => {
-        const statusOrder: Record<FundAllocationStatus, number> = {
-          pending_allocation: 0,
-          allocated: 1,
-        }
-        const statusDiff = statusOrder[a.allocationStatus] - statusOrder[b.allocationStatus]
-        if (statusDiff !== 0) return statusDiff
-        if (a.fundRequested !== b.fundRequested) return a.fundRequested ? -1 : 1
-        return a.passengerName.localeCompare(b.passengerName)
-      })
+    if (listResultCache) return listResultCache
+    return cacheListResult(
+      listFundAllocationOperationalRows()
+        .map(toFundAllocationRow)
+        .sort((a, b) => {
+          const statusOrder: Record<FundAllocationStatus, number> = {
+            pending_allocation: 0,
+            allocated: 1,
+          }
+          const statusDiff = statusOrder[a.allocationStatus] - statusOrder[b.allocationStatus]
+          if (statusDiff !== 0) return statusDiff
+          if (a.fundRequested !== b.fundRequested) return a.fundRequested ? -1 : 1
+          return a.passengerName.localeCompare(b.passengerName)
+        }),
+    )
   },
 
   /** All fund-allocation rows for an application (used by Expense Management sync). */
@@ -441,6 +464,7 @@ export const fundAllocationService = {
         cloneOverlay(overlay),
       ]),
     )
+    invalidateListResultCache()
   },
 }
 

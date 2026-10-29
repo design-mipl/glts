@@ -1,8 +1,7 @@
 import { Input, Select } from '@/design-system/UIComponents'
 import { ListingFilterField } from '@/design-system/listingFilterPopoverShell'
-import { EXPENSE_PAYMENT_MODE_OPTIONS } from '@/pages/admin/finance/expenses/config/expenseDetailFormConfig'
-import type { ReconciliationFilters, ReconciliationPeriodPreset, ReconciliationStatus, ReconciliationTab } from '@/shared/types/reconciliation'
-import { RECONCILIATION_PERIOD_OPTIONS } from '../config/reconciliationListingConfig'
+import type { ReconciliationFilters, ReconciliationPeriodPreset, ReconciliationTab } from '@/shared/types/reconciliation'
+import { RECONCILIATION_PAYMENT_MODE_OPTIONS, RECONCILIATION_PERIOD_OPTIONS } from '../config/reconciliationListingConfig'
 
 export interface ReconciliationAdvancedFilterFieldsProps {
   draft: ReconciliationFilters
@@ -49,21 +48,6 @@ export function ReconciliationAdvancedFilterFields({
           </ListingFilterField>
         </>
       ) : null}
-      <ListingFilterField label="Status">
-        <Select
-          value={draft.status ?? ''}
-          onChange={value => patch({ status: String(value) as ReconciliationStatus | '' })}
-          options={[
-            { value: '', label: 'All statuses' },
-            { value: 'pending', label: 'Pending' },
-            { value: 'submitted', label: 'Submitted' },
-            { value: 'rejected', label: 'Rejected' },
-          ]}
-          placeholder="Status"
-          size="sm"
-          fullWidth
-        />
-      </ListingFilterField>
       {tab === 'mode_of_payment' ? (
         <ListingFilterField label="Mode of payment">
           <Select
@@ -71,7 +55,7 @@ export function ReconciliationAdvancedFilterFields({
             onChange={value => patch({ paymentMode: String(value) })}
             options={[
               { value: '', label: 'All modes' },
-              ...EXPENSE_PAYMENT_MODE_OPTIONS.map(option => ({
+              ...RECONCILIATION_PAYMENT_MODE_OPTIONS.map(option => ({
                 value: option.value,
                 label: option.label,
               })),

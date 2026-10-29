@@ -1,3 +1,5 @@
+import type { InvoiceRefundAppliedVia, InvoiceRefundBillingStatus } from '@/shared/types/invoice'
+
 /** Invoice composition service categories (aligned with agreement / quotation). */
 export type InvoiceServiceLineCategory =
   | 'glts_processing'
@@ -54,10 +56,12 @@ export interface InvoiceConsulateRefundLine {
   remarks: string
   recordedAt?: string
   recordedBy?: string
-  status: 'pending' | 'applied'
-  /** Include this refund when submitting the current composition. */
+  status: InvoiceRefundBillingStatus
+  /** Include this refund as a reduction (or credit) on the current document. */
   included: boolean
-  appliedVia?: 'generate' | 'modify' | 'credit_note'
+  /** Close the refund without a refund line — amounts already absorbed in services. */
+  managed: boolean
+  appliedVia?: InvoiceRefundAppliedVia
   appliedDocumentId?: string
   appliedDocumentNumber?: string
 }

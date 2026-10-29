@@ -2,6 +2,7 @@ import { Stack, Typography } from '@mui/material'
 import { Badge } from '@/design-system/UIComponents'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
 import { validateForActivation } from '@/shared/utils/commercialAgreementValidation'
+import { countPricingScheduleFees, ensureAgreementPricingSchedules } from '@/shared/utils/agreementPricingScheduleUtils'
 import {
   agreementTypeLabel,
   billingTypeLabel,
@@ -58,12 +59,27 @@ export function AgreementSummaryPanel({ formData, agreementId, statusLabel = 'Dr
         <SummaryRow label="Agreement expiry date" value={formatAgreementDate(formData.endDate)} />
         <SummaryRow label="Entities" value={String(formData.entities.length)} />
         <SummaryRow
-          label="Processing visa fees"
-          value={String(formData.commercialVisaPricing?.length || formData.pricingMatrix.length)}
+          label="Pricing sets"
+          value={String(
+            ensureAgreementPricingSchedules(
+              formData.pricingSchedules,
+              formData.commercialVisaPricing,
+              formData.miscellaneousServices,
+              formData.entities,
+            ).length,
+          )}
         />
         <SummaryRow
-          label="Misc services"
-          value={String(formData.miscellaneousServices?.length || formData.miscellaneousCosts.length)}
+          label="Fee lines"
+          value={String(
+            ensureAgreementPricingSchedules(
+              formData.pricingSchedules,
+              formData.commercialVisaPricing,
+              formData.miscellaneousServices,
+              formData.entities,
+            ).reduce((sum, schedule) => sum + countPricingScheduleFees(schedule), 0) ||
+              formData.pricingMatrix.length,
+          )}
         />
         <SummaryRow label="Documents" value={`${uploadedDocs}/${requiredDocs} required`} />
       </Stack>

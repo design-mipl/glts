@@ -6,16 +6,6 @@ import { isImageSource } from '../utils/imageSource'
 const IMG = (photoId: string, width = 640) =>
   `https://images.unsplash.com/${photoId}?auto=format&fit=crop&w=${width}&h=${Math.round(width * 0.7)}&q=80`
 
-export function getCountryHeroImageUrl(country: Country, width = 640): string {
-  const local = getLocalCountryHeroImageUrl(country.code)
-  if (local) return local
-
-  const id = country.heroPhotoId?.trim() ?? ''
-  if (!id) return ''
-  if (isImageSource(id)) return id
-  return IMG(id, width)
-}
-
 function country(
   partial: Omit<Country, 'visaTypes'> & { visaTypes?: Country['visaTypes'] },
 ): Country {
@@ -341,11 +331,138 @@ const COUNTRIES: Country[] = [
     visaCategory: 'e-Visa',
     validity: '90 days',
     documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
-    heroPhotoId: 'photo-1516834611397-8d633eaec5d0',
+    // Christ the Redeemer — verified Unsplash id
+    heroPhotoId: 'photo-1516306609758-0d2ee611928b',
     fastMinutes: 720,
     cities: 'Rio de Janeiro · São Paulo · Brasília',
   }),
+  country({
+    id: '27',
+    name: 'Germany',
+    code: 'DE',
+    region: 'Europe',
+    processingTime: '12-18 days',
+    price: 8600,
+    rating: 89,
+    flags: '🇩🇪',
+    trending: true,
+    trendingPercent: 5,
+    visaCategory: 'Sticker',
+    validity: '90 days',
+    documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
+    heroPhotoId: 'photo-1467269204594-9661b134dd2b',
+    fastMinutes: 720,
+    cities: 'Berlin · Munich · Frankfurt',
+  }),
+  country({
+    id: '28',
+    name: 'Spain',
+    code: 'ES',
+    region: 'Europe',
+    processingTime: '12-18 days',
+    price: 8200,
+    rating: 88,
+    flags: '🇪🇸',
+    trending: false,
+    trendingPercent: 3,
+    visaCategory: 'Sticker',
+    validity: '90 days',
+    documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
+    heroPhotoId: 'photo-1543783207-ec64e4d95325',
+    fastMinutes: 720,
+    cities: 'Madrid · Barcelona · Valencia',
+  }),
+  country({
+    id: '29',
+    name: 'Norway',
+    code: 'NO',
+    region: 'Europe',
+    processingTime: '12-18 days',
+    price: 9200,
+    rating: 87,
+    flags: '🇳🇴',
+    trending: false,
+    trendingPercent: 2,
+    visaCategory: 'Sticker',
+    validity: '90 days',
+    documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
+    // Bergen fjord — verified Unsplash id (prior id 404'd)
+    heroPhotoId: 'photo-1520769669658-f07657f5a307',
+    fastMinutes: 720,
+    cities: 'Oslo · Bergen · Trondheim',
+  }),
+  country({
+    id: '30',
+    name: 'Italy',
+    code: 'IT',
+    region: 'Europe',
+    processingTime: '12-18 days',
+    price: 8400,
+    rating: 89,
+    flags: '🇮🇹',
+    trending: true,
+    trendingPercent: 4,
+    visaCategory: 'Sticker',
+    validity: '90 days',
+    documentsNeeded: ['Photo', 'Passport', 'Bank Statements'],
+    heroPhotoId: 'photo-1552832230-c0197dd311b5',
+    fastMinutes: 720,
+    cities: 'Rome · Milan · Florence',
+  }),
+  country({
+    id: '31',
+    name: 'Vietnam',
+    code: 'VN',
+    region: 'Asia',
+    processingTime: '3-5 days',
+    price: 2400,
+    rating: 91,
+    flags: '🇻🇳',
+    trending: true,
+    trendingPercent: 10,
+    visaCategory: 'e-Visa',
+    validity: '90 days',
+    documentsNeeded: ['Photo', 'Passport'],
+    heroPhotoId: 'photo-1528127269322-539801943592',
+    fastMinutes: 180,
+    cities: 'Hanoi · Ho Chi Minh City · Da Nang',
+  }),
+  country({
+    id: '32',
+    name: 'Turkey',
+    code: 'TR',
+    region: 'Europe',
+    processingTime: '1-2 days',
+    price: 3100,
+    rating: 90,
+    flags: '🇹🇷',
+    trending: true,
+    trendingPercent: 8,
+    visaCategory: 'e-Visa',
+    validity: '180 days',
+    documentsNeeded: ['Photo', 'Passport'],
+    heroPhotoId: 'photo-1524231757912-21f4fe3a7200',
+    fastMinutes: 120,
+    cities: 'Istanbul · Antalya · Cappadocia',
+  }),
 ]
+
+export function getCountryHeroImageUrl(country: Country, width = 640): string {
+  const local = getLocalCountryHeroImageUrl(country.code)
+  if (local) return local
+
+  let id = country.heroPhotoId?.trim() ?? ''
+  // Master rows often use placeholder "default" — fall back to catalog photo by code.
+  if (!id || id === 'default') {
+    const catalog = COUNTRIES.find(
+      (entry) => entry.code === country.code || entry.id === country.id,
+    )
+    id = catalog?.heroPhotoId?.trim() ?? ''
+  }
+  if (!id || id === 'default') return ''
+  if (isImageSource(id)) return id
+  return IMG(id, width)
+}
 
 /** Portal application flow — visa options vary by destination */
 export interface PortalVisaOption {
@@ -426,6 +543,14 @@ const VISA_TYPES_BY_COUNTRY: Record<string, PortalVisaOption[]> = {
   '23': [
     visaOpt('ca-visitor', 'Visitor', 'Tourism & short business'),
     visaOpt('ca-transit', 'Transit', 'Airport connection'),
+  ],
+  '31': [
+    visaOpt('vn-tourist', 'e-Visa · Tourist', 'Single entry · 90 days'),
+    visaOpt('vn-business', 'e-Visa · Business', 'Meetings & site visits'),
+  ],
+  '32': [
+    visaOpt('tr-tourist', 'e-Visa · Tourist', 'Multiple entry · 180 days'),
+    visaOpt('tr-business', 'e-Visa · Business', 'Meetings & conferences'),
   ],
 }
 

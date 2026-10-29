@@ -2,6 +2,7 @@ import { Card, Grid, Stack, Typography } from '@mui/material'
 import { BaseCard } from '@/design-system/UIComponents'
 import { BORDER_RADIUS, BORDER_WIDTH } from '@/design-system/tokens'
 import { usePublicBrandColors } from '@/shared/theme/publicBrand'
+import type { ApplicationCustomerSegment } from '../../types/applicationListing.types'
 import { buildApplicationOverviewMetaRows } from '../../utils/applicationOverviewMetaRows'
 import type { ApplicationReviewOverview } from '../../utils/applicationReviewOverview'
 import { resolveApplicationReferenceDisplay } from '../../utils/gltsReferenceIds'
@@ -11,12 +12,14 @@ export interface ApplicationReviewOverviewCardProps {
   travelerCount: number
   /** Admin verify uses DS BaseCard; customer uses branded Card */
   variant?: 'customer' | 'admin'
+  customerSegment?: ApplicationCustomerSegment
 }
 
 export function ApplicationReviewOverviewCard({
   overview,
   travelerCount,
   variant = 'customer',
+  customerSegment = 'marine',
 }: ApplicationReviewOverviewCardProps) {
   const colors = usePublicBrandColors()
   const { primaryId, batchId } = resolveApplicationReferenceDisplay(
@@ -65,6 +68,7 @@ export function ApplicationReviewOverviewCard({
         {buildApplicationOverviewMetaRows(overview, {
           travelerCount,
           includeConsultantAssignment: variant === 'admin',
+          customerSegment,
         }).map(([label, value]) => (
           <Grid size={1} key={label} sx={{ minWidth: 0 }}>
             <Typography

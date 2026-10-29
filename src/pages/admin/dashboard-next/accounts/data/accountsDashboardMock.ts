@@ -250,9 +250,9 @@ export const ACCOUNTS_DASHBOARD_MOCK: AccountsDashboardData = {
     {
       id: 'qa-accounts-legacy',
       title: 'Accounts workspace',
-      description: 'Legacy accounts dashboard.',
+      description: 'Accounts dashboard.',
       badge: 'Reports',
-      href: '/admin/dashboard/accounts',
+      href: '/admin/dashboard-next/accounts',
     },
   ],
   collectionRows: [

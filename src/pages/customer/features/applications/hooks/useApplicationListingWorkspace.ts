@@ -15,10 +15,15 @@ import {
 export interface UseApplicationListingWorkspaceOptions {
   singles: SingleApplicationRow[]
   bulks: BulkBatchRow[]
+  defaultTab?: ApplicationListingTab
 }
 
-export function useApplicationListingWorkspace({ singles, bulks }: UseApplicationListingWorkspaceOptions) {
-  const [activeTab, setActiveTab] = useState<ApplicationListingTab>('all')
+export function useApplicationListingWorkspace({
+  singles,
+  bulks,
+  defaultTab = 'all',
+}: UseApplicationListingWorkspaceOptions) {
+  const [activeTab, setActiveTab] = useState<ApplicationListingTab>(defaultTab)
   const [sortPreset, setSortPreset] = useState<ApplicationSortPreset>('latest_created')
 
   const tabFilteredRows = useMemo(() => filterByTab([...singles, ...bulks], activeTab), [singles, bulks, activeTab])

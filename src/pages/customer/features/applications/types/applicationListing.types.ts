@@ -30,6 +30,8 @@ export type ApplicationTypeFilter = '' | ApplicationRecordType
 
 export type ApplicationSortPreset = 'latest_created' | 'travel_date' | 'status' | 'last_updated'
 
+export type ApplicationDocumentRequirementFilter = '' | 'required' | 'not_required'
+
 export interface ApplicationListingFilterState {
   country: string
   visaType: string
@@ -37,6 +39,8 @@ export interface ApplicationListingFilterState {
   processingStage: string
   applicationType: ApplicationTypeFilter
   createdBy: string
+  /** B2B listing: Docs required vs not required. Empty = all. */
+  documentRequirement?: ApplicationDocumentRequirementFilter
 }
 
 export const EMPTY_APPLICATION_LISTING_FILTERS: ApplicationListingFilterState = {
@@ -46,6 +50,7 @@ export const EMPTY_APPLICATION_LISTING_FILTERS: ApplicationListingFilterState = 
   processingStage: '',
   applicationType: '',
   createdBy: '',
+  documentRequirement: '',
 }
 
 /** Post-submit pipeline — excludes Draft and pre-submit Pending Documents. */

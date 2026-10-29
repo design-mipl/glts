@@ -707,6 +707,7 @@ export function MarineViewFormPage() {
         selectedRow={selectedRow}
         detail={detail}
         submission={submission}
+        listingRow={listingRow}
       />
 
       <AdminWorkspaceShell

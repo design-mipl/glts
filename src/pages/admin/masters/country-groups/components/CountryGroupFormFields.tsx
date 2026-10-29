@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
-import { FormField, Input, MultiSelect, Select } from '@/design-system/UIComponents'
-import { MASTER_STATUS_FILTER_OPTIONS } from '@/pages/admin/masters/config/masterStatusConfig'
+import { FormField, Input, MultiSelect } from '@/design-system/UIComponents'
 import { countryGroupMasterService } from '@/shared/services/countryGroupMasterService'
 import type { CountryGroupMasterFormData } from '@/shared/types/countryGroupMaster'
 
@@ -16,10 +15,6 @@ export function CountryGroupFormFields({
   errors,
 }: CountryGroupFormFieldsProps) {
   const update = (patch: Partial<CountryGroupMasterFormData>) => onChange({ ...formData, ...patch })
-
-  const statusOptions = MASTER_STATUS_FILTER_OPTIONS.filter((o) => o.value !== 'all').map(
-    (o) => ({ value: o.value, label: o.label }),
-  )
 
   const countryOptions = useMemo(() => countryGroupMasterService.listCountryOptions(), [])
 
@@ -51,16 +46,6 @@ export function CountryGroupFormFields({
           options={countryOptions}
           placeholder="Select countries"
           searchable
-          size="sm"
-          fullWidth
-        />
-      </FormField>
-      <FormField label="Status" required error={Boolean(errors.status)} helperText={errors.status}>
-        <Select
-          value={formData.status}
-          onChange={(v) => update({ status: String(v) as CountryGroupMasterFormData['status'] })}
-          options={statusOptions}
-          placeholder="Select status"
           size="sm"
           fullWidth
         />

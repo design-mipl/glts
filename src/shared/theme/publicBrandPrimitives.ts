@@ -6,6 +6,9 @@ export type PublicBrandMode = 'light' | 'dark'
 
 export const brandPrimaryGreenRgb = '115, 194, 101' as const
 
+/** RGB components for brand gold (`#FEC107`) — legacy status/emphasis surfaces. */
+export const brandGoldRgb = '254, 193, 7' as const
+
 export interface PublicBrandColors {
   navy: string
   navyMid: string
@@ -14,7 +17,14 @@ export interface PublicBrandColors {
   greenBright: string
   greenDark: string
   greenMuted: string
+  /** Legacy gold — retained for status/emphasis surfaces; retail apply uses brand green. */
+  gold: string
+  goldBright: string
+  goldDark: string
+  goldMuted: string
   teal: string
+  tealDark: string
+  tealMuted: string
   criticalMuted: string
   criticalBorder: string
   checklistMuted: string
@@ -41,7 +51,13 @@ export const publicLightColors: PublicBrandColors = {
   greenBright: '#73C265',
   greenDark: '#5A9A4E',
   greenMuted: 'rgba(115, 194, 101, 0.12)',
+  gold: '#FEC107',
+  goldBright: '#FEC107',
+  goldDark: '#FFA000',
+  goldMuted: 'rgba(254, 193, 7, 0.12)',
   teal: '#0C6C79',
+  tealDark: '#084F58',
+  tealMuted: 'rgba(12, 108, 121, 0.10)',
   criticalMuted: '#FEF2F2',
   criticalBorder: '#FECACA',
   checklistMuted: '#F2F5F9',
@@ -66,7 +82,13 @@ export const publicDarkColors: PublicBrandColors = {
   greenBright: '#8FD67F',
   greenDark: '#5A9A4E',
   greenMuted: 'rgba(115, 194, 101, 0.14)',
-  teal: '#0C6C79',
+  gold: '#FEC107',
+  goldBright: '#FFD54F',
+  goldDark: '#FFA000',
+  goldMuted: 'rgba(254, 193, 7, 0.14)',
+  teal: '#4FB4C2',
+  tealDark: '#7ED0DB',
+  tealMuted: 'rgba(79, 180, 194, 0.16)',
   criticalMuted: '#2D1818',
   criticalBorder: '#5C2E2E',
   checklistMuted: '#151D2B',
@@ -89,6 +111,8 @@ export const publicFonts = {
   /** UI headings, cards, controls, navigation, and body copy. */
   heading: '"Roboto", system-ui, sans-serif',
   body: '"Roboto", system-ui, sans-serif',
+  /** Tabular data face for processing-time/price/date readouts. */
+  mono: '"Roboto Mono", ui-monospace, monospace',
 } as const
 
 export const publicShadows = {

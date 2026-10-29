@@ -27,7 +27,7 @@ function pickFields(
   }
   return fieldIds
     .map(id => byId.get(id))
-    .filter((field): field is VerifySummaryField => Boolean(field))
+    .filter((field): field is VerifySummaryField => field != null && field.value !== '—')
 }
 
 export function buildVerifyApplicantSummaryFields(
@@ -35,7 +35,7 @@ export function buildVerifyApplicantSummaryFields(
   detail: ApplicationDetailViewModel,
   applicationId: string,
   documentsLabel: string,
-): { primary: VerifySummaryField[]; B2b: VerifySummaryField[] } {
+): { primary: VerifySummaryField[]; secondary: VerifySummaryField[] } {
   const ctx: FormAssistContext = {
     row: ensureRowBasicDetails(row),
     detail,
@@ -44,36 +44,37 @@ export function buildVerifyApplicantSummaryFields(
 
   const primary = pickFields(
     ctx,
-    ['personal', 'passport', 'travel'],
+    ['personal', 'passport', 'travel', 'immigration'],
     [
-      'designation',
-      'traveler',
-      'passportNo',
-      'nationality',
-      'dateOfBirth',
-      'passportExpiry',
-      'paxContactNo',
-      'paxEmailId',
-      'travel',
-      'visa',
-      'country',
-      'jurisdiction',
+      'applicantName',
+      'passportNumber',
+      'applicantNationality',
+      'applicantDateOfBirth',
+      'passportExpiryDate',
+      'applicantMobileNumber',
+      'applicantPhoneNumber',
+      'applicantEmail',
+      'travelDate',
+      'visaType',
+      'destination',
+      'applicationReference',
     ],
   )
 
   primary.push({ label: 'Documents', value: documentsLabel })
 
-  const B2b = pickFields(
+  const secondary = pickFields(
     ctx,
-    ['employment', 'details', 'address'],
+    ['employment', 'education', 'family'],
     [
-      'employmentOccupation',
-      'lastContractSignDate',
-      'billingEntity',
-      'location',
-      'billingAddress',
+      'occupation',
+      'designation',
+      'organisationName',
+      'organisationAddress',
+      'organisationHostAddress',
+      'institutionName',
     ],
   )
 
-  return { primary, B2b }
+  return { primary, secondary }
 }

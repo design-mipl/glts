@@ -19,8 +19,103 @@ export interface OperationalCaseFormAssistSeed {
   >
 }
 
-/** Demo submission snapshots aligned with `mockOperationalCases` application fee selections. */
-export const OPERATIONAL_CASE_FORM_ASSIST_SEEDS: OperationalCaseFormAssistSeed[] = [
+function reconciliationDemoTodayKey(): string {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+/** Payment-entry demos wired to real submitted apps — always dated today for the default period filter. */
+export function buildTodayReconciliationFormAssistSeeds(): OperationalCaseFormAssistSeed[] {
+  const today = reconciliationDemoTodayKey()
+  return [
+    {
+      applicationId: 'GL-1025',
+      passengerSequence: 1,
+      submission: {
+        vfsServiceCharges: [
+          { id: 'pay-today-1025-1-vfs', serviceName: 'VFS fees', amount: 1200, gstIncluded: false },
+          { id: 'pay-today-1025-1-visa', serviceName: 'Visa fees', amount: 8500, gstIncluded: false },
+        ],
+        submissionDate: today,
+        submissionReferenceNumber: 'VFS-TODAY-1025-1',
+        submittedBy: 'Anita Desai',
+        vfsSubmissionDate: today,
+        tentativeCollectionDate: today,
+        paymentDate: today,
+        paymentMode: 'card',
+        paymentReferenceNumber: 'CCAV-TODAY-1025-1',
+        amountPaid: '9700',
+        receiptStatus: 'received',
+      },
+    },
+    {
+      applicationId: 'GL-1025',
+      passengerSequence: 2,
+      submission: {
+        vfsServiceCharges: [
+          { id: 'pay-today-1025-2-vfs', serviceName: 'VFS fees', amount: 1200, gstIncluded: false },
+          { id: 'pay-today-1025-2-bio', serviceName: 'Biometrics', amount: 2500, gstIncluded: false },
+        ],
+        submissionDate: today,
+        submissionReferenceNumber: 'VFS-TODAY-1025-2',
+        submittedBy: 'Anita Desai',
+        vfsSubmissionDate: today,
+        tentativeCollectionDate: today,
+        paymentDate: today,
+        paymentMode: 'bank_transfer',
+        paymentReferenceNumber: 'NEFT-TODAY-1025-2',
+        amountPaid: '3700',
+        receiptStatus: 'received',
+      },
+    },
+    {
+      applicationId: 'GL-1025',
+      passengerSequence: 3,
+      submission: {
+        vfsServiceCharges: [
+          { id: 'pay-today-1025-3-vfs', serviceName: 'VFS fees', amount: 1200, gstIncluded: false },
+          { id: 'pay-today-1025-3-priority', serviceName: 'Priority processing', amount: 1800, gstIncluded: true },
+        ],
+        submissionDate: today,
+        submissionReferenceNumber: 'VFS-TODAY-1025-3',
+        submittedBy: 'Priya Sharma',
+        vfsSubmissionDate: today,
+        tentativeCollectionDate: today,
+        paymentDate: today,
+        paymentMode: 'card',
+        paymentReferenceNumber: 'CCAV-TODAY-1025-3',
+        amountPaid: '3000',
+        receiptStatus: 'awaited',
+      },
+    },
+    {
+      applicationId: 'GL-744',
+      passengerSequence: 1,
+      submission: {
+        vfsServiceCharges: [
+          { id: 'pay-today-744-1-vfs', serviceName: 'VFS fees', amount: 1200, gstIncluded: false },
+          { id: 'pay-today-744-1-visa', serviceName: 'Visa fees', amount: 6200, gstIncluded: false },
+        ],
+        submissionDate: today,
+        submissionReferenceNumber: 'VFS-TODAY-744-1',
+        submittedBy: 'Operations Desk',
+        vfsSubmissionDate: today,
+        tentativeCollectionDate: today,
+        paymentDate: today,
+        paymentMode: 'card',
+        paymentReferenceNumber: 'CCAV-TODAY-744-1',
+        amountPaid: '7400',
+        receiptStatus: 'received',
+      },
+    },
+  ]
+}
+
+/** Legacy June snapshots for operational-case demos (YTD / custom period testing). */
+const LEGACY_OPERATIONAL_CASE_FORM_ASSIST_SEEDS: OperationalCaseFormAssistSeed[] = [
   {
     applicationId: 'GLTS-M-2026-0142',
     passengerSequence: 1,
@@ -125,3 +220,11 @@ export const OPERATIONAL_CASE_FORM_ASSIST_SEEDS: OperationalCaseFormAssistSeed[]
     },
   },
 ]
+
+export function getOperationalCaseFormAssistSeeds(): OperationalCaseFormAssistSeed[] {
+  return [...buildTodayReconciliationFormAssistSeeds(), ...LEGACY_OPERATIONAL_CASE_FORM_ASSIST_SEEDS]
+}
+
+/** @deprecated Prefer getOperationalCaseFormAssistSeeds() for rolling today demos. */
+export const OPERATIONAL_CASE_FORM_ASSIST_SEEDS: OperationalCaseFormAssistSeed[] =
+  getOperationalCaseFormAssistSeeds()

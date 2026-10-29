@@ -1,11 +1,14 @@
-import { getDocumentWorkspaceItems } from '@/shared/services/countryMasterService'
+import {
+  getDocumentWorkspaceItems,
+  resolveOfferingIdsByLabels,
+} from '@/shared/services/countryMasterService'
+import type { BusinessSegment } from '@/shared/types/countryMaster'
 import { resolveOriginalRequiredDocuments } from '@/shared/utils/originalDocumentCollectionUtils'
 import {
   isApplicantDocumentSatisfied,
   seedSimpleDocumentWorkflowFields,
 } from '@/shared/utils/applicantDocumentWorkflowUtils'
 import {
-  defaultChecklist,
   type ApplicantDocumentItem,
   type ChecklistItem,
   type ExtractedField,
@@ -16,9 +19,24 @@ export interface ApplicantDocumentChecklistContext {
   countryLabel: string
   countryId?: string
   visaOfferingId?: string
+  visaTypeLabel?: string
+  segment?: BusinessSegment
   jurisdictionId?: string
   seedIndex?: number
   passportFields?: ExtractedField[]
+}
+
+function resolveOfferingFromContext(ctx: ApplicantDocumentChecklistContext): {
+  countryId: string
+  visaOfferingId: string
+} | undefined {
+  if (ctx.countryId && ctx.visaOfferingId) {
+    return { countryId: ctx.countryId, visaOfferingId: ctx.visaOfferingId }
+  }
+  if (ctx.countryLabel && ctx.visaTypeLabel) {
+    return resolveOfferingIdsByLabels(ctx.countryLabel, ctx.visaTypeLabel, ctx.segment)
+  }
+  return undefined
 }
 
 export function applicantDocumentChecklistSignature(documents: ApplicantDocumentItem[]): string {
@@ -121,16 +139,17 @@ export function resolveExpectedApplicantDocuments(
 ): ApplicantDocumentItem[] {
   const seedIndex = ctx.seedIndex ?? 0
   const passportFields = ctx.passportFields ?? []
-  if (ctx.countryId && ctx.visaOfferingId) {
+  const offering = resolveOfferingFromContext(ctx)
+  if (offering) {
     return createApplicantDocuments(
-      ctx.countryId,
-      ctx.visaOfferingId,
+      offering.countryId,
+      offering.visaOfferingId,
       passportFields,
       seedIndex,
       ctx.jurisdictionId,
     )
   }
-  return checklistToApplicantDocuments(defaultChecklist(ctx.countryLabel), seedIndex)
+  return []
 }
 
 function mergeWithExpected(

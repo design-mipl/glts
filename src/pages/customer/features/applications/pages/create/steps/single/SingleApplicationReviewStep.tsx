@@ -6,9 +6,10 @@ import { useToast } from '@/design-system/UIComponents'
 import { usePublicBrandColors, getPrimaryButtonSx } from '@/shared/theme/publicBrand'
 import type { ApplicationFlowState } from '../../../../hooks/useApplicationFlowState'
 import { useCustomerPortalBase } from '@/pages/customer/features/shared/hooks/useCustomerPortalBase'
-import { customerPortalService } from '@/pages/customer/features/shared/services/customerPortalService'
+import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
+import { useApplicationFlowPolicy } from '../../../../context/ApplicationFlowPolicyContext'
 import { CustomerDocumentChecklist } from '@/pages/customer/features/shared/components/CustomerPrimitives'
-import { defaultChecklist } from '../../../../data/applicationFlowData'
+import { buildGlobalChecklistItems, resolveGlobalChecklistDocuments } from '../../../../utils/globalDocumentChecklist'
 import { getTravelDateFeasibilityForOffering, offeringRequiresJurisdictionSelection } from '@/shared/services/countryMasterService'
 import {
   getDocumentWorkspaceItems,
@@ -26,7 +27,7 @@ export function SingleApplicationReviewStep({ state, onBack, onSubmitted }: Sing
   const navigate = useNavigate()
   const { base } = useCustomerPortalBase()
   const { showToast } = useToast()
-  const [declared, setDeclared] = useState(false)
+  const { customerSegment } = useApplicationFlowPolicy()
 
   const requiresJurisdiction = useMemo(
     () => offeringRequiresJurisdictionSelection(state.countryId, state.visaOfferingId),
@@ -54,7 +55,16 @@ export function SingleApplicationReviewStep({ state, onBack, onSubmitted }: Sing
     [requiresJurisdiction, state],
   )
 
-  const checklist = defaultChecklist(state.countryName)
+  const [declared, setDeclared] = useState(false)
+
+  const checklist = useMemo(() => {
+    const docs = resolveGlobalChecklistDocuments({
+      countryId: state.countryId,
+      visaOfferingId: state.visaOfferingId,
+      jurisdictionId: state.jurisdictionId,
+    })
+    return buildGlobalChecklistItems(state.globalDocumentUploads, undefined, docs)
+  }, [state.countryId, state.globalDocumentUploads, state.jurisdictionId, state.visaOfferingId])
   const missingCount = checklist.filter(i => i.status === 'missing').length
   const requirementCards = useMemo(
     () => getRequirementPreviewCards(state.countryId, state.visaOfferingId, state.jurisdictionId),
@@ -81,7 +91,7 @@ export function SingleApplicationReviewStep({ state, onBack, onSubmitted }: Sing
   )
 
   const handleSubmit = () => {
-    customerPortalService.submitApplication('single', { applicationId: state.gltsApplicationId })
+    marineApplicationAdminService.createAndSubmitFromFlow(state, customerSegment)
     onSubmitted()
     showToast({
       title: 'Application submitted',
@@ -92,7 +102,13 @@ export function SingleApplicationReviewStep({ state, onBack, onSubmitted }: Sing
   }
 
   const handleDraft = () => {
-    showToast({ title: 'Draft saved', description: 'Resume from Application Management → Draft applications.', variant: 'info' })
+    marineApplicationAdminService.saveDraftFromFlow(state, customerSegment)
+    onSubmitted()
+    showToast({
+      title: 'Draft saved',
+      description: 'Resume from Application Management → Draft applications.',
+      variant: 'success',
+    })
     navigate(`${base}/applications`)
   }
 

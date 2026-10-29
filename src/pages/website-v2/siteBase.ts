@@ -1,6 +1,5 @@
-import { WEBSITE_V2_BASE } from '@/shared/website/websiteVariantPaths'
-
-export { WEBSITE_V2_BASE }
+/** Public website-v2 owns the root mount (no `/v2` prefix). */
+export const WEBSITE_V2_BASE = '/'
 
 /**
  * Build an absolute Website v2 path. Pass `/`, `/countries`, `/apply/new?x=1`, etc.
@@ -12,5 +11,6 @@ export function w2(path: string = '/'): string {
   const [pathname, query = ''] = path.split('?')
   const normalized = pathname.startsWith('/') ? pathname : `/${pathname}`
   const suffix = query ? `?${query}` : ''
-  return `${WEBSITE_V2_BASE}${normalized}${suffix}`
+  // Root-mounted site: path is already absolute.
+  return `${normalized}${suffix}`
 }

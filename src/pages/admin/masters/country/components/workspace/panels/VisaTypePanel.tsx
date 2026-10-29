@@ -6,6 +6,7 @@ import {
   FormField,
   Input,
   Select,
+  Textarea,
   Toggle,
 } from '@/design-system/UIComponents'
 import { AdminFormSectionsLayout } from '@/pages/admin/components/AdminFormSectionsLayout'
@@ -191,6 +192,16 @@ export function VisaTypePanel({
             />
           </FormField>
           <AdminFullPageFormFieldSpan>
+            <FormField label="Description" helperText="Optional summary for this visa type.">
+              <Textarea
+                value={visaType.description ?? ''}
+                onChange={(v) => patchVisa({ description: v })}
+                minRows={2}
+                readonly={readOnly}
+              />
+            </FormField>
+          </AdminFullPageFormFieldSpan>
+          <AdminFullPageFormFieldSpan>
             <FormField
               label="Workflow"
               helperText="Leave as segment default, or override for this visa type. Change anytime."
@@ -229,8 +240,8 @@ export function VisaTypePanel({
             label="Pricing (INR)"
             helperText={
               visaType.jurisdictionEnabled
-                ? 'Lowest Consulate Rates total across active jurisdictions, excluding Urgent Charge.'
-                : 'Sum of Consulate Rates, excluding Urgent Charge.'
+                ? 'Lowest total across active jurisdictions.'
+                : 'Sum of Consulate Rates.'
             }
           >
             <Input
@@ -246,9 +257,9 @@ export function VisaTypePanel({
               visaType.jurisdictionEnabled &&
               processingTimeline.lowestFromName &&
               processingTimeline.highestFromName
-                ? `Lowest: ${processingTimeline.lowestFromName} (${processingTimeline.lowerDays} days) • Highest: ${processingTimeline.highestFromName} (${processingTimeline.highestDays} days)`
+                ? `${processingTimeline.lowestFromName} (${processingTimeline.lowerDays}d) – ${processingTimeline.highestFromName} (${processingTimeline.highestDays}d)`
                 : processingTimeline.lowerDays != null && processingTimeline.highestDays != null
-                  ? `Range: ${processingTimeline.lowerDays}-${processingTimeline.highestDays} business days`
+                  ? `${processingTimeline.lowerDays}–${processingTimeline.highestDays} business days`
                   : 'TBD'
             }
           >

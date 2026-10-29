@@ -3,7 +3,7 @@ import {
   mockSingleApplications,
 } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationCustomerSegment } from '@/pages/customer/features/applications/types/applicationListing.types'
-import { GLTS_MAR_1025_CREW, SEED_APPLICATION_EXPENSES, SEED_APPLICATION_EXPENSE_VERSION } from '@/shared/data/mockApplicationExpenses'
+import { GLTS_MAR_1025_CREW, SEED_APPLICATION_EXPENSES, SEED_APPLICATION_EXPENSE_VERSION, buildTodayReconciliationSeedExpenses } from '@/shared/data/mockApplicationExpenses'
 import { applicationArrangedExpenseService } from '@/shared/services/applicationArrangedExpenseService'
 import { marineApplicationAdminService } from '@/shared/services/marineApplicationAdminService'
 import { operationalCaseHandlingService } from '@/shared/services/operationalCaseHandlingService'
@@ -29,6 +29,7 @@ import {
   computeFinanceKpis,
   fundAllocationServiceToExpenseRecord,
   getServiceSourceLabel,
+  mergeAutoSyncedExpense,
   syncOperationalCasesToExpenseRecords,
 } from '@/shared/utils/applicationExpenseManagementUtils'
 import { fundAllocationService } from '@/shared/services/fundAllocationService'
@@ -38,6 +39,10 @@ const STORAGE_KEY = 'glts:application-expense-management'
 const SEED_VERSION_KEY = 'glts:application-expense-management-seed-version'
 
 type ExpenseStore = Record<string, ApplicationExpenseRecord>
+
+// In-memory cache so repeated readStore() calls within a sync cycle hit memory, not localStorage.
+let storeCache: ExpenseStore | null = null
+
 
 function mergeSeedExpenses(store: ExpenseStore): ExpenseStore {
   let changed = false
@@ -52,12 +57,19 @@ function mergeSeedExpenses(store: ExpenseStore): ExpenseStore {
 }
 
 function readStore(): ExpenseStore {
+  if (storeCache) return storeCache
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     const storedVersion = Number(localStorage.getItem(SEED_VERSION_KEY) ?? '0')
-    if (!raw) return seedStore()
+    if (!raw) {
+      storeCache = seedStore()
+      return storeCache
+    }
     const parsed = JSON.parse(raw) as ExpenseStore
-    if (!parsed || typeof parsed !== 'object') return seedStore()
+    if (!parsed || typeof parsed !== 'object') {
+      storeCache = seedStore()
+      return storeCache
+    }
     if (storedVersion < SEED_APPLICATION_EXPENSE_VERSION) {
       // Refresh known seed rows so label / category updates apply in existing browsers.
       for (const expense of SEED_APPLICATION_EXPENSES) {
@@ -65,11 +77,14 @@ function readStore(): ExpenseStore {
       }
       localStorage.setItem(SEED_VERSION_KEY, String(SEED_APPLICATION_EXPENSE_VERSION))
       writeStore(parsed)
-      return mergeSeedExpenses(parsed)
+      storeCache = mergeSeedExpenses(parsed)
+      return storeCache
     }
-    return mergeSeedExpenses(parsed)
+    storeCache = mergeSeedExpenses(parsed)
+    return storeCache
   } catch {
-    return seedStore()
+    storeCache = seedStore()
+    return storeCache
   }
 }
 
@@ -86,13 +101,22 @@ function seedStore(): ExpenseStore {
 function writeStore(store: ExpenseStore) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store))
+    storeCache = store
+    // Invalidate derived caches so they rebuild from the updated store on next access.
+    allExpensesCache = null
+    expensesByAppCache = null
   } catch {
     // ignore storage failures in mock mode
   }
 }
 
+// Derived cache — invalidated by writeStore nulling allExpensesCache.
+let allExpensesCache: ApplicationExpenseRecord[] | null = null
+
 function listAllExpenses(): ApplicationExpenseRecord[] {
-  return Object.values(readStore())
+  if (allExpensesCache) return allExpensesCache
+  const store = readStore()
+  allExpensesCache = Object.values(store)
     .map(expense => ({
       ...expense,
       costAmount: typeof expense.costAmount === 'number' ? expense.costAmount : 0,
@@ -101,10 +125,22 @@ function listAllExpenses(): ApplicationExpenseRecord[] {
         (expense.readyForReconciliation ? 'invoiced' : 'not_invoiced'),
     }))
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  return allExpensesCache
 }
 
+// Per-application expense index — invalidated by writeStore nulling expensesByAppCache.
+let expensesByAppCache: Map<string, ApplicationExpenseRecord[]> | null = null
+
 function expensesForApplication(applicationId: string): ApplicationExpenseRecord[] {
-  return listAllExpenses().filter(e => e.applicationId === applicationId)
+  if (!expensesByAppCache) {
+    expensesByAppCache = new Map()
+    for (const e of listAllExpenses()) {
+      const bucket = expensesByAppCache.get(e.applicationId)
+      if (bucket) bucket.push(e)
+      else expensesByAppCache.set(e.applicationId, [e])
+    }
+  }
+  return expensesByAppCache.get(applicationId) ?? []
 }
 
 function upsertMany(expenses: ApplicationExpenseRecord[]) {
@@ -301,10 +337,15 @@ function syncAutoServiceExpenses(applicationId: string, existing: ExpenseStore):
     }))
 }
 
-function buildListingRowsForSegment(segment: ApplicationCustomerSegment): ApplicationExpenseListingRow[] {
-  if (segment !== 'marine') return []
+const EXPENSE_LISTING_SEGMENTS: ApplicationCustomerSegment[] = [
+  'marine',
+  'retail',
+  'corporate',
+  'b2bAgents',
+]
 
-  const { singles, bulks } = marineApplicationAdminService.listAllSubmittedBySegment('marine')
+function buildListingRowsForSegment(segment: ApplicationCustomerSegment): ApplicationExpenseListingRow[] {
+  const { singles, bulks } = marineApplicationAdminService.listAllSubmittedBySegment(segment)
   const apps = [...singles, ...bulks]
   return apps.map(app => buildListingRowFromApplication(app, expensesForApplication(app.id)))
 }
@@ -320,6 +361,24 @@ function buildListingLookup(): Map<string, ApplicationExpenseListingRow> {
 }
 
 export const applicationExpenseManagementService = {
+  /** Re-stamp rolling "today" reconciliation demo rows so the default period filter stays populated. */
+  refreshTodayReconciliationSeedExpenses(): void {
+    const store = readStore()
+    let changed = false
+    for (const expense of buildTodayReconciliationSeedExpenses()) {
+      const existing = store[expense.id]
+      if (
+        !existing ||
+        existing.expenseDate !== expense.expenseDate ||
+        existing.updatedAt !== expense.updatedAt
+      ) {
+        store[expense.id] = expense
+        changed = true
+      }
+    }
+    if (changed) writeStore(store)
+  },
+
   listApplications(
     segment: ApplicationCustomerSegment,
     filters: ApplicationExpenseListingFilters = {},
@@ -386,21 +445,33 @@ export const applicationExpenseManagementService = {
     ]
 
     for (const expense of merged) {
-      const existing = store[expense.id]
-      // Auto-synced lines always refresh from upstream modules (assignment, ground ops, tickets, funds).
-      if (!existing || expense.isAutoGenerated) {
-        store[expense.id] = expense
-      }
+      store[expense.id] = mergeAutoSyncedExpense(store[expense.id], expense)
     }
     writeStore(store)
     return expensesForApplication(applicationId)
   },
 
   syncAllSubmitted(): void {
-    const { singles, bulks } = marineApplicationAdminService.listAllSubmittedBySegment('marine')
-    for (const app of [...singles, ...bulks]) {
-      this.syncApplication(app.id)
+    const apps = EXPENSE_LISTING_SEGMENTS.flatMap(segment => {
+      const { singles, bulks } = marineApplicationAdminService.listAllSubmittedBySegment(segment)
+      return [...singles, ...bulks]
+    })
+    if (apps.length === 0) return
+
+    const store = readStore()
+    for (const app of apps) {
+      const customerSegment = app.customerSegment ?? 'marine'
+      const merged = [
+        ...syncArrangedExpenses(app.id),
+        ...syncAutoServiceExpenses(app.id, store),
+        ...syncGroundOperationsExpenses(app.id),
+        ...syncAssignmentAndFundAllocationExpenses(app.id, customerSegment),
+      ]
+      for (const expense of merged) {
+        store[expense.id] = mergeAutoSyncedExpense(store[expense.id], expense)
+      }
     }
+    writeStore(store)
   },
 
   upsertManualExpense(applicationId: string, input: UpsertApplicationExpenseInput): ApplicationExpenseRecord {
@@ -487,6 +558,7 @@ export const applicationExpenseManagementService = {
       billTo: input.billTo ?? existing.billTo ?? 'client',
       internalRemarks: input.internalRemarks ?? existing.internalRemarks,
       expenseDate: input.expenseDate ?? existing.expenseDate,
+      vendorInvoiceNumber: input.vendorInvoiceNumber ?? existing.vendorInvoiceNumber,
       updatedAt: new Date().toISOString(),
     }
     upsertMany([updated])

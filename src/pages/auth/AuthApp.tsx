@@ -9,14 +9,17 @@ import {
   OperationsLoginPage,
   PortalSelectionPage,
   RetailAuthPage,
+  RetailLoginPage,
 } from './authRoutePages'
 
 export function AuthApp() {
   return (
     <LazyRouteBoundary label="Loading…">
       <Routes>
+        {/* Keep branch auth UI as default; preserve main's /sign-in/retail deep link */}
         <Route index element={<RetailAuthPage />} />
         <Route path="portals" element={<PortalSelectionPage />} />
+        <Route path="retail" element={<RetailLoginPage />} />
         <Route path="business" element={<BusinessLoginHubPage />} />
         <Route path="business/marine" element={<MarineLoginPage />} />
         <Route path="business/corporate" element={<CorporateLoginPage />} />

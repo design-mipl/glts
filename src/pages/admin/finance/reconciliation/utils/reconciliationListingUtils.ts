@@ -1,6 +1,11 @@
-import type { ReconciliationFilters, ReconciliationItem, ReconciliationTab } from '@/shared/types/reconciliation'
+import type {
+  ReconciliationFilters,
+  ReconciliationItem,
+  ReconciliationStatus,
+  ReconciliationTab,
+} from '@/shared/types/reconciliation'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
-import { RECONCILIATION_PERIOD_OPTIONS } from '../config/reconciliationListingConfig'
+import { getReconciliationPaymentModeLabel, RECONCILIATION_PERIOD_OPTIONS } from '../config/reconciliationListingConfig'
 
 export const EMPTY_RECONCILIATION_FILTERS: ReconciliationFilters = {
   period: 'today',
@@ -16,7 +21,6 @@ export function hasReconciliationFiltersActive(
 ): boolean {
   if (filters.period === 'custom' && (filters.customFrom || filters.customTo)) return true
   if (filters.period !== 'today') return true
-  if (filters.status) return true
   if (tab === 'mode_of_payment' && filters.paymentMode) return true
   return false
 }
@@ -49,6 +53,7 @@ export function matchesReconciliationSearch(row: ReconciliationItem, query: stri
     row.visaCountry,
     row.policyNumber,
     row.trackingNumber,
+    row.vendorInvoiceNumber,
     row.chargesName,
     row.claimNumber,
     row.referenceNumber,
@@ -76,7 +81,11 @@ export function computeReconciliationKpis(rows: ReconciliationItem[]) {
   }
 }
 
-export function getReconciliationEmptyState(tab: ReconciliationTab, hasSearch: boolean) {
+export function getReconciliationEmptyState(
+  tab: ReconciliationTab,
+  hasSearch: boolean,
+  statusTab: ReconciliationStatus = 'pending',
+) {
   if (hasSearch) {
     return {
       title: 'No matching records',
@@ -90,8 +99,21 @@ export function getReconciliationEmptyState(tab: ReconciliationTab, hasSearch: b
     courier: 'courier expenses',
     mode_of_payment: 'payment records',
   }
+  const category = labels[tab]
+  if (statusTab === 'submitted') {
+    return {
+      title: `No submitted ${category} in this period`,
+      description: 'Reconciled records will appear here after you submit them from Pending.',
+    }
+  }
+  if (statusTab === 'rejected') {
+    return {
+      title: `No rejected ${category} in this period`,
+      description: 'Rejected records will appear here when you reject a pending item.',
+    }
+  }
   return {
-    title: `No ${labels[tab]} in this period`,
+    title: `No pending ${category} in this period`,
     description: 'Adjust the period filter or check expense / claim sheet data.',
   }
 }
@@ -100,7 +122,7 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
   const headersByTab: Record<ReconciliationTab, string[]> = {
     approved_claim_sheet: [
       'Claim number',
-      'GLTS No',
+      'GLTS reference',
       'Passenger',
       'Client',
       'Visa country',
@@ -113,7 +135,7 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'User',
     ],
     insurance: [
-      'RefNo',
+      'GLTS reference',
       'GLTS creation date',
       'PassengerName',
       'Client',
@@ -123,16 +145,16 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'Vendor',
       'Insurance booking date',
       'Policy number',
-      'Vendor Invoice number',
+      'Invoice No.',
       'Cost',
-      'Markup',
+      'IW',
       'Total',
       'Status',
       'Book entry number',
       'User',
     ],
     ticket: [
-      'RefNo',
+      'GLTS reference',
       'GLTS Creation date',
       'PassengerName',
       'Client',
@@ -142,15 +164,16 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'Vendor',
       'Ticket Booking date',
       'Cost',
-      'Markup',
+      'IW',
       'Total',
+      'Invoice No.',
       'Locations of Ticket bookings',
       'Status',
       'Book entry number',
       'User',
     ],
     courier: [
-      'RefNo',
+      'GLTS reference',
       'GLTS Creation date',
       'PassengerName',
       'Client',
@@ -159,21 +182,18 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
       'VisaCountry',
       'Vendor',
       'Courier booking date',
-      'Tracking no (AWB)',
+      'AWB Number',
       'Courier Booked by GLTS staff',
-      'Cost',
-      'Markup',
-      'Total',
+      'Amount',
       'Locations of Courier',
       'Status',
-      'Book entry number',
       'User',
     ],
     mode_of_payment: [
-      'GLTS No',
+      'GLTS reference',
       'Passenger Name',
       'Country',
-      'Charges Name',
+      'Service',
       'Vendor Name',
       'Payment Date',
       'Mode of payment',
@@ -240,6 +260,7 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
           row.cost,
           row.markup,
           row.total,
+          row.vendorInvoiceNumber,
           `${row.locationFrom} → ${row.locationTo}`,
           row.status,
           row.referenceNumber,
@@ -258,12 +279,9 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
           row.bookingDate,
           row.trackingNumber,
           row.courierBookedBy,
-          row.cost,
-          row.markup,
           row.total,
           `${row.locationFrom} → ${row.locationTo}`,
           row.status,
-          row.referenceNumber,
           user,
         ]
       case 'mode_of_payment':
@@ -274,7 +292,7 @@ export function downloadReconciliationCsv(rows: ReconciliationItem[], tab: Recon
           row.chargesName,
           row.vendor,
           row.paymentDate,
-          row.paymentMode,
+          getReconciliationPaymentModeLabel(row.paymentMode),
           row.cardUsed,
           row.amountInr,
           row.foreignCurrencyAmount,

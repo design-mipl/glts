@@ -1,14 +1,19 @@
 import { Box, Divider, Stack, Typography } from '@mui/material'
 import { Badge, BaseCard } from '@/design-system/UIComponents'
 import type { ApplicationPriority } from '@/pages/customer/features/applications/data/applicationFlowData'
+import type { ApplicationCustomerSegment } from '@/pages/customer/features/applications/types/applicationListing.types'
 import { formatDisplayDate } from '@/shared/utils/formatDisplayDate'
+import {
+  isMarineApplicationSegment,
+  usesDesignationLabel,
+} from '@/shared/utils/applicationSegmentListingPolicy'
 import { ApplicationVipStar } from './ApplicationVipStar'
 import {
   applicationPriorityBadgeColor,
   applicationPriorityLabel,
 } from '../config/applicationConsultantConfig'
 
-/** Minimal overview shape shared by marine / corporate / b2b verify utils. */
+/** Minimal overview shape shared by marine / corporate / b2b / retail verify utils. */
 export interface ApplicationOverviewSummaryData {
   gltsApplicationId?: string
   gltsBatchId?: string
@@ -25,6 +30,10 @@ export interface ApplicationOverviewSummaryData {
   compassNo?: string
   joiningPort?: string
   entityName?: string
+  department?: string
+  costCode?: string
+  note1?: string
+  note2?: string
   consultantName?: string
   consultantTeamName?: string
   priority?: string
@@ -34,6 +43,8 @@ export interface ApplicationOverviewSummaryData {
 interface ApplicationVerifyOverviewSummaryProps {
   overview: ApplicationOverviewSummaryData
   isBulk?: boolean
+  /** Segment controls which meta chips are shown. Defaults to marine for safety. */
+  customerSegment?: ApplicationCustomerSegment
 }
 
 function MetaChip({ label, value }: { label: string; value: string }) {
@@ -67,7 +78,12 @@ function isApplicationPriority(value: string): value is ApplicationPriority {
 export function ApplicationVerifyOverviewSummary({
   overview,
   isBulk = false,
+  customerSegment = 'marine',
 }: ApplicationVerifyOverviewSummaryProps) {
+  const isMarine = isMarineApplicationSegment(customerSegment)
+  const isBusiness = usesDesignationLabel(customerSegment)
+  const isRetail = customerSegment === 'retail'
+
   const primaryId = overview.gltsBatchId || overview.gltsApplicationId || '—'
   const visaLabel = overview.purposeLabel
     ? `${overview.visaTypeLabel} · ${overview.purposeLabel}`
@@ -164,12 +180,30 @@ export function ApplicationVerifyOverviewSummary({
             {overview.gltsBatchId && overview.gltsApplicationId ? (
               <MetaChip label="App" value={overview.gltsApplicationId} />
             ) : null}
-            <MetaChip label="Company" value={overview.companyName || '—'} />
-            <MetaChip label="Billing entity" value={overview.entityName || '—'} />
-            <MetaChip label="Vessel" value={overview.vesselName || '—'} />
-            <MetaChip label="PO / CID no." value={overview.poCidNo || '—'} />
-            <MetaChip label="Compass No." value={overview.compassNo || '—'} />
-            <MetaChip label="Joining port" value={overview.joiningPort || '—'} />
+            {!isRetail || overview.companyName?.trim() ? (
+              <MetaChip label="Company" value={overview.companyName || '—'} />
+            ) : null}
+            {isBusiness || isMarine ? (
+              <MetaChip label="Billing entity" value={overview.entityName || '—'} />
+            ) : null}
+            {isBusiness ? (
+              <>
+                {overview.department?.trim() ? (
+                  <MetaChip label="Department" value={overview.department} />
+                ) : null}
+                {overview.costCode?.trim() ? (
+                  <MetaChip label="Cost code" value={overview.costCode} />
+                ) : null}
+              </>
+            ) : null}
+            {isMarine ? (
+              <>
+                <MetaChip label="Vessel" value={overview.vesselName || '—'} />
+                <MetaChip label="PO / CID no." value={overview.poCidNo || '—'} />
+                <MetaChip label="Compass No." value={overview.compassNo || '—'} />
+                <MetaChip label="Joining port" value={overview.joiningPort || '—'} />
+              </>
+            ) : null}
             <MetaChip label="Country" value={countryLabel} />
             <MetaChip label="Visa" value={visaLabel} />
             <MetaChip label="Jurisdiction" value={overview.jurisdiction || '—'} />

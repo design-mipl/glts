@@ -11,8 +11,10 @@ import { countryMasterAdminService } from '@/shared/services/countryMasterAdminS
 import type {
   BusinessSegment,
   CountryMasterFormData,
+  CountrySegmentConfig,
   VisaApplicationWindowUnit,
 } from '@/shared/types/countryMaster'
+import { resolveVisaTypePricingFromConsulateRates } from '@/shared/utils/countryVfsServiceRateUtils'
 import {
   COUNTRY_STATUS_OPTIONS,
   VISA_APPLICATION_WINDOW_UNIT_OPTIONS,
@@ -31,6 +33,7 @@ import { useCountryWorkspaceMode } from '../countryWorkspaceModeContext'
 interface CountryOverviewPanelProps {
   countryId: string
   formData: CountryMasterFormData
+  segments: CountrySegmentConfig[]
   onChange: (next: CountryMasterFormData) => void
   onSelectSegment: (segment: BusinessSegment) => void
 }
@@ -38,11 +41,22 @@ interface CountryOverviewPanelProps {
 export function CountryOverviewPanel({
   countryId,
   formData,
+  segments,
   onChange,
   onSelectSegment,
 }: CountryOverviewPanelProps) {
   const { readOnly } = useCountryWorkspaceMode()
   const patch = (partial: Partial<CountryMasterFormData>) => onChange({ ...formData, ...partial })
+
+  const computedStartingPrice = useMemo(() => {
+    const allVisaTypes = segments
+      .filter((s) => s.enabled)
+      .flatMap((s) => s.visaTypes.filter((vt) => vt.status === 'active'))
+    if (allVisaTypes.length === 0) return 0
+    const prices = allVisaTypes.map((vt) => resolveVisaTypePricingFromConsulateRates(vt))
+    const nonZero = prices.filter((p) => p > 0)
+    return nonZero.length > 0 ? Math.min(...nonZero) : 0
+  }, [segments])
 
   const patchVisaApplicationWindow = (partial: Partial<CountryMasterFormData['visaApplicationWindow']>) => {
     patch({
@@ -207,8 +221,11 @@ export function CountryOverviewPanel({
           <FormField label="Display Processing Time">
             <Input value={formData.processingTime} onChange={(v) => patch({ processingTime: v })} size="sm" readonly={readOnly} />
           </FormField>
-          <FormField label="Starting Price (INR)">
-            <Input type="number" value={String(formData.price)} onChange={(v) => patch({ price: Number(v) || 0 })} size="sm" readonly={readOnly} />
+          <FormField
+            label="Starting Price (INR)"
+            helperText="Derived from lowest active visa type pricing."
+          >
+            <Input type="number" value={String(computedStartingPrice)} size="sm" readonly />
           </FormField>
           <FormField label="Trending">
             <Toggle checked={formData.trending} onChange={(v) => patch({ trending: v })} label={formData.trending ? 'Trending' : 'Not trending'} disabled={readOnly} />

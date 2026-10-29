@@ -21,6 +21,7 @@ export { AdminListingTable } from './AdminListingTable'
 export type { AdminListingTableProps } from './AdminListingTable'
 export { AdminListingGrid } from './AdminListingGrid'
 export type { AdminListingGridItem } from './AdminListingGrid'
+export { AdminListingLoadingState } from './AdminListingLoadingState'
 export { AdminListingStickyHeader, AdminListingStickyHeaderSlot } from './AdminListingStickyHeader'
 export {
   adminListingColumnWidth,

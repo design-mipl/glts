@@ -94,7 +94,7 @@ function toRefundRow(
     recordedBy: refund.recordedBy,
     caseId: record.id,
     operationalId: record.operationalId,
-    status: applied ? 'applied' : 'pending',
+    status: applied ? (applied.appliedVia === 'managed' ? 'managed' : 'applied') : 'pending',
     appliedVia: applied?.appliedVia,
     appliedDocumentId: applied?.appliedDocumentId,
     appliedDocumentNumber: applied?.documentNumber ?? applied?.appliedDocumentNumber,
@@ -182,8 +182,9 @@ export function listConsulateRefundsForApplication(
       remarks: refund.remarks?.trim() || '',
       recordedAt: refund.recordedAt,
       recordedBy: refund.recordedBy,
-      status: applied ? 'applied' : 'pending',
+      status: applied ? (applied.appliedVia === 'managed' ? 'managed' : 'applied') : 'pending',
       included: !applied,
+      managed: false,
       appliedVia: applied?.appliedVia,
       appliedDocumentId: applied?.appliedDocumentId,
       appliedDocumentNumber: applied?.documentNumber ?? applied?.appliedDocumentNumber,
@@ -196,7 +197,17 @@ export function listConsulateRefundsForApplication(
 export function collectIncludedRefundsFromComposition(
   lines: InvoiceConsulateRefundLine[],
 ): InvoiceConsulateRefundLine[] {
-  return lines.filter(line => line.status === 'pending' && line.included && line.amount > 0)
+  return lines.filter(
+    line => line.status === 'pending' && line.included && !line.managed && line.amount > 0,
+  )
+}
+
+export function collectManagedRefundsFromComposition(
+  lines: InvoiceConsulateRefundLine[],
+): InvoiceConsulateRefundLine[] {
+  return lines.filter(
+    line => line.status === 'pending' && line.managed && !line.included && line.amount > 0,
+  )
 }
 
 export function sumIncludedConsulateRefunds(lines: InvoiceConsulateRefundLine[]): number {
@@ -205,13 +216,13 @@ export function sumIncludedConsulateRefunds(lines: InvoiceConsulateRefundLine[])
   )
 }
 
-export function appliedRefundsFromLines(
-  lines: InvoiceConsulateRefundLine[],
+function appliedRefundSnapshotFromLine(
+  line: InvoiceConsulateRefundLine,
   documentId: string,
   documentNumber: string,
   appliedVia: InvoiceRefundAppliedVia,
-): InvoiceAppliedRefund[] {
-  return collectIncludedRefundsFromComposition(lines).map(line => ({
+): InvoiceAppliedRefund {
+  return {
     caseId: line.caseId,
     operationalId: line.operationalId,
     applicationId: line.applicationId,
@@ -224,5 +235,26 @@ export function appliedRefundsFromLines(
     appliedVia,
     appliedDocumentId: documentId,
     appliedDocumentNumber: documentNumber,
-  }))
+  }
+}
+
+export function appliedRefundsFromLines(
+  lines: InvoiceConsulateRefundLine[],
+  documentId: string,
+  documentNumber: string,
+  appliedVia: InvoiceRefundAppliedVia,
+): InvoiceAppliedRefund[] {
+  return collectIncludedRefundsFromComposition(lines).map(line =>
+    appliedRefundSnapshotFromLine(line, documentId, documentNumber, appliedVia),
+  )
+}
+
+export function managedRefundsFromLines(
+  lines: InvoiceConsulateRefundLine[],
+  documentId: string,
+  documentNumber: string,
+): InvoiceAppliedRefund[] {
+  return collectManagedRefundsFromComposition(lines).map(line =>
+    appliedRefundSnapshotFromLine(line, documentId, documentNumber, 'managed'),
+  )
 }

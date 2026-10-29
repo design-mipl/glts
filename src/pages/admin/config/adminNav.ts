@@ -7,6 +7,7 @@ import {
   HandCoins,
   Headphones,
   LayoutDashboard,
+  ShoppingCart,
   Shield,
   SlidersHorizontal,
   Wrench,
@@ -76,6 +77,15 @@ export const adminNav: NavConfig[] = [
     ],
   },
   {
+    type: 'group',
+    label: 'Order Management',
+    icon: createElement(ShoppingCart, iconProps),
+    children: [
+      { type: 'item', label: 'Order Enquiries', href: '/admin/order-management/order-enquiries' },
+      { type: 'item', label: 'Orders', href: '/admin/order-management/orders' },
+    ],
+  },
+  {
     type: 'item',
     label: 'Support tickets',
     icon: createElement(Headphones, iconProps),
@@ -114,7 +124,9 @@ export const adminNav: NavConfig[] = [
       { type: 'item', label: 'Jurisdiction Master', href: '/admin/masters/jurisdiction' },
       { type: 'item', label: 'Card Master', href: '/admin/masters/card-master' },
       { type: 'item', label: 'Bank Master', href: '/admin/masters/bank-master' },
+      { type: 'item', label: 'Organization & Location Master', href: '/admin/masters/organization-location' },
       { type: 'item', label: 'Document master', href: '/admin/masters/documents' },
+      { type: 'item', label: 'Requirement Master', href: '/admin/masters/requirements' },
       { type: 'item', label: 'GLTS Fee Master', href: '/admin/masters/services' },
       { type: 'item', label: 'SAC Code Master', href: '/admin/masters/sac-codes' },
       { type: 'item', label: 'GST & TDS Master', href: '/admin/masters/tax' },

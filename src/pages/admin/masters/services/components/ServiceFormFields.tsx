@@ -4,9 +4,8 @@ import { sacCodeMasterService } from '@/shared/services/sacCodeMasterService'
 import { taxMasterService } from '@/shared/services/taxMasterService'
 import { MASTER_APPLICABILITY_OPTIONS } from '@/shared/types/masterCommon'
 import type { ServiceMasterFormData } from '@/shared/types/serviceMaster'
-import { masterStatusLabel } from '../../config/masterStatusConfig'
 
-type ServiceFormSection = 'basic' | 'pricingTax' | 'applicability' | 'status'
+type ServiceFormSection = 'basic' | 'pricingTax' | 'applicability'
 
 interface ServiceFormFieldsProps {
   formData: ServiceMasterFormData
@@ -97,38 +96,21 @@ export function ServiceFormFields({ formData, onChange, errors, section }: Servi
     )
   }
 
-  if (section === 'applicability') {
-    return (
-      <FormField
-        label="Applicable for"
-        required
-        error={Boolean(errors.applicableFor)}
-        helperText={errors.applicableFor}
-      >
-        <MultiSelect
-          value={formData.applicableFor}
-          onChange={(value) =>
-            patch({ applicableFor: value as ServiceMasterFormData['applicableFor'] })
-          }
-          placeholder="Select applicability"
-          options={MASTER_APPLICABILITY_OPTIONS}
-          searchable
-          size="sm"
-          fullWidth
-        />
-      </FormField>
-    )
-  }
-
   return (
-    <FormField label="Status" required>
-      <Select
-        value={formData.status}
-        onChange={(value) => patch({ status: value as ServiceMasterFormData['status'] })}
-        placeholder="Select status"
-        options={(
-          Object.entries(masterStatusLabel) as [ServiceMasterFormData['status'], string][]
-        ).map(([value, label]) => ({ value, label }))}
+    <FormField
+      label="Applicable for"
+      required
+      error={Boolean(errors.applicableFor)}
+      helperText={errors.applicableFor}
+    >
+      <MultiSelect
+        value={formData.applicableFor}
+        onChange={(value) =>
+          patch({ applicableFor: value as ServiceMasterFormData['applicableFor'] })
+        }
+        placeholder="Select applicability"
+        options={MASTER_APPLICABILITY_OPTIONS}
+        searchable
         size="sm"
         fullWidth
       />

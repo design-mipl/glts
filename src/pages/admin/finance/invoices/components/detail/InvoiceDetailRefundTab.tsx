@@ -25,11 +25,32 @@ import {
   sumInvoiceRefunds,
   sumPendingInvoiceRefunds,
 } from '../../utils/invoiceDetailSideTabs'
+import type { InvoiceDetailRefundRow } from '../../utils/invoiceConsulateRefundUtils'
 
 interface InvoiceDetailRefundTabProps {
   invoice: Invoice
   onModifyInvoice?: () => void
   onCreateCreditNote?: () => void
+}
+
+function refundRowBadge(row: InvoiceDetailRefundRow): {
+  label: string
+  color: 'success' | 'warning' | 'info'
+} {
+  if (row.status === 'managed' || row.appliedVia === 'managed') {
+    return { label: 'Managed', color: 'info' }
+  }
+  if (row.status === 'applied') {
+    return { label: 'Applied', color: 'success' }
+  }
+  return { label: 'Pending', color: 'warning' }
+}
+
+function refundAppliedCaption(row: InvoiceDetailRefundRow): string | null {
+  if (row.status === 'pending' || !row.appliedDocumentNumber) return null
+  if (row.appliedVia === 'managed') return `${row.appliedDocumentNumber} · Managed in services`
+  if (row.appliedVia === 'credit_note') return `${row.appliedDocumentNumber} · Credit note`
+  return row.appliedDocumentNumber
 }
 
 export function InvoiceDetailRefundTab({
@@ -114,7 +135,10 @@ export function InvoiceDetailRefundTab({
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map(row => (
+            {rows.map(row => {
+              const badge = refundRowBadge(row)
+              const caption = refundAppliedCaption(row)
+              return (
               <TableRow key={row.id}>
                 <TableCell sx={{ fontSize: 13, verticalAlign: 'top' }}>
                   <Typography variant="body2" fontWeight={600} sx={{ fontSize: 13 }}>
@@ -128,14 +152,13 @@ export function InvoiceDetailRefundTab({
                 <TableCell sx={{ fontSize: 13, verticalAlign: 'top' }}>{row.vendorName}</TableCell>
                 <TableCell sx={{ verticalAlign: 'top' }}>
                   <Badge
-                    label={row.status === 'applied' ? 'Applied' : 'Pending'}
-                    color={row.status === 'applied' ? 'success' : 'warning'}
+                    label={badge.label}
+                    color={badge.color}
                     size="sm"
                   />
-                  {row.status === 'applied' && row.appliedDocumentNumber ? (
+                  {caption ? (
                     <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.35 }}>
-                      {row.appliedDocumentNumber}
-                      {row.appliedVia === 'credit_note' ? ' · Credit note' : ''}
+                      {caption}
                     </Typography>
                   ) : null}
                 </TableCell>
@@ -154,7 +177,8 @@ export function InvoiceDetailRefundTab({
                   {formatInr(row.amount)}
                 </TableCell>
               </TableRow>
-            ))}
+              )
+            })}
           </TableBody>
         </Table>
       </Box>

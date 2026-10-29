@@ -145,13 +145,28 @@ function workspaceToInvoice(
     existing?.invoiceId ??
     (workspace.selection.invoiceType === 'credit_note' ? generateCreditNoteId() : generateInvoiceId())
   const appliedVia = resolveRefundAppliedVia(workspace, existing)
-  const extractedRefunds =
+  const lineRefunds =
+    status === 'draft' ? [] : extractAppliedRefundsFromLineItems(lineItems, id, invoiceId, appliedVia)
+  const managedRefunds =
     status === 'draft'
       ? []
-      : extractAppliedRefundsFromLineItems(lineItems, id, invoiceId, appliedVia)
+      : (workspace.managedConsulateRefunds ?? []).map(row => ({
+          ...row,
+          appliedAt: nowIso(),
+          appliedVia: 'managed' as const,
+          appliedDocumentId: id,
+          appliedDocumentNumber: invoiceId,
+        }))
+  const extractedRefunds = [
+    ...lineRefunds,
+    ...managedRefunds.filter(row => !lineRefunds.some(included => included.caseId === row.caseId)),
+  ]
   const appliedRefunds =
     extractedRefunds.length > 0
-      ? [...(existing?.appliedRefunds ?? []).filter(r => !extractedRefunds.some(e => e.caseId === r.caseId)), ...extractedRefunds]
+      ? [
+          ...(existing?.appliedRefunds ?? []).filter(r => !extractedRefunds.some(e => e.caseId === r.caseId)),
+          ...extractedRefunds,
+        ]
       : existing?.appliedRefunds
 
   const base: Invoice = {
@@ -191,6 +206,7 @@ function workspaceToInvoice(
     attachments: existing?.attachments ?? [],
     payments: existing?.payments ?? [],
     appliedRefunds,
+    managedConsulateRefunds: status === 'draft' ? workspace.managedConsulateRefunds : undefined,
   }
 
   return base
@@ -681,7 +697,9 @@ export const invoiceService = {
     }
 
     const composed = workspace.lineItems.filter(li => li.included !== false && Math.abs(li.unitPrice) > 0)
-    if (composed.length === 0) return undefined
+    const managedOnly =
+      composed.length === 0 && (workspace.managedConsulateRefunds ?? []).length > 0
+    if (composed.length === 0 && !managedOnly) return undefined
 
     const lineItems = composed.map(li => ({
       ...li,
@@ -712,6 +730,7 @@ export const invoiceService = {
       dueDate: dueDateFromTerms(30),
       sourceInvoiceId: source.id,
       agreementId: source.agreementId,
+      managedConsulateRefunds: workspace.managedConsulateRefunds,
     }
 
     const invoice = workspaceToInvoice(cnWorkspace, 'submitted')

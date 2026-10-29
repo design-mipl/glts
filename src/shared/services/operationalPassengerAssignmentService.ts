@@ -49,10 +49,6 @@ let overlayStore = new Map<string, OperationalPassengerOverlay>(
   Object.entries(SEED_OPERATIONAL_PASSENGER_OVERLAYS).map(([id, o]) => [id, cloneOverlay(o)]),
 )
 
-function getOverlayMap(): Map<string, OperationalPassengerOverlay> {
-  return overlayStore
-}
-
 function appendTimeline(
   overlay: OperationalPassengerOverlay,
   label: string,
@@ -92,9 +88,24 @@ function touch(overlay: OperationalPassengerOverlay) {
 
 const ALL_SEGMENTS: ApplicationCustomerSegment[] = ['marine', 'retail', 'corporate', 'b2bAgents']
 
+/** Derivation over the full mock dataset is expensive — cache per segment, invalidated on any overlay mutation. */
+let rowsCache = new Map<ApplicationCustomerSegment, OperationalPassengerRow[]>()
+
+function invalidateRowsCache() {
+  rowsCache.clear()
+}
+
+function getRows(segment: ApplicationCustomerSegment): OperationalPassengerRow[] {
+  const cached = rowsCache.get(segment)
+  if (cached) return cached
+  const rows = deriveOperationalPassengerRows(segment, overlayStore)
+  rowsCache.set(segment, rows)
+  return rows
+}
+
 function findRowById(id: string): OperationalPassengerRow | undefined {
   for (const segment of ALL_SEGMENTS) {
-    const row = deriveOperationalPassengerRows(segment, overlayStore).find(r => r.id === id)
+    const row = getRows(segment).find(r => r.id === id)
     if (row) return row
   }
   return undefined
@@ -124,6 +135,7 @@ function ensureOverlay(id: string): OperationalPassengerOverlay | undefined {
     lastUpdated: derived.lastUpdated,
   }
   overlayStore.set(id, fresh)
+  invalidateRowsCache()
   return fresh
 }
 
@@ -132,6 +144,7 @@ function mutate(id: string, updater: (overlay: OperationalPassengerOverlay) => v
   if (!overlay) return undefined
   updater(overlay)
   touch(overlay)
+  invalidateRowsCache()
   return findRowById(id)
 }
 
@@ -157,6 +170,7 @@ function applyAutoCarryForward() {
       appendTimeline(overlay, 'Auto carry forward — moved to next operational date', 'System')
       touch(overlay)
       overlayStore.set(id, overlay)
+      invalidateRowsCache()
     }
   }
 }
@@ -164,7 +178,7 @@ function applyAutoCarryForward() {
 export const operationalPassengerAssignmentService = {
   list(segment: ApplicationCustomerSegment): OperationalPassengerRow[] {
     applyAutoCarryForward()
-    return deriveOperationalPassengerRows(segment, getOverlayMap())
+    return getRows(segment)
   },
 
   getById(id: string, segment: ApplicationCustomerSegment): OperationalPassengerRow | undefined {
@@ -365,5 +379,6 @@ export const operationalPassengerAssignmentService = {
     overlayStore = new Map(
       Object.entries(SEED_OPERATIONAL_PASSENGER_OVERLAYS).map(([id, o]) => [id, cloneOverlay(o)]),
     )
+    invalidateRowsCache()
   },
 }

@@ -1,4 +1,4 @@
-import { FormField, Select, Toggle } from '@/design-system/UIComponents'
+import { FormField, Select } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import {
   SLA_DOMAIN_OPTIONS,
@@ -98,17 +98,6 @@ export function SlaFormFields({
             disabled={submoduleDisabled}
           />
         </FormField>
-      </AdminFullPageFormFieldSpan>
-
-      <AdminFullPageFormFieldSpan>
-        <Toggle
-          checked={formData.status === 'active'}
-          onChange={(checked) =>
-            onChange({ ...formData, status: checked ? 'active' : 'inactive' })
-          }
-          label="Active"
-          size="sm"
-        />
       </AdminFullPageFormFieldSpan>
     </>
   )

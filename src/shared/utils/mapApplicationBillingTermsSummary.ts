@@ -58,7 +58,7 @@ export function mapApplicationBillingTermsSummary(
 ): ApplicationBillingTermsViewModel {
   const billingType = agreement.billingType
   const billingTypeLabel = BILLING_TYPE_LABEL[billingType]
-  const { creditPeriodDays, creditLimit } = agreement.billingConfig
+  const { creditPeriodDays, creditLimit, billingDay } = agreement.billingConfig
 
   if (billingType === 'credit') {
     return {
@@ -67,6 +67,7 @@ export function mapApplicationBillingTermsSummary(
       tone: 'info',
       fields: [
         { label: 'Billing type', value: billingTypeLabel },
+        { label: 'Billing day', value: billingDay ? String(billingDay) : '—' },
         { label: 'Credit period', value: `${creditPeriodDays} days` },
         { label: 'Credit limit', value: formatCreditLimit(creditLimit) },
       ],

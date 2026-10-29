@@ -5,8 +5,6 @@ import {
   singleJurisdictionForVisa,
 } from '@/shared/data/countryJurisdictionDefaults'
 import {
-  chinaMarineGTypeDelhiJurisdiction,
-  chinaMarineGTypeMumbaiJurisdiction,
   chinaMarineMTypeDelhiJurisdiction,
   japanMarineCrewVisaJurisdictions,
 } from '@/shared/data/countryMarineMockConfig'
@@ -56,15 +54,18 @@ const stdCommonDocuments: CountryDocumentChecklistItem[] = [
 
 const stdApplicationDocuments: CountryDocumentChecklistItem[] = [
   { documentId: 'bank', mandatory: true, sortOrder: 0 },
-  { documentId: 'travel-ticket', mandatory: true, sortOrder: 1 },
-  { documentId: 'insurance', mandatory: true, sortOrder: 2 },
+  { documentId: 'bank-balance-certificate', mandatory: true, sortOrder: 1 },
+  { documentId: 'travel-ticket', mandatory: true, sortOrder: 2 },
+  { documentId: 'insurance', mandatory: true, sortOrder: 3 },
 ]
 
 const crewApplicationDocuments: CountryDocumentChecklistItem[] = [
-  { documentId: 'cdc', mandatory: true, sortOrder: 0 },
-  { documentId: 'vessel-letter', mandatory: true, sortOrder: 1 },
-  { documentId: 'travel-ticket', mandatory: true, sortOrder: 2 },
-  { documentId: 'insurance', mandatory: true, sortOrder: 3 },
+  { documentId: 'cdc', mandatory: true, sortOrder: 0, originalDocument: true },
+  { documentId: 'personal-details-form', mandatory: true, sortOrder: 1 },
+  { documentId: 'stcw-certificate', mandatory: true, sortOrder: 2 },
+  { documentId: 'vessel-letter', mandatory: true, sortOrder: 3 },
+  { documentId: 'travel-ticket', mandatory: true, sortOrder: 4 },
+  { documentId: 'insurance', mandatory: true, sortOrder: 5 },
 ]
 
 function visaType(
@@ -152,6 +153,11 @@ function segment(
   }
 }
 
+/**
+ * Generic corporate segment: one visa type with jurisdiction enabled (embassy/VFS
+ * jurisdictions configured) and one e-visa type with jurisdiction disabled (documents
+ * configured directly on the visa type).
+ */
 function corporateBusinessSegment(idPrefix: string, countryName: string): CountrySegmentConfig {
   return segment({
     segment: 'corporate',
@@ -172,10 +178,35 @@ function corporateBusinessSegment(idPrefix: string, countryName: string): Countr
         jurisdictionEnabled: true,
         jurisdictions: buildCorporateBusinessJurisdictions(countryName, idPrefix),
       }),
+      eVisaType({
+        id: `${idPrefix}-evisa-business-corp`,
+        name: 'Business e-Visa',
+        visaCategory: 'Business',
+        processingTime: '4–6 business days',
+        entryType: 'Single / multiple',
+        validity: '90 days',
+        stayDuration: 'As per invitation',
+        purposeId: 'business_meeting',
+        purposeLabel: 'Corporate travel',
+        countryName,
+        applicationDocuments: corporateApplicationDocuments,
+        documents: buildCorporateEvisaDocuments(idPrefix),
+        gltsScopeLines: [
+          'Business e-Visa application preparation and portal filing',
+          'Invitation letter and corporate document review',
+          'Compliance check before online submission',
+          'Status updates and approval notification',
+        ],
+      }),
     ],
   })
 }
 
+/**
+ * Generic B2B agent segment: one visa type with jurisdiction enabled (embassy/VFS
+ * jurisdictions configured) and one e-visa type with jurisdiction disabled (documents
+ * configured directly on the visa type).
+ */
 function b2bAgentSegment(idPrefix: string, countryName: string): CountrySegmentConfig {
   return segment({
     segment: 'b2bAgents',
@@ -196,19 +227,63 @@ function b2bAgentSegment(idPrefix: string, countryName: string): CountrySegmentC
         jurisdictionEnabled: true,
         jurisdictions: buildB2bTouristJurisdictions(countryName, `${idPrefix}-tourist`),
       }),
-      visaType({
+      eVisaType({
         id: `${idPrefix}-agent-business`,
-        name: 'Agent Business Visa',
+        name: 'Agent Business e-Visa',
         visaCategory: 'Business',
-        processingTime: '10–14 business days',
+        processingTime: '4–6 business days',
         entryType: 'Single / multiple',
         validity: '90 days',
         stayDuration: 'As per invitation',
         purposeId: 'business_meeting',
         purposeLabel: 'Agent corporate filing',
+        countryName,
         applicationDocuments: b2bBusinessApplicationDocuments,
+        documents: buildB2bBusinessEvisaDocuments(`${idPrefix}-business`),
+      }),
+    ],
+  })
+}
+
+/**
+ * Generic marine segment applied uniformly across countries: two visa types —
+ * one with jurisdiction enabled (embassy/VFS jurisdictions configured), one with
+ * jurisdiction disabled (documents configured directly on the visa type).
+ */
+function marineSegment(idPrefix: string, countryName: string): CountrySegmentConfig {
+  return segment({
+    segment: 'marine',
+    enabled: true,
+    workflowId: 'workflow-online-to-offline',
+    visaTypes: [
+      visaType({
+        id: `${idPrefix}-marine-crew`,
+        name: 'Crew Visa',
+        visaCategory: 'Crew',
+        processingTime: '10–14 business days',
+        entryType: 'Crew visa',
+        validity: '90 days',
+        stayDuration: 'Crew rotation',
+        purposeId: 'crew_joining',
+        purposeLabel: 'Crew joining',
+        applicationDocuments: crewApplicationDocuments,
         jurisdictionEnabled: true,
-        jurisdictions: buildB2bBusinessJurisdictions(countryName, `${idPrefix}-business`),
+        jurisdictions: defaultJurisdictionsForVisa('Crew Visa', countryName, crewApplicationDocuments),
+      }),
+      visaType({
+        id: `${idPrefix}-marine-crew-transit`,
+        name: 'Crew Transit Visa',
+        visaCategory: 'Transit crew',
+        processingTime: '5–8 business days',
+        entryType: 'Transit',
+        validity: '72 hours',
+        stayDuration: 'Transit connection',
+        purposeId: 'transit',
+        purposeLabel: 'Transit',
+        applicationDocuments: crewApplicationDocuments,
+        jurisdictionEnabled: false,
+        jurisdictions: [],
+        documents: checklistToJurisdictionDocuments(crewApplicationDocuments, 'jurisdiction'),
       }),
     ],
   })
@@ -374,7 +449,23 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           applicationDocuments: crewApplicationDocuments,
           purposeId: 'crew_joining',
           purposeLabel: 'Crew joining',
+          jurisdictionEnabled: true,
           jurisdictions: japanMarineCrewVisaJurisdictions(),
+        }),
+        visaType({
+          id: 'jp-crew-transit',
+          name: 'Crew Transit Visa',
+          visaCategory: 'Transit crew',
+          processingTime: '5–8 business days',
+          entryType: 'Transit',
+          validity: '72 hours',
+          stayDuration: 'Transit connection',
+          applicationDocuments: crewApplicationDocuments,
+          purposeId: 'transit',
+          purposeLabel: 'Transit',
+          jurisdictionEnabled: false,
+          jurisdictions: [],
+          documents: checklistToJurisdictionDocuments(crewApplicationDocuments, 'jurisdiction'),
         }),
       ],
     }),
@@ -435,9 +526,25 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           applicationDocuments: crewApplicationDocuments,
           purposeId: 'crew_joining',
           purposeLabel: 'Crew joining',
+          jurisdictionEnabled: true,
           jurisdictions: [
             singleJurisdictionForVisa('mumbai', 'Mumbai', 'France', crewApplicationDocuments),
           ],
+        }),
+        visaType({
+          id: 'schengen-crew-transit',
+          name: 'Crew Transit Visa',
+          visaCategory: 'Transit crew',
+          processingTime: '5–8 business days',
+          entryType: 'Transit',
+          validity: '72 hours',
+          stayDuration: 'Transit connection',
+          applicationDocuments: crewApplicationDocuments,
+          purposeId: 'transit',
+          purposeLabel: 'Transit',
+          jurisdictionEnabled: false,
+          jurisdictions: [],
+          documents: checklistToJurisdictionDocuments(crewApplicationDocuments, 'jurisdiction'),
         }),
       ],
     }),
@@ -531,6 +638,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           applicationDocuments: crewApplicationDocuments,
           purposeId: 'crew_joining',
           purposeLabel: 'Crew joining',
+          jurisdictionEnabled: true,
           jurisdictions: [chinaMarineMTypeDelhiJurisdiction()],
         }),
         visaType({
@@ -544,10 +652,9 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
           applicationDocuments: crewApplicationDocuments,
           purposeId: 'transit',
           purposeLabel: 'Transit',
-          jurisdictions: [
-            chinaMarineGTypeDelhiJurisdiction(),
-            chinaMarineGTypeMumbaiJurisdiction(),
-          ],
+          jurisdictionEnabled: false,
+          jurisdictions: [],
+          documents: checklistToJurisdictionDocuments(crewApplicationDocuments, 'jurisdiction'),
         }),
       ],
     }),
@@ -622,7 +729,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
       ],
     }),
     corporateEvisaSegment('sg', 'Singapore', 2600),
-    segment({ segment: 'marine', enabled: false, visaTypes: [] }),
+    marineSegment('sg', 'Singapore'),
     b2bEvisaSegment('sg', 'Singapore', 2100, 2600),
   ],
   '10': [
@@ -666,7 +773,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
       ],
     }),
     corporateEvisaSegment('ke', 'Kenya', 4200),
-    segment({ segment: 'marine', enabled: false, visaTypes: [] }),
+    marineSegment('ke', 'Kenya'),
     b2bEvisaSegment('ke', 'Kenya', 3500, 4200),
   ],
   '15': [
@@ -710,7 +817,7 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
       ],
     }),
     corporateEvisaSegment('au', 'Australia', 7200),
-    segment({ segment: 'marine', enabled: false, visaTypes: [] }),
+    marineSegment('au', 'Australia'),
     b2bEvisaSegment('au', 'Australia', 6400, 7200),
   ],
   '16': [
@@ -748,8 +855,96 @@ const SEGMENTS_BY_COUNTRY: Record<string, CountrySegmentConfig[]> = {
       ],
     }),
     corporateEvisaSegment('tw', 'Taiwan', 4800),
-    segment({ segment: 'marine', enabled: false, visaTypes: [] }),
+    marineSegment('tw', 'Taiwan'),
     b2bEvisaSegment('tw', 'Taiwan', 4100, 4800),
+  ],
+  '31': [
+    segment({
+      segment: 'retail',
+      enabled: true,
+      workflowId: 'workflow-online-only',
+      visaTypes: [
+        eVisaType({
+          id: 'vn-evisa-tourist',
+          name: 'e-Visa · Tourist',
+          visaCategory: 'Tourism',
+          pricing: 2400,
+          processingTime: '3–5 business days',
+          entryType: 'Single entry',
+          validity: '90 days',
+          stayDuration: '90 days',
+          purposeId: 'tourism',
+          purposeLabel: 'Tourism',
+          countryName: 'Vietnam',
+          gltsScopeLines: [
+            'Online e-Visa application completion and submission',
+            'Passport and photo validation against Vietnam e-Visa portal rules',
+            'Payment coordination for government e-Visa fee',
+            'Approval tracking and e-Visa delivery to applicant',
+          ],
+        }),
+        eVisaType({
+          id: 'vn-evisa-business',
+          name: 'e-Visa · Business',
+          visaCategory: 'Business',
+          pricing: 2900,
+          processingTime: '4–6 business days',
+          entryType: 'Single entry',
+          validity: '90 days',
+          stayDuration: 'As per invitation',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Business meeting',
+          countryName: 'Vietnam',
+        }),
+      ],
+    }),
+    corporateEvisaSegment('vn', 'Vietnam', 2900),
+    marineSegment('vn', 'Vietnam'),
+    b2bEvisaSegment('vn', 'Vietnam', 2400, 2900),
+  ],
+  '32': [
+    segment({
+      segment: 'retail',
+      enabled: true,
+      workflowId: 'workflow-online-only',
+      visaTypes: [
+        eVisaType({
+          id: 'tr-evisa-tourist',
+          name: 'e-Visa · Tourist',
+          visaCategory: 'Tourism',
+          pricing: 3100,
+          processingTime: '1–2 business days',
+          entryType: 'Multiple entry',
+          validity: '180 days',
+          stayDuration: '90 days',
+          purposeId: 'tourism',
+          purposeLabel: 'Tourism',
+          countryName: 'Turkey',
+          gltsScopeLines: [
+            'Eligibility check against Turkey e-Visa nationality and purpose rules',
+            'Online e-Visa application completion and submission',
+            'Passport and photo validation against Turkey e-Visa portal rules',
+            'Approval tracking and e-Visa delivery to applicant',
+          ],
+        }),
+        eVisaType({
+          id: 'tr-evisa-business',
+          name: 'e-Visa · Business',
+          visaCategory: 'Business',
+          pricing: 3600,
+          processingTime: '2–3 business days',
+          entryType: 'Multiple entry',
+          validity: '180 days',
+          stayDuration: 'As per invitation',
+          purposeId: 'business_meeting',
+          purposeLabel: 'Business meeting',
+          countryName: 'Turkey',
+        }),
+      ],
+    }),
+    corporateEvisaSegment('tr', 'Turkey', 3600),
+    marineSegment('tr', 'Turkey'),
+    b2bEvisaSegment('tr', 'Turkey', 3100, 3600),
   ],
 }
 
@@ -769,14 +964,28 @@ const DEFAULT_SEGMENTS: CountrySegmentConfig[] = [
         stayDuration: '30 days',
         purposeId: 'tourism',
         purposeLabel: 'Tourism',
+        jurisdictionEnabled: true,
         jurisdictions: [
           singleJurisdictionForVisa('delhi', 'Delhi', 'Default', stdApplicationDocuments),
         ],
       }),
+      eVisaType({
+        id: 'default-evisa-tourist',
+        name: 'Tourist e-Visa',
+        visaCategory: 'Tourism',
+        processingTime: '3–5 business days',
+        entryType: 'Single entry',
+        validity: '90 days',
+        stayDuration: '30 days',
+        purposeId: 'tourism',
+        purposeLabel: 'Tourism',
+        countryName: 'Default',
+        applicationDocuments: stdApplicationDocuments,
+      }),
     ],
   }),
   corporateBusinessSegment('default', 'Default'),
-  segment({ segment: 'marine', enabled: false, visaTypes: [] }),
+  marineSegment('default', 'Default'),
   b2bAgentSegment('default', 'Default'),
 ]
 
@@ -853,9 +1062,54 @@ function primaryRetailVisaType(segments: CountrySegmentConfig[]) {
   return retail?.visaTypes.find((visaType) => visaType.status === 'active')
 }
 
+/**
+ * Overlay catalog processing / validity / stay / price onto the primary
+ * retail visa type (first entry) so country-detail hero stats match the
+ * destination catalog for every country — default and custom segments alike
+ * (e.g. UK 15 days / 6 months, Japan 7 days / 90 days).
+ */
+function enrichPrimaryRetailFromCatalog(
+  segments: CountrySegmentConfig[],
+  c: ReturnType<typeof getAllCountries>[0],
+): CountrySegmentConfig[] {
+  const catalogStay =
+    c.visaTypes.find((visaType) => visaType.duration?.trim())?.duration?.trim() || c.validity
+
+  return segments.map((entry) => {
+    if (entry.segment !== 'retail') return entry
+    return {
+      ...entry,
+      visaTypes: entry.visaTypes.map((visaType, index) => {
+        if (index !== 0) return visaType
+        return {
+          ...visaType,
+          processingTime: c.processingTime,
+          validity: c.validity,
+          stayDuration: catalogStay,
+          pricing: visaType.pricing ?? c.price,
+        }
+      }),
+    }
+  })
+}
+
+const BASIC_RETAIL_REQUIREMENT_PACK_ID = 'req-basic-retail'
+
+function ensureRetailRequirementPack(segments: CountrySegmentConfig[]): CountrySegmentConfig[] {
+  return segments.map((seg) =>
+    seg.segment === 'retail' && !seg.requirementPackId
+      ? { ...seg, requirementPackId: BASIC_RETAIL_REQUIREMENT_PACK_ID }
+      : seg,
+  )
+}
+
 function buildMasterFromCountry(c: ReturnType<typeof getAllCountries>[0]): CountryMaster {
-  const segments = ensureAllSegments(
-    normalizeCountrySegments(SEGMENTS_BY_COUNTRY[c.id] ?? DEFAULT_SEGMENTS),
+  const segments = ensureRetailRequirementPack(
+    ensureAllSegments(
+      normalizeCountrySegments(
+        enrichPrimaryRetailFromCatalog(SEGMENTS_BY_COUNTRY[c.id] ?? DEFAULT_SEGMENTS, c),
+      ),
+    ),
   )
   const now = new Date().toISOString()
   const visaOfferings = enrichVisaOfferingsApproxCost(syncVisaOfferingsFromSegments(segments), c.price)
@@ -884,13 +1138,13 @@ function buildMasterFromCountry(c: ReturnType<typeof getAllCountries>[0]): Count
     internalNotes: '',
     cities: c.cities,
     heroPhotoId: c.heroPhotoId,
-    processingTime: retailVisa?.processingTime ?? c.processingTime,
+    processingTime: c.processingTime,
     price: retailVisa?.pricing ?? c.price,
     rating: c.rating,
     trending: c.trending,
     trendingPercent: c.trendingPercent,
     visaCategory: retailVisa?.visaCategory ?? c.visaCategory,
-    validity: retailVisa?.validity ?? c.validity,
+    validity: c.validity,
     fastMinutes: c.fastMinutes,
     passportIssueLocations: buildDefaultPassportIssueLocations(c.name),
     segments,
@@ -989,10 +1243,12 @@ function buildMasters(): CountryMaster[] {
 let cache: CountryMaster[] | null = null
 
 export function getMockCountryMasters(): CountryMaster[] {
+  // normalizeMasterGltsScopes is idempotent defaulting logic — the cache is already normalized
+  // after buildMasters()/setMockCountryMastersStore(), so re-running it on every read (this is
+  // called extremely frequently, including in per-application admin sync loops) was doing a full
+  // deep re-map of every country/segment/visaType/jurisdiction for no behavioral change.
   if (!cache) {
     cache = buildMasters()
-  } else {
-    cache = cache.map(normalizeMasterGltsScopes)
   }
   return cache
 }

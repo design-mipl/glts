@@ -707,6 +707,7 @@ export function CorporateViewFormPage() {
         selectedRow={selectedRow}
         detail={detail}
         submission={submission}
+        listingRow={listingRow}
       />
 
       <AdminWorkspaceShell

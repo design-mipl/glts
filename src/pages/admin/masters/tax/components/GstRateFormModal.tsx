@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
-import { FormField, FormSection, Input, Modal, Select, Textarea, useToast } from '@/design-system/UIComponents'
+import { FormField, FormSection, Input, Modal, Textarea, useToast } from '@/design-system/UIComponents'
 import { AdminFullPageFormFooter } from '@/pages/admin/components/AdminFullPageFormFooter'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
 import { ADMIN_MODAL_FORM_LAYOUT } from '@/pages/admin/components/adminOverlayFormLayout'
 import { taxMasterService } from '@/shared/services/taxMasterService'
 import type { GstRate } from '@/shared/types/taxMaster'
-import { masterStatusLabel } from '../../config/masterStatusConfig'
 import {
   gstRateToFormData,
   INITIAL_GST_RATE_FORM,
@@ -106,20 +105,6 @@ export function GstRateFormModal({ open, record, onClose, onSaved }: GstRateForm
             />
           </FormField>
         </AdminFullPageFormFieldSpan>
-        <FormField label="Status" required>
-          <Select
-            value={formData.status}
-            onChange={(value) =>
-              setFormData({ ...formData, status: value as typeof formData.status })
-            }
-            placeholder="Select status"
-            options={(
-              Object.entries(masterStatusLabel) as [typeof formData.status, string][]
-            ).map(([value, label]) => ({ value, label }))}
-            size="sm"
-            fullWidth
-          />
-        </FormField>
       </FormSection>
     </Modal>
   )

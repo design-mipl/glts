@@ -6,9 +6,9 @@ export type CorporateAccountSectionId =
   | 'agreement'
   | 'super-admin'
   | 'admins'
+  | 'bookers'
   | 'entities'
   | 'vessels'
-  | 'bookers'
   | 'activation'
   | 'review'
 

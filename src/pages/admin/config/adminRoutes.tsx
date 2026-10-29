@@ -4,7 +4,6 @@ import { AdminModulePlaceholder } from '../components/AdminModulePlaceholder'
 import { PermissionGuard } from '../components/PermissionGuard'
 import {
   AccountsDashboardNextPage,
-  AccountsDashboardPage,
   AdminDashboardNextPage,
   AdminProfilePage,
   AgreementDetailPage,
@@ -26,6 +25,10 @@ import {
   CorporateCreateApplicationPage,
   CorporateVerifyDocumentsPage,
   CorporateViewFormPage,
+  RetailApplicationListingPage,
+  RetailCreateApplicationPage,
+  RetailVerifyDocumentsPage,
+  RetailViewFormPage,
   CountryConfigWorkspacePage,
   CountryGroupListingPage,
   CountryListingPage,
@@ -39,9 +42,11 @@ import {
   DepartmentDetailPage,
   DepartmentListingPage,
   DocumentationDashboardNextPage,
-  DocumentationDashboardPage,
   DocumentDetailPage,
   DocumentListingPage,
+  CreateRequirementPage,
+  EditRequirementPage,
+  RequirementListingPage,
   EditAgreementPage,
   EditCorporateAccountPage,
   EditCountryConfigWorkspacePage,
@@ -68,10 +73,18 @@ import {
   MarineCreateApplicationPage,
   MarineVerifyDocumentsPage,
   MarineViewFormPage,
+  CreateOrderPage,
+  CreateOrderEnquiryPage,
+  EditOrderPage,
+  EditOrderEnquiryPage,
   OperationalCaseHandlingPage,
-  OperationsConsultantDashboardPage,
   OperationsDashboardNextPage,
   OperationsDashboardPage,
+  OrderDetailPage,
+  OrderEnquiryDetailPage,
+  OrderEnquiryListingPage,
+  OrderListingPage,
+  OrganizationLocationListingPage,
   QuotationDetailPage,
   QuotationListingPage,
   QuotationPdfPreviewPage,
@@ -127,13 +140,12 @@ function LegacyVendorRedirect() {
 }
 
 const adminDashboardRoutes: AdminRouteDefinition[] = ADMIN_ALL_DASHBOARDS.filter(
-  (dashboard) =>
-    dashboard.status === 'coming-soon' && !dashboard.href.startsWith('/admin/dashboard-next'),
+  (dashboard) => dashboard.status === 'coming-soon',
 ).map((dashboard) => ({
   path: dashboard.href.replace('/admin/', ''),
   title: dashboard.title,
   description: dashboard.description,
-  eyebrow: dashboard.href.startsWith('/admin/dashboard-next') ? 'Dashboard Next' : 'Dashboard',
+  eyebrow: 'Dashboard',
   kind: 'coming-soon' as const,
 }))
 
@@ -147,13 +159,6 @@ const adminRoutes: AdminRouteDefinition[] = [
     kind: 'coming-soon',
   },
 
-  {
-    path: 'application-management/retail',
-    title: 'Retail application management',
-    description: 'This module is under development.',
-    eyebrow: 'Application management',
-    kind: 'coming-soon',
-  },
   {
     path: 'operations/*',
     title: 'Operations visibility',
@@ -248,6 +253,70 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <EnquiryDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="order-management/order-enquiries"
+        element={
+          <PermissionGuard>
+            <OrderEnquiryListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="order-management/order-enquiries/new"
+        element={
+          <PermissionGuard>
+            <CreateOrderEnquiryPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="order-management/order-enquiries/:enquiryId/edit"
+        element={
+          <PermissionGuard>
+            <EditOrderEnquiryPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="order-management/order-enquiries/:enquiryId"
+        element={
+          <PermissionGuard>
+            <OrderEnquiryDetailPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="order-management/orders"
+        element={
+          <PermissionGuard>
+            <OrderListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="order-management/orders/new"
+        element={
+          <PermissionGuard>
+            <CreateOrderPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="order-management/orders/:orderId/edit"
+        element={
+          <PermissionGuard>
+            <EditOrderPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="order-management/orders/:orderId"
+        element={
+          <PermissionGuard>
+            <OrderDetailPage />
           </PermissionGuard>
         }
       />
@@ -408,6 +477,30 @@ export function AdminRoutes() {
         }
       />
       <Route
+        path="masters/requirements"
+        element={
+          <PermissionGuard>
+            <RequirementListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/requirements/new"
+        element={
+          <PermissionGuard>
+            <CreateRequirementPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/requirements/:requirementId/edit"
+        element={
+          <PermissionGuard>
+            <EditRequirementPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
         path="masters/tax"
         element={
           <PermissionGuard>
@@ -444,6 +537,14 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <BankMasterListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="masters/organization-location"
+        element={
+          <PermissionGuard>
+            <OrganizationLocationListingPage />
           </PermissionGuard>
         }
       />
@@ -540,6 +641,38 @@ export function AdminRoutes() {
         element={
           <PermissionGuard>
             <CorporateVerifyDocumentsPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/retail"
+        element={
+          <PermissionGuard>
+            <RetailApplicationListingPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/retail/new"
+        element={
+          <PermissionGuard>
+            <RetailCreateApplicationPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/retail/:applicationId/view-form"
+        element={
+          <PermissionGuard>
+            <RetailViewFormPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="application-management/retail/:applicationId"
+        element={
+          <PermissionGuard>
+            <RetailVerifyDocumentsPage />
           </PermissionGuard>
         }
       />
@@ -799,30 +932,13 @@ export function AdminRoutes() {
           </PermissionGuard>
         }
       />
-      <Route
-        path="dashboard/operations"
-        element={
-          <PermissionGuard>
-            <OperationsConsultantDashboardPage />
-          </PermissionGuard>
-        }
-      />
+      {/* Legacy dashboard URLs → Dashboard Next */}
+      <Route path="dashboard/operations" element={<Navigate to="/admin/dashboard-next/operations" replace />} />
       <Route
         path="dashboard/documentation"
-        element={
-          <PermissionGuard>
-            <DocumentationDashboardPage />
-          </PermissionGuard>
-        }
+        element={<Navigate to="/admin/dashboard-next/documentation" replace />}
       />
-      <Route
-        path="dashboard/accounts"
-        element={
-          <PermissionGuard>
-            <AccountsDashboardPage />
-          </PermissionGuard>
-        }
-      />
+      <Route path="dashboard/accounts" element={<Navigate to="/admin/dashboard-next/accounts" replace />} />
       <Route
         path="dashboard-next/super-admin"
         element={

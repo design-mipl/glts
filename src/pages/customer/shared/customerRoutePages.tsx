@@ -92,3 +92,7 @@ export const ContactSupportPage = lazyNamed(
   () => import('../features/help-support/pages/ContactSupportPage'),
   'ContactSupportPage',
 )
+export const StoredDocumentsPage = lazyNamed(
+  () => import('../features/profile/components/StoredDocumentsSection'),
+  'StoredDocumentsPage',
+)

@@ -4,14 +4,11 @@ import type { Country } from '../types/visa'
 export function formatEtaShort(processingTime: string): string {
   const minMatch = processingTime.match(/(\d+)\s*min/i)
   if (minMatch) return `${minMatch[1]}m`
-  const dayMatch = processingTime.match(/(\d+)(?:\s*-\s*(\d+))?\s*days?/i)
-  if (dayMatch) {
-    const end = dayMatch[2] ?? dayMatch[1]
-    return dayMatch[2] ? `${dayMatch[1]}-${end}d` : `${end}d`
-  }
-  const singleDay = processingTime.match(/(\d+)\s*day/i)
+  const dayMatch = processingTime.match(/(\d+)\s*[–-]\s*(\d+)\s*(?:business\s+)?days?/i)
+  if (dayMatch) return `${dayMatch[1]}-${dayMatch[2]}d`
+  const singleDay = processingTime.match(/(\d+)\s*(?:business\s+)?days?/i)
   if (singleDay) return `${singleDay[1]}d`
-  return processingTime.replace(/\s*days?/i, 'd').replace(/\s*min/i, 'm')
+  return processingTime.replace(/\s*business\s+days?/i, 'd').replace(/\s*days?/i, 'd').replace(/\s*min/i, 'm')
 }
 
 export function isFastVisa(country: Country): boolean {

@@ -94,9 +94,9 @@ export interface InvoiceAttachment {
 }
 
 /** Consulate refund from Ground Ops — billing application status on an invoice. */
-export type InvoiceRefundBillingStatus = 'pending' | 'applied'
+export type InvoiceRefundBillingStatus = 'pending' | 'applied' | 'managed'
 
-export type InvoiceRefundAppliedVia = 'generate' | 'modify' | 'credit_note'
+export type InvoiceRefundAppliedVia = 'generate' | 'modify' | 'credit_note' | 'managed'
 
 /** Snapshot of a Ground Ops consulate refund applied to billing. */
 export interface InvoiceAppliedRefund {
@@ -171,6 +171,11 @@ export interface Invoice {
   payments: InvoicePaymentRecord[]
   /** Consulate refunds from Ground Ops that have been applied on this document. */
   appliedRefunds?: InvoiceAppliedRefund[]
+  /**
+   * Draft-only: refunds marked Managed (absorbed into service amounts) before submit.
+   * On submit these are merged into `appliedRefunds` with appliedVia `managed`.
+   */
+  managedConsulateRefunds?: InvoiceAppliedRefund[]
 }
 
 export interface InvoiceBillingSelection {
@@ -203,6 +208,11 @@ export interface InvoiceWorkspaceState {
   sourceInvoiceId?: string
   draftInvoiceId?: string
   agreementId?: string
+  /**
+   * Consulate refunds absorbed into service amounts (no refund line).
+   * Closed on submit via `appliedRefunds` with appliedVia `managed`.
+   */
+  managedConsulateRefunds?: InvoiceAppliedRefund[]
 }
 
 export interface InvoiceListFilters {

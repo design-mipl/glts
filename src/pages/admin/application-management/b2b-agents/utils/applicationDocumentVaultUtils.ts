@@ -114,8 +114,9 @@ export function buildApplicationDocumentVaultItems(input: {
   selectedRow: UploadQueueRow
   detail: ApplicationDetailViewModel
   submission?: FormAssistSubmissionDraft
+  listingRow?: { country?: string; visaType?: string; jurisdiction?: string } | null
 }): DocumentVaultItem[] {
-  const { selectedRow, detail, submission } = input
+  const { selectedRow, detail, submission, listingRow } = input
   const items: DocumentVaultItem[] = []
   const seen = new Set<string>()
 
@@ -154,9 +155,9 @@ export function buildApplicationDocumentVaultItems(input: {
   }
 
   const globalDocs = resolveGlobalChecklistDocuments({
-    countryLabel: detail.application?.country,
-    visaTypeLabel: detail.application?.visaType,
-    jurisdictionName: detail.application?.jurisdiction,
+    countryLabel: detail.application?.country ?? listingRow?.country,
+    visaTypeLabel: detail.application?.visaType ?? listingRow?.visaType,
+    jurisdictionName: detail.application?.jurisdiction ?? listingRow?.jurisdiction,
   })
   for (const globalDoc of globalDocs) {
     const upload = detail.globalDocumentUploads[globalDoc.documentId]

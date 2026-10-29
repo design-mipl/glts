@@ -3,6 +3,7 @@ import { Checkbox, FormField, Input, Select, Toggle } from '@/design-system/UICo
 import { commercialAgreementService } from '@/shared/services/commercialAgreementService'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
 import { AGREEMENT_WORKFLOW_OPTIONS } from '../config/agreementStatusConfig'
+import { BILLING_DAY_OPTIONS } from '../utils/agreementFormUtils'
 import { AgreementTermDateFields } from './workspace/AgreementTermDateFields'
 
 interface AgreementBillingConfigFieldsProps {
@@ -46,6 +47,15 @@ export function AgreementBillingConfigFields({
               { value: 'quarterly', label: 'Quarterly' },
               { value: 'custom', label: 'Custom' },
             ]}
+            fullWidth
+          />
+        </FormField>
+        <FormField label="Billing day">
+          <Select
+            value={data.billingConfig.billingDay ? String(data.billingConfig.billingDay) : ''}
+            onChange={(v) => updateBilling({ billingDay: Number(v) || 0 })}
+            options={BILLING_DAY_OPTIONS}
+            placeholder="Select day"
             fullWidth
           />
         </FormField>

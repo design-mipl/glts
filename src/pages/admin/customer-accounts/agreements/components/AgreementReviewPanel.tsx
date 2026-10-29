@@ -4,6 +4,10 @@ import { alpha, useTheme } from '@mui/material/styles'
 import { Badge } from '@/design-system/UIComponents'
 import type { CommercialAgreementFormData } from '@/shared/types/commercialAgreement'
 import { deriveAdvanceRuleSummary } from '@/shared/utils/commercialAgreementValidation'
+import {
+  countPricingScheduleFees,
+  ensureAgreementPricingSchedules,
+} from '@/shared/utils/agreementPricingScheduleUtils'
 import { splitAgreementDocuments } from '@/shared/utils/agreementDocumentUtils'
 import { getSelectedFinanceContactPersons } from '@/shared/utils/agreementFinanceContacts'
 import {
@@ -67,15 +71,24 @@ export function AgreementReviewPanel({ data, agreementId, statusLabel }: Agreeme
   const uploadedDocs = data.documents.filter((d) => d.status === 'uploaded' || d.status === 'verified').length
   const requiredDocs = data.documents.filter((d) => d.required).length
 
+  const schedules = ensureAgreementPricingSchedules(
+    data.pricingSchedules,
+    data.commercialVisaPricing,
+    data.miscellaneousServices,
+    data.entities,
+  )
+  const defaultFees = schedules.find((s) => s.appliesTo === 'all')
+  const feeCount = schedules.reduce((sum, schedule) => sum + countPricingScheduleFees(schedule), 0)
+
   const statCards = [
     { label: 'Entities', value: String(data.entities.length) },
     {
-      label: 'Processing visa fees',
-      value: String(data.commercialVisaPricing?.length || data.pricingMatrix.length),
+      label: 'Pricing sets',
+      value: String(schedules.length),
     },
     {
-      label: 'Misc services',
-      value: String(data.miscellaneousServices?.length || data.miscellaneousCosts.length),
+      label: 'Fee lines',
+      value: String(feeCount || data.pricingMatrix.length),
     },
     { label: 'Documents', value: `${uploadedDocs}/${requiredDocs}` },
   ]
@@ -166,14 +179,29 @@ export function AgreementReviewPanel({ data, agreementId, statusLabel }: Agreeme
               label="Advance rule"
               value={deriveAdvanceRuleSummary(data.billingType, data.billingConfig)}
             />
-            <ReviewRow
-              label="Credit limit"
-              value={
+            <ReviewRow label="Credit limit" value={
                 data.billingConfig.creditLimit
                   ? `₹${data.billingConfig.creditLimit.toLocaleString('en-IN')}`
                   : '—'
               }
             />
+            <ReviewRow
+              label="Default pricing"
+              value={`${defaultFees?.commercialVisaPricing.length ?? 0} visa fees · ${defaultFees?.miscellaneousServices.length ?? 0} misc`}
+            />
+            {schedules
+              .filter((schedule) => schedule.appliesTo === 'entities')
+              .map((schedule) => (
+                <ReviewRow
+                  key={schedule.id}
+                  label={schedule.name}
+                  value={
+                    schedule.entityIds.length
+                      ? `${countPricingScheduleFees(schedule)} fee lines · ${schedule.entityIds.length} entit${schedule.entityIds.length === 1 ? 'y' : 'ies'}`
+                      : 'Map an entity'
+                  }
+                />
+              ))}
           </Box>
         </ReviewSection>
 

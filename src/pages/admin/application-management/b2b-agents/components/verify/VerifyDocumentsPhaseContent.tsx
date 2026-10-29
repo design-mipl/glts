@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Box, Grid, Stack } from '@mui/material'
+import { Box, Grid, Stack, Typography } from '@mui/material'
 import { BaseCard, Button, Tabs } from '@/design-system/UIComponents'
 import type { ApplicantDocumentItem } from '@/pages/customer/features/applications/data/applicationFlowData'
 import type { ApplicationDetailViewModel } from '@/pages/customer/features/applications/types/applicationDetail.types'
@@ -64,6 +64,8 @@ interface VerifyDocumentsPhaseContentProps {
   onSaveDraft: () => void
   onSubmit: () => void
   readOnly?: boolean
+  /** Admin B2B Document Not Required — files optional; checklist still required. */
+  documentsNotRequired?: boolean
   processingStatus?: {
     currentStatusId: string
     countryId?: string
@@ -112,6 +114,7 @@ export function VerifyDocumentsPhaseContent({
   onSaveDraft,
   onSubmit,
   readOnly = false,
+  documentsNotRequired = false,
   processingStatus,
 }: VerifyDocumentsPhaseContentProps) {
   const isFinalPhase = phase === 'final'
@@ -403,6 +406,13 @@ export function VerifyDocumentsPhaseContent({
           },
         ]}
         emptyMessage="Select a passenger to review documents and complete verification."
+        workTabHint={
+          documentsNotRequired ? (
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.45 }}>
+              Documents are optional for this application. Complete the verification checklist to move the queue.
+            </Typography>
+          ) : undefined
+        }
         processingStatus={processingStatus}
       />
 

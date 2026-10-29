@@ -281,7 +281,7 @@ export function buildSuperAdminSearchItems(options: {
       title: 'Monthly executive pack',
       subtitle: 'Recent report',
       category: 'report',
-      onSelect: () => options.onNavigate('/admin/dashboard/accounts'),
+      onSelect: () => options.onNavigate('/admin/dashboard-next/accounts'),
     },
   ]
 }

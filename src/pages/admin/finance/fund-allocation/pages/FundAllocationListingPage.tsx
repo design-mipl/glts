@@ -102,6 +102,7 @@ export function FundAllocationListingPage() {
     closeDetail,
     refresh,
     mutateAndRefresh,
+    isLoading,
   } = useFundAllocationListing()
 
   const filterOptions = useMemo(() => getFundAllocationFilterOptions(allRows), [allRows])
@@ -346,60 +347,75 @@ export function FundAllocationListingPage() {
     ]
   }, [listingTab, openBulkAllocate])
 
-  const allocatedTable = (
-    <AdminListingTable
-      columns={batchColumns}
-      data={paginatedBatches}
-      filterSourceData={filterSourceBatches}
-      rowKey="id"
-      state={tableState}
-      onStateChange={handleTableStateChange}
-      columnFilters={columnFilters}
-      onColumnFiltersChange={setColumnFilters}
-      getCellValue={getFundAllocationBatchCellValue}
-      onRowClick={selectBatch}
-      stickyHeader
-      emptyTitle={emptyState.title}
-      emptyDescription={emptyState.description}
-    />
-  )
-
-  const pendingTable = (
-    <AdminListingTable
-      columns={passengerColumns}
-      data={paginatedRows}
-      filterSourceData={filterSourceRows}
-      rowKey="id"
-      state={tableState}
-      onStateChange={handleTableStateChange}
-      columnFilters={columnFilters}
-      onColumnFiltersChange={setColumnFilters}
-      getCellValue={getFundAllocationCellValue}
-      onRowClick={selectPassenger}
-      bulkActions={bulkActions}
-      stickyHeader
-      emptyTitle={emptyState.title}
-      emptyDescription={emptyState.description}
-    />
-  )
-
-  const claimSheetsTable = (
-    <AdminListingTable
-      columns={claimSheetColumns}
-      data={paginatedClaimSheets}
-      filterSourceData={filterSourceClaimSheets}
-      rowKey="id"
-      state={tableState}
-      onStateChange={handleTableStateChange}
-      columnFilters={columnFilters}
-      onColumnFiltersChange={setColumnFilters}
-      getCellValue={getFundAllocationClaimSheetCellValue}
-      onRowClick={selectClaimSheet}
-      stickyHeader
-      emptyTitle={emptyState.title}
-      emptyDescription={emptyState.description}
-    />
-  )
+  const activeTable = useMemo(() => {
+    if (isClaimSheetsTab) {
+      return (
+        <AdminListingTable
+          columns={claimSheetColumns}
+          data={paginatedClaimSheets}
+          filterSourceData={filterSourceClaimSheets}
+          rowKey="id"
+          state={tableState}
+          onStateChange={handleTableStateChange}
+          columnFilters={columnFilters}
+          onColumnFiltersChange={setColumnFilters}
+          getCellValue={getFundAllocationClaimSheetCellValue}
+          onRowClick={selectClaimSheet}
+          loading={isLoading}
+          stickyHeader
+          emptyTitle={emptyState.title}
+          emptyDescription={emptyState.description}
+        />
+      )
+    }
+    if (isAllocatedTab) {
+      return (
+        <AdminListingTable
+          columns={batchColumns}
+          data={paginatedBatches}
+          filterSourceData={filterSourceBatches}
+          rowKey="id"
+          state={tableState}
+          onStateChange={handleTableStateChange}
+          columnFilters={columnFilters}
+          onColumnFiltersChange={setColumnFilters}
+          getCellValue={getFundAllocationBatchCellValue}
+          onRowClick={selectBatch}
+          loading={isLoading}
+          stickyHeader
+          emptyTitle={emptyState.title}
+          emptyDescription={emptyState.description}
+        />
+      )
+    }
+    return (
+      <AdminListingTable
+        columns={passengerColumns}
+        data={paginatedRows}
+        filterSourceData={filterSourceRows}
+        rowKey="id"
+        state={tableState}
+        onStateChange={handleTableStateChange}
+        columnFilters={columnFilters}
+        onColumnFiltersChange={setColumnFilters}
+        getCellValue={getFundAllocationCellValue}
+        onRowClick={selectPassenger}
+        bulkActions={bulkActions}
+        loading={isLoading}
+        stickyHeader
+        emptyTitle={emptyState.title}
+        emptyDescription={emptyState.description}
+      />
+    )
+  }, [
+    isClaimSheetsTab, isAllocatedTab,
+    claimSheetColumns, paginatedClaimSheets, filterSourceClaimSheets, selectClaimSheet,
+    batchColumns, paginatedBatches, filterSourceBatches, selectBatch,
+    passengerColumns, paginatedRows, filterSourceRows, selectPassenger, bulkActions,
+    tableState, handleTableStateChange, columnFilters, setColumnFilters,
+    emptyState,
+    isLoading,
+  ])
 
   const toolbarColumns = useMemo(
     () => columns.filter(col => col.key !== 'actions').map(col => ({ key: col.key, label: col.label })),
@@ -537,11 +553,12 @@ export function FundAllocationListingPage() {
             onDeselectAll={() => setTableState(state => ({ ...state, selectedRows: [] }))}
           />
         ) : null}
-        {isClaimSheetsTab ? claimSheetsTable : isAllocatedTab ? allocatedTable : pendingTable}
+        {activeTable}
       </Stack>
     ) : (
       <AdminListingGrid
         items={gridItems}
+        loading={isLoading}
         onItemClick={id => {
           if (isClaimSheetsTab) {
             const sheet = paginatedClaimSheets.find(entry => entry.id === id)

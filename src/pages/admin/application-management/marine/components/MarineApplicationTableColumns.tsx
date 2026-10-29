@@ -17,7 +17,7 @@ import {
   getApplicationOperationalBadgeColor,
   getApplicationTypeLabel,
 } from '@/pages/customer/features/applications/components/listing/applicationStatus'
-import { resolveApplicationCompanyName, resolveApplicationRank, resolveApplicationVesselName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
+import { resolveApplicationCompanyName, resolveApplicationVesselName } from '@/pages/customer/features/applications/utils/applicationCompanyUtils'
 import {
   resolveApplicationBillingEntity,
   resolveApplicationCompassNo,
@@ -193,18 +193,6 @@ export function buildMarineApplicationColumns({
           </Tooltip>
         )
       },
-    },
-    {
-      key: 'rank',
-      label: 'Rank',
-      widthSize: 'sm',
-      sortable: false,
-      filterable: false,
-      render: (_: unknown, row: MarineApplicationRow) => (
-        <Typography variant="body2" sx={{ fontSize: 13 }}>
-          {resolveApplicationRank(row)}
-        </Typography>
-      ),
     },
     {
       key: 'companyName',

@@ -165,6 +165,7 @@ export const ADMIN_PERMISSION_MODULES: AdminPermissionModule[] = [
       { id: 'country_groups', label: 'Country Group Master', tabs: [DEFAULT_LISTING_TAB] },
       { id: 'jurisdiction', label: 'Jurisdiction Master', tabs: [DEFAULT_LISTING_TAB] },
       { id: 'card_master', label: 'Card Master', tabs: [DEFAULT_LISTING_TAB] },
+      { id: 'organization_location', label: 'Organization & Location Master', tabs: [DEFAULT_LISTING_TAB] },
       {
         id: 'documents',
         label: 'Document master',

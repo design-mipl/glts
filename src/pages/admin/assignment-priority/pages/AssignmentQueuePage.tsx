@@ -8,6 +8,7 @@ import {
   AdminListingTable,
   AdminListingToolbar,
 } from '@/pages/admin/components/listing'
+import { applicationExpenseManagementService } from '@/shared/services/applicationExpenseManagementService'
 import { fundAllocationService } from '@/shared/services/fundAllocationService'
 import { operationalPassengerAssignmentService } from '@/shared/services/operationalPassengerAssignmentService'
 import type {
@@ -213,12 +214,27 @@ export function AssignmentQueuePage({ segmentConfig }: AssignmentQueuePageProps)
         }
       })
 
+      const assignedApplicationId = actionModal.record.gltsApplicationId
+      const expenseQueued =
+        Boolean(assignedApplicationId) &&
+        (payload.action === 'assign_user' || payload.action === 'reassign') &&
+        (payload.assigneeType === 'vendor' || payload.assigneeType === 'passenger')
+      if (expenseQueued && assignedApplicationId) {
+        applicationExpenseManagementService.syncApplication(assignedApplicationId)
+      }
+
       setActionModal(null)
       showToast({
-        title: fundRequested ? 'Assigned and fund requested' : 'Passenger updated',
+        title: fundRequested
+          ? 'Assigned and fund requested'
+          : expenseQueued
+            ? 'Assigned and queued in expenses'
+            : 'Passenger updated',
         description: fundRequested
           ? 'Finance can allocate funds on the Fund Allocation queue.'
-          : undefined,
+          : expenseQueued
+            ? 'Expense management now shows this case as Needs update until payment is confirmed.'
+            : undefined,
         variant: 'success',
       })
     },

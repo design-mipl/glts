@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { Button, FormField, Select } from '@/design-system/UIComponents'
 import { AdminOverlayFormSection } from '@/pages/admin/components/AdminOverlayFormSection'
 import type { BusinessSegment, CountryMasterFormData, VisaTypeStatus } from '@/shared/types/countryMaster'
+import { getActiveRequirementPackSelectOptions } from '@/shared/utils/countryRequirementPackUtils'
 import { getActiveWorkflowSelectOptions } from '@/shared/utils/countryWorkflowUtils'
 import { COUNTRY_WORKSPACE_LAYOUT } from '../../../config/countryWorkspaceLayout'
 import { VisaTypeCardList } from '../VisaTypeCardList'
@@ -28,6 +29,10 @@ export function SegmentPanel({
   const segConfig = formData.segments.find((s) => s.segment === segment)
   const workflowOptions = useMemo(
     () => [{ value: '', label: 'Not mapped' }, ...getActiveWorkflowSelectOptions()],
+    [],
+  )
+  const requirementPackOptions = useMemo(
+    () => [{ value: '', label: 'Not mapped' }, ...getActiveRequirementPackSelectOptions()],
     [],
   )
 
@@ -97,6 +102,32 @@ export function SegmentPanel({
           />
         </FormField>
       </AdminOverlayFormSection>
+
+      {segment === 'retail' ? (
+        <AdminOverlayFormSection
+          title="Requirement pack"
+          description="Default intake pack for retail. Overridden per visa type (no jurisdictions) or per jurisdiction (when jurisdictions are enabled)."
+          importance="primary"
+          columns={1}
+        >
+          <FormField
+            label="Default requirement pack"
+            helperText="Fallback when visa type / jurisdiction has no pack mapped. Packs come from Requirement Master."
+          >
+            <Select
+              value={segConfig.requirementPackId ?? ''}
+              onChange={(v) =>
+                patchSegment({ requirementPackId: String(v) || undefined })
+              }
+              options={requirementPackOptions}
+              placeholder="Select requirement pack"
+              size="sm"
+              disabled={readOnly || !segConfig.enabled}
+              fullWidth
+            />
+          </FormField>
+        </AdminOverlayFormSection>
+      ) : null}
 
       <AdminOverlayFormSection
         title="Visa types"

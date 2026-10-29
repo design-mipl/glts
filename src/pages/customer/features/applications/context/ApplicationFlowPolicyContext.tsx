@@ -8,6 +8,7 @@ export type ApplicationFlowPolicy = 'customer' | 'admin' | 'website'
 export const ADMIN_MARINE_APPLICATION_FLOW_STORAGE_KEY = 'glts:admin-marine-application-flow'
 export const ADMIN_B2B_APPLICATION_FLOW_STORAGE_KEY = 'glts:admin-b2b-application-flow'
 export const ADMIN_CORPORATE_APPLICATION_FLOW_STORAGE_KEY = 'glts:admin-corporate-application-flow'
+export const ADMIN_RETAIL_APPLICATION_FLOW_STORAGE_KEY = 'glts:admin-retail-application-flow'
 export const WEBSITE_APPLICATION_FLOW_STORAGE_KEY = 'glts:website-application-flow'
 export const CUSTOMER_MARINE_APPLICATION_FLOW_STORAGE_KEY = 'glts:application-flow'
 export const CUSTOMER_CORPORATE_APPLICATION_FLOW_STORAGE_KEY = 'glts:customer-corporate-application-flow'
@@ -67,6 +68,7 @@ function defaultStorageKeyFor(
     case 'corporate':
       return ADMIN_CORPORATE_APPLICATION_FLOW_STORAGE_KEY
     case 'retail':
+      return ADMIN_RETAIL_APPLICATION_FLOW_STORAGE_KEY
     case 'marine':
     default:
       return ADMIN_MARINE_APPLICATION_FLOW_STORAGE_KEY

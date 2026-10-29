@@ -20,7 +20,11 @@ import {
   toSettlementDateKey,
 } from '@/shared/services/fundUtilizationService'
 import { getCurrentUser } from '@/shared/services/authService'
-import type { FundBankWithdrawalEntry, FundSettlementUserOption } from '@/shared/types/fundUtilization'
+import type {
+  FundBankSettlementSummary,
+  FundBankWithdrawalEntry,
+  FundSettlementUserOption,
+} from '@/shared/types/fundUtilization'
 import { formatInr } from '@/shared/utils/invoiceCalculations'
 import { formatSettlementHeaderDate } from '@/shared/utils/fundSettlementDisplay'
 import { isFundUtilizationBankBatch, resolveOverallSettlementBankAccountLabel } from '../utils/fundUtilizationSettlementUtils'
@@ -28,6 +32,26 @@ import { FundSettlementKpiRow } from './FundSettlementKpiRow'
 import { FundWithdrawalHistoryTab } from './FundWithdrawalHistoryTab'
 
 const SETTLEMENT_DRAWER_WIDTH = 560
+
+const EMPTY_BANK_SETTLEMENT_SUMMARY: FundBankSettlementSummary = {
+  settlementDate: '',
+  priorBankDate: '',
+  closingBankBalancePrior: 0,
+  fundsTransferred: 0,
+  availableBankBalance: 0,
+  cashWithdrawn: 0,
+  closingBankBalance: 0,
+  openingCashBalance: 0,
+  totalCashAvailable: 0,
+  expensesIncurred: 0,
+  closingCashBalance: 0,
+  allocatedAmount: 0,
+  totalWithdrawn: 0,
+  availableInBank: 0,
+  inHandCash: 0,
+  settlementAmount: 0,
+  bankAllocationCount: 0,
+}
 
 type SettlementTab = 'bank_settlement' | 'withdrawal_history'
 
@@ -77,11 +101,12 @@ export function FundSettlementDrawer({
   const isToday = settlementDateKey === todayKey
 
   const bankBatches = useMemo(() => {
+    if (!open) return []
     void refreshKey
     return fundAllocationService
       .listAllocatedBatches()
       .filter(batch => isFundUtilizationBankBatch(batch))
-  }, [refreshKey])
+  }, [open, refreshKey])
 
   const reloadHistory = useCallback(() => {
     setHistory(fundUtilizationService.listAllBankWithdrawals())
@@ -97,17 +122,20 @@ export function FundSettlementDrawer({
     reloadHistory()
   }, [open, userOptions, reloadHistory])
 
-  const summary = useMemo(() => {
-    void refreshKey
-    void history
-    return computeOverallFundBankSettlementSummary(settlementDateKey)
-  }, [refreshKey, history, settlementDateKey])
-
   const todaySummary = useMemo(() => {
+    if (!open) return EMPTY_BANK_SETTLEMENT_SUMMARY
     void refreshKey
     void history
     return computeOverallFundBankSettlementSummary(todayKey)
-  }, [refreshKey, history, todayKey])
+  }, [open, refreshKey, history, todayKey])
+
+  const summary = useMemo(() => {
+    if (!open) return EMPTY_BANK_SETTLEMENT_SUMMARY
+    if (settlementDateKey === todayKey) return todaySummary
+    void refreshKey
+    void history
+    return computeOverallFundBankSettlementSummary(settlementDateKey)
+  }, [open, refreshKey, history, settlementDateKey, todayKey, todaySummary])
 
   const bankAccountLabel = useMemo(
     () => resolveOverallSettlementBankAccountLabel(bankBatches),

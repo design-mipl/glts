@@ -38,6 +38,12 @@ export const CORPORATE_ACCOUNT_WORKSPACE_SECTIONS: {
     description: 'Add optional administrators with scoped portal access.',
   },
   {
+    id: 'bookers',
+    navId: 'section-bookers',
+    label: 'Booker setup',
+    description: 'Add portal bookers who can create and manage visa applications.',
+  },
+  {
     id: 'entities',
     navId: 'section-entities',
     label: 'Entity setup',
@@ -48,12 +54,6 @@ export const CORPORATE_ACCOUNT_WORKSPACE_SECTIONS: {
     navId: 'section-vessels',
     label: 'Vessel setup',
     description: 'Link vessels to entities for marine workflow applications.',
-  },
-  {
-    id: 'bookers',
-    navId: 'section-bookers',
-    label: 'Booker setup',
-    description: 'Add portal bookers who can create and manage visa applications.',
   },
   {
     id: 'activation',
@@ -177,6 +177,18 @@ export function buildCorporateAccountFormSteps(
       children: <CorporateAccountAdminsSection data={formData} onChange={onChange} />,
     },
     {
+      id: 'bookers',
+      label: 'Booker setup',
+      description: 'Portal bookers',
+      children: (
+        <CorporateAccountBookersSection
+          data={formData}
+          corporateAccountId={options.corporateAccountId}
+          onChange={onChange}
+        />
+      ),
+    },
+    {
       id: 'entities',
       label: 'Entity setup',
       description: 'Corporate entities',
@@ -194,18 +206,6 @@ export function buildCorporateAccountFormSteps(
       description: 'Linked vessels',
       children: (
         <CorporateAccountVesselsSection
-          data={formData}
-          corporateAccountId={options.corporateAccountId}
-          onChange={onChange}
-        />
-      ),
-    },
-    {
-      id: 'bookers',
-      label: 'Booker setup',
-      description: 'Portal bookers',
-      children: (
-        <CorporateAccountBookersSection
           data={formData}
           corporateAccountId={options.corporateAccountId}
           onChange={onChange}

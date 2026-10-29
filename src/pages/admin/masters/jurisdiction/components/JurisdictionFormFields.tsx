@@ -1,6 +1,5 @@
-import { FormField, Input, Select, Textarea } from '@/design-system/UIComponents'
+import { FormField, Input, Textarea } from '@/design-system/UIComponents'
 import { AdminFullPageFormFieldSpan } from '@/pages/admin/components/AdminFullPageFormShell'
-import { MASTER_STATUS_FILTER_OPTIONS } from '@/pages/admin/masters/config/masterStatusConfig'
 import type { JurisdictionMasterFormData } from '@/shared/types/jurisdictionMaster'
 
 interface JurisdictionFormFieldsProps {
@@ -15,10 +14,6 @@ export function JurisdictionFormFields({
   errors,
 }: JurisdictionFormFieldsProps) {
   const update = (patch: Partial<JurisdictionMasterFormData>) => onChange({ ...formData, ...patch })
-
-  const statusOptions = MASTER_STATUS_FILTER_OPTIONS.filter((o) => o.value !== 'all').map(
-    (o) => ({ value: o.value, label: o.label }),
-  )
 
   return (
     <>
@@ -47,16 +42,6 @@ export function JurisdictionFormFields({
           />
         </FormField>
       </AdminFullPageFormFieldSpan>
-      <FormField label="Status" required error={Boolean(errors.status)} helperText={errors.status}>
-        <Select
-          value={formData.status}
-          onChange={(v) => update({ status: String(v) as JurisdictionMasterFormData['status'] })}
-          options={statusOptions}
-          placeholder="Select status"
-          size="sm"
-          fullWidth
-        />
-      </FormField>
     </>
   )
 }
